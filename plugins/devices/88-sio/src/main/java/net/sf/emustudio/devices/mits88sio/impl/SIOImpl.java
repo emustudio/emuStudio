@@ -29,16 +29,16 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 import net.sf.emustudio.devices.mits88sio.gui.ConfigDialog;
 import net.sf.emustudio.devices.mits88sio.gui.StatusDialog;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
 
 @PluginType(
         type = PLUGIN_TYPE.DEVICE,
@@ -48,6 +48,7 @@ import java.util.ResourceBundle;
 )
 @SuppressWarnings("unused")
 public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserver {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SIOImpl.class);
 
     private final Transmitter transmitter = new Transmitter();
@@ -59,8 +60,8 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     private ExtendedContext cpu;
     private StatusDialog gui;
 
-    private int statusPortNumber = SIOSettings.DEFAULT_STATUS_PORT_NUMBER;
-    private int dataPortNumber = SIOSettings.DEFAULT_DATA_PORT_NUMBER;
+    private final List<Integer> currentStatusPorts = new ArrayList<>();
+    private final List<Integer> currentDataPorts = new ArrayList<>();
 
     public SIOImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -72,7 +73,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
             contextPool.register(pluginID, physicalPort, DeviceContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             LOGGER.error("Could not register 88-SIO device context", e);
-            StaticDialogs.showErrorMessage("Could not register MITS 88-SIO physical port", getTitle());
+            StaticDialogs.showErrorMessage("Could not register MITS 88-SIO physical port", super.getTitle());
         }
     }
 
@@ -114,7 +115,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     public void showGUI() {
         if (!sioSettings.isNoGUI()) {
             if (gui == null) {
-                gui = new StatusDialog(statusPortNumber, dataPortNumber, transmitter.getDeviceId());
+                gui = new StatusDialog(transmitter.getDeviceId());
             }
             gui.setVisible(true);
         }
@@ -122,8 +123,9 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
 
     @Override
     public void destroy() {
-        cpu.detachDevice(statusPortNumber);
-        cpu.detachDevice(dataPortNumber);
+        currentStatusPorts.forEach(port -> cpu.detachDevice(port));
+        currentDataPorts.forEach(port -> cpu.detachDevice(port));
+
         transmitter.setDevice(null);
         if (gui != null) {
             gui.dispose();
@@ -144,48 +146,24 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
         return !sioSettings.isNoGUI();
     }
 
-    private int getAnotherPortNumber(String portName, int defaultPortNumber) {
-        if (!sioSettings.isNoGUI()) {
-            String newPort = (String) JOptionPane.showInputDialog(null, portName
-                    + " cannot be attached to CPU, please enter another one: ",
-                getTitle(), JOptionPane.ERROR_MESSAGE, null, null, defaultPortNumber);
-            try {
-                return Integer.decode(newPort);
-            } catch (NumberFormatException e) {
-                LOGGER.error("Could not convert " + portName + " number to integer", e);
-                StaticDialogs.showErrorMessage("Invalid port number", getTitle());
-            }
-        }
-        return defaultPortNumber;
-    }
-
     @Override
     public void settingsChanged() {
-        if (dataPortNumber != -1) {
-            cpu.detachDevice(dataPortNumber);
-        }
-        if (statusPortNumber != -1) {
-            cpu.detachDevice(statusPortNumber);
-        }
-        dataPortNumber = sioSettings.getDataPortNumber();
-        statusPortNumber = sioSettings.getStatusPortNumber();
+        currentStatusPorts.forEach(port -> cpu.detachDevice(port));
+        currentDataPorts.forEach(port -> cpu.detachDevice(port));
 
-        // attach IO ports
-        if (!cpu.attachDevice(statusPort, statusPortNumber)) {
-            LOGGER.warn("Could not attach Status port to {}. Trying another one.", statusPortNumber);
-            statusPortNumber = getAnotherPortNumber("Status port", SIOSettings.DEFAULT_STATUS_PORT_NUMBER);
-            if (!cpu.attachDevice(statusPort, statusPortNumber)) {
-                LOGGER.error("Could not attach Status port to {}.", statusPortNumber);
-                StaticDialogs.showErrorMessage("Error: status port still cannot be attached", getTitle());
-            }
-        }
-        if (!cpu.attachDevice(dataPort, dataPortNumber)) {
-            LOGGER.warn("Could not attach Data port to {}. Trying another one.", dataPortNumber);
-            dataPortNumber = getAnotherPortNumber("Data port", SIOSettings.DEFAULT_DATA_PORT_NUMBER);
-            if (!cpu.attachDevice(dataPort, dataPortNumber)) {
-                LOGGER.error("Could not attach Data port to {}.", dataPortNumber);
-                StaticDialogs.showErrorMessage("Error: data port still cannot be attached", getTitle());
-            }
-        }
+        currentStatusPorts.clear();
+        currentStatusPorts.addAll(sioSettings.getStatusPorts());
+        currentDataPorts.clear();
+        currentDataPorts.addAll(sioSettings.getDataPorts());
+
+        currentStatusPorts.stream().filter(port -> !cpu.attachDevice(statusPort, port)).forEachOrdered(port -> {
+            LOGGER.error("Could not attach Status port to {}.", port);
+            StaticDialogs.showErrorMessage("Could not attach Status port to " + port, getTitle());
+        });
+        
+        currentDataPorts.stream().filter(port -> !cpu.attachDevice(dataPort, port)).forEachOrdered(port -> {
+            LOGGER.error("Could not attach Data port to {}.", port);
+            StaticDialogs.showErrorMessage("Could not attach Data port to " + port, getTitle());
+        });
     }
 }

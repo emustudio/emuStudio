@@ -22,12 +22,15 @@ package net.sf.emustudio.devices.mits88sio.impl;
 import emulib.emustudio.SettingsManager;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class SIOSettingsTest {
     private static final int PLUGIN_ID = 1122;
@@ -55,7 +58,7 @@ public class SIOSettingsTest {
 
         SIOSettings settings = new SIOSettings(PLUGIN_ID);
         settings.addChangedObserver(observer);
-        settings.setStatusPortNumber(0);
+        settings.setStatusPorts(Arrays.asList(0));
 
         verify(observer);
     }
@@ -69,7 +72,7 @@ public class SIOSettingsTest {
 
         SIOSettings settings = new SIOSettings(PLUGIN_ID);
         settings.addChangedObserver(observer);
-        settings.setDataPortNumber(0);
+        settings.setDataPorts(Arrays.asList(0));
 
         verify(observer);
     }
@@ -78,8 +81,10 @@ public class SIOSettingsTest {
     public void testValuesAreCorrectAfterRead() throws Exception {
         SettingsManager manager = createMock(SettingsManager.class);
         expect(manager.readSetting(PLUGIN_ID, SettingsManager.NO_GUI)).andReturn("true").once();
-        expect(manager.readSetting(PLUGIN_ID, SIOSettings.STATUS_PORT_NUMBER)).andReturn("5").once();
-        expect(manager.readSetting(PLUGIN_ID, SIOSettings.DATA_PORT_NUMBER)).andReturn("10").once();
+        expect(manager.readSetting(PLUGIN_ID, SIOSettings.STATUS_PORT_NUMBER + "0")).andReturn("5").once();
+        expect(manager.readSetting(PLUGIN_ID, SIOSettings.STATUS_PORT_NUMBER + "1")).andReturn(null).once();
+        expect(manager.readSetting(PLUGIN_ID, SIOSettings.DATA_PORT_NUMBER + "0")).andReturn("10").once();
+        expect(manager.readSetting(PLUGIN_ID, SIOSettings.DATA_PORT_NUMBER + "1")).andReturn(null).once();
         replay(manager);
 
         SIOSettings settings = new SIOSettings(PLUGIN_ID);
@@ -87,8 +92,8 @@ public class SIOSettingsTest {
         settings.read();
 
         assertEquals(true, settings.isNoGUI());
-        assertEquals(5, settings.getStatusPortNumber());
-        assertEquals(10, settings.getDataPortNumber());
+        assertEquals(5, (int)settings.getStatusPorts().iterator().next());
+        assertEquals(10, (int)settings.getDataPorts().iterator().next());
 
         verify(manager);
     }
@@ -96,34 +101,36 @@ public class SIOSettingsTest {
     @Test
     public void testCorrectValuesAreWrittenAfterWrite() throws Exception {
         SettingsManager manager = createMock(SettingsManager.class);
-        expect(manager.writeSetting(PLUGIN_ID, SIOSettings.STATUS_PORT_NUMBER, "5")).andReturn(true).once();
-        expect(manager.writeSetting(PLUGIN_ID, SIOSettings.DATA_PORT_NUMBER, "10")).andReturn(true).once();
+        expect(manager.writeSetting(PLUGIN_ID, SIOSettings.STATUS_PORT_NUMBER + "0", "5")).andReturn(true).once();
+        expect(manager.writeSetting(PLUGIN_ID, SIOSettings.DATA_PORT_NUMBER + "0", "10")).andReturn(true).once();
         replay(manager);
 
         SIOSettings settings = new SIOSettings(PLUGIN_ID);
         settings.setSettingsManager(manager);
-        settings.setDataPortNumber(10);
-        settings.setStatusPortNumber(5);
+        settings.setDataPorts(Arrays.asList(10));
+        settings.setStatusPorts(Arrays.asList(5));
         settings.write();
 
         verify(manager);
     }
 
     @Test
-    public void testIfPortsCannotBeParsedDefaultsAreAssigned() throws Exception {
+    public void testIfPortsCannotBeParsedNothingIsReturned() throws Exception {
         SettingsManager manager = createMock(SettingsManager.class);
         expect(manager.readSetting(PLUGIN_ID, SettingsManager.NO_GUI)).andReturn("true").once();
-        expect(manager.readSetting(PLUGIN_ID, SIOSettings.STATUS_PORT_NUMBER)).andReturn("abc").once();
-        expect(manager.readSetting(PLUGIN_ID, SIOSettings.DATA_PORT_NUMBER)).andReturn("def").once();
+        expect(manager.readSetting(PLUGIN_ID, SIOSettings.STATUS_PORT_NUMBER + "0")).andReturn("abc").once();
+        expect(manager.readSetting(PLUGIN_ID, SIOSettings.STATUS_PORT_NUMBER + "1")).andReturn(null).once();
+        expect(manager.readSetting(PLUGIN_ID, SIOSettings.DATA_PORT_NUMBER + "0")).andReturn("def").once();
+        expect(manager.readSetting(PLUGIN_ID, SIOSettings.DATA_PORT_NUMBER + "1")).andReturn(null).once();
         replay(manager);
 
         SIOSettings settings = new SIOSettings(PLUGIN_ID);
         settings.setSettingsManager(manager);
         settings.read();
 
-        assertEquals(true, settings.isNoGUI());
-        assertEquals(SIOSettings.DEFAULT_STATUS_PORT_NUMBER, settings.getStatusPortNumber());
-        assertEquals(SIOSettings.DEFAULT_DATA_PORT_NUMBER, settings.getDataPortNumber());
+        assertTrue(settings.isNoGUI());
+        assertTrue(settings.getStatusPorts().isEmpty());
+        assertTrue(settings.getDataPorts().isEmpty());
 
         verify(manager);
     }

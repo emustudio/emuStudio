@@ -24,6 +24,8 @@ import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -34,16 +36,14 @@ public class SIOSettings {
 
     static final String STATUS_PORT_NUMBER = "statusPortNumber";
     static final String DATA_PORT_NUMBER = "dataPortNumber";
-    public static final int DEFAULT_STATUS_PORT_NUMBER = 0x10;
-    public static final int DEFAULT_DATA_PORT_NUMBER = 0x11;
 
     private final long pluginID;
     private volatile SettingsManager settingsManager;
 
     private volatile boolean emuStudioNoGUI = false;
 
-    private volatile int statusPortNumber = DEFAULT_STATUS_PORT_NUMBER;
-    private volatile int dataPortNumber = DEFAULT_DATA_PORT_NUMBER;
+    private final List<Integer> statusPorts = new CopyOnWriteArrayList<>();
+    private final List<Integer> dataPorts = new CopyOnWriteArrayList<>();
 
     private final List<ChangedObserver> observers = new CopyOnWriteArrayList<>();
 
@@ -75,21 +75,23 @@ public class SIOSettings {
         return emuStudioNoGUI;
     }
 
-    public int getStatusPortNumber() {
-        return statusPortNumber;
+    public Collection<Integer> getStatusPorts() {
+        return Collections.unmodifiableCollection(statusPorts);
     }
 
-    public void setStatusPortNumber(int statusPortNumber) {
-        this.statusPortNumber = statusPortNumber;
+    public void setStatusPorts(Collection<Integer> statusPorts) {
+        this.statusPorts.clear();
+        this.statusPorts.addAll(statusPorts);
         notifyObservers();
     }
 
-    public int getDataPortNumber() {
-        return dataPortNumber;
+    public Collection<Integer> getDataPorts() {
+        return Collections.unmodifiableCollection(dataPorts);
     }
 
-    public void setDataPortNumber(int dataPortNumber) {
-        this.dataPortNumber = dataPortNumber;
+    public void setDataPorts(Collection<Integer> dataPorts) {
+        this.dataPorts.clear();
+        this.dataPorts.addAll(dataPorts);
         notifyObservers();
     }
 
@@ -97,9 +99,19 @@ public class SIOSettings {
         SettingsManager tmpManager = settingsManager;
         if (tmpManager != null) {
             synchronized (this) {
-                tmpManager.writeSetting(pluginID, STATUS_PORT_NUMBER, String.valueOf(statusPortNumber));
-                tmpManager.writeSetting(pluginID, DATA_PORT_NUMBER, String.valueOf(dataPortNumber));
+                writePorts(statusPorts, STATUS_PORT_NUMBER);
+                writePorts(dataPorts, DATA_PORT_NUMBER);
             }
+        }
+    }
+    
+    private void writePorts(Collection<Integer> ports, String baseName) {
+        SettingsManager tmpManager = settingsManager;
+        
+        int i = 0;
+        for (int port : ports) {
+            tmpManager.writeSetting(pluginID, baseName + i, String.valueOf(port));
+            i++;
         }
     }
 
@@ -108,26 +120,30 @@ public class SIOSettings {
         if (tmpManager != null) {
             synchronized (this) {
                 emuStudioNoGUI = Boolean.parseBoolean(tmpManager.readSetting(pluginID, SettingsManager.NO_GUI));
-                String tmp = tmpManager.readSetting(pluginID, STATUS_PORT_NUMBER);
-                if (tmp != null) {
-                    try {
-                        statusPortNumber = Integer.decode(tmp);
-                    } catch (NumberFormatException e) {
-                        LOGGER.error("Could not read setting: status port number", e);
-                    }
-                }
-                tmp = tmpManager.readSetting(pluginID, DATA_PORT_NUMBER);
-                if (tmp != null) {
-                    try {
-                        dataPortNumber = Integer.decode(tmp);
-                    } catch (NumberFormatException e) {
-                        LOGGER.error("Could not read setting: data port number", e);
-                    }
-                }
+                readPorts(statusPorts, STATUS_PORT_NUMBER);
+                readPorts(dataPorts, DATA_PORT_NUMBER);
             }
         }
         notifyObservers();
     }
 
+    private void readPorts(List<Integer> ports, String baseName) {
+        SettingsManager tmpManager = settingsManager;
+
+        ports.clear();
+        int i = 0;
+        String tmp;
+        do {
+            tmp = tmpManager.readSetting(pluginID, baseName + i);
+            if (tmp != null) {
+                try {
+                    ports.add(Integer.decode(tmp));
+                } catch (NumberFormatException e) {
+                    LOGGER.error("Could not parse status port number: {}", tmp, e);
+                }
+            }
+            i++;
+        } while (tmp != null);
+    }
 
 }
