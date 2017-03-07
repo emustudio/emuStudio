@@ -21,6 +21,7 @@ package net.sf.emustudio.zilogZ80.gui;
 
 import emulib.plugins.cpu.CPU;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.zilogZ80.impl.ContextImpl;
 import net.sf.emustudio.zilogZ80.impl.CpuImpl;
 import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
 
@@ -69,7 +70,7 @@ public class StatusPanel extends javax.swing.JPanel {
             }
 
         });
-        cpu.addFrequencyChangedListener(newFrequency -> lblFrequency.setText(String.format("%.2f kHz", newFrequency)));
+        cpu.getEngine().addFrequencyChangedListener(newFrequency -> lblFrequency.setText(String.format("%.2f kHz", newFrequency)));
         spnFrequency.addChangeListener(e -> {
             int i = (Integer)spnFrequency.getModel().getValue();
             try {
@@ -729,7 +730,7 @@ public class StatusPanel extends javax.swing.JPanel {
         jLabel32.setText("Test periode:");
 
         spnFrequency.setFont(spnFrequency.getFont().deriveFont(spnFrequency.getFont().getStyle() & ~java.awt.Font.BOLD));
-        spnFrequency.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(20000), Integer.valueOf(1), null, Integer.valueOf(100)));
+        spnFrequency.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(ContextImpl.DEFAULT_FREQUENCY_KHZ), Integer.valueOf(1), null, Integer.valueOf(100)));
         spnFrequency.setName("CPU frequency"); // NOI18N
 
         spnTestPeriode.setFont(spnTestPeriode.getFont().deriveFont(spnTestPeriode.getFont().getStyle() & ~java.awt.Font.BOLD));

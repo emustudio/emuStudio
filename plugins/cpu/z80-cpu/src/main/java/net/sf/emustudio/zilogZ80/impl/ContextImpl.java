@@ -29,11 +29,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class ContextImpl implements ExtendedContext {
+    public final static int DEFAULT_FREQUENCY_KHZ = 20000;
+
     private final static Logger LOGGER = LoggerFactory.getLogger(net.sf.emustudio.intel8080.impl.ContextImpl.class);
     private final ConcurrentMap<Integer, DeviceContext<Short>> devices = new ConcurrentHashMap<>();
 
     private volatile EmulatorEngine cpu;
-    private volatile int clockFrequency = 2000; // kHz
+    private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
 
     public void setCpu(EmulatorEngine cpu) {
         this.cpu = cpu;

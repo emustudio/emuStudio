@@ -31,15 +31,12 @@ import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.intel8080.api.FrequencyUpdater;
-import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
 import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
-import javax.swing.*;
-import java.util.List;
+import javax.swing.JPanel;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,7 +55,6 @@ public class CpuImpl extends AbstractCPU {
     private static final String PRINT_CODE_USE_CACHE = "printCodeUseCache";
 
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
-    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
 
     private final ContextPool contextPool;
@@ -78,20 +74,6 @@ public class CpuImpl extends AbstractCPU {
         }
     }
 
-    public void addFrequencyChangedListener(FrequencyChangedListener listener) {
-        frequencyChangedListeners.add(listener);
-    }
-
-    public void removeFrequencyChangedListener(FrequencyChangedListener listener) {
-        frequencyChangedListeners.remove(listener);
-    }
-    
-    private void fireFrequencyChanged(float newFrequency) {
-        for (FrequencyChangedListener listener : frequencyChangedListeners) {
-            listener.frequencyChanged(newFrequency);
-        }
-    }
-    
     @Override
     public int getInstructionPosition() {
         return engine.PC;
@@ -197,7 +179,6 @@ public class CpuImpl extends AbstractCPU {
     @Override
     protected void destroyInternal() {
         context.clearDevices();
-        frequencyChangedListeners.clear();
     }
 
     @Override

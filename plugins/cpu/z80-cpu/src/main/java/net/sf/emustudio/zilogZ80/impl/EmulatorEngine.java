@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -69,7 +71,185 @@ public class EmulatorEngine implements CpuEngine {
     private final static int[] CONDITION_VALUES = new int[] {
             0, FLAG_Z, 0, FLAG_C, 0, FLAG_PV, 0, FLAG_S
     };
-    
+
+    private final static Method[] DISPATCH_TABLE = new Method[256];
+    private final static Method[] DISPATCH_TABLE_ED = new Method[256];
+
+    static {
+        try {
+            DISPATCH_TABLE[0x00] = EmulatorEngine.class.getDeclaredMethod("O0_NOP", short.class);
+            DISPATCH_TABLE[0x02] = EmulatorEngine.class.getDeclaredMethod("O2_LD_LPAR_BC_RPAR__A", short.class);
+            DISPATCH_TABLE[0x03] = EmulatorEngine.class.getDeclaredMethod("INC_SS", short.class);
+            DISPATCH_TABLE[0x13] = EmulatorEngine.class.getDeclaredMethod("INC_SS", short.class);
+            DISPATCH_TABLE[0x23] = EmulatorEngine.class.getDeclaredMethod("INC_SS", short.class);
+            DISPATCH_TABLE[0x33] = EmulatorEngine.class.getDeclaredMethod("INC_SS", short.class);
+
+            DISPATCH_TABLE[0x09] = EmulatorEngine.class.getDeclaredMethod("ADD_HL_SS", short.class);
+            DISPATCH_TABLE[0x19] = EmulatorEngine.class.getDeclaredMethod("ADD_HL_SS", short.class);
+            DISPATCH_TABLE[0x29] = EmulatorEngine.class.getDeclaredMethod("ADD_HL_SS", short.class);
+            DISPATCH_TABLE[0x39] = EmulatorEngine.class.getDeclaredMethod("ADD_HL_SS", short.class);
+
+            DISPATCH_TABLE[0x0B] = EmulatorEngine.class.getDeclaredMethod("DEC_SS", short.class);
+            DISPATCH_TABLE[0x1B] = EmulatorEngine.class.getDeclaredMethod("DEC_SS", short.class);
+            DISPATCH_TABLE[0x2B] = EmulatorEngine.class.getDeclaredMethod("DEC_SS", short.class);
+            DISPATCH_TABLE[0x3B] = EmulatorEngine.class.getDeclaredMethod("DEC_SS", short.class);
+
+            DISPATCH_TABLE[0xC1] = EmulatorEngine.class.getDeclaredMethod("POP_QQ", short.class);
+            DISPATCH_TABLE[0xD1] = EmulatorEngine.class.getDeclaredMethod("POP_QQ", short.class);
+            DISPATCH_TABLE[0xE1] = EmulatorEngine.class.getDeclaredMethod("POP_QQ", short.class);
+            DISPATCH_TABLE[0xF1] = EmulatorEngine.class.getDeclaredMethod("POP_QQ", short.class);
+
+            DISPATCH_TABLE[0xC5] = EmulatorEngine.class.getDeclaredMethod("PUSH_QQ", short.class);
+            DISPATCH_TABLE[0xD5] = EmulatorEngine.class.getDeclaredMethod("PUSH_QQ", short.class);
+            DISPATCH_TABLE[0xE5] = EmulatorEngine.class.getDeclaredMethod("PUSH_QQ", short.class);
+            DISPATCH_TABLE[0xF5] = EmulatorEngine.class.getDeclaredMethod("PUSH_QQ", short.class);
+
+            DISPATCH_TABLE[0x06] = EmulatorEngine.class.getDeclaredMethod("LD_R_N", short.class);
+            DISPATCH_TABLE[0x0E] = EmulatorEngine.class.getDeclaredMethod("LD_R_N", short.class);
+            DISPATCH_TABLE[0x16] = EmulatorEngine.class.getDeclaredMethod("LD_R_N", short.class);
+            DISPATCH_TABLE[0x1E] = EmulatorEngine.class.getDeclaredMethod("LD_R_N", short.class);
+            DISPATCH_TABLE[0x26] = EmulatorEngine.class.getDeclaredMethod("LD_R_N", short.class);
+            DISPATCH_TABLE[0x2E] = EmulatorEngine.class.getDeclaredMethod("LD_R_N", short.class);
+            DISPATCH_TABLE[0x36] = EmulatorEngine.class.getDeclaredMethod("LD_R_N", short.class);
+            DISPATCH_TABLE[0x3E] = EmulatorEngine.class.getDeclaredMethod("LD_R_N", short.class);
+
+            DISPATCH_TABLE[0x04] = EmulatorEngine.class.getDeclaredMethod("INC_R", short.class);
+            DISPATCH_TABLE[0x0C] = EmulatorEngine.class.getDeclaredMethod("INC_R", short.class);
+            DISPATCH_TABLE[0x14] = EmulatorEngine.class.getDeclaredMethod("INC_R", short.class);
+            DISPATCH_TABLE[0x1C] = EmulatorEngine.class.getDeclaredMethod("INC_R", short.class);
+            DISPATCH_TABLE[0x24] = EmulatorEngine.class.getDeclaredMethod("INC_R", short.class);
+            DISPATCH_TABLE[0x2C] = EmulatorEngine.class.getDeclaredMethod("INC_R", short.class);
+            DISPATCH_TABLE[0x34] = EmulatorEngine.class.getDeclaredMethod("INC_R", short.class);
+            DISPATCH_TABLE[0x3C] = EmulatorEngine.class.getDeclaredMethod("INC_R", short.class);
+
+            DISPATCH_TABLE[0x05] = EmulatorEngine.class.getDeclaredMethod("DEC_R", short.class);
+            DISPATCH_TABLE[0x0D] = EmulatorEngine.class.getDeclaredMethod("DEC_R", short.class);
+            DISPATCH_TABLE[0x15] = EmulatorEngine.class.getDeclaredMethod("DEC_R", short.class);
+            DISPATCH_TABLE[0x1D] = EmulatorEngine.class.getDeclaredMethod("DEC_R", short.class);
+            DISPATCH_TABLE[0x25] = EmulatorEngine.class.getDeclaredMethod("DEC_R", short.class);
+            DISPATCH_TABLE[0x2D] = EmulatorEngine.class.getDeclaredMethod("DEC_R", short.class);
+            DISPATCH_TABLE[0x35] = EmulatorEngine.class.getDeclaredMethod("DEC_R", short.class);
+            DISPATCH_TABLE[0x3D] = EmulatorEngine.class.getDeclaredMethod("DEC_R", short.class);
+
+            DISPATCH_TABLE[0xC0] = EmulatorEngine.class.getDeclaredMethod("RET_CC", short.class);
+            DISPATCH_TABLE[0xC8] = EmulatorEngine.class.getDeclaredMethod("RET_CC", short.class);
+            DISPATCH_TABLE[0xD0] = EmulatorEngine.class.getDeclaredMethod("RET_CC", short.class);
+            DISPATCH_TABLE[0xD8] = EmulatorEngine.class.getDeclaredMethod("RET_CC", short.class);
+            DISPATCH_TABLE[0xE0] = EmulatorEngine.class.getDeclaredMethod("RET_CC", short.class);
+            DISPATCH_TABLE[0xE8] = EmulatorEngine.class.getDeclaredMethod("RET_CC", short.class);
+            DISPATCH_TABLE[0xF0] = EmulatorEngine.class.getDeclaredMethod("RET_CC", short.class);
+            DISPATCH_TABLE[0xF8] = EmulatorEngine.class.getDeclaredMethod("RET_CC", short.class);
+
+            DISPATCH_TABLE[0xC7] = EmulatorEngine.class.getDeclaredMethod("RST_P", short.class);
+            DISPATCH_TABLE[0xCF] = EmulatorEngine.class.getDeclaredMethod("RST_P", short.class);
+            DISPATCH_TABLE[0xD7] = EmulatorEngine.class.getDeclaredMethod("RST_P", short.class);
+            DISPATCH_TABLE[0xDF] = EmulatorEngine.class.getDeclaredMethod("RST_P", short.class);
+            DISPATCH_TABLE[0xE7] = EmulatorEngine.class.getDeclaredMethod("RST_P", short.class);
+            DISPATCH_TABLE[0xEF] = EmulatorEngine.class.getDeclaredMethod("RST_P", short.class);
+            DISPATCH_TABLE[0xF7] = EmulatorEngine.class.getDeclaredMethod("RST_P", short.class);
+            DISPATCH_TABLE[0xFF] = EmulatorEngine.class.getDeclaredMethod("RST_P", short.class);
+
+            DISPATCH_TABLE[0x80] = EmulatorEngine.class.getDeclaredMethod("ADD_A_R", short.class);
+            DISPATCH_TABLE[0x81] = EmulatorEngine.class.getDeclaredMethod("ADD_A_R", short.class);
+            DISPATCH_TABLE[0x82] = EmulatorEngine.class.getDeclaredMethod("ADD_A_R", short.class);
+            DISPATCH_TABLE[0x83] = EmulatorEngine.class.getDeclaredMethod("ADD_A_R", short.class);
+            DISPATCH_TABLE[0x84] = EmulatorEngine.class.getDeclaredMethod("ADD_A_R", short.class);
+            DISPATCH_TABLE[0x85] = EmulatorEngine.class.getDeclaredMethod("ADD_A_R", short.class);
+            DISPATCH_TABLE[0x86] = EmulatorEngine.class.getDeclaredMethod("ADD_A_R", short.class);
+            DISPATCH_TABLE[0x87] = EmulatorEngine.class.getDeclaredMethod("ADD_A_R", short.class);
+
+            DISPATCH_TABLE[0x88] = EmulatorEngine.class.getDeclaredMethod("ADC_A_R", short.class);
+            DISPATCH_TABLE[0x89] = EmulatorEngine.class.getDeclaredMethod("ADC_A_R", short.class);
+            DISPATCH_TABLE[0x8A] = EmulatorEngine.class.getDeclaredMethod("ADC_A_R", short.class);
+            DISPATCH_TABLE[0x8B] = EmulatorEngine.class.getDeclaredMethod("ADC_A_R", short.class);
+            DISPATCH_TABLE[0x8C] = EmulatorEngine.class.getDeclaredMethod("ADC_A_R", short.class);
+            DISPATCH_TABLE[0x8D] = EmulatorEngine.class.getDeclaredMethod("ADC_A_R", short.class);
+            DISPATCH_TABLE[0x8E] = EmulatorEngine.class.getDeclaredMethod("ADC_A_R", short.class);
+            DISPATCH_TABLE[0x8F] = EmulatorEngine.class.getDeclaredMethod("ADC_A_R", short.class);
+
+            DISPATCH_TABLE[0x90] = EmulatorEngine.class.getDeclaredMethod("SUB_R", short.class);
+            DISPATCH_TABLE[0x91] = EmulatorEngine.class.getDeclaredMethod("SUB_R", short.class);
+            DISPATCH_TABLE[0x92] = EmulatorEngine.class.getDeclaredMethod("SUB_R", short.class);
+            DISPATCH_TABLE[0x93] = EmulatorEngine.class.getDeclaredMethod("SUB_R", short.class);
+            DISPATCH_TABLE[0x94] = EmulatorEngine.class.getDeclaredMethod("SUB_R", short.class);
+            DISPATCH_TABLE[0x95] = EmulatorEngine.class.getDeclaredMethod("SUB_R", short.class);
+            DISPATCH_TABLE[0x96] = EmulatorEngine.class.getDeclaredMethod("SUB_R", short.class);
+            DISPATCH_TABLE[0x97] = EmulatorEngine.class.getDeclaredMethod("SUB_R", short.class);
+
+            DISPATCH_TABLE[0x98] = EmulatorEngine.class.getDeclaredMethod("SBC_A_R", short.class);
+            DISPATCH_TABLE[0x99] = EmulatorEngine.class.getDeclaredMethod("SBC_A_R", short.class);
+            DISPATCH_TABLE[0x9A] = EmulatorEngine.class.getDeclaredMethod("SBC_A_R", short.class);
+            DISPATCH_TABLE[0x9B] = EmulatorEngine.class.getDeclaredMethod("SBC_A_R", short.class);
+            DISPATCH_TABLE[0x9C] = EmulatorEngine.class.getDeclaredMethod("SBC_A_R", short.class);
+            DISPATCH_TABLE[0x9D] = EmulatorEngine.class.getDeclaredMethod("SBC_A_R", short.class);
+            DISPATCH_TABLE[0x9E] = EmulatorEngine.class.getDeclaredMethod("SBC_A_R", short.class);
+            DISPATCH_TABLE[0x9F] = EmulatorEngine.class.getDeclaredMethod("SBC_A_R", short.class);
+
+            DISPATCH_TABLE[0xA0] = EmulatorEngine.class.getDeclaredMethod("AND_R", short.class);
+            DISPATCH_TABLE[0xA1] = EmulatorEngine.class.getDeclaredMethod("AND_R", short.class);
+            DISPATCH_TABLE[0xA2] = EmulatorEngine.class.getDeclaredMethod("AND_R", short.class);
+            DISPATCH_TABLE[0xA3] = EmulatorEngine.class.getDeclaredMethod("AND_R", short.class);
+            DISPATCH_TABLE[0xA4] = EmulatorEngine.class.getDeclaredMethod("AND_R", short.class);
+            DISPATCH_TABLE[0xA5] = EmulatorEngine.class.getDeclaredMethod("AND_R", short.class);
+            DISPATCH_TABLE[0xA6] = EmulatorEngine.class.getDeclaredMethod("AND_R", short.class);
+            DISPATCH_TABLE[0xA7] = EmulatorEngine.class.getDeclaredMethod("AND_R", short.class);
+
+            DISPATCH_TABLE[0xA8] = EmulatorEngine.class.getDeclaredMethod("XOR_R", short.class);
+            DISPATCH_TABLE[0xA9] = EmulatorEngine.class.getDeclaredMethod("XOR_R", short.class);
+            DISPATCH_TABLE[0xAA] = EmulatorEngine.class.getDeclaredMethod("XOR_R", short.class);
+            DISPATCH_TABLE[0xAB] = EmulatorEngine.class.getDeclaredMethod("XOR_R", short.class);
+            DISPATCH_TABLE[0xAC] = EmulatorEngine.class.getDeclaredMethod("XOR_R", short.class);
+            DISPATCH_TABLE[0xAD] = EmulatorEngine.class.getDeclaredMethod("XOR_R", short.class);
+            DISPATCH_TABLE[0xAE] = EmulatorEngine.class.getDeclaredMethod("XOR_R", short.class);
+            DISPATCH_TABLE[0xAF] = EmulatorEngine.class.getDeclaredMethod("XOR_R", short.class);
+
+            DISPATCH_TABLE[0xB0] = EmulatorEngine.class.getDeclaredMethod("OR_R", short.class);
+            DISPATCH_TABLE[0xB1] = EmulatorEngine.class.getDeclaredMethod("OR_R", short.class);
+            DISPATCH_TABLE[0xB2] = EmulatorEngine.class.getDeclaredMethod("OR_R", short.class);
+            DISPATCH_TABLE[0xB3] = EmulatorEngine.class.getDeclaredMethod("OR_R", short.class);
+            DISPATCH_TABLE[0xB4] = EmulatorEngine.class.getDeclaredMethod("OR_R", short.class);
+            DISPATCH_TABLE[0xB5] = EmulatorEngine.class.getDeclaredMethod("OR_R", short.class);
+            DISPATCH_TABLE[0xB6] = EmulatorEngine.class.getDeclaredMethod("OR_R", short.class);
+            DISPATCH_TABLE[0xB7] = EmulatorEngine.class.getDeclaredMethod("OR_R", short.class);
+
+            DISPATCH_TABLE[0xB8] = EmulatorEngine.class.getDeclaredMethod("CP_R", short.class);
+            DISPATCH_TABLE[0xB9] = EmulatorEngine.class.getDeclaredMethod("CP_R", short.class);
+            DISPATCH_TABLE[0xBA] = EmulatorEngine.class.getDeclaredMethod("CP_R", short.class);
+            DISPATCH_TABLE[0xBB] = EmulatorEngine.class.getDeclaredMethod("CP_R", short.class);
+            DISPATCH_TABLE[0xBC] = EmulatorEngine.class.getDeclaredMethod("CP_R", short.class);
+            DISPATCH_TABLE[0xBD] = EmulatorEngine.class.getDeclaredMethod("CP_R", short.class);
+            DISPATCH_TABLE[0xBE] = EmulatorEngine.class.getDeclaredMethod("CP_R", short.class);
+            DISPATCH_TABLE[0xBF] = EmulatorEngine.class.getDeclaredMethod("CP_R", short.class);
+
+            DISPATCH_TABLE[0x07] = EmulatorEngine.class.getDeclaredMethod("O7_RLCA", short.class);
+            DISPATCH_TABLE[0x08] = EmulatorEngine.class.getDeclaredMethod("O8_EX_AF_AFF", short.class);
+            DISPATCH_TABLE[0x0A] = EmulatorEngine.class.getDeclaredMethod("OA_LD_A_LPAR_BC_RPAR", short.class);
+            DISPATCH_TABLE[0x0F] = EmulatorEngine.class.getDeclaredMethod("OF_RRCA", short.class);
+            DISPATCH_TABLE[0x10] = EmulatorEngine.class.getDeclaredMethod("O10_DJNZ", short.class);
+            DISPATCH_TABLE[0x12] = EmulatorEngine.class.getDeclaredMethod("O12_LD_LPAR_DE_RPAR_A", short.class);
+            DISPATCH_TABLE[0x17] = EmulatorEngine.class.getDeclaredMethod("O17_RLA", short.class);
+            DISPATCH_TABLE[0x1A] = EmulatorEngine.class.getDeclaredMethod("O1A_LD_A_LPAR_DE_RPAR", short.class);
+            DISPATCH_TABLE[0x1F] = EmulatorEngine.class.getDeclaredMethod("O1F_RRA", short.class);
+            DISPATCH_TABLE[0x27] = EmulatorEngine.class.getDeclaredMethod("O27_DAA", short.class);
+            DISPATCH_TABLE[0x2F] = EmulatorEngine.class.getDeclaredMethod("O2F_CPL", short.class);
+            DISPATCH_TABLE[0x37] = EmulatorEngine.class.getDeclaredMethod("O37_SCF", short.class);
+            DISPATCH_TABLE[0x3F] = EmulatorEngine.class.getDeclaredMethod("O3F_CCF", short.class);
+            DISPATCH_TABLE[0xC9] = EmulatorEngine.class.getDeclaredMethod("C9_RET", short.class);
+            DISPATCH_TABLE[0xD9] = EmulatorEngine.class.getDeclaredMethod("D9_EXX", short.class);
+            DISPATCH_TABLE[0xE3] = EmulatorEngine.class.getDeclaredMethod("E3_EX_LPAR_SP_RPAR_HL", short.class);
+            DISPATCH_TABLE[0xE9] = EmulatorEngine.class.getDeclaredMethod("E9_JP_LPAR_HL_RPAR", short.class);
+            DISPATCH_TABLE[0xEB] = EmulatorEngine.class.getDeclaredMethod("EB_EX_DE_HL", short.class);
+            DISPATCH_TABLE[0xF3] = EmulatorEngine.class.getDeclaredMethod("F3_DI", short.class);
+            DISPATCH_TABLE[0xF9] = EmulatorEngine.class.getDeclaredMethod("F9_LD_SP_HL", short.class);
+            DISPATCH_TABLE[0xFB] = EmulatorEngine.class.getDeclaredMethod("FB_EI", short.class);
+
+
+
+        } catch (NoSuchMethodException | SecurityException e) {
+            LOGGER.error("Could not set up dispatch table. The emulator won't work correctly", e);
+        }
+    }
+
     private final ContextImpl context;
     private final MemoryContext<Short> memory;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
@@ -154,9 +334,9 @@ public class EmulatorEngine implements CpuEngine {
         boolean oldIFF = IFF[0];
         noWait = false;
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
-        int opcode = memory.read(PC);
+        short opcode = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        evalStep(opcode);
+        dispatch(opcode);
         isINT = (interruptPending != 0) && oldIFF && IFF[0];
         if (PC > 0xffff) {
             PC = 0xffff;
@@ -178,16 +358,19 @@ public class EmulatorEngine implements CpuEngine {
             cycles_executed = 0;
             while ((cycles_executed < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
-                    int opcode = memory.read(PC);
+                    short opcode = memory.read(PC);
                     PC = (PC + 1) & 0xFFFF;
-                    cycles = evalStep(opcode);
+                    cycles = dispatch(opcode);
                     cycles_executed += cycles;
                     executedCycles += cycles;
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }
-                } catch (IllegalArgumentException e) {
-                    return  CPU.RunState.STATE_STOPPED_BAD_INSTR;
+                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                    if (e.getCause() != null && e.getCause() instanceof IndexOutOfBoundsException) {
+                        return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    }
+                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 } catch (IndexOutOfBoundsException e) {
                     return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
                 } catch (IOException e) {
@@ -252,47 +435,33 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    void putpair(int reg, int val) {
-        if (reg == 3) {
-            SP = val;
-        } else {
-            int high = (val >>> 8) & 0xFF;
-            int low = val & 0xFF;
-            int index = reg * 2;
-            regs[index] = high;
-            regs[index+1] = low;
-        }
-    }
-    
-    private void putpair2(int reg, int val) {
+    void putpair(int reg, int val, boolean reg3IsSP) {
         int high = (val >>> 8) & 0xFF;
         int low = val & 0xFF;
         int index = reg * 2;
+
         if (reg == 3) {
-            regs[REG_A] = high;
-            flags = (short)low;
+            if (reg3IsSP) {
+                SP = val;
+            } else {
+                regs[REG_A] = high;
+                flags = (short)low;
+            }
         } else {
             regs[index] = high;
             regs[index+1] = low;
         }
     }
 
-    private int getpair(int reg) {
+    private int getpair(int reg, boolean reg3IsSP) {
         if (reg == 3) {
-            return SP;
+            return reg3IsSP ? SP : (regs[REG_A] << 8 | (flags & 0xFF));
         }
         int index = reg * 2;
         return regs[index] << 8 | regs[index + 1];
-    }
 
-    private int getpair2(int reg) {
-        if (reg == 3) {
-            return regs[REG_A] << 8 | (flags & 0xFF);
-        }
-        int index = reg * 2;
-        return regs[index] << 8 | regs[index + 1];
     }
-
+    
     private int getpair(short special, int reg) {
         if (reg == 3) {
             return SP;
@@ -351,7 +520,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.writeWord(address, new Short[] { (short)(value & 0xFF), (short)((value >>> 8) & 0xFF) } );
     }
 
-    private int doInterrupt() throws IOException {
+    private int doInterrupt() throws IOException, InvocationTargetException, IllegalAccessException {
         isINT = false;
         int cycles = 0;
 
@@ -366,7 +535,7 @@ public class EmulatorEngine implements CpuEngine {
             case 0:  // rst p (interruptVector)
                 cycles += 11;
                 RunState old_runstate = currentRunState;
-                evalStep((short) interruptVector); // must ignore halt
+                dispatch((short) interruptVector); // must ignore halt
                 if (currentRunState == RunState.STATE_STOPPED_NORMAL) {
                     currentRunState = old_runstate;
                 }
@@ -476,8 +645,400 @@ public class EmulatorEngine implements CpuEngine {
     private void incrementR() {
         R = (R & 0x80) | (((R & 0x7F) + 1) & 0x7F);
     }
-    
-    private int evalStep(int OP) throws IOException {
+
+    private int O0_NOP(short OP) {
+        return 4;
+    }
+
+    private int O2_LD_LPAR_BC_RPAR__A(short OP) {
+        memory.write(getpair(0, false), (short) regs[REG_A]);
+        return 7;
+    }
+
+    private int INC_SS(short OP) {
+        int tmp = (OP >>> 4) & 0x03;
+        putpair(tmp, (getpair(tmp, true) + 1) & 0xFFFF, true);
+        return 6;
+    }
+
+    private int ADD_HL_SS(short OP) {
+        int tmp = getpair((OP >>> 4) & 0x03, true);
+        int tmp1 = getpair(2, true);
+        carry15(tmp, tmp1);
+        halfCarry11(tmp, tmp1);
+        flags &= (~(FLAG_N | FLAG_S | FLAG_Z));
+        tmp += tmp1;
+
+        flags |= ((tmp & 0x8000) == 0x8000) ? FLAG_S : 0;
+        flags |= (tmp == 0) ? FLAG_Z : 0;
+        putpair(2, tmp & 0xFFFF, true);
+        return 11;
+    }
+
+    private int DEC_SS(short OP) {
+        int tmp = (OP >>> 4) & 0x03;
+        putpair(tmp, (getpair(tmp, true) - 1) & 0xFFFF, true);
+        return 6;
+    }
+
+    private int POP_QQ(short OP) {
+        int tmp = (OP >>> 4) & 0x03;
+        int tmp1 = readWord(SP);
+        SP = (SP + 2) & 0xffff;
+        putpair(tmp, tmp1, false);
+        return 10;
+    }
+
+    private int PUSH_QQ(short OP) {
+        int tmp = (OP >>> 4) & 0x03;
+        int tmp1 = getpair(tmp, false);
+        SP = (SP - 2) & 0xffff;
+        writeWord(SP, tmp1);
+        return 11;
+    }
+
+    private int LD_R_N(short OP) {
+        int tmp = (OP >>> 3) & 0x07;
+        putreg(tmp, memory.read(PC));
+        PC = (PC + 1) & 0xFFFF;
+        if (tmp == 6) {
+            return 10;
+        } else {
+            return 7;
+        }
+    }
+
+    private int INC_R(short OP) {
+        int tmp = (OP >>> 3) & 0x07;
+        int tmp1 = (getreg(tmp) + 1) & 0xFF;
+        flags = INC_TABLE[tmp1] | (flags & FLAG_C);
+        putreg(tmp, tmp1);
+        return (tmp == 6) ? 11 : 4;
+    }
+
+    private int DEC_R(short OP) {
+        int tmp = (OP >>> 3) & 0x07;
+        int tmp1 = (getreg(tmp) - 1) & 0xFF;
+        flags = DEC_TABLE[tmp1] | (flags & FLAG_C);
+        putreg(tmp, tmp1);
+        return (tmp == 6) ? 11 : 4;
+    }
+
+    private int RET_CC(short OP) {
+        int tmp = (OP >>> 3) & 7;
+        if ((flags & CONDITION[tmp]) == CONDITION_VALUES[tmp]) {
+            PC = readWord(SP);
+            SP = (SP + 2) & 0xffff;
+            return 11;
+        }
+        return 5;
+    }
+
+    private int RST_P(short OP) {
+        writeWord(SP - 2, PC);
+        SP = (SP - 2) & 0xffff;
+        PC = OP & 0x38;
+        return 11;
+    }
+
+    private int ADD_A_R(short OP) {
+        int X = regs[REG_A];
+        int diff = getreg(OP & 0x07);
+        regs[REG_A] += diff;
+
+        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        regs[REG_A] = regs[REG_A] & 0xFF;
+
+        auxCarry(X, diff);
+        overflow(X, diff, regs[REG_A]);
+
+        return ((OP & 0x07) == 6) ? 7 : 4;
+    }
+
+    private int ADC_A_R(short OP) {
+        int X = regs[REG_A];
+        int diff = getreg(OP & 0x07);
+        if ((flags & FLAG_C) != 0) {
+            diff++;
+        }
+        regs[REG_A] += diff;
+
+        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        regs[REG_A] = regs[REG_A] & 0xFF;
+
+        auxCarry(X, diff);
+        overflow(X, diff, regs[REG_A]);
+
+        return ((OP & 0x07) == 6) ? 7 : 4;
+    }
+
+    private int SUB_R(short OP) {
+        int X = regs[REG_A];
+        int diff = -getreg(OP & 0x07);
+        regs[REG_A] += diff;
+        diff &= 0xFF;
+
+        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+        regs[REG_A] = regs[REG_A] & 0xFF;
+
+        auxCarry(X, diff);
+        overflow(X, diff, regs[REG_A]);
+
+        return ((OP & 0x07) == 6) ? 7 : 4;
+    }
+
+    private int SBC_A_R(short OP) {
+        int X = regs[REG_A];
+        int diff = -getreg(OP & 0x07);
+        if ((flags & FLAG_C) != 0) {
+            diff--;
+        }
+        regs[REG_A] += diff;
+        diff &= 0xFF;
+
+        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+        regs[REG_A] = regs[REG_A] & 0xFF;
+
+        auxCarry(X, diff);
+        overflow(X, diff, regs[REG_A]);
+
+        return ((OP & 0x07) == 6) ? 7 : 4;
+    }
+
+    private int AND_R(short OP) {
+        regs[REG_A] = (regs[REG_A] & getreg(OP & 7)) & 0xFF;
+        flags = AND_OR_XOR_TABLE[regs[REG_A]];
+        return (OP == 0xA6) ? 7 : 4;
+    }
+
+    private int XOR_R(short OP) {
+        regs[REG_A] = ((regs[REG_A] ^ getreg(OP & 7)) & 0xff);
+        flags = AND_OR_XOR_TABLE[regs[REG_A]];
+        return (OP == 0xAE) ? 7 : 4;
+    }
+
+    private int OR_R(short OP) {
+        regs[REG_A] = (regs[REG_A] | getreg(OP & 7)) & 0xFF;
+        flags = AND_OR_XOR_TABLE[regs[REG_A]];
+        return (OP == 0xB6) ? 7 : 4;
+    }
+
+    private int CP_R(short OP) {
+        int diff = -getreg(OP & 7);
+        int tmp2 = regs[REG_A] + diff;
+        diff &= 0xFF;
+
+        flags = SIGN_ZERO_CARRY_TABLE[tmp2 & 0x1FF] | FLAG_N;
+        auxCarry(regs[REG_A], diff);
+        overflow(regs[REG_A], diff, tmp2 & 0xFF);
+
+        return (OP == 0xBE) ? 7 : 4;
+    }
+
+    private int O7_RLCA(short OP) {
+        int tmp = regs[REG_A] >>> 7;
+        regs[REG_A] = ((((regs[REG_A] << 1) & 0xFF) | tmp) & 0xff);
+        flags = ((flags & 0xEC) | tmp);
+        return 4;
+    }
+
+    private int O8_EX_AF_AFF(short OP) {
+        int tmp = regs[REG_A];
+        regs[REG_A] = regs2[REG_A];
+        regs2[REG_A] = tmp;
+        tmp = flags;
+        flags = flags2;
+        flags2 = tmp;
+        return 4;
+    }
+
+    private int OA_LD_A_LPAR_BC_RPAR(short OP) {
+        regs[REG_A] = memory.read(getpair(0, false));
+        return 7;
+    }
+
+    private int OF_RRCA(short OP) {
+        flags = ((flags & 0xEC) | (regs[REG_A] & 1));
+        regs[REG_A] = RRCA_TABLE[regs[REG_A]];
+        return 4;
+    }
+
+    private int O10_DJNZ(short OP) {
+        int tmp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        regs[REG_B]--;
+        regs[REG_B] &= 0xFF;
+        if (regs[REG_B] != 0) {
+            PC += (byte) tmp;
+            PC &= 0xFFFF;
+            return 13;
+        }
+        return 8;
+    }
+
+    private int O12_LD_LPAR_DE_RPAR_A(short OP) {
+        memory.write(getpair(1, false), (short) regs[REG_A]);
+        return 7;
+    }
+
+    private int O17_RLA(short OP) {
+        int tmp = regs[REG_A] >>> 7;
+        regs[REG_A] = (((regs[REG_A] << 1) | (flags & FLAG_C)) & 0xff);
+        flags = ((flags & 0xEC) | tmp);
+        return 4;
+    }
+
+    private int O1A_LD_A_LPAR_DE_RPAR(short OP) {
+        int tmp = memory.read(getpair(1, false));
+        regs[REG_A] = (tmp & 0xff);
+        return 7;
+    }
+
+    private int O1F_RRA(short OP) {
+        int tmp = (flags & FLAG_C) << 7;
+        flags = ((flags & 0xEC) | (regs[REG_A] & 1));
+        regs[REG_A] = ((regs[REG_A] >>> 1 | tmp) & 0xff);
+        return 4;
+    }
+
+    private int O27_DAA(short OP) {
+        int temp = regs[REG_A];
+        boolean acFlag = (flags & FLAG_H) == FLAG_H;
+        boolean cFlag = (flags & FLAG_C) == FLAG_C;
+        boolean nFlag = (flags & FLAG_N) == FLAG_N;
+
+        if (!acFlag && !cFlag) {
+            regs[REG_A] = DAA_NOT_C_NOT_H_TABLE[temp] & 0xFF;
+            flags = (DAA_NOT_C_NOT_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+            if (nFlag) {
+                flags |= DAA_N_NOT_H_FOR_H_TABLE[temp];
+            } else {
+                flags |= DAA_NOT_N_NOT_H_FOR_H_TABLE[temp];
+            }
+        } else if (acFlag && !cFlag) {
+            regs[REG_A] = DAA_NOT_C_H_TABLE[temp] & 0xFF;
+            flags = (DAA_NOT_C_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+            if (nFlag) {
+                flags |= DAA_N_H_FOR_H_TABLE[temp];
+            } else {
+                flags |= DAA_NOT_N_H_FOR_H_TABLE[temp];
+            }
+        } else if (!acFlag && cFlag) {
+            regs[REG_A] = DAA_C_NOT_H_TABLE[temp] & 0xFF;
+            flags = (DAA_C_NOT_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+            if (nFlag) {
+                flags |= DAA_N_NOT_H_FOR_H_TABLE[temp];
+            } else {
+                flags |= DAA_NOT_N_NOT_H_FOR_H_TABLE[temp];
+            }
+        } else {
+            regs[REG_A] = DAA_C_H_TABLE[temp] & 0xFF;
+            flags = (DAA_C_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+            if (nFlag) {
+                flags |= DAA_N_H_FOR_H_TABLE[temp];
+            } else {
+                flags |= DAA_NOT_N_H_FOR_H_TABLE[temp];
+            }
+        }
+        flags |= PARITY_TABLE[regs[REG_A]] | SIGN_ZERO_TABLE[regs[REG_A]];
+        return 4;
+    }
+
+    private int O2F_CPL(short OP) {
+        regs[REG_A] = ((~regs[REG_A]) & 0xFF);
+        flags |= FLAG_N | FLAG_H;
+        return 4;
+    }
+
+    private int O37_SCF(short OP) {
+        flags |= FLAG_N | FLAG_C;
+        flags &= ~FLAG_H;
+        return 4;
+    }
+
+    private int O3F_CCF(short OP) {
+        int tmp = flags & FLAG_C;
+        if (tmp == 0) {
+            flags |= FLAG_C;
+        } else {
+            flags &= ~FLAG_C;
+        }
+        flags &= ~FLAG_N;
+        return 4;
+    }
+
+    private int C9_RET(short OP) {
+        PC = readWord(SP);
+        SP += 2;
+        return 10;
+    }
+
+    private int D9_EXX(short OP) {
+        int tmp = regs[REG_B];
+        regs[REG_B] = regs2[REG_B];
+        regs2[REG_B] = tmp;
+        tmp = regs[REG_C];
+        regs[REG_C] = regs2[REG_C];
+        regs2[REG_C] = tmp;
+        tmp = regs[REG_D];
+        regs[REG_D] = regs2[REG_D];
+        regs2[REG_D] = tmp;
+        tmp = regs[REG_E];
+        regs[REG_E] = regs2[REG_E];
+        regs2[REG_E] = tmp;
+        tmp = regs[REG_H];
+        regs[REG_H] = regs2[REG_H];
+        regs2[REG_H] = tmp;
+        tmp = regs[REG_L];
+        regs[REG_L] = regs2[REG_L];
+        regs2[REG_L] = tmp;
+        return 4;
+    }
+
+    private int E3_EX_LPAR_SP_RPAR_HL(short OP) {
+        int tmp = memory.read(SP);
+        int tmp1 = memory.read(SP + 1);
+        memory.write(SP, (short) regs[REG_L]);
+        memory.write(SP + 1, (short) regs[REG_H]);
+        regs[REG_L] = tmp & 0xFF;
+        regs[REG_H] = tmp1 & 0xFF;
+        return 19;
+    }
+
+    private int E9_JP_LPAR_HL_RPAR(short OP) {
+        PC = ((regs[REG_H] << 8) | regs[REG_L]);
+        return 4;
+    }
+
+    private int EB_EX_DE_HL(short OP) {
+        int tmp = regs[REG_D];
+        regs[REG_D] = regs[REG_H];
+        regs[REG_H] = tmp;
+        tmp = regs[REG_E];
+        regs[REG_E] = regs[REG_L];
+        regs[REG_L] = tmp;
+        return 4;
+    }
+
+    private int F3_DI(short OP) {
+        IFF[0] = IFF[1] = false;
+        return 4;
+    }
+
+    private int F9_LD_SP_HL(short OP) {
+        SP = ((regs[REG_H] << 8) | regs[REG_L]);
+        return 6;
+    }
+
+    private int FB_EI(short OP) {
+        IFF[0] = IFF[1] = true;
+        return 4;
+    }
+
+
+
+
+    private int dispatch(short OP) throws IOException, InvocationTargetException, IllegalAccessException {
         int tmp, tmp1, tmp2, tmp3;
         short special = 0; // prefix if available = 0xDD or 0xFD
 
@@ -513,439 +1074,14 @@ public class EmulatorEngine implements CpuEngine {
                         return 4;
                     }
             }
+
+            /* Dispatch Instruction */
+            Method instr = DISPATCH_TABLE[OP];
+            if (instr != null) {
+                return (Integer) instr.invoke(this, OP);
+            }
+
             switch (OP) {
-                case 0x00: /* NOP */
-                    return 4;
-                case 0x02: /* LD (BC),A */
-                    memory.write(getpair(0), (short) regs[REG_A]);
-                    return 7;
-            /* INC ss */
-                case 0x03:
-                case 0x13:
-                case 0x23:
-                case 0x33:
-                    tmp = (OP >>> 4) & 0x03;
-                    putpair(tmp, (getpair(tmp) + 1) & 0xFFFF);
-                    return 6;
-            /* ADD HL, ss*/
-                case 0x09:
-                case 0x19:
-                case 0x29:
-                case 0x39:
-                    tmp = getpair((OP >>> 4) & 0x03);
-                    tmp1 = getpair(2);
-                    carry15(tmp, tmp1);
-                    halfCarry11(tmp, tmp1);
-                    flags &= (~(FLAG_N | FLAG_S | FLAG_Z));
-                    tmp += tmp1;
-
-                    flags |= ((tmp & 0x8000) == 0x8000) ? FLAG_S : 0;
-                    flags |= (tmp == 0) ? FLAG_Z : 0;
-                    putpair(2, tmp & 0xFFFF);
-                    return 11;
-            /* DEC ss*/
-                case 0x0B:
-                case 0x1B:
-                case 0x2B:
-                case 0x3B:
-                    tmp = (OP >>> 4) & 0x03;
-                    putpair(tmp, (getpair(tmp) - 1) & 0xFFFF);
-                    return 6;
-            /* POP qq */
-                case 0xC1:
-                case 0xD1:
-                case 0xE1:
-                case 0xF1:
-                    tmp = (OP >>> 4) & 0x03;
-                    tmp1 = readWord(SP);
-                    SP = (SP + 2) & 0xffff;
-                    putpair2(tmp, tmp1);
-                    return 10;
-            /* PUSH qq */
-                case 0xC5:
-                case 0xD5:
-                case 0xE5:
-                case 0xF5:
-                    tmp = (OP >>> 4) & 0x03;
-                    tmp1 = getpair2(tmp);
-                    SP = (SP - 2) & 0xffff;
-                    writeWord(SP, tmp1);
-                    return 11;
-            /* LD r,n */
-                case 0x06:
-                case 0x0E:
-                case 0x16:
-                case 0x1E:
-                case 0x26:
-                case 0x2E:
-                case 0x36:
-                case 0x3E:
-                    tmp = (OP >>> 3) & 0x07;
-                    putreg(tmp, memory.read(PC));
-                    PC = (PC + 1) & 0xFFFF;
-                    if (tmp == 6) {
-                        return 10;
-                    } else {
-                        return 7;
-                    }
-            /* INC r */
-                case 0x04:
-                case 0x0C:
-                case 0x14:
-                case 0x1C:
-                case 0x24:
-                case 0x2C:
-                case 0x34:
-                case 0x3C:
-                    tmp = (OP >>> 3) & 0x07;
-                    tmp1 = (getreg(tmp) + 1) & 0xFF;
-                    flags = INC_TABLE[tmp1] | (flags & FLAG_C);
-                    putreg(tmp, tmp1);
-                    return (tmp == 6) ? 11 : 4;
-            /* DEC r */
-                case 0x05:
-                case 0x0D:
-                case 0x15:
-                case 0x1D:
-                case 0x25:
-                case 0x2D:
-                case 0x35:
-                case 0x3D:
-                    tmp = (OP >>> 3) & 0x07;
-                    tmp1 = (getreg(tmp) - 1) & 0xFF;
-                    flags = DEC_TABLE[tmp1] | (flags & FLAG_C);
-                    putreg(tmp, tmp1);
-                    return (tmp == 6) ? 11 : 4;
-            /* RET cc */
-                case 0xC0:
-                case 0xC8:
-                case 0xD0:
-                case 0xD8:
-                case 0xE0:
-                case 0xE8:
-                case 0xF0:
-                case 0xF8:
-                    tmp = (OP >>> 3) & 7;
-                    if ((flags & CONDITION[tmp]) == CONDITION_VALUES[tmp]) {
-                        PC = readWord(SP);
-                        SP = (SP + 2) & 0xffff;
-                        return 11;
-                    }
-                    return 5;
-            /* RST p */
-                case 0xC7:
-                case 0xCF:
-                case 0xD7:
-                case 0xDF:
-                case 0xE7:
-                case 0xEF:
-                case 0xF7:
-                case 0xFF:
-                    writeWord(SP - 2, PC);
-                    SP = (SP - 2) & 0xffff;
-                    PC = OP & 0x38;
-                    return 11;
-            /* ADD A,r */
-                case 0x80:
-                case 0x81:
-                case 0x82:
-                case 0x83:
-                case 0x84:
-                case 0x85:
-                case 0x86:
-                case 0x87:
-                    int X = regs[REG_A];
-                    int diff = getreg(OP & 0x07);
-                    regs[REG_A] += diff;
-
-                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                    regs[REG_A] = regs[REG_A] & 0xFF;
-
-                    auxCarry(X, diff);
-                    overflow(X, diff, regs[REG_A]);
-
-                    return ((OP & 0x07) == 6) ? 7 : 4;
-            /* ADC A,r */
-                case 0x88:
-                case 0x89:
-                case 0x8A:
-                case 0x8B:
-                case 0x8C:
-                case 0x8D:
-                case 0x8E:
-                case 0x8F:
-                    X = regs[REG_A];
-                    diff = getreg(OP & 0x07);
-                    if ((flags & FLAG_C) != 0) {
-                        diff++;
-                    }
-                    regs[REG_A] += diff;
-
-                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                    regs[REG_A] = regs[REG_A] & 0xFF;
-
-                    auxCarry(X, diff);
-                    overflow(X, diff, regs[REG_A]);
-
-                    return ((OP & 0x07) == 6) ? 7 : 4;
-            /* SUB r */
-                case 0x90:
-                case 0x91:
-                case 0x92:
-                case 0x93:
-                case 0x94:
-                case 0x95:
-                case 0x96:
-                case 0x97:
-                    X = regs[REG_A];
-                    diff = -getreg(OP & 0x07);
-                    regs[REG_A] += diff;
-                    diff &= 0xFF;
-
-                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                    regs[REG_A] = regs[REG_A] & 0xFF;
-
-                    auxCarry(X, diff);
-                    overflow(X, diff, regs[REG_A]);
-
-                    return ((OP & 0x07) == 6) ? 7 : 4;
-            /* SBC A,r */
-                case 0x98:
-                case 0x99:
-                case 0x9A:
-                case 0x9B:
-                case 0x9C:
-                case 0x9D:
-                case 0x9E:
-                case 0x9F:
-                    X = regs[REG_A];
-                    diff = -getreg(OP & 0x07);
-                    if ((flags & FLAG_C) != 0) {
-                        diff--;
-                    }
-                    regs[REG_A] += diff;
-                    diff &= 0xFF;
-
-                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                    regs[REG_A] = regs[REG_A] & 0xFF;
-
-                    auxCarry(X, diff);
-                    overflow(X, diff, regs[REG_A]);
-
-                    return ((OP & 0x07) == 6) ? 7 : 4;
-            /* AND r */
-                case 0xA0:
-                case 0xA1:
-                case 0xA2:
-                case 0xA3:
-                case 0xA4:
-                case 0xA5:
-                case 0xA6:
-                case 0xA7:
-                    regs[REG_A] = (regs[REG_A] & getreg(OP & 7)) & 0xFF;
-                    flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                    return (OP == 0xA6) ? 7 : 4;
-            /* XOR r */
-                case 0xA8:
-                case 0xA9:
-                case 0xAA:
-                case 0xAB:
-                case 0xAC:
-                case 0xAD:
-                case 0xAE:
-                case 0xAF:
-                    regs[REG_A] = ((regs[REG_A] ^ getreg(OP & 7)) & 0xff);
-                    flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                    return (OP == 0xAE) ? 7 : 4;
-            /* OR r */
-                case 0xB0:
-                case 0xB1:
-                case 0xB2:
-                case 0xB3:
-                case 0xB4:
-                case 0xB5:
-                case 0xB6:
-                case 0xB7:
-                    regs[REG_A] = (regs[REG_A] | getreg(OP & 7)) & 0xFF;
-                    flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                    return (OP == 0xB6) ? 7 : 4;
-            /* CP r */
-                case 0xB8:
-                case 0xB9:
-                case 0xBA:
-                case 0xBB:
-                case 0xBC:
-                case 0xBD:
-                case 0xBE:
-                case 0xBF:
-                    diff = -getreg(OP & 7);
-                    tmp2 = regs[REG_A] + diff;
-                    diff &= 0xFF;
-
-                    flags = SIGN_ZERO_CARRY_TABLE[tmp2 & 0x1FF] | FLAG_N;
-                    auxCarry(regs[REG_A], diff);
-                    overflow(regs[REG_A], diff, tmp2 & 0xFF);
-
-                    return (OP == 0xBE) ? 7 : 4;
-                case 0x07: /* RLCA */
-                    tmp = regs[REG_A] >>> 7;
-                    regs[REG_A] = ((((regs[REG_A] << 1) & 0xFF) | tmp) & 0xff);
-                    flags = ((flags & 0xEC) | tmp);
-                    return 4;
-                case 0x08: /* EX AF,AF' */
-                    tmp = regs[REG_A];
-                    regs[REG_A] = regs2[REG_A];
-                    regs2[REG_A] = tmp;
-                    tmp = flags;
-                    flags = flags2;
-                    flags2 = tmp;
-                    return 4;
-                case 0x0A: /* LD A,(BC) */
-                    tmp = memory.read(getpair(0));
-                    regs[REG_A] = tmp;
-                    return 7;
-                case 0x0F: /* RRCA */
-                    flags = ((flags & 0xEC) | (regs[REG_A] & 1));
-                    regs[REG_A] = RRCA_TABLE[regs[REG_A]];
-                    return 4;
-                case 0x10: /* DJNZ e */
-                    tmp = memory.read(PC);
-                    PC = (PC + 1) & 0xFFFF;
-                    regs[REG_B]--;
-                    regs[REG_B] &= 0xFF;
-                    if (regs[REG_B] != 0) {
-                        PC += (byte) tmp;
-                        PC &= 0xFFFF;
-                        return 13;
-                    }
-                    return 8;
-                case 0x12: /* LD (DE), A */
-                    memory.write(getpair(1), (short) regs[REG_A]);
-                    return 7;
-                case 0x17: /* RLA */
-                    tmp = regs[REG_A] >>> 7;
-                    regs[REG_A] = (((regs[REG_A] << 1) | (flags & FLAG_C)) & 0xff);
-                    flags = ((flags & 0xEC) | tmp);
-                    return 4;
-                case 0x1A: /* LD A,(DE) */
-                    tmp = memory.read(getpair(1));
-                    regs[REG_A] = (tmp & 0xff);
-                    return 7;
-                case 0x1F: /* RRA */
-                    tmp = (flags & FLAG_C) << 7;
-                    flags = ((flags & 0xEC) | (regs[REG_A] & 1));
-                    regs[REG_A] = ((regs[REG_A] >>> 1 | tmp) & 0xff);
-                    return 4;
-                case 0x27: /* DAA */
-                    int temp = regs[REG_A];
-                    boolean acFlag = (flags & FLAG_H) == FLAG_H;
-                    boolean cFlag = (flags & FLAG_C) == FLAG_C;
-                    boolean nFlag = (flags & FLAG_N) == FLAG_N;
-
-                    if (!acFlag && !cFlag) {
-                        regs[REG_A] = DAA_NOT_C_NOT_H_TABLE[temp] & 0xFF;
-                        flags = (DAA_NOT_C_NOT_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-                        if (nFlag) {
-                            flags |= DAA_N_NOT_H_FOR_H_TABLE[temp];
-                        } else {
-                            flags |= DAA_NOT_N_NOT_H_FOR_H_TABLE[temp];
-                        }
-                    } else if (acFlag && !cFlag) {
-                        regs[REG_A] = DAA_NOT_C_H_TABLE[temp] & 0xFF;
-                        flags = (DAA_NOT_C_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-                        if (nFlag) {
-                            flags |= DAA_N_H_FOR_H_TABLE[temp];
-                        } else {
-                            flags |= DAA_NOT_N_H_FOR_H_TABLE[temp];
-                        }
-                    } else if (!acFlag && cFlag) {
-                        regs[REG_A] = DAA_C_NOT_H_TABLE[temp] & 0xFF;
-                        flags = (DAA_C_NOT_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-                        if (nFlag) {
-                            flags |= DAA_N_NOT_H_FOR_H_TABLE[temp];
-                        } else {
-                            flags |= DAA_NOT_N_NOT_H_FOR_H_TABLE[temp];
-                        }
-                    } else {
-                        regs[REG_A] = DAA_C_H_TABLE[temp] & 0xFF;
-                        flags = (DAA_C_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-                        if (nFlag) {
-                            flags |= DAA_N_H_FOR_H_TABLE[temp];
-                        } else {
-                            flags |= DAA_NOT_N_H_FOR_H_TABLE[temp];
-                        }
-                    }
-                    flags |= PARITY_TABLE[regs[REG_A]] | SIGN_ZERO_TABLE[regs[REG_A]];
-                    return 4;
-                case 0x2F: /* CPL */
-                    regs[REG_A] = ((~regs[REG_A]) & 0xFF);
-                    flags |= FLAG_N | FLAG_H;
-                    return 4;
-                case 0x37: /* SCF */
-                    flags |= FLAG_N | FLAG_C;
-                    flags &= ~FLAG_H;
-                    return 4;
-                case 0x3F: /* CCF */
-                    tmp = flags & FLAG_C;
-                    if (tmp == 0) {
-                        flags |= FLAG_C;
-                    } else {
-                        flags &= ~FLAG_C;
-                    }
-                    flags &= ~FLAG_N;
-                    return 4;
-                case 0xC9: /* RET */
-                    PC = readWord(SP);
-                    SP += 2;
-                    return 10;
-                case 0xD9: /* EXX */
-                    tmp = regs[REG_B];
-                    regs[REG_B] = regs2[REG_B];
-                    regs2[REG_B] = tmp;
-                    tmp = regs[REG_C];
-                    regs[REG_C] = regs2[REG_C];
-                    regs2[REG_C] = tmp;
-                    tmp = regs[REG_D];
-                    regs[REG_D] = regs2[REG_D];
-                    regs2[REG_D] = tmp;
-                    tmp = regs[REG_E];
-                    regs[REG_E] = regs2[REG_E];
-                    regs2[REG_E] = tmp;
-                    tmp = regs[REG_H];
-                    regs[REG_H] = regs2[REG_H];
-                    regs2[REG_H] = tmp;
-                    tmp = regs[REG_L];
-                    regs[REG_L] = regs2[REG_L];
-                    regs2[REG_L] = tmp;
-                    return 4;
-                case 0xE3: /* EX (SP),HL */
-                    tmp = memory.read(SP);
-                    tmp1 = memory.read(SP + 1);
-                    memory.write(SP, (short) regs[REG_L]);
-                    memory.write(SP + 1, (short) regs[REG_H]);
-                    regs[REG_L] = tmp & 0xFF;
-                    regs[REG_H] = tmp1 & 0xFF;
-                    return 19;
-                case 0xE9: /* JP (HL) */
-                    PC = ((regs[REG_H] << 8) | regs[REG_L]);
-                    return 4;
-                case 0xEB: /* EX DE,HL */
-                    tmp = regs[REG_D];
-                    regs[REG_D] = regs[REG_H];
-                    regs[REG_H] = tmp;
-                    tmp = regs[REG_E];
-                    regs[REG_E] = regs[REG_L];
-                    regs[REG_L] = tmp;
-                    return 4;
-                case 0xF3: /* DI */
-                    IFF[0] = IFF[1] = false;
-                    return 4;
-                case 0xF9: /* LD SP,HL */
-                    SP = ((regs[REG_H] << 8) | regs[REG_L]);
-                    return 6;
-                case 0xFB:
-                    IFF[0] = IFF[1] = true;
-                    return 4;
                 case 0xED:
                     OP = memory.read(PC);
                     incrementR();
@@ -982,8 +1118,8 @@ public class EmulatorEngine implements CpuEngine {
                         case 0x52:
                         case 0x62:
                         case 0x72:
-                            tmp = -getpair((OP >>> 4) & 0x03);
-                            tmp1 = getpair(2);
+                            tmp = -getpair((OP >>> 4) & 0x03, true);
+                            tmp1 = getpair(2, true);
                             if ((flags & FLAG_C) == FLAG_C) {
                                 tmp--;
                             }
@@ -1006,7 +1142,7 @@ public class EmulatorEngine implements CpuEngine {
                             carry15(tmp1, tmp);
                             halfCarry11(tmp1, tmp);
                             bigOverflow(tmp1, tmp, sum);
-                            putpair(2, sum);
+                            putpair(2, sum, true);
 
                             return 15;
                     /* ADC HL,ss */
@@ -1014,8 +1150,8 @@ public class EmulatorEngine implements CpuEngine {
                         case 0x5A:
                         case 0x6A:
                         case 0x7A:
-                            tmp = getpair((OP >>> 4) & 0x03);
-                            tmp1 = getpair(2);
+                            tmp = getpair((OP >>> 4) & 0x03, true);
+                            tmp1 = getpair(2, true);
                             if ((flags & FLAG_C) == FLAG_C) {
                                 tmp++;
                             }
@@ -1037,7 +1173,7 @@ public class EmulatorEngine implements CpuEngine {
                             carry15(tmp, tmp1);
                             halfCarry11(tmp, tmp1);
                             bigOverflow(tmp, tmp1, sum);
-                            putpair(2, sum);
+                            putpair(2, sum, false);
 
                             return 11;
                         case 0x44: /* NEG */
@@ -1119,9 +1255,9 @@ public class EmulatorEngine implements CpuEngine {
                             context.fireIO(regs[REG_C], false, 0);
                             return 12;
                         case 0xA0: /* LDI */
-                            tmp1 = getpair(2);
-                            tmp2 = getpair(1);
-                            tmp = getpair(0);
+                            tmp1 = getpair(2, false);
+                            tmp2 = getpair(1, false);
+                            tmp = getpair(0, false);
 
                             memory.write(tmp2, memory.read(tmp1));
 
@@ -1474,7 +1610,7 @@ public class EmulatorEngine implements CpuEngine {
                             tmp = readWord(PC);
                             PC = (PC + 2) & 0xFFFF;
 
-                            tmp1 = getpair((OP >>> 4) & 3);
+                            tmp1 = getpair((OP >>> 4) & 3, true);
                             writeWord(tmp, tmp1);
                             return 20;
                     /* LD ss,(nn) */
@@ -1486,7 +1622,7 @@ public class EmulatorEngine implements CpuEngine {
                             PC = (PC + 2) & 0xFFFF;
 
                             tmp1 = readWord(tmp);
-                            putpair((OP >>> 4) & 3, tmp1);
+                            putpair((OP >>> 4) & 3, tmp1, true);
                             return 20;
                     }
                     currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
@@ -1684,7 +1820,7 @@ public class EmulatorEngine implements CpuEngine {
                             flags = AND_OR_XOR_TABLE[regs[REG_A]];
                             return 19;
                         case 0xBE: /* CP (ii+d) */
-                            diff = -memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
+                            int diff = -memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
                             tmp2 = regs[REG_A] + diff;
                             diff &= 0xFF;
 
@@ -2225,7 +2361,7 @@ public class EmulatorEngine implements CpuEngine {
                 case 0x11:
                 case 0x21:
                 case 0x31:
-                    putpair((OP >>> 4) & 3, tmp);
+                    putpair((OP >>> 4) & 3, tmp, true);
                     return 10;
             /* JP cc,nn */
                 case 0xC2:
@@ -2259,12 +2395,12 @@ public class EmulatorEngine implements CpuEngine {
                     }
                     return 10;
                 case 0x22: /* LD (nn),HL */
-                    tmp1 = getpair(2);
+                    tmp1 = getpair(2, false);
                     writeWord(tmp, tmp1);
                     return 16;
                 case 0x2A: /* LD HL,(nn) */
                     tmp1 = readWord(tmp);
-                    putpair(2, tmp1);
+                    putpair(2, tmp1, false);
                     return 16;
                 case 0x32: /* LD (nn),A */
                     memory.write(tmp, (short) regs[REG_A]);
@@ -2281,7 +2417,8 @@ public class EmulatorEngine implements CpuEngine {
                     PC = tmp;
                     return 17;
             }
-            currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
+
+            currentRunState = CPU.RunState.STATE_STOPPED_BAD_INSTR;
         } finally {
             if (tmpListener != null) {
                 tmpListener.afterDispatch();

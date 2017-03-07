@@ -72,14 +72,14 @@ public class TransferTest extends InstructionsTest {
     }
 
 
-    private void runLD_r_n_test(int register, int... opcodes) {
+    private void runLD_r_n_test(int register, int opcode) {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(register)
             .verifyRegister(register, context -> context.second & 0xFF)
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinary(
-            test.runWithSecondOperand(opcodes[0])
+            test.runWithSecondOperand(opcode)
         );
     }
 
