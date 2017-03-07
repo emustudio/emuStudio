@@ -160,7 +160,7 @@ public class Main {
     }
 
     private static void printHelp() {
-        System.out.println("88-DISK implements the EXPERIMENTAL feature regarding working with CP/M filesystem.");
+        System.out.println("88-DISK implements the EXPERIMENTAL feature regarding working with CP/M 2.2 filesystem.");
         System.out.println("In particular, it can only list files so far.");
 
         System.out.println("\nThe following command line parameters are available:\n"

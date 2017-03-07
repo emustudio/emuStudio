@@ -27,6 +27,8 @@
     <logback.version>1.1.7</logback.version>
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.compiler.source>1.8</maven.compiler.source>
+    <emulib.version>9.0.0</emulib.version>
+    <javacup.version>11b</javacup.version>
   </properties>
 
   <licenses>
@@ -297,12 +299,12 @@
       <dependency>
         <groupId>com.github.vbmacher</groupId>
         <artifactId>java-cup-runtime</artifactId>
-        <version>11b</version>
+        <version>${javacup.version}</version>
       </dependency>
       <dependency>
         <groupId>net.sf.emustudio</groupId>
         <artifactId>emuLib</artifactId>
-        <version>9.0.0</version>
+        <version>${emulib.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>

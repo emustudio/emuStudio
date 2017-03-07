@@ -35,7 +35,7 @@
             </manifest>
             <manifestEntries>
               <!-- DO NOT REMOVE THESE DEPENDENCIES; COMMAND LINE THEN WON'T WORK -->
-              <Class-Path>lib/java-cup-runtime-11b.jar lib/emuLib-9.0.0.jar lib/slf4j-api-1.7.21.jar</Class-Path>
+              <Class-Path>lib/java-cup-runtime-${javacup.version}.jar lib/emuLib-${emulib.version}.jar lib/slf4j-api-${slf4j.version}.jar</Class-Path>
             </manifestEntries>
           </archive>
         </configuration>
