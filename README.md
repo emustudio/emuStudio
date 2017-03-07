@@ -2,23 +2,12 @@
 [![Build Status](https://travis-ci.org/vbmacher/emuStudio.svg?branch=master)](https://travis-ci.org/vbmacher/emuStudio)
 
 emuStudio is a desktop application which allows to write programs and emulate computers.
-More generally, it is a platform for using, and framework for programming various computer emulators.
+In addition, it is easily extensible - acting as a framework it encourages developers to write their computer emulators.
 It is versatile, free, and written in Java.
 
-The main goal is to support teaching older but important computers and abstract machines. For example,
-students can write their programming assignments in emuStudio IDE, which then will be run on the emulated
-computer. The output might be displayed on emulated screen, or written to some file having the possibility
-of creating automated "assignment checking" process.
-
-emuStudio is used at [Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
-
-Besides, developer's API is very simple and powerful enough to enable to write own computer components.
-The components are implemented as emuStudio plugins: compilers, CPUs, operating memories, and I/O devices.
-Some can be compatible, some not. Compatible components can be arranged into working schemas of computer which
-makes the versatility of emuStudio.
- 
-NOTE: There are many tutorials for emulation of various CPUs or other hardware and they might be useful when
-implementing them using emuStudio.
+The main goal is to support learning about older but important computers or abstract machines. 
+I think it is also appropriate for schools; for example, emuStudio is used at
+[Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
 
 # License
 
@@ -30,7 +19,7 @@ Currently supported are Linux and Windows. Mac is NOT supported, but it might wo
 
 # Available computer emulators
 
-* MITS Altair8800 with choosable processor: Intel 8080 or Zilog Z80 CPU. Includes 88-DISK drive, 88-SIO board,
+* MITS Altair8800 with two processor choices: Intel 8080 or Zilog Z80 CPU. Includes 88-DISK drive, 88-SIO board,
   LSI ADM-3A terminal, SIMH pseudo device (partially reimplemented from simh emulator), operating memory,
   and 8080 + Z80 assembler compilers
 
@@ -43,6 +32,9 @@ Currently supported are Linux and Windows. Mac is NOT supported, but it might wo
 * Brainfuck interpreter (designed as a "computer" which I called BrainDuck)
 
 # For developers
+
+In order to quickly "get into" emuStudio programming is to read
+[tutorials for writing plug-ins](https://vbmacher.github.io/emuStudio/docdevel/emulator_tutorial/index/).
 
 The project uses Maven for managing dependencies and build process. Each module can be compiled separately,
 but if you run the following command in the root directory, it will compile each module (results will be in
@@ -66,14 +58,14 @@ Inside the `target` subdirectory will be a zip file containing the custom releas
 # Running / installation
 
 There are two ways of how to run emuStudio. In both cases, a prerequisite is to have a full release of emuStudio.
-You can either download it from [project's web page](http://emustudio.sourceforge.net/downloads.html),
+You can either download it from [project's web page](https://vbmacher.github.io/emuStudio/download/),
 or you can prepare it according to the previous section.
 
 ## The "classic" way
 
 The requirement is to have installed Java Runtime Environment (JRE) 1.8.
 
-Unzip the emuStudio distribution zip file (`emuStudio-xxx-release.zip`) and run it using command:
+Unzip the emuStudio distribution zip file (`emuStudio-xxx.zip`) and run it using command:
 
 ```
 java -jar emuStudio.jar
