@@ -25,9 +25,9 @@ import emulib.runtime.UniversalFileFilter;
 import net.sf.emustudio.devices.mits88disk.impl.DiskImpl;
 import net.sf.emustudio.devices.mits88disk.impl.Drive;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
@@ -469,8 +469,8 @@ public class SettingsDialog extends javax.swing.JDialog {
         Drive drive = drives.get(cmbDrive.getSelectedIndex());
         try {
             drive.mount(new File(txtImageFile.getText()));
-        } catch (IOException ex) {
-            StaticDialogs.showErrorMessage(ex.getMessage());
+        } catch (Exception ex) {
+            StaticDialogs.showErrorMessage("Could not mount file: " + ex.getMessage());
             txtImageFile.grabFocus();
         }
         updateGUI(drive);

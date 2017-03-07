@@ -165,20 +165,25 @@ public class Drive {
         return new DriveParameters(port1status, port2status, track, sector, sectorOffset, mountedFloppy);
     }
 
+    boolean isSelected() {
+        return selected;
+    }
+
     public void select() {
         if (mountedFloppy == null) {
-            throw new IllegalStateException("[drive=" + index + "] Image is not mounted");
+            LOGGER.warn("[drive={}] Could not select drive; image is not mounted");
+        } else {
+            selected = true;
+            port1status = 0xE5; // 11100101b
+            port2status = 0xC1; // 11000001b
+            sector = 0;
+            sectorOffset = 0;
+            if (track == 0) {
+                port1status &= 0xBF; // 10111111b
+            } // head is on track 0
+            notifyDiskSelected();
+            notifyParamsChanged();
         }
-        selected = true;
-        port1status = 0xE5; // 11100101b
-        port2status = 0xC1; // 11000001b
-        sector = 0;
-        sectorOffset = 0;
-        if (track == 0) {
-            port1status &= 0xBF; // 10111111b
-        } // head is on track 0
-        notifyDiskSelected();
-        notifyParamsChanged();
     }
 
     public void deselect() {
@@ -204,7 +209,7 @@ public class Drive {
 
     public void umount() {
         if (selected) {
-            throw new IllegalStateException("[drive=" + index + "] Drive cannot be unmounted when it is selected");
+            deselect();
         }
         mountedFloppy = null;
         try {

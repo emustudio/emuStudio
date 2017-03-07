@@ -20,7 +20,6 @@
 package net.sf.emustudio.devices.mits88disk.impl;
 
 import emulib.plugins.device.DeviceContext;
-import emulib.runtime.StaticDialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +47,6 @@ class Port3 implements DeviceContext<Short> {
             data = disk.getCurrentDrive().readData();
         } catch (Exception e) {
             LOGGER.error("Could not read from disk", e);
-            StaticDialogs.showErrorMessage("Could not read from disk. Please see log file for more details");
         }
         return data;
     }
@@ -59,7 +57,6 @@ class Port3 implements DeviceContext<Short> {
             disk.getCurrentDrive().writeData(data);
         } catch (Exception e) {
             LOGGER.error("Could not write to disk", e);
-            StaticDialogs.showErrorMessage("Couldn't write to disk. Please see log file for more details");
         }
     }
 

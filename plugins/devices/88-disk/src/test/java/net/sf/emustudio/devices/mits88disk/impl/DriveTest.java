@@ -35,6 +35,7 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
@@ -103,13 +104,14 @@ public class DriveTest {
         new Drive(0).umount();
     }
     
-    @Test(expected = IllegalStateException.class)
-    public void testUnmountSelectedDriveThrows() throws IOException {
+    @Test
+    public void testUnmountSelectedDriveDeselects() throws IOException {
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
         
         drive.umount();
+        assertFalse(drive.isSelected());
     }
     
     @Test
@@ -159,10 +161,11 @@ public class DriveTest {
         assertEquals(0xC1, params.port2status);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testSelectWithoutMount() {
         Drive drive = new Drive(0);
         drive.select();
+        assertFalse(drive.isSelected());
     }
     
     @Test
