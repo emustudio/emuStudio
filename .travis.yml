@@ -6,7 +6,7 @@ os:
 - linux
 branches:
   only:
-  - master
+  - branch-0_39
 env:
   global:
   - secure: CBze4MoSq9LKgG0ObeoFL94UICe/lAwBKQZdvUP6fIZLcihSzcsIO6n9+MAc6KesyMJQhUmKh8sIYID2bNyOX5L39KCch+SZ70yHuQN6UGxEER6eAdiTcXCb4K7Cxwq8j/QSPVGwA7I/TqIaUJw/IwhNnFYBRBAi7jEdCpXxekA=
