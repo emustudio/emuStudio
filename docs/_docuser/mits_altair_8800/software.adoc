@@ -158,7 +158,7 @@ the size, too, and the output will be `INSUFFICIENT MEMORY`.
 
 The following image shows how it looks like:
 
-image::{imagepath}/altairdos.png[Operating system Altair DOS 1.0]
+image::{imagepath}/altairdos.gif[Operating system Altair DOS 1.0]
 
 
 === BASIC

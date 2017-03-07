@@ -415,7 +415,7 @@ Before other steps, please <a href="#XASMEML">load this image into operating mem
 <div class="ulist">
 <ul>
 <li>
-<p><code>MEMORY SIZE?</code> &#8594; 64</p>
+<p><code>MEMORY SIZE?</code> &#8594; 64 or ENTER (if memory ROM is at 0xFFFF)</p>
 </li>
 <li>
 <p><code>INTERRUPTS</code> &#8594; N or just ENTER</p>
@@ -435,11 +435,18 @@ Before other steps, please <a href="#XASMEML">load this image into operating mem
 <p>The basic commands you can use are e.g. <code>MNT 0</code> - to mount the drive, and then <code>DIR 0</code> to list the files.</p>
 </div>
 <div class="paragraph">
+<p>If you want AltairDOS being able to automatically detect how much memory is installed on system,
+it is possible. The system does it by very nasty trick - testing if it can write to particular address
+(ofcourse, maximum is 16-bits - i.e. 64K of memory). If the result is the same as it was before reading,
+it means that it reached the "end of memory". But when it fails to detect the ROM, it fails to determine
+the size, too, and the output will be <code>INSUFFICIENT MEMORY</code>.</p>
+</div>
+<div class="paragraph">
 <p>The following image shows how it looks like:</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docuser/mits_altair_8800/images//altairdos.png" alt="Operating system Altair DOS 1.0">
+<img src="https://vbmacher.github.io/emuStudio/docuser/mits_altair_8800/images//altairdos.gif" alt="Operating system Altair DOS 1.0">
 </div>
 </div>
 </div>
