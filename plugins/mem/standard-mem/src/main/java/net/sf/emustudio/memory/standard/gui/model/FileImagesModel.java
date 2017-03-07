@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
 public class FileImagesModel extends AbstractTableModel {
     private final static Logger LOGGER = LoggerFactory.getLogger(FileImagesModel.class);
     
-    private final List<String> imageFullNames = new ArrayList<>();
-    private final List<String> imageNames = new ArrayList<>();
+    private final List<String> imageFullFileNames = new ArrayList<>();
+    private final List<String> imageShortFileNames = new ArrayList<>();
     private final List<Integer> imageAddresses = new ArrayList<>();
     
     public FileImagesModel(SettingsManager settings, long pluginID) {
@@ -45,8 +45,8 @@ public class FileImagesModel extends AbstractTableModel {
             try {
                 int addressInt = Integer.decode(address);
                 
-                imageFullNames.add(fileName);
-                imageNames.add(new File(fileName).getName());
+                imageFullFileNames.add(fileName);
+                imageShortFileNames.add(new File(fileName).getName());
                 imageAddresses.add(addressInt);
             } catch (NumberFormatException e) {
                 LOGGER.error("[address={}] Unparseable image address. Ignoring the file", address, e);
@@ -56,7 +56,7 @@ public class FileImagesModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return imageNames.size();
+        return imageShortFileNames.size();
     }
 
     @Override
@@ -86,7 +86,7 @@ public class FileImagesModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         if (columnIndex == 0) {
-            return imageNames.get(rowIndex);
+            return imageShortFileNames.get(rowIndex);
         } else {
             return String.format("0x%04X", imageAddresses.get(rowIndex));
         }
@@ -97,7 +97,7 @@ public class FileImagesModel extends AbstractTableModel {
     }
 
     public List<String> getImageFullNames() {
-        return Collections.unmodifiableList(imageFullNames);
+        return Collections.unmodifiableList(imageFullFileNames);
     }
 
     public List<Integer> getImageAddresses() {
@@ -105,18 +105,26 @@ public class FileImagesModel extends AbstractTableModel {
     }
     
     public void addImage(File fileSource, int address) {
-        imageNames.add(fileSource.getName());
-        imageFullNames.add(fileSource.getAbsolutePath());
+        imageShortFileNames.add(fileSource.getName());
+        imageFullFileNames.add(fileSource.getAbsolutePath());
         imageAddresses.add(address);
 
         fireTableDataChanged();
     }
     
     public void removeImageAt(int index) {
-        imageNames.remove(index);
-        imageFullNames.remove(index);
+        imageShortFileNames.remove(index);
+        imageFullFileNames.remove(index);
         imageAddresses.remove(index);
         
         fireTableDataChanged();
+    }
+    
+    public String getFileNameAtRow(int index) {
+        return imageFullFileNames.get(index);
+    }
+    
+    public int getImageAddressAtRow(int index) {
+        return imageAddresses.get(index);
     }
 }

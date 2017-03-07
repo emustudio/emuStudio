@@ -29,16 +29,15 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
 import net.sf.emustudio.memory.standard.gui.MemoryDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
 
 @PluginType(
         type=PLUGIN_TYPE.MEMORY,
@@ -180,25 +179,31 @@ public class MemoryImpl extends AbstractMemory {
         String imageName;
         String imageAddress;
         int i = 0;
-        for (; ; i++) {
+        for (;; i++) {
             imageName = settings.readSetting(pluginID, "imageName" + i);
             imageAddress = settings.readSetting(pluginID, "imageAddress" + i);
             if (imageName == null) {
                 break;
             }
-            if (imageName.toUpperCase().endsWith(".HEX")) {
-                context.loadHex(imageName, 0);
-            } else {
-                if (imageAddress != null) {
-                    try {
-                        context.loadBin(imageName, Integer.decode(imageAddress), 0);
-                    } catch (NumberFormatException e) {
-                        throw new PluginInitializationException(
-                                this, "Could not parse address at which the image should be loaded", e
-                        );
-                    }
+            int address = 0;
+            if (imageAddress != null) {
+                try {
+                    address = Integer.decode(imageAddress);
+                } catch (NumberFormatException e) {
+                    throw new PluginInitializationException(
+                            this, "Could not parse address at which the image should be loaded", e
+                    );
                 }
             }
+            loadImage(imageName, address);
+        }
+    }
+    
+    public void loadImage(String fileName, int address) {
+        if (fileName.toUpperCase().endsWith(".HEX")) {
+            context.loadHex(fileName, 0);
+        } else {
+            context.loadBin(fileName, address, 0);
         }
     }
 

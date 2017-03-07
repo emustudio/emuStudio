@@ -104,6 +104,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         tblImages = new javax.swing.JTable();
         btnAddImage = new javax.swing.JButton();
         btnRemoveImage = new javax.swing.JButton();
+        btnLoadNow = new javax.swing.JButton();
         btnOK = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -309,6 +310,14 @@ public class SettingsDialog extends javax.swing.JDialog {
             }
         });
 
+        btnLoadNow.setFont(btnLoadNow.getFont().deriveFont(btnLoadNow.getFont().getStyle() & ~java.awt.Font.BOLD));
+        btnLoadNow.setText("Load now");
+        btnLoadNow.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLoadNowActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -318,9 +327,10 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 498, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btnLoadNow, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnRemoveImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnAddImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -330,7 +340,9 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(btnAddImage)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnRemoveImage))
+                        .addComponent(btnRemoveImage)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnLoadNow))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -476,9 +488,20 @@ public class SettingsDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_btnRemoveImageActionPerformed
 
+    private void btnLoadNowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoadNowActionPerformed
+        int row = tblImages.getSelectedRow();
+        if (row == -1) {
+            StaticDialogs.showErrorMessage("Memory image has to be selected!");
+        } else {
+            memory.loadImage(imagesModel.getFileNameAtRow(row), imagesModel.getImageAddressAtRow(row));
+        }
+        tblMem.getMemModel().fireTableDataChanged();
+    }//GEN-LAST:event_btnLoadNowActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAddImage;
     private javax.swing.JButton btnAddRange;
+    private javax.swing.JButton btnLoadNow;
     private javax.swing.JButton btnOK;
     private javax.swing.JButton btnRemoveImage;
     private javax.swing.JButton btnRemoveRange;
