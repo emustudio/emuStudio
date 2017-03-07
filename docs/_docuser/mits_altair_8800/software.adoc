@@ -142,13 +142,19 @@ Steps for booting Altair DOS v1.0 follow:
 The system will start asking some questions. According to the
  http://altairclone.com/downloads/manuals/Altair%20DOS%20User's%20Manual.pdf[manual], the answers for emuStudio are:
 
-- `MEMORY SIZE?` -> 64
+- `MEMORY SIZE?` -> 64 or ENTER (if memory ROM is at 0xFFFF)
 - `INTERRUPTS` -> N or just ENTER
 - `HIGHEST DISK NUMBER?` -> 0 (if only 1 disk is mounted)
 - `HOW MANY DISK FILES?` -> 3
 - `HOW MANY RANDOM FILES?` -> 2
 
 The basic commands you can use are e.g. `MNT 0` - to mount the drive, and then `DIR 0` to list the files.
+
+If you want AltairDOS being able to automatically detect how much memory is installed on system,
+it is possible. The system does it by very nasty trick - testing if it can write to particular address
+(ofcourse, maximum is 16-bits - i.e. 64K of memory). If the result is the same as it was before reading,
+it means that it reached the "end of memory". But when it fails to detect the ROM, it fails to determine
+the size, too, and the output will be `INSUFFICIENT MEMORY`.
 
 The following image shows how it looks like:
 

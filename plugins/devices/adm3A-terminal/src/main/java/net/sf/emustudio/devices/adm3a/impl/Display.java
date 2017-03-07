@@ -71,6 +71,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         this.colCount = cursor.getColCount();
         this.rowCount = cursor.getRowCount();
         this.videoMemory = new char[rowCount * colCount];
+        refillWithSpaces();
 
         setForeground(FOREGROUND);
         setBackground(BACKGROUND);
@@ -109,7 +110,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         return 0;
     }
 
-    public void start() {
+    void start() {
         cursor.start(getGraphics(), displayParameters);
     }
 
@@ -138,7 +139,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         return new DisplayParameters(charHeight, charWidth, startY, maxWidth, maxHeight);
     }
 
-    public void destroy() {
+    void destroy() {
         settings.removeChangedObserver(this);
         closeOutputWriter();
     }
@@ -249,12 +250,16 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         }
     }
 
-    public final void clearScreen() {
+    private void refillWithSpaces() {
         synchronized (videoMemory) {
             for (int i = 0; i < (rowCount * colCount); i++) {
                 videoMemory[i] = ' ';
             }
         }
+    }
+
+    public final void clearScreen() {
+        refillWithSpaces();
         cursor.home();
         repaint();
     }
