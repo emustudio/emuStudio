@@ -9,6 +9,12 @@ The main goal is to support learning about older but important computers or abst
 I think it is also appropriate for schools; for example, emuStudio is used at
 [Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
 
+## BIG THANKS
+
+Big thanks goes to the one and only [simh](http://simh.trailing-edge.com/) project, which inspired me a lot, and helped
+me as a student and emulator enthusiast when working on emuStudio. I wish emuStudio will reach it's simplicity and
+emulators "richness" as the simh project has.  
+
 # License
 
 This project is released under GNU GPL v2 license.
