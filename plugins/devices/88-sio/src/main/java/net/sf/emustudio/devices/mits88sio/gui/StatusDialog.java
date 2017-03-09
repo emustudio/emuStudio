@@ -35,12 +35,12 @@ public class StatusDialog extends javax.swing.JDialog {
         transmitter.addObserver(new Transmitter.Observer() {
             @Override
             public void statusChanged(int status) {
-                txtStatus.setText(Integer.toHexString(status));
+                txtStatus.setText(String.format("0x%x", status));
             }
 
             @Override
             public void dataAvailable(int data) {
-                txtData.setText(Integer.toHexString(data));
+                txtData.setText(String.format("0x%x", data));
             }
 
             @Override

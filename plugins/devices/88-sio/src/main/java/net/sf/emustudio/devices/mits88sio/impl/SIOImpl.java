@@ -89,6 +89,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         ExtendedContext cpu = contextPool.getCPUContext(pluginID, ExtendedContext.class);
@@ -99,8 +100,13 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
         sioSettings.addChangedObserver(this);
 
         // get a device attached to this board
-        DeviceContext<Short> device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
+        DeviceContext device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
         if (device != null) {
+            if (device.getDataType() != Short.class) {
+                LOGGER.error("Could not connect device which does not operate on Short data!");
+                throw new PluginInitializationException(this, "Incompatible input device!");
+            }
+
             transmitter.setDevice(device);
         } else {
             LOGGER.warn("No device is connected into the 88-SIO.");
