@@ -3562,26 +3562,59 @@ Original manual of MITS 88-SIO serial board can be downloaded at
 <div class="sect2">
 <h3 id="cpu-ports-settings-2">10.2. CPU Ports settings</h3>
 <div class="paragraph">
-<p>MITS 88-SIO board is attached to CPU using two ports. By allowing settings of the port numbers the board can be used
-in other computers, too. By default, the ports used by 88-SIO are:</p>
+<p>MITS 88-SIO board is attached to CPU using multiple ports. By default, the used CPU ports are:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>port 1: 0x08</p>
+<p>Status port: 0x03, 0x10, 0x14, 0x16, 0x18 (preferred: 0x10)</p>
 </li>
 <li>
-<p>port 2: 0x09</p>
+<p>Data port: 0x02, 0x11, 0x15, 0x17, 0x19 (preferred: 0x11)</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>These numbers can be changed in the Settings window, tab "CPU Ports":</p>
+<p>By allowing settings of the port numbers the board can be used in other computers, too.
+These numbers can be changed in the Settings window:</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docuser/mits_altair_8800/images//88-sio-ports.png" alt="Setting CPU ports">
+<img src="https://vbmacher.github.io/emuStudio/docuser/mits_altair_8800/images//88-sio-ports.png" alt="Settings window">
 </div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>A</strong>: Attach Status SIO port to some new CPU port. The CPU port must be unique among both Status and Data ports
+attachments.</p>
+</li>
+<li>
+<p><strong>B</strong>: Detach Status SIO port from selected CPU port.</p>
+</li>
+<li>
+<p><strong>C</strong>: Attach Data SIO port to some new CPU port. The CPU port must be unique among both Status and Data ports
+attachments.</p>
+</li>
+<li>
+<p><strong>D</strong>: Detach Data SIO port from selected CPU port.</p>
+</li>
+<li>
+<p><strong>E</strong>: List of CPU ports to which the Status SIO port is attached</p>
+</li>
+<li>
+<p><strong>F</strong>: Clear the current attachements of the Status SIO port and attach it to default CPU ports</p>
+</li>
+<li>
+<p><strong>G</strong>: List of CPU ports to which the Data SIO port is attached</p>
+</li>
+<li>
+<p><strong>H</strong>: Clear the current attachements of the Data SIO port and attach it to default CPU ports</p>
+</li>
+<li>
+<p><strong>I</strong>: When selected, clicking on <code>OK</code> button will save the settings and will be applied at next emuStudio start.</p>
+</li>
+</ul>
 </div>
 </div>
 <div class="sect2">
@@ -3669,17 +3702,7 @@ be accessed.</p>
 </tbody>
 </table>
 <div class="paragraph">
-<p>As can be seen; the two SIO ports can be attached to multiple CPU ports. By default, the used CPU ports are:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Status port: 0x03, 0x10, 0x14, 0x16, 0x18</p>
-</li>
-<li>
-<p>Data port: 0x02, 0x11, 0x15, 0x17, 0x19</p>
-</li>
-</ul>
+<p>As can be seen; the <code>X</code> represents a number, it&#8217;s a way how two SIO ports can be attached to multiple CPU ports.</p>
 </div>
 <div class="paragraph">
 <p>The reason why there are multiple "bindings" is that there existed various software which expected specific bindings.

@@ -28,15 +28,27 @@ The plug-in emulates only basic functionality of the board. It has the following
 
 === CPU Ports settings
 
-MITS 88-SIO board is attached to CPU using two ports. By allowing settings of the port numbers the board can be used
-in other computers, too. By default, the ports used by 88-SIO are:
+MITS 88-SIO board is attached to CPU using multiple ports. By default, the used CPU ports are:
 
-- port 1: 0x08
-- port 2: 0x09
+- Status port: 0x03, 0x10, 0x14, 0x16, 0x18 (preferred: 0x10)
+- Data port: 0x02, 0x11, 0x15, 0x17, 0x19 (preferred: 0x11)
 
-These numbers can be changed in the Settings window, tab "CPU Ports":
+By allowing settings of the port numbers the board can be used in other computers, too.
+These numbers can be changed in the Settings window:
 
-image::{imagepath}/88-sio-ports.png[Setting CPU ports]
+image::{imagepath}/88-sio-ports.png[Settings window]
+
+- *A*: Attach Status SIO port to some new CPU port. The CPU port must be unique among both Status and Data ports
+       attachments.
+- *B*: Detach Status SIO port from selected CPU port.
+- *C*: Attach Data SIO port to some new CPU port. The CPU port must be unique among both Status and Data ports
+       attachments.
+- *D*: Detach Data SIO port from selected CPU port.
+- *E*: List of CPU ports to which the Status SIO port is attached
+- *F*: Clear the current attachements of the Status SIO port and attach it to default CPU ports
+- *G*: List of CPU ports to which the Data SIO port is attached
+- *H*: Clear the current attachements of the Data SIO port and attach it to default CPU ports
+- *I*: When selected, clicking on `OK` button will save the settings and will be applied at next emuStudio start.
 
 === Connecting devices
 
@@ -72,10 +84,7 @@ The following table shows all the possible settings of MITS 88-SIO plug-in:
 |`dataPortNumberX`   | 0x11          | > 0 and < 256; X range from 0 upwards | X-th Number of Data Port
 |==========================================================================================
 
-As can be seen; the two SIO ports can be attached to multiple CPU ports. By default, the used CPU ports are:
-
-- Status port: 0x03, 0x10, 0x14, 0x16, 0x18
-- Data port: 0x02, 0x11, 0x15, 0x17, 0x19
+As can be seen; the `X` represents a number, it's a way how two SIO ports can be attached to multiple CPU ports.
 
 The reason why there are multiple "bindings" is that there existed various software which expected specific bindings.
 The presented default values are the most common ones.
