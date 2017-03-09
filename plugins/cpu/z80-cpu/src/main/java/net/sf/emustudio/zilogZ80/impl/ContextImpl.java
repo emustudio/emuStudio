@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class ContextImpl implements ExtendedContext {
+    private final static int NO_DATA = 0xFF;
     public final static int DEFAULT_FREQUENCY_KHZ = 20000;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(net.sf.emustudio.intel8080.impl.ContextImpl.class);
@@ -63,28 +64,23 @@ public final class ContextImpl implements ExtendedContext {
         }
     }
 
-    public void clearDevices() {
+    void clearDevices() {
         devices.clear();
     }
 
-    /**
-     * Performs I/O operation.
-     * @param port I/O port
-     * @param read whether method should read or write to the port
-     * @param val value to be written to the port. if parameter read is set to
-     *            true, then val is ignored.
-     * @return value from the port if read is true, otherwise 0
-     */
-    public short fireIO(int port, boolean read, int val) throws IOException {
+    void writeIO(int port, int val) throws IOException {
         DeviceContext<Short> device = devices.get(port);
         if (device != null) {
-            if (read) {
-                return device.read();
-            } else {
-                device.write((short)val);
-            }
+            device.write((short)val);
         }
-        return 0;
+    }
+
+    short readIO(int port) throws IOException {
+        DeviceContext<Short> device = devices.get(port);
+        if (device != null) {
+            return device.read();
+        }
+        return NO_DATA;
     }
 
     @Override

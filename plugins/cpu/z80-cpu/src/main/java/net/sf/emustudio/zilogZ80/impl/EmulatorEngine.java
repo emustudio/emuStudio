@@ -472,6 +472,7 @@ public class EmulatorEngine implements CpuEngine {
 
     private final static Method[] DISPATCH_TABLE = new Method[256];
     private final static Method[] DISPATCH_TABLE_ED = new Method[256];
+    private final static Method[] DISPATCH_TABLE_DD_FD = new Method[256];
 
     static {
         try {
@@ -805,6 +806,19 @@ public class EmulatorEngine implements CpuEngine {
         return 0;
     }
 
+    private int DD_FD_DISPATCH(short OP) throws InvocationTargetException, IllegalAccessException {
+        int special = OP;
+        OP = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        incrementR();
+
+        Method instr = DISPATCH_TABLE_DD_FD[OP];
+        if (instr != null) {
+            return (Integer) instr.invoke(this, OP, special);
+        }
+        currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
+        return 0;
+    }
 
 
     private int O0_NOP(short OP) {
@@ -1198,14 +1212,14 @@ public class EmulatorEngine implements CpuEngine {
 
     private int IN_r_LPAR_C_RPAR(short OP) throws IOException {
         int tmp = (OP >>> 3) & 0x7;
-        putreg(tmp, context.fireIO(regs[REG_C], true, 0));
+        putreg(tmp, context.readIO(regs[REG_C]));
         flags = (flags & FLAG_C) | SIGN_ZERO_TABLE[regs[tmp]] | PARITY_TABLE[regs[tmp]];
         return 12;
     }
 
     private int OUT_LPAR_C_RPAR_r(short OP) throws IOException {
         int tmp = (OP >>> 3) & 0x7;
-        context.fireIO(regs[REG_C], false, (short) getreg(tmp));
+        context.writeIO(regs[REG_C], (short) getreg(tmp));
         return 12;
     }
 
@@ -1346,13 +1360,13 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int O70_IN_LPAR_C_RPAR(short OP) throws IOException {
-        int tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+        int tmp = (context.readIO(regs[REG_C]) & 0xFF);
         flags = SIGN_ZERO_TABLE[tmp] | PARITY_TABLE[tmp] | (flags & FLAG_C);
         return 12;
     }
 
     private int O71_OUT_LPAR_C_RPAR_0(short OP) throws IOException {
-        context.fireIO(regs[REG_C], false, 0);
+        context.writeIO(regs[REG_C], 0);
         return 12;
     }
 
@@ -1403,7 +1417,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int A2_INI(short OP) throws IOException {
-        int tmp = context.fireIO(regs[REG_C], true, 0) & 0xFF;
+        int tmp = context.readIO(regs[REG_C]) & 0xFF;
         int tmp1 = (regs[REG_H] << 8) | regs[REG_L];
         int tmp2 = tmp + (regs[REG_C] + 1) & 0xFF;
 
@@ -1427,7 +1441,7 @@ public class EmulatorEngine implements CpuEngine {
         int tmp1 = (regs[REG_H] << 8) | regs[REG_L];
         int tmp2 = memory.read(tmp1) & 0xFF;
 
-        context.fireIO(regs[REG_C], false, tmp2);
+        context.writeIO(regs[REG_C], tmp2);
         tmp1 = (tmp1 + 1) & 0xFFFF;
         regs[REG_H] = ((tmp1 >>> 8) & 0xff);
         regs[REG_L] = (tmp1 & 0xFF);
@@ -1489,7 +1503,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int AA_IND(short OP) throws IOException {
-        int tmp = context.fireIO(regs[REG_C], true, 0) & 0xFF;
+        int tmp = context.readIO(regs[REG_C]) & 0xFF;
         int tmp1 = (regs[REG_H] << 8) | regs[REG_L];
         int tmp2 = tmp + ((regs[REG_C] - 1) & 0xFF);
 
@@ -1514,7 +1528,7 @@ public class EmulatorEngine implements CpuEngine {
         int tmp1 = (regs[REG_H] << 8) | regs[REG_L];
         int tmp2 = memory.read(tmp1) & 0xFF;
 
-        context.fireIO(regs[REG_C], false, tmp2);
+        context.writeIO(regs[REG_C], tmp2);
         tmp1 = (tmp1 - 1) & 0xFFFF;
         regs[REG_H] = ((tmp1 >>> 8) & 0xff);
         regs[REG_L] = (tmp1 & 0xFF);
@@ -1585,7 +1599,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int B2_INIR(short OP) throws IOException {
-        int tmp = context.fireIO(regs[REG_C], true, 0) & 0xFF;
+        int tmp = context.readIO(regs[REG_C]) & 0xFF;
         int tmp1 = (regs[REG_H] << 8) | regs[REG_L];
         int tmp2 = tmp + (regs[REG_C] + 1) & 0xFF;
 
@@ -1614,7 +1628,7 @@ public class EmulatorEngine implements CpuEngine {
         int tmp1 = (regs[REG_H] << 8) | regs[REG_L];
         int tmp2 = memory.read(tmp1) & 0xFF;
 
-        context.fireIO(regs[REG_C], false, tmp2);
+        context.writeIO(regs[REG_C], tmp2);
         tmp1 = (tmp1 + 1) & 0xFFFF;
         regs[REG_H] = ((tmp1 >>> 8) & 0xff);
         regs[REG_L] = (tmp1 & 0xFF);
@@ -1686,7 +1700,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int BA_INDR(short OP) throws IOException {
-        int tmp = context.fireIO(regs[REG_C], true, 0) & 0xFF;
+        int tmp = context.readIO(regs[REG_C]) & 0xFF;
         int tmp1 = (regs[REG_H] << 8) | regs[REG_L];
         int tmp2 = tmp + ((regs[REG_C] - 1) & 0xFF);
 
@@ -1715,7 +1729,7 @@ public class EmulatorEngine implements CpuEngine {
         int tmp1 = (regs[REG_H] << 8) | regs[REG_L];
         int tmp2 = memory.read(tmp1) & 0xFF;
 
-        context.fireIO(regs[REG_C], false, tmp2);
+        context.writeIO(regs[REG_C], tmp2);
         tmp1 = (tmp1 - 1) & 0xFFFF;
         regs[REG_H] = (tmp1 >>> 8);
         regs[REG_L] = (tmp1 & 0xFF);
@@ -1816,7 +1830,7 @@ public class EmulatorEngine implements CpuEngine {
         int tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
 
-        context.fireIO(tmp, false, (short) regs[REG_A]);
+        context.writeIO(tmp, (short) regs[REG_A]);
         return 11;
     }
 
@@ -1842,7 +1856,7 @@ public class EmulatorEngine implements CpuEngine {
         int tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
 
-        regs[REG_A] = (context.fireIO(tmp, true, 0) & 0xFF);
+        regs[REG_A] = (context.readIO(tmp) & 0xFF);
         return 11;
     }
 
