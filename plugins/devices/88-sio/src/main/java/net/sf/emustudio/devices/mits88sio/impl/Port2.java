@@ -20,7 +20,6 @@
 package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.plugins.device.DeviceContext;
-
 import java.io.IOException;
 import java.util.Objects;
 

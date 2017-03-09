@@ -21,7 +21,6 @@ package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
-
 import java.util.Objects;
 
 /**

@@ -26,20 +26,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ThreadSafe
-class Transmitter {
+public class Transmitter {
     private final static Logger LOGGER = LoggerFactory.getLogger(Transmitter.class);
 
     private final Queue<Short> buffer = new ConcurrentLinkedQueue<>();
     private final Lock bufferAndStatusLock = new ReentrantLock();
 
     private volatile DeviceContext<Short> device;
-    private volatile short status;
+    private volatile short status = 2;
+    
+    private final List<Observer> observers = new ArrayList<>();
 
     void setDevice(DeviceContext<Short> device) {
         this.device = device;
@@ -60,6 +64,8 @@ class Transmitter {
     }
 
     void writeToStatus(short value) {
+        int newStatus = status;
+        
         bufferAndStatusLock.lock();
         try {
             // TODO: Wrong implementation; buffer SHOULD be emptied.
@@ -67,18 +73,32 @@ class Transmitter {
             if (value == 0x03 && buffer.isEmpty()) {
                 this.status = 0x02;
             }
+            newStatus = this.status;
         } finally {
             bufferAndStatusLock.unlock();
+            notifyStatusChanged(newStatus);
         }
     }
 
     void writeFromDevice(short data) {
+        boolean wasEmpty = false;
+        int newStatus = status;
+        
         bufferAndStatusLock.lock();
         try {
+            if (buffer.isEmpty()) {
+                wasEmpty = true;
+            }
             buffer.add(data);
             status = (short) (status | 0x01);
+            newStatus = status;
         } finally {
             bufferAndStatusLock.unlock();
+
+            if (wasEmpty) {
+                notifyNewData(data);
+            }
+            notifyStatusChanged(newStatus);
         }
     }
 
@@ -90,19 +110,59 @@ class Transmitter {
     }
 
     short readBuffer() {
+        int newData = 0;
+        boolean isNotEmpty = false;
+        int newStatus = status; // what to do..
+        
         bufferAndStatusLock.lock();
         try {
             Short result = buffer.poll();
-            status = buffer.isEmpty()
-                    ? (short) (status & 0xFE)
-                    : (short) (status | 0x01);
+
+            isNotEmpty = !buffer.isEmpty();
+            status = isNotEmpty ? (short) (status | 0x01) : (short) (status & 0xFE);
+            newStatus = status;
+            
+            if (isNotEmpty) {
+                newData = buffer.peek();
+            }
+            
             return result == null ? 0 : result;
         } finally {
             bufferAndStatusLock.unlock();
+            
+            if (isNotEmpty) {
+                notifyNewData(newData);
+            } else {
+                notifyNoData();
+            }
+            notifyStatusChanged(newStatus);
         }
     }
 
     short readStatus() {
         return status;
+    }
+    
+    
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+    }
+    
+    private void notifyStatusChanged(int status) {
+        observers.forEach(o -> o.statusChanged(status));
+    }
+    
+    private void notifyNewData(int data) {
+        observers.forEach(o -> o.dataAvailable(data));
+    }
+    
+    private void notifyNoData() {
+        observers.forEach(o -> o.noData());
+    }
+
+    public interface Observer {
+        void statusChanged(int status);
+        void dataAvailable(int data);
+        void noData();
     }
 }

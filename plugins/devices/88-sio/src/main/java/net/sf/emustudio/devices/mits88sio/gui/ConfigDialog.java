@@ -318,6 +318,8 @@ public class ConfigDialog extends javax.swing.JDialog {
         settings.setStatusPorts(statusPortsModel.getAll());
         settings.setDataPorts(dataPortsModel.getAll());
         
+        settings.write();
+        
         dispose();
     }//GEN-LAST:event_btnOKActionPerformed
 
