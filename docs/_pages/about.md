@@ -9,7 +9,11 @@ permalink: /about/
 Project 'emuStudio' started in 2006 as a semester project. I have continued to work on it afterwards, and graduated
 with a final thesis named *emuStudio - universal emulation platform*. It was my very first project in Java.
 
-After graduating from school I have not much time for it, but I still find some little spare time to either improve
+My supervisor was https://kpi.fei.tuke.sk/sk/person/slavomir-simonak[Slavomír Šimoňák], and here I want to thank him
+a lot for his very concise and conceptual leadership of the first versions of the project. Lots of good ideas and
+project directions came from our discussions, of which I have only good memories. 
+
+After graduating from school I had not much time for it, but I still find some little spare time to either improve
 something, or fix bugs. Also, the project is being used in Technical University in Košice, Slovakia, by students
 on various subjects, like:
  
