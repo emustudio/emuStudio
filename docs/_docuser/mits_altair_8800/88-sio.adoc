@@ -3,10 +3,11 @@
 [[SIO-88]]
 == Serial board `88-sio`
 
-Altair 8800 computer was equipped with serial board called 88-SIO. It was a device which allowed connecting other
-devices using RS-232 interface. From one side it was attached to CPU on two ports (0x10 and 0x11). The other side
-was ended with one or two physical ports (allowing to connect one or two devices). Real board supported both hardware
-and software interrupts.
+Altair 8800 computer was equipped with serial board called
+http://www.s100computers.com/Hardware%20Folder/MITS/SIO-B/SIO.htm[88-SIO], or 88-2 SIO. It was a device which allowed
+connecting other devices using RS-232 interface. From one side it was attached to CPU on at least two ports
+(most commonly 0x10 and 0x11). The other side was ended with one or two physical ports (allowing to connect one or
+two devices). Real board supported both hardware and software interrupts.
 
 The following image shows MITS 88-SIO-2 board.
 
@@ -66,10 +67,19 @@ The following table shows all the possible settings of MITS 88-SIO plug-in:
 .Settings of MITS 88-SIO
 [frame="topbot",options="header,footer",role="table table-condensed"]
 |==========================================================================================
-|Name               | Default value | Valid values         | Description
-|`statusPortNumber` | 0x10          | > 0 and < 256        | Number of Status Port
-|`dataPortNumber`   | 0x11          | > 0 and < 256        | Number of Data Port
+|Name                | Default value | Valid values                          | Description
+|`statusPortNumberX` | 0x10          | > 0 and < 256; X range from 0 upwards | X-th Number of Status Port
+|`dataPortNumberX`   | 0x11          | > 0 and < 256; X range from 0 upwards | X-th Number of Data Port
 |==========================================================================================
+
+As can be seen; the two SIO ports can be attached to multiple CPU ports. By default, the used CPU ports are:
+
+- Status port: 0x03, 0x10, 0x14, 0x16, 0x18
+- Data port: 0x02, 0x11, 0x15, 0x17, 0x19
+
+The reason why there are multiple "bindings" is that there existed various software which expected specific bindings.
+The presented default values are the most common ones.
+
 
 [[SIO-88_PROGRAMMING]]
 === Programming
@@ -96,7 +106,9 @@ Now, detailed description of the ports follow. Bits are ordered in a byte as fol
 
 where `D7` is the most significant bit, and `D0` the least significant bit.
 
-==== Port 1 (default address: 0x10)
+==== Port 1 ("Control" port)
+
+Default addresses: 0x03, 0x10, 0x14, 0x16, 0x18 (preferred is 0x10)
 
 *WRITE*:
 
@@ -125,7 +137,9 @@ Read status of the device.
 - `D0` : _Input device ready_. Value 1 means a ready pulse has been sent from the device. Practically it means that
          CPU can write data to the data port.
 
-==== Port 2 (default address: 0x11)
+==== Port 2 ("Data" port)
+
+Default addresses: 0x02, 0x11, 0x15, 0x17, 0x19 (preferred is 0x11)
 
 *WRITE*:
 

@@ -132,10 +132,11 @@
 <h2 id="SIO-88">Serial board <code>88-sio</code></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Altair 8800 computer was equipped with serial board called 88-SIO. It was a device which allowed connecting other
-devices using RS-232 interface. From one side it was attached to CPU on two ports (0x10 and 0x11). The other side
-was ended with one or two physical ports (allowing to connect one or two devices). Real board supported both hardware
-and software interrupts.</p>
+<p>Altair 8800 computer was equipped with serial board called
+<a href="http://www.s100computers.com/Hardware%20Folder/MITS/SIO-B/SIO.htm">88-SIO</a>, or 88-2 SIO. It was a device which allowed
+connecting other devices using RS-232 interface. From one side it was attached to CPU on at least two ports
+(most commonly 0x10 and 0x11). The other side was ended with one or two physical ports (allowing to connect one or
+two devices). Real board supported both hardware and software interrupts.</p>
 </div>
 <div class="paragraph">
 <p>The following image shows MITS 88-SIO-2 board.</p>
@@ -277,21 +278,38 @@ be accessed.</p>
 </thead>
 <tfoot>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>dataPortNumber</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>dataPortNumberX</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0x11</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 0 and &lt; 256</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Number of Data Port</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 0 and &lt; 256; X range from 0 upwards</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">X-th Number of Data Port</p></td>
 </tr>
 </tfoot>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>statusPortNumber</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>statusPortNumberX</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0x10</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 0 and &lt; 256</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Number of Status Port</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 0 and &lt; 256; X range from 0 upwards</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">X-th Number of Status Port</p></td>
 </tr>
 </tbody>
 </table>
+<div class="paragraph">
+<p>As can be seen; the two SIO ports can be attached to multiple CPU ports. By default, the used CPU ports are:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Status port: 0x03, 0x10, 0x14, 0x16, 0x18</p>
+</li>
+<li>
+<p>Data port: 0x02, 0x11, 0x15, 0x17, 0x19</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The reason why there are multiple "bindings" is that there existed various software which expected specific bindings.
+The presented default values are the most common ones.</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="SIO-88_PROGRAMMING">Programming</h3>
@@ -351,7 +369,10 @@ Status port and Data port. The following table shows the ports and how they are 
 </div>
 </div>
 <div class="sect3">
-<h4 id="port-1-default-address-0x10">Port 1 (default address: 0x10)</h4>
+<h4 id="port-1-control-port">Port 1 ("Control" port)</h4>
+<div class="paragraph">
+<p>Default addresses: 0x03, 0x10, 0x14, 0x16, 0x18 (preferred is 0x10)</p>
+</div>
 <div class="paragraph">
 <p><strong>WRITE</strong>:</p>
 </div>
@@ -411,7 +432,10 @@ CPU can write data to the data port.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="port-2-default-address-0x11">Port 2 (default address: 0x11)</h4>
+<h4 id="port-2-data-port">Port 2 ("Data" port)</h4>
+<div class="paragraph">
+<p>Default addresses: 0x02, 0x11, 0x15, 0x17, 0x19 (preferred is 0x11)</p>
+</div>
 <div class="paragraph">
 <p><strong>WRITE</strong>:</p>
 </div>
