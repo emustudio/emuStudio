@@ -33,7 +33,9 @@ MITS 88-SIO board is attached to CPU using multiple ports. By default, the used 
 - Status port: 0x03, 0x10, 0x14, 0x16, 0x18 (preferred: 0x10)
 - Data port: 0x02, 0x11, 0x15, 0x17, 0x19 (preferred: 0x11)
 
-By allowing settings of the port numbers the board can be used in other computers, too.
+The reason why there are multiple "bindings" is that there existed various software which expected specific bindings.
+The presented default values are the most common ones.
+
 These numbers can be changed in the Settings window:
 
 image::{imagepath}/88-sio-ports.png[Settings window]
@@ -86,8 +88,6 @@ The following table shows all the possible settings of MITS 88-SIO plug-in:
 
 As can be seen; the `X` represents a number, it's a way how two SIO ports can be attached to multiple CPU ports.
 
-The reason why there are multiple "bindings" is that there existed various software which expected specific bindings.
-The presented default values are the most common ones.
 
 
 [[SIO-88_PROGRAMMING]]
@@ -105,7 +105,7 @@ Status port and Data port. The following table shows the ports and how they are 
 [frame="topbot",options="header,footer",role="table table-condensed"]
 |===========================================================================
 |Port     | Address | Input                      | Output
-|1        | 0x10    | Read board status          | Only 'empties' buffer
+|1        | 0x10    | Read board status          | Not used. Originally used for enabling/disabling interrupts.
 |2        | 0x11    | Read data                  | Write data
 |===========================================================================
 
@@ -126,25 +126,25 @@ in the device, which was a post-step after interrupts being enabled. However, th
 support.
 
 - `D7 D6 D5 D4 D3 D2` : unused bits
-- `D1 D0`             : Value `03` will cause to empty transmitter buffer. Other values are ignored.
+- `D1 D0`             : Used for enabling/disabling interrupts. Not used in emuStudio.
 
 *READ*:
 
 Read status of the device.
 
-- `D7` : _Output device ready_. Value 0 means that a ready pulse was sent from device. Value 1 means the device is not
-         ready.
-- `D6` : Not used.
-- `D5` : _Data available_. Value 1 means that a word of data is in the buffer on the I/O board.
+- `D7` : _Output device ready_. Always 0 in the emulator.
+- `D6` : Not used (always 0).
+- `D5` : _Data available (for writing to the attached device)_. Always 0 in the emulator, meaning that no data is
+          pending to be written. Data are written immediately after `OUT` instruction.
 - `D4` : _Data overflow_. Value 1 means a new word of data has been received before the previous word was inputted to
          the accumulator. In emuStudio, this never happens.
 - `D3` : _Framing error_. Value 1 means that data bit has no valid stop bit. In emuStudio, this never happens.
 - `D2` : _Parity error_. Value 1 means that received parity does not agree with selected parity. In emuStudio, this
          never happens.
-- `D1` : _Transmitter buffer empty_. Value 1 means that the previous data word has been transmitted and a new data
-         word may be outputted. Practically it means CPU can read data from the data port.
-- `D0` : _Input device ready_. Value 1 means a ready pulse has been sent from the device. Practically it means that
-         CPU can write data to the data port.
+- `D1` : _Transmitter buffer empty_. Value 1 means that the data word has been received from the attached device and it's
+         available for reading (from the Data port).
+- `D0` : _Input device ready_. Value 1 means that the CPU can write data to the SIO (that the board is ready). Always 1
+        in the emulator.
 
 ==== Port 2 ("Data" port)
 
@@ -157,6 +157,9 @@ Write data to the attached device.
 *READ*:
 
 Read data from the attached device.
+
+If the attached device sends asynchronously multiple data, the emulated board stores all in a buffer (queue) with
+unlimited capacity, so no data should be lost and can be read anytime.
 
 ==== Program example
 

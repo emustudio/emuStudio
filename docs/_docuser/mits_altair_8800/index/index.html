@@ -3575,8 +3575,11 @@ Original manual of MITS 88-SIO serial board can be downloaded at
 </ul>
 </div>
 <div class="paragraph">
-<p>By allowing settings of the port numbers the board can be used in other computers, too.
-These numbers can be changed in the Settings window:</p>
+<p>The reason why there are multiple "bindings" is that there existed various software which expected specific bindings.
+The presented default values are the most common ones.</p>
+</div>
+<div class="paragraph">
+<p>These numbers can be changed in the Settings window:</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -3704,10 +3707,6 @@ be accessed.</p>
 <div class="paragraph">
 <p>As can be seen; the <code>X</code> represents a number, it&#8217;s a way how two SIO ports can be attached to multiple CPU ports.</p>
 </div>
-<div class="paragraph">
-<p>The reason why there are multiple "bindings" is that there existed various software which expected specific bindings.
-The presented default values are the most common ones.</p>
-</div>
 </div>
 <div class="sect2">
 <h3 id="SIO-88_PROGRAMMING">10.5. Programming</h3>
@@ -3750,7 +3749,7 @@ Status port and Data port. The following table shows the ports and how they are 
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0x10</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Read board status</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Only 'empties' buffer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Not used. Originally used for enabling/disabling interrupts.</p></td>
 </tr>
 </tbody>
 </table>
@@ -3785,7 +3784,7 @@ support.</p>
 <p><code>D7 D6 D5 D4 D3 D2</code> : unused bits</p>
 </li>
 <li>
-<p><code>D1 D0</code>             : Value <code>03</code> will cause to empty transmitter buffer. Other values are ignored.</p>
+<p><code>D1 D0</code>             : Used for enabling/disabling interrupts. Not used in emuStudio.</p>
 </li>
 </ul>
 </div>
@@ -3798,14 +3797,14 @@ support.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>D7</code> : <em>Output device ready</em>. Value 0 means that a ready pulse was sent from device. Value 1 means the device is not
-ready.</p>
+<p><code>D7</code> : <em>Output device ready</em>. Always 0 in the emulator.</p>
 </li>
 <li>
-<p><code>D6</code> : Not used.</p>
+<p><code>D6</code> : Not used (always 0).</p>
 </li>
 <li>
-<p><code>D5</code> : <em>Data available</em>. Value 1 means that a word of data is in the buffer on the I/O board.</p>
+<p><code>D5</code> : <em>Data available (for writing to the attached device)</em>. Always 0 in the emulator, meaning that no data is
+pending to be written. Data are written immediately after <code>OUT</code> instruction.</p>
 </li>
 <li>
 <p><code>D4</code> : <em>Data overflow</em>. Value 1 means a new word of data has been received before the previous word was inputted to
@@ -3819,12 +3818,12 @@ the accumulator. In emuStudio, this never happens.</p>
 never happens.</p>
 </li>
 <li>
-<p><code>D1</code> : <em>Transmitter buffer empty</em>. Value 1 means that the previous data word has been transmitted and a new data
-word may be outputted. Practically it means CPU can read data from the data port.</p>
+<p><code>D1</code> : <em>Transmitter buffer empty</em>. Value 1 means that the data word has been received from the attached device and it&#8217;s
+available for reading (from the Data port).</p>
 </li>
 <li>
-<p><code>D0</code> : <em>Input device ready</em>. Value 1 means a ready pulse has been sent from the device. Practically it means that
-CPU can write data to the data port.</p>
+<p><code>D0</code> : <em>Input device ready</em>. Value 1 means that the CPU can write data to the SIO (that the board is ready). Always 1
+in the emulator.</p>
 </li>
 </ul>
 </div>
@@ -3845,6 +3844,10 @@ CPU can write data to the data port.</p>
 </div>
 <div class="paragraph">
 <p>Read data from the attached device.</p>
+</div>
+<div class="paragraph">
+<p>If the attached device sends asynchronously multiple data, the emulated board stores all in a buffer (queue) with
+unlimited capacity, so no data should be lost and can be read anytime.</p>
 </div>
 </div>
 <div class="sect3">
