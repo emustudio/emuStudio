@@ -37,8 +37,8 @@ public class TransmitterTest {
     }
 
     @Test
-    public void testInitialStatusIs0x00() throws Exception {
-        assertEquals(0, new Transmitter().readStatus());
+    public void testInitialStatusIs0x02() throws Exception {
+        assertEquals(2, new Transmitter().readStatus());
     }
 
     @Test

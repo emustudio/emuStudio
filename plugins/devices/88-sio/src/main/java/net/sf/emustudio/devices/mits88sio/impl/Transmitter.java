@@ -33,6 +33,19 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Status port IN:
+ *
+ * 7 - 0 - device ready; 1 - not ready
+ * 6 - N/A
+ * 5 - 1 - data ready (for writing to output device - CPU); 0 - not ready
+ * 4 - 1 - data overflow; 0 - OK
+ * 3 - 1 - framing error; 0 - OK
+ * 2 - 1 - parity error; 0 - OK
+ * 1 - 1 - transmitter buffer empty (i.e. ready for receive data from CPU)
+ * 0 - 1 - data from input device is ready to be read
+ *
+ */
 @ThreadSafe
 public class Transmitter {
     private final static Logger LOGGER = LoggerFactory.getLogger(Transmitter.class);
@@ -41,8 +54,10 @@ public class Transmitter {
     private final Lock bufferAndStatusLock = new ReentrantLock();
 
     private volatile DeviceContext<Short> device;
-    private volatile short status = 2;
-    
+    private volatile short status = 0x2;
+    private volatile boolean inputInterruptEnabled;
+    private volatile boolean outputInterruptEnabled;
+
     private final List<Observer> observers = new ArrayList<>();
 
     void setDevice(DeviceContext<Short> device) {
@@ -60,7 +75,7 @@ public class Transmitter {
     }
 
     void reset() {
-        writeToStatus((short)0x03);
+        writeToStatus((short)0); // disable interrupts
     }
 
     void writeToStatus(short value) {
@@ -70,8 +85,13 @@ public class Transmitter {
         try {
             // TODO: Wrong implementation; buffer SHOULD be emptied.
             // However, it messes up the automation.
-            if (value == 0x03 && buffer.isEmpty()) {
-                this.status = 0x02;
+            inputInterruptEnabled = (value & 1) == 1;
+            outputInterruptEnabled = (value & 2) == 2;
+
+            if (buffer.isEmpty()) {
+                this.status = 2;
+            } else {
+                this.status = 3;
             }
             newStatus = this.status;
         } finally {
@@ -90,7 +110,7 @@ public class Transmitter {
                 wasEmpty = true;
             }
             buffer.add(data);
-            status = (short) (status | 0x01);
+            status = (short) (status | 1);
             newStatus = status;
         } finally {
             bufferAndStatusLock.unlock();
@@ -119,7 +139,7 @@ public class Transmitter {
             Short result = buffer.poll();
 
             isNotEmpty = !buffer.isEmpty();
-            status = isNotEmpty ? (short) (status | 0x01) : (short) (status & 0xFE);
+            status = isNotEmpty ? (short) (status | 1) : (short) (status & 0xFE);
             newStatus = status;
             
             if (isNotEmpty) {
@@ -139,7 +159,7 @@ public class Transmitter {
         }
     }
 
-    short readStatus() {
+    public short readStatus() {
         return status;
     }
     
@@ -157,7 +177,7 @@ public class Transmitter {
     }
     
     private void notifyNoData() {
-        observers.forEach(o -> o.noData());
+        observers.forEach(Observer::noData);
     }
 
     public interface Observer {

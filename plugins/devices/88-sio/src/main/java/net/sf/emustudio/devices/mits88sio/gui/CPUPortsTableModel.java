@@ -19,9 +19,10 @@
  */
 package net.sf.emustudio.devices.mits88sio.gui;
 
-import java.util.Objects;
-import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.devices.mits88sio.impl.CPUPorts;
+
+import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 public class CPUPortsTableModel extends AbstractTableModel {
     private final CPUPorts cpuPorts;
@@ -50,9 +51,9 @@ public class CPUPortsTableModel extends AbstractTableModel {
         int statusCount = cpuPorts.getStatusPortsCount();
         
         if (rowIndex < statusCount) {
-            return columnIndex == 0 ? "Status" : cpuPorts.getStatusPort(rowIndex);
+            return columnIndex == 0 ? "Status" : String.format("0x%x", cpuPorts.getStatusPort(rowIndex));
         }
-        return columnIndex == 0 ? "Data" : cpuPorts.getDataPort(rowIndex - statusCount);
+        return columnIndex == 0 ? "Data" : String.format("0x%x", cpuPorts.getDataPort(rowIndex - statusCount));
     }
     
 }

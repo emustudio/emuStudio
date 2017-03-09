@@ -26,10 +26,11 @@ public class StatusDialog extends javax.swing.JDialog {
 
     public StatusDialog(String deviceName, Transmitter transmitter, CPUPorts cpuPorts) {
         initComponents();
-        tblCPUPorts.setModel(new CPUPortsTableModel(cpuPorts));
-        
         super.setLocationRelativeTo(null);
-        
+        tblCPUPorts.setModel(new CPUPortsTableModel(cpuPorts));
+
+        txtStatus.setText(String.format("0x%x", transmitter.readStatus()));
+
         lblAttachedDevice.setText(deviceName);
         transmitter.addObserver(new Transmitter.Observer() {
             @Override
