@@ -9,7 +9,7 @@ permalink: /about/
 Project 'emuStudio' started in 2006 as a semester project. I have continued to work on it afterwards, and graduated
 with a final thesis named *emuStudio - universal emulation platform*. It was my very first project in Java.
 
-My supervisor was https://kpi.fei.tuke.sk/sk/person/slavomir-simonak[Slavomír Šimoňák], and here I want to thank him
+My supervisor was [Slavomír Šimoňák](https://kpi.fei.tuke.sk/sk/person/slavomir-simonak), and here I want to thank him
 a lot for his very concise and conceptual leadership of the first versions of the project. Lots of good ideas and
 project directions came from our discussions, of which I have only good memories. 
 
