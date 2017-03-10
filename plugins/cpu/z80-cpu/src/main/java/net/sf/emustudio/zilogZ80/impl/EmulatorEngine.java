@@ -138,7 +138,7 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    public void reset(int startPos) {
+    void reset(int startPos) {
         SP = IX = IY = 0;
         I = R = 0;
         Arrays.fill(regs, 0);
@@ -153,7 +153,7 @@ public class EmulatorEngine implements CpuEngine {
         currentRunState = RunState.STATE_STOPPED_BREAK;
     }
 
-    public CPU.RunState step() throws Exception {
+    CPU.RunState step() throws Exception {
         boolean oldIFF = IFF[0];
         noWait = false;
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
@@ -212,18 +212,18 @@ public class EmulatorEngine implements CpuEngine {
         return currentRunState;
     }
 
-    public void setInterrupt(DeviceContext device, int mask) {
+    void setInterrupt(DeviceContext device, int mask) {
         this.interruptDevice = device;
         this.interruptPending |= mask;
     }
 
-    public void clearInterrupt(DeviceContext device, int mask) {
+    void clearInterrupt(DeviceContext device, int mask) {
         if (interruptDevice == device) {
             this.interruptPending &= ~mask;
         }
     }
 
-    public void setInterruptVector(byte[] vector) {
+    void setInterruptVector(byte[] vector) {
         if ((vector == null) || (vector.length == 0)) {
             return;
         }
@@ -258,7 +258,7 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    void putpair(int reg, int val, boolean reg3IsSP) {
+    private void putpair(int reg, int val, boolean reg3IsSP) {
         int high = (val >>> 8) & 0xFF;
         int low = val & 0xFF;
         int index = reg * 2;
@@ -1795,14 +1795,13 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
 
         int DAR = regs[REG_A];
-        int diff = tmp;
-        regs[REG_A] += diff;
+        regs[REG_A] += tmp;
 
         flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
         regs[REG_A] = regs[REG_A] & 0xFF;
 
-        auxCarry(DAR, diff);
-        overflow(DAR, diff, regs[REG_A]);
+        auxCarry(DAR, tmp);
+        overflow(DAR, tmp, regs[REG_A]);
 
         return 7;
     }
