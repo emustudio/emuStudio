@@ -910,8 +910,8 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int RST_P(short OP) {
-        writeWord(SP - 2, PC);
         SP = (SP - 2) & 0xffff;
+        writeWord(SP, PC);
         PC = OP & 0x38;
         return 11;
     }
@@ -1144,7 +1144,7 @@ public class EmulatorEngine implements CpuEngine {
 
     private int C9_RET(short OP) {
         PC = readWord(SP);
-        SP += 2;
+        SP = (SP + 2) & 0xFFFF;
         return 10;
     }
 
@@ -1172,9 +1172,10 @@ public class EmulatorEngine implements CpuEngine {
 
     private int E3_EX_LPAR_SP_RPAR_HL(short OP) {
         int tmp = memory.read(SP);
-        int tmp1 = memory.read(SP + 1);
+        int x = (SP + 1) & 0xFFFF;
+        int tmp1 = memory.read(x);
         memory.write(SP, (short) regs[REG_L]);
-        memory.write(SP + 1, (short) regs[REG_H]);
+        memory.write(x, (short) regs[REG_H]);
         regs[REG_L] = tmp & 0xFF;
         regs[REG_H] = tmp1 & 0xFF;
         return 19;
@@ -2109,7 +2110,7 @@ public class EmulatorEngine implements CpuEngine {
                             } else {
                                 IY = readWord(SP);
                             }
-                            SP += 2;
+                            SP = (SP + 2) & 0xFFFF;
                             return 14;
                         case 0xE3: /* EX (SP),ii */
                             tmp = readWord(SP);
@@ -2123,7 +2124,7 @@ public class EmulatorEngine implements CpuEngine {
                             writeWord(SP, tmp1);
                             return 23;
                         case 0xE5: /* PUSH ii */
-                            SP -= 2;
+                            SP = (SP - 2) & 0xFFFF;
                             if (special == 0xDD) {
                                 writeWord(SP, IX);
                             } else {
