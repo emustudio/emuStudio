@@ -419,7 +419,10 @@ public class SettingsDialog extends javax.swing.JDialog {
             from = JOptionPane.showInputDialog("Please enter FROM address", "0");
             to = JOptionPane.showInputDialog("Please enter TO address", "0");
         }
-        
+
+        if (from == null || to == null) {
+            return;
+        }
         try {
             memContext.setRAM(new AddressRangeImpl(Integer.decode(from), Integer.decode(to)));
 
