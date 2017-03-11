@@ -21,18 +21,18 @@ package net.sf.emustudio.memory.standard.gui;
 
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
-import java.io.File;
-import java.util.Objects;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.JTextField;
-import static net.sf.emustudio.memory.standard.gui.FileChooser.selectFile;
 import net.sf.emustudio.memory.standard.gui.model.FileImagesModel;
 import net.sf.emustudio.memory.standard.gui.model.ROMmodel;
 import net.sf.emustudio.memory.standard.gui.model.TableMemory;
 import net.sf.emustudio.memory.standard.impl.AddressRangeImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryImpl;
+
+import javax.swing.*;
+import java.io.File;
+import java.util.Objects;
+
+import static net.sf.emustudio.memory.standard.gui.FileChooser.selectFile;
 
 public class SettingsDialog extends javax.swing.JDialog {
     private final MemoryContextImpl memContext;
@@ -391,7 +391,10 @@ public class SettingsDialog extends javax.swing.JDialog {
     private void btnAddRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddRangeActionPerformed
         String from = JOptionPane.showInputDialog("Please enter FROM address", "0");
         String to = JOptionPane.showInputDialog("Please enter TO address", "0");
-        
+
+        if (from == null || to == null) {
+            return;
+        }
         try {
             memContext.setROM(new AddressRangeImpl(Integer.decode(from), Integer.decode(to)));
 
