@@ -31,14 +31,17 @@ import java.util.stream.Collectors;
 
 @NotThreadSafe
 public class CpmDirectory {
-    public final static int ENTRY_SIZE = 32;
-    public final static int DIRECTORY_ENTRIES = 256;
-    public final static int RECORD_BYTES = 128;
+    private final static int ENTRY_SIZE = 32;
+//    public final static int DIRECTORY_ENTRIES = 256;
+    private final static int RECORD_BYTES = 128;
+    public final static boolean BLOCKS_ARE_TWO_BYTES = false;
 
     private final RawDisc disc;
+    private final boolean blocksAreTwoBytes; // TODO: capacity blocks < 256 ? false : true;
 
-    public CpmDirectory(RawDisc disc) {
+    public CpmDirectory(RawDisc disc, boolean blocksAreTwoBytes) {
         this.disc = Objects.requireNonNull(disc);
+        this.blocksAreTwoBytes = blocksAreTwoBytes;
     }
 
     private List<CpmFile> readAllFiles() throws IOException {
@@ -95,7 +98,6 @@ public class CpmDirectory {
             return;
         }
 
-        boolean blocksAreTwoBytes = false; // TODO: capacity blocks < 256 ? false : true;
         int maxBlocksCount = 16;
         if (blocksAreTwoBytes) {
             maxBlocksCount /= 2;

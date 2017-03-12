@@ -39,6 +39,7 @@ public class Main {
     private static int SECTORS_COUNT = RawDisc.SECTORS_PER_TRACK;
     private static int BLOCK_LENGTH = RawDisc.BLOCK_LENGTH;
     private static int DIRECTORY_TRACK = RawDisc.DIRECTORY_TRACK;
+    private static boolean BLOCKS_ARE_TWO_BYTES = CpmDirectory.BLOCKS_ARE_TWO_BYTES;
     private static String CAT_FILE = null;
 
     /**
@@ -55,19 +56,11 @@ public class Main {
             try {
                 switch (arg) {
                     case "--LIST":
-                        // list files in the image
                         ARG_LIST = true;
                         break;
                     case "--IMAGE":
                         i++;
-                        // the image file
-                        if (IMAGE_FILE != null) {
-                            System.out.println("Image file already defined,"
-                                + " ignoring this one: " + args[i]);
-                        } else {
-                            IMAGE_FILE = args[i];
-                            System.out.println("Image file name: " + IMAGE_FILE);
-                        }
+                        IMAGE_FILE = args[i];
                         break;
                     case "--HELP":
                         ARG_HELP = true;
@@ -98,6 +91,9 @@ public class Main {
                     case "--CAT":
                         i++;
                         CAT_FILE = args[i].toUpperCase();
+                        break;
+                    case "--BLOCKPTRS2":
+                        BLOCKS_ARE_TWO_BYTES = true;
                         break;
                     default:
                         System.out.println("Error: Invalid command line argument (" + arg + ")!");
@@ -132,7 +128,7 @@ public class Main {
             DIRECTORY_TRACK,
             StandardOpenOption.READ
         )) {
-            CpmDirectory directory = new CpmDirectory(disc);
+            CpmDirectory directory = new CpmDirectory(disc, BLOCKS_ARE_TWO_BYTES);
 
             if (ARG_INFO) {
                 System.out.println("Disc label: " + directory.findDiscLabel());
@@ -176,6 +172,8 @@ public class Main {
             + "\n--sectorskew X: sector skew in bytes (default " + RawDisc.SECTOR_SKEW + ")"
             + "\n--blocklen X  : block length in bytes (default " + RawDisc.BLOCK_LENGTH + ")"
             + "\n--directory X : directory track number (default " + RawDisc.DIRECTORY_TRACK + ")"
+            + "\n--blockptrs2  : use 2 bytes per block pointer (default "
+            + (CpmDirectory.BLOCKS_ARE_TWO_BYTES ? "2 bytes" : "1 byte") + ")"
             + "\n--list        : list all files in the image"
             + "\n--info        : return some drive information"
             + "\n--cat name    : print the file content from the image to stdout"

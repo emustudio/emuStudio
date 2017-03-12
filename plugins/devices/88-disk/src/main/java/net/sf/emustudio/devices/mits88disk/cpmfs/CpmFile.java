@@ -29,15 +29,15 @@ import java.util.Objects;
 
 @Immutable
 public class CpmFile {
-    public final String fileName;
-    public final String fileExt;
-    public final int status;
-    public final int extentNumber;
-    public final byte bc; // the number of bytes in the last used record
-    public final byte rc; // the number of 128 byte records of the last used logical extent.
-    public final List<Byte> blockPointers;
+    final String fileName;
+    final String fileExt;
+    final int status;
+    final int extentNumber;
+    final byte bc; // the number of bytes in the last used record
+    final byte rc; // the number of 128 byte records of the last used logical extent.
+    final List<Byte> blockPointers;
 
-    public CpmFile(String fileName, String fileExt, int status, int extentNumber, byte bc, byte rc, List<Byte> blockPointers) {
+    CpmFile(String fileName, String fileExt, int status, int extentNumber, byte bc, byte rc, List<Byte> blockPointers) {
         this.status = status;
         this.extentNumber = extentNumber;
         this.bc = bc;
@@ -58,7 +58,7 @@ public class CpmFile {
         return result;
     }
 
-    public static CpmFile fromEntry(ByteBuffer entry) {
+    static CpmFile fromEntry(ByteBuffer entry) {
         int fileStatus = entry.get() & 0xFF;
 
         byte[] fileNameBytes = new byte[11];

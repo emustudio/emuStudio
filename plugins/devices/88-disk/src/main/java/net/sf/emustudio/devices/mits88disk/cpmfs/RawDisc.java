@@ -33,19 +33,19 @@ public class RawDisc implements AutoCloseable {
     public final static int SECTORS_PER_TRACK = 32; // 26, 32
     public final static int SECTOR_SKEW = 17;
     public final static int BLOCK_LENGTH = 1024; // 2048, 4096, 8192 and 16384
-    public final static int TRACKS_COUNT = 77;
+    //public final static int TRACKS_COUNT = 77;
     public final static int DIRECTORY_TRACK = 6;
-    public final static int RAW_CHECKSUM_LENGTH = 9;
+    private final static int RAW_CHECKSUM_LENGTH = 9;
 
     private final Position position = new Position(0, 0);
     private final FileChannel channel;
 
     private final int[] skewTab;
-    public final int rawSectorSize;
-    public final int sectorSize;
-    public final int sectorsPerTrack;
-    public final int blockLength;
-    public final int directoryTrack;
+    private final int rawSectorSize;
+    private final int sectorSize;
+    private final int sectorsPerTrack;
+    private final int blockLength;
+    private final int directoryTrack;
 
     public RawDisc(Path imageFile, int sectorSize, int sectorsPerTrack, int sectorSkew, int blockLength,
                    int directoryTrack, OpenOption... openOptions) throws IOException {
@@ -76,15 +76,11 @@ public class RawDisc implements AutoCloseable {
         this.channel = FileChannel.open(Objects.requireNonNull(imageFile), openOptions);
     }
 
-    public void reset(int track) {
-        reset(track, 0);
-    }
-
-    public void reset(int track, int sector) {
+    private void reset(int track, int sector) {
         position.reset(track, sector);
     }
 
-    public ByteBuffer readSector() throws IOException {
+    private ByteBuffer readSector() throws IOException {
         ByteBuffer buffer = ByteBuffer.allocateDirect(rawSectorSize);
 
         channel.position(sectorsPerTrack * rawSectorSize * position.track + rawSectorSize * skewTab[position.sector]);
@@ -96,30 +92,28 @@ public class RawDisc implements AutoCloseable {
         return buffer.asReadOnlyBuffer();
     }
 
-    public void writeSector(ByteBuffer buffer) throws IOException {
-        channel.position(sectorsPerTrack * rawSectorSize * position.track + rawSectorSize * skewTab[position.sector]);
+//    public void writeSector(ByteBuffer buffer) throws IOException {
+//        channel.position(sectorsPerTrack * rawSectorSize * position.track + rawSectorSize * skewTab[position.sector]);
+//
+//        int expected = buffer.remaining();
+//        if (channel.write(buffer) != expected) {
+//            throw new IOException("Could not write whole sector! (" + position + ")");
+//        }
+//    }
 
-        int expected = buffer.remaining();
-        if (channel.write(buffer) != expected) {
-            throw new IOException("Could not write whole sector! (" + position + ")");
-        }
-    }
-
-    public List<ByteBuffer> readBlock(int blockNumber) throws IOException {
-        int sector, track, counter;
-
+    List<ByteBuffer> readBlock(int blockNumber) throws IOException {
         int sectorsPerBlock = blockLength / sectorSize;
-        sector = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) % sectorsPerTrack;
-        track = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) / sectorsPerTrack;
+        final int sector = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) % sectorsPerTrack;
+        int track = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) / sectorsPerTrack;
 
         reset(track, sector);
         List<ByteBuffer> block = new ArrayList<>();
-        for (counter = 0; counter < sectorsPerBlock; counter++) {
+        for (int counter = 0; counter < sectorsPerBlock; counter++) {
             block.add(readSector());
             position.sector++;
             if (position.sector >= sectorsPerTrack) {
-                position.track++;
-                position.sector = 0;
+                reset(track + 1, 0);
+                track++;
             }
         }
         return block;

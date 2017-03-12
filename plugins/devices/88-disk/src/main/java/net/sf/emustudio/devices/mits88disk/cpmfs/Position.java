@@ -20,7 +20,7 @@
 package net.sf.emustudio.devices.mits88disk.cpmfs;
 
 class Position {
-  public int track;
+  int track;
   public int sector;
 
   Position(int track, int sector) {
@@ -28,7 +28,7 @@ class Position {
     this.sector = sector;
   }
 
-  public void reset(int track, int sector) {
+  void reset(int track, int sector) {
       this.track = track;
       this.sector = sector;
   }
