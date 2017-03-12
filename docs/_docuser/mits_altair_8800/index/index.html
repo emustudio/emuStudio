@@ -2862,7 +2862,7 @@ it provides custom context API, enabling to use more features - e.g. bank-switch
     <span style="color: #408080; font-style: italic">/**</span>
 <span style="color: #408080; font-style: italic">     * This interface represents a range of addresses in the memory.</span>
 <span style="color: #408080; font-style: italic">     */</span>
-    <span style="color: #008000; font-weight: bold">interface</span> <span style="color: #0000FF; font-weight: bold">AddressRange</span> <span style="color: #008000; font-weight: bold">extends</span> Comparable<span style="color: #666666">&lt;</span>AddressRange<span style="color: #666666">&gt;</span> <span style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">interface</span> <span style="color: #0000FF; font-weight: bold">AddressRange</span> <span style="color: #666666">{</span>
         <span style="color: #B00040">int</span> <span style="color: #0000FF">getStartAddress</span><span style="color: #666666">();</span>
         <span style="color: #B00040">int</span> <span style="color: #0000FF">getStopAddress</span><span style="color: #666666">();</span>
     <span style="color: #666666">}</span>
@@ -2876,11 +2876,11 @@ it provides custom context API, enabling to use more features - e.g. bank-switch
     <span style="color: #B00040">boolean</span> <span style="color: #0000FF">isROM</span><span style="color: #666666">(</span><span style="color: #B00040">int</span> address<span style="color: #666666">);</span>
 
     <span style="color: #408080; font-style: italic">/**</span>
-<span style="color: #408080; font-style: italic">     * Get list of ranges of adresses in memory which are read-only.</span>
+<span style="color: #408080; font-style: italic">     * Get list of ranges of read-only addresses.</span>
 <span style="color: #408080; font-style: italic">     *</span>
 <span style="color: #408080; font-style: italic">     * @return list of ROM memory addresses</span>
 <span style="color: #408080; font-style: italic">     */</span>
-    List<span style="color: #666666">&lt;</span>AddressRange<span style="color: #666666">&gt;</span> <span style="color: #0000FF">getROMRanges</span><span style="color: #666666">();</span>
+    List<span style="color: #666666">&lt;?</span> <span style="color: #008000; font-weight: bold">extends</span> AddressRange<span style="color: #666666">&gt;</span> <span style="color: #0000FF">getROMRanges</span><span style="color: #666666">();</span>
 
     <span style="color: #408080; font-style: italic">/**</span>
 <span style="color: #408080; font-style: italic">     * Set specified memory range as RAM (Random Access Memory).</span>
