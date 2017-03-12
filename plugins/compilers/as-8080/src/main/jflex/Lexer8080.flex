@@ -910,7 +910,7 @@ Label ={Identifier}[\:]
 {String} {
     String text = yytext();
     String val = text.substring(1,text.length()-1);
-    if (val.length() > 2) {
+    if (val.length() > 1) {
         lastToken = Tokens.LITERAL_STRING;
         return (new Tokens(lastToken,Token.LITERAL,text,val,yyline,yycolumn,
             yychar,yychar+text.length(),true));

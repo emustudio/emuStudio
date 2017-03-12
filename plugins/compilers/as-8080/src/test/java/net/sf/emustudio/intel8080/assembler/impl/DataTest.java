@@ -83,6 +83,28 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test
+    public void testDBliteral() throws Exception {
+        compile(
+            "db 'if'\n"
+        );
+
+        assertProgram(
+            'i', 'f'
+        );
+    }
+
+    @Test
+    public void testDBshortLiteral() throws Exception {
+        compile(
+            "db 'i'\n"
+        );
+
+        assertProgram(
+            'i'
+        );
+    }
+
+    @Test
     public void testDWwithNegativeValueWorks() throws Exception {
         compile(
             "dw -1"
