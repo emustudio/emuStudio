@@ -22,6 +22,6 @@ package net.sf.emustudio.zilogZ80.assembler.exceptions;
 public class ValueTooBigException extends CompilerException {
 
     public ValueTooBigException(int line, int column, int currentValue, int maximumValue) {
-        super(line, column, "Value (" + currentValue + ") too large (maximum is " + maximumValue + ")");
+        super(column, line, "Value (" + currentValue + ") too large (maximum is " + maximumValue + ")");
     }
 }

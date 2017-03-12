@@ -874,7 +874,7 @@ Label ={Identifier}[\:]
 }
 {String} { lastText = yytext(); yybegin(YYINITIAL);
     String val = lastText.substring(1,lastText.length()-1);
-    if (val.length() > 2) {
+    if (val.length() > 1) {
         lastToken = Tokens.LITERAL_STRING;
         return (new Tokens(lastToken,Token.LITERAL,lastText,val,yyline,yycolumn,
             yychar,yychar+lastText.length(),true));
