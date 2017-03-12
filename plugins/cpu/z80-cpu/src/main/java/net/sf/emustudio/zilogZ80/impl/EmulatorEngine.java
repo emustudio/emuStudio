@@ -23,6 +23,12 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
 import emulib.plugins.device.DeviceContext;
 import emulib.plugins.memory.MemoryContext;
+import net.sf.emustudio.intel8080.api.CpuEngine;
+import net.sf.emustudio.intel8080.api.DispatchListener;
+import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,9 +37,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
-import net.sf.emustudio.intel8080.api.CpuEngine;
-import net.sf.emustudio.intel8080.api.DispatchListener;
-import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
+
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.AND_OR_XOR_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_C_H_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_C_NOT_H_TABLE;
@@ -50,8 +54,6 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.PARITY_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.RRCA_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_CARRY_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_TABLE;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
@@ -99,7 +101,6 @@ public class EmulatorEngine implements CpuEngine {
     private DeviceContext interruptDevice;
 
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
-    private final int checkTimeSlice = 100;
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
@@ -169,6 +170,7 @@ public class EmulatorEngine implements CpuEngine {
     public CPU.RunState run(CPU cpu) {
         long startTime, endTime;
         int cycles_executed;
+        int checkTimeSlice = 100;
         int cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         int cycles;
         long slice = checkTimeSlice * 1000000;

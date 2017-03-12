@@ -5,9 +5,9 @@ MAIN:
   CALL TIMER5
   halt
 
-TIMER5:   LD E,35H
-J60:      LD B,0FFH
-J61:      LD D,0FFH
+TIMER5:   LD E, 35H
+J60:      LD B, 0FFH
+J61:      LD D, 0FFH
 J62:      DEC D
           JP NZ,J62
           DEC B

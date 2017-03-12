@@ -42,7 +42,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
     private int banksCount;
     private short bankSelect = 0;
     private int bankCommon = 0;
-    private int activeBank;
 
     void init(int size, int banks, int bankCommon) {
         if (banks <= 0) {
@@ -68,7 +67,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
     void destroy() {
         clear();
         mem = null;
-        activeBank = 0;
         banksCount = 0;
     }
 
@@ -142,11 +140,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
 
     @Override
     public Short read(int from) {
-        if (from < bankCommon) {
-            return mem[bankSelect][from];
-        } else {
-            return mem[0][from];
-        }
+        int activeBank = (from < bankCommon) ? bankSelect : 0;
+        return mem[activeBank][from];
     }
 
     public Short read(int from, int bank) {
@@ -159,14 +154,14 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
 
     @Override
     public Short[] readWord(int from) {
-        activeBank = (from < bankCommon) ? bankSelect : 0;
+        int activeBank = (from < bankCommon) ? bankSelect : 0;
         return new Short[] { mem[activeBank][from] , mem[activeBank][from + 1] };
     }
 
     @Override
     public void write(int to, Short val) {
         if (!isROM(to)) {
-            activeBank = (to < bankCommon) ? bankSelect : 0;
+            int activeBank = (to < bankCommon) ? bankSelect : 0;
             mem[activeBank][to] = (short) (val & 0xFF);
             notifyMemoryChanged(to);
         }
@@ -174,7 +169,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
 
     public void write(int to, short val, int bank) {
         if (!isROM(to)) {
-            activeBank = (to < bankCommon) ? bank : 0;
+            int activeBank = (to < bankCommon) ? bank : 0;
             mem[activeBank][to] = (short)(val & 0xFF);
             notifyMemoryChanged(to);
         }
@@ -185,7 +180,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         if (isROM(to)) {
             return;
         }
-        activeBank = (to < bankCommon) ? bankSelect : 0;
+        int activeBank = (to < bankCommon) ? bankSelect : 0;
         mem[activeBank][to] = (short)(cells[0] & 0xFF);
 
         if (isROM(to+1)) {
