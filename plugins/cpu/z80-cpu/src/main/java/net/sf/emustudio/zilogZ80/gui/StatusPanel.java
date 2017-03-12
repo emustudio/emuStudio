@@ -20,13 +20,11 @@
 package net.sf.emustudio.zilogZ80.gui;
 
 import emulib.plugins.cpu.CPU;
-import net.sf.emustudio.intel8080.api.ExtendedContext;
-import net.sf.emustudio.zilogZ80.impl.ContextImpl;
-import net.sf.emustudio.zilogZ80.impl.CpuImpl;
-import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
-
 import static emulib.runtime.RadixUtils.formatByteHexString;
 import static emulib.runtime.RadixUtils.formatWordHexString;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.zilogZ80.impl.CpuImpl;
+import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
@@ -34,6 +32,7 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
+import net.sf.emustudio.zilogZ80.impl.InstructionPrinter;
 
 public class StatusPanel extends javax.swing.JPanel {
     private final CpuImpl cpu;
@@ -43,13 +42,14 @@ public class StatusPanel extends javax.swing.JPanel {
 
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, ExtendedContext context) {
+    public StatusPanel(CpuImpl cpu, ExtendedContext context, boolean dumpInstructions) {
         this.cpu = cpu;
         this.context = context;
         this.flagModel1 = new FlagsModel(0, cpu.getEngine());
         this.flagModel2 = new FlagsModel(1, cpu.getEngine());
         
         initComponents();
+        chkPrintInstructions.setSelected(dumpInstructions);
         tblFlags1.setModel(flagModel1);
         tblFlags2.setModel(flagModel2);
         
@@ -77,14 +77,6 @@ public class StatusPanel extends javax.swing.JPanel {
                 context.setCPUFrequency(i);
             } catch (IndexOutOfBoundsException ex) {
                 spnFrequency.getModel().setValue(context.getCPUFrequency());
-            }
-        });
-        spnTestPeriode.addChangeListener(e -> {
-            int i = (Integer) spnTestPeriode.getModel().getValue();
-            try {
-                cpu.setSliceTime(i);
-            } catch (IndexOutOfBoundsException ex) {
-                spnTestPeriode.getModel().setValue(cpu.getSliceTime());
             }
         });
     }
@@ -134,10 +126,8 @@ public class StatusPanel extends javax.swing.JPanel {
         lblRunState.setText(runState.toString());
         if (runState == CPU.RunState.STATE_RUNNING) {
             spnFrequency.setEnabled(false);
-            spnTestPeriode.setEnabled(false);
         } else {
             spnFrequency.setEnabled(true);
-            spnTestPeriode.setEnabled(true);
         }
     }
        
@@ -220,13 +210,11 @@ public class StatusPanel extends javax.swing.JPanel {
         lblRunState = new javax.swing.JLabel();
         javax.swing.JSeparator jSeparator1 = new javax.swing.JSeparator();
         javax.swing.JLabel jLabel31 = new javax.swing.JLabel();
-        javax.swing.JLabel jLabel32 = new javax.swing.JLabel();
         spnFrequency = new javax.swing.JSpinner();
-        spnTestPeriode = new javax.swing.JSpinner();
         javax.swing.JLabel jLabel33 = new javax.swing.JLabel();
-        javax.swing.JLabel jLabel34 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel35 = new javax.swing.JLabel();
         lblFrequency = new javax.swing.JLabel();
+        chkPrintInstructions = new javax.swing.JCheckBox();
 
         jTabbedPane1.setFont(jTabbedPane1.getFont().deriveFont(jTabbedPane1.getFont().getStyle() & ~java.awt.Font.BOLD));
 
@@ -726,27 +714,26 @@ public class StatusPanel extends javax.swing.JPanel {
         jLabel31.setFont(jLabel31.getFont().deriveFont(jLabel31.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel31.setText("CPU Frequency:");
 
-        jLabel32.setFont(jLabel32.getFont().deriveFont(jLabel32.getFont().getStyle() & ~java.awt.Font.BOLD));
-        jLabel32.setText("Test periode:");
-
         spnFrequency.setFont(spnFrequency.getFont().deriveFont(spnFrequency.getFont().getStyle() & ~java.awt.Font.BOLD));
-        spnFrequency.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(ContextImpl.DEFAULT_FREQUENCY_KHZ), Integer.valueOf(1), null, Integer.valueOf(100)));
+        spnFrequency.setModel(new javax.swing.SpinnerNumberModel(20000, 1, null, 100));
         spnFrequency.setName("CPU frequency"); // NOI18N
-
-        spnTestPeriode.setFont(spnTestPeriode.getFont().deriveFont(spnTestPeriode.getFont().getStyle() & ~java.awt.Font.BOLD));
-        spnTestPeriode.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(50), Integer.valueOf(10), null, Integer.valueOf(5)));
 
         jLabel33.setFont(jLabel33.getFont().deriveFont(jLabel33.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel33.setText("kHz");
-
-        jLabel34.setFont(jLabel34.getFont().deriveFont(jLabel34.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel34.setText("ms");
 
         jLabel35.setFont(jLabel35.getFont().deriveFont(jLabel35.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel35.setText("Runtime frequency:");
 
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | java.awt.Font.BOLD));
         lblFrequency.setText("0.00 kHz");
+
+        chkPrintInstructions.setFont(chkPrintInstructions.getFont().deriveFont(chkPrintInstructions.getFont().getStyle() & ~java.awt.Font.BOLD));
+        chkPrintInstructions.setText("Dump instructions history");
+        chkPrintInstructions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkPrintInstructionsActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -760,21 +747,16 @@ public class StatusPanel extends javax.swing.JPanel {
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblRunState)
                             .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel31)
-                                    .addComponent(jLabel32))
+                                .addComponent(jLabel31)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(spnFrequency)
-                                    .addComponent(spnTestPeriode, javax.swing.GroupLayout.DEFAULT_SIZE, 91, Short.MAX_VALUE))
+                                .addComponent(spnFrequency, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel33)
-                                    .addComponent(jLabel34)))
+                                .addComponent(jLabel33))
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(jLabel35)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblFrequency)))
+                                .addComponent(lblFrequency))
+                            .addComponent(chkPrintInstructions))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -791,15 +773,11 @@ public class StatusPanel extends javax.swing.JPanel {
                     .addComponent(spnFrequency, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel33))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel32)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(spnTestPeriode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel34)))
-                .addGap(18, 18, 18)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel35)
                     .addComponent(lblFrequency))
+                .addGap(18, 18, 18)
+                .addComponent(chkPrintInstructions)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -828,12 +806,20 @@ public class StatusPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void chkPrintInstructionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkPrintInstructionsActionPerformed
+        if (chkPrintInstructions.isSelected()) {
+            cpu.getEngine().setDispatchListener(new InstructionPrinter(cpu.getDisassembler(), cpu.getEngine(), true));
+        } else {
+            cpu.getEngine().setDispatchListener(null);
+        }
+    }//GEN-LAST:event_chkPrintInstructionsActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkPrintInstructions;
     private javax.swing.JLabel lblFrequency;
     private javax.swing.JLabel lblRunState;
     private javax.swing.JSpinner spnFrequency;
-    private javax.swing.JSpinner spnTestPeriode;
     private javax.swing.JTable tblFlags1;
     private javax.swing.JTable tblFlags2;
     private javax.swing.JTextField txtA1;

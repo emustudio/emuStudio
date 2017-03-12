@@ -23,12 +23,6 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
 import emulib.plugins.device.DeviceContext;
 import emulib.plugins.memory.MemoryContext;
-import net.sf.emustudio.intel8080.api.CpuEngine;
-import net.sf.emustudio.intel8080.api.DispatchListener;
-import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -37,7 +31,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
-
+import net.sf.emustudio.intel8080.api.CpuEngine;
+import net.sf.emustudio.intel8080.api.DispatchListener;
+import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.AND_OR_XOR_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_C_H_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_C_NOT_H_TABLE;
@@ -54,6 +50,8 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.PARITY_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.RRCA_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_CARRY_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_TABLE;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
@@ -79,8 +77,8 @@ public class EmulatorEngine implements CpuEngine {
 
     public final int[] regs = new int[8];
     public final int[] regs2 = new int[8];
-    public volatile int flags = 2;
-    public volatile int  flags2 = 2;    
+    public int flags = 2;
+    public int flags2 = 2;    
     
     // special registers
     public int PC = 0, SP = 0, IX = 0, IY = 0;
@@ -101,7 +99,7 @@ public class EmulatorEngine implements CpuEngine {
     private DeviceContext interruptDevice;
 
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
-    public int checkTimeSlice = 100;
+    public final int checkTimeSlice = 100;
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;

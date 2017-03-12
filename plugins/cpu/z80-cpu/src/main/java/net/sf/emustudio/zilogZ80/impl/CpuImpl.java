@@ -29,11 +29,6 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
-import net.sf.emustudio.intel8080.api.ExtendedContext;
-import net.sf.emustudio.intel8080.api.FrequencyUpdater;
-import net.sf.emustudio.zilogZ80.gui.StatusPanel;
-
-import javax.swing.JPanel;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
@@ -42,6 +37,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.JPanel;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.intel8080.api.FrequencyUpdater;
+import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
 @PluginType(
         type = PLUGIN_TYPE.CPU,
@@ -95,7 +94,7 @@ public class CpuImpl extends AbstractCPU {
 
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
-        statusPanel = new StatusPanel(this, context);
+        statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
     }
 
     public EmulatorEngine getEngine() {
@@ -106,10 +105,6 @@ public class CpuImpl extends AbstractCPU {
         return engine.checkTimeSlice;
     }
     
-    public void setSliceTime(int t) {
-        engine.checkTimeSlice = t;
-    }
-
     @Override
     public JPanel getStatusPanel() {
         return statusPanel;
