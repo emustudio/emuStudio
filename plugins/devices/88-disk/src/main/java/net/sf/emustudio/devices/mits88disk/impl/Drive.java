@@ -196,7 +196,8 @@ public class Drive {
 
     public void mount(File file) throws IOException {
         if (!file.isFile() || !file.exists()) {
-            throw new IllegalArgumentException("[drive=" + index + "] Specified file name doesn't point to a file");
+            LOGGER.error("[drive={},file={}] Specified file name doesn't point to existing file", index, file);
+            return;
         }
         umount();
         this.mountedFloppy = file;
@@ -217,7 +218,7 @@ public class Drive {
                 imageChannel.close();
             }
         } catch (IOException e) {
-            LOGGER.error("[drive=" + index + "] Could not umount disk image", e);
+            LOGGER.error("[drive={}] Could not un-mount disk image", index, e);
         }
     }
 
