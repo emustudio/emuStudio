@@ -275,12 +275,12 @@ class PseudoContext implements DeviceContext<Short> {
         short result = 0;
         switch (lastCommand) {
             case getHostFilenames:
-                LOGGER.debug("[command={},name=getHostFilenames] Unimplemented command!", lastCommand);
+                LOGGER.trace("[command={},name=getHostFilenames] Unimplemented command!", lastCommand);
                 lastCommand = 0;
                 break;
             case attachPTRCmd:
             case attachPTPCmd:
-                LOGGER.debug("[command={},name=attachPTRCmd/attachPTPCmd] Unimplemented command!", lastCommand);
+                LOGGER.trace("[command={},name=attachPTRCmd/attachPTPCmd] Unimplemented command!", lastCommand);
 
                 result = lastCPMStatus;
                 lastCommand = 0;
@@ -438,28 +438,28 @@ class PseudoContext implements DeviceContext<Short> {
                 lastCommand = value;
                 switch (value) {
                     case getHostFilenames:
-                        LOGGER.debug("[command={},name=getHostFilenames,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=getHostFilenames,method=write] Unimplemented command!", lastCommand);
                         break;
                     case SIMHSleepCmd:
-                        LOGGER.debug("[command={},name=SIMHSleepCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=SIMHSleepCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case printTimeCmd:
-                        LOGGER.debug("[command={},name=printTimeCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=printTimeCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case startTimerCmd:
-                        LOGGER.debug("[command={},name=startTimerCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=startTimerCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case stopTimerCmd:
-                        LOGGER.debug("[command={},name=stopTimerCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=stopTimerCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case resetPTRCmd:
-                        LOGGER.debug("[command={},name=resetPTRCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=resetPTRCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case attachPTRCmd:
-                        LOGGER.debug("[command={},name=attachPTRCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=attachPTRCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case detachPTRCmd:
-                        LOGGER.debug("[command={},name=detachPTRCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=detachPTRCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case getSIMHVersionCmd:
                         versionPos = 0;
@@ -494,28 +494,28 @@ class PseudoContext implements DeviceContext<Short> {
                     case resetSIMHInterfaceCmd:
                         markTimeSP = 0;
                         lastCommand = 0;
-                        LOGGER.debug("[command={},name=resetSIMHInterfaceCMD,method=write] Partially implemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=resetSIMHInterfaceCMD,method=write] Partially implemented command!", lastCommand);
                         break;
                     case showTimerCmd:
-                        LOGGER.debug("[command={},name=showTimerCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=showTimerCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case attachPTPCmd:
-                        LOGGER.debug("[command={},name=attachPTPCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=attachPTPCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case detachPTPCmd:
-                        LOGGER.debug("[command={},name=detachPTPCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=detachPTPCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case setZ80CPUCmd:
-                        LOGGER.debug("[command={},name=setZ80CPUCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=setZ80CPUCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case set8080CPUCmd:
-                        LOGGER.debug("[command={},name=set8080CPUCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=set8080CPUCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case startTimerInterruptsCmd:
-                        LOGGER.debug("[command={},name=startTimerInterruptsCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=startTimerInterruptsCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case stopTimerInterruptsCmd:
-                        LOGGER.debug("[command={},name=stopTimerInterruptsCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=stopTimerInterruptsCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case setTimerDeltaCmd:
                         setTimerDeltaPos = 0;
@@ -524,10 +524,10 @@ class PseudoContext implements DeviceContext<Short> {
                         setTimerInterruptAdrPos = 0;
                         break;
                     case resetStopWatchCmd:
-                        LOGGER.debug("[command={},name=resetStopWatchCmd,method=write] Unimplemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=resetStopWatchCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case readStopWatchCmd:
-                        LOGGER.debug("[command={},name=readStopWatchCmd,method=write] Partially implemented command!", lastCommand);
+                        LOGGER.trace("[command={},name=readStopWatchCmd,method=write] Partially implemented command!", lastCommand);
                         getStopWatchDeltaPos = 0;
                         break;
                     default:

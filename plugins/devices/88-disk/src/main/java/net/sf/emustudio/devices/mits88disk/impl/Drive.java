@@ -236,9 +236,6 @@ public class Drive {
     public void writeToPort2(short val) {
         if ((val & 0x01) != 0) { /* Step head in */
             track++;
-            if (track == 77) {
-                track = 0;
-            }
             sector = 0;
             sectorOffset = 0;
         }
