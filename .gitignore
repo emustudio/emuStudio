@@ -87,9 +87,9 @@ diag-*.png.cache
 .vagrant/
 
 # emustudio
-./compilers/
-./config/
-./cpu/
-./devices/
-./mem/
+compilers/
+config/
+cpu/
+devices/
+mem/
 
