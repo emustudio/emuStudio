@@ -1,7 +1,7 @@
 1. Open AltairZ80 computer
 2. Set these parameters in memory: 8 banks, common address is 0xC000
 3. Load file `boot/mboot.bin` into memory at address 0xFF00
-4. Load disk image file `cpm3.dsk` into device MITS 88-DISK as disk 0
+4. Load disk image file `cpm3.dsk` into device MITS 88-DISK as disk A
 5. (optional) Jump at address 0xFF00
 6. Open terminal
 7. Run emulation

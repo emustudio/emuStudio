@@ -1,0 +1,10 @@
+1. Open AltairZ80 computer
+2. Load file `boot/mboot.bin` into memory at address 0xFF00
+3. Load disk image file `plm0.dsk` into device MITS 88-DISK as disk A
+3. Load disk image file `plm1.dsk` into device MITS 88-DISK as disk B
+3. Load disk image file `plm2.dsk` into device MITS 88-DISK as disk C
+3. Load disk image file `plm3.dsk` into device MITS 88-DISK as disk D
+5. (optional) Jump at address 0xFF00
+6. Open terminal
+7. Run emulation
+
