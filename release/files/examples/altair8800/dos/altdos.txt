@@ -1,0 +1,7 @@
+1. Open MITS Altair8800 or AltairZ80 computer
+2. Load file `boot/boot.bin` into memory at address 0xFF00
+3. Mount disk image file `altdos.dsk` into device MITS 88-DISK as disk A
+4. (optional) Jump at address 0xFF00
+5. Open terminal
+6. Run emulation
+
