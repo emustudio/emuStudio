@@ -22,11 +22,14 @@ package net.sf.emustudio.devices.simh.impl;
 
 import emulib.plugins.device.DeviceContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Calendar;
 
 class PseudoContext implements DeviceContext<Short> {
+    private final static Logger LOGGER = LoggerFactory.getLogger(PseudoContext.class);
 
     private StandardMemoryContext mem;
 
@@ -201,9 +204,6 @@ class PseudoContext implements DeviceContext<Short> {
         setTimerInterruptAdrPos = 0;
         markTimeSP = 0;
         versionPos = 0;
-      //  timerInterrupt = false;
-//    if (simh_unit.flags & UNIT_SIMH_TIMERON)
-//        simh_dev_set_timeron(NULL, 0, NULL, NULL);
     }
 
     private int toBCD(int x) {
@@ -226,67 +226,6 @@ class PseudoContext implements DeviceContext<Short> {
         ClockZSDOSDelta.set(year, mm, dd, hh, min, ss);
     }
 
-//#define CPM_COMMAND_LINE_LENGTH    128
-//#define TIMER_STACK_LIMIT          10       /* stack depth of timer stack   */
-//static uint32 markTime[TIMER_STACK_LIMIT];  /* timer stack                  */
-//
-//static void warnNoRealTimeClock(void) {
-//    if (simh_unit.flags & UNIT_SIMH_VERBOSE)
-//        printf("Sorry - no real time clock available.\n");
-//}
-//
-//static t_stat simh_dev_set_timeron(UNIT *uptr, int32 value, char *cptr, void *desc) {
-//    if (rtc_avail) {
-//        timeOfNextInterrupt = sim_os_msec() + timerDelta;
-//        return sim_activate(&simh_unit, simh_unit.wait);    /* activate unit */
-//    }
-//    warnNoRealTimeClock();
-//    return SCPE_ARG;
-//}
-//
-//static t_stat simh_dev_set_timeroff(UNIT *uptr, int32 value, char *cptr, void *desc) {
-//    timerInterrupt = FALSE;
-//    sim_cancel(&simh_unit);
-//    return SCPE_OK;
-//}
-//
-//static t_stat simh_svc(UNIT *uptr) {
-//    uint32 n = sim_os_msec();
-//    if (n >= timeOfNextInterrupt) {
-//        timerInterrupt = TRUE;
-//        timeOfNextInterrupt += timerDelta;
-//        if (n >= timeOfNextInterrupt)               /* time of next interrupt is not in the future  */
-//            timeOfNextInterrupt = n + timerDelta;   /* make sure it is in the future!               */
-//    }
-//    if (simh_unit.flags & UNIT_SIMH_TIMERON)
-//        sim_activate(&simh_unit, simh_unit.wait);   /* activate unit                                */
-//    return SCPE_OK;
-//}
-//
-//static char cpmCommandLine[CPM_COMMAND_LINE_LENGTH];
-//static void createCPMCommandLine(void) {
-//    int32 i, len = (GetBYTEWrapper(0x80) & 0x7f); /* 0x80 contains length of command line, discard first char */
-//    for (i = 0; i < len - 1; i++)
-//        cpmCommandLine[i] = (char)GetBYTEWrapper(0x82 + i); /* the first char, typically ' ', is discarded */
-//    cpmCommandLine[i] = 0; /* make C string */
-//}
-//
-///* The CP/M command line is used as the name of a file and UNIT* uptr is attached to it. */
-//static void attachCPM(UNIT *uptr) {
-//    createCPMCommandLine();
-//    if (uptr == &ptr_unit)
-//        sim_switches = SWMASK('R');
-//    else if (uptr == &ptp_unit)
-//        sim_switches = SWMASK('W') | SWMASK('C');   /* 'C' option makes sure that file is properly truncated
-//                                                        if it had existed before                                */
-//    lastCPMStatus = attach_unit(uptr, cpmCommandLine);
-//    if ((lastCPMStatus != SCPE_OK) && (simh_unit.flags & UNIT_SIMH_VERBOSE)) {
-//        MESSAGE_3("Cannot open '%s' (%s).", cpmCommandLine, scp_error_messages[lastCPMStatus - SCPE_BASE]);
-//        /* must keep curly braces as messageX is a macro with two statements */
-//    }
-//}
-//
-//
     private short mkCPM3Origin() {
         short month, year;
         short result;
@@ -336,40 +275,13 @@ class PseudoContext implements DeviceContext<Short> {
         short result = 0;
         switch (lastCommand) {
             case getHostFilenames:
-//#if UNIX_PLATFORM
-//            if (globValid) {
-//                if (globPosNameList < globS.gl_pathc) {
-//                    if (!(result = globS.gl_pathv[globPosNameList][globPosName++])) {
-//                        globPosNameList++;
-//                        globPosName = 0;
-//                    }
-//                }
-//                else {
-//                    globValid = FALSE;
-//                    lastCommand = 0;
-//                    globfree(&globS);
-//                }
-//            }
-//#elif defined (_WIN32)
-//            if (globValid) {
-//                if (globFinished) {
-//                    globValid = FALSE;
-//                }
-//                else if (!(result = FindFileData.cFileName[globPosName++])) {
-//                    globPosName = 0;
-//                    if (!FindNextFile(hFind, &FindFileData)) {
-//                        globFinished = TRUE;
-//                        FindClose(hFind);
-//                        hFind = INVALID_HANDLE_VALUE;
-//                    }
-//                }
-//            }
-//#else
+                LOGGER.debug("[command={},name=getHostFilenames] Unimplemented command!", lastCommand);
                 lastCommand = 0;
-//#endif
                 break;
             case attachPTRCmd:
             case attachPTPCmd:
+                LOGGER.debug("[command={},name=attachPTRCmd/attachPTPCmd] Unimplemented command!", lastCommand);
+
                 result = lastCPMStatus;
                 lastCommand = 0;
                 break;
@@ -470,6 +382,7 @@ class PseudoContext implements DeviceContext<Short> {
                 result = (short) File.separatorChar;
                 break;
             default: /* undefined */
+                LOGGER.debug("[command={}] Unknown command!", lastCommand);
                 result = lastCommand = 0;
         }
         return result;
@@ -525,94 +438,33 @@ class PseudoContext implements DeviceContext<Short> {
                 lastCommand = value;
                 switch (value) {
                     case getHostFilenames:
-//#if UNIX_PLATFORM
-//                    if (!globValid) {
-//                        globValid = TRUE;
-//                        globPosNameList = globPosName = 0;
-//                        createCPMCommandLine();
-//                        globError = glob(cpmCommandLine, GLOB_ERR, NULL, &globS);
-//                        if (globError) {
-//                            if (simh_unit.flags & UNIT_SIMH_VERBOSE) {
-//                                MESSAGE_3("Cannot expand '%s'. Error is %i.", cpmCommandLine, globError);
-//                            }
-//                            globfree(&globS);
-//                            globValid = FALSE;
-//                        }
-//                    }
-//#elif defined (_WIN32)
-//                    if (!globValid) {
-//                        globValid = TRUE;
-//                        globPosName = 0;
-//                        globFinished = FALSE;
-//                        createCPMCommandLine();
-//                        hFind = FindFirstFile(cpmCommandLine, &FindFileData);
-//                        if (hFind == INVALID_HANDLE_VALUE) {
-//                            if (simh_unit.flags & UNIT_SIMH_VERBOSE) {
-//                                MESSAGE_3("Cannot expand '%s'. Error is %lu.", cpmCommandLine, GetLastError());
-//                            }
-//                            globValid = FALSE;
-//                        }
-//                    }
-//#endif
+                        LOGGER.debug("[command={},name=getHostFilenames,method=write] Unimplemented command!", lastCommand);
                         break;
                     case SIMHSleepCmd:
-//#if defined (_WIN32)
-//                    if ((SIMHSleep / 1000) && !sio_unit.u4) /* time to sleep and SIO not attached to a file */
-//                        Sleep(SIMHSleep / 1000);
-//#else
-//                    if (SIMHSleep && !sio_unit.u4)          /* time to sleep and SIO not attached to a file */
-//                        usleep(SIMHSleep);
-//#endif
+                        LOGGER.debug("[command={},name=SIMHSleepCmd,method=write] Unimplemented command!", lastCommand);
                         break;
-                    case printTimeCmd:  /* print time */
-//                    if (rtc_avail) {
-//                        MESSAGE_2("Current time in milliseconds = %d.", sim_os_msec());
-//                    }
-//                    else {
-//                        warnNoRealTimeClock();
-//                    }
+                    case printTimeCmd:
+                        LOGGER.debug("[command={},name=printTimeCmd,method=write] Unimplemented command!", lastCommand);
                         break;
-                    case startTimerCmd: /* create a new timer on top of stack */
-//                    if (rtc_avail) {
-//                        if (markTimeSP < TIMER_STACK_LIMIT) {
-//                            markTime[markTimeSP++] = sim_os_msec();
-//                        }
-//                        else {
-//                            MESSAGE_1("Timer stack overflow.");
-//                        }
-//                    }
-//                    else {
-//                        warnNoRealTimeClock();
-//                    }
+                    case startTimerCmd:
+                        LOGGER.debug("[command={},name=startTimerCmd,method=write] Unimplemented command!", lastCommand);
                         break;
-                    case stopTimerCmd:  /* stop timer on top of stack and show time difference */
-//                    if (rtc_avail) {
-//                        if (markTimeSP > 0) {
-//                            uint32 delta = sim_os_msec() - markTime[--markTimeSP];
-//                            MESSAGE_2("Timer stopped. Elapsed time in milliseconds = %d.", delta);
-//                        }
-//                        else {
-//                            MESSAGE_1("No timer active.");
-//                        }
-//                    }
-//                    else {
-//                        warnNoRealTimeClock();
-//                    }
+                    case stopTimerCmd:
+                        LOGGER.debug("[command={},name=stopTimerCmd,method=write] Unimplemented command!", lastCommand);
                         break;
-                    case resetPTRCmd:   /* reset ptr device */
-//                    ptr_reset(NULL);
+                    case resetPTRCmd:
+                        LOGGER.debug("[command={},name=resetPTRCmd,method=write] Unimplemented command!", lastCommand);
                         break;
-                    case attachPTRCmd:  /* attach ptr to the file with name at beginning of CP/M command line */
-//                    attachCPM(&ptr_unit);
+                    case attachPTRCmd:
+                        LOGGER.debug("[command={},name=attachPTRCmd,method=write] Unimplemented command!", lastCommand);
                         break;
-                    case detachPTRCmd:  /* detach ptr */
-//                    detach_unit(&ptr_unit);
+                    case detachPTRCmd:
+                        LOGGER.debug("[command={},name=detachPTRCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case getSIMHVersionCmd:
                         versionPos = 0;
                         break;
                     case getClockZSDOSCmd:
-//                    time(&now);
                         now = Calendar.getInstance().getTimeInMillis();
                         now += ClockZSDOSDelta.getTimeInMillis(); // bug i think
                         currentTime.setTimeInMillis(now);
@@ -642,55 +494,28 @@ class PseudoContext implements DeviceContext<Short> {
                     case resetSIMHInterfaceCmd:
                         markTimeSP = 0;
                         lastCommand = 0;
-//#if UNIX_PLATFORM
-//                    if (globValid) {
-//                        globValid = FALSE;
-//                        globfree(&globS);
-//                    }
-//#elif defined (_WIN32)
-//                    if (globValid) {
-//                        globValid = FALSE;
-//                        if (hFind != INVALID_HANDLE_VALUE) {
-//                            FindClose(hFind);
-//                        }
-//                    }
-//#endif
+                        LOGGER.debug("[command={},name=resetSIMHInterfaceCMD,method=write] Partially implemented command!", lastCommand);
                         break;
-                    case showTimerCmd:  /* show time difference to timer on top of stack */
-//                    if (rtc_avail) {
-//                        if (markTimeSP > 0) {
-//                            uint32 delta = sim_os_msec() - markTime[markTimeSP - 1];
-//                            MESSAGE_2("Timer running. Elapsed in milliseconds = %d.", delta);
-//                        }
-//                        else {
-//                            MESSAGE_1("No timer active.");
-//                        }
-//                    }
-//                    else {
-//                        warnNoRealTimeClock();
-//                    }
+                    case showTimerCmd:
+                        LOGGER.debug("[command={},name=showTimerCmd,method=write] Unimplemented command!", lastCommand);
                         break;
-                    case attachPTPCmd:  /* attach ptp to the file with name at beginning of CP/M command line */
-//                    attachCPM(&ptp_unit);
+                    case attachPTPCmd:
+                        LOGGER.debug("[command={},name=attachPTPCmd,method=write] Unimplemented command!", lastCommand);
                         break;
-                    case detachPTPCmd:  /* detach ptp */
-//                    detach_unit(&ptp_unit);
+                    case detachPTPCmd:
+                        LOGGER.debug("[command={},name=detachPTPCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case setZ80CPUCmd:
-//                    cpu_unit.flags |= UNIT_CHIP;
+                        LOGGER.debug("[command={},name=setZ80CPUCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case set8080CPUCmd:
-//                    cpu_unit.flags &= ~UNIT_CHIP;
+                        LOGGER.debug("[command={},name=set8080CPUCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case startTimerInterruptsCmd:
-//                    if (simh_dev_set_timeron(NULL, 0, NULL, NULL) == SCPE_OK) {
-//                        timerInterrupt = FALSE;
-//                        simh_unit.flags |= UNIT_SIMH_TIMERON;
-//                    }
+                        LOGGER.debug("[command={},name=startTimerInterruptsCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case stopTimerInterruptsCmd:
-//                    simh_unit.flags &= ~UNIT_SIMH_TIMERON;
-//                    simh_dev_set_timeroff(NULL, 0, NULL, NULL);
+                        LOGGER.debug("[command={},name=stopTimerInterruptsCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case setTimerDeltaCmd:
                         setTimerDeltaPos = 0;
@@ -699,17 +524,14 @@ class PseudoContext implements DeviceContext<Short> {
                         setTimerInterruptAdrPos = 0;
                         break;
                     case resetStopWatchCmd:
-//                    stopWatchNow = rtc_avail ? sim_os_msec() : 0;
+                        LOGGER.debug("[command={},name=resetStopWatchCmd,method=write] Unimplemented command!", lastCommand);
                         break;
                     case readStopWatchCmd:
+                        LOGGER.debug("[command={},name=readStopWatchCmd,method=write] Partially implemented command!", lastCommand);
                         getStopWatchDeltaPos = 0;
-//                    stopWatchDelta = rtc_avail ? sim_os_msec() - stopWatchNow : 0;
                         break;
                     default:
-//                    if (simh_unit.flags & UNIT_SIMH_VERBOSE) {
-//                        MESSAGE_3("Unknown command (%i) to SIMH pseudo device on port %03xh ignored.",
-//                            data, port);
-//                    }
+                        LOGGER.debug("[command={},method=write] Unknown command!", lastCommand);
                 }
         }
     }
