@@ -1,5 +1,5 @@
 File `utils.dsk` is an additional disk image file which includes various utilities.
-It can be used with CP/M operating system.
+It can be used with CP/M 3 operating system.
 
 It must be mounted as additional disk (number 2, 3, etc.) into device MITS 88-DISK.
 It can be done also when emulation is running.
