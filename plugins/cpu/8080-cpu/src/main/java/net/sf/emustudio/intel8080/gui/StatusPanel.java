@@ -21,11 +21,11 @@ package net.sf.emustudio.intel8080.gui;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
-import net.sf.emustudio.intel8080.api.ExtendedContext;
-import net.sf.emustudio.intel8080.impl.CpuImpl;
-import net.sf.emustudio.intel8080.impl.EmulatorEngine;
-import net.sf.emustudio.intel8080.impl.InstructionPrinter;
-
+import static emulib.runtime.RadixUtils.formatByteHexString;
+import static emulib.runtime.RadixUtils.formatWordHexString;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.JCheckBox;
@@ -37,12 +37,10 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.table.AbstractTableModel;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-
-import static emulib.runtime.RadixUtils.formatByteHexString;
-import static emulib.runtime.RadixUtils.formatWordHexString;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.intel8080.impl.CpuImpl;
+import net.sf.emustudio.intel8080.impl.EmulatorEngine;
+import net.sf.emustudio.intel8080.impl.InstructionPrinter;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
@@ -87,14 +85,6 @@ public class StatusPanel extends JPanel {
                 spnFrequency.getModel().setValue(context.getCPUFrequency());
             }
         });
-        spnTestPeriode.addChangeListener(e -> {
-            int i = (Integer) spnTestPeriode.getModel().getValue();
-            try {
-                StatusPanel.this.cpu.setSliceTime(i);
-            } catch (IndexOutOfBoundsException ex) {
-                spnTestPeriode.getModel().setValue(cpu.getSliceTime());
-            }
-        });
     }
 
     public void updateGUI() {
@@ -117,10 +107,8 @@ public class StatusPanel extends JPanel {
         lblRun.setText(runState.toString());
         if (runState == RunState.STATE_RUNNING) {
             spnFrequency.setEnabled(false);
-            spnTestPeriode.setEnabled(false);
         } else {
             spnFrequency.setEnabled(true);
-            spnTestPeriode.setEnabled(true);
         }
     }
     
@@ -168,9 +156,6 @@ public class StatusPanel extends JPanel {
         JLabel lblKHZ = new JLabel("kHz");
         JLabel lblRuntimeFreq = new JLabel("Runtime frequency:");
         lblFrequency = new JLabel("0,0 kHz");
-        JLabel lblTestPeriode = new JLabel("Test periode:");
-        spnTestPeriode = new JSpinner();
-        JLabel lblMS = new JLabel("ms");
         JLabel lblFlags = new JLabel("Flags (F): ");
         tblFlags = new JTable();
         chkPrintInstructions = new JCheckBox("Dump instructions history");
@@ -179,7 +164,6 @@ public class StatusPanel extends JPanel {
         paneRegisters.setBorder(null); // NOI18N
 
         lblCPUFreq.setFont(lblCPUFreq.getFont().deriveFont(lblCPUFreq.getFont().getStyle() & ~Font.BOLD));
-        lblTestPeriode.setFont(lblTestPeriode.getFont().deriveFont(lblTestPeriode.getFont().getStyle() & ~Font.BOLD));
         lblRuntimeFreq.setFont(lblRuntimeFreq.getFont().deriveFont(lblRuntimeFreq.getFont().getStyle() & ~Font.BOLD));
         lblFlags.setFont(lblFlags.getFont().deriveFont(lblFlags.getFont().getStyle() & ~Font.BOLD));
         chkPrintInstructions.setFont(chkPrintInstructions.getFont().deriveFont(chkPrintInstructions.getFont().getStyle() & ~Font.BOLD));
@@ -268,12 +252,6 @@ public class StatusPanel extends JPanel {
         lblKHZ.setFont(lblKHZ.getFont().deriveFont(lblKHZ.getFont().getStyle() | java.awt.Font.BOLD));
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | java.awt.Font.BOLD));
 
-        SpinnerNumberModel spTestPeriodeModel = new SpinnerNumberModel();
-        spTestPeriodeModel.setValue(50);
-        spTestPeriodeModel.setStepSize(50);
-        spnTestPeriode.setModel(spTestPeriodeModel);
-        lblMS.setFont(lblMS.getFont().deriveFont(lblMS.getFont().getStyle() | java.awt.Font.BOLD));
-
         GroupLayout panelRunLayout = new GroupLayout(panelRun);
         panelRun.setLayout(panelRunLayout);
         panelRunLayout.setHorizontalGroup(
@@ -284,15 +262,12 @@ public class StatusPanel extends JPanel {
                                 .addContainerGap()
                                 .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addComponent(lblCPUFreq)
-                                        .addComponent(lblTestPeriode)
                                 ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addComponent(spnFrequency)
-                                        .addComponent(spnTestPeriode)
                                 ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addComponent(lblKHZ)
-                                        .addComponent(lblMS)
                                 ).addContainerGap()
                         ).addGroup(panelRunLayout.createSequentialGroup()
                                 .addContainerGap()
@@ -312,11 +287,6 @@ public class StatusPanel extends JPanel {
                                 .addComponent(lblCPUFreq)
                                 .addComponent(spnFrequency, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
                                 .addComponent(lblKHZ)
-                        ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE, false)
-                                .addComponent(lblTestPeriode)
-                                .addComponent(spnTestPeriode, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
-                                .addComponent(lblMS)
                         ).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                 .addComponent(lblRuntimeFreq)
@@ -339,7 +309,6 @@ public class StatusPanel extends JPanel {
     JLabel lblFrequency;
     JLabel lblRun;
     JSpinner spnFrequency;
-    JSpinner spnTestPeriode;
     JTable tblFlags;
     JTextField txtFlags;
     JTextField txtRegA;

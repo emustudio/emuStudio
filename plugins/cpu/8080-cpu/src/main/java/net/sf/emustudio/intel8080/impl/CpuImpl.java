@@ -69,7 +69,7 @@ public class CpuImpl extends AbstractCPU {
         try {
             contextPool.register(pluginID, context, ExtendedContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not register CPU Context", getTitle());
+            StaticDialogs.showErrorMessage("Could not register CPU Context", super.getTitle());
         }
     }
 
@@ -128,14 +128,6 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public JPanel getStatusPanel() {
         return statusPanel;
-    }
-
-    public int getSliceTime() {
-        return engine.checkTimeSlice;
-    }
-
-    public void setSliceTime(int t) {
-        engine.checkTimeSlice = t;
     }
 
     private void stopFrequencyUpdater() {

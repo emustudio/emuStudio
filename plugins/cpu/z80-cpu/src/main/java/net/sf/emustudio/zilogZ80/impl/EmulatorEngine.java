@@ -99,7 +99,7 @@ public class EmulatorEngine implements CpuEngine {
     private DeviceContext interruptDevice;
 
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
-    public final int checkTimeSlice = 100;
+    private final int checkTimeSlice = 100;
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;

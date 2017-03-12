@@ -101,10 +101,6 @@ public class CpuImpl extends AbstractCPU {
         return engine;
     }
     
-    public int getSliceTime() {
-        return engine.checkTimeSlice;
-    }
-    
     @Override
     public JPanel getStatusPanel() {
         return statusPanel;

@@ -21,12 +21,6 @@ package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
-import net.sf.emustudio.intel8080.api.CpuEngine;
-import net.sf.emustudio.intel8080.api.DispatchListener;
-import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,6 +28,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
+import net.sf.emustudio.intel8080.api.CpuEngine;
+import net.sf.emustudio.intel8080.api.DispatchListener;
+import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EmulatorEngine implements CpuEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
@@ -63,7 +62,7 @@ public class EmulatorEngine implements CpuEngine {
     private final ContextImpl context;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
-    public int checkTimeSlice = 100;
+    private final int checkTimeSlice = 100;
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
