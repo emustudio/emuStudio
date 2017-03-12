@@ -24,31 +24,38 @@ import net.jcip.annotations.NotThreadSafe;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @NotThreadSafe
 public class CpmDirectory {
-    public final static int DIRECTORY_ENTRY_SIZE = 32;
-    public final static int DIRECTORY_TRACK = 6;
+    public final static int ENTRY_SIZE = 32;
+    public final static int DIRECTORY_ENTRIES = 256;
+    public final static int RECORD_BYTES = 128;
 
-    private final List<CpmFile> files = new ArrayList<>();
+    private final RawDisc disc;
 
-    public CpmDirectory(List<CpmFile> files) {
-        this.files.addAll(files);
+    public CpmDirectory(RawDisc disc) {
+        this.disc = Objects.requireNonNull(disc);
     }
 
-    public List<CpmFile> getAllFiles() {
-        return Collections.unmodifiableList(files);
+    private List<CpmFile> readAllFiles() throws IOException {
+        List<ByteBuffer> directorySectors = disc.readBlock(0);
+        List<ByteBuffer> entries = getEntries(directorySectors);
+        return getFilesFromEntries(entries);
     }
 
-    public List<CpmFile> filterValidFiles() {
-        return files.stream().filter(file -> file.status < 32).collect(Collectors.toList());
+    public List<CpmFile> filterValidFiles() throws IOException {
+        return readAllFiles().stream()
+            .filter(file -> file.status < 32)
+            .filter(file -> file.extentNumber == 0)
+            .collect(Collectors.toList());
     }
 
-    public String findDiscLabel() {
-        for (CpmFile file : files) {
+    public String findDiscLabel() throws IOException {
+        for (CpmFile file : readAllFiles()) {
             if (file.status == 32) {
                 return file.fileName + file.fileExt;
             }
@@ -61,10 +68,10 @@ public class CpmDirectory {
 
         for (ByteBuffer sector : directorySectors) {
             sector.position(3);
-            int numberOfEntries = sector.remaining() / DIRECTORY_ENTRY_SIZE;
+            int numberOfEntries = sector.remaining() / ENTRY_SIZE;
 
             for (int i = 0; i < numberOfEntries; i++) {
-                byte[] entry = new byte[DIRECTORY_ENTRY_SIZE];
+                byte[] entry = new byte[ENTRY_SIZE];
                 sector.get(entry);
 
                 entries.add(ByteBuffer.wrap(entry).asReadOnlyBuffer());
@@ -77,13 +84,65 @@ public class CpmDirectory {
         return entries.stream().map(CpmFile::fromEntry).collect(Collectors.toList());
     }
 
-    public static CpmDirectory fromDisc(RawDisc disc) throws IOException {
-        disc.reset(DIRECTORY_TRACK);
-        List<ByteBuffer> directorySectors = disc.readBlock();
-        List<ByteBuffer> entries = getEntries(directorySectors);
-        List<CpmFile> files = getFilesFromEntries(entries);
+    public void catFile(String fileName) throws IOException {
+        List<CpmFile> foundExtents = readAllFiles().stream()
+            .filter(file -> file.status < 32)
+            .filter(file -> file.toString().equals(fileName))
+            .collect(Collectors.toList());
 
-        return new CpmDirectory(files);
+        if (foundExtents.isEmpty()) {
+            System.err.println("File was not found");
+            return;
+        }
+
+        boolean blocksAreTwoBytes = false; // TODO: capacity blocks < 256 ? false : true;
+        int maxBlocksCount = 16;
+        if (blocksAreTwoBytes) {
+            maxBlocksCount /= 2;
+        }
+
+        foundExtents.sort(Comparator.comparingInt(o -> o.extentNumber));
+        int expectingExtentNumber = 0;
+        for (CpmFile extent : foundExtents) {
+            if (extent.extentNumber != expectingExtentNumber) {
+                System.err.println(
+                    String.format("[file=%s, extent=%d, expectingExtent=%d] ERROR: Expecting different extent number!",
+                        fileName, extent.extentNumber, expectingExtentNumber)
+                );
+                break;
+            }
+
+            int recordsLeft = extent.rc & 0xFF;
+            for (int i = 0; i < maxBlocksCount; i++) {
+                int nextBlock = extent.blockPointers.get(i) & 0xFF;
+                if (blocksAreTwoBytes) {
+                    i++;
+                    nextBlock = (nextBlock << 8) | (extent.blockPointers.get(i) & 0xFF);
+                }
+                if (nextBlock == 0) {
+                    break;
+                }
+
+                List<ByteBuffer> records = disc.readBlock(nextBlock);
+                int recordsCount = records.size();
+
+                records.stream()
+                    .limit(recordsLeft)
+                    .forEach(b -> printContent(b, extent.bc & 0xFF));
+
+                recordsLeft -= recordsCount;
+            }
+            expectingExtentNumber++;
+        }
+    }
+
+    private void printContent(ByteBuffer buffer, int extentBc) {
+        buffer.position(3);
+        byte[] b = new byte[Math.min(extentBc == 0 ? RECORD_BYTES : extentBc, buffer.remaining())];
+        buffer.get(b);
+        for (byte c : b) {
+            System.out.print((char) c);
+        }
     }
 
 }

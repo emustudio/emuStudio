@@ -27,7 +27,7 @@
     <logback.version>1.1.7</logback.version>
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.compiler.source>1.8</maven.compiler.source>
-    <emulib.version>9.0.0</emulib.version>
+    <emulib.version>9.1.0-SNAPSHOT</emulib.version>
     <javacup.version>11b</javacup.version>
   </properties>
 

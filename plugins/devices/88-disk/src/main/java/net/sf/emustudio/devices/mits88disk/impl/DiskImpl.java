@@ -231,12 +231,7 @@ public class DiskImpl extends AbstractDevice {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.devices.mits88disk.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return Main.getVersion();
     }
 
     @Override

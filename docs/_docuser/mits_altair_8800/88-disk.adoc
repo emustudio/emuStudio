@@ -77,7 +77,7 @@ The following table shows all the possible settings of MITS 88-DISK plug-in:
 |`port1CPU`     | 0x08          | > 0 and < 256        | Number of Port 1
 |`port2CPU`     | 0x09          | > 0 and < 256        | Number of Port 2
 |`port3CPU`     | 0x0A          | > 0 and < 256        | Number of Port 3
-|`sectorsCount` | 32            | > 0                  | Count of sectors in a disk image
+|`sectorsPerTrack` | 32            | > 0                  | Count of sectors in a disk image
 |`sectorLength` | 137           | > 0                  | Size of one sector in bytes
 |`image0`       | N/A           | Path to existing file| File name to mount on disk A (0)
 | ...           | ...           | ...                  | ...

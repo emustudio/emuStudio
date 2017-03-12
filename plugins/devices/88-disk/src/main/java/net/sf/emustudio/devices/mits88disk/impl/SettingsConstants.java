@@ -23,7 +23,7 @@ public class SettingsConstants {
     public static final String PORT1_CPU = "port1CPU";
     public static final String PORT2_CPU = "port2CPU";
     public static final String PORT3_CPU = "port3CPU";
-    public static final String SECTORS_COUNT = "sectorsCount";
+    public static final String SECTORS_COUNT = "sectorsPerTrack";
     public static final String SECTOR_LENGTH = "sectorLength";
     public static final String IMAGE = "image";
 

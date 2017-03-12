@@ -307,7 +307,7 @@ public class Drive {
             return 0;
         }
 //        LOGGER.info("[T={}, S={}, O={}, imagePos={}] Reading", track, sector, sectorOffset,
-//            sectorsCount * sectorLength * track + sectorLength * sector + sectorOffset
+//            sectorsPerTrack * sectorLength * track + sectorLength * sector + sectorOffset
 //        );
         imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + sectorOffset);
         try {
