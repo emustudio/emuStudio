@@ -24,11 +24,13 @@ import emulib.runtime.StaticDialogs;
 import net.sf.emustudio.memory.standard.gui.model.FileImagesModel;
 import net.sf.emustudio.memory.standard.gui.model.ROMmodel;
 import net.sf.emustudio.memory.standard.gui.model.TableMemory;
-import net.sf.emustudio.memory.standard.impl.AddressRangeImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryImpl;
+import net.sf.emustudio.memory.standard.impl.RangeTree;
 
-import javax.swing.*;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import java.io.File;
 import java.util.Objects;
 
@@ -53,6 +55,16 @@ public class SettingsDialog extends javax.swing.JDialog {
         initComponents();
         super.setLocationRelativeTo(parent);
 
+        loadSettings(pluginID, settings);
+
+        imagesModel = new FileImagesModel(settings, pluginID);
+        tblImages.setModel(imagesModel);
+
+        this.romModel = new ROMmodel(this.memContext);
+        tblROM.setModel(romModel);
+    }
+
+    private void loadSettings(long pluginID, SettingsManager settings) {
         // first tab (after start)
         String s = settings.readSetting(pluginID, "banksCount");
         if (s != null) {
@@ -67,12 +79,6 @@ public class SettingsDialog extends javax.swing.JDialog {
         } else {
             txtCommonBoundary.setText("0");
         }
-
-        imagesModel = new FileImagesModel(settings, pluginID);
-        tblImages.setModel(imagesModel);
-
-        this.romModel = new ROMmodel(this.memContext);
-        tblROM.setModel(romModel);
     }
 
     /**
@@ -84,21 +90,21 @@ public class SettingsDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         tblROM = new javax.swing.JTable();
         btnAddRange = new javax.swing.JButton();
         btnRemoveRange = new javax.swing.JButton();
         chkApplyROMatStartup = new javax.swing.JCheckBox();
         javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
-        jLabel6 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel6 = new javax.swing.JLabel();
         txtBanksCount = new javax.swing.JTextField();
-        jLabel7 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
         txtCommonBoundary = new javax.swing.JTextField();
         javax.swing.JSeparator jSeparator2 = new javax.swing.JSeparator();
         javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel9 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel10 = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         tblImages = new javax.swing.JTable();
@@ -396,7 +402,7 @@ public class SettingsDialog extends javax.swing.JDialog {
             return;
         }
         try {
-            memContext.setROM(new AddressRangeImpl(Integer.decode(from), Integer.decode(to)));
+            memContext.setROM(new RangeTree.Range(Integer.decode(from), Integer.decode(to)));
 
             tblROM.revalidate();
             tblROM.repaint();
@@ -424,7 +430,7 @@ public class SettingsDialog extends javax.swing.JDialog {
             return;
         }
         try {
-            memContext.setRAM(new AddressRangeImpl(Integer.decode(from), Integer.decode(to)));
+            memContext.setRAM(new RangeTree.Range(Integer.decode(from), Integer.decode(to)));
 
             tblROM.revalidate();
             tblROM.repaint();
@@ -512,10 +518,6 @@ public class SettingsDialog extends javax.swing.JDialog {
     private javax.swing.JButton btnRemoveImage;
     private javax.swing.JButton btnRemoveRange;
     private javax.swing.JCheckBox chkApplyROMatStartup;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable tblImages;
     private javax.swing.JTable tblROM;

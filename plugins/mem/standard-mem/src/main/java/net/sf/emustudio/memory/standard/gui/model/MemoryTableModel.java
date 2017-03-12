@@ -22,6 +22,7 @@ package net.sf.emustudio.memory.standard.gui.model;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 /**
  * tabulka ma 16 riadkov a 16 stlpcov (od 0 po FF)
@@ -41,7 +42,7 @@ public class MemoryTableModel extends AbstractTableModel {
     private int currentBank = 0;
 
     public MemoryTableModel(MemoryContextImpl mem) {
-        this.mem = mem;
+        this.mem = Objects.requireNonNull(mem);
         currentPage = 0;
     }
 
@@ -50,7 +51,6 @@ public class MemoryTableModel extends AbstractTableModel {
         return ROW_COUNT;
     }
 
-    // from 00-FF
     @Override
     public int getColumnCount() {
         return COLUMN_COUNT;
@@ -61,12 +61,12 @@ public class MemoryTableModel extends AbstractTableModel {
         return String.format("%1$02X", col);
     }
 
-    public boolean isROMAt(int rowIndex, int columnIndex) {
+    boolean isROMAt(int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
         return mem.isROM(pos);
     }
 
-    public boolean isAtBANK(int rowIndex, int columnIndex) {
+    boolean isAtBANK(int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
         return pos < mem.getCommonBoundary();
     }
@@ -87,6 +87,7 @@ public class MemoryTableModel extends AbstractTableModel {
             mem.write(pos, Short.decode(String.valueOf(aValue)), currentBank);
             fireTableCellUpdated(rowIndex, columnIndex);
         } catch (NumberFormatException e) {
+            // ignored
         }
     }
 
@@ -108,7 +109,7 @@ public class MemoryTableModel extends AbstractTableModel {
         int offset = 0;
         int foundAddress = -1;
         for (int currentAddr = from; currentAddr < size && offset < sequence.length; currentAddr++) {
-            if (((Number)mem.read(currentAddr, currentBank)).byteValue() == sequence[offset]) {
+            if ((mem.read(currentAddr, currentBank)).byteValue() == sequence[offset]) {
                 if (offset == 0) {
                     foundAddress = currentAddr;
                 }

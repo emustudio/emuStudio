@@ -19,10 +19,11 @@
  */
 package net.sf.emustudio.memory.standard.gui.model;
 
-import java.util.Objects;
-import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
+
+import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 public class ROMmodel extends AbstractTableModel {
     private final MemoryContextImpl memory;
@@ -71,7 +72,4 @@ public class ROMmodel extends AbstractTableModel {
         }
     }
 
-    public void setValueAt(int r, int c) {
-        fireTableCellUpdated(r, c);
-    }
 }

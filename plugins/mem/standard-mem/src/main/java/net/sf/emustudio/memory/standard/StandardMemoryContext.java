@@ -35,7 +35,7 @@ public interface StandardMemoryContext extends MemoryContext<Short> {
     /**
      * This interface represents a range of addresses in the memory.
      */
-    interface AddressRange extends Comparable<AddressRange> {
+    interface AddressRange {
         int getStartAddress();
         int getStopAddress();
     }
@@ -49,11 +49,11 @@ public interface StandardMemoryContext extends MemoryContext<Short> {
     boolean isROM(int address);
     
     /**
-     * Get list of ranges of adresses in memory which are read-only.
+     * Get list of ranges of read-only addresses.
      * 
      * @return list of ROM memory addresses
      */
-    List<AddressRange> getROMRanges();
+    List<? extends AddressRange> getROMRanges();
 
     /**
      * Set specified memory range as RAM (Random Access Memory).

@@ -29,15 +29,16 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
 import net.sf.emustudio.memory.standard.gui.MemoryDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 @PluginType(
         type=PLUGIN_TYPE.MEMORY,
@@ -168,7 +169,7 @@ public class MemoryImpl extends AbstractMemory {
                 if ((romFrom == null) || (romTo == null)) {
                     break;
                 }
-                context.setROM(new AddressRangeImpl(Integer.decode(romFrom), Integer.decode(romTo)));
+                context.setROM(new RangeTree.Range(Integer.decode(romFrom), Integer.decode(romTo)));
             }
         } catch (NumberFormatException e) {
             throw new PluginInitializationException(this, "Could not parse ROM range", e);

@@ -29,24 +29,22 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @ContextType(id = "Standard Memory")
 public class MemoryContextImpl extends AbstractMemoryContext<Short> implements StandardMemoryContext {
-    public final static int DEFAULT_MEM_SIZE = 65536;
+    final static int DEFAULT_MEM_SIZE = 65536;
 
-    private final List<AddressRange> romList = new ArrayList<>();
+    private final RangeTree romRanges = new RangeTree();
 
-    public int lastImageStart = 0;
+    int lastImageStart = 0;
     private short[][] mem = new short[1][0];
     private int banksCount;
     private short bankSelect = 0;
     private int bankCommon = 0;
     private int activeBank;
 
-    public void init(int size, int banks, int bankCommon) {
+    void init(int size, int banks, int bankCommon) {
         if (banks <= 0) {
             throw new IllegalArgumentException("Number of banks must be >= 1!");
         }
@@ -67,7 +65,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         notifyMemoryChanged(-1);
     }
 
-    public void destroy() {
+    void destroy() {
         clear();
         mem = null;
         activeBank = 0;
@@ -151,7 +149,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         }
     }
 
-    public Object read(int from, int bank) {
+    public Short read(int from, int bank) {
         if (from < bankCommon) {
             return mem[bank][from];
         } else {
@@ -189,6 +187,11 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         }
         activeBank = (to < bankCommon) ? bankSelect : 0;
         mem[activeBank][to] = (short)(cells[0] & 0xFF);
+
+        if (isROM(to+1)) {
+            return;
+        }
+
         mem[activeBank][to + 1] = (short)(cells[1] & 0xFF);
         notifyMemoryChanged(to);
         notifyMemoryChanged(to + 1);
@@ -199,68 +202,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         return mem[0].length;
     }
 
-    /**
-     * Merges all continuous ranges into one.
-     */
-    private void mergeRanges() {
-        if (romList.isEmpty()) {
-            return;
-        }
-        Collections.sort(romList);
-
-        AddressRange range = romList.get(0);
-        for (int i = 1; i < romList.size(); i++) {
-            AddressRange otherRange = romList.get(i);
-            if (range.getStopAddress() == otherRange.getStartAddress() + 1) {
-                // merge
-                romList.remove(range);
-                romList.remove(otherRange);
-                range = new AddressRangeImpl(range.getStartAddress(), otherRange.getStopAddress());
-                romList.add(range);
-            } else {
-                range = otherRange;
-            }
-        }
-    }
-
     private void removeROMRange(AddressRange rangeToRemove) {
-        if (rangeToRemove == null) {
-            return;
-        }
-        int removeStartAddr = rangeToRemove.getStartAddress();
-        int removeStopAddr = rangeToRemove.getStopAddress();
-
-        List<AddressRange> toRemove = new ArrayList<>();
-        List<AddressRange> toAdd = new ArrayList<>();
-        
-        romList.forEach(range -> {
-            int startAddr = range.getStartAddress();
-            int stopAddr = range.getStopAddress();
-
-            if ((startAddr >= removeStartAddr) && (stopAddr <= removeStopAddr)) {
-                toRemove.add(range);
-            } else if ((startAddr < removeStartAddr) && (stopAddr >= removeStartAddr) && (stopAddr <= removeStopAddr)) {
-                toRemove.add(range);
-                toAdd.add(new AddressRangeImpl(startAddr, removeStartAddr - 1));
-            } else if ((startAddr >= removeStartAddr) && (startAddr <= removeStopAddr) && (stopAddr > removeStopAddr)) {
-                toRemove.add(range);
-                toAdd.add(new AddressRangeImpl(removeStopAddr + 1, stopAddr));
-            } else if ((startAddr < removeStartAddr) && (stopAddr > removeStopAddr)) {
-                toRemove.add(range);
-                toAdd.add(new AddressRangeImpl(startAddr, removeStartAddr - 1));
-                toAdd.add(new AddressRangeImpl(removeStopAddr + 1, stopAddr));
-            }
-        });
-        
-        toRemove.forEach(romList::remove);
-        toAdd.forEach(romList::add);
-                
-        mergeRanges();
+        romRanges.remove(rangeToRemove.getStartAddress(), rangeToRemove.getStopAddress());
     }
 
     private void addRomRange(AddressRange range) {
-        removeROMRange(range);
-        romList.add(range);
+        romRanges.add(range.getStartAddress(), range.getStopAddress());
     }
 
     @Override
@@ -281,19 +228,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
 
     @Override
     public boolean isROM(int address) {
-        for (AddressRange range : romList) {
-            int startAddress = range.getStartAddress();
-            int stopAddress = range.getStopAddress();
-            if ((startAddress <= address) && (address <= stopAddress)) {
-                return true;
-            }
-        }
-        return false;
+        return romRanges.isIn(address);
     }
 
     @Override
-    public List<AddressRange> getROMRanges() {
-        return romList;
+    public List<? extends AddressRange> getROMRanges() {
+        return romRanges.getRanges();
     }
 
     @Override
