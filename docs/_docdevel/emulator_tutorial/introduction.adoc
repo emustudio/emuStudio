@@ -108,10 +108,10 @@ be rather kept in other places.
 Also, in the future there might be something like a plug-in repository, and a user would download what he wants manually.
 So far, it is not like that and it is too soon to consider this.
 
-==== Requirements of DONE
+==== Definition of DONE
 
-There are some requirements which need to be fulfilled before we can say that the contribution is done and can be
-accepted. The list is simple:
+There are some requirements which need to be fulfilled before we can say that the contribution is "done" and can be
+accepted or released. The list is very simple:
 
 - Code should be clean, conforming to the code style
 - Code must have proper unit tests, if applicable or possible
