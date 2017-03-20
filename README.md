@@ -43,42 +43,17 @@ Anyone can contribute. Before start, please read
 which includes information like:
 
 - Which tools to use and how to set up the environment
-- How to compile emuStudio
-- How to prepare local release
-
+- How to compile emuStudio and prepare local releases
+- Which git branch to use
+- Which rules needs to be followed
 
 # Running / installation
 
-There are two ways of how to run emuStudio. In both cases, a prerequisite is to have a full release of emuStudio.
-You can either download it from [project's web site](https://vbmacher.github.io/emuStudio/download/),
-or you can prepare it according to the previous section.
-
-## The "classic" way
-
-The requirement is to have installed Java Runtime Environment (JRE) 1.8.
-
-Unzip the emuStudio distribution zip file (`emuStudio-xxx.zip`) and run it using command:
+At first, either compile or [download](https://vbmacher.github.io/emuStudio/download/) emuStudio.
+Then, unzip the zip file (`emuStudio-xxx.zip`) and run it using command:
 
 ```
 java -jar emuStudio.jar
 ```
 
-## Using Vagrant
-
-It is also possible to use [Vagrant](https://www.vagrantup.com/) in order to run emuStudio. This way does not
-require to install JRE, but virtual box must be installed. Also it works only for custom releases, as described
-above.
-
-Assuming the release is prepared, run the script in the root directory of emuStudio:
-
-```
-> ./emuStudio-vagrant.sh
-```
-
-The script does the following:
-
-1. It boots or resumes the already-prepared virtual machine with preinstalled Linux and Java using
-   [Vagrant](https://www.vagrantup.com/).
-2. Synchronizes `release/target/` subdirectory with the machine.
-3. Then it unzips the release zip file into VM's `/emustudio/` directory
-4. Finally, it runs emuStudio from the virtual machine (using SSH with X forwarding). 
+NOTE: The requirement is to have installed Java Runtime Environment (JRE) 1.8.
