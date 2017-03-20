@@ -22,19 +22,16 @@ I think it is also appropriate for schools; for example, emuStudio is used at
 * [BrainDuck (brainfuck interpreter)](https://vbmacher.github.io/emuStudio/docuser/brainduck/index/)
 
 
+# License
+
+This project is released under GNU GPL v2 license.
+
 ## BIG THANKS
 
 Big thanks goes to the one and only [simh](http://simh.trailing-edge.com/) project, which inspired me a lot, and helped
 me as a student and emulator enthusiast when working on emuStudio. I wish emuStudio will reach it's simplicity and
 emulators "richness" as the simh project has.  
 
-# Supported host platforms
-
-Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
-
-# License
-
-This project is released under GNU GPL v2 license.
 
 # Contributing
 
@@ -47,7 +44,17 @@ which includes information like:
 - Which git branch to use
 - Which rules needs to be followed
 
-# Running / installation
+# Getting started
+
+### Prerequisites
+
+The requirement is to have installed Java Runtime Environment (JRE) 1.8.
+
+### Host platforms
+
+Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
+
+### Running / installation
 
 At first, either compile or [download](https://vbmacher.github.io/emuStudio/download/) emuStudio.
 Then, unzip the zip file (`emuStudio-xxx.zip`) and run it using command:
@@ -55,5 +62,3 @@ Then, unzip the zip file (`emuStudio-xxx.zip`) and run it using command:
 ```
 java -jar emuStudio.jar
 ```
-
-NOTE: The requirement is to have installed Java Runtime Environment (JRE) 1.8.
