@@ -89,16 +89,6 @@ public class DriveTest {
         new Drive(0).mount(null);
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testMountImageNonExistantFile() throws IOException {
-         new Drive(0).mount(new File("nonexistant"));
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testMountImageFolder() throws IOException {
-         new Drive(0).mount(folder.getRoot());
-    }
-    
     @Test
     public void testUnmountWithoutMountHasNoEffect() {
         new Drive(0).umount();
