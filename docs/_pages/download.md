@@ -15,16 +15,20 @@ permalink: /download/
       <tr class="active">
         <td>0.39</td>
         <td>
-          <div>31.1.2017</div>
-          <div><a href="">Release notes</a></div>
+          <div>20.3.2017</div>
+          <div><a href="https://sourceforge.net/projects/emustudio/files/dist/changelog-0.39.md/download"
+                  target="_blank">Release notes</a></div>
         </td>
         <td>
           <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-          <button class="button btn-link btn-lg">emuStudio-0.39.zip</button>
+          <a href="https://sourceforge.net/projects/emustudio/files/dist/emuStudio-0.39.zip/download" 
+             class="button btn-link btn-lg"
+             role="button"
+             target="_blank">emuStudio-0.39.zip</a>
         </td>
       </tr>
       <tr>
-        <td>0.38</td>
+        <td>0.38 beta</td>
         <td>
           <div>24.10.2011</div>
           <div><a href="https://sourceforge.net/projects/emustudio/files/dist/changelog-0.38.txt/download"
@@ -35,7 +39,7 @@ permalink: /download/
           <a href="https://sourceforge.net/projects/emustudio/files/dist/emuStudio-0.38b.zip/download" 
              class="button btn-link btn-lg"
              role="button"
-             target="_blank">emuStudio-0.38.zip</a>
+             target="_blank">emuStudio-0.38b.zip</a>
         </td>
       </tr>
       <tr>
