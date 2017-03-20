@@ -1,0 +1,36 @@
+Changelog of emuStudio 0.37b -> 0.38b
+=====================================
+
+-  Add possibility to modify settings of plug-ins in abstract schema
+   editor by double-clicking on an element or with using pop-up menu
+   with right-click on an element.
+
+-  Fixed several bugs in abstract schema drawing
+
+-  Added pop-up menu when user right clicks on an element in abstract schema
+-  Add ability to resize elements in abstract schema
+-  Add useGrid, gridGap and width/height of all elements into schema and configuration file
+
+-  Fixed debug table column title: mnemo to opcode
+-  Created listener for possibility to call updates on debug table by any plugins.
+
+-  Fixed bug: when deleted last computer in computers dialog, exception was thrown
+-  Changed Vector to ArrayList in HighlightThread
+
+-  Fixed bug in text editor: file saving
+
+-  Fixed bug in 'view of computer' - devices were shown weirdly
+
+-  Fixed synchronization problems in automatized emulation execution
+-  Added new parameter "--nogui" that won't show GUI in the automatization
+
+-  Fixed automatization, now "auto" setting is set to "true" if the emulation is automatized.
+   Plugins may read this setting to determine this.
+
+-  Fixed possible NullPointerExceptions throws when disassembler is not implemented inside a CPU
+
+-  Re-implement pagination in the debug table
+
+-  Next try to overcome thread deadlock bug connected with syntax highlighting :(
+
+-  Make all rows in debug table visible
