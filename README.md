@@ -21,6 +21,13 @@ I think it is also appropriate for schools; for example, emuStudio is used at
 
 * [BrainDuck (brainfuck interpreter)](https://vbmacher.github.io/emuStudio/docuser/brainduck/index/)
 
+## Related projects
+
+There exist some additional projects, which are either incorporated in or used by emuStudio:
+  
+- [emuLib](https://github.com/vbmacher/emuLib), a run-time library
+- [edigen](https://github.com/sulir/edigen), an emulator disassembler generator
+
 
 ## BIG THANKS
 
