@@ -5,7 +5,7 @@
   <parent>
     <artifactId>emustudio-parent</artifactId>
     <groupId>net.sf.emustudio</groupId>
-    <version>0.39-SNAPSHOT</version>
+    <version>0.39</version>
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>

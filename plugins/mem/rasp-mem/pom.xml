@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.sf.emustudio</groupId>
         <artifactId>emustudio-parent</artifactId>
-        <version>0.39-SNAPSHOT</version>
+        <version>0.39</version>
         <relativePath>../../../pom.xml</relativePath>
     </parent>
     <artifactId>rasp-mem</artifactId>
