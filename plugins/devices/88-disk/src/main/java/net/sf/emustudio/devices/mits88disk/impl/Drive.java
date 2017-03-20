@@ -171,7 +171,7 @@ public class Drive {
 
     public void select() {
         if (mountedFloppy == null) {
-            LOGGER.warn("[drive={}] Could not select drive; image is not mounted");
+            LOGGER.warn("[drive={}] Could not select drive; image is not mounted", index);
         } else {
             selected = true;
             port1status = 0xE5; // 11100101b

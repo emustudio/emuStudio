@@ -287,39 +287,46 @@ be rather kept in other places.</p>
 So far, it is not like that and it is too soon to consider this.</p>
 </div>
 <div class="sect3">
+<h4 id="requirements-of-done">Requirements of DONE</h4>
+<div class="paragraph">
+<p>There are some requirements which need to be fulfilled before we can say that the contribution is done and can be
+accepted. The list is simple:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Code should be clean, conforming to the code style</p>
+</li>
+<li>
+<p>Code must have proper unit tests, if applicable or possible</p>
+</li>
+<li>
+<p>Documentation should be updated</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
 <h4 id="git-workflow">Git workflow</h4>
 <div class="paragraph">
 <p>Since the whole project is using <code>git</code> as the version control system (VCS), it has many benefits used for specification
 of a way how people can actually contribute.</p>
 </div>
 <div class="paragraph">
-<p>emuStudio uses very simple branching model. Each version (previous or currently developed) has its own branch. For
-example, version 0.39, which is currently developed has name <code>branch-0_39</code>. On GitHub the branch is marked as a default.</p>
+<p>emuStudio uses a much simplified version of the <a href="https://datasift.github.io/gitflow/IntroducingGitFlow.html">Git Flow model</a>.
+Releasing of older versions due to "hot fixes" or maintenance is not supported. Fixing bugs and development of new features
+are both done in the single branch, called <code>develop</code>. On GitHub the branch is marked as default.</p>
 </div>
 <div class="paragraph">
-<p>When a new release is out, new branch is created which becomes a new default (e.g. <code>branch-0_40</code>). Also, a tag is
-created for marking the last release commit.</p>
+<p>When a new release is out, the last commit must be tagged with a new tag named <code>RELEASE-X</code>, where <code>X</code> is the released
+version.</p>
 </div>
 <div class="paragraph">
-<p>When contributing, always derive new branch for fixing the bug or adding a feature from the latest branch, with
-the highest version. The reason is that only major releases exists so far, and maintenance of older versions is not
-supported (fixes will appear in new version). The other branches exist just for easier checking between versions.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-In the future, the branching model can change. The name of development branch should be always the same, but
-      so far it is like was said.
-</td>
-</tr>
-</table>
+<p>When contributing (fixing, new development), always derive new branch from the <code>develop</code> branch. In your branch, you
+can do any number of well-formed commits. When you are ready, raise new pull-request back to the <code>develop</code> branch.</p>
 </div>
 <div class="paragraph">
-<p>A sample git workflow is as follows:</p>
+<p>Example of the git workflow is as follows:</p>
 </div>
 <div class="paragraph">
 <p>At first, fork emuStudio on GitHub. Then:</p>
@@ -327,27 +334,29 @@ In the future, the branching model can change. The name of development branch sh
 <div class="listingblock">
 <div class="content">
 <pre class="pygments highlight"><code>git clone https://github.com/your_name/emuStudio.git
-git checkout -b fix-issue-143 origin/branch-0_39
+git checkout -b fix-issue-143 origin/develop
 
 .. fixing/implementing ..
 
-git commit -a -m '[#143] Super hot fix'
+git commit -a -m '[#143] 88-disk: implement interrupts'
 git push</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>After the push, create a pull request to original emuStudio repository</p>
+<p>You can repeat this process several times. When you are finished with all commits, create a pull request to original
+emuStudio repository, back to the <code>develop</code> branch.</p>
 </div>
 <div class="paragraph">
 <p>The pull request will be seen by the author, which will make a review and either approve (and merge), comment or
 rejects the pull request (with explanation).</p>
 </div>
 <div class="paragraph">
-<p>As you could notice, commits should be named with the issue number before the commit title, in square brackets, e.g.:</p>
+<p>As you could notice, commits should be well-formed - named with the issue number before the commit title, in square
+brackets. Also, if it is related to specific plug-in or module, it should be written in the message, e.g.:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code>[#143] Super hot fix</code></pre>
+<pre class="pygments highlight"><code>[#143] 88-disk: implement interrupts</code></pre>
 </div>
 </div>
 <div class="paragraph">
