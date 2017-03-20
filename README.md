@@ -2,12 +2,25 @@
 [![Build Status](https://travis-ci.org/vbmacher/emuStudio.svg?branch=develop)](https://travis-ci.org/vbmacher/emuStudio)
 
 emuStudio is a desktop application which allows to write programs and emulate computers.
-In addition, it is easily extensible - acting as a framework it encourages developers to write their computer emulators.
-It is versatile, free, and written in Java.
+In addition, it is easily extensible - acting as a framework it encourages developers to write their own computer
+emulators. It is versatile, free, and written in Java.
 
 The main goal is to support learning about older but important computers or abstract machines. 
 I think it is also appropriate for schools; for example, emuStudio is used at
 [Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
+
+## Available emulators
+
+* [MITS Altair8800](https://vbmacher.github.io/emuStudio/docuser/mits_altair_8800/index/)
+
+* [Manchester SSEM](https://vbmacher.github.io/emuStudio/docuser/ssem/index/)
+
+* [Random Access Machine (RAM)](https://vbmacher.github.io/emuStudio/docuser/ram/index/)
+
+* [Random Access Stored Program (RASP)](https://vbmacher.github.io/emuStudio/docuser/rasp/index/) 
+
+* [BrainDuck (brainfuck interpreter)](https://vbmacher.github.io/emuStudio/docuser/brainduck/index/)
+
 
 ## BIG THANKS
 
@@ -15,56 +28,29 @@ Big thanks goes to the one and only [simh](http://simh.trailing-edge.com/) proje
 me as a student and emulator enthusiast when working on emuStudio. I wish emuStudio will reach it's simplicity and
 emulators "richness" as the simh project has.  
 
+# Supported host platforms
+
+Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
+
 # License
 
 This project is released under GNU GPL v2 license.
 
-# Supported host platform
+# Contributing
 
-Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
+Anyone can contribute. Before start, please read
+[developer documentation](https://vbmacher.github.io/emuStudio/docdevel/emulator_tutorial/index/),
+which includes information like:
 
-# Available computer emulators
+- Which tools to use and how to set up the environment
+- How to compile emuStudio
+- How to prepare local release
 
-* MITS Altair8800 with two processor choices: Intel 8080 or Zilog Z80 CPU. Includes 88-DISK drive, 88-SIO board,
-  LSI ADM-3A terminal, SIMH pseudo device (partially reimplemented from simh emulator), operating memory,
-  and 8080 + Z80 assembler compilers
-
-* Manchester Small-Scale Experimental Machine (SSEM) emulator, with programming tutorials
-
-* Random Access Machine (RAM) simulator
-
-* Random Access Stored Program (RASP) machine simulator 
-
-* Brainfuck interpreter (designed as a "computer" which I called BrainDuck)
-
-# For developers
-
-In order to quickly "get into" emuStudio programming is to read
-[tutorials for writing plug-ins](https://vbmacher.github.io/emuStudio/docdevel/emulator_tutorial/index/).
-
-The project uses Maven for managing dependencies and build process. Each module can be compiled separately,
-but if you run the following command in the root directory, it will compile each module (results will be in
-particular module directory):
-
-```
-mvn clean install
-```
-
-## Creating a custom "release"
-
-In order to package complete emuStudio with examples and all predefined computers, at first compile the whole
-project. Then go to directory `release` and invoke the following command:
-
-```
-mvn clean install -P release
-```
-
-Inside the `target` subdirectory will be a zip file containing the custom release of emuStudio.
 
 # Running / installation
 
 There are two ways of how to run emuStudio. In both cases, a prerequisite is to have a full release of emuStudio.
-You can either download it from [project's web page](https://vbmacher.github.io/emuStudio/download/),
+You can either download it from [project's web site](https://vbmacher.github.io/emuStudio/download/),
 or you can prepare it according to the previous section.
 
 ## The "classic" way
