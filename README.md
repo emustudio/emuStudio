@@ -1,5 +1,5 @@
 # Welcome to emuStudio
-[![Build Status](https://travis-ci.org/vbmacher/emuStudio.svg?branch=master)](https://travis-ci.org/vbmacher/emuStudio)
+[![Build Status](https://travis-ci.org/vbmacher/emuStudio.svg?branch=develop)](https://travis-ci.org/vbmacher/emuStudio)
 
 emuStudio is a desktop application which allows to write programs and emulate computers.
 In addition, it is easily extensible - acting as a framework it encourages developers to write their computer emulators.
