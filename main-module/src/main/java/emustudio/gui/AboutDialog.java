@@ -91,7 +91,7 @@ public class AboutDialog extends javax.swing.JDialog {
         jLabel4.setText("Version");
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
-        jLabel1.setText("<html>This software is released under GNU GPL license, version 2. For more information, please visit project web page at <a href=\"http://emustudio.sf.net\">http://emustudio.sf.net</a>.");
+        jLabel1.setText("<html>This software is released under GNU GPL license, version 2. For more information, please visit project web page at <a href=\"https://vbmacher.github.io/emuStudio/\">https://vbmacher.github.io/emuStudio/</a>.");
 
         javax.swing.GroupLayout panelInfoLayout = new javax.swing.GroupLayout(panelInfo);
         panelInfo.setLayout(panelInfoLayout);
