@@ -11,6 +11,6 @@ admin_email: 'pjakubco@gmail.com'
 timezone: Europe/Prague
 github_username: vbmacher
 
-current_version: '0.39'
-next_milestone: '0.40'
+current_version: '0.40'
+next_milestone: '0.41'
 milestone_number: 3

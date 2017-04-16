@@ -227,7 +227,7 @@ dependencies across plug-ins themselves and across emuStudio must be the same wi
 
 In emuStudio, plug-in source codes are located in `plugins/` subdirectory, then separated by plug-in type. For example:
 
-https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins
+https://github.com/vbmacher/emuStudio/tree/develop/plugins
 
 In order to contribute to an existing plug-in, you can find the plug-in in some subdirectory. If you want to add a
 new plug-in which should exist in the default emuStudio distribution, you would create new plug-in in that place as well.
@@ -273,7 +273,7 @@ is installed. For example, here is a Manifest file for RAM compiler plug-in:
 ----
 Manifest-Version: 1.0
 Implementation-Title: RAM Compiler
-Implementation-Version: 0.39-SNAPSHOT
+Implementation-Version: 0.40-SNAPSHOT
 Archiver-Version: Plexus Archiver
 Built-By: vbmacher
 Specification-Title: RAM Compiler
@@ -281,7 +281,7 @@ Implementation-Vendor-Id: net.sf.emustudio
 Class-Path: mem/ram-mem.jar lib/java-cup-runtime-11b.jar
 Created-By: Apache Maven 3.3.3
 Build-Jdk: 1.8.0_65
-Specification-Version: 0.39-SNAPSHOT
+Specification-Version: 0.40-SNAPSHOT
 ----
 
 The plug-in uses two non-default dependencies: RAM memory plug-in, and java-cup library. The first one is a memory
