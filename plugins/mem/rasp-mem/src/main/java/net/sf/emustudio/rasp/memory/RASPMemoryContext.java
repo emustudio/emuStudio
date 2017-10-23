@@ -24,6 +24,8 @@ import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
 import emulib.annotations.ContextType;
 import emulib.plugins.memory.MemoryContext;
 
+import java.util.List;
+
 /**
  * Context of the RASP memory.
  *
@@ -60,5 +62,11 @@ public interface RASPMemoryContext extends MemoryContext<MemoryItem> {
      * any
      */
     public String addressToLabelString(int address);
+
+    //from compiler
+    void addInputs(List<Integer> input);
+
+    // for CPU
+    List<Integer> getInputs();
 
 }

@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import net.sf.emustudio.rasp.compiler.tree.Input;
 import net.sf.emustudio.rasp.compiler.tree.Label;
 import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
 import net.sf.emustudio.rasp.memory.RASPMemoryContext;
@@ -40,6 +42,7 @@ import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 public class CompilerOutput {
 
     private int programStart;
+    private List<Integer> inputs = new ArrayList<>();
 
     private HashMap<Integer, String> labels = new HashMap<>();
     private HashMap<String, Integer> reversedLabels = new HashMap<>();
@@ -85,6 +88,7 @@ public class CompilerOutput {
     public void clear() {
         labels.clear();
         reversedLabels.clear();
+        inputs.clear();
         memoryItems.clear();
     }
 
@@ -95,6 +99,7 @@ public class CompilerOutput {
             try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(bufferedOutputStream)) {
                 objectOutputStream.writeObject(labels);
                 objectOutputStream.writeObject(programStart);
+                objectOutputStream.writeObject(inputs);
                 objectOutputStream.writeObject(memoryItems);
             }
         } catch (FileNotFoundException ex) {
@@ -115,10 +120,22 @@ public class CompilerOutput {
         for (MemoryItem item : memoryItems) {
             memory.write(position++, item);
         }
+
+        memory.addInputs(inputs);
     }
     
     public HashMap<String, Integer> getReversedLabels() {
         return reversedLabels;
     }
 
+    public List<Integer> getInputs() {
+        return inputs;
+    }
+
+    public void addInputs(List<Integer> inputs) {
+        if (inputs == null) {
+            return;
+        }
+        this.inputs.addAll(inputs);
+    }
 }

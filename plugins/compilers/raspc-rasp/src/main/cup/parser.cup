@@ -96,6 +96,7 @@ parser code{:
 terminal READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT, ORG, SEPARATOR_EOL, TCOMMENT, OPERATOR_CONSTANT, ERROR_UNKNOWN_TOKEN;
 terminal Integer NUMBER;
 terminal String TLABEL, IDENT;
+terminal TINPUT;
 
 non terminal SourceCode SourceCode;
 non terminal Program Program;
@@ -105,13 +106,22 @@ non terminal Comment;
 non terminal Statement Statement;
 non terminal RASPInstructionImpl Instruction;
 non terminal RASPInstructionImpl JumpInstruction;
+non terminal Input Input;
 
 
 start with SourceCode;
 
-SourceCode ::= ORG NUMBER:programStart Program:p                    {: RESULT = new SourceCode(programStart, p); :}
-        | Program:p                                                 {: RESULT = new SourceCode(-1, p); :}
+SourceCode ::= ORG NUMBER:programStart Program:p                        {: RESULT = new SourceCode(programStart, p); :}
+      |  TINPUT Input:i Program:p                                       {: RESULT = new SourceCode(i,p); :}
+      |  TINPUT Input:i ORG NUMBER:programStart Program:p               {: RESULT = new SourceCode(programStart, i, p); :}
+      |  Program:p                                                      {: RESULT = new SourceCode(p); :}
+      ;
+
+Input ::= Input:i NUMBER:n                                            {: i.addNumber(n); RESULT = i; :}
+        | NUMBER:n                                                    {: RESULT = new Input(n); :}
         ;
+
+
 
 Program ::= Program:p Row:r                                         {: if(r != null) p.addRow(r); RESULT = p; :}
             | /*empty program*/                                     {: RESULT = new Program(); :}

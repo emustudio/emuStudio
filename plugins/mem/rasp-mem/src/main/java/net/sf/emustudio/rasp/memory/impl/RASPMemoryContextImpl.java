@@ -40,6 +40,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
 
     private final List<MemoryItem> memory = new ArrayList<>();
     private Integer programStart;
+    private final List<Integer> inputs = new ArrayList<>();
 
     private final Map<Integer, String> labels = new HashMap<>();
 
@@ -115,6 +116,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
      */
     @Override
     public void clear() {
+        inputs.clear();
         memory.clear();
         labels.clear();
         notifyMemoryChanged(-1);
@@ -175,6 +177,19 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
         }
     }
 
+    @Override
+    public void addInputs(List<Integer> inputs) {
+        if (inputs == null) {
+            return;
+        }
+        this.inputs.addAll(inputs);
+    }
+
+    @Override
+    public List<Integer> getInputs() {
+        return inputs;
+    }
+
     /**
      * Get switched map of labels; i.e. keys are the string reprezentations of
      * labels, and values are the addresses.
@@ -230,9 +245,11 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
                 //clear labels and memory before loading
                 labels.clear();
                 memory.clear();
+                inputs.clear();
 
                 labels.putAll((Map<Integer, String>) objectInputStream.readObject());
                 programStart = (Integer) objectInputStream.readObject();
+                inputs.addAll((List<Integer>) objectInputStream.readObject());
                 //load program from file
                 List<MemoryItem> program = (List<MemoryItem>) objectInputStream.readObject();
                 int position = programStart;
