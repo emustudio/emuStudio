@@ -47,14 +47,12 @@ public class SourceCode extends AbstractTreeNode {
             this.programStart = programStart;
         }
 
-        if (inputs != null) {
-            this.inputs.addAll(inputs.getAll());
-        }
+        this.inputs.addAll(inputs.getAll());
         this.program = program;
     }
 
     public SourceCode(int programStart, Program program) {
-        this(programStart, null, program);
+        this(programStart, new Input(), program);
     }
 
     public SourceCode(Input input, Program program) {
@@ -62,7 +60,7 @@ public class SourceCode extends AbstractTreeNode {
     }
 
     public SourceCode(Program program) {
-        this(-1, null, program);
+        this(-1, new Input(), program);
     }
 
     @Override

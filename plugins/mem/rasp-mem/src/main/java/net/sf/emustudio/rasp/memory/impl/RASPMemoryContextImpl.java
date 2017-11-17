@@ -27,10 +27,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.RASPInstruction;
@@ -179,9 +177,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
 
     @Override
     public void addInputs(List<Integer> inputs) {
-        if (inputs == null) {
-            return;
-        }
+        Objects.requireNonNull(inputs, "inputs cannot be null");
         this.inputs.addAll(inputs);
     }
 

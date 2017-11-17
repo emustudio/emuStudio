@@ -25,10 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import net.sf.emustudio.rasp.compiler.tree.Input;
 import net.sf.emustudio.rasp.compiler.tree.Label;
@@ -42,7 +39,7 @@ import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 public class CompilerOutput {
 
     private int programStart;
-    private List<Integer> inputs = new ArrayList<>();
+    private final List<Integer> inputs = new ArrayList<>();
 
     private HashMap<Integer, String> labels = new HashMap<>();
     private HashMap<String, Integer> reversedLabels = new HashMap<>();
@@ -133,9 +130,7 @@ public class CompilerOutput {
     }
 
     public void addInputs(List<Integer> inputs) {
-        if (inputs == null) {
-            return;
-        }
+        Objects.requireNonNull(inputs, "inputs cannot be null");
         this.inputs.addAll(inputs);
     }
 }

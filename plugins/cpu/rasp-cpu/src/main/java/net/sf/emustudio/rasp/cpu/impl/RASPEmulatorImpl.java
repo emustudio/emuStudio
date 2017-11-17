@@ -536,9 +536,6 @@ public class RASPEmulatorImpl extends AbstractCPU {
         inputTape.clear();
 
         List<Integer> inputs = memory.getInputs();
-        if (inputs == null) {
-            return;
-        }
 
         List<String> inputsStrings = inputs.stream().map(i -> String.valueOf(i)).collect(Collectors.toList());
         int j = inputs.size();

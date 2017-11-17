@@ -7,10 +7,12 @@ import java.util.List;
  * Created by miso on 24.9.2017.
  */
 public class Input {
-    private List<Integer> numbers;
+    private final List<Integer> numbers = new ArrayList<>();
+
+    public Input() {
+    }
 
     public Input(int n) {
-        numbers = new ArrayList<>();
         numbers.add(n);
     }
 
