@@ -60,13 +60,13 @@ The following plug-ins are used in the schemas. Each plug-in is described in fur
 
 [role="table table-striped table-condensed"]
 |======================================================================================================================
-|Compiler | https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/compilers/as-8080[as-8080]
-|Compiler | https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/compilers/as-z80[as-z80]
-|Operating memory (RAM) | https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/mem/standard-mem[standard-mem]
-|CPU | https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/cpu/8080-cpu[8080-cpu]
-|Another CPU | https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/cpu/z80-cpu[z80-cpu]
-|Device | https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/devices/88-sio[88-sio]
-|Device | https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/devices/88-disk[88-disk]
-|Device | https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/devices/simhPseudo-z80[simhPseudo-z80]
-|Device | https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/devices/adm3A-terminal[adm3A-terminal]
+|Compiler | https://github.com/vbmacher/emuStudio/tree/develop/plugins/compilers/as-8080[as-8080]
+|Compiler | https://github.com/vbmacher/emuStudio/tree/develop/plugins/compilers/as-z80[as-z80]
+|Operating memory (RAM) | https://github.com/vbmacher/emuStudio/tree/develop/plugins/mem/standard-mem[standard-mem]
+|CPU | https://github.com/vbmacher/emuStudio/tree/develop/plugins/cpu/8080-cpu[8080-cpu]
+|Another CPU | https://github.com/vbmacher/emuStudio/tree/develop/plugins/cpu/z80-cpu[z80-cpu]
+|Device | https://github.com/vbmacher/emuStudio/tree/develop/plugins/devices/88-sio[88-sio]
+|Device | https://github.com/vbmacher/emuStudio/tree/develop/plugins/devices/88-disk[88-disk]
+|Device | https://github.com/vbmacher/emuStudio/tree/develop/plugins/devices/simhPseudo-z80[simhPseudo-z80]
+|Device | https://github.com/vbmacher/emuStudio/tree/develop/plugins/devices/adm3A-terminal[adm3A-terminal]
 |======================================================================================================================
