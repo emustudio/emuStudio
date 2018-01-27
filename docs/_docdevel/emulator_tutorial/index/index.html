@@ -55,16 +55,18 @@
 
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-        ga('create', 'UA-3492956-5', 'auto');
-        ga('send', 'pageview');
-
-    </script>
+    
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+    
+        gtag('config', 'UA-3492956-5');
+      </script>
+    
 </head>
 
 
@@ -80,7 +82,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/emuStudio/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
@@ -92,27 +94,27 @@
             <ul class="nav navbar-nav navbar-right">
                 
                 <li>
-                    <a href="/emuStudio/">Home</a>
+                    <a href="/">Home</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/download">Download</a>
+                    <a href="/download">Download</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/docs">Docs</a>
+                    <a href="/docs">Docs</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/devel">Developer</a>
+                    <a href="/devel">Developer</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/roadmap">Roadmap</a>
+                    <a href="/roadmap">Roadmap</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/about">About</a>
+                    <a href="/about">About</a>
                 </li>
                 
             </ul>
@@ -149,7 +151,7 @@
             
             
                 
-                <a href="/emuStudio/docdevel/emulator_tutorial/index/" role="button" class="btn btn-default active">
+                <a href="/docdevel/emulator_tutorial/index/" role="button" class="btn btn-default active">
                     emulator tutorial
                 </a>
             
@@ -164,7 +166,7 @@
         <span>
             
             
-                <a href="/emuStudio/docdevel/javadoc_and_others/index/" role="button" class="btn btn-default">
+                <a href="/docdevel/javadoc_and_others/index/" role="button" class="btn btn-default">
                     javadoc and others
                 </a>
             
@@ -454,7 +456,7 @@ expected.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/images/emustudio-plugins.svg" alt="emustudio plugins" width="498" height="214">
+<img src="/images/emustudio-plugins.svg" alt="emustudio plugins" width="493" height="214">
 </div>
 </div>
 <div class="paragraph">
@@ -696,7 +698,7 @@ main class must have a constructor with exactly two arguments:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java">SamplePlugin<span style="color: #666666">(</span>Long pluginId<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span>SamplePlugin<span style="color: #666666">(</span>Long pluginId<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
 <span style="color: #666666">}</span></code></pre>
 </div>
@@ -847,7 +849,7 @@ Therefore I "codify" this to 4 spaces.</p>
 <div class="listingblock">
 <div class="title">Example of using logger</div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.slf4j.Logger</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.slf4j.Logger</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.slf4j.LoggerFactory</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">SomeClass</span> <span style="color: #666666">{</span>
@@ -893,7 +895,7 @@ to use them from Maven, put the following code into your <code>pom.xml</code> fi
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="xml"><span style="color: #008000; font-weight: bold">&lt;distributionManagement&gt;</span>
+<pre class="pygments highlight"><code data-lang="xml"><span></span><span style="color: #008000; font-weight: bold">&lt;distributionManagement&gt;</span>
   <span style="color: #008000; font-weight: bold">&lt;repository&gt;</span>
     <span style="color: #008000; font-weight: bold">&lt;id&gt;</span>emustudio-repository<span style="color: #008000; font-weight: bold">&lt;/id&gt;</span>
     <span style="color: #008000; font-weight: bold">&lt;name&gt;</span>emuStudio Repository<span style="color: #008000; font-weight: bold">&lt;/name&gt;</span>
@@ -1510,7 +1512,7 @@ Note the naming of the plug-in. We are following the naming convention as descri
 <div class="listingblock">
 <div class="title"><code>pom.xml</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="xml"><span style="color: #BC7A00">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+<pre class="pygments highlight"><code data-lang="xml"><span></span><span style="color: #BC7A00">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
 <span style="color: #008000; font-weight: bold">&lt;project</span> <span style="color: #7D9029">xmlns=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0&quot;</span>
          <span style="color: #7D9029">xmlns:xsi=</span><span style="color: #BA2121">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
          <span style="color: #7D9029">xsi:schemaLocation=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;</span><span style="color: #008000; font-weight: bold">&gt;</span>
@@ -1652,7 +1654,7 @@ The content of the specfile is as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/jflex/ssem.jflex</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="flex">package net.sf.emustudio.ssem.assembler;
+<pre class="pygments highlight"><code data-lang="flex"><span></span>package net.sf.emustudio.ssem.assembler;
 
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.Token;
@@ -1868,7 +1870,7 @@ assigned their specific editor style, like color or font.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.Token</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java_cup.runtime.ComplexSymbolFactory</span><span style="color: #666666">;</span>
@@ -2131,7 +2133,7 @@ interface first:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">interface</span> <span style="color: #0000FF; font-weight: bold">ASTnode</span> <span style="color: #666666">{</span>
 
@@ -2155,7 +2157,7 @@ root of the tree.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">interface</span> <span style="color: #0000FF; font-weight: bold">ASTvisitor</span> <span style="color: #666666">{</span>
 
@@ -2181,7 +2183,7 @@ either <code>Instruction</code> or <code>Constant</code>. Notice how we implemen
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.util.HashMap</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.util.Map</span><span style="color: #666666">;</span>
@@ -2250,7 +2252,7 @@ implemented in one AST node.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.CompileException</span><span style="color: #666666">;</span>
 
@@ -2365,7 +2367,7 @@ methods <code>hashCode()</code> and <code>equals()</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">Constant</span> <span style="color: #008000; font-weight: bold">implements</span> ASTnode <span style="color: #666666">{</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> <span style="color: #B00040">int</span> number<span style="color: #666666">;</span>
@@ -2446,7 +2448,7 @@ is stopped as failed.</p>
 <div class="listingblock">
 <div class="title"><code>src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.Token</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.junit.Test</span><span style="color: #666666">;</span>
@@ -2557,7 +2559,7 @@ is stopped as failed.</p>
 <div class="listingblock">
 <div class="title"><code>src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java_cup.runtime.ComplexSymbolFactory</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree.ASTvisitor</span><span style="color: #666666">;</span>
@@ -2750,7 +2752,7 @@ are created by emuStudio, and we will talk about them later.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PLUGIN_TYPE</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PluginType</span><span style="color: #666666">;</span>
@@ -2880,7 +2882,7 @@ similar fashion. The code is as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.runtime.NumberUtils</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.runtime.NumberUtils.Strategy</span><span style="color: #666666">;</span>
@@ -2991,7 +2993,7 @@ actually an abstract class, extending <code>OutputStream</code>. The reason is e
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.io.IOException</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.io.OutputStream</span><span style="color: #666666">;</span>
@@ -3009,7 +3011,7 @@ actually an abstract class, extending <code>OutputStream</code>. The reason is e
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.MemoryContext</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">net.jcip.annotations.NotThreadSafe</span><span style="color: #666666">;</span>
@@ -3075,7 +3077,7 @@ actually an abstract class, extending <code>OutputStream</code>. The reason is e
 <div class="listingblock">
 <div class="title"><code>src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler.tree.Instruction</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.junit.After</span><span style="color: #666666">;</span>
@@ -3193,7 +3195,7 @@ Let&#8217;s begin with it first.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CompilerImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCompiler <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CompilerImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCompiler <span style="color: #666666">{</span>
 
     <span style="color: #666666">...</span>
 
@@ -3280,7 +3282,7 @@ in the <code>Main</code> class, as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/Main.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.Compiler</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.Message</span><span style="color: #666666">;</span>
@@ -3471,7 +3473,7 @@ Note the naming of the plug-in. It follows the naming convention as described in
 <div class="listingblock">
 <div class="title"><code>ssem-mem/pom.xml</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="xml"><span style="color: #008000; font-weight: bold">&lt;project</span> <span style="color: #7D9029">xmlns=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0&quot;</span> <span style="color: #7D9029">xmlns:xsi=</span><span style="color: #BA2121">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+<pre class="pygments highlight"><code data-lang="xml"><span></span><span style="color: #008000; font-weight: bold">&lt;project</span> <span style="color: #7D9029">xmlns=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0&quot;</span> <span style="color: #7D9029">xmlns:xsi=</span><span style="color: #BA2121">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
   <span style="color: #7D9029">xsi:schemaLocation=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;</span><span style="color: #008000; font-weight: bold">&gt;</span>
   <span style="color: #008000; font-weight: bold">&lt;modelVersion&gt;</span>4.0.0<span style="color: #008000; font-weight: bold">&lt;/modelVersion&gt;</span>
 
@@ -3554,7 +3556,7 @@ main class of any emuStudio plug-in. The code snippet looks as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/MemoryImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PLUGIN_TYPE</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PluginType</span><span style="color: #666666">;</span>
@@ -3640,7 +3642,7 @@ methods of the <code>MemoryContext</code> interface for us. We will call the cla
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.impl</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.impl</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.AbstractMemoryContext</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">net.jcip.annotations.ThreadSafe</span><span style="color: #666666">;</span>
@@ -3754,7 +3756,7 @@ can be a class extending from a <code>javax.swing.JFrame</code> or <code>javax.s
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docdevel/emulator_tutorial/images//ssem-memory.png" alt="SSEM Memory GUI sample look">
+<img src="/docdevel/emulator_tutorial/images//ssem-memory.png" alt="SSEM Memory GUI sample look">
 </div>
 </div>
 <div class="paragraph">
@@ -3783,7 +3785,7 @@ editor, cell renderer and introduce row header renderer.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryGUI.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.Memory</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.MemoryContext</span><span style="color: #666666">;</span>
@@ -3905,7 +3907,7 @@ of some columns, it will be good to wrap it up in a custom <code>JTable</code>. 
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTable.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.awt.event.ActionEvent</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.awt.event.KeyEvent</span><span style="color: #666666">;</span>
@@ -4011,7 +4013,7 @@ the data to hex value, and raw ASCII value. The class is called <code>MemoryTabl
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTableModel.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.MemoryContext</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.runtime.NumberUtils</span><span style="color: #666666">;</span>
@@ -4222,7 +4224,7 @@ for setting up a custom row header:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/RowHeaderRenderer.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">javax.swing.JLabel</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">javax.swing.JList</span><span style="color: #666666">;</span>
@@ -4293,7 +4295,7 @@ Official tutorial and description of custom renderers can be found
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/CellRenderer.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.awt.Color</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.awt.Component</span><span style="color: #666666">;</span>
@@ -4383,7 +4385,7 @@ as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/CellEditor.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.gui</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.awt.Component</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.awt.FontMetrics</span><span style="color: #666666">;</span>
@@ -4453,7 +4455,7 @@ and will be called repeatedly, always when a user clicks on the mentioned icon.<
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/MemoryImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #666666">...</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #666666">...</span>
 
 <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">MemoryImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractMemory <span style="color: #666666">{</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> <span style="color: #008000; font-weight: bold">static</span> Logger LOGGER <span style="color: #666666">=</span> LoggerFactory<span style="color: #666666">.</span><span style="color: #7D9029">getLogger</span><span style="color: #666666">(</span>MemoryImpl<span style="color: #666666">.</span><span style="color: #7D9029">class</span><span style="color: #666666">);</span>
@@ -4540,7 +4542,7 @@ the main plugin class. For example, the automated unit test of the memory contex
 <div class="listingblock">
 <div class="title"><code>src/test/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImplTest.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.impl</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory.impl</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.Memory</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.junit.Test</span><span style="color: #666666">;</span>
@@ -4789,7 +4791,7 @@ pom.xml</pre>
 <div class="listingblock">
 <div class="title"><code>pom.xml</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="xml"><span style="color: #008000; font-weight: bold">&lt;project</span> <span style="color: #7D9029">xmlns=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0&quot;</span> <span style="color: #7D9029">xmlns:xsi=</span><span style="color: #BA2121">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+<pre class="pygments highlight"><code data-lang="xml"><span></span><span style="color: #008000; font-weight: bold">&lt;project</span> <span style="color: #7D9029">xmlns=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0&quot;</span> <span style="color: #7D9029">xmlns:xsi=</span><span style="color: #BA2121">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
          <span style="color: #7D9029">xsi:schemaLocation=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;</span><span style="color: #008000; font-weight: bold">&gt;</span>
   <span style="color: #008000; font-weight: bold">&lt;modelVersion&gt;</span>4.0.0<span style="color: #008000; font-weight: bold">&lt;/modelVersion&gt;</span>
 
@@ -4898,7 +4900,7 @@ as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #AA22FF">@PluginType</span><span style="color: #666666">(</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #AA22FF">@PluginType</span><span style="color: #666666">(</span>
     type <span style="color: #666666">=</span> PLUGIN_TYPE<span style="color: #666666">.</span><span style="color: #7D9029">CPU</span><span style="color: #666666">,</span>
     title <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;SSEM CPU&quot;</span><span style="color: #666666">,</span>
     copyright <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;\u00A9 Copyright 2017, Your Name&quot;</span><span style="color: #666666">,</span>
@@ -5044,7 +5046,7 @@ the state machine of emuStudio.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/images/run-states.svg" alt="run states" width="335" height="300">
+<img src="/images/run-states.svg" alt="run states" width="324" height="300">
 </div>
 </div>
 <div class="paragraph">
@@ -5053,7 +5055,7 @@ the state machine of emuStudio.</p>
 <div class="listingblock">
 <div class="title"><code>emulib.plugins.cpu.CPU.RunState</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">static</span> <span style="color: #008000; font-weight: bold">enum</span> RunState <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">static</span> <span style="color: #008000; font-weight: bold">enum</span> RunState <span style="color: #666666">{</span>
     STATE_STOPPED_NORMAL<span style="color: #666666">(</span><span style="color: #BA2121">&quot;stopped&quot;</span><span style="color: #666666">),</span>
     STATE_STOPPED_BREAK<span style="color: #666666">(</span><span style="color: #BA2121">&quot;breakpoint&quot;</span><span style="color: #666666">),</span>
     STATE_STOPPED_ADDR_FALLOUT<span style="color: #666666">(</span><span style="color: #BA2121">&quot;stopped (address fallout)&quot;</span><span style="color: #666666">),</span>
@@ -5073,7 +5075,7 @@ the state machine of emuStudio.</p>
 <div class="listingblock">
 <div class="title"><code>emulib.plugins.cpu.CPU</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">interface</span> <span style="color: #0000FF; font-weight: bold">CPU</span> <span style="color: #008000; font-weight: bold">extends</span> Plugin <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">interface</span> <span style="color: #0000FF; font-weight: bold">CPU</span> <span style="color: #008000; font-weight: bold">extends</span> Plugin <span style="color: #666666">{</span>
 
     <span style="color: #B00040">void</span> <span style="color: #0000FF">step</span><span style="color: #666666">();</span>
 
@@ -5096,7 +5098,7 @@ way. It is the required to implement only the following methods, which do not ha
 <div class="listingblock">
 <div class="title"><code>emulib.plugins.cpu.AbstractCPU</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #AA22FF">@ThreadSafe</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #AA22FF">@ThreadSafe</span>
 <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">abstract</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">AbstractCPU</span> <span style="color: #008000; font-weight: bold">implements</span> CPU<span style="color: #666666">,</span> Callable<span style="color: #666666">&lt;</span>RunState<span style="color: #666666">&gt;</span> <span style="color: #666666">{</span>
     <span style="color: #008000; font-weight: bold">protected</span> <span style="color: #008000; font-weight: bold">abstract</span> RunState <span style="color: #0000FF">stepInternal</span><span style="color: #666666">()</span> <span style="color: #008000; font-weight: bold">throws</span> Exception<span style="color: #666666">;</span>
 
@@ -5192,7 +5194,7 @@ is connected overally):</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/images/ssem-scheme.svg" alt="ssem scheme" width="402" height="301">
+<img src="/images/ssem-scheme.svg" alt="ssem scheme" width="393" height="301">
 </div>
 </div>
 </div>
@@ -5208,7 +5210,7 @@ is connected overally):</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> ContextPool contextPool<span style="color: #666666">;</span>
 
     <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">CpuImpl</span><span style="color: #666666">(</span>Long pluginID<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
@@ -5239,7 +5241,7 @@ implemented in this tutorial. There is dedicated separate tutorial for the CRT d
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
     <span style="color: #008000; font-weight: bold">private</span> MemoryContext<span style="color: #666666">&lt;</span>Integer<span style="color: #666666">&gt;</span> memory<span style="color: #666666">;</span>
 
     <span style="color: #AA22FF">@Override</span>
@@ -5361,7 +5363,7 @@ values.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
 
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> MemoryContext<span style="color: #666666">&lt;</span>Byte<span style="color: #666666">&gt;</span> memory<span style="color: #666666">;</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">volatile</span> CPU<span style="color: #666666">.</span><span style="color: #7D9029">RunState</span> currentRunState<span style="color: #666666">;</span>
@@ -5497,7 +5499,7 @@ somehow "pause" the CPU.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> CPU cpu<span style="color: #666666">;</span>
 
@@ -5646,7 +5648,7 @@ is faster than Baby computer (which is expected).</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">volatile</span> <span style="color: #B00040">long</span> averageInstructionNanos<span style="color: #666666">;</span>
 
@@ -5807,7 +5809,7 @@ which the constant takes.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="xml">...
+<pre class="pygments highlight"><code data-lang="xml"><span></span>...
       <span style="color: #008000; font-weight: bold">&lt;plugin&gt;</span>
         <span style="color: #008000; font-weight: bold">&lt;groupId&gt;</span>edigen<span style="color: #008000; font-weight: bold">&lt;/groupId&gt;</span>
         <span style="color: #008000; font-weight: bold">&lt;artifactId&gt;</span>edigen-maven-plugin<span style="color: #008000; font-weight: bold">&lt;/artifactId&gt;</span>
@@ -5836,7 +5838,7 @@ the engine as well as disassembler. The code looks as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
     <span style="color: #008000; font-weight: bold">private</span> EmulatorEngine engine<span style="color: #666666">;</span>
     <span style="color: #008000; font-weight: bold">private</span> Disassembler disasm<span style="color: #666666">;</span>
@@ -5923,7 +5925,7 @@ registers' values really are (and compare them with those shown on a display), e
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docdevel/emulator_tutorial/images//cpu-status-panel.png" alt="SSEM CPU Status panel GUI">
+<img src="/docdevel/emulator_tutorial/images//cpu-status-panel.png" alt="SSEM CPU Status panel GUI">
 </div>
 </div>
 <div class="paragraph">
@@ -5932,7 +5934,8 @@ registers' values really are (and compare them with those shown on a display), e
 <div class="listingblock">
 <div class="title"><code>ssem-cpu/src/main/java/net/sf/emustudio/ssem/cpu/CpuPanel.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.cpu</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span>
+<span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.cpu</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.cpu.CPU</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.MemoryContext</span><span style="color: #666666">;</span>
@@ -6297,7 +6300,7 @@ Don&#8217;t forget to register the updater by calling <code>cpu.addCPUListener()
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
 
     <span style="color: #AA22FF">@Override</span>
     <span style="color: #008000; font-weight: bold">public</span> JPanel <span style="color: #0000FF">getStatusPanel</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
@@ -6341,7 +6344,7 @@ file called <code>ssem.out</code>.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/AutomaticEmulation.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.cpu</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.cpu</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.cpu.CPU</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.MemoryContext</span><span style="color: #666666">;</span>
@@ -6439,7 +6442,7 @@ file called <code>ssem.out</code>.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
 
     <span style="color: #008000; font-weight: bold">private</span> Optional<span style="color: #666666">&lt;</span>AutomaticEmulation<span style="color: #666666">&gt;</span> automaticEmulation <span style="color: #666666">=</span> Optional<span style="color: #666666">.</span><span style="color: #7D9029">empty</span><span style="color: #666666">();</span>
@@ -6629,7 +6632,7 @@ Note the naming of the plug-in. It follows the naming convention as described in
 <div class="listingblock">
 <div class="title"><code>ssem-display/pom.xml</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="xml"><span style="color: #008000; font-weight: bold">&lt;project</span> <span style="color: #7D9029">xmlns=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0&quot;</span> <span style="color: #7D9029">xmlns:xsi=</span><span style="color: #BA2121">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+<pre class="pygments highlight"><code data-lang="xml"><span></span><span style="color: #008000; font-weight: bold">&lt;project</span> <span style="color: #7D9029">xmlns=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0&quot;</span> <span style="color: #7D9029">xmlns:xsi=</span><span style="color: #BA2121">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
   <span style="color: #7D9029">xsi:schemaLocation=</span><span style="color: #BA2121">&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;</span><span style="color: #008000; font-weight: bold">&gt;</span>
   <span style="color: #008000; font-weight: bold">&lt;modelVersion&gt;</span>4.0.0<span style="color: #008000; font-weight: bold">&lt;/modelVersion&gt;</span>
 
@@ -6713,7 +6716,7 @@ main class of any emuStudio plug-in. The code snippet looks as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PLUGIN_TYPE</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PluginType</span><span style="color: #666666">;</span>
@@ -6758,7 +6761,7 @@ as the source of information which bits are "turned on":</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">DisplaySSEM</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractDevice <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">DisplaySSEM</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractDevice <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> ContextPool contextPool<span style="color: #666666">;</span>
 
@@ -6843,7 +6846,7 @@ For better description about how painting of Swing components works, please see
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docdevel/emulator_tutorial/images//ssem-display.png" alt="SSEM Display GUI sample look">
+<img src="/docdevel/emulator_tutorial/images//ssem-display.png" alt="SSEM Display GUI sample look">
 </div>
 </div>
 <div class="sect3">
@@ -6854,7 +6857,7 @@ For better description about how painting of Swing components works, please see
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplayPanel.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.runtime.NumberUtils</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">net.jcip.annotations.ThreadSafe</span><span style="color: #666666">;</span>
@@ -6967,7 +6970,7 @@ for the dialog is as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplayDialog.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.Memory</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.MemoryContext</span><span style="color: #666666">;</span>
@@ -7075,7 +7078,7 @@ new content - by copying the whole memory into the video memory of the display.<
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PLUGIN_TYPE</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PluginType</span><span style="color: #666666">;</span>
@@ -7205,7 +7208,7 @@ all requests for showing the GUI. Otherwise, we will create the display GUI righ
                     <ul class="nav navbar-nav">
                         <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
                         <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
                     </ul>
                 </div>
             </nav>

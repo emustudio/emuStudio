@@ -47,16 +47,18 @@
 
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-        ga('create', 'UA-3492956-5', 'auto');
-        ga('send', 'pageview');
-
-    </script>
+    
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+    
+        gtag('config', 'UA-3492956-5');
+      </script>
+    
 </head>
 
 
@@ -72,7 +74,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/emuStudio/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
@@ -84,27 +86,27 @@
             <ul class="nav navbar-nav navbar-right">
                 
                 <li>
-                    <a href="/emuStudio/">Home</a>
+                    <a href="/">Home</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/download">Download</a>
+                    <a href="/download">Download</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/docs">Docs</a>
+                    <a href="/docs">Docs</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/devel">Developer</a>
+                    <a href="/devel">Developer</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/roadmap">Roadmap</a>
+                    <a href="/roadmap">Roadmap</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/about">About</a>
+                    <a href="/about">About</a>
                 </li>
                 
             </ul>
@@ -257,7 +259,7 @@ pom.xml</pre>
 <div class="listingblock">
 <div class="title"><code>pom.xml</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="xml">Unresolved directive in cpu.adoc - include::{sourcedir}/plugins/cpu/ssem-cpu/pom.xml[]</code></pre>
+<pre class="pygments highlight"><code data-lang="xml"><span></span>Unresolved directive in cpu.adoc - include::{sourcedir}/plugins/cpu/ssem-cpu/pom.xml[]</code></pre>
 </div>
 </div>
 </div>
@@ -275,7 +277,7 @@ as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #AA22FF">@PluginType</span><span style="color: #666666">(</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #AA22FF">@PluginType</span><span style="color: #666666">(</span>
     type <span style="color: #666666">=</span> PLUGIN_TYPE<span style="color: #666666">.</span><span style="color: #7D9029">CPU</span><span style="color: #666666">,</span>
     title <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;SSEM CPU&quot;</span><span style="color: #666666">,</span>
     copyright <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;\u00A9 Copyright 2017, Your Name&quot;</span><span style="color: #666666">,</span>
@@ -421,7 +423,7 @@ the state machine of emuStudio.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/images/run-states.svg" alt="run states" width="335" height="300">
+<img src="/images/run-states.svg" alt="run states" width="324" height="300">
 </div>
 </div>
 <div class="paragraph">
@@ -430,7 +432,7 @@ the state machine of emuStudio.</p>
 <div class="listingblock">
 <div class="title"><code>emulib.plugins.cpu.CPU.RunState</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">static</span> <span style="color: #008000; font-weight: bold">enum</span> RunState <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">static</span> <span style="color: #008000; font-weight: bold">enum</span> RunState <span style="color: #666666">{</span>
     STATE_STOPPED_NORMAL<span style="color: #666666">(</span><span style="color: #BA2121">&quot;stopped&quot;</span><span style="color: #666666">),</span>
     STATE_STOPPED_BREAK<span style="color: #666666">(</span><span style="color: #BA2121">&quot;breakpoint&quot;</span><span style="color: #666666">),</span>
     STATE_STOPPED_ADDR_FALLOUT<span style="color: #666666">(</span><span style="color: #BA2121">&quot;stopped (address fallout)&quot;</span><span style="color: #666666">),</span>
@@ -450,7 +452,7 @@ the state machine of emuStudio.</p>
 <div class="listingblock">
 <div class="title"><code>emulib.plugins.cpu.CPU</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">interface</span> <span style="color: #0000FF; font-weight: bold">CPU</span> <span style="color: #008000; font-weight: bold">extends</span> Plugin <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">interface</span> <span style="color: #0000FF; font-weight: bold">CPU</span> <span style="color: #008000; font-weight: bold">extends</span> Plugin <span style="color: #666666">{</span>
 
     <span style="color: #B00040">void</span> <span style="color: #0000FF">step</span><span style="color: #666666">();</span>
 
@@ -473,7 +475,7 @@ way. It is the required to implement only the following methods, which do not ha
 <div class="listingblock">
 <div class="title"><code>emulib.plugins.cpu.AbstractCPU</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #AA22FF">@ThreadSafe</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #AA22FF">@ThreadSafe</span>
 <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">abstract</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">AbstractCPU</span> <span style="color: #008000; font-weight: bold">implements</span> CPU<span style="color: #666666">,</span> Callable<span style="color: #666666">&lt;</span>RunState<span style="color: #666666">&gt;</span> <span style="color: #666666">{</span>
     <span style="color: #008000; font-weight: bold">protected</span> <span style="color: #008000; font-weight: bold">abstract</span> RunState <span style="color: #0000FF">stepInternal</span><span style="color: #666666">()</span> <span style="color: #008000; font-weight: bold">throws</span> Exception<span style="color: #666666">;</span>
 
@@ -569,7 +571,7 @@ is connected overally):</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/images/ssem-scheme.svg" alt="ssem scheme" width="402" height="301">
+<img src="/images/ssem-scheme.svg" alt="ssem scheme" width="393" height="301">
 </div>
 </div>
 </div>
@@ -585,7 +587,7 @@ is connected overally):</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> ContextPool contextPool<span style="color: #666666">;</span>
 
     <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">CpuImpl</span><span style="color: #666666">(</span>Long pluginID<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
@@ -616,7 +618,7 @@ implemented in this tutorial. There is dedicated separate tutorial for the CRT d
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
     <span style="color: #008000; font-weight: bold">private</span> MemoryContext<span style="color: #666666">&lt;</span>Integer<span style="color: #666666">&gt;</span> memory<span style="color: #666666">;</span>
 
     <span style="color: #AA22FF">@Override</span>
@@ -738,7 +740,7 @@ values.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
 
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> MemoryContext<span style="color: #666666">&lt;</span>Byte<span style="color: #666666">&gt;</span> memory<span style="color: #666666">;</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">volatile</span> CPU<span style="color: #666666">.</span><span style="color: #7D9029">RunState</span> currentRunState<span style="color: #666666">;</span>
@@ -874,7 +876,7 @@ somehow "pause" the CPU.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> CPU cpu<span style="color: #666666">;</span>
 
@@ -1023,7 +1025,7 @@ is faster than Baby computer (which is expected).</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
     <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">volatile</span> <span style="color: #B00040">long</span> averageInstructionNanos<span style="color: #666666">;</span>
 
@@ -1165,7 +1167,7 @@ which the constant takes.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="xml">...
+<pre class="pygments highlight"><code data-lang="xml"><span></span>...
       <span style="color: #008000; font-weight: bold">&lt;plugin&gt;</span>
         <span style="color: #008000; font-weight: bold">&lt;groupId&gt;</span>edigen<span style="color: #008000; font-weight: bold">&lt;/groupId&gt;</span>
         <span style="color: #008000; font-weight: bold">&lt;artifactId&gt;</span>edigen-maven-plugin<span style="color: #008000; font-weight: bold">&lt;/artifactId&gt;</span>
@@ -1194,7 +1196,7 @@ the engine as well as disassembler. The code looks as follows:</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
     <span style="color: #008000; font-weight: bold">private</span> EmulatorEngine engine<span style="color: #666666">;</span>
     <span style="color: #008000; font-weight: bold">private</span> Disassembler disasm<span style="color: #666666">;</span>
@@ -1281,7 +1283,7 @@ registers' values really are (and compare them with those shown on a display), e
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docdevel/emulator_tutorial/images//cpu-status-panel.png" alt="SSEM CPU Status panel GUI">
+<img src="/docdevel/emulator_tutorial/images//cpu-status-panel.png" alt="SSEM CPU Status panel GUI">
 </div>
 </div>
 <div class="paragraph">
@@ -1290,7 +1292,7 @@ registers' values really are (and compare them with those shown on a display), e
 <div class="listingblock">
 <div class="title"><code>ssem-cpu/src/main/java/net/sf/emustudio/ssem/cpu/CpuPanel.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java">Unresolved directive in cpu<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>cpu<span style="color: #666666">/</span>ssem<span style="color: #666666">-</span>cpu<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>cpu<span style="color: #666666">/</span>CpuPanel<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
+<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in cpu<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>cpu<span style="color: #666666">/</span>ssem<span style="color: #666666">-</span>cpu<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>cpu<span style="color: #666666">/</span>CpuPanel<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1325,7 +1327,7 @@ Don&#8217;t forget to register the updater by calling <code>cpu.addCPUListener()
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
 
     <span style="color: #AA22FF">@Override</span>
     <span style="color: #008000; font-weight: bold">public</span> JPanel <span style="color: #0000FF">getStatusPanel</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
@@ -1369,7 +1371,7 @@ file called <code>ssem.out</code>.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/AutomaticEmulation.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java">Unresolved directive in cpu<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>cpu<span style="color: #666666">/</span>ssem<span style="color: #666666">-</span>cpu<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>cpu<span style="color: #666666">/</span>AutomaticEmulation<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
+<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in cpu<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>cpu<span style="color: #666666">/</span>ssem<span style="color: #666666">-</span>cpu<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>cpu<span style="color: #666666">/</span>AutomaticEmulation<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1378,7 +1380,7 @@ file called <code>ssem.out</code>.</p>
 <div class="listingblock">
 <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CpuImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
 
     <span style="color: #008000; font-weight: bold">private</span> Optional<span style="color: #666666">&lt;</span>AutomaticEmulation<span style="color: #666666">&gt;</span> automaticEmulation <span style="color: #666666">=</span> Optional<span style="color: #666666">.</span><span style="color: #7D9029">empty</span><span style="color: #666666">();</span>
@@ -1484,7 +1486,7 @@ environment. Each unit test is also a class. Maven uses standard path where the 
                     <ul class="nav navbar-nav">
                         <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
                         <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
                     </ul>
                 </div>
             </nav>

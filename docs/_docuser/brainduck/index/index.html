@@ -55,16 +55,18 @@
 
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-        ga('create', 'UA-3492956-5', 'auto');
-        ga('send', 'pageview');
-
-    </script>
+    
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+    
+        gtag('config', 'UA-3492956-5');
+      </script>
+    
 </head>
 
 
@@ -80,7 +82,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/emuStudio/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
@@ -92,27 +94,27 @@
             <ul class="nav navbar-nav navbar-right">
                 
                 <li>
-                    <a href="/emuStudio/">Home</a>
+                    <a href="/">Home</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/download">Download</a>
+                    <a href="/download">Download</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/docs">Docs</a>
+                    <a href="/docs">Docs</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/devel">Developer</a>
+                    <a href="/devel">Developer</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/roadmap">Roadmap</a>
+                    <a href="/roadmap">Roadmap</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/about">About</a>
+                    <a href="/about">About</a>
                 </li>
                 
             </ul>
@@ -143,7 +145,7 @@
             
             
                 
-                <a href="/emuStudio/docuser/brainduck/index/" role="button" class="btn btn-default active">
+                <a href="/docuser/brainduck/index/" role="button" class="btn btn-default active">
                     brainduck
                 </a>
             
@@ -154,7 +156,7 @@
         <span>
             
             
-                <a href="/emuStudio/docuser/main_module/index/" role="button" class="btn btn-default">
+                <a href="/docuser/main_module/index/" role="button" class="btn btn-default">
                     main module
                 </a>
             
@@ -177,7 +179,7 @@
         <span>
             
             
-                <a href="/emuStudio/docuser/mits_altair_8800/index/" role="button" class="btn btn-default">
+                <a href="/docuser/mits_altair_8800/index/" role="button" class="btn btn-default">
                     mits altair 8800
                 </a>
             
@@ -200,7 +202,7 @@
         <span>
             
             
-                <a href="/emuStudio/docuser/ram/index/" role="button" class="btn btn-default">
+                <a href="/docuser/ram/index/" role="button" class="btn btn-default">
                     ram
                 </a>
             
@@ -219,7 +221,7 @@
         <span>
             
             
-                <a href="/emuStudio/docuser/rasp/index/" role="button" class="btn btn-default">
+                <a href="/docuser/rasp/index/" role="button" class="btn btn-default">
                     rasp
                 </a>
             
@@ -238,7 +240,7 @@
         <span>
             
             
-                <a href="/emuStudio/docuser/ssem/index/" role="button" class="btn btn-default">
+                <a href="/docuser/ssem/index/" role="button" class="btn btn-default">
                     ssem
                 </a>
             
@@ -382,7 +384,7 @@ documentation for more details). The following image shows the schema of BrainDu
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/images/brainduck-scheme.svg" alt="brainduck scheme" width="347" height="154">
+<img src="/images/brainduck-scheme.svg" alt="brainduck scheme" width="337" height="154">
 </div>
 </div>
 <div class="paragraph">
@@ -608,7 +610,7 @@ panel in the main window.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docuser/brainduck/images//status-panel.png" alt="BrainDuck CPU status panel">
+<img src="/docuser/brainduck/images//status-panel.png" alt="BrainDuck CPU status panel">
 </div>
 </div>
 <div class="paragraph">
@@ -680,7 +682,7 @@ about the update.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docuser/brainduck/images//brainduck-mem.png" alt="BrainDuck memory window">
+<img src="/docuser/brainduck/images//brainduck-mem.png" alt="BrainDuck memory window">
 </div>
 </div>
 <div class="ulist">
@@ -741,7 +743,7 @@ in which case it loads input from the file and output to another file.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docuser/brainduck/images//brainduck-terminal.png" alt="BrainDuck terminal window">
+<img src="/docuser/brainduck/images//brainduck-terminal.png" alt="BrainDuck terminal window">
 </div>
 </div>
 <div class="paragraph">
@@ -754,7 +756,7 @@ displayed on screen.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/docuser/brainduck/images//brainduck-terminal-input.png" alt="Input is enabled in BrainDuck terminal window">
+<img src="/docuser/brainduck/images//brainduck-terminal-input.png" alt="Input is enabled in BrainDuck terminal window">
 </div>
 </div>
 <div class="paragraph">
@@ -869,7 +871,7 @@ Take care about end-of-line characters. Most of brainfuck programs count with Un
                     <ul class="nav navbar-nav">
                         <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
                         <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
                     </ul>
                 </div>
             </nav>
