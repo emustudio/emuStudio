@@ -10,7 +10,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>{% if page.title %}{{ page.title }} &diams; {{ site.data.global.title }}{% elsif post.title %}{{ post.title }} &diams; {{ site.data.global.title }}{% else %}{{ site.data.global.title }} &diams; {{ site.data.global.description }}{% endif %}</title>
-    <meta name="keywords" content="emulator,emulation,emustudio,programming emulator,debugging in emulator,computer emulation,altair emulation">
+    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <meta name="description" content="Universal computer emulation platform and framework.">
+    <meta name=”robots” content=”noindex,follow”>
+
+    <meta property="og:title" content="{% if page.title %}{{ page.title }}{% elsif post.title %}{{ post.title }}{% else %}{{ site.data.global.title }}{% endif %}">
+    <meta property="og:image" content="{{base}}img/logo-2.svg">
+    <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <!-- RSS -->
     <link rel="alternate" type="application/rss+xml" title="{{ site.data.global.title }} &diams; {{ site.data.global.description }}" href="{{ base }}feed.xml">
