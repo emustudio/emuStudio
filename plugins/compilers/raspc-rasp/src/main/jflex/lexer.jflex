@@ -85,6 +85,8 @@ number = "-"?[0-9]+
 identifier = [a-zA-Z][a-zA-Z0-9]*
 label = {identifier}[":"]
 operator_constant = "="
+org=[\r|\n|\r\n]*"org"
+input=[\r|\n|\r\n]*"<input>"
 
 %%
 
@@ -127,8 +129,12 @@ operator_constant = "="
 }
 
 /*preprocessor directives*/
-"org" {
+{org} {
 	return token(ORG, Token.PREPROCESSOR); 
+}
+
+{input} {
+    return token(TINPUT, Token.PREPROCESSOR);
 }
 
 /*separators*/

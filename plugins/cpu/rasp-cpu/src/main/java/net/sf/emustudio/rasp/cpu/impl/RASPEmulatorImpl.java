@@ -38,11 +38,11 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.swing.JPanel;
+
+import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
 import net.sf.emustudio.rasp.cpu.gui.LabelDebugColumn;
 import net.sf.emustudio.rasp.cpu.gui.RASPCpuStatusPanel;
 import net.sf.emustudio.rasp.cpu.gui.RASPDisassembler;
@@ -89,6 +89,8 @@ public class RASPEmulatorImpl extends AbstractCPU {
     @Override
     protected void resetInternal(int startPos) {
         IP = startPos;
+        loadInputs();
+        context.getOutputTape().clear();
     }
 
     /**
@@ -526,6 +528,20 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
         disassembler = new RASPDisassembler(memory);
         context.init(getPluginID());
+        loadInputs();
+    }
+
+    private void loadInputs() {
+        AbstractTapeContext inputTape = context.getInputTape();
+        inputTape.clear();
+
+        List<Integer> inputs = memory.getInputs();
+
+        List<String> inputsStrings = inputs.stream().map(i -> String.valueOf(i)).collect(Collectors.toList());
+        int j = inputs.size();
+        for (int i = 0; i < j; i++) {
+            inputTape.setSymbolAt(i, inputsStrings.get(i));
+        }
     }
 
     @Override

@@ -21,6 +21,9 @@ package net.sf.emustudio.rasp.compiler.tree;
 
 import net.sf.emustudio.rasp.compiler.CompilerOutput;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  * @author miso
@@ -28,11 +31,12 @@ import net.sf.emustudio.rasp.compiler.CompilerOutput;
 public class SourceCode extends AbstractTreeNode {
 
     private final int programStart;
+    private final List<Integer> inputs = new ArrayList<>();
     private final Program program;
     private boolean programStartZero;
     private boolean programStartUndefined;
 
-    public SourceCode(int programStart, Program program) {
+    public SourceCode(int programStart, Input inputs, Program program) {
         if (programStart == 0) {
             this.programStart = 20;
             this.programStartZero = true;
@@ -42,12 +46,27 @@ public class SourceCode extends AbstractTreeNode {
         } else {
             this.programStart = programStart;
         }
+
+        this.inputs.addAll(inputs.getAll());
         this.program = program;
+    }
+
+    public SourceCode(int programStart, Program program) {
+        this(programStart, new Input(), program);
+    }
+
+    public SourceCode(Input input, Program program) {
+        this(-1, input, program);
+    }
+
+    public SourceCode(Program program) {
+        this(-1, new Input(), program);
     }
 
     @Override
     public void pass() throws Exception {
         CompilerOutput.getInstance().setProgramStart(programStart);
+        CompilerOutput.getInstance().addInputs(inputs);
         program.pass();
     }
 
