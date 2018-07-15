@@ -1,12 +1,12 @@
 # Welcome to emuStudio
 [![Build Status](https://travis-ci.org/vbmacher/emuStudio.svg?branch=develop)](https://travis-ci.org/vbmacher/emuStudio)
 
-emuStudio is a desktop application which allows to write programs and emulate computers.
+[emuStudio](www.emustudio.net) is a desktop application which allows to write programs and emulate computers.
 In addition, it is easily extensible - acting as a framework it encourages developers to write their own computer
-emulators. It is versatile, free, and written in Java.
+emulator. It is versatile, free, and written in Java.
 
 The main goal is to support learning about older but important computers or abstract machines. 
-I think it is also appropriate for schools; for example, emuStudio is used at
+It is also appropriate for using at schools; for example, emuStudio is used at
 [Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
 
 ## Available emulators

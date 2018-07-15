@@ -14,7 +14,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>Introduction &diams; emuStudio</title>
-    <meta name="keywords" content="emulator,emulation,emustudio,programming emulator,debugging in emulator,computer emulation,altair emulation">
+    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <meta name="description" content="Universal computer emulation platform and framework.">
+    <meta name=”robots” content=”noindex,follow”>
+
+    <meta property="og:title" content="Introduction">
+    <meta property="og:image" content="../../../img/logo-2.svg">
+    <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <!-- RSS -->
     <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../feed.xml">
@@ -47,16 +53,18 @@
 
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-        ga('create', 'UA-3492956-5', 'auto');
-        ga('send', 'pageview');
-
-    </script>
+    
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+    
+        gtag('config', 'UA-3492956-5');
+      </script>
+    
 </head>
 
 
@@ -72,7 +80,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/emuStudio/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
@@ -84,27 +92,27 @@
             <ul class="nav navbar-nav navbar-right">
                 
                 <li>
-                    <a href="/emuStudio/">Home</a>
+                    <a href="/">Home</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/download">Download</a>
+                    <a href="/download">Download</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/docs">Docs</a>
+                    <a href="/docs">Docs</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/devel">Developer</a>
+                    <a href="/devel">Developer</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/roadmap">Roadmap</a>
+                    <a href="/roadmap">Roadmap</a>
                 </li>
                 
                 <li>
-                    <a href="/emuStudio/about">About</a>
+                    <a href="/about">About</a>
                 </li>
                 
             </ul>
@@ -392,7 +400,7 @@ expected.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="https://vbmacher.github.io/emuStudio/images/emustudio-plugins.svg" alt="emustudio plugins" width="493" height="214">
+<img src="/images/emustudio-plugins.svg" alt="emustudio plugins" width="493" height="214">
 </div>
 </div>
 <div class="paragraph">
@@ -634,7 +642,7 @@ main class must have a constructor with exactly two arguments:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java">SamplePlugin<span style="color: #666666">(</span>Long pluginId<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span>SamplePlugin<span style="color: #666666">(</span>Long pluginId<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
 <span style="color: #666666">}</span></code></pre>
 </div>
@@ -785,7 +793,7 @@ Therefore I "codify" this to 4 spaces.</p>
 <div class="listingblock">
 <div class="title">Example of using logger</div>
 <div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.slf4j.Logger</span><span style="color: #666666">;</span>
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.slf4j.Logger</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.slf4j.LoggerFactory</span><span style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">SomeClass</span> <span style="color: #666666">{</span>
@@ -831,7 +839,7 @@ to use them from Maven, put the following code into your <code>pom.xml</code> fi
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="pygments highlight"><code data-lang="xml"><span style="color: #008000; font-weight: bold">&lt;distributionManagement&gt;</span>
+<pre class="pygments highlight"><code data-lang="xml"><span></span><span style="color: #008000; font-weight: bold">&lt;distributionManagement&gt;</span>
   <span style="color: #008000; font-weight: bold">&lt;repository&gt;</span>
     <span style="color: #008000; font-weight: bold">&lt;id&gt;</span>emustudio-repository<span style="color: #008000; font-weight: bold">&lt;/id&gt;</span>
     <span style="color: #008000; font-weight: bold">&lt;name&gt;</span>emuStudio Repository<span style="color: #008000; font-weight: bold">&lt;/name&gt;</span>
@@ -1087,7 +1095,7 @@ your fingers, you&#8217;ll write some code. Let&#8217;s start.</p>
                     <ul class="nav navbar-nav">
                         <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
                         <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
                     </ul>
                 </div>
             </nav>

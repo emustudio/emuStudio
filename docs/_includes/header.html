@@ -10,7 +10,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>{% if page.title %}{{ page.title }} &diams; {{ site.data.global.title }}{% elsif post.title %}{{ post.title }} &diams; {{ site.data.global.title }}{% else %}{{ site.data.global.title }} &diams; {{ site.data.global.description }}{% endif %}</title>
-    <meta name="keywords" content="emulator,emulation,emustudio,programming emulator,debugging in emulator,computer emulation,altair emulation">
+    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <meta name="description" content="Universal computer emulation platform and framework.">
+    <meta name=”robots” content=”noindex,follow”>
+
+    <meta property="og:title" content="{% if page.title %}{{ page.title }}{% elsif post.title %}{{ post.title }}{% else %}{{ site.data.global.title }}{% endif %}">
+    <meta property="og:image" content="{{base}}img/logo-2.svg">
+    <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <!-- RSS -->
     <link rel="alternate" type="application/rss+xml" title="{{ site.data.global.title }} &diams; {{ site.data.global.description }}" href="{{ base }}feed.xml">
@@ -48,16 +54,18 @@
 {% endif%}
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-        ga('create', 'UA-3492956-5', 'auto');
-        ga('send', 'pageview');
-
-    </script>
+    {% if site.google_analytics_id %}
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics_id }}"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+    
+        gtag('config', '{{ site.google_analytics_id }}');
+      </script>
+    {% endif %}
 </head>
 
 {% if documentation %}
@@ -87,7 +95,7 @@
             <ul class="nav navbar-nav navbar-right">
                 {% for item in site.data.nav.main %}
                 <li>
-                    <a href="{{ site.baseurl }}{{ item.url }}">{{ item.text }}</a>
+                    <a href="{{ item.url | prepend: site.baseurl }}">{{ item.text }}</a>
                 </li>
                 {% endfor %}
             </ul>

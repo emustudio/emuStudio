@@ -10,15 +10,19 @@ collections:
   docdevel:
     output: true
 
-# When debugging locally, run as :
-#    jekyll serve --baseurl ''
-baseurl: /emuStudio
+# Serving
+baseurl: ""
+url: http://www.emustudio.net/
+detach:  false
+port:    4000
+host:    0.0.0.0
+baseurl: "" # does not include hostname
 
 # Handling Reading
 safe:         true
 include:      [".htaccess"]
 exclude:      []
-keep_files:   [".git", ".svn"]
+keep_files:   [".git"]
 encoding:     "utf-8"
 markdown_ext: "markdown,mkdown,mkdn,mkd,md"
 
@@ -33,17 +37,14 @@ whitelist: [jekyll-asciidoc]
 gems:      [asciidoctor-diagram, jekyll-asciidoc, jekyll-sitemap]
 repository: vbmacher/emuStudio
 
+google_analytics_id: UA-3492956-5
+
 # Conversion
 markdown:    kramdown
 highlighter: rouge
 lsi:         false
 excerpt_separator: "\n\n"
 
-# Serving
-detach:  false
-port:    4000
-host:    0.0.0.0
-baseurl: "" # does not include hostname
 
 # Outputting
 permalink:        pretty
@@ -97,3 +98,6 @@ exclude:
   - .gitignore
   - README.md
   - pom.xml
+  - build.sh
+  - Gemfile
+  - Gemfile.lock
