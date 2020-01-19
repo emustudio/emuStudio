@@ -1,10 +1,9 @@
 language: java
 sudo: false
 jdk:
-- openjdk11
+- oraclejdk11
 os:
 - linux
-# services: xvfb
 branches:
   only:
   - develop
@@ -15,11 +14,6 @@ env:
   - secure: oLauAjLvkgKhboQMN6evL6qtCCZ9/5w/g0u+N0C/1O1g/+vTxlpFtMkawv5T2qOaqRe1aD2P5CkNaHudKgN6AsI5as9t3n33gYOOShZcGC0hXn8gXePIP2UJIUcfSga3UZkBDfxVKL+BvSUSRxVHKQrqbpCYnszDGyQer9DH3Pc=
 
 install: true
-
-#before_script:
-#  - export DISPLAY=:99.0
-#  - sh -e /etc/init.d/xvfb start
-#  - sleep 2
 
 script:
   - mvn -B -U -P coveralls clean cobertura:cobertura coveralls:report
