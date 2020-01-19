@@ -4,6 +4,7 @@ jdk:
 - openjdk11
 os:
 - linux
+services: xvfb
 branches:
   only:
   - develop
