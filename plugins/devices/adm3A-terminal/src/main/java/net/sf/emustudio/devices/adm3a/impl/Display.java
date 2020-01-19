@@ -49,9 +49,9 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     private static final Logger LOGGER = LoggerFactory.getLogger(Display.class);
 
     private static final String HERE_IS_CONSTANT = Display.class.getAnnotation(ContextType.class).id();
-    public static final Color FOREGROUND = new Color(0, 255, 0);
-    public static final Color BACKGROUND = Color.BLACK;
-    public static final String TERMINAL_FONT_PATH = "/net/sf/emustudio/devices/adm3a/gui/terminal.ttf";
+    static final Color FOREGROUND = new Color(0, 255, 0);
+    static final Color BACKGROUND = Color.BLACK;
+    private static final String TERMINAL_FONT_PATH = "/net/sf/emustudio/devices/adm3a/gui/terminal.ttf";
 
     private final char[] videoMemory;
     private final int colCount;
@@ -60,14 +60,16 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     private final TerminalSettings settings;
 
     private final Cursor cursor;
+    private final LoadCursorPosition loadCursorPosition;
     private volatile DisplayParameters displayParameters;
     private volatile Dimension size;
 
     private FileWriter outputWriter = null;
 
-    public Display(Cursor cursor, TerminalSettings settings) {
+    public Display(Cursor cursor, LoadCursorPosition loadCursorPosition, TerminalSettings settings) {
         this.settings = Objects.requireNonNull(settings);
         this.cursor = Objects.requireNonNull(cursor);
+        this.loadCursorPosition = Objects.requireNonNull(loadCursorPosition);
         this.colCount = cursor.getColCount();
         this.rowCount = cursor.getRowCount();
         this.videoMemory = new char[rowCount * colCount];
@@ -90,7 +92,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
             GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
         } catch (Exception e) {
             LOGGER.error("Could not load custom font, using default monospaced font", e);
-            font = new Font(Font.MONOSPACED, 0, 14);
+            font = new Font(Font.MONOSPACED, Font.PLAIN, 14);
         }
         return font;
     }
@@ -213,7 +215,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         if (outputWriter != null) {
             try {
                 outputWriter.close();
-            } catch (IOException e) {
+            } catch (IOException ignored) {
             }
         }
         outputWriter = null;
@@ -325,7 +327,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
                 break;
         }
 
-        if (data >= 32) {
+        if (!loadCursorPosition.accept(data) && data >= 32) {
             insertChar((char) (data & 0xFF));
             cursor.move(this);
         }

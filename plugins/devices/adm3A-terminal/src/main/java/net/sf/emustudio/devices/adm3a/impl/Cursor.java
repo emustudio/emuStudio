@@ -65,7 +65,9 @@ public class Cursor {
             if (displayParameters == null || graphics == null) {
                 return;
             }
-            if (reset || visiblePoint == null) {
+            boolean currentReset = reset;
+
+            if (currentReset || visiblePoint == null) {
                 visiblePoint = cursorPoint.get();
             }
 
@@ -76,7 +78,7 @@ public class Cursor {
                     visiblePoint.y * displayParameters.charHeight + displayParameters.startY - displayParameters.charHeight,
                     displayParameters.charWidth, displayParameters.charHeight);
             graphics.setPaintMode();
-            reset = !reset;
+            reset = !currentReset;
         }
     }
 

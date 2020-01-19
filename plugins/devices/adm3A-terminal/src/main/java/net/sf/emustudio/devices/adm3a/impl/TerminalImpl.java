@@ -46,7 +46,7 @@ import java.util.ResourceBundle;
 @PluginType(
         type = PLUGIN_TYPE.DEVICE,
         title = "LSI ADM-3A terminal",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2020, Peter Jakubčo",
         description = "Custom implementation of LSI ADM-3A terminal"
 )
 @SuppressWarnings("unused")
@@ -58,6 +58,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
     private final ContextPool contextPool;
     private final Display display;
     private final Cursor cursor;
+    private final LoadCursorPosition loadCursorPosition;
     private final TerminalSettings terminalSettings;
 
     private TerminalWindow terminalGUI;
@@ -69,7 +70,8 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         this.contextPool = Objects.requireNonNull(contextPool);
         terminalSettings = new TerminalSettings(pluginID);
         cursor = new Cursor(COLUMNS_COUNT, ROWS_COUNT);
-        display = new Display(cursor, terminalSettings);
+        loadCursorPosition = new LoadCursorPosition(cursor);
+        display = new Display(cursor, loadCursorPosition, terminalSettings);
         try {
             contextPool.register(pluginID, display, DeviceContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
@@ -175,7 +177,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
     private void createKeyboard() {
         destroyKeyboard();
-        Keyboard tmp = new Keyboard(cursor);
+        Keyboard tmp = new Keyboard(loadCursorPosition);
         tmp.addListenerRecursively(terminalGUI);
         keyboard = tmp;
         connectKeyboard();
