@@ -16,7 +16,7 @@ env:
 install: true
 
 script:
-  - mvn -B -U -P coveralls clean cobertura:cobertura coveralls:report
+  - mvn -B -U clean test
 
 after_success:
   - python add_server.py

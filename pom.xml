@@ -156,16 +156,6 @@
           <version>1.1</version>
         </plugin>
         <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>cobertura-maven-plugin</artifactId>
-          <version>2.7</version>
-        </plugin>
-        <plugin>
-          <groupId>org.eluder.coveralls</groupId>
-          <artifactId>coveralls-maven-plugin</artifactId>
-          <version>4.2.0</version>
-        </plugin>
-        <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>2.6</version>
         </plugin>
@@ -208,59 +198,6 @@
   </build>
 
   <profiles>
-    <profile>
-      <id>coverage</id>
-      <activation>
-        <property>
-          <name>env.TRAVIS</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>cobertura-maven-plugin</artifactId>
-            <configuration>
-              <check/>
-              <quiet>true</quiet>
-              <format>xml</format>
-              <maxmem>256m</maxmem>
-              <aggregate>true</aggregate>
-              <instrumentation>
-                <excludes>
-                  <exclude>**/DecoderImpl*.class</exclude>
-                  <exclude>**/DisassemblerImpl*.class</exclude>
-                  <exclude>**/LexerImpl*.class</exclude>
-                  <exclude>**/*ParserImpl*.class</exclude>
-                  <exclude>**/Symbols*.class</exclude>
-                </excludes>
-              </instrumentation>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>coveralls</id>
-      <activation>
-        <property>
-          <name>env.TRAVIS</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.eluder.coveralls</groupId>
-            <artifactId>coveralls-maven-plugin</artifactId>
-            <configuration>
-              <serviceName>travis-ci</serviceName>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
     <profile>
       <!--
             Profile for creating emuStudio distribution. Use with command:
