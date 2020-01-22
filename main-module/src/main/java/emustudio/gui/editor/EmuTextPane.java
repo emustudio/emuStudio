@@ -35,20 +35,8 @@ import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.text.AbstractDocument;
+import javax.swing.text.*;
 import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.BoxView;
-import javax.swing.text.ComponentView;
-import javax.swing.text.Element;
-import javax.swing.text.FlowView;
-import javax.swing.text.IconView;
-import javax.swing.text.LabelView;
-import javax.swing.text.ParagraphView;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledEditorKit;
-import javax.swing.text.View;
-import javax.swing.text.ViewFactory;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -179,11 +167,29 @@ public class EmuTextPane extends JTextPane {
             @Override
             public void undoableEditHappened(UndoableEditEvent e) {
                 UndoableEdit ed = e.getEdit();
-                DefaultDocumentEvent event = (DefaultDocumentEvent) e.getEdit();
-                if (event.getType().equals(DocumentEvent.EventType.CHANGE)) {
+
+                Optional<DefaultDocumentEvent> event = Optional.empty();
+                if (ed instanceof DefaultDocumentEvent) {
+                    event = Optional.of((DefaultDocumentEvent) ed);
+                } else {
+                    // it is a private AbstractDocument.DefaultDocumentEventUndoableWrapper ... :/
+                    try {
+                        Field[] fields = ed.getClass().getDeclaredFields();
+                        for (Field field : fields) {
+                            if (field.getType() == DefaultDocumentEvent.class) {
+                                field.setAccessible(true);
+                                event = Optional.of((DefaultDocumentEvent)field.get(ed));
+                                break;
+                            }
+                        }
+                    } catch (IllegalAccessException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+                if (event.filter(evt -> evt.getType().equals(DocumentEvent.EventType.CHANGE)).isPresent()) {
                     return;
                 }
-                if (ed.isSignificant()) {
+                if (event.isPresent() && ed.isSignificant()) {
                     synchronized (undoLock) {
                         undo.addEdit(ed);
                     }
