@@ -139,11 +139,8 @@ try:
 
     # append sourceforge.net public ssh key fingerprint (if disabling strict host checking doesn't work)
     call(['ssh-keygen', '-R', 'web.sourceforge.net'])
-    write_file(
-      knownHostsPath,
-      "web.sourceforge.net,216.34.181.70 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCwsY6sZT4MTTkHfpRzYjxG7mnXrGL74RCT2cO/NFvRrZVNB5XNwKNn7G5fHbYLdJ6UzpURDRae1eMg92JG0+yo=\n",
-      'a'
-    )
+    with open(knownHostsPath, "w") as outfile:
+        call(['ssh-keyscan', '-H', 'web.sourceforge.net'], stdout=outfile)
 except:
     print "Unexpected error occured"
     pass
