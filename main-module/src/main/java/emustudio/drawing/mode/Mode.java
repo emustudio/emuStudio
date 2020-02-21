@@ -20,7 +20,8 @@
 package emustudio.drawing.mode;
 
 import emustudio.drawing.mode.ModeSelector.SelectMode;
-import java.awt.Graphics2D;
+
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public interface Mode {

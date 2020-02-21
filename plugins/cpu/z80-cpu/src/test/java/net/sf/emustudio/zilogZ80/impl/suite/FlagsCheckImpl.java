@@ -21,12 +21,7 @@ package net.sf.emustudio.zilogZ80.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.FlagsCheck;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_Z;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
 
 public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckImpl<T>> {
 
@@ -65,7 +60,7 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
 
     public FlagsCheckImpl<T> zero16bit() {
         evaluators.add((context, result) -> {
-            if ((result.intValue() & 0xFFFF)== 0) {
+            if ((result.intValue() & 0xFFFF) == 0) {
                 expectedFlags |= FLAG_Z;
             } else {
                 expectedNotFlags |= FLAG_Z;
@@ -91,7 +86,7 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
 
             if (sign != (trueSecond & 0x80)) {
                 expectedNotFlags |= FLAG_PV;
-            } else if ((result.intValue() & 0x80) != sign){
+            } else if ((result.intValue() & 0x80) != sign) {
                 expectedFlags |= FLAG_PV;
             }
         });
@@ -105,7 +100,7 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
 
             if (sign != (trueSecond & 0x8000)) {
                 expectedNotFlags |= FLAG_PV;
-            } else if ((result.intValue() & 0x8000) != sign){
+            } else if ((result.intValue() & 0x8000) != sign) {
                 expectedFlags |= FLAG_PV;
             }
         });
@@ -121,7 +116,7 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
             }
             value = value >>> 1;
         }
-        return  numberOfOnes % 2 == 0;
+        return numberOfOnes % 2 == 0;
     }
 
     public FlagsCheckImpl<T> parity() {
@@ -199,7 +194,7 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     public FlagsCheckImpl<T> halfCarry() {
         evaluators.add((context, result) -> {
             int firstInt = context.first.intValue();
-            byte diff = (byte)((result.intValue() - firstInt) & 0xFF);
+            byte diff = (byte) ((result.intValue() - firstInt) & 0xFF);
 
             if (isAuxCarry(firstInt & 0xFF, diff)) {
                 expectedFlags |= FLAG_H;
@@ -217,18 +212,18 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
             int mask = second & context.first.intValue();
             int xormask = second ^ context.first.intValue();
 
-            int C0 = mask&1;
-            int C1 = ((mask>>>1) ^ (C0&(xormask>>>1)))&1;
-            int C2 = ((mask>>>2) ^ (C1&(xormask>>>2)))&1;
-            int C3 = ((mask>>>3) ^ (C2&(xormask>>>3)))&1;
-            int C4 = ((mask>>>4) ^ (C3&(xormask>>>4)))&1;
-            int C5 = ((mask>>>5) ^ (C4&(xormask>>>5)))&1;
-            int C6 = ((mask>>>6) ^ (C5&(xormask>>>6)))&1;
-            int C7 = ((mask>>>7) ^ (C6&(xormask>>>7)))&1;
-            int C8 = ((mask>>>8) ^ (C7&(xormask>>>8)))&1;
-            int C9 = ((mask>>>9) ^ (C8&(xormask>>>9)))&1;
-            int C10 = ((mask>>>10) ^ (C9&(xormask>>>10)))&1;
-            int C11 = ((mask>>>11) ^ (C10&(xormask>>>11)))&1;
+            int C0 = mask & 1;
+            int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
+            int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
+            int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
+            int C4 = ((mask >>> 4) ^ (C3 & (xormask >>> 4))) & 1;
+            int C5 = ((mask >>> 5) ^ (C4 & (xormask >>> 5))) & 1;
+            int C6 = ((mask >>> 6) ^ (C5 & (xormask >>> 6))) & 1;
+            int C7 = ((mask >>> 7) ^ (C6 & (xormask >>> 7))) & 1;
+            int C8 = ((mask >>> 8) ^ (C7 & (xormask >>> 8))) & 1;
+            int C9 = ((mask >>> 9) ^ (C8 & (xormask >>> 9))) & 1;
+            int C10 = ((mask >>> 10) ^ (C9 & (xormask >>> 10))) & 1;
+            int C11 = ((mask >>> 11) ^ (C10 & (xormask >>> 11))) & 1;
 
             if (C11 != 0) {
                 expectedFlags |= FLAG_H;

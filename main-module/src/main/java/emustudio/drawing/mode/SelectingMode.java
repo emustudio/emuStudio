@@ -22,9 +22,8 @@ package emustudio.drawing.mode;
 import emustudio.drawing.DrawingPanel;
 import emustudio.drawing.Model;
 import emustudio.drawing.mode.ModeSelector.SelectMode;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Point;
+
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 class SelectingMode extends AbstractMode {

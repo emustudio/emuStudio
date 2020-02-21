@@ -20,21 +20,21 @@
 package net.sf.emustudio.devices.mits88disk.cpmfs;
 
 class Position {
-  int track;
-  public int sector;
+    int track;
+    public int sector;
 
-  Position(int track, int sector) {
-    this.track = track;
-    this.sector = sector;
-  }
+    Position(int track, int sector) {
+        this.track = track;
+        this.sector = sector;
+    }
 
-  void reset(int track, int sector) {
-      this.track = track;
-      this.sector = sector;
-  }
+    void reset(int track, int sector) {
+        this.track = track;
+        this.sector = sector;
+    }
 
-  @Override
-  public String toString() {
-    return "T=" + track + " S=" + sector;
-  }
+    @Override
+    public String toString() {
+        return "T=" + track + " S=" + sector;
+    }
 }

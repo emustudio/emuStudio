@@ -49,41 +49,11 @@ import emustudio.main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.AbstractListModel;
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JList;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
-import javax.swing.LayoutStyle;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import java.awt.Font;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.util.Objects;
 import java.util.Optional;
@@ -183,9 +153,9 @@ public class StudioFrame extends JFrame {
         GroupLayout layout = new GroupLayout(this.statusWindow);
         this.statusWindow.setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(statusPanel));
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(statusPanel));
         layout.setVerticalGroup(
-                layout.createSequentialGroup().addComponent(statusPanel));
+            layout.createSequentialGroup().addComponent(statusPanel));
     }
 
     private void setupListeners() {
@@ -225,7 +195,7 @@ public class StudioFrame extends JFrame {
 
     private void resizeComponents() {
         int height = getHeight();
-        int newHeight = (int)(((double)height) / GOLDEN_RATIO);
+        int newHeight = (int) (((double) height) / GOLDEN_RATIO);
 
         if (height - newHeight < MIN_COMPILER_OUTPUT_HEIGHT) {
             splitSource.setDividerLocation(height - MIN_COMPILER_OUTPUT_HEIGHT);
@@ -241,7 +211,7 @@ public class StudioFrame extends JFrame {
             heightTogether = Math.max(0, height - MIN_PERIPHERAL_PANEL_HEIGHT);
         }
 
-        double dividerLocation = Math.min(1.0, heightTogether / (double)height);
+        double dividerLocation = Math.min(1.0, heightTogether / (double) height);
 
         splitPerDebug.setDividerLocation(dividerLocation);
     }
@@ -585,22 +555,22 @@ public class StudioFrame extends JFrame {
         GroupLayout panelSourceLayout = new GroupLayout(panelSource);
         panelSource.setLayout(panelSourceLayout);
         panelSourceLayout.setHorizontalGroup(
-                panelSourceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(toolStandard)
-                        .addGroup(
-                                panelSourceLayout
-                                        .createSequentialGroup()
-                                        .addContainerGap()
-                                        .addComponent(splitSource)
-                                        .addContainerGap()
-                        )
+            panelSourceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addComponent(toolStandard)
+                .addGroup(
+                    panelSourceLayout
+                        .createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(splitSource)
+                        .addContainerGap()
+                )
         );
         panelSourceLayout.setVerticalGroup(
-                panelSourceLayout
-                        .createSequentialGroup()
-                        .addComponent(toolStandard, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
-                        .addContainerGap()
+            panelSourceLayout
+                .createSequentialGroup()
+                .addComponent(toolStandard, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                .addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
         );
 
         tabbedPane.addTab(SOURCE_CODE_EDITOR, panelSource);
@@ -715,16 +685,16 @@ public class StudioFrame extends JFrame {
         GroupLayout debuggerPanelLayout = new GroupLayout(debuggerPanel);
         debuggerPanel.setLayout(debuggerPanelLayout);
         debuggerPanelLayout.setHorizontalGroup(
-                debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.CENTER).addComponent(toolDebug) //, GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
-                        .addGroup(debuggerPanelLayout.createSequentialGroup().addComponent(panelPages))
-                        .addComponent(paneDebug, 10, 350, Short.MAX_VALUE));
+            debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.CENTER).addComponent(toolDebug) //, GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
+                .addGroup(debuggerPanelLayout.createSequentialGroup().addComponent(panelPages))
+                .addComponent(paneDebug, 10, 350, Short.MAX_VALUE));
         debuggerPanelLayout.setVerticalGroup(
-                debuggerPanelLayout.createSequentialGroup()
-                        .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(paneDebug, GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(panelPages)));
+            debuggerPanelLayout.createSequentialGroup()
+                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
+                .addComponent(paneDebug, GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(panelPages)));
         splitLeftRight.setDividerLocation(1.0);
         splitPerDebug.setTopComponent(debuggerPanel);
 
@@ -774,18 +744,18 @@ public class StudioFrame extends JFrame {
         GroupLayout peripheralPanelLayout = new GroupLayout(peripheralPanel);
         peripheralPanel.setLayout(peripheralPanelLayout);
         peripheralPanelLayout.setHorizontalGroup(
-                peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(paneDevices).addGroup(GroupLayout.Alignment.TRAILING, peripheralPanelLayout.createSequentialGroup().addContainerGap().addComponent(btnShowSettings).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnShowGUI).addContainerGap()));
+            peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(paneDevices).addGroup(GroupLayout.Alignment.TRAILING, peripheralPanelLayout.createSequentialGroup().addContainerGap().addComponent(btnShowSettings).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnShowGUI).addContainerGap()));
         peripheralPanelLayout.setVerticalGroup(
-                peripheralPanelLayout.createSequentialGroup().addComponent(paneDevices).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(btnShowSettings).addComponent(btnShowGUI)));
+            peripheralPanelLayout.createSequentialGroup().addComponent(paneDevices).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(btnShowSettings).addComponent(btnShowGUI)));
         splitPerDebug.setRightComponent(peripheralPanel);
         splitLeftRight.setLeftComponent(splitPerDebug);
 
         GroupLayout panelEmulatorLayout = new GroupLayout(panelEmulator);
         panelEmulator.setLayout(panelEmulatorLayout);
         panelEmulatorLayout.setHorizontalGroup(
-                panelEmulatorLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(splitLeftRight));
+            panelEmulatorLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(splitLeftRight));
         panelEmulatorLayout.setVerticalGroup(
-                panelEmulatorLayout.createSequentialGroup().addContainerGap().addComponent(splitLeftRight, 0, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE).addContainerGap());
+            panelEmulatorLayout.createSequentialGroup().addContainerGap().addComponent(splitLeftRight, 0, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE).addContainerGap());
 
         tabbedPane.addTab("Emulator", panelEmulator);
 
@@ -921,11 +891,11 @@ public class StudioFrame extends JFrame {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
+                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
         layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
+                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
     }
 
     private void btnPauseActionPerformed(ActionEvent evt) {
@@ -981,7 +951,7 @@ public class StudioFrame extends JFrame {
 
     private void btnRunTimeActionPerformed(ActionEvent evt) {
         String sliceText = StaticDialogs.inputStringValue("Enter time slice in milliseconds:",
-                "Run timed emulation", "500");
+            "Run timed emulation", "500");
         if (sliceText == null) {
             return;
         }
@@ -1040,8 +1010,8 @@ public class StudioFrame extends JFrame {
                 memorySize = memory.get().getSize();
             }
             String maxSize = memory.isPresent() ?
-                    "\n (expected range from 0 to " + String.valueOf(memorySize - 1) + ")"
-                    : "";
+                "\n (expected range from 0 to " + String.valueOf(memorySize - 1) + ")"
+                : "";
             Main.tryShowErrorMessage("Typed address is incorrect !" + maxSize, "Jump");
         }
         debugTable.refresh();
@@ -1197,8 +1167,8 @@ public class StudioFrame extends JFrame {
     private void mnuEditFindNextActionPerformed(ActionEvent evt) {
         try {
             if (finder.findNext(txtSource.getText(),
-                    txtSource.getCaretPosition(),
-                    txtSource.getDocument().getEndPosition().getOffset() - 1)) {
+                txtSource.getCaretPosition(),
+                txtSource.getDocument().getEndPosition().getOffset() - 1)) {
                 txtSource.select(finder.getMatchStart(), finder.getMatchEnd());
                 txtSource.grabFocus();
             } else {

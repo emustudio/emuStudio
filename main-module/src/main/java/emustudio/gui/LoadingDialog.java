@@ -19,12 +19,7 @@
  */
 package emustudio.gui;
 
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 
 public class LoadingDialog extends JDialog {
 
@@ -45,7 +40,7 @@ public class LoadingDialog extends JDialog {
 
         lblLoading.setFont(lblLoading.getFont().deriveFont(lblLoading.getFont().getStyle() | java.awt.Font.BOLD));
         lblLoading.setIcon(new ImageIcon(getClass()
-                .getResource("/emustudio/gui/loading.gif"))); // NOI18N
+            .getResource("/emustudio/gui/loading.gif"))); // NOI18N
         lblLoading.setText("Loading computer, please wait...");
 
         lblWarning.setFont(lblWarning.getFont().deriveFont(java.awt.Font.PLAIN));
@@ -54,17 +49,17 @@ public class LoadingDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createSequentialGroup().addContainerGap()
+            layout.createSequentialGroup().addContainerGap()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(lblWarning, GroupLayout.PREFERRED_SIZE, 338,
-                GroupLayout.PREFERRED_SIZE).addComponent(lblLoading))
+                    .addComponent(lblWarning, GroupLayout.PREFERRED_SIZE, 338,
+                        GroupLayout.PREFERRED_SIZE).addComponent(lblLoading))
                 .addContainerGap());
         layout.setVerticalGroup(
-                layout.createSequentialGroup().addContainerGap()
+            layout.createSequentialGroup().addContainerGap()
                 .addComponent(lblLoading).addPreferredGap(LayoutStyle
                 .ComponentPlacement.UNRELATED).addComponent(lblWarning)
                 .addContainerGap(lblWarning.getPreferredSize().height,
-                lblWarning.getPreferredSize().height).addContainerGap());
+                    lblWarning.getPreferredSize().height).addContainerGap());
 
         pack();
     }

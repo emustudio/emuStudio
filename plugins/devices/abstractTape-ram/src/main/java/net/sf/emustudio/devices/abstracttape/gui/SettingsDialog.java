@@ -81,16 +81,16 @@ public class SettingsDialog extends JDialog {
         pane.setLayout(layout);
 
         layout.setHorizontalGroup(
-                layout.createSequentialGroup()
+            layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(chkAlwaysOnTop)
-                .addComponent(chkShowAtStartup))
+                    .addComponent(chkAlwaysOnTop)
+                    .addComponent(chkShowAtStartup))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                .addComponent(btnOK))
+                    .addComponent(btnOK))
                 .addContainerGap());
         layout.setVerticalGroup(
-                layout.createSequentialGroup()
+            layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(chkAlwaysOnTop)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -99,6 +99,7 @@ public class SettingsDialog extends JDialog {
                 .addComponent(btnOK));
         pack();
     }
+
     private JCheckBox chkAlwaysOnTop;
     private JCheckBox chkShowAtStartup;
 }

@@ -29,18 +29,18 @@ import java.util.Objects;
  */
 @ContextType
 public interface RAMInstruction extends CompilerContext {
-	int READ = 1;
-	int WRITE = 2;
-	int LOAD = 3;
-	int STORE = 4;
-	int ADD = 5;
-	int SUB = 6;
-	int MUL = 7;
-	int DIV = 8;
-	int JMP = 9;
-	int JZ = 10;
-	int JGTZ = 11;
-	int HALT = 12;
+    int READ = 1;
+    int WRITE = 2;
+    int LOAD = 3;
+    int STORE = 4;
+    int ADD = 5;
+    int SUB = 6;
+    int MUL = 7;
+    int DIV = 8;
+    int JMP = 9;
+    int JZ = 10;
+    int JGTZ = 11;
+    int HALT = 12;
 
     enum Direction {
         REGISTER(""), DIRECT("="), INDIRECT("*");
@@ -55,47 +55,50 @@ public interface RAMInstruction extends CompilerContext {
             return value;
         }
     }
-	
-	/**
-	 * Get machine code of the RAM instruction. 
-	 * @return code of the instruction
-	 */
-	int getCode();
-	
-	/**
-	 * Get direction of the RAM instruction:
+
+    /**
+     * Get machine code of the RAM instruction.
      *
-	 * @return direction of the instruction
-	 */
-	Direction getDirection();
-	
-	/**
-	 * Get operand of the RAM instruction.
-         * 
-	 * @return operand (number or address, or string). If the operand is direct,
-         * it returns a String. Otherwise Integer.
-	 */
-	Object getOperand();
-	
-	/**
-	 * Get a string representation of label operand (meaningful only for
-         * JMP/JZ instructions)
-         * @return label operand
-	 */
-	String getOperandLabel();
-	
-	/**
-	 * Get string representation of the RAM instruction (mnemonic code).
-         * 
-	 * @return string representation of the instruction
-	 */
-	String getCodeStr();
-	
-	/**
-	 * Get string representation of the operand.
-         * 
-	 * It includes labels, direction and integer operands.
-	 * @return String representation of operand
-	 */
-	String getOperandStr();
+     * @return code of the instruction
+     */
+    int getCode();
+
+    /**
+     * Get direction of the RAM instruction:
+     *
+     * @return direction of the instruction
+     */
+    Direction getDirection();
+
+    /**
+     * Get operand of the RAM instruction.
+     *
+     * @return operand (number or address, or string). If the operand is direct,
+     * it returns a String. Otherwise Integer.
+     */
+    Object getOperand();
+
+    /**
+     * Get a string representation of label operand (meaningful only for
+     * JMP/JZ instructions)
+     *
+     * @return label operand
+     */
+    String getOperandLabel();
+
+    /**
+     * Get string representation of the RAM instruction (mnemonic code).
+     *
+     * @return string representation of the instruction
+     */
+    String getCodeStr();
+
+    /**
+     * Get string representation of the operand.
+     * <p>
+     * It includes labels, direction and integer operands.
+     *
+     * @return String representation of operand
+     */
+    String getOperandStr();
 }

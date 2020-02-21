@@ -19,7 +19,7 @@
  */
 package net.sf.emustudio.devices.adm3a.impl;
 
-import java.awt.GraphicsEnvironment;
+import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 
@@ -33,10 +33,10 @@ public class Utils {
                 tx = new AffineTransform();
             } else {
                 tx = GraphicsEnvironment
-                        .getLocalGraphicsEnvironment()
-                        .getDefaultScreenDevice()
-                        .getDefaultConfiguration()
-                        .getDefaultTransform();
+                    .getLocalGraphicsEnvironment()
+                    .getDefaultScreenDevice()
+                    .getDefaultConfiguration()
+                    .getDefaultTransform();
             }
             DEFAULT_FRC = new FontRenderContext(tx, false, false);
         }

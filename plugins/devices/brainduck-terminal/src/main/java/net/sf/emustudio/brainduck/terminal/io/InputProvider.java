@@ -31,15 +31,15 @@ public interface InputProvider extends IOProvider {
 
         @Override
         public void reset() {
-            
+
         }
 
         @Override
         public void close() throws IOException {
-            
+
         }
     };
-    
+
     int read();
 
 }

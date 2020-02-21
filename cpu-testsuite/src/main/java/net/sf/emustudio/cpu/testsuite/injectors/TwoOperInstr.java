@@ -23,17 +23,17 @@ import net.sf.emustudio.cpu.testsuite.injectors.internal.DefaultProgramGenerator
 
 /**
  * Instruction with two operands.
- *
+ * <p>
  * It is used as an injector for the test runner.
- *
+ * <p>
  * The order of bytes is as follows:
- *
+ * <p>
  * 1. Initial opcodes (1 or more)
  * 2. First Operand
  * 3. Second Operand
  * 4. Possibly more opcodes (0 or more)
  *
- * @param <T> type of CpuRunner
+ * @param <T>        type of CpuRunner
  * @param <OperandT> type of the operand (Byte or Integer)
  */
 public class TwoOperInstr<T extends CpuRunner, OperandT extends Number> implements TwoOperInjector<T, OperandT> {
@@ -50,7 +50,7 @@ public class TwoOperInstr<T extends CpuRunner, OperandT extends Number> implemen
 
     /**
      * Will place more opcodes after the instruction operands.
-     *
+     * <p>
      * NOTE: size of operands is given by OperandType parameter (Byte = 8 bits, Integer = 16 bits)
      *
      * @param opcodes opcode(s). Each opcode must be a byte (don't get confused by int).

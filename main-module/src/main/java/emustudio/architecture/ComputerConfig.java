@@ -33,13 +33,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class ComputerConfig {
     private final static String CONFIGS_DIR = "config";
@@ -131,7 +125,7 @@ public class ComputerConfig {
         }
         try {
             return file.delete();
-        } catch(Exception e) {
+        } catch (Exception e) {
             LOGGER.error("Could not delete configuration: " + file.getAbsolutePath(), e);
         }
         return false;
@@ -145,7 +139,7 @@ public class ComputerConfig {
         }
         try {
             return oldConfig.renameTo(getConfigDir().resolve(newName + ".conf").toFile());
-        } catch(Exception e) {
+        } catch (Exception e) {
             LOGGER.error(
                 "Could not rename configuration: {}  to (thesamepath)/{}", oldConfig.getAbsolutePath(), newName, e
             );
@@ -169,7 +163,7 @@ public class ComputerConfig {
             throw new ReadConfigurationException("Could not read configuration file: " + configFile.getAbsolutePath(), e);
         }
         if (!p.getProperty("emu8Version").equals("3")
-                && !p.getProperty("emu8Version").equals("4")) {
+            && !p.getProperty("emu8Version").equals("4")) {
             throw new ReadConfigurationException("Could not read configuration: " + configName + ". Unsupported file version.");
         }
         return new ConfigurationImpl(configName, p);

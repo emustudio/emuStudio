@@ -26,10 +26,9 @@ import java.awt.*;
 
 /**
  * This class represents a style used within the syntax highlighting process.
- *
+ * <p>
  * For each token type an instance of this class is created and used in the
  * proper places.
- *
  */
 class HighlightStyle extends SimpleAttributeSet {
 

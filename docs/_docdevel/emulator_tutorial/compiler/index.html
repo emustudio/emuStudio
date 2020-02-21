@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>Compiler &diams; emuStudio</title>
-    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <meta name="keywords"
+          content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
     <meta name="description" content="Universal computer emulation platform and framework.">
     <meta name=”robots” content=”noindex,follow”>
 
@@ -23,8 +20,10 @@
     <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <!-- RSS -->
-    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../feed.xml">
-    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../atom.xml">
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../atom.xml">
 
     <!-- Favicons -->
     <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
@@ -32,7 +31,8 @@
     <meta name="msapplication-TileColor" content="#ffffff">
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+    <link rel="stylesheet"
+          href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../../css/style.css">
@@ -54,17 +54,18 @@
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 
-    
-      <!-- Global site tag (gtag.js) - Google Analytics -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
-      <script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+    <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
     
         gtag('config', 'UA-3492956-5');
-      </script>
-    
+
+    </script>
+
 </head>
 
 
@@ -74,47 +75,49 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;"
+                                                     src="../../../img/logo-2.svg" width="30px"/></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
-                <!--<div class="form-group">-->
-                    <!--<input type="text" class="form-control" placeholder="Search website">-->
-                <!--</div>-->
-                <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
             <!--</form>-->
             <ul class="nav navbar-nav navbar-right">
-                
+
                 <li>
                     <a href="/">Home</a>
                 </li>
-                
+
                 <li>
                     <a href="/download">Download</a>
                 </li>
-                
+
                 <li>
                     <a href="/docs">Docs</a>
                 </li>
-                
+
                 <li>
                     <a href="/devel">Developer</a>
                 </li>
-                
+
                 <li>
                     <a href="/roadmap">Roadmap</a>
                 </li>
-                
+
                 <li>
                     <a href="/about">About</a>
                 </li>
-                
+
             </ul>
         </div>
     </div>
@@ -129,355 +132,410 @@
           
       </span>
     </h1>
-    
-    
+
+
 </div>
 
 
 <div class="container">
     <div class="sect1">
-<h2 id="writing-a-compiler">Writing a compiler</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This tutorial will guide you to how to create a compiler for emuStudio. It focuses on things around
-emuStudio, emuLib and some common practices. It will not dig deep into the compiler theory, only what will be required
-on the way.</p>
-</div>
-<div class="paragraph">
-<p>In present days, general scheme of compiler&#8217;s work is parsing, semantic analysis, optimalization and code generation.
-Quite tedious and error-prone work of parsing can be generated automatically with parser generators. All emuStudio
-compilers use such tools; and they will be also used in this tutorial:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="http://jflex.de/">JFlex</a> for generating the lexical analyzer, or lexer for short,</p>
-</li>
-<li>
-<p><a href="http://www2.cs.tum.edu/projects/cup/">Java cup</a> for generating LR(k) parsers.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Before reading on, please read the <a href="#INTRODUCTION_PLUGINS">[INTRODUCTION_PLUGINS]</a> chapter. It provides the information
-needed for setting up the development environment and explains how emuStudio plug-ins' lifecycle work.</p>
-</div>
-<div class="sect2">
-<h3 id="COMPILER_GETTING_STARTED">Getting started</h3>
-<div class="paragraph">
-<p>In the context of the whole emulator, the compiler is usually an assembler which produces binary instructions for
-the emulated CPU. However, it does not have to be assembler; it really can be any language compiler. The output of
-the compiler is often loaded directly into emulated operating memory, so the program can be run in emuStudio in a
-single click. This is one of the great features of emuStudio.</p>
-</div>
-<div class="paragraph">
-<p>A compiler is a plug-in, which means that it requires to implement an API. The API for compilers is defined in the form
-of Java interfaces and some classes in emuLib, in package <code>emulib.plugins.compiler</code>. This tutorial will guide
-you with implementing the API and the whole compiler.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="COMPILER_SSEM_ASM">Assembler for SSEM</h3>
-<div class="paragraph">
-<p>In this tutorial, we will implement an assembler for the world&#8217;s very first stored-program computer,
-<a href="https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine">SSEM</a>, nicknamed "Baby". It was a predecessor
-of Manchester Mark 1 which led to Ferranti Mark 1, the world&#8217;s first commercially available general-purpose computer.</p>
-</div>
-<div class="paragraph">
-<p>It it very simple computer, which can run only 7 instructions. The instructions table
-follows (modified from <a href="https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine#Programming">Wikipedia</a>):</p>
-</div>
-<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Binary code</th>
-<th class="tableblock halign-left valign-top">Mnemonic</th>
-<th class="tableblock halign-left valign-top">Action</th>
-<th class="tableblock halign-left valign-top">Operation</th>
-</tr>
-</thead>
-<tfoot>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">111</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">STP  / HLT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Stop</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-</tfoot>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">JMP S</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S(L) &#8594; CI</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Jump to the instruction at the address obtained from the specified memory
-                                                  address <code>S(L)</code> (absolute unconditional jump)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">100</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">JRP / JPR / JMR S</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CI + S(L) &#8594; CI</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Jump to the instruction at the program counter (<code>CI</code>) plus the
-                                                  relative value obtained from the specified memory address <code>S(L)</code>
-                                                  (relative unconditional jump)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">010</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">LDN S</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-S(L) &#8594; A</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Take the number from the specified memory address <code>S(L)</code>, negate it,
-                                                  and load it into the accumulator</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">110</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">STO S</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A &#8594; S(L)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Store the number in the accumulator to the specified memory address <code>S(L)</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">001 or 101</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SUB S</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A - S(L) &#8594; A</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Subtract the number at the specified memory address <code>S(L)</code> from the
-                                                  value in accumulator, and store the result in the accumulator</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">011</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CMP / SKN</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">if A&lt;0 then CI+1&#8594;CI</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Skip next instruction if the accumulator contains a negative value</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>The instructions are stored in a memory, which had 32 cells. Each cell was 32 bits long, and each instruction fit into
-exactly one cell. So each instruction has 32 bits. The bit representation was reversed, so the most and the least
-significant bits were put on opposite sides. For example, value <code>3</code>, in common personal computers represented as <code>011</code>,
-was in SSEM represented as <code>110</code>.</p>
-</div>
-<div class="paragraph">
-<p>The instruction format is as follows:</p>
-</div>
-<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
-<caption class="title">Table 1. SSEM Instruction Format</caption>
-<colgroup>
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3333%;">
-<col style="width: 8.3337%;">
-</colgroup>
-<tfoot>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Value:</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2^0</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2^31</p></td>
-</tr>
-</tfoot>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Bit:</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">00</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">01</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">02</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">03</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">04</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">&#8230;&#8203;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">13</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">14</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">15</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">&#8230;&#8203;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">31</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Use:</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>where bits <code>LLLLL</code> denote a "line", which is basically the memory address - index of a memory cell. It can be understood
-as instruction operand. Bits <code>III</code> specify the instruction opcode (3 bits are enough for 7 instructions).</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="language-specification">Language specification</h3>
-<div class="paragraph">
-<p>Each compiler is just a program which translates an input source code into output code. Usually, the input language is
-more high level than the output language, and often offers some features, which are not supported by the output language.
-For example, assembler source codes often support comments, various formats of number literals, labels, or macros. These
-are features, which are not supported by the instruction set itself, and they must be translated to it by compiler.</p>
-</div>
-<div class="paragraph">
-<p>SSEM assembler specification can be started with informal expressing, what it will know:</p>
-</div>
-<div class="sect3">
-<h4 id="COMPILER_TOKEN_CATEGORIES">Token categories</h4>
-<div class="paragraph">
-<p>Tokens, parsed by lexical analyzer have assigned a so-called category. The category is useful mainly for syntax
-highlighter in emuStudio editor. For example, reserved words are colored differently than e.g. numeric constants, or
-comments.</p>
-</div>
-<div class="paragraph">
-<p>The list of all categories can be seen in the following class:
-<a href="https://github.com/vbmacher/emuLib/blob/branch-9_0/src/main/java/emulib/plugins/compiler/Token.java">Token.java</a>.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="new-lines">New-lines</h4>
-<div class="paragraph">
-<p>New-line character (LF, CR, or CRLF) will be required as a delimiter of instructions, and as the last character.
-Successive empty new-line characters will be ignored.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="instructions">Instructions</h4>
-<div class="paragraph">
-<p>Assembler will support all forms of instructions shown in the table in section <a href="#COMPILER_SSEM_ASM">Assembler for SSEM</a>. All instructions must
-start with a line number. For example:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>01 LDN 20</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Instructions belong to token category called "reserved words".</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="literals-constants">Literals / constants</h4>
-<div class="paragraph">
-<p>Raw number constants can be defined in separate lines using special preprocessor keywords. The first one is <code>NUM xxx</code>,
-where <code>xxx</code> is a number in either decimal or hexadecimal form. Hexadecimal format must start with prefix <code>0x</code>. For example:</p>
-</div>
-<div class="literalblock">
-<div class="content">
+        <h2 id="writing-a-compiler">Writing a compiler</h2>
+        <div class="sectionbody">
+            <div class="paragraph">
+                <p>This tutorial will guide you to how to create a compiler for emuStudio. It focuses on things around
+                    emuStudio, emuLib and some common practices. It will not dig deep into the compiler theory, only
+                    what will be required
+                    on the way.</p>
+            </div>
+            <div class="paragraph">
+                <p>In present days, general scheme of compiler&#8217;s work is parsing, semantic analysis,
+                    optimalization and code generation.
+                    Quite tedious and error-prone work of parsing can be generated automatically with parser generators.
+                    All emuStudio
+                    compilers use such tools; and they will be also used in this tutorial:</p>
+            </div>
+            <div class="ulist">
+                <ul>
+                    <li>
+                        <p><a href="http://jflex.de/">JFlex</a> for generating the lexical analyzer, or lexer for short,
+                        </p>
+                    </li>
+                    <li>
+                        <p><a href="http://www2.cs.tum.edu/projects/cup/">Java cup</a> for generating LR(k) parsers.</p>
+                    </li>
+                </ul>
+            </div>
+            <div class="paragraph">
+                <p>Before reading on, please read the <a href="#INTRODUCTION_PLUGINS">[INTRODUCTION_PLUGINS]</a>
+                    chapter. It provides the information
+                    needed for setting up the development environment and explains how emuStudio plug-ins' lifecycle
+                    work.</p>
+            </div>
+            <div class="sect2">
+                <h3 id="COMPILER_GETTING_STARTED">Getting started</h3>
+                <div class="paragraph">
+                    <p>In the context of the whole emulator, the compiler is usually an assembler which produces binary
+                        instructions for
+                        the emulated CPU. However, it does not have to be assembler; it really can be any language
+                        compiler. The output of
+                        the compiler is often loaded directly into emulated operating memory, so the program can be run
+                        in emuStudio in a
+                        single click. This is one of the great features of emuStudio.</p>
+                </div>
+                <div class="paragraph">
+                    <p>A compiler is a plug-in, which means that it requires to implement an API. The API for compilers
+                        is defined in the form
+                        of Java interfaces and some classes in emuLib, in package <code>emulib.plugins.compiler</code>.
+                        This tutorial will guide
+                        you with implementing the API and the whole compiler.</p>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="COMPILER_SSEM_ASM">Assembler for SSEM</h3>
+                <div class="paragraph">
+                    <p>In this tutorial, we will implement an assembler for the world&#8217;s very first stored-program
+                        computer,
+                        <a href="https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine">SSEM</a>,
+                        nicknamed "Baby". It was a predecessor
+                        of Manchester Mark 1 which led to Ferranti Mark 1, the world&#8217;s first commercially
+                        available general-purpose computer.</p>
+                </div>
+                <div class="paragraph">
+                    <p>It it very simple computer, which can run only 7 instructions. The instructions table
+                        follows (modified from <a
+                                href="https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine#Programming">Wikipedia</a>):
+                    </p>
+                </div>
+                <table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+                    <colgroup>
+                        <col style="width: 25%;">
+                        <col style="width: 25%;">
+                        <col style="width: 25%;">
+                        <col style="width: 25%;">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th class="tableblock halign-left valign-top">Binary code</th>
+                        <th class="tableblock halign-left valign-top">Mnemonic</th>
+                        <th class="tableblock halign-left valign-top">Action</th>
+                        <th class="tableblock halign-left valign-top">Operation</th>
+                    </tr>
+                    </thead>
+                    <tfoot>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">111</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">STP / HLT</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Stop</p></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                    </tr>
+                    </tfoot>
+                    <tbody>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">000</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">JMP S</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">S(L) &#8594; CI</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Jump to the instruction at
+                            the address obtained from the specified memory
+                            address <code>S(L)</code> (absolute unconditional jump)</p></td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">100</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">JRP / JPR / JMR S</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">CI + S(L) &#8594; CI</p>
+                        </td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Jump to the instruction at
+                            the program counter (<code>CI</code>) plus the
+                            relative value obtained from the specified memory address <code>S(L)</code>
+                            (relative unconditional jump)</p></td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">010</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">LDN S</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">-S(L) &#8594; A</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Take the number from the
+                            specified memory address <code>S(L)</code>, negate it,
+                            and load it into the accumulator</p></td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">110</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">STO S</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">A &#8594; S(L)</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Store the number in the
+                            accumulator to the specified memory address <code>S(L)</code></p></td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">001 or 101</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">SUB S</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">A - S(L) &#8594; A</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Subtract the number at the
+                            specified memory address <code>S(L)</code> from the
+                            value in accumulator, and store the result in the accumulator</p></td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">011</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">CMP / SKN</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">if A&lt;0 then
+                            CI+1&#8594;CI</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Skip next instruction if the
+                            accumulator contains a negative value</p></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="paragraph">
+                    <p>The instructions are stored in a memory, which had 32 cells. Each cell was 32 bits long, and each
+                        instruction fit into
+                        exactly one cell. So each instruction has 32 bits. The bit representation was reversed, so the
+                        most and the least
+                        significant bits were put on opposite sides. For example, value <code>3</code>, in common
+                        personal computers represented as <code>011</code>,
+                        was in SSEM represented as <code>110</code>.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The instruction format is as follows:</p>
+                </div>
+                <table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+                    <caption class="title">Table 1. SSEM Instruction Format</caption>
+                    <colgroup>
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3333%;">
+                        <col style="width: 8.3337%;">
+                    </colgroup>
+                    <tfoot>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Value:</strong></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">2^0</p></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                        <td class="tableblock halign-left valign-top"></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">2^31</p></td>
+                    </tr>
+                    </tfoot>
+                    <tbody>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Bit:</strong></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">00</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">01</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">02</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">03</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">04</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">&#8230;&#8203;</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">13</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">14</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">15</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">&#8230;&#8203;</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">31</p></td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Use:</strong></p>
+                        </td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="paragraph">
+                    <p>where bits <code>LLLLL</code> denote a "line", which is basically the memory address - index of a
+                        memory cell. It can be understood
+                        as instruction operand. Bits <code>III</code> specify the instruction opcode (3 bits are enough
+                        for 7 instructions).</p>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="language-specification">Language specification</h3>
+                <div class="paragraph">
+                    <p>Each compiler is just a program which translates an input source code into output code. Usually,
+                        the input language is
+                        more high level than the output language, and often offers some features, which are not
+                        supported by the output language.
+                        For example, assembler source codes often support comments, various formats of number literals,
+                        labels, or macros. These
+                        are features, which are not supported by the instruction set itself, and they must be translated
+                        to it by compiler.</p>
+                </div>
+                <div class="paragraph">
+                    <p>SSEM assembler specification can be started with informal expressing, what it will know:</p>
+                </div>
+                <div class="sect3">
+                    <h4 id="COMPILER_TOKEN_CATEGORIES">Token categories</h4>
+                    <div class="paragraph">
+                        <p>Tokens, parsed by lexical analyzer have assigned a so-called category. The category is useful
+                            mainly for syntax
+                            highlighter in emuStudio editor. For example, reserved words are colored differently than
+                            e.g. numeric constants, or
+                            comments.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>The list of all categories can be seen in the following class:
+                            <a href="https://github.com/vbmacher/emuLib/blob/branch-9_0/src/main/java/emulib/plugins/compiler/Token.java">Token.java</a>.
+                        </p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="new-lines">New-lines</h4>
+                    <div class="paragraph">
+                        <p>New-line character (LF, CR, or CRLF) will be required as a delimiter of instructions, and as
+                            the last character.
+                            Successive empty new-line characters will be ignored.</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="instructions">Instructions</h4>
+                    <div class="paragraph">
+                        <p>Assembler will support all forms of instructions shown in the table in section <a
+                                href="#COMPILER_SSEM_ASM">Assembler for SSEM</a>. All instructions must
+                            start with a line number. For example:</p>
+                    </div>
+                    <div class="literalblock">
+                        <div class="content">
+                            <pre>01 LDN 20</pre>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>Instructions belong to token category called "reserved words".</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="literals-constants">Literals / constants</h4>
+                    <div class="paragraph">
+                        <p>Raw number constants can be defined in separate lines using special preprocessor keywords.
+                            The first one is <code>NUM xxx</code>,
+                            where <code>xxx</code> is a number in either decimal or hexadecimal form. Hexadecimal format
+                            must start with prefix <code>0x</code>. For example:</p>
+                    </div>
+                    <div class="literalblock">
+                        <div class="content">
 <pre>00 NUM 0x20
 01 NUM 1207943145</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Another keyword is <code>BNUM xxx</code>, where <code>xxx</code> can be only a binary number. For example:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>01 BNUM 10011011111000101111110000111111</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>It means that the number will be stored untouched to the memory in the format as it appears in the binary form.</p>
-</div>
-<div class="paragraph">
-<p>There exists also a third keyword, <code>BINS xxx</code>, with the exact meaning as <code>BNUM</code>. The reason for its presence is to
-be compatible with most of the programs <a href="http://www.cs.ubc.ca/~hilpert/e/SSEM/programs/noodle.html">found on internet</a>.</p>
-</div>
-<div class="paragraph">
-<p>For all constants, the following rules hold. Only integral constants are supported, and the allowed range is from 0 - 31
-(maximum is 2^5).</p>
-</div>
-<div class="paragraph">
-<p>Word <code>NUM</code>, <code>BNUM</code> and <code>BINS</code> keywords belong to "preprocessor" category, but number constants to the category called
-"literals".</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="comments">Comments</h4>
-<div class="paragraph">
-<p>Only one-line comments will be supported, but of various forms. Generally, comment will be everything starting with
-some prefix until the end of the line. Comment prefixes are:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Double-slash (<code>//</code>)</p>
-</li>
-<li>
-<p>Semi-colon (<code>;</code>)</p>
-</li>
-<li>
-<p>Double-dash (<code>--</code>)</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The token category of comments is "comments".</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="full-example">Full example</h4>
-<div class="paragraph">
-<p>For example, simple <code>5+3</code> addition can be implemented as follows:</p>
-</div>
-<div class="literalblock">
-<div class="content">
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>Another keyword is <code>BNUM xxx</code>, where <code>xxx</code> can be only a binary number.
+                            For example:</p>
+                    </div>
+                    <div class="literalblock">
+                        <div class="content">
+                            <pre>01 BNUM 10011011111000101111110000111111</pre>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>It means that the number will be stored untouched to the memory in the format as it appears
+                            in the binary form.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>There exists also a third keyword, <code>BINS xxx</code>, with the exact meaning as <code>BNUM</code>.
+                            The reason for its presence is to
+                            be compatible with most of the programs <a
+                                    href="http://www.cs.ubc.ca/~hilpert/e/SSEM/programs/noodle.html">found on
+                                internet</a>.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>For all constants, the following rules hold. Only integral constants are supported, and the
+                            allowed range is from 0 - 31
+                            (maximum is 2^5).</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Word <code>NUM</code>, <code>BNUM</code> and <code>BINS</code> keywords belong to
+                            "preprocessor" category, but number constants to the category called
+                            "literals".</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="comments">Comments</h4>
+                    <div class="paragraph">
+                        <p>Only one-line comments will be supported, but of various forms. Generally, comment will be
+                            everything starting with
+                            some prefix until the end of the line. Comment prefixes are:</p>
+                    </div>
+                    <div class="ulist">
+                        <ul>
+                            <li>
+                                <p>Double-slash (<code>//</code>)</p>
+                            </li>
+                            <li>
+                                <p>Semi-colon (<code>;</code>)</p>
+                            </li>
+                            <li>
+                                <p>Double-dash (<code>--</code>)</p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="paragraph">
+                        <p>The token category of comments is "comments".</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="full-example">Full example</h4>
+                    <div class="paragraph">
+                        <p>For example, simple <code>5+3</code> addition can be implemented as follows:</p>
+                    </div>
+                    <div class="literalblock">
+                        <div class="content">
 <pre>0 LDN 7 // load negative X into the accumulator
 1 SUB 8 // subtract Y from the value in the accumulator
 2 STO 9 // store the sum at address 7
 3 LDN 9 // A = -(-Sum)
 4 STO 9 // store sum
 5 HLT</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
+                        </div>
+                    </div>
+                    <div class="literalblock">
+                        <div class="content">
 <pre>7 NUM 3 // X
 8 NUM 5 // Y
 9       // here will be the result</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The accumulator should now contain value <code>8</code>, as well as memory cell at index 9.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="preparing-the-environment">Preparing the environment</h3>
-<div class="paragraph">
-<p>In order to start developing the compiler, create new Java project in your favorite IDE. In emuStudio, Maven is used for
-dependencies management. If you&#8217;re not familiar with Maven, you can start
-<a href="https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html">here</a>.</p>
-</div>
-<div class="paragraph">
-<p>The compiler will be implemented as another standard emuStudio plug-in in standard path
-<code>plugins/compilers/as-ssem</code>. It will inherit all Maven plug-in dependencies from the main POM file.</p>
-</div>
-<div class="paragraph">
-<p>The directory structure is "dictated" by Maven, so it should look as follows:</p>
-</div>
-<div class="literalblock">
-<div class="content">
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>The accumulator should now contain value <code>8</code>, as well as memory cell at index 9.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="preparing-the-environment">Preparing the environment</h3>
+                <div class="paragraph">
+                    <p>In order to start developing the compiler, create new Java project in your favorite IDE. In
+                        emuStudio, Maven is used for
+                        dependencies management. If you&#8217;re not familiar with Maven, you can start
+                        <a href="https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html">here</a>.
+                    </p>
+                </div>
+                <div class="paragraph">
+                    <p>The compiler will be implemented as another standard emuStudio plug-in in standard path
+                        <code>plugins/compilers/as-ssem</code>. It will inherit all Maven plug-in dependencies from the
+                        main POM file.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The directory structure is "dictated" by Maven, so it should look as follows:</p>
+                </div>
+                <div class="literalblock">
+                    <div class="content">
 <pre>src/
   main/
     java/
@@ -485,317 +543,468 @@ dependencies management. If you&#8217;re not familiar with Maven, you can start
 test/
   java/
 pom.xml</pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Note the naming of the plug-in. We are following the naming convention as described in the <a href="#INTRODUCTION_NAMING">[INTRODUCTION_NAMING]</a>
-      guide.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>The POM file of the project looks as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>pom.xml</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="xml"><span></span>Unresolved directive in compiler.adoc - include::{sourcedir}/plugins/compilers/as-ssem/pom.xml[]</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="lexical-analyzer-lexer">Lexical analyzer (lexer)</h3>
-<div class="paragraph">
-<p>We will start with definition of the lexer specfile. It is a special file, which will be given to <a href="http://jflex.de/">JFlex</a>
-during project compilation. Jflex will generate a Java class - the lexer - which will be used by the parser later, and
-by emuStudio editor, too. The specification file has special place in the directory structure:</p>
-</div>
-<div class="literalblock">
-<div class="content">
+                    </div>
+                </div>
+                <div class="admonitionblock note">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-note" title="Note"></i>
+                            </td>
+                            <td class="content">
+                                Note the naming of the plug-in. We are following the naming convention as described in
+                                the <a href="#INTRODUCTION_NAMING">[INTRODUCTION_NAMING]</a>
+                                guide.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>The POM file of the project looks as follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>pom.xml</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="xml"><span></span>Unresolved directive in compiler.adoc - include::{sourcedir}/plugins/compilers/as-ssem/pom.xml[]</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="lexical-analyzer-lexer">Lexical analyzer (lexer)</h3>
+                <div class="paragraph">
+                    <p>We will start with definition of the lexer specfile. It is a special file, which will be given to
+                        <a href="http://jflex.de/">JFlex</a>
+                        during project compilation. Jflex will generate a Java class - the lexer - which will be used by
+                        the parser later, and
+                        by emuStudio editor, too. The specification file has special place in the directory structure:
+                    </p>
+                </div>
+                <div class="literalblock">
+                    <div class="content">
 <pre>src/
   main/
     jflex/
       lexer.jflex</pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Note that the specfile is not put into resources directory. If it was so, then it would be included in the final
-      JAR file.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>JFlex will be called during compilation of the assembler by the
-<a href="http://jflex.sourceforge.net/maven-jflex-plugin/generate-mojo.html">JFlex Maven plugin</a> (see the POM file above).
-The content of the specfile is as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/jflex/ssem.jflex</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="flex"><span></span>Unresolved directive in compiler.adoc - include::{sourcedir}/plugins/compilers/as-ssem/src/main/jflex/lexer.jflex[lines=20..-1]</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>As you can notice, the specfile uses special class named <code>TokenImpl</code>. We must implement this class by ourselves. It
-holds the basic information about the parsed token, like offset, length, type, etc. There are several requirements
-when implementing the class:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>It must extend <code>java_cup.runtime.Symbol</code> class, for JFlex - cup interoperability.</p>
-</li>
-<li>
-<p>It must implement <code>emulib.plugins.compiler.Token</code> interface, for being able to use this class in emuStudio syntax
-highlighter</p>
-</li>
-<li>
-<p>It&#8217;s now a secret, but it would have to implement also special <code>Symbols</code> interface, which will be generated by
-parser, described in section below.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Syntax highlighter in emuStudio represents the source code in a dynamic "lexical tree". It scans regularly required text
-blocks in the editor and translates them into the symbolic representation - into tokens, which are arranged in a tree
-structure. Tokens are parsed by the lexer, provided by us. And <code>Token</code> interface is the shared API known by our specific
-lexer and general syntax highlighter in emuStudio.</p>
-</div>
-<div class="paragraph">
-<p>Tokens are assigned into categories, as was already mentioned in section <a href="#COMPILER_TOKEN_CATEGORIES">Token categories</a>. Token categories have
-assigned their specific editor style, like color or font.</p>
-</div>
-<div class="paragraph">
-<p>The content of the <code>net.sf.emustudio.ssem.assembler.TokenImpl</code> class is as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>TokenImpl<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="COMPILER_GRAMMAR">Syntax analyzer (parser)</h3>
-<div class="paragraph">
-<p>Next, we define the grammar file. It is also a special file, which will be given to cup during project
-compilation. Cup will generate Java classes - the parser - which we will use in our code. The specfile
-has special place in the directory structure:</p>
-</div>
-<div class="literalblock">
-<div class="content">
+                    </div>
+                </div>
+                <div class="admonitionblock note">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-note" title="Note"></i>
+                            </td>
+                            <td class="content">
+                                Note that the specfile is not put into resources directory. If it was so, then it would
+                                be included in the final
+                                JAR file.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>JFlex will be called during compilation of the assembler by the
+                        <a href="http://jflex.sourceforge.net/maven-jflex-plugin/generate-mojo.html">JFlex Maven
+                            plugin</a> (see the POM file above).
+                        The content of the specfile is as follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/jflex/ssem.jflex</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="flex"><span></span>Unresolved directive in compiler.adoc - include::{sourcedir}/plugins/compilers/as-ssem/src/main/jflex/lexer.jflex[lines=20..-1]</code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>As you can notice, the specfile uses special class named <code>TokenImpl</code>. We must
+                        implement this class by ourselves. It
+                        holds the basic information about the parsed token, like offset, length, type, etc. There are
+                        several requirements
+                        when implementing the class:</p>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p>It must extend <code>java_cup.runtime.Symbol</code> class, for JFlex - cup
+                                interoperability.</p>
+                        </li>
+                        <li>
+                            <p>It must implement <code>emulib.plugins.compiler.Token</code> interface, for being able to
+                                use this class in emuStudio syntax
+                                highlighter</p>
+                        </li>
+                        <li>
+                            <p>It&#8217;s now a secret, but it would have to implement also special <code>Symbols</code>
+                                interface, which will be generated by
+                                parser, described in section below.</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="paragraph">
+                    <p>Syntax highlighter in emuStudio represents the source code in a dynamic "lexical tree". It scans
+                        regularly required text
+                        blocks in the editor and translates them into the symbolic representation - into tokens, which
+                        are arranged in a tree
+                        structure. Tokens are parsed by the lexer, provided by us. And <code>Token</code> interface is
+                        the shared API known by our specific
+                        lexer and general syntax highlighter in emuStudio.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Tokens are assigned into categories, as was already mentioned in section <a
+                            href="#COMPILER_TOKEN_CATEGORIES">Token categories</a>. Token categories have
+                        assigned their specific editor style, like color or font.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The content of the <code>net.sf.emustudio.ssem.assembler.TokenImpl</code> class is as follows:
+                    </p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span
+                                style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span
+                                style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span
+                                style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span
+                                style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span
+                                style="color: #666666">/</span>assembler<span
+                                style="color: #666666">/</span>TokenImpl<span style="color: #666666">.</span><span
+                                style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span
+                                style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="COMPILER_GRAMMAR">Syntax analyzer (parser)</h3>
+                <div class="paragraph">
+                    <p>Next, we define the grammar file. It is also a special file, which will be given to cup during
+                        project
+                        compilation. Cup will generate Java classes - the parser - which we will use in our code. The
+                        specfile
+                        has special place in the directory structure:</p>
+                </div>
+                <div class="literalblock">
+                    <div class="content">
 <pre>src/
   main/
     cup/
       parser.cup</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Grammar type and form we use depends on the parsing algorithm we choose. In emuStudio, all compilers use
-<a href="http://www2.cs.tum.edu/projects/cup/">Java cup</a> parser generator, which does bottom-up parsing, and supported grammars
-are of type LALR.</p>
-</div>
-<div class="paragraph">
-<p>The main difference between LL and LALR grammars is that in LALR you can freely use left-recursion, but not right
-recursion. Otherwise you would get shift/reduce conflicts. For more information, see for example
-<a href="https://lambda.uta.edu/cse5317/notes/node21.html">this site</a>.</p>
-</div>
-<div class="paragraph">
-<p>The grammar specfile of SSEM assembler parser follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/cup/parser.cup</code></div>
-<div class="content">
-<pre class="pygments highlight"><code>Unresolved directive in compiler.adoc - include::{sourcedir}/plugins/compilers/as-ssem/src/main/cup/parser.cup[lines=20..-1]</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The right sides - code snippets wrapped between <code>{:</code> and <code>:}</code> - is Java code which will be executed when particular rule
-of the grammar is applied. Remember, that they will be applied in reverse - first will be applied the right-most rules.</p>
-</div>
-<div class="paragraph">
-<p>There exist a special variable <code>RESULT</code>, which should return some Java object of type which the
-non-terminal defines for it <sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnote_1" title="View footnote.">1</a>]</sup>.</p>
-</div>
-<div class="paragraph">
-<p>For more information, especially about the <code>error</code> symbol, please read <a href="http://www2.cs.tum.edu/projects/cup/">cup</a>
-documentation.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="COMPILER_AST">Introducing AST</h3>
-<div class="paragraph">
-<p>The code won&#8217;t compile so far. The reason is that the parser strangely uses some undefined classes, such as <code>Program</code>,
-<code>ASTnode</code>, <code>Instruction</code> and <code>Constant</code>. They are defined in the grammar file as follows (see above):</p>
-</div>
-<div class="literalblock">
-<div class="content">
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>Grammar type and form we use depends on the parsing algorithm we choose. In emuStudio, all
+                        compilers use
+                        <a href="http://www2.cs.tum.edu/projects/cup/">Java cup</a> parser generator, which does
+                        bottom-up parsing, and supported grammars
+                        are of type LALR.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The main difference between LL and LALR grammars is that in LALR you can freely use
+                        left-recursion, but not right
+                        recursion. Otherwise you would get shift/reduce conflicts. For more information, see for example
+                        <a href="https://lambda.uta.edu/cse5317/notes/node21.html">this site</a>.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The grammar specfile of SSEM assembler parser follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/cup/parser.cup</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code>Unresolved directive in compiler.adoc - include::{sourcedir}/plugins/compilers/as-ssem/src/main/cup/parser.cup[lines=20..-1]</code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>The right sides - code snippets wrapped between <code>{:</code> and <code>:}</code> - is Java
+                        code which will be executed when particular rule
+                        of the grammar is applied. Remember, that they will be applied in reverse - first will be
+                        applied the right-most rules.</p>
+                </div>
+                <div class="paragraph">
+                    <p>There exist a special variable <code>RESULT</code>, which should return some Java object of type
+                        which the
+                        non-terminal defines for it <sup class="footnote">[<a id="_footnoteref_1" class="footnote"
+                                                                              href="#_footnote_1"
+                                                                              title="View footnote.">1</a>]</sup>.</p>
+                </div>
+                <div class="paragraph">
+                    <p>For more information, especially about the <code>error</code> symbol, please read <a
+                            href="http://www2.cs.tum.edu/projects/cup/">cup</a>
+                        documentation.</p>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="COMPILER_AST">Introducing AST</h3>
+                <div class="paragraph">
+                    <p>The code won&#8217;t compile so far. The reason is that the parser strangely uses some undefined
+                        classes, such as <code>Program</code>,
+                        <code>ASTnode</code>, <code>Instruction</code> and <code>Constant</code>. They are defined in
+                        the grammar file as follows (see above):</p>
+                </div>
+                <div class="literalblock">
+                    <div class="content">
 <pre>non terminal Program Program;
 non terminal ASTnode Statement;
 non terminal Instruction Instruction;
 non terminal Constant Constant;</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>These classes are part of so-called abstract syntax tree, and they wait for our implementation. Abstract Syntax Tree
-(or AST) is a "symbolic" representation of the parsed program source code. The parser creates one as a side-effect of
-parsing. It is different from Parse Syntax Tree (PST), which represents a tree of true grammar derivations which were
-"detected" by the parser for given source code of a program.</p>
-</div>
-<div class="paragraph">
-<p>AST is something more artificial, ie. not all grammar rules need to be taken into account when representing the program.
-For this reason, we define only some "nodes" of the derivation tree. In our case, it is <code>Program</code>, representing the
-"root" of the tree, which has children - `Statement`s. Statements have `Instruction`s or `Constant`s as its children.</p>
-</div>
-<div class="paragraph">
-<p>Do you remember those code snippets in the grammar specfile wrapped in <code>{: &#8230;&#8203; :}</code> ? This code snippets create the
-AST, just follow them.</p>
-</div>
-<div class="paragraph">
-<p>It&#8217;s now time to implement them. Since we know all nodes are just nodes of our AST, we should define common <code>ASTnode</code>
-interface first:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>tree<span style="color: #666666">/</span>ASTnode<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This interface will be useful when we will traverse the tree. For tree traversal it is very well-suited the
-<a href="https://sourcemaking.com/design_patterns/visitor">Visitor pattern</a>. The idea of traversing a tree using visitor pattern
-is to have the "visitor" object - which represents an object which wants to go through all nodes of the tree and do
-something. The algorithm of visiting is based on a premise that each node of the AST implements the <code>accept()</code> method.
-That way, each node is responsible for calling the visitor for each its children and itself.
-So the effect is that the "visitor" will "get" the all tree node objects, when the <code>accept()</code> method is called on the
-root of the tree.</p>
-</div>
-<div class="paragraph">
-<p>We can now define the visitor interface as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>tree<span style="color: #666666">/</span>ASTvisitor<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The methods of the visitor will be implemented by some visitor, for example a code generator. However, we need to
-finish implementation of the AST first.</p>
-</div>
-<div class="sect3">
-<h4 id="program-node">'Program' node</h4>
-<div class="paragraph">
-<p>The root node of the AST is the <code>Program</code> class. According to the grammar, it contains all the statements, which are
-either <code>Instruction</code> or <code>Constant</code>. Notice how we implemented traversing of the node:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>tree<span style="color: #666666">/</span>Program<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The important note is that how the statements are stored. They are in fact the children of the program node. For this
-purpose a key-value map is used. Key has type <code>Integer</code> and it represents the line - or memory cell index, or address -
-on which the statement will be located. That way we can write several instructions which lie on the same line, e.g.:</p>
-</div>
-<div class="literalblock">
-<div class="content">
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>These classes are part of so-called abstract syntax tree, and they wait for our implementation.
+                        Abstract Syntax Tree
+                        (or AST) is a "symbolic" representation of the parsed program source code. The parser creates
+                        one as a side-effect of
+                        parsing. It is different from Parse Syntax Tree (PST), which represents a tree of true grammar
+                        derivations which were
+                        "detected" by the parser for given source code of a program.</p>
+                </div>
+                <div class="paragraph">
+                    <p>AST is something more artificial, ie. not all grammar rules need to be taken into account when
+                        representing the program.
+                        For this reason, we define only some "nodes" of the derivation tree. In our case, it is <code>Program</code>,
+                        representing the
+                        "root" of the tree, which has children - `Statement`s. Statements have `Instruction`s or
+                        `Constant`s as its children.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Do you remember those code snippets in the grammar specfile wrapped in <code>{: &#8230;&#8203;
+                        :}</code> ? This code snippets create the
+                        AST, just follow them.</p>
+                </div>
+                <div class="paragraph">
+                    <p>It&#8217;s now time to implement them. Since we know all nodes are just nodes of our AST, we
+                        should define common <code>ASTnode</code>
+                        interface first:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java</code>
+                    </div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span
+                                style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span
+                                style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span
+                                style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span
+                                style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span
+                                style="color: #666666">/</span>assembler<span style="color: #666666">/</span>tree<span
+                                style="color: #666666">/</span>ASTnode<span style="color: #666666">.</span><span
+                                style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span
+                                style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>This interface will be useful when we will traverse the tree. For tree traversal it is very
+                        well-suited the
+                        <a href="https://sourcemaking.com/design_patterns/visitor">Visitor pattern</a>. The idea of
+                        traversing a tree using visitor pattern
+                        is to have the "visitor" object - which represents an object which wants to go through all nodes
+                        of the tree and do
+                        something. The algorithm of visiting is based on a premise that each node of the AST implements
+                        the <code>accept()</code> method.
+                        That way, each node is responsible for calling the visitor for each its children and itself.
+                        So the effect is that the "visitor" will "get" the all tree node objects, when the <code>accept()</code>
+                        method is called on the
+                        root of the tree.</p>
+                </div>
+                <div class="paragraph">
+                    <p>We can now define the visitor interface as follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java</code>
+                    </div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span
+                                style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span
+                                style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span
+                                style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span
+                                style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span
+                                style="color: #666666">/</span>assembler<span style="color: #666666">/</span>tree<span
+                                style="color: #666666">/</span>ASTvisitor<span style="color: #666666">.</span><span
+                                style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span
+                                style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>The methods of the visitor will be implemented by some visitor, for example a code generator.
+                        However, we need to
+                        finish implementation of the AST first.</p>
+                </div>
+                <div class="sect3">
+                    <h4 id="program-node">'Program' node</h4>
+                    <div class="paragraph">
+                        <p>The root node of the AST is the <code>Program</code> class. According to the grammar, it
+                            contains all the statements, which are
+                            either <code>Instruction</code> or <code>Constant</code>. Notice how we implemented
+                            traversing of the node:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java</code>
+                        </div>
+                        <div class="content">
+                            <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                    style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span
+                                    style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span
+                                    style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span
+                                    style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
+                                    style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
+                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>ssem<span
+                                    style="color: #666666">/</span>assembler<span
+                                    style="color: #666666">/</span>tree<span style="color: #666666">/</span>Program<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">java</span><span
+                                    style="color: #666666">[</span>lines<span
+                                    style="color: #666666">=20..-1]</span></code></pre>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>The important note is that how the statements are stored. They are in fact the children of
+                            the program node. For this
+                            purpose a key-value map is used. Key has type <code>Integer</code> and it represents the
+                            line - or memory cell index, or address -
+                            on which the statement will be located. That way we can write several instructions which lie
+                            on the same line, e.g.:</p>
+                    </div>
+                    <div class="literalblock">
+                        <div class="content">
 <pre>01 LDN 15
 01 STO 06</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>which will be translated into two statements, but the program node will contain just the last one. The reason is that
-they share the line - <code>01</code> - which is the key in the map of statements, so the first statement will be "overwritten"
-by the second one.</p>
-</div>
-<div class="paragraph">
-<p>It is for a debate if we want this behavior to happen. For simplicity, we allow it. Otherwise we would throw some
-compiler exception.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="instruction-node">'Instruction' node</h4>
-<div class="paragraph">
-<p>Instruction node represents the instruction. If you remember, each instruction except <code>STP</code> and <code>CMP</code> has a parameter,
-or better - operand - which is a "line" - index of a memory cell. It would be possible to represent specific
-instructions by separate classes, but since the required operations would be shared, it would be much easier to have
-just one class for all the instructions. Generally, instructions with same number and type of parameters are usually
-implemented in one AST node.</p>
-</div>
-<div class="paragraph">
-<p>Here&#8217;s the source code:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>tree<span style="color: #666666">/</span>Instruction<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Note that the constructor is private. The implication is that it is just impossible to create some invalid <code>Instruction</code>
-object. The only possible way how to define it is using static factory methods, which represent the instructions
-themselves. These are called from the parser - check the grammar specfile in the section <a href="#COMPILER_GRAMMAR">Syntax analyzer (parser)</a>.</p>
-</div>
-<div class="paragraph">
-<p>Also, note that we can compare instructions based on opcode and operand. This is allowed by custom implementations of
-methods <code>hashCode()</code> and <code>equals()</code>.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="constant-node">'Constant' node</h4>
-<div class="paragraph">
-<p>Another kind of statement is a constant. The constant is just a number, and the node class is very simple:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>tree<span style="color: #666666">/</span>Constant<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Comparing <code>Constant</code> instances is based on comparing the numbers they represent.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="testing">Testing</h3>
-<div class="paragraph">
-<p>It is very good practice to write automated tests. These will give us some level of confidence that what we did so far
-is actually working. It is the earliest feedback we can get on our work, which consequently improves the speed of
-creating sofware which actually works.</p>
-</div>
-<div class="paragraph">
-<p>A unit test is just a normal class which contains test methods. A test method generally creates the testing object, does
-the testing operation and finally check if the operation did what it should. Each test method should test just one thing
-and should be short and clear. It is good practice to name test method according to the test case, possibly resulting
-in a whole sentence, in camel case.</p>
-</div>
-<div class="paragraph">
-<p>Java projects use some unit testing framework for that, e.g. JUnit or TestNG, which recognizes those classes
-automatically and runs the test methods during the compilation of the project. If a test fails, the whole compilation
-is stopped as failed.</p>
-</div>
-<div class="paragraph">
-<p>For lexer and parser we create unit test classes, which will be placed here (following to Maven directory structure):</p>
-</div>
-<div class="literalblock">
-<div class="content">
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>which will be translated into two statements, but the program node will contain just the last
+                            one. The reason is that
+                            they share the line - <code>01</code> - which is the key in the map of statements, so the
+                            first statement will be "overwritten"
+                            by the second one.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>It is for a debate if we want this behavior to happen. For simplicity, we allow it. Otherwise
+                            we would throw some
+                            compiler exception.</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="instruction-node">'Instruction' node</h4>
+                    <div class="paragraph">
+                        <p>Instruction node represents the instruction. If you remember, each instruction except <code>STP</code>
+                            and <code>CMP</code> has a parameter,
+                            or better - operand - which is a "line" - index of a memory cell. It would be possible to
+                            represent specific
+                            instructions by separate classes, but since the required operations would be shared, it
+                            would be much easier to have
+                            just one class for all the instructions. Generally, instructions with same number and type
+                            of parameters are usually
+                            implemented in one AST node.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Here&#8217;s the source code:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="title">
+                            <code>src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java</code></div>
+                        <div class="content">
+                            <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                    style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span
+                                    style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span
+                                    style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span
+                                    style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
+                                    style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
+                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>ssem<span
+                                    style="color: #666666">/</span>assembler<span
+                                    style="color: #666666">/</span>tree<span
+                                    style="color: #666666">/</span>Instruction<span style="color: #666666">.</span><span
+                                    style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span
+                                    style="color: #666666">=20..-1]</span></code></pre>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>Note that the constructor is private. The implication is that it is just impossible to create
+                            some invalid <code>Instruction</code>
+                            object. The only possible way how to define it is using static factory methods, which
+                            represent the instructions
+                            themselves. These are called from the parser - check the grammar specfile in the section <a
+                                    href="#COMPILER_GRAMMAR">Syntax analyzer (parser)</a>.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Also, note that we can compare instructions based on opcode and operand. This is allowed by
+                            custom implementations of
+                            methods <code>hashCode()</code> and <code>equals()</code>.</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="constant-node">'Constant' node</h4>
+                    <div class="paragraph">
+                        <p>Another kind of statement is a constant. The constant is just a number, and the node class is
+                            very simple:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
+                            <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                    style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span
+                                    style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span
+                                    style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span
+                                    style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
+                                    style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
+                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>ssem<span
+                                    style="color: #666666">/</span>assembler<span
+                                    style="color: #666666">/</span>tree<span
+                                    style="color: #666666">/</span>Constant<span style="color: #666666">.</span><span
+                                    style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span
+                                    style="color: #666666">=20..-1]</span></code></pre>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>Comparing <code>Constant</code> instances is based on comparing the numbers they represent.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="testing">Testing</h3>
+                <div class="paragraph">
+                    <p>It is very good practice to write automated tests. These will give us some level of confidence
+                        that what we did so far
+                        is actually working. It is the earliest feedback we can get on our work, which consequently
+                        improves the speed of
+                        creating sofware which actually works.</p>
+                </div>
+                <div class="paragraph">
+                    <p>A unit test is just a normal class which contains test methods. A test method generally creates
+                        the testing object, does
+                        the testing operation and finally check if the operation did what it should. Each test method
+                        should test just one thing
+                        and should be short and clear. It is good practice to name test method according to the test
+                        case, possibly resulting
+                        in a whole sentence, in camel case.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Java projects use some unit testing framework for that, e.g. JUnit or TestNG, which recognizes
+                        those classes
+                        automatically and runs the test methods during the compilation of the project. If a test fails,
+                        the whole compilation
+                        is stopped as failed.</p>
+                </div>
+                <div class="paragraph">
+                    <p>For lexer and parser we create unit test classes, which will be placed here (following to Maven
+                        directory structure):</p>
+                </div>
+                <div class="literalblock">
+                    <div class="content">
 <pre>src/
   test/
     java/
@@ -806,412 +1015,675 @@ is stopped as failed.</p>
               assembler/
                 LexerTest.java
                 ParserTest.java</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The content of the test classes are as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>test<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>LexerTest<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>test<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>ParserTest<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-The tests of parser are based on comparing <code>Instruction</code> and <code>Constant</code> instances with JUnit&#8217;s <code>assertEquals()</code>
-      method. This is possible only because of overriden <code>equals()</code> and <code>hashCode()</code> methods in the classes, since
-      they are used directly by Java when it is comparing the instances.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="the-main-class">The main class</h3>
-<div class="paragraph">
-<p>The time has come for implementing the main plug-in class. It will be placed in a package
-<code>net.sf.emustudio.ssem.assembler</code>, and the class will be named <code>CompilerImpl</code>.</p>
-</div>
-<div class="paragraph">
-<p>There are several requirements (behavioral contracts) put on the compiler main class:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>It must implement <code>emulib.plugins.compiler.Compiler</code> interface. There already exists helper abstract class called
-<code>emulib.plugins.compiler.AbstractCompiler</code>, which implements some fundamental and general methods. We will use that
-class.</p>
-</li>
-<li>
-<p>It must be annotated with <code>emulib.annotations.PluginType</code> annotation.</p>
-</li>
-<li>
-<p>The constructor gets two arguments: unique plugin ID (<code>Long</code>) and <code>emulib.runtime.ContextPool</code> object. Both values
-are created by emuStudio, and we will talk about them later.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Now, the "skeleton" of the class follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>The content of the test classes are as follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span
+                                style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span
+                                style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span
+                                style="color: #666666">/</span>test<span style="color: #666666">/</span>java<span
+                                style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span
+                                style="color: #666666">/</span>assembler<span
+                                style="color: #666666">/</span>LexerTest<span style="color: #666666">.</span><span
+                                style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span
+                                style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span
+                                style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span
+                                style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span
+                                style="color: #666666">/</span>test<span style="color: #666666">/</span>java<span
+                                style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span
+                                style="color: #666666">/</span>assembler<span
+                                style="color: #666666">/</span>ParserTest<span style="color: #666666">.</span><span
+                                style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span
+                                style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+                <div class="admonitionblock note">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-note" title="Note"></i>
+                            </td>
+                            <td class="content">
+                                The tests of parser are based on comparing <code>Instruction</code> and
+                                <code>Constant</code> instances with JUnit&#8217;s <code>assertEquals()</code>
+                                method. This is possible only because of overriden <code>equals()</code> and <code>hashCode()</code>
+                                methods in the classes, since
+                                they are used directly by Java when it is comparing the instances.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="the-main-class">The main class</h3>
+                <div class="paragraph">
+                    <p>The time has come for implementing the main plug-in class. It will be placed in a package
+                        <code>net.sf.emustudio.ssem.assembler</code>, and the class will be named
+                        <code>CompilerImpl</code>.</p>
+                </div>
+                <div class="paragraph">
+                    <p>There are several requirements (behavioral contracts) put on the compiler main class:</p>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p>It must implement <code>emulib.plugins.compiler.Compiler</code> interface. There already
+                                exists helper abstract class called
+                                <code>emulib.plugins.compiler.AbstractCompiler</code>, which implements some fundamental
+                                and general methods. We will use that
+                                class.</p>
+                        </li>
+                        <li>
+                            <p>It must be annotated with <code>emulib.annotations.PluginType</code> annotation.</p>
+                        </li>
+                        <li>
+                            <p>The constructor gets two arguments: unique plugin ID (<code>Long</code>) and <code>emulib.runtime.ContextPool</code>
+                                object. Both values
+                                are created by emuStudio, and we will talk about them later.</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="paragraph">
+                    <p>Now, the "skeleton" of the class follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java</code>
+                    </div>
+                    <div class="content">
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span
+        style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span
+        style="color: #666666">;</span>
 
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PLUGIN_TYPE</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PluginType</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.AbstractCompiler</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.LexicalAnalyzer</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.SourceFileExtension</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.runtime.ContextPool</span><span style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PLUGIN_TYPE</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PluginType</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.AbstractCompiler</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.LexicalAnalyzer</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.SourceFileExtension</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.runtime.ContextPool</span><span
+            style="color: #666666">;</span>
 
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.io.IOException</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.io.Reader</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.util.Objects</span><span style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.io.IOException</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.io.Reader</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.util.Objects</span><span
+            style="color: #666666">;</span>
 
 <span style="color: #AA22FF">@PluginType</span><span style="color: #666666">(</span>
-    type <span style="color: #666666">=</span> PLUGIN_TYPE<span style="color: #666666">.</span><span style="color: #7D9029">COMPILER</span><span style="color: #666666">,</span>
-    title <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;SSEM Assembler&quot;</span><span style="color: #666666">,</span>
-    copyright <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;\u00A9 Copyright 2016, YourName&quot;</span><span style="color: #666666">,</span>
+    type <span style="color: #666666">=</span> PLUGIN_TYPE<span style="color: #666666">.</span><span
+            style="color: #7D9029">COMPILER</span><span style="color: #666666">,</span>
+    title <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;SSEM Assembler&quot;</span><span
+            style="color: #666666">,</span>
+    copyright <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;\u00A9 Copyright 2016, YourName&quot;</span><span
+            style="color: #666666">,</span>
     description <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;Assembler of SSEM processor language&quot;</span>
 <span style="color: #666666">)</span>
-<span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CompilerImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCompiler <span style="color: #666666">{</span>
-    <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">static</span> <span style="color: #008000; font-weight: bold">final</span> SourceFileExtension<span style="color: #666666">[]</span> SOURCE_FILE_EXTENSIONS <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">new</span> SourceFileExtension<span style="color: #666666">[]{</span>
-        <span style="color: #008000; font-weight: bold">new</span> SourceFileExtension<span style="color: #666666">(</span><span style="color: #BA2121">&quot;ssem&quot;</span><span style="color: #666666">,</span> <span style="color: #BA2121">&quot;SSEM source file&quot;</span><span style="color: #666666">)</span>
+<span style="color: #008000; font-weight: bold">public</span> <span
+            style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CompilerImpl</span> <span
+            style="color: #008000; font-weight: bold">extends</span> AbstractCompiler <span
+            style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">static</span> <span
+            style="color: #008000; font-weight: bold">final</span> SourceFileExtension<span
+            style="color: #666666">[]</span> SOURCE_FILE_EXTENSIONS <span style="color: #666666">=</span> <span
+            style="color: #008000; font-weight: bold">new</span> SourceFileExtension<span
+            style="color: #666666">[]{</span>
+        <span style="color: #008000; font-weight: bold">new</span> SourceFileExtension<span
+            style="color: #666666">(</span><span style="color: #BA2121">&quot;ssem&quot;</span><span
+            style="color: #666666">,</span> <span style="color: #BA2121">&quot;SSEM source file&quot;</span><span
+            style="color: #666666">)</span>
     <span style="color: #666666">};</span>
-    <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> ContextPool contextPool<span style="color: #666666">;</span>
+    <span style="color: #008000; font-weight: bold">private</span> <span
+            style="color: #008000; font-weight: bold">final</span> ContextPool contextPool<span
+            style="color: #666666">;</span>
 
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">CompilerImpl</span><span style="color: #666666">(</span>Long pluginID<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
-        <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span style="color: #666666">);</span>
-        <span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">.</span><span style="color: #7D9029">contextPool</span> <span style="color: #666666">=</span> Objects<span style="color: #666666">.</span><span style="color: #7D9029">requireNonNull</span><span style="color: #666666">(</span>contextPool<span style="color: #666666">);</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">CompilerImpl</span><span
+            style="color: #666666">(</span>Long pluginID<span
+            style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span
+            style="color: #666666">{</span>
+        <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span
+            style="color: #666666">);</span>
+        <span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">.</span><span
+            style="color: #7D9029">contextPool</span> <span style="color: #666666">=</span> Objects<span
+            style="color: #666666">.</span><span style="color: #7D9029">requireNonNull</span><span
+            style="color: #666666">(</span>contextPool<span style="color: #666666">);</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span style="color: #0000FF">compile</span><span style="color: #666666">(</span>String inputFileName<span style="color: #666666">,</span> String outputFileName<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span
+            style="color: #0000FF">compile</span><span style="color: #666666">(</span>String inputFileName<span
+            style="color: #666666">,</span> String outputFileName<span style="color: #666666">)</span> <span
+            style="color: #666666">{</span>
         <span style="color: #408080; font-style: italic">// TODO !!</span>
-        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">false</span><span style="color: #666666">;</span>
+        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">false</span><span
+            style="color: #666666">;</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span style="color: #0000FF">compile</span><span style="color: #666666">(</span>String inputFileName<span style="color: #666666">)</span> <span style="color: #666666">{</span>
-        String outputFileName <span style="color: #666666">=</span> Objects<span style="color: #666666">.</span><span style="color: #7D9029">requireNonNull</span><span style="color: #666666">(</span>inputFileName<span style="color: #666666">);</span>
-        SourceFileExtension srcExtension <span style="color: #666666">=</span> SOURCE_FILE_EXTENSIONS<span style="color: #666666">[0];</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span
+            style="color: #0000FF">compile</span><span style="color: #666666">(</span>String inputFileName<span
+            style="color: #666666">)</span> <span style="color: #666666">{</span>
+        String outputFileName <span style="color: #666666">=</span> Objects<span style="color: #666666">.</span><span
+            style="color: #7D9029">requireNonNull</span><span style="color: #666666">(</span>inputFileName<span
+            style="color: #666666">);</span>
+        SourceFileExtension srcExtension <span style="color: #666666">=</span> SOURCE_FILE_EXTENSIONS<span
+            style="color: #666666">[0];</span>
 
-        <span style="color: #B00040">int</span> i <span style="color: #666666">=</span> inputFileName<span style="color: #666666">.</span><span style="color: #7D9029">lastIndexOf</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;.&quot;</span> <span style="color: #666666">+</span> srcExtension<span style="color: #666666">.</span><span style="color: #7D9029">getExtension</span><span style="color: #666666">());</span>
-        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>i <span style="color: #666666">&gt;=</span> <span style="color: #666666">0)</span> <span style="color: #666666">{</span>
-            outputFileName <span style="color: #666666">=</span> outputFileName<span style="color: #666666">.</span><span style="color: #7D9029">substring</span><span style="color: #666666">(0,</span> i<span style="color: #666666">);</span>
+        <span style="color: #B00040">int</span> i <span style="color: #666666">=</span> inputFileName<span
+            style="color: #666666">.</span><span style="color: #7D9029">lastIndexOf</span><span
+            style="color: #666666">(</span><span style="color: #BA2121">&quot;.&quot;</span> <span
+            style="color: #666666">+</span> srcExtension<span style="color: #666666">.</span><span
+            style="color: #7D9029">getExtension</span><span style="color: #666666">());</span>
+        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>i <span
+            style="color: #666666">&gt;=</span> <span style="color: #666666">0)</span> <span
+            style="color: #666666">{</span>
+            outputFileName <span style="color: #666666">=</span> outputFileName<span
+            style="color: #666666">.</span><span style="color: #7D9029">substring</span><span
+            style="color: #666666">(0,</span> i<span style="color: #666666">);</span>
         <span style="color: #666666">}</span>
-        <span style="color: #008000; font-weight: bold">return</span> compile<span style="color: #666666">(</span>inputFileName<span style="color: #666666">,</span> outputFileName <span style="color: #666666">+</span> <span style="color: #BA2121">&quot;.bin&quot;</span><span style="color: #666666">);</span>
+        <span style="color: #008000; font-weight: bold">return</span> compile<span style="color: #666666">(</span>inputFileName<span
+            style="color: #666666">,</span> outputFileName <span style="color: #666666">+</span> <span
+            style="color: #BA2121">&quot;.bin&quot;</span><span style="color: #666666">);</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> LexicalAnalyzer <span style="color: #0000FF">getLexer</span><span style="color: #666666">(</span>Reader reader<span style="color: #666666">)</span> <span style="color: #666666">{</span>
-        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">new</span> LexerImpl<span style="color: #666666">(</span>reader<span style="color: #666666">);</span>
+    <span style="color: #008000; font-weight: bold">public</span> LexicalAnalyzer <span
+            style="color: #0000FF">getLexer</span><span style="color: #666666">(</span>Reader reader<span
+            style="color: #666666">)</span> <span style="color: #666666">{</span>
+        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">new</span> LexerImpl<span
+            style="color: #666666">(</span>reader<span style="color: #666666">);</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> SourceFileExtension<span style="color: #666666">[]</span> <span style="color: #0000FF">getSourceSuffixList</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
-        <span style="color: #008000; font-weight: bold">return</span> SOURCE_FILE_EXTENSIONS<span style="color: #666666">;</span>
+    <span style="color: #008000; font-weight: bold">public</span> SourceFileExtension<span
+            style="color: #666666">[]</span> <span style="color: #0000FF">getSourceSuffixList</span><span
+            style="color: #666666">()</span> <span style="color: #666666">{</span>
+        <span style="color: #008000; font-weight: bold">return</span> SOURCE_FILE_EXTENSIONS<span
+            style="color: #666666">;</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">destroy</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span
+            style="color: #0000FF">destroy</span><span style="color: #666666">()</span> <span
+            style="color: #666666">{</span>
 
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">showSettings</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span
+            style="color: #0000FF">showSettings</span><span style="color: #666666">()</span> <span
+            style="color: #666666">{</span>
 
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span style="color: #0000FF">isShowSettingsSupported</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
-        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">false</span><span style="color: #666666">;</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span
+            style="color: #0000FF">isShowSettingsSupported</span><span style="color: #666666">()</span> <span
+            style="color: #666666">{</span>
+        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">false</span><span
+            style="color: #666666">;</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> String <span style="color: #0000FF">getVersion</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
-        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #BA2121">&quot;1.0&quot;</span><span style="color: #666666">;</span>
+    <span style="color: #008000; font-weight: bold">public</span> String <span
+            style="color: #0000FF">getVersion</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
+        <span style="color: #008000; font-weight: bold">return</span> <span
+            style="color: #BA2121">&quot;1.0&quot;</span><span style="color: #666666">;</span>
     <span style="color: #666666">}</span>
 <span style="color: #666666">}</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Some things are obvious, some maybe not. For example, method <code>getLexer()</code> is called by emuStudio for the syntax
-highlighter. It is very straightforward - just return new <code>LexerImpl()</code> which was generated by JFlex from our
-specfile.</p>
-</div>
-<div class="paragraph">
-<p>Method <code>compile(String)</code> might seem complex at first look. It is "ugly" Java code which tries to check if the given
-file name ends with our supported file suffix, which is ".ssem". We chose it as the suffix of SSEM source code file.
-We could chose ".asm" or other extension as well. Then, the "real" <code>compile()</code> method is called with the input file
-and the output file name, which has suffix ".bin".</p>
-</div>
-<div class="paragraph">
-<p>Method <code>getSourceSuffixList()</code> returns all supported extensions, and will be used in the file filter in the open file
-dialog shown in emuStudio.</p>
-</div>
-<div class="paragraph">
-<p>Compiler can have it&#8217;s own settings dialog (GUI window) which can be shown. This is reflected by the methods
-<code>isShowSettingsSupported()</code> and <code>showSettings()</code>. Our assembler will not support the dialog.</p>
-</div>
-<div class="paragraph">
-<p>The "real" <code>compile()</code> method is left to be done in the last section.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="generating-code">Generating code</h3>
-<div class="paragraph">
-<p>So far, we have implemented a parser which creates our AST. Next operations which compilers do are semantic analysis,
-optimization and code generation. These three phases are performed on the AST. The algorithms traverse the tree and
-update some own internal state, or state of the AST based on visited nodes. Code generator at the end take the results,
-and again - by traversing AST - generates the code.</p>
-</div>
-<div class="paragraph">
-<p>In our case, we don&#8217;t need any semantic analysis, like type-checks or so, because we have simple machine instructions,
-which do not require it. We could optimize them, but for the simplicity we will omit this step as well. We will rather
-focus on the final step - code generation.</p>
-</div>
-<div class="paragraph">
-<p>You might remember the section <a href="#COMPILER_AST">Introducing AST</a>, which talked about AST traversal. We already have <code>ASTnode</code> and <code>ASTvisitor</code>
-interfaces. The traversal is already implemented, according to the Visitor pattern, by the nodes themselves. One thing
-which is left to do is to implement the visitor itself - the code generator class.</p>
-</div>
-<div class="paragraph">
-<p>For each encountered instruction, the code generator will generate a binary code. Our code generator will write the
-binary representation into a file. However, it is generally better if I/O classes work with I/O abstractions
-(streams, channels, etc.) rather than specific objects, e.g. files. Out code generator will be implemented in a
-similar fashion. The code is as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>CodeGenerator<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>There are several things to notice:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Output code is written into class <code>SeekableOutputStream</code>. Wi will define this class later.</p>
-</li>
-<li>
-<p><code>CodeGenerator</code> is a visitor, which has separate methods for code generation of <code>Constant</code> and <code>Instruction</code>.</p>
-</li>
-<li>
-<p><code>CodeGenerator</code> can be "closed" - so it handles closing of the writer (our <code>SeekableOutputStream</code>).</p>
-</li>
-<li>
-<p>Generated code is binary</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The code generation is not that complex. There is some complexity caused by a fact, that the binary representations
-are reversed, when comparing to our present-time PCs/laptops.</p>
-</div>
-<div class="paragraph">
-<p>The idea of generating code for instruction is to prepare 4 bytes, 32 bits, which are then written into the "writer"
-as one <code>Integer</code>, which has also 32 bits. The instruction format is explained in section <a href="#COMPILER_SSEM_ASM">Assembler for SSEM</a>. First 5 bits from
-the left represent the "line" - instruction operand. It must be reversed.
-Then, bits 13,14,15 represent the instruction opcode. It does not have to be reversed here, since the instructions are
-already encoded properly in the <code>Instruction</code> class. Last two bytes are just empty.</p>
-</div>
-<div class="paragraph">
-<p>Code generation for constant is much easier - it&#8217;s just retrieving the value and writing it in the reversed fashion as
-<code>Integer</code>.</p>
-</div>
-<div class="paragraph">
-<p>Code generator uses a "seekable" output stream, which allows to seek in the output. It is a separate class, which is
-actually an abstract class, extending <code>OutputStream</code>. The reason is easier testing:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>SeekableOutputStream<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>and here&#8217;s the implementation:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>MemoryAndFileOutput<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The "seeking" capability is required, because, as you remember, it&#8217;s possible to write something like this:</p>
-</div>
-<div class="literalblock">
-<div class="content">
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>Some things are obvious, some maybe not. For example, method <code>getLexer()</code> is called by
+                        emuStudio for the syntax
+                        highlighter. It is very straightforward - just return new <code>LexerImpl()</code> which was
+                        generated by JFlex from our
+                        specfile.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Method <code>compile(String)</code> might seem complex at first look. It is "ugly" Java code
+                        which tries to check if the given
+                        file name ends with our supported file suffix, which is ".ssem". We chose it as the suffix of
+                        SSEM source code file.
+                        We could chose ".asm" or other extension as well. Then, the "real" <code>compile()</code> method
+                        is called with the input file
+                        and the output file name, which has suffix ".bin".</p>
+                </div>
+                <div class="paragraph">
+                    <p>Method <code>getSourceSuffixList()</code> returns all supported extensions, and will be used in
+                        the file filter in the open file
+                        dialog shown in emuStudio.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Compiler can have it&#8217;s own settings dialog (GUI window) which can be shown. This is
+                        reflected by the methods
+                        <code>isShowSettingsSupported()</code> and <code>showSettings()</code>. Our assembler will not
+                        support the dialog.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The "real" <code>compile()</code> method is left to be done in the last section.</p>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="generating-code">Generating code</h3>
+                <div class="paragraph">
+                    <p>So far, we have implemented a parser which creates our AST. Next operations which compilers do
+                        are semantic analysis,
+                        optimization and code generation. These three phases are performed on the AST. The algorithms
+                        traverse the tree and
+                        update some own internal state, or state of the AST based on visited nodes. Code generator at
+                        the end take the results,
+                        and again - by traversing AST - generates the code.</p>
+                </div>
+                <div class="paragraph">
+                    <p>In our case, we don&#8217;t need any semantic analysis, like type-checks or so, because we have
+                        simple machine instructions,
+                        which do not require it. We could optimize them, but for the simplicity we will omit this step
+                        as well. We will rather
+                        focus on the final step - code generation.</p>
+                </div>
+                <div class="paragraph">
+                    <p>You might remember the section <a href="#COMPILER_AST">Introducing AST</a>, which talked about
+                        AST traversal. We already have <code>ASTnode</code> and <code>ASTvisitor</code>
+                        interfaces. The traversal is already implemented, according to the Visitor pattern, by the nodes
+                        themselves. One thing
+                        which is left to do is to implement the visitor itself - the code generator class.</p>
+                </div>
+                <div class="paragraph">
+                    <p>For each encountered instruction, the code generator will generate a binary code. Our code
+                        generator will write the
+                        binary representation into a file. However, it is generally better if I/O classes work with I/O
+                        abstractions
+                        (streams, channels, etc.) rather than specific objects, e.g. files. Out code generator will be
+                        implemented in a
+                        similar fashion. The code is as follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java</code>
+                    </div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span
+                                style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span
+                                style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span
+                                style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span
+                                style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span
+                                style="color: #666666">/</span>assembler<span style="color: #666666">/</span>CodeGenerator<span
+                                style="color: #666666">.</span><span style="color: #7D9029">java</span><span
+                                style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>There are several things to notice:</p>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p>Output code is written into class <code>SeekableOutputStream</code>. Wi will define this
+                                class later.</p>
+                        </li>
+                        <li>
+                            <p><code>CodeGenerator</code> is a visitor, which has separate methods for code generation
+                                of <code>Constant</code> and <code>Instruction</code>.</p>
+                        </li>
+                        <li>
+                            <p><code>CodeGenerator</code> can be "closed" - so it handles closing of the writer (our
+                                <code>SeekableOutputStream</code>).</p>
+                        </li>
+                        <li>
+                            <p>Generated code is binary</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="paragraph">
+                    <p>The code generation is not that complex. There is some complexity caused by a fact, that the
+                        binary representations
+                        are reversed, when comparing to our present-time PCs/laptops.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The idea of generating code for instruction is to prepare 4 bytes, 32 bits, which are then
+                        written into the "writer"
+                        as one <code>Integer</code>, which has also 32 bits. The instruction format is explained in
+                        section <a href="#COMPILER_SSEM_ASM">Assembler for SSEM</a>. First 5 bits from
+                        the left represent the "line" - instruction operand. It must be reversed.
+                        Then, bits 13,14,15 represent the instruction opcode. It does not have to be reversed here,
+                        since the instructions are
+                        already encoded properly in the <code>Instruction</code> class. Last two bytes are just empty.
+                    </p>
+                </div>
+                <div class="paragraph">
+                    <p>Code generation for constant is much easier - it&#8217;s just retrieving the value and writing it
+                        in the reversed fashion as
+                        <code>Integer</code>.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Code generator uses a "seekable" output stream, which allows to seek in the output. It is a
+                        separate class, which is
+                        actually an abstract class, extending <code>OutputStream</code>. The reason is easier testing:
+                    </p>
+                </div>
+                <div class="listingblock">
+                    <div class="title">
+                        <code>src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span
+                                style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span
+                                style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span
+                                style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span
+                                style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span
+                                style="color: #666666">/</span>assembler<span style="color: #666666">/</span>SeekableOutputStream<span
+                                style="color: #666666">.</span><span style="color: #7D9029">java</span><span
+                                style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>and here&#8217;s the implementation:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title">
+                        <code>src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span
+                                style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span
+                                style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span
+                                style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span
+                                style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span
+                                style="color: #666666">/</span>assembler<span style="color: #666666">/</span>MemoryAndFileOutput<span
+                                style="color: #666666">.</span><span style="color: #7D9029">java</span><span
+                                style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>The "seeking" capability is required, because, as you remember, it&#8217;s possible to write
+                        something like this:</p>
+                </div>
+                <div class="literalblock">
+                    <div class="content">
 <pre>06 STO 05
 05 LDN 06
 07 STP</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>It&#8217;s not quite common, but it&#8217;s possible.</p>
-</div>
-<div class="sect3">
-<h4 id="testing-2">Testing</h4>
-<div class="paragraph">
-<p>As being our practice, we must test it.</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>test<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>CodeGeneratorTest<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="finalizing">Finalizing</h3>
-<div class="paragraph">
-<p>We&#8217;re almost done now! What is missing so far is to finish implementation of the main <code>CompilerImpl.compile()</code>  method.
-Let&#8217;s begin with it first.</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CompilerImpl</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractCompiler <span style="color: #666666">{</span>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>It&#8217;s not quite common, but it&#8217;s possible.</p>
+                </div>
+                <div class="sect3">
+                    <h4 id="testing-2">Testing</h4>
+                    <div class="paragraph">
+                        <p>As being our practice, we must test it.</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="title">
+                            <code>src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java</code></div>
+                        <div class="content">
+                            <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                    style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span
+                                    style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span
+                                    style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span
+                                    style="color: #666666">/</span>src<span style="color: #666666">/</span>test<span
+                                    style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
+                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>ssem<span
+                                    style="color: #666666">/</span>assembler<span style="color: #666666">/</span>CodeGeneratorTest<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">java</span><span
+                                    style="color: #666666">[</span>lines<span
+                                    style="color: #666666">=20..-1]</span></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="finalizing">Finalizing</h3>
+                <div class="paragraph">
+                    <p>We&#8217;re almost done now! What is missing so far is to finish implementation of the main
+                        <code>CompilerImpl.compile()</code> method.
+                        Let&#8217;s begin with it first.</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java</code>
+                    </div>
+                    <div class="content">
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span
+        style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">CompilerImpl</span> <span
+        style="color: #008000; font-weight: bold">extends</span> AbstractCompiler <span style="color: #666666">{</span>
 
     <span style="color: #666666">...</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span style="color: #0000FF">compile</span><span style="color: #666666">(</span>String inputFileName<span style="color: #666666">,</span> String outputFileName<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span
+            style="color: #0000FF">compile</span><span style="color: #666666">(</span>String inputFileName<span
+            style="color: #666666">,</span> String outputFileName<span style="color: #666666">)</span> <span
+            style="color: #666666">{</span>
         notifyCompileStart<span style="color: #666666">();</span>
 
-        <span style="color: #B00040">int</span> errorCode <span style="color: #666666">=</span> <span style="color: #666666">0;</span>
-        <span style="color: #008000; font-weight: bold">try</span> <span style="color: #666666">(</span>Reader reader <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">new</span> FileReader<span style="color: #666666">(</span>inputFileName<span style="color: #666666">))</span> <span style="color: #666666">{</span>
-            MemoryContext<span style="color: #666666">&lt;</span>Byte<span style="color: #666666">&gt;</span> memory <span style="color: #666666">=</span> contextPool<span style="color: #666666">.</span><span style="color: #7D9029">getMemoryContext</span><span style="color: #666666">(</span>pluginID<span style="color: #666666">,</span> MemoryContext<span style="color: #666666">.</span><span style="color: #7D9029">class</span><span style="color: #666666">);</span>
+        <span style="color: #B00040">int</span> errorCode <span style="color: #666666">=</span> <span
+            style="color: #666666">0;</span>
+        <span style="color: #008000; font-weight: bold">try</span> <span
+            style="color: #666666">(</span>Reader reader <span style="color: #666666">=</span> <span
+            style="color: #008000; font-weight: bold">new</span> FileReader<span style="color: #666666">(</span>inputFileName<span
+            style="color: #666666">))</span> <span style="color: #666666">{</span>
+            MemoryContext<span style="color: #666666">&lt;</span>Byte<span
+            style="color: #666666">&gt;</span> memory <span style="color: #666666">=</span> contextPool<span
+            style="color: #666666">.</span><span style="color: #7D9029">getMemoryContext</span><span
+            style="color: #666666">(</span>pluginID<span style="color: #666666">,</span> MemoryContext<span
+            style="color: #666666">.</span><span style="color: #7D9029">class</span><span
+            style="color: #666666">);</span>
 
-            <span style="color: #008000; font-weight: bold">try</span> <span style="color: #666666">(</span>CodeGenerator codeGenerator <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">new</span> CodeGenerator<span style="color: #666666">(</span><span style="color: #008000; font-weight: bold">new</span> MemoryAndFileOutput<span style="color: #666666">(</span>outputFileName<span style="color: #666666">,</span> memory<span style="color: #666666">)))</span> <span style="color: #666666">{</span>
-                LexerImpl lexer <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">new</span> LexerImpl<span style="color: #666666">(</span>reader<span style="color: #666666">);</span>
-                ParserImpl parser <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">new</span> ParserImpl<span style="color: #666666">(</span>lexer<span style="color: #666666">,</span> <span style="color: #008000; font-weight: bold">new</span> ComplexSymbolFactory<span style="color: #666666">(),</span> <span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">);</span>
+            <span style="color: #008000; font-weight: bold">try</span> <span style="color: #666666">(</span>CodeGenerator codeGenerator <span
+            style="color: #666666">=</span> <span
+            style="color: #008000; font-weight: bold">new</span> CodeGenerator<span style="color: #666666">(</span><span
+            style="color: #008000; font-weight: bold">new</span> MemoryAndFileOutput<span
+            style="color: #666666">(</span>outputFileName<span style="color: #666666">,</span> memory<span
+            style="color: #666666">)))</span> <span style="color: #666666">{</span>
+                LexerImpl lexer <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">new</span> LexerImpl<span
+            style="color: #666666">(</span>reader<span style="color: #666666">);</span>
+                ParserImpl parser <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">new</span> ParserImpl<span
+            style="color: #666666">(</span>lexer<span style="color: #666666">,</span> <span
+            style="color: #008000; font-weight: bold">new</span> ComplexSymbolFactory<span
+            style="color: #666666">(),</span> <span style="color: #008000; font-weight: bold">this</span><span
+            style="color: #666666">);</span>
 
-                Program program <span style="color: #666666">=</span> <span style="color: #666666">(</span>Program<span style="color: #666666">)</span> parser<span style="color: #666666">.</span><span style="color: #7D9029">parse</span><span style="color: #666666">().</span><span style="color: #7D9029">value</span><span style="color: #666666">;</span>
-                <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>program <span style="color: #666666">==</span> <span style="color: #008000; font-weight: bold">null</span><span style="color: #666666">)</span> <span style="color: #666666">{</span>
-                    <span style="color: #008000; font-weight: bold">throw</span> <span style="color: #008000; font-weight: bold">new</span> Exception<span style="color: #666666">(</span><span style="color: #BA2121">&quot;Unexpected end of file&quot;</span><span style="color: #666666">);</span>
+                Program program <span style="color: #666666">=</span> <span style="color: #666666">(</span>Program<span
+            style="color: #666666">)</span> parser<span style="color: #666666">.</span><span style="color: #7D9029">parse</span><span
+            style="color: #666666">().</span><span style="color: #7D9029">value</span><span
+            style="color: #666666">;</span>
+                <span style="color: #008000; font-weight: bold">if</span> <span
+            style="color: #666666">(</span>program <span style="color: #666666">==</span> <span
+            style="color: #008000; font-weight: bold">null</span><span style="color: #666666">)</span> <span
+            style="color: #666666">{</span>
+                    <span style="color: #008000; font-weight: bold">throw</span> <span
+            style="color: #008000; font-weight: bold">new</span> Exception<span style="color: #666666">(</span><span
+            style="color: #BA2121">&quot;Unexpected end of file&quot;</span><span style="color: #666666">);</span>
                 <span style="color: #666666">}</span>
-                <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>parser<span style="color: #666666">.</span><span style="color: #7D9029">hasSyntaxErrors</span><span style="color: #666666">())</span> <span style="color: #666666">{</span>
-                    <span style="color: #008000; font-weight: bold">throw</span> <span style="color: #008000; font-weight: bold">new</span> Exception<span style="color: #666666">(</span><span style="color: #BA2121">&quot;One or more errors has been found, cannot continue.&quot;</span><span style="color: #666666">);</span>
+                <span style="color: #008000; font-weight: bold">if</span> <span
+            style="color: #666666">(</span>parser<span style="color: #666666">.</span><span style="color: #7D9029">hasSyntaxErrors</span><span
+            style="color: #666666">())</span> <span style="color: #666666">{</span>
+                    <span style="color: #008000; font-weight: bold">throw</span> <span
+            style="color: #008000; font-weight: bold">new</span> Exception<span style="color: #666666">(</span><span
+            style="color: #BA2121">&quot;One or more errors has been found, cannot continue.&quot;</span><span
+            style="color: #666666">);</span>
                 <span style="color: #666666">}</span>
 
-                program<span style="color: #666666">.</span><span style="color: #7D9029">accept</span><span style="color: #666666">(</span>codeGenerator<span style="color: #666666">);</span>
-                programStart <span style="color: #666666">=</span> program<span style="color: #666666">.</span><span style="color: #7D9029">getStartLine</span><span style="color: #666666">()</span> <span style="color: #666666">*</span> <span style="color: #666666">4;</span>
-                notifyInfo<span style="color: #666666">(</span><span style="color: #BA2121">&quot;Compile was successful. Output: &quot;</span> <span style="color: #666666">+</span> outputFileName<span style="color: #666666">);</span>
+                program<span style="color: #666666">.</span><span style="color: #7D9029">accept</span><span
+            style="color: #666666">(</span>codeGenerator<span style="color: #666666">);</span>
+                programStart <span style="color: #666666">=</span> program<span style="color: #666666">.</span><span
+            style="color: #7D9029">getStartLine</span><span style="color: #666666">()</span> <span
+            style="color: #666666">*</span> <span style="color: #666666">4;</span>
+                notifyInfo<span style="color: #666666">(</span><span style="color: #BA2121">&quot;Compile was successful. Output: &quot;</span> <span
+            style="color: #666666">+</span> outputFileName<span style="color: #666666">);</span>
             <span style="color: #666666">}</span>
-        <span style="color: #666666">}</span> <span style="color: #008000; font-weight: bold">catch</span> <span style="color: #666666">(</span>Exception e<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+        <span style="color: #666666">}</span> <span style="color: #008000; font-weight: bold">catch</span> <span
+            style="color: #666666">(</span>Exception e<span style="color: #666666">)</span> <span
+            style="color: #666666">{</span>
             errorCode <span style="color: #666666">=</span> <span style="color: #666666">1;</span>
-            LOGGER<span style="color: #666666">.</span><span style="color: #7D9029">error</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;Compilation error.&quot;</span><span style="color: #666666">,</span> e<span style="color: #666666">);</span>
-            notifyError<span style="color: #666666">(</span><span style="color: #BA2121">&quot;Compilation error.&quot;</span><span style="color: #666666">);</span>
+            LOGGER<span style="color: #666666">.</span><span style="color: #7D9029">error</span><span
+            style="color: #666666">(</span><span style="color: #BA2121">&quot;Compilation error.&quot;</span><span
+            style="color: #666666">,</span> e<span style="color: #666666">);</span>
+            notifyError<span style="color: #666666">(</span><span
+            style="color: #BA2121">&quot;Compilation error.&quot;</span><span style="color: #666666">);</span>
 
-            <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">false</span><span style="color: #666666">;</span>
-        <span style="color: #666666">}</span> <span style="color: #008000; font-weight: bold">finally</span> <span style="color: #666666">{</span>
+            <span style="color: #008000; font-weight: bold">return</span> <span
+            style="color: #008000; font-weight: bold">false</span><span style="color: #666666">;</span>
+        <span style="color: #666666">}</span> <span style="color: #008000; font-weight: bold">finally</span> <span
+            style="color: #666666">{</span>
             notifyCompileFinish<span style="color: #666666">(</span>errorCode<span style="color: #666666">);</span>
         <span style="color: #666666">}</span>
 
-        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">true</span><span style="color: #666666">;</span>
+        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">true</span><span
+            style="color: #666666">;</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #666666">...</span>
 <span style="color: #666666">}</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>As input, we have full path to the input file, and to the output file. It is good to use Java
-<a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">try-with-resources</a>
-statement for opening the files. The same approach can be used for the code generator, because the class implements
-<code>AutoCloseable</code> interface.</p>
-</div>
-<div class="paragraph">
-<p>We want to notify emuStudio about compilation progress, as we have already done in the parser, when dealing with
-parsing errors. For this purpose, <code>emulib.plugins.compiler.AbstractCompiler</code> class offers several methods:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>notifyCompileStart()</code>, which will inform emuStudio that the compilation has started,</p>
-</li>
-<li>
-<p><code>notifyCompileFinish(errorCode)</code> will inform emuStudio that the compilation has finished, with given error code. <sup class="footnote">[<a id="_footnoteref_2" class="footnote" href="#_footnote_2" title="View footnote.">2</a>]</sup></p>
-</li>
-<li>
-<p><code>notifyOnMessage()</code> - notifies emuStudio about some general message, it can be either error, info, warning.</p>
-</li>
-<li>
-<p><code>notifyWarning()</code> - compiler warning</p>
-</li>
-<li>
-<p><code>notifyError()</code> - compilation error</p>
-</li>
-<li>
-<p><code>notifyInfo()</code> - informational message</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="command-line-interface-cli">Command-line interface (CLI)</h3>
-<div class="paragraph">
-<p>It might be sometimes useful to being able to run the compiler from the command line. We can add the implementation
-in the <code>Main</code> class, as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/Main.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>assembler<span style="color: #666666">/</span>Main<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>And that was the very last thing, now you have SSEM compiler ready :)</p>
-</div>
-</div>
-</div>
-</div>
-<div id="footnotes">
-<hr>
-<div class="footnote" id="_footnote_1">
-<a href="#_footnoteref_1">1</a>. For example, <code>non terminal Instruction Statement;</code> in the gramamr above defines a non-terminal <code>Statement</code>, which should return an instance of <code>Instruction</code> class. The class <code>Instruction</code> must be implemented manually - it is part of AST; there are no special requirements for the implementation.
-</div>
-<div class="footnote" id="_footnote_2">
-<a href="#_footnoteref_2">2</a>. The error code should be defined by you, developer, if you want. It is a convention used also in other compilers that specific error has assigned a unique number. In our compiler, we do not use it.
-</div>
-</div>
-</div>
-
-
-    <footer class="site-footer">
-        <div class="container">
-            <nav class="navbar">
-                <div class="container">
-                    <ul class="nav navbar-nav">
-                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                        <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>As input, we have full path to the input file, and to the output file. It is good to use Java
+                        <a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">try-with-resources</a>
+                        statement for opening the files. The same approach can be used for the code generator, because
+                        the class implements
+                        <code>AutoCloseable</code> interface.</p>
+                </div>
+                <div class="paragraph">
+                    <p>We want to notify emuStudio about compilation progress, as we have already done in the parser,
+                        when dealing with
+                        parsing errors. For this purpose, <code>emulib.plugins.compiler.AbstractCompiler</code> class
+                        offers several methods:</p>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p><code>notifyCompileStart()</code>, which will inform emuStudio that the compilation has
+                                started,</p>
+                        </li>
+                        <li>
+                            <p><code>notifyCompileFinish(errorCode)</code> will inform emuStudio that the compilation
+                                has finished, with given error code. <sup class="footnote">[<a id="_footnoteref_2"
+                                                                                               class="footnote"
+                                                                                               href="#_footnote_2"
+                                                                                               title="View footnote.">2</a>]</sup>
+                            </p>
+                        </li>
+                        <li>
+                            <p><code>notifyOnMessage()</code> - notifies emuStudio about some general message, it can be
+                                either error, info, warning.</p>
+                        </li>
+                        <li>
+                            <p><code>notifyWarning()</code> - compiler warning</p>
+                        </li>
+                        <li>
+                            <p><code>notifyError()</code> - compilation error</p>
+                        </li>
+                        <li>
+                            <p><code>notifyInfo()</code> - informational message</p>
+                        </li>
                     </ul>
                 </div>
-            </nav>
+            </div>
+            <div class="sect2">
+                <h3 id="command-line-interface-cli">Command-line interface (CLI)</h3>
+                <div class="paragraph">
+                    <p>It might be sometimes useful to being able to run the compiler from the command line. We can add
+                        the implementation
+                        in the <code>Main</code> class, as follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/Main.java</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in compiler<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span
+                                style="color: #666666">/</span>compilers<span style="color: #666666">/</span>as<span
+                                style="color: #666666">-</span>ssem<span style="color: #666666">/</span>src<span
+                                style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span
+                                style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span
+                                style="color: #666666">/</span>assembler<span style="color: #666666">/</span>Main<span
+                                style="color: #666666">.</span><span style="color: #7D9029">java</span><span
+                                style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>And that was the very last thing, now you have SSEM compiler ready :)</p>
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
+    <div id="footnotes">
+        <hr>
+        <div class="footnote" id="_footnote_1">
+            <a href="#_footnoteref_1">1</a>. For example, <code>non terminal Instruction Statement;</code> in the
+            gramamr above defines a non-terminal <code>Statement</code>, which should return an instance of <code>Instruction</code>
+            class. The class <code>Instruction</code> must be implemented manually - it is part of AST; there are no
+            special requirements for the implementation.
+        </div>
+        <div class="footnote" id="_footnote_2">
+            <a href="#_footnoteref_2">2</a>. The error code should be defined by you, developer, if you want. It is a
+            convention used also in other compilers that specific error has assigned a unique number. In our compiler,
+            we do not use it.
+        </div>
+    </div>
+</div>
 
-    </body>
+
+<footer class="site-footer">
+    <div class="container">
+        <nav class="navbar">
+            <div class="container">
+                <ul class="nav navbar-nav">
+                    <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                                                                                           src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
+                    </li>
+                    <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</footer>
+
+</body>
 </html>
 

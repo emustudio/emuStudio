@@ -155,7 +155,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
     @Override
     public Short[] readWord(int from) {
         int activeBank = (from < bankCommon) ? bankSelect : 0;
-        return new Short[] { mem[activeBank][from] , mem[activeBank][from + 1] };
+        return new Short[]{mem[activeBank][from], mem[activeBank][from + 1]};
     }
 
     @Override
@@ -170,7 +170,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
     public void write(int to, short val, int bank) {
         if (!isROM(to)) {
             int activeBank = (to < bankCommon) ? bank : 0;
-            mem[activeBank][to] = (short)(val & 0xFF);
+            mem[activeBank][to] = (short) (val & 0xFF);
             notifyMemoryChanged(to);
         }
     }
@@ -181,13 +181,13 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
             return;
         }
         int activeBank = (to < bankCommon) ? bankSelect : 0;
-        mem[activeBank][to] = (short)(cells[0] & 0xFF);
+        mem[activeBank][to] = (short) (cells[0] & 0xFF);
 
-        if (isROM(to+1)) {
+        if (isROM(to + 1)) {
             return;
         }
 
-        mem[activeBank][to + 1] = (short)(cells[1] & 0xFF);
+        mem[activeBank][to + 1] = (short) (cells[1] & 0xFF);
         notifyMemoryChanged(to);
         notifyMemoryChanged(to + 1);
     }

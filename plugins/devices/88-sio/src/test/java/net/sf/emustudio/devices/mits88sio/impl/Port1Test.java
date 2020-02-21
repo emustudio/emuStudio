@@ -22,11 +22,7 @@ package net.sf.emustudio.devices.mits88sio.impl;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public class Port1Test {
@@ -43,7 +39,7 @@ public class Port1Test {
         replay(transmitter);
 
         Port1 port1 = new Port1(transmitter);
-        assertEquals((short)5, port1.read().shortValue());
+        assertEquals((short) 5, port1.read().shortValue());
 
         verify(transmitter);
     }
@@ -51,12 +47,12 @@ public class Port1Test {
     @Test
     public void testWriteCallsWriteToStatusOnTransmitter() throws Exception {
         Transmitter transmitter = EasyMock.createMock(Transmitter.class);
-        transmitter.writeToStatus(eq((short)5));
+        transmitter.writeToStatus(eq((short) 5));
         expectLastCall().once();
         replay(transmitter);
 
         Port1 port1 = new Port1(transmitter);
-        port1.write((short)5);
+        port1.write((short) 5);
 
         verify(transmitter);
     }

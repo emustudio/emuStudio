@@ -29,22 +29,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
-
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_Z;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
+import static org.junit.Assert.*;
 
 public class CpuVerifierImpl extends CpuVerifier {
     private final CpuImpl cpu;
@@ -59,8 +45,8 @@ public class CpuVerifierImpl extends CpuVerifier {
     public void checkRegister(int register, int value) {
         value &= 0xFF;
         assertEquals(
-                String.format("Expected reg[%02x]=%02x, but was %02x", register, value, cpu.getEngine().regs[register]),
-                value, cpu.getEngine().regs[register]
+            String.format("Expected reg[%02x]=%02x, but was %02x", register, value, cpu.getEngine().regs[register]),
+            value, cpu.getEngine().regs[register]
         );
     }
 
@@ -93,8 +79,8 @@ public class CpuVerifierImpl extends CpuVerifier {
         }
 
         assertEquals(
-                String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
-                value, realValue
+            String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
+            value, realValue
         );
     }
 
@@ -122,8 +108,8 @@ public class CpuVerifierImpl extends CpuVerifier {
         int realValue = cpu.getEngine().regs2[highRegister] << 8 | (cpu.getEngine().regs2[lowRegister]);
 
         assertEquals(
-                String.format("Expected regPair2[%02x]=%04x, but was %04x", registerPair, value, realValue),
-                value, realValue
+            String.format("Expected regPair2[%02x]=%04x, but was %04x", registerPair, value, realValue),
+            value, realValue
         );
     }
 
@@ -131,16 +117,16 @@ public class CpuVerifierImpl extends CpuVerifier {
     public void checkIX(int value) {
         value &= 0xFFFF;
         assertEquals(
-                String.format("Expected IX=%x, but was %x", value, cpu.getEngine().IX),
-                value, cpu.getEngine().IX
+            String.format("Expected IX=%x, but was %x", value, cpu.getEngine().IX),
+            value, cpu.getEngine().IX
         );
     }
 
     public void checkIY(int value) {
         value &= 0xFFFF;
         assertEquals(
-                String.format("Expected IY=%x, but was %x", value, cpu.getEngine().IY),
-                value, cpu.getEngine().IY
+            String.format("Expected IY=%x, but was %x", value, cpu.getEngine().IY),
+            value, cpu.getEngine().IY
         );
     }
 
@@ -150,8 +136,8 @@ public class CpuVerifierImpl extends CpuVerifier {
         } else if (registerPair == 3) {
             int realValue = (cpu.getEngine().regs[REG_A] << 8) | cpu.getEngine().flags;
             assertEquals(
-                    String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
-                    value, realValue
+                String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
+                value, realValue
             );
         } else {
             throw new IllegalArgumentException("Expected value between <0,3> !");
@@ -160,8 +146,8 @@ public class CpuVerifierImpl extends CpuVerifier {
 
     public void checkPC(int PC) {
         assertEquals(
-                String.format("Expected PC=%04x, but was %04x", PC, cpu.getEngine().PC),
-                PC, cpu.getEngine().PC
+            String.format("Expected PC=%04x, but was %04x", PC, cpu.getEngine().PC),
+            PC, cpu.getEngine().PC
         );
     }
 
@@ -200,32 +186,32 @@ public class CpuVerifierImpl extends CpuVerifier {
     @Override
     public void checkFlags(int mask) {
         assertTrue(
-                String.format("Expected flags=%s, but was %s",
-                        intToFlags(mask), intToFlags(cpu.getEngine().flags)),
-                (cpu.getEngine().flags & mask) == mask
+            String.format("Expected flags=%s, but was %s",
+                intToFlags(mask), intToFlags(cpu.getEngine().flags)),
+            (cpu.getEngine().flags & mask) == mask
         );
     }
 
     @Override
     public void checkNotFlags(int mask) {
         assertTrue(
-                String.format("Expected NOT flags=%s, but was %s",
-                        intToFlags(mask), intToFlags(cpu.getEngine().flags)),
-                (cpu.getEngine().flags & mask) == 0
+            String.format("Expected NOT flags=%s, but was %s",
+                intToFlags(mask), intToFlags(cpu.getEngine().flags)),
+            (cpu.getEngine().flags & mask) == 0
         );
     }
 
     public void checkI(int value) {
         assertEquals(
-                String.format("Expected I=%02x, but was %02x", value, cpu.getEngine().I),
-                value, cpu.getEngine().I
+            String.format("Expected I=%02x, but was %02x", value, cpu.getEngine().I),
+            value, cpu.getEngine().I
         );
     }
 
     public void checkR(int value) {
         assertEquals(
-                String.format("Expected R=%02x, but was %02x", value, cpu.getEngine().R),
-                value, cpu.getEngine().R
+            String.format("Expected R=%02x, but was %02x", value, cpu.getEngine().R),
+            value, cpu.getEngine().R
         );
     }
 
@@ -233,8 +219,8 @@ public class CpuVerifierImpl extends CpuVerifier {
         int af = (cpu.getEngine().regs[REG_A] << 8) | cpu.getEngine().flags;
 
         assertEquals(
-                String.format("Expected AF=%04x, but was %04x", value, af),
-                value, af
+            String.format("Expected AF=%04x, but was %04x", value, af),
+            value, af
         );
     }
 
@@ -243,16 +229,16 @@ public class CpuVerifierImpl extends CpuVerifier {
         int af = (cpu.getEngine().regs2[REG_A] << 8) | cpu.getEngine().flags2;
 
         assertEquals(
-                String.format("Expected AF2=%04x, but was %04x", value, af),
-                value, af
+            String.format("Expected AF2=%04x, but was %04x", value, af),
+            value, af
         );
     }
 
     public void checkDeviceValue(int port, int expected) {
         int value = devices.get(port & 0xFF).getValue() & 0xFF;
         assertEquals(
-                String.format("Expected device[%02x]=%02x, but was %02x", port, expected, value),
-                expected, value
+            String.format("Expected device[%02x]=%02x, but was %02x", port, expected, value),
+            expected, value
         );
     }
 }

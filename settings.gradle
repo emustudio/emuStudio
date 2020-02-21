@@ -1,0 +1,32 @@
+rootProject.name = 'emuStudio'
+
+include ':cpu-testsuite'
+include ':main-module'
+
+include ':plugins:compilers:as-8080'
+include ':plugins:compilers:as-ssem'
+include ':plugins:compilers:as-z80'
+include ':plugins:compilers:brainc-brainduck'
+include ':plugins:compilers:ramc-ram'
+include ':plugins:compilers:raspc-rasp'
+
+include ':plugins:cpu:8080-cpu'
+include ':plugins:cpu:brainduck-cpu'
+include ':plugins:cpu:ram-cpu'
+include ':plugins:cpu:rasp-cpu'
+include ':plugins:cpu:ssem-cpu'
+include ':plugins:cpu:z80-cpu'
+
+include ':plugins:devices:88-disk'
+include ':plugins:devices:88-sio'
+include ':plugins:devices:abstractTape-ram'
+include ':plugins:devices:adm3A-terminal'
+include ':plugins:devices:brainduck-terminal'
+include ':plugins:devices:simhPseudo-z80'
+include ':plugins:devices:ssem-display'
+
+include ':plugins:mem:brainduck-mem'
+include ':plugins:mem:ram-mem'
+include ':plugins:mem:rasp-mem'
+include ':plugins:mem:ssem-mem'
+include ':plugins:mem:standard-mem'

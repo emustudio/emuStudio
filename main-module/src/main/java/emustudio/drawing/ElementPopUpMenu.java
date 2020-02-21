@@ -26,20 +26,19 @@ import javax.swing.*;
 /**
  * This class represents pop-up menu that shows up when a user clicks with
  * right button on drawing canvas in abstract schema editor.
- *
  */
 public class ElementPopUpMenu extends JPopupMenu {
     private Element elem;
     private JDialog parent;
 
-    public ElementPopUpMenu(Element el, JDialog par){
+    public ElementPopUpMenu(Element el, JDialog par) {
         this.parent = par;
         this.elem = el;
         JMenuItem anItem = new JMenuItem("Settings...");
         add(anItem);
 
         anItem.addActionListener(ae -> {
-            new ElementPropertiesDialog(parent,elem).setVisible(true);
+            new ElementPropertiesDialog(parent, elem).setVisible(true);
             parent.repaint();
         });
     }

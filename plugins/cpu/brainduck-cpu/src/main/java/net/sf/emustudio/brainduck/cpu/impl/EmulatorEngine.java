@@ -89,7 +89,7 @@ public class EmulatorEngine {
                 }
                 break;
             case I_INCV: /* + */
-                rawMemory[P] = (short)((rawMemory[P] + argument) & 0xFF);
+                rawMemory[P] = (short) ((rawMemory[P] + argument) & 0xFF);
                 break;
             case I_DECV: /* - */
                 rawMemory[P] = (short) ((rawMemory[P] - argument) & 0xFF);
@@ -134,7 +134,7 @@ public class EmulatorEngine {
                 rawMemory[P] = 0;
                 break;
             case I_SCANLOOP: // [<] or [>] or combinations
-                for (; rawMemory[P] != 0; P += operation.argument);
+                for (; rawMemory[P] != 0; P += operation.argument) ;
                 break;
             default: /* invalid instruction */
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;

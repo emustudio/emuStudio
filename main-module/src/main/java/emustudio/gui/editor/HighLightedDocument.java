@@ -41,7 +41,7 @@ class HighLightedDocument extends DefaultStyledDocument {
     /**
      * Performs the update of the document reader and re-color needed parts,
      * when a text is inserted into the document.
-     *
+     * <p>
      * It should be called whenever a text is inserted somewhere into the
      * source code.
      *
@@ -61,7 +61,7 @@ class HighLightedDocument extends DefaultStyledDocument {
     /**
      * Performs the update of the document reader and re-color needed parts,
      * when a text is removed from the document.
-     *
+     * <p>
      * It should be called whenever a text is removed from somewhere in the
      * source code.
      *

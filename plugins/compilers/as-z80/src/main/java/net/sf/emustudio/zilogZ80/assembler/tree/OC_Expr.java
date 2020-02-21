@@ -121,7 +121,7 @@ public class OC_Expr extends Instruction {
     public static final int XOR = 0xEE00; // XOR N
     public static final int XOR_IIX_NN = 0xDDAE00; // XOR (IX+N)
     public static final int XOR_IIY_NN = 0xFDAE00; // XOR (IY+N)    
-    
+
     private final Expression expr;
     private final boolean oneByte;
     private final int old_opcode;

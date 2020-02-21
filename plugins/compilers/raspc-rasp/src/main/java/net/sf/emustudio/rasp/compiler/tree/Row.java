@@ -23,7 +23,6 @@ package net.sf.emustudio.rasp.compiler.tree;
 import net.sf.emustudio.rasp.compiler.Statement;
 
 /**
- *
  * @author miso
  */
 public class Row extends AbstractTreeNode {

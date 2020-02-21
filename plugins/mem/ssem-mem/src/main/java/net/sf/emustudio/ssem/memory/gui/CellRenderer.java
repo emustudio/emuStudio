@@ -19,25 +19,17 @@
  */
 package net.sf.emustudio.ssem.memory.gui;
 
-import java.awt.Color;
-import java.awt.Component;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JTable;
+import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import static net.sf.emustudio.ssem.memory.gui.Constants.BOLD_FONT;
-import static net.sf.emustudio.ssem.memory.gui.Constants.CHAR_HEIGHT;
-import static net.sf.emustudio.ssem.memory.gui.Constants.COLOR_CELL_BACK;
-import static net.sf.emustudio.ssem.memory.gui.Constants.COLOR_CELL_BACK_MOD2;
-import static net.sf.emustudio.ssem.memory.gui.Constants.COLOR_FORE;
-import static net.sf.emustudio.ssem.memory.gui.Constants.COLOR_FORE_UNIMPORTANT;
-import static net.sf.emustudio.ssem.memory.gui.Constants.DEFAULT_FONT;
+import java.awt.*;
+
+import static net.sf.emustudio.ssem.memory.gui.Constants.*;
 
 class CellRenderer extends JLabel implements TableCellRenderer {
     private final JList rowHeader;
     private final String[] rowNames;
     private final RowHeaderRenderer rowHeaderRenderer;
-    
+
     private Color selectionForeground;
     private Color selectionBackground;
 
@@ -55,15 +47,15 @@ class CellRenderer extends JLabel implements TableCellRenderer {
         super.setFont(DEFAULT_FONT);
         super.setHorizontalAlignment(CENTER);
     }
-    
+
     public void setup(JTable table) {
         rowHeader.setFixedCellHeight(table.getRowHeight() + CHAR_HEIGHT);
         rowHeaderRenderer.setup(table);
-        
+
         selectionBackground = table.getSelectionBackground();
         selectionForeground = table.getSelectionForeground();
     }
-    
+
     public JList getRowHeader() {
         return rowHeader;
     }
@@ -76,19 +68,19 @@ class CellRenderer extends JLabel implements TableCellRenderer {
         } else {
             Color back = ((row % 2) == 0) ? COLOR_CELL_BACK : COLOR_CELL_BACK_MOD2;
             Color front = COLOR_FORE_UNIMPORTANT;
-            
+
             if (MemoryTableModel.isBitInstruction(column) || MemoryTableModel.isBitLine(column)) {
                 setFont(BOLD_FONT);
                 front = COLOR_FORE;
             } else {
                 setFont(DEFAULT_FONT);
             }
-            
+
             setBackground(back);
             setForeground(front);
         }
         setText(value.toString());
         return this;
     }
-    
+
 }

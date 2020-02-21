@@ -25,7 +25,7 @@ import java.util.List;
 
 public class DefaultProgramGenerator<OperandT extends Number> {
     private final List<Short> opcodes = new ArrayList<>();
-    private final List<OperandT> operands  = new ArrayList<>();
+    private final List<OperandT> operands = new ArrayList<>();
     private final List<Short> opcodesAfterOperand = new ArrayList<>();
 
     public void addOpcodes(int... opcodes) {
@@ -43,7 +43,7 @@ public class DefaultProgramGenerator<OperandT extends Number> {
     private static List<Short> intArrayToList(int... things) {
         List<Short> tmpList = new ArrayList<>();
         for (int thing : things) {
-            tmpList.add((short)thing);
+            tmpList.add((short) thing);
         }
         return tmpList;
     }
@@ -54,10 +54,10 @@ public class DefaultProgramGenerator<OperandT extends Number> {
         program.addAll(opcodes);
         for (OperandT operand : operands) {
             if (operand instanceof Byte) {
-                program.add((short)(operand.byteValue() & 0xFF));
+                program.add((short) (operand.byteValue() & 0xFF));
             } else if (operand instanceof Integer) {
-                program.add((short)(operand.shortValue() & 0xFF));
-                program.add((short)((operand.shortValue() >>> 8) & 0xFF));
+                program.add((short) (operand.shortValue() & 0xFF));
+                program.add((short) ((operand.shortValue() >>> 8) & 0xFF));
             } else {
                 throw new IllegalStateException("Operand type can be either Byte or Integer");
             }

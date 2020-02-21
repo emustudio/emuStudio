@@ -38,19 +38,19 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.COMPILER,
-        title = "Intel 8080 Assembler",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Light modified clone of original Intel's assembler. For syntax look at users manual."
+    type = PLUGIN_TYPE.COMPILER,
+    title = "Intel 8080 Assembler",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Light modified clone of original Intel's assembler. For syntax look at users manual."
 )
 @SuppressWarnings("unused")
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
     private final LexerImpl lexer;
     private final ParserImpl parser;
-    private final SourceFileExtension[] suffixes = new SourceFileExtension[] {
-            new SourceFileExtension("asm", "Assembler source file"),
-            new SourceFileExtension("inc", "Include file")
+    private final SourceFileExtension[] suffixes = new SourceFileExtension[]{
+        new SourceFileExtension("asm", "Assembler source file"),
+        new SourceFileExtension("inc", "Include file")
     };
     private final ContextPool contextPool;
 

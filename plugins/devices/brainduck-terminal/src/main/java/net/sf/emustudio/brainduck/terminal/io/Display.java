@@ -21,11 +21,8 @@ package net.sf.emustudio.brainduck.terminal.io;
 
 import net.jcip.annotations.ThreadSafe;
 
-import javax.swing.JPanel;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Point;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

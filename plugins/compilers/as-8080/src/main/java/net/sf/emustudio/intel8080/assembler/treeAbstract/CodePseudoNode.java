@@ -33,9 +33,9 @@ public abstract class CodePseudoNode {
 
     /**
      * Get size of compiled code.
-     * 
+     *
      * @return size in bytes
-     */ 
+     */
     public abstract int getSize();
 
     public abstract int pass2(CompileEnv parentEnv, int addr_start) throws Exception;

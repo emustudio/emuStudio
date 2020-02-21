@@ -24,12 +24,7 @@ import emulib.runtime.PluginLoader;
 import emulib.runtime.exceptions.InvalidPasswordException;
 import emulib.runtime.exceptions.InvalidPluginException;
 import emulib.runtime.exceptions.PluginInitializationException;
-import emustudio.architecture.Computer;
-import emustudio.architecture.ComputerConfig;
-import emustudio.architecture.ComputerFactory;
-import emustudio.architecture.Configuration;
-import emustudio.architecture.ReadConfigurationException;
-import emustudio.architecture.SettingsManagerImpl;
+import emustudio.architecture.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

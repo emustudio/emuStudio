@@ -24,15 +24,8 @@ import emulib.plugins.device.DeviceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
-import java.awt.Rectangle;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.font.LineMetrics;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
@@ -121,10 +114,10 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         Rectangle2D metrics = font.getStringBounds("W", Utils.getDefaultFrc());
         LineMetrics lineMetrics = font.getLineMetrics("W", Utils.getDefaultFrc());
 
-        int charWidth = (int)metrics.getWidth();
-        int charHeight = (int)lineMetrics.getHeight();
+        int charWidth = (int) metrics.getWidth();
+        int charHeight = (int) lineMetrics.getHeight();
 
-        int lineAscent = (int)lineMetrics.getAscent();
+        int lineAscent = (int) lineMetrics.getAscent();
 
         int maxWidth = colCount * charWidth;
         int maxHeight = rowCount * charHeight;
@@ -201,7 +194,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
             sLine = "";
         }
     }
-    
+
     private void openOutputWriter() {
         try {
             File tmpFile = new File(settings.getOutputFileName());

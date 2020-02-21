@@ -38,10 +38,10 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.CPU,
-        title = "Abstract tape",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Abstract tape device is used by abstract machines such as RAM or Turing machine"
+    type = PLUGIN_TYPE.CPU,
+    title = "Abstract tape",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Abstract tape device is used by abstract machines such as RAM or Turing machine"
 )
 @SuppressWarnings("unused")
 public class AbstractTape extends AbstractDevice {

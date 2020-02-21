@@ -41,7 +41,7 @@ public class IncludePseudoNode extends PseudoNode {
 
     public IncludePseudoNode(String filename, int line, int column, CompilerImpl compiler) {
         super(line, column);
-        this.fileName = filename.replace("\\", File.separator);        
+        this.fileName = filename.replace("\\", File.separator);
         this.compiler = compiler;
     }
 
@@ -49,7 +49,7 @@ public class IncludePseudoNode extends PseudoNode {
     public int getSize() {
         return program.getSize();
     }
-    
+
     private File findIncludeFile(String tmpFileName) {
         File tmpFile = new File(tmpFileName);
         if (tmpFile.isAbsolute()) {
@@ -62,8 +62,8 @@ public class IncludePseudoNode extends PseudoNode {
     /**
      * Method will compare filename (in the include statement)
      * with filename given by the parameter.
-     * 
-     * @param tmpFileName 
+     *
+     * @param tmpFileName
      * @return true if filenames equal, false if not
      */
     boolean isEqualName(String tmpFileName) {
@@ -73,7 +73,7 @@ public class IncludePseudoNode extends PseudoNode {
     void pass1(List<String> includefiles, CompileEnv parentEnv) throws Exception {
         try {
             namespace = new CompileEnv(parentEnv.getInputFile().getAbsolutePath());
-            
+
             File file = findIncludeFile(fileName);
             FileReader f = new FileReader(file);
             LexerImpl lexer = new LexerImpl(f);

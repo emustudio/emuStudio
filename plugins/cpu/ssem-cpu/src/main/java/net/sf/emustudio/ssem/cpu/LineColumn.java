@@ -21,7 +21,7 @@ package net.sf.emustudio.ssem.cpu;
 
 import emulib.plugins.cpu.AbstractDebugColumn;
 
-public class LineColumn  extends AbstractDebugColumn {
+public class LineColumn extends AbstractDebugColumn {
     private final static String LINE_FORMAT = "%04X";
 
     public LineColumn() {

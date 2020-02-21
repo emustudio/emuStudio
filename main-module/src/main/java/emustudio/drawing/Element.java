@@ -19,24 +19,13 @@
  */
 package emustudio.drawing;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Element used by abstract schema of virtual computer.
- *
+ * <p>
  * It is a graphical object representing a plug-in.
  */
 public abstract class Element {
@@ -65,7 +54,7 @@ public abstract class Element {
     /**
      * This variable holds true, if the element size has been measured. The measurement process means the computation of
      * the width and height, and the correction of the X and Y positions wihin the schema canvas.
-     *
+     * <p>
      * The measurement is realized manually, by external call of the measure() method.
      */
     private boolean wasMeasured;
@@ -112,7 +101,7 @@ public abstract class Element {
         height = Integer.parseInt(myProperties.getProperty("height", "0"));
         this.wasMeasured = false;
     }
-    
+
     public final void refreshSettings(Map properties) throws NumberFormatException {
         myProperties.clear();
         updateProperties();
@@ -132,18 +121,18 @@ public abstract class Element {
         updateProperties();
         return new Properties(myProperties);
     }
-    
+
     public Map<String, String> getPropertiesWithoutSchema() {
         Map<String, String> map = new HashMap<>();
         for (Map.Entry entry : myProperties.entrySet()) {
-            String key = (String)entry.getKey();
+            String key = (String) entry.getKey();
             if (key.startsWith("point")) {
                 continue;
             }
             if (key.equals("width") || key.equals("height")) {
                 continue;
             }
-            map.put(key, (String)entry.getValue());
+            map.put(key, (String) entry.getValue());
         }
         return map;
     }
@@ -151,7 +140,7 @@ public abstract class Element {
     /**
      * Saves all the element's settings into given properties.
      *
-     * @param properties properties of virtual computer
+     * @param properties  properties of virtual computer
      * @param elementName key setting name of this element within the properies
      */
     void saveProperties(Properties properties, String elementName) {
@@ -244,18 +233,18 @@ public abstract class Element {
         FontMetrics fm1 = g.getFontMetrics(italicFont);
         Rectangle2D r1 = fm1.getStringBounds(pluginName, g);
 
-        int tW = (int)Math.max(r.getWidth(), r1.getWidth());
-        int tH = (int)Math.max(r.getHeight(), r1.getHeight());
+        int tW = (int) Math.max(r.getWidth(), r1.getWidth());
+        int tH = (int) Math.max(r.getHeight(), r1.getHeight());
 
         // compute width and height
         Rectangle2D wrect = fm.getStringBounds("w", g);
-                
-        width = tW + 2 * (int)wrect.getWidth();
-        height = 2 * tH + 2 * (int)wrect.getHeight();
+
+        width = tW + 2 * (int) wrect.getWidth();
+        height = 2 * tH + 2 * (int) wrect.getHeight();
 
         textY = height / 2 + 10 - fm.getAscent();
         // set starting x and y
-        
+
         leftX = x - getWidth() / 2;
         topY = y - getHeight() / 2;
 
@@ -301,7 +290,7 @@ public abstract class Element {
         return leftX + getWidth();
     }
 
-    
+
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
@@ -313,12 +302,12 @@ public abstract class Element {
     /**
      * Determines whether a selection area crosses or overlays this element. It is assumed that the element is measured
      * already.
-     *
+     * <p>
      * The following four conditions must be true: 1. selection.Xleft <= element.Xright 2. selection.Xright >=
      * element.Xleft 3. selection.Ytop <= element.Ybottom 4. selection.Ybottom >= element.Ytop
      *
      * @param selectionStart the selection start point
-     * @param selectionEnd the selection end point
+     * @param selectionEnd   the selection end point
      * @return true if the element is crossing
      */
     boolean crossesArea(Point selectionStart, Point selectionEnd) {
@@ -327,14 +316,14 @@ public abstract class Element {
         }
         int xR = getRightX();
         int yB = getBottomY();
-        
+
         return (selectionStart.x <= xR) && (selectionEnd.x >= leftX)
-                && (selectionStart.y <= yB) && (selectionEnd.y >= topY);
+            && (selectionStart.y <= yB) && (selectionEnd.y >= topY);
     }
 
     /**
      * Determine if a point crosses north (top) border of this element.
-     *
+     * <p>
      * Used for resizing. It uses a tolerance.
      *
      * @param borderPoint the point for the testing
@@ -351,7 +340,7 @@ public abstract class Element {
 
     /**
      * Determine if a point crosses south (bottom) border of this element.
-     *
+     * <p>
      * Used for resizing. It uses a tolerance.
      *
      * @param borderPoint the point for the testing
@@ -369,7 +358,7 @@ public abstract class Element {
 
     /**
      * Determine if a point crosses west (left) border of this element.
-     *
+     * <p>
      * Used for resizing. It uses a tolerance.
      *
      * @param borderPoint the point for the testing
@@ -386,7 +375,7 @@ public abstract class Element {
 
     /**
      * Determine if a point crosses east (right) border of this element.
-     *
+     * <p>
      * Used for resizing. It uses a tolerance.
      *
      * @param borderPoint the point for the testing
@@ -406,5 +395,5 @@ public abstract class Element {
     public String toString() {
         return pluginName + "[x=" + x + ", y=" + y + ", rect=" + getRectangle() + ']';
     }
-    
+
 }

@@ -30,11 +30,11 @@ public class FlagsTableGeneratorTest {
 
     /**
      * Get H flag after DAA
-     *
+     * <p>
      * According to the document: "Undocumented Z80"
      *
-     * @param nf N flag before operation
-     * @param hf half-carry before operation
+     * @param nf    N flag before operation
+     * @param hf    half-carry before operation
      * @param value value
      * @return 8-bit (H or 0)
      */
@@ -62,11 +62,11 @@ public class FlagsTableGeneratorTest {
 
     /**
      * Get result after DAA plus C flag
-     *
+     * <p>
      * According to the document: "Undocumented Z80"
      *
-     * @param cf carry before operation
-     * @param hf half-carry before operation
+     * @param cf    carry before operation
+     * @param hf    half-carry before operation
      * @param value value
      * @return 16 bit value -> higher 8-bit = flags (C or 0), lower 8-bit = result
      */
@@ -74,18 +74,18 @@ public class FlagsTableGeneratorTest {
         int high = (value >>> 4) & 0xF;
         int low = value & 0xF;
 
- //       cf high hf low  diff
- //       0  0-9  0  0-9  00
- //       0  0-9  1  0-9  06
- //       0  0-8  *  a-f  06
- //       0  a-f  0  0-9  60
- //       1  *    0  0-9  60
- //       1  *    1  0-9  66
- //       1  *    *  a-f  66
- //       0  9-f  *  a-f  66
- //       0  a-f  1  0-9  66
+        //       cf high hf low  diff
+        //       0  0-9  0  0-9  00
+        //       0  0-9  1  0-9  06
+        //       0  0-8  *  a-f  06
+        //       0  a-f  0  0-9  60
+        //       1  *    0  0-9  60
+        //       1  *    1  0-9  66
+        //       1  *    *  a-f  66
+        //       0  9-f  *  a-f  66
+        //       0  a-f  1  0-9  66
 
- //       CF high low  CF’
+        //       CF high low  CF’
 //        0  0-9  0-9  0
 //        0  0-8  a-f  0
 //        0  9-f  a-f  1
@@ -108,7 +108,7 @@ public class FlagsTableGeneratorTest {
             return 0x66 | (FLAG_C << 8);
         } else if (!cf && high >= 9 && high <= 0xF && low >= 0xA && low <= 0xF) {
             return 0x66 | (FLAG_C << 8);
-        } else if (!cf && hf && high >= 0xA && high <=0xF && low <= 9) {
+        } else if (!cf && hf && high >= 0xA && high <= 0xF && low <= 9) {
             return 0x66 | (FLAG_C << 8);
         }
         throw new RuntimeException();

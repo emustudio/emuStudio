@@ -20,15 +20,15 @@
 
 package net.sf.emustudio.rasp.compiler.tree;
 
-import java.util.ArrayList;
-import java.util.List;
 import net.sf.emustudio.rasp.compiler.CompilerOutput;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- *
  * @author miso
  */
-public class Program extends AbstractTreeNode{
+public class Program extends AbstractTreeNode {
 
     private final List<Row> rows = new ArrayList<>();
 
@@ -50,7 +50,7 @@ public class Program extends AbstractTreeNode{
         for (Row row : rows) {
             Label label = row.getLabel();
             if (label != null) {
-                label.setAddress(programStart + rows.indexOf(row) * 2);      
+                label.setAddress(programStart + rows.indexOf(row) * 2);
                 label.pass();
             }
         }

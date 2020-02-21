@@ -22,13 +22,12 @@ package emustudio.gui.debugTable;
 import emulib.emustudio.debugtable.DebugTable;
 import emulib.plugins.cpu.DebugColumn;
 import emustudio.Constants;
-import java.awt.Dimension;
+
+import javax.swing.*;
+import javax.swing.table.TableColumn;
+import java.awt.*;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.table.TableColumn;
 
 public class DebugTableImpl extends JTable implements DebugTable {
 
@@ -73,7 +72,7 @@ public class DebugTableImpl extends JTable implements DebugTable {
                 tableColumn.setCellEditor(new DefaultCellEditor(new InvisibleJCheckBox()));
             }
             if (debugColumn.getDefaultWidth() != -1)
-            tableColumn.setPreferredWidth(debugColumn.getDefaultWidth());
+                tableColumn.setPreferredWidth(debugColumn.getDefaultWidth());
         }
     }
 

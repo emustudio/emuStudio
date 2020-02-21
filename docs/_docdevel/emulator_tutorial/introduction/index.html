@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>Introduction &diams; emuStudio</title>
-    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <meta name="keywords"
+          content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
     <meta name="description" content="Universal computer emulation platform and framework.">
     <meta name=”robots” content=”noindex,follow”>
 
@@ -23,8 +20,10 @@
     <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <!-- RSS -->
-    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../feed.xml">
-    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../atom.xml">
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../atom.xml">
 
     <!-- Favicons -->
     <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
@@ -32,7 +31,8 @@
     <meta name="msapplication-TileColor" content="#ffffff">
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+    <link rel="stylesheet"
+          href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../../css/style.css">
@@ -54,17 +54,18 @@
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 
-    
-      <!-- Global site tag (gtag.js) - Google Analytics -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
-      <script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+    <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
     
         gtag('config', 'UA-3492956-5');
-      </script>
-    
+
+    </script>
+
 </head>
 
 
@@ -74,47 +75,49 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;"
+                                                     src="../../../img/logo-2.svg" width="30px"/></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
-                <!--<div class="form-group">-->
-                    <!--<input type="text" class="form-control" placeholder="Search website">-->
-                <!--</div>-->
-                <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
             <!--</form>-->
             <ul class="nav navbar-nav navbar-right">
-                
+
                 <li>
                     <a href="/">Home</a>
                 </li>
-                
+
                 <li>
                     <a href="/download">Download</a>
                 </li>
-                
+
                 <li>
                     <a href="/docs">Docs</a>
                 </li>
-                
+
                 <li>
                     <a href="/devel">Developer</a>
                 </li>
-                
+
                 <li>
                     <a href="/roadmap">Roadmap</a>
                 </li>
-                
+
                 <li>
                     <a href="/about">About</a>
                 </li>
-                
+
             </ul>
         </div>
     </div>
@@ -129,217 +132,273 @@
           
       </span>
     </h1>
-    
-    
+
+
 </div>
 
 
 <div class="container">
     <div class="sect1">
-<h2 id="INTRODUCTION_PLUGINS">Introduction</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This guide shall help you, the developer, to write your own virtual computer for emuStudio. From now on, every time
-a 'virtual computer' will be mentioned, it should be always understood as a computer emulator written for emuStudio, if
-it won&#8217;t be said otherwise.</p>
-</div>
-<div class="sect2">
-<h3 id="what-is-emustudio">What is emuStudio</h3>
-<div class="paragraph">
-<p>From user&#8217;s point of view, emuStudio can be understood as an <strong>emulation platform</strong>, because it can run various emulators
-in the same environment. It has a simple IDE, debugger and other features like automatic emulation, which makes emuStudio
-quite powerful.</p>
-</div>
-<div class="paragraph">
-<p>From developer&#8217;s point of view, it is also a <strong>framework</strong>, because it provides API and lifecycle management for virtual
-computers. There are some contracts how things work, what developer can count with, and what is not defined. This
-tutorial shall guide the developer through these waters, hopefully at the end there won&#8217;t be any serious problems with
-writing custom virtual computers.</p>
-</div>
-<div class="sect3">
-<h4 id="core-technologies">Core technologies</h4>
-<div class="paragraph">
-<p>During programming, there are some commonly used technologies, which are mandatory when relevant. These are the "core
-technologies", which are listed in the following table:</p>
-</div>
-<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
-<caption class="title">Table 1. Core technologies used in emuStudio</caption>
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Technology</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Relevance</th>
-<th class="tableblock halign-left valign-top">Link</th>
-</tr>
-</thead>
-<tfoot>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Asciidoctor</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Documentation generator</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Documentation module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://asciidoctor.org/" class="bare">http://asciidoctor.org/</a></p></td>
-</tr>
-</tfoot>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Git</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Version control system</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://git-scm.com/" class="bare">https://git-scm.com/</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Java 8 SE</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Main programming language</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html" class="bare">http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Maven 3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Build lifecycle management</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://maven.apache.org/download.cgi" class="bare">https://maven.apache.org/download.cgi</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SLF4J</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Facade for logger implementation</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.slf4j.org/" class="bare">http://www.slf4j.org/</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">JFlex</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Lexical analyzer generator</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Compilers</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://jflex.de/" class="bare">http://jflex.de/</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Java CUP</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">LR parser generator</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Compilers</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www2.cs.tum.edu/projects/cup/" class="bare">http://www2.cs.tum.edu/projects/cup/</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Edigen</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Disassembler generator</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CPU</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://github.com/sulir/edigen" class="bare">https://github.com/sulir/edigen</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">emuLib</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Plugin API and runtime library</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://github.com/vbmacher/emuLib" class="bare">https://github.com/vbmacher/emuLib</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">JUnit</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Java unit testing framework</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://junit.org/" class="bare">http://junit.org/</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">EasyMock</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Mock library</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://easymock.org/" class="bare">http://easymock.org/</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="admonitionblock caution">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-caution" title="Caution"></i>
-</td>
-<td class="content">
-emuStudio uses Maven for the build lifecycle management. All dependencies and their versions are defined in
-      the root <code>pom.xml</code> file. When you use a library or some technology which is listed there, please use the
-      same version as it is used by emuStudio. You will avoid unexpected conflicts or behavior of your plug-ins.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="license">License</h4>
-<div class="paragraph">
-<p>emuStudio with all its modules, including emuLib, is a free software. It is released with GNU GPL 2 license.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="contributing">Contributing</h3>
-<div class="paragraph">
-<p>Anyone can contribute to emuStudio. The source code is available on GitHub, at <a href="https://github.com/vbmacher/emuStudio" class="bare">https://github.com/vbmacher/emuStudio</a>.
-emuStudio repository contains the main module, plug-ins (predefined set of virtual computers), testing tools,
-and CI (continuous integration) tools.</p>
-</div>
-<div class="paragraph">
-<p>There are basically two options how you can contribute. Either you fix or enhance emuStudio itself (or plug-ins), or
-you implement completely new computer which can be used with emuStudio. The latter does not really mean to contribute,
-unless it is included in the original emuStudio repository.</p>
-</div>
-<div class="paragraph">
-<p>However, adding new computers to standard emuStudio must be consulted with the author in advance. While I encourage
-people writing their own computers, I assume they will be mostly students having only little experience
-and/or fixed-time projects which will end when the student passes. This is perfectly fine, but those projects should
-be rather kept in other places.</p>
-</div>
-<div class="paragraph">
-<p>Also, in the future there might be something like a plug-in repository, and a user would download what he wants manually.
-So far, it is not like that and it is too soon to consider this.</p>
-</div>
-<div class="sect3">
-<h4 id="definition-of-done">Definition of DONE</h4>
-<div class="paragraph">
-<p>There are some requirements which need to be fulfilled before we can say that the contribution is "done" and can be
-accepted or released. The list is very simple:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Code should be clean, conforming to the code style</p>
-</li>
-<li>
-<p>Code must have proper unit tests, if applicable or possible</p>
-</li>
-<li>
-<p>Documentation should be updated</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect3">
-<h4 id="git-workflow">Git workflow</h4>
-<div class="paragraph">
-<p>Since the whole project is using <code>git</code> as the version control system (VCS), it has many benefits used for specification
-of a way how people can actually contribute.</p>
-</div>
-<div class="paragraph">
-<p>emuStudio uses a much simplified version of the <a href="https://datasift.github.io/gitflow/IntroducingGitFlow.html">Git Flow model</a>.
-Releasing of older versions due to "hot fixes" or maintenance is not supported. Fixing bugs and development of new features
-are both done in the single branch, called <code>develop</code>. On GitHub the branch is marked as default.</p>
-</div>
-<div class="paragraph">
-<p>When a new release is out, the last commit must be tagged with a new tag named <code>RELEASE-X</code>, where <code>X</code> is the released
-version.</p>
-</div>
-<div class="paragraph">
-<p>When contributing (fixing, new development), always derive new branch from the <code>develop</code> branch. In your branch, you
-can do any number of well-formed commits. When you are ready, raise new pull-request back to the <code>develop</code> branch.</p>
-</div>
-<div class="paragraph">
-<p>Example of the git workflow is as follows:</p>
-</div>
-<div class="paragraph">
-<p>At first, fork emuStudio on GitHub. Then:</p>
-</div>
-<div class="listingblock">
-<div class="content">
+        <h2 id="INTRODUCTION_PLUGINS">Introduction</h2>
+        <div class="sectionbody">
+            <div class="paragraph">
+                <p>This guide shall help you, the developer, to write your own virtual computer for emuStudio. From now
+                    on, every time
+                    a 'virtual computer' will be mentioned, it should be always understood as a computer emulator
+                    written for emuStudio, if
+                    it won&#8217;t be said otherwise.</p>
+            </div>
+            <div class="sect2">
+                <h3 id="what-is-emustudio">What is emuStudio</h3>
+                <div class="paragraph">
+                    <p>From user&#8217;s point of view, emuStudio can be understood as an <strong>emulation
+                        platform</strong>, because it can run various emulators
+                        in the same environment. It has a simple IDE, debugger and other features like automatic
+                        emulation, which makes emuStudio
+                        quite powerful.</p>
+                </div>
+                <div class="paragraph">
+                    <p>From developer&#8217;s point of view, it is also a <strong>framework</strong>, because it
+                        provides API and lifecycle management for virtual
+                        computers. There are some contracts how things work, what developer can count with, and what is
+                        not defined. This
+                        tutorial shall guide the developer through these waters, hopefully at the end there won&#8217;t
+                        be any serious problems with
+                        writing custom virtual computers.</p>
+                </div>
+                <div class="sect3">
+                    <h4 id="core-technologies">Core technologies</h4>
+                    <div class="paragraph">
+                        <p>During programming, there are some commonly used technologies, which are mandatory when
+                            relevant. These are the "core
+                            technologies", which are listed in the following table:</p>
+                    </div>
+                    <table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+                        <caption class="title">Table 1. Core technologies used in emuStudio</caption>
+                        <colgroup>
+                            <col style="width: 25%;">
+                            <col style="width: 25%;">
+                            <col style="width: 25%;">
+                            <col style="width: 25%;">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th class="tableblock halign-left valign-top">Technology</th>
+                            <th class="tableblock halign-left valign-top">Description</th>
+                            <th class="tableblock halign-left valign-top">Relevance</th>
+                            <th class="tableblock halign-left valign-top">Link</th>
+                        </tr>
+                        </thead>
+                        <tfoot>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Asciidoctor</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Documentation
+                                generator</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Documentation module</p>
+                            </td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="http://asciidoctor.org/" class="bare">http://asciidoctor.org/</a></p></td>
+                        </tr>
+                        </tfoot>
+                        <tbody>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Git</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Version control
+                                system</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="https://git-scm.com/" class="bare">https://git-scm.com/</a></p></td>
+                        </tr>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Java 8 SE</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Main programming
+                                language</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html"
+                                    class="bare">http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html</a>
+                            </p></td>
+                        </tr>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Maven 3</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Build lifecycle
+                                management</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="https://maven.apache.org/download.cgi" class="bare">https://maven.apache.org/download.cgi</a>
+                            </p></td>
+                        </tr>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">SLF4J</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Facade for logger
+                                implementation</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="http://www.slf4j.org/" class="bare">http://www.slf4j.org/</a></p></td>
+                        </tr>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">JFlex</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Lexical analyzer
+                                generator</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Compilers</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="http://jflex.de/" class="bare">http://jflex.de/</a></p></td>
+                        </tr>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Java CUP</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">LR parser generator</p>
+                            </td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Compilers</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="http://www2.cs.tum.edu/projects/cup/" class="bare">http://www2.cs.tum.edu/projects/cup/</a>
+                            </p></td>
+                        </tr>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Edigen</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Disassembler
+                                generator</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">CPU</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="https://github.com/sulir/edigen"
+                                    class="bare">https://github.com/sulir/edigen</a></p></td>
+                        </tr>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">emuLib</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Plugin API and runtime
+                                library</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="https://github.com/vbmacher/emuLib" class="bare">https://github.com/vbmacher/emuLib</a>
+                            </p></td>
+                        </tr>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">JUnit</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Java unit testing
+                                framework</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="http://junit.org/" class="bare">http://junit.org/</a></p></td>
+                        </tr>
+                        <tr>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">EasyMock</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">Mock library</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
+                            <td class="tableblock halign-left valign-top"><p class="tableblock"><a
+                                    href="http://easymock.org/" class="bare">http://easymock.org/</a></p></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="admonitionblock caution">
+                        <table>
+                            <tr>
+                                <td class="icon">
+                                    <i class="fa icon-caution" title="Caution"></i>
+                                </td>
+                                <td class="content">
+                                    emuStudio uses Maven for the build lifecycle management. All dependencies and their
+                                    versions are defined in
+                                    the root <code>pom.xml</code> file. When you use a library or some technology which
+                                    is listed there, please use the
+                                    same version as it is used by emuStudio. You will avoid unexpected conflicts or
+                                    behavior of your plug-ins.
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="license">License</h4>
+                    <div class="paragraph">
+                        <p>emuStudio with all its modules, including emuLib, is a free software. It is released with GNU
+                            GPL 2 license.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="contributing">Contributing</h3>
+                <div class="paragraph">
+                    <p>Anyone can contribute to emuStudio. The source code is available on GitHub, at <a
+                            href="https://github.com/vbmacher/emuStudio" class="bare">https://github.com/vbmacher/emuStudio</a>.
+                        emuStudio repository contains the main module, plug-ins (predefined set of virtual computers),
+                        testing tools,
+                        and CI (continuous integration) tools.</p>
+                </div>
+                <div class="paragraph">
+                    <p>There are basically two options how you can contribute. Either you fix or enhance emuStudio
+                        itself (or plug-ins), or
+                        you implement completely new computer which can be used with emuStudio. The latter does not
+                        really mean to contribute,
+                        unless it is included in the original emuStudio repository.</p>
+                </div>
+                <div class="paragraph">
+                    <p>However, adding new computers to standard emuStudio must be consulted with the author in advance.
+                        While I encourage
+                        people writing their own computers, I assume they will be mostly students having only little
+                        experience
+                        and/or fixed-time projects which will end when the student passes. This is perfectly fine, but
+                        those projects should
+                        be rather kept in other places.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Also, in the future there might be something like a plug-in repository, and a user would download
+                        what he wants manually.
+                        So far, it is not like that and it is too soon to consider this.</p>
+                </div>
+                <div class="sect3">
+                    <h4 id="definition-of-done">Definition of DONE</h4>
+                    <div class="paragraph">
+                        <p>There are some requirements which need to be fulfilled before we can say that the
+                            contribution is "done" and can be
+                            accepted or released. The list is very simple:</p>
+                    </div>
+                    <div class="ulist">
+                        <ul>
+                            <li>
+                                <p>Code should be clean, conforming to the code style</p>
+                            </li>
+                            <li>
+                                <p>Code must have proper unit tests, if applicable or possible</p>
+                            </li>
+                            <li>
+                                <p>Documentation should be updated</p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="git-workflow">Git workflow</h4>
+                    <div class="paragraph">
+                        <p>Since the whole project is using <code>git</code> as the version control system (VCS), it has
+                            many benefits used for specification
+                            of a way how people can actually contribute.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>emuStudio uses a much simplified version of the <a
+                                href="https://datasift.github.io/gitflow/IntroducingGitFlow.html">Git Flow model</a>.
+                            Releasing of older versions due to "hot fixes" or maintenance is not supported. Fixing bugs
+                            and development of new features
+                            are both done in the single branch, called <code>develop</code>. On GitHub the branch is
+                            marked as default.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>When a new release is out, the last commit must be tagged with a new tag named <code>RELEASE-X</code>,
+                            where <code>X</code> is the released
+                            version.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>When contributing (fixing, new development), always derive new branch from the
+                            <code>develop</code> branch. In your branch, you
+                            can do any number of well-formed commits. When you are ready, raise new pull-request back to
+                            the <code>develop</code> branch.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Example of the git workflow is as follows:</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>At first, fork emuStudio on GitHub. Then:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
 <pre class="pygments highlight"><code>git clone https://github.com/your_name/emuStudio.git
 git checkout -b fix-issue-143 origin/develop
 
@@ -347,181 +406,226 @@ git checkout -b fix-issue-143 origin/develop
 
 git commit -a -m '[#143] 88-disk: implement interrupts'
 git push</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>You can repeat this process several times. When you are finished with all commits, create a pull request to original
-emuStudio repository, back to the <code>develop</code> branch.</p>
-</div>
-<div class="paragraph">
-<p>The pull request will be seen by the author, which will make a review and either approve (and merge), comment or
-rejects the pull request (with explanation).</p>
-</div>
-<div class="paragraph">
-<p>As you could notice, commits should be well-formed - named with the issue number before the commit title, in square
-brackets. Also, if it is related to specific plug-in or module, it should be written in the message, e.g.:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="pygments highlight"><code>[#143] 88-disk: implement interrupts</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>GitHub then automatically links the commit with the issue (a comment appears). For more information, see
-<a href="https://help.github.com/articles/using-pull-requests/" class="bare">https://help.github.com/articles/using-pull-requests/</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="what-is-a-virtual-computer">What is a virtual computer</h3>
-<div class="paragraph">
-<p>Generally, a real computer can be decomposed into some cooperating components (still high-level), like CPU, bus, memory,
-or devices. It is not far different from how it is in emuStudio. The core concept of a virtual computer is inspired by
-the <a href="https://en.wikipedia.org/wiki/Von_Neumann_architecture">von Neumann model</a>. The model defines three types of core
-components: CPU (control unit and arithmetic-logic unit), memory, and input/output devices. In emuStudio,
-the virtual computer includes also these components, but the possibilities of interconnection and cooperation are not
-bound to hardware limits or philosophy.</p>
-</div>
-<div class="paragraph">
-<p>Each component of a virtual computer is a separate plug-in written in Java. A virtual computer is then just a set of
-cooperating plug-ins which are loaded and initialized by emuStudio. The selection of plugins is handled externally, by
-the user of emuStudio. The plugins list is extended with information about plug-in interconnection, which is specific
-for each computer. Then we have something which is called <strong>abstract schema</strong>. But as was said, abstract schemas are
-prepared by user, not plug-in developer.</p>
-</div>
-<div class="paragraph">
-<p>For more information about how to create such a schema, please read the user manual. The whole process of loading and
-initializing the plug-ins into working emulator is completely handled by emuStudio. Developer must hold to some
-contracts, and principles of good object-oriented design, which are enough for ensuring that everything will work as
-expected.</p>
-</div>
-<div class="paragraph">
-<p>The following schema defines all plug-in types and their possible interconnections, as it is currently in emuStudio.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/images/emustudio-plugins.svg" alt="emustudio plugins" width="493" height="214">
-</div>
-</div>
-<div class="paragraph">
-<p>As you can see, there are no restrictions about which plug-in can "see" or cooperate with another plug-in. For example,
-a compiler can access all computer components, including CPU, devices and memory.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-Most probably a compiler would want to access memory, in which case it would be able to load a compiled program
-     directly there. But the reason why the compiler is allowed to access also other components is that the compiled
-     program can contain either some information about initial states, or initial data which are needed to be preloaded
-     into other components before program can be started (for example, content of abstract tapes in the case of RAM
-     machine).
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="plug-in-basics">Plug-in basics</h3>
-<div class="paragraph">
-<p>Each plug-in is a separate Java module, usually single jar file, placed in the proper directory. As it is necessary
-to place the plug-in to proper location (<code>compilers/</code>, <code>cpu/</code>, <code>mem/</code>, and <code>devices/</code>), dependencies of both emuStudio
-and all plug-ins should be included in <code>lib/</code> directory. The reason is to help ensuring that versions of shared
-dependencies across plug-ins themselves and across emuStudio must be the same within single emuStudio distribution.</p>
-</div>
-<div class="paragraph">
-<p>In emuStudio, plug-in source codes are located in <code>plugins/</code> subdirectory, then separated by plug-in type. For example:</p>
-</div>
-<div class="paragraph">
-<p><a href="https://github.com/vbmacher/emuStudio/tree/develop/plugins" class="bare">https://github.com/vbmacher/emuStudio/tree/develop/plugins</a></p>
-</div>
-<div class="paragraph">
-<p>In order to contribute to an existing plug-in, you can find the plug-in in some subdirectory. If you want to add a
-new plug-in which should exist in the default emuStudio distribution, you would create new plug-in in that place as well.</p>
-</div>
-<div class="admonitionblock caution">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-caution" title="Caution"></i>
-</td>
-<td class="content">
-Standard or "default" plug-ins force to use Maven and you must follow the standard which will be defined later.
-      Also, before making any design changes or new plug-in development, please contact the emuStudio author.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Usually, your plug-ins will not be the standard part of default emuStudio distribution. In that case, you are not forced
-to use Maven or any other technology, except of emuStudio API, contracts and the limits which might exist when involving
-unknown third party dependencies. Also, you can use your own code style if you like.</p>
-</div>
-<div class="sect3">
-<h4 id="plug-in-api">Plug-in API</h4>
-<div class="paragraph">
-<p>The basic idea of the development of the plug-in is to implement an API of that specific plug-in. This is actually only
-thing which is required.</p>
-</div>
-<div class="paragraph">
-<p>Plug-in API is stored in emuLib library (see <a href="#core-technologies">Core technologies</a>), so each plug-in must have emuLib as dependency.
-This and following guides will show you some examples of how to implement a plug-in. For deeper details of all available
-API, it is recommended to check the Javadoc.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="third-party-dependencies">Third-party dependencies</h4>
-<div class="paragraph">
-<p>Each plug-in can depend on third-party libraries. It is recommended way how to avoid code duplication and reinventing
-a wheel. If a plug-in depend on some third-party library, it is required to put the class path to the Manifest file
-of the plug-in.</p>
-</div>
-<div class="paragraph">
-<p>What is not required, however, is to define some default dependencies (listed below). emuStudio uses custom class-loader
-for loading plug-ins, which handles the default dependencies automatically.</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-emuLib
-</td>
-<td class="hdlist2">
-<p>Plugin API and runtime library</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-slf4J
-</td>
-<td class="hdlist2">
-<p>Facade for logger implementation</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-logback
-</td>
-<td class="hdlist2">
-<p>Logger implementation, successor of log4j</p>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>These dependencies should not be present in plug-in manifest files, they will be automatically loaded with emuStudio.
-Please see emuStudio main POM file to determine the library versions.</p>
-</div>
-<div class="paragraph">
-<p>In order to use other third-party dependencies, they must be mentioned in Manifest. The recommended way is to put the
-dependencies in <code>/lib</code> subdirectory, and define relative path in Manifest from the root directory of where the emuStudio
-is installed. For example, here is a Manifest file for RAM compiler plug-in:</p>
-</div>
-<div class="listingblock">
-<div class="content">
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>You can repeat this process several times. When you are finished with all commits, create a
+                            pull request to original
+                            emuStudio repository, back to the <code>develop</code> branch.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>The pull request will be seen by the author, which will make a review and either approve (and
+                            merge), comment or
+                            rejects the pull request (with explanation).</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>As you could notice, commits should be well-formed - named with the issue number before the
+                            commit title, in square
+                            brackets. Also, if it is related to specific plug-in or module, it should be written in the
+                            message, e.g.:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
+                            <pre class="pygments highlight"><code>[#143] 88-disk: implement interrupts</code></pre>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>GitHub then automatically links the commit with the issue (a comment appears). For more
+                            information, see
+                            <a href="https://help.github.com/articles/using-pull-requests/" class="bare">https://help.github.com/articles/using-pull-requests/</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="what-is-a-virtual-computer">What is a virtual computer</h3>
+                <div class="paragraph">
+                    <p>Generally, a real computer can be decomposed into some cooperating components (still high-level),
+                        like CPU, bus, memory,
+                        or devices. It is not far different from how it is in emuStudio. The core concept of a virtual
+                        computer is inspired by
+                        the <a href="https://en.wikipedia.org/wiki/Von_Neumann_architecture">von Neumann model</a>. The
+                        model defines three types of core
+                        components: CPU (control unit and arithmetic-logic unit), memory, and input/output devices. In
+                        emuStudio,
+                        the virtual computer includes also these components, but the possibilities of interconnection
+                        and cooperation are not
+                        bound to hardware limits or philosophy.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Each component of a virtual computer is a separate plug-in written in Java. A virtual computer is
+                        then just a set of
+                        cooperating plug-ins which are loaded and initialized by emuStudio. The selection of plugins is
+                        handled externally, by
+                        the user of emuStudio. The plugins list is extended with information about plug-in
+                        interconnection, which is specific
+                        for each computer. Then we have something which is called <strong>abstract schema</strong>. But
+                        as was said, abstract schemas are
+                        prepared by user, not plug-in developer.</p>
+                </div>
+                <div class="paragraph">
+                    <p>For more information about how to create such a schema, please read the user manual. The whole
+                        process of loading and
+                        initializing the plug-ins into working emulator is completely handled by emuStudio. Developer
+                        must hold to some
+                        contracts, and principles of good object-oriented design, which are enough for ensuring that
+                        everything will work as
+                        expected.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The following schema defines all plug-in types and their possible interconnections, as it is
+                        currently in emuStudio.</p>
+                </div>
+                <div class="imageblock">
+                    <div class="content">
+                        <img src="/images/emustudio-plugins.svg" alt="emustudio plugins" width="493" height="214">
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>As you can see, there are no restrictions about which plug-in can "see" or cooperate with another
+                        plug-in. For example,
+                        a compiler can access all computer components, including CPU, devices and memory.</p>
+                </div>
+                <div class="admonitionblock tip">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-tip" title="Tip"></i>
+                            </td>
+                            <td class="content">
+                                Most probably a compiler would want to access memory, in which case it would be able to
+                                load a compiled program
+                                directly there. But the reason why the compiler is allowed to access also other
+                                components is that the compiled
+                                program can contain either some information about initial states, or initial data which
+                                are needed to be preloaded
+                                into other components before program can be started (for example, content of abstract
+                                tapes in the case of RAM
+                                machine).
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="plug-in-basics">Plug-in basics</h3>
+                <div class="paragraph">
+                    <p>Each plug-in is a separate Java module, usually single jar file, placed in the proper directory.
+                        As it is necessary
+                        to place the plug-in to proper location (<code>compilers/</code>, <code>cpu/</code>,
+                        <code>mem/</code>, and <code>devices/</code>), dependencies of both emuStudio
+                        and all plug-ins should be included in <code>lib/</code> directory. The reason is to help
+                        ensuring that versions of shared
+                        dependencies across plug-ins themselves and across emuStudio must be the same within single
+                        emuStudio distribution.</p>
+                </div>
+                <div class="paragraph">
+                    <p>In emuStudio, plug-in source codes are located in <code>plugins/</code> subdirectory, then
+                        separated by plug-in type. For example:</p>
+                </div>
+                <div class="paragraph">
+                    <p><a href="https://github.com/vbmacher/emuStudio/tree/develop/plugins" class="bare">https://github.com/vbmacher/emuStudio/tree/develop/plugins</a>
+                    </p>
+                </div>
+                <div class="paragraph">
+                    <p>In order to contribute to an existing plug-in, you can find the plug-in in some subdirectory. If
+                        you want to add a
+                        new plug-in which should exist in the default emuStudio distribution, you would create new
+                        plug-in in that place as well.</p>
+                </div>
+                <div class="admonitionblock caution">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-caution" title="Caution"></i>
+                            </td>
+                            <td class="content">
+                                Standard or "default" plug-ins force to use Maven and you must follow the standard which
+                                will be defined later.
+                                Also, before making any design changes or new plug-in development, please contact the
+                                emuStudio author.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>Usually, your plug-ins will not be the standard part of default emuStudio distribution. In that
+                        case, you are not forced
+                        to use Maven or any other technology, except of emuStudio API, contracts and the limits which
+                        might exist when involving
+                        unknown third party dependencies. Also, you can use your own code style if you like.</p>
+                </div>
+                <div class="sect3">
+                    <h4 id="plug-in-api">Plug-in API</h4>
+                    <div class="paragraph">
+                        <p>The basic idea of the development of the plug-in is to implement an API of that specific
+                            plug-in. This is actually only
+                            thing which is required.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Plug-in API is stored in emuLib library (see <a href="#core-technologies">Core
+                            technologies</a>), so each plug-in must have emuLib as dependency.
+                            This and following guides will show you some examples of how to implement a plug-in. For
+                            deeper details of all available
+                            API, it is recommended to check the Javadoc.</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="third-party-dependencies">Third-party dependencies</h4>
+                    <div class="paragraph">
+                        <p>Each plug-in can depend on third-party libraries. It is recommended way how to avoid code
+                            duplication and reinventing
+                            a wheel. If a plug-in depend on some third-party library, it is required to put the class
+                            path to the Manifest file
+                            of the plug-in.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>What is not required, however, is to define some default dependencies (listed below).
+                            emuStudio uses custom class-loader
+                            for loading plug-ins, which handles the default dependencies automatically.</p>
+                    </div>
+                    <div class="hdlist">
+                        <table>
+                            <tr>
+                                <td class="hdlist1">
+                                    emuLib
+                                </td>
+                                <td class="hdlist2">
+                                    <p>Plugin API and runtime library</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="hdlist1">
+                                    slf4J
+                                </td>
+                                <td class="hdlist2">
+                                    <p>Facade for logger implementation</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="hdlist1">
+                                    logback
+                                </td>
+                                <td class="hdlist2">
+                                    <p>Logger implementation, successor of log4j</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="paragraph">
+                        <p>These dependencies should not be present in plug-in manifest files, they will be
+                            automatically loaded with emuStudio.
+                            Please see emuStudio main POM file to determine the library versions.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>In order to use other third-party dependencies, they must be mentioned in Manifest. The
+                            recommended way is to put the
+                            dependencies in <code>/lib</code> subdirectory, and define relative path in Manifest from
+                            the root directory of where the emuStudio
+                            is installed. For example, here is a Manifest file for RAM compiler plug-in:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
 <pre class="pygments highlight"><code>Manifest-Version: 1.0
 Implementation-Title: RAM Compiler
 Implementation-Version: 0.40-SNAPSHOT
@@ -533,480 +637,564 @@ Class-Path: mem/ram-mem.jar lib/java-cup-runtime-11b.jar
 Created-By: Apache Maven 3.3.3
 Build-Jdk: 1.8.0_65
 Specification-Version: 0.40-SNAPSHOT</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The plug-in uses two non-default dependencies: RAM memory plug-in, and java-cup library. The first one is a memory
-plug-in for emuStudio, so it is placed in <code>mem/</code> subdirectory, but java-cup library is completely third-party, and
-non-default. The recommended place for storing these kind of libraries is <code>lib/</code> subdirectory.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Cyclic dependencies are also supported.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="INTRODUCTION_BEHAVIORAL">Emulation lifecycle</h3>
-<div class="paragraph">
-<p>emuStudio is also a framework, which not only defines the API, but also the whole life cycle of plug-ins. It has the
-control of all emulation processes, including CPU and all virtual devices. It proactively loads, instantiates and
-initializes plug-ins. That way a plug-in developer can safely focus only on what the plug-in should do in the first place.</p>
-</div>
-<div class="paragraph">
-<p>Behavior contracts define rules and assumptions which plug-in developer must hold to. emuStudio is assuming that
-plug-ins "behave good", and if it is true, everything should work as expected. By ignoring the behavioral contracts
-the emuStudio behavior is undefined; it can possibly corrupt the emulation process or crash whole emuStudio.</p>
-</div>
-<div class="paragraph">
-<p>The list of some categories of behavioral contracts include:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Order of operations being called by emuStudio (e.g. order of loading / initialization of plug-ins)</p>
-</li>
-<li>
-<p>Rules of allowed / not allowed method calls in particular contexts</p>
-</li>
-<li>
-<p>Specification of signature of constructors</p>
-</li>
-<li>
-<p>Threading concerns</p>
-</li>
-<li>
-<p>Other</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The behavioral contracts are described in particular Javadoc for emuLib and all modules to which it may concern.
-The Javadoc contains special note which starts with capital <code>CONTRACT:</code>. The contract is mainly in the form of
-explanation which other methods should not be called, or how particular thing should be implemented.</p>
-</div>
-<div class="sect3">
-<h4 id="main-class">Main class</h4>
-<div class="paragraph">
-<p>Each plug-in must have exactly one "main class" in Java, which will be annotated with <code>emulib.annotations.PluginType</code>
-annotation. This annotation provides several information, like:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Title of the plug-in</p>
-</li>
-<li>
-<p>Copyright notice and description of the plug-in</p>
-</li>
-<li>
-<p>What type of the plug-in is (compiler, CPU, memory, device),</p>
-</li>
-<li>
-<p>What version of emuLib it supports</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The class must also inherit from <code>emulib.plugins.Plugin</code> interface (not necessarily directly).</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="loading-and-initialization">Loading and initialization</h4>
-<div class="paragraph">
-<p>Setting up plug-ins is a two-phase process and it is done solely in emuStudio. emuStudio has custom class loader, into
-which it loads all plug-ins (classes and resources) and "registers" them in JVM.</p>
-</div>
-<div class="sect4">
-<h5 id="phase-1-loading">Phase 1 - Loading</h5>
-<div class="paragraph">
-<p>The plug-ins are loaded as a one bunch of extracted JARs mixed together, in a newly created class loader. The class
-loader is immutable so further modification of plug-in loading (e.g. adding another component at run-time) is not
-possible.</p>
-</div>
-<div class="paragraph">
-<p>Dependencies explicitly specified in manifest files are recognized and loaded as well. With this, plug-ins can depend
-on each other. However, in case of circular dependency, plug-ins loadin will fail.</p>
-</div>
-<div class="paragraph">
-<p>The result of this phase is that all plug-in classes are loaded in memory and all main-classes instantiated. Each plug-in
-main class must have a constructor with exactly two arguments:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>SamplePlugin<span style="color: #666666">(</span>Long pluginId<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>The plug-in uses two non-default dependencies: RAM memory plug-in, and java-cup library. The
+                            first one is a memory
+                            plug-in for emuStudio, so it is placed in <code>mem/</code> subdirectory, but java-cup
+                            library is completely third-party, and
+                            non-default. The recommended place for storing these kind of libraries is <code>lib/</code>
+                            subdirectory.</p>
+                    </div>
+                    <div class="admonitionblock note">
+                        <table>
+                            <tr>
+                                <td class="icon">
+                                    <i class="fa icon-note" title="Note"></i>
+                                </td>
+                                <td class="content">
+                                    Cyclic dependencies are also supported.
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="INTRODUCTION_BEHAVIORAL">Emulation lifecycle</h3>
+                <div class="paragraph">
+                    <p>emuStudio is also a framework, which not only defines the API, but also the whole life cycle of
+                        plug-ins. It has the
+                        control of all emulation processes, including CPU and all virtual devices. It proactively loads,
+                        instantiates and
+                        initializes plug-ins. That way a plug-in developer can safely focus only on what the plug-in
+                        should do in the first place.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Behavior contracts define rules and assumptions which plug-in developer must hold to. emuStudio
+                        is assuming that
+                        plug-ins "behave good", and if it is true, everything should work as expected. By ignoring the
+                        behavioral contracts
+                        the emuStudio behavior is undefined; it can possibly corrupt the emulation process or crash
+                        whole emuStudio.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The list of some categories of behavioral contracts include:</p>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p>Order of operations being called by emuStudio (e.g. order of loading / initialization of
+                                plug-ins)</p>
+                        </li>
+                        <li>
+                            <p>Rules of allowed / not allowed method calls in particular contexts</p>
+                        </li>
+                        <li>
+                            <p>Specification of signature of constructors</p>
+                        </li>
+                        <li>
+                            <p>Threading concerns</p>
+                        </li>
+                        <li>
+                            <p>Other</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="paragraph">
+                    <p>The behavioral contracts are described in particular Javadoc for emuLib and all modules to which
+                        it may concern.
+                        The Javadoc contains special note which starts with capital <code>CONTRACT:</code>. The contract
+                        is mainly in the form of
+                        explanation which other methods should not be called, or how particular thing should be
+                        implemented.</p>
+                </div>
+                <div class="sect3">
+                    <h4 id="main-class">Main class</h4>
+                    <div class="paragraph">
+                        <p>Each plug-in must have exactly one "main class" in Java, which will be annotated with <code>emulib.annotations.PluginType</code>
+                            annotation. This annotation provides several information, like:</p>
+                    </div>
+                    <div class="ulist">
+                        <ul>
+                            <li>
+                                <p>Title of the plug-in</p>
+                            </li>
+                            <li>
+                                <p>Copyright notice and description of the plug-in</p>
+                            </li>
+                            <li>
+                                <p>What type of the plug-in is (compiler, CPU, memory, device),</p>
+                            </li>
+                            <li>
+                                <p>What version of emuLib it supports</p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="paragraph">
+                        <p>The class must also inherit from <code>emulib.plugins.Plugin</code> interface (not
+                            necessarily directly).</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="loading-and-initialization">Loading and initialization</h4>
+                    <div class="paragraph">
+                        <p>Setting up plug-ins is a two-phase process and it is done solely in emuStudio. emuStudio has
+                            custom class loader, into
+                            which it loads all plug-ins (classes and resources) and "registers" them in JVM.</p>
+                    </div>
+                    <div class="sect4">
+                        <h5 id="phase-1-loading">Phase 1 - Loading</h5>
+                        <div class="paragraph">
+                            <p>The plug-ins are loaded as a one bunch of extracted JARs mixed together, in a newly
+                                created class loader. The class
+                                loader is immutable so further modification of plug-in loading (e.g. adding another
+                                component at run-time) is not
+                                possible.</p>
+                        </div>
+                        <div class="paragraph">
+                            <p>Dependencies explicitly specified in manifest files are recognized and loaded as well.
+                                With this, plug-ins can depend
+                                on each other. However, in case of circular dependency, plug-ins loadin will fail.</p>
+                        </div>
+                        <div class="paragraph">
+                            <p>The result of this phase is that all plug-in classes are loaded in memory and all
+                                main-classes instantiated. Each plug-in
+                                main class must have a constructor with exactly two arguments:</p>
+                        </div>
+                        <div class="listingblock">
+                            <div class="content">
+<pre class="pygments highlight"><code data-lang="java"><span></span>SamplePlugin<span style="color: #666666">(</span>Long pluginId<span
+        style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span
+        style="color: #666666">{</span>
     <span style="color: #666666">...</span>
 <span style="color: #666666">}</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <code>ContextPool</code> can be used (in this phase) only for <strong>registering</strong> custom plug-in contexts, but not for their
-obtaining. More information can be found in emuLib&#8217;s Javadoc.</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="INTRODUCTION_INITIALIZATION">Phase 2 - Initialization</h5>
-<div class="paragraph">
-<p>The initialization of plug-ins follows as the second phase. In this phase, plug-ins should ask from given <code>ContextPool</code>
-in the previous phase of context(s) of other, already registered plug-ins.</p>
-</div>
-<div class="paragraph">
-<p>The order in which plug-ins are initialized is:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Compiler</p>
-</li>
-<li>
-<p>CPU</p>
-</li>
-<li>
-<p>Memory</p>
-</li>
-<li>
-<p>Devices in the order as they are defined in the virtual computer configuration file</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>When following this contract, it cannot happen that a plug-in will ask for context which is not registered.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="INTRODUCTION_NAMING">Naming conventions</h3>
-<div class="paragraph">
-<p>Plug-in names (jar file names) follow naming conventions. The names differ based on plug-in types. From the jar file
-name it should be clear what plug-in we are talking about. Generally, the jar file should begin with some custom
-abbreviation of the real world "model" optionally preceded with the manufacturer (e.g. intel-8080, lsi-adm-3A, etc.).
-Then plug-in type follows, as it is shown in the following table:</p>
-</div>
-<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
-<caption class="title">Table 2. Naming conventions for plug-in jar files</caption>
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Plug-in type</th>
-<th class="tableblock halign-left valign-top">Naming convention</th>
-<th class="tableblock halign-left valign-top">Example</th>
-</tr>
-</thead>
-<tfoot>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Device</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;optional_manufacturer&gt;-&lt;model_abbreviation&gt;-&lt;device_type&gt;</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>88-disk</code>, <code>adm3a-terminal</code></p></td>
-</tr>
-</tfoot>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Compiler</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;language_abbreviation&gt;-compiler</code>, or <code>as-&lt;language_abbreviation&gt;</code> for assemblers</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>as-8080</code>, <code>brainc-compiler</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CPU</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;optional_manufacturer&gt;-&lt;model_abbreviation&gt;-cpu</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>8080-cpu</code>, <code>z80-cpu</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Memory</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;model_or_main_features_abbreviation&gt;-mem</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>standard-mem</code>, <code>ram-mem</code></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>Plug-in names can contain digits, small and capital letters (regex: <code>[a-zA-Z0-9]+</code>). Capital letters shall be used only
-for the following reasons:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Word separation (e.g. zilogZ80),</p>
-</li>
-<li>
-<p>Acronyms (e.g. RAM, standing for "Random Access Machine")</p>
-</li>
-</ul>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Using naming conventions for development of official plug-ins is a must; for custom projects it is highly
-      recommended. emuStudio does not use the naming convention for searching for plugins.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="coding-style">Coding Style</h3>
-<div class="paragraph">
-<p>Unified coding style is as important as being a team player. It is the commonly-accepted order, which puts the code
-readability at the same level everywhere. It is as in a classical book - you don&#8217;t usually see multiple writing styles
-or text organizations throughout the book. It is written as by only one author, even if it has more. The same purpose
-has the code style, because the reader is always just one.</p>
-</div>
-<div class="paragraph">
-<p>I encourage you to read a book called Clean Code from Robert Martin. You can find there many inspiring thoughts and
-ideas how to write the code in a clean way.</p>
-</div>
-<div class="sect3">
-<h4 id="license-information">License information</h4>
-<div class="paragraph">
-<p>Each file must start with a comment with the license information. Please read part "How to Apply These
-Terms to Your New Programs" at link <a href="http://www.gnu.org/licenses/gpl.html" class="bare">http://www.gnu.org/licenses/gpl.html</a>.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="indentation">Indentation</h4>
-<div class="paragraph">
-<p>I consider this section as very important, so as there is lots of time consuming debates about the "indentation problem".
-Therefore I "codify" this to 4 spaces.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="logging">Logging</h4>
-<div class="paragraph">
-<p>emuStudio is bundled with <a href="https://www.slf4j.org/">SLF4J logger API</a> which is bound with
-<a href="http://logback.qos.ch/">logback logger</a>. In code, it is possible to use the logger, like in this example:</p>
-</div>
-<div class="listingblock">
-<div class="title">Example of using logger</div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.slf4j.Logger</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.slf4j.LoggerFactory</span><span style="color: #666666">;</span>
+                            </div>
+                        </div>
+                        <div class="paragraph">
+                            <p>The <code>ContextPool</code> can be used (in this phase) only for
+                                <strong>registering</strong> custom plug-in contexts, but not for their
+                                obtaining. More information can be found in emuLib&#8217;s Javadoc.</p>
+                        </div>
+                    </div>
+                    <div class="sect4">
+                        <h5 id="INTRODUCTION_INITIALIZATION">Phase 2 - Initialization</h5>
+                        <div class="paragraph">
+                            <p>The initialization of plug-ins follows as the second phase. In this phase, plug-ins
+                                should ask from given <code>ContextPool</code>
+                                in the previous phase of context(s) of other, already registered plug-ins.</p>
+                        </div>
+                        <div class="paragraph">
+                            <p>The order in which plug-ins are initialized is:</p>
+                        </div>
+                        <div class="olist arabic">
+                            <ol class="arabic">
+                                <li>
+                                    <p>Compiler</p>
+                                </li>
+                                <li>
+                                    <p>CPU</p>
+                                </li>
+                                <li>
+                                    <p>Memory</p>
+                                </li>
+                                <li>
+                                    <p>Devices in the order as they are defined in the virtual computer configuration
+                                        file</p>
+                                </li>
+                            </ol>
+                        </div>
+                        <div class="paragraph">
+                            <p>When following this contract, it cannot happen that a plug-in will ask for context which
+                                is not registered.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="INTRODUCTION_NAMING">Naming conventions</h3>
+                <div class="paragraph">
+                    <p>Plug-in names (jar file names) follow naming conventions. The names differ based on plug-in
+                        types. From the jar file
+                        name it should be clear what plug-in we are talking about. Generally, the jar file should begin
+                        with some custom
+                        abbreviation of the real world "model" optionally preceded with the manufacturer (e.g.
+                        intel-8080, lsi-adm-3A, etc.).
+                        Then plug-in type follows, as it is shown in the following table:</p>
+                </div>
+                <table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+                    <caption class="title">Table 2. Naming conventions for plug-in jar files</caption>
+                    <colgroup>
+                        <col style="width: 33.3333%;">
+                        <col style="width: 33.3333%;">
+                        <col style="width: 33.3334%;">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th class="tableblock halign-left valign-top">Plug-in type</th>
+                        <th class="tableblock halign-left valign-top">Naming convention</th>
+                        <th class="tableblock halign-left valign-top">Example</th>
+                    </tr>
+                    </thead>
+                    <tfoot>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Device</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;optional_manufacturer&gt;-&lt;model_abbreviation&gt;-&lt;device_type&gt;</code>
+                        </p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><code>88-disk</code>, <code>adm3a-terminal</code>
+                        </p></td>
+                    </tr>
+                    </tfoot>
+                    <tbody>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Compiler</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;language_abbreviation&gt;-compiler</code>,
+                            or <code>as-&lt;language_abbreviation&gt;</code> for assemblers</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><code>as-8080</code>, <code>brainc-compiler</code>
+                        </p></td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">CPU</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;optional_manufacturer&gt;-&lt;model_abbreviation&gt;-cpu</code>
+                        </p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><code>8080-cpu</code>,
+                            <code>z80-cpu</code></p></td>
+                    </tr>
+                    <tr>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock">Memory</p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;model_or_main_features_abbreviation&gt;-mem</code>
+                        </p></td>
+                        <td class="tableblock halign-left valign-top"><p class="tableblock"><code>standard-mem</code>,
+                            <code>ram-mem</code></p></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="paragraph">
+                    <p>Plug-in names can contain digits, small and capital letters (regex: <code>[a-zA-Z0-9]+</code>).
+                        Capital letters shall be used only
+                        for the following reasons:</p>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p>Word separation (e.g. zilogZ80),</p>
+                        </li>
+                        <li>
+                            <p>Acronyms (e.g. RAM, standing for "Random Access Machine")</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="admonitionblock note">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-note" title="Note"></i>
+                            </td>
+                            <td class="content">
+                                Using naming conventions for development of official plug-ins is a must; for custom
+                                projects it is highly
+                                recommended. emuStudio does not use the naming convention for searching for plugins.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="coding-style">Coding Style</h3>
+                <div class="paragraph">
+                    <p>Unified coding style is as important as being a team player. It is the commonly-accepted order,
+                        which puts the code
+                        readability at the same level everywhere. It is as in a classical book - you don&#8217;t usually
+                        see multiple writing styles
+                        or text organizations throughout the book. It is written as by only one author, even if it has
+                        more. The same purpose
+                        has the code style, because the reader is always just one.</p>
+                </div>
+                <div class="paragraph">
+                    <p>I encourage you to read a book called Clean Code from Robert Martin. You can find there many
+                        inspiring thoughts and
+                        ideas how to write the code in a clean way.</p>
+                </div>
+                <div class="sect3">
+                    <h4 id="license-information">License information</h4>
+                    <div class="paragraph">
+                        <p>Each file must start with a comment with the license information. Please read part "How to
+                            Apply These
+                            Terms to Your New Programs" at link <a href="http://www.gnu.org/licenses/gpl.html"
+                                                                   class="bare">http://www.gnu.org/licenses/gpl.html</a>.
+                        </p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="indentation">Indentation</h4>
+                    <div class="paragraph">
+                        <p>I consider this section as very important, so as there is lots of time consuming debates
+                            about the "indentation problem".
+                            Therefore I "codify" this to 4 spaces.</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="logging">Logging</h4>
+                    <div class="paragraph">
+                        <p>emuStudio is bundled with <a href="https://www.slf4j.org/">SLF4J logger API</a> which is
+                            bound with
+                            <a href="http://logback.qos.ch/">logback logger</a>. In code, it is possible to use the
+                            logger, like in this example:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="title">Example of using logger</div>
+                        <div class="content">
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">import</span> <span
+        style="color: #0000FF; font-weight: bold">org.slf4j.Logger</span><span style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">org.slf4j.LoggerFactory</span><span
+            style="color: #666666">;</span>
 
-<span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">SomeClass</span> <span style="color: #666666">{</span>
-    <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">static</span> <span style="color: #008000; font-weight: bold">final</span> Logger LOGGER <span style="color: #666666">=</span> LoggerFactory<span style="color: #666666">.</span><span style="color: #7D9029">getLogger</span><span style="color: #666666">(</span>SomeClass<span style="color: #666666">.</span><span style="color: #7D9029">class</span><span style="color: #666666">);</span>
+<span style="color: #008000; font-weight: bold">public</span> <span
+            style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">SomeClass</span> <span
+            style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">static</span> <span
+            style="color: #008000; font-weight: bold">final</span> Logger LOGGER <span style="color: #666666">=</span> LoggerFactory<span
+            style="color: #666666">.</span><span style="color: #7D9029">getLogger</span><span
+            style="color: #666666">(</span>SomeClass<span style="color: #666666">.</span><span style="color: #7D9029">class</span><span
+            style="color: #666666">);</span>
 
 
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">someMethod</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
-        LOGGER<span style="color: #666666">.</span><span style="color: #7D9029">info</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;Information message...&quot;</span><span style="color: #666666">);</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span
+            style="color: #0000FF">someMethod</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
+        LOGGER<span style="color: #666666">.</span><span style="color: #7D9029">info</span><span style="color: #666666">(</span><span
+            style="color: #BA2121">&quot;Information message...&quot;</span><span style="color: #666666">);</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #666666">...</span>
 <span style="color: #666666">}</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Logging can be very important for analysis of a problem some other user had. emuStudio is supposed for many users
-so it&#8217;s reasonable to include logging.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-It is not recommended to log information during running emulation. Logging significantly lowers the performance
-      down.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="use-maven-if-you-can">Use Maven if you can</h3>
-<div class="paragraph">
-<p>Maven is a standard for Java projects today. It helps with the build process and manages dependencies in satisfying
-and reusable way.</p>
-</div>
-<div class="paragraph">
-<p>Each official emuStudio module (artifact) is available in custom Maven repository, including emuLib. In order to be able
-to use them from Maven, put the following code into your <code>pom.xml</code> file:</p>
-</div>
-<div class="listingblock">
-<div class="content">
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>Logging can be very important for analysis of a problem some other user had. emuStudio is
+                            supposed for many users
+                            so it&#8217;s reasonable to include logging.</p>
+                    </div>
+                    <div class="admonitionblock note">
+                        <table>
+                            <tr>
+                                <td class="icon">
+                                    <i class="fa icon-note" title="Note"></i>
+                                </td>
+                                <td class="content">
+                                    It is not recommended to log information during running emulation. Logging
+                                    significantly lowers the performance
+                                    down.
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="use-maven-if-you-can">Use Maven if you can</h3>
+                <div class="paragraph">
+                    <p>Maven is a standard for Java projects today. It helps with the build process and manages
+                        dependencies in satisfying
+                        and reusable way.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Each official emuStudio module (artifact) is available in custom Maven repository, including
+                        emuLib. In order to be able
+                        to use them from Maven, put the following code into your <code>pom.xml</code> file:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
 <pre class="pygments highlight"><code data-lang="xml"><span></span><span style="color: #008000; font-weight: bold">&lt;distributionManagement&gt;</span>
   <span style="color: #008000; font-weight: bold">&lt;repository&gt;</span>
-    <span style="color: #008000; font-weight: bold">&lt;id&gt;</span>emustudio-repository<span style="color: #008000; font-weight: bold">&lt;/id&gt;</span>
-    <span style="color: #008000; font-weight: bold">&lt;name&gt;</span>emuStudio Repository<span style="color: #008000; font-weight: bold">&lt;/name&gt;</span>
-    <span style="color: #008000; font-weight: bold">&lt;url&gt;</span>sftp://web.sourceforge.net:/home/project-web/emustudio/htdocs/repository<span style="color: #008000; font-weight: bold">&lt;/url&gt;</span>
+    <span style="color: #008000; font-weight: bold">&lt;id&gt;</span>emustudio-repository<span
+            style="color: #008000; font-weight: bold">&lt;/id&gt;</span>
+    <span style="color: #008000; font-weight: bold">&lt;name&gt;</span>emuStudio Repository<span
+            style="color: #008000; font-weight: bold">&lt;/name&gt;</span>
+    <span style="color: #008000; font-weight: bold">&lt;url&gt;</span>sftp://web.sourceforge.net:/home/project-web/emustudio/htdocs/repository<span
+            style="color: #008000; font-weight: bold">&lt;/url&gt;</span>
   <span style="color: #008000; font-weight: bold">&lt;/repository&gt;</span>
 <span style="color: #008000; font-weight: bold">&lt;/distributionManagement&gt;</span></code></pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Development of official standard plug-ins require using Maven.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="documenting-plug-ins">Documenting plug-ins</h3>
-<div class="paragraph">
-<p>There are two types of documentation:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>user documentation</p>
-</li>
-<li>
-<p>developer&#8217;s documentation (not javadoc)</p>
-</li>
-</ul>
-</div>
-<div class="sect3">
-<h4 id="user-documentation">User documentation</h4>
-<div class="paragraph">
-<p>User documentation is located at <code>doc/src/user-manual</code>.</p>
-</div>
-<div class="paragraph">
-<p>Description of a plug-in usually should not be standalone, but put in a bigger document describing the
-whole computer. Description of each computer should be put in a separate directory, e.g. <code>altair8800/</code>, <code>brainduck/</code>, etc.
-The description should focus on the interactive part of the emulation, and do not describe what&#8217;s going under the hood
-in much detail.</p>
-</div>
-<div class="paragraph">
-<p>The description should start with some introduction:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>How the computer is related to the computer history?</p>
-</li>
-<li>
-<p>Is it abstract or real?</p>
-</li>
-<li>
-<p>The purpose of the computer</p>
-</li>
-<li>
-<p>Comparison of features which it has as the emulator for emuStudio with the features of real computer</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Then, every plug-in should be described, starting from compiler - in the form of the "programming language" tutorial.</p>
-</div>
-<div class="paragraph">
-<p>It is important - keep the information useful. Do not try hard to put any information if you think it is too small.
-Some plug-ins are quite clear and don&#8217;t seem to interact much with user, which is OK. For example usually it&#8217;s the
-CPU plug-in.</p>
-</div>
-<div class="paragraph">
-<p>Programming examples should follow, if the plug-in allows programming. For example, both MITS 88-DISK and MITS 88-SIO
-are programmable devices.</p>
-</div>
-<div class="paragraph">
-<p>Then a very important section should be devoted to automatic emulation. More specifically:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>How the plug-in will behave if emuStudio will run in automatic emulation mode?</p>
-</li>
-<li>
-<p>Where can user find output files if the output is redirected to a file?</p>
-</li>
-<li>
-<p>What is the behavior if the automatic emulation is run more times in a row? Will the files be overridden or appended?</p>
-</li>
-<li>
-<p>Can be output file names changed?</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The last section should talk about debugging of the plug-in. For example:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>List of known bugs</p>
-</li>
-<li>
-<p>How to report a bug</p>
-</li>
-<li>
-<p>How to do some analysis when something does not work</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect3">
-<h4 id="developer-s-documentation">Developer&#8217;s documentation</h4>
-<div class="paragraph">
-<p>Developer documentation is optional, but suggested. It should be written in the form of Maven sites. The preferred
-formatter is Markdown.</p>
-</div>
-<div class="paragraph">
-<p>In this type of documentation, only technical details should be explained. Majority of them should be the "why"s instead
-of "how"s.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="incorporating-a-plug-in-to-emustudio">Incorporating a plug-in to emuStudio</h3>
-<div class="paragraph">
-<p>The philosophy about releasing is to keep everything as automatic as possible. The main reason is that if it was manual,
-it would take some time which can be spent on something better. Of course there will be always some manual steps, but
-it is better to keep them minimal.</p>
-</div>
-<div class="paragraph">
-<p>The submodule <code>release/</code> is used now to create emuStudio releases. It expects that emuStudio artifacts are either
-installed in local Maven repository, or they will be downloaded from emuStudio repository.</p>
-</div>
-<div class="paragraph">
-<p>The submodule uses <code>maven-assembly-plugin</code> is used, and <code>assembly.xml</code> file exists which describes which artifacts
-and files should be placed in which directories.</p>
-</div>
-<div class="paragraph">
-<p>The following artifacts can be included in the release:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Plug-in artifact (JAR file)</p>
-</li>
-<li>
-<p>Plug-in examples</p>
-</li>
-<li>
-<p>New computer configuration (if applicable)</p>
-</li>
-</ul>
-</div>
-<div class="sect3">
-<h4 id="plug-in-artifact">Plug-in artifact</h4>
-<div class="paragraph">
-<p>The condition is ofcourse that the plug-in must be a submodule in the main emuStudio repository. As an example,
-let&#8217;s use plug-in <code>plugins/compilers/as-ssem</code>. The point is to edit <code>release/assembly.xml</code> file, find the dependency
-set for compilers (look for the line <code>&lt;outputDirectory&gt;/compilers&lt;/outputDirectory&gt;</code>) and add the plug-in in that
-set:</p>
-</div>
-<div class="listingblock">
-<div class="content">
+                    </div>
+                </div>
+                <div class="admonitionblock note">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-note" title="Note"></i>
+                            </td>
+                            <td class="content">
+                                Development of official standard plug-ins require using Maven.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="documenting-plug-ins">Documenting plug-ins</h3>
+                <div class="paragraph">
+                    <p>There are two types of documentation:</p>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p>user documentation</p>
+                        </li>
+                        <li>
+                            <p>developer&#8217;s documentation (not javadoc)</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="sect3">
+                    <h4 id="user-documentation">User documentation</h4>
+                    <div class="paragraph">
+                        <p>User documentation is located at <code>doc/src/user-manual</code>.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Description of a plug-in usually should not be standalone, but put in a bigger document
+                            describing the
+                            whole computer. Description of each computer should be put in a separate directory, e.g.
+                            <code>altair8800/</code>, <code>brainduck/</code>, etc.
+                            The description should focus on the interactive part of the emulation, and do not describe
+                            what&#8217;s going under the hood
+                            in much detail.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>The description should start with some introduction:</p>
+                    </div>
+                    <div class="ulist">
+                        <ul>
+                            <li>
+                                <p>How the computer is related to the computer history?</p>
+                            </li>
+                            <li>
+                                <p>Is it abstract or real?</p>
+                            </li>
+                            <li>
+                                <p>The purpose of the computer</p>
+                            </li>
+                            <li>
+                                <p>Comparison of features which it has as the emulator for emuStudio with the features
+                                    of real computer</p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="paragraph">
+                        <p>Then, every plug-in should be described, starting from compiler - in the form of the
+                            "programming language" tutorial.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>It is important - keep the information useful. Do not try hard to put any information if you
+                            think it is too small.
+                            Some plug-ins are quite clear and don&#8217;t seem to interact much with user, which is OK.
+                            For example usually it&#8217;s the
+                            CPU plug-in.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Programming examples should follow, if the plug-in allows programming. For example, both MITS
+                            88-DISK and MITS 88-SIO
+                            are programmable devices.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Then a very important section should be devoted to automatic emulation. More
+                            specifically:</p>
+                    </div>
+                    <div class="ulist">
+                        <ul>
+                            <li>
+                                <p>How the plug-in will behave if emuStudio will run in automatic emulation mode?</p>
+                            </li>
+                            <li>
+                                <p>Where can user find output files if the output is redirected to a file?</p>
+                            </li>
+                            <li>
+                                <p>What is the behavior if the automatic emulation is run more times in a row? Will the
+                                    files be overridden or appended?</p>
+                            </li>
+                            <li>
+                                <p>Can be output file names changed?</p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="paragraph">
+                        <p>The last section should talk about debugging of the plug-in. For example:</p>
+                    </div>
+                    <div class="ulist">
+                        <ul>
+                            <li>
+                                <p>List of known bugs</p>
+                            </li>
+                            <li>
+                                <p>How to report a bug</p>
+                            </li>
+                            <li>
+                                <p>How to do some analysis when something does not work</p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="developer-s-documentation">Developer&#8217;s documentation</h4>
+                    <div class="paragraph">
+                        <p>Developer documentation is optional, but suggested. It should be written in the form of Maven
+                            sites. The preferred
+                            formatter is Markdown.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>In this type of documentation, only technical details should be explained. Majority of them
+                            should be the "why"s instead
+                            of "how"s.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="incorporating-a-plug-in-to-emustudio">Incorporating a plug-in to emuStudio</h3>
+                <div class="paragraph">
+                    <p>The philosophy about releasing is to keep everything as automatic as possible. The main reason is
+                        that if it was manual,
+                        it would take some time which can be spent on something better. Of course there will be always
+                        some manual steps, but
+                        it is better to keep them minimal.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The submodule <code>release/</code> is used now to create emuStudio releases. It expects that
+                        emuStudio artifacts are either
+                        installed in local Maven repository, or they will be downloaded from emuStudio repository.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The submodule uses <code>maven-assembly-plugin</code> is used, and <code>assembly.xml</code> file
+                        exists which describes which artifacts
+                        and files should be placed in which directories.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The following artifacts can be included in the release:</p>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p>Plug-in artifact (JAR file)</p>
+                        </li>
+                        <li>
+                            <p>Plug-in examples</p>
+                        </li>
+                        <li>
+                            <p>New computer configuration (if applicable)</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="sect3">
+                    <h4 id="plug-in-artifact">Plug-in artifact</h4>
+                    <div class="paragraph">
+                        <p>The condition is ofcourse that the plug-in must be a submodule in the main emuStudio
+                            repository. As an example,
+                            let&#8217;s use plug-in <code>plugins/compilers/as-ssem</code>. The point is to edit <code>release/assembly.xml</code>
+                            file, find the dependency
+                            set for compilers (look for the line <code>&lt;outputDirectory&gt;/compilers&lt;/outputDirectory&gt;</code>)
+                            and add the plug-in in that
+                            set:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
 <pre>    &lt;dependencySet&gt;
       &lt;includes&gt;
         ...
@@ -1015,37 +1203,42 @@ set:</p>
       ...
       &lt;outputDirectory&gt;/compilers&lt;/outputDirectory&gt;
     &lt;/dependencySet&gt;</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Similarly, for other types of plug-ins there exist corresponding sections which should be used.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="plug-in-examples">Plug-in examples</h4>
-<div class="paragraph">
-<p>Similarly as was said in the previous subsection, the file which should be edited is <code>release/assembly.xml</code>. Examples
-section is located in the bottom part, in a <code>fileSet</code> section. Examples are usually bound with specific compiler - and
-they are also physically placed.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Compilation of compiler plug-ins does not create examples artifacts (maybe it should in the future). The assembly
-      therefore points to relative path of the example files.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>For example, example files for plug-in <code>as-8080</code> are stored in the following section:</p>
-</div>
-<div class="listingblock">
-<div class="content">
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>Similarly, for other types of plug-ins there exist corresponding sections which should be
+                            used.</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="plug-in-examples">Plug-in examples</h4>
+                    <div class="paragraph">
+                        <p>Similarly as was said in the previous subsection, the file which should be edited is <code>release/assembly.xml</code>.
+                            Examples
+                            section is located in the bottom part, in a <code>fileSet</code> section. Examples are
+                            usually bound with specific compiler - and
+                            they are also physically placed.</p>
+                    </div>
+                    <div class="admonitionblock note">
+                        <table>
+                            <tr>
+                                <td class="icon">
+                                    <i class="fa icon-note" title="Note"></i>
+                                </td>
+                                <td class="content">
+                                    Compilation of compiler plug-ins does not create examples artifacts (maybe it should
+                                    in the future). The assembly
+                                    therefore points to relative path of the example files.
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="paragraph">
+                        <p>For example, example files for plug-in <code>as-8080</code> are stored in the following
+                            section:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
 <pre>    &lt;fileSet&gt;
       &lt;directory&gt;../plugins/compilers/as-8080/examples&lt;/directory&gt;
       &lt;directoryMode&gt;&lt;/directoryMode&gt;
@@ -1055,53 +1248,61 @@ Compilation of compiler plug-ins does not create examples artifacts (maybe it sh
       &lt;/includes&gt;
       &lt;outputDirectory&gt;/examples/as-8080&lt;/outputDirectory&gt;
     &lt;/fileSet&gt;</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The subdirectories in target <code>examples/</code> directory are organized by compiler plug-in names, or machine names if
-the examples are rather bound to the whole virtual computer (e.g. disk images, etc.). Examples for whole virtual
-computers are usually not bound with specific plug-ins and should be placed directly in the <code>release/files/examples/</code>
-directory.</p>
-</div>
-<div class="paragraph">
-<p>All files in the <code>release/files</code> are automatically included in the release.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="new-computer-configuration">New computer configuration</h4>
-<div class="paragraph">
-<p>All predefined computer configurations are placed in directory <code>release/files/config</code>. The only step needed to be
-done here is to create a computer configuration file and place it there. The <code>maven-assembly-plugin</code> will take care
-of it and the configuration will be included in the release automatically.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="what-to-do-next">What to do next</h3>
-<div class="paragraph">
-<p>What follows are tutorials for developing specific emuStudio plug-ins - compiler, CPU, memory or a device. Prepare
-your fingers, you&#8217;ll write some code. Let&#8217;s start.</p>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-
-    <footer class="site-footer">
-        <div class="container">
-            <nav class="navbar">
-                <div class="container">
-                    <ul class="nav navbar-nav">
-                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                        <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
-                    </ul>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>The subdirectories in target <code>examples/</code> directory are organized by compiler
+                            plug-in names, or machine names if
+                            the examples are rather bound to the whole virtual computer (e.g. disk images, etc.).
+                            Examples for whole virtual
+                            computers are usually not bound with specific plug-ins and should be placed directly in the
+                            <code>release/files/examples/</code>
+                            directory.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>All files in the <code>release/files</code> are automatically included in the release.</p>
+                    </div>
                 </div>
-            </nav>
+                <div class="sect3">
+                    <h4 id="new-computer-configuration">New computer configuration</h4>
+                    <div class="paragraph">
+                        <p>All predefined computer configurations are placed in directory
+                            <code>release/files/config</code>. The only step needed to be
+                            done here is to create a computer configuration file and place it there. The <code>maven-assembly-plugin</code>
+                            will take care
+                            of it and the configuration will be included in the release automatically.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="what-to-do-next">What to do next</h3>
+                <div class="paragraph">
+                    <p>What follows are tutorials for developing specific emuStudio plug-ins - compiler, CPU, memory or
+                        a device. Prepare
+                        your fingers, you&#8217;ll write some code. Let&#8217;s start.</p>
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    </body>
+
+<footer class="site-footer">
+    <div class="container">
+        <nav class="navbar">
+            <div class="container">
+                <ul class="nav navbar-nav">
+                    <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                                                                                           src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
+                    </li>
+                    <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</footer>
+
+</body>
 </html>
 

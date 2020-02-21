@@ -20,12 +20,12 @@
 package net.sf.emustudio.memory.standard.gui;
 
 import emulib.runtime.UniversalFileFilter;
+
+import javax.swing.*;
 import java.io.File;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 
 public class FileChooser {
-    
+
     public static File selectFile(JDialog parent, String title) {
         JFileChooser f = new JFileChooser();
         UniversalFileFilter f1 = new UniversalFileFilter();
@@ -52,6 +52,6 @@ public class FileChooser {
         }
         return null;
     }
-    
-    
+
+
 }

@@ -19,12 +19,7 @@
  */
 package emustudio.gui.debugTable;
 
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.LayoutStyle;
+import javax.swing.*;
 
 public class PagesPanel extends JPanel {
     private static final String PAGE_FIRST_PNG = "/emustudio/gui/page-first.png";
@@ -43,13 +38,13 @@ public class PagesPanel extends JPanel {
     }
 
     private void initComponents() {
-        JButton btnFirst =  new JButton();
+        JButton btnFirst = new JButton();
         JButton btnBackward = new JButton();
-        JButton btnCurrentPage =  new JButton();
-        JButton btnForward =  new JButton();
-        JButton btnLast =  new JButton();
-        JButton btnSeekBackward =  new JButton();
-        JButton btnSeekForward =  new JButton();
+        JButton btnCurrentPage = new JButton();
+        JButton btnForward = new JButton();
+        JButton btnLast = new JButton();
+        JButton btnSeekBackward = new JButton();
+        JButton btnSeekForward = new JButton();
 
         btnFirst.setIcon(new ImageIcon(getClass().getResource(PAGE_FIRST_PNG)));
         btnFirst.setToolTipText("Go to the first page");
@@ -83,33 +78,33 @@ public class PagesPanel extends JPanel {
         GroupLayout pagesLayout = new GroupLayout(this);
         setLayout(pagesLayout);
         pagesLayout.setHorizontalGroup(
-                pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addGroup(pagesLayout.createSequentialGroup()
-                                .addComponent(btnFirst)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnSeekBackward)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnBackward)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnCurrentPage)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnForward)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnSeekForward)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnLast))
+            pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addGroup(pagesLayout.createSequentialGroup()
+                    .addComponent(btnFirst)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(btnSeekBackward)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(btnBackward)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(btnCurrentPage)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(btnForward)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(btnSeekForward)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(btnLast))
         );
         pagesLayout.setVerticalGroup(
-                pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addGroup(pagesLayout.createSequentialGroup()
-                                .addGroup(pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                                        .addComponent(btnLast)
-                                        .addComponent(btnSeekBackward)
-                                        .addComponent(btnBackward)
-                                        .addComponent(btnFirst)
-                                        .addComponent(btnCurrentPage)
-                                        .addComponent(btnSeekForward)
-                                        .addComponent(btnForward)))
+            pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addGroup(pagesLayout.createSequentialGroup()
+                    .addGroup(pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                        .addComponent(btnLast)
+                        .addComponent(btnSeekBackward)
+                        .addComponent(btnBackward)
+                        .addComponent(btnFirst)
+                        .addComponent(btnCurrentPage)
+                        .addComponent(btnSeekForward)
+                        .addComponent(btnForward)))
         );
     }
 

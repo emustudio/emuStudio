@@ -29,11 +29,11 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
     static final int NUMBER_OF_CELLS = 32 * 4;
 
     // byte type is atomic in JVM memory model
-    private final byte[]memory = new byte[NUMBER_OF_CELLS];
+    private final byte[] memory = new byte[NUMBER_OF_CELLS];
 
     @Override
     public void clear() {
-        Arrays.fill(memory, (byte)0);
+        Arrays.fill(memory, (byte) 0);
         notifyMemoryChanged(-1); // notify that all memory has changed
     }
 
@@ -49,7 +49,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
 
     @Override
     public Byte[] readWord(int from) {
-        return new Byte[] { memory[from], memory[from+1], memory[from+2], memory[from+3] };
+        return new Byte[]{memory[from], memory[from + 1], memory[from + 2], memory[from + 3]};
     }
 
     @Override
@@ -63,7 +63,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
         int i = 0;
         for (byte cell : cells) {
             memory[to + i] = cell;
-            notifyMemoryChanged(to+i);
+            notifyMemoryChanged(to + i);
             i++;
         }
     }

@@ -49,7 +49,7 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
 
             String setting = settings.readSetting(pluginId, PRINT_CODE);
             String printCodeUseCache = settings.readSetting(pluginId, PRINT_CODE_USE_CACHE);
-            
+
             this.dumpInstructions = false;
             if (setting != null && setting.toLowerCase().equals("true")) {
                 this.dumpInstructions = true;

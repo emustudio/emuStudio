@@ -22,11 +22,7 @@ package net.sf.emustudio.ssem.memory.impl;
 import emulib.plugins.memory.Memory;
 import org.junit.Test;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -51,7 +47,7 @@ public class MemoryContextImplTest {
     public void testReadWithoutWritReturnsZero() throws Exception {
         MemoryContextImpl context = new MemoryContextImpl();
 
-        assertEquals(0L, (long)context.read(10));
+        assertEquals(0L, (long) context.read(10));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -84,7 +80,7 @@ public class MemoryContextImplTest {
         replay(listener);
 
         context.addMemoryListener(listener);
-        context.write(10, (byte)134);
+        context.write(10, (byte) 134);
 
         verify(listener);
     }
@@ -93,15 +89,15 @@ public class MemoryContextImplTest {
     public void testWriteReallyWritesCorrectValueAtCorrectLocation() throws Exception {
         MemoryContextImpl context = new MemoryContextImpl();
 
-        context.write(10, (byte)134);
-        assertEquals((byte)134, (byte)context.read(10));
+        context.write(10, (byte) 134);
+        assertEquals((byte) 134, (byte) context.read(10));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testWriteAtInvalidLocationThrows() throws Exception {
         MemoryContextImpl context = new MemoryContextImpl();
 
-        context.write(-1, (byte)134);
+        context.write(-1, (byte) 134);
     }
 
     @Test
@@ -118,16 +114,16 @@ public class MemoryContextImplTest {
 
     @Test
     public void testReadWordIsSupported() throws Exception {
-        assertArrayEquals(new Byte[] {0,0,0,0}, new MemoryContextImpl().readWord(0));
+        assertArrayEquals(new Byte[]{0, 0, 0, 0}, new MemoryContextImpl().readWord(0));
     }
 
     @Test
     public void testWriteWordIsSupported() throws Exception {
         MemoryContextImpl mem = new MemoryContextImpl();
-        
-        Byte[] row = new Byte[] {1,2,3,4};
+
+        Byte[] row = new Byte[]{1, 2, 3, 4};
         mem.writeWord(0, row);
-        
+
         assertArrayEquals(row, mem.readWord(0));
     }
 }

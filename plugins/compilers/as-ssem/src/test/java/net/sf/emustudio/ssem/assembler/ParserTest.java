@@ -31,10 +31,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class ParserTest {
 
@@ -46,12 +43,12 @@ public class ParserTest {
     public void testInstructions() throws Exception {
         ParserImpl parser = program(
             "0 cmp // comment\n" +
-            "1 stp\n" +
-            "2 jmp 22\n" +
-            "3 jrp 0\n" +
-            "4 ldn 31\n" +
-            "5 sto 10\n" +
-            "6 sub 15\n"
+                "1 stp\n" +
+                "2 jmp 22\n" +
+                "3 jrp 0\n" +
+                "4 ldn 31\n" +
+                "5 sto 10\n" +
+                "6 sub 15\n"
         );
 
         Program program = (Program) parser.parse().value;
@@ -60,11 +57,11 @@ public class ParserTest {
         Deque<Instruction> expectedInstructions = new LinkedList<>(Arrays.asList(
             Instruction.cmp(),
             Instruction.stp(),
-            Instruction.jmp((byte)22),
-            Instruction.jrp((byte)0),
-            Instruction.ldn((byte)31),
-            Instruction.sto((byte)10),
-            Instruction.sub((byte)15)
+            Instruction.jmp((byte) 22),
+            Instruction.jrp((byte) 0),
+            Instruction.ldn((byte) 31),
+            Instruction.sto((byte) 10),
+            Instruction.sub((byte) 15)
         ));
         program.accept(new ASTvisitor() {
 
@@ -124,11 +121,11 @@ public class ParserTest {
 
         assertConstant(program, -32);
     }
-    
+
     @Test
     public void testStartingPointIsAccepted() throws Exception {
         ParserImpl parser = program("0 jmp 1\nstart:\n3 cmp\n");
-        
+
         Program program = (Program) parser.parse().value;
         assertFalse(parser.hasSyntaxErrors());
         assertEquals(3, program.getStartLine());

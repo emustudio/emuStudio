@@ -19,19 +19,17 @@
  */
 package emustudio.drawing;
 
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Point;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 public class SchemaTest {
 
@@ -44,7 +42,7 @@ public class SchemaTest {
         Rectangle2D rect = EasyMock.createNiceMock(Rectangle2D.class);
         EasyMock.expect(rect.getWidth()).andReturn(0.0);
         EasyMock.expect(fontMetricsMock.getStringBounds(EasyMock.anyObject(String.class),
-                EasyMock.eq(graphicsMock))).andReturn(rect).anyTimes();
+            EasyMock.eq(graphicsMock))).andReturn(rect).anyTimes();
         Font fontMock = EasyMock.createNiceMock(Font.class);
         EasyMock.expect(fontMock.deriveFont(EasyMock.anyInt())).andReturn(fontMock).anyTimes();
         EasyMock.expect(graphicsMock.getFont()).andReturn(fontMock).anyTimes();
@@ -347,28 +345,28 @@ public class SchemaTest {
 
         ConnectionLine line0 = mockConnectionLine(compiler, memory, schema);
         ConnectionLine line1 = mockConnectionLine(compiler, device, schema);
-        ConnectionLine line2 = mockConnectionLine(device, memory, schema, new Point(250,200));
+        ConnectionLine line2 = mockConnectionLine(device, memory, schema, new Point(250, 200));
 
         Point p;
         ConnectionLine result = schema.getCrossingLine(null);
         Assert.assertSame(null, result);
 
 
-       /*             l
-        *             i                 width  = 100
-        * +---------+ n  +---------+    height = 30
-        * |   [A]   | e1 |   [B]   |
-        * |    x    |<-->|    x    |
-        * | 100,100 |    | 250,100 |
-        * +---------+    +---------+   AC = C - A = (50, 100) = (1,2)
-        *       ^.[P]         ^         P = A + AC/2 = [125, 150]; AC' = (-150, 125) = (-2,1)
-        *   line0 v           |         P'= P + AC' = [123, 151]
-        *      +---------+    |         d(P,P') = sqrt(4 + 1) = sqrt(5) < 5 (tolerance)
-        *      |   [C]   |    |
-        *      |    x    |<---+ line2
-        *      | 150,200 | 250,200
-        *      +---------+
-        */
+        /*             l
+         *             i                 width  = 100
+         * +---------+ n  +---------+    height = 30
+         * |   [A]   | e1 |   [B]   |
+         * |    x    |<-->|    x    |
+         * | 100,100 |    | 250,100 |
+         * +---------+    +---------+   AC = C - A = (50, 100) = (1,2)
+         *       ^.[P]         ^         P = A + AC/2 = [125, 150]; AC' = (-150, 125) = (-2,1)
+         *   line0 v           |         P'= P + AC' = [123, 151]
+         *      +---------+    |         d(P,P') = sqrt(4 + 1) = sqrt(5) < 5 (tolerance)
+         *      |   [C]   |    |
+         *      |    x    |<---+ line2
+         *      | 150,200 | 250,200
+         *      +---------+
+         */
         p = new Point(125, 150);
         result = schema.getCrossingLine(p);
         Assert.assertSame(line0, result);
@@ -380,7 +378,7 @@ public class SchemaTest {
         /*
          * toleranceFactor = TOLERANCE / sqrt(x^2 + y^2); where AC' = (x,y)
          */
-        int maxT = (int)(ConnectionLine.TOLERANCE / Math.sqrt(5)+20);
+        int maxT = (int) (ConnectionLine.TOLERANCE / Math.sqrt(5) + 20);
         ConnectionLine expResult;
         for (int toleranceFactor = -20; toleranceFactor < maxT; toleranceFactor++) {
             p = new Point(125 + toleranceFactor * (-2), 150 + toleranceFactor);
@@ -441,7 +439,7 @@ public class SchemaTest {
 
         ConnectionLine line0 = mockConnectionLine(compiler, memory, instance);
         ConnectionLine line1 = mockConnectionLine(compiler, device, instance);
-        ConnectionLine line2 = mockConnectionLine(device, memory, instance, new Point(250,200));
+        ConnectionLine line2 = mockConnectionLine(device, memory, instance, new Point(250, 200));
 
         int x = 50;
         int y = 20;
@@ -585,7 +583,7 @@ public class SchemaTest {
 
         ConnectionLine line0 = mockConnectionLine(compiler, memory, schema);
         ConnectionLine line1 = mockConnectionLine(compiler, device, schema);
-        ConnectionLine line2 = mockConnectionLine(device, memory, schema, new Point(250,200));
+        ConnectionLine line2 = mockConnectionLine(device, memory, schema, new Point(250, 200));
 
         int x = 0;
         int y = 90;
@@ -651,21 +649,21 @@ public class SchemaTest {
         Assert.assertFalse(schema.moveSelection(0, -75 + Schema.MIN_TOP_MARGIN - 1));
         Assert.assertEquals(100, compiler.getY());
 
-       /*             l
-        *             i                 width  = 100
-        * +---------+ n  +---------+    height = 30
-        * |   [A]   | e1 |   [B]   |
-        * |    x    |<-->|    x    |
-        * | 100,100 |    | 250,100 |
-        * +---------+    +---------+   AC = C - A = (50, 100) = (1,2)
-        *       ^.[P]         ^         P = A + AC/2 = [125, 150]; AC' = (-150, 125) = (-2,1)
-        *   line0 v           |         P'= P + AC' = [123, 151]
-        *      +---------+    |         d(P,P') = sqrt(4 + 1) = sqrt(5) < 5 (tolerance)
-        *      |   [C]   |    |
-        *      |    x    |<---+ line2
-        *      | 150,200 | 250,200
-        *      +---------+
-        */
+        /*             l
+         *             i                 width  = 100
+         * +---------+ n  +---------+    height = 30
+         * |   [A]   | e1 |   [B]   |
+         * |    x    |<-->|    x    |
+         * | 100,100 |    | 250,100 |
+         * +---------+    +---------+   AC = C - A = (50, 100) = (1,2)
+         *       ^.[P]         ^         P = A + AC/2 = [125, 150]; AC' = (-150, 125) = (-2,1)
+         *   line0 v           |         P'= P + AC' = [123, 151]
+         *      +---------+    |         d(P,P') = sqrt(4 + 1) = sqrt(5) < 5 (tolerance)
+         *      |   [C]   |    |
+         *      |    x    |<---+ line2
+         *      | 150,200 | 250,200
+         *      +---------+
+         */
 
         // now test elem3
 
@@ -674,7 +672,7 @@ public class SchemaTest {
         y = 180;
         width = 100;
         height = 50;
-        
+
         schema.selectElements(x, y, width, height);
         Assert.assertFalse(compiler.isSelected());
         Assert.assertFalse(device.isSelected());
@@ -694,7 +692,7 @@ public class SchemaTest {
         // right
         Assert.assertTrue(schema.moveSelection(59, 0));
         Assert.assertEquals(209, memory.getX());
-        
+
         Assert.assertFalse(schema.moveSelection(1, 0));
         Assert.assertEquals(209, memory.getX()); // move failed
         Assert.assertFalse(schema.moveSelection(20, 0));
@@ -795,7 +793,7 @@ public class SchemaTest {
 
         Assert.assertNull(schema.getSettings().getProperty("compiler"));
         schema.save();
-        
+
         Properties settings = schema.getSettings();
         Assert.assertEquals("compiler", settings.getProperty("compiler"));
         Assert.assertEquals("100", settings.getProperty("compiler.point.x"));
@@ -805,7 +803,7 @@ public class SchemaTest {
     }
 
     private CompilerElement mockCompiler(Schema instance, int x, int y, int width, int height) throws NumberFormatException {
-        Properties props = mockProperties("compiler",x,y,width,height);
+        Properties props = mockProperties("compiler", x, y, width, height);
         CompilerElement compiler = new CompilerElement("compiler", props, instance);
         compiler.measure(graphicsMock);
         instance.setCompilerElement(compiler);
@@ -813,7 +811,7 @@ public class SchemaTest {
         return compiler;
     }
 
-    
+
     private MemoryElement mockMemory(Schema instance, int x, int y, int width, int height) throws NumberFormatException {
         Properties props = mockProperties("memory", x, y, width, height);
         MemoryElement memory = new MemoryElement("memory", props, instance);
@@ -829,13 +827,13 @@ public class SchemaTest {
     }
 
     private DeviceElement mockDevice(Schema instance, int x, int y, int width, int height) throws NumberFormatException {
-        Properties props = mockProperties("dev-0",x, y, width, height);
+        Properties props = mockProperties("dev-0", x, y, width, height);
         DeviceElement device = new DeviceElement("dev-0", props, instance);
         device.measure(graphicsMock);
         instance.addDeviceElement(device);
         return device;
     }
-    
+
     private Properties mockProperties(String name, int x, int y, int width, int height) {
         Properties props = new Properties();
         props.setProperty(name, name);

@@ -19,9 +19,9 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
+import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.intel8080.assembler.exceptions.UnknownIdentifierException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
-import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 
 public class IdExpr extends ExprNode {

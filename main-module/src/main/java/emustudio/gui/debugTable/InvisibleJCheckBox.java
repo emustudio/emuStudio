@@ -19,8 +19,8 @@
  */
 package emustudio.gui.debugTable;
 
-import javax.swing.JCheckBox;
-import java.awt.Graphics;
+import javax.swing.*;
+import java.awt.*;
 
 class InvisibleJCheckBox extends JCheckBox {
 

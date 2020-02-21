@@ -20,19 +20,15 @@
 
 package net.sf.emustudio.rasp.memory.impl;
 
-import net.sf.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
 import emulib.plugins.memory.AbstractMemoryContext;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.*;
-
+import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.RASPInstruction;
-import net.sf.emustudio.rasp.memory.RASPMemoryContext;
+import net.sf.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
+
+import java.io.*;
+import java.util.*;
 
 public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {
 
@@ -63,7 +59,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
      * Write a memory item to the given address.
      *
      * @param position the memory address
-     * @param item the item to write
+     * @param item     the item to write
      */
     @Override
     public void write(int position, MemoryItem item) {
@@ -134,7 +130,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
     /**
      * Assigns label to particular address.
      *
-     * @param pos the memory address
+     * @param pos   the memory address
      * @param label the label
      */
     @Override

@@ -21,13 +21,8 @@ package net.sf.emustudio.devices.adm3a.gui;
 
 import net.sf.emustudio.devices.adm3a.impl.Display;
 
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.WindowConstants;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Font;
+import javax.swing.*;
+import java.awt.*;
 
 public class TerminalWindow extends JFrame {
     private final Display display;

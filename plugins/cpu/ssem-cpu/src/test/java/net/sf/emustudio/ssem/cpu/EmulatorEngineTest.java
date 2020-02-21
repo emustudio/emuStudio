@@ -43,7 +43,7 @@ public class EmulatorEngineTest {
     }
 
     @Test
-    public void testAddition() throws Exception {
+    public void testAddition() {
         /*
 01: LDN 29  -- A = -X
 02: SUB 30  -- A = -X - Y
@@ -57,8 +57,8 @@ public class EmulatorEngineTest {
 31:         -- Sum Result will appear here
 */
 
-        memoryStub.setMemory(new short[] {
-            0,    0, 0, 0,
+        memoryStub.setMemory(new short[]{
+            0, 0, 0, 0,
             0xB8, 0x02, 0, 0,
             0x78, 0x01, 0, 0,
             0xF8, 0x06, 0, 0,
@@ -66,9 +66,9 @@ public class EmulatorEngineTest {
             0xF8, 0x06, 0, 0,
             0x00, 0x07, 0, 0,
 
-            0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,
-            0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,
-            0,0,0,0,  0,0,0,0,  0xA0,0,0,0,  0xC0,0,0,0,  0,0,0,0,  0,0,0,0
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0xA0, 0, 0, 0, 0xC0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         });
 
         engine.reset(4);
@@ -77,7 +77,7 @@ public class EmulatorEngineTest {
     }
 
     @Test(timeout = 500)
-    public void testEndlessLoopPrevention() throws Exception {
+    public void testEndlessLoopPrevention() {
         memoryStub.setMemory(new short[32 * 4]);
         engine.reset(0);
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());

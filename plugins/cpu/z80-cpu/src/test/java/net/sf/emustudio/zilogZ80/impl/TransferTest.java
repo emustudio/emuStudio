@@ -26,16 +26,7 @@ import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.Utils;
 import org.junit.Test;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.predicate8MSBplus8LSB;
 
 @SuppressWarnings("unchecked")

@@ -27,17 +27,18 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import net.sf.emustudio.ram.memory.gui.MemoryDialog;
 
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
 @PluginType(
-        type=PLUGIN_TYPE.MEMORY,
-        title="RAM Program Tape",
-        copyright="\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description="Read-only program tape for abstract RAM machine."
+    type = PLUGIN_TYPE.MEMORY,
+    title = "RAM Program Tape",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Read-only program tape for abstract RAM machine."
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
@@ -54,7 +55,7 @@ public class MemoryImpl extends AbstractMemory {
             contextPool.register(pluginID, context, MemoryContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register Program tape context",
-                    MemoryImpl.class.getAnnotation(PluginType.class).title());
+                MemoryImpl.class.getAnnotation(PluginType.class).title());
         }
     }
 

@@ -32,7 +32,7 @@ public class ModeSelector {
     private Mode currentMode;
 
     public ModeSelector(DrawingPanel panel, Model model) {
-        modes = new Mode[] {
+        modes = new Mode[]{
             new MovingMode(panel, model),
             new ModelingMode(panel, model),
             new ResizingMode(panel, model),

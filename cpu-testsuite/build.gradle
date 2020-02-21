@@ -1,0 +1,9 @@
+plugins {
+  id 'java'
+}
+
+dependencies {
+  implementation libs.emuLib
+  implementation libs.jcipAnnotations
+  implementation libs.junit
+}

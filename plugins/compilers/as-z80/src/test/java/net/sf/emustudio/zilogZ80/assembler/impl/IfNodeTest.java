@@ -27,8 +27,8 @@ public class IfNodeTest extends AbstractCompilerTest {
     public void testIfNodeIsProcessed() throws Exception {
         compile(
             "if 1\n"
-            + "  rrca\n"
-            + "endif"
+                + "  rrca\n"
+                + "endif"
         );
 
         assertProgram(
@@ -64,9 +64,9 @@ public class IfNodeTest extends AbstractCompilerTest {
     public void testIfCanEvaluateBackwardReferenceInExpression() throws Exception {
         compile(
             "present equ 1\n"
-            + "if present\n"
-            + "  rrca\n"
-            + "endif\n"
+                + "if present\n"
+                + "  rrca\n"
+                + "endif\n"
         );
 
         assertProgram(
@@ -77,7 +77,7 @@ public class IfNodeTest extends AbstractCompilerTest {
     @Test
     public void testIfCannotEvaluateForwardReferenceInExpression() throws Exception {
         compile(
-                "if present\n"
+            "if present\n"
                 + "  rrca\n"
                 + "endif\n"
                 + "present equ 1\n"
@@ -90,9 +90,9 @@ public class IfNodeTest extends AbstractCompilerTest {
     public void testIfCannotRedefineIdentifierInside() throws Exception {
         compile(
             "text: db 6\n"
-            + "if 554\n"
-            + "  text: db 5\n"
-            + "endif"
+                + "if 554\n"
+                + "  text: db 5\n"
+                + "endif"
         );
 
         assertError();

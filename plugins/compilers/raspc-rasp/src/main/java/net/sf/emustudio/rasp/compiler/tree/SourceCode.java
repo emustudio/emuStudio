@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * @author miso
  */
 public class SourceCode extends AbstractTreeNode {
@@ -76,6 +75,6 @@ public class SourceCode extends AbstractTreeNode {
 
     public boolean isProgramStartUndefined() {
         return programStartUndefined;
-    } 
+    }
 
 }

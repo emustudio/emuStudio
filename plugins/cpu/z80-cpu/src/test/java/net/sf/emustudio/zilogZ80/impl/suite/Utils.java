@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 public class Utils {
 
     public static int get8MSBplus8LSB(int value) {
-        return ((value & 0xFF00) + (byte)(value & 0xFF)) & 0xFFFF;
+        return ((value & 0xFF00) + (byte) (value & 0xFF)) & 0xFFFF;
     }
 
     public static Predicate<Integer> predicate8MSBplus8LSB(int minimum) {

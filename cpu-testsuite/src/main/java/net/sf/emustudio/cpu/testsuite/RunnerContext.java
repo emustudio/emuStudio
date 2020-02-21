@@ -27,7 +27,7 @@ import java.util.List;
 
 /**
  * Context of a running test.
- *
+ * <p>
  * It is used by injectors and verifiers.
  *
  * @param <OperandType> type of the operands (Byte or Integer)
@@ -45,11 +45,11 @@ public class RunnerContext<OperandType extends Number> {
     /**
      * Creates new RunnerContext which will be used by test verifiers.
      *
-     * @param first first operand (if not used, 0)
-     * @param second second operand (if not used, 0)
-     * @param flags flags before test execution
-     * @param PC program context register (or instruction pointer) before test execution
-     * @param SP stack pointer before test execution
+     * @param first     first operand (if not used, 0)
+     * @param second    second operand (if not used, 0)
+     * @param flags     flags before test execution
+     * @param PC        program context register (or instruction pointer) before test execution
+     * @param SP        stack pointer before test execution
      * @param registers values of some CPU registers before test execution (which registers are there is up to
      *                  CpuRunner implementation)
      */
@@ -65,12 +65,12 @@ public class RunnerContext<OperandType extends Number> {
 
     /**
      * Creates new RunnerContext which will be used by test verifiers.
-     *
+     * <p>
      * NOTE: PC, SP will be 0, and registers will be empty
      *
-     * @param first first operand (if not used, 0)
+     * @param first  first operand (if not used, 0)
      * @param second second operand (if not used, 0)
-     * @param flags flags before test execution
+     * @param flags  flags before test execution
      */
     public RunnerContext(OperandType first, OperandType second, int flags) {
         this(first, second, flags, 0, 0, Collections.emptyList());

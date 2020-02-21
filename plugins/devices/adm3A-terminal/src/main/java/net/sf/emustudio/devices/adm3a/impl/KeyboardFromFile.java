@@ -24,11 +24,7 @@ import net.sf.emustudio.devices.adm3a.InputProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -48,7 +44,7 @@ class KeyboardFromFile implements InputProvider {
     }
 
     void processInputFile(int delayInMilliseconds) {
-        try(BufferedInputStream input = new BufferedInputStream(new FileInputStream(inputFile))) {
+        try (BufferedInputStream input = new BufferedInputStream(new FileInputStream(inputFile))) {
             int key;
             while ((key = input.read()) != -1) {
                 notifyObservers((short) key);

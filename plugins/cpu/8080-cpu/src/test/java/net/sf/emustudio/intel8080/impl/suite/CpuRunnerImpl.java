@@ -26,13 +26,7 @@ import net.sf.emustudio.intel8080.impl.CpuImpl;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_A;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_B;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_C;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_D;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_E;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_H;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_L;
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.*;
 
 public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
 
@@ -76,7 +70,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
             setRegisterPair(registerPair, value);
         } else if (registerPair == 3) {
             cpu.getEngine().regs[REG_A] = (value >>> 8) & 0xFF;
-            cpu.getEngine().flags = (short)(value & 0xD7 | 2);
+            cpu.getEngine().flags = (short) (value & 0xD7 | 2);
         } else {
             throw new IllegalArgumentException("Expected value between <0,3> !");
         }

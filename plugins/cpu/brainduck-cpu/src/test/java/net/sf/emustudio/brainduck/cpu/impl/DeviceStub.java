@@ -34,7 +34,7 @@ public class DeviceStub implements DeviceContext<Short> {
 
     public void setInput(byte[] input) {
         for (byte value : input) {
-            this.input.add((short)value);
+            this.input.add((short) value);
         }
     }
 

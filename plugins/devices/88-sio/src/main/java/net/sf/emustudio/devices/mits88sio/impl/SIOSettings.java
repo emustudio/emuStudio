@@ -104,10 +104,10 @@ public class SIOSettings {
             }
         }
     }
-    
+
     private void writePorts(Collection<Integer> ports, String baseName) {
         SettingsManager tmpManager = settingsManager;
-        
+
         int i = 0;
         for (int port : ports) {
             tmpManager.writeSetting(pluginID, baseName + i, String.valueOf(port));

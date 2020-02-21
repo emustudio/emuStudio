@@ -22,7 +22,7 @@ package net.sf.emustudio.ssem.display;
 import emulib.plugins.memory.Memory;
 import emulib.plugins.memory.MemoryContext;
 
-import javax.swing.JDialog;
+import javax.swing.*;
 import java.util.Objects;
 
 class DisplayDialog extends JDialog {
@@ -32,15 +32,15 @@ class DisplayDialog extends JDialog {
     DisplayDialog(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
         this.displayPanel = new DisplayPanel();
-        
+
         super.setLocationRelativeTo(null);
         initComponents();
 
         scrollPane.setViewportView(displayPanel);
-        
+
         initListener();
     }
-    
+
     private void initListener() {
         memory.addMemoryListener(new Memory.MemoryListener() {
             @Override
@@ -84,23 +84,23 @@ class DisplayDialog extends JDialog {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 432, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 432, Short.MAX_VALUE)
+                    .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
+                    .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
- 
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane scrollPane;
     // End of variables declaration//GEN-END:variables

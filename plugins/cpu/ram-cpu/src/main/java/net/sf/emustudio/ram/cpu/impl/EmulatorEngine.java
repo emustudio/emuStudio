@@ -38,7 +38,8 @@ import java.util.function.IntBinaryOperator;
 public class EmulatorEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
 
-    private enum ArithOp { ADD, SUB, MUL, DIV }
+    private enum ArithOp {ADD, SUB, MUL, DIV}
+
     private final static Map<ArithOp, IntBinaryOperator> INT_ARITH_OPS = new HashMap<>();
     private final static Map<ArithOp, DoubleBinaryOperator> DBL_ARITH_OPS = new HashMap<>();
 
@@ -47,15 +48,15 @@ public class EmulatorEngine {
     public int IP;
 
     static {
-        INT_ARITH_OPS.put(ArithOp.ADD, (a,b) -> a+b);
-        INT_ARITH_OPS.put(ArithOp.SUB, (a,b) -> a-b);
-        INT_ARITH_OPS.put(ArithOp.MUL, (a,b) -> a*b);
-        INT_ARITH_OPS.put(ArithOp.DIV, (a,b) -> a/b);
+        INT_ARITH_OPS.put(ArithOp.ADD, (a, b) -> a + b);
+        INT_ARITH_OPS.put(ArithOp.SUB, (a, b) -> a - b);
+        INT_ARITH_OPS.put(ArithOp.MUL, (a, b) -> a * b);
+        INT_ARITH_OPS.put(ArithOp.DIV, (a, b) -> a / b);
 
-        DBL_ARITH_OPS.put(ArithOp.ADD, (a,b) -> a+b);
-        DBL_ARITH_OPS.put(ArithOp.SUB, (a,b) -> a-b);
-        DBL_ARITH_OPS.put(ArithOp.MUL, (a,b) -> a*b);
-        DBL_ARITH_OPS.put(ArithOp.DIV, (a,b) -> a/b);
+        DBL_ARITH_OPS.put(ArithOp.ADD, (a, b) -> a + b);
+        DBL_ARITH_OPS.put(ArithOp.SUB, (a, b) -> a - b);
+        DBL_ARITH_OPS.put(ArithOp.MUL, (a, b) -> a * b);
+        DBL_ARITH_OPS.put(ArithOp.DIV, (a, b) -> a / b);
     }
 
     public EmulatorEngine(RAMContext context, RAMMemoryContext memory) {
@@ -93,7 +94,7 @@ public class EmulatorEngine {
     }
 
     private int getIntegerOperand(RAMInstruction instruction) throws IOException {
-        Integer operand = (Integer)instruction.getOperand();
+        Integer operand = (Integer) instruction.getOperand();
         switch (instruction.getDirection()) {
             case REGISTER:
                 return operand;
@@ -119,7 +120,7 @@ public class EmulatorEngine {
         } catch (NumberFormatException e) {
             try {
                 return String.valueOf(
-                  DBL_ARITH_OPS.get(op).applyAsDouble(Double.parseDouble(sym0), Double.parseDouble(sym1))
+                    DBL_ARITH_OPS.get(op).applyAsDouble(Double.parseDouble(sym0), Double.parseDouble(sym1))
                 );
             } catch (NumberFormatException x) {
                 throw new IOException("Could not parse numbers " + sym0 + " and/or " + sym1, e);

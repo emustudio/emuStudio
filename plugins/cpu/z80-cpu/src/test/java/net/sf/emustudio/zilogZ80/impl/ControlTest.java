@@ -25,19 +25,7 @@ import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_Z;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
 
 @SuppressWarnings("unchecked")
 public class ControlTest extends InstructionsTest {

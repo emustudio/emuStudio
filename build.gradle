@@ -1,0 +1,72 @@
+import java.text.SimpleDateFormat
+
+ext.versions = [
+  slf4j: '1.7.25'
+]
+
+ext.libs = [
+  emuLib         : "net.sf.emustudio:emuLib:9.0.1",
+
+  javaCupRuntime : "com.github.vbmacher:java-cup-runtime:11b-20160615",
+  jcipAnnotations: "net.jcip:jcip-annotations:1.0",
+
+  slf4JApi       : "org.slf4j:slf4j-api:${versions.slf4j}",
+  slf4JSimple    : "org.slf4j:slf4j-simple:${versions.slf4j}",
+  slf4JNop       : "org.slf4j:slf4j-nop:${versions.slf4j}",
+  logback        : "ch.qos.logback:logback-classic:1.2.3",
+
+  args4j         : "args4j:args4j:2.33",
+
+  junit          : "junit:junit:4.12",
+  easyMock       : "org.easymock:easymock:4.2",
+  mockito        : "org.mockito:mockito-all:1.9.5"
+]
+
+allprojects {
+  version = '0.40-SNAPSHOT'
+
+  configurations {
+    compilerLib
+    memoryLib
+    deviceLib
+    cpuLib
+
+    implementation.extendsFrom(compilerLib)
+    implementation.extendsFrom(memoryLib)
+    implementation.extendsFrom(deviceLib)
+    implementation.extendsFrom(cpuLib)
+  }
+
+  def libClassPath = {
+    def libs = configurations.runtimeClasspath.files.collect { "lib/" + it.getName() } +
+      configurations.compilerLib.files.collect { "compilers/" + it.getName() } +
+      configurations.memoryLib.files.collect { "mem/" + it.getName() } +
+      configurations.deviceLib.files.collect { "devices/" + it.getName() } +
+      configurations.cpuLib.files.collect { "cpu/" + it.getName() }
+
+    return libs.join(' ')
+  }
+
+  ext.manifestAttributes = { String mainClass ->
+    def baseAttributes = [
+      'Class-Path'            : libClassPath(),
+      "Implementation-Title"  : project.name,
+      "Implementation-Version": project.version,
+      'Build-Timestamp'       : new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+      'Build-Jdk'             : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+      'Build-OS'              : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+    ]
+
+    if (mainClass != null && mainClass != '') {
+      baseAttributes.put('Main-Class', mainClass)
+    }
+
+    return baseAttributes
+  }
+}
+
+subprojects {
+  repositories {
+    mavenCentral()
+  }
+}

@@ -25,10 +25,9 @@ import net.sf.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
 
 /**
- *
  * @author miso
  */
-public class Statement extends AbstractTreeNode{
+public class Statement extends AbstractTreeNode {
 
     private final RASPInstructionImpl instruction;
     private final Integer operand;
@@ -59,7 +58,7 @@ public class Statement extends AbstractTreeNode{
     }
 
     @Override
-    public void pass() throws Exception{
+    public void pass() throws Exception {
         //add instruction
         CompilerOutput.getInstance().addMemoryItem(instruction);
         if (operand != null) {

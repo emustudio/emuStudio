@@ -9,20 +9,26 @@
     <meta content="yes" name="apple-mobile-web-app-capable">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <title>{% if page.title %}{{ page.title }} &diams; {{ site.data.global.title }}{% elsif post.title %}{{ post.title }} &diams; {{ site.data.global.title }}{% else %}{{ site.data.global.title }} &diams; {{ site.data.global.description }}{% endif %}</title>
-    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <title>{% if page.title %}{{ page.title }} &diams; {{ site.data.global.title }}{% elsif post.title %}{{ post.title
+        }} &diams; {{ site.data.global.title }}{% else %}{{ site.data.global.title }} &diams; {{
+        site.data.global.description }}{% endif %}</title>
+    <meta name="keywords"
+          content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
     <meta name="description" content="Universal computer emulation platform and framework.">
     <meta name=”robots” content=”noindex,follow”>
 
-    <meta property="og:title" content="{% if page.title %}{{ page.title }}{% elsif post.title %}{{ post.title }}{% else %}{{ site.data.global.title }}{% endif %}">
+    <meta property="og:title"
+          content="{% if page.title %}{{ page.title }}{% elsif post.title %}{{ post.title }}{% else %}{{ site.data.global.title }}{% endif %}">
     <meta property="og:image" content="{{base}}img/logo-2.svg">
     <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <meta name="flattr:id" content="vo23ep">
 
     <!-- RSS -->
-    <link rel="alternate" type="application/rss+xml" title="{{ site.data.global.title }} &diams; {{ site.data.global.description }}" href="{{ base }}feed.xml">
-    <link rel="alternate" type="application/atom+xml" title="{{ site.data.global.title }} &diams; {{ site.data.global.description }}" href="{{ base }}atom.xml">
+    <link rel="alternate" type="application/rss+xml"
+          title="{{ site.data.global.title }} &diams; {{ site.data.global.description }}" href="{{ base }}feed.xml">
+    <link rel="alternate" type="application/atom+xml"
+          title="{{ site.data.global.title }} &diams; {{ site.data.global.description }}" href="{{ base }}atom.xml">
 
     <!-- Favicons -->
     <link rel="shortcut icon" type="image/x-icon" href="{{ base }}favicon.ico?">
@@ -30,14 +36,15 @@
     <meta name="msapplication-TileColor" content="#ffffff">
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+    <link rel="stylesheet"
+          href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
 
     <!-- Styles -->
     <link rel="stylesheet" href="{{ base }}css/style.css">
-{% if documentation %}
+    {% if documentation %}
     <link rel="stylesheet" href="{{ base }}css/bootstrap-toc.min.css">
     <link rel="stylesheet" href="{{ base }}fonts/font-awesome.min.css">
-{% endif %}
+    {% endif %}
 
     <!-- Scripts -->
 
@@ -51,22 +58,23 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous">
     </script>
-{% if documentation %}
+    {% if documentation %}
     <script src="{{ base }}js/bootstrap-toc.min.js"></script>
-{% endif%}
+    {% endif%}
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 
     {% if site.google_analytics_id %}
-      <!-- Global site tag (gtag.js) - Google Analytics -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics_id }}"></script>
-      <script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics_id }}"></script>
+    <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
     
         gtag('config', '{{ site.google_analytics_id }}');
-      </script>
+
+    </script>
     {% endif %}
 </head>
 
@@ -79,20 +87,24 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{{ site.baseurl }}/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="{{base}}img/logo-2.svg" width="30px" /></i>{{ site.data.global.title }}</a>
+            <a class="navbar-brand" href="{{ site.baseurl }}/"><i><img alt="&diams;"
+                                                                       style="margin: -5px;margin-right:2px;"
+                                                                       src="{{base}}img/logo-2.svg" width="30px"/></i>{{
+                site.data.global.title }}</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
-                <!--<div class="form-group">-->
-                    <!--<input type="text" class="form-control" placeholder="Search website">-->
-                <!--</div>-->
-                <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
             <!--</form>-->
             <ul class="nav navbar-nav navbar-right">
                 {% for item in site.data.nav.main %}

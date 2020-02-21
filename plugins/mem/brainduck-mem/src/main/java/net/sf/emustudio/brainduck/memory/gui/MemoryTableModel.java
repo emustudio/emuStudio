@@ -20,6 +20,7 @@
 package net.sf.emustudio.brainduck.memory.gui;
 
 import emulib.plugins.memory.MemoryContext;
+
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
 
@@ -72,7 +73,7 @@ public class MemoryTableModel extends AbstractTableModel {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
-    
+
     void dataChangedAt(int address) {
         int page = address / (ROW_COUNT * COLUMN_COUNT);
         if (page == this.currentPage) {

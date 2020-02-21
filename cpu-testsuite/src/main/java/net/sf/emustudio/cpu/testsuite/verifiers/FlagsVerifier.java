@@ -28,7 +28,7 @@ import java.util.function.Function;
 
 /**
  * Flags verifier.
- *
+ * <p>
  * Used as a test verifier.
  *
  * @param <OperandT> operands type (Byte or Integer)
@@ -41,8 +41,8 @@ public class FlagsVerifier<OperandT extends Number> implements Consumer<RunnerCo
     /**
      * Creates new flags verifier.
      *
-     * @param verifier CPU verifier
-     * @param operation operation which will be used for checking flags
+     * @param verifier   CPU verifier
+     * @param operation  operation which will be used for checking flags
      * @param flagsCheck flags checker
      */
     public FlagsVerifier(CpuVerifier verifier, Function<RunnerContext<OperandT>, Integer> operation, FlagsCheck flagsCheck) {

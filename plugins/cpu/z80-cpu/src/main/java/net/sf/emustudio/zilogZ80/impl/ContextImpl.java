@@ -71,7 +71,7 @@ public final class ContextImpl implements ExtendedContext {
     void writeIO(int port, int val) throws IOException {
         DeviceContext<Short> device = devices.get(port);
         if (device != null) {
-            device.write((short)val);
+            device.write((short) val);
         }
     }
 

@@ -31,29 +31,29 @@ import java.util.concurrent.locks.LockSupport;
 public class EmulatorEngine {
     final static int INSTRUCTIONS_PER_SECOND = 700;
     private final static int MEMORY_CELLS = 32 * 4;
-    
+
     private final CPU cpu;
     private final MemoryContext<Byte> memory;
-    
+
     volatile int Acc;
     volatile int CI;
 
     private volatile long averageInstructionNanos;
-    
+
     EmulatorEngine(MemoryContext<Byte> memory, CPU cpu) {
         this.memory = Objects.requireNonNull(memory);
         this.cpu = Objects.requireNonNull(cpu);
     }
-    
+
     void reset(int startingPos) {
         Acc = 0;
         CI = startingPos;
     }
-    
+
     CPU.RunState step() {
         Byte[] instruction = memory.readWord(CI);
         CI += 4;
-        
+
         int line = NumberUtils.reverseBits(instruction[0], 8) * 4;
         int opcode = instruction[1] & 7;
 
@@ -90,12 +90,12 @@ public class EmulatorEngine {
         }
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
-    
+
     private int readInt(int line) {
         Byte[] word = memory.readWord(line);
         return NumberUtils.readInt(word, Strategy.REVERSE_BITS);
     }
-    
+
     private void writeInt(int line, int value) {
         Byte[] word = new Byte[4];
         NumberUtils.writeInt(value, word, Strategy.REVERSE_BITS);
@@ -107,7 +107,7 @@ public class EmulatorEngine {
             measureAverageInstructionNanos();
         }
         CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
-        
+
         long waitNanos = TimeUnit.SECONDS.toNanos(1) / averageInstructionNanos;
         while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_STOPPED_BREAK) {
             try {
@@ -129,41 +129,48 @@ public class EmulatorEngine {
         }
         return currentRunState;
     }
-    
+
     private void fakeStep() {
         Byte[] instruction = memory.readWord(CI);
-        
+
         int line = NumberUtils.reverseBits(instruction[0], 8);
         int opcode = instruction[1] & 3;
         CI = (CI + 4) % MEMORY_CELLS;
 
 
         switch (opcode) {
-            case 0: break;
-            case 1: break;
-            case 2: break;
-            case 3: break;
-            case 4: break;
-            case 6: break;
-            case 7: break;
+            case 0:
+                break;
+            case 1:
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            case 4:
+                break;
+            case 6:
+                break;
+            case 7:
+                break;
         }
-        
+
         Acc -= memory.read(line % MEMORY_CELLS);
     }
-    
-    
+
+
     private void measureAverageInstructionNanos() {
         int oldCI = CI;
         int oldAcc = Acc;
-        
+
         long start = System.nanoTime();
         for (int i = 0; i < INSTRUCTIONS_PER_SECOND; i++) {
             fakeStep();
         }
         long elapsed = System.nanoTime() - start;
-        
+
         averageInstructionNanos = elapsed / INSTRUCTIONS_PER_SECOND;
-        
+
         CI = oldCI;
         Acc = oldAcc;
     }

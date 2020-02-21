@@ -24,10 +24,9 @@ import java.util.function.BiConsumer;
 
 /**
  * Injector of a integer (2 bytes) value at specified memory address.
- *
+ * <p>
  * Given memory address, test runner will inject a 16-bit value there.
  * Higher than 16-bit value will be truncated.
- *
  */
 public class MemoryWord<T extends CpuRunner, OperandType extends Number> implements BiConsumer<T, OperandType> {
     private final int address;

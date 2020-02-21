@@ -22,13 +22,7 @@ package emustudio.gui.debugTable;
 import emulib.plugins.cpu.Disassembler;
 import net.jcip.annotations.ThreadSafe;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Objects;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 
@@ -42,7 +36,7 @@ class CallFlow {
     CallFlow(Disassembler disassembler) {
         this.disassembler = Objects.requireNonNull(disassembler);
     }
-    
+
     void updateCache(int currentLocation) {
         int nextPosition = disassembler.getNextInstructionPosition(currentLocation);
         if (nextPosition - currentLocation > longestInstructionSize) {
@@ -53,12 +47,12 @@ class CallFlow {
 
     /**
      * Will traverse instructions "knownFrom" (inclusive) up to "to" (exclusive).
-     *
+     * <p>
      * The "knownFrom" has to be <= "to".
      *
      * @param knownFrom start location, inclusive.
-     * @param to stop location, exclusive.
-     * @param consumer action which will be taken for each found instruction, including start location.
+     * @param to        stop location, exclusive.
+     * @param consumer  action which will be taken for each found instruction, including start location.
      * @return the greatest instruction location (lastKnownFrom) satisfying lastKnownFrom < to
      */
     int traverseUpTo(int knownFrom, int to, Consumer<Integer> consumer) {
@@ -85,7 +79,7 @@ class CallFlow {
     }
 
     void traverseForInstructionCount(int knownFrom, int count, Consumer<Integer> consumer) {
-        for (int i = 0; i <  count; i++) {
+        for (int i = 0; i < count; i++) {
             int lastKnownFrom = knownFrom;
 
             try {
@@ -130,7 +124,8 @@ class CallFlow {
         if (knownLocations.isEmpty() || knownLocations.firstKey() > unknownLocation) {
             Integer previousKnownLocation = flowGraph.lowerKey(unknownLocation);
             if (previousKnownLocation != null) {
-                return traverseUpTo(previousKnownLocation, unknownLocation, i -> {});
+                return traverseUpTo(previousKnownLocation, unknownLocation, i -> {
+                });
             }
         }
         return knownLocations.isEmpty() ? unknownLocation : knownLocations.firstKey();

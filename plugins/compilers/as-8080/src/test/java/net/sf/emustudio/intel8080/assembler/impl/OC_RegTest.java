@@ -30,13 +30,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testINR() throws Exception {
         compile(
             "inr A\n"
-            + "inr B\n"
-            + "inr C\n"
-            + "inr D\n"
-            + "inr E\n"
-            + "inr H\n"
-            + "inr L\n"
-            + "inr M\n"
+                + "inr B\n"
+                + "inr C\n"
+                + "inr D\n"
+                + "inr E\n"
+                + "inr H\n"
+                + "inr L\n"
+                + "inr M\n"
         );
 
         assertProgram(
@@ -48,13 +48,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testDCR() throws Exception {
         compile(
             "dcr A\n"
-            + "dcr B\n"
-            + "dcr C\n"
-            + "dcr D\n"
-            + "dcr E\n"
-            + "dcr H\n"
-            + "dcr L\n"
-            + "dcr M\n"
+                + "dcr B\n"
+                + "dcr C\n"
+                + "dcr D\n"
+                + "dcr E\n"
+                + "dcr H\n"
+                + "dcr L\n"
+                + "dcr M\n"
         );
 
         assertProgram(
@@ -66,13 +66,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testADD() throws Exception {
         compile(
             "add A\n"
-            + "add B\n"
-            + "add C\n"
-            + "add D\n"
-            + "add E\n"
-            + "add H\n"
-            + "add L\n"
-            + "add M\n"
+                + "add B\n"
+                + "add C\n"
+                + "add D\n"
+                + "add E\n"
+                + "add H\n"
+                + "add L\n"
+                + "add M\n"
         );
 
         assertProgram(
@@ -84,13 +84,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testADC() throws Exception {
         compile(
             "adc A\n"
-            + "adc B\n"
-            + "adc C\n"
-            + "adc D\n"
-            + "adc E\n"
-            + "adc H\n"
-            + "adc L\n"
-            + "adc M\n"
+                + "adc B\n"
+                + "adc C\n"
+                + "adc D\n"
+                + "adc E\n"
+                + "adc H\n"
+                + "adc L\n"
+                + "adc M\n"
         );
 
         assertProgram(
@@ -102,13 +102,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testSUB() throws Exception {
         compile(
             "sub A\n"
-            + "sub B\n"
-            + "sub C\n"
-            + "sub D\n"
-            + "sub E\n"
-            + "sub H\n"
-            + "sub L\n"
-            + "sub M\n"
+                + "sub B\n"
+                + "sub C\n"
+                + "sub D\n"
+                + "sub E\n"
+                + "sub H\n"
+                + "sub L\n"
+                + "sub M\n"
         );
 
         assertProgram(
@@ -120,13 +120,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testSBB() throws Exception {
         compile(
             "sbb A\n"
-            + "sbb B\n"
-            + "sbb C\n"
-            + "sbb D\n"
-            + "sbb E\n"
-            + "sbb H\n"
-            + "sbb L\n"
-            + "sbb M\n"
+                + "sbb B\n"
+                + "sbb C\n"
+                + "sbb D\n"
+                + "sbb E\n"
+                + "sbb H\n"
+                + "sbb L\n"
+                + "sbb M\n"
         );
 
         assertProgram(
@@ -138,13 +138,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testANA() throws Exception {
         compile(
             "ana A\n"
-            + "ana B\n"
-            + "ana C\n"
-            + "ana D\n"
-            + "ana E\n"
-            + "ana H\n"
-            + "ana L\n"
-            + "ana M\n"
+                + "ana B\n"
+                + "ana C\n"
+                + "ana D\n"
+                + "ana E\n"
+                + "ana H\n"
+                + "ana L\n"
+                + "ana M\n"
         );
 
         assertProgram(
@@ -156,13 +156,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testXRA() throws Exception {
         compile(
             "xra A\n"
-            + "xra B\n"
-            + "xra C\n"
-            + "xra D\n"
-            + "xra E\n"
-            + "xra H\n"
-            + "xra L\n"
-            + "xra M\n"
+                + "xra B\n"
+                + "xra C\n"
+                + "xra D\n"
+                + "xra E\n"
+                + "xra H\n"
+                + "xra L\n"
+                + "xra M\n"
         );
 
         assertProgram(
@@ -174,13 +174,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testORA() throws Exception {
         compile(
             "ora A\n"
-            + "ora B\n"
-            + "ora C\n"
-            + "ora D\n"
-            + "ora E\n"
-            + "ora H\n"
-            + "ora L\n"
-            + "ora M\n"
+                + "ora B\n"
+                + "ora C\n"
+                + "ora D\n"
+                + "ora E\n"
+                + "ora H\n"
+                + "ora L\n"
+                + "ora M\n"
         );
 
         assertProgram(
@@ -192,13 +192,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testCMP() throws Exception {
         compile(
             "cmp A\n"
-            + "cmp B\n"
-            + "cmp C\n"
-            + "cmp D\n"
-            + "cmp E\n"
-            + "cmp H\n"
-            + "cmp L\n"
-            + "cmp M\n"
+                + "cmp B\n"
+                + "cmp C\n"
+                + "cmp D\n"
+                + "cmp E\n"
+                + "cmp H\n"
+                + "cmp L\n"
+                + "cmp M\n"
         );
 
         assertProgram(
@@ -208,6 +208,6 @@ public class OC_RegTest extends AbstractCompilerTest {
 
     @Test
     public void testOCRegSizeReturns1() throws Exception {
-        assertEquals(1, new OC_Reg("doesnotmatter", (byte)0,0,0).getSize());
+        assertEquals(1, new OC_Reg("doesnotmatter", (byte) 0, 0, 0).getSize());
     }
 }

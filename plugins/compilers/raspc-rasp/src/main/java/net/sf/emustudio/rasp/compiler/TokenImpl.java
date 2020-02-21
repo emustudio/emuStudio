@@ -24,14 +24,12 @@ import emulib.plugins.compiler.Token;
 import java_cup.runtime.ComplexSymbolFactory;
 
 /**
- *
  * @author miso
  */
 public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Token, Symbols {
 
     /**
      * The type of the Token (RESERVED, PREPROCESSOR...)
-     *
      */
     private final int type;
 

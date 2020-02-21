@@ -25,17 +25,19 @@ import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 public abstract class DataValueNode {
     protected int line;
     protected int column;
-    
+
     public DataValueNode(int line, int column) {
         this.line = line;
         this.column = column;
     }
-    
+
     /// compile time ///
     public abstract int getSize();
+
     public abstract int pass2(CompileEnv env, int addr_start) throws Exception;
+
     public abstract void pass4(HEXFileManager hex) throws Exception;
-    
+
     // encode string to hex codes
     protected String getEncString(String literal) {
         byte[] byts = literal.getBytes();
@@ -47,5 +49,5 @@ public abstract class DataValueNode {
         return enc;
     }
 
-    
+
 }

@@ -38,7 +38,7 @@ public class PseudoMACRO extends Pseudo {
     private Namespace newEnv;
 
     public PseudoMACRO(String name, List<String> params, Program s, int line,
-            int column) {
+                       int column) {
         super(line, column);
         this.mnemo = name;
         if (params == null) {
@@ -88,7 +88,7 @@ public class PseudoMACRO extends Pseudo {
         // create/rewrite symbols => parameters as equ pseudo instructions
         for (int i = 0; i < params.size(); i++) {
             newEnv.addConstant(new PseudoEQU(params.get(i),
-                    call_params.get(i), line, column));
+                call_params.get(i), line, column));
         }
         return subprogram.pass2(newEnv, addr_start);
     }

@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @NotThreadSafe
 public class CpmDirectory {
     private final static int ENTRY_SIZE = 32;
-//    public final static int DIRECTORY_ENTRIES = 256;
+    //    public final static int DIRECTORY_ENTRIES = 256;
     private final static int RECORD_BYTES = 128;
     public final static boolean BLOCKS_ARE_TWO_BYTES = false;
 

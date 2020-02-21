@@ -23,12 +23,7 @@ import emulib.plugins.memory.AbstractMemoryContext;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +64,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> 
 
     @Override
     public RAMInstruction[] readWord(int pos) {
-        return new RAMInstruction[] { memory.get(pos), null } ;
+        return new RAMInstruction[]{memory.get(pos), null};
     }
 
     @Override

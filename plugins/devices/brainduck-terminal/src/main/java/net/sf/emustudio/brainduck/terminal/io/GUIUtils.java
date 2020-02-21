@@ -19,8 +19,7 @@
  */
 package net.sf.emustudio.brainduck.terminal.io;
 
-import java.awt.Component;
-import java.awt.Container;
+import java.awt.*;
 import java.awt.event.KeyListener;
 
 public class GUIUtils {
@@ -46,5 +45,5 @@ public class GUIUtils {
             }
         }
     }
-    
+
 }

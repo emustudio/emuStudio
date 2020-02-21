@@ -50,7 +50,7 @@ class BrainTerminalContext implements DeviceContext<Short>, IOProvider {
     public Short read() {
         InputProvider tmpInputProvider = inputProvider;
         if (tmpInputProvider != null) {
-            return (short)(tmpInputProvider.read() & 0xFF);
+            return (short) (tmpInputProvider.read() & 0xFF);
         }
         return InputProvider.EOF;
     }
@@ -86,13 +86,13 @@ class BrainTerminalContext implements DeviceContext<Short>, IOProvider {
             tmpOutputProvider.close();
         }
     }
-    
+
     void showGUI() {
         OutputProvider tmpOutputProvider = outputProvider;
         if (tmpOutputProvider != null) {
             tmpOutputProvider.showGUI();
         }
     }
-    
+
 
 }

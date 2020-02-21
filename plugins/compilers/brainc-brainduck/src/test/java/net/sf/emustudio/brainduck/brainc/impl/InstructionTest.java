@@ -23,9 +23,7 @@ import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import org.junit.Test;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.*;
 
 public class InstructionTest extends AbstractCompilerTest {
 
@@ -36,7 +34,7 @@ public class InstructionTest extends AbstractCompilerTest {
         );
 
         assertProgram(
-            0,1,2,3,4,5,6,7,8
+            0, 1, 2, 3, 4, 5, 6, 7, 8
         );
     }
 
@@ -56,7 +54,7 @@ public class InstructionTest extends AbstractCompilerTest {
         );
 
         assertProgram(
-            1,1,7,4,8,2,2,7,4,1,1,3,2,2,8
+            1, 1, 7, 4, 8, 2, 2, 7, 4, 1, 1, 3, 2, 2, 8
         );
     }
 
@@ -80,7 +78,7 @@ public class InstructionTest extends AbstractCompilerTest {
         new CompilerImpl(0L, contextPool).compile("nonexistant");
 
         assertProgram(
-            1,1
+            1, 1
         );
     }
 

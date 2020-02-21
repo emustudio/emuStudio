@@ -25,16 +25,16 @@ import java.util.function.BiConsumer;
 
 /**
  * Instruction with single operand.
- *
+ * <p>
  * It is used as an injector for the test runner.
- *
+ * <p>
  * The order of bytes is as follows:
- *
+ * <p>
  * 1. Initial opcodes (1 or more)
  * 2. Operand
  * 3. Possibly more opcodes (0 or more)
  *
- * @param <RunnerT> type of the CpuRunner
+ * @param <RunnerT>  type of the CpuRunner
  * @param <OperandT> type of operand (Byte or Integer)
  */
 public class OneOperInstr<RunnerT extends CpuRunner, OperandT extends Number> implements BiConsumer<RunnerT, OperandT> {
@@ -52,7 +52,7 @@ public class OneOperInstr<RunnerT extends CpuRunner, OperandT extends Number> im
 
     /**
      * Inserts opcodes after operand.
-     *
+     * <p>
      * NOTE: size of operands is given by OperandType parameter (Byte = 8 bits, Integer = 16 bits)
      *
      * @param opcodes opcode(s). Each opcode must be a byte (don't get confused by int).

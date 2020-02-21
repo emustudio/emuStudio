@@ -54,7 +54,7 @@ public abstract class CpuRunner<CpuType extends CPU> {
     public void setProgram(int... program) {
         ensureProgramSize(program.length);
         for (int i = 0; i < program.length; i++) {
-            this.program[i] = (short)program[i];
+            this.program[i] = (short) program[i];
         }
         resetProgram();
     }
@@ -86,7 +86,7 @@ public abstract class CpuRunner<CpuType extends CPU> {
 
     public void setByte(int address, int value) {
         ensureProgramSize(address + 1);
-        program[address] = (short)(value & 0xFF);
+        program[address] = (short) (value & 0xFF);
     }
 
     private void resetProgram() {

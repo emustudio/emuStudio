@@ -1,0 +1,29 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+  id 'java'
+}
+
+dependencies {
+  implementation libs.emuLib
+  cpuLib project(":plugins:cpu:8080-cpu")
+
+  testImplementation libs.junit
+  testImplementation libs.easyMock
+
+}
+
+jar {
+  archiveVersion = ''
+  manifest {
+    attributes manifestAttributes('')
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+      "project.version": project.version
+    ]
+  }
+}

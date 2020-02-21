@@ -31,7 +31,7 @@ import java.util.Objects;
 
 public class CPUPorts {
     private final static Logger LOGGER = LoggerFactory.getLogger(CPUPorts.class);
-    
+
     private final List<Integer> statusPorts = new ArrayList<>();
     private final List<Integer> dataPorts = new ArrayList<>();
     private final ExtendedContext cpu;
@@ -39,19 +39,19 @@ public class CPUPorts {
     CPUPorts(ExtendedContext cpu) {
         this.cpu = Objects.requireNonNull(cpu);
     }
-    
+
     public int getStatusPortsCount() {
         return statusPorts.size();
     }
-    
+
     public int getDataPortsCount() {
         return dataPorts.size();
     }
-    
+
     public int getStatusPort(int index) {
         return statusPorts.get(index);
     }
-    
+
     public int getDataPort(int index) {
         return dataPorts.get(index);
     }
@@ -65,9 +65,9 @@ public class CPUPorts {
             LOGGER.error("Could not attach Status port to {}.", port);
             StaticDialogs.showErrorMessage("Could not attach Status port to " + port, "MITS SIO");
         });
-        
+
     }
-    
+
     void reattachDataPort(Collection<Integer> intDataPorts, Port2 dataPort) {
         dataPorts.forEach(cpu::detachDevice);
         dataPorts.clear();
@@ -78,8 +78,8 @@ public class CPUPorts {
             StaticDialogs.showErrorMessage("Could not attach Data port to " + port, "MITS SIO");
         });
     }
-    
-    
+
+
     void destroy() {
         statusPorts.forEach(cpu::detachDevice);
         dataPorts.forEach(cpu::detachDevice);

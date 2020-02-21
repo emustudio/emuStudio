@@ -30,7 +30,7 @@ public class CPUPortsTableModel extends AbstractTableModel {
     public CPUPortsTableModel(CPUPorts cpuPorts) {
         this.cpuPorts = Objects.requireNonNull(cpuPorts);
     }
-        
+
     @Override
     public int getRowCount() {
         return cpuPorts.getDataPortsCount() + cpuPorts.getStatusPortsCount();
@@ -49,11 +49,11 @@ public class CPUPortsTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         int statusCount = cpuPorts.getStatusPortsCount();
-        
+
         if (rowIndex < statusCount) {
             return columnIndex == 0 ? "Status" : String.format("0x%x", cpuPorts.getStatusPort(rowIndex));
         }
         return columnIndex == 0 ? "Data" : String.format("0x%x", cpuPorts.getDataPort(rowIndex - statusCount));
     }
-    
+
 }

@@ -37,10 +37,10 @@ import java.util.ResourceBundle;
  * SIMH emulator's pseudo device.
  */
 @PluginType(
-        type=PLUGIN_TYPE.DEVICE,
-        title="SIMH pseudo device",
-        copyright="Copyright (c) 2002-2007, Peter Schorn\n\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description="Re-implementation of simh pseudo device, used in simh emulator. Version is SIMH003."
+    type = PLUGIN_TYPE.DEVICE,
+    title = "SIMH pseudo device",
+    copyright = "Copyright (c) 2002-2007, Peter Schorn\n\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Re-implementation of simh pseudo device, used in simh emulator. Version is SIMH003."
 )
 @SuppressWarnings("unused")
 public class SIMHpseudo extends AbstractDevice {
@@ -64,7 +64,7 @@ public class SIMHpseudo extends AbstractDevice {
         // attach IO port
         if (!cpu.attachDevice(context, 0xFE)) {
             throw new PluginInitializationException(
-                    this, "SIMH device can't be attached to CPU (maybe there is a hardware conflict)"
+                this, "SIMH device can't be attached to CPU (maybe there is a hardware conflict)"
             );
         }
         reset();

@@ -26,11 +26,11 @@ package emustudio.gui.editor;
 class DocPosition implements Comparable<DocPosition> {
     private int position;
 
-    int getPosition(){
+    int getPosition() {
         return position;
     }
 
-    DocPosition(int position){
+    DocPosition(int position) {
         this.position = position;
     }
 
@@ -42,7 +42,7 @@ class DocPosition implements Comparable<DocPosition> {
      * @param adjustment amount (either positive or negative) to adjust this position.
      * @return the DocPosition, adjusted properly.
      */
-    DocPosition adjustPosition(int adjustment){
+    DocPosition adjustPosition(int adjustment) {
         position += adjustment;
         return this;
     }
@@ -53,9 +53,9 @@ class DocPosition implements Comparable<DocPosition> {
      * @return if this DocPosition represents the same position as another.
      */
     @Override
-    public boolean equals(Object obj){
-        if (obj instanceof DocPosition){
-            DocPosition d = (DocPosition)(obj);
+    public boolean equals(Object obj) {
+        if (obj instanceof DocPosition) {
+            DocPosition d = (DocPosition) (obj);
             return this.position == d.position;
         } else {
             return false;
@@ -70,7 +70,7 @@ class DocPosition implements Comparable<DocPosition> {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "" + position;
     }
 

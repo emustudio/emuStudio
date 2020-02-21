@@ -74,8 +74,8 @@ public class ContextImpl implements ExtendedContext {
      *
      * @param port I/O port
      * @param read whether method should read or write to the port
-     * @param val value to be written to the port. if parameter read is set to
-     * true, then val is ignored.
+     * @param val  value to be written to the port. if parameter read is set to
+     *             true, then val is ignored.
      * @return value from the port if read is true, otherwise 0
      */
     public short fireIO(int port, boolean read, short val) throws IOException {
@@ -97,13 +97,13 @@ public class ContextImpl implements ExtendedContext {
 
     /**
      * Signals raw interrupt to the CPU.
-     *
+     * <p>
      * The interrupting device can insert any instruction on the data bus for
      * execution by the CPU. The first byte of a multi-byte instruction is read
      * during the interrupt acknowledge cycle. Subsequent bytes are read in by a
      * normal memory read sequence.
      *
-     * @param device the device which signals the interrupt
+     * @param device      the device which signals the interrupt
      * @param instruction instruction signaled by this interrupt
      */
     @Override

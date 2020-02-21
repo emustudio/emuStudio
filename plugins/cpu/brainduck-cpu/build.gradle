@@ -1,0 +1,41 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+  id 'java'
+  id 'net.emustudio.edigen-plugin' version '1.0.0'
+}
+
+repositories {
+  mavenCentral()
+  jcenter()
+}
+
+dependencies {
+  implementation libs.emuLib
+  memoryLib project(":plugins:mem:brainduck-mem")
+
+  testImplementation project(":cpu-testsuite")
+  testImplementation libs.junit
+  testImplementation libs.easyMock
+}
+
+jar {
+  archiveVersion = ''
+  manifest {
+    attributes manifestAttributes('')
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+      "project.version": project.version
+    ]
+  }
+}
+
+
+edigen {
+  decoderName = 'net.sf.emustudio.braincpu.gui.DecoderImpl'
+  disassemblerName = 'net.sf.emustudio.braincpu.gui.DisassemblerImpl'
+}

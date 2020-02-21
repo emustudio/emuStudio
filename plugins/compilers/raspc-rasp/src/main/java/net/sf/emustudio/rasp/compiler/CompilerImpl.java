@@ -30,13 +30,7 @@ import java_cup.runtime.ComplexSymbolFactory;
 import net.sf.emustudio.rasp.compiler.tree.SourceCode;
 import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.io.Reader;
+import java.io.*;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
@@ -46,10 +40,10 @@ import java.util.ResourceBundle;
  * language.
  */
 @PluginType(
-        type = PLUGIN_TYPE.COMPILER,
-        title = "RASP Assembler",
-        copyright = "\u00A9 Copyright 2016-2017, Michal Šipoš",
-        description = "Assembler of RASP machine language"
+    type = PLUGIN_TYPE.COMPILER,
+    title = "RASP Assembler",
+    copyright = "\u00A9 Copyright 2016-2017, Michal Šipoš",
+    description = "Assembler of RASP machine language"
 )
 public class CompilerImpl extends AbstractCompiler {
 
@@ -62,7 +56,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     public CompilerImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
-        
+
         this.contextPool = Objects.requireNonNull(contextPool);
 
         //compiler will be reset before compilation
@@ -105,13 +99,13 @@ public class CompilerImpl extends AbstractCompiler {
             if (parser.hasSyntaxErrors()) {
                 throw new Exception("One ore more errors in the source code.");
             }
-            
-            if(sourceCode.isProgramStartZero()){
+
+            if (sourceCode.isProgramStartZero()) {
                 notifyWarning("Program start must not be 0. It was automatically set to 20.");
-            }else if(sourceCode.isProgramStartUndefined()){
+            } else if (sourceCode.isProgramStartUndefined()) {
                 notifyWarning("Program start was not defined. It was automatically set to 20.");
             }
-            
+
             sourceCode.pass();
             CompilerOutput.getInstance().saveToFile(outputFileName);
 
@@ -138,7 +132,7 @@ public class CompilerImpl extends AbstractCompiler {
         programStart = CompilerOutput.getInstance().getProgramStart();
         return true;
     }
-    
+
     @Override
     public boolean compile(String inputFileName) {
         String outputFileName = Objects.requireNonNull(inputFileName);

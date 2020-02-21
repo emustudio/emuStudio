@@ -108,7 +108,7 @@ public class Drive {
         this.index = index;
         init();
     }
-    
+
     private void init() {
         track = 0;
         sector = 0;
@@ -156,7 +156,7 @@ public class Drive {
         DriveListener tmpListener = listener;
         if (tmpListener != null) {
             tmpListener.driveParamsChanged(new DriveParameters(
-                    port1status, port2status, track, sector, sectorOffset, mountedFloppy
+                port1status, port2status, track, sector, sectorOffset, mountedFloppy
             ));
         }
     }
@@ -254,7 +254,7 @@ public class Drive {
             port1status &= 0xFB; /* turn on head loaded bit */
             port1status &= 0x7F; /* turn on 'read data available */
 
-            port2status = (short)((sector << 1) & 0x3E | 0xC0);
+            port2status = (short) ((sector << 1) & 0x3E | 0xC0);
         }
         if ((val & 0x08) != 0) { /* Head Unload */
             port1status |= 0x04; /* turn off 'head loaded' */
@@ -273,9 +273,9 @@ public class Drive {
 
     public void nextSectorIfHeadIsLoaded() {
         if (((~port1status) & 0x04) != 0) { /* head loaded? */
-            sector = (short)((sector + 1) % 32);
+            sector = (short) ((sector + 1) % 32);
             sectorOffset = 0;
-            port2status = (short)((sector << 1) & 0x3E | 0xC0);
+            port2status = (short) ((sector << 1) & 0x3E | 0xC0);
         } else {
             // head not loaded - sector true is 1 (false)
             port2status = 0xC1;

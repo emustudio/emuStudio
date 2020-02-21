@@ -21,10 +21,9 @@ package net.sf.emustudio.zilogZ80.assembler.exceptions;
 
 /**
  * This exception can be thrown during compiling forward references that are in expressions.
- *
+ * <p>
  * Expression with forward reference for label can't be evaulated without knowing a value of the label (its address that
  * label is pointing at).
- *
  */
 public class NeedMorePassException extends CompilerException {
 

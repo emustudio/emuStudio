@@ -48,7 +48,7 @@ public class FindText {
      *
      * @param findExpr new find pattern
      * @throws PatternSyntaxException if the pattern syntax is wrong (regular
-     * expression).
+     *                                expression).
      */
     public void createPattern(String findExpr) throws PatternSyntaxException {
         int flags = 0;
@@ -162,11 +162,11 @@ public class FindText {
      *
      * @param textPane the document where to perform search
      * @return false if replacement is null or if text was not found. Otherwise
-     *  it returns true.
+     * it returns true.
      * @throws NullPointerException if the find pattern is null
      */
     public boolean replaceNext(JTextPane textPane)
-            throws NullPointerException {
+        throws NullPointerException {
         if ((matcher == null) && (pattern == null)) {
             throw new NullPointerException("matcher can't be null, use dialog");
         } else if (matcher == null) {
@@ -219,11 +219,11 @@ public class FindText {
      *
      * @param textPane the document where to perform search
      * @return false if replacement is null or if text was not found. Otherwise
-     *  it returns true.
+     * it returns true.
      * @throws NullPointerException if the find pattern is null
      */
     public boolean replaceAll(JTextPane textPane)
-            throws NullPointerException {
+        throws NullPointerException {
         if ((matcher == null) && (pattern == null)) {
             throw new NullPointerException("matcher can't be null, use dialog");
         } else if (matcher == null) {
@@ -274,9 +274,9 @@ public class FindText {
     private void replaceNow(JTextPane textPane) {
         try {
             textPane.getDocument().remove(matcher.start(),
-                    matcher.end() - matcher.start());
+                matcher.end() - matcher.start());
             textPane.getDocument().insertString(matcher.start(),
-                    replacement, null);
+                replacement, null);
         } catch (BadLocationException ignored) {
         }
     }

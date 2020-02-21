@@ -27,9 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static emustudio.gui.debugTable.PaginatingDisassembler.CURRENT_INSTR_ROW;
-import static emustudio.gui.debugTable.PaginatingDisassembler.INSTR_PER_HALF_PAGE;
-import static emustudio.gui.debugTable.PaginatingDisassembler.INSTR_PER_PAGE;
+import static emustudio.gui.debugTable.PaginatingDisassembler.*;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -60,7 +58,7 @@ class MockHelper {
     }
 
     static DisassemblerStub makeDisassembler() {
-        return new DisassemblerStub(10,1,2,3,4,5,6,7,8,9,10);
+        return new DisassemblerStub(10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
     }
 
     private static DisassemblerStub makeDisassemblerStep() {
@@ -194,7 +192,7 @@ class MockHelper {
             nextPositions[i - step] = i;
         }
 
-        return new DisassemblerStub(memorySize,nextPositions);
+        return new DisassemblerStub(memorySize, nextPositions);
     }
 
 }

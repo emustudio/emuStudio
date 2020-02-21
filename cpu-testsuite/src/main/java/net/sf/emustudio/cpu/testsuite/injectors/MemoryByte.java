@@ -24,7 +24,7 @@ import java.util.function.BiConsumer;
 
 /**
  * Injector of a byte value at specified memory address.
- *
+ * <p>
  * Given memory address, test runner will inject a 8-bit value there.
  * Higher than 8-bit value will be truncated.
  */

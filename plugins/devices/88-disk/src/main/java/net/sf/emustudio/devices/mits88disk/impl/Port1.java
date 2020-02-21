@@ -25,7 +25,7 @@ import java.util.Objects;
 
 /**
  * Port 1.
- * 
+ * <p>
  * IN: disk flags
  * OUT: select/unselect drive
  */

@@ -29,10 +29,10 @@ import java.util.List;
 
 /**
  * This class handles the drawing canvas - panel by which the user can modelling abstract schemas of virtual computers.
- *
+ * <p>
  * The drawing is realized by capturing mouse events (motion, clicks). The "picture" is synchronized with the Schema
  * object automatically.
- *
+ * <p>
  * The panel has states, or modes. The initial mode is "moving" mode.
  */
 public class DrawingPanel extends JPanel implements MouseListener, MouseMotionListener {
@@ -42,19 +42,19 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
     final static Integer DEFAULT_GRID_GAP = 20;
 
     public final static BasicStroke DASHED_LINE = new BasicStroke(
-            1.0f,
-            BasicStroke.CAP_BUTT,
-            BasicStroke.JOIN_MITER,
-            10.0f,
-            DASH,
-            0.0f);
+        1.0f,
+        BasicStroke.CAP_BUTT,
+        BasicStroke.JOIN_MITER,
+        10.0f,
+        DASH,
+        0.0f);
     private final static BasicStroke DOTTED_LINE = new BasicStroke(
-            1.0f,
-            BasicStroke.CAP_BUTT,
-            BasicStroke.JOIN_MITER,
-            1.0f,
-            DOT,
-            0.0f);
+        1.0f,
+        BasicStroke.CAP_BUTT,
+        BasicStroke.JOIN_MITER,
+        1.0f,
+        DOT,
+        0.0f);
 
     public enum Tool {
         compiler,
@@ -193,7 +193,7 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D graphics = (Graphics2D)g;
+        Graphics2D graphics = (Graphics2D) g;
 
         paintGrid(graphics);
         for (Element elem : schema.getAllElements()) {

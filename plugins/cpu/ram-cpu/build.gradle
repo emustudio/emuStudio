@@ -1,0 +1,36 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+  id 'java'
+}
+
+repositories {
+  mavenCentral()
+  jcenter()
+}
+
+dependencies {
+  implementation libs.emuLib
+  compilerLib project(":plugins:compilers:ramc-ram")
+  memoryLib project(":plugins:mem:ram-mem")
+  deviceLib project(":plugins:devices:abstractTape-ram")
+
+  testImplementation libs.junit
+  testImplementation libs.easyMock
+  testImplementation libs.mockito
+}
+
+jar {
+  archiveVersion = ''
+  manifest {
+    attributes manifestAttributes('')
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+      "project.version": project.version
+    ]
+  }
+}

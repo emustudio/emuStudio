@@ -119,11 +119,11 @@ public class Cursor {
             point = new Point();
         } while (!cursorPoint.compareAndSet(oldPoint, point));
     }
-    
+
     Point getLogicalPoint() {
         return new Point(cursorPoint.get());
     }
-    
+
     private void repaint() {
         Graphics graphics = canvas.getGraphics();
         if (graphics == null) {

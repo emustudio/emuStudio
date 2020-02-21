@@ -20,16 +20,17 @@
 
 package net.sf.emustudio.rasp.cpu.impl;
 
-import emulib.runtime.exceptions.PluginInitializationException;
 import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.device.DeviceContext;
-import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.ContextPool;
+import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
+import emulib.runtime.exceptions.PluginInitializationException;
+import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
+
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
 
 /**
  * Context of the RASP CPU emulator.
@@ -45,7 +46,7 @@ public class RASPCpuContext implements CPUContext {
     /**
      * Constructor.
      *
-     * @param cpu the RASP CPU emulator instance
+     * @param cpu         the RASP CPU emulator instance
      * @param contextPool the context pool to register to
      */
     public RASPCpuContext(RASPEmulatorImpl cpu, ContextPool contextPool) {

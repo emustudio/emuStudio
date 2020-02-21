@@ -146,7 +146,7 @@ public class RAMInstructionImpl implements RAMInstruction, Serializable {
     @Override
     public int hashCode() {
         int result = instructionCode;
-        result = 31 * result +  direction.hashCode();
+        result = 31 * result + direction.hashCode();
         result = 31 * result + (label != null ? label.hashCode() : (operand != null ? operand.hashCode() : 0));
         return result;
     }

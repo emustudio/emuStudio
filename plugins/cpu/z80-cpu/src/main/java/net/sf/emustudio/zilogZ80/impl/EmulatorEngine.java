@@ -38,22 +38,7 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.AND_OR_XOR_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_C_H_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_C_NOT_H_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_C_H_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_C_NOT_H_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_N_H_FOR_H_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_N_NOT_H_FOR_H_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_N_H_FOR_H_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_N_NOT_H_FOR_H_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DEC_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.INC_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.NEG_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.PARITY_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.RRCA_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_CARRY_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.*;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
@@ -66,11 +51,11 @@ public class EmulatorEngine implements CpuEngine {
     public static final int REG_A = 7, REG_B = 0, REG_C = 1, REG_D = 2, REG_E = 3, REG_H = 4, REG_L = 5;
     public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_H = 0x10, FLAG_PV = 0x4, FLAG_N = 0x02, FLAG_C = 0x1;
 
-    private final static int[] CONDITION = new int[] {
-            FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_PV, FLAG_PV, FLAG_S, FLAG_S
+    private final static int[] CONDITION = new int[]{
+        FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_PV, FLAG_PV, FLAG_S, FLAG_S
     };
-    private final static int[] CONDITION_VALUES = new int[] {
-            0, FLAG_Z, 0, FLAG_C, 0, FLAG_PV, 0, FLAG_S
+    private final static int[] CONDITION_VALUES = new int[]{
+        0, FLAG_Z, 0, FLAG_C, 0, FLAG_PV, 0, FLAG_S
     };
 
     private final ContextImpl context;
@@ -80,12 +65,12 @@ public class EmulatorEngine implements CpuEngine {
     public final int[] regs = new int[8];
     public final int[] regs2 = new int[8];
     public int flags = 2;
-    public int flags2 = 2;    
-    
+    public int flags2 = 2;
+
     // special registers
     public int PC = 0, SP = 0, IX = 0, IY = 0;
     public int I = 0, R = 0; // interrupt r., refresh r.
-    
+
     public byte intMode = 0; // interrupt mode (0,1,2)
     // Interrupt flip-flops
     public final boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
@@ -236,7 +221,7 @@ public class EmulatorEngine implements CpuEngine {
         }
         return regs[reg];
     }
-    
+
     private int getreg2(int reg) {
         if (reg == 6) {
             return 0;
@@ -246,7 +231,7 @@ public class EmulatorEngine implements CpuEngine {
 
     private void putreg(int reg, int val) {
         if (reg == 6) {
-            memory.write((regs[REG_H] << 8) | regs[REG_L], (short)val);
+            memory.write((regs[REG_H] << 8) | regs[REG_L], (short) val);
         } else {
             regs[reg] = val;
         }
@@ -268,11 +253,11 @@ public class EmulatorEngine implements CpuEngine {
                 SP = val;
             } else {
                 regs[REG_A] = high;
-                flags = (short)low;
+                flags = (short) low;
             }
         } else {
             regs[index] = high;
-            regs[index+1] = low;
+            regs[index + 1] = low;
         }
     }
 
@@ -284,7 +269,7 @@ public class EmulatorEngine implements CpuEngine {
         return regs[index] << 8 | regs[index + 1];
 
     }
-    
+
     private int getpair(short special, int reg) {
         if (reg == 3) {
             return SP;
@@ -340,7 +325,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private void writeWord(int address, int value) {
-        memory.writeWord(address, new Short[] { (short)(value & 0xFF), (short)((value >>> 8) & 0xFF) } );
+        memory.writeWord(address, new Short[]{(short) (value & 0xFF), (short) ((value >>> 8) & 0xFF)});
     }
 
     private int doInterrupt() throws IOException, InvocationTargetException, IllegalAccessException {
@@ -377,13 +362,13 @@ public class EmulatorEngine implements CpuEngine {
         }
         return cycles;
     }
-    
+
     private void overflow(int i, int j, int result) {
         int signFirst = i & 0x80;
         int signSecond = j & 0x80;
         if (signFirst != signSecond) {
             flags &= (~FLAG_PV);
-        } else if ((result & 0x80) != signFirst){
+        } else if ((result & 0x80) != signFirst) {
             flags |= FLAG_PV;
         }
     }
@@ -392,7 +377,7 @@ public class EmulatorEngine implements CpuEngine {
         int sign = i & 0x8000;
         if (sign != (j & 0x8000)) {
             flags &= (~FLAG_PV);
-        } else if ((result & 0x8000) != sign){
+        } else if ((result & 0x8000) != sign) {
             flags |= FLAG_PV;
         }
     }
@@ -401,10 +386,10 @@ public class EmulatorEngine implements CpuEngine {
         int mask = sumWith & before;
         int xormask = sumWith ^ before;
 
-        int C0 = mask&1;
-        int C1 = ((mask>>>1) ^ (C0&(xormask>>>1)))&1;
-        int C2 = ((mask>>>2) ^ (C1&(xormask>>>2)))&1;
-        int C3 = ((mask>>>3) ^ (C2&(xormask>>>3)))&1;
+        int C0 = mask & 1;
+        int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
+        int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
+        int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
 
         if (C3 != 0) {
             flags |= FLAG_H;
@@ -412,23 +397,23 @@ public class EmulatorEngine implements CpuEngine {
             flags &= (~FLAG_H);
         }
     }
-    
+
     private void halfCarry11(int before, int sumWith) {
         int mask = sumWith & before;
         int xormask = sumWith ^ before;
 
-        int C0 = mask&1;
-        int C1 = ((mask>>>1) ^ (C0&(xormask>>>1)))&1;
-        int C2 = ((mask>>>2) ^ (C1&(xormask>>>2)))&1;
-        int C3 = ((mask>>>3) ^ (C2&(xormask>>>3)))&1;
-        int C4 = ((mask>>>4) ^ (C3&(xormask>>>4)))&1;
-        int C5 = ((mask>>>5) ^ (C4&(xormask>>>5)))&1;
-        int C6 = ((mask>>>6) ^ (C5&(xormask>>>6)))&1;
-        int C7 = ((mask>>>7) ^ (C6&(xormask>>>7)))&1;
-        int C8 = ((mask>>>8) ^ (C7&(xormask>>>8)))&1;
-        int C9 = ((mask>>>9) ^ (C8&(xormask>>>9)))&1;
-        int C10 = ((mask>>>10) ^ (C9&(xormask>>>10)))&1;
-        int C11 = ((mask>>>11) ^ (C10&(xormask>>>11)))&1;
+        int C0 = mask & 1;
+        int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
+        int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
+        int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
+        int C4 = ((mask >>> 4) ^ (C3 & (xormask >>> 4))) & 1;
+        int C5 = ((mask >>> 5) ^ (C4 & (xormask >>> 5))) & 1;
+        int C6 = ((mask >>> 6) ^ (C5 & (xormask >>> 6))) & 1;
+        int C7 = ((mask >>> 7) ^ (C6 & (xormask >>> 7))) & 1;
+        int C8 = ((mask >>> 8) ^ (C7 & (xormask >>> 8))) & 1;
+        int C9 = ((mask >>> 9) ^ (C8 & (xormask >>> 9))) & 1;
+        int C10 = ((mask >>> 10) ^ (C9 & (xormask >>> 10))) & 1;
+        int C11 = ((mask >>> 11) ^ (C10 & (xormask >>> 11))) & 1;
 
         if (C11 != 0) {
             flags |= FLAG_H;
@@ -441,22 +426,22 @@ public class EmulatorEngine implements CpuEngine {
         int mask = sumWith & before;
         int xormask = sumWith ^ before;
 
-        int C0 = mask&1;
-        int C1 = ((mask>>>1) ^ (C0&(xormask>>>1)))&1;
-        int C2 = ((mask>>>2) ^ (C1&(xormask>>>2)))&1;
-        int C3 = ((mask>>>3) ^ (C2&(xormask>>>3)))&1;
-        int C4 = ((mask>>>4) ^ (C3&(xormask>>>4)))&1;
-        int C5 = ((mask>>>5) ^ (C4&(xormask>>>5)))&1;
-        int C6 = ((mask>>>6) ^ (C5&(xormask>>>6)))&1;
-        int C7 = ((mask>>>7) ^ (C6&(xormask>>>7)))&1;
-        int C8 = ((mask>>>8) ^ (C7&(xormask>>>8)))&1;
-        int C9 = ((mask>>>9) ^ (C8&(xormask>>>9)))&1;
-        int C10 = ((mask>>>10) ^ (C9&(xormask>>>10)))&1;
-        int C11 = ((mask>>>11) ^ (C10&(xormask>>>11)))&1;
-        int C12 = ((mask>>>12) ^ (C11&(xormask>>>12)))&1;
-        int C13 = ((mask>>>13) ^ (C12&(xormask>>>13)))&1;
-        int C14 = ((mask>>>14) ^ (C13&(xormask>>>14)))&1;
-        int C15 = ((mask>>>15) ^ (C14&(xormask>>>15)))&1;
+        int C0 = mask & 1;
+        int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
+        int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
+        int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
+        int C4 = ((mask >>> 4) ^ (C3 & (xormask >>> 4))) & 1;
+        int C5 = ((mask >>> 5) ^ (C4 & (xormask >>> 5))) & 1;
+        int C6 = ((mask >>> 6) ^ (C5 & (xormask >>> 6))) & 1;
+        int C7 = ((mask >>> 7) ^ (C6 & (xormask >>> 7))) & 1;
+        int C8 = ((mask >>> 8) ^ (C7 & (xormask >>> 8))) & 1;
+        int C9 = ((mask >>> 9) ^ (C8 & (xormask >>> 9))) & 1;
+        int C10 = ((mask >>> 10) ^ (C9 & (xormask >>> 10))) & 1;
+        int C11 = ((mask >>> 11) ^ (C10 & (xormask >>> 11))) & 1;
+        int C12 = ((mask >>> 12) ^ (C11 & (xormask >>> 12))) & 1;
+        int C13 = ((mask >>> 13) ^ (C12 & (xormask >>> 13))) & 1;
+        int C14 = ((mask >>> 14) ^ (C13 & (xormask >>> 14))) & 1;
+        int C15 = ((mask >>> 15) ^ (C14 & (xormask >>> 15))) & 1;
 
         if (C15 != 0) {
             flags |= FLAG_C;
@@ -783,8 +768,6 @@ public class EmulatorEngine implements CpuEngine {
             DISPATCH_TABLE_ED[0x5B] = EmulatorEngine.class.getDeclaredMethod("LD_SS_LPAR_N_RPAR", short.class);
             DISPATCH_TABLE_ED[0x6B] = EmulatorEngine.class.getDeclaredMethod("LD_SS_LPAR_N_RPAR", short.class);
             DISPATCH_TABLE_ED[0x7B] = EmulatorEngine.class.getDeclaredMethod("LD_SS_LPAR_N_RPAR", short.class);
-
-
 
 
         } catch (NoSuchMethodException | SecurityException e) {
@@ -1446,7 +1429,7 @@ public class EmulatorEngine implements CpuEngine {
         tmp1 = (tmp1 + 1) & 0xFFFF;
         regs[REG_H] = ((tmp1 >>> 8) & 0xff);
         regs[REG_L] = (tmp1 & 0xFF);
-        regs[REG_B] = (regs[REG_B]- 1) & 0xFF;
+        regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
         flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + regs[REG_L]) & 7) ^ regs[REG_B]];
         if ((tmp2 & 0x80) == 0x80) {
             flags |= FLAG_N;
@@ -2028,10 +2011,10 @@ public class EmulatorEngine implements CpuEngine {
         }
 
         try {
-        /* if interrupt is waiting, instruction won't be read from memory
-         * but from one or all of 3 bytes (b1,b2,b3) which represents either
-         * rst or call instruction incomed from external peripheral device
-         */
+            /* if interrupt is waiting, instruction won't be read from memory
+             * but from one or all of 3 bytes (b1,b2,b3) which represents either
+             * rst or call instruction incomed from external peripheral device
+             */
             if (isINT) {
                 return doInterrupt();
             }
@@ -2072,7 +2055,7 @@ public class EmulatorEngine implements CpuEngine {
                     PC = (PC + 1) & 0xFFFF;
                     incrementR();
                     switch (OP) {
-                    /* ADD ii,pp */
+                        /* ADD ii,pp */
                         case 0x09:
                         case 0x19:
                         case 0x29:
@@ -2147,7 +2130,7 @@ public class EmulatorEngine implements CpuEngine {
                     switch (OP) {
                         case 0x76:
                             break;
-                    /* LD r,(ii+d) */
+                        /* LD r,(ii+d) */
                         case 0x46:
                         case 0x4E:
                         case 0x56:
@@ -2158,7 +2141,7 @@ public class EmulatorEngine implements CpuEngine {
                             tmp1 = (OP >>> 3) & 7;
                             putreg2(tmp1, memory.read((getspecial(special) + (byte) tmp) & 0xFFFF));
                             return 19;
-                    /* LD (ii+d),r */
+                        /* LD (ii+d),r */
                         case 0x70:
                         case 0x71:
                         case 0x72:
@@ -2285,7 +2268,7 @@ public class EmulatorEngine implements CpuEngine {
                             OP = (short) ((tmp >>> 8) & 0xff);
                             tmp &= 0xff;
                             switch (OP) {
-                            /* BIT b,(ii+d) */
+                                /* BIT b,(ii+d) */
                                 case 0x46:
                                 case 0x4E:
                                 case 0x56:
@@ -2312,7 +2295,7 @@ public class EmulatorEngine implements CpuEngine {
                                     flags = ((flags & FLAG_C) | FLAG_H | (((tmp1 & (1 << 7)) == 0) ? (FLAG_Z | FLAG_PV) : 0))
                                         | (((tmp1 & (1 << 7)) == 0x80) ? FLAG_S : 0);
                                     return 20;
-                            /* RES b,(ii+d) */
+                                /* RES b,(ii+d) */
                                 case 0x86:
                                 case 0x8E:
                                 case 0x96:
@@ -2327,7 +2310,7 @@ public class EmulatorEngine implements CpuEngine {
                                     tmp1 = (tmp1 & (~(1 << tmp2)));
                                     memory.write(tmp3, (short) (tmp1 & 0xff));
                                     return 23;
-                            /* SET b,(ii+d) */
+                                /* SET b,(ii+d) */
                                 case 0xC6:
                                 case 0xCE:
                                 case 0xD6:
@@ -2342,7 +2325,7 @@ public class EmulatorEngine implements CpuEngine {
                                     tmp1 = (tmp1 | (1 << tmp2));
                                     memory.write(tmp3, (short) (tmp1 & 0xff));
                                     return 23;
-                            /* SET 0,(ii+d),reg (undocumented) */
+                                /* SET 0,(ii+d),reg (undocumented) */
                                 case 0xC0:
                                 case 0xC1:
                                 case 0xC2:
@@ -2365,11 +2348,11 @@ public class EmulatorEngine implements CpuEngine {
                                     tmp2 = (tmp1 >>> 7) & 1;
                                     tmp1 = ((((tmp1 << 1) & 0xFF) | tmp2) & 0xFF);
 
-                                    memory.write(tmp, (short)(tmp1 & 0xFF));
+                                    memory.write(tmp, (short) (tmp1 & 0xFF));
                                     flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
 
                                     if (OP == 0) {
-                                        regs[REG_B] = (short)(tmp1 & 0xFF);
+                                        regs[REG_B] = (short) (tmp1 & 0xFF);
                                     }
                                     return 23;
                                 case 0x0E: /* RRC (ii+d) */
@@ -2379,7 +2362,7 @@ public class EmulatorEngine implements CpuEngine {
                                     tmp2 = tmp1 & 1;
                                     tmp1 = (((tmp1 >>> 1) & 0x7F) | (tmp2 << 7)) & 0xFF;
 
-                                    memory.write(tmp, (short)(tmp1 & 0xFF));
+                                    memory.write(tmp, (short) (tmp1 & 0xFF));
                                     flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
 
                                     return 23;
@@ -2389,7 +2372,7 @@ public class EmulatorEngine implements CpuEngine {
 
                                     tmp2 = (tmp1 >>> 7) & 1;
                                     tmp1 = ((((tmp1 << 1) & 0xFF) | flags & FLAG_C) & 0xFF);
-                                    memory.write(tmp, (short)(tmp1 & 0xFF));
+                                    memory.write(tmp, (short) (tmp1 & 0xFF));
 
                                     flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
 
@@ -2400,7 +2383,7 @@ public class EmulatorEngine implements CpuEngine {
 
                                     tmp2 = tmp1 & 1;
                                     tmp1 = ((((tmp1 >> 1) & 0xFF) | (flags & FLAG_C) << 7) & 0xFF);
-                                    memory.write(tmp, (short)(tmp1 & 0xFF));
+                                    memory.write(tmp, (short) (tmp1 & 0xFF));
 
                                     flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
 
@@ -2411,7 +2394,7 @@ public class EmulatorEngine implements CpuEngine {
 
                                     tmp2 = (tmp1 >>> 7) & 1;
                                     tmp1 = (tmp1 << 1) & 0xFE;
-                                    memory.write(tmp, (short)tmp1);
+                                    memory.write(tmp, (short) tmp1);
 
                                     flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
 
@@ -2422,7 +2405,7 @@ public class EmulatorEngine implements CpuEngine {
 
                                     tmp2 = tmp1 & 1;
                                     tmp1 = (tmp1 >> 1) & 0xFF | (tmp1 & 0x80);
-                                    memory.write(tmp, (short)tmp1);
+                                    memory.write(tmp, (short) tmp1);
 
                                     flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
 
@@ -2433,7 +2416,7 @@ public class EmulatorEngine implements CpuEngine {
 
                                     tmp2 = (tmp1 >>> 7) & 1;
                                     tmp1 = (tmp1 << 1) & 0xFF | tmp1 & 1;
-                                    memory.write(tmp, (short)tmp1);
+                                    memory.write(tmp, (short) tmp1);
 
                                     flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
 
@@ -2444,7 +2427,7 @@ public class EmulatorEngine implements CpuEngine {
 
                                     tmp2 = tmp1 & 1;
                                     tmp1 = (tmp1 >>> 1) & 0x7F;
-                                    memory.write(tmp, (short)tmp1);
+                                    memory.write(tmp, (short) tmp1);
 
                                     flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
 
@@ -2460,7 +2443,7 @@ public class EmulatorEngine implements CpuEngine {
                     PC = (PC + 1) & 0xFFFF;
                     incrementR();
                     switch (OP) {
-                    /* RLC r */
+                        /* RLC r */
                         case 0x00:
                         case 0x01:
                         case 0x02:
@@ -2483,7 +2466,7 @@ public class EmulatorEngine implements CpuEngine {
                             } else {
                                 return 8;
                             }
-                    /* RRC r */
+                            /* RRC r */
                         case 0x08:
                         case 0x09:
                         case 0x0A:
@@ -2506,7 +2489,7 @@ public class EmulatorEngine implements CpuEngine {
                             } else {
                                 return 8;
                             }
-                    /* RL r */
+                            /* RL r */
                         case 0x10:
                         case 0x11:
                         case 0x12:
@@ -2529,7 +2512,7 @@ public class EmulatorEngine implements CpuEngine {
                             } else {
                                 return 8;
                             }
-                    /* RR r */
+                            /* RR r */
                         case 0x18:
                         case 0x19:
                         case 0x1A:
@@ -2552,7 +2535,7 @@ public class EmulatorEngine implements CpuEngine {
                             } else {
                                 return 8;
                             }
-                    /* SLA r */
+                            /* SLA r */
                         case 0x20:
                         case 0x21:
                         case 0x22:
@@ -2575,7 +2558,7 @@ public class EmulatorEngine implements CpuEngine {
                             } else {
                                 return 8;
                             }
-                    /* SRA r */
+                            /* SRA r */
                         case 0x28:
                         case 0x29:
                         case 0x2A:
@@ -2598,7 +2581,7 @@ public class EmulatorEngine implements CpuEngine {
                             } else {
                                 return 8;
                             }
-                    /* SLL r - unsupported */
+                            /* SLL r - unsupported */
                         case 0x30:
                         case 0x31:
                         case 0x32:
@@ -2621,7 +2604,7 @@ public class EmulatorEngine implements CpuEngine {
                             } else {
                                 return 8;
                             }
-                    /* SRL r */
+                            /* SRL r */
                         case 0x38:
                         case 0x39:
                         case 0x3A:

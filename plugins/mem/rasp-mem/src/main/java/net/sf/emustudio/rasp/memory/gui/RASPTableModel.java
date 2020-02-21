@@ -20,11 +20,12 @@
 
 package net.sf.emustudio.rasp.memory.gui;
 
-import javax.swing.table.AbstractTableModel;
+import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.RASPInstruction;
-import net.sf.emustudio.rasp.memory.RASPMemoryContext;
+
+import javax.swing.table.AbstractTableModel;
 
 /**
  * MODEL for the table with memory content.
@@ -102,7 +103,7 @@ public class RASPTableModel extends AbstractTableModel {
         return "";
     }
 
-    
+
     /**
      * Returns string contained in the mnemonic column (column No. 2)
      *

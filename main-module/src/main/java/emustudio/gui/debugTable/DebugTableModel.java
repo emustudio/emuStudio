@@ -154,11 +154,11 @@ public class DebugTableModel extends AbstractTableModel {
         Disassembler dis = cpu.getDisassembler();
         if (cpu.isBreakpointSupported()) {
             setColumns(Arrays.asList(
-                    new BreakpointColumn(cpu), new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+                new BreakpointColumn(cpu), new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
             ));
         } else {
             setColumns(Arrays.asList(
-                    new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+                new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
             ));
         }
     }

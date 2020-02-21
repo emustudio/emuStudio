@@ -20,8 +20,8 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.CodePseudoNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
 
@@ -31,34 +31,34 @@ public class InstructionNode {
     protected LabelNode label;
     final CodePseudoNode codePseudo;
     private int current_address; // its computed in pass2
-    
+
     public InstructionNode(LabelNode label, CodePseudoNode codePseudo) {
         this.label = label;
         this.codePseudo = codePseudo;
     }
-    
+
     public InstructionNode(CodePseudoNode codePseudo) {
         this.label = null;
         this.codePseudo = codePseudo;
     }
-    
-    public int getSize() { 
-        if (codePseudo !=null) {
+
+    public int getSize() {
+        if (codePseudo != null) {
             return codePseudo.getSize();
         }
         return 0;
     }
 
     void pass1(List<String> inclfiles, CompileEnv parentEnv) throws Exception {
-        ((IncludePseudoNode)codePseudo).pass1(inclfiles, parentEnv);        
+        ((IncludePseudoNode) codePseudo).pass1(inclfiles, parentEnv);
     }
 
     void pass1() throws Exception {
         if (codePseudo instanceof PseudoBlock) {
-            ((PseudoBlock)codePseudo).pass1();
+            ((PseudoBlock) codePseudo).pass1();
         }
     }
-    
+
     public int pass2(CompileEnv prev_env, int addr_start) throws Exception {
         this.current_address = addr_start;
         if (label != null) {
@@ -67,25 +67,25 @@ public class InstructionNode {
         // pass2 pre definiciu makra nemozem volat. ide totiz o samotnu expanziu
         // makra. preto pass2 mozem volat az pri samotnom volani makra (pass2 triedy
         // MacroCallPseudo)
-        if (codePseudo != null) { 
+        if (codePseudo != null) {
             if (!(codePseudo instanceof MacroPseudoNode)) {
                 addr_start = codePseudo.pass2(prev_env, addr_start);
             }
         }
         return addr_start;
     }
-    
+
     boolean pass3(CompileEnv env) throws Exception {
         try {
             if (codePseudo != null) {
-                codePseudo.pass2(env,this.current_address);
+                codePseudo.pass2(env, this.current_address);
             }
         } catch (NeedMorePassException e) {
             return false;
         }
         return true;
     }
-    
+
     // code generation
     public void pass4(HEXFileManager hex) throws Exception {
         if (codePseudo != null) {
@@ -97,7 +97,7 @@ public class InstructionNode {
 
     boolean getIncludeLoops(String filename) {
         if (codePseudo != null && codePseudo instanceof IncludePseudoNode) {
-            IncludePseudoNode i = (IncludePseudoNode)codePseudo;
+            IncludePseudoNode i = (IncludePseudoNode) codePseudo;
             if (i.isEqualName(filename)) {
                 return true;
             }

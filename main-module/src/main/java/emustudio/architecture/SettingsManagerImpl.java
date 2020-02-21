@@ -27,11 +27,7 @@ import emustudio.main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class SettingsManagerImpl implements SettingsManager {
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsManagerImpl.class);
@@ -53,18 +49,18 @@ public class SettingsManagerImpl implements SettingsManager {
         initialize();
     }
 
-    private void initialize()  {
+    private void initialize() {
         if (Main.commandLine.isAuto()) {
-           // Set "auto" setting to "true" to all plugins
-           setSettingWithoutWrite(SettingsManager.AUTO, "true");
+            // Set "auto" setting to "true" to all plugins
+            setSettingWithoutWrite(SettingsManager.AUTO, "true");
         }
         if (Main.commandLine.isNoGUI()) {
-           setSettingWithoutWrite(SettingsManager.NO_GUI, "true");
-           try {
-               StaticDialogs.setGUISupported(false, Main.emulibToken);
-           } catch (InvalidPasswordException e) {
-               LOGGER.error("Unexpected security issue", e);
-           }
+            setSettingWithoutWrite(SettingsManager.NO_GUI, "true");
+            try {
+                StaticDialogs.setGUISupported(false, Main.emulibToken);
+            } catch (InvalidPasswordException e) {
+                LOGGER.error("Unexpected security issue", e);
+            }
         }
     }
 
@@ -90,9 +86,9 @@ public class SettingsManagerImpl implements SettingsManager {
     /**
      * Get device name (file name without extension)
      *
-     * @param index  Index of the device
+     * @param index Index of the device
      * @return device file name without extension, or null
-     *         if device is unknown
+     * if device is unknown
      */
     public String getDeviceName(int index) {
         return configuration.get("device" + index);
@@ -169,7 +165,7 @@ public class SettingsManagerImpl implements SettingsManager {
     }
 
     void setSettingWithoutWrite(String settingName, String value) {
-        for (String pluginName: pluginConfigNames.values()) {
+        for (String pluginName : pluginConfigNames.values()) {
             configuration.set(pluginName + "." + settingName, value);
         }
     }

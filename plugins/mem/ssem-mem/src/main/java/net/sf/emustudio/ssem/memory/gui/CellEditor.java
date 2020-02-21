@@ -19,29 +19,25 @@
  */
 package net.sf.emustudio.ssem.memory.gui;
 
-import java.awt.Component;
-import java.awt.FontMetrics;
-import javax.swing.AbstractCellEditor;
-import javax.swing.JTable;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.table.TableCellEditor;
-import static net.sf.emustudio.ssem.memory.gui.Constants.CHAR_HEIGHT;
-import static net.sf.emustudio.ssem.memory.gui.Constants.COLUMN_WIDTH;
-import static net.sf.emustudio.ssem.memory.gui.Constants.DEFAULT_FONT;
+import java.awt.*;
+
+import static net.sf.emustudio.ssem.memory.gui.Constants.*;
 import static net.sf.emustudio.ssem.memory.gui.MemoryTableModel.COLUMN_HEX_VALUE;
 import static net.sf.emustudio.ssem.memory.gui.MemoryTableModel.COLUMN_RAW_VALUE;
 
 class CellEditor extends AbstractCellEditor implements TableCellEditor {
     private final JTextField editComponent = new JTextField();
     private FontMetrics fontMetrics;
-    
+
     private void setComponentSize(int columnIndex) {
         if (fontMetrics != null) {
             editComponent.setSize(COLUMN_WIDTH[columnIndex], fontMetrics.getHeight() + CHAR_HEIGHT);
             editComponent.setBorder(null);
         }
     }
-    
+
     public void setup(JTable table) {
         fontMetrics = table.getFontMetrics(DEFAULT_FONT);
     }
@@ -57,7 +53,7 @@ class CellEditor extends AbstractCellEditor implements TableCellEditor {
                 editComponent.setText("");
                 break;
             case COLUMN_HEX_VALUE:
-                editComponent.setText("0x"+ String.valueOf(value));
+                editComponent.setText("0x" + String.valueOf(value));
                 break;
             default:
                 editComponent.setText(String.valueOf(value));
@@ -70,5 +66,5 @@ class CellEditor extends AbstractCellEditor implements TableCellEditor {
     public Object getCellEditorValue() {
         return editComponent.getText();
     }
-    
+
 }

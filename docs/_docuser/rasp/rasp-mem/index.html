@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>Rasp Mem &diams; emuStudio</title>
-    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <meta name="keywords"
+          content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
     <meta name="description" content="Universal computer emulation platform and framework.">
     <meta name=”robots” content=”noindex,follow”>
 
@@ -23,8 +20,10 @@
     <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <!-- RSS -->
-    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../feed.xml">
-    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../atom.xml">
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../atom.xml">
 
     <!-- Favicons -->
     <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
@@ -32,7 +31,8 @@
     <meta name="msapplication-TileColor" content="#ffffff">
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+    <link rel="stylesheet"
+          href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../../css/style.css">
@@ -54,17 +54,18 @@
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 
-    
-      <!-- Global site tag (gtag.js) - Google Analytics -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
-      <script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+    <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
     
         gtag('config', 'UA-3492956-5');
-      </script>
-    
+
+    </script>
+
 </head>
 
 
@@ -74,47 +75,49 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;"
+                                                     src="../../../img/logo-2.svg" width="30px"/></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
-                <!--<div class="form-group">-->
-                    <!--<input type="text" class="form-control" placeholder="Search website">-->
-                <!--</div>-->
-                <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
             <!--</form>-->
             <ul class="nav navbar-nav navbar-right">
-                
+
                 <li>
                     <a href="/">Home</a>
                 </li>
-                
+
                 <li>
                     <a href="/download">Download</a>
                 </li>
-                
+
                 <li>
                     <a href="/docs">Docs</a>
                 </li>
-                
+
                 <li>
                     <a href="/devel">Developer</a>
                 </li>
-                
+
                 <li>
                     <a href="/roadmap">Roadmap</a>
                 </li>
-                
+
                 <li>
                     <a href="/about">About</a>
                 </li>
-                
+
             </ul>
         </div>
     </div>
@@ -129,97 +132,107 @@
           
       </span>
     </h1>
-    
-    
+
+
 </div>
 
 
 <div class="container">
     <div class="sect1">
-<h2 id="memory-code-rasp-mem-code">Memory <code>rasp-mem</code></h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>RASP memory plug-in serves as the main store (operating memory) for the RASP virtual computer. As already mentioned in the introduction
-of this manual, RASP is an example of von-Neumann architecture, which implies that both program and data reside in the same memory module.</p>
-</div>
-<div class="paragraph">
-<p>After compilation of a RASP source code file the compiled program is loaded into here. During the process of the emulation, the CPU plug-in
-reads instructions an their operands and writes results of the operations from/to the memory.</p>
-</div>
-<div class="sect2">
-<h3 id="installation-and-run">Installation and run</h3>
-<div class="paragraph">
-<p>RASP memory plugin is already included in emuStudio distribution, in location <code>mem/rasp-mem.jar</code>.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="graphical-user-interface-gui">Graphical user interface (GUI)</h3>
-<div class="paragraph">
-<p>During the emulation, user can view current content of the operating memory in a simple GUI window:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/docuser/rasp/images//memory_window.png" alt="Memory GUI window">
-</div>
-</div>
-<div class="paragraph">
-<p>It is also possible to load a compiled memory image
-from a file by clicking on the OPEN icon:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/docuser/rasp/images//document-open.png" alt="OPEN icon">
-</div>
-</div>
-<div class="paragraph">
-<p>After that, you can choose the binary file you want to load.</p>
-</div>
-<div class="paragraph">
-<p>By clicking on the CLEAN icon, you can clean the entire memory content:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/docuser/rasp/images//edit-delete.png" alt="CLEAN icon">
-</div>
-</div>
-<div class="paragraph">
-<p>The table with memory cells content is editable. By double-clicking on a row you can simply edit the value. You confirm your changes by
-the ENTER key.</p>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-If you edit a cell that contains an instruction, you edit its operation code, e.g. if a cell contains the <code>ADD =</code> instruction (operation code 7)
-and you change the cell to 9, the operation code will be overwritten. As a result, the instruction changes to <code>SUB =</code>. It means that you cannot
-write number 9 as a data item here, only as an operation code.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-
-    <footer class="site-footer">
-        <div class="container">
-            <nav class="navbar">
-                <div class="container">
-                    <ul class="nav navbar-nav">
-                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                        <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
-                    </ul>
+        <h2 id="memory-code-rasp-mem-code">Memory <code>rasp-mem</code></h2>
+        <div class="sectionbody">
+            <div class="paragraph">
+                <p>RASP memory plug-in serves as the main store (operating memory) for the RASP virtual computer. As
+                    already mentioned in the introduction
+                    of this manual, RASP is an example of von-Neumann architecture, which implies that both program and
+                    data reside in the same memory module.</p>
+            </div>
+            <div class="paragraph">
+                <p>After compilation of a RASP source code file the compiled program is loaded into here. During the
+                    process of the emulation, the CPU plug-in
+                    reads instructions an their operands and writes results of the operations from/to the memory.</p>
+            </div>
+            <div class="sect2">
+                <h3 id="installation-and-run">Installation and run</h3>
+                <div class="paragraph">
+                    <p>RASP memory plugin is already included in emuStudio distribution, in location <code>mem/rasp-mem.jar</code>.
+                    </p>
                 </div>
-            </nav>
+            </div>
+            <div class="sect2">
+                <h3 id="graphical-user-interface-gui">Graphical user interface (GUI)</h3>
+                <div class="paragraph">
+                    <p>During the emulation, user can view current content of the operating memory in a simple GUI
+                        window:</p>
+                </div>
+                <div class="imageblock">
+                    <div class="content">
+                        <img src="/docuser/rasp/images//memory_window.png" alt="Memory GUI window">
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>It is also possible to load a compiled memory image
+                        from a file by clicking on the OPEN icon:</p>
+                </div>
+                <div class="imageblock">
+                    <div class="content">
+                        <img src="/docuser/rasp/images//document-open.png" alt="OPEN icon">
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>After that, you can choose the binary file you want to load.</p>
+                </div>
+                <div class="paragraph">
+                    <p>By clicking on the CLEAN icon, you can clean the entire memory content:</p>
+                </div>
+                <div class="imageblock">
+                    <div class="content">
+                        <img src="/docuser/rasp/images//edit-delete.png" alt="CLEAN icon">
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>The table with memory cells content is editable. By double-clicking on a row you can simply edit
+                        the value. You confirm your changes by
+                        the ENTER key.</p>
+                </div>
+                <div class="admonitionblock warning">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-warning" title="Warning"></i>
+                            </td>
+                            <td class="content">
+                                If you edit a cell that contains an instruction, you edit its operation code, e.g. if a
+                                cell contains the <code>ADD =</code> instruction (operation code 7)
+                                and you change the cell to 9, the operation code will be overwritten. As a result, the
+                                instruction changes to <code>SUB =</code>. It means that you cannot
+                                write number 9 as a data item here, only as an operation code.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    </body>
+
+<footer class="site-footer">
+    <div class="container">
+        <nav class="navbar">
+            <div class="container">
+                <ul class="nav navbar-nav">
+                    <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                                                                                           src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
+                    </li>
+                    <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</footer>
+
+</body>
 </html>
 

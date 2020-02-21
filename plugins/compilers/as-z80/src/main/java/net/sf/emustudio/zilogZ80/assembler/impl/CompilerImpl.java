@@ -40,10 +40,10 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type=PLUGIN_TYPE.COMPILER,
-        title="Zilog Z80 Assembler",
-        copyright="\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description="Custom version of the assembler. For syntax look at users manual."
+    type = PLUGIN_TYPE.COMPILER,
+    title = "Zilog Z80 Assembler",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Custom version of the assembler. For syntax look at users manual."
 )
 @SuppressWarnings("unused")
 public class CompilerImpl extends AbstractCompiler {
@@ -78,7 +78,7 @@ public class CompilerImpl extends AbstractCompiler {
     public void destroy() {
     }
 
-    
+
     private HEXFileManager compileToHex(String inputFileName) throws Exception {
         Objects.requireNonNull(inputFileName);
 
@@ -112,7 +112,7 @@ public class CompilerImpl extends AbstractCompiler {
             return hex;
         }
     }
-    
+
     @Override
     public boolean compile(String inputFileName, String outputFileName) {
         try {
@@ -155,7 +155,7 @@ public class CompilerImpl extends AbstractCompiler {
         outputFileName += ".hex";
         return compile(inputFileName, outputFileName);
     }
-    
+
     @Override
     public LexicalAnalyzer getLexer(Reader in) {
         return new LexerImpl(in);

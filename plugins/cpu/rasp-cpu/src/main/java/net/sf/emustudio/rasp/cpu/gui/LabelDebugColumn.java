@@ -21,13 +21,13 @@
 package net.sf.emustudio.rasp.cpu.gui;
 
 import emulib.plugins.cpu.AbstractDebugColumn;
-import java.util.Objects;
 import net.sf.emustudio.rasp.memory.RASPMemoryContext;
+
+import java.util.Objects;
 
 /**
  * Debug column with labels, borrowed from RAM memory pluin (Copyright (C)
  * 2009-2012 Peter Jakubčo).
- *
  */
 public class LabelDebugColumn extends AbstractDebugColumn {
 

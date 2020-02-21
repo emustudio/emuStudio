@@ -23,10 +23,9 @@ package net.sf.emustudio.rasp.compiler.tree;
 import net.sf.emustudio.rasp.compiler.CompilerOutput;
 
 /**
- *
  * @author miso
  */
-public class Label extends AbstractTreeNode{
+public class Label extends AbstractTreeNode {
 
     private final String value;
     private int address;
@@ -46,9 +45,9 @@ public class Label extends AbstractTreeNode{
     public void setAddress(int address) {
         this.address = address;
     }
-    
+
     @Override
-    public void pass(){
+    public void pass() {
         CompilerOutput.getInstance().addLabel(this);
     }
 }

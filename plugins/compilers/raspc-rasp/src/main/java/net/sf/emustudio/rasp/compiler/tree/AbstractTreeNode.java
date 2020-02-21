@@ -21,7 +21,6 @@
 package net.sf.emustudio.rasp.compiler.tree;
 
 /**
- *
  * @author miso
  */
 public abstract class AbstractTreeNode {

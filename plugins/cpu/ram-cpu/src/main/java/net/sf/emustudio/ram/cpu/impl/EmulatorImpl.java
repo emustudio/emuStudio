@@ -34,12 +34,6 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
-import javax.swing.*;
 import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
 import net.sf.emustudio.ram.cpu.gui.LabelDebugColumn;
 import net.sf.emustudio.ram.cpu.gui.RAMDisassembler;
@@ -49,11 +43,18 @@ import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
 @PluginType(
-        type = PLUGIN_TYPE.CPU,
-        title = "Random Access Machine (RAM)",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Emulator of abstract RAM machine"
+    type = PLUGIN_TYPE.CPU,
+    title = "Random Access Machine (RAM)",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Emulator of abstract RAM machine"
 )
 @SuppressWarnings("unused")
 public class EmulatorImpl extends AbstractCPU {
@@ -76,7 +77,7 @@ public class EmulatorImpl extends AbstractCPU {
             contextPool.register(pluginID, context, CPUContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register RAM CPU Context",
-                    EmulatorImpl.class.getAnnotation(PluginType.class).title());
+                EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
     }
 
@@ -111,7 +112,7 @@ public class EmulatorImpl extends AbstractCPU {
             DebugTable debugTable = API.getInstance().getDebugTable();
             if (debugTable != null) {
                 debugTable.setCustomColumns(Arrays.asList(
-                        new BreakpointColumn(this), new LabelDebugColumn(memory), new MnemoColumn(disassembler)
+                    new BreakpointColumn(this), new LabelDebugColumn(memory), new MnemoColumn(disassembler)
                 ));
             }
             debugTableInitialized = true;

@@ -21,26 +21,18 @@ package net.sf.emustudio.intel8080.gui;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
-import static emulib.runtime.RadixUtils.formatByteHexString;
-import static emulib.runtime.RadixUtils.formatWordHexString;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.intel8080.impl.CpuImpl;
 import net.sf.emustudio.intel8080.impl.EmulatorEngine;
 import net.sf.emustudio.intel8080.impl.InstructionPrinter;
+
+import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+
+import static emulib.runtime.RadixUtils.formatByteHexString;
+import static emulib.runtime.RadixUtils.formatWordHexString;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
@@ -78,7 +70,7 @@ public class StatusPanel extends JPanel {
         });
         cpu.getEngine().addFrequencyChangedListener(newFrequency -> lblFrequency.setText(String.format("%.2f kHz", newFrequency)));
         spnFrequency.addChangeListener(e -> {
-            int i = (Integer)spnFrequency.getModel().getValue();
+            int i = (Integer) spnFrequency.getModel().getValue();
             try {
                 StatusPanel.this.context.setCPUFrequency(i);
             } catch (IndexOutOfBoundsException ex) {
@@ -91,13 +83,13 @@ public class StatusPanel extends JPanel {
         txtRegA.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_A]));
         txtRegB.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_B]));
         txtRegC.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_C]));
-        txtRegBC.setText(formatWordHexString((short)engine.regs[EmulatorEngine.REG_B], (short)engine.regs[EmulatorEngine.REG_C]));
+        txtRegBC.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_B], (short) engine.regs[EmulatorEngine.REG_C]));
         txtRegD.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_D]));
         txtRegE.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_E]));
-        txtRegDE.setText(formatWordHexString((short)engine.regs[EmulatorEngine.REG_D], (short)engine.regs[EmulatorEngine.REG_E]));
+        txtRegDE.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_D], (short) engine.regs[EmulatorEngine.REG_E]));
         txtRegH.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_H]));
         txtRegL.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_L]));
-        txtRegHL.setText(formatWordHexString((short)engine.regs[EmulatorEngine.REG_H], (short)engine.regs[EmulatorEngine.REG_L]));
+        txtRegHL.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_H], (short) engine.regs[EmulatorEngine.REG_L]));
         txtRegSP.setText(formatWordHexString(engine.SP));
         txtRegPC.setText(formatWordHexString(engine.PC));
 
@@ -111,7 +103,7 @@ public class StatusPanel extends JPanel {
             spnFrequency.setEnabled(true);
         }
     }
-    
+
     private void onDumpInstructionsSelect(ActionEvent e) {
         if (chkPrintInstructions.isSelected()) {
             engine.setDispatchListener(new InstructionPrinter(cpu.getDisassembler(), engine, true));
@@ -119,7 +111,7 @@ public class StatusPanel extends JPanel {
             engine.setDispatchListener(null);
         }
     }
-    
+
     // <editor-fold defaultstate="collapsed" desc="Generated Code">
     private void initComponents() {
         JPanel paneRegisters = new JPanel();
@@ -167,7 +159,7 @@ public class StatusPanel extends JPanel {
         lblRuntimeFreq.setFont(lblRuntimeFreq.getFont().deriveFont(lblRuntimeFreq.getFont().getStyle() & ~Font.BOLD));
         lblFlags.setFont(lblFlags.getFont().deriveFont(lblFlags.getFont().getStyle() & ~Font.BOLD));
         chkPrintInstructions.setFont(chkPrintInstructions.getFont().deriveFont(chkPrintInstructions.getFont().getStyle() & ~Font.BOLD));
-        
+
         chkPrintInstructions.addActionListener(this::onDumpInstructionsSelect);
 
         lblRegB.setFont(lblRegB.getFont().deriveFont(lblRegB.getFont().getStyle() | java.awt.Font.BOLD));
@@ -231,16 +223,16 @@ public class StatusPanel extends JPanel {
         paneRegisters.setLayout(paneRegistersLayout);
 
         paneRegistersLayout.setHorizontalGroup(
-                paneRegistersLayout.createSequentialGroup().addContainerGap().addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(paneRegistersLayout.createSequentialGroup().addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegB).addComponent(lblRegD).addComponent(lblRegH).addComponent(lblRegA)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegB).addComponent(txtRegD).addComponent(txtRegH).addComponent(txtRegA)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegC).addComponent(lblRegE).addComponent(lblRegL).addComponent(lblRegF)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegC).addComponent(txtRegE).addComponent(txtRegL).addComponent(txtFlags)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegBC).addComponent(lblRegDE).addComponent(lblRegHL).addComponent(lblRegPC).addComponent(lblRegSP)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegBC).addComponent(txtRegDE).addComponent(txtRegHL).addComponent(txtRegPC).addComponent(txtRegSP))).addComponent(lblFlags).addComponent(tblFlags)).addContainerGap());
+            paneRegistersLayout.createSequentialGroup().addContainerGap().addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(paneRegistersLayout.createSequentialGroup().addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegB).addComponent(lblRegD).addComponent(lblRegH).addComponent(lblRegA)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegB).addComponent(txtRegD).addComponent(txtRegH).addComponent(txtRegA)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegC).addComponent(lblRegE).addComponent(lblRegL).addComponent(lblRegF)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegC).addComponent(txtRegE).addComponent(txtRegL).addComponent(txtFlags)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegBC).addComponent(lblRegDE).addComponent(lblRegHL).addComponent(lblRegPC).addComponent(lblRegSP)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegBC).addComponent(txtRegDE).addComponent(txtRegHL).addComponent(txtRegPC).addComponent(txtRegSP))).addComponent(lblFlags).addComponent(tblFlags)).addContainerGap());
         paneRegistersLayout.setVerticalGroup(
-                paneRegistersLayout.createSequentialGroup().addContainerGap().addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegB).addComponent(txtRegB).addComponent(lblRegC).addComponent(txtRegC).addComponent(lblRegBC).addComponent(txtRegBC)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegD).addComponent(txtRegD).addComponent(lblRegE).addComponent(txtRegE).addComponent(lblRegDE).addComponent(txtRegDE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegH).addComponent(txtRegH).addComponent(lblRegL).addComponent(txtRegL).addComponent(lblRegHL).addComponent(txtRegHL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegA).addComponent(txtRegA).addComponent(lblRegF).addComponent(txtFlags).addComponent(lblRegPC).addComponent(txtRegPC)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegSP).addComponent(txtRegSP)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblFlags).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(tblFlags));
+            paneRegistersLayout.createSequentialGroup().addContainerGap().addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegB).addComponent(txtRegB).addComponent(lblRegC).addComponent(txtRegC).addComponent(lblRegBC).addComponent(txtRegBC)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegD).addComponent(txtRegD).addComponent(lblRegE).addComponent(txtRegE).addComponent(lblRegDE).addComponent(txtRegDE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegH).addComponent(txtRegH).addComponent(lblRegL).addComponent(txtRegL).addComponent(lblRegHL).addComponent(txtRegHL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegA).addComponent(txtRegA).addComponent(lblRegF).addComponent(txtFlags).addComponent(lblRegPC).addComponent(txtRegPC)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegSP).addComponent(txtRegSP)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblFlags).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(tblFlags));
 
         panelRun.setBorder(BorderFactory.createTitledBorder(
-                new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true),
-                "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-                javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                new java.awt.Font("DejaVu Sans", Font.BOLD, 14),
-                new java.awt.Color(102, 102, 102))); // NOI18N
+            new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true),
+            "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+            javax.swing.border.TitledBorder.DEFAULT_POSITION,
+            new java.awt.Font("DejaVu Sans", Font.BOLD, 14),
+            new java.awt.Color(102, 102, 102))); // NOI18N
 
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | java.awt.Font.BOLD));
         lblRun.setForeground(new java.awt.Color(0, 102, 0));
@@ -255,56 +247,56 @@ public class StatusPanel extends JPanel {
         GroupLayout panelRunLayout = new GroupLayout(panelRun);
         panelRun.setLayout(panelRunLayout);
         panelRunLayout.setHorizontalGroup(
-                panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelRunLayout.createSequentialGroup()
-                                .addContainerGap().addComponent(lblRun).addContainerGap()
-                        ).addGroup(panelRunLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblCPUFreq)
-                                ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(spnFrequency)
-                                ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblKHZ)
-                                ).addContainerGap()
-                        ).addGroup(panelRunLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(lblRuntimeFreq)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblFrequency).addContainerGap()
-                        ).addGroup(panelRunLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(chkPrintInstructions)
-                                .addContainerGap()                                
-                        )
+            panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelRunLayout.createSequentialGroup()
+                    .addContainerGap().addComponent(lblRun).addContainerGap()
+                ).addGroup(panelRunLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(lblCPUFreq)
+                ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(spnFrequency)
+                ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(lblKHZ)
+                ).addContainerGap()
+            ).addGroup(panelRunLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblRuntimeFreq)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblFrequency).addContainerGap()
+            ).addGroup(panelRunLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(chkPrintInstructions)
+                .addContainerGap()
+            )
         );
         panelRunLayout.setVerticalGroup(
-                panelRunLayout.createSequentialGroup().addContainerGap().addComponent(lblRun)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE, false)
-                                .addComponent(lblCPUFreq)
-                                .addComponent(spnFrequency, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
-                                .addComponent(lblKHZ)
-                        ).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(lblRuntimeFreq)
-                                .addComponent(lblFrequency)
-                        ).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(chkPrintInstructions)
-                        ).addContainerGap()
+            panelRunLayout.createSequentialGroup().addContainerGap().addComponent(lblRun)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE, false)
+                    .addComponent(lblCPUFreq)
+                    .addComponent(spnFrequency, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
+                    .addComponent(lblKHZ)
+                ).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblRuntimeFreq)
+                    .addComponent(lblFrequency)
+                ).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkPrintInstructions)
+                ).addContainerGap()
         );
 
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(paneRegisters, 10, 290, Short.MAX_VALUE).addComponent(panelRun, 10, 290, Short.MAX_VALUE));
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(paneRegisters, 10, 290, Short.MAX_VALUE).addComponent(panelRun, 10, 290, Short.MAX_VALUE));
         layout.setVerticalGroup(
-                layout.createSequentialGroup().addComponent(paneRegisters, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(panelRun, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addContainerGap());
+            layout.createSequentialGroup().addComponent(paneRegisters, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(panelRun, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addContainerGap());
     }// </editor-fold>                        
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     JLabel lblFrequency;
     JLabel lblRun;

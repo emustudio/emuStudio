@@ -87,6 +87,6 @@ public class RASPInstructionImpl implements RASPInstruction {
     @Override
     public String toString() {
         return getCodeStr();
-    } 
+    }
 
 }
