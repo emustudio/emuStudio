@@ -19,18 +19,13 @@
  */
 package emustudio.gui.editor;
 
-import javax.swing.undo.CannotRedoException;
-import javax.swing.undo.CannotUndoException;
-import javax.swing.undo.CompoundEdit;
-import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
+import javax.swing.undo.*;
 
 
 /**
  * A simple UndoManager that groups the Edits in each 0.5 second.  If the time
  * difference between the current undo and the last one is less than 0.5 secs,
  * then the two edits are compound.
- *
  */
 class CompoundUndoManager extends UndoManager {
     /**

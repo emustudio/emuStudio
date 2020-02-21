@@ -32,14 +32,7 @@ import emustudio.architecture.ComputerFactory.PluginInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class Computer implements PluginConnections {
     private final static Logger LOGGER = LoggerFactory.getLogger(Computer.class);
@@ -138,12 +131,12 @@ public class Computer implements PluginConnections {
     /**
      * Method determine if plugin <code>plugin1</code>
      * is connected to <code>plugin2</code>.
-     *
+     * <p>
      * This method is used for determining connections between cpu,memory
      * and devices.
      *
-     * @param pluginID  Plugin1
-     * @param toPluginID  Plugin2
+     * @param pluginID   Plugin1
+     * @param toPluginID Plugin2
      * @return true if plugin1 is connected to plugin2; false otherwise
      */
     @Override

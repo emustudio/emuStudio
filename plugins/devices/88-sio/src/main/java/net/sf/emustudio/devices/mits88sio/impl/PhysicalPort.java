@@ -25,12 +25,12 @@ import java.util.Objects;
 
 /**
  * This port is a physical port which is used to device-device connection.
- * 
+ * <p>
  * For example, a terminal would use this port for communication.
  */
 class PhysicalPort implements DeviceContext<Short> {
     private final Transmitter transmitter;
-    
+
     PhysicalPort(Transmitter transmitter) {
         this.transmitter = Objects.requireNonNull(transmitter);
     }
@@ -49,5 +49,5 @@ class PhysicalPort implements DeviceContext<Short> {
     public Class getDataType() {
         return Short.class;
     }
-    
+
 }

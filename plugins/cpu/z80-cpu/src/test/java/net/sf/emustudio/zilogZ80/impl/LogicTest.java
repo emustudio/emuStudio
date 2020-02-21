@@ -28,17 +28,7 @@ import org.junit.Test;
 
 import java.util.function.Function;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.get8MSBplus8LSB;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.predicate8MSBplus8LSB;
 
@@ -431,9 +421,9 @@ public class LogicTest extends InstructionsTest {
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> (0 - context.first) & 0xFF)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>()
-                .switchFirstAndSecond().sign().zero().halfCarry().subtractionIsSet()
-                .expectFlagOnlyWhen(FLAG_C, (context, result) -> context.second.byteValue() != 0)
-               // .expectFlagOnlyWhen(FLAG_PV, (context, result) -> (context.second & 0xFF) == 0x80)
+                    .switchFirstAndSecond().sign().zero().halfCarry().subtractionIsSet()
+                    .expectFlagOnlyWhen(FLAG_C, (context, result) -> context.second.byteValue() != 0)
+                // .expectFlagOnlyWhen(FLAG_PV, (context, result) -> (context.second & 0xFF) == 0x80)
             )
             .keepCurrentInjectorsAfterRun();
 

@@ -136,7 +136,7 @@ public class ORGTest extends AbstractCompilerTest {
 
     @Test
     public void testORGdoesNotBreakPreviousMemoryContent() throws Exception {
-        memoryStub.write(0, (short)0x10);
+        memoryStub.write(0, (short) 0x10);
         memoryStub.write(1, (short) 0x11);
 
         compile(

@@ -34,7 +34,7 @@ public class Tokens extends Symbol implements Token, Symbols {
     private final boolean initial;
 
     public Tokens(int ID, int type, String text,
-            int line, int column, int offset, Object val, boolean initial) {
+                  int line, int column, int offset, Object val, boolean initial) {
         super(ID, val);
         this.type = type;
         this.text = text;

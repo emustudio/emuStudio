@@ -8,7 +8,7 @@ public interface RawMemoryContext extends MemoryContext<Short> {
 
     /**
      * Returns raw memory represented by Java array.
-     *
+     * <p>
      * Memory notifications must be handled manually if this array changes.
      *
      * @return raw memory

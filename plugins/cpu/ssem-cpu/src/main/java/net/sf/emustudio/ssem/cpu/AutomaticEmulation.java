@@ -87,8 +87,8 @@ class AutomaticEmulation {
     }
 
     private void saveSnapshot(int ciSnapshot, int accSnapshot, Byte[][] memorySnapshot) {
-        try(OutputStream out = new FileOutputStream(SSEM_FILE_NAME)) {
-            try(PrintWriter writer = new PrintWriter(out)) {
+        try (OutputStream out = new FileOutputStream(SSEM_FILE_NAME)) {
+            try (PrintWriter writer = new PrintWriter(out)) {
 
                 writer.println("ACC=0x" + Integer.toHexString(accSnapshot));
                 writer.println("CI=0x" + Integer.toHexString(ciSnapshot));
@@ -98,7 +98,7 @@ class AutomaticEmulation {
                 for (int i = 0; i < memorySnapshot.length; i++) {
                     int number = NumberUtils.readInt(memorySnapshot[i], NumberUtils.Strategy.BIG_ENDIAN);
                     String binary = RadixUtils.formatBinaryString(number, 32, 0, true);
-                    writer.println(String.format("%02d %s", i, binary.replaceAll("0","  ").replaceAll("1","* ")));
+                    writer.println(String.format("%02d %s", i, binary.replaceAll("0", "  ").replaceAll("1", "* ")));
                 }
             }
         } catch (IOException e) {

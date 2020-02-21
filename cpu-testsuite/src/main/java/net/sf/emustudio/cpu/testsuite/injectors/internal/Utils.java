@@ -22,7 +22,6 @@ import java.util.Arrays;
 
 /**
  * INTERNAL CLASS. DO NOT USE DIRECTLY.
- *
  */
 public class Utils {
 

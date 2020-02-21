@@ -59,6 +59,7 @@ public class Program {
      * Method check whether this "subprogram" contains include
      * pseudocode(s) and if yes, whether the statement calls for
      * filename given by parameter.
+     *
      * @param filename name of the file that "include" pseudocode should contain
      * @return true if subprogram contains "include filename" pseudocode
      */
@@ -99,7 +100,7 @@ public class Program {
             if ((row.statement != null) && (row.statement instanceof PseudoMACRO)) {
                 if (!namespace.addMacro((PseudoMACRO) row.statement)) {
                     throw new Exception("Error: Macro already defined: "
-                            + ((PseudoMACRO) row.statement).getName());
+                        + ((PseudoMACRO) row.statement).getName());
                 }
             }
             if ((row.statement != null) && (row.statement instanceof PseudoINCLUDE)) {

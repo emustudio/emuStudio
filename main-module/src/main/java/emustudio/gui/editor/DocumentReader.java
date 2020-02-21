@@ -42,7 +42,7 @@ class DocumentReader extends Reader {
      * should not be called at the same time as a read) allows
      * the reader to compensate.
      *
-     * @param position the position
+     * @param position   the position
      * @param adjustment the adjustment
      */
     synchronized void update(int position, int adjustment) {
@@ -128,7 +128,7 @@ class DocumentReader extends Reader {
     }
 
     @Override
-    public long skip(long n){
+    public long skip(long n) {
         document.readLock();
         int docLen = 0;
         try {
@@ -136,7 +136,7 @@ class DocumentReader extends Reader {
         } finally {
             document.readUnlock();
         }
-        if (position + n <= docLen){
+        if (position + n <= docLen) {
             position += n;
             return n;
         } else {
@@ -146,7 +146,7 @@ class DocumentReader extends Reader {
         }
     }
 
-    void seek(long n){
+    void seek(long n) {
         document.readLock();
         int docLen = 0;
         try {
@@ -154,7 +154,7 @@ class DocumentReader extends Reader {
         } finally {
             document.readUnlock();
         }
-        if (n <= docLen){
+        if (n <= docLen) {
             position = n;
         } else {
             position = docLen;

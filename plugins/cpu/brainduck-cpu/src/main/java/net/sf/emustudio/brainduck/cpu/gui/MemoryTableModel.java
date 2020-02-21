@@ -30,7 +30,7 @@ public class MemoryTableModel extends AbstractTableModel {
     MemoryTableModel(RawMemoryContext memory) {
         this.memory = memory.getRawMemory();
     }
-    
+
     @Override
     public int getRowCount() {
         return 1;
@@ -40,7 +40,7 @@ public class MemoryTableModel extends AbstractTableModel {
     public int getColumnCount() {
         return 5;
     }
-    
+
     @Override
     public String getColumnName(int columnIndex) {
         int index = P + (columnIndex - 2);

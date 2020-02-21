@@ -32,7 +32,7 @@ public class Main {
         int i;
         for (i = 0; i < args.length; i++) {
             String arg = args[i].toLowerCase();
-            if ((arg.equals("--output") || arg.equals("-o")) && ((i+1) < args.length)) {
+            if ((arg.equals("--output") || arg.equals("-o")) && ((i + 1) < args.length)) {
                 outputFile = args[++i];
             } else if (arg.equals("--help") || arg.equals("-h")) {
                 printHelp();

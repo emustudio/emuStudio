@@ -27,7 +27,6 @@ import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
 
 /**
- *
  * opcode = (first_byte+reg) expr
  */
 public class OC_RegExpr extends Instruction {
@@ -40,18 +39,17 @@ public class OC_RegExpr extends Instruction {
     public static final int BIT = 0xCB40; // BIT b,r
     public static final int RES = 0xCB80; // RES b,r
     public static final int SET = 0xCBC0; // SET b,r
-    
+
     private final Expression expr;
     private final boolean oneByte;
     private final boolean bitInstr; // bit instruction? (BIT,SET,RES)
     private final boolean relativeAddress;
 
     /**
-     *
      * Creates a new instance of OC_RegExpr
      *
      * @param pos index of byte where add register value; e.g. DD 70+reg XX XX
-     * => pos = 1; C4+reg 00 00 => pos = 0;
+     *            => pos = 1; C4+reg 00 00 => pos = 0;
      */
 
     public OC_RegExpr(int opcode, int reg, int pos, Expression expr, boolean oneByte, int line, int column) {

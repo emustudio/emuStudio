@@ -43,15 +43,15 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.COMPILER,
-        title = "RAM Compiler",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Custom compiler for RAM abstract machine"
+    type = PLUGIN_TYPE.COMPILER,
+    title = "RAM Compiler",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Custom compiler for RAM abstract machine"
 )
 @SuppressWarnings("unused")
 public class RAMCompiler extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(RAMCompiler.class);
-    private static final SourceFileExtension[] SUFFIXES = new SourceFileExtension[] {
+    private static final SourceFileExtension[] SUFFIXES = new SourceFileExtension[]{
         new SourceFileExtension("ram", "Random Access Machine source")
     };
 
@@ -158,7 +158,7 @@ public class RAMCompiler extends AbstractCompiler {
         outputFileName += ".ro";
         return compile(inputFileName, outputFileName);
     }
-    
+
     @Override
     public LexicalAnalyzer getLexer(Reader reader) {
         return new LexerImpl(reader);

@@ -1,0 +1,14 @@
+plugins {
+  id 'java'
+}
+
+dependencies {
+  implementation libs.emuLib
+}
+
+jar {
+  archiveVersion = ''
+  manifest {
+    attributes manifestAttributes('')
+  }
+}

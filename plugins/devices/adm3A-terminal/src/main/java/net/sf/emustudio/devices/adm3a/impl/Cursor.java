@@ -21,9 +21,8 @@ package net.sf.emustudio.devices.adm3a.impl;
 
 import net.jcip.annotations.ThreadSafe;
 
-import javax.swing.Timer;
-import java.awt.Graphics;
-import java.awt.Point;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Objects;
@@ -74,9 +73,9 @@ public class Cursor {
             graphics.setXORMode(Display.BACKGROUND);
             graphics.setColor(Display.FOREGROUND);
             graphics.fillRect(
-                    visiblePoint.x * displayParameters.charWidth,
-                    visiblePoint.y * displayParameters.charHeight + displayParameters.startY - displayParameters.charHeight,
-                    displayParameters.charWidth, displayParameters.charHeight);
+                visiblePoint.x * displayParameters.charWidth,
+                visiblePoint.y * displayParameters.charHeight + displayParameters.startY - displayParameters.charHeight,
+                displayParameters.charWidth, displayParameters.charHeight);
             graphics.setPaintMode();
             reset = !currentReset;
         }
@@ -103,7 +102,7 @@ public class Cursor {
         return rowCount;
     }
 
-    Point getPoint(){
+    Point getPoint() {
         return new Point(cursorPoint.get());
     }
 

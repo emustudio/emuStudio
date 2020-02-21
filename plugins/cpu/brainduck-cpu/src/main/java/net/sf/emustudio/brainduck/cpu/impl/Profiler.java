@@ -7,29 +7,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_COPY_AND_CLEAR;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DEC;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DECV;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_INC;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_INCV;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_LOOP_END;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_LOOP_START;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_PRINT;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_READ;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_SCANLOOP;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_STOP;
+import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.*;
 
 public class Profiler {
     private final short[] memory;
     private final CachedOperation[] operationsCache;
     private final Integer[] loopEndsCache;
-    
+
     private int repeatedOptsCount = 0;
     private int copyLoopsCount = 0;
     private int scanLoopsCount = 0;
 
     public static final class CachedOperation {
-        public enum TYPE { COPYLOOP, REPEAT, SCANLOOP }
+        public enum TYPE {COPYLOOP, REPEAT, SCANLOOP}
 
         final TYPE type;
         int nextIP;
@@ -48,8 +38,10 @@ public class Profiler {
         @Override
         public String toString() {
             switch (type) {
-                case COPYLOOP: return type + copyLoops.toString();
-                case REPEAT: return type + "[op=" + operation + ", arg=" + argument + "]";
+                case COPYLOOP:
+                    return type + copyLoops.toString();
+                case REPEAT:
+                    return type + "[op=" + operation + ", arg=" + argument + "]";
             }
             return "UNKNOWN";
         }
@@ -58,7 +50,7 @@ public class Profiler {
     public final static class CopyLoop {
         int factor;
         int relativePosition;
-        
+
         short specialOP;
 
         CopyLoop(int factor, int relativePosition) {
@@ -94,10 +86,10 @@ public class Profiler {
         optimizeCopyLoops(programSize);
         optimizeScanLoops(programSize);
         optimizeRepeatingOperations(programSize);
-        
+
         System.out.println(this);
     }
-    
+
     private void optimizeRepeatingOperations(int programSize) {
         int lastOperation = -1;
         short OP;
@@ -110,7 +102,7 @@ public class Profiler {
                 operation.operation = OP;
                 operation.argument = 2;
 
-                while ((tmpIP+1) < programSize && (memory[tmpIP+1] == lastOperation)) {
+                while ((tmpIP + 1) < programSize && (memory[tmpIP + 1] == lastOperation)) {
                     operation.argument++;
                     tmpIP++;
                 }
@@ -156,7 +148,7 @@ public class Profiler {
         short OP;
         for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
             OP = memory[tmpIP];
-            if (OP == I_LOOP_START && tmpIP+2 < programSize) {
+            if (OP == I_LOOP_START && tmpIP + 2 < programSize) {
                 tmpIP++;
                 OP = memory[tmpIP];
                 CachedOperation copyLoop = findCopyLoop(tmpIP, OP);
@@ -172,7 +164,7 @@ public class Profiler {
 
     private int[] repeatRead(short incOp, short decOp, int pos, int stopPos, int var) {
         if (pos >= stopPos) {
-            return new int[] { pos, var};
+            return new int[]{pos, var};
         }
         do {
             short op = memory[pos];
@@ -183,9 +175,9 @@ public class Profiler {
             } else break;
             pos++;
         } while (pos < stopPos);
-        return new int[] { pos, var };
+        return new int[]{pos, var};
     }
-    
+
     private int readSpecial(int startIP, int stopIP, List<CopyLoop> copyLoops) {
         if (startIP > stopIP) {
             return startIP;
@@ -201,7 +193,7 @@ public class Profiler {
         } while (startIP < stopIP);
         return startIP;
     }
-    
+
     private CachedOperation findCopyLoop(int tmpIP, short OP) {
         if (loopEndsCache[tmpIP - 1] == -1) {
             return null; // we don't have optimized loops
@@ -231,7 +223,7 @@ public class Profiler {
 
         while (startIP < stopIP) {
             startIP = readSpecial(startIP, stopIP, copyLoops);
-            
+
             int[] posVar = repeatRead(I_INC, I_DEC, startIP, stopIP, pointerInvEntrophy);
             if (posVar[0] == startIP) {
                 break; // weird stuff
@@ -249,7 +241,7 @@ public class Profiler {
             }
             startIP = posFactor[0];
 
-            copyLoops.add(new CopyLoop(posFactor[1],pointerInvEntrophy));
+            copyLoops.add(new CopyLoop(posFactor[1], pointerInvEntrophy));
         }
         if (pointerInvEntrophy == 0 && startIP == stopIP) {
             CachedOperation operation = new CachedOperation(CachedOperation.TYPE.COPYLOOP);
@@ -260,7 +252,7 @@ public class Profiler {
         }
         return null;
     }
-    
+
     private void optimizeScanLoops(int programSize) {
         short OP;
         for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
@@ -270,16 +262,16 @@ public class Profiler {
                     // loop optimization is needed
                     break;
                 }
-                int loopEnd = loopEndsCache[tmpIP]- 1;
-                int posVar[] = repeatRead(I_INC, I_DEC, tmpIP+1, loopEnd, 0);
-                
+                int loopEnd = loopEndsCache[tmpIP] - 1;
+                int posVar[] = repeatRead(I_INC, I_DEC, tmpIP + 1, loopEnd, 0);
+
                 if (posVar[0] == loopEnd) {
                     // we have scanloop
                     CachedOperation scanLoop = new CachedOperation(CachedOperation.TYPE.SCANLOOP);
                     scanLoop.nextIP = posVar[0] + 1;
                     scanLoop.argument = posVar[1];
                     scanLoop.operation = I_SCANLOOP;
-                    
+
                     operationsCache[tmpIP] = scanLoop;
                     tmpIP = scanLoop.nextIP;
                     scanLoopsCount++;
@@ -300,8 +292,8 @@ public class Profiler {
     public String toString() {
         int total = repeatedOptsCount + copyLoopsCount + scanLoopsCount;
         return "Profiler{optimizations=" + total
-                + ", repeatedOps=" + repeatedOptsCount + ", copyLoops=" + copyLoopsCount
-                + ", scanLoops=" + scanLoopsCount
-                + "}";
+            + ", repeatedOps=" + repeatedOptsCount + ", copyLoops=" + copyLoopsCount
+            + ", scanLoops=" + scanLoopsCount
+            + "}";
     }
 }

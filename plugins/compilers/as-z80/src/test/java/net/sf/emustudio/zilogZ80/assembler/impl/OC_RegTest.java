@@ -30,13 +30,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testINR() throws Exception {
         compile(
             "inc A\n"
-            + "inc B\n"
-            + "inc C\n"
-            + "inc D\n"
-            + "inc E\n"
-            + "inc H\n"
-            + "inc L\n"
-            + "inc (HL)\n"
+                + "inc B\n"
+                + "inc C\n"
+                + "inc D\n"
+                + "inc E\n"
+                + "inc H\n"
+                + "inc L\n"
+                + "inc (HL)\n"
         );
 
         assertProgram(
@@ -48,13 +48,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testDCR() throws Exception {
         compile(
             "dec A\n"
-            + "dec B\n"
-            + "dec C\n"
-            + "dec D\n"
-            + "dec E\n"
-            + "dec H\n"
-            + "dec L\n"
-            + "dec (HL)\n"
+                + "dec B\n"
+                + "dec C\n"
+                + "dec D\n"
+                + "dec E\n"
+                + "dec H\n"
+                + "dec L\n"
+                + "dec (HL)\n"
         );
 
         assertProgram(
@@ -66,13 +66,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testADD() throws Exception {
         compile(
             "add A,A\n"
-            + "add A,B\n"
-            + "add A,C\n"
-            + "add A,D\n"
-            + "add A,E\n"
-            + "add A,H\n"
-            + "add A,L\n"
-            + "add A,(HL)\n"
+                + "add A,B\n"
+                + "add A,C\n"
+                + "add A,D\n"
+                + "add A,E\n"
+                + "add A,H\n"
+                + "add A,L\n"
+                + "add A,(HL)\n"
         );
 
         assertProgram(
@@ -84,13 +84,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testADC() throws Exception {
         compile(
             "adc A,A\n"
-            + "adc A,B\n"
-            + "adc A,C\n"
-            + "adc A,D\n"
-            + "adc A,E\n"
-            + "adc A,H\n"
-            + "adc A,L\n"
-            + "adc A,(HL)\n"
+                + "adc A,B\n"
+                + "adc A,C\n"
+                + "adc A,D\n"
+                + "adc A,E\n"
+                + "adc A,H\n"
+                + "adc A,L\n"
+                + "adc A,(HL)\n"
         );
 
         assertProgram(
@@ -102,13 +102,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testSUB() throws Exception {
         compile(
             "sub A\n"
-            + "sub B\n"
-            + "sub C\n"
-            + "sub D\n"
-            + "sub E\n"
-            + "sub H\n"
-            + "sub L\n"
-            + "sub (HL)\n"
+                + "sub B\n"
+                + "sub C\n"
+                + "sub D\n"
+                + "sub E\n"
+                + "sub H\n"
+                + "sub L\n"
+                + "sub (HL)\n"
         );
 
         assertProgram(
@@ -120,13 +120,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testSBB() throws Exception {
         compile(
             "sbc A\n"
-            + "sbc B\n"
-            + "sbc C\n"
-            + "sbc D\n"
-            + "sbc E\n"
-            + "sbc H\n"
-            + "sbc L\n"
-            + "sbc (HL)\n"
+                + "sbc B\n"
+                + "sbc C\n"
+                + "sbc D\n"
+                + "sbc E\n"
+                + "sbc H\n"
+                + "sbc L\n"
+                + "sbc (HL)\n"
         );
 
         assertProgram(
@@ -138,13 +138,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testANA() throws Exception {
         compile(
             "and A\n"
-            + "and B\n"
-            + "and C\n"
-            + "and D\n"
-            + "and E\n"
-            + "and H\n"
-            + "and L\n"
-            + "and (HL)\n"
+                + "and B\n"
+                + "and C\n"
+                + "and D\n"
+                + "and E\n"
+                + "and H\n"
+                + "and L\n"
+                + "and (HL)\n"
         );
 
         assertProgram(
@@ -156,13 +156,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testXRA() throws Exception {
         compile(
             "xor A\n"
-            + "xor B\n"
-            + "xor C\n"
-            + "xor D\n"
-            + "xor E\n"
-            + "xor H\n"
-            + "xor L\n"
-            + "xor (HL)\n"
+                + "xor B\n"
+                + "xor C\n"
+                + "xor D\n"
+                + "xor E\n"
+                + "xor H\n"
+                + "xor L\n"
+                + "xor (HL)\n"
         );
 
         assertProgram(
@@ -174,13 +174,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testORA() throws Exception {
         compile(
             "or A\n"
-            + "or B\n"
-            + "or C\n"
-            + "or D\n"
-            + "or E\n"
-            + "or H\n"
-            + "or L\n"
-            + "or (HL)\n"
+                + "or B\n"
+                + "or C\n"
+                + "or D\n"
+                + "or E\n"
+                + "or H\n"
+                + "or L\n"
+                + "or (HL)\n"
         );
 
         assertProgram(
@@ -192,13 +192,13 @@ public class OC_RegTest extends AbstractCompilerTest {
     public void testCMP() throws Exception {
         compile(
             "cp A\n"
-            + "cp B\n"
-            + "cp C\n"
-            + "cp D\n"
-            + "cp E\n"
-            + "cp H\n"
-            + "cp L\n"
-            + "cp (HL)\n"
+                + "cp B\n"
+                + "cp C\n"
+                + "cp D\n"
+                + "cp E\n"
+                + "cp H\n"
+                + "cp L\n"
+                + "cp (HL)\n"
         );
 
         assertProgram(
@@ -208,6 +208,6 @@ public class OC_RegTest extends AbstractCompilerTest {
 
     @Test
     public void testOCRegSizeReturns1() throws Exception {
-        assertEquals(1, new OC_Reg(55, 0,0,0).getSize());
+        assertEquals(1, new OC_Reg(55, 0, 0, 0).getSize());
     }
 }

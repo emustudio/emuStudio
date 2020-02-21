@@ -19,30 +19,18 @@
  */
 package net.sf.emustudio.brainduck.memory.gui;
 
-import javax.swing.AbstractCellEditor;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListSelectionModel;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
+import java.awt.*;
 
 import static emulib.runtime.RadixUtils.formatWordHexString;
 
 class MemoryTable extends JTable {
     private final static int CHAR_WIDTH = 17;
-    
+
     private final MemoryTableModel model;
     private final JScrollPane scrollPane;
 
@@ -80,7 +68,7 @@ class MemoryTable extends JTable {
 
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-                boolean cellHasFocus) {
+                                                      boolean cellHasFocus) {
             setText((value == null) ? "" : value.toString());
             return this;
         }
@@ -96,7 +84,7 @@ class MemoryTable extends JTable {
             adresses = new String[model.getRowCount()];
             for (int i = 0; i < adresses.length; i++) {
                 adresses[i] = formatWordHexString(
-                        model.getColumnCount() * i + model.getColumnCount() * model.getRowCount() * currentPage
+                    model.getColumnCount() * i + model.getColumnCount() * model.getRowCount() * currentPage
                 ) + "h";
             }
             this.setOpaque(true);
@@ -123,14 +111,14 @@ class MemoryTable extends JTable {
             currentPage = model.getPage();
             for (int i = 0; i < adresses.length; i++) {
                 adresses[i] = String.format("%1$04Xh",
-                        model.getColumnCount() * i + model.getColumnCount() * model.getRowCount() * currentPage);
+                    model.getColumnCount() * i + model.getColumnCount() * model.getRowCount() * currentPage);
             }
             rowHeader.setListData(adresses);
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
-                boolean isSelected, boolean hasFocus, int row, int column) {
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
             if (isSelected) {
                 setBackground(MemoryTable.this.getSelectionBackground());
                 setForeground(MemoryTable.this.getSelectionForeground());
@@ -157,7 +145,7 @@ class MemoryTable extends JTable {
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                boolean isSelected, int rowIndex, int vColIndex) {
+                                                     boolean isSelected, int rowIndex, int vColIndex) {
             if (isSelected == false) {
                 return null;
             }
@@ -169,5 +157,5 @@ class MemoryTable extends JTable {
         public Object getCellEditorValue() {
             return component.getText();
         }
-    }    
+    }
 }

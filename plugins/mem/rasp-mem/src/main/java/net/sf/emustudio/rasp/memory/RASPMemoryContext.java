@@ -20,9 +20,9 @@
 
 package net.sf.emustudio.rasp.memory;
 
-import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
 import emulib.annotations.ContextType;
 import emulib.plugins.memory.MemoryContext;
+import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public interface RASPMemoryContext extends MemoryContext<MemoryItem> {
     /**
      * Adds label to memory's set of labels.
      *
-     * @param pos adress which label refers to
+     * @param pos   adress which label refers to
      * @param label the string reprezentation of the label
      */
     public void addLabel(int pos, String label);

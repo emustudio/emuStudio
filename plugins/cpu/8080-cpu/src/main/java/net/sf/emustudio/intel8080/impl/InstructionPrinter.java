@@ -30,11 +30,7 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_AC;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_S;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_Z;
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.*;
 
 @ThreadSafe
 public class InstructionPrinter implements DispatchListener {
@@ -68,7 +64,7 @@ public class InstructionPrinter implements DispatchListener {
             if (useCache && !cache.contains(emulatorEngine.PC)) {
                 if (numberOfMatch.get() != 0) {
                     System.out.println(String.format("%04d | Block from %04X to %04X; count=%d",
-                            timeStamp, matchPC, emulatorEngine.PC, numberOfMatch.get())
+                        timeStamp, matchPC, emulatorEngine.PC, numberOfMatch.get())
                     );
                 } else {
                     matchPC = emulatorEngine.PC;
@@ -81,7 +77,7 @@ public class InstructionPrinter implements DispatchListener {
 
             if (numberOfMatch.get() <= 1) {
                 System.out.print(String.format("%04d | PC=%04x | %12s | %10s ",
-                        timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
+                    timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
                 );
             }
 
@@ -94,14 +90,14 @@ public class InstructionPrinter implements DispatchListener {
     public void afterDispatch() {
         if (numberOfMatch.get() <= 1) {
             System.out.println(String.format("|| regs=%s | flags=%s | SP=%04x | PC=%04x",
-                    regsToString(), intToFlags(emulatorEngine.flags), emulatorEngine.SP, emulatorEngine.PC)
+                regsToString(), intToFlags(emulatorEngine.flags), emulatorEngine.SP, emulatorEngine.PC)
             );
         }
     }
 
     private String regsToString() {
         String r = "";
-        for (short i =0; i < emulatorEngine.regs.length; i++) {
+        for (short i = 0; i < emulatorEngine.regs.length; i++) {
             r += String.format("%02x ", emulatorEngine.regs[i]);
         }
         return r;

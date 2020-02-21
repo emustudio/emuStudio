@@ -34,7 +34,7 @@ public class FakeDevice implements DeviceContext<Short> {
 
     @Override
     public Short read() {
-        return (short)(value & 0xFF);
+        return (short) (value & 0xFF);
     }
 
     @Override

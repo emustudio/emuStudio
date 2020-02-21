@@ -19,24 +19,17 @@
  */
 package emustudio.drawing.mode;
 
-import emustudio.drawing.CompilerElement;
-import emustudio.drawing.ConnectionLine;
-import emustudio.drawing.CpuElement;
-import emustudio.drawing.DeviceElement;
-import emustudio.drawing.DrawingPanel;
+import emustudio.drawing.*;
 import emustudio.drawing.DrawingPanel.Tool;
-import emustudio.drawing.Element;
-import emustudio.drawing.MemoryElement;
-import emustudio.drawing.Model;
 import emustudio.drawing.mode.ModeSelector.SelectMode;
-import java.awt.Graphics2D;
-import java.awt.Point;
+
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
  * Modeling drawing mode. New components are being added or deleted, according to selected tool. When mouse clicks on
  * the canvas, the component is created/deleted and mode is switched into "moving" mode.
- *
+ * <p>
  * If a user is creating a line, by clicking on an empty area a line point is created and user continues creating the
  * line - ie. the "modelling" mode stays.
  */
@@ -45,7 +38,7 @@ class ModelingMode extends AbstractMode {
     /**
      * This variable contains last sketch point when drawing a connection line. The last point is variable according to
      * the mouse position. It actually is the mouse position when drawing a line.
-     *
+     * <p>
      * It is used only in "modelling" mode.
      */
     private Point sketchLastPoint;

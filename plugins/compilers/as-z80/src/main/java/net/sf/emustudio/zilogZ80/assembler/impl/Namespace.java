@@ -19,27 +19,18 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.impl;
 
-import net.sf.emustudio.zilogZ80.assembler.tree.Label;
-import net.sf.emustudio.zilogZ80.assembler.tree.PseudoEQU;
-import net.sf.emustudio.zilogZ80.assembler.tree.PseudoMACRO;
-import net.sf.emustudio.zilogZ80.assembler.tree.PseudoVAR;
-import net.sf.emustudio.zilogZ80.assembler.tree.Row;
+import net.sf.emustudio.zilogZ80.assembler.tree.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Namespace is used in compile time.
- *
+ * <p>
  * It is a compile environment. It stores needed values for all compiler passes.
  * sets, macros and equs are pseudo-instructions that aren't added to symbol table
  * in pass1. This means that if eg. equ wasn't defined before first use error
  * comes.
- *
  */
 public class Namespace {
     private final Map<String, Label> labels = new HashMap<>();
@@ -61,9 +52,9 @@ public class Namespace {
         Objects.requireNonNull(name);
 
         return labels.containsKey(name)
-                || macros.containsKey(name)
-                || constants.containsKey(name)
-                || variables.containsKey(name);
+            || macros.containsKey(name)
+            || constants.containsKey(name)
+            || variables.containsKey(name);
     }
 
     private <T> boolean addIdentifier(Map<String, T> identifiers, T identifier, String name) {

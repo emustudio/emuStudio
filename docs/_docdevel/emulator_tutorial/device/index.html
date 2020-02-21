@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>Device &diams; emuStudio</title>
-    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <meta name="keywords"
+          content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
     <meta name="description" content="Universal computer emulation platform and framework.">
     <meta name=”robots” content=”noindex,follow”>
 
@@ -23,8 +20,10 @@
     <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <!-- RSS -->
-    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../feed.xml">
-    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../atom.xml">
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../atom.xml">
 
     <!-- Favicons -->
     <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
@@ -32,7 +31,8 @@
     <meta name="msapplication-TileColor" content="#ffffff">
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+    <link rel="stylesheet"
+          href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../../css/style.css">
@@ -54,17 +54,18 @@
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 
-    
-      <!-- Global site tag (gtag.js) - Google Analytics -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
-      <script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+    <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
     
         gtag('config', 'UA-3492956-5');
-      </script>
-    
+
+    </script>
+
 </head>
 
 
@@ -74,47 +75,49 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;"
+                                                     src="../../../img/logo-2.svg" width="30px"/></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
-                <!--<div class="form-group">-->
-                    <!--<input type="text" class="form-control" placeholder="Search website">-->
-                <!--</div>-->
-                <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
             <!--</form>-->
             <ul class="nav navbar-nav navbar-right">
-                
+
                 <li>
                     <a href="/">Home</a>
                 </li>
-                
+
                 <li>
                     <a href="/download">Download</a>
                 </li>
-                
+
                 <li>
                     <a href="/docs">Docs</a>
                 </li>
-                
+
                 <li>
                     <a href="/devel">Developer</a>
                 </li>
-                
+
                 <li>
                     <a href="/roadmap">Roadmap</a>
                 </li>
-                
+
                 <li>
                     <a href="/about">About</a>
                 </li>
-                
+
             </ul>
         </div>
     </div>
@@ -129,78 +132,96 @@
           
       </span>
     </h1>
-    
-    
+
+
 </div>
 
 
 <div class="container">
     <div class="sect1">
-<h2 id="DEVICE_HOWTO">Writing a Device</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This tutorial will describe how to implement a virtual device to be used in emuStudio. The tutorial
-will focus on implementing simple CRT display for SSEM computer.
-The main focus is put on how to use emuLib API in a virtual device project so it can be used in emuStudio.</p>
-</div>
-<div class="sect2">
-<h3 id="DEVICE_GETTING_STARTED">Getting started</h3>
-<div class="paragraph">
-<p>Before reading on, please read the <a href="#INTRODUCTION_PLUGINS">[INTRODUCTION_PLUGINS]</a> chapter. It gives the information
-needed for setting up the development environment and for basic understanding how the emuStudio/plug-ins lifecycle
-work.</p>
-</div>
-<div class="paragraph">
-<p>In this tutorial we will implement a CRT display for our SSEM computer. It will not completely mimic the real
-"monitor" interface with switches and everything, but it will just display the content of the memory. There exist
-several good sources about how the real monitor looked like; and with many additional details - just to mention
-few:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="http://www.rogerdavies.com/2009/12/manchester-ssem-baby/">Roger Davies nice article about SSEM</a></p>
-</li>
-<li>
-<p><a href="http://www.cs.ubc.ca/~hilpert/e/SSEM/index.html">Brent Hilpert page about SSEM, including emulator</a></p>
-</li>
-<li>
-<p><a href="http://www.davidsharp.com/baby/">David Sharp page about SSEM, including emulator</a></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>As we know from <a href="#MEMORY_HOWTO">[MEMORY_HOWTO]</a>, SSEM memory is in fact a 32x32 grid of bits. A memory cell has 4 bytes = 32 bits. So
-we have 32 rows or memory cells in the memory, each of size 4 bytes.</p>
-</div>
-<div class="paragraph">
-<p>Next, the number stored in memory is "reversed" when compared to current x86 numbers representation in memory. It means,
-that LSB and MSB were switched. What&#8217;s more, SSEM used two&#8217;s complement to represent negative numbers.</p>
-</div>
-<div class="paragraph">
-<p>With that information, we are able to create the display. For the simplicity, the display will be just a black canvas
-with the grid of squares - bits - filled with different color - based on whether the corresponding bit is 1 or 0.</p>
-</div>
-<div class="paragraph">
-<p>The display should be able to "listen" for memory changes and re-paint itself to be up to date with the current state
-of the SSEM memory.</p>
-</div>
-<div class="paragraph">
-<p>Besides displaying, there will be no other interaction from user.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="preparing-the-environment">Preparing the environment</h3>
-<div class="paragraph">
-<p>In order to start developing the device, create new Java project. Here, Maven will be used for dependencies management.
-The plug-in will be implemented as another standard emuStudio plug-in, so it will inherit Maven plug-in dependencies
-from the main POM file.</p>
-</div>
-<div class="paragraph">
-<p>The project should be located at <code>emuStudio/plugins/devices/ssem-display</code>, and should contain the following structure:</p>
-</div>
-<div class="literalblock">
-<div class="content">
+        <h2 id="DEVICE_HOWTO">Writing a Device</h2>
+        <div class="sectionbody">
+            <div class="paragraph">
+                <p>This tutorial will describe how to implement a virtual device to be used in emuStudio. The tutorial
+                    will focus on implementing simple CRT display for SSEM computer.
+                    The main focus is put on how to use emuLib API in a virtual device project so it can be used in
+                    emuStudio.</p>
+            </div>
+            <div class="sect2">
+                <h3 id="DEVICE_GETTING_STARTED">Getting started</h3>
+                <div class="paragraph">
+                    <p>Before reading on, please read the <a href="#INTRODUCTION_PLUGINS">[INTRODUCTION_PLUGINS]</a>
+                        chapter. It gives the information
+                        needed for setting up the development environment and for basic understanding how the
+                        emuStudio/plug-ins lifecycle
+                        work.</p>
+                </div>
+                <div class="paragraph">
+                    <p>In this tutorial we will implement a CRT display for our SSEM computer. It will not completely
+                        mimic the real
+                        "monitor" interface with switches and everything, but it will just display the content of the
+                        memory. There exist
+                        several good sources about how the real monitor looked like; and with many additional details -
+                        just to mention
+                        few:</p>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p><a href="http://www.rogerdavies.com/2009/12/manchester-ssem-baby/">Roger Davies nice
+                                article about SSEM</a></p>
+                        </li>
+                        <li>
+                            <p><a href="http://www.cs.ubc.ca/~hilpert/e/SSEM/index.html">Brent Hilpert page about SSEM,
+                                including emulator</a></p>
+                        </li>
+                        <li>
+                            <p><a href="http://www.davidsharp.com/baby/">David Sharp page about SSEM, including
+                                emulator</a></p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="paragraph">
+                    <p>As we know from <a href="#MEMORY_HOWTO">[MEMORY_HOWTO]</a>, SSEM memory is in fact a 32x32 grid
+                        of bits. A memory cell has 4 bytes = 32 bits. So
+                        we have 32 rows or memory cells in the memory, each of size 4 bytes.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Next, the number stored in memory is "reversed" when compared to current x86 numbers
+                        representation in memory. It means,
+                        that LSB and MSB were switched. What&#8217;s more, SSEM used two&#8217;s complement to represent
+                        negative numbers.</p>
+                </div>
+                <div class="paragraph">
+                    <p>With that information, we are able to create the display. For the simplicity, the display will be
+                        just a black canvas
+                        with the grid of squares - bits - filled with different color - based on whether the
+                        corresponding bit is 1 or 0.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The display should be able to "listen" for memory changes and re-paint itself to be up to date
+                        with the current state
+                        of the SSEM memory.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Besides displaying, there will be no other interaction from user.</p>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="preparing-the-environment">Preparing the environment</h3>
+                <div class="paragraph">
+                    <p>In order to start developing the device, create new Java project. Here, Maven will be used for
+                        dependencies management.
+                        The plug-in will be implemented as another standard emuStudio plug-in, so it will inherit Maven
+                        plug-in dependencies
+                        from the main POM file.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The project should be located at <code>emuStudio/plugins/devices/ssem-display</code>, and should
+                        contain the following structure:</p>
+                </div>
+                <div class="literalblock">
+                    <div class="content">
 <pre>src/
   main/
     java/
@@ -208,278 +229,415 @@ from the main POM file.</p>
 test/
   java/
 pom.xml</pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Note the naming of the plug-in. It follows the naming convention as described in the <a href="#INTRODUCTION_NAMING">[INTRODUCTION_NAMING]</a>
-      guide.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>The POM file of the project might look as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>ssem-display/pom.xml</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="xml"><span></span>Unresolved directive in device.adoc - include::{sourcedir}/plugins/devices/ssem-display/pom.xml[]</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>And let&#8217;s start with the first Java class, the main plug-in class. Let&#8217;s put it to package
-<code>net.sf.emustudio.ssem.display</code>, and call it <code>DisplaySSEM</code>.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="DEVICE_MAIN_CLASS">The main class</h3>
-<div class="paragraph">
-<p>Go to the <code>DeviceSSEM</code> class source. Extend the class from <code>emulib.plugins.devices.AbstractDevice</code> class.
-The abstract class extends from <code>emulib.plugins.devices.Device</code> interface and implements the most common methods,
-usable by all devices.</p>
-</div>
-<div class="paragraph">
-<p>It is also necessary to annotate the class with <code>emulib.annotations.PluginType</code> annotation, which is required for every
-main class of any emuStudio plug-in. The code snippet looks as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span style="color: #666666">;</span>
+                    </div>
+                </div>
+                <div class="admonitionblock note">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-note" title="Note"></i>
+                            </td>
+                            <td class="content">
+                                Note the naming of the plug-in. It follows the naming convention as described in the <a
+                                    href="#INTRODUCTION_NAMING">[INTRODUCTION_NAMING]</a>
+                                guide.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>The POM file of the project might look as follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>ssem-display/pom.xml</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="xml"><span></span>Unresolved directive in device.adoc - include::{sourcedir}/plugins/devices/ssem-display/pom.xml[]</code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>And let&#8217;s start with the first Java class, the main plug-in class. Let&#8217;s put it to
+                        package
+                        <code>net.sf.emustudio.ssem.display</code>, and call it <code>DisplaySSEM</code>.</p>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="DEVICE_MAIN_CLASS">The main class</h3>
+                <div class="paragraph">
+                    <p>Go to the <code>DeviceSSEM</code> class source. Extend the class from <code>emulib.plugins.devices.AbstractDevice</code>
+                        class.
+                        The abstract class extends from <code>emulib.plugins.devices.Device</code> interface and
+                        implements the most common methods,
+                        usable by all devices.</p>
+                </div>
+                <div class="paragraph">
+                    <p>It is also necessary to annotate the class with <code>emulib.annotations.PluginType</code>
+                        annotation, which is required for every
+                        main class of any emuStudio plug-in. The code snippet looks as follows:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java</code></div>
+                    <div class="content">
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span
+        style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.display</span><span
+        style="color: #666666">;</span>
 
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PLUGIN_TYPE</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PluginType</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.AbstractDevice</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.runtime.ContextPool</span><span style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PLUGIN_TYPE</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PluginType</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.memory.AbstractDevice</span><span
+            style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.runtime.ContextPool</span><span
+            style="color: #666666">;</span>
 
 <span style="color: #AA22FF">@PluginType</span><span style="color: #666666">(</span>
-        type <span style="color: #666666">=</span> PLUGIN_TYPE<span style="color: #666666">.</span><span style="color: #7D9029">DEVICE</span><span style="color: #666666">,</span>
-        title <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;SSEM CRT display&quot;</span><span style="color: #666666">,</span>
-        copyright <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;\u00A9 Copyright 2006-2017, Peter Jakubčo&quot;</span><span style="color: #666666">,</span>
+        type <span style="color: #666666">=</span> PLUGIN_TYPE<span style="color: #666666">.</span><span
+            style="color: #7D9029">DEVICE</span><span style="color: #666666">,</span>
+        title <span style="color: #666666">=</span> <span
+            style="color: #BA2121">&quot;SSEM CRT display&quot;</span><span style="color: #666666">,</span>
+        copyright <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;\u00A9 Copyright 2006-2017, Peter Jakubčo&quot;</span><span
+            style="color: #666666">,</span>
         description <span style="color: #666666">=</span> <span style="color: #BA2121">&quot;CRT display for SSEM computer.&quot;</span>
 <span style="color: #666666">)</span>
-<span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">DisplaySSEM</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractDevice <span style="color: #666666">{</span>
-    <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> <span style="color: #008000; font-weight: bold">static</span> Logger LOGGER <span style="color: #666666">=</span> LoggerFactory<span style="color: #666666">.</span><span style="color: #7D9029">getLogger</span><span style="color: #666666">(</span>DisplaySSEM<span style="color: #666666">.</span><span style="color: #7D9029">class</span><span style="color: #666666">);</span>
+<span style="color: #008000; font-weight: bold">public</span> <span
+            style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">DisplaySSEM</span> <span
+            style="color: #008000; font-weight: bold">extends</span> AbstractDevice <span
+            style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">private</span> <span
+            style="color: #008000; font-weight: bold">final</span> <span style="color: #008000; font-weight: bold">static</span> Logger LOGGER <span
+            style="color: #666666">=</span> LoggerFactory<span style="color: #666666">.</span><span
+            style="color: #7D9029">getLogger</span><span style="color: #666666">(</span>DisplaySSEM<span
+            style="color: #666666">.</span><span style="color: #7D9029">class</span><span
+            style="color: #666666">);</span>
 
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">DisplaySSEM</span><span style="color: #666666">(</span>Long pluginID<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
-        <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span style="color: #666666">);</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">DisplaySSEM</span><span
+            style="color: #666666">(</span>Long pluginID<span
+            style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span
+            style="color: #666666">{</span>
+        <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span
+            style="color: #666666">);</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #408080; font-style: italic">// ... other methods ...</span>
 <span style="color: #666666">}</span></code></pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-The constructor presented here is mandatory. This is one of the behavioral contracts, emuStudio expects
-      that a plug-in will have a constructor with two arguments: <code>pluginID</code> (assigned by emuStudio), and a context
-      pool, which is a storage or registrar of all plug-ins contexts.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>In the initialization phase (see <a href="#INTRODUCTION_INITIALIZATION">[INTRODUCTION_INITIALIZATION]</a>), we need to obtain SSEM memory, which will be used
-as the source of information which bits are "turned on":</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">DisplaySSEM</span> <span style="color: #008000; font-weight: bold">extends</span> AbstractDevice <span style="color: #666666">{</span>
+                    </div>
+                </div>
+                <div class="admonitionblock note">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-note" title="Note"></i>
+                            </td>
+                            <td class="content">
+                                The constructor presented here is mandatory. This is one of the behavioral contracts,
+                                emuStudio expects
+                                that a plug-in will have a constructor with two arguments: <code>pluginID</code>
+                                (assigned by emuStudio), and a context
+                                pool, which is a storage or registrar of all plug-ins contexts.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>In the initialization phase (see <a href="#INTRODUCTION_INITIALIZATION">[INTRODUCTION_INITIALIZATION]</a>),
+                        we need to obtain SSEM memory, which will be used
+                        as the source of information which bits are "turned on":</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java</code></div>
+                    <div class="content">
+<pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span
+        style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">DisplaySSEM</span> <span
+        style="color: #008000; font-weight: bold">extends</span> AbstractDevice <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
-    <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">final</span> ContextPool contextPool<span style="color: #666666">;</span>
+    <span style="color: #008000; font-weight: bold">private</span> <span
+            style="color: #008000; font-weight: bold">final</span> ContextPool contextPool<span
+            style="color: #666666">;</span>
 
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">DisplaySSEM</span><span style="color: #666666">(</span>Long pluginID<span style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span style="color: #666666">{</span>
-        <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span style="color: #666666">);</span>
-        <span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">.</span><span style="color: #7D9029">contextPool</span> <span style="color: #666666">=</span> Objects<span style="color: #666666">.</span><span style="color: #7D9029">requireNonNull</span><span style="color: #666666">(</span>contextPool<span style="color: #666666">);</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">DisplaySSEM</span><span
+            style="color: #666666">(</span>Long pluginID<span
+            style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span
+            style="color: #666666">{</span>
+        <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span
+            style="color: #666666">);</span>
+        <span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">.</span><span
+            style="color: #7D9029">contextPool</span> <span style="color: #666666">=</span> Objects<span
+            style="color: #666666">.</span><span style="color: #7D9029">requireNonNull</span><span
+            style="color: #666666">(</span>contextPool<span style="color: #666666">);</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">initialize</span><span style="color: #666666">(</span>SettingsManager settings<span style="color: #666666">)</span> <span style="color: #008000; font-weight: bold">throws</span> PluginInitializationException <span style="color: #666666">{</span>
-        <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">.</span><span style="color: #7D9029">initialize</span><span style="color: #666666">(</span>settings<span style="color: #666666">);</span>
-        MemoryContext<span style="color: #666666">&lt;</span>Byte<span style="color: #666666">&gt;</span> memory <span style="color: #666666">=</span> contextPool<span style="color: #666666">.</span><span style="color: #7D9029">getMemoryContext</span><span style="color: #666666">(</span>pluginID<span style="color: #666666">,</span> MemoryContext<span style="color: #666666">.</span><span style="color: #7D9029">class</span><span style="color: #666666">);</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span
+            style="color: #0000FF">initialize</span><span style="color: #666666">(</span>SettingsManager settings<span
+            style="color: #666666">)</span> <span style="color: #008000; font-weight: bold">throws</span> PluginInitializationException <span
+            style="color: #666666">{</span>
+        <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">.</span><span
+            style="color: #7D9029">initialize</span><span style="color: #666666">(</span>settings<span
+            style="color: #666666">);</span>
+        MemoryContext<span style="color: #666666">&lt;</span>Byte<span style="color: #666666">&gt;</span> memory <span
+            style="color: #666666">=</span> contextPool<span style="color: #666666">.</span><span
+            style="color: #7D9029">getMemoryContext</span><span style="color: #666666">(</span>pluginID<span
+            style="color: #666666">,</span> MemoryContext<span style="color: #666666">.</span><span
+            style="color: #7D9029">class</span><span style="color: #666666">);</span>
 
-        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>memory<span style="color: #666666">.</span><span style="color: #7D9029">getDataType</span><span style="color: #666666">()</span> <span style="color: #666666">!=</span> Byte<span style="color: #666666">.</span><span style="color: #7D9029">class</span><span style="color: #666666">)</span> <span style="color: #666666">{</span>
-            <span style="color: #008000; font-weight: bold">throw</span> <span style="color: #008000; font-weight: bold">new</span> PluginInitializationException<span style="color: #666666">(</span><span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">,</span> <span style="color: #BA2121">&quot;Expected Byte memory cell type!&quot;</span><span style="color: #666666">);</span>
+        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>memory<span
+            style="color: #666666">.</span><span style="color: #7D9029">getDataType</span><span style="color: #666666">()</span> <span
+            style="color: #666666">!=</span> Byte<span style="color: #666666">.</span><span
+            style="color: #7D9029">class</span><span style="color: #666666">)</span> <span
+            style="color: #666666">{</span>
+            <span style="color: #008000; font-weight: bold">throw</span> <span
+            style="color: #008000; font-weight: bold">new</span> PluginInitializationException<span
+            style="color: #666666">(</span><span style="color: #008000; font-weight: bold">this</span><span
+            style="color: #666666">,</span> <span
+            style="color: #BA2121">&quot;Expected Byte memory cell type!&quot;</span><span
+            style="color: #666666">);</span>
         <span style="color: #666666">}</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">showSettings</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span
+            style="color: #0000FF">showSettings</span><span style="color: #666666">()</span> <span
+            style="color: #666666">{</span>
         <span style="color: #408080; font-style: italic">// we don&#39;t have settings GUI</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span style="color: #0000FF">isShowSettingsSupported</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
-        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">false</span><span style="color: #666666">;</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">boolean</span> <span
+            style="color: #0000FF">isShowSettingsSupported</span><span style="color: #666666">()</span> <span
+            style="color: #666666">{</span>
+        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">false</span><span
+            style="color: #666666">;</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
-    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">showGUI</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span
+            style="color: #0000FF">showGUI</span><span style="color: #666666">()</span> <span
+            style="color: #666666">{</span>
         <span style="color: #408080; font-style: italic">// TODO!</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #666666">...</span>
 <span style="color: #666666">}</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>At first - notice that in the constructor we are not registering any device context. It means that the device does not
-provide any interaction with other plug-ins. It is however possible to do it as for any other plug-in.</p>
-</div>
-<div class="paragraph">
-<p>However, it is not the case the opposite way - the device can (and must) use memory to obtain its contents. It is
-very possible to get the memory context from the context pool. This is done in the initialization phase, so it is clear
-that <code>contextPool</code> is loaded with all available contexts from other plug-ins.</p>
-</div>
-<div class="paragraph">
-<p>It is a good practice to check whether the data type of the memory cells is as we expect; unfortunately in Java the
-generics information does not differentiate a type so we need to do it manually.</p>
-</div>
-<div class="paragraph">
-<p>Now notice there are two methods dealing with GUI. The first one is <code>showGUI()</code> and the second one is <code>showSettings()</code>,
-which creates a pair with <code>isShowSettingsSupported()</code>. In emuStudio, each device plug-in can have a "main GUI window",
-which is used primarily for the interaction with user. On the other hand, as it could be noticed in other plug-in types,
-each plug-in can have its own "settings" window, which shows specific settings of a plug-in. It is also the case for
-the device plug-ins.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="the-gui">The GUI</h3>
-<div class="paragraph">
-<p>We are nowon the best way to implement the GUI of the dislpay. As it was the case for the SSEM memory GUI, the display
-will also use a <code>javax.swing.JDialog</code> window for displaying the GUI. Next, the window will contain the canvas - a
-<code>javax.swing.JPanel</code> - which will paint the grid with the squares. In order to do that, we need to create our own
-version of <code>JPanel</code>.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-For better description about how painting of Swing components works, please see
-      <a href="https://docs.oracle.com/javase/tutorial/uiswing/painting/index.html">this tutorial</a>.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Before that, let&#8217;s show how we want the result to look like:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/docdevel/emulator_tutorial/images//ssem-display.png" alt="SSEM Display GUI sample look">
-</div>
-</div>
-<div class="sect3">
-<h4 id="display-panel">Display panel</h4>
-<div class="paragraph">
-<p>And now we are ready for the source code of the <code>DisplayPanel</code>:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplayPanel.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in device<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>devices<span style="color: #666666">/</span>ssem<span style="color: #666666">-</span>display<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>display<span style="color: #666666">/</span>DisplayPanel<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>At first, notice that the display panel has its own memory - we can call it "video memory". It is absolutely not
-related to the real hardware, becasuse SSEM didn&#8217;t have this thing. I decided to introduce the video memory because
-when painting, which will occur in UI thread - and often!, don&#8217;t have to interact with the real SSEM memory,
-accessed also by the CPU, in emulation thread. So painting method - the <code>paintComponent()</code> - is using this
-vide memory to ask whether the bit - or the square - should be green or black, based on whether the memory bit is 1
-or 0. Also this fact - bit representation in video memory - is a bit different. Instead of numbers 1 or 0 we store
-booleans, which better corresponds to a two-value options.</p>
-</div>
-<div class="paragraph">
-<p>Except the <code>paintComponent()</code>, we can see there to be a <code>writeRow()</code> and <code>clear()</code> methods. The <code>writeRow()</code> method
-will be called by a memory listener, which is not now defined. The idea is that when a byte in the SSEM memory changes,
-the listener will be notified about the change, which will call the <code>writeRow</code> as the consequence.</p>
-</div>
-<div class="paragraph">
-<p>It means that we will update the whole row - memory cell - even if only part of it had changed. The decision about this
-detail is simplicity, the performance can be improved if we update only specific bits.</p>
-</div>
-<div class="paragraph">
-<p>Method <code>clear()</code> will erase the video memory.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="gui-window">GUI window</h4>
-<div class="paragraph">
-<p>As it was said already, we need to implement a <code>JDialog</code> which will contain the display panel. The source code
-for the dialog is as follows:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplayDialog.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in device<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>devices<span style="color: #666666">/</span>ssem<span style="color: #666666">-</span>display<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>display<span style="color: #666666">/</span>DisplayDialog<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>In the constructor you can notice that we add the memory listener to the memory which is responsible for updating
-the display, as was explained in the previous section.</p>
-</div>
-<div class="paragraph">
-<p>Also, the interesting method is <code>reset()</code>, which causes to at first - clearing the display and then loading it with
-new content - by copying the whole memory into the video memory of the display.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="wrapping-up">Wrapping up</h3>
-<div class="paragraph">
-<p>The last step is to finish the main class. We need to include and show the display when emuStudio asks for it:</p>
-</div>
-<div class="listingblock">
-<div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java</code></div>
-<div class="content">
-<pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in device<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>devices<span style="color: #666666">/</span>ssem<span style="color: #666666">-</span>display<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>ssem<span style="color: #666666">/</span>display<span style="color: #666666">/</span>DisplaySSEM<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Notice the method <code>initialize()</code> - we added a check whether we are in a no-GUI mode. If yes, we should ignore
-all requests for showing the GUI. Otherwise, we will create the display GUI right away, and only once.</p>
-</div>
-<div class="paragraph">
-<p>The method <code>showGUI()</code> will then make the GUI visible - show it.</p>
-</div>
-<div class="paragraph">
-<p>Now we have finished the last piece of the SSEM computer emulator and it is ready for run.</p>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-
-    <footer class="site-footer">
-        <div class="container">
-            <nav class="navbar">
-                <div class="container">
-                    <ul class="nav navbar-nav">
-                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                        <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
-                    </ul>
+                    </div>
                 </div>
-            </nav>
+                <div class="paragraph">
+                    <p>At first - notice that in the constructor we are not registering any device context. It means
+                        that the device does not
+                        provide any interaction with other plug-ins. It is however possible to do it as for any other
+                        plug-in.</p>
+                </div>
+                <div class="paragraph">
+                    <p>However, it is not the case the opposite way - the device can (and must) use memory to obtain its
+                        contents. It is
+                        very possible to get the memory context from the context pool. This is done in the
+                        initialization phase, so it is clear
+                        that <code>contextPool</code> is loaded with all available contexts from other plug-ins.</p>
+                </div>
+                <div class="paragraph">
+                    <p>It is a good practice to check whether the data type of the memory cells is as we expect;
+                        unfortunately in Java the
+                        generics information does not differentiate a type so we need to do it manually.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Now notice there are two methods dealing with GUI. The first one is <code>showGUI()</code> and
+                        the second one is <code>showSettings()</code>,
+                        which creates a pair with <code>isShowSettingsSupported()</code>. In emuStudio, each device
+                        plug-in can have a "main GUI window",
+                        which is used primarily for the interaction with user. On the other hand, as it could be noticed
+                        in other plug-in types,
+                        each plug-in can have its own "settings" window, which shows specific settings of a plug-in. It
+                        is also the case for
+                        the device plug-ins.</p>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="the-gui">The GUI</h3>
+                <div class="paragraph">
+                    <p>We are nowon the best way to implement the GUI of the dislpay. As it was the case for the SSEM
+                        memory GUI, the display
+                        will also use a <code>javax.swing.JDialog</code> window for displaying the GUI. Next, the window
+                        will contain the canvas - a
+                        <code>javax.swing.JPanel</code> - which will paint the grid with the squares. In order to do
+                        that, we need to create our own
+                        version of <code>JPanel</code>.</p>
+                </div>
+                <div class="admonitionblock note">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-note" title="Note"></i>
+                            </td>
+                            <td class="content">
+                                For better description about how painting of Swing components works, please see
+                                <a href="https://docs.oracle.com/javase/tutorial/uiswing/painting/index.html">this
+                                    tutorial</a>.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>Before that, let&#8217;s show how we want the result to look like:</p>
+                </div>
+                <div class="imageblock">
+                    <div class="content">
+                        <img src="/docdevel/emulator_tutorial/images//ssem-display.png"
+                             alt="SSEM Display GUI sample look">
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="display-panel">Display panel</h4>
+                    <div class="paragraph">
+                        <p>And now we are ready for the source code of the <code>DisplayPanel</code>:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplayPanel.java</code>
+                        </div>
+                        <div class="content">
+                            <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in device<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                    style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span
+                                    style="color: #666666">}/</span>plugins<span
+                                    style="color: #666666">/</span>devices<span style="color: #666666">/</span>ssem<span
+                                    style="color: #666666">-</span>display<span style="color: #666666">/</span>src<span
+                                    style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span
+                                    style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                    style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>ssem<span style="color: #666666">/</span>display<span
+                                    style="color: #666666">/</span>DisplayPanel<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">java</span><span
+                                    style="color: #666666">[</span>lines<span
+                                    style="color: #666666">=20..-1]</span></code></pre>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>At first, notice that the display panel has its own memory - we can call it "video memory".
+                            It is absolutely not
+                            related to the real hardware, becasuse SSEM didn&#8217;t have this thing. I decided to
+                            introduce the video memory because
+                            when painting, which will occur in UI thread - and often!, don&#8217;t have to interact with
+                            the real SSEM memory,
+                            accessed also by the CPU, in emulation thread. So painting method - the <code>paintComponent()</code>
+                            - is using this
+                            vide memory to ask whether the bit - or the square - should be green or black, based on
+                            whether the memory bit is 1
+                            or 0. Also this fact - bit representation in video memory - is a bit different. Instead of
+                            numbers 1 or 0 we store
+                            booleans, which better corresponds to a two-value options.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Except the <code>paintComponent()</code>, we can see there to be a <code>writeRow()</code>
+                            and <code>clear()</code> methods. The <code>writeRow()</code> method
+                            will be called by a memory listener, which is not now defined. The idea is that when a byte
+                            in the SSEM memory changes,
+                            the listener will be notified about the change, which will call the <code>writeRow</code> as
+                            the consequence.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>It means that we will update the whole row - memory cell - even if only part of it had
+                            changed. The decision about this
+                            detail is simplicity, the performance can be improved if we update only specific bits.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Method <code>clear()</code> will erase the video memory.</p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="gui-window">GUI window</h4>
+                    <div class="paragraph">
+                        <p>As it was said already, we need to implement a <code>JDialog</code> which will contain the
+                            display panel. The source code
+                            for the dialog is as follows:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplayDialog.java</code>
+                        </div>
+                        <div class="content">
+                            <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in device<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                    style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span
+                                    style="color: #666666">}/</span>plugins<span
+                                    style="color: #666666">/</span>devices<span style="color: #666666">/</span>ssem<span
+                                    style="color: #666666">-</span>display<span style="color: #666666">/</span>src<span
+                                    style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span
+                                    style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span
+                                    style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>ssem<span style="color: #666666">/</span>display<span
+                                    style="color: #666666">/</span>DisplayDialog<span
+                                    style="color: #666666">.</span><span style="color: #7D9029">java</span><span
+                                    style="color: #666666">[</span>lines<span
+                                    style="color: #666666">=20..-1]</span></code></pre>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>In the constructor you can notice that we add the memory listener to the memory which is
+                            responsible for updating
+                            the display, as was explained in the previous section.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Also, the interesting method is <code>reset()</code>, which causes to at first - clearing the
+                            display and then loading it with
+                            new content - by copying the whole memory into the video memory of the display.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="wrapping-up">Wrapping up</h3>
+                <div class="paragraph">
+                    <p>The last step is to finish the main class. We need to include and show the display when emuStudio
+                        asks for it:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java</code></div>
+                    <div class="content">
+                        <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in device<span
+                                style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
+                                style="color: #666666">-</span> include<span
+                                style="color: #666666">::{</span>sourcedir<span
+                                style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>devices<span
+                                style="color: #666666">/</span>ssem<span style="color: #666666">-</span>display<span
+                                style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
+                                style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
+                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                style="color: #666666">/</span>ssem<span style="color: #666666">/</span>display<span
+                                style="color: #666666">/</span>DisplaySSEM<span style="color: #666666">.</span><span
+                                style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span
+                                style="color: #666666">=20..-1]</span></code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>Notice the method <code>initialize()</code> - we added a check whether we are in a no-GUI mode.
+                        If yes, we should ignore
+                        all requests for showing the GUI. Otherwise, we will create the display GUI right away, and only
+                        once.</p>
+                </div>
+                <div class="paragraph">
+                    <p>The method <code>showGUI()</code> will then make the GUI visible - show it.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Now we have finished the last piece of the SSEM computer emulator and it is ready for run.</p>
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    </body>
+
+<footer class="site-footer">
+    <div class="container">
+        <nav class="navbar">
+            <div class="container">
+                <ul class="nav navbar-nav">
+                    <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                                                                                           src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
+                    </li>
+                    <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</footer>
+
+</body>
 </html>
 

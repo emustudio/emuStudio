@@ -41,10 +41,10 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type=PLUGIN_TYPE.MEMORY,
-        title="Standard operating memory",
-        copyright="\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description="Operating memory suitable for most of CPUs"
+    type = PLUGIN_TYPE.MEMORY,
+    title = "Standard operating memory",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Operating memory suitable for most of CPUs"
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
@@ -64,7 +64,7 @@ public class MemoryImpl extends AbstractMemory {
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             LOGGER.error("Could not register memory", e);
             StaticDialogs.showErrorMessage("Could not register the memory",
-                    MemoryImpl.class.getAnnotation(PluginType.class).title());
+                MemoryImpl.class.getAnnotation(PluginType.class).title());
         }
     }
 
@@ -180,7 +180,7 @@ public class MemoryImpl extends AbstractMemory {
         String imageName;
         String imageAddress;
         int i = 0;
-        for (;; i++) {
+        for (; ; i++) {
             imageName = settings.readSetting(pluginID, "imageName" + i);
             imageAddress = settings.readSetting(pluginID, "imageAddress" + i);
             if (imageName == null) {
@@ -192,14 +192,14 @@ public class MemoryImpl extends AbstractMemory {
                     address = Integer.decode(imageAddress);
                 } catch (NumberFormatException e) {
                     throw new PluginInitializationException(
-                            this, "Could not parse address at which the image should be loaded", e
+                        this, "Could not parse address at which the image should be loaded", e
                     );
                 }
             }
             loadImage(imageName, address);
         }
     }
-    
+
     public void loadImage(String fileName, int address) {
         if (fileName.toUpperCase().endsWith(".HEX")) {
             context.loadHex(fileName, 0);
@@ -213,7 +213,7 @@ public class MemoryImpl extends AbstractMemory {
      * after start of the emulator. These settings correspond to tab0 in frmSettings.
      */
     public void saveCoreSettings(int banksCount, int commonBoundary,
-            List<String> imageFullNames, List<Integer> imageAddresses) {
+                                 List<String> imageFullNames, List<Integer> imageAddresses) {
         settings.writeSetting(pluginID, "banksCount", String.valueOf(banksCount));
         settings.writeSetting(pluginID, "commonBoundary", String.valueOf(commonBoundary));
 
@@ -240,7 +240,7 @@ public class MemoryImpl extends AbstractMemory {
             settings.removeSetting(pluginID, "ROMto" + i);
             i++;
         }
-        
+
         i = 0;
         for (AddressRange range : context.getROMRanges()) {
             settings.writeSetting(pluginID, "ROMfrom" + i, String.valueOf(range.getStartAddress()));

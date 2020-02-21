@@ -19,10 +19,11 @@
  */
 package net.sf.emustudio.ram.memory.gui;
 
-import java.util.Objects;
-import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
+
+import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 class RAMTableModel extends AbstractTableModel {
     private final RAMMemoryContext memory;
@@ -67,11 +68,14 @@ class RAMTableModel extends AbstractTableModel {
     @Override
     public String getColumnName(int col) {
         switch (col) {
-            case 0: return "Address";
-            case 1: return "Label";
-            case 2: return "Instruction";
+            case 0:
+                return "Address";
+            case 1:
+                return "Label";
+            case 2:
+                return "Instruction";
         }
         return "";
     }
-    
+
 }

@@ -40,8 +40,8 @@ import org.kohsuke.args4j.CmdLineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.UIManager;
-import java.awt.Window;
+import javax.swing.*;
+import java.awt.*;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
@@ -96,9 +96,9 @@ public class Main {
 
     private static void runAutomation(Computer computer) {
         try {
-          new Automation(
-                  computer, commandLine.getInputFileName(), commandLine.isNoGUI()
-          ).run();
+            new Automation(
+                computer, commandLine.getInputFileName(), commandLine.isNoGUI()
+            ).run();
         } catch (AutomationException e) {
             LOGGER.error("Unexpected error during automation.", e);
             tryShowErrorMessage("Error: " + e.getMessage());
@@ -180,7 +180,7 @@ public class Main {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (javax.swing.UnsupportedLookAndFeelException | ClassNotFoundException
-                | InstantiationException | IllegalAccessException e) {
+            | InstantiationException | IllegalAccessException e) {
             LOGGER.warn("Unable to set system look and feel", e);
         }
         UIManager.put("TabbedPane.selected", UIManager.get("Panel.background"));

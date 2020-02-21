@@ -25,7 +25,7 @@ import java.util.Objects;
 
 /**
  * Port 2.
- * 
+ * <p>
  * IN: sector pos
  * OUT: set flags
  */

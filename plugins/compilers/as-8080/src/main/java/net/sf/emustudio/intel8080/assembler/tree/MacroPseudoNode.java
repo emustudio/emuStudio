@@ -68,7 +68,7 @@ public class MacroPseudoNode extends PseudoBlock {
     @Override
     public void pass1() throws Exception {
     }
-    
+
     // this is macro expansion ! can be called only in MacroCallPseudo class
     // call parameters have to be set
     @Override
@@ -86,7 +86,7 @@ public class MacroPseudoNode extends PseudoBlock {
         // create/rewrite symbols => parameters as equ pseudo instructions
         for (int i = 0; i < params.size(); i++) {
             newEnv.addConstant(new EquPseudoNode(params.get(i), call_params.get(i),
-                    line, column));
+                line, column));
         }
         return stat.pass2(newEnv, addr_start);
     }

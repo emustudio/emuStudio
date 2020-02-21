@@ -48,49 +48,49 @@ public class CodeGeneratorTest {
     public void testCMP() throws Exception {
         codeGenerator.visit(Instruction.cmp());
 
-        assertArrayEquals(new byte[] {0,Instruction.CMP,0,0}, out.toArray());
+        assertArrayEquals(new byte[]{0, Instruction.CMP, 0, 0}, out.toArray());
     }
 
     @Test
     public void testSTP() throws Exception {
         codeGenerator.visit(Instruction.stp());
 
-        assertArrayEquals(new byte[] {0,Instruction.STP,0,0}, out.toArray());
+        assertArrayEquals(new byte[]{0, Instruction.STP, 0, 0}, out.toArray());
     }
 
     @Test
     public void testJMP() throws Exception {
-        codeGenerator.visit(Instruction.jmp((byte)6));
+        codeGenerator.visit(Instruction.jmp((byte) 6));
 
-        assertArrayEquals(new byte[] {0x60,Instruction.JMP,0,0}, out.toArray());
+        assertArrayEquals(new byte[]{0x60, Instruction.JMP, 0, 0}, out.toArray());
     }
 
     @Test
     public void testJRP() throws Exception {
-        codeGenerator.visit(Instruction.jrp((byte)23));
+        codeGenerator.visit(Instruction.jrp((byte) 23));
 
-        assertArrayEquals(new byte[] {(byte)0xE8,Instruction.JRP,0,0}, out.toArray());
+        assertArrayEquals(new byte[]{(byte) 0xE8, Instruction.JRP, 0, 0}, out.toArray());
     }
 
     @Test
     public void testLDN() throws Exception {
-        codeGenerator.visit(Instruction.ldn((byte)12));
+        codeGenerator.visit(Instruction.ldn((byte) 12));
 
-        assertArrayEquals(new byte[] {(byte)0x30,Instruction.LDN,0,0}, out.toArray());
+        assertArrayEquals(new byte[]{(byte) 0x30, Instruction.LDN, 0, 0}, out.toArray());
     }
 
     @Test
     public void testSTO() throws Exception {
-        codeGenerator.visit(Instruction.sto((byte)30));
+        codeGenerator.visit(Instruction.sto((byte) 30));
 
-        assertArrayEquals(new byte[] {(byte)0x78,Instruction.STO,0,0}, out.toArray());
+        assertArrayEquals(new byte[]{(byte) 0x78, Instruction.STO, 0, 0}, out.toArray());
     }
 
     @Test
     public void testSUB() throws Exception {
-        codeGenerator.visit(Instruction.sub((byte)18));
+        codeGenerator.visit(Instruction.sub((byte) 18));
 
-        assertArrayEquals(new byte[] {(byte)0x48,Instruction.SUB,0,0}, out.toArray());
+        assertArrayEquals(new byte[]{(byte) 0x48, Instruction.SUB, 0, 0}, out.toArray());
     }
 
     private static class SeekableByteArrayOutputStream extends SeekableOutputStream {
@@ -110,7 +110,7 @@ public class CodeGeneratorTest {
 
         @Override
         public void write(int b) throws IOException {
-            array[pos] = (byte)b;
+            array[pos] = (byte) b;
             pos++;
             length = Math.max(pos, length);
         }

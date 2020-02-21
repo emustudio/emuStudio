@@ -61,9 +61,9 @@ public class AutoDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblAction, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE).addComponent(lblPerforming).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnStop))).addContainerGap());
+            layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblAction, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE).addComponent(lblPerforming).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnStop))).addContainerGap());
         layout.setVerticalGroup(
-                layout.createSequentialGroup().addContainerGap().addComponent(lblPerforming).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblAction).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnStop).addContainerGap());
+            layout.createSequentialGroup().addContainerGap().addComponent(lblPerforming).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblAction).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnStop).addContainerGap());
 
         pack();
     }
@@ -72,7 +72,7 @@ public class AutoDialog extends JDialog {
      * Sets abstract action. The abstract action is represented by a state
      * string and whether to enable the "Stop" button.
      *
-     * @param action action to show in the dialog
+     * @param action           action to show in the dialog
      * @param enableStopButton whether to enable the "Stop" button
      */
     public void setAction(String action, boolean enableStopButton) {
@@ -84,6 +84,7 @@ public class AutoDialog extends JDialog {
     private void btnStopActionPerformed(ActionEvent e) {
         computer.getCPU().get().stop();
     }
+
     private JLabel lblAction;
     private JButton btnStop;
 }

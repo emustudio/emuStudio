@@ -19,9 +19,8 @@
  */
 package emustudio.gui.utils;
 
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import javax.swing.JButton;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * A button with the constant size.

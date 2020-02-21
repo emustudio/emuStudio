@@ -22,11 +22,7 @@ package net.sf.emustudio.brainduck.terminal.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 
 public class FileIOProvider implements InputProvider, OutputProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileIOProvider.class);

@@ -21,11 +21,9 @@ package emustudio.gui.debugTable;
 
 import emustudio.Constants;
 
-import javax.swing.JLabel;
-import javax.swing.JTable;
+import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import java.awt.Color;
-import java.awt.Component;
+import java.awt.*;
 
 class TextCellRenderer extends JLabel implements TableCellRenderer {
 

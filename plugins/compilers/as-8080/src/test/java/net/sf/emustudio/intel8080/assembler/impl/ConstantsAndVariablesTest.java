@@ -26,35 +26,35 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     @Test
     public void testLabelAsConstantWorks() throws Exception {
         compile(
-                "here equ 0\n"
-                        + "mov a,b\n"
-                        + "jz here"
+            "here equ 0\n"
+                + "mov a,b\n"
+                + "jz here"
         );
 
         assertProgram(
-                0x78, 0xCA, 0, 0
+            0x78, 0xCA, 0, 0
         );
     }
 
     @Test
     public void testConstantAsLabelWorks() throws Exception {
         compile(
-                "here equ there\n"
-                        + "there: mov a,b\n"
-                        + "jz here"
+            "here equ there\n"
+                + "there: mov a,b\n"
+                + "jz here"
         );
 
         assertProgram(
-                0x78, 0xCA, 0, 0
+            0x78, 0xCA, 0, 0
         );
     }
 
     @Test
     public void testRecursiveConstantDefinitionsDoesNotWork() throws Exception {
         compile(
-                "here equ there\n"
-                        + "there equ here\n"
-                        + "jz here"
+            "here equ there\n"
+                + "there equ here\n"
+                + "jz here"
         );
 
         assertError();
@@ -63,7 +63,7 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     @Test
     public void testTwoSameLabelsDoNotWork() throws Exception {
         compile(
-                "here:\nhere:\njz here"
+            "here:\nhere:\njz here"
         );
 
         assertError();
@@ -72,7 +72,7 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     @Test
     public void testTwoSameConstantsDoNotWork() throws Exception {
         compile(
-                "here equ 0\nhere equ 1"
+            "here equ 0\nhere equ 1"
         );
 
         assertError();
@@ -81,10 +81,10 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     @Test
     public void testVariableCanBeOverwritten() throws Exception {
         compile(
-                "here set 0\nhere set 1\ncpi here"
+            "here set 0\nhere set 1\ncpi here"
         );
         assertProgram(
-                0xFE, 1
+            0xFE, 1
         );
     }
 

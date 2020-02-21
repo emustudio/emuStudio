@@ -20,7 +20,8 @@
 package emustudio.drawing;
 
 import emustudio.drawing.DrawingPanel.Tool;
-import java.awt.Point;
+
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,9 +29,9 @@ public class Model {
 
     /**
      * Holds a point of a connection line.
-     *
+     * <p>
      * This is used in "moving" mode for: - moving of the connection line point - add/delete connection line point
-     *
+     * <p>
      * in the "modelling" mode, it is used for: - holds temporal point that will be added to temporal points array when
      * mouse is released, while drawing a line
      */
@@ -40,7 +41,7 @@ public class Model {
 
     /**
      * This variable is used when "moving" mode is active and user moves an element. It holds the moving element object.
-     *
+     * <p>
      * If "modelling" mode is active and when users draws a line, it represents the first element that the line is
      * connected to. If it is selected the element deletion, it represents a shape that should be deleted when mouse is
      * released.
@@ -70,7 +71,7 @@ public class Model {
 
     /**
      * Selected line. Used only in "moving" mode.
-     *
+     * <p>
      * This variable is used if the user wants to remove or moving an existing connection line point.
      */
     public ConnectionLine selLine;
@@ -79,10 +80,9 @@ public class Model {
     /**
      * If an element is selected (mouse pressed) and then dragged, this variable holds true. It is false in all other
      * cases.
-     *
+     * <p>
      * When the mouse is released, the value is tested. If it is true, it means that the element has been moved and
      * therefore possible selection of the other elements should not be cleared.
-     *
      */
     public boolean elementDragged = false;
 

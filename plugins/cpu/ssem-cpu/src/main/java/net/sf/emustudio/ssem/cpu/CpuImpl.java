@@ -38,12 +38,8 @@ import net.sf.emustudio.ssem.DisassemblerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JPanel;
-import java.util.Arrays;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import javax.swing.*;
+import java.util.*;
 
 @PluginType(
     type = PLUGIN_TYPE.CPU,
@@ -82,11 +78,11 @@ public class CpuImpl extends AbstractCPU {
         DebugTable debugTable = API.getInstance().getDebugTable();
         if (debugTable != null) {
             debugTable.setCustomColumns(Arrays.asList(
-                    new BreakpointColumn(this), new LineColumn(), new MnemoColumn(disasm),
-                    new OpcodeColumn(disasm)
+                new BreakpointColumn(this), new LineColumn(), new MnemoColumn(disasm),
+                new OpcodeColumn(disasm)
             ));
         }
-       
+
         return new CpuPanel(this, engine, memory);
     }
 
@@ -99,7 +95,7 @@ public class CpuImpl extends AbstractCPU {
     public boolean setInstructionPosition(int i) {
         int memSize = memory.getSize();
         if (i < 0 || i >= memSize) {
-            throw new IllegalArgumentException("Instruction position can be in <0," + memSize/4 +">, but was: " + i);
+            throw new IllegalArgumentException("Instruction position can be in <0," + memSize / 4 + ">, but was: " + i);
         }
         engine.CI = i;
         return true;
@@ -126,7 +122,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public String getVersion() {
-       try {
+        try {
             ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.ssem.cpu.version");
             return bundle.getString("version");
         } catch (MissingResourceException e) {

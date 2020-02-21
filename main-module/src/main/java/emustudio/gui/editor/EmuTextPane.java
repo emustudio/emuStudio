@@ -29,9 +29,7 @@ import emustudio.main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.JTextPane;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
@@ -40,25 +38,19 @@ import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Insets;
+import java.awt.*;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * This class is extended JTextPane class. Support some awesome features like
  * line numbering or syntax highlighting and other.
  * TODO: add ability to set breakpoints
- *
  */
 public class EmuTextPane extends JTextPane {
     private final static Logger logger = LoggerFactory.getLogger(EmuTextPane.class);
@@ -85,6 +77,7 @@ public class EmuTextPane extends JTextPane {
 
     public interface UndoActionListener {
         void undoStateChanged(boolean canUndo, String presentationName);
+
         void redoStateChanged(boolean canRedo, String presentationName);
     }
 
@@ -121,8 +114,8 @@ public class EmuTextPane extends JTextPane {
                     break;
                 default:
                     throw new AssertionError("Unknown Element type: "
-                            + element.getClass().getName() + " : "
-                            + name);
+                        + element.getClass().getName() + " : "
+                        + name);
             }
             if (view instanceof ParagraphView) {
                 try {
@@ -178,7 +171,7 @@ public class EmuTextPane extends JTextPane {
                         for (Field field : fields) {
                             if (field.getType() == DefaultDocumentEvent.class) {
                                 field.setAccessible(true);
-                                event = Optional.of((DefaultDocumentEvent)field.get(ed));
+                                event = Optional.of((DefaultDocumentEvent) field.get(ed));
                                 break;
                             }
                         }
@@ -379,7 +372,7 @@ public class EmuTextPane extends JTextPane {
             synchronized (syntaxLock) {
                 if (syntaxLexer != null) {
                     highlight = new HighlightThread(syntaxLexer, reader, document,
-                            styles);
+                        styles);
                     highlight.colorAll();
                 }
             }
@@ -410,7 +403,7 @@ public class EmuTextPane extends JTextPane {
                 f1.addExtension(fileExtension.getExtension());
                 descr += "*." + fileExtension.getExtension() + ",";
             }
-            descr = descr.substring(0, descr.length()-1);
+            descr = descr.substring(0, descr.length() - 1);
             descr += ")";
             f1.setDescription(descr);
         }
@@ -495,10 +488,10 @@ public class EmuTextPane extends JTextPane {
                 f.addChoosableFileFilter(filters[i]);
             }
         }
-        filters[filters.length-1] = new UniversalFileFilter();
-        filters[filters.length-1].addExtension("*");
-        filters[filters.length-1].setDescription("All files (*.*)");
-        f.addChoosableFileFilter(filters[filters.length-1]);
+        filters[filters.length - 1] = new UniversalFileFilter();
+        filters[filters.length - 1].addExtension("*");
+        filters[filters.length - 1].setDescription("All files (*.*)");
+        f.addChoosableFileFilter(filters[filters.length - 1]);
         f.setFileFilter(filters[0]);
         f.setApproveButtonText("Save");
         f.setSelectedFile(fileSource);
@@ -514,11 +507,11 @@ public class EmuTextPane extends JTextPane {
             return false;
         }
         File selectedFile = f.getSelectedFile();
-        UniversalFileFilter selectedFileFilter = (UniversalFileFilter)f.getFileFilter();
+        UniversalFileFilter selectedFileFilter = (UniversalFileFilter) f.getFileFilter();
 
         String suffix = selectedFileFilter.getFirstExtension();
         if (!suffix.equals("*") &&
-                selectedFile.getName().toLowerCase().endsWith("." + suffix.toLowerCase())) {
+            selectedFile.getName().toLowerCase().endsWith("." + suffix.toLowerCase())) {
             fileSource = selectedFile;
         } else {
             fileSource = new File(selectedFile.getAbsolutePath() + "." + suffix.toLowerCase());
@@ -527,7 +520,7 @@ public class EmuTextPane extends JTextPane {
     }
 
     public boolean isFileSaved() {
-        return fileSaved  && (fileSource != null);
+        return fileSaved && (fileSource != null);
     }
 
     public Optional<File> getCurrentFile() {

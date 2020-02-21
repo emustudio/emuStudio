@@ -30,9 +30,7 @@ import java.net.URISyntaxException;
 import java.util.Properties;
 
 import static emustudio.architecture.ComputerConfigTest.getBaseDirectory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ConfigurationImplTest {
 

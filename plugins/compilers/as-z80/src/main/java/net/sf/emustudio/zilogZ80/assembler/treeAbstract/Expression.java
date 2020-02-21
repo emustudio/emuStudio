@@ -56,11 +56,11 @@ public abstract class Expression {
             s = String.format("%02X%02X", (val & 0xFF), ((val >> 8) & 0xFF));
         } else if (size == 3) {
             s = String.format("%02X%02X%02X",
-                    (val & 0xFF), ((val >> 8) & 0xFF), ((val >> 16) & 0xFF));
+                (val & 0xFF), ((val >> 8) & 0xFF), ((val >> 16) & 0xFF));
         } else {
             s = String.format("%02X%02X%02X%02X",
-                    (val & 0xFF), ((val >> 8) & 0xFF), ((val >> 16) & 0xFF),
-                    ((val >> 24) & 0xFF));
+                (val & 0xFF), ((val >> 8) & 0xFF), ((val >> 16) & 0xFF),
+                ((val >> 24) & 0xFF));
         }
         return s;
     }

@@ -56,7 +56,7 @@ public class Generator {
     public static void forAll8bitBinaryWhichEqual(BiConsumer<Byte, Byte>... runners) {
         for (int i = 0; i < 256; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
-                runner.accept((byte)i, (byte)i);
+                runner.accept((byte) i, (byte) i);
             }
         }
     }
@@ -67,7 +67,7 @@ public class Generator {
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
                 int k = random.nextInt(256);
-                runner.accept((byte)k, (byte)k);
+                runner.accept((byte) k, (byte) k);
             }
         }
     }
@@ -109,7 +109,7 @@ public class Generator {
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
                 int first = random.nextInt(MAX_OPERAND_SIZE);
-                while(!predicate.test(first)) {
+                while (!predicate.test(first)) {
                     first = random.nextInt(MAX_OPERAND_SIZE);
                 }
                 runner.accept(first, random.nextInt(MAX_OPERAND_SIZE));
@@ -119,12 +119,12 @@ public class Generator {
 
     @SuppressWarnings("unused")
     public static void forSome16bitBinaryBothSatisfying(Predicate<Integer> firstP, Predicate<Integer> secondP,
-                                                         BiConsumer<Integer, Integer>... runners) {
+                                                        BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
                 int first = random.nextInt(MAX_OPERAND_SIZE);
-                while(!firstP.test(first)) {
+                while (!firstP.test(first)) {
                     first = random.nextInt(MAX_OPERAND_SIZE);
                 }
                 int second = random.nextInt(MAX_OPERAND_SIZE);
@@ -151,7 +151,7 @@ public class Generator {
             return 32900;
         }
         if (value > 33000 && value < 65000) {
-            return  65500;
+            return 65500;
         }
         return value;
     }
@@ -187,7 +187,7 @@ public class Generator {
     public static void forAll8bitUnary(BiConsumer<Byte, Byte>... runners) {
         for (int i = 0; i < 256; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
-                runner.accept((byte)i, (byte)0);
+                runner.accept((byte) i, (byte) 0);
             }
         }
     }
@@ -198,7 +198,7 @@ public class Generator {
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
                 int k = random.nextInt(256);
-                runner.accept((byte)k, (byte)0);
+                runner.accept((byte) k, (byte) 0);
             }
         }
     }
@@ -240,14 +240,14 @@ public class Generator {
 
     @SuppressWarnings("unused")
     public static <T extends Number> void forGivenOperandsAndSingleRun(T operand, BiConsumer<T, T>... runners) {
-        for (BiConsumer<T,T> runner : runners) {
+        for (BiConsumer<T, T> runner : runners) {
             runner.accept(operand, operand);
         }
     }
 
     @SuppressWarnings("unused")
     public static <T extends Number> void forGivenOperandsAndSingleRun(T first, T second, BiConsumer<T, T>... runners) {
-        for (BiConsumer<T,T> runner : runners) {
+        for (BiConsumer<T, T> runner : runners) {
             runner.accept(first, second);
         }
     }

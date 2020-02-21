@@ -40,9 +40,9 @@ public interface OutputProvider extends IOProvider {
         public void showGUI() {
         }
     };
-    
+
     void write(int character);
-    
+
     void showGUI();
-    
+
 }

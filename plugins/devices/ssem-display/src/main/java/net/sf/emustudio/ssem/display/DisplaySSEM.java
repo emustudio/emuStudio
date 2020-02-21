@@ -33,10 +33,10 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.DEVICE,
-        title = "SSEM CRT display",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "CRT display for SSEM computer."
+    type = PLUGIN_TYPE.DEVICE,
+    title = "SSEM CRT display",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "CRT display for SSEM computer."
 )
 @SuppressWarnings("unused")
 public class DisplaySSEM extends AbstractDevice {
@@ -63,7 +63,7 @@ public class DisplaySSEM extends AbstractDevice {
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         MemoryContext<Byte> memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
-        
+
         if (memory.getDataType() != Byte.class) {
             throw new PluginInitializationException(this, "Expected Byte memory cell type!");
         }

@@ -30,24 +30,18 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
+import static org.easymock.EasyMock.*;
+import static org.junit.Assert.*;
 
 public class DriveTest {
     private final static short SECTOR_SIZE = 2;
     private final static short SECTORS_COUNT = 2;
     private final static short TRACKS_COUNT = 2;
-    
+
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
     private File testImageFile;
-    
+
     @Before
     public void prepareTestImage() throws Exception {
         testImageFile = folder.newFile();
@@ -57,7 +51,7 @@ public class DriveTest {
             }
         }
     }
-    
+
     private void assertImageContent(int dataStart) throws Exception {
         try (RandomAccessFile raf = new RandomAccessFile(testImageFile, "r")) {
             for (int i = 0; i < SECTOR_SIZE * SECTORS_COUNT * TRACKS_COUNT; i++) {
@@ -69,7 +63,7 @@ public class DriveTest {
     @Test
     public void testInitialDriveParameters() throws Exception {
         Drive drive = new Drive(0);
-        
+
         Drive.DriveParameters params = drive.getDriveParameters();
         assertEquals(0, params.sector);
         assertEquals(0, params.sectorOffset);
@@ -78,38 +72,38 @@ public class DriveTest {
         assertEquals(0xE7, params.port1status);
         assertEquals(0xC1, params.port2status);
     }
-    
+
     @Test
     public void testMountValidImage() throws IOException {
         new Drive(0).mount(testImageFile);
     }
-    
+
     @Test(expected = NullPointerException.class)
     public void testMountImageNullArgument() throws IOException {
         new Drive(0).mount(null);
     }
-    
+
     @Test
     public void testUnmountWithoutMountHasNoEffect() {
         new Drive(0).umount();
     }
-    
+
     @Test
     public void testUnmountSelectedDriveDeselects() throws IOException {
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
-        
+
         drive.umount();
         assertFalse(drive.isSelected());
     }
-    
+
     @Test
     public void testUmountClearsMountImageInDriveParams() throws IOException {
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.umount();
-        
+
         Drive.DriveParameters params = drive.getDriveParameters();
         assertNull(params.mountedFloppy);
     }
@@ -122,16 +116,16 @@ public class DriveTest {
 
         drive.mount(testImageFile);
         drive.select();
-        
+
         Drive.DriveParameters params = drive.getDriveParameters();
-        
+
         assertEquals(0xA5, params.port1status);
         assertEquals(0xC1, params.port2status);
         assertEquals(0, params.sector);
         assertEquals(0, params.sectorOffset);
         assertEquals(0, params.track);
     }
-    
+
     @Test
     public void testDriveParametersAfterSelectThenDeselect() throws Exception {
         Drive drive = new Drive(0);
@@ -141,7 +135,7 @@ public class DriveTest {
         drive.mount(testImageFile);
         drive.select();
         drive.deselect();
-        
+
         Drive.DriveParameters params = drive.getDriveParameters();
         assertEquals(0, params.sector);
         assertEquals(0, params.sectorOffset);
@@ -157,12 +151,12 @@ public class DriveTest {
         drive.select();
         assertFalse(drive.isSelected());
     }
-    
+
     @Test
     public void testDeselectWithoutSelectHasNoEffect() {
         new Drive(0).deselect();
     }
-    
+
     @Test
     public void testReadAllData() throws Exception {
         Drive drive = new Drive(0);
@@ -171,18 +165,18 @@ public class DriveTest {
 
         drive.mount(testImageFile);
         drive.select();
-        
+
         assertEquals(0, drive.getPort1status() & 0x40); // track 0
 
         int expectedData = 0;
         for (int track = 0; track < TRACKS_COUNT; track++) {
             assertEquals(track, drive.getTrack());
-            
+
             // head load
-            drive.writeToPort2((short)0x04);            
+            drive.writeToPort2((short) 0x04);
             for (int sector = 0; sector < SECTORS_COUNT; sector++) {
                 assertEquals(sector, drive.getSector());
-                
+
                 for (int offset = 0; offset < SECTOR_SIZE; offset++) {
                     assertEquals(offset, drive.getOffset());
                     assertEquals(expectedData++, drive.readData());
@@ -190,14 +184,14 @@ public class DriveTest {
                 drive.nextSectorIfHeadIsLoaded();
             }
             // head unload
-            drive.writeToPort2((short)0x08);
+            drive.writeToPort2((short) 0x08);
             // assert head can be moved
             assertEquals(0, drive.getPort1status() & 0x02);
             // increment track number
-            drive.writeToPort2((short)0x01);
+            drive.writeToPort2((short) 0x01);
         }
     }
-    
+
     @Test
     public void testWriteAllData() throws Exception {
         Drive drive = new Drive(0);
@@ -206,25 +200,25 @@ public class DriveTest {
 
         drive.mount(testImageFile);
         drive.select();
-        
+
         assertEquals(0, drive.getPort1status() & 0x40); // track 0
 
         int writtenData = 1;
         for (int track = 0; track < TRACKS_COUNT; track++) {
             assertEquals(track, drive.getTrack());
-            
+
             // head load
-            drive.writeToPort2((short)0x04);
+            drive.writeToPort2((short) 0x04);
             assertEquals(0, drive.getPort1status() & 0x04); // head loaded
 
             for (int sector = 0; sector < SECTORS_COUNT; sector++) {
                 assertEquals(sector, drive.getSector());
-                
+
                 // write enable
-                drive.writeToPort2((short)0x80);
+                drive.writeToPort2((short) 0x80);
                 for (int offset = 0; offset < SECTOR_SIZE; offset++) {
                     assertEquals(offset, drive.getOffset());
-                    
+
                     // enter new write data ?
                     assertEquals(0, drive.getPort1status() & 0x01);
 
@@ -233,11 +227,11 @@ public class DriveTest {
                 drive.nextSectorIfHeadIsLoaded();
             }
             // head unload
-            drive.writeToPort2((short)0x08);
+            drive.writeToPort2((short) 0x08);
             // assert head can be moved
             assertEquals(0, drive.getPort1status() & 0x02);
             // increment track number
-            drive.writeToPort2((short)0x01);
+            drive.writeToPort2((short) 0x01);
         }
         assertImageContent(1);
     }
@@ -250,12 +244,12 @@ public class DriveTest {
         listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
         expectLastCall().once();
         replay(listener);
-        
+
         Drive drive = new Drive(0);
         drive.setDriveListener(listener);
         drive.mount(testImageFile);
         drive.select();
-        
+
         verify(listener);
     }
 
@@ -267,13 +261,13 @@ public class DriveTest {
         listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
         expectLastCall().once();
         replay(listener);
-        
+
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
         drive.setDriveListener(listener);
         drive.deselect();
-        
+
         verify(listener);
     }
 
@@ -283,13 +277,13 @@ public class DriveTest {
         listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
         expectLastCall().once();
         replay(listener);
-        
+
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
         drive.setDriveListener(listener);
         drive.nextSectorIfHeadIsLoaded();
-        
+
         verify(listener);
     }
 
@@ -302,8 +296,8 @@ public class DriveTest {
 
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
-        drive.select();        
-        drive.writeToPort2((short)0x04);
+        drive.select();
+        drive.writeToPort2((short) 0x04);
         drive.setDriveListener(listener);
         drive.readData();
 
@@ -320,11 +314,11 @@ public class DriveTest {
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
-        drive.writeToPort2((short)0x04);
-        drive.writeToPort2((short)0x80);
+        drive.writeToPort2((short) 0x04);
+        drive.writeToPort2((short) 0x80);
         drive.setDriveListener(listener);
         drive.writeData(1);
-        
+
         verify(listener);
     }
 
@@ -339,8 +333,8 @@ public class DriveTest {
         drive.mount(testImageFile);
         drive.select();
         drive.setDriveListener(listener);
-        drive.writeToPort2((short)0x04);
-        
+        drive.writeToPort2((short) 0x04);
+
         verify(listener);
     }
 }

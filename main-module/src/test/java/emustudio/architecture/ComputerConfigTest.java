@@ -22,6 +22,8 @@ package emustudio.architecture;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -29,11 +31,10 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ComputerConfigTest {
+    private final static Logger LOGGER = LoggerFactory.getLogger(ComputerConfigTest.class);
 
     @BeforeClass
     public static void setUpClass() throws URISyntaxException {
@@ -64,7 +65,7 @@ public class ComputerConfigTest {
     @Test
     public void testDeleteConfiguration() throws Exception {
         File file = ComputerConfig.getConfigDir().resolve("test.conf").toFile();
-        System.out.println("Going to delete file: " + file.getAbsolutePath() + " : " + file.exists());
+        LOGGER.info("Going to delete file: " + file.getAbsolutePath() + " : " + file.exists());
         assertTrue(file.exists());
 
         assertTrue(ComputerConfig.delete("test"));
@@ -77,7 +78,7 @@ public class ComputerConfigTest {
     }
 
     @Test
-    public void testRenameConfiguration() throws URISyntaxException {
+    public void testRenameConfiguration() {
         File oldFile = ComputerConfig.getConfigDir().resolve("test.conf").toFile();
         File newFile = ComputerConfig.getConfigDir().resolve("newtest.conf").toFile();
 
@@ -97,5 +98,4 @@ public class ComputerConfigTest {
         assertTrue(oldFile.exists());
         assertFalse(newFile.exists());
     }
-
 }

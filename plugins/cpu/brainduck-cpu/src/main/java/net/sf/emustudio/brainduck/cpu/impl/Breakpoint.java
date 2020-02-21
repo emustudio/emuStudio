@@ -20,5 +20,5 @@
 package net.sf.emustudio.brainduck.cpu.impl;
 
 public class Breakpoint extends Exception {
-    
+
 }

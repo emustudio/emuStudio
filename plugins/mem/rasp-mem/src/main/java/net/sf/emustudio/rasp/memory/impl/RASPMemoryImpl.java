@@ -24,21 +24,22 @@ import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.plugins.memory.AbstractMemory;
 import emulib.plugins.memory.MemoryContext;
-import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
-import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import emulib.runtime.exceptions.AlreadyRegisteredException;
+import emulib.runtime.exceptions.InvalidContextException;
 import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 import net.sf.emustudio.rasp.memory.gui.MemoryWindow;
 
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
 @PluginType(
-        type = PLUGIN_TYPE.MEMORY,
-        title = "RASP Memory",
-        description = "RASP memory containing the program as well as the data",
-        copyright = "\u00A9 Copyright 2016, Michal Šipoš"
+    type = PLUGIN_TYPE.MEMORY,
+    title = "RASP Memory",
+    description = "RASP memory containing the program as well as the data",
+    copyright = "\u00A9 Copyright 2016, Michal Šipoš"
 )
 
 /**
@@ -53,7 +54,7 @@ public class RASPMemoryImpl extends AbstractMemory {
     /**
      * Constructor.
      *
-     * @param pluginID ID of the plugin
+     * @param pluginID    ID of the plugin
      * @param contextPool the contextPool to register this plugin to
      */
     public RASPMemoryImpl(Long pluginID, ContextPool contextPool) {
@@ -66,7 +67,7 @@ public class RASPMemoryImpl extends AbstractMemory {
             contextPool.register(pluginID, context, MemoryContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException ex) {
             StaticDialogs.showErrorMessage("Could not register RASP Memory context",
-                    RASPMemoryImpl.class.getAnnotation(PluginType.class).title());
+                RASPMemoryImpl.class.getAnnotation(PluginType.class).title());
         }
     }
 

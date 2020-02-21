@@ -22,10 +22,8 @@ package net.sf.emustudio.ssem.display;
 import emulib.runtime.NumberUtils;
 import net.jcip.annotations.ThreadSafe;
 
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import javax.swing.*;
+import java.awt.*;
 import java.util.stream.Collectors;
 
 @ThreadSafe
@@ -45,9 +43,9 @@ public class DisplayPanel extends JPanel {
     void writeRow(Byte[] value, int row) {
         int number = NumberUtils.readInt(value, NumberUtils.Strategy.BIG_ENDIAN);
         Boolean[] bits = String.format("%" + CELL_SIZE + "s", Integer.toBinaryString(number)).chars()
-                .mapToObj(c -> c == '1')
-                .collect(Collectors.toList())
-                .toArray(new Boolean[0]);
+            .mapToObj(c -> c == '1')
+            .collect(Collectors.toList())
+            .toArray(new Boolean[0]);
 
         for (int i = 0; i < ROWS; i++) {
             memory[row][i] = bits[i];
@@ -64,7 +62,7 @@ public class DisplayPanel extends JPanel {
         repaint();
     }
 
-     @Override
+    @Override
     public void paintComponent(Graphics g) {
         Dimension size = getSize();
         int startX = size.width / 2 - (CELL_SIZE / 2) * PIXEL_SIZE_PLUS_GAP - PIXEL_SIZE;
@@ -72,25 +70,25 @@ public class DisplayPanel extends JPanel {
 
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, size.width, size.height);
-        
+
         for (int i = 0; i < memory.length; i++) {
             for (int j = 0; j < memory[i].length; j++) {
                 if (memory[i][j]) {
-                  g.setColor(Color.GREEN);
-                  g.fillRect(
-                          startX + j * PIXEL_SIZE_PLUS_GAP,
-                          startY + i * PIXEL_SIZE_PLUS_GAP,
-                          PIXEL_SIZE,
-                          PIXEL_SIZE
-                  );
+                    g.setColor(Color.GREEN);
+                    g.fillRect(
+                        startX + j * PIXEL_SIZE_PLUS_GAP,
+                        startY + i * PIXEL_SIZE_PLUS_GAP,
+                        PIXEL_SIZE,
+                        PIXEL_SIZE
+                    );
                 } else {
-                  g.setColor(Color.DARK_GRAY);
-                  g.fillRect(
-                          startX + j * PIXEL_SIZE_PLUS_GAP,
-                          startY + i * PIXEL_SIZE_PLUS_GAP,
-                          PIXEL_SIZE,
-                          PIXEL_SIZE
-                  );
+                    g.setColor(Color.DARK_GRAY);
+                    g.fillRect(
+                        startX + j * PIXEL_SIZE_PLUS_GAP,
+                        startY + i * PIXEL_SIZE_PLUS_GAP,
+                        PIXEL_SIZE,
+                        PIXEL_SIZE
+                    );
                 }
             }
         }

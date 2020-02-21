@@ -21,6 +21,7 @@ package net.sf.emustudio.ram.memory;
 
 import emulib.annotations.ContextType;
 import emulib.plugins.memory.MemoryContext;
+
 import java.util.List;
 
 @ContextType
@@ -29,11 +30,11 @@ public interface RAMMemoryContext extends MemoryContext<RAMInstruction> {
     void addLabel(int pos, String label);
 
     String getLabel(int pos);
-	
-	// from Compiler
-	void addInputs(List<String> inputs);
-	
-	// for CPU
-	List<String> getInputs();
-        
+
+    // from Compiler
+    void addInputs(List<String> inputs);
+
+    // for CPU
+    List<String> getInputs();
+
 }

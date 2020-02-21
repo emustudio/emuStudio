@@ -49,7 +49,7 @@ public class IncludeTest extends AbstractCompilerTest {
         );
 
         assertProgram(
-            0xCD, 06, 00, 0x3E, 0, 0xC9, 0x3E, 0 ,0xC9
+            0xCD, 06, 00, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9
         );
     }
 

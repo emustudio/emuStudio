@@ -70,5 +70,5 @@ class FlagsModel extends AbstractTableModel {
         flagsI[5] = ((F & EmulatorEngine.FLAG_C) != 0) ? 1 : 0;
         super.fireTableDataChanged();
     }
-    
+
 }

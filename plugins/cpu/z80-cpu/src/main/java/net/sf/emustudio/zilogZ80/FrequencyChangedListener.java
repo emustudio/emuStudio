@@ -23,10 +23,10 @@ package net.sf.emustudio.zilogZ80;
  * Listener of frequency changes
  */
 public interface FrequencyChangedListener {
-    
+
     /**
      * Handle frequency changes of the CPU.
-     * 
+     *
      * @param newFrequency new Frequency in kHz
      */
     void frequencyChanged(float newFrequency);

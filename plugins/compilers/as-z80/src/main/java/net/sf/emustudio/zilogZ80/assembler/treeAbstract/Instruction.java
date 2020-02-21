@@ -23,9 +23,9 @@ import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueOutOfBoundsException;
 
 public abstract class Instruction extends InstrData {
     protected int opcode;
-    
+
     public Instruction(int opcode, int line, int column) {
-        super(line,column);
+        super(line, column);
         this.opcode = opcode;
     }
 
@@ -39,7 +39,7 @@ public abstract class Instruction extends InstrData {
 
 
     @Override
-    public int getSize() { 
+    public int getSize() {
         return Expression.getSize(opcode);
     }
 }

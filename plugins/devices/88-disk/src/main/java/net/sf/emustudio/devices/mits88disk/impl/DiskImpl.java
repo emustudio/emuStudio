@@ -37,30 +37,23 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.Objects;
-import java.util.ResourceBundle;
 
-import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.IMAGE;
-import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT1_CPU;
-import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT2_CPU;
-import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT3_CPU;
-import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTORS_COUNT;
-import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTOR_LENGTH;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.*;
 
 /**
  * MITS 88-DISK Floppy Disk controller with up to 16 drives
- */ 
+ */
 @PluginType(
-        type = PLUGIN_TYPE.DEVICE,
-        title = "MITS 88-DISK device",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Implementation of popular floppy disk controller."
+    type = PLUGIN_TYPE.DEVICE,
+    title = "MITS 88-DISK device",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Implementation of popular floppy disk controller."
 )
 @SuppressWarnings("unused")
 public class DiskImpl extends AbstractDevice {
     private final static Logger LOGGER = LoggerFactory.getLogger(DiskImpl.class);
-    
+
     private final static int DRIVES_COUNT = 16;
     public final static int DEFAULT_CPU_PORT1 = 0x8;
     public final static int DEFAULT_CPU_PORT2 = 0x9;
@@ -103,20 +96,20 @@ public class DiskImpl extends AbstractDevice {
     /**
      * Asks the user for new port number and tries to attach given port to this
      * port number on CPU.
-     *
+     * <p>
      * If a port of the DISK cannot be attached to the CPU, we want to ask the
      * user to provide another port number. He got only one chance.
      *
-     * @param DISKport Port number in 88-DISK (1,2,3)
+     * @param DISKport    Port number in 88-DISK (1,2,3)
      * @param defaultPort Default port number on CPU
-     * @param port The 88-DISK port object that needs to be attached
+     * @param port        The 88-DISK port object that needs to be attached
      * @return new port number if the attachment was successful, -1 otherwise
      */
     private int providePort(int DISKport, int defaultPort, DeviceContext port) {
         String providedPort = StaticDialogs.inputStringValue("Port "
                 + DISKport + " can not be attached to default"
                 + " CPU port, please enter another one: ", "88-DISK",
-                String.valueOf(defaultPort));
+            String.valueOf(defaultPort));
         int portNumber;
         try {
             portNumber = Integer.decode(providedPort);
@@ -142,7 +135,7 @@ public class DiskImpl extends AbstractDevice {
             port1CPU = providePort(1, port1CPU, port1);
             if (port1CPU == -1) {
                 throw new PluginInitializationException(
-                        this, ": 88-DISK (port1) can not be attached to default CPU port"
+                    this, ": 88-DISK (port1) can not be attached to default CPU port"
                 );
             }
         }
@@ -150,7 +143,7 @@ public class DiskImpl extends AbstractDevice {
             port2CPU = providePort(2, port2CPU, port2);
             if (port2CPU == -1) {
                 throw new PluginInitializationException(
-                        this, ": 88-DISK (port2) can not be attached to default CPU port"
+                    this, ": 88-DISK (port2) can not be attached to default CPU port"
                 );
             }
         }
@@ -158,7 +151,7 @@ public class DiskImpl extends AbstractDevice {
             port3CPU = providePort(3, port3CPU, port3);
             if (port3CPU == -1) {
                 throw new PluginInitializationException(
-                        this, ": 88-DISK (port3) can not be attached to default CPU port"
+                    this, ": 88-DISK (port3) can not be attached to default CPU port"
                 );
             }
         }
@@ -215,7 +208,7 @@ public class DiskImpl extends AbstractDevice {
                 try {
                     drive.mount(new File(s));
                 } catch (IOException ex) {
-                    LOGGER.error("Could not mount image file {}", s, ex);                    
+                    LOGGER.error("Could not mount image file {}", s, ex);
                     StaticDialogs.showErrorMessage(ex.getMessage());
                 }
             }

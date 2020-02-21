@@ -25,9 +25,9 @@ import java.util.function.Consumer;
 
 /**
  * Instruction without operands.
- *
+ * <p>
  * It is used as an injector for the test runner.
- *
+ * <p>
  * Can have 1 or more opcodes.
  */
 public class NoOperInstr<T extends CpuRunner> implements Consumer<T> {

@@ -22,18 +22,15 @@ package net.sf.emustudio.zilogZ80.impl;
 import emulib.plugins.cpu.DisassembledInstruction;
 import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.exceptions.InvalidInstructionException;
+import net.jcip.annotations.ThreadSafe;
+import net.sf.emustudio.intel8080.api.DispatchListener;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import net.jcip.annotations.ThreadSafe;
-import net.sf.emustudio.intel8080.api.DispatchListener;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_Z;
+
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
 
 @ThreadSafe
 public class InstructionPrinter implements DispatchListener {
@@ -68,7 +65,7 @@ public class InstructionPrinter implements DispatchListener {
             if (useCache && !cache.contains(PC)) {
                 if (numberOfMatch.get() != 0) {
                     System.out.println(String.format("%04d | Block from %04X to %04X; count=%d",
-                            timeStamp, matchPC, PC, numberOfMatch.get())
+                        timeStamp, matchPC, PC, numberOfMatch.get())
                     );
                 } else {
                     matchPC = PC;
@@ -81,7 +78,7 @@ public class InstructionPrinter implements DispatchListener {
 
             if (numberOfMatch.get() <= 1) {
                 System.out.print(String.format("%04d | PC=%04x | %15s | %10s ",
-                        timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
+                    timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
                 );
             }
 
@@ -94,18 +91,18 @@ public class InstructionPrinter implements DispatchListener {
     public void afterDispatch() {
         if (numberOfMatch.get() <= 1) {
             System.out.println(String.format("|| regs=%s IX=%04x IY=%04x IFF=%1x I=%02x R=%02x | flags=%s | SP=%04x | PC=%04x",
-                    regsToString(), emulatorEngine.IX, emulatorEngine.IY,
-                            emulatorEngine.IFF[0] ? 1 : 0,
-                            emulatorEngine.I, emulatorEngine.R,
-                            intToFlags(emulatorEngine.flags),
-                            emulatorEngine.SP, emulatorEngine.PC)
+                regsToString(), emulatorEngine.IX, emulatorEngine.IY,
+                emulatorEngine.IFF[0] ? 1 : 0,
+                emulatorEngine.I, emulatorEngine.R,
+                intToFlags(emulatorEngine.flags),
+                emulatorEngine.SP, emulatorEngine.PC)
             );
         }
     }
 
     private String regsToString() {
         String r = "";
-        for (short i =0; i < emulatorEngine.regs.length; i++) {
+        for (short i = 0; i < emulatorEngine.regs.length; i++) {
             r += String.format("%02x ", emulatorEngine.regs[i]);
         }
         return r;

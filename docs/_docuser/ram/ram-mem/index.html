@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>Ram Mem &diams; emuStudio</title>
-    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <meta name="keywords"
+          content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
     <meta name="description" content="Universal computer emulation platform and framework.">
     <meta name=”robots” content=”noindex,follow”>
 
@@ -23,8 +20,10 @@
     <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <!-- RSS -->
-    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../feed.xml">
-    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../atom.xml">
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../atom.xml">
 
     <!-- Favicons -->
     <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
@@ -32,7 +31,8 @@
     <meta name="msapplication-TileColor" content="#ffffff">
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+    <link rel="stylesheet"
+          href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../../css/style.css">
@@ -54,17 +54,18 @@
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 
-    
-      <!-- Global site tag (gtag.js) - Google Analytics -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
-      <script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+    <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
     
         gtag('config', 'UA-3492956-5');
-      </script>
-    
+
+    </script>
+
 </head>
 
 
@@ -74,47 +75,49 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;"
+                                                     src="../../../img/logo-2.svg" width="30px"/></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
-                <!--<div class="form-group">-->
-                    <!--<input type="text" class="form-control" placeholder="Search website">-->
-                <!--</div>-->
-                <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
             <!--</form>-->
             <ul class="nav navbar-nav navbar-right">
-                
+
                 <li>
                     <a href="/">Home</a>
                 </li>
-                
+
                 <li>
                     <a href="/download">Download</a>
                 </li>
-                
+
                 <li>
                     <a href="/docs">Docs</a>
                 </li>
-                
+
                 <li>
                     <a href="/devel">Developer</a>
                 </li>
-                
+
                 <li>
                     <a href="/roadmap">Roadmap</a>
                 </li>
-                
+
                 <li>
                     <a href="/about">About</a>
                 </li>
-                
+
             </ul>
         </div>
     </div>
@@ -129,91 +132,98 @@
           
       </span>
     </h1>
-    
-    
+
+
 </div>
 
 
 <div class="container">
     <div class="sect1">
-<h2 id="program-memory">Program Memory</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>RAM memory is used as a part of RAM simulator, which acts as the "program memory", holding just the program.</p>
-</div>
-<div class="paragraph">
-<p>RAM CPU reads instructions from this memory. The instructions can be written here only by compiling
-the source code, or loading already compiled binary image.</p>
-</div>
-<div class="paragraph">
-<p>The memory plug-in contains simple graphical window, a GUI, which provides a set of the following features:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>It computes time and space complexity of the program</p>
-</li>
-<li>
-<p>It shows the memory content (the "program") as the list of disassembled instructions</p>
-</li>
-</ul>
-</div>
-<div class="sect2">
-<h3 id="XMI">Installation and run</h3>
-<div class="paragraph">
-<p>The RAM memory can be run only as a part of emuStudio. It is installed in location <code>mem/ram-mem.jar</code>.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="XMG">Graphical user interface (GUI)</h3>
-<div class="paragraph">
-<p>The memory GUI can be seen in the following picture.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/docuser/ram/images//ram-mem.png" alt="RAM memory window">
-</div>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>A</strong>: Opens already compiled program into memory. Previous program will be dismissed.</p>
-</li>
-<li>
-<p><strong>B</strong>: Clears memory.</p>
-</li>
-<li>
-<p><strong>C</strong>: Shows uniform time complexity for the actual program.</p>
-</li>
-<li>
-<p><strong>D</strong>: Shows uniform space complexity for the actual program.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Uniform time complexity means maximum number of instructions based on the input <code>N</code>. Uniform space complexity
-means maximum number of used registers.</p>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-
-    <footer class="site-footer">
-        <div class="container">
-            <nav class="navbar">
-                <div class="container">
-                    <ul class="nav navbar-nav">
-                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                        <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
+        <h2 id="program-memory">Program Memory</h2>
+        <div class="sectionbody">
+            <div class="paragraph">
+                <p>RAM memory is used as a part of RAM simulator, which acts as the "program memory", holding just the
+                    program.</p>
+            </div>
+            <div class="paragraph">
+                <p>RAM CPU reads instructions from this memory. The instructions can be written here only by compiling
+                    the source code, or loading already compiled binary image.</p>
+            </div>
+            <div class="paragraph">
+                <p>The memory plug-in contains simple graphical window, a GUI, which provides a set of the following
+                    features:</p>
+            </div>
+            <div class="ulist">
+                <ul>
+                    <li>
+                        <p>It computes time and space complexity of the program</p>
+                    </li>
+                    <li>
+                        <p>It shows the memory content (the "program") as the list of disassembled instructions</p>
+                    </li>
+                </ul>
+            </div>
+            <div class="sect2">
+                <h3 id="XMI">Installation and run</h3>
+                <div class="paragraph">
+                    <p>The RAM memory can be run only as a part of emuStudio. It is installed in location <code>mem/ram-mem.jar</code>.
+                    </p>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="XMG">Graphical user interface (GUI)</h3>
+                <div class="paragraph">
+                    <p>The memory GUI can be seen in the following picture.</p>
+                </div>
+                <div class="imageblock">
+                    <div class="content">
+                        <img src="/docuser/ram/images//ram-mem.png" alt="RAM memory window">
+                    </div>
+                </div>
+                <div class="ulist">
+                    <ul>
+                        <li>
+                            <p><strong>A</strong>: Opens already compiled program into memory. Previous program will be
+                                dismissed.</p>
+                        </li>
+                        <li>
+                            <p><strong>B</strong>: Clears memory.</p>
+                        </li>
+                        <li>
+                            <p><strong>C</strong>: Shows uniform time complexity for the actual program.</p>
+                        </li>
+                        <li>
+                            <p><strong>D</strong>: Shows uniform space complexity for the actual program.</p>
+                        </li>
                     </ul>
                 </div>
-            </nav>
+                <div class="paragraph">
+                    <p>Uniform time complexity means maximum number of instructions based on the input <code>N</code>.
+                        Uniform space complexity
+                        means maximum number of used registers.</p>
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    </body>
+
+<footer class="site-footer">
+    <div class="container">
+        <nav class="navbar">
+            <div class="container">
+                <ul class="nav navbar-nav">
+                    <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                                                                                           src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
+                    </li>
+                    <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</footer>
+
+</body>
 </html>
 

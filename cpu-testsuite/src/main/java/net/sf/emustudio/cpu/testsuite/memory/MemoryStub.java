@@ -45,7 +45,7 @@ public interface MemoryStub<T extends Number> extends MemoryContext<T> {
     default byte[] nativeShortsToNativeBytes(short[] read) {
         byte[] word = new byte[read.length];
         for (int i = 0; i < read.length; i++) {
-            word[i] = (byte)(read[i] & 0xFF);
+            word[i] = (byte) (read[i] & 0xFF);
         }
         return word;
     }

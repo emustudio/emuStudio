@@ -45,7 +45,7 @@ class BrainCPUContextImpl implements BrainCPUContext {
     }
 
     /**
-     * Write a value into attached device. 
+     * Write a value into attached device.
      *
      * @param val value that will be written into the device
      */
@@ -58,7 +58,7 @@ class BrainCPUContextImpl implements BrainCPUContext {
 
     /**
      * Read a value from the attached device.
-     * 
+     * <p>
      * If the device doesn't have anything to send, a zero (0) might be considered
      * as the signal.
      *

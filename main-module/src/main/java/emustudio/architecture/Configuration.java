@@ -23,11 +23,16 @@ import emustudio.drawing.Schema;
 
 public interface Configuration {
     String get(String key);
+
     String get(String key, String defaultValue);
+
     void set(String key, String value);
+
     void remove(String key);
+
     boolean contains(String key);
 
     void write() throws WriteConfigurationException;
+
     Schema loadSchema();
 }

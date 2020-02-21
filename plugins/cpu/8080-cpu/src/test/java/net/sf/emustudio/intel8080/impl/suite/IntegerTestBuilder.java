@@ -19,15 +19,15 @@
  */
 package net.sf.emustudio.intel8080.impl.suite;
 
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryExpand;
-import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.intel8080.impl.suite.injectors.RegisterPair;
 import net.sf.emustudio.intel8080.impl.suite.injectors.RegisterPairPSW;
 
 import java.util.function.Function;
 
-public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder, CpuRunnerImpl, CpuVerifierImpl>  {
+public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder, CpuRunnerImpl, CpuVerifierImpl> {
 
     public IntegerTestBuilder(CpuRunnerImpl cpuRunner, CpuVerifierImpl cpuVerifier) {
         super(cpuRunner, cpuVerifier);

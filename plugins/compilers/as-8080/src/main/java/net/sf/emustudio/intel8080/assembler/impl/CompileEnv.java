@@ -19,27 +19,18 @@
  */
 package net.sf.emustudio.intel8080.assembler.impl;
 
-import net.sf.emustudio.intel8080.assembler.tree.EquPseudoNode;
-import net.sf.emustudio.intel8080.assembler.tree.InstructionNode;
-import net.sf.emustudio.intel8080.assembler.tree.LabelNode;
-import net.sf.emustudio.intel8080.assembler.tree.MacroPseudoNode;
-import net.sf.emustudio.intel8080.assembler.tree.SetPseudoNode;
+import net.sf.emustudio.intel8080.assembler.tree.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Compile environment.
- *
+ * <p>
  * It stores needed values for all compiler passes. This is something like symbol table.
- *
+ * <p>
  * Sets, macros and equs are pseudoinstructions that aren't added into symbol table in pass1. This means if eg. equ
  * wasn't defined before first use, error raises.
- *
  */
 public class CompileEnv {
     private final Map<String, LabelNode> labels = new HashMap<>();
@@ -61,9 +52,9 @@ public class CompileEnv {
         Objects.requireNonNull(name);
 
         return labels.containsKey(name)
-                || macros.containsKey(name)
-                || constants.containsKey(name)
-                || variables.containsKey(name);
+            || macros.containsKey(name)
+            || constants.containsKey(name)
+            || variables.containsKey(name);
     }
 
     private <T> boolean addIdentifier(Map<String, T> identifiers, T identifier, String name) {

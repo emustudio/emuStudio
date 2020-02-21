@@ -21,16 +21,8 @@ package emustudio.gui.debugTable;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static emustudio.gui.debugTable.MockHelper.CURRENT_INSTR;
-import static emustudio.gui.debugTable.MockHelper.HALF_PAGE_MAX_BYTES;
-import static emustudio.gui.debugTable.MockHelper.LONGEST_INSTR;
-import static emustudio.gui.debugTable.MockHelper.MEMORY_SIZE;
-import static emustudio.gui.debugTable.MockHelper.makeDisassembler;
-import static emustudio.gui.debugTable.MockHelper.makeDisassemblerWithFixedSizedInstructions;
-import static emustudio.gui.debugTable.MockHelper.mockCallFlow;
-import static emustudio.gui.debugTable.PaginatingDisassembler.CURRENT_INSTR_ROW;
-import static emustudio.gui.debugTable.PaginatingDisassembler.INSTR_PER_HALF_PAGE;
-import static emustudio.gui.debugTable.PaginatingDisassembler.INSTR_PER_PAGE;
+import static emustudio.gui.debugTable.MockHelper.*;
+import static emustudio.gui.debugTable.PaginatingDisassembler.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -144,7 +136,7 @@ public class PaginatingDisassemblerTest {
         int page1min = CURRENT_INSTR + HALF_PAGE_MAX_BYTES;
         assertEquals(
             page1min, // last instruction from previous page is present here
-            asm.rowToLocation(CURRENT_INSTR,0)
+            asm.rowToLocation(CURRENT_INSTR, 0)
         );
     }
 
@@ -170,7 +162,7 @@ public class PaginatingDisassemblerTest {
         int page2min = CURRENT_INSTR + LONGEST_INSTR * (INSTR_PER_PAGE - 1) + HALF_PAGE_MAX_BYTES;
         assertEquals(
             page2min,
-            asm.rowToLocation(CURRENT_INSTR,0)
+            asm.rowToLocation(CURRENT_INSTR, 0)
         );
     }
 
@@ -183,7 +175,7 @@ public class PaginatingDisassemblerTest {
         int page2max = CURRENT_INSTR + 2 * LONGEST_INSTR * (INSTR_PER_PAGE - 1) + HALF_PAGE_MAX_BYTES;
         assertEquals(
             page2max,
-            asm.rowToLocation(CURRENT_INSTR,INSTR_PER_PAGE - 1)
+            asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1)
         );
     }
 

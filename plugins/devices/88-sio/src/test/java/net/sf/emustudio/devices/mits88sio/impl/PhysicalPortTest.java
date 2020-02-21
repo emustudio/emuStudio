@@ -22,10 +22,7 @@ package net.sf.emustudio.devices.mits88sio.impl;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public class PhysicalPortTest {
@@ -41,7 +38,7 @@ public class PhysicalPortTest {
         replay(transmitter);
 
         PhysicalPort port = new PhysicalPort(transmitter);
-        assertEquals((short)0, port.read().shortValue());
+        assertEquals((short) 0, port.read().shortValue());
 
         verify(transmitter);
     }
@@ -49,12 +46,12 @@ public class PhysicalPortTest {
     @Test
     public void testWriteCallsWriteFromDeviceOnTransmitter() throws Exception {
         Transmitter transmitter = EasyMock.createMock(Transmitter.class);
-        transmitter.writeFromDevice(eq((short)5));
+        transmitter.writeFromDevice(eq((short) 5));
         expectLastCall().once();
         replay(transmitter);
 
         PhysicalPort port = new PhysicalPort(transmitter);
-        port.write((short)5);
+        port.write((short) 5);
 
         verify(transmitter);
     }

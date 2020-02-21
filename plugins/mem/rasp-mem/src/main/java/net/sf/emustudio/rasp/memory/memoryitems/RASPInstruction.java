@@ -26,7 +26,7 @@ package net.sf.emustudio.rasp.memory.memoryitems;
  * @author miso
  */
 public interface RASPInstruction extends MemoryItem {
-    
+
     /**
      * Operation code of RASP instruction.
      */

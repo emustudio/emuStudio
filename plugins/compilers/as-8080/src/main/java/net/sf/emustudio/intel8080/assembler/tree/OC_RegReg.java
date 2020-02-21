@@ -30,7 +30,7 @@ public class OC_RegReg extends OpCodeNode {
     private final byte reg_dst;
 
     public OC_RegReg(String mnemo, byte reg_dst, byte reg_src, int line,
-            int column) {
+                     int column) {
         super(mnemo, line, column);
         this.reg_dst = reg_dst;
         this.reg_src = reg_src;

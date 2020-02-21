@@ -25,21 +25,8 @@ import net.sf.emustudio.intel8080.impl.CpuImpl;
 
 import java.util.Objects;
 
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_AC;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_S;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_Z;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_A;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_B;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_C;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_D;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_E;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_H;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_L;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.*;
+import static org.junit.Assert.*;
 
 public class CpuVerifierImpl extends CpuVerifier {
     private final CpuImpl cpu;
@@ -52,8 +39,8 @@ public class CpuVerifierImpl extends CpuVerifier {
     public void checkRegister(int register, int value) {
         value &= 0xFF;
         assertEquals(
-                String.format("Expected reg[%02x]=%02x, but was %02x", register, value, cpu.getEngine().regs[register]),
-                value, cpu.getEngine().regs[register]
+            String.format("Expected reg[%02x]=%02x, but was %02x", register, value, cpu.getEngine().regs[register]),
+            value, cpu.getEngine().regs[register]
         );
     }
 
@@ -79,8 +66,8 @@ public class CpuVerifierImpl extends CpuVerifier {
         }
 
         assertEquals(
-                String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
-                value, realValue
+            String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
+            value, realValue
         );
     }
 
@@ -90,8 +77,8 @@ public class CpuVerifierImpl extends CpuVerifier {
         } else if (registerPair == 3) {
             int realValue = (cpu.getEngine().regs[REG_A] << 8) | (cpu.getEngine().flags & 0xD7 | 2);
             assertEquals(
-                    String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
-                    value, realValue
+                String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
+                value, realValue
             );
         } else {
             throw new IllegalArgumentException("Expected value between <0,3> !");
@@ -100,8 +87,8 @@ public class CpuVerifierImpl extends CpuVerifier {
 
     public void checkPC(int PC) {
         assertEquals(
-                String.format("Expected PC=%04x, but was %04x", PC, cpu.getEngine().PC),
-                PC, cpu.getEngine().PC
+            String.format("Expected PC=%04x, but was %04x", PC, cpu.getEngine().PC),
+            PC, cpu.getEngine().PC
         );
     }
 
@@ -136,18 +123,18 @@ public class CpuVerifierImpl extends CpuVerifier {
     @Override
     public void checkFlags(int mask) {
         assertTrue(
-                String.format("Expected flags=%s, but was %s",
-                        intToFlags(mask), intToFlags(cpu.getEngine().flags)),
-                (cpu.getEngine().flags & mask) == mask
+            String.format("Expected flags=%s, but was %s",
+                intToFlags(mask), intToFlags(cpu.getEngine().flags)),
+            (cpu.getEngine().flags & mask) == mask
         );
     }
 
     @Override
     public void checkNotFlags(int mask) {
         assertTrue(
-                String.format("Expected NOT flags=%s, but was %s",
-                        intToFlags(mask), intToFlags(cpu.getEngine().flags)),
-                (cpu.getEngine().flags & mask) == 0
+            String.format("Expected NOT flags=%s, but was %s",
+                intToFlags(mask), intToFlags(cpu.getEngine().flags)),
+            (cpu.getEngine().flags & mask) == 0
         );
     }
 }

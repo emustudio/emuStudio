@@ -33,18 +33,18 @@ import java.util.List;
 
 /**
  * Tape used by abstract machines.
- *
+ * <p>
  * Tape options are:
- *   - (R)ead
- *   - (R)ead (W)rite
- *   - (W)rite
- *   - direction:
- *     - only left
- *     - only right
- *     - both
- *
+ * - (R)ead
+ * - (R)ead (W)rite
+ * - (W)rite
+ * - direction:
+ * - only left
+ * - only right
+ * - both
+ * <p>
  * The CPU must assign all the details to this tape using the tape context.
- *
+ * <p>
  * By default, the tape is unbounded. However, it is possible to change.
  */
 public class AbstractTapeContextImpl implements AbstractTapeContext {
@@ -161,7 +161,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
             symbol = "";
         }
         tape.add(symbol);
-        writeSymbol(tape.size()-1, symbol);
+        writeSymbol(tape.size() - 1, symbol);
         fireChange();
     }
 
@@ -250,7 +250,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     public boolean isEmpty() {
         return tape.isEmpty();
     }
-    
+
     @Override
     public String read() {
         if (currentPosition >= tape.size() || (currentPosition < 0)) {
@@ -283,7 +283,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     }
 
     private String createValidFileName(String str) {
-        return str.trim().toLowerCase().replaceAll("[\\*\\.#\\%&\\s\\+!~/\\?<>,\\|\\{\\}\\[\\]\\\\\"'`=]","_");
+        return str.trim().toLowerCase().replaceAll("[\\*\\.#\\%&\\s\\+!~/\\?<>,\\|\\{\\}\\[\\]\\\\\"'`=]", "_");
     }
 
     /**

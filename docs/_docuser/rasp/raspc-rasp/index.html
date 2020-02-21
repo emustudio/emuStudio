@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <title>Raspc Rasp &diams; emuStudio</title>
-    <meta name="keywords" content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
+    <meta name="keywords"
+          content="emulator-programming,emulation-platform,emulation-framework,altair8800,Z80,intel-8080,SSEM,RAM,RASP,random-access-machine,random-access-stored-program-machine">
     <meta name="description" content="Universal computer emulation platform and framework.">
     <meta name=”robots” content=”noindex,follow”>
 
@@ -23,8 +20,10 @@
     <meta property="og:description" content="Universal computer emulation platform and framework.">
 
     <!-- RSS -->
-    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../feed.xml">
-    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework" href="../../../atom.xml">
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; Computer emulation platform/framework"
+          href="../../../atom.xml">
 
     <!-- Favicons -->
     <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
@@ -32,7 +31,8 @@
     <meta name="msapplication-TileColor" content="#ffffff">
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+    <link rel="stylesheet"
+          href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../../css/style.css">
@@ -54,17 +54,18 @@
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 
-    
-      <!-- Global site tag (gtag.js) - Google Analytics -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
-      <script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3492956-5"></script>
+    <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
     
         gtag('config', 'UA-3492956-5');
-      </script>
-    
+
+    </script>
+
 </head>
 
 
@@ -74,47 +75,49 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="/"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;"
+                                                     src="../../../img/logo-2.svg" width="30px"/></i>emuStudio</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <!--<form class="navbar-form navbar-left" role="search">-->
-                <!--<div class="form-group">-->
-                    <!--<input type="text" class="form-control" placeholder="Search website">-->
-                <!--</div>-->
-                <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
             <!--</form>-->
             <ul class="nav navbar-nav navbar-right">
-                
+
                 <li>
                     <a href="/">Home</a>
                 </li>
-                
+
                 <li>
                     <a href="/download">Download</a>
                 </li>
-                
+
                 <li>
                     <a href="/docs">Docs</a>
                 </li>
-                
+
                 <li>
                     <a href="/devel">Developer</a>
                 </li>
-                
+
                 <li>
                     <a href="/roadmap">Roadmap</a>
                 </li>
-                
+
                 <li>
                     <a href="/about">About</a>
                 </li>
-                
+
             </ul>
         </div>
     </div>
@@ -129,125 +132,152 @@
           
       </span>
     </h1>
-    
-    
+
+
 </div>
 
 
 <div class="container">
     <div class="sect1">
-<h2 id="compiler-code-raspc-rasp-code">Compiler <code>raspc-rasp</code></h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>RASP compiler is included in the architecture of RASP virtual computer in emuStudio. Its purpose is to translate source code of a RASP program into the form executable by the RASP CPU emulator.</p>
-</div>
-<div class="paragraph">
-<p>It includes lexical analyzer which is responsibe for recognising lexical units within the source code. It also enables syntax highlighting. Then, the code goes through syntax analysis which checks for syntax errors and builds up the syntactic tree. The tree is then passed through and binary code executable by the emulator is generated.</p>
-</div>
-<div class="paragraph">
-<p>As with the other emuStudio compilers, you start the compilation by the "Compile source" icon in the main menu. The result of the compilation is saved into a binary file with the <code>.bin</code> extension and also loaded into the RASP operating memory.</p>
-</div>
-<div class="sect2">
-<h3 id="installation-and-run">Installation and run</h3>
-<div class="paragraph">
-<p>RASP compiler plugin is already included in emuStudio distribution, in location <code>compilers/raspc-rasp.jar</code>.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="language-syntax">Language syntax</h3>
-<div class="sect3">
-<h4 id="program-start-definition">Program start definition</h4>
-<div class="paragraph">
-<p>As RASP is a von-Neumann computer, both the program and the data reside in the same memory module. Therefore, we need to clearly specify, where the program start address is as CPU must know where to start emulation. We do so by the <code>org</code> directive followed by a positive ineteger. Program start definition <strong>must</strong> be the <strong>first line</strong> of the source code. Please, <strong>do not</strong> place any <strong>empty lines</strong> before it. Here, an example follows:</p>
-</div>
-<div class="paragraph">
-<p><code>org 5</code></p>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-If you do not specify the program start address, or if you set it to <code>0</code> (<code>org 0</code>), the default pre-set value will be used, which is <code>20</code>. The compiler will warn you about this, so do not worry. Setting program start to <code>0</code> is not allowed as register <code>R0</code> is used as the <strong>accumulator</strong> and therefore any instruction written here would be overwritten sooner or later.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="supported-instructions">Supported instructions</h4>
-<div class="paragraph">
-<p>All RASP emulator supported instructions together with their semantics are available in the RASP CPU documentation. There are three types of operands of those instructions:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>register - e.g. <code>READ 1</code></p>
-</li>
-<li>
-<p>constant - e.g. <code>WRITE =2</code> - you specify that operand of an instruction should be interpreted as a constant by the <code>=</code> character.</p>
-</li>
-<li>
-<p>label, which is operand of jump instructions (<code>JMP</code>, <code>JZ</code>, <code>JGTZ</code>), e.g. <code>JMP <strong>label</strong></code></p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect3">
-<h4 id="line-of-code-structure">Line of code structure</h4>
-<div class="paragraph">
-<p>Each RASP instruction with its operand <strong>MUST</strong> be on a separate line, otherwise the code will not compile.</p>
-</div>
-<div class="paragraph">
-<p>A single line of code consists of <strong>instruction</strong> followed by its <strong>operand</strong>. The line can be optionally started with a <strong>label</strong>. It is possible to put the label and the instruction on two separate lines, however, please, <strong>do not</strong> place any <strong>empy lines</strong> between the label and the instruction.</p>
-</div>
-<div class="paragraph">
-<p>Example (<code>WRITE 2</code> can be on a separate line):</p>
-</div>
-<div class="paragraph">
-<p><code><strong>labelName:</strong> WRITE 2</code></p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="comments">Comments</h4>
-<div class="paragraph">
-<p>RASP compiler supports one-line comments. You start them with a semicolon (<code>;</code>):</p>
-</div>
-<div class="paragraph">
-<p><code>;this is a comment</code></p>
-</div>
-<div class="paragraph">
-<p>You can append a comment to an existing line, e.g.</p>
-</div>
-<div class="paragraph">
-<p><code>write 2 <em>;comment</em></code></p>
-</div>
-<div class="paragraph">
-<p>or put it on a completely new line.</p>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-
-    <footer class="site-footer">
-        <div class="container">
-            <nav class="navbar">
-                <div class="container">
-                    <ul class="nav navbar-nav">
-                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                        <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio" src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a></li>
-                        <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
-                    </ul>
+        <h2 id="compiler-code-raspc-rasp-code">Compiler <code>raspc-rasp</code></h2>
+        <div class="sectionbody">
+            <div class="paragraph">
+                <p>RASP compiler is included in the architecture of RASP virtual computer in emuStudio. Its purpose is
+                    to translate source code of a RASP program into the form executable by the RASP CPU emulator.</p>
+            </div>
+            <div class="paragraph">
+                <p>It includes lexical analyzer which is responsibe for recognising lexical units within the source
+                    code. It also enables syntax highlighting. Then, the code goes through syntax analysis which checks
+                    for syntax errors and builds up the syntactic tree. The tree is then passed through and binary code
+                    executable by the emulator is generated.</p>
+            </div>
+            <div class="paragraph">
+                <p>As with the other emuStudio compilers, you start the compilation by the "Compile source" icon in the
+                    main menu. The result of the compilation is saved into a binary file with the <code>.bin</code>
+                    extension and also loaded into the RASP operating memory.</p>
+            </div>
+            <div class="sect2">
+                <h3 id="installation-and-run">Installation and run</h3>
+                <div class="paragraph">
+                    <p>RASP compiler plugin is already included in emuStudio distribution, in location <code>compilers/raspc-rasp.jar</code>.
+                    </p>
                 </div>
-            </nav>
+            </div>
+            <div class="sect2">
+                <h3 id="language-syntax">Language syntax</h3>
+                <div class="sect3">
+                    <h4 id="program-start-definition">Program start definition</h4>
+                    <div class="paragraph">
+                        <p>As RASP is a von-Neumann computer, both the program and the data reside in the same memory
+                            module. Therefore, we need to clearly specify, where the program start address is as CPU
+                            must know where to start emulation. We do so by the <code>org</code> directive followed by a
+                            positive ineteger. Program start definition <strong>must</strong> be the <strong>first
+                                line</strong> of the source code. Please, <strong>do not</strong> place any <strong>empty
+                                lines</strong> before it. Here, an example follows:</p>
+                    </div>
+                    <div class="paragraph">
+                        <p><code>org 5</code></p>
+                    </div>
+                    <div class="admonitionblock warning">
+                        <table>
+                            <tr>
+                                <td class="icon">
+                                    <i class="fa icon-warning" title="Warning"></i>
+                                </td>
+                                <td class="content">
+                                    If you do not specify the program start address, or if you set it to <code>0</code>
+                                    (<code>org 0</code>), the default pre-set value will be used, which is
+                                    <code>20</code>. The compiler will warn you about this, so do not worry. Setting
+                                    program start to <code>0</code> is not allowed as register <code>R0</code> is used
+                                    as the <strong>accumulator</strong> and therefore any instruction written here would
+                                    be overwritten sooner or later.
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="supported-instructions">Supported instructions</h4>
+                    <div class="paragraph">
+                        <p>All RASP emulator supported instructions together with their semantics are available in the
+                            RASP CPU documentation. There are three types of operands of those instructions:</p>
+                    </div>
+                    <div class="ulist">
+                        <ul>
+                            <li>
+                                <p>register - e.g. <code>READ 1</code></p>
+                            </li>
+                            <li>
+                                <p>constant - e.g. <code>WRITE =2</code> - you specify that operand of an instruction
+                                    should be interpreted as a constant by the <code>=</code> character.</p>
+                            </li>
+                            <li>
+                                <p>label, which is operand of jump instructions (<code>JMP</code>, <code>JZ</code>,
+                                    <code>JGTZ</code>), e.g. <code>JMP <strong>label</strong></code></p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="line-of-code-structure">Line of code structure</h4>
+                    <div class="paragraph">
+                        <p>Each RASP instruction with its operand <strong>MUST</strong> be on a separate line, otherwise
+                            the code will not compile.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>A single line of code consists of <strong>instruction</strong> followed by its <strong>operand</strong>.
+                            The line can be optionally started with a <strong>label</strong>. It is possible to put the
+                            label and the instruction on two separate lines, however, please, <strong>do not</strong>
+                            place any <strong>empy lines</strong> between the label and the instruction.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p>Example (<code>WRITE 2</code> can be on a separate line):</p>
+                    </div>
+                    <div class="paragraph">
+                        <p><code><strong>labelName:</strong> WRITE 2</code></p>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="comments">Comments</h4>
+                    <div class="paragraph">
+                        <p>RASP compiler supports one-line comments. You start them with a semicolon (<code>;</code>):
+                        </p>
+                    </div>
+                    <div class="paragraph">
+                        <p><code>;this is a comment</code></p>
+                    </div>
+                    <div class="paragraph">
+                        <p>You can append a comment to an existing line, e.g.</p>
+                    </div>
+                    <div class="paragraph">
+                        <p><code>write 2 <em>;comment</em></code></p>
+                    </div>
+                    <div class="paragraph">
+                        <p>or put it on a completely new line.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    </body>
+
+<footer class="site-footer">
+    <div class="container">
+        <nav class="navbar">
+            <div class="container">
+                <ul class="nav navbar-nav">
+                    <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                                                                                           src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
+                    </li>
+                    <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</footer>
+
+</body>
 </html>
 

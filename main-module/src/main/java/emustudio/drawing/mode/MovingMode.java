@@ -19,34 +19,29 @@
  */
 package emustudio.drawing.mode;
 
-import emustudio.drawing.ConnectionLine;
-import emustudio.drawing.DrawingPanel;
+import emustudio.drawing.*;
 import emustudio.drawing.DrawingPanel.Tool;
-import emustudio.drawing.Element;
-import emustudio.drawing.ElementPopUpMenu;
-import emustudio.drawing.Model;
 import emustudio.drawing.mode.ModeSelector.SelectMode;
 import emustudio.gui.ElementPropertiesDialog;
-import java.awt.Cursor;
-import java.awt.Graphics2D;
-import java.awt.Point;
+
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
  * Moving drawing mode, initial.
- *
+ * <p>
  * If no objects are selected, mouse is just moving - if the mouse hovers over components or line points, they are
  * highlighted.
- *
+ * <p>
  * If a user presses left mouse button over existing selection, selected components are going to be moved by following
  * mouse moves. The mouse releasement finishes the movement.
- *
+ * <p>
  * If a user presses left mouse button over a line point, it is going to be moved by following mouse moves. The mouse
  * releasement finishes the movement.
- *
+ * <p>
  * If a user presses left mouse button over a line (not on a line point), new line point is created on this location and
  * it is immediately selected for movement.
- *
+ * <p>
  * If a user presses left mouse button over empty area, the mode is switched to "selection" mode.
  */
 class MovingMode extends AbstractMode {
@@ -134,7 +129,7 @@ class MovingMode extends AbstractMode {
         // if an element was clicked, selecting it, if user holds CTRL or SHIFT
         if (e.getButton() == MouseEvent.BUTTON1) {
             int ctrl_shift = e.getModifiersEx() & (MouseEvent.SHIFT_DOWN_MASK
-                    | MouseEvent.CTRL_DOWN_MASK);
+                | MouseEvent.CTRL_DOWN_MASK);
             if ((!model.elementDragged) && (ctrl_shift == 0)) {
                 schema.selectElements(-1, -1, 0, 0);
             }
@@ -157,7 +152,7 @@ class MovingMode extends AbstractMode {
             }
             Point linePoint = model.selLine.containsPoint(p, ConnectionLine.TOLERANCE);
             if ((model.selLine != schema.getCrossingLine(p))
-                    || (model.selPoint != linePoint)) {
+                || (model.selPoint != linePoint)) {
                 model.selLine = null;
                 model.selPoint = null;
                 return SelectMode.MOVING;

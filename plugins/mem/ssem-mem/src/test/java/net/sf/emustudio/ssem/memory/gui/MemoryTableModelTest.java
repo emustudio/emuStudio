@@ -22,17 +22,10 @@ package net.sf.emustudio.ssem.memory.gui;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.NumberUtils;
 import emulib.runtime.NumberUtils.Strategy;
-import static org.easymock.EasyMock.aryEq;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import org.junit.Test;
+
+import static org.easymock.EasyMock.*;
+import static org.junit.Assert.*;
 
 public class MemoryTableModelTest {
 
@@ -72,9 +65,9 @@ public class MemoryTableModelTest {
     public void testSetBinaryValueCellsMemoryWrite() throws Exception {
         MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
-        Byte[] row = new Byte[] { 1,2,3,4 };
-        Byte[] modified = new Byte[] { 1,2,(byte)0x83,4 }; // 16th bit set to 1, but original 3 wasnt'modified
-        
+        Byte[] row = new Byte[]{1, 2, 3, 4};
+        Byte[] modified = new Byte[]{1, 2, (byte) 0x83, 4}; // 16th bit set to 1, but original 3 wasnt'modified
+
         expect(memoryContext.readWord(10 * 4)).andReturn(row);
         memoryContext.writeWord(eq(10 * 4), aryEq(modified));
         expectLastCall().once();
@@ -90,14 +83,14 @@ public class MemoryTableModelTest {
     public void testSetHexValueCellsMemoryWrite() throws Exception {
         MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
-        Byte[] row = new Byte[] { 1,2,3,4 };
-        Byte[] modified = new Byte[] { (byte)0xFF,0,0,0 };
-        
+        Byte[] row = new Byte[]{1, 2, 3, 4};
+        Byte[] modified = new Byte[]{(byte) 0xFF, 0, 0, 0};
+
         expect(memoryContext.readWord(10 * 4)).andReturn(row);
         memoryContext.writeWord(eq(10 * 4), aryEq(modified));
         expectLastCall().once();
         replay(memoryContext);
-        
+
         MemoryTableModel model = new MemoryTableModel(memoryContext);
         model.setValueAt("0xFF", 10, MemoryTableModel.COLUMN_HEX_VALUE);
 
@@ -108,21 +101,21 @@ public class MemoryTableModelTest {
     public void testSetCharValueCellsMemoryWrite() throws Exception {
         MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
-        Byte[] row = new Byte[] { 1,2,3,4 };
-        Byte[] modified = new Byte[] { 0x56, (byte)0xf6, 0x16, (byte)0x86 };
-        
+        Byte[] row = new Byte[]{1, 2, 3, 4};
+        Byte[] modified = new Byte[]{0x56, (byte) 0xf6, 0x16, (byte) 0x86};
+
         expect(memoryContext.readWord(10 * 4)).andReturn(row);
-        memoryContext.writeWord(eq(10*4), aryEq(modified));
+        memoryContext.writeWord(eq(10 * 4), aryEq(modified));
         expectLastCall().once();
         replay(memoryContext);
-        
+
         MemoryTableModel model = new MemoryTableModel(memoryContext);
         model.setValueAt("ahoj", 10, MemoryTableModel.COLUMN_RAW_VALUE);
 
         verify(memoryContext);
     }
 
-    
+
     @Test
     public void testSetValueAtInvalidIndexDoesNotThrow() throws Exception {
         MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));

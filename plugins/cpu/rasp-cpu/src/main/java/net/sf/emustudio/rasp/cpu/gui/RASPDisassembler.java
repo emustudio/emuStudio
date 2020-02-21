@@ -23,11 +23,12 @@ package net.sf.emustudio.rasp.cpu.gui;
 import emulib.plugins.cpu.DisassembledInstruction;
 import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.exceptions.InvalidInstructionException;
-import java.util.Objects;
+import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.RASPInstruction;
-import net.sf.emustudio.rasp.memory.RASPMemoryContext;
+
+import java.util.Objects;
 
 /**
  * The disassembler implementation for RASP machine language.
@@ -63,7 +64,7 @@ public class RASPDisassembler implements Disassembler {
         boolean jumpInstruction = false;
 
         if (opCode == RASPInstruction.JMP || opCode == RASPInstruction.JZ || opCode == RASPInstruction.JGTZ) {
-            jumpInstruction=true;
+            jumpInstruction = true;
         }
 
         //retrieve its operand
@@ -74,7 +75,7 @@ public class RASPDisassembler implements Disassembler {
         NumberMemoryItem operand = (NumberMemoryItem) item;
 
         //prepare the mnemonic form
-        if(jumpInstruction){ //if we work with jump instr., mnemo should contain the label
+        if (jumpInstruction) { //if we work with jump instr., mnemo should contain the label
             String label = memory.addressToLabelString(operand.getValue());
             String mnemo = instruction.getCodeStr() + " " + label;
             return new DisassembledInstruction(memoryPosition, mnemo, "");

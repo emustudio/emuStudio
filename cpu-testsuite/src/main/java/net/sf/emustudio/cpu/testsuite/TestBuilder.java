@@ -18,12 +18,7 @@
  */
 package net.sf.emustudio.cpu.testsuite;
 
-import net.sf.emustudio.cpu.testsuite.injectors.MemoryAddress;
-import net.sf.emustudio.cpu.testsuite.injectors.MemoryByte;
-import net.sf.emustudio.cpu.testsuite.injectors.MemoryWord;
-import net.sf.emustudio.cpu.testsuite.injectors.NoOperInstr;
-import net.sf.emustudio.cpu.testsuite.injectors.OneOperInstr;
-import net.sf.emustudio.cpu.testsuite.injectors.TwoOperInstr;
+import net.sf.emustudio.cpu.testsuite.injectors.*;
 import net.sf.emustudio.cpu.testsuite.verifiers.FlagsVerifier;
 import net.sf.emustudio.cpu.testsuite.verifiers.MemoryByteVerifier;
 import net.sf.emustudio.cpu.testsuite.verifiers.MemoryWordVerifier;
@@ -35,7 +30,7 @@ import java.util.function.Function;
 
 @SuppressWarnings("unchecked")
 public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends TestBuilder,
-        RunnerT extends CpuRunner, VerifierT extends CpuVerifier> {
+    RunnerT extends CpuRunner, VerifierT extends CpuVerifier> {
     protected final RunnerT cpuRunner;
     protected final VerifierT cpuVerifier;
     protected final TestRunner<RunnerT, OperandT> runner;
@@ -50,41 +45,41 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
 
     public TestBuilderT clearAllVerifiers() {
         runner.clearAllVerifiers();
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     @SuppressWarnings("unused")
     public TestBuilderT verifyAll(Consumer<RunnerContext<OperandT>>... verifiers) {
         runner.verifyAfterTest(verifiers);
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT registerIsRandom(int register, int maxValue) {
         Random random = new Random();
         runner.injectFirst((tmpRunner, argument) -> cpuRunner.setRegister(register, random.nextInt(maxValue + 1)));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     @SuppressWarnings("unused")
     public TestBuilderT printRegister(int register) {
         runner.injectTwoOperands((runner, first, second) ->
-                        System.out.println(String.format("REG_%d=%x", register, runner.getRegisters().get(register)))
+            System.out.println(String.format("REG_%d=%x", register, runner.getRegisters().get(register)))
         );
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     @SuppressWarnings("unused")
     public TestBuilderT printOperands() {
         runner.injectTwoOperands((runner, first, second) ->
-                        System.out.println(String.format("first=%x, second=%x", first, second))
+            System.out.println(String.format("first=%x, second=%x", first, second))
         );
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     @SuppressWarnings("unused")
     public TestBuilderT printInjectingProcess() {
         runner.printInjectingProcess();
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT verifyFlags(FlagsCheck flagsCheck, Function<RunnerContext<OperandT>, Integer> operator) {
@@ -98,7 +93,7 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
         }
         Function<RunnerContext<OperandT>, Integer> operation = lastOperation;
         runner.verifyAfterTest(new FlagsVerifier<>(cpuVerifier, operation, flagsCheck));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT verifyByte(int address, Function<RunnerContext<OperandT>, Integer> operator) {
@@ -110,7 +105,7 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
                                    Function<RunnerContext<OperandT>, Integer> operator) {
         lastOperation = operator;
         runner.verifyAfterTest(new MemoryWordVerifier(cpuVerifier, operator, addressOperator));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT verifyByte(int address) {
@@ -128,60 +123,60 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
             throw new IllegalStateException("Last operation is not set!");
         }
         runner.verifyAfterTest(new MemoryByteVerifier<>(cpuVerifier, lastOperation, addressOperator));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT keepCurrentInjectorsAfterRun() {
         runner.keepCurrentInjectorsAfterClear();
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT clearOtherVerifiersAfterRun() {
         runner.keepCurrentVerifiersAfterClear();
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT firstIsMemoryByteAt(int address) {
         runner.injectFirst(new MemoryByte<>(address));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT secondIsMemoryByteAt(int address) {
         runner.injectSecond(new MemoryByte<>(address));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT firstIsMemoryWordAt(int address) {
         runner.injectFirst(new MemoryWord<>(address));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     @SuppressWarnings("unused")
     public TestBuilderT secondIsMemoryWordAt(int address) {
         runner.injectSecond(new MemoryWord<>(address));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT firstIsMemoryAddressByte(int value) {
-        runner.injectFirst(new MemoryAddress<>((byte)value));
-        return (TestBuilderT)this;
+        runner.injectFirst(new MemoryAddress<>((byte) value));
+        return (TestBuilderT) this;
     }
 
     @SuppressWarnings("unused")
     public TestBuilderT secondIsMemoryAddressByte(int value) {
         runner.injectSecond(new MemoryAddress<>((byte) value));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT firstIsMemoryAddressWord(int value) {
         runner.injectFirst(new MemoryAddress<>(value));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     @SuppressWarnings("unused")
     public TestBuilderT secondIsMemoryAddressWord(int value) {
         runner.injectSecond(new MemoryAddress<>(value));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT firstIsAddressAndSecondIsMemoryWord() {
@@ -190,7 +185,7 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
             runner.setByte(first.intValue(), second.intValue() & 0xFF);
             runner.setByte(first.intValue() + 1, (second.intValue() >>> 8) & 0xFF);
         });
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     @SuppressWarnings("unused")
@@ -200,7 +195,7 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
             runner.setByte(second.intValue(), first.intValue() & 0xFF);
             runner.setByte(second.intValue() + 1, (first.intValue() >>> 8) & 0xFF);
         });
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT firstIsAddressAndSecondIsMemoryByte() {
@@ -208,7 +203,7 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
             runner.ensureProgramSize(first.intValue() + 4);
             runner.setByte(first.intValue(), second.intValue() & 0xFF);
         });
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT secondIsAddressAndFirstIsMemoryByte() {
@@ -216,17 +211,17 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
             runner.ensureProgramSize(second.intValue() + 4);
             runner.setByte(second.intValue(), first.intValue() & 0xFF);
         });
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT setFlags(int flags) {
         runner.injectFirst((tmpRunner, argument) -> tmpRunner.setFlags(flags));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestBuilderT expandMemory(Function<Number, Integer> address) {
         runner.injectFirst((tmpRunner, argument) -> tmpRunner.ensureProgramSize(address.apply(argument)));
-        return (TestBuilderT)this;
+        return (TestBuilderT) this;
     }
 
     public TestRunner<RunnerT, OperandT> run(int... instruction) {

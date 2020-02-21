@@ -40,10 +40,10 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.DEVICE,
-        title = "MITS 88-SIO Board",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Custom implementation of MITS 88-SIO serial board."
+    type = PLUGIN_TYPE.DEVICE,
+    title = "MITS 88-SIO Board",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Custom implementation of MITS 88-SIO serial board."
 )
 @SuppressWarnings("unused")
 public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserver {
@@ -93,7 +93,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         ExtendedContext cpu = contextPool.getCPUContext(pluginID, ExtendedContext.class);
-        
+
         cpuPorts = new CPUPorts(cpu);
 
         sioSettings.setSettingsManager(settings);

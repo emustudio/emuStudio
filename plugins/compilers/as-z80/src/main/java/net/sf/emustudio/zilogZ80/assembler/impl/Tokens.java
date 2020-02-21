@@ -38,7 +38,7 @@ public class Tokens extends ComplexSymbolFactory.ComplexSymbol implements Token,
     private final boolean initial;
 
     public Tokens(int id, int type, String text, Object value, int lineNumber,
-            int columnNumber, int charBegin, int charEnd, boolean initial) {
+                  int columnNumber, int charBegin, int charEnd, boolean initial) {
         super(
             text, id, new ComplexSymbolFactory.Location(lineNumber, columnNumber),
             new ComplexSymbolFactory.Location(lineNumber, columnNumber), value

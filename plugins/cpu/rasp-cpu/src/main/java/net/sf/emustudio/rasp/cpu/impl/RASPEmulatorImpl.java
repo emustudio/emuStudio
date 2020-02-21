@@ -27,35 +27,35 @@ import emulib.emustudio.SettingsManager;
 import emulib.emustudio.debugtable.BreakpointColumn;
 import emulib.emustudio.debugtable.DebugTable;
 import emulib.emustudio.debugtable.MnemoColumn;
-import emulib.runtime.exceptions.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.cpu.DebugColumn;
 import emulib.plugins.cpu.Disassembler;
+import emulib.runtime.ContextPool;
+import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.ContextNotFoundException;
-import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.InvalidContextException;
-import emulib.runtime.StaticDialogs;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.swing.JPanel;
-
+import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
 import net.sf.emustudio.rasp.cpu.gui.LabelDebugColumn;
 import net.sf.emustudio.rasp.cpu.gui.RASPCpuStatusPanel;
 import net.sf.emustudio.rasp.cpu.gui.RASPDisassembler;
+import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
 import net.sf.emustudio.rasp.memory.memoryitems.RASPInstruction;
-import net.sf.emustudio.rasp.memory.RASPMemoryContext;
+
+import javax.swing.*;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @PluginType(
-        type = PLUGIN_TYPE.CPU,
-        title = "Random access stored program (RASP)",
-        copyright = "\u00A9 Copyright 2016, Michal Šipoš",
-        description = "CPU emulator for abstract RASP machine"
+    type = PLUGIN_TYPE.CPU,
+    title = "Random access stored program (RASP)",
+    copyright = "\u00A9 Copyright 2016, Michal Šipoš",
+    description = "CPU emulator for abstract RASP machine"
 )
 /**
  * CPU emulator implementation for abstract RASP machine.
@@ -522,7 +522,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
         //check if memory is compatible with this CPU emulator
         if (memory.getDataType() != MemoryItem.class) {
             throw new PluginInitializationException(this,
-                    "Specified memory uses "
+                "Specified memory uses "
                     + "incompatible data type, this CPU emulator does not support such kind of memory.");
         }
 

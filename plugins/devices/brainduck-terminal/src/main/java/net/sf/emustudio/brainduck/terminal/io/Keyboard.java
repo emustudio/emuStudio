@@ -29,13 +29,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @ThreadSafe
-public class Keyboard  implements InputProvider, KeyListener {
+public class Keyboard implements InputProvider, KeyListener {
     private final BlockingQueue<Integer> inputBuffer = new LinkedBlockingQueue<>();
     private final List<KeyboardListener> listeners = new CopyOnWriteArrayList<>();
 
     @ThreadSafe
     public interface KeyboardListener {
         void readStarted();
+
         void readEnded();
     }
 
@@ -72,7 +73,7 @@ public class Keyboard  implements InputProvider, KeyListener {
     @Override
     public void close() {
     }
-    
+
     @Override
     public void keyTyped(KeyEvent e) {
     }
@@ -83,7 +84,7 @@ public class Keyboard  implements InputProvider, KeyListener {
         if (keycode == KeyEvent.VK_ESCAPE) {
             inputBuffer.add(InputProvider.EOF);
         } else if (!((keycode == KeyEvent.VK_SHIFT || keycode == KeyEvent.VK_CONTROL ||
-                keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META))) {
+            keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META))) {
             inputBuffer.add((int) e.getKeyChar());
         }
     }

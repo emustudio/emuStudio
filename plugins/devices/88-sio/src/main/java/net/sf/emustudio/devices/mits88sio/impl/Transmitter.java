@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Status port IN:
- *
+ * <p>
  * 7 - 0 - device ready; 1 - not ready
  * 6 - N/A
  * 5 - 1 - data ready (for writing to output device - CPU); 0 - not ready
@@ -44,7 +44,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * 2 - 1 - parity error; 0 - OK
  * 1 - 1 - transmitter buffer empty (i.e. ready for receive data from CPU)
  * 0 - 1 - data from input device is ready to be read
- *
  */
 @ThreadSafe
 public class Transmitter {
@@ -71,16 +70,16 @@ public class Transmitter {
             return "unknown";
         }
         ContextType contextType = tmpDevice.getClass().getAnnotation(ContextType.class);
-        return  (contextType != null) ? contextType.id() : tmpDevice.toString();
+        return (contextType != null) ? contextType.id() : tmpDevice.toString();
     }
 
     void reset() {
-        writeToStatus((short)0); // disable interrupts
+        writeToStatus((short) 0); // disable interrupts
     }
 
     void writeToStatus(short value) {
         int newStatus = status;
-        
+
         bufferAndStatusLock.lock();
         try {
             // TODO: Wrong implementation; buffer SHOULD be emptied.
@@ -103,7 +102,7 @@ public class Transmitter {
     void writeFromDevice(short data) {
         boolean wasEmpty = false;
         int newStatus = status;
-        
+
         bufferAndStatusLock.lock();
         try {
             if (buffer.isEmpty()) {
@@ -133,7 +132,7 @@ public class Transmitter {
         int newData = 0;
         boolean isNotEmpty = false;
         int newStatus = status; // what to do..
-        
+
         bufferAndStatusLock.lock();
         try {
             Short result = buffer.poll();
@@ -141,15 +140,15 @@ public class Transmitter {
             isNotEmpty = !buffer.isEmpty();
             status = isNotEmpty ? (short) (status | 1) : (short) (status & 0xFE);
             newStatus = status;
-            
+
             if (isNotEmpty) {
                 newData = buffer.peek();
             }
-            
+
             return result == null ? 0 : result;
         } finally {
             bufferAndStatusLock.unlock();
-            
+
             if (isNotEmpty) {
                 notifyNewData(newData);
             } else {
@@ -162,27 +161,29 @@ public class Transmitter {
     public short readStatus() {
         return status;
     }
-    
-    
+
+
     public void addObserver(Observer observer) {
         observers.add(observer);
     }
-    
+
     private void notifyStatusChanged(int status) {
         observers.forEach(o -> o.statusChanged(status));
     }
-    
+
     private void notifyNewData(int data) {
         observers.forEach(o -> o.dataAvailable(data));
     }
-    
+
     private void notifyNoData() {
         observers.forEach(Observer::noData);
     }
 
     public interface Observer {
         void statusChanged(int status);
+
         void dataAvailable(int data);
+
         void noData();
     }
 }

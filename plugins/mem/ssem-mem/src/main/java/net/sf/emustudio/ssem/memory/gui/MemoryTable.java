@@ -19,20 +19,13 @@
  */
 package net.sf.emustudio.ssem.memory.gui;
 
+import javax.swing.*;
+import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.table.TableColumn;
-import static net.sf.emustudio.ssem.memory.gui.Constants.CHAR_HEIGHT;
-import static net.sf.emustudio.ssem.memory.gui.Constants.COLUMN_WIDTH;
-import static net.sf.emustudio.ssem.memory.gui.Constants.DEFAULT_FONT;
+
+import static net.sf.emustudio.ssem.memory.gui.Constants.*;
 
 class MemoryTable extends JTable {
     private final MemoryTableModel model;
@@ -43,7 +36,7 @@ class MemoryTable extends JTable {
         this.scrollPane = Objects.requireNonNull(scrollPane);
         this.model = Objects.requireNonNull(model);
         this.cellRenderer = new CellRenderer(model);
-        
+
         super.setModel(this.model);
         super.setFont(DEFAULT_FONT);
         super.setCellSelectionEnabled(true);
@@ -51,7 +44,7 @@ class MemoryTable extends JTable {
         super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         super.getTableHeader().setFont(DEFAULT_FONT);
     }
-    
+
     public void setup() {
         cellRenderer.setup(this);
         setDefaultRenderer(Object.class, cellRenderer);
@@ -59,14 +52,14 @@ class MemoryTable extends JTable {
 
         CellEditor editor = new CellEditor();
         editor.setup(this);
-        
+
         for (int i = 0; i < columnModel.getColumnCount(); i++) {
             TableColumn col = columnModel.getColumn(i);
             col.setPreferredWidth(COLUMN_WIDTH[i]);
             col.setCellEditor(editor);
         }
         setRowHeight(getRowHeight() + CHAR_HEIGHT);
-        
+
         InputMap im = getInputMap(JTable.WHEN_FOCUSED);
         ActionMap am = getActionMap();
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
@@ -75,13 +68,13 @@ class MemoryTable extends JTable {
             public void actionPerformed(ActionEvent listener) {
                 int row = getSelectedRow();
                 int col = getSelectedColumn();
-                
+
                 if (row != -1 && col != -1) {
                     model.setValueAt("0", row, col);
                 }
             }
         });
-        
+
     }
 
 }

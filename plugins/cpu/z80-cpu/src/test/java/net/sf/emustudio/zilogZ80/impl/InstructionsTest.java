@@ -36,13 +36,7 @@ import org.junit.Before;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.easymock.EasyMock.anyLong;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.createNiceMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.same;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertTrue;
 
 public class InstructionsTest {
@@ -64,7 +58,7 @@ public class InstructionsTest {
     public void setUp() throws Exception {
         ShortMemoryStub memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
-        Capture<ExtendedContext> cpuContext = new Capture<>();
+        Capture<ExtendedContext> cpuContext = Capture.newInstance();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class))
             .andReturn(memoryStub)

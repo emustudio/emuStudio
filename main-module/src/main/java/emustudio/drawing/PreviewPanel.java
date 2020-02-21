@@ -21,15 +21,16 @@ package emustudio.drawing;
 
 import emulib.runtime.UniversalFileFilter;
 import emustudio.main.Main;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PreviewPanel extends JPanel {
     private final static Logger logger = LoggerFactory.getLogger(PreviewPanel.class);
@@ -71,13 +72,13 @@ public class PreviewPanel extends JPanel {
         // initialize buffer if needed
         if (dbImage == null) {
             dbImage = createImage(this.getSize().width,
-                    this.getSize().height);
+                this.getSize().height);
             dbg = (Graphics2D) dbImage.getGraphics();
         }
         // clear screen in background
         dbg.setColor(getBackground());
         dbg.fillRect(0, 0, this.getSize().width,
-                this.getSize().height);
+            this.getSize().height);
 
         // draw elements in background
         dbg.setColor(getForeground());
@@ -153,7 +154,7 @@ public class PreviewPanel extends JPanel {
         topFactor = minTop - Schema.MIN_TOP_MARGIN;
         if (width != 0 && height != 0) {
             this.setSize(width - leftFactor + Schema.MIN_LEFT_MARGIN,
-                    height - topFactor + Schema.MIN_TOP_MARGIN);
+                height - topFactor + Schema.MIN_TOP_MARGIN);
             this.revalidate();
         }
         schemaWidth = width;
@@ -222,12 +223,12 @@ public class PreviewPanel extends JPanel {
         UniversalFileFilter filter = new UniversalFileFilter();
         filter.addExtension(".png");
         filter.setDescription("PNG file");
-        
+
         fileChooser.addChoosableFileFilter(filter);
         fileChooser.setFileFilter(filter);
-        
+
         fileChooser.setApproveButtonText("Save");
-        
+
         if (lastImageFile != null) {
             fileChooser.setCurrentDirectory(lastImageFile.getParentFile());
         } else {

@@ -21,13 +21,9 @@ package emustudio.gui.debugTable;
 
 import emustudio.Constants;
 
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JTable;
+import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
+import java.awt.*;
 
 class BooleanCellRenderer extends JLabel implements TableCellRenderer {
 

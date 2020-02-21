@@ -20,14 +20,15 @@
 package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.plugins.device.DeviceContext;
+
 import java.io.IOException;
 import java.util.Objects;
 
 /**
  * This is the data port of 88-SIO card.
- * 
+ * <p>
  * This port is attached to a CPU.
- * 
+ * <p>
  * A read to the data port gets the buffered character, a write to the data port
  * writes the character to the device.
  */

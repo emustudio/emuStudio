@@ -20,21 +20,22 @@
 package net.sf.emustudio.memory.standard.gui.model;
 
 import emulib.emustudio.SettingsManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.table.AbstractTableModel;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.swing.table.AbstractTableModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FileImagesModel extends AbstractTableModel {
     private final static Logger LOGGER = LoggerFactory.getLogger(FileImagesModel.class);
-    
+
     private final List<String> imageFullFileNames = new ArrayList<>();
     private final List<String> imageShortFileNames = new ArrayList<>();
     private final List<Integer> imageAddresses = new ArrayList<>();
-    
+
     public FileImagesModel(SettingsManager settings, long pluginID) {
         for (int i = 0; ; i++) {
             String fileName = settings.readSetting(pluginID, "imageName" + i);
@@ -44,7 +45,7 @@ public class FileImagesModel extends AbstractTableModel {
             }
             try {
                 int addressInt = Integer.decode(address);
-                
+
                 imageFullFileNames.add(fileName);
                 imageShortFileNames.add(new File(fileName).getName());
                 imageAddresses.add(addressInt);
@@ -103,7 +104,7 @@ public class FileImagesModel extends AbstractTableModel {
     public List<Integer> getImageAddresses() {
         return Collections.unmodifiableList(imageAddresses);
     }
-    
+
     public void addImage(File fileSource, int address) {
         imageShortFileNames.add(fileSource.getName());
         imageFullFileNames.add(fileSource.getAbsolutePath());
@@ -111,19 +112,19 @@ public class FileImagesModel extends AbstractTableModel {
 
         fireTableDataChanged();
     }
-    
+
     public void removeImageAt(int index) {
         imageShortFileNames.remove(index);
         imageFullFileNames.remove(index);
         imageAddresses.remove(index);
-        
+
         fireTableDataChanged();
     }
-    
+
     public String getFileNameAtRow(int index) {
         return imageFullFileNames.get(index);
     }
-    
+
     public int getImageAddressAtRow(int index) {
         return imageAddresses.get(index);
     }

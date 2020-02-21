@@ -23,11 +23,11 @@ import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 
 public class DecimalExpr extends Expression {
-    
+
     public DecimalExpr(int value) {
         this.value = value;
     }
-    
+
     public int getSize() {
         if ((value & 0xFF) == value) {
             return 1;

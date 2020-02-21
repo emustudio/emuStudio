@@ -19,14 +19,14 @@
  */
 package net.sf.emustudio.zilogZ80.impl.suite;
 
-import net.sf.emustudio.cpu.testsuite.TestBuilder;
 import net.sf.emustudio.cpu.testsuite.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.TestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.injectors.Register;
 
 import java.util.Objects;
 import java.util.function.Function;
 
-public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunnerImpl, CpuVerifierImpl>  {
+public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunnerImpl, CpuVerifierImpl> {
 
     public ByteTestBuilder(CpuRunnerImpl cpuRunner, CpuVerifierImpl cpuVerifier) {
         super(cpuRunner, cpuVerifier);
@@ -64,7 +64,7 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
 
     public ByteTestBuilder firstIsDeviceAndSecondIsPort() {
         runner.injectTwoOperands((tmpRunner, first, second) ->
-                cpuRunner.getDevice(second.intValue() & 0xFF).setValue(first.byteValue()));
+            cpuRunner.getDevice(second.intValue() & 0xFF).setValue(first.byteValue()));
         return this;
     }
 
@@ -75,8 +75,8 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
 
     public ByteTestBuilder setPair(int registerPair, int value) {
         runner.injectFirst(
-                (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 1),
-                (tmpRunner, argument) -> cpuRunner.setRegisterPair(registerPair, value)
+            (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 1),
+            (tmpRunner, argument) -> cpuRunner.setRegisterPair(registerPair, value)
         );
         return this;
     }

@@ -22,7 +22,6 @@ import emulib.plugins.cpu.CPU;
 
 /**
  * INTERNAL CLASS. DO NOT USE DIRECTLY.
- *
  */
 public class RunStateListenerStub implements CPU.CPUListener {
     public CPU.RunState runState;

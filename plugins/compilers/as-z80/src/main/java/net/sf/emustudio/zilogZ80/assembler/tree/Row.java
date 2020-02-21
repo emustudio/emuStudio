@@ -65,7 +65,7 @@ public class Row {
 
     // do pass1 for all elements
     public void pass1()
-            throws Exception {
+        throws Exception {
         if (statement != null) {
             statement.pass1();
         }

@@ -43,15 +43,15 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.DEVICE,
-        title = "BrainDuck terminal",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Terminal device for abstract BrainDuck architecture."
+    type = PLUGIN_TYPE.DEVICE,
+    title = "BrainDuck terminal",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Terminal device for abstract BrainDuck architecture."
 )
 @SuppressWarnings("unused")
 public class BrainTerminal extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrainTerminal.class);
-    
+
     private boolean nogui;
     private BrainTerminalContext terminal;
     private final ContextPool contextPool;
@@ -65,7 +65,7 @@ public class BrainTerminal extends AbstractDevice {
             contextPool.register(pluginID, terminal, DeviceContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
-                    getTitle());
+                getTitle());
         }
     }
 

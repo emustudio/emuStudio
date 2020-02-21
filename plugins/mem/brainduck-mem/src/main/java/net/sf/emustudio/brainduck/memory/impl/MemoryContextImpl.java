@@ -31,12 +31,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements R
     }
 
     /**
-     * Initializes the memory context. 
-     * 
+     * Initializes the memory context.
+     * <p>
      * It is called by the main class.
-     * 
-     * @param size  size of the memory
-     * @return      true if the initialization was successful, false otherwise
+     *
+     * @param size size of the memory
+     * @return true if the initialization was successful, false otherwise
      */
     boolean init(int size) {
         memory = new short[size];
@@ -69,9 +69,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements R
     @Override
     public Short[] readWord(int from) {
         if (from == memory.length - 1) {
-            return new Short[] { memory[from], 0 };
+            return new Short[]{memory[from], 0};
         }
-        return new Short[] { memory[from], memory[from + 1] };
+        return new Short[]{memory[from], memory[from + 1]};
     }
 
     @Override

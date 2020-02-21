@@ -83,10 +83,10 @@ public class MacroTest extends AbstractCompilerTest {
     public void testCannotRedefineIdentifierInMacro() throws Exception {
         compile(
             "hello: db 0\n"
-            + "shrt macro\n"
-            + "  hello equ 0Fh\n"
-            + "endm\n"
-            + "shrt\n"
+                + "shrt macro\n"
+                + "  hello equ 0Fh\n"
+                + "endm\n"
+                + "shrt\n"
         );
 
         assertError();
@@ -96,7 +96,7 @@ public class MacroTest extends AbstractCompilerTest {
     public void testMacroAlreadyDefined() throws Exception {
         compile(
             "shrt macro\nendm\n"
-            + "shrt macro\nendm\n"
+                + "shrt macro\nendm\n"
         );
 
         assertError();
@@ -106,10 +106,10 @@ public class MacroTest extends AbstractCompilerTest {
     public void testMacroCannotGetForwardLabelReferences() throws Exception {
         compile(
             "shrt macro param\n"
-            + "  lxi h, param\n"
-            + "endm\n"
-            + "shrt text\n"
-            + "text: db 1\n"
+                + "  lxi h, param\n"
+                + "endm\n"
+                + "shrt text\n"
+                + "text: db 1\n"
         );
 
         assertError();
@@ -119,9 +119,9 @@ public class MacroTest extends AbstractCompilerTest {
     public void testLessMacroParametersThanExpected() throws Exception {
         compile(
             "shrt macro param\n"
-            + "  lxi h, param\n"
-            + "endm\n"
-            + "shrt\n"
+                + "  lxi h, param\n"
+                + "endm\n"
+                + "shrt\n"
         );
 
         assertError();

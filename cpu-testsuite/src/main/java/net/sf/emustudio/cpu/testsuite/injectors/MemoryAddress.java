@@ -24,7 +24,7 @@ import java.util.function.BiConsumer;
 
 /**
  * Injector of specific value at injected memory address.
- *
+ * <p>
  * Used for placing given value at memory address injected by TestRunner.
  * Based on the used constructor, it places either Byte or Integer at the injected address.
  */

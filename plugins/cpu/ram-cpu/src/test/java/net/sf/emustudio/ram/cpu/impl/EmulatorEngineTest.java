@@ -50,7 +50,7 @@ public class EmulatorEngineTest {
 
         RAMContext context = mockContext(storageT, inputT);
 
-        return new EmulatorEngine(context, mockMemory(new RAMInstruction[] {
+        return new EmulatorEngine(context, mockMemory(new RAMInstruction[]{
             new RAMInstructionImpl(RAMInstruction.READ, RAMInstruction.Direction.REGISTER, 0),
             testedInstruction
         }));

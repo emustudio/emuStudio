@@ -1,0 +1,27 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+  id 'java'
+}
+
+dependencies {
+  implementation libs.emuLib
+  cpuLib project(":plugins:cpu:8080-cpu")
+  cpuLib project(":plugins:cpu:z80-cpu")
+  memoryLib project(":plugins:mem:standard-mem")
+}
+
+jar {
+  archiveVersion = ''
+  manifest {
+    attributes manifestAttributes('')
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+      "project.version": project.version
+    ]
+  }
+}

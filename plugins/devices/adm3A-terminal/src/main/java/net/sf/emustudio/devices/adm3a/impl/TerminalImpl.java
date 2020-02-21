@@ -44,10 +44,10 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.DEVICE,
-        title = "LSI ADM-3A terminal",
-        copyright = "\u00A9 Copyright 2006-2020, Peter Jakubčo",
-        description = "Custom implementation of LSI ADM-3A terminal"
+    type = PLUGIN_TYPE.DEVICE,
+    title = "LSI ADM-3A terminal",
+    copyright = "\u00A9 Copyright 2006-2020, Peter Jakubčo",
+    description = "Custom implementation of LSI ADM-3A terminal"
 )
 @SuppressWarnings("unused")
 public class TerminalImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
@@ -140,7 +140,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
     @Override
     public void showSettings() {
         if (!terminalSettings.isNoGUI()) {
-          new ConfigDialog(terminalSettings, terminalGUI, display).setVisible(true);
+            new ConfigDialog(terminalSettings, terminalGUI, display).setVisible(true);
         }
     }
 

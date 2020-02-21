@@ -95,6 +95,7 @@ class PseudoContext implements DeviceContext<Short> {
     void setMemory(StandardMemoryContext mem) {
         this.mem = mem;
     }
+
     /*  Z80 or 8080 programs communicate with the SIMH pseudo device via port 0xfe.
     The following principles apply:
 
@@ -263,11 +264,11 @@ class PseudoContext implements DeviceContext<Short> {
     4 BCD byte: SS                              */
     private void setClockCPM3() {
         ClockCPM3Delta = mkCPM3Origin()
-                + (mem.read(setClockCPM3Adr) + mem.read(setClockCPM3Adr + 1) * 256)
-                * SECONDS_PER_DAY + fromBCD(mem.read(setClockCPM3Adr + 2))
-                * SECONDS_PER_HOUR + fromBCD(mem.read(setClockCPM3Adr + 3))
-                * SECONDS_PER_MINUTE + fromBCD(mem.read(setClockCPM3Adr + 4))
-                - (short) (Calendar.getInstance().getTimeInMillis() / 1000);
+            + (mem.read(setClockCPM3Adr) + mem.read(setClockCPM3Adr + 1) * 256)
+            * SECONDS_PER_DAY + fromBCD(mem.read(setClockCPM3Adr + 2))
+            * SECONDS_PER_HOUR + fromBCD(mem.read(setClockCPM3Adr + 3))
+            * SECONDS_PER_MINUTE + fromBCD(mem.read(setClockCPM3Adr + 4))
+            - (short) (Calendar.getInstance().getTimeInMillis() / 1000);
     }
 
     @Override

@@ -21,11 +21,7 @@ package emustudio.gui.debugTable;
 
 import net.jcip.annotations.ThreadSafe;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 @ThreadSafe
@@ -155,7 +151,7 @@ public class PaginatingDisassembler {
         pageIndex = 0;
 
         if (!bytesPerPageCache.containsKey(0)) {
-            bytesPerPageCache.put(0, new Page(0, -1,-1));
+            bytesPerPageCache.put(0, new Page(0, -1, -1));
         }
 
         currentPage = bytesPerPageCache.get(0);

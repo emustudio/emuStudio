@@ -1,0 +1,104 @@
+NAME
+    Achut Reddy
+    achut@sun.com
+
+COUNTRY
+    USA
+
+DESCRIPTION
+    Virtual pet, like the currently popular "Tamagotchi" children's toys.
+    The virtual pet must constantly be fed.  As long as it has sufficient food, 
+    it shows a happy face, and a full belly.  When it runs out, it shows a
+    sad face and a slim profile.  You can then pause the machine to give it
+    more food.  It will then return to a happy face until it runs out again.
+
+
+FEATURES
+    It is a graphical, interactive program!
+    Uses all 32 words of the store.
+
+DETAILS
+    The last 4 lines (28-31) of store are used as the graphical display area.
+    Two images are always shown there:  a full length image, and a facial
+    close-up.  Both are indicators of the current "mood" of the virtual
+    pet, which depends solely on the amount food it has available.
+    The virtual pet has a voracious appetite; it consumes about 100 units
+    of food every second.  The initial food supply is 1000, which will 
+    last about 10 seconds.  After the food runs out, the images change to
+    sad/hungry, and it loops endlessly waiting for food.  The virtual pet can
+    be fed by entering a number of food units into line 22, by temporarily
+    putting the machine into Manual mode, and keying in a value. Then,
+    when the program is continued, the images change to happy/full, and the
+    virtual pet continues to thrive.
+
+    Happy image:
+
+    28	--*-*--
+    29	-------
+    30	-*---*-
+    31	--***--
+
+    Sad image:
+
+    28	--*-*--
+    29	-------
+    30	--***--
+    31	-*---*-
+
+    Full image:
+
+    28	--*---
+    29	-***--
+    30	-*-*--
+    31	--*---
+
+    Empty stomach image:
+
+    28	--*---
+    29	-***--
+    30	--*---
+    31	-*-*--
+
+
+virpet.asm:
+32
+0    NUM 0
+1    LDN 22
+2    SUB 27
+3    STO 25
+4    LDN 25
+5    STO 22
+6    CMP
+7    JMP 0
+8    LDN 23
+9    STO 31
+10   LDN 24
+11   STO 30
+12   LDN 0
+13   STO 22
+14   LDN 22
+15   CMP
+16   JRP 26
+17   LDN 23
+18   STO 30
+19   LDN 24
+20   STO 31
+21   JMP 0
+22   NUM 1000
+23   NUM -35651904
+24   NUM -29360256
+25   NUM 0
+26   NUM -3
+27   NUM -1
+28   NUM 20971648
+29   NUM 448
+30   NUM 35651904
+31   NUM 29360256
+
+
+
+----- End Included Message -----
+
+
+
+

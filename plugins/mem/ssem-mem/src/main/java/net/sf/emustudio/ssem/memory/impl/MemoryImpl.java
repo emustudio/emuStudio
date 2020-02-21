@@ -37,10 +37,10 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.MEMORY,
-        title = "SSEM memory",
-        copyright = "\u00A9 Copyright 2016, Peter Jakubčo",
-        description = "Main store for SSEM machine"
+    type = PLUGIN_TYPE.MEMORY,
+    title = "SSEM memory",
+    copyright = "\u00A9 Copyright 2016, Peter Jakubčo",
+    description = "Main store for SSEM machine"
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {

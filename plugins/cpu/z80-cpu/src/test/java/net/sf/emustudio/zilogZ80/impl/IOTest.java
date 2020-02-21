@@ -272,10 +272,10 @@ public class IOTest extends InstructionsTest {
     @Test
     public void testOUTI() {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + ((context.first+1) & 0xFF)) > 0xFF;
+            ((context.second & 0xFF) + ((context.first + 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
             FlagsCheckImpl.isParity(
-                (((context.second & 0xFF) + ((context.first+1) & 0xFF)) & 7) ^ result.byteValue()
+                (((context.second & 0xFF) + ((context.first + 1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -306,7 +306,7 @@ public class IOTest extends InstructionsTest {
             ((context.second & 0xFF) + ((context.first + 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
             FlagsCheckImpl.isParity(
-                (((context.second & 0xFF) + (context.first+1) & 0xFF) & 7) ^ result.byteValue()
+                (((context.second & 0xFF) + (context.first + 1) & 0xFF) & 7) ^ result.byteValue()
             );
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -340,10 +340,10 @@ public class IOTest extends InstructionsTest {
     @Test
     public void testOUTD() {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + ((context.first-1) & 0xFF)) > 0xFF;
+            ((context.second & 0xFF) + ((context.first - 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
             FlagsCheckImpl.isParity(
-                (((context.second & 0xFF) + ((context.first-1) & 0xFF)) & 7) ^ result.byteValue()
+                (((context.second & 0xFF) + ((context.first - 1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -371,10 +371,10 @@ public class IOTest extends InstructionsTest {
     @Test
     public void testOTDR() {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + ((context.first-1) & 0xFF)) > 0xFF;
+            ((context.second & 0xFF) + ((context.first - 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
             FlagsCheckImpl.isParity(
-                (((context.second & 0xFF) + ((context.first-1) & 0xFF)) & 7) ^ result.byteValue()
+                (((context.second & 0xFF) + ((context.first - 1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)

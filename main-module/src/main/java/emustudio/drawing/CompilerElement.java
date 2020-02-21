@@ -26,7 +26,6 @@ import java.util.Properties;
  * This class represents a compiler element. It is used in the abstract schema
  * editor. It corresponds to a compiler object that will be used in the emulated
  * computer.
- *
  */
 public class CompilerElement extends Element {
     private final static Color BACK_COLOR = new Color(0xeeefff);

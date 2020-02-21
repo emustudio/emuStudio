@@ -20,20 +20,14 @@
 
 package net.sf.emustudio.rasp.compiler;
 
-import java.io.BufferedOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import net.sf.emustudio.rasp.compiler.tree.Label;
+import net.sf.emustudio.rasp.memory.RASPMemoryContext;
+import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
+
+import java.io.*;
 import java.util.*;
 
-import net.sf.emustudio.rasp.compiler.tree.Input;
-import net.sf.emustudio.rasp.compiler.tree.Label;
-import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
-import net.sf.emustudio.rasp.memory.RASPMemoryContext;
-
 /**
- *
  * @author miso
  */
 public class CompilerOutput {
@@ -63,10 +57,10 @@ public class CompilerOutput {
     }
 
     public int getAddressForLabel(String labelValue) throws Exception {
-        if (reversedLabels.containsKey(labelValue+":")) {
-            return reversedLabels.get(labelValue+":");
+        if (reversedLabels.containsKey(labelValue + ":")) {
+            return reversedLabels.get(labelValue + ":");
         } else {
-            throw new Exception("There is no label " + "\"" + labelValue+ "\"");
+            throw new Exception("There is no label " + "\"" + labelValue + "\"");
         }
     }
 
@@ -108,7 +102,7 @@ public class CompilerOutput {
 
     public void loadIntoMemory(RASPMemoryContext memory) {
         memory.clear();
-        
+
         for (Map.Entry<Integer, String> entry : labels.entrySet()) {
             memory.addLabel(entry.getKey(), entry.getValue());
         }
@@ -120,7 +114,7 @@ public class CompilerOutput {
 
         memory.addInputs(inputs);
     }
-    
+
     public HashMap<String, Integer> getReversedLabels() {
         return reversedLabels;
     }

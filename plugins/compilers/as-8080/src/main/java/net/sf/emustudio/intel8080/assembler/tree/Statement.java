@@ -20,8 +20,8 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
 
 import java.util.ArrayList;
@@ -123,6 +123,7 @@ public class Statement {
      * Method check whether this "subprogram" contains include
      * pseudocode(s) and if yes, whether the statement calls for
      * filename given by parameter.
+     *
      * @param filename name of the file that "include" pseudocode should contain
      * @return true if subprogram contains "include filename" pseudocode
      */

@@ -31,11 +31,11 @@ public class Program implements ASTnode {
         previousLine = line;
         nodes.put(line, node);
     }
-    
+
     public void nextLineStarts() {
         this.startLine = previousLine;
     }
-    
+
     public int getStartLine() {
         return startLine;
     }

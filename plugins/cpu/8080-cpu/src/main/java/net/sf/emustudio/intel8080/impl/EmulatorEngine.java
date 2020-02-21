@@ -21,6 +21,12 @@ package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
+import net.sf.emustudio.intel8080.api.CpuEngine;
+import net.sf.emustudio.intel8080.api.DispatchListener;
+import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -28,11 +34,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
-import net.sf.emustudio.intel8080.api.CpuEngine;
-import net.sf.emustudio.intel8080.api.DispatchListener;
-import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EmulatorEngine implements CpuEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
@@ -40,10 +41,10 @@ public class EmulatorEngine implements CpuEngine {
     public static final int REG_A = 7, REG_B = 0, REG_C = 1, REG_D = 2, REG_E = 3, REG_H = 4, REG_L = 5;
     public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_AC = 0x10, FLAG_P = 0x4, FLAG_C = 0x1;
     private final static int[] CONDITION = new int[]{
-            FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_P, FLAG_P, FLAG_S, FLAG_S
+        FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_P, FLAG_P, FLAG_S, FLAG_S
     };
     private final static int[] CONDITION_VALUES = new int[]{
-            0, FLAG_Z, 0, FLAG_C, 0, FLAG_P, 0, FLAG_S
+        0, FLAG_Z, 0, FLAG_C, 0, FLAG_P, 0, FLAG_S
     };
 
     public boolean INTE = false; // enabling / disabling of interrupts
@@ -54,7 +55,7 @@ public class EmulatorEngine implements CpuEngine {
 
     public int PC = 0; // program counter
     public int SP = 0; // stack pointer
-    public int [] regs = new int[8];
+    public int[] regs = new int[8];
     public short flags = 2; // registers
     public volatile CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_NORMAL;
 
@@ -175,7 +176,7 @@ public class EmulatorEngine implements CpuEngine {
     /* Put a value into an 8080 register from memory */
     private void putreg(int reg, int val) {
         if (reg == 6) {
-            memory.write((regs[REG_H] << 8) | regs[REG_L], (short)(val & 0xFF));
+            memory.write((regs[REG_H] << 8) | regs[REG_L], (short) (val & 0xFF));
         } else {
             regs[reg] = val & 0xFF;
         }
@@ -265,7 +266,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private void writeWord(int address, int value) {
-        memory.writeWord(address, new Short[] { (short)(value & 0xFF), (short)((value >>> 8) & 0xFF) } );
+        memory.writeWord(address, new Short[]{(short) (value & 0xFF), (short) ((value >>> 8) & 0xFF)});
     }
 
     private static final Method[] DISPATCH_TABLE = new Method[256];
@@ -430,7 +431,7 @@ public class EmulatorEngine implements CpuEngine {
     private int O34_SHLD(short OP) {
         int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
-        memory.writeWord(DAR, new Short[] { (short)regs[REG_L] , (short) regs[REG_H] });
+        memory.writeWord(DAR, new Short[]{(short) regs[REG_L], (short) regs[REG_H]});
         return 16;
     }
 
@@ -458,7 +459,7 @@ public class EmulatorEngine implements CpuEngine {
             }
         }
         regs[REG_A] = temp & 0xFF;
-        flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C) | (flags & FLAG_AC));
+        flags = (short) (EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C) | (flags & FLAG_AC));
         return 4;
     }
 
@@ -479,7 +480,7 @@ public class EmulatorEngine implements CpuEngine {
     private int O50_STA(short OP) {
         int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
-        memory.write(DAR, (short)regs[REG_A]);
+        memory.write(DAR, (short) regs[REG_A]);
         return 13;
     }
 
@@ -559,7 +560,7 @@ public class EmulatorEngine implements CpuEngine {
     private int O211_OUT(short OP) throws IOException {
         int DAR = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        context.fireIO(DAR, false, (short)regs[REG_A]);
+        context.fireIO(DAR, false, (short) regs[REG_A]);
         return 10;
     }
 
@@ -702,7 +703,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int MEF_02_STAX(short OP) {
-        memory.write(getpair((OP >>> 4) & 0x03), (short)getreg(7));
+        memory.write(getpair((OP >>> 4) & 0x03), (short) getreg(7));
         return 7;
     }
 

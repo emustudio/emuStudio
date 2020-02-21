@@ -19,10 +19,11 @@
  */
 package emustudio.drawing.mode;
 
-import emustudio.drawing.Model;
 import emustudio.drawing.DrawingPanel;
+import emustudio.drawing.Model;
 import emustudio.drawing.Schema;
-import java.awt.Point;
+
+import java.awt.*;
 
 abstract class AbstractMode implements Mode {
     protected final DrawingPanel panel;

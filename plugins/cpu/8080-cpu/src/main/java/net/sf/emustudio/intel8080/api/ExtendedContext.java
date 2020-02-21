@@ -28,22 +28,22 @@ import emulib.plugins.device.DeviceContext;
  */
 @ContextType
 public interface ExtendedContext extends CPUContext {
-    
+
     /**
      * Attach a device into the CPU.
-     * 
+     *
      * @param device the device
-     * @param port CPU port where the device should be attached
+     * @param port   CPU port where the device should be attached
      * @return true on success, false otherwise
      */
     boolean attachDevice(DeviceContext<Short> device, int port);
-    
+
     /**
      * Detach a device from the CPU.
-     * 
+     *
      * @param port the CPU port number which will be freed.
      */
     void detachDevice(int port);
-    
+
     void setCPUFrequency(int freq);
 }

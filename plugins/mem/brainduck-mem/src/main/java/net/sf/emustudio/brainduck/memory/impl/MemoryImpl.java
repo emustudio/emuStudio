@@ -37,10 +37,10 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.MEMORY,
-        title = "BrainDuck memory",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Operating memory for abstract BrainDuck architecture"
+    type = PLUGIN_TYPE.MEMORY,
+    title = "BrainDuck memory",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Operating memory for abstract BrainDuck architecture"
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
@@ -75,7 +75,7 @@ public class MemoryImpl extends AbstractMemory {
         super.initialize(settings);
         this.size = 65536;
         memContext.init(size);
-        
+
         if (!Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI))) {
             memoryGUI = new MemoryGUI(memContext);
         }

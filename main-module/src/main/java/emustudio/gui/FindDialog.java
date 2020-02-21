@@ -84,7 +84,7 @@ class FindDialog extends javax.swing.JDialog {
         public void removeListDataListener(ListDataListener l) {
         }
     }
-    
+
     private class DialogKeyListener implements KeyListener {
 
         @Override
@@ -101,9 +101,9 @@ class FindDialog extends javax.swing.JDialog {
         @Override
         public void keyReleased(KeyEvent e) {
         }
-        
+
     }
-    
+
     static FindDialog create(JFrame parent, FindText finder, boolean modal, JTextPane pane) {
         FindDialog dialog = new FindDialog(parent, finder, modal, pane);
         dialog.initialize();
@@ -151,7 +151,7 @@ class FindDialog extends javax.swing.JDialog {
         }
         this.setLocationRelativeTo(parent);
     }
-    
+
     private void initialize() {
         addKeyListenerRecursively(this, dialogKeyListener);
     }
@@ -230,9 +230,9 @@ class FindDialog extends javax.swing.JDialog {
         GroupLayout panelOptionsLayout = new GroupLayout(panelOptions);
         panelOptions.setLayout(panelOptionsLayout);
         panelOptionsLayout.setHorizontalGroup(
-                panelOptionsLayout.createSequentialGroup().addContainerGap().addGroup(panelOptionsLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(caseCheck).addComponent(wholeCheck)).addContainerGap());
+            panelOptionsLayout.createSequentialGroup().addContainerGap().addGroup(panelOptionsLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(caseCheck).addComponent(wholeCheck)).addContainerGap());
         panelOptionsLayout.setVerticalGroup(
-                panelOptionsLayout.createSequentialGroup().addContainerGap().addComponent(caseCheck).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(wholeCheck).addContainerGap());
+            panelOptionsLayout.createSequentialGroup().addContainerGap().addComponent(caseCheck).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(wholeCheck).addContainerGap());
 
         panelDirection.setBorder(BorderFactory.createTitledBorder("Direction"));
 
@@ -252,9 +252,9 @@ class FindDialog extends javax.swing.JDialog {
         GroupLayout panelDirectionLayout = new GroupLayout(panelDirection);
         panelDirection.setLayout(panelDirectionLayout);
         panelDirectionLayout.setHorizontalGroup(
-                panelDirectionLayout.createSequentialGroup().addContainerGap().addGroup(panelDirectionLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(endRadio).addComponent(startRadio).addComponent(allRadio)).addContainerGap());
+            panelDirectionLayout.createSequentialGroup().addContainerGap().addGroup(panelDirectionLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(endRadio).addComponent(startRadio).addComponent(allRadio)).addContainerGap());
         panelDirectionLayout.setVerticalGroup(
-                panelDirectionLayout.createSequentialGroup().addComponent(endRadio).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(startRadio).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(allRadio).addContainerGap());
+            panelDirectionLayout.createSequentialGroup().addComponent(endRadio).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(startRadio).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(allRadio).addContainerGap());
 
         btnSearch.setText("Search");
         btnSearch.setFont(btnSearch.getFont().deriveFont(btnSearch.getFont().getStyle() & ~java.awt.Font.BOLD));
@@ -286,8 +286,8 @@ class FindDialog extends javax.swing.JDialog {
         try {
             finder.createPattern(str);
             if (finder.findNext(textPane.getText(),
-                    textPane.getCaretPosition(),
-                    textPane.getDocument().getEndPosition().getOffset() - 1)) {
+                textPane.getCaretPosition(),
+                textPane.getDocument().getEndPosition().getOffset() - 1)) {
                 textPane.select(finder.getMatchStart(), finder.getMatchEnd());
                 textPane.grabFocus();
                 dispose();
@@ -333,6 +333,7 @@ class FindDialog extends javax.swing.JDialog {
             cmbSearch.grabFocus();
         }
     }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JRadioButton allRadio;
     private JCheckBox caseCheck;

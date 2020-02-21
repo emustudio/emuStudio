@@ -19,15 +19,9 @@
  */
 package net.sf.emustudio.brainduck.terminal.impl;
 
-import net.sf.emustudio.brainduck.terminal.io.Cursor;
-import net.sf.emustudio.brainduck.terminal.io.Display;
-import net.sf.emustudio.brainduck.terminal.io.GUIUtils;
-import net.sf.emustudio.brainduck.terminal.io.Keyboard;
-import net.sf.emustudio.brainduck.terminal.io.OutputProvider;
+import net.sf.emustudio.brainduck.terminal.io.*;
 
-import javax.swing.ImageIcon;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.net.URL;
 import java.util.Objects;
@@ -37,31 +31,31 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     private final ImageIcon blueIcon;
     private final ImageIcon redIcon;
     private final ImageIcon greenIcon;
-    
+
     private final Display canvas;
     private final Keyboard keyboard;
 
     private BrainTerminalDialog(Keyboard keyboard) {
         URL blueIconURL = getClass().getResource(
-                "/net/sf/emustudio/brainduck/terminal/16_circle_blue.png"
+            "/net/sf/emustudio/brainduck/terminal/16_circle_blue.png"
         );
         URL redIconURL = getClass().getResource(
-                "/net/sf/emustudio/brainduck/terminal/16_circle_red.png"
+            "/net/sf/emustudio/brainduck/terminal/16_circle_red.png"
         );
         URL greenIconURL = getClass().getResource(
-                "/net/sf/emustudio/brainduck/terminal/16_circle_green.png"
+            "/net/sf/emustudio/brainduck/terminal/16_circle_green.png"
         );
 
         blueIcon = new ImageIcon(Objects.requireNonNull(blueIconURL));
         redIcon = new ImageIcon(Objects.requireNonNull(redIconURL));
         greenIcon = new ImageIcon(Objects.requireNonNull(greenIconURL));
-        
+
         this.keyboard = keyboard;
 
         setTitle("BrainDuck Terminal");
         initComponents();
         setLocationRelativeTo(null);
-        
+
         canvas = new Display();
         scrollPane.setViewportView(canvas);
         canvas.start();
@@ -133,7 +127,7 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     public void showGUI() {
         this.setVisible(true);
     }
-    
+
     @Override
     public void close() {
         canvas.stop();
@@ -172,17 +166,17 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
         panelStatus.setLayout(panelStatusLayout);
         panelStatusLayout.setHorizontalGroup(
             panelStatusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelStatusLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblStatusIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnASCII)
-                .addContainerGap(664, Short.MAX_VALUE))
+                .addGroup(panelStatusLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(lblStatusIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(btnASCII)
+                    .addContainerGap(664, Short.MAX_VALUE))
         );
         panelStatusLayout.setVerticalGroup(
             panelStatusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lblStatusIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(btnASCII, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
+                .addComponent(lblStatusIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnASCII, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
         );
 
         scrollPane.setBackground(new java.awt.Color(255, 255, 255));
@@ -191,15 +185,15 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(panelStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(scrollPane)
+                .addComponent(panelStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(scrollPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(panelStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createSequentialGroup()
+                    .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(panelStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
@@ -208,10 +202,10 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     private void btnASCIIActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnASCIIActionPerformed
         String asciiString = JOptionPane.showInputDialog(this, "Enter ASCII codes separated with spaces", "0");
         StringTokenizer tokenizer = new StringTokenizer(asciiString);
-        
+
         while (tokenizer.hasMoreTokens()) {
             int ascii = Integer.decode(tokenizer.nextToken());
-            keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char)ascii));
+            keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char) ascii));
         }
     }//GEN-LAST:event_btnASCIIActionPerformed
 

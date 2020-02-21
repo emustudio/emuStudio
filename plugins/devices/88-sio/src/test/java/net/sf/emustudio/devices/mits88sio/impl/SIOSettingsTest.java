@@ -24,11 +24,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -92,8 +88,8 @@ public class SIOSettingsTest {
         settings.read();
 
         assertEquals(true, settings.isNoGUI());
-        assertEquals(5, (int)settings.getStatusPorts().iterator().next());
-        assertEquals(10, (int)settings.getDataPorts().iterator().next());
+        assertEquals(5, (int) settings.getStatusPorts().iterator().next());
+        assertEquals(10, (int) settings.getDataPorts().iterator().next());
 
         verify(manager);
     }

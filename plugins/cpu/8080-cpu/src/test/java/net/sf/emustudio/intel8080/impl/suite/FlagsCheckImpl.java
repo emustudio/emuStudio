@@ -21,11 +21,7 @@ package net.sf.emustudio.intel8080.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.FlagsCheck;
 
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_AC;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_S;
-import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_Z;
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.*;
 
 public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckImpl<T>> {
 
@@ -136,7 +132,7 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     public FlagsCheckImpl auxCarry() {
         evaluators.add((context, result) -> {
             int firstInt = context.first.intValue();
-            byte diff = (byte)((result.intValue() - firstInt) & 0xFF);
+            byte diff = (byte) ((result.intValue() - firstInt) & 0xFF);
 
             if (isAuxCarry(context.first.intValue(), diff)) {
                 expectedFlags |= FLAG_AC;

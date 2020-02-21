@@ -2,10 +2,10 @@
 end_of_line = lf
 insert_final_newline = true
 
-[*.{java,py,sh}]
+[*.{java, py, sh}]
 charset = utf-8
 
-[*.{java,py}]
+[*.{java, py}]
 indent_style = space
 indent_size = 4
 
@@ -13,6 +13,6 @@ indent_size = 4
 indent_style = space
 indent_size = 2
 
-[pom.xml]
+[build.gradle]
 indent_style = space
 indent_size = 2

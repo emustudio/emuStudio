@@ -22,12 +22,8 @@ package emustudio.gui;
 import emulib.runtime.RadixUtils;
 import emustudio.gui.utils.ConstantSizeButton;
 import emustudio.main.Main;
-import javax.swing.GroupLayout;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
+
+import javax.swing.*;
 
 /**
  * The breakpoint dialog - it asks user for the address where should be
@@ -79,17 +75,17 @@ class BreakpointDialog extends JDialog {
         getContentPane().setLayout(layout);
 
         layout.setHorizontalGroup(layout.createSequentialGroup().addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(lblSetUnset).addComponent(txtAddress)
                 .addGroup(GroupLayout.Alignment.CENTER, layout.createSequentialGroup()
-                .addComponent(btnUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnSet))).addContainerGap());
+                    .addComponent(btnUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(btnSet))).addContainerGap());
         layout.setVerticalGroup(layout.createSequentialGroup().addContainerGap().addComponent(lblSetUnset)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
                 GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                 .addComponent(btnUnset).addComponent(btnSet)).addContainerGap());
 
 

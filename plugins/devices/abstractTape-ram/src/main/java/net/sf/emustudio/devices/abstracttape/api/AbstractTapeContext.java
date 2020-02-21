@@ -50,7 +50,7 @@ public interface AbstractTapeContext extends DeviceContext<String> {
 
     /**
      * Move the tape one symbol to the left.
-     *
+     * <p>
      * If the tape is left-bounded and the old position is 0, tape won't move. Otherwise the tape
      * will expand to the left - add new empty symbol to position 0 and shift the rest of the content to the right.
      *
@@ -65,7 +65,7 @@ public interface AbstractTapeContext extends DeviceContext<String> {
 
     /**
      * Allow or disallow to edit the tape.
-     *
+     * <p>
      * If the tape is editable, the user (in GUI) can add, modify or remove symbols from the tape.
      * Otherwise it is driven only by the CPU.
      *
@@ -83,15 +83,15 @@ public interface AbstractTapeContext extends DeviceContext<String> {
 
     /**
      * Set symbol at the specified position.
-     *
+     * <p>
      * If the position is < 0, then no symbol will be set.
-     *
+     * <p>
      * If the position is > tape size, empty symbols will be added until the required tape size is ensured.
      * Then, the symbol is added at the specified position.
-     *
+     * <p>
      * This method should be used only when loading some initial content to the tape.
      *
-     * @param pos position in the tape, starting from 0
+     * @param pos    position in the tape, starting from 0
      * @param symbol symbol value
      */
     void setSymbolAt(int pos, String symbol);

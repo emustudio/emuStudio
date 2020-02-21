@@ -22,17 +22,11 @@ package emustudio.gui.editor;
 
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.Token;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import javax.swing.text.SimpleAttributeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.text.SimpleAttributeSet;
+import java.util.*;
 
 /**
  * The syntax highlighting thread.
@@ -71,6 +65,7 @@ class HighlightThread extends Thread {
             this.adjustment = adjustment;
         }
     }
+
     /**
      * Vector that stores the communication between the two threads.
      */
@@ -135,7 +130,7 @@ class HighlightThread extends Thread {
      * section of the document.  It will process this as a FIFO.
      * This method should be done inside a lock.
      *
-     * @param position a starting position in the document
+     * @param position   a starting position in the document
      * @param adjustment range of the text block
      */
     public void color(int position, int adjustment) {

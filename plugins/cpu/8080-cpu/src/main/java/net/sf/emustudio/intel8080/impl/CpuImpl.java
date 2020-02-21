@@ -29,6 +29,11 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.intel8080.api.FrequencyUpdater;
+import net.sf.emustudio.intel8080.gui.StatusPanel;
+
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
@@ -37,16 +42,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.*;
-import net.sf.emustudio.intel8080.api.ExtendedContext;
-import net.sf.emustudio.intel8080.api.FrequencyUpdater;
-import net.sf.emustudio.intel8080.gui.StatusPanel;
 
 @PluginType(
-        type = PLUGIN_TYPE.CPU,
-        title = "Intel 8080 CPU",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Emulator of Intel 8080 CPU"
+    type = PLUGIN_TYPE.CPU,
+    title = "Intel 8080 CPU",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Emulator of Intel 8080 CPU"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {

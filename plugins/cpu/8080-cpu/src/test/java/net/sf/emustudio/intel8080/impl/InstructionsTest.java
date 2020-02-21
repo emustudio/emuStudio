@@ -32,9 +32,7 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 
-import static org.easymock.EasyMock.createNiceMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.*;
 
 public class InstructionsTest {
     private static final long PLUGIN_ID = 0L;
@@ -55,8 +53,8 @@ public class InstructionsTest {
 
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class))
-                .andReturn(memoryStub)
-                .anyTimes();
+            .andReturn(memoryStub)
+            .anyTimes();
         replay(contextPool);
 
         cpu = new CpuImpl(PLUGIN_ID, contextPool);

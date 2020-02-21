@@ -19,8 +19,7 @@
  */
 package emustudio.gui.utils;
 
-import java.awt.Component;
-import java.awt.Container;
+import java.awt.*;
 import java.awt.event.KeyListener;
 
 public class Components {
@@ -29,7 +28,7 @@ public class Components {
      * This method adds this key listener to all sub-components of given
      * component.
      *
-     * @param c Component to add this key listener recursively
+     * @param c           Component to add this key listener recursively
      * @param keyListener the key listener object
      */
     public static void addKeyListenerRecursively(Component c, KeyListener keyListener) {
@@ -42,5 +41,5 @@ public class Components {
             }
         }
     }
-    
+
 }

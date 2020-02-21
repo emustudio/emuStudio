@@ -39,10 +39,10 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.COMPILER,
-        title = "BrainDuck Compiler",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Compiler for esoteric architecture based on brainfuck."
+    type = PLUGIN_TYPE.COMPILER,
+    title = "BrainDuck Compiler",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Compiler for esoteric architecture based on brainfuck."
 )
 @SuppressWarnings("unused")
 public class CompilerImpl extends AbstractCompiler {

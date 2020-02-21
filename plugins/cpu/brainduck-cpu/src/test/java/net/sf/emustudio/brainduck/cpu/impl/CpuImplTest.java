@@ -33,14 +33,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Objects;
 
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.createNiceMock;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.same;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -54,7 +47,7 @@ public class CpuImplTest {
         memory = new MemoryStub();
         ioDevice = new DeviceStub();
 
-        Capture<BrainCPUContextImpl> cpuContextCapture = new Capture<>();
+        Capture<BrainCPUContextImpl> cpuContextCapture = Capture.newInstance();
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, RawMemoryContext.class)).andReturn(memory).anyTimes();
@@ -136,8 +129,8 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testSimpleOutput() {
         // +[,.--]
-        byte[] program = new byte[] { 3, 7, 6, 5, 4, 4, 8 };
-        byte[] input = new byte[] { 4, 3, 2 };
+        byte[] program = new byte[]{3, 7, 6, 5, 4, 4, 8};
+        byte[] input = new byte[]{4, 3, 2};
 
         emulate(program, null, input);
 
@@ -154,8 +147,8 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testMoveCell() {
         // [->+<]
-        byte[] program = new byte[] { 7, 4, 1, 3, 2, 8 };
-        byte[] data = new byte[] { 4 };
+        byte[] program = new byte[]{7, 4, 1, 3, 2, 8};
+        byte[] data = new byte[]{4};
 
         emulate(program, data, null);
 
@@ -167,8 +160,8 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testCopyCell() {
         // [->+>+<<]
-        byte[] program = new byte[] { 7, 4, 1, 3, 1, 3, 2, 2, 8 };
-        byte[] data = new byte[] { 4 };
+        byte[] program = new byte[]{7, 4, 1, 3, 1, 3, 2, 2, 8};
+        byte[] data = new byte[]{4};
 
         emulate(program, data, null);
 
@@ -181,11 +174,11 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testCopyCell2() {
         // [->+>+<<]>>[-<<+>>]
-        byte[] program = new byte[] {
-                7, 4, 1, 3, 1, 3, 2, 2, 8, 1, 1, 7, 4, 2, 2, 3,
-                1, 1, 8
+        byte[] program = new byte[]{
+            7, 4, 1, 3, 1, 3, 2, 2, 8, 1, 1, 7, 4, 2, 2, 3,
+            1, 1, 8
         };
-        byte[] data = new byte[] { 4 };
+        byte[] data = new byte[]{4};
 
         emulate(program, data, null);
 
@@ -198,12 +191,12 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testAddition() {
         // ,>++++++[<-------->-],[<+>-],<.>.
-        byte[] program = new byte[] {
-                6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
-                4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
-                5
+        byte[] program = new byte[]{
+            6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
+            4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
+            5
         };
-        byte[] input = new byte[] { '4', '4', '\n' };
+        byte[] input = new byte[]{'4', '4', '\n'};
 
         emulate(program, null, input);
 
@@ -222,11 +215,11 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testMoreAddition() {
         // ,>++++++[<-------->-],[<+>-],<.>.
-        byte[] program = new byte[] {
-                6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
-                4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
-                5 };
-        byte[] input = new byte[] { '8', '8', 'a' };
+        byte[] program = new byte[]{
+            6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
+            4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
+            5};
+        byte[] input = new byte[]{'8', '8', 'a'};
 
         emulate(program, null, input);
 
@@ -245,7 +238,7 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testMultiplyThreeTimesFive() {
         // +++[>+++++<-]
-        byte[] program = new byte[] { 3, 3, 3, 7, 1, 3, 3, 3, 3, 3, 2, 4, 8 };
+        byte[] program = new byte[]{3, 3, 3, 7, 1, 3, 3, 3, 3, 3, 2, 4, 8};
 
         emulate(program, null, null);
 
@@ -258,14 +251,14 @@ public class CpuImplTest {
     public void testMultiply() {
         // [>>>+>+<<<<-]>>>>[<<<<+>>>>-]<[<<[>>>+>+<<<<-]>>>>[<<<<+>>>>-]<[<<+>>-]<-]
 
-        byte[] program = new byte[] {
-                7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1, 1,
-                1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7, 2,
-                2, 7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1,
-                1, 1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7,
-                2, 2, 3, 1, 1, 4, 8, 2, 4, 8
+        byte[] program = new byte[]{
+            7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1, 1,
+            1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7, 2,
+            2, 7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1,
+            1, 1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7,
+            2, 2, 3, 1, 1, 4, 8, 2, 4, 8
         };
-        byte[] data = new byte[] { 20, 5 };
+        byte[] data = new byte[]{20, 5};
 
         emulate(program, data, null);
 
@@ -278,7 +271,7 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testDecrementZeroGives255() {
         // -
-        byte[] program = new byte[] { 4 };
+        byte[] program = new byte[]{4};
 
         emulate(program, null, null);
 
@@ -289,7 +282,7 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testTwoLoopsInLoop() {
         // +[[-]+[-]]
-        byte[] program = new byte[] { 3, 7, 7, 4, 8, 3, 7, 4, 8, 8 };
+        byte[] program = new byte[]{3, 7, 7, 4, 8, 3, 7, 4, 8, 8};
 
         emulate(program, null, null);
         assertEquals(11, emulator.getInstructionPosition());
@@ -298,7 +291,7 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testMinusPlusGivesZero() {
         // -+
-        byte[] program = new byte[] { 4, 3 };
+        byte[] program = new byte[]{4, 3};
 
         emulate(program, null, null);
         assertEquals(0, memory.read(emulator.getEngine().P).byteValue());
@@ -307,13 +300,13 @@ public class CpuImplTest {
     @Test(timeout = 3000)
     public void testSelfPrint() {
         // +++++[>+++++++++<-],[[>--.++>+<<-]>+.->[<.>-]<<,]
-        byte[] program = new byte[] {
-                3, 3, 3, 3, 3, 7, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-                2, 4, 8, 6, 7, 7, 1, 4, 4, 5, 3, 3, 1, 3, 2, 2,
-                4, 8, 1, 3, 5, 4, 1, 7, 2, 5, 1, 4, 8, 2, 2, 6,
-                8
+        byte[] program = new byte[]{
+            3, 3, 3, 3, 3, 7, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            2, 4, 8, 6, 7, 7, 1, 4, 4, 5, 3, 3, 1, 3, 2, 2,
+            4, 8, 1, 3, 5, 4, 1, 7, 2, 5, 1, 4, 8, 2, 2, 6,
+            8
         };
-        byte[] input = new byte[] { 1, 0 };
+        byte[] input = new byte[]{1, 0};
 
         emulateWithBreakpoint(program, null, input, 19);
 

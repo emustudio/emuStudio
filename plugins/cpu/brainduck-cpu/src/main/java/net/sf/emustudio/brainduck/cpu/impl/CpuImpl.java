@@ -37,17 +37,17 @@ import net.sf.emustudio.brainduck.memory.RawMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.io.IOException;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
-        type = PLUGIN_TYPE.CPU,
-        title = "BrainCPU",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Emulator of CPU for abstract BrainDuck architecture"
+    type = PLUGIN_TYPE.CPU,
+    title = "BrainCPU",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Emulator of CPU for abstract BrainDuck architecture"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
@@ -80,14 +80,14 @@ public class CpuImpl extends AbstractCPU {
             return "(unknown)";
         }
     }
-    
+
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         memory = contextPool.getMemoryContext(getPluginID(), RawMemoryContext.class);
 
         if (memory.getDataType() != Short.class) {
             throw new PluginInitializationException(
-                    this, "Selected operating memory is not supported."
+                this, "Selected operating memory is not supported."
             );
         }
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
@@ -98,7 +98,7 @@ public class CpuImpl extends AbstractCPU {
     public int getInstructionPosition() {
         return engine.IP;
     }
-    
+
     @Override
     public boolean setInstructionPosition(int pos) {
         if (pos < 0) {

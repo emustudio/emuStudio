@@ -34,17 +34,17 @@ public abstract class FlagsCheck<T extends Number, SpecificFlagsBuilder extends 
     public SpecificFlagsBuilder reset() {
         expectedFlags = 0;
         expectedNotFlags = 0;
-        return (SpecificFlagsBuilder)this;
+        return (SpecificFlagsBuilder) this;
     }
 
     public SpecificFlagsBuilder or(int flags) {
         expectedFlags |= flags;
-        return (SpecificFlagsBuilder)this;
+        return (SpecificFlagsBuilder) this;
     }
 
     public SpecificFlagsBuilder switchFirstAndSecond() {
         switchFirstAndSecond = !switchFirstAndSecond;
-        return (SpecificFlagsBuilder)this;
+        return (SpecificFlagsBuilder) this;
     }
 
     public SpecificFlagsBuilder expectFlagOnlyWhen(int flag, BiFunction<RunnerContext<T>, Number, Boolean> predicate) {
@@ -55,7 +55,7 @@ public abstract class FlagsCheck<T extends Number, SpecificFlagsBuilder extends 
                 expectedNotFlags |= flag;
             }
         }));
-        return (SpecificFlagsBuilder)this;
+        return (SpecificFlagsBuilder) this;
     }
 
     public int getExpectedFlags() {

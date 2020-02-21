@@ -19,25 +19,13 @@
  */
 package net.sf.emustudio.memory.standard.gui.model;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.util.Objects;
-import javax.swing.AbstractCellEditor;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListSelectionModel;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import java.awt.*;
+import java.util.Objects;
 
 public class TableMemory extends JTable {
     private final MemoryTableModel memModel;
@@ -46,7 +34,7 @@ public class TableMemory extends JTable {
     public TableMemory(MemoryTableModel memModel, JScrollPane pm) {
         this.paneMemory = Objects.requireNonNull(pm);
         this.memModel = Objects.requireNonNull(memModel);
-        
+
         super.setModel(this.memModel);
         super.setFont(new Font("Monospaced", Font.PLAIN, 12));
         super.setCellSelectionEnabled(true);
@@ -78,7 +66,7 @@ public class TableMemory extends JTable {
 
         @Override
         public Component getListCellRendererComponent(JList list, Object value,
-                int index, boolean isSelected, boolean cellHasFocus) {
+                                                      int index, boolean isSelected, boolean cellHasFocus) {
             setText((value == null) ? "" : value.toString());
             return this;
         }
@@ -99,7 +87,7 @@ public class TableMemory extends JTable {
             adresses = new String[memModel.getRowCount()];
             for (int i = 0; i < adresses.length; i++) {
                 adresses[i] = emulib.runtime.RadixUtils.formatWordHexString(memModel.getColumnCount() * i
-                        + memModel.getColumnCount() * memModel.getRowCount() * currentPage) + "h";
+                    + memModel.getColumnCount() * memModel.getRowCount() * currentPage) + "h";
             }
             this.setOpaque(true);
             rowHeader = new JList(adresses);
@@ -125,7 +113,7 @@ public class TableMemory extends JTable {
             currentPage = memModel.getPage();
             for (int i = 0; i < adresses.length; i++) {
                 adresses[i] = String.format("%1$04Xh",
-                        memModel.getColumnCount() * i + memModel.getColumnCount()
+                    memModel.getColumnCount() * i + memModel.getColumnCount()
                         * memModel.getRowCount() * currentPage);
             }
             rowHeader.setListData(adresses);
@@ -133,7 +121,7 @@ public class TableMemory extends JTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
-                boolean isSelected, boolean hasFocus, int row, int column) {
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
             if (isSelected) {
                 this.setBackground(tm.getSelectionBackground());
                 this.setForeground(tm.getSelectionForeground());
@@ -170,7 +158,7 @@ public class TableMemory extends JTable {
         // This method is called when a cell value is edited by the user.
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                boolean isSelected, int rowIndex, int vColIndex) {
+                                                     boolean isSelected, int rowIndex, int vColIndex) {
             // 'value' is value contained in the cell located at (rowIndex, vColIndex)
             if (isSelected == false) {
                 return null;
@@ -188,5 +176,5 @@ public class TableMemory extends JTable {
     public MemoryTableModel getMemModel() {
         return memModel;
     }
-    
+
 }

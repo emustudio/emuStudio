@@ -22,7 +22,7 @@ package net.sf.emustudio.memory.standard.gui;
 import net.sf.emustudio.memory.standard.gui.model.MemoryTableModel;
 import net.sf.emustudio.memory.standard.gui.model.TableMemory;
 
-import javax.swing.SpinnerModel;
+import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
@@ -32,7 +32,7 @@ public class KeyboardHandler extends KeyAdapter {
     private final SpinnerModel spnPageModel;
     private final MemoryTableModel memoryModel;
     private final MemoryDialog memDialog;
-    
+
     private boolean right_correct;
     private boolean left_correct;
     private boolean up_correct;
@@ -44,7 +44,7 @@ public class KeyboardHandler extends KeyAdapter {
         this.memDialog = Objects.requireNonNull(memDialog);
         this.memoryModel = tblMemory.getMemModel();
     }
-    
+
     @Override
     public void keyPressed(KeyEvent e) {
         final int columnCount = tblMemory.getColumnCount();
@@ -52,7 +52,7 @@ public class KeyboardHandler extends KeyAdapter {
 
         final int selectedColumn = tblMemory.getSelectedColumn();
         final int selectedRow = tblMemory.getSelectedRow();
-        
+
         int key = e.getKeyCode();
         if ((key == KeyEvent.VK_RIGHT) && (selectedColumn == columnCount - 1)) {
             if (selectedRow == rowCount - 1) {
@@ -79,7 +79,7 @@ public class KeyboardHandler extends KeyAdapter {
                 tblMemory.setRowSelectionInterval(rowCount - 1, rowCount - 1);
                 left_correct = true;
             } else {
-                tblMemory.setRowSelectionInterval(selectedRow  - 1, selectedRow - 1);
+                tblMemory.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
                 left_correct = true;
             }
         } else if ((key == KeyEvent.VK_UP) && (selectedRow == 0)) {
@@ -108,10 +108,10 @@ public class KeyboardHandler extends KeyAdapter {
     public void keyReleased(KeyEvent e) {
         final int columnCount = tblMemory.getColumnCount();
         final int rowCount = tblMemory.getRowCount();
-        
+
         final int selectedColumn = tblMemory.getSelectedColumn();
         final int selectedRow = tblMemory.getSelectedRow();
-        
+
         if (right_correct) {
             try {
                 tblMemory.setColumnSelectionInterval(0, 0);

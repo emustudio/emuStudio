@@ -19,8 +19,7 @@
  */
 package emustudio.drawing;
 
-import java.awt.Color;
-import java.awt.Point;
+import java.awt.*;
 import java.util.Properties;
 
 public class MemoryElement extends Element {

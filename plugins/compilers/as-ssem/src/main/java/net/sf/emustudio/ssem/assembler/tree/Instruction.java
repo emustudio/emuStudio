@@ -31,7 +31,7 @@ public class Instruction implements ASTnode {
     public final static byte SUB = 1; // 001
     public final static byte CMP = 3; // 011
     public final static byte STP = 7; // 111
-    private final static String[] INSTRUCTION_STRING = new String[] {
+    private final static String[] INSTRUCTION_STRING = new String[]{
         "JMP", "SUB", "LDN", "CMP", "JRP", null, "STO", "STP"
     };
 
@@ -42,7 +42,7 @@ public class Instruction implements ASTnode {
         if (operand > 31 || operand < 0) {
             throw new CompileException("Instruction operand must be in range <0,31>!");
         }
-        this.operand = Optional.of((byte)(operand & 0xFF));
+        this.operand = Optional.of((byte) (operand & 0xFF));
         this.opcode = opcode;
     }
 
@@ -89,7 +89,7 @@ public class Instruction implements ASTnode {
 
     @Override
     public void accept(ASTvisitor visitor) throws Exception {
-         visitor.visit(this);
+        visitor.visit(this);
     }
 
     @Override

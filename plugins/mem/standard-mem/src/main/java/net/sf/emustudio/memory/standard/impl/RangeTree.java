@@ -19,11 +19,12 @@
  */
 package net.sf.emustudio.memory.standard.impl;
 
+import net.sf.emustudio.memory.standard.StandardMemoryContext;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeSet;
-import net.sf.emustudio.memory.standard.StandardMemoryContext;
 
 public class RangeTree {
     private final NavigableSet<Integer> values = new TreeSet<>();

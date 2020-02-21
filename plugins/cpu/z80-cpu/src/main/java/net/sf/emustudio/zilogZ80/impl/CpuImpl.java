@@ -29,6 +29,11 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.intel8080.api.FrequencyUpdater;
+import net.sf.emustudio.zilogZ80.gui.StatusPanel;
+
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
@@ -37,16 +42,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.JPanel;
-import net.sf.emustudio.intel8080.api.ExtendedContext;
-import net.sf.emustudio.intel8080.api.FrequencyUpdater;
-import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
 @PluginType(
-        type = PLUGIN_TYPE.CPU,
-        title = "Zilog Z80 CPU",
-        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
-        description = "Emulator of Zilog Z80 CPU"
+    type = PLUGIN_TYPE.CPU,
+    title = "Zilog Z80 CPU",
+    copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
+    description = "Emulator of Zilog Z80 CPU"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
@@ -58,7 +59,7 @@ public class CpuImpl extends AbstractCPU {
 
     private final ContextPool contextPool;
     private final ContextImpl context = new ContextImpl();
-    
+
     private StatusPanel statusPanel;
     private Disassembler disassembler;
     private EmulatorEngine engine;
@@ -77,7 +78,7 @@ public class CpuImpl extends AbstractCPU {
     public int getInstructionPosition() {
         return engine.PC;
     }
-    
+
     @Override
     public boolean setInstructionPosition(int position) {
         if (position < 0) {
@@ -86,7 +87,7 @@ public class CpuImpl extends AbstractCPU {
         engine.PC = position & 0xFFFF;
         return true;
     }
-    
+
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         InitializerForZ80 initializer = new InitializerForZ80(this, getPluginID(), contextPool, settings, context);
@@ -100,12 +101,12 @@ public class CpuImpl extends AbstractCPU {
     public EmulatorEngine getEngine() {
         return engine;
     }
-    
+
     @Override
     public JPanel getStatusPanel() {
         return statusPanel;
     }
-    
+
     private void stopFrequencyUpdater() {
         Future tmpFuture;
 
@@ -161,12 +162,12 @@ public class CpuImpl extends AbstractCPU {
     protected RunState stepInternal() throws Exception {
         return engine.step();
     }
-    
+
     @Override
     public Disassembler getDisassembler() {
         return disassembler;
     }
-    
+
     @Override
     protected void destroyInternal() {
         context.clearDevices();

@@ -42,7 +42,7 @@ public class PseudoINCLUDE extends Pseudo {
 
     public PseudoINCLUDE(String filename, int line, int column, CompilerImpl compiler) {
         super(line, column);
-        this.fileName = filename.replace("\\", File.separator);        
+        this.fileName = filename.replace("\\", File.separator);
         this.compiler = compiler;
     }
 
@@ -50,21 +50,22 @@ public class PseudoINCLUDE extends Pseudo {
     public int getSize() {
         return program.getSize();
     }
-    
+
     private File findIncludeFile(String tmpFileName) {
         File tmpFile = new File(tmpFileName);
         if (tmpFile.isAbsolute()) {
             return tmpFile;
         } else {
             return new File(namespace.getInputFile().getParent()
-                    + File.separator + tmpFileName);
-        }        
+                + File.separator + tmpFileName);
+        }
     }
-    
+
 
     /**
      * Method compare filename (in the include statement)
      * with filename given by the parameter
+     *
      * @return true if filenames equal, false if not
      */
     public boolean isEqualName(String tmpFileName) {
@@ -78,9 +79,9 @@ public class PseudoINCLUDE extends Pseudo {
     public void pass1(List<String> includefiles, Namespace parent) throws Exception {
         try {
             namespace = new Namespace(parent.getInputFile().getAbsolutePath());
-            
+
             File file = findIncludeFile(fileName);
-            
+
             FileReader f = new FileReader(file);
             LexerImpl lexer = new LexerImpl(f);
             ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory());

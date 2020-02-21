@@ -19,18 +19,13 @@
  */
 package emustudio.drawing;
 
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
+import java.awt.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * This class represents abstract schema of virtual computer configuration. It is created by the schema editor and used
  * by ArchLoader. It is a graphics model of the virtual computer.
- *
  */
 public class Schema {
     final static int MIN_LEFT_MARGIN = 5;
@@ -72,7 +67,7 @@ public class Schema {
         // grid
         useGrid = Boolean.parseBoolean(settings.getProperty("useGrid", "false"));
         gridGap = Integer.parseInt(settings.getProperty("gridGap",
-                DrawingPanel.DEFAULT_GRID_GAP.toString()));
+            DrawingPanel.DEFAULT_GRID_GAP.toString()));
 
         compilerElement = new CompilerElement(settings.getProperty("compiler"), selectSettings("compiler"), this);
         // if cpu is null here, it does not matter. Maybe user just did not
@@ -134,7 +129,7 @@ public class Schema {
 
     /**
      * Update all lines connections.
-     *
+     * <p>
      * This method will replace an element e1 that a line is connected to in at least one point to new element e2.
      *
      * @param e1 old element
@@ -280,7 +275,7 @@ public class Schema {
             int eY = elem.getY() - elem.getHeight() / 2;
 
             if ((eX <= p.getX()) && (eX + elem.getWidth() >= p.x)
-                    && (eY <= p.getY()) && (eY + elem.getHeight() >= p.y)) {
+                && (eY <= p.getY()) && (eY + elem.getHeight() >= p.y)) {
                 return elem;
             }
         }
@@ -289,7 +284,7 @@ public class Schema {
 
     /**
      * Get an element where at least one its border is crossing a point.
-     *
+     * <p>
      * It is used in the drawing panel.
      *
      * @param borderPoint Point that is checked for pointing at some element's border
@@ -299,7 +294,7 @@ public class Schema {
         List<Element> allElements = getAllElements();
         for (Element element : allElements) {
             if (element.crossesBottomBorder(borderPoint) || (element.crossesLeftBorder(borderPoint))
-                    || element.crossesRightBorder(borderPoint) || element.crossesTopBorder(borderPoint)) {
+                || element.crossesRightBorder(borderPoint) || element.crossesTopBorder(borderPoint)) {
                 return element;
             }
         }
@@ -342,12 +337,12 @@ public class Schema {
 
     /**
      * This method selects all elements and connection lines that crosses or lies inside the selection area.
-     *
+     * <p>
      * If the area is empty (or null), nothing is done.
      *
-     * @param x X coordinate of the selection start
-     * @param y Y coordinate of the selection start
-     * @param width width of the selection
+     * @param x      X coordinate of the selection start
+     * @param y      Y coordinate of the selection start
+     * @param width  width of the selection
      * @param height height of the selection
      */
     public void selectElements(int x, int y, int width, int height) {
@@ -438,8 +433,8 @@ public class Schema {
     }
 
     boolean canMoveElement(int newX, int newY, Element element) {
-        int eW = element.getWidth()/2;
-        int eH = element.getHeight()/2;
+        int eW = element.getWidth() / 2;
+        int eH = element.getHeight() / 2;
 
         Point elementStart = new Point(newX - eW, newY - eH);
         Point elementEnd = new Point(newX + eW, newY + eH);
@@ -458,30 +453,30 @@ public class Schema {
             if (elem.isSelected()) {
                 continue;
             }
-            int elemW = elem.getWidth()/2;
-            int elemH = elem.getHeight()/2;
+            int elemW = elem.getWidth() / 2;
+            int elemH = elem.getHeight() / 2;
 
             // test left line
-            if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()-elemH),
-                    new Point(elem.getX()-elemW, elem.getY()+elemH), elementStart, elementEnd)) {
+            if (ConnectionLine.isAreaCrossing(new Point(elem.getX() - elemW, elem.getY() - elemH),
+                new Point(elem.getX() - elemW, elem.getY() + elemH), elementStart, elementEnd)) {
                 return false;
             }
 
             // test right line
-            if (ConnectionLine.isAreaCrossing(new Point(elem.getX()+elemW, elem.getY()-elemH),
-                    new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd)) {
+            if (ConnectionLine.isAreaCrossing(new Point(elem.getX() + elemW, elem.getY() - elemH),
+                new Point(elem.getX() + elemW, elem.getY() + elemH), elementStart, elementEnd)) {
                 return false;
             }
 
             // test top line
-            if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()-elemH),
-                    new Point(elem.getX()+elemW, elem.getY()-elemH), elementStart, elementEnd)) {
+            if (ConnectionLine.isAreaCrossing(new Point(elem.getX() - elemW, elem.getY() - elemH),
+                new Point(elem.getX() + elemW, elem.getY() - elemH), elementStart, elementEnd)) {
                 return false;
             }
 
             // test bottom line
-            if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()+elemH),
-                    new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd)) {
+            if (ConnectionLine.isAreaCrossing(new Point(elem.getX() - elemW, elem.getY() + elemH),
+                new Point(elem.getX() + elemW, elem.getY() + elemH), elementStart, elementEnd)) {
                 return false;
             }
         }
@@ -504,8 +499,8 @@ public class Schema {
             if (elem.isSelected()) {
                 continue;
             }
-            Point elementStart = new Point(elem.getX() - elem.getWidth()/2, elem.getY()- elem.getHeight()/2);
-            Point elementEnd = new Point(elem.getX() + elem.getWidth()/2, elem.getY() + elem.getHeight()/2);
+            Point elementStart = new Point(elem.getX() - elem.getWidth() / 2, elem.getY() - elem.getHeight() / 2);
+            Point elementEnd = new Point(elem.getX() + elem.getWidth() / 2, elem.getY() + elem.getHeight() / 2);
             if (ConnectionLine.isAreaCrossingPoint(elementStart, elementEnd, new Point(newX, newY))) {
                 return false;
             }

@@ -19,10 +19,10 @@
  */
 package net.sf.emustudio.zilogZ80.impl.suite;
 
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryByte;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryExpand;
-import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.injectors.RegisterPair;
 import net.sf.emustudio.zilogZ80.impl.suite.injectors.RegisterPair2;
 import net.sf.emustudio.zilogZ80.impl.suite.injectors.RegisterPairPSW;
@@ -102,7 +102,7 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
 
     public IntegerTestBuilder first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte() {
         runner.injectTwoOperands((tmpRunner, first, second) ->
-                new MemoryByte(get8MSBplus8LSB(first)).accept(tmpRunner, second.byteValue())
+            new MemoryByte(get8MSBplus8LSB(first)).accept(tmpRunner, second.byteValue())
         );
         return this;
     }

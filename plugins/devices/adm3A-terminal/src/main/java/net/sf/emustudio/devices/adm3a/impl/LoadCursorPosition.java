@@ -28,6 +28,7 @@ class LoadCursorPosition {
     private static final int ASCII_ESC = 0x1B;
     // Offset in ASCII for X and Y coordinate
     private static final int ASCII_COORDINATE_OFFSET = 32;
+
     enum ExpectedSequence {
         ESCAPE, ASSIGN, X, Y
     }

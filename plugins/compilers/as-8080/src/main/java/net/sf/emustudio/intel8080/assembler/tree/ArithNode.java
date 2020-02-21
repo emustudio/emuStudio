@@ -26,21 +26,21 @@ public class ArithNode extends ExprNode {
     private ExprNode left;
     private ExprNode right;
     private String operator;
-    
+
     public ArithNode(ExprNode left, ExprNode right, String operator) {
         this.left = left;
         this.right = right;
         this.operator = operator;
     }
-    
+
     @Override
     public int eval(CompileEnv env, int curr_addr) throws Exception {
-        int lv = left.eval(env,curr_addr);
+        int lv = left.eval(env, curr_addr);
         int rv = 0;
         if (right != null) {
             rv = right.eval(env, curr_addr);
         }
- 
+
         this.value = 0;
         switch (operator) {
             case "or":
@@ -80,7 +80,7 @@ public class ArithNode extends ExprNode {
                 this.value = (lv == rv) ? 1 : 0;
                 break;
         }
-        
+
         return this.value;
     }
 

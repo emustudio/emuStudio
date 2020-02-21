@@ -1,0 +1,58 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+  id 'java'
+  id 'org.xbib.gradle.plugin.jflex' version "1.2.1"
+  id "cup.gradle.cup-gradle-plugin" version "1.2"
+}
+
+dependencies {
+  implementation libs.emuLib
+  runtimeOnly libs.javaCupRuntime
+
+  testImplementation project(":cpu-testsuite")
+  testImplementation libs.junit
+  testImplementation libs.easyMock
+}
+
+sourceSets.main.java.srcDirs = [
+  "${buildDir}/generated-sources/jflex", "${buildDir}/generated-sources/cup", 'src/main/java'
+]
+
+jflex {
+  generateDir = project.file("${buildDir}/generated-sources/jflex/net/sf/emustudio/intel8080/assembler/impl")
+}
+
+cup {
+  generateDir = "${buildDir}/generated-sources/cup/net/sf/emustudio/intel8080/assembler/impl"
+  args = [
+    "-parser", "ParserImpl", "-symbols", "Symbols", "-interface"
+  ]
+}
+
+
+jar {
+  archiveVersion = ''
+  manifest {
+    attributes manifestAttributes('net.sf.emustudio.intel8080.assembler.impl.Main')
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+      "project.version": project.version
+    ]
+  }
+}
+
+
+copy {
+  from('src/main/examples')
+  into "$buildDir/libs/examples"
+}
+
+copy {
+  from('src/main/scripts')
+  into "$buildDir/libs/scripts"
+}

@@ -24,11 +24,10 @@ import java.util.function.BiConsumer;
 
 /**
  * Program memory expander.
- *
+ * <p>
  * Used as an injector for TestRunner.
- *
+ * <p>
  * Ensures that memory has at least specified size. The size is injected from TestRunner.
- *
  */
 public class MemoryExpand<T extends CpuRunner> implements BiConsumer<T, Integer> {
 
