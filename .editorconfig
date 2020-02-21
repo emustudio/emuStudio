@@ -2,6 +2,9 @@
 end_of_line = lf
 insert_final_newline = true
 
+[*.bat]
+end_of_line = crlf
+
 [*.{java, py, sh}]
 charset = utf-8
 
