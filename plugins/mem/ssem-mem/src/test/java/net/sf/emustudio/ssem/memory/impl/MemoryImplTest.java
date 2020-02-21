@@ -19,7 +19,6 @@
  */
 package net.sf.emustudio.ssem.memory.impl;
 
-import emulib.emustudio.SettingsManager;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import org.junit.Test;
@@ -30,7 +29,7 @@ import static org.junit.Assert.*;
 public class MemoryImplTest {
 
     @Test(expected = NullPointerException.class)
-    public void testCreateInstanceWithNullContextPoolThrows() throws Exception {
+    public void testCreateInstanceWithNullContextPoolThrows() {
         new MemoryImpl(0L, null);
     }
 
@@ -47,29 +46,21 @@ public class MemoryImplTest {
     }
 
     @Test
-    public void testGetSizeReturnsNumberOfCells() throws Exception {
+    public void testGetSizeReturnsNumberOfCells() {
         MemoryImpl memory = new MemoryImpl(0L, createNiceMock(ContextPool.class));
 
         assertEquals(MemoryContextImpl.NUMBER_OF_CELLS, memory.getSize());
     }
 
     @Test
-    public void testIsShowSettingsSupportedReturnsTrueByDefault() throws Exception {
+    public void testIsShowSettingsSupportedReturnsTrueByDefault() {
         MemoryImpl memory = new MemoryImpl(0L, createNiceMock(ContextPool.class));
 
         assertTrue(memory.isShowSettingsSupported());
     }
 
     @Test
-    public void testInitializeWithGUIdoesNotThrow() throws Exception {
-        MemoryImpl memory = new MemoryImpl(0L, createNiceMock(ContextPool.class));
-
-        // just to increase coverage
-        memory.initialize(createNiceMock(SettingsManager.class));
-    }
-
-    @Test
-    public void testGetVersionDoesNotReturnNull() throws Exception {
+    public void testGetVersionDoesNotReturnNull() {
         MemoryImpl memory = new MemoryImpl(0L, createNiceMock(ContextPool.class));
 
         assertNotNull(memory.getVersion());
