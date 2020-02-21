@@ -1,7 +1,7 @@
 # Welcome to emuStudio
-[![Build Status](https://travis-ci.org/vbmacher/emuStudio.svg?branch=develop)](https://travis-ci.org/vbmacher/emuStudio)
+![emuStudio Build](https://github.com/emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
 
-[emuStudio](www.emustudio.net) is a desktop application which allows to write programs and emulate computers.
+[emuStudio](https://www.emustudio.net/) is a desktop application which allows to write programs and emulate computers.
 In addition, it is easily extensible - acting as a framework it encourages developers to write their own computer
 emulator. It is versatile, free, and written in Java.
 
@@ -25,7 +25,7 @@ It is also appropriate for using at schools; for example, emuStudio is used at
 
 There exist some additional projects, which are either incorporated in or used by emuStudio:
   
-- [emuLib](https://github.com/vbmacher/emuLib), a run-time library
+- [emuLib](https://github.com/emustudio/emuLib), a run-time library
 - [edigen](https://github.com/sulir/edigen), an emulator disassembler generator
 
 
