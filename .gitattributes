@@ -19,6 +19,7 @@
 *.jflex eol=lf
 *.md eol=lf
 *.b eol=lf
+*.bat=crlf
 
 # Declare files that are truly binary and shouldn't be modified.
 *.jpeg binary

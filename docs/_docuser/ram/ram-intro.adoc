@@ -103,7 +103,7 @@ After the run, the following output on the stdout can be expected:
 [INFO] [Info    (000)] RAM Compiler, version 0.39-SNAPSHOT
 [INFO] [Info    (000)] Compile was successful.
 [INFO] [Info    (000)] Compiled file was loaded into operating memory.
-[INFO] [Info    (000)] Compilation was saved to the file: /home/vbmacher/tmp/emustudio/examples/ramc-ram/factorial.ro
+[INFO] [Info    (000)] Compilation was saved to the file: /home/vbmacher/tmp/net.emustudio/examples/ramc-ram/factorial.ro
 [INFO] Compiler finished successfully.
 [INFO] Program start address: 0000h
 [INFO] Resetting CPU...

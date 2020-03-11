@@ -2,7 +2,7 @@ Intel 8080 CPU plug-in
 -----------------------
 
 This is another Java-based emulator of 8-bit Intel 8080 CPU. It is implemented as a plug-in for
-[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform.
+[emuStudio](http://net.emustudio.sf.net), a software-based computer emulation platform.
 
 This project has been the first attempt of creating the emuStudio (it was called emu8 in that time).
 After time passed, the emulator was enhanced. The CPU emulator of the Intel 8080 processor was separated
@@ -32,5 +32,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

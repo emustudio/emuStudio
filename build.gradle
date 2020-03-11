@@ -1,3 +1,22 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2020  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import java.text.SimpleDateFormat
 
 ext.versions = [
@@ -5,7 +24,8 @@ ext.versions = [
 ]
 
 ext.libs = [
-  emuLib         : "net.sf.emustudio:emuLib:9.0.1",
+  emuLib         : "net.emustudio:emulib:11.0.0",
+  cpuTestSuite   : "net.emustudio:cpu-testsuite_11.0:1.1.0",
 
   javaCupRuntime : "com.github.vbmacher:java-cup-runtime:11b-20160615",
   jcipAnnotations: "net.jcip:jcip-annotations:1.0",
@@ -16,8 +36,9 @@ ext.libs = [
   logback        : "ch.qos.logback:logback-classic:1.2.3",
 
   args4j         : "args4j:args4j:2.33",
+  tomlj          : "com.electronwill.night-config:toml:3.6.2",
 
-  junit          : "junit:junit:4.12",
+  junit          : "junit:junit:4.13",
   easyMock       : "org.easymock:easymock:4.2",
   mockito        : "org.mockito:mockito-all:1.9.5"
 ]

@@ -4,7 +4,7 @@ LSI ADM-3A terminal plug-in
 The project represents an emulator of [ADM-3A](http://en.wikipedia.org/wiki/ADM-3A)
 terminal device from LSI company. It was used with old computers, e.g. MITS Altair8800.
 The terminal was connected into RS-232 serial port (in emuStudio, it can be plugged into
-MITS 88-SIO device). The project is implemented as a plug-in for [emuStudio](http://emustudio.sf.net),
+MITS 88-SIO device). The project is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net),
 a software-based computer emulation platform.
 
 Some main properties of the product include:
@@ -30,5 +30,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

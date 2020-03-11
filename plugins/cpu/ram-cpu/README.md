@@ -2,7 +2,7 @@ Random Access Machine emulator
 ------------------------------
 
 This is a Java-based emulator of Ranom Access Machine (RAM), used in theoretical informatics. It is implemented as a plug-in for
-[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform.
+[emuStudio](http://net.emustudio.sf.net), a software-based computer emulation platform.
 
 Random Access Machine (RAM) is abstract machine derived from Turing machine. It was created for easier computation of algorithms`
 complexity, in comparison to Turing machine. Originally, RAM is of Harvard architecture, but it is implemented also in the emuStudio,
@@ -27,5 +27,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

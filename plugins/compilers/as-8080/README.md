@@ -2,7 +2,7 @@ Intel 8080 Assembler plug-in
 ----------------------------
 
 This project is light modified (enhanced) "clone" of original Intel's 8080 assembler, written in Java.
-It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
+It is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based computer
 emulation platform.
 
 The assembler syntax is taken from manual found at [this](http://www.classiccmp.org/dunfield/r/8080asm.pdf)
@@ -32,4 +32,4 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).

@@ -1,3 +1,22 @@
+<!--
+  ~ This file is part of emuStudio.
+  ~
+  ~ Copyright (C) 2006-2020  Peter Jakubčo
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -307,7 +326,7 @@ pom.xml</pre>
                         as follows:</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java</code></div>
                     <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #AA22FF">@PluginType</span><span
         style="color: #666666">(</span>
@@ -326,7 +345,7 @@ pom.xml</pre>
 
     <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">CpuImpl</span><span
             style="color: #666666">(</span>Long pluginID<span
-            style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span
+            style="color: #666666">,</span> ContextPool contextPoolImpl<span style="color: #666666">)</span> <span
             style="color: #666666">{</span>
         <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span
             style="color: #666666">);</span>
@@ -740,26 +759,26 @@ pom.xml</pre>
                         method.</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java</code></div>
                     <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span
         style="color: #008000; font-weight: bold">class</span> <span
         style="color: #0000FF; font-weight: bold">CpuImpl</span> <span
         style="color: #008000; font-weight: bold">extends</span> AbstractCPU <span style="color: #666666">{</span>
     <span style="color: #008000; font-weight: bold">private</span> <span
-            style="color: #008000; font-weight: bold">final</span> ContextPool contextPool<span
+            style="color: #008000; font-weight: bold">final</span> ContextPool contextPoolImpl<span
             style="color: #666666">;</span>
 
     <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">CpuImpl</span><span
             style="color: #666666">(</span>Long pluginID<span
-            style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span
+            style="color: #666666">,</span> ContextPool contextPoolImpl<span style="color: #666666">)</span> <span
             style="color: #666666">{</span>
         <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span
             style="color: #666666">);</span>
         <span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">.</span><span
-            style="color: #7D9029">contextPool</span> <span style="color: #666666">=</span> Objects<span
+            style="color: #7D9029">contextPoolImpl</span> <span style="color: #666666">=</span> Objects<span
             style="color: #666666">.</span><span style="color: #7D9029">requireNonNull</span><span
-            style="color: #666666">(</span>contextPool<span style="color: #666666">);</span>
+            style="color: #666666">(</span>contextPoolImpl<span style="color: #666666">);</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
@@ -788,7 +807,7 @@ pom.xml</pre>
                     <p>The first step of the initialization is getting the memory from the context pool:</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java</code></div>
                     <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span
         style="color: #008000; font-weight: bold">class</span> <span
@@ -802,7 +821,7 @@ pom.xml</pre>
             style="color: #0000FF">initialize</span><span style="color: #666666">(</span>SettingsManager settingsManager<span
             style="color: #666666">)</span> <span style="color: #008000; font-weight: bold">throws</span> PluginInitializationException <span
             style="color: #666666">{</span>
-        memory <span style="color: #666666">=</span> contextPool<span style="color: #666666">.</span><span
+        memory <span style="color: #666666">=</span> contextPoolImpl<span style="color: #666666">.</span><span
             style="color: #7D9029">getMemoryContext</span><span style="color: #666666">(</span>getPluginID<span
             style="color: #666666">(),</span> MemoryContext<span style="color: #666666">.</span><span
             style="color: #7D9029">class</span><span style="color: #666666">);</span>
@@ -944,7 +963,7 @@ pom.xml</pre>
                     <p>The class looks as follows:</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java</code></div>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/EmulatorEngine.java</code></div>
                     <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span
         style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EmulatorEngine</span> <span
@@ -1202,7 +1221,7 @@ pom.xml</pre>
                         <p>We implement this in the <code>run()</code> method, right before instruction execution:</p>
                     </div>
                     <div class="listingblock">
-                        <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java</code>
+                        <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/EmulatorEngine.java</code>
                         </div>
                         <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span
@@ -1304,7 +1323,7 @@ pom.xml</pre>
                             the machine cycle
                             as a time of elementary phase when performing the instruction. Based on this information
                             which is
-                            usually available, can be build a technique for preserving speed even better.</p>
+                            usually available, can be net.emustudio.architecture.build a technique for preserving speed even better.</p>
                     </div>
                     <div class="admonitionblock note">
                         <table>
@@ -1314,7 +1333,7 @@ pom.xml</pre>
                                 </td>
                                 <td class="content">
                                     Description of the speed-preservation technique can be seen e.g. at
-                                    <a href="http://emustudio.sourceforge.net/downloads/2010-cse.pdf">this link</a>.
+                                    <a href="http://net.emustudio.sourceforge.net/downloads/2010-cse.pdf">this link</a>.
                                 </td>
                             </tr>
                         </table>
@@ -1457,7 +1476,7 @@ pom.xml</pre>
                             algorithm can look as follows (there&#8217;s lot to improve ofcourse):</p>
                     </div>
                     <div class="listingblock">
-                        <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java</code>
+                        <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/EmulatorEngine.java</code>
                         </div>
                         <div class="content">
 <pre>public class EmulatorEngine {
@@ -1594,9 +1613,9 @@ pom.xml</pre>
         <span style="color: #008000; font-weight: bold">&lt;artifactId&gt;</span>edigen-maven-plugin<span
             style="color: #008000; font-weight: bold">&lt;/artifactId&gt;</span>
         <span style="color: #008000; font-weight: bold">&lt;configuration&gt;</span>
-          <span style="color: #008000; font-weight: bold">&lt;decoderName&gt;</span>net.sf.emustudio.ssem.DecoderImpl<span
+          <span style="color: #008000; font-weight: bold">&lt;decoderName&gt;</span>net.sf.net.emustudio.ssem.DecoderImpl<span
             style="color: #008000; font-weight: bold">&lt;/decoderName&gt;</span>
-          <span style="color: #008000; font-weight: bold">&lt;disassemblerName&gt;</span>net.sf.emustudio.ssem.DisassemblerImpl<span
+          <span style="color: #008000; font-weight: bold">&lt;disassemblerName&gt;</span>net.sf.net.emustudio.ssem.DisassemblerImpl<span
             style="color: #008000; font-weight: bold">&lt;/disassemblerName&gt;</span>
         <span style="color: #008000; font-weight: bold">&lt;/configuration&gt;</span>
         <span style="color: #008000; font-weight: bold">&lt;executions&gt;</span>
@@ -1613,7 +1632,7 @@ pom.xml</pre>
                     </div>
                     <div class="paragraph">
                         <p>The disassembler will be generated in the class
-                            <code>net.sf.emustudio.ssem.DisassemblerImpl</code>. The class already implements
+                            <code>net.sf.net.emustudio.ssem.DisassemblerImpl</code>. The class already implements
                             the interface <code>emulib.plugins.cpu.Disassembler</code>, which is exactly what method
                             <code>CPU.getDisassembler()</code> returns.
                             Disassembler is an independent component so it also uses the memory from where it reads the
@@ -1623,7 +1642,7 @@ pom.xml</pre>
                             the engine as well as disassembler. The code looks as follows:</p>
                     </div>
                     <div class="listingblock">
-                        <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
+                        <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java</code></div>
                         <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span
         style="color: #008000; font-weight: bold">class</span> <span
@@ -1642,7 +1661,7 @@ pom.xml</pre>
             style="color: #0000FF">initialize</span><span style="color: #666666">(</span>SettingsManager settingsManager<span
             style="color: #666666">)</span> <span style="color: #008000; font-weight: bold">throws</span> PluginInitializationException <span
             style="color: #666666">{</span>
-        memory <span style="color: #666666">=</span> contextPool<span style="color: #666666">.</span><span
+        memory <span style="color: #666666">=</span> contextPoolImpl<span style="color: #666666">.</span><span
             style="color: #7D9029">getMemoryContext</span><span style="color: #666666">(</span>getPluginID<span
             style="color: #666666">(),</span> MemoryContext<span style="color: #666666">.</span><span
             style="color: #7D9029">class</span><span style="color: #666666">);</span>
@@ -1769,7 +1788,7 @@ pom.xml</pre>
                     <p>The class code is:</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>ssem-cpu/src/main/java/net/sf/emustudio/ssem/cpu/CpuPanel.java</code></div>
+                    <div class="title"><code>ssem-cpu/src/main/java/net/sf/net.emustudio/ssem/cpu/CpuPanel.java</code></div>
                     <div class="content">
                         <pre class="pygments highlight"><code
                                 data-lang="java"><span></span>Unresolved directive in cpu<span
@@ -1780,7 +1799,7 @@ pom.xml</pre>
                                 style="color: #666666">/</span>ssem<span style="color: #666666">-</span>cpu<span
                                 style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                 style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                 style="color: #666666">/</span>ssem<span style="color: #666666">/</span>cpu<span
                                 style="color: #666666">/</span>CpuPanel<span style="color: #666666">.</span><span
                                 style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span
@@ -1825,7 +1844,7 @@ pom.xml</pre>
                     <p>Now we need to incorporate the panel into the main class. It&#8217;s easy:</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java</code></div>
                     <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span
         style="color: #008000; font-weight: bold">class</span> <span
@@ -1887,7 +1906,7 @@ pom.xml</pre>
                     <p>At first, let&#8217;s implement the class:</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/AutomaticEmulation.java</code>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/AutomaticEmulation.java</code>
                     </div>
                     <div class="content">
                         <pre class="pygments highlight"><code
@@ -1899,7 +1918,7 @@ pom.xml</pre>
                                 style="color: #666666">/</span>ssem<span style="color: #666666">-</span>cpu<span
                                 style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                 style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                 style="color: #666666">/</span>ssem<span style="color: #666666">/</span>cpu<span
                                 style="color: #666666">/</span>AutomaticEmulation<span
                                 style="color: #666666">.</span><span style="color: #7D9029">java</span><span
@@ -1910,7 +1929,7 @@ pom.xml</pre>
                     <p>Then, the class should be incorporated to the main class:</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java</code></div>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java</code></div>
                     <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">public</span> <span
         style="color: #008000; font-weight: bold">class</span> <span
@@ -2045,7 +2064,7 @@ CI=0x8
             <div class="container">
                 <ul class="nav navbar-nav">
                     <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                    <li><a href="https://sourceforge.net/p/net.emustudio/" rel="nofollow"><img alt="Download emuStudio"
                                                                                            src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
                     </li>
                     <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>

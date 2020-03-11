@@ -17,62 +17,66 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.ram.compiler.impl;
+package net.emustudio.plugins.compilers.ramc;
 
-import emulib.plugins.compiler.Message;
-import emulib.plugins.compiler.Message.MessageType;
-import emulib.plugins.compiler.Token;
+import java_cup.runtime.DefaultSymbolFactory;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
+import net.emustudio.emulib.plugins.compiler.Token;
+import net.emustudio.plugins.compilers.ramc.tree.Label;
+import net.emustudio.plugins.compilers.ramc.tree.Program;
+import net.emustudio.plugins.compilers.ramc.tree.RAMInstructionImpl;
+import net.emustudio.plugins.compilers.ramc.tree.Row;
+import net.emustudio.plugins.memory.ram.api.RAMInstruction;
+import net.emustudio.plugins.memory.ram.api.RAMInstruction.Direction;
+
 import java.util.ArrayList;
 import java.util.List;
-import java_cup.runtime.Symbol;
-import net.sf.emustudio.ram.compiler.tree.*;
-import net.sf.emustudio.ram.memory.RAMInstruction;
-import net.sf.emustudio.ram.memory.RAMInstruction.Direction;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-init with {: errorCount = 0; :}
 parser code {:
-    private RAMCompiler compiler;
-    public Token lastToken;
-    public int errorCount = 0;
-    private String reportPrefixString = null;
-    
-    public void setCompiler(RAMCompiler compiler) {
-        this.compiler = compiler;
-    }
+    private CompilerImpl compiler;
+    private boolean syntaxErrors;
 
-    public void syntax_error(Symbol current) {
-        errorCount++;
-        report_error("Syntax error: ",current);
-    }
-
-    public void unrecovered_syntax_error(Symbol current) {
-        errorCount++;
-        report_error("Fatal syntax error: ", current);
-        done_parsing();
-    }
-
-    public void report_error(String messageText, Symbol current) {
-        Token token = (Token)current;
-
-        messageText = messageText + token.getErrorString() + " ('"+token.getText()+"')";
-        if (reportPrefixString != null) {
-            messageText = reportPrefixString + messageText;
+        public ParserImpl(LexerImpl lexer, CompilerImpl compiler) {
+            super(lexer, new DefaultSymbolFactory());
+            this.compiler = Objects.requireNonNull(compiler);
         }
 
-        Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
-                null, errorCount);
+        @Override
+        public void report_fatal_error(String message, Object info) throws Exception {
+            done_parsing();
+            report_error(message, info);
+            throw new Exception("Can't recover from previous error(s)");
+        }
 
-        if (compiler != null) {
+        @Override
+        public void report_error(String messageText, Object current) {
+            syntaxErrors = true;
+
+            Token token = (Token)current;
+
+            messageText += ":" + token.getErrorString() + " ('" + token.getText() + "')";
+
+            List<String> expectedTokenIds = expected_token_ids()
+                .stream()
+                .map(this::symbl_name_from_id)
+                .collect(Collectors.toList());
+
+            if (!expectedTokenIds.isEmpty()) {
+                messageText += "\nExpected tokens: " + expectedTokenIds;
+            }
+
+            CompilerMessage message = new CompilerMessage(
+                CompilerMessage.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn()
+            );
+
             compiler.notifyOnMessage(message);
-        } else {
-            System.out.println(message.getFormattedMessage());
         }
-    }
 
-    public void setReportPrefixString(String str) {
-        this.reportPrefixString = str;
-    }
-
+        public boolean hasSyntaxErrors() {
+            return syntaxErrors;
+        }
 :}
 
 terminal HALT,LOAD,STORE,READ,WRITE,ADD,SUB,MUL,DIV,JMP,JZ,JGTZ;

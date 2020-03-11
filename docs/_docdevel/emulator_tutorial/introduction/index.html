@@ -1,3 +1,22 @@
+<!--
+  ~ This file is part of emuStudio.
+  ~
+  ~ Copyright (C) 2006-2020  Peter Jakubčo
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -149,7 +168,7 @@
                     it won&#8217;t be said otherwise.</p>
             </div>
             <div class="sect2">
-                <h3 id="what-is-emustudio">What is emuStudio</h3>
+                <h3 id="what-is-net.emustudio">What is emuStudio</h3>
                 <div class="paragraph">
                     <p>From user&#8217;s point of view, emuStudio can be understood as an <strong>emulation
                         platform</strong>, because it can run various emulators
@@ -295,7 +314,7 @@
                                     <i class="fa icon-caution" title="Caution"></i>
                                 </td>
                                 <td class="content">
-                                    emuStudio uses Maven for the build lifecycle management. All dependencies and their
+                                    emuStudio uses Maven for the net.emustudio.architecture.build lifecycle management. All dependencies and their
                                     versions are defined in
                                     the root <code>pom.xml</code> file. When you use a library or some technology which
                                     is listed there, please use the
@@ -478,7 +497,7 @@ git push</code></pre>
                 </div>
                 <div class="imageblock">
                     <div class="content">
-                        <img src="/images/emustudio-plugins.svg" alt="emustudio plugins" width="493" height="214">
+                        <img src="/images/net.emustudio-plugins.svg" alt="net.emustudio plugins" width="493" height="214">
                     </div>
                 </div>
                 <div class="paragraph">
@@ -632,7 +651,7 @@ Implementation-Version: 0.40-SNAPSHOT
 Archiver-Version: Plexus Archiver
 Built-By: vbmacher
 Specification-Title: RAM Compiler
-Implementation-Vendor-Id: net.sf.emustudio
+Implementation-Vendor-Id: net.sf.net.emustudio
 Class-Path: mem/ram-mem.jar lib/java-cup-runtime-11b.jar
 Created-By: Apache Maven 3.3.3
 Build-Jdk: 1.8.0_65
@@ -766,7 +785,7 @@ Specification-Version: 0.40-SNAPSHOT</code></pre>
                         <div class="listingblock">
                             <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span>SamplePlugin<span style="color: #666666">(</span>Long pluginId<span
-        style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span
+        style="color: #666666">,</span> ContextPool contextPoolImpl<span style="color: #666666">)</span> <span
         style="color: #666666">{</span>
     <span style="color: #666666">...</span>
 <span style="color: #666666">}</span></code></pre>
@@ -994,7 +1013,7 @@ Specification-Version: 0.40-SNAPSHOT</code></pre>
             <div class="sect2">
                 <h3 id="use-maven-if-you-can">Use Maven if you can</h3>
                 <div class="paragraph">
-                    <p>Maven is a standard for Java projects today. It helps with the build process and manages
+                    <p>Maven is a standard for Java projects today. It helps with the net.emustudio.architecture.build process and manages
                         dependencies in satisfying
                         and reusable way.</p>
                 </div>
@@ -1007,11 +1026,11 @@ Specification-Version: 0.40-SNAPSHOT</code></pre>
                     <div class="content">
 <pre class="pygments highlight"><code data-lang="xml"><span></span><span style="color: #008000; font-weight: bold">&lt;distributionManagement&gt;</span>
   <span style="color: #008000; font-weight: bold">&lt;repository&gt;</span>
-    <span style="color: #008000; font-weight: bold">&lt;id&gt;</span>emustudio-repository<span
+    <span style="color: #008000; font-weight: bold">&lt;id&gt;</span>net.emustudio-repository<span
             style="color: #008000; font-weight: bold">&lt;/id&gt;</span>
     <span style="color: #008000; font-weight: bold">&lt;name&gt;</span>emuStudio Repository<span
             style="color: #008000; font-weight: bold">&lt;/name&gt;</span>
-    <span style="color: #008000; font-weight: bold">&lt;url&gt;</span>sftp://web.sourceforge.net:/home/project-web/emustudio/htdocs/repository<span
+    <span style="color: #008000; font-weight: bold">&lt;url&gt;</span>sftp://web.sourceforge.net:/home/project-web/net.emustudio/htdocs/repository<span
             style="color: #008000; font-weight: bold">&lt;/url&gt;</span>
   <span style="color: #008000; font-weight: bold">&lt;/repository&gt;</span>
 <span style="color: #008000; font-weight: bold">&lt;/distributionManagement&gt;</span></code></pre>
@@ -1148,7 +1167,7 @@ Specification-Version: 0.40-SNAPSHOT</code></pre>
                 </div>
             </div>
             <div class="sect2">
-                <h3 id="incorporating-a-plug-in-to-emustudio">Incorporating a plug-in to emuStudio</h3>
+                <h3 id="incorporating-a-plug-in-to-net.emustudio">Incorporating a plug-in to emuStudio</h3>
                 <div class="paragraph">
                     <p>The philosophy about releasing is to keep everything as automatic as possible. The main reason is
                         that if it was manual,
@@ -1198,7 +1217,7 @@ Specification-Version: 0.40-SNAPSHOT</code></pre>
 <pre>    &lt;dependencySet&gt;
       &lt;includes&gt;
         ...
-        &lt;include&gt;net.sf.emustudio:as-ssem&lt;/include&gt;
+        &lt;include&gt;net.sf.net.emustudio:as-ssem&lt;/include&gt;
       &lt;/includes&gt;
       ...
       &lt;outputDirectory&gt;/compilers&lt;/outputDirectory&gt;
@@ -1293,7 +1312,7 @@ Specification-Version: 0.40-SNAPSHOT</code></pre>
             <div class="container">
                 <ul class="nav navbar-nav">
                     <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                    <li><a href="https://sourceforge.net/p/net.emustudio/" rel="nofollow"><img alt="Download emuStudio"
                                                                                            src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
                     </li>
                     <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>

@@ -18,79 +18,62 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package net.sf.emustudio.rasp.compiler;
+package net.emustudio.plugins.compilers.raspc;
 
-import emulib.plugins.compiler.Message;
-import emulib.plugins.compiler.Token;
-import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.Symbol;
-
-import net.sf.emustudio.rasp.compiler.tree.*;
-import net.sf.emustudio.rasp.memory.memoryitems.RASPInstruction;
-import net.sf.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
+import java_cup.runtime.DefaultSymbolFactory;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
+import net.emustudio.emulib.plugins.compiler.Token;
+import net.emustudio.plugins.compilers.raspc.tree.*;
+import net.emustudio.plugins.memory.rasp.RASPInstructionImpl;
+import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-init with{: syntaxErrors = false; :}
 parser code{:
-	private LexerImpl lexer;
-	private boolean syntaxErrors;
-	private CompilerImpl compiler;
-		
-	public ParserImpl(LexerImpl lexer, ComplexSymbolFactory csf, CompilerImpl compiler){
-		super(lexer, csf);
-		this.lexer = Objects.requireNonNull(lexer);
-		this.compiler = Objects.requireNonNull(compiler);
-	}
+   private CompilerImpl compiler;
+    private boolean syntaxErrors;
 
-	@Override
-	public void report_fatal_error(String message, Object info) throws Exception{
-		//cancel parsing
-		done_parsing();
-		report_error(message, info);
-		throw new Exception("Cannot recover from previous error(s)");
-	}
+        public ParserImpl(LexerImpl lexer, CompilerImpl compiler) {
+            super(lexer, new DefaultSymbolFactory());
+            this.compiler = Objects.requireNonNull(compiler);
+        }
 
-	@Override
-	public void report_error(String messageText, Object current){
-		syntaxErrors = true;
-		Token token = (Token) current;
-                String tokenText;
-                if(token.getID() == TokenImpl.SEPARATOR_EOL){
-                    tokenText = "End of line";
-                }else {
-                    tokenText = token.getText();
-                }
-		messageText+=": " + token.getErrorString()+" (\'" + tokenText + "\')";
+        @Override
+        public void report_fatal_error(String message, Object info) throws Exception {
+            done_parsing();
+            report_error(message, info);
+            throw new Exception("Can't recover from previous error(s)");
+        }
 
-		List<Integer> expectedTokenIds = expected_token_ids();
-                if(!expectedTokenIds.isEmpty()){
-                    StringBuilder sb = new StringBuilder();
-                    for(int ID: expectedTokenIds){
-                            String nameOfNonTerminal = symbl_name_from_id(ID);
-                            sb.append(nameOfNonTerminal + " ");			
-                    }
+        @Override
+        public void report_error(String messageText, Object current) {
+            syntaxErrors = true;
 
-                    messageText+="\nExpected tokens: " + sb.toString();
-                }
+            Token token = (Token)current;
 
-		Message message = new Message(
-			Message.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(), null, 0
-		);
+            messageText += ":" + token.getErrorString() + " ('" + token.getText() + "')";
 
-		if(compiler!=null){
-			compiler.notifyOnMessage(message);
-		}else{
-			System.err.println(message.getFormattedMessage());
-		}
-	}
+            List<String> expectedTokenIds = expected_token_ids()
+                .stream()
+                .map(this::symbl_name_from_id)
+                .collect(Collectors.toList());
 
-	public boolean hasSyntaxErrors(){
-		return syntaxErrors;
-	}
+            if (!expectedTokenIds.isEmpty()) {
+                messageText += "\nExpected tokens: " + expectedTokenIds;
+            }
 
+            CompilerMessage message = new CompilerMessage(
+                CompilerMessage.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn()
+            );
+
+            compiler.notifyOnMessage(message);
+        }
+
+        public boolean hasSyntaxErrors() {
+            return syntaxErrors;
+        }
 :};
 
 terminal READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT, ORG, SEPARATOR_EOL, TCOMMENT, OPERATOR_CONSTANT, ERROR_UNKNOWN_TOKEN;

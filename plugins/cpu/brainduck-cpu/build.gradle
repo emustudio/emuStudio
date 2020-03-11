@@ -1,8 +1,27 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2020  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
-  id 'net.emustudio.edigen-plugin' version '1.0.0'
+  id 'net.emustudio.edigen-plugin' version '1.1.0'
 }
 
 repositories {
@@ -12,9 +31,10 @@ repositories {
 
 dependencies {
   implementation libs.emuLib
+  implementation libs.slf4JApi
   memoryLib project(":plugins:mem:brainduck-mem")
 
-  testImplementation project(":cpu-testsuite")
+  testImplementation libs.cpuTestSuite
   testImplementation libs.junit
   testImplementation libs.easyMock
 }
@@ -36,6 +56,6 @@ processResources {
 
 
 edigen {
-  decoderName = 'net.sf.emustudio.braincpu.gui.DecoderImpl'
-  disassemblerName = 'net.sf.emustudio.braincpu.gui.DisassemblerImpl'
+  decoderName = 'net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl'
+  disassemblerName = 'net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl'
 }

@@ -2,7 +2,7 @@ BrainDuck compiler plug-in
 ---------------------------
 
 This is a compiler for my own CPU architecture called BrainDuck (`brainduck-cpu`),
-written in Java. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
+written in Java. It is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based
 computer emulation platform.
 
 BrainDuck is abstract architecture derived from [brainfuck](http://en.wikipedia.org/wiki/Brainfuck), esoteric
@@ -24,4 +24,4 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).

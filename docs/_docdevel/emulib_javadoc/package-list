@@ -1,6 +1,6 @@
 emulib.annotations
-emulib.emustudio
-emulib.emustudio.debugtable
+emulib.net.emustudio
+emulib.net.emustudio.debugtable
 emulib.plugins
 emulib.plugins.compiler
 emulib.plugins.cpu

@@ -2,7 +2,7 @@ Compiler for Random Access Machine (RAM)
 ----------------------------------------
 
 This project is a compiler for abstract machine RAM, used in theoretical informatics, written in Java.
-It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
+It is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based computer
 emulation platform.
 
 The compiler doesn't support compilation into a binary file, but outputs the result directly to
@@ -27,4 +27,4 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).

@@ -82,7 +82,7 @@ technologies", which are listed in the following table:
 |http://asciidoctor.org/
 |===
 
-CAUTION: emuStudio uses Maven for the build lifecycle management. All dependencies and their versions are defined in
+CAUTION: emuStudio uses Maven for the net.emustudio.architecture.build lifecycle management. All dependencies and their versions are defined in
       the root `pom.xml` file. When you use a library or some technology which is listed there, please use the
       same version as it is used by emuStudio. You will avoid unexpected conflicts or behavior of your plug-ins.
 
@@ -184,7 +184,7 @@ expected.
 
 The following schema defines all plug-in types and their possible interconnections, as it is currently in emuStudio.
 
-[graphviz,emustudio-plugins,svg]
+[graphviz,net.emustudio-plugins,svg]
 ---------------------------------------------------------------------
 graph virtual_computer {
   splines=true;
@@ -277,7 +277,7 @@ Implementation-Version: 0.40-SNAPSHOT
 Archiver-Version: Plexus Archiver
 Built-By: vbmacher
 Specification-Title: RAM Compiler
-Implementation-Vendor-Id: net.sf.emustudio
+Implementation-Vendor-Id: net.sf.net.emustudio
 Class-Path: mem/ram-mem.jar lib/java-cup-runtime-11b.jar
 Created-By: Apache Maven 3.3.3
 Build-Jdk: 1.8.0_65
@@ -344,7 +344,7 @@ main class must have a constructor with exactly two arguments:
 
 [source,java]
 ----
-SamplePlugin(Long pluginId, ContextPool contextPool) {
+SamplePlugin(Long pluginId, ContextPool contextPoolImpl) {
     ...
 }
 ----
@@ -459,7 +459,7 @@ NOTE: It is not recommended to log information during running emulation. Logging
 
 === Use Maven if you can
 
-Maven is a standard for Java projects today. It helps with the build process and manages dependencies in satisfying
+Maven is a standard for Java projects today. It helps with the net.emustudio.architecture.build process and manages dependencies in satisfying
 and reusable way.
 
 Each official emuStudio module (artifact) is available in custom Maven repository, including emuLib. In order to be able
@@ -469,9 +469,9 @@ to use them from Maven, put the following code into your `pom.xml` file:
 ----
 <distributionManagement>
   <repository>
-    <id>emustudio-repository</id>
+    <id>net.emustudio-repository</id>
     <name>emuStudio Repository</name>
-    <url>sftp://web.sourceforge.net:/home/project-web/emustudio/htdocs/repository</url>
+    <url>sftp://web.sourceforge.net:/home/project-web/net.emustudio/htdocs/repository</url>
   </repository>
 </distributionManagement>
 ----
@@ -561,7 +561,7 @@ set:
     <dependencySet>
       <includes>
         ...
-        <include>net.sf.emustudio:as-ssem</include>
+        <include>net.sf.net.emustudio:as-ssem</include>
       </includes>
       ...
       <outputDirectory>/compilers</outputDirectory>

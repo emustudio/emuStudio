@@ -35,10 +35,10 @@ The template can be found [here](https://github.com/scotch-io/scotch-io.github.i
 This site is using Jekyll static site generator. For more information about how to work with Jekyll,
 please visit [official Jekyll site](https://jekyllrb.com/).
 
-In order to build a production version of the site, enter:
+In order to net.emustudio.architecture.build a production version of the site, enter:
 
 ```bash
-./build.sh
+./net.emustudio.architecture.build.sh
 ```
 
 Then upload the site manually to the hosting server.

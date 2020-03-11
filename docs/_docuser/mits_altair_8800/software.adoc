@@ -11,7 +11,7 @@ Some of the available online sites are:
 - http://altairclone.com/support.htm[Altair clone]
 - http://www.classiccmp.org/cpmarchives/cpm/mirrors/www.schorn.ch/cpm/intro.php[SIMH]
 
-In order to build custom disk images, please follow this link:
+In order to net.emustudio.architecture.build custom disk images, please follow this link:
 
 - http://www.autometer.de/unix4fun/z80pack/
 
@@ -48,7 +48,7 @@ In current implementation of emuStudio, there is only one boot ROM supported - s
 which loads operating system from MITS 88-DISK (through CPU ports).
 
 The boot loader is already available in a file `boot.bin`. You can find it at the
-http://emustudio.sourceforge.net/downloads.html[download page].
+http://net.emustudio.sourceforge.net/downloads.html[download page].
 
 The boot ROM must be loaded into memory at address `0xFF00` (hexadecimal). It is safe to jump to this address manually
 when operating system image file is mounted.
@@ -112,7 +112,7 @@ The following parameters were borrowed from `simh` and were tested:
 ==== Boot ROM
 
 There exist specific version of boot loader (modified probably by `simh` authors) to load CP/M into banked memory.
-It has name `mboot.bin` and you can find it at the http://emustudio.sourceforge.net/downloads.html[download page].
+It has name `mboot.bin` and you can find it at the http://net.emustudio.sourceforge.net/downloads.html[download page].
 Before other steps, please <<XASMEML, load this image into operating memory>> at address 0xFF00 (hexadecimal).
 
 ==== Steps for booting CP/M 3

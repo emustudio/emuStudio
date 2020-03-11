@@ -5,7 +5,7 @@ The aim of this project is to mimic functionality of pseudo device that is imple
 inside [simh](http://simh.trailing-edge.com/) emulator. It is used for the interaction
 between emulated programs and the emuStudio (eg. CP/M 3 operating system assembled for
 the SIMH emulator uses this device). It is implemented as a plug-in for
-[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform.
+[emuStudio](http://net.emustudio.sf.net), a software-based computer emulation platform.
 
 In the present time it can be used side by side with `8080-cpu` or `z80-cpu` plug-ins.
 
@@ -74,5 +74,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

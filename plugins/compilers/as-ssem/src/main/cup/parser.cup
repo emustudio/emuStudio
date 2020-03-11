@@ -17,29 +17,26 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.ssem.assembler;
+package net.emustudio.plugins.compilers.ssem;
 
-import emulib.plugins.compiler.Message;
-import emulib.plugins.compiler.Token;
 import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.Symbol;
-import net.sf.emustudio.ssem.assembler.tree.ASTnode;
-import net.sf.emustudio.ssem.assembler.tree.Constant;
-import net.sf.emustudio.ssem.assembler.tree.Instruction;
-import net.sf.emustudio.ssem.assembler.tree.Program;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
+import net.emustudio.emulib.plugins.compiler.Token;
+import net.emustudio.plugins.compilers.ssem.tree.ASTnode;
+import net.emustudio.plugins.compilers.ssem.tree.Constant;
+import net.emustudio.plugins.compilers.ssem.tree.Instruction;
+import net.emustudio.plugins.compilers.ssem.tree.Program;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 parser code {:
-    private LexerImpl lexer;
+    private CompilerImpl compiler; // cannot be final because cup generates garbage constructors
     private boolean syntaxErrors;
-    private CompilerImpl compiler;
 
-    public ParserImpl(LexerImpl lex, ComplexSymbolFactory csf, CompilerImpl compiler) {
-        super(lex, csf);
-        lexer = Objects.requireNonNull(lex);
+    public ParserImpl(LexerImpl lexer, CompilerImpl compiler) {
+        super(lexer, new ComplexSymbolFactory());
         this.compiler = Objects.requireNonNull(compiler);
     }
 
@@ -47,7 +44,7 @@ parser code {:
     public void report_fatal_error(String message, Object info) throws Exception {
         done_parsing();
         report_error(message, info);
-        throw new Exception("Can\'t recover from previous error(s)");
+        throw new Exception("Can't recover from previous error(s)");
     }
 
     @Override
@@ -58,24 +55,20 @@ parser code {:
 
         messageText += ":" + token.getErrorString() + " ('" + token.getText() + "')";
 
-        List expectedTokenIds = expected_token_ids()
+        List<String> expectedTokenIds = expected_token_ids()
             .stream()
-            .map(id -> symbl_name_from_id(id.intValue()))
+            .map(this::symbl_name_from_id)
             .collect(Collectors.toList());
 
         if (!expectedTokenIds.isEmpty()) {
             messageText += "\nExpected tokens: " + expectedTokenIds;
         }
 
-        Message message = new Message(
-            Message.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(), null, 0
+        CompilerMessage message = new CompilerMessage(
+            CompilerMessage.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn()
         );
 
-        if (compiler != null) {
-            compiler.notifyOnMessage(message);
-        } else {
-            System.err.println(message.getFormattedMessage());
-        }
+        compiler.notifyOnMessage(message);
     }
 
     public boolean hasSyntaxErrors() {

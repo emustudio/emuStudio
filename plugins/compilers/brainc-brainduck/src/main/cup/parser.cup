@@ -17,44 +17,60 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.brainduck.brainc.impl;
+package net.emustudio.plugins.compilers.brainc;
 
-import java_cup.runtime.Symbol;
-import emulib.plugins.compiler.Token;
-import net.sf.emustudio.brainduck.brainc.tree.*;
-import emulib.plugins.compiler.Message;
-import emulib.plugins.compiler.Message.MessageType;
+import java_cup.runtime.DefaultSymbolFactory;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
+import net.emustudio.emulib.plugins.compiler.Token;
+import net.emustudio.plugins.compilers.brainc.tree.Instruction;
+import net.emustudio.plugins.compilers.brainc.tree.Program;
 
-init with {: errorCount = 0; :}
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 parser code {:
     private CompilerImpl compiler;
-    public Token lastToken;
-    public int errorCount = 0;
+    private boolean syntaxErrors;
 
-    public void setCompiler(CompilerImpl compiler) {
-        this.compiler = compiler;
+    public ParserImpl(LexerImpl lexer, CompilerImpl compiler) {
+        super(lexer, new DefaultSymbolFactory());
+        this.compiler = Objects.requireNonNull(compiler);
     }
 
-    public void syntax_error(Symbol current) {
-        errorCount++;
-        report_error("Syntax error: ",current);
-    }
-
-    public void unrecovered_syntax_error(Symbol current) {
-        errorCount++;
-        report_error("Fatal syntax error: ", current);
+    @Override
+    public void report_fatal_error(String message, Object info) throws Exception {
         done_parsing();
+        report_error(message, info);
+        throw new Exception("Can't recover from previous error(s)");
     }
 
-    public void report_error(String messageText, Symbol current) {
+    @Override
+    public void report_error(String messageText, Object current) {
+        syntaxErrors = true;
+
         Token token = (Token)current;
-        Message message = new Message(MessageType.TYPE_ERROR, messageText + token.getErrorString() + " ('"+token.getText()+"')",
-                token.getLine()+1, token.getColumn(), null, errorCount);
-        if (compiler != null) {
-            compiler.notifyOnMessage(message);
-        } else {
-            System.out.println(message.getFormattedMessage());
+
+        messageText += ":" + token.getErrorString() + " ('" + token.getText() + "')";
+
+        List<String> expectedTokenIds = expected_token_ids()
+            .stream()
+            .map(this::symbl_name_from_id)
+            .collect(Collectors.toList());
+
+        if (!expectedTokenIds.isEmpty()) {
+            messageText += "\nExpected tokens: " + expectedTokenIds;
         }
+
+        CompilerMessage message = new CompilerMessage(
+            CompilerMessage.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn()
+        );
+
+        compiler.notifyOnMessage(message);
+    }
+
+    public boolean hasSyntaxErrors() {
+        return syntaxErrors;
     }
 :}
 

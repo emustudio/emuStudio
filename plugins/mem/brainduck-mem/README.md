@@ -2,7 +2,7 @@ BrainDuck operating memory plug-in
 -----------------------------------
 
 This project represents operating memory of abstract computer architecture called BrainDuck.
-It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
+It is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based
 computer emulation platform.
 
 The project has been created as teaching material for people who wants to create plug-ins for
@@ -27,5 +27,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

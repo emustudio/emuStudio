@@ -2,7 +2,7 @@ Program memory plug-in for Random Access Machine (RAM)
 ------------------------------------------------------
 
 This project represents program memory (or program tape) of Random Access Machine, used in theoretical
-informatics. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
+informatics. It is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based
 computer emulation platform.
 
 This plug-in can be used only with `ramc-ram` compiler and `ram-cpu` RAM emulator. 
@@ -30,5 +30,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

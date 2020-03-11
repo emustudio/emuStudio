@@ -12,7 +12,7 @@ collections:
 
 # Serving
 baseurl: ""
-url: http://www.emustudio.net/
+url: http://www.net.emustudio.net/
 detach:  false
 port:    4000
 host:    0.0.0.0

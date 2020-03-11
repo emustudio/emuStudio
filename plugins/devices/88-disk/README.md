@@ -3,7 +3,7 @@
 
 This project is an emulator of MITS 88-DISK device, used in MITS Altair8800 computers.
 The device has been a disk controller that is plugged into S-BUS bus. It is implemented
-as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer emulation
+as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based computer emulation
 platform.
 
 In the present time it can be used side by side with `8080-cpu` or `z80-cpu` plug-ins.
@@ -33,5 +33,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

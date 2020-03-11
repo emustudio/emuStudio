@@ -1,3 +1,22 @@
+<!--
+  ~ This file is part of emuStudio.
+  ~
+  ~ Copyright (C) 2006-2020  Peter Jakubčo
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -277,7 +296,7 @@ pom.xml</pre>
                 <div class="paragraph">
                     <p>And let&#8217;s start with the first Java class, the main plug-in class. Let&#8217;s put it to
                         package
-                        <code>net.sf.emustudio.ssem.memory</code>, and call it <code>MemoryImpl</code>.</p>
+                        <code>net.sf.net.emustudio.ssem.memory</code>, and call it <code>MemoryImpl</code>.</p>
                 </div>
             </div>
             <div class="sect2">
@@ -294,10 +313,10 @@ pom.xml</pre>
                         main class of any emuStudio plug-in. The code snippet looks as follows:</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/MemoryImpl.java</code></div>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/memory/MemoryImpl.java</code></div>
                     <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span
-        style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.memory</span><span
+        style="color: #0000FF; font-weight: bold">net.sf.net.emustudio.ssem.memory</span><span
         style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.PLUGIN_TYPE</span><span
@@ -331,7 +350,7 @@ pom.xml</pre>
 
     <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">MemoryImpl</span><span
             style="color: #666666">(</span>Long pluginID<span
-            style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span
+            style="color: #666666">,</span> ContextPool contextPoolImpl<span style="color: #666666">)</span> <span
             style="color: #666666">{</span>
         <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span
             style="color: #666666">);</span>
@@ -425,7 +444,7 @@ pom.xml</pre>
                 </div>
                 <div class="listingblock">
                     <div class="title">
-                        <code>src/main/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImpl.java</code></div>
+                        <code>src/main/java/net/sf/net.emustudio/ssem/memory/impl/MemoryContextImpl.java</code></div>
                     <div class="content">
                         <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in memory<span
                                 style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
@@ -435,7 +454,7 @@ pom.xml</pre>
                                 style="color: #666666">/</span>ssem<span style="color: #666666">-</span>mem<span
                                 style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                 style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                 style="color: #666666">/</span>ssem<span style="color: #666666">/</span>memory<span
                                 style="color: #666666">/</span>impl<span style="color: #666666">/</span>MemoryContextImpl<span
                                 style="color: #666666">.</span><span style="color: #7D9029">java</span><span
@@ -552,7 +571,7 @@ synchronization to ensure sequential consistency.</pre>
                     <p>The source code of the main GUI class is here:</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryGUI.java</code></div>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/memory/gui/MemoryGUI.java</code></div>
                     <div class="content">
                         <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in memory<span
                                 style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
@@ -562,7 +581,7 @@ synchronization to ensure sequential consistency.</pre>
                                 style="color: #666666">/</span>ssem<span style="color: #666666">-</span>mem<span
                                 style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                 style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                 style="color: #666666">/</span>ssem<span style="color: #666666">/</span>memory<span
                                 style="color: #666666">/</span>gui<span style="color: #666666">/</span>MemoryGUI<span
                                 style="color: #666666">.</span><span style="color: #7D9029">java</span><span
@@ -605,7 +624,7 @@ synchronization to ensure sequential consistency.</pre>
                             looks as follows:</p>
                     </div>
                     <div class="listingblock">
-                        <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTable.java</code>
+                        <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/memory/gui/MemoryTable.java</code>
                         </div>
                         <div class="content">
                             <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in memory<span
@@ -615,7 +634,7 @@ synchronization to ensure sequential consistency.</pre>
                                     style="color: #666666">/</span>ssem<span style="color: #666666">-</span>mem<span
                                     style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                     style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                     style="color: #666666">/</span>ssem<span style="color: #666666">/</span>memory<span
                                     style="color: #666666">/</span>gui<span
                                     style="color: #666666">/</span>MemoryTable<span style="color: #666666">.</span><span
@@ -669,7 +688,7 @@ synchronization to ensure sequential consistency.</pre>
                     </div>
                     <div class="listingblock">
                         <div class="title">
-                            <code>src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTableModel.java</code></div>
+                            <code>src/main/java/net/sf/net.emustudio/ssem/memory/gui/MemoryTableModel.java</code></div>
                         <div class="content">
                             <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in memory<span
                                     style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
@@ -678,7 +697,7 @@ synchronization to ensure sequential consistency.</pre>
                                     style="color: #666666">/</span>ssem<span style="color: #666666">-</span>mem<span
                                     style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                     style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                     style="color: #666666">/</span>ssem<span style="color: #666666">/</span>memory<span
                                     style="color: #666666">/</span>gui<span style="color: #666666">/</span>MemoryTableModel<span
                                     style="color: #666666">.</span><span style="color: #7D9029">java</span><span
@@ -714,7 +733,7 @@ synchronization to ensure sequential consistency.</pre>
                     </div>
                     <div class="listingblock">
                         <div class="title">
-                            <code>src/main/java/net/sf/emustudio/ssem/memory/gui/RowHeaderRenderer.java</code></div>
+                            <code>src/main/java/net/sf/net.emustudio/ssem/memory/gui/RowHeaderRenderer.java</code></div>
                         <div class="content">
                             <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in memory<span
                                     style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
@@ -723,7 +742,7 @@ synchronization to ensure sequential consistency.</pre>
                                     style="color: #666666">/</span>ssem<span style="color: #666666">-</span>mem<span
                                     style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                     style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                     style="color: #666666">/</span>ssem<span style="color: #666666">/</span>memory<span
                                     style="color: #666666">/</span>gui<span style="color: #666666">/</span>RowHeaderRenderer<span
                                     style="color: #666666">.</span><span style="color: #7D9029">java</span><span
@@ -760,7 +779,7 @@ synchronization to ensure sequential consistency.</pre>
                         <p>The cell renderer code looks as follows:</p>
                     </div>
                     <div class="listingblock">
-                        <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/CellRenderer.java</code>
+                        <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/memory/gui/CellRenderer.java</code>
                         </div>
                         <div class="content">
                             <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in memory<span
@@ -770,7 +789,7 @@ synchronization to ensure sequential consistency.</pre>
                                     style="color: #666666">/</span>ssem<span style="color: #666666">-</span>mem<span
                                     style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                     style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                     style="color: #666666">/</span>ssem<span style="color: #666666">/</span>memory<span
                                     style="color: #666666">/</span>gui<span
                                     style="color: #666666">/</span>CellRenderer<span
@@ -795,7 +814,7 @@ synchronization to ensure sequential consistency.</pre>
                             as follows:</p>
                     </div>
                     <div class="listingblock">
-                        <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/gui/CellEditor.java</code>
+                        <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/memory/gui/CellEditor.java</code>
                         </div>
                         <div class="content">
                             <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in memory<span
@@ -805,7 +824,7 @@ synchronization to ensure sequential consistency.</pre>
                                     style="color: #666666">/</span>ssem<span style="color: #666666">-</span>mem<span
                                     style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                     style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                    style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                     style="color: #666666">/</span>ssem<span style="color: #666666">/</span>memory<span
                                     style="color: #666666">/</span>gui<span
                                     style="color: #666666">/</span>CellEditor<span style="color: #666666">.</span><span
@@ -827,7 +846,7 @@ synchronization to ensure sequential consistency.</pre>
                         and will be called repeatedly, always when a user clicks on the mentioned icon.</p>
                 </div>
                 <div class="listingblock">
-                    <div class="title"><code>src/main/java/net/sf/emustudio/ssem/memory/MemoryImpl.java</code></div>
+                    <div class="title"><code>src/main/java/net/sf/net.emustudio/ssem/memory/MemoryImpl.java</code></div>
                     <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #666666">...</span>
 
@@ -851,12 +870,12 @@ synchronization to ensure sequential consistency.</pre>
 
     <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">MemoryImpl</span><span
             style="color: #666666">(</span>Long pluginID<span
-            style="color: #666666">,</span> ContextPool contextPool<span style="color: #666666">)</span> <span
+            style="color: #666666">,</span> ContextPool contextPoolImpl<span style="color: #666666">)</span> <span
             style="color: #666666">{</span>
         <span style="color: #008000; font-weight: bold">super</span><span style="color: #666666">(</span>pluginID<span
             style="color: #666666">);</span>
         <span style="color: #008000; font-weight: bold">try</span> <span style="color: #666666">{</span>
-            contextPool<span style="color: #666666">.</span><span style="color: #7D9029">register</span><span
+            contextPoolImpl<span style="color: #666666">.</span><span style="color: #7D9029">register</span><span
             style="color: #666666">(</span>pluginID<span style="color: #666666">,</span> memContext<span
             style="color: #666666">,</span> MemoryContext<span style="color: #666666">.</span><span
             style="color: #7D9029">class</span><span style="color: #666666">);</span>
@@ -938,7 +957,7 @@ synchronization to ensure sequential consistency.</pre>
                         <li>
                             <p>In constructor, we will register new instance of our memory context. Since we do not have
                                 custom context, the
-                                interface, passed as the second argument to call <code>contextPool.register()</code>
+                                interface, passed as the second argument to call <code>contextPoolImpl.register()</code>
                                 will be plain <code>MemoryContext.class</code>.
                                 If we had custom context, it would require to be defined in separate interface which
                                 will extend the standard
@@ -978,7 +997,7 @@ synchronization to ensure sequential consistency.</pre>
                 </div>
                 <div class="listingblock">
                     <div class="title">
-                        <code>src/test/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImplTest.java</code></div>
+                        <code>src/test/java/net/sf/net.emustudio/ssem/memory/impl/MemoryContextImplTest.java</code></div>
                     <div class="content">
                         <pre class="pygments highlight"><code data-lang="java"><span></span>Unresolved directive in memory<span
                                 style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span
@@ -988,7 +1007,7 @@ synchronization to ensure sequential consistency.</pre>
                                 style="color: #666666">/</span>ssem<span style="color: #666666">-</span>mem<span
                                 style="color: #666666">/</span>src<span style="color: #666666">/</span>test<span
                                 style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                 style="color: #666666">/</span>ssem<span style="color: #666666">/</span>memory<span
                                 style="color: #666666">/</span>impl<span style="color: #666666">/</span>MemoryContextImplTest<span
                                 style="color: #666666">.</span><span style="color: #7D9029">java</span><span
@@ -1024,7 +1043,7 @@ synchronization to ensure sequential consistency.</pre>
             <div class="container">
                 <ul class="nav navbar-nav">
                     <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                    <li><a href="https://sourceforge.net/p/net.emustudio/" rel="nofollow"><img alt="Download emuStudio"
                                                                                            src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
                     </li>
                     <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>

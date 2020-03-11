@@ -2,7 +2,7 @@ Standard operating memory plug-in
 ----------------------------------
 
 This project represents virtual computer's operating memory. It is implemented as a plug-in for
-[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform.
+[emuStudio](http://net.emustudio.sf.net), a software-based computer emulation platform.
 
 This plug-in can be used with any 'real' von-Neumann's CPUs that understand memory cells as linear
 ordered bytes. Size of the memory is variable, and can be set-up during construction of virtual computer.
@@ -23,5 +23,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

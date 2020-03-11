@@ -1,3 +1,3 @@
 #!/bin/bash
 
-java -cp "compilers/brainc-brainduck.jar:lib/*" net.sf.emustudio.brainduck.brainc.impl.Main "$@"
+java -cp "compilers/brainc-brainduck.jar:lib/*" net.emustudio.plugins.compilers.brainc.Main "$@"

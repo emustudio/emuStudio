@@ -1,3 +1,22 @@
+<!--
+  ~ This file is part of emuStudio.
+  ~
+  ~ Copyright (C) 2006-2020  Peter Jakubčo
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -393,7 +412,7 @@
                         plug-in.
                         You can obtain the context during the <code>initialize()</code> method of the plug-in main
                         class. The context is named
-                        <code>net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext</code>:</p>
+                        <code>net.sf.net.emustudio.devices.abstracttape.api.AbstractTapeContext</code>:</p>
                 </div>
                 <div class="listingblock">
                     <div class="content">
@@ -404,7 +423,7 @@
             style="color: #666666">)</span> <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
 
-    AbstractTapeContext tape <span style="color: #666666">=</span> contextPool<span style="color: #666666">.</span><span
+    AbstractTapeContext tape <span style="color: #666666">=</span> contextPoolImpl<span style="color: #666666">.</span><span
             style="color: #7D9029">getDeviceContext</span><span style="color: #666666">(</span>pluginID<span
             style="color: #666666">,</span> AbstractTapeContext<span style="color: #666666">.</span><span
             style="color: #7D9029">class</span><span style="color: #666666">);</span>
@@ -425,7 +444,7 @@
                                 style="color: #666666">/</span>abstractTape<span style="color: #666666">-</span>ram<span
                                 style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span
                                 style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span
-                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span
+                                style="color: #666666">/</span>sf<span style="color: #666666">/</span>net.emustudio<span
                                 style="color: #666666">/</span>devices<span
                                 style="color: #666666">/</span>abstracttape<span style="color: #666666">/</span>api<span
                                 style="color: #666666">/</span>AbstractTapeContext<span
@@ -445,7 +464,7 @@
             <div class="container">
                 <ul class="nav navbar-nav">
                     <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                    <li><a href="https://sourceforge.net/p/net.emustudio/" rel="nofollow"><img alt="Download emuStudio"
                                                                                            src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
                     </li>
                     <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>

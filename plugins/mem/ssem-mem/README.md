@@ -2,7 +2,7 @@ SSEM operating memory plug-in
 ------------------------------
 
 This module is a main store of SSEM "Baby" machine. It is implemented as a plug-in for
-[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform.
+[emuStudio](http://net.emustudio.sf.net), a software-based computer emulation platform.
 
 Main features include:
 
@@ -24,5 +24,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

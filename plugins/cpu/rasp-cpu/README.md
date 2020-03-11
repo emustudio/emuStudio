@@ -1,7 +1,7 @@
 Random Access Stored Program (RASP) machine emulator
 ----------------------------------------------------
 
-RASP machine emulator is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer emulation platform. RASP machine is a von Neumann equivalent of Random Access Machine (RAM), which is a Harvard one. It is supposed to serve as a study supporting tool for courses oriented to computer architectures.
+RASP machine emulator is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based computer emulation platform. RASP machine is a von Neumann equivalent of Random Access Machine (RAM), which is a Harvard one. It is supposed to serve as a study supporting tool for courses oriented to computer architectures.
 
 This plug-in can be used only with `raspc-rasp` compiler and `rasp-mem` operating memory. As a form of input/output devices, input and output tapes can be attached. A tape is represented by a `abstractTape-ram` device (abstract tape is borrowed from the RAM machine emulator).
 
@@ -20,4 +20,4 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).

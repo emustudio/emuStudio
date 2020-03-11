@@ -150,7 +150,7 @@ computers, too. Besides standard operations which are provided by `emulib.plugin
 it provides custom context API, enabling to use more features - e.g. bank-switching.
 
 You can obtain the context during the `initialize()` method of plug-in main class. The context is named
-`net.sf.emustudio.memory.standard.StandardMemoryContext`:
+`net.sf.net.emustudio.memory.standard.StandardMemoryContext`:
 
 [source,java]
 ----
@@ -159,7 +159,7 @@ You can obtain the context during the `initialize()` method of plug-in main clas
 public void initialize(SettingsManager settings) {
     ...
 
-    StandardMemoryContext mem = contextPool.getMemoryContext(pluginID, StandardMemoryContext.class);
+    StandardMemoryContext mem = contextPoolImpl.getMemoryContext(pluginID, StandardMemoryContext.class);
     ...
 }
 ----
@@ -169,6 +169,6 @@ The memory context has the following content:
 
 [source,java]
 ----
-include::{sourcedir}/plugins/mem/standard-mem/src/main/java/net/sf/emustudio/memory/standard/StandardMemoryContext.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/standard-mem/src/main/java/net/sf/net.emustudio/memory/standard/StandardMemoryContext.java[lines=20..-1]
 ----
 

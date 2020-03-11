@@ -18,19 +18,22 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package net.sf.emustudio.intel8080.assembler.impl;
+package net.emustudio.plugins.compilers.as8080;
 
-import java.util.Vector;
+import java_cup.runtime.DefaultSymbolFactory;
 import java_cup.runtime.Symbol;
-import emulib.plugins.compiler.Token;
-import emulib.plugins.compiler.Message;
-import emulib.plugins.compiler.Message.MessageType;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
+import net.emustudio.emulib.plugins.compiler.Token;
+import net.emustudio.plugins.compilers.as8080.tree.*;
+import net.emustudio.plugins.compilers.as8080.treeAbstract.*;
 
-import net.sf.emustudio.intel8080.assembler.tree.*;
-import net.sf.emustudio.intel8080.assembler.treeAbstract.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Vector;
+import java.util.stream.Collectors;
 
 
-init with {: errorCount = 0; lastLine = 0; lastColumn = 0; :}
+init with {: lastLine = 0; lastColumn = 0; :}
 scan with {:
     Token t = (Token)this.getScanner().next_token();
     this.lastLine = t.getLine()+1;
@@ -38,52 +41,59 @@ scan with {:
     return (Symbol)t;
  :}
 parser code {:
-    private CompilerImpl compiler;
-    public int lastLine;
-    public int lastColumn;
-    public int errorCount = 0;
+    private CompilerImpl compiler; // cannot be final because cup generates garbage constructors
+    private boolean syntaxErrors;
+    private int lastLine;
+    private int lastColumn;
+    private String reportPrefixString;
 
-    private String reportPrefixString = null;
-    
-    public void syntax_error(Symbol current) {
-        report_error("Syntax error: ",current);
+    public ParserImpl(LexerImpl lexer, CompilerImpl compiler) {
+        super(lexer, new DefaultSymbolFactory());
+        this.compiler = Objects.requireNonNull(compiler);
     }
 
-    public void unrecovered_syntax_error(Symbol current) {
-        report_error("Fatal syntax error: ", current);
+    @Override
+    public void report_fatal_error(String message, Object info) throws Exception {
         done_parsing();
+        report_error(message, info);
+        throw new Exception("Can't recover from previous error(s)");
     }
 
-    public void report_error(String messageText, Symbol current) {
+    @Override
+    public void report_error(String messageText, Object current) {
+        syntaxErrors = true;
+
         Token token = (Token)current;
 
-        messageText = messageText + token.getErrorString() + " ('"+token.getText()+"')";
         if (reportPrefixString != null) {
-            messageText = reportPrefixString + messageText;
-        }
-
-        Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
-                null, errorCount);
-
-        if (compiler != null) {
-            compiler.notifyOnMessage(message);
+            messageText = reportPrefixString + messageText + ":" + token.getErrorString() + " ('" + token.getText() + "')";
         } else {
-            System.out.println(message.getFormattedMessage());
+            messageText += ":" + token.getErrorString() + " ('" + token.getText() + "')";
         }
+
+        List<String> expectedTokenIds = expected_token_ids()
+            .stream()
+            .map(this::symbl_name_from_id)
+            .collect(Collectors.toList());
+
+        if (!expectedTokenIds.isEmpty()) {
+            messageText += "\nExpected tokens: " + expectedTokenIds;
+        }
+
+        CompilerMessage message = new CompilerMessage(
+            CompilerMessage.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn()
+        );
+
+        compiler.notifyOnMessage(message);
     }
 
-    public void setCompiler(CompilerImpl compiler) {
-        this.compiler = compiler;
-    }
-
-    public CompilerImpl getCompiler() {
-        return compiler;
+    public boolean hasSyntaxErrors() {
+        return syntaxErrors;
     }
 
     public void setReportPrefixString(String str) {
-        this.reportPrefixString = str;
+            this.reportPrefixString = str;
     }
-
 :}
 
 terminal RESERVED_STC,RESERVED_CMC,RESERVED_INR,RESERVED_DCR,RESERVED_CMA,
@@ -148,7 +158,7 @@ Statement ::= Instruction:instr
     :}
  | Statement:stmt SEPARATOR_EOL Instruction:instr
     {: if (instr != null) stmt.addElement(instr); RESULT = stmt; :}
- | Statement:stmt error {: parser.errorCount++; RESULT = stmt; :};
+ | Statement:stmt error {: parser.syntaxErrors = true; RESULT = stmt; :};
 
 Instruction ::= LabelOptional:label CodePseudocode:codepseudo CommentOptional
     {: if (label == null && codepseudo == null) RESULT = null;
@@ -224,7 +234,7 @@ Pseudocode ::= PREPROCESSOR_ORG Expression:e
  | TIDENTIFIER:name MacroExprOptional:vec
     {: RESULT = new MacroCallPseudo(name, vec,parser.lastLine, parser.lastColumn); :}
  | PREPROCESSOR_INCLUDE LITERAL_STRING:filename
-    {: RESULT = new IncludePseudoNode(filename,parser.lastLine,parser.lastColumn,parser.getCompiler()); :};
+    {: RESULT = new IncludePseudoNode(filename,parser.lastLine,parser.lastColumn,parser.compiler); :};
 
 MacroOperOptional ::= MOperList:vec {: RESULT = vec; :} | {: RESULT = null; :};
 MOperList ::= TIDENTIFIER:name

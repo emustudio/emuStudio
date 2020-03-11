@@ -2,7 +2,7 @@ Zilog Z80 Assembler plug-in
 ----------------------------
 
 This project is my own version of assembler for Z80 processor, written in Java.
-It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
+It is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based computer
 emulation platform.
 
 The assembler syntax is inspired by my `as-8080` compiler plug-in
@@ -33,4 +33,4 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).

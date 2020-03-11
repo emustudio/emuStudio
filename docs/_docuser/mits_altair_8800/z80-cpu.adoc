@@ -28,7 +28,7 @@ When enabled, then each executed instruction - together with content of flags an
 are printed. This feature might be extremely useful in two cases:
 
 1. Reverse engineering of some unknown software
-2. It allows to build tools for automatic checking of register values during the emulation,
+2. It allows to net.emustudio.architecture.build tools for automatic checking of register values during the emulation,
    when performing automatic emulation.
 
 In order to enable this feature, please see the section <<CPU-Z80-CONFIG_FILE>>.

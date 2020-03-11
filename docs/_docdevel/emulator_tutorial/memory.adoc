@@ -79,7 +79,7 @@ include::{sourcedir}/plugins/mem/ssem-mem/pom.xml[]
 ----
 
 And let's start with the first Java class, the main plug-in class. Let's put it to package
-`net.sf.emustudio.ssem.memory`, and call it `MemoryImpl`.
+`net.sf.net.emustudio.ssem.memory`, and call it `MemoryImpl`.
 
 [[MEMORY_BASIC_STUFF]]
 === The main class
@@ -91,9 +91,9 @@ It is also necessary to annotate the class with `emulib.annotations.PluginType` 
 main class of any emuStudio plug-in. The code snippet looks as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/memory/MemoryImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/memory/MemoryImpl.java`
 ----
-package net.sf.emustudio.ssem.memory;
+package net.sf.net.emustudio.ssem.memory;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
@@ -109,7 +109,7 @@ import emulib.runtime.ContextPool;
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
-    public MemoryImpl(Long pluginID, ContextPool contextPool) {
+    public MemoryImpl(Long pluginID, ContextPool contextPoolImpl) {
         super(pluginID);
     }
 
@@ -158,9 +158,9 @@ special customized context, so we can comfortably extend from class `AbstractMem
 methods of the `MemoryContext` interface for us. We will call the class `MemoryContextImpl`:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/memory/impl/MemoryContextImpl.java`
 ----
-include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImpl.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/net.emustudio/ssem/memory/impl/MemoryContextImpl.java[lines=20..-1]
 ----
 
 As you can see, SSEM memory is indeed an array of bytes. This is the "core" idea of a memory. Ofcourse, it is possible
@@ -218,9 +218,9 @@ editor, cell renderer and introduce row header renderer.
 The source code of the main GUI class is here:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryGUI.java`
+.`src/main/java/net/sf/net.emustudio/ssem/memory/gui/MemoryGUI.java`
 ----
-include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryGUI.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/net.emustudio/ssem/memory/gui/MemoryGUI.java[lines=20..-1]
 ----
 
 Note that in the constructor we create a memory listener, which implements `Memory.MemoryListener` interface. The
@@ -240,9 +240,9 @@ Since we want "special" behavior, like custom cell renderer, custom row header, 
 of some columns, it will be good to wrap it up in a custom `JTable`. The code looks as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTable.java`
+.`src/main/java/net/sf/net.emustudio/ssem/memory/gui/MemoryTable.java`
 ----
-include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTable.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/net.emustudio/ssem/memory/gui/MemoryTable.java[lines=20..-1]
 ----
 
 Now, particular sub-components of the table will be implemented and described in more detail.
@@ -264,9 +264,9 @@ The model must provide data for every row and column. So here, we must do some m
 the data to hex value, and raw ASCII value. The class is called `MemoryTableModel` and it's source code is here:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTableModel.java`
+.`src/main/java/net/sf/net.emustudio/ssem/memory/gui/MemoryTableModel.java`
 ----
-include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTableModel.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/net.emustudio/ssem/memory/gui/MemoryTableModel.java[lines=20..-1]
 ----
 
 ==== Row header renderer
@@ -283,9 +283,9 @@ for setting up a custom row header:
 The trick is to set a `javax.swing.JList` as a component for the row header. So we end up with the following class:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/memory/gui/RowHeaderRenderer.java`
+.`src/main/java/net/sf/net.emustudio/ssem/memory/gui/RowHeaderRenderer.java`
 ----
-include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/RowHeaderRenderer.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/net.emustudio/ssem/memory/gui/RowHeaderRenderer.java[lines=20..-1]
 ----
 
 ==== Cell renderer + editor
@@ -300,9 +300,9 @@ NOTE: Official tutorial and description of custom renderers can be found
 The cell renderer code looks as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/memory/gui/CellRenderer.java`
+.`src/main/java/net/sf/net.emustudio/ssem/memory/gui/CellRenderer.java`
 ----
-include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/CellRenderer.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/net.emustudio/ssem/memory/gui/CellRenderer.java[lines=20..-1]
 ----
 
 Similarly, if we want to let user edit a value in a table, we must provide the editor as a Swing component. The
@@ -314,9 +314,9 @@ editor shows up. User can activate the editor by double-clicking on a cell. The 
 as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/memory/gui/CellEditor.java`
+.`src/main/java/net/sf/net.emustudio/ssem/memory/gui/CellEditor.java`
 ----
-include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/CellEditor.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/ssem-mem/src/main/java/net/sf/net.emustudio/ssem/memory/gui/CellEditor.java[lines=20..-1]
 ----
 
 === Wrapping it up
@@ -327,7 +327,7 @@ icon in the debug tool bar in emuStudio emulation panel. This method is responsi
 and will be called repeatedly, always when a user clicks on the mentioned icon.
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/memory/MemoryImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/memory/MemoryImpl.java`
 ----
 ...
 
@@ -337,10 +337,10 @@ public class MemoryImpl extends AbstractMemory {
     private final MemoryContextImpl memContext = new MemoryContextImpl();
     private MemoryGUI memoryGUI;
 
-    public MemoryImpl(Long pluginID, ContextPool contextPool) {
+    public MemoryImpl(Long pluginID, ContextPool contextPoolImpl) {
         super(pluginID);
         try {
-            contextPool.register(pluginID, memContext, MemoryContext.class);
+            contextPoolImpl.register(pluginID, memContext, MemoryContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register SSEM memory", getTitle());
         }
@@ -383,7 +383,7 @@ public class MemoryImpl extends AbstractMemory {
 As you can see from the code, there are several things to notice:
 
 - In constructor, we will register new instance of our memory context. Since we do not have custom context, the
-  interface, passed as the second argument to call `contextPool.register()` will be plain `MemoryContext.class`.
+  interface, passed as the second argument to call `contextPoolImpl.register()` will be plain `MemoryContext.class`.
   If we had custom context, it would require to be defined in separate interface which will extend the standard
   `MemoryContext`, and annotated with `@emulib.annotations.ContextType` annotation.
 - In the `initialize()` method, we determine if we run in a "non-GUI" mode. We use a `SettingsManager` object for
@@ -403,8 +403,8 @@ What should be tested is the context itself - since it's the core part of the me
 the main plugin class. For example, the automated unit test of the memory context can look as follows:
 
 [source,java]
-.`src/test/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImplTest.java`
+.`src/test/java/net/sf/net.emustudio/ssem/memory/impl/MemoryContextImplTest.java`
 ----
-include::{sourcedir}/plugins/mem/ssem-mem/src/test/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImplTest.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/ssem-mem/src/test/java/net/sf/net.emustudio/ssem/memory/impl/MemoryContextImplTest.java[lines=20..-1]
 ----
 

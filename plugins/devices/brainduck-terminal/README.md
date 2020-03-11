@@ -3,7 +3,7 @@ BrainDuck text terminal plug-in
 
 This project is text terminal for BrainDuck architecture. BrainDuck is abstract
 machine based on esoteric programming language [brainfuck](http://en.wikipedia.org/wiki/Brainfuck).
-It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
+It is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based
 computer emulation platform.
 
 The project has been created as teaching material for people who want to create plug-ins for emuStudio.
@@ -28,5 +28,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

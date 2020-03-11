@@ -95,7 +95,7 @@ We will start with small snippet of code which will be extended throughout the t
 as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java`
 ----
 @PluginType(
     type = PLUGIN_TYPE.CPU,
@@ -105,7 +105,7 @@ as follows:
 )
 public class CpuImpl extends AbstractCPU {
 
-    public CpuImpl(Long pluginID, ContextPool contextPool) {
+    public CpuImpl(Long pluginID, ContextPool contextPoolImpl) {
         super(pluginID);
     }
 
@@ -405,14 +405,14 @@ The initialization code is represented by the constructor and the `initialize()`
 
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java`
 ----
 public class CpuImpl extends AbstractCPU {
-    private final ContextPool contextPool;
+    private final ContextPool contextPoolImpl;
 
-    public CpuImpl(Long pluginID, ContextPool contextPool) {
+    public CpuImpl(Long pluginID, ContextPool contextPoolImpl) {
         super(pluginID);
-        this.contextPool = Objects.requireNonNull(contextPool);
+        this.contextPoolImpl = Objects.requireNonNull(contextPoolImpl);
     }
 
     @Override
@@ -433,14 +433,14 @@ implemented in this tutorial. There is dedicated separate tutorial for the CRT d
 The first step of the initialization is getting the memory from the context pool:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java`
 ----
 public class CpuImpl extends AbstractCPU {
     private MemoryContext<Integer> memory;
 
     @Override
     public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
-        memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+        memory = contextPoolImpl.getMemoryContext(getPluginID(), MemoryContext.class);
     }
 }
 ----
@@ -522,7 +522,7 @@ values.
 The class looks as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/EmulatorEngine.java`
 ----
 public class EmulatorEngine {
 
@@ -650,7 +650,7 @@ somehow "pause" the CPU.
 We implement this in the `run()` method, right before instruction execution:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/EmulatorEngine.java`
 ----
 public class EmulatorEngine {
     ...
@@ -712,10 +712,10 @@ suppose :), we can "wait" after each instruction the time difference, so we will
 
 In reality, every instruction is performed in some number of machine "cycles". We can imagine the machine cycle
 as a time of elementary phase when performing the instruction. Based on this information which is
-usually available, can be build a technique for preserving speed even better.
+usually available, can be net.emustudio.architecture.build a technique for preserving speed even better.
 
 NOTE: Description of the speed-preservation technique can be seen e.g. at
-      http://emustudio.sourceforge.net/downloads/2010-cse.pdf[this link].
+      http://net.emustudio.sourceforge.net/downloads/2010-cse.pdf[this link].
 
 I don't quite know the speed of particular SSEM instructions, and besides the algorithm is quite complex. More achievable
 is a bit different approach, but still quite interesting.
@@ -789,7 +789,7 @@ kind of "fake" the `step()` method which will not change the emulator state or m
 instruction with the average "complexity", which we will do just with some estimation or better - feeling. The
 algorithm can look as follows (there's lot to improve ofcourse):
 
-.`src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/EmulatorEngine.java`
 ----
 public class EmulatorEngine {
     final static int INSTRUCTIONS_PER_SECOND = 700;
@@ -890,8 +890,8 @@ When you look into our `pom.xml` file, you can find a section:
         <groupId>edigen</groupId>
         <artifactId>edigen-maven-plugin</artifactId>
         <configuration>
-          <decoderName>net.sf.emustudio.ssem.DecoderImpl</decoderName>
-          <disassemblerName>net.sf.emustudio.ssem.DisassemblerImpl</disassemblerName>
+          <decoderName>net.sf.net.emustudio.ssem.DecoderImpl</decoderName>
+          <disassemblerName>net.sf.net.emustudio.ssem.DisassemblerImpl</disassemblerName>
         </configuration>
         <executions>
           <execution>
@@ -904,14 +904,14 @@ When you look into our `pom.xml` file, you can find a section:
 ...
 ----
 
-The disassembler will be generated in the class `net.sf.emustudio.ssem.DisassemblerImpl`. The class already implements
+The disassembler will be generated in the class `net.sf.net.emustudio.ssem.DisassemblerImpl`. The class already implements
 the interface `emulib.plugins.cpu.Disassembler`, which is exactly what method `CPU.getDisassembler()` returns.
 Disassembler is an independent component so it also uses the memory from where it reads the instructions. Therefore,
 disassembler can be initialized _after_ the memory. Now we are ready to do full initialization of the emulator, with
 the engine as well as disassembler. The code looks as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java`
 ----
 public class CpuImpl extends AbstractCPU {
     ...
@@ -922,7 +922,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
-        memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+        memory = contextPoolImpl.getMemoryContext(getPluginID(), MemoryContext.class);
         Decoder decoder = new DecoderImpl(memory);
         disasm = new DisassemblerImpl(memory, decoder);
         engine = new EmulatorEngine(memory, this);
@@ -988,9 +988,9 @@ image::{imagepath}/cpu-status-panel.png[SSEM CPU Status panel GUI]
 The class code is:
 
 [source,java]
-.`ssem-cpu/src/main/java/net/sf/emustudio/ssem/cpu/CpuPanel.java`
+.`ssem-cpu/src/main/java/net/sf/net.emustudio/ssem/cpu/CpuPanel.java`
 ----
-include::{sourcedir}/plugins/cpu/ssem-cpu/src/main/java/net/sf/emustudio/ssem/cpu/CpuPanel.java[lines=20..-1]
+include::{sourcedir}/plugins/cpu/ssem-cpu/src/main/java/net/sf/net.emustudio/ssem/cpu/CpuPanel.java[lines=20..-1]
 ----
 
 We don't have to care about method `initComponents()` and the fields at the end of the class. Those are generated by
@@ -1010,7 +1010,7 @@ NOTE: Don't forget to register the updater by calling `cpu.addCPUListener()`. Th
 Now we need to incorporate the panel into the main class. It's easy:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java`
 ----
 public class CpuImpl extends AbstractCPU {
 
@@ -1047,15 +1047,15 @@ file called `ssem.out`.
 At first, let's implement the class:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/cpu/AutomaticEmulation.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/AutomaticEmulation.java`
 ----
-include::{sourcedir}/plugins/cpu/ssem-cpu/src/main/java/net/sf/emustudio/ssem/cpu/AutomaticEmulation.java[lines=20..-1]
+include::{sourcedir}/plugins/cpu/ssem-cpu/src/main/java/net/sf/net.emustudio/ssem/cpu/AutomaticEmulation.java[lines=20..-1]
 ----
 
 Then, the class should be incorporated to the main class:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/cpu/CpuImpl.java`
 ----
 public class CpuImpl extends AbstractCPU {
     ...

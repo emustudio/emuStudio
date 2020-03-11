@@ -1,3 +1,22 @@
+<!--
+  ~ This file is part of emuStudio.
+  ~
+  ~ Copyright (C) 2006-2020  Peter Jakubčo
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2212,7 +2231,7 @@ LD (TEMP), A</pre>
                                 <p>Reverse engineering of some unknown software</p>
                             </li>
                             <li>
-                                <p>It allows to build tools for automatic checking of register values during the
+                                <p>It allows to net.emustudio.architecture.build tools for automatic checking of register values during the
                                     emulation,
                                     when performing automatic emulation.</p>
                             </li>
@@ -2564,7 +2583,7 @@ input: ds 30</code></pre>
                                     <p>Reverse engineering of some unknown software</p>
                                 </li>
                                 <li>
-                                    <p>It allows to build tools for automatic checking of register values during the
+                                    <p>It allows to net.emustudio.architecture.build tools for automatic checking of register values during the
                                         emulation,
                                         when performing automatic emulation.</p>
                                 </li>
@@ -3225,7 +3244,7 @@ input: ds 30</code></pre>
                         <div class="paragraph">
                             <p>You can obtain the context during the <code>initialize()</code> method of plug-in main
                                 class. The context is named
-                                <code>net.sf.emustudio.memory.standard.StandardMemoryContext</code>:</p>
+                                <code>net.sf.net.emustudio.memory.standard.StandardMemoryContext</code>:</p>
                         </div>
                         <div class="listingblock">
                             <div class="content">
@@ -3236,7 +3255,7 @@ input: ds 30</code></pre>
             style="color: #666666">)</span> <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
 
-    StandardMemoryContext mem <span style="color: #666666">=</span> contextPool<span
+    StandardMemoryContext mem <span style="color: #666666">=</span> contextPoolImpl<span
             style="color: #666666">.</span><span style="color: #7D9029">getMemoryContext</span><span
             style="color: #666666">(</span>pluginID<span style="color: #666666">,</span> StandardMemoryContext<span
             style="color: #666666">.</span><span style="color: #7D9029">class</span><span
@@ -3251,7 +3270,7 @@ input: ds 30</code></pre>
                         <div class="listingblock">
                             <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span
-        style="color: #0000FF; font-weight: bold">net.sf.emustudio.memory.standard</span><span
+        style="color: #0000FF; font-weight: bold">net.sf.net.emustudio.memory.standard</span><span
         style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.ContextType</span><span
@@ -5550,7 +5569,7 @@ getline_ret:       ; end of input
                         </ul>
                     </div>
                     <div class="paragraph">
-                        <p>In order to build custom disk images, please follow this link:</p>
+                        <p>In order to net.emustudio.architecture.build custom disk images, please follow this link:</p>
                     </div>
                     <div class="ulist">
                         <ul>
@@ -5628,7 +5647,7 @@ getline_ret:       ; end of input
                         <div class="paragraph">
                             <p>The boot loader is already available in a file <code>boot.bin</code>. You can find it at
                                 the
-                                <a href="http://emustudio.sourceforge.net/downloads.html">download page</a>.</p>
+                                <a href="http://net.emustudio.sourceforge.net/downloads.html">download page</a>.</p>
                         </div>
                         <div class="paragraph">
                             <p>The boot ROM must be loaded into memory at address <code>0xFF00</code> (hexadecimal). It
@@ -5796,7 +5815,7 @@ getline_ret:       ; end of input
                                 <p>There exist specific version of boot loader (modified probably by <code>simh</code>
                                     authors) to load CP/M into banked memory.
                                     It has name <code>mboot.bin</code> and you can find it at the <a
-                                            href="http://emustudio.sourceforge.net/downloads.html">download page</a>.
+                                            href="http://net.emustudio.sourceforge.net/downloads.html">download page</a>.
                                     Before other steps, please <a href="#XASMEML">load this image into operating
                                         memory</a> at address 0xFF00 (hexadecimal).</p>
                             </div>
@@ -6063,7 +6082,7 @@ getline_ret:       ; end of input
             <div class="container">
                 <ul class="nav navbar-nav">
                     <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                    <li><a href="https://sourceforge.net/p/net.emustudio/" rel="nofollow"><img alt="Download emuStudio"
                                                                                            src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
                     </li>
                     <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>

@@ -1,0 +1,3 @@
+# How to compile the classes:
+
+javac -cp ../../../../net.emustudio.architecture.build/classes/java/main APluginDependsOnB.java hidden/BdependsOnC.java hidden/C.java

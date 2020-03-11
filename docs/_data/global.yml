@@ -1,7 +1,7 @@
 # Site Settings
 title: 'emuStudio'
 description: 'Computer emulation platform/framework'
-url: 'http://emustudio.sf.net' # the base hostname & protocol for your site
+url: 'http://net.emustudio.sf.net' # the base hostname & protocol for your site
 footer_text: '&copy; Copyright 2006-2017, Peter Jakubčo'
 
 # Admin Settings

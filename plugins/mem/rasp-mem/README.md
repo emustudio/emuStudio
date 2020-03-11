@@ -1,7 +1,7 @@
 Operating memory plug-in for Random Access Stored Program (RASP) machine
 ------------------------------------------------------------------------
 
-This project is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
+This project is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based
 computer emulation platform. It is used as the operating memory for the RASP machine emulator plug-in. 
 
 Supported features:
@@ -24,5 +24,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

@@ -1,3 +1,22 @@
+<!--
+  ~ This file is part of emuStudio.
+  ~
+  ~ Copyright (C) 2006-2020  Peter Jakubčo
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -428,7 +447,7 @@
 [INFO] [Info    (000)] RAM Compiler, version 0.39-SNAPSHOT
 [INFO] [Info    (000)] Compile was successful.
 [INFO] [Info    (000)] Compiled file was loaded into operating memory.
-[INFO] [Info    (000)] Compilation was saved to the file: /home/vbmacher/tmp/emustudio/examples/ramc-ram/factorial.ro
+[INFO] [Info    (000)] Compilation was saved to the file: /home/vbmacher/tmp/net.emustudio/examples/ramc-ram/factorial.ro
 [INFO] Compiler finished successfully.
 [INFO] Program start address: 0000h
 [INFO] Resetting CPU...
@@ -1133,7 +1152,7 @@ halt</pre>
                                 other plug-in.
                                 You can obtain the context during the <code>initialize()</code> method of the plug-in
                                 main class. The context is named
-                                <code>net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext</code>:</p>
+                                <code>net.sf.net.emustudio.devices.abstracttape.api.AbstractTapeContext</code>:</p>
                         </div>
                         <div class="listingblock">
                             <div class="content">
@@ -1144,7 +1163,7 @@ halt</pre>
             style="color: #666666">)</span> <span style="color: #666666">{</span>
     <span style="color: #666666">...</span>
 
-    AbstractTapeContext tape <span style="color: #666666">=</span> contextPool<span style="color: #666666">.</span><span
+    AbstractTapeContext tape <span style="color: #666666">=</span> contextPoolImpl<span style="color: #666666">.</span><span
             style="color: #7D9029">getDeviceContext</span><span style="color: #666666">(</span>pluginID<span
             style="color: #666666">,</span> AbstractTapeContext<span style="color: #666666">.</span><span
             style="color: #7D9029">class</span><span style="color: #666666">);</span>
@@ -1158,7 +1177,7 @@ halt</pre>
                         <div class="listingblock">
                             <div class="content">
 <pre class="pygments highlight"><code data-lang="java"><span></span><span style="color: #008000; font-weight: bold">package</span> <span
-        style="color: #0000FF; font-weight: bold">net.sf.emustudio.devices.abstracttape.api</span><span
+        style="color: #0000FF; font-weight: bold">net.sf.net.emustudio.devices.abstracttape.api</span><span
         style="color: #666666">;</span>
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.annotations.ContextType</span><span
@@ -1346,7 +1365,7 @@ halt</pre>
             <div class="container">
                 <ul class="nav navbar-nav">
                     <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
-                    <li><a href="https://sourceforge.net/p/emustudio/" rel="nofollow"><img alt="Download emuStudio"
+                    <li><a href="https://sourceforge.net/p/net.emustudio/" rel="nofollow"><img alt="Download emuStudio"
                                                                                            src="https://sourceforge.net/sflogo.php?type=10&group_id=340604"></a>
                     </li>
                     <li class="navbar-text">&copy; Copyright 2006-2018, Peter Jakubčo</li>

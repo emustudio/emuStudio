@@ -16,12 +16,12 @@ permalink: /download/
         <td>0.39</td>
         <td>
           <div>20.3.2017</div>
-          <div><a href="https://sourceforge.net/projects/emustudio/files/dist/changelog-0.39.md/download"
+          <div><a href="https://sourceforge.net/projects/net.emustudio/files/dist/changelog-0.39.md/download"
                   target="_blank">Release notes</a></div>
         </td>
         <td>
           <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-          <a href="https://sourceforge.net/projects/emustudio/files/dist/emuStudio-0.39.zip/download" 
+          <a href="https://sourceforge.net/projects/net.emustudio/files/dist/emuStudio-0.39.zip/download" 
              class="button btn-link btn-lg"
              role="button"
              target="_blank">emuStudio-0.39.zip</a>
@@ -31,12 +31,12 @@ permalink: /download/
         <td>0.38 beta</td>
         <td>
           <div>24.10.2011</div>
-          <div><a href="https://sourceforge.net/projects/emustudio/files/dist/changelog-0.38.txt/download"
+          <div><a href="https://sourceforge.net/projects/net.emustudio/files/dist/changelog-0.38.txt/download"
                   target="_blank">Release notes</a></div>
         </td>
         <td>
           <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-          <a href="https://sourceforge.net/projects/emustudio/files/dist/emuStudio-0.38b.zip/download" 
+          <a href="https://sourceforge.net/projects/net.emustudio/files/dist/emuStudio-0.38b.zip/download" 
              class="button btn-link btn-lg"
              role="button"
              target="_blank">emuStudio-0.38b.zip</a>
@@ -49,7 +49,7 @@ permalink: /download/
         </td>
         <td>
           <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-          <a href="https://sourceforge.net/projects/emustudio/files/dist/emu8-very-first.zip/download" 
+          <a href="https://sourceforge.net/projects/net.emustudio/files/dist/emu8-very-first.zip/download" 
              class="button btn-link btn-lg"
              role="button"
              target="_blank">The very first emuStudio</a>
@@ -59,7 +59,7 @@ permalink: /download/
   </div>
   <p>
     Other versions of emuStudio are available at
-     <a href="https://sourceforge.net/projects/emustudio/files/dist/" target="_blank">SourceForge</a>.
+     <a href="https://sourceforge.net/projects/net.emustudio/files/dist/" target="_blank">SourceForge</a>.
   </p>
 </div>
 

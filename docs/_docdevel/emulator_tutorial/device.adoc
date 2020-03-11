@@ -66,7 +66,7 @@ include::{sourcedir}/plugins/devices/ssem-display/pom.xml[]
 ----
 
 And let's start with the first Java class, the main plug-in class. Let's put it to package
-`net.sf.emustudio.ssem.display`, and call it `DisplaySSEM`.
+`net.sf.net.emustudio.ssem.display`, and call it `DisplaySSEM`.
 
 [[DEVICE_MAIN_CLASS]]
 === The main class
@@ -79,9 +79,9 @@ It is also necessary to annotate the class with `emulib.annotations.PluginType` 
 main class of any emuStudio plug-in. The code snippet looks as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java`
+.`src/main/java/net/sf/net.emustudio/ssem/display/DisplaySSEM.java`
 ----
-package net.sf.emustudio.ssem.display;
+package net.sf.net.emustudio.ssem.display;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
@@ -97,7 +97,7 @@ import emulib.runtime.ContextPool;
 public class DisplaySSEM extends AbstractDevice {
     private final static Logger LOGGER = LoggerFactory.getLogger(DisplaySSEM.class);
 
-    public DisplaySSEM(Long pluginID, ContextPool contextPool) {
+    public DisplaySSEM(Long pluginID, ContextPool contextPoolImpl) {
         super(pluginID);
     }
 
@@ -113,21 +113,21 @@ In the initialization phase (see <<INTRODUCTION_INITIALIZATION>>), we need to ob
 as the source of information which bits are "turned on":
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java`
+.`src/main/java/net/sf/net.emustudio/ssem/display/DisplaySSEM.java`
 ----
 public class DisplaySSEM extends AbstractDevice {
     ...
-    private final ContextPool contextPool;
+    private final ContextPool contextPoolImpl;
 
-    public DisplaySSEM(Long pluginID, ContextPool contextPool) {
+    public DisplaySSEM(Long pluginID, ContextPool contextPoolImpl) {
         super(pluginID);
-        this.contextPool = Objects.requireNonNull(contextPool);
+        this.contextPoolImpl = Objects.requireNonNull(contextPoolImpl);
     }
 
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
-        MemoryContext<Byte> memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
+        MemoryContext<Byte> memory = contextPoolImpl.getMemoryContext(pluginID, MemoryContext.class);
 
         if (memory.getDataType() != Byte.class) {
             throw new PluginInitializationException(this, "Expected Byte memory cell type!");
@@ -158,7 +158,7 @@ provide any interaction with other plug-ins. It is however possible to do it as 
 
 However, it is not the case the opposite way - the device can (and must) use memory to obtain its contents. It is
 very possible to get the memory context from the context pool. This is done in the initialization phase, so it is clear
-that `contextPool` is loaded with all available contexts from other plug-ins.
+that `contextPoolImpl` is loaded with all available contexts from other plug-ins.
 
 It is a good practice to check whether the data type of the memory cells is as we expect; unfortunately in Java the
 generics information does not differentiate a type so we need to do it manually.
@@ -188,9 +188,9 @@ image::{imagepath}/ssem-display.png[SSEM Display GUI sample look]
 And now we are ready for the source code of the `DisplayPanel`:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/display/DisplayPanel.java`
+.`src/main/java/net/sf/net.emustudio/ssem/display/DisplayPanel.java`
 ----
-include::{sourcedir}/plugins/devices/ssem-display/src/main/java/net/sf/emustudio/ssem/display/DisplayPanel.java[lines=20..-1]
+include::{sourcedir}/plugins/devices/ssem-display/src/main/java/net/sf/net.emustudio/ssem/display/DisplayPanel.java[lines=20..-1]
 ----
 
 At first, notice that the display panel has its own memory - we can call it "video memory". It is absolutely not
@@ -216,9 +216,9 @@ As it was said already, we need to implement a `JDialog` which will contain the 
 for the dialog is as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/display/DisplayDialog.java`
+.`src/main/java/net/sf/net.emustudio/ssem/display/DisplayDialog.java`
 ----
-include::{sourcedir}/plugins/devices/ssem-display/src/main/java/net/sf/emustudio/ssem/display/DisplayDialog.java[lines=20..-1]
+include::{sourcedir}/plugins/devices/ssem-display/src/main/java/net/sf/net.emustudio/ssem/display/DisplayDialog.java[lines=20..-1]
 ----
 
 In the constructor you can notice that we add the memory listener to the memory which is responsible for updating
@@ -233,9 +233,9 @@ new content - by copying the whole memory into the video memory of the display.
 The last step is to finish the main class. We need to include and show the display when emuStudio asks for it:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java`
+.`src/main/java/net/sf/net.emustudio/ssem/display/DisplaySSEM.java`
 ----
-include::{sourcedir}/plugins/devices/ssem-display/src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java[lines=20..-1]
+include::{sourcedir}/plugins/devices/ssem-display/src/main/java/net/sf/net.emustudio/ssem/display/DisplaySSEM.java[lines=20..-1]
 ----
 
 Notice the method `initialize()` - we added a check whether we are in a no-GUI mode. If yes, we should ignore

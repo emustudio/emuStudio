@@ -1,0 +1,135 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2020  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package net.emustudio.plugins.memory.standard.gui.model;
+
+import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.interaction.Dialogs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.table.AbstractTableModel;
+import java.io.File;
+import java.util.*;
+
+public class FileImagesModel extends AbstractTableModel {
+    private final static Logger LOGGER = LoggerFactory.getLogger(FileImagesModel.class);
+
+    private final List<String> imageFullFileNames = new ArrayList<>();
+    private final List<String> imageShortFileNames = new ArrayList<>();
+    private final List<Integer> imageAddresses = new ArrayList<>();
+
+    public FileImagesModel(PluginSettings settings, Dialogs dialogs) {
+        for (int i = 0; ; i++) {
+            try {
+                Optional<String> imageName = settings.getString("imageName" + i);
+                Optional<Integer> imageAddress = settings.getInt("imageAddress" + i);
+
+                if (imageName.isPresent() && imageAddress.isPresent()) {
+                    String fileName = imageName.get();
+                    int address = imageAddress.get();
+
+                    imageFullFileNames.add(fileName);
+                    imageShortFileNames.add(new File(fileName).getName());
+                    imageAddresses.add(address);
+                } else {
+                    break;
+                }
+            } catch (NumberFormatException e) {
+                LOGGER.error("Invalid number format of setting 'imageAddress" + i + "'", e);
+                dialogs.showError(
+                    "Invalid number format of setting 'imageAddress" + i + "'. Please see log file for more details"
+                );
+            }
+        }
+    }
+
+    @Override
+    public int getRowCount() {
+        return imageShortFileNames.size();
+    }
+
+    @Override
+    public int getColumnCount() {
+        return 2;
+    }
+
+    @Override
+    public String getColumnName(int columnIndex) {
+        if (columnIndex == 0) {
+            return "File name";
+        } else {
+            return "Load address (hex)";
+        }
+    }
+
+    @Override
+    public Class<?> getColumnClass(int col) {
+        return String.class;
+    }
+
+    @Override
+    public boolean isCellEditable(int r, int c) {
+        return false;
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        if (columnIndex == 0) {
+            return imageShortFileNames.get(rowIndex);
+        } else {
+            return String.format("0x%04X", imageAddresses.get(rowIndex));
+        }
+    }
+
+    public void setValueAt(int r, int c) {
+        fireTableCellUpdated(r, c);
+    }
+
+    public List<String> getImageFullNames() {
+        return Collections.unmodifiableList(imageFullFileNames);
+    }
+
+    public List<Integer> getImageAddresses() {
+        return Collections.unmodifiableList(imageAddresses);
+    }
+
+    public void addImage(File fileSource, int address) {
+        imageShortFileNames.add(fileSource.getName());
+        imageFullFileNames.add(fileSource.getAbsolutePath());
+        imageAddresses.add(address);
+
+        fireTableDataChanged();
+    }
+
+    public void removeImageAt(int index) {
+        imageShortFileNames.remove(index);
+        imageFullFileNames.remove(index);
+        imageAddresses.remove(index);
+
+        fireTableDataChanged();
+    }
+
+    public String getFileNameAtRow(int index) {
+        return imageFullFileNames.get(index);
+    }
+
+    public int getImageAddressAtRow(int index) {
+        return imageAddresses.get(index);
+    }
+}

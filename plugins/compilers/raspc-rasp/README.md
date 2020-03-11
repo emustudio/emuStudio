@@ -1,7 +1,7 @@
 Compiler for Random Access Stored Program (RASP) machine.
 ---------------------------------------------------------
 
-This project is a compiler for abstract machine RASP, similarly to RAM - used in theoretical informatics. It is written in Java. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer emulation platform. 
+This project is a compiler for abstract machine RASP, similarly to RAM - used in theoretical informatics. It is written in Java. It is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based computer emulation platform. 
 
 The result of the compilation is loaded into the operating memory of the RASP emulator and also serialised into a file with `*.bin` extension.
 
@@ -22,4 +22,4 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).

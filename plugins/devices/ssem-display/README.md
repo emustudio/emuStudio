@@ -3,7 +3,7 @@ SSEM CRT display plug-in
 
 This project is a CRT display for SSEM computer. SSEM was the first stored-program computer. More
 information can be found at [this link](https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine).
-It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
+It is implemented as a plug-in for [emuStudio](http://net.emustudio.sf.net), a software-based
 computer emulation platform.
 
 SSEM uses Cathode-Ray-Tube for displaying the content of the memory. Both the display and memory were in fact
@@ -25,5 +25,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

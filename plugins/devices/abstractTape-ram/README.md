@@ -3,7 +3,7 @@ Abstract tape for Random Access Machine
 
 This project represents an 'abstract tape' that is used in abstract machines, such as Random
 Access Machine (RAM), or Turing machine. It is implemented as a plug-in for
-[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform.
+[emuStudio](http://net.emustudio.sf.net), a software-based computer emulation platform.
 
 In the present time, only RAM machine emulator exists within the emuStudio (`ram-cpu`).
 The device then represents either input, output or register tape of the RAM machine (it
@@ -27,5 +27,5 @@ Now you can use the plug-in in abstract schema editor to construct virtual compu
 will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
 distribution.
 
-For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+For more information, please visit [emuStudio home page](http://net.emustudio.sourceforge.net/downloads.html).
 

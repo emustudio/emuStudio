@@ -109,7 +109,7 @@ described in the <<ABSTRRACT_TAPE, introduction>> section.
 
 Usually, the tapes are used by CPU plug-ins, but it is ofcourse possible to use it in any other plug-in.
 You can obtain the context during the `initialize()` method of the plug-in main class. The context is named
-`net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext`:
+`net.sf.net.emustudio.devices.abstracttape.api.AbstractTapeContext`:
 
 [source,java]
 ----
@@ -118,7 +118,7 @@ You can obtain the context during the `initialize()` method of the plug-in main 
 public void initialize(SettingsManager settings) {
     ...
 
-    AbstractTapeContext tape = contextPool.getDeviceContext(pluginID, AbstractTapeContext.class);
+    AbstractTapeContext tape = contextPoolImpl.getDeviceContext(pluginID, AbstractTapeContext.class);
     ...
 }
 ----
@@ -127,7 +127,7 @@ The tape context interface is as follows:
 
 [source,java]
 ----
-include::{sourcedir}/plugins/devices/abstractTape-ram/src/main/java/net/sf/emustudio/devices/abstracttape/api/AbstractTapeContext.java[lines=20..-1]
+include::{sourcedir}/plugins/devices/abstractTape-ram/src/main/java/net/sf/net.emustudio/devices/abstracttape/api/AbstractTapeContext.java[lines=20..-1]
 ----
 
 

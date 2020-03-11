@@ -1,11 +1,11 @@
-# EmuStudio
+# emuStudio
 *.hex
+*.jar
+artwork/
+tmp/
 
-# AsciiDOC
-diag-*.cache
-
-# Created by https://www.gitignore.io/api/java,gradle,eclipse,netbeans,intellij+all
-# Edit at https://www.gitignore.io/?templates=java,gradle,eclipse,netbeans,intellij+all
+# Created by https://www.gitignore.io/api/gradle,eclipse,netbeans,intellij+iml
+# Edit at https://www.gitignore.io/?templates=gradle,eclipse,netbeans,intellij+iml
 
 ### Eclipse ###
 .metadata
@@ -76,20 +76,15 @@ local.properties
 
 .sts4-cache/
 
-### Intellij+all ###
+### Intellij+iml ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
-# User-specific stuff
+# IntelliJ Idea
 .idea/
-*.iml
-*.ipr
 
 # CMake
 cmake-build-*/
-
-# Mongo Explorer plugin
-.idea/**/mongoSettings.xml
 
 # File-based project format
 *.iws
@@ -112,52 +107,12 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-# Editor-based Rest Client
-.idea/httpRequests
-
-# Android studio 3.1+ serialized cache file
-.idea/caches/build_file_checksums.ser
-
-### Intellij+all Patch ###
-# Ignores the whole .idea folder and all .iml files
-# See https://github.com/joeblau/gitignore.io/issues/186 and https://github.com/joeblau/gitignore.io/issues/360
-
-.idea/
-
+### Intellij+iml Patch ###
 # Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-249601023
 
 *.iml
 modules.xml
-.idea/misc.xml
 *.ipr
-
-# Sonarlint plugin
-.idea/sonarlint
-
-### Java ###
-# Compiled class file
-*.class
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
 
 ### NetBeans ###
 **/nbproject/private/
@@ -170,7 +125,7 @@ nbdist/
 .nb-gradle/
 
 ### Gradle ###
-.gradle/
+.gradle
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -187,4 +142,4 @@ gradle-app.setting
 ### Gradle Patch ###
 **/build/
 
-# End of https://www.gitignore.io/api/java,gradle,eclipse,netbeans,intellij+all
+# End of https://www.gitignore.io/api/gradle,eclipse,netbeans,intellij+iml

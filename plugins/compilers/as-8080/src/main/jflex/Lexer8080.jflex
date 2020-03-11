@@ -18,10 +18,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package net.sf.emustudio.intel8080.assembler.impl;
+package net.emustudio.plugins.compilers.as8080;
 
-import emulib.plugins.compiler.LexicalAnalyzer;
-import emulib.plugins.compiler.Token;
+import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugins.compiler.Token;
+
 import java.io.IOException;
 import java.io.Reader;
 

@@ -229,12 +229,12 @@ lexer and general syntax highlighter in emuStudio.
 Tokens are assigned into categories, as was already mentioned in section <<COMPILER_TOKEN_CATEGORIES>>. Token categories have
 assigned their specific editor style, like color or font.
 
-The content of the `net.sf.emustudio.ssem.assembler.TokenImpl` class is as follows:
+The content of the `net.sf.net.emustudio.ssem.assembler.TokenImpl` class is as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/TokenImpl.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/TokenImpl.java[lines=20..-1]
 ----
 
 [[COMPILER_GRAMMAR]]
@@ -303,9 +303,9 @@ It's now time to implement them. Since we know all nodes are just nodes of our A
 interface first:
 
 [source, java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/tree/ASTnode.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/tree/ASTnode.java[lines=20..-1]
 ----
 
 This interface will be useful when we will traverse the tree. For tree traversal it is very well-suited the
@@ -319,9 +319,9 @@ root of the tree.
 We can now define the visitor interface as follows:
 
 [source, java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/tree/ASTvisitor.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/tree/ASTvisitor.java[lines=20..-1]
 ----
 
 The methods of the visitor will be implemented by some visitor, for example a code generator. However, we need to
@@ -333,9 +333,9 @@ The root node of the AST is the `Program` class. According to the grammar, it co
 either `Instruction` or `Constant`. Notice how we implemented traversing of the node:
 
 [source, java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/tree/Program.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/tree/Program.java[lines=20..-1]
 ----
 
 The important note is that how the statements are stored. They are in fact the children of the program node. For this
@@ -363,9 +363,9 @@ implemented in one AST node.
 Here's the source code:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/tree/Instruction.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/tree/Instruction.java[lines=20..-1]
 ----
 
 Note that the constructor is private. The implication is that it is just impossible to create some invalid `Instruction`
@@ -381,7 +381,7 @@ Another kind of statement is a constant. The constant is just a number, and the 
 
 [source,java]
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Constant.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/tree/Constant.java[lines=20..-1]
 ----
 
 Comparing `Constant` instances is based on comparing the numbers they represent.
@@ -408,7 +408,7 @@ For lexer and parser we create unit test classes, which will be placed here (fol
         java/
           net/
             sf/
-              emustudio/
+              net.emustudio/
                 ssem/
                   assembler/
                     LexerTest.java
@@ -417,15 +417,15 @@ For lexer and parser we create unit test classes, which will be placed here (fol
 The content of the test classes are as follows:
 
 [source,java]
-.`src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java`
+.`src/test/java/net/sf/net.emustudio/ssem/assembler/LexerTest.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/test/java/net/sf/net.emustudio/ssem/assembler/LexerTest.java[lines=20..-1]
 ----
 
 [source,java]
-.`src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java`
+.`src/test/java/net/sf/net.emustudio/ssem/assembler/ParserTest.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/test/java/net/sf/net.emustudio/ssem/assembler/ParserTest.java[lines=20..-1]
 ----
 
 NOTE: The tests of parser are based on comparing `Instruction` and `Constant` instances with JUnit's `assertEquals()`
@@ -435,7 +435,7 @@ NOTE: The tests of parser are based on comparing `Instruction` and `Constant` in
 === The main class
 
 The time has come for implementing the main plug-in class. It will be placed in a package
-`net.sf.emustudio.ssem.assembler`, and the class will be named `CompilerImpl`.
+`net.sf.net.emustudio.ssem.assembler`, and the class will be named `CompilerImpl`.
 
 There are several requirements (behavioral contracts) put on the compiler main class:
 
@@ -449,9 +449,9 @@ There are several requirements (behavioral contracts) put on the compiler main c
 Now, the "skeleton" of the class follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/CompilerImpl.java`
 ----
-package net.sf.emustudio.ssem.assembler;
+package net.sf.net.emustudio.ssem.assembler;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
@@ -474,11 +474,11 @@ public class CompilerImpl extends AbstractCompiler {
     private static final SourceFileExtension[] SOURCE_FILE_EXTENSIONS = new SourceFileExtension[]{
         new SourceFileExtension("ssem", "SSEM source file")
     };
-    private final ContextPool contextPool;
+    private final ContextPool contextPoolImpl;
 
-    public CompilerImpl(Long pluginID, ContextPool contextPool) {
+    public CompilerImpl(Long pluginID, ContextPool contextPoolImpl) {
         super(pluginID);
-        this.contextPool = Objects.requireNonNull(contextPool);
+        this.contextPoolImpl = Objects.requireNonNull(contextPoolImpl);
     }
 
     @Override
@@ -569,9 +569,9 @@ binary representation into a file. However, it is generally better if I/O classe
 similar fashion. The code is as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/CodeGenerator.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/CodeGenerator.java[lines=20..-1]
 ----
 
 There are several things to notice:
@@ -597,17 +597,17 @@ Code generator uses a "seekable" output stream, which allows to seek in the outp
 actually an abstract class, extending `OutputStream`. The reason is easier testing:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/SeekableOutputStream.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/SeekableOutputStream.java[lines=20..-1]
 ----
 
 and here's the implementation:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/MemoryAndFileOutput.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/MemoryAndFileOutput.java[lines=20..-1]
 ----
 
 The "seeking" capability is required, because, as you remember, it's possible to write something like this:
@@ -624,9 +624,9 @@ It's not quite common, but it's possible.
 As being our practice, we must test it.
 
 [source,java]
-.`src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java`
+.`src/test/java/net/sf/net.emustudio/ssem/assembler/CodeGeneratorTest.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/test/java/net/sf/net.emustudio/ssem/assembler/CodeGeneratorTest.java[lines=20..-1]
 ----
 
 === Finalizing
@@ -635,7 +635,7 @@ We're almost done now! What is missing so far is to finish implementation of the
 Let's begin with it first.
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/CompilerImpl.java`
 ----
 public class CompilerImpl extends AbstractCompiler {
 
@@ -647,7 +647,7 @@ public class CompilerImpl extends AbstractCompiler {
 
         int errorCode = 0;
         try (Reader reader = new FileReader(inputFileName)) {
-            MemoryContext<Byte> memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
+            MemoryContext<Byte> memory = contextPoolImpl.getMemoryContext(pluginID, MemoryContext.class);
 
             try (CodeGenerator codeGenerator = new CodeGenerator(new MemoryAndFileOutput(outputFileName, memory))) {
                 LexerImpl lexer = new LexerImpl(reader);
@@ -705,9 +705,9 @@ It might be sometimes useful to being able to run the compiler from the command 
 in the `Main` class, as follows:
 
 [source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/Main.java`
+.`src/main/java/net/sf/net.emustudio/ssem/assembler/Main.java`
 ----
-include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/Main.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/net.emustudio/ssem/assembler/Main.java[lines=20..-1]
 ----
 
 And that was the very last thing, now you have SSEM compiler ready :)

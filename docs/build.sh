@@ -7,7 +7,7 @@ rm -rf ./images/
 
 echo Building site...
 jekyll clean
-JEKYLL_ENV=production jekyll build --verbose # --baseurl '/emuStudio'
+JEKYLL_ENV=production jekyll net.emustudio.architecture.build --verbose # --baseurl '/emuStudio'
 
 echo Copying results...
 cp -rf _site/docuser/* _docuser/
