@@ -1,7 +1,8 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2016-2017  Michal Šipoš
+ * Copyright (C) 2020  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package net.emustudio.plugins.compilers.raspc.tree;
 
 import net.emustudio.plugins.compilers.raspc.CompilerOutput;
@@ -24,9 +24,6 @@ import net.emustudio.plugins.compilers.raspc.CompilerOutput;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author miso
- */
 public class Program extends AbstractTreeNode {
 
     private final List<Row> rows = new ArrayList<>();

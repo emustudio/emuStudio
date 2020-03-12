@@ -1,7 +1,8 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2016-2017  Michal Šipoš
+ * Copyright (C) 2020  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,16 +22,8 @@ package net.emustudio.plugins.memory.rasp.api;
 
 import java.io.Serializable;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
- * General interface reprezenting memory item.
- *
- * @author miso
+ * General interface representing memory item.
  */
 public interface MemoryItem extends Serializable {
 

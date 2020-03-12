@@ -1,7 +1,8 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2016-2017  Michal Šipoš
+ * Copyright (C) 2020  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,8 +37,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * The implementation of the compiler of RASP abstract machine assembly
- * language.
+ * The implementation of the compiler of RASP abstract machine assembly language.
  */
 @PluginRoot(
     type = PLUGIN_TYPE.COMPILER,

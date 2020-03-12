@@ -1,7 +1,8 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2016-2017  Michal Šipoš
+ * Copyright (C) 2020  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,96 +22,94 @@ package net.emustudio.plugins.memory.rasp.api;
 
 /**
  * Interface representing RASP instruction.
- *
- * @author miso
  */
 public interface RASPInstruction extends MemoryItem {
 
     /**
      * Operation code of RASP instruction.
      */
-    public final static int READ = 1;
+    int READ = 1;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int WRITE_CONSTANT = 2;
+    int WRITE_CONSTANT = 2;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int WRITE_REGISTER = 3;
+    int WRITE_REGISTER = 3;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int LOAD_CONSTANT = 4;
+    int LOAD_CONSTANT = 4;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int LOAD_REGISTER = 5;
+    int LOAD_REGISTER = 5;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int STORE = 6;
+    int STORE = 6;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int ADD_CONSTANT = 7;
+    int ADD_CONSTANT = 7;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int ADD_REGISTER = 8;
+    int ADD_REGISTER = 8;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int SUB_CONSTANT = 9;
+    int SUB_CONSTANT = 9;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int SUB_REGISTER = 10;
+    int SUB_REGISTER = 10;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int MUL_CONSTANT = 11;
+    int MUL_CONSTANT = 11;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int MUL_REGISTER = 12;
+    int MUL_REGISTER = 12;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int DIV_CONSTANT = 13;
+    int DIV_CONSTANT = 13;
     /**
      * Operation code of RASP instruction.
      */
-    public static final int DIV_REGISTER = 14;
+    int DIV_REGISTER = 14;
     /**
      * Operation code of RASP instruction.
      */
-    public static final int JMP = 15;
+    int JMP = 15;
     /**
      * Operation code of RASP instruction.
      */
-    public static final int JZ = 16;
+    int JZ = 16;
     /**
      * Operation code of RASP instruction.
      */
-    public static final int JGTZ = 17;
+    int JGTZ = 17;
     /**
      * Operation code of RASP instruction.
      */
-    public static final int HALT = 18;
+    int HALT = 18;
 
     /**
      * Get operation code of the instruction.
      *
      * @return operation code of the instruction.
      */
-    public int getCode();
+    int getCode();
 
     /**
      * Get string representation of the RASP instruction (mnemonic code).
      *
      * @return string representation of the instruction
      */
-    public String getCodeStr();
+    String getCodeStr();
 
 }

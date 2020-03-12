@@ -1,7 +1,8 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2016-2017  Michal Šipoš
+ * Copyright (C) 2020  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,27 +24,15 @@ import net.emustudio.plugins.memory.rasp.api.MemoryItem;
 
 /**
  * Value as a memory item, either value of register, or instruction operand.
- *
- * @author miso
  */
 public class NumberMemoryItem implements MemoryItem {
 
     private final int value;
 
-    /**
-     * Constructor.
-     *
-     * @param value the value
-     */
     public NumberMemoryItem(int value) {
         this.value = value;
     }
 
-    /**
-     * Get the value.
-     *
-     * @return the value
-     */
     public int getValue() {
         return value;
     }

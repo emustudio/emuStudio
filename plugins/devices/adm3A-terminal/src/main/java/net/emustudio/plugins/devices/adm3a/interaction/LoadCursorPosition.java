@@ -2,6 +2,7 @@
  * This file is part of emuStudio.
  *
  * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2020  Marcin Wieczorek
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
