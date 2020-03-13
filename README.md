@@ -14,10 +14,6 @@ emuStudio is very appropriate for using at schools, e.g. when students are doing
 are taught about computers history. For example, emuStudio is used at [Technical University of Košice](http://www.fei.tuke.sk/en)
 since 2007.
 
-# License
-
-This project is released under [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.html) license.
-
 ## Available emulators
 
 * [MITS Altair8800](https://vbmacher.github.io/emuStudio/docuser/mits_altair_8800/index/)
@@ -36,7 +32,11 @@ Big thanks goes to the one and only [simh](http://simh.trailing-edge.com/) proje
 me as a student and emulator enthusiast when working on emuStudio. I wish emuStudio will reach it's simplicity and
 emulators "richness" as the simh project has.
 
-# Getting started
+## License
+
+This project is released under [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.html) license.
+
+## Getting started
 
 At first, either compile or [download](https://vbmacher.github.io/emuStudio/download/) emuStudio.
 The prerequisite is to have Java Runtime Environment (JRE) version 1.8 installed. 
@@ -51,8 +51,7 @@ NOTE: Currently supported are Linux and Windows. Mac is NOT supported, but it mi
 
 For more information, please read [user documentation](https://vbmacher.github.io/emuStudio/docs/).
 
-
-# Contributing
+## Contributing
 
 Anyone can contribute. Before start, please read
 [developer documentation](https://vbmacher.github.io/emuStudio/docdevel/emulator_tutorial/index/),
@@ -63,7 +62,7 @@ which includes information like:
 - Which git branch to use
 - Which rules needs to be followed
 
-## Related projects
+### Related projects
 
 There exist some additional projects, which are either incorporated in or used by emuStudio, useful for contributors:
   
