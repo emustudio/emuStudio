@@ -1,4 +1,4 @@
-# ![alt text](logo.png "Logo Title Text 1") Welcome to emuStudio
+# ![emuStudio logo](logo.png "emuStudio logo") Welcome to emuStudio
 ![emuStudio Build](https://github.com/emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
 
 [emuStudio](https://www.emustudio.net/) is a desktop application used for computers emulation and writing programs
