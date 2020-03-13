@@ -21,11 +21,14 @@
 package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
 import net.emustudio.plugins.memory.rasp.api.MemoryItem;
+import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.*;
 
 public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {

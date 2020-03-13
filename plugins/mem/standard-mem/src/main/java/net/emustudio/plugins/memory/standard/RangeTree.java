@@ -16,11 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.standard.impl;
+package net.emustudio.plugins.memory.standard;
 
-import net.emustudio.plugins.memory.standard.StandardMemoryContext;
+import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 public class RangeTree {
     private final NavigableSet<Integer> values = new TreeSet<>();

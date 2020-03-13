@@ -39,11 +39,11 @@ public class LoadingDialog extends JDialog {
 
         lblLoading.setFont(lblLoading.getFont().deriveFont(lblLoading.getFont().getStyle() | java.awt.Font.BOLD));
         lblLoading.setIcon(new ImageIcon(getClass()
-            .getResource("/emustudio/gui/loading.gif"))); // NOI18N
+            .getResource("/net/emustudio/application/gui/dialogs/loading.gif"))); // NOI18N
         lblLoading.setText("Loading computer, please wait...");
 
         lblWarning.setFont(lblWarning.getFont().deriveFont(java.awt.Font.PLAIN));
-        lblWarning.setText("If you see some errors, please look at the net.emustudio.log.");
+        lblWarning.setText("If you see some errors, please see the log file.");
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

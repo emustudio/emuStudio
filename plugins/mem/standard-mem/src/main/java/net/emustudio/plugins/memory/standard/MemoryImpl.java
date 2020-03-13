@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.standard.impl;
+package net.emustudio.plugins.memory.standard;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -24,12 +24,15 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.memory.AbstractMemory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.*;
-import net.emustudio.plugins.memory.standard.StandardMemoryContext;
+import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
 import net.emustudio.plugins.memory.standard.gui.MemoryDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
 @PluginRoot(
     type = PLUGIN_TYPE.MEMORY,
@@ -61,17 +64,12 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.emustudio.plugins.memory.standard.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -223,5 +221,13 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public boolean isShowSettingsSupported() {
         return !guiNotSupported;
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.memory.standard.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 }

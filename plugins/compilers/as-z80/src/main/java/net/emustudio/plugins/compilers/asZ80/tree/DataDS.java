@@ -19,13 +19,13 @@
 package net.emustudio.plugins.compilers.asZ80.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.plugins.compilers.asZ80.Namespace;
 import net.emustudio.plugins.compilers.asZ80.exceptions.AmbiguousException;
 import net.emustudio.plugins.compilers.asZ80.exceptions.NeedMorePassException;
 import net.emustudio.plugins.compilers.asZ80.exceptions.NegativeValueException;
 import net.emustudio.plugins.compilers.asZ80.exceptions.ValueTooBigException;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.DataValue;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.Expression;
-import net.emustudio.plugins.compilers.asZ80.Namespace;
 
 public class DataDS extends DataValue {
     private Expression expression;

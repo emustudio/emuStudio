@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.devices.mits88disk;
 
-import net.emustudio.plugins.devices.mits88disk.cpmfs.CpmFile;
 import net.emustudio.plugins.devices.mits88disk.cpmfs.CpmDirectory;
+import net.emustudio.plugins.devices.mits88disk.cpmfs.CpmFile;
 import net.emustudio.plugins.devices.mits88disk.cpmfs.RawDisc;
 
 import java.io.File;

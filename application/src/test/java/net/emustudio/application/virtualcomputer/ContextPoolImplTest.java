@@ -18,7 +18,10 @@
  */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.virtualcomputer.ContextStubs.*;
+import net.emustudio.application.virtualcomputer.ContextStubs.DifferentCPUContextStubWithEqualHash;
+import net.emustudio.application.virtualcomputer.ContextStubs.DifferentCompilerContextStubWithEqualHash;
+import net.emustudio.application.virtualcomputer.ContextStubs.DifferentDeviceContextStubWithEqualHash;
+import net.emustudio.application.virtualcomputer.ContextStubs.DifferentShortMemoryContextStubWithEqualHash;
 import net.emustudio.application.virtualcomputer.stubs.*;
 import net.emustudio.emulib.plugins.Context;
 import net.emustudio.emulib.plugins.annotations.PluginContext;

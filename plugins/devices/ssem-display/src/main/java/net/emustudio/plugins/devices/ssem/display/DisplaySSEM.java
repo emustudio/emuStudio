@@ -42,9 +42,15 @@ public class DisplaySSEM extends AbstractDevice {
         super(pluginID, applicationApi, settings);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        MemoryContext<Byte> memory = applicationApi.getContextPool().getMemoryContext(pluginID, ByteMemoryContext.class);
+        MemoryContext<Byte> memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
+        if (memory.getDataType() != Byte.class) {
+            throw new PluginInitializationException(
+                "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+            );
+        }
 
         boolean guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         if (!guiNotSupported) {
@@ -79,17 +85,12 @@ public class DisplaySSEM extends AbstractDevice {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.emustudio.plugins.devices.ssem.display.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -97,5 +98,11 @@ public class DisplaySSEM extends AbstractDevice {
         return "CRT display for SSEM computer";
     }
 
-    private interface ByteMemoryContext extends MemoryContext<Byte> {}
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.ssem.display.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
+    }
 }

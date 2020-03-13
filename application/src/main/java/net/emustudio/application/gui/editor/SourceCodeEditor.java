@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.application.Constants;
+import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.plugins.compiler.Token;
@@ -38,7 +38,10 @@ import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Timer;

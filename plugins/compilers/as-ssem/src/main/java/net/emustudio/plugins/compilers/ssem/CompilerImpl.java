@@ -25,16 +25,17 @@ import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextNotFoundException;
+import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.plugins.compilers.ssem.tree.Program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @PluginRoot(
     type = PLUGIN_TYPE.COMPILER,
@@ -61,7 +62,7 @@ public class CompilerImpl extends AbstractCompiler {
                 memory = pool.getMemoryContext(pluginID, MemoryContext.class);
                 if (memory.getDataType() != Byte.class) {
                     throw new InvalidContextException(
-                        "Unexpected memory cell type. Expected Short byt was: " + memory.getDataType()
+                        "Unexpected memory cell type. Expected Short but was: " + memory.getDataType()
                     );
                 }
             } catch (InvalidContextException | ContextNotFoundException e) {
@@ -137,16 +138,24 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public String getVersion() {
-        return "1.0";
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2016-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
     public String getDescription() {
         return "Assembler of SSEM computer language";
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compilers.ssem.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 }

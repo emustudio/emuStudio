@@ -16,10 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.cpu.ram.impl;
 
-public class Breakpoint extends Exception {
+package net.emustudio.plugins.cpu.ram.api;
 
-    public Breakpoint() {
-    }
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
+
+public interface RAMContext extends CPUContext {
+
+    AbstractTapeContext getStorage();
+
+    AbstractTapeContext getInput();
+
+    AbstractTapeContext getOutput();
 }

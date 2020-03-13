@@ -19,10 +19,10 @@
 package net.emustudio.plugins.compilers.asZ80.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.plugins.compilers.asZ80.Namespace;
 import net.emustudio.plugins.compilers.asZ80.exceptions.AlreadyDefinedException;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.Expression;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.Pseudo;
-import net.emustudio.plugins.compilers.asZ80.Namespace;
 
 public class PseudoVAR extends Pseudo {
     private Expression expr;

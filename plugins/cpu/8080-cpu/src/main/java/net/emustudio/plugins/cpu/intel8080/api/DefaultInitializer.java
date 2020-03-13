@@ -54,7 +54,7 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
             MemoryContext<Short> memory = contextPool.getMemoryContext(pluginId, MemoryContext.class);
             if (memory.getDataType() != Short.class) {
                 throw new InvalidContextException(
-                    "Unexpected memory cell type. Expected Short byt was: " + memory.getDataType()
+                    "Unexpected memory cell type. Expected Short but was: " + memory.getDataType()
                 );
             }
 

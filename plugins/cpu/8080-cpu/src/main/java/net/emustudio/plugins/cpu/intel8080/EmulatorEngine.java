@@ -62,7 +62,6 @@ public class EmulatorEngine implements CpuEngine {
     private final ContextImpl context;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
-    private final int checkTimeSlice = 100;
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
@@ -86,10 +85,6 @@ public class EmulatorEngine implements CpuEngine {
 
     public void addFrequencyChangedListener(FrequencyChangedListener listener) {
         frequencyChangedListeners.add(listener);
-    }
-
-    public void removeFrequencyChangedListener(FrequencyChangedListener listener) {
-        frequencyChangedListeners.remove(listener);
     }
 
     @Override
@@ -117,6 +112,7 @@ public class EmulatorEngine implements CpuEngine {
     public CPU.RunState run(CPU cpu) {
         long startTime, endTime;
         int cycles_executed;
+        int checkTimeSlice = 100;
         int cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         int cycles;
         long slice = checkTimeSlice * 1000000;

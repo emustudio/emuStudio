@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.schema.mode;
 
-import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.DrawingModel;
+import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.Schema;
 
 import java.awt.*;

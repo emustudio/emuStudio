@@ -19,13 +19,13 @@
 package net.emustudio.plugins.compilers.asZ80.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.plugins.compilers.asZ80.CompilerImpl;
 import net.emustudio.plugins.compilers.asZ80.LexerImpl;
+import net.emustudio.plugins.compilers.asZ80.Namespace;
 import net.emustudio.plugins.compilers.asZ80.ParserImpl;
 import net.emustudio.plugins.compilers.asZ80.exceptions.CompilerException;
 import net.emustudio.plugins.compilers.asZ80.exceptions.UnexpectedEOFException;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.Pseudo;
-import net.emustudio.plugins.compilers.asZ80.CompilerImpl;
-import net.emustudio.plugins.compilers.asZ80.Namespace;
 
 import java.io.File;
 import java.io.FileReader;

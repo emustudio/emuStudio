@@ -19,6 +19,7 @@
 package net.emustudio.plugins.memory.ssem.impl;
 
 import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;

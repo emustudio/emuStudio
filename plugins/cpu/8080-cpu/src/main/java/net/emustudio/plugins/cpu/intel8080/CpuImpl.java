@@ -27,14 +27,15 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.cpu.intel8080.gui.StatusPanel;
 import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
 import net.emustudio.plugins.cpu.intel8080.api.FrequencyUpdater;
+import net.emustudio.plugins.cpu.intel8080.gui.StatusPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -77,17 +78,12 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.emustudio.plugins.cpu.intel8080.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2017, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -194,5 +190,13 @@ public class CpuImpl extends AbstractCPU {
         }
         engine.PC = position & 0xFFFF;
         return true;
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.intel8080.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 }

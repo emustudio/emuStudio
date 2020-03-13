@@ -19,8 +19,8 @@
 package net.emustudio.plugins.compilers.asZ80.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
-import net.emustudio.plugins.compilers.asZ80.treeAbstract.Instruction;
 import net.emustudio.plugins.compilers.asZ80.Namespace;
+import net.emustudio.plugins.compilers.asZ80.treeAbstract.Instruction;
 
 public class OC_NoParams extends Instruction {
     public static final int ADC_A_HHLL = 0x8E;

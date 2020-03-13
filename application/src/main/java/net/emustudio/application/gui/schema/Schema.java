@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.schema;
 
-import net.emustudio.application.configuration.ComputerConfig;
 import net.emustudio.application.configuration.ApplicationConfig;
+import net.emustudio.application.configuration.ComputerConfig;
 import net.emustudio.application.configuration.PluginConfig;
 import net.emustudio.application.configuration.PluginConnection;
 import net.emustudio.application.gui.P;

@@ -19,8 +19,8 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.jcip.annotations.ThreadSafe;
 import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

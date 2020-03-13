@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.memory.standard.impl;
 
+import net.emustudio.plugins.memory.standard.RangeTree;
 import org.junit.Test;
 
 import java.util.List;

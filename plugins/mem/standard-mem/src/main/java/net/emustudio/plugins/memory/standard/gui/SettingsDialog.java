@@ -25,9 +25,9 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.memory.standard.gui.model.FileImagesModel;
 import net.emustudio.plugins.memory.standard.gui.model.ROMmodel;
 import net.emustudio.plugins.memory.standard.gui.model.TableMemory;
-import net.emustudio.plugins.memory.standard.impl.MemoryContextImpl;
-import net.emustudio.plugins.memory.standard.impl.MemoryImpl;
-import net.emustudio.plugins.memory.standard.impl.RangeTree;
+import net.emustudio.plugins.memory.standard.MemoryContextImpl;
+import net.emustudio.plugins.memory.standard.MemoryImpl;
+import net.emustudio.plugins.memory.standard.RangeTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

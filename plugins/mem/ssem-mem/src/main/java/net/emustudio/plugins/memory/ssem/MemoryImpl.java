@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.brainduck.impl;
+package net.emustudio.plugins.memory.ssem;
 
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
@@ -26,66 +26,57 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
-import net.emustudio.plugins.memory.brainduck.gui.MemoryGUI;
+import net.emustudio.plugins.memory.ssem.gui.MemoryGUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
     type = PLUGIN_TYPE.MEMORY,
-    title = "BrainDuck memory"
+    title = "SSEM memory (Williams-Kilburn Tube)"
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl memContext = new MemoryContextImpl();
     private MemoryGUI memoryGUI;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-
         try {
-            applicationApi.getContextPool().register(pluginID, memContext, RawMemoryContext.class);
             applicationApi.getContextPool().register(pluginID, memContext, MemoryContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register memory context", e);
+            LOGGER.error("Could not register SSEM memory context", e);
             applicationApi.getDialogs().showError(
-                "Could not register BrainDuck memory. Please see log file for details.", getTitle()
+                "Could not register SSEM memory. Please see log file for more details.", getTitle()
             );
         }
     }
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.net.emustudio.brainduck.memory.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2017, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
     public String getDescription() {
-        return "Operating memory for abstract BrainDuck architecture";
+        return "Main store for SSEM machine";
     }
 
     @Override
     public void initialize() {
-        settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).ifPresent(nogui -> {
-            if (!nogui) {
-                memoryGUI = new MemoryGUI(memContext);
-            }
-        });
+        if (!settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)) {
+            memoryGUI = new MemoryGUI(memContext);
+        }
     }
 
     @Override
@@ -94,7 +85,7 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public int getSize() {
-        return memContext.getSize();
+        return MemoryContextImpl.NUMBER_OF_CELLS;
     }
 
     @Override
@@ -106,6 +97,14 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public boolean isShowSettingsSupported() {
-        return memoryGUI != null;
+        return true;
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.memory.ssem.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 }

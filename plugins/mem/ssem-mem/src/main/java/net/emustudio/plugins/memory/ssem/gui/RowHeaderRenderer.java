@@ -22,7 +22,7 @@ import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 
-class RowHeaderRenderer extends JLabel implements ListCellRenderer {
+class RowHeaderRenderer extends JLabel implements ListCellRenderer<String> {
     private final static int NO_COLUMN_WIDTH = Constants.CHAR_WIDTH * 4;
 
     private int height;
@@ -42,10 +42,9 @@ class RowHeaderRenderer extends JLabel implements ListCellRenderer {
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList list, String value, int index, boolean isSelected, boolean cellHasFocus) {
         setPreferredSize(new Dimension(NO_COLUMN_WIDTH, height));
-        setText((value == null) ? "" : value.toString());
+        setText((value == null) ? "" : value);
         return this;
     }
-
 }

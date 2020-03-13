@@ -18,12 +18,12 @@
  */
 package net.emustudio.application.gui.schema.mode;
 
-import net.emustudio.application.gui.schema.DrawingPanel;
+import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.DrawingModel;
+import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.elements.ConnectionLine;
 import net.emustudio.application.gui.schema.elements.Element;
 import net.emustudio.application.gui.schema.mode.ModeSelector.SelectMode;
-import net.emustudio.application.gui.P;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;

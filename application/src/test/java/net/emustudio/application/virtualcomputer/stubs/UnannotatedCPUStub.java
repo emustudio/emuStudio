@@ -23,7 +23,7 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.PluginSettings;
 
-import javax.swing.JPanel;
+import javax.swing.*;
 
 public class UnannotatedCPUStub implements CPU {
 

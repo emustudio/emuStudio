@@ -35,7 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.MissingResourceException;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
 @PluginRoot(
     type = PLUGIN_TYPE.CPU,
@@ -55,9 +58,15 @@ public class CpuImpl extends AbstractCPU {
         super(pluginID, applicationApi, settings);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, ByteMemoryContext.class);
+        memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
+        if (memory.getDataType() != Byte.class) {
+            throw new PluginInitializationException(
+                "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+            );
+        }
         Decoder decoder = new DecoderImpl(memory);
         disassembler = new DisassemblerImpl(memory, decoder);
         engine = new EmulatorEngine(memory, this);
@@ -114,23 +123,17 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.emustudio.plugins.cpu.ssem.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            LOGGER.error("Could not load resource file", e);
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
     public String getDescription() {
-        return "Emulator of SSEM CPU";
+        return "Emulator of SSEM machine";
     }
 
     @Override
@@ -147,5 +150,11 @@ public class CpuImpl extends AbstractCPU {
         return engine;
     }
 
-    private interface ByteMemoryContext extends MemoryContext<Byte> {}
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.ssem.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
+    }
 }

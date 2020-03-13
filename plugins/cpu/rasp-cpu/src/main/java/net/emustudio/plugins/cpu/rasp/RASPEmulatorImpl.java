@@ -35,10 +35,10 @@ import net.emustudio.plugins.cpu.rasp.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.rasp.gui.RASPCpuStatusPanel;
 import net.emustudio.plugins.cpu.rasp.gui.RASPDisassembler;
 import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
 import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
+import net.emustudio.plugins.memory.rasp.api.MemoryItem;
 import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,17 +205,12 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.emustudio.plugins.cpu.rasp.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2016-2020, Michal Šipoš";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -526,5 +521,13 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
     private RunState halt(NumberMemoryItem operand) {
         return RunState.STATE_STOPPED_NORMAL;
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.rasp.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 }

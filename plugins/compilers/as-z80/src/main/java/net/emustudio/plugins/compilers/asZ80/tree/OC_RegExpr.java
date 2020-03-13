@@ -19,11 +19,11 @@
 package net.emustudio.plugins.compilers.asZ80.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.plugins.compilers.asZ80.Namespace;
 import net.emustudio.plugins.compilers.asZ80.exceptions.ValueOutOfBoundsException;
 import net.emustudio.plugins.compilers.asZ80.exceptions.ValueTooBigException;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.Expression;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.Instruction;
-import net.emustudio.plugins.compilers.asZ80.Namespace;
 
 /**
  * opcode = (first_byte+reg) expr

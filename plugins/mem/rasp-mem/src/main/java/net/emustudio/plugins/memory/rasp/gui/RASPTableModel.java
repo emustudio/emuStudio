@@ -20,10 +20,10 @@
 
 package net.emustudio.plugins.memory.rasp.gui;
 
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
 import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
+import net.emustudio.plugins.memory.rasp.api.MemoryItem;
+import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -81,7 +81,7 @@ public class RASPTableModel extends AbstractTableModel {
     private String getAddressColumnText(int rowIndex) {
         String label = memory.getLabel(rowIndex);
         if (label != null) {
-            return String.valueOf(rowIndex) + " " + label.toLowerCase();
+            return rowIndex + " " + label.toLowerCase();
         } else {
             return String.valueOf(rowIndex);
         }

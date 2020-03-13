@@ -20,8 +20,8 @@
 package net.emustudio.plugins.compilers.raspc;
 
 import net.emustudio.plugins.compilers.raspc.tree.Label;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 import net.emustudio.plugins.memory.rasp.api.MemoryItem;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 
 import java.io.*;
 import java.util.*;

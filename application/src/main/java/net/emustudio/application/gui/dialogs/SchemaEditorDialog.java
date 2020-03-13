@@ -153,7 +153,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         toolDraw.setFloatable(false);
         toolDraw.setRollover(true);
 
-        btnSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/document-save.png"))); // NOI18N
+        btnSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/document-save.png"))); // NOI18N
         btnSave.setToolTipText("Save & Close");
         btnSave.setFocusable(false);
         btnSave.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -163,7 +163,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         toolDraw.add(jSeparator4);
 
         groupDraw.add(btnCompiler);
-        btnCompiler.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/compile.png"))); // NOI18N
+        btnCompiler.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/compile.png"))); // NOI18N
         btnCompiler.setToolTipText("Set compiler");
         btnCompiler.setFocusable(false);
         btnCompiler.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -173,7 +173,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         toolDraw.add(btnCompiler);
 
         groupDraw.add(btnCPU);
-        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/cpu.gif"))); // NOI18N
+        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/cpu.gif"))); // NOI18N
         btnCPU.setToolTipText("Set CPU");
         btnCPU.setFocusable(false);
         btnCPU.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -183,7 +183,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         toolDraw.add(btnCPU);
 
         groupDraw.add(btnRAM);
-        btnRAM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/ram.gif"))); // NOI18N
+        btnRAM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/ram.gif"))); // NOI18N
         btnRAM.setToolTipText("Set main store");
         btnRAM.setFocusable(false);
         btnRAM.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -193,7 +193,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         toolDraw.add(btnRAM);
 
         groupDraw.add(btnDevice);
-        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/device.png"))); // NOI18N
+        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/device.png"))); // NOI18N
         btnDevice.setToolTipText("Add device");
         btnDevice.setFocusable(false);
         btnDevice.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -204,7 +204,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         toolDraw.add(jSeparator5);
 
         groupDraw.add(btnLine);
-        btnLine.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/connection.png"))); // NOI18N
+        btnLine.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/connection.png"))); // NOI18N
         btnLine.setToolTipText("Add connection");
         btnLine.setFocusable(false);
         btnLine.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -213,7 +213,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         btnLine.addActionListener(this::btnLineActionPerformed);
         toolDraw.add(btnLine);
 
-        btnBidirection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/bidirection.gif"))); // NOI18N
+        btnBidirection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/bidirection.gif"))); // NOI18N
         btnBidirection.setSelected(true);
         btnBidirection.setToolTipText("Bidirectional connection");
         btnBidirection.setFocusable(false);
@@ -224,7 +224,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         toolDraw.add(jSeparator2);
 
         groupDraw.add(btnDelete);
-        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/edit-delete.png"))); // NOI18N
+        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/edit-delete.png"))); // NOI18N
         btnDelete.setToolTipText("Delete component or connection");
         btnDelete.setFocusable(false);
         btnDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -239,7 +239,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         toolDraw.add(cmbPlugin);
         toolDraw.add(jSeparator3);
 
-        btnUseGrid.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/grid_memory.gif"))); // NOI18N
+        btnUseGrid.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/grid_memory.gif"))); // NOI18N
         btnUseGrid.setSelected(true);
         btnUseGrid.setToolTipText("Use grid?");
         btnUseGrid.setFocusable(false);

@@ -16,11 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.cpu.ram.impl;
+package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.plugins.cpu.ram.api.RAMContext;
 import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
-import net.emustudio.plugins.cpu.ram.RAMContext;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import org.slf4j.Logger;
@@ -138,7 +138,7 @@ public class EmulatorEngine {
         }
     }
 
-    CPU.RunState step() throws IOException {
+    public CPU.RunState step() throws IOException {
         AbstractTapeContext storage = context.getStorage();
 
         RAMInstruction in = memory.read(IP++);

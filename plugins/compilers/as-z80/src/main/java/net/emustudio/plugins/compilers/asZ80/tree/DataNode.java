@@ -19,9 +19,9 @@
 package net.emustudio.plugins.compilers.asZ80.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.plugins.compilers.asZ80.Namespace;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.DataValue;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.InstrData;
-import net.emustudio.plugins.compilers.asZ80.Namespace;
 
 import java.util.ArrayList;
 import java.util.List;

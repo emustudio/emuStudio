@@ -37,7 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractCompilerTest {
     protected CompilerImpl compiler;

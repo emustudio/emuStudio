@@ -70,7 +70,7 @@ public class CompilerImpl extends AbstractCompiler {
                 memory = pool.getMemoryContext(pluginID, MemoryContext.class);
                 if (memory.getDataType() != Short.class) {
                     throw new InvalidContextException(
-                        "Unexpected memory cell type. Expected Short byt was: " + memory.getDataType()
+                        "Unexpected memory cell type. Expected Short but was: " + memory.getDataType()
                     );
                 }
             } catch (ContextNotFoundException | InvalidContextException e) {
@@ -81,17 +81,12 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.emustudio.plugins.compilers.brainc.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -180,6 +175,14 @@ public class CompilerImpl extends AbstractCompiler {
             program.firstPass(0);
             program.secondPass(hex);
             return hex;
+        }
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compilers.brainc.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
         }
     }
 }

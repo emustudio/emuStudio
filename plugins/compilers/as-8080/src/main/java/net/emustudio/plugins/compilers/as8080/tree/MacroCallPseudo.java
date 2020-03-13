@@ -19,10 +19,10 @@
 package net.emustudio.plugins.compilers.as8080.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.plugins.compilers.as8080.Namespace;
 import net.emustudio.plugins.compilers.as8080.exceptions.AmbiguousException;
 import net.emustudio.plugins.compilers.as8080.exceptions.NeedMorePassException;
 import net.emustudio.plugins.compilers.as8080.exceptions.UndefinedMacroException;
-import net.emustudio.plugins.compilers.as8080.Namespace;
 import net.emustudio.plugins.compilers.as8080.treeAbstract.ExprNode;
 import net.emustudio.plugins.compilers.as8080.treeAbstract.PseudoNode;
 

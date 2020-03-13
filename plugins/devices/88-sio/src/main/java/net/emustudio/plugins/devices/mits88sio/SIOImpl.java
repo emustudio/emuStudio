@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.devices.mits88sio;
 
+import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
@@ -31,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
@@ -67,18 +69,12 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.net.emustudio.devices.mits88sio.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            LOGGER.error("Cannot get version number", e);
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -91,8 +87,9 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
         transmitter.reset();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void initialize() throws ContextNotFoundException, InvalidContextException {
+    public void initialize() throws PluginInitializationException {
         ExtendedContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, ExtendedContext.class);
 
         cpuPorts = new CPUPorts(cpu);
@@ -100,7 +97,13 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
 
         // get a device attached to this board
         try {
-            DeviceContext<Short> device = applicationApi.getContextPool().getDeviceContext(pluginID, ShortDeviceContext.class);
+            DeviceContext<Short> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
+            if (device.getDataType() != Short.class) {
+                throw new PluginInitializationException(
+                    "Unexpected device data type. Expected Short but was: " + device.getDataType()
+                );
+            }
+
             transmitter.setDevice(device);
         } catch (ContextNotFoundException e) {
             LOGGER.warn("No device is connected into the 88-SIO.");
@@ -152,5 +155,11 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
         }
     }
 
-    private interface ShortDeviceContext extends DeviceContext<Short> {}
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.mits88sio.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
+    }
 }

@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
@@ -70,17 +71,12 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.emustudio.plugins.cpu.brainduck.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2017, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -167,5 +163,13 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public Disassembler getDisassembler() {
         return disassembler;
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.brainduck.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 }

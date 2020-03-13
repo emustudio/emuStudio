@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -64,8 +65,12 @@ public class Runner {
             setupLookAndFeel();
             Optional<LoadingDialog> splash = showSplashScreen(commandLine.isNoGUI(), commandLine.getConfigName());
 
+            Path configFile = Path.of("emuStudio.toml");
+            if (Files.notExists(configFile)) {
+                Files.createFile(configFile);
+            }
             ApplicationConfig applicationConfig = ApplicationConfig.fromFile(
-                Path.of("emuStudio.conf"), commandLine.isNoGUI(), commandLine.isAuto()
+                configFile, commandLine.isNoGUI(), commandLine.isAuto()
             );
 
             Dialogs dialogs = commandLine.isNoGUI() ? new NoGuiDialogsImpl() : new GuiDialogsImpl();

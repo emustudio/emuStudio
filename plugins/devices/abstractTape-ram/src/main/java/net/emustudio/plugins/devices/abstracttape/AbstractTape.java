@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.MissingResourceException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
@@ -66,17 +67,12 @@ public class AbstractTape extends AbstractDevice {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.emustudio.plugins.devices.abstracttape.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -144,5 +140,13 @@ public class AbstractTape extends AbstractDevice {
     @Override
     public boolean isShowSettingsSupported() {
         return !guiNotSupported;
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.abstracttape.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 }

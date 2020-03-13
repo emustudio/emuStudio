@@ -19,12 +19,12 @@
 package net.emustudio.plugins.compilers.asZ80.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.plugins.compilers.asZ80.Namespace;
 import net.emustudio.plugins.compilers.asZ80.exceptions.AmbiguousException;
 import net.emustudio.plugins.compilers.asZ80.exceptions.NeedMorePassException;
 import net.emustudio.plugins.compilers.asZ80.exceptions.UndefinedMacroException;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.Expression;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.Pseudo;
-import net.emustudio.plugins.compilers.asZ80.Namespace;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -19,8 +19,8 @@
 package net.emustudio.plugins.compilers.as8080.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
-import net.emustudio.plugins.compilers.as8080.exceptions.NeedMorePassException;
 import net.emustudio.plugins.compilers.as8080.Namespace;
+import net.emustudio.plugins.compilers.as8080.exceptions.NeedMorePassException;
 import net.emustudio.plugins.compilers.as8080.treeAbstract.CodePseudoNode;
 import net.emustudio.plugins.compilers.as8080.treeAbstract.PseudoBlock;
 

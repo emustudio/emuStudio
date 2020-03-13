@@ -47,16 +47,6 @@ public class P {
         this.y = y;
     }
 
-    public void move(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public void move(P p) {
-        this.x = p.x;
-        this.y = p.y;
-    }
-
     public void move(Point p) {
         this.x = p.getX();
         this.y = p.getY();
@@ -68,11 +58,6 @@ public class P {
 
     public P copy() {
         return new P(x, y);
-    }
-
-    public boolean equals(P other) {
-        double d = Math.hypot(x - other.x, y - other.y);
-        return (d < SELECTION_TOLERANCE);
     }
 
     public boolean equals(Point other) {
@@ -87,10 +72,6 @@ public class P {
 
     public SchemaPoint toSchemaPoint() {
         return SchemaPoint.create(ix(), iy());
-    }
-
-    public Point toPoint() {
-        return new Point(ix(), iy());
     }
 
     public static P of(double x, double y) {

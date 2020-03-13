@@ -20,8 +20,8 @@ package net.emustudio.plugins.cpu.intel8080.impl.suite;
 
 import net.emustudio.cpu.testsuite.CpuVerifier;
 import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
-import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 import net.emustudio.plugins.cpu.intel8080.CpuImpl;
+import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 
 import java.util.Objects;
 

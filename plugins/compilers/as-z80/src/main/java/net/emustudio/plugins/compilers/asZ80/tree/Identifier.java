@@ -18,10 +18,10 @@
  */
 package net.emustudio.plugins.compilers.asZ80.tree;
 
+import net.emustudio.plugins.compilers.asZ80.Namespace;
 import net.emustudio.plugins.compilers.asZ80.exceptions.NeedMorePassException;
 import net.emustudio.plugins.compilers.asZ80.exceptions.UnknownIdentifierException;
 import net.emustudio.plugins.compilers.asZ80.treeAbstract.Expression;
-import net.emustudio.plugins.compilers.asZ80.Namespace;
 
 public class Identifier extends Expression {
     private String name;

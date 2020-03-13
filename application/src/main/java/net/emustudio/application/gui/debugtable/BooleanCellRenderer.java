@@ -32,7 +32,7 @@ class BooleanCellRenderer extends JLabel implements TableCellRenderer {
         boolean boolValue = (value == null) ? false : (Boolean) value;
 
         if (boolValue) {
-            setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/breakpoint.png")));
+            setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/breakpoint.png")));
         } else {
             setIcon(null);
         }

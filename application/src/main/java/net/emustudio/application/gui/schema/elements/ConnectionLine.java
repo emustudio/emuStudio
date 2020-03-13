@@ -20,8 +20,8 @@ package net.emustudio.application.gui.schema.elements;
 
 import net.emustudio.application.configuration.PluginConnection;
 import net.emustudio.application.configuration.SchemaPoint;
-import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.P;
+import net.emustudio.application.gui.schema.Schema;
 
 import java.awt.*;
 import java.awt.geom.Point2D;

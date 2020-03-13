@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.devices.mits88sio.gui;
 
-import net.emustudio.plugins.devices.mits88sio.ports.CPUPorts;
 import net.emustudio.plugins.devices.mits88sio.Transmitter;
+import net.emustudio.plugins.devices.mits88sio.ports.CPUPorts;
 
 public class StatusDialog extends javax.swing.JDialog {
 

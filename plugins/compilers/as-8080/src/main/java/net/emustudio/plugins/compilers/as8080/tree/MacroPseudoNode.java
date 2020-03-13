@@ -19,9 +19,9 @@
 package net.emustudio.plugins.compilers.as8080.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.plugins.compilers.as8080.Namespace;
 import net.emustudio.plugins.compilers.as8080.exceptions.InvalidMacroParamsCountException;
 import net.emustudio.plugins.compilers.as8080.exceptions.UnknownMacroParametersException;
-import net.emustudio.plugins.compilers.as8080.Namespace;
 import net.emustudio.plugins.compilers.as8080.treeAbstract.ExprNode;
 import net.emustudio.plugins.compilers.as8080.treeAbstract.PseudoBlock;
 

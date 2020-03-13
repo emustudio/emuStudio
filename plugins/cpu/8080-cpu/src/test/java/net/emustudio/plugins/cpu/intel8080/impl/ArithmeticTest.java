@@ -22,8 +22,8 @@ import net.emustudio.cpu.testsuite.Generator;
 import net.emustudio.cpu.testsuite.RunnerContext;
 import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 import net.emustudio.plugins.cpu.intel8080.impl.suite.ByteTestBuilder;
-import net.emustudio.plugins.cpu.intel8080.impl.suite.IntegerTestBuilder;
 import net.emustudio.plugins.cpu.intel8080.impl.suite.FlagsCheckImpl;
+import net.emustudio.plugins.cpu.intel8080.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
 import java.util.function.Function;

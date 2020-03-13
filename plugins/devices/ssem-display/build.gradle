@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 /*
  * This file is part of emuStudio.
  *
@@ -30,5 +32,14 @@ jar {
   archiveVersion = ''
   manifest {
     attributes manifestAttributes('')
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+      "project.version": project.version,
+      "today.year": new Date().format("yyyy")
+    ]
   }
 }

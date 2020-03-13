@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.compilers.asZ80.tree;
 
-import net.emustudio.plugins.compilers.asZ80.treeAbstract.Expression;
 import net.emustudio.plugins.compilers.asZ80.Namespace;
+import net.emustudio.plugins.compilers.asZ80.treeAbstract.Expression;
 
 public class Arithmetic extends Expression {
 

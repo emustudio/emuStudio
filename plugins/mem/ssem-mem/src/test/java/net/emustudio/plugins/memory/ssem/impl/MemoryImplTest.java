@@ -22,6 +22,8 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
+import net.emustudio.plugins.memory.ssem.MemoryImpl;
 import org.junit.Before;
 import org.junit.Test;
 

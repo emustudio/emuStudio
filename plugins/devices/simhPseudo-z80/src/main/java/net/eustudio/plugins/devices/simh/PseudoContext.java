@@ -19,7 +19,7 @@
 package net.eustudio.plugins.devices.simh;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.memory.standard.StandardMemoryContext;
+import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +85,7 @@ class PseudoContext implements DeviceContext<Short> {
 
     private Calendar currentTime = Calendar.getInstance();
     private boolean currentTimeValid = false;
-    private short version[] = {'S', 'I', 'M', 'H', '0', '0', '3', 0};
+    private short[] version = {'S', 'I', 'M', 'H', '0', '0', '3', 0};
     private final static int SECONDS_PER_MINUTE = 60;
     private final static int SECONDS_PER_HOUR = (60 * SECONDS_PER_MINUTE);
     private final static int SECONDS_PER_DAY = (24 * SECONDS_PER_HOUR);

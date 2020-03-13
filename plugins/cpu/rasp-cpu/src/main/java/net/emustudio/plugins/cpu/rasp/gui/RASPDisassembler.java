@@ -22,10 +22,10 @@ package net.emustudio.plugins.cpu.rasp.gui;
 
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
 import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
+import net.emustudio.plugins.memory.rasp.api.MemoryItem;
 import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 
 import java.util.Objects;
 

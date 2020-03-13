@@ -19,8 +19,8 @@
 package net.emustudio.plugins.devices.adm3a.gui;
 
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.devices.adm3a.interaction.Display;
 import net.emustudio.plugins.devices.adm3a.TerminalSettings;
+import net.emustudio.plugins.devices.adm3a.interaction.Display;
 
 import javax.swing.*;
 import java.awt.*;

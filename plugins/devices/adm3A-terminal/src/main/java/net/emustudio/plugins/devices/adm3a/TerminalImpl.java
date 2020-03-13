@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
@@ -69,13 +70,19 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
         terminalSettings.addChangedObserver(this);
 
         // try to connect to a serial I/O board
         try {
-            this.connectedDevice = applicationApi.getContextPool().getDeviceContext(pluginID, ShortDeviceContext.class);
+            this.connectedDevice = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
+            if (connectedDevice.getDataType() != Short.class) {
+                throw new PluginInitializationException(
+""
+                );
+            }
         } catch (ContextNotFoundException e) {
             LOGGER.warn("The terminal is not connected to any I/O device.");
         }
@@ -98,17 +105,12 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.net.emustudio.devices.adm3a.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -186,5 +188,11 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         }
     }
 
-    private interface ShortDeviceContext extends DeviceContext<Short> {}
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.adm3a.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
+    }
 }

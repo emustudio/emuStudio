@@ -30,8 +30,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class MemoryDialog extends javax.swing.JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryDialog.class);

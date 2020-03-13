@@ -22,13 +22,13 @@ import javax.swing.*;
 import java.util.Objects;
 
 public class PagesPanel extends JPanel {
-    private static final String PAGE_FIRST_PNG = "/emustudio/gui/page-first.png";
-    private static final String PAGE_BACK_PNG = "/emustudio/gui/page-back.png";
-    private static final String PAGE_CURRENT_PNG = "/emustudio/gui/page-current.png";
-    private static final String PAGE_FORWARD_PNG = "/emustudio/gui/page-forward.png";
-    private static final String PAGE_LAST_PNG = "/emustudio/gui/page-last.png";
-    private static final String PAGE_SEEK_BACKWARD_PNG = "/emustudio/gui/page-seek-backward.png";
-    private static final String PAGE_SEEK_FORWARD_PNG = "/emustudio/gui/page-seek-forward.png";
+    private static final String PAGE_FIRST_PNG = "/net/emustudio/application/gui/dialogs/page-first.png";
+    private static final String PAGE_BACK_PNG = "/net/emustudio/application/gui/dialogs/page-back.png";
+    private static final String PAGE_CURRENT_PNG = "/net/emustudio/application/gui/dialogs/page-current.png";
+    private static final String PAGE_FORWARD_PNG = "/net/emustudio/application/gui/dialogs/page-forward.png";
+    private static final String PAGE_LAST_PNG = "/net/emustudio/application/gui/dialogs/page-last.png";
+    private static final String PAGE_SEEK_BACKWARD_PNG = "/net/emustudio/application/gui/dialogs/page-seek-backward.png";
+    private static final String PAGE_SEEK_FORWARD_PNG = "/net/emustudio/application/gui/dialogs/page-seek-forward.png";
 
     private final DebugTableModel debugTableModel;
     private int pageSeekLastValue = 10;

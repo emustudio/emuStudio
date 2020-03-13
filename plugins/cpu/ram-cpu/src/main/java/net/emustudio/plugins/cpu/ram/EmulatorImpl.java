@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.cpu.ram.impl;
+package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -24,15 +24,17 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
+import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
+import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.ram.gui.RAMDisassembler;
 import net.emustudio.plugins.cpu.ram.gui.RAMStatusPanel;
 import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
-import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
@@ -74,17 +77,12 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.net.emustudio.ram.cpu.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -173,5 +171,13 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public Disassembler getDisassembler() {
         return disassembler;
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.ram.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 }

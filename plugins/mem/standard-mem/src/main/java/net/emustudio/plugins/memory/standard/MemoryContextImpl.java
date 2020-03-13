@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.standard.impl;
+package net.emustudio.plugins.memory.standard;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.memory.standard.StandardMemoryContext;
+import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
 
 import java.io.EOFException;
 import java.io.File;

@@ -48,7 +48,7 @@ class CellEditor extends AbstractCellEditor implements TableCellEditor {
                 editComponent.setText("");
                 break;
             case MemoryTableModel.COLUMN_HEX_VALUE:
-                editComponent.setText("0x" + String.valueOf(value));
+                editComponent.setText("0x" + value);
                 break;
             default:
                 editComponent.setText(String.valueOf(value));

@@ -19,7 +19,6 @@
 package net.emustudio.application.gui.editor;
 
 import javax.swing.text.BadLocationException;
-import java.io.IOException;
 import java.io.Reader;
 
 /**

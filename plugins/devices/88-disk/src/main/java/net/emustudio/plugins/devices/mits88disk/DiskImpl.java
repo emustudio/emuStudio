@@ -27,20 +27,18 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
 import net.emustudio.plugins.devices.mits88disk.gui.DiskFrame;
 import net.emustudio.plugins.devices.mits88disk.gui.SettingsDialog;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
-import net.emustudio.plugins.devices.mits88disk.ports.StatusPort;
 import net.emustudio.plugins.devices.mits88disk.ports.ControlPort;
 import net.emustudio.plugins.devices.mits88disk.ports.DataPort;
+import net.emustudio.plugins.devices.mits88disk.ports.StatusPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @PluginRoot(
     type = PLUGIN_TYPE.DEVICE,
@@ -116,12 +114,12 @@ public class DiskImpl extends AbstractDevice {
 
     @Override
     public String getVersion() {
-        return Main.getVersion();
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -226,6 +224,14 @@ public class DiskImpl extends AbstractDevice {
                 );
             }
             return portNumber;
+        }
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.mits88disk.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
         }
     }
 }

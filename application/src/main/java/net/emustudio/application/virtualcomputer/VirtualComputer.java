@@ -134,7 +134,7 @@ public class VirtualComputer implements PluginConnections {
             computerConfig.getCPU(),
             computerConfig.getMemory()
         ).stream()
-            .map(VirtualComputer::toList)
+            .map(opt -> opt.map(List::of).orElse(Collections.emptyList()))
             .flatMap(List::stream)
             .collect(Collectors.toList());
         pluginConfigs.addAll(computerConfig.getDevices());
@@ -204,11 +204,6 @@ public class VirtualComputer implements PluginConnections {
             throw new InvalidPluginException("Plug-in main class does not have proper constructor", e);
         }
     }
-
-    private static <T> List<T> toList(Optional<T> optional) {
-        return optional.map(List::of).orElse(Collections.emptyList());
-    }
-
 
     static class PluginMeta {
         final PluginSettings pluginSettings;

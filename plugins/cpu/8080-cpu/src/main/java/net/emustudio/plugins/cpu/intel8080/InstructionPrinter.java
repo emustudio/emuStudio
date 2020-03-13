@@ -21,8 +21,8 @@ package net.emustudio.plugins.cpu.intel8080;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
-import net.jcip.annotations.ThreadSafe;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
+import net.jcip.annotations.ThreadSafe;
 
 import java.util.List;
 import java.util.Objects;

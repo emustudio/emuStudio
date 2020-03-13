@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.memory.standard.gui.model;
 
-import net.emustudio.plugins.memory.standard.StandardMemoryContext.AddressRange;
-import net.emustudio.plugins.memory.standard.impl.MemoryContextImpl;
+import net.emustudio.plugins.memory.standard.api.StandardMemoryContext.AddressRange;
+import net.emustudio.plugins.memory.standard.MemoryContextImpl;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;

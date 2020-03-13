@@ -19,8 +19,8 @@
 package net.emustudio.plugins.compilers.asZ80.tree;
 
 import net.emustudio.emulib.runtime.helpers.IntelHEX;
-import net.emustudio.plugins.compilers.asZ80.exceptions.NeedMorePassException;
 import net.emustudio.plugins.compilers.asZ80.Namespace;
+import net.emustudio.plugins.compilers.asZ80.exceptions.NeedMorePassException;
 
 import java.util.ArrayList;
 import java.util.List;

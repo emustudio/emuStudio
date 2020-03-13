@@ -16,63 +16,59 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.brainduck.impl;
+package net.emustudio.plugins.memory.ssem;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import net.jcip.annotations.ThreadSafe;
 
 import java.util.Arrays;
 
-public class MemoryContextImpl extends AbstractMemoryContext<Short> implements RawMemoryContext {
-    private final short[] memory = new short[65536];
+@ThreadSafe
+public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
+    public static final int NUMBER_OF_CELLS = 32 * 4;
+
+    // byte type is atomic in JVM memory model
+    private final byte[] memory = new byte[NUMBER_OF_CELLS];
 
     @Override
     public void clear() {
-        Arrays.fill(memory, (short) 0);
+        Arrays.fill(memory, (byte) 0);
         notifyMemoryChanged(-1); // notify that all memory has changed
     }
 
     @Override
-    public Short read(int from) {
+    public Byte read(int from) {
         return memory[from];
     }
 
     @Override
-    public Short[] readWord(int from) {
-        if (from == memory.length - 1) {
-            return new Short[]{memory[from], 0};
-        }
-        return new Short[]{memory[from], memory[from + 1]};
+    public Byte[] readWord(int from) {
+        return new Byte[]{memory[from], memory[from + 1], memory[from + 2], memory[from + 3]};
     }
 
     @Override
-    public void write(int to, Short val) {
+    public void write(int to, Byte val) {
         memory[to] = val;
         notifyMemoryChanged(to);
     }
 
     @Override
-    public void writeWord(int to, Short[] cells) {
-        memory[to] = cells[0];
-        notifyMemoryChanged(to);
-        if (to < memory.length - 1) {
-            memory[to + 1] = cells[1];
-            notifyMemoryChanged(to + 1);
+    public void writeWord(int to, Byte[] cells) {
+        int i = 0;
+        for (byte cell : cells) {
+            memory[to + i] = cell;
+            notifyMemoryChanged(to + i);
+            i++;
         }
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     @Override
     public int getSize() {
         return memory.length;
-    }
-
-    @Override
-    public short[] getRawMemory() {
-        return memory;
     }
 }

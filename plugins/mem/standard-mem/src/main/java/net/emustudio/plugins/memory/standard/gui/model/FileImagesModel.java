@@ -25,7 +25,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.table.AbstractTableModel;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 public class FileImagesModel extends AbstractTableModel {
     private final static Logger LOGGER = LoggerFactory.getLogger(FileImagesModel.class);

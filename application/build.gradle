@@ -81,7 +81,7 @@ jar {
   archiveVersion = ''
   manifest {
     attributes(
-      'Main-Class': 'net.emustudio.main.Main',
+      'Main-Class': 'net.emustudio.application.Runner',
       'Class-Path': configurations.extraLibs.files.collect { "lib/" + it.getName() }.join(' '),
       "Implementation-Title": project.name,
       "Implementation-Version": project.version,

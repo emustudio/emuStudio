@@ -73,7 +73,7 @@ public class AboutDialog extends javax.swing.JDialog {
 
         lblLogo.setBackground(java.awt.Color.white);
         lblLogo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/logo.png"))); // NOI18N
+        lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/logo.png"))); // NOI18N
         lblLogo.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         lblLogo.setDoubleBuffered(true);
         lblLogo.setFocusable(false);

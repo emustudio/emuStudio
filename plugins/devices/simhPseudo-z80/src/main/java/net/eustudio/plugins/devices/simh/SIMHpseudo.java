@@ -26,9 +26,10 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
-import net.emustudio.plugins.memory.standard.StandardMemoryContext;
+import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
 
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
@@ -81,17 +82,12 @@ public class SIMHpseudo extends AbstractDevice {
 
     @Override
     public String getVersion() {
-        try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.net.emustudio.devices.simh.version");
-            return bundle.getString("version");
-        } catch (MissingResourceException e) {
-            return "(unknown)";
-        }
+        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }
 
     @Override
     public String getCopyright() {
-        return "Copyright (c) 2002-2007, Peter Schorn\n\u00A9 Copyright 2006-2020, Peter Jakubčo";
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -106,5 +102,13 @@ public class SIMHpseudo extends AbstractDevice {
     @Override
     public boolean isShowSettingsSupported() {
         return false;
+    }
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.simh.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 }

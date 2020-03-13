@@ -20,9 +20,10 @@
 package net.emustudio.plugins.cpu.ram.impl;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.compilers.ramc.tree.RAMInstructionImpl;
-import net.emustudio.plugins.cpu.ram.RAMContext;
+import net.emustudio.plugins.cpu.ram.EmulatorEngine;
+import net.emustudio.plugins.cpu.ram.api.RAMContext;
+import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import org.junit.Test;

@@ -35,18 +35,18 @@ public class Instruction implements ASTnode {
     };
 
     private final int opcode;
-    private final Optional<Byte> operand;
+    private final Byte operand;
 
     private Instruction(int opcode, int operand) throws CompileException {
         if (operand > 31 || operand < 0) {
             throw new CompileException("Instruction operand must be in range <0,31>!");
         }
-        this.operand = Optional.of((byte) (operand & 0xFF));
+        this.operand = (byte) (operand & 0xFF);
         this.opcode = opcode;
     }
 
     private Instruction(int opcode) {
-        this.operand = Optional.empty();
+        this.operand = null;
         this.opcode = opcode;
     }
 
@@ -55,7 +55,7 @@ public class Instruction implements ASTnode {
     }
 
     public Optional<Byte> getOperand() {
-        return operand;
+        return Optional.ofNullable(operand);
     }
 
     public static Instruction jmp(int address) throws CompileException {
@@ -97,18 +97,18 @@ public class Instruction implements ASTnode {
         if (o == null || getClass() != o.getClass()) return false;
 
         Instruction that = (Instruction) o;
-        return opcode == that.opcode && operand.equals(that.operand);
+        return opcode == that.opcode && Optional.ofNullable(operand).equals(Optional.ofNullable(that.operand));
     }
 
     @Override
     public int hashCode() {
         int result = opcode;
-        result = 31 * result + operand.hashCode();
+        result = 31 * result + Optional.ofNullable(operand).hashCode();
         return result;
     }
 
     @Override
     public String toString() {
-        return INSTRUCTION_STRING[opcode] + " " + operand;
+        return INSTRUCTION_STRING[opcode] + " " + Optional.ofNullable(operand);
     }
 }

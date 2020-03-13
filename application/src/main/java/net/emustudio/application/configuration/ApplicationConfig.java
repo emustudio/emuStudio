@@ -22,7 +22,10 @@ import com.electronwill.nightconfig.core.file.FileConfig;
 
 import java.io.Closeable;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static net.emustudio.emulib.runtime.PluginSettings.*;
 

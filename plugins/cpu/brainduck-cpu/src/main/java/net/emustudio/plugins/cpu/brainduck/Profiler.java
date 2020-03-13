@@ -282,7 +282,7 @@ public class Profiler {
                     break;
                 }
                 int loopEnd = loopEndsCache[tmpIP] - 1;
-                int posVar[] = repeatRead(I_INC, I_DEC, tmpIP + 1, loopEnd, 0);
+                int[] posVar = repeatRead(I_INC, I_DEC, tmpIP + 1, loopEnd, 0);
 
                 if (posVar[0] == loopEnd) {
                     // we have scanloop

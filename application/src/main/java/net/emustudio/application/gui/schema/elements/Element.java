@@ -24,7 +24,7 @@ import net.emustudio.application.gui.schema.Schema;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
-import java.util.*;
+import java.util.Objects;
 
 /**
  * Element used by abstract schema of virtual computer.

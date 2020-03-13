@@ -25,8 +25,7 @@ import java.awt.*;
 import static net.emustudio.plugins.memory.ssem.gui.Constants.*;
 
 class CellRenderer extends JLabel implements TableCellRenderer {
-    private final JList rowHeader;
-    private final String[] rowNames;
+    private final JList<String> rowHeader;
     private final RowHeaderRenderer rowHeaderRenderer;
 
     private Color selectionForeground;
@@ -35,11 +34,11 @@ class CellRenderer extends JLabel implements TableCellRenderer {
     CellRenderer(final MemoryTableModel model) {
         this.rowHeaderRenderer = new RowHeaderRenderer();
 
-        rowNames = new String[model.getColumnCount()];
+        String[] rowNames = new String[model.getColumnCount()];
         for (int i = 0; i < rowNames.length; i++) {
             rowNames[i] = String.format("%02X", i);
         }
-        rowHeader = new JList(rowNames);
+        rowHeader = new JList<>(rowNames);
         rowHeader.setCellRenderer(rowHeaderRenderer);
 
         super.setOpaque(true);
@@ -55,7 +54,7 @@ class CellRenderer extends JLabel implements TableCellRenderer {
         selectionForeground = table.getSelectionForeground();
     }
 
-    public JList getRowHeader() {
+    public JList<String> getRowHeader() {
         return rowHeader;
     }
 
@@ -81,5 +80,4 @@ class CellRenderer extends JLabel implements TableCellRenderer {
         setText(value.toString());
         return this;
     }
-
 }

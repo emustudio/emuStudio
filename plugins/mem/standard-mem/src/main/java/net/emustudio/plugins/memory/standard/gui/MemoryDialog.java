@@ -22,8 +22,8 @@ import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.memory.standard.gui.model.MemoryTableModel;
 import net.emustudio.plugins.memory.standard.gui.model.TableMemory;
-import net.emustudio.plugins.memory.standard.impl.MemoryContextImpl;
-import net.emustudio.plugins.memory.standard.impl.MemoryImpl;
+import net.emustudio.plugins.memory.standard.MemoryContextImpl;
+import net.emustudio.plugins.memory.standard.MemoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -26,7 +26,11 @@ import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 import java.io.Closeable;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import static java.util.stream.Collectors.toList;
 
 public class ComputerConfig implements ConfigSaver, Closeable {

@@ -20,10 +20,10 @@ package net.emustudio.plugins.cpu.intel8080.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
-import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
 import net.emustudio.plugins.cpu.intel8080.CpuImpl;
+import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 import net.emustudio.plugins.cpu.intel8080.InstructionPrinter;
+import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
