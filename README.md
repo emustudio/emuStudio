@@ -1,7 +1,7 @@
-# Welcome to emuStudio
-![emuStudio Build](https://github.com/net.emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
+# ![alt text](logo.png "Logo Title Text 1") Welcome to emuStudio
+![emuStudio Build](https://github.com/emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
 
-[emuStudio](https://www.net.emustudio.net/) is a desktop application used for computers emulation and writing programs
+[emuStudio](https://www.emustudio.net/) is a desktop application used for computers emulation and writing programs
 for emulated computers. It extensible - acting as a framework it encourages developers to write their own computer
 emulator. It is a free software.
 
@@ -16,15 +16,15 @@ since 2007.
 
 ## Available emulators
 
-* [MITS Altair8800](https://vbmacher.github.io/emuStudio/docuser/mits_altair_8800/index/)
+* [MITS Altair8800](https://www.emustudio.net/docuser/mits_altair_8800/index/)
 
-* [Manchester SSEM](https://vbmacher.github.io/emuStudio/docuser/ssem/index/)
+* [Manchester SSEM](https://www.emustudio.net/docuser/ssem/index/)
 
-* [Random Access Machine (RAM)](https://vbmacher.github.io/emuStudio/docuser/ram/index/)
+* [Random Access Machine (RAM)](https://www.emustudio.net/docuser/ram/index/)
 
-* [Random Access Stored Program (RASP)](https://vbmacher.github.io/emuStudio/docuser/rasp/index/) 
+* [Random Access Stored Program (RASP)](https://www.emustudio.net/docuser/rasp/index/) 
 
-* [BrainDuck (brainfuck interpreter)](https://vbmacher.github.io/emuStudio/docuser/brainduck/index/)
+* [BrainDuck (brainfuck interpreter)](https://www.emustudio.net/docuser/brainduck/index/)
 
 ## BIG THANKS
 
@@ -54,7 +54,7 @@ For more information, please read [user documentation](https://vbmacher.github.i
 ## Contributing
 
 Anyone can contribute. Before start, please read
-[developer documentation](https://vbmacher.github.io/emuStudio/docdevel/emulator_tutorial/index/),
+[developer documentation](https://www.emustudio.net/devel/),
 which includes information like:
 
 - Which tools to use and how to set up the environment
@@ -64,7 +64,9 @@ which includes information like:
 
 ### Related projects
 
-There exist some additional projects, which are either incorporated in or used by emuStudio, useful for contributors:
+There exist some additional projects, which are used by emuStudio, useful for contributors:
   
-- [emuLib](https://github.com/net.emustudio/emuLib), a run-time library
-- [edigen](https://github.com/sulir/edigen), an emulator disassembler generator
+- [emuLib](https://github.com/emustudio/emuLib), a run-time library
+- [edigen](https://github.com/emustudio/edigen), an emulator disassembler generator
+- [cpu-testsuite](https://github.com/emustudio/cpu-testsuite), a JUnit-based test suite for comfortable testing of CPU
+  plugins
