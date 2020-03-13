@@ -37,7 +37,7 @@ This project is released under [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0
 
 ## Getting started
 
-At first, either compile or [download](https://vbmacher.github.io/emuStudio/download/) emuStudio.
+At first, either compile or [download](https://www.emustudio.net/download/) emuStudio.
 The prerequisite is to have Java Runtime Environment (JRE) version 1.8 installed. 
 
 Then, unzip the zip file (`emuStudio-xxx.zip`) and run it using command:
@@ -48,7 +48,7 @@ java -jar emuStudio.jar
 
 NOTE: Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
 
-For more information, please read [user documentation](https://vbmacher.github.io/emuStudio/docs/).
+For more information, please read [user documentation](https://www.emustudio.net/docs/).
 
 ## Contributing
 
