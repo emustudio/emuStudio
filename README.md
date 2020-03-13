@@ -2,13 +2,12 @@
 ![emuStudio Build](https://github.com/emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
 
 [emuStudio](https://www.emustudio.net/) is a desktop application used for computers emulation and writing programs
-for emulated computers. It extensible - acting as a framework it encourages developers to write their own computer
-emulator. It is a free software.
+for emulated computers. It extensible; it encourages developers to write their own computer emulators.
 
-The main goal of emuStudio is support learning process about older but important computers, or abstract machines, and
-having fun. Nowadays the ability to write programs for old computers is probably not really interesting for the programming
-market, but I guess emulation has always be more about fun, trying to keeping alive something which was outstanding
-in it's peak, and preserve some memories.
+Main goal of emuStudio is support learning about older but important computers, or abstract machines, while
+having fun. Nowadays the ability to write programs for old computers is probably not quite interesting for the market,
+but I guess emulation has always be more about fun, trying to keeping alive something which was outstanding
+in it's peak, and preserve memories.
 
 emuStudio is very appropriate for using at schools, e.g. when students are doing first steps in assembler, or when they
 are taught about computers history. For example, emuStudio is used at [Technical University of Košice](http://www.fei.tuke.sk/en)
