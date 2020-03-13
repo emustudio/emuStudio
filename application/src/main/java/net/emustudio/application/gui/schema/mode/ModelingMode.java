@@ -135,29 +135,25 @@ class ModelingMode extends AbstractMode {
         } else if (drawingModel.drawTool == DrawingPanel.Tool.compiler) {
             p.setLocation(searchGridPoint(p));
             NamePath namePath = drawingModel.pluginNamePath;
-            PluginConfig config = PluginConfig.create(PLUGIN_TYPE.COMPILER, namePath.name, namePath.path);
-            config.getSchemaPoint().setLocation(p);
+            PluginConfig config = PluginConfig.create(PLUGIN_TYPE.COMPILER, namePath.name, namePath.path, p);
             schema.setCompilerElement(new CompilerElement(config));
             panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.CPU) {
             p.setLocation(searchGridPoint(p));
             NamePath namePath = drawingModel.pluginNamePath;
-            PluginConfig config = PluginConfig.create(PLUGIN_TYPE.CPU, namePath.name, namePath.path);
-            config.getSchemaPoint().setLocation(p);
+            PluginConfig config = PluginConfig.create(PLUGIN_TYPE.CPU, namePath.name, namePath.path, p);
             schema.setCpuElement(new CpuElement(config));
             panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.memory) {
             p.setLocation(searchGridPoint(p));
             NamePath namePath = drawingModel.pluginNamePath;
-            PluginConfig config = PluginConfig.create(PLUGIN_TYPE.MEMORY, namePath.name, namePath.path);
-            config.getSchemaPoint().setLocation(p);
+            PluginConfig config = PluginConfig.create(PLUGIN_TYPE.MEMORY, namePath.name, namePath.path, p);
             schema.setMemoryElement(new MemoryElement(config));
             panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.device) {
             p.setLocation(searchGridPoint(p));
             NamePath namePath = drawingModel.pluginNamePath;
-            PluginConfig config = PluginConfig.create(PLUGIN_TYPE.DEVICE, namePath.name, namePath.path);
-            config.getSchemaPoint().setLocation(p);
+            PluginConfig config = PluginConfig.create(PLUGIN_TYPE.DEVICE, namePath.name, namePath.path, p);
             schema.addDeviceElement(new DeviceElement(config));
             panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.connection) {

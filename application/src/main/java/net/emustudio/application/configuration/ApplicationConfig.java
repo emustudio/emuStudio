@@ -24,8 +24,15 @@ import java.io.Closeable;
 import java.nio.file.Path;
 import java.util.*;
 
+import static net.emustudio.emulib.runtime.PluginSettings.*;
+
 @SuppressWarnings("unused")
 public class ApplicationConfig implements Closeable {
+    public final static String KEY_NOGUI = EMUSTUDIO_NO_GUI.substring(EMUSTUDIO_PREFIX.length(), EMUSTUDIO_NO_GUI.length() -1);
+    public final static String KEY_AUTO = EMUSTUDIO_AUTO.substring(EMUSTUDIO_PREFIX.length(), EMUSTUDIO_AUTO.length() -1);
+    public final static String KEY_USE_SCHEMA_GRID = "useSchemaGrid";
+    public final static String KEY_SCHEMA_GRID_GAP = "schemaGridGap";
+
     public transient final boolean emuStudioAuto;
     public transient final boolean noGUI;
 
@@ -38,27 +45,25 @@ public class ApplicationConfig implements Closeable {
     }
 
     public boolean contains(String key) {
-        switch (key) {
-            case "useSchemaGrid":
-            case "auto":
-            case "nogui":
-            case "schemaGridGap":
-                return true;
-        }
-        return false;
+        return KEY_NOGUI.equals(key) || KEY_AUTO.equals(key) || KEY_USE_SCHEMA_GRID.equals(key)
+            || KEY_SCHEMA_GRID_GAP.equals(key);
     }
 
     public Optional<Boolean> getBoolean(String key) {
-        switch (key) {
-            case "useSchemaGrid": return useSchemaGrid();
-            case "auto": return Optional.of(emuStudioAuto);
-            case "nogui": return Optional.of(noGUI);
+        if (KEY_USE_SCHEMA_GRID.equals(key)) {
+            return useSchemaGrid();
+        } else if (KEY_SCHEMA_GRID_GAP.equals(key)) {
+            return useSchemaGrid();
+        } else if (KEY_AUTO.equals(key)) {
+            return Optional.of(emuStudioAuto);
+        } else if (KEY_NOGUI.equals(key)) {
+            return Optional.of(noGUI);
         }
         return Optional.empty();
     }
 
     public Optional<Integer> getInt(String key) {
-        if ("schemaGridGap".equals(key)) {
+        if (KEY_SCHEMA_GRID_GAP.equals(key)) {
             return getSchemaGridGap();
         }
         return Optional.empty();
@@ -81,19 +86,19 @@ public class ApplicationConfig implements Closeable {
     }
 
     public Optional<Boolean> useSchemaGrid() {
-        return config.getOptional("useSchemaGrid");
+        return config.getOptional(KEY_USE_SCHEMA_GRID);
     }
 
     public void setUseSchemaGrid(boolean useSchemaGrid) {
-        config.set("useSchemaGrid", useSchemaGrid);
+        config.set(KEY_USE_SCHEMA_GRID, useSchemaGrid);
     }
 
     public Optional<Integer> getSchemaGridGap() {
-        return config.getOptional("schemaGridGap");
+        return config.getOptional(KEY_SCHEMA_GRID_GAP);
     }
 
     public void setSchemaGridGap(int schemaGridGap) {
-        config.set("schemaGridGap", schemaGridGap);
+        config.set(KEY_SCHEMA_GRID_GAP, schemaGridGap);
     }
 
     public void save() {

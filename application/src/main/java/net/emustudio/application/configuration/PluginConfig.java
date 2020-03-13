@@ -21,6 +21,7 @@ package net.emustudio.application.configuration;
 import com.electronwill.nightconfig.core.Config;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
+import java.awt.*;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.UUID;
@@ -46,16 +47,20 @@ public class PluginConfig {
     }
 
     public Path getPluginFile() {
-        return Path.of(config.get("path"));
+        return Path.of(config.<String>get("path"));
     }
 
-    public SchemaPoint getSchemaPoint() {
+    public SchemaPoint getSchemaPoint() throws NumberFormatException {
         if (!config.contains("schemaPoint")) {
             config.set("schemaPoint", "0,0");
         }
 
         String schemaPointStr = config.get("schemaPoint");
         return SchemaPoint.parse(schemaPointStr);
+    }
+
+    public void setSchemaPoint(SchemaPoint point) {
+        config.set("schemaPoint", point.toString());
     }
 
     public Config getPluginSettings() {
@@ -70,12 +75,14 @@ public class PluginConfig {
     }
 
 
-    public static PluginConfig create(PLUGIN_TYPE pluginType, String pluginName, Path pluginPath) {
+
+    public static PluginConfig create(PLUGIN_TYPE pluginType, String pluginName, Path pluginPath, Point schemaLocation) {
         Config config = Config.inMemory();
         config.set("id", UUID.randomUUID().toString());
         config.set("type", pluginType.toString());
         config.set("name", pluginName);
         config.set("path", pluginPath.toString());
+        config.set("schemaPoint", schemaLocation.x + "," + schemaLocation.y);
 
         return new PluginConfig(config);
     }

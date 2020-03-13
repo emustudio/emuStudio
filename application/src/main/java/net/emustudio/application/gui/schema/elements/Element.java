@@ -72,8 +72,9 @@ public abstract class Element {
         this.pluginConfig = Objects.requireNonNull(config);
         this.backColor = Objects.requireNonNull(backColor);
 
-        int x = config.getSchemaPoint().x;
-        int y = config.getSchemaPoint().y;
+        SchemaPoint schemaPoint = config.getSchemaPoint();
+        int x = schemaPoint.x;
+        int y = schemaPoint.y;
 
         this.gradient = new GradientPaint(x, y, Color.WHITE, x, y + height, this.backColor, false);
     }
@@ -109,8 +110,7 @@ public abstract class Element {
         int py = point.y;
 
         if (wasMeasured && !schema.isElementNotMovable(px + diffX, py + diffY, this)) {
-            point.x = px + diffX;
-            point.y = py + diffY;
+            pluginConfig.setSchemaPoint(SchemaPoint.create(px + diffX, py + diffY));
 
             // do not break internal state of the element
             leftX += diffX;

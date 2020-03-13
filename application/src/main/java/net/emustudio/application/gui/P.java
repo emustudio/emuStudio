@@ -86,7 +86,7 @@ public class P {
 
 
     public SchemaPoint toSchemaPoint() {
-        return new SchemaPoint(ix(), iy());
+        return SchemaPoint.create(ix(), iy());
     }
 
     public Point toPoint() {

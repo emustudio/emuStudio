@@ -18,30 +18,18 @@
  */
 package net.emustudio.application.configuration;
 
-import java.awt.*;
+import net.jcip.annotations.Immutable;
 
+import java.util.Objects;
+
+@Immutable
 public class SchemaPoint {
-    public volatile int x;
-    public volatile int y;
+    public final int x;
+    public final int y;
 
-    public SchemaPoint(int x, int y) {
+    private SchemaPoint(int x, int y) {
         this.x = x;
         this.y = y;
-    }
-
-    public void setLocation(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public void setLocation(SchemaPoint location) {
-        this.x = location.x;
-        this.y = location.y;
-    }
-
-    public void setLocation(Point point) {
-       this.x = point.x;
-       this.y = point.y;
     }
 
     @Override
@@ -49,12 +37,28 @@ public class SchemaPoint {
         return x + "," + y;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SchemaPoint that = (SchemaPoint) o;
+        return x == that.x &&  y == that.y;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
 
     public static SchemaPoint parse(String value) {
         String[] xy = value.split(",");
-        int x = Integer.parseInt(xy[0].trim());
-        int y = Integer.parseInt(xy[1].trim());
+        int x = Integer.decode(xy[0].trim());
+        int y = Integer.decode(xy[1].trim());
 
+        return new SchemaPoint(x, y);
+    }
+
+    public static SchemaPoint create(int x, int y) {
         return new SchemaPoint(x, y);
     }
 }
