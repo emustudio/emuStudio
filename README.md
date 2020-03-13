@@ -38,7 +38,8 @@ This project is released under [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0
 ## Getting started
 
 At first, either compile or [download](https://www.emustudio.net/download/) emuStudio.
-The prerequisite is to have Java Runtime Environment (JRE) version 1.8 installed. 
+The prerequisite is to have installed **Java Runtime Environment (JRE), at least version 11**
+(download [here](https://www.oracle.com/java/technologies/javase-downloads.html)). 
 
 Then, unzip the zip file (`emuStudio-xxx.zip`) and run it using command:
 
