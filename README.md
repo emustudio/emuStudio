@@ -1,13 +1,22 @@
 # Welcome to emuStudio
 ![emuStudio Build](https://github.com/net.emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
 
-[emuStudio](https://www.net.emustudio.net/) is a desktop application which allows to write programs and emulate computers.
-In addition, it is easily extensible - acting as a framework it encourages developers to write their own computer
-emulator. It is versatile, free, and written in Java.
+[emuStudio](https://www.net.emustudio.net/) is a desktop application used for computers emulation and writing programs
+for emulated computers. It extensible - acting as a framework it encourages developers to write their own computer
+emulator. It is a free software.
 
-The main goal is to support learning about older but important computers or abstract machines. 
-It is also appropriate for using at schools; for example, emuStudio is used at
-[Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
+The main goal of emuStudio is support learning process about older but important computers, or abstract machines, and
+having fun. Nowadays the ability to write programs for old computers is probably not really interesting for the programming
+market, but I guess emulation has always be more about fun, trying to keeping alive something which was outstanding
+in it's peak, and preserve some memories.
+
+emuStudio is very appropriate for using at schools, e.g. when students are doing first steps in assembler, or when they
+are taught about computers history. For example, emuStudio is used at [Technical University of Košice](http://www.fei.tuke.sk/en)
+since 2007.
+
+# License
+
+This project is released under [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.html) license.
 
 ## Available emulators
 
@@ -21,19 +30,11 @@ It is also appropriate for using at schools; for example, emuStudio is used at
 
 * [BrainDuck (brainfuck interpreter)](https://vbmacher.github.io/emuStudio/docuser/brainduck/index/)
 
-## Related projects
-
-There exist some additional projects, which are either incorporated in or used by emuStudio:
-  
-- [emuLib](https://github.com/net.emustudio/emuLib), a run-time library
-- [edigen](https://github.com/sulir/edigen), an emulator disassembler generator
-
-
 ## BIG THANKS
 
 Big thanks goes to the one and only [simh](http://simh.trailing-edge.com/) project, which inspired me a lot, and helped
 me as a student and emulator enthusiast when working on emuStudio. I wish emuStudio will reach it's simplicity and
-emulators "richness" as the simh project has.  
+emulators "richness" as the simh project has.
 
 # Getting started
 
@@ -62,6 +63,9 @@ which includes information like:
 - Which git branch to use
 - Which rules needs to be followed
 
-# License
+## Related projects
 
-This project is released under GNU GPL v2 license.
+There exist some additional projects, which are either incorporated in or used by emuStudio, useful for contributors:
+  
+- [emuLib](https://github.com/net.emustudio/emuLib), a run-time library
+- [edigen](https://github.com/sulir/edigen), an emulator disassembler generator
