@@ -25,15 +25,18 @@ import net.emustudio.emulib.runtime.interaction.debugger.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class DebugTableModelImpl extends DebugTableModel {
-    private DebuggerColumn<?>[] columns;
-    private final CPU cpu;
-    private final PaginatingDisassembler ida;
+    private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
+    private CPU cpu;
+    private PaginatingDisassembler ida;
 
-    public DebugTableModelImpl(CPU cpu, int memorySize) {
+    public DebugTableModelImpl() {
+    }
+
+    public void setCPU(CPU cpu, int memorySize) {
         this.cpu = Objects.requireNonNull(cpu);
-
         CallFlow callFlow = new CallFlow(cpu.getDisassembler());
         this.ida = new PaginatingDisassembler(callFlow, memorySize);
         setDefaultColumns();
@@ -41,7 +44,7 @@ public class DebugTableModelImpl extends DebugTableModel {
 
     @Override
     public int getRowCount() {
-        return PaginatingDisassembler.INSTR_PER_PAGE;
+        return (ida != null) ? PaginatingDisassembler.INSTR_PER_PAGE : 0;
     }
 
     @Override
@@ -66,72 +69,89 @@ public class DebugTableModelImpl extends DebugTableModel {
 
     @Override
     public void previousPage() {
-        ida.pagePrevious();
-        fireTableDataChanged();
+        Optional.ofNullable(ida).ifPresent(i -> {
+            i.pagePrevious();
+            fireTableDataChanged();
+        });
     }
 
     @Override
-    public void seekBackwardPage(int value) {
-        while (value > 0) {
-            ida.pagePrevious();
-            value--;
-        }
-        fireTableDataChanged();
+    public void seekBackwardPage(final int value) {
+        Optional.ofNullable(ida).ifPresent(i -> {
+            for (int counter = 0; counter < value; counter++) {
+                i.pagePrevious();
+            }
+            fireTableDataChanged();
+        });
     }
 
     @Override
     public void firstPage() {
-        ida.pageFirst();
-        fireTableDataChanged();
+        Optional.ofNullable(ida).ifPresent(i -> {
+            i.pageFirst();
+            fireTableDataChanged();
+        });
     }
 
     @Override
     public void nextPage() {
-        ida.pageNext();
-        fireTableDataChanged();
+        Optional.ofNullable(ida).ifPresent(i -> {
+            i.pageNext();
+            fireTableDataChanged();
+        });
     }
 
     @Override
-    public void seekForwardPage(int value) {
-        while (value > 0) {
-            ida.pageNext();
-            value--;
-        }
-        fireTableDataChanged();
+    public void seekForwardPage(final int value) {
+        Optional.ofNullable(ida).ifPresent(i -> {
+            for (int counter = 0; counter < value; counter++) {
+                ida.pageNext();
+            }
+            fireTableDataChanged();
+        });
     }
 
     @Override
     public void lastPage() {
-        ida.pageLast();
-        fireTableDataChanged();
+        Optional.ofNullable(ida).ifPresent(i -> {
+            i.pageLast();
+            fireTableDataChanged();
+        });
     }
 
     @Override
     public void currentPage() {
-        ida.pageCurrent();
-        fireTableDataChanged();
+        Optional.ofNullable(ida).ifPresent(i -> {
+            i.pageCurrent();
+            fireTableDataChanged();
+        });
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        int location = ida.rowToLocation(cpu.getInstructionLocation(), rowIndex);
-        if (location != -1) {
-            return columns[columnIndex].getValue(location);
-        }
-        return null;
+        return Optional.ofNullable(ida).map(i -> {
+            int location = i.rowToLocation(cpu.getInstructionLocation(), rowIndex);
+            if (location != -1) {
+                return columns[columnIndex].getValue(location);
+            }
+            return null;
+        }).orElse(null);
     }
 
     @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
-        int location = ida.rowToLocation(cpu.getInstructionLocation(), rowIndex);
-        if (location != -1) {
-            DebuggerColumn<?> column = columns[columnIndex];
-            if (value.getClass() == column.getClassType()) {
-                try {
-                    column.setValue(location, value);
-                } catch (CannotSetDebuggerValueException ignored) {}
+        Optional.ofNullable(ida).ifPresent(i -> {
+            int location = i.rowToLocation(cpu.getInstructionLocation(), rowIndex);
+            if (location != -1) {
+                DebuggerColumn<?> column = columns[columnIndex];
+                if (value.getClass() == column.getClassType()) {
+                    try {
+                        column.setValue(location, value);
+                    } catch (CannotSetDebuggerValueException ignored) {
+                    }
+                }
             }
-        }
+        });
     }
 
     @Override
@@ -141,46 +161,52 @@ public class DebugTableModelImpl extends DebugTableModel {
 
     @Override
     public boolean isRowAtCurrentInstruction(int rowIndex) {
-        return ida.isRowAtCurrentInstruction(rowIndex);
+        return Optional.ofNullable(ida).map(i -> i.isRowAtCurrentInstruction(rowIndex)).orElse(false);
     }
 
     @Override
     public void memoryChanged(int from, int to) {
-        ida.flushCache(from, to + 1);
+        Optional.ofNullable(ida).ifPresent(i -> i.flushCache(from, to + 1));
     }
 
     @Override
     public void setMemorySize(int memorySize) {
-        ida.setMemorySize(memorySize);
-        fireTableDataChanged();
-    }
-
-    @Override
-    public void setColumns(List<DebuggerColumn<?>> columns) {
-        this.columns = columns.toArray(new DebuggerColumn[0]);
-        fireTableStructureChanged();
+        Optional.ofNullable(ida).ifPresent(i -> i.setMemorySize(memorySize));
     }
 
     @Override
     public final void setDefaultColumns() {
-        Disassembler dis = cpu.getDisassembler();
-        if (cpu.isBreakpointSupported()) {
-            setColumns(Arrays.asList(
-                new BreakpointColumn(cpu), new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
-            ));
-        } else {
-            setColumns(Arrays.asList(
-                new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
-            ));
-        }
+        Optional.ofNullable(cpu).ifPresent(cpu -> {
+            Disassembler dis = cpu.getDisassembler();
+            if (cpu.isBreakpointSupported()) {
+                setDebuggerColumns(Arrays.asList(
+                    new BreakpointColumn(cpu), new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+                ));
+            } else {
+                setDebuggerColumns(Arrays.asList(
+                    new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+                ));
+            }
+        });
     }
 
     @Override
     public int guessPreviousInstructionLocation() {
-        int location = ida.rowToLocation(cpu.getInstructionLocation(), PaginatingDisassembler.CURRENT_INSTR_ROW - 1);
-        if (location < 0) {
-            return Math.max(0, cpu.getInstructionLocation() - 1);
+        PaginatingDisassembler i = ida;
+        CPU cpu = this.cpu;
+        if (i != null && cpu != null) {
+            int location = i.rowToLocation(cpu.getInstructionLocation(), PaginatingDisassembler.CURRENT_INSTR_ROW - 1);
+            if (location < 0) {
+                return Math.max(0, cpu.getInstructionLocation() - 1);
+            }
+            return location;
         }
-        return location;
+        return 0;
+    }
+
+    @Override
+    public void setDebuggerColumns(List<DebuggerColumn<?>> columns) {
+        this.columns = columns.toArray(new DebuggerColumn[0]);
+        fireTableStructureChanged();
     }
 }

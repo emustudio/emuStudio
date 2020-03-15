@@ -20,11 +20,11 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
+import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.List;
 
-public abstract class DebugTableModel extends AbstractTableModel {
+public abstract class DebugTableModel extends AbstractTableModel implements DebuggerTable {
 
     public abstract DebuggerColumn<?> getColumnAt(int index);
 
@@ -48,99 +48,7 @@ public abstract class DebugTableModel extends AbstractTableModel {
 
     public abstract void setMemorySize(int memorySize);
 
-    public abstract void setColumns(List<DebuggerColumn<?>> columns);
-
     public abstract void setDefaultColumns();
 
     public abstract int guessPreviousInstructionLocation();
-
-
-
-
-    public static final DebugTableModel EMPTY = new DebugTableModel() {
-        @Override
-        public DebuggerColumn<?> getColumnAt(int index) {
-            return null;
-        }
-
-        @Override
-        public void previousPage() {
-
-        }
-
-        @Override
-        public void seekBackwardPage(int value) {
-
-        }
-
-        @Override
-        public void firstPage() {
-
-        }
-
-        @Override
-        public void nextPage() {
-
-        }
-
-        @Override
-        public void seekForwardPage(int value) {
-
-        }
-
-        @Override
-        public void lastPage() {
-
-        }
-
-        @Override
-        public void currentPage() {
-
-        }
-
-        @Override
-        public boolean isRowAtCurrentInstruction(int rowIndex) {
-            return false;
-        }
-
-        @Override
-        public void memoryChanged(int from, int to) {
-
-        }
-
-        @Override
-        public void setMemorySize(int memorySize) {
-
-        }
-
-        @Override
-        public void setColumns(List<DebuggerColumn<?>> columns) {
-
-        }
-
-        @Override
-        public void setDefaultColumns() {
-
-        }
-
-        @Override
-        public int guessPreviousInstructionLocation() {
-            return 0;
-        }
-
-        @Override
-        public int getRowCount() {
-            return 0;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 0;
-        }
-
-        @Override
-        public Object getValueAt(int i, int i1) {
-            return null;
-        }
-    };
 }

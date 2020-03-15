@@ -17,6 +17,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
 import java.text.SimpleDateFormat
 
 plugins {
@@ -89,6 +92,15 @@ jar {
       'Build-Jdk': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
       'Build-OS': "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
     )
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+      "project.version": project.version,
+      "today.year": new Date().format("yyyy")
+    ]
   }
 }
 

@@ -78,7 +78,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         this.setLocationRelativeTo(null);
         this.odialog = odialog;
         btnUseGrid.setSelected(schema.useSchemaGrid());
-        panel = new DrawingPanel(this.schema, this);
+        panel = new DrawingPanel(this.schema);
         scrollScheme.setViewportView(panel);
         scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
         scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
@@ -88,7 +88,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         addKeyListenerRecursively(this, this);
 
         panel.addToolListener(() -> {
-            panel.setTool(Tool.nothing, null);
+            panel.setTool(Tool.TOOL_NOTHING, null);
             cmbPlugin.setModel(EMPTY_MODEL);
             groupDraw.clearSelection();
             buttonSelected = false;
@@ -321,13 +321,13 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
     }//GEN-LAST:event_btnDeviceActionPerformed
 
     private void btnLineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLineActionPerformed
-        panel.setTool(Tool.nothing, null);
+        panel.setTool(Tool.TOOL_NOTHING, null);
         cmbPlugin.setModel(EMPTY_MODEL);
         if (buttonSelected) {
             groupDraw.clearSelection();
             return;
         }
-        panel.setTool(Tool.connection, null);
+        panel.setTool(Tool.TOOL_CONNECTION, null);
         buttonSelected = true;
     }//GEN-LAST:event_btnLineActionPerformed
 
@@ -335,14 +335,14 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         Optional<NamePath> pluginPath = ((PluginComboModel) cmbPlugin.getModel()).getSelectedNamePath();
         pluginPath.ifPresentOrElse(namePath -> {
             if (btnCompiler.isSelected()) {
-                panel.setTool(Tool.compiler, namePath);
+                panel.setTool(Tool.TOOL_COMPILER, namePath);
             }
             if (btnCPU.isSelected()) {
-                panel.setTool(Tool.CPU, namePath);
+                panel.setTool(Tool.TOOL_CPU, namePath);
             } else if (btnRAM.isSelected()) {
-                panel.setTool(Tool.memory, namePath);
+                panel.setTool(Tool.TOOL_MEMORY, namePath);
             } else if (btnDevice.isSelected()) {
-                panel.setTool(Tool.device, namePath);
+                panel.setTool(Tool.TOOL_DEVICE, namePath);
             }
         }, () -> panel.cancelDrawing());
     }//GEN-LAST:event_cmbPluginActionPerformed
@@ -384,12 +384,12 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
     }//GEN-LAST:event_btnDeleteItemStateChanged
 
     private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
-        panel.setTool(Tool.nothing, null);
+        panel.setTool(Tool.TOOL_NOTHING, null);
         cmbPlugin.setModel(EMPTY_MODEL);
         if (buttonSelected) {
             groupDraw.clearSelection();
         } else {
-            panel.setTool(Tool.delete, null);
+            panel.setTool(Tool.TOOL_DELETE, null);
             buttonSelected = true;
         }
     }//GEN-LAST:event_btnDeleteActionPerformed
@@ -397,14 +397,12 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
         try {
             schema.save();
-            return;
+            odialog.setSelectedComputerConfig(schema.getComputerConfig());
+            odialog.update();
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not save computer schema", e);
             dialogs.showError("Could not save computer schema. Please consult log file for details.", "Save schema");
         }
-
-        odialog.setSelectedComputerConfig(schema.getComputerConfig());
-        odialog.update();
         dispose();
     }//GEN-LAST:event_btnSaveActionPerformed
 
@@ -451,7 +449,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         if (buttonSelected) {
             cmbPlugin.setModel(EMPTY_MODEL);
             groupDraw.clearSelection();
-            panel.setTool(Tool.nothing, null);
+            panel.setTool(Tool.TOOL_NOTHING, null);
             buttonSelected = false;
             return false;
         }
@@ -463,5 +461,4 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
             cmbPlugin.setSelectedIndex(0);
         }
     }
-
 }

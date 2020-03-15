@@ -79,13 +79,13 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
         0.0f);
 
     public enum Tool {
-        compiler,
-        CPU,
-        memory,
-        device,
-        connection,
-        delete,
-        nothing
+        TOOL_COMPILER,
+        TOOL_CPU,
+        TOOL_MEMORY,
+        TOOL_DEVICE,
+        TOOL_CONNECTION,
+        TOOL_DELETE,
+        TOOL_NOTHING
     }
 
     private final Color gridColor = new Color(0xDDDDDD);
@@ -98,16 +98,13 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
     private Graphics2D doubleBufferingGraphics;
     private Image secondBuffer;
 
-    private final JDialog parentDialog;
-
     public interface ToolListener {
 
         void toolWasUsed();
     }
 
-    public DrawingPanel(Schema schema, JDialog parent) {
+    public DrawingPanel(Schema schema) {
         this.schema = Objects.requireNonNull(schema);
-        this.parentDialog = parent;
 
         mode = new ModeSelector(this, drawingModel);
         mode.select(ModeSelector.SelectMode.MOVING);
@@ -117,10 +114,6 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
 
     public void addToolListener(ToolListener listener) {
         toolListeners.add(listener);
-    }
-
-    public JDialog getParentDialog() {
-        return parentDialog;
     }
 
     public void fireToolWasUsed() {
@@ -241,7 +234,7 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
         drawingModel.drawTool = tool;
         drawingModel.pluginNamePath = namePath;
 
-        if ((tool == null) || (tool == Tool.nothing)) {
+        if ((tool == null) || (tool == Tool.TOOL_NOTHING)) {
             mode.select(ModeSelector.SelectMode.MOVING);
         } else {
             mode.select(ModeSelector.SelectMode.MODELING);

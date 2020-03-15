@@ -39,7 +39,7 @@ public class DrawingModel {
      */
     public P selectedPoint;
 
-    public DrawingPanel.Tool drawTool = DrawingPanel.Tool.nothing;
+    public DrawingPanel.Tool drawTool = DrawingPanel.Tool.TOOL_NOTHING;
 
     /**
      * This variable is used when "moving" mode is active and user moves an element. It holds the moving element object.
@@ -104,6 +104,6 @@ public class DrawingModel {
         selectedPoint = null;
         selectedLine = null;
         pluginNamePath = null;
-        drawTool = DrawingPanel.Tool.nothing;
+        drawTool = DrawingPanel.Tool.TOOL_NOTHING;
     }
 }

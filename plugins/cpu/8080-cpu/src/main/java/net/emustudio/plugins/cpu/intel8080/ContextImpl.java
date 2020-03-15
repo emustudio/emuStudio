@@ -48,7 +48,7 @@ public class ContextImpl implements ExtendedContext {
             return false;
         }
         if (devices.putIfAbsent(port, device) == null) {
-            LOGGER.info("[port={},device={}] Device was attached to CPU", port, device);
+            LOGGER.debug("[port={},device={}] Device was attached to CPU", port, device);
         }
         return true;
     }
@@ -56,7 +56,7 @@ public class ContextImpl implements ExtendedContext {
     @Override
     public void detachDevice(int port) {
         if (devices.remove(port) != null) {
-            LOGGER.info("[port={}] Device was detached from CPU", port);
+            LOGGER.debug("[port={}] Device was detached from CPU", port);
         }
     }
 

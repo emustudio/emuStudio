@@ -1,0 +1,74 @@
+name = "MITS Altair8800"
+
+[MEMORY]
+	schemaPoint = "60,160"
+	path = "/home/vbmacher/emuStudio/mem/standard-mem.jar"
+	name = "standard-mem"
+	id = "fee24374-8d28-4472-85ef-e8ef182f44e3"
+	type = "MEMORY"
+
+[COMPILER]
+	schemaPoint = "60,60"
+	path = "/home/vbmacher/emuStudio/compilers/as-8080.jar"
+	name = "as-8080"
+	id = "14a9121e-348e-48d9-90ae-05a61b6ed8a8"
+	type = "COMPILER"
+
+[CPU]
+	schemaPoint = "180,160"
+	path = "/home/vbmacher/emuStudio/cpu/8080-cpu.jar"
+	name = "8080-cpu"
+	id = "0c7bc110-554b-433d-b6e2-29885379fac6"
+	type = "CPU"
+
+[[DEVICE]]
+	schemaPoint = "180,60"
+	path = "/home/vbmacher/emuStudio/devices/88-disk.jar"
+	name = "88-disk"
+	id = "ad934179-3690-4bbc-b6ab-f4634346927a"
+	type = "DEVICE"
+
+[[DEVICE]]
+	schemaPoint = "280,160"
+	path = "/home/vbmacher/emuStudio/devices/88-sio.jar"
+	name = "88-sio"
+	id = "515f3dfd-5005-4b62-b002-a20f23324573"
+	type = "DEVICE"
+
+[[DEVICE]]
+	schemaPoint = "280,60"
+	path = "/home/vbmacher/emuStudio/devices/adm3A-terminal.jar"
+	name = "adm3A-terminal"
+	id = "654a684c-b65e-4c6d-b1f1-1371a3027a90"
+	type = "DEVICE"
+
+[[connections]]
+	bidirectional = true
+	from = "14a9121e-348e-48d9-90ae-05a61b6ed8a8"
+	to = "fee24374-8d28-4472-85ef-e8ef182f44e3"
+	points = []
+
+[[connections]]
+	bidirectional = true
+	from = "fee24374-8d28-4472-85ef-e8ef182f44e3"
+	to = "0c7bc110-554b-433d-b6e2-29885379fac6"
+	points = []
+
+[[connections]]
+	bidirectional = true
+	from = "ad934179-3690-4bbc-b6ab-f4634346927a"
+	to = "0c7bc110-554b-433d-b6e2-29885379fac6"
+	points = []
+
+[[connections]]
+	bidirectional = true
+	from = "515f3dfd-5005-4b62-b002-a20f23324573"
+	to = "0c7bc110-554b-433d-b6e2-29885379fac6"
+	points = []
+
+[[connections]]
+	bidirectional = true
+	from = "654a684c-b65e-4c6d-b1f1-1371a3027a90"
+	to = "515f3dfd-5005-4b62-b002-a20f23324573"
+	points = []
+

@@ -22,6 +22,7 @@ import net.emustudio.application.Constants;
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.ConstantSizeButton;
+import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.PagesPanel;
 import net.emustudio.application.gui.debugtable.PaginatingDisassembler;
@@ -74,29 +75,29 @@ public class StudioFrame extends JFrame {
 
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
 
-    public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs, JTable debugTable,
-                       MemoryContext<?> memoryContext, String fileName) {
-        this(computer, applicationConfig, dialogs, debugTable, memoryContext);
+    public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
+                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, String fileName) {
+        this(computer, applicationConfig, dialogs, debugTableModel, memoryContext);
         txtSource.openFile(fileName);
     }
 
-    public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs, JTable debugTable,
-                       MemoryContext<?> memoryContext) {
+    public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
+                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext) {
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
         this.computer = Objects.requireNonNull(computer);
-        this.debugTable = Objects.requireNonNull(debugTable);
-        this.debugTableModel = Objects.requireNonNull((DebugTableModel) debugTable.getModel());
+        this.debugTable = new DebugTableImpl(Objects.requireNonNull(debugTableModel));
+        this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.memoryContext = memoryContext;
 
-        this.emulationController = new EmulationController(
-            computer.getCPU().orElse(null), computer.getMemory().orElse(null), computer.getDevices()
-        );
+        this.emulationController = computer.getCPU().map(cpu -> new EmulationController(
+            cpu, computer.getMemory().orElse(null), computer.getDevices()
+        )).orElse(null);
 
-        txtSource = new SourceCodeEditor(computer.getCompiler().orElse(null), dialogs);
-        systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        this.txtSource = new SourceCodeEditor(computer.getCompiler().orElse(null), dialogs);
+        this.systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-        memoryListener = new Memory.MemoryListener() {
+        this.memoryListener = new Memory.MemoryListener() {
             @Override
             public void memoryChanged(int memoryPosition) {
                 debugTableModel.memoryChanged(memoryPosition, memoryPosition + 1);
@@ -120,11 +121,7 @@ public class StudioFrame extends JFrame {
         paneDebug.setViewportView(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
-        this.setStatusGUI();
-        pack();
-
-        setupListeners();
-
+        setStatusGUI();
         lstDevices.setModel(new AbstractListModel<>() {
             private final List<Device> devices = computer.getDevices();
 
@@ -138,10 +135,12 @@ public class StudioFrame extends JFrame {
                 return devices.get(index).getTitle();
             }
         });
-        this.setLocationRelativeTo(null);
         this.setTitle("emuStudio [" + computer.getComputerConfig().getName() + "]");
-        txtSource.grabFocus();
 
+        pack();
+        setupListeners();
+        this.setLocationRelativeTo(null);
+        txtSource.grabFocus();
         resizeComponents();
     }
 
@@ -909,7 +908,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnPauseActionPerformed(ActionEvent evt) {
-        emulationController.pause();
+        Optional.ofNullable(emulationController).ifPresent(EmulationController::pause);
     }
 
     private void showSettingsButtonActionPerformed(ActionEvent evt) {
@@ -950,26 +949,30 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnStepActionPerformed(ActionEvent evt) {
-        emulationController.step();
+        Optional.ofNullable(emulationController).ifPresent(EmulationController::step);
     }
 
     private void btnRunActionPerformed(ActionEvent evt) {
-        debugTable.setEnabled(false);
-        emulationController.start();
+        Optional.ofNullable(emulationController).ifPresent(c -> {
+            debugTable.setEnabled(false);
+            c.start();
+        });
     }
 
     private void btnRunTimeActionPerformed(ActionEvent evt) {
-        try {
-            dialogs
-                .readInteger("Enter time slice in milliseconds:", "Timed emulation", 500)
-                .ifPresent(sliceMillis -> emulationController.step(sliceMillis, TimeUnit.MILLISECONDS));
-        } catch (NumberFormatException e) {
-            dialogs.showError("Invalid number format", "Timed emulation");
-        }
+        Optional.ofNullable(emulationController).ifPresent(c -> {
+            try {
+                dialogs
+                    .readInteger("Enter time slice in milliseconds:", "Timed emulation", 500)
+                    .ifPresent(sliceMillis -> c.step(sliceMillis, TimeUnit.MILLISECONDS));
+            } catch (NumberFormatException e) {
+                dialogs.showError("Invalid number format", "Timed emulation");
+            }
+        });
     }
 
     private void btnStopActionPerformed(ActionEvent evt) {
-        emulationController.stop();
+        Optional.ofNullable(emulationController).ifPresent(EmulationController::stop);
     }
 
     private void btnBackActionPerformed(ActionEvent evt) {
@@ -980,7 +983,6 @@ public class StudioFrame extends JFrame {
                 paneDebug.revalidate();
                 refreshDebugTable();
             }
-
         });
     }
 
@@ -993,7 +995,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnResetActionPerformed(ActionEvent evt) {
-        emulationController.reset();
+        Optional.ofNullable(emulationController).ifPresent(EmulationController::reset);
     }
 
     private void btnJumpActionPerformed(ActionEvent evt) {

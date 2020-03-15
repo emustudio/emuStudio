@@ -25,6 +25,7 @@ import net.emustudio.application.gui.schema.Schema;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -42,13 +43,13 @@ public class ConnectionLine {
 
     private final Color lineColor = new Color(0x333333);
 
-    private Element e1;
-    private Element e2;
+    private Element elementFrom;
+    private Element elementTo;
     private final List<P> points;
     private final boolean bidirectional;
 
     /**
-     * Starting arrow point for element1. The x and y values are relative to the element middle-point.
+     * Starting arrow point for elementFrom. The x and y values are relative to the element middle-point.
      */
     private P arrow1;
     private P arrow1LeftEnd;
@@ -57,7 +58,7 @@ public class ConnectionLine {
     private final int[] yy1 = new int[4];
 
     /**
-     * Starting arrow point for element2. The x and y values are relative to the element middle-point.
+     * Starting arrow point for elementTo. The x and y values are relative to the element middle-point.
      */
     private P arrow2;
     private P arrow2LeftEnd;
@@ -68,10 +69,10 @@ public class ConnectionLine {
     private boolean selected = false;
 
 
-    public ConnectionLine(Element e1, Element e2, List<P> points, boolean bidirectional) {
-        this.e1 = Objects.requireNonNull(e1);
-        this.e2 = Objects.requireNonNull(e2);
-        this.points = Objects.requireNonNull(points);
+    public ConnectionLine(Element from, Element to, List<P> points, boolean bidirectional) {
+        this.elementFrom = Objects.requireNonNull(from);
+        this.elementTo = Objects.requireNonNull(to);
+        this.points = new ArrayList<>(Objects.requireNonNull(points));
         this.bidirectional = bidirectional;
     }
 
@@ -93,8 +94,8 @@ public class ConnectionLine {
     }
 
     private void computeArrows() {
-        computeElementArrow(e2, e1);
-        computeElementArrow(e1, e2);
+        computeElementArrow(elementTo, elementFrom);
+        computeElementArrow(elementFrom, elementTo);
         if (!bidirectional) {
             arrow1LeftEnd = null;
             arrow1RightEnd = null;
@@ -127,7 +128,7 @@ public class ConnectionLine {
         if (points.isEmpty()) {
             lineEnd = P.of(secondE.getX(), secondE.getY());
         } else {
-            lineEnd = (firstE == e1) ? points.get(0) : points.get(points.size() - 1);
+            lineEnd = (firstE == elementFrom) ? points.get(0) : points.get(points.size() - 1);
             double x2 = lineEnd.x;
             double y2 = lineEnd.y;
 
@@ -180,7 +181,7 @@ public class ConnectionLine {
                 arrow = p.copy();
             }
         }
-        if (firstE == e1) {
+        if (firstE == elementFrom) {
             arrow1 = arrow;
         } else {
             arrow2 = arrow;
@@ -223,7 +224,7 @@ public class ConnectionLine {
         P a_left = P.of(ARROW_ARM_LENGTH * Math.sin(radians), ARROW_ARM_LENGTH * Math.cos(radians));
         P a_right = P.of(ARROW_ARM_LENGTH * Math.sin(mRadians), ARROW_ARM_LENGTH * Math.cos(mRadians));
 
-        if (firstE == e1) {
+        if (firstE == elementFrom) {
             arrow1LeftEnd = a_left;
             arrow1RightEnd = a_right;
         } else {
@@ -335,10 +336,10 @@ public class ConnectionLine {
      * Determine whether a line segment P1P2 crosses a triangle ABC.
      *
      * @param lineStart start point of the line segment
-     * @param lineEnd end point of the line segment
-     * @param pa  first point of the triangle
-     * @param pb  second point of the triangle
-     * @param pc  third point of the triangle
+     * @param lineEnd   end point of the line segment
+     * @param pa        first point of the triangle
+     * @param pb        second point of the triangle
+     * @param pc        third point of the triangle
      * @return true if the line segment crosses the triangle; false otherwise
      */
     private static boolean inTriangle(P lineStart, P lineEnd, P pa, P pb, P pc) {
@@ -347,7 +348,7 @@ public class ConnectionLine {
         double c = -a * lineStart.x - b * lineStart.y; // general line equation
 
         double result = a * pa.x + b * pa.y + c;
-        int sign = Integer.signum((int)result);
+        int sign = Integer.signum((int) result);
 
         result = a * pb.x + b * pb.y + c;
         boolean is = isCrossing(sign, result);
@@ -456,12 +457,12 @@ public class ConnectionLine {
         } else {
             g.setColor(lineColor);
         }
-        int x1 = e1.getX();
-        int y1 = e1.getY();
+        int x1 = elementFrom.getX();
+        int y1 = elementFrom.getY();
         int x2, y2;
 
-        int widthHalf1 = e1.getWidth() / 2;
-        int heightHalf1 = e1.getHeight() / 2;
+        int widthHalf1 = elementFrom.getWidth() / 2;
+        int heightHalf1 = elementFrom.getHeight() / 2;
 
         Stroke ss = g.getStroke();
         g.setStroke(thickLine);
@@ -503,11 +504,11 @@ public class ConnectionLine {
             x1 = x2;
             y1 = y2;
         }
-        x2 = e2.getX();
-        y2 = e2.getY();
+        x2 = elementTo.getX();
+        y2 = elementTo.getY();
 
-        int widthHalf2 = e2.getWidth() / 2;
-        int heightHalf2 = e2.getHeight() / 2;
+        int widthHalf2 = elementTo.getWidth() / 2;
+        int heightHalf2 = elementTo.getHeight() / 2;
 
         if (j >= 0) { // only if line contains points, modify the line end in a
             // wish that the line was straight
@@ -595,7 +596,7 @@ public class ConnectionLine {
      * Draws a small red circle around given point
      *
      * @param point the center of the circle
-     * @param g        Graphics2D object
+     * @param g     Graphics2D object
      */
     public static void highlightPoint(P point, Graphics2D g) {
         int xx = point.ix();
@@ -707,7 +708,7 @@ public class ConnectionLine {
      * @return true, if the line is connected to the element; false otherwise
      */
     public boolean containsElement(Element e) {
-        return e1 == e || e2 == e;
+        return elementFrom == e || elementTo == e;
     }
 
     /**
@@ -718,11 +719,11 @@ public class ConnectionLine {
      * @param replacement replacement for the first element
      */
     public void replaceElement(Element origin, Element replacement) {
-        if (this.e1 == origin) {
-            this.e1 = replacement;
+        if (this.elementFrom == origin) {
+            this.elementFrom = replacement;
         }
-        if (this.e2 == origin) {
-            this.e2 = replacement;
+        if (this.elementTo == origin) {
+            this.elementTo = replacement;
         }
     }
 
@@ -807,29 +808,12 @@ public class ConnectionLine {
         return -1;
     }
 
-    /**
-     * Returns the direction of the elements connection. The connection
-     * can be the one-directional, or bidirectional.
-     * <p>
-     * If the connection is one-directional, then the connection direction is
-     * getJunc0() -> getJunc1(). If there is a need to switch the direction,
-     * use the switchDirection() method.
-     * <p>
-     * If the connection is bidirectional, then the direction is in the form:
-     * getJunc0 <-> getJunc1().
-     *
-     * @return true if the connection is bidirectional; false otherwise
-     */
-    public boolean isBidirectional() {
-        return bidirectional;
-    }
-
     public PluginConnection toPluginConnection() {
         List<SchemaPoint> schemaPoints = points.stream().map(P::toSchemaPoint).collect(Collectors.toList());
 
         return PluginConnection.create(
-            e1.pluginConfig.getPluginId(),
-            e2.pluginConfig.getPluginId(),
+            elementFrom.pluginConfig.getPluginId(),
+            elementTo.pluginConfig.getPluginId(),
             bidirectional,
             schemaPoints
         );

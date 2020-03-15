@@ -47,8 +47,8 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);
 
     private ComputerConfig selectedComputerConfig;
-    private boolean OOK = false;
-    private final ConfigurationsListModel amodel = new ConfigurationsListModel();
+    private boolean userPressedOK = false;
+    private final ConfigurationsListModel configurationsModel;
     private final SchemaPreviewPanel preview;
     private final ConfigFiles configFiles;
     private final ApplicationConfig applicationConfig;
@@ -56,25 +56,21 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
     public OpenComputerDialog(ConfigFiles configFiles, ApplicationConfig applicationConfig, Dialogs dialogs) {
         this.configFiles = Objects.requireNonNull(configFiles);
+        this.configurationsModel = new ConfigurationsListModel(configFiles);
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.preview = new SchemaPreviewPanel(null, dialogs);
 
         initComponents();
-        lstConfig.setModel(amodel);
+        lstConfig.setModel(configurationsModel);
         super.setModal(true);
         super.setLocationRelativeTo(null);
 
         scrollPreview.setViewportView(preview);
     }
 
-    /**
-     * Determine whether the user pressed "OK" button.
-     *
-     * @return true if user has pressed OK, false otherwise
-     */
-    public boolean getOK() {
-        return OOK;
+    public boolean userPressedOK() {
+        return userPressedOK;
     }
 
     public ComputerConfig getSelectedComputerConfig() {
@@ -83,8 +79,11 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
 
     void update() {
-        amodel.update();
-        lblPreview.setText(selectedComputerConfig.getName());
+        configurationsModel.update();
+        Optional.ofNullable(selectedComputerConfig).ifPresentOrElse(
+            c -> lblPreview.setText(c.getName()),
+            () -> lblPreview.setText("")
+        );
         lstConfigValueChanged(null);
     }
 
@@ -288,7 +287,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         if (selectedComputerConfig == null) {
             dialogs.showError("A computer has to be selected!", "Open computer");
         } else {
-            OOK = true;
+            userPressedOK = true;
             dispose();
         }
     }//GEN-LAST:event_btnOpenActionPerformed
@@ -375,7 +374,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     private class ConfigurationsListModel extends AbstractListModel<ComputerConfig> {
         private List<ComputerConfig> computerConfigs = Collections.emptyList();
 
-        ConfigurationsListModel() {
+        ConfigurationsListModel(ConfigFiles configFiles) {
             try {
                 computerConfigs = configFiles.loadConfigurations();
             } catch (IOException e) {

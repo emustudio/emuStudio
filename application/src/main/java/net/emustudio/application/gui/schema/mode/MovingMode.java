@@ -196,7 +196,7 @@ class MovingMode extends AbstractMode {
         drawingModel.selectedLine = null;
 
         // resize mouse pointers
-        if (drawingModel.drawTool == DrawingPanel.Tool.nothing) {
+        if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_NOTHING) {
             drawingModel.tmpElem1 = schema.getElementByBorderPoint(mousePoint);
             if (drawingModel.tmpElem1 != null) {
                 if (drawingModel.tmpElem1.crossesBottomBorder(mousePoint)) {

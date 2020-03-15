@@ -26,7 +26,7 @@ import net.emustudio.application.emulation.Automation;
 import net.emustudio.application.emulation.AutomationException;
 import net.emustudio.application.gui.GuiDialogsImpl;
 import net.emustudio.application.gui.NoGuiDialogsImpl;
-import net.emustudio.application.gui.debugtable.DebugTableImpl;
+import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.gui.dialogs.OpenComputerDialog;
@@ -34,6 +34,7 @@ import net.emustudio.application.gui.dialogs.StudioFrame;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.InvalidPluginException;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
+import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
@@ -63,7 +64,6 @@ public class Runner {
             CommandLine commandLine = CommandLine.parse(args);
 
             setupLookAndFeel();
-            Optional<LoadingDialog> splash = showSplashScreen(commandLine.isNoGUI(), commandLine.getConfigName());
 
             Path configFile = Path.of("emuStudio.toml");
             if (Files.notExists(configFile)) {
@@ -74,17 +74,13 @@ public class Runner {
             );
 
             Dialogs dialogs = commandLine.isNoGUI() ? new NoGuiDialogsImpl() : new GuiDialogsImpl();
-            ContextPoolImpl contextPool = new ContextPoolImpl(emustudioId);
-            DebugTableImpl debugTable = new DebugTableImpl();
-            ApplicationApi applicationApi = new ApplicationApiImpl(debugTable, contextPool, dialogs);
-
             ConfigFiles configFiles = new ConfigFiles();
 
             ComputerConfig computerConfig = null;
             if (commandLine.getConfigName() == null && !commandLine.isNoGUI()) {
                 OpenComputerDialog dialog = new OpenComputerDialog(configFiles, applicationConfig, dialogs);
                 dialog.setVisible(true);
-                if (dialog.getOK()) {
+                if (dialog.userPressedOK()) {
                     computerConfig = dialog.getSelectedComputerConfig();
                 }
             } else {
@@ -96,16 +92,27 @@ public class Runner {
                 System.exit(1);
             }
 
+            Optional<LoadingDialog> splash = showSplashScreen(commandLine.isNoGUI(), commandLine.getConfigName());
+
+            ContextPoolImpl contextPool = new ContextPoolImpl(emustudioId);
+            DebugTableModelImpl debugTableModel =  new DebugTableModelImpl();
+            ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs);
+
             VirtualComputer computer = new VirtualComputer(computerConfig, applicationApi, applicationConfig);
+            final int memorySize = computer.getMemory().map(Memory::getSize).orElse(0);
+            computer.getCPU().ifPresent(cpu -> debugTableModel.setCPU(cpu, memorySize));
+            computer.initialize(contextPool);
 
             splash.ifPresent(Window::dispose);
 
-            if (!commandLine.isAuto()) {
-                showMainWindow(computer, applicationConfig, dialogs, debugTable, contextPool, commandLine.getInputFileName());
-            } else {
+            if (commandLine.isAuto()) {
                 System.exit(runAutomation(computer, commandLine.getInputFileName(), applicationConfig, dialogs));
+            } else if (!commandLine.isNoGUI()) {
+                showMainWindow(computer, applicationConfig, dialogs, debugTableModel, contextPool, commandLine.getInputFileName());
+            } else {
+                System.err.println("No GUI is available; and no automatic emulation was set either. Exiting.");
             }
-        } catch (CmdLineException | IOException | NoSuchElementException | InvalidPluginException e) {
+        } catch (CmdLineException | IOException | NoSuchElementException | InvalidPluginException | PluginInitializationException e) {
             LOGGER.error("Could not run emuStudio", e);
             e.printStackTrace();
             System.exit(1);
@@ -126,24 +133,20 @@ public class Runner {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static void showMainWindow(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
-                                       DebugTableImpl debugTable, ContextPool contextPool, String inputFileName) {
-        computer.getCPU().ifPresent(cpu -> {
-            int memorySize = computer.getMemory().map(Memory::getSize).orElse(0);
-            debugTable.setModel(new DebugTableModelImpl(cpu, memorySize));
-        });
-
+                                       DebugTableModel debugTableModel, ContextPool contextPool, String inputFileName) {
         MemoryContext<?> memoryContext = null;
         try {
             memoryContext = contextPool.getMemoryContext(emustudioId, MemoryContext.class);
         } catch (ContextNotFoundException | InvalidContextException e) {
-            LOGGER.warn("Could not find memory context", e);
+            LOGGER.warn("No memory context is available", e);
         }
 
         if (inputFileName != null) {
-            new StudioFrame(computer, applicationConfig, dialogs, debugTable, memoryContext, inputFileName).setVisible(true);
+            new StudioFrame(computer, applicationConfig, dialogs, debugTableModel, memoryContext, inputFileName).setVisible(true);
         } else {
-            new StudioFrame(computer, applicationConfig, dialogs, debugTable, memoryContext).setVisible(true);
+            new StudioFrame(computer, applicationConfig, dialogs, debugTableModel, memoryContext).setVisible(true);
         }
     }
 

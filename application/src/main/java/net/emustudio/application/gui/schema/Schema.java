@@ -147,6 +147,10 @@ public class Schema {
         return Collections.unmodifiableList(lines);
     }
 
+    public void addConnectionLine(ConnectionLine line) {
+        lines.add(line);
+    }
+
     public void removeConnectionLine(ConnectionLine line) {
         lines.remove(line);
     }

@@ -128,6 +128,11 @@ public class ComputerConfig implements ConfigSaver, Closeable {
         config.close();
     }
 
+    @Override
+    public String toString() {
+        return getName();
+    }
+
     public static ComputerConfig load(Path configurationFile) {
         FileConfig config = FileConfig.of(configurationFile);
         config.load();

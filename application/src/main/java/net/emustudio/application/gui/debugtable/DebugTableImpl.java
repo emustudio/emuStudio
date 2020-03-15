@@ -20,23 +20,18 @@ package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.application.Constants;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.List;
+import java.util.Objects;
 
-public class DebugTableImpl extends JTable implements DebuggerTable {
+public class DebugTableImpl extends JTable  {
+    private final DebugTableModel tableModel;
 
-    public DebugTableImpl() {
-        super(DebugTableModel.EMPTY);
-
-        BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
-        super.setDefaultRenderer(Boolean.class, boolRenderer);
-
-        setupBooleanCellEditorAndDefaultWidth();
+    public DebugTableImpl(DebugTableModel tableModel) {
+        super(Objects.requireNonNull(tableModel));
+        this.tableModel = tableModel;
 
         super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         super.setOpaque(false);
@@ -44,40 +39,31 @@ public class DebugTableImpl extends JTable implements DebuggerTable {
         super.setIntercellSpacing(new Dimension(0, 0));
         // turn off grid painting as we'll handle this manually
         super.setShowGrid(false);
+
+        setupRenderers();
+        setupBooleanCellEditorAndDefaultWidth();
     }
 
     private void setupBooleanCellEditorAndDefaultWidth() {
-        DebugTableModel model = (DebugTableModel) getModel();
-
-        int columnCount = model.getColumnCount();
+        int columnCount = tableModel.getColumnCount();
         for (int i = 0; i < columnCount; i++) {
             TableColumn tableColumn = getColumn(getColumnName(i));
-            DebuggerColumn<?> debugColumn = model.getColumnAt(i);
+            DebuggerColumn<?> debugColumn = tableModel.getColumnAt(i);
 
             if (debugColumn.getClassType() == Boolean.class) {
                 tableColumn.setCellEditor(new DefaultCellEditor(new InvisibleJCheckBox()));
             }
-            if (debugColumn.getDefaultWidth() != -1)
+            if (debugColumn.getDefaultWidth() != -1) {
                 tableColumn.setPreferredWidth(debugColumn.getDefaultWidth());
+            }
         }
     }
 
-    @Override
-    public void setModel(TableModel dataModel) {
-        if (!(dataModel instanceof DebugTableModel)) {
-            throw new IllegalArgumentException("Table model must be instance of DebugTableModel");
-        }
-
-        super.setModel(dataModel);
-
-        TextCellRenderer textRenderer = new TextCellRenderer((DebugTableModel) dataModel);
-        setDefaultRenderer(Object.class, textRenderer);
-        setDefaultRenderer(String.class, textRenderer);
-    }
-
-    @Override
-    public void setDebuggerColumns(List<DebuggerColumn<?>> columns) {
-        ((DebugTableModel)getModel()).setColumns(columns);
-        setupBooleanCellEditorAndDefaultWidth();
+    private void setupRenderers() {
+        BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
+        TextCellRenderer textRenderer = new TextCellRenderer(tableModel);
+        super.setDefaultRenderer(Object.class, textRenderer);
+        super.setDefaultRenderer(String.class, textRenderer);
+        super.setDefaultRenderer(Boolean.class, boolRenderer);
     }
 }

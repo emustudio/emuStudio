@@ -39,7 +39,7 @@ public final class PluginComboModel implements ComboBoxModel<String> {
             String fileName = path.getFileName().toString();
             int suffixIndex = fileName.lastIndexOf(".jar");
             if (suffixIndex != -1) {
-                fileName = fileName.substring(0, fileName.length() - suffixIndex - 1);
+                fileName = fileName.substring(0, suffixIndex);
             }
             this.namePathsByIndex.put(i.get(), new NamePath(fileName, path));
             this.nameIndexes.put(fileName, i.getAndIncrement());
@@ -57,7 +57,7 @@ public final class PluginComboModel implements ComboBoxModel<String> {
 
     @Override
     public String getSelectedItem() {
-        return selected.name;
+        return Optional.ofNullable(selected).map(s -> s.name).orElse(null);
     }
 
     @Override

@@ -66,7 +66,7 @@ public class VirtualComputer implements PluginConnections {
         plugins.forEach((pluginId, pluginMeta) -> {
             pluginsById.put(pluginId, pluginMeta);
 
-            List<PluginMeta> metas = pluginsByType.putIfAbsent(pluginMeta.pluginConfig.getPluginType(), Collections.emptyList());
+            List<PluginMeta> metas = pluginsByType.putIfAbsent(pluginMeta.pluginConfig.getPluginType(), new ArrayList<>());
             if (metas != null) {
                 metas.add(pluginMeta);
             }

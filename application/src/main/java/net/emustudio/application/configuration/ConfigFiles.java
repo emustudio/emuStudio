@@ -59,7 +59,15 @@ public class ConfigFiles {
     public List<ComputerConfig> loadConfigurations() throws IOException {
         return Files.list(Path.of(baseDirectory, CONFIGS_DIR))
             .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
-            .map(ComputerConfig::load)
+            .map(p -> {
+                try {
+                    return Optional.of(ComputerConfig.load(p));
+                } catch (Exception e) {
+                    return Optional.<ComputerConfig>empty();
+                }
+            })
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .collect(Collectors.toList());
     }
 
@@ -70,12 +78,12 @@ public class ConfigFiles {
     }
 
     public ComputerConfig createConfiguration(String computerName) {
-        Path configPath = Path.of(baseDirectory, CONFIGS_DIR, encodeToFileName(computerName) + ".conf");
+        Path configPath = Path.of(baseDirectory, CONFIGS_DIR, encodeToFileName(computerName) + ".toml");
         return ComputerConfig.create(computerName, configPath);
     }
 
     public void removeConfiguration(String computerName) throws IOException {
-        Path configPath = Path.of(baseDirectory, CONFIGS_DIR, encodeToFileName(computerName) + ".conf");
+        Path configPath = Path.of(baseDirectory, CONFIGS_DIR, encodeToFileName(computerName) + ".toml");
         Files.deleteIfExists(configPath);
     }
 

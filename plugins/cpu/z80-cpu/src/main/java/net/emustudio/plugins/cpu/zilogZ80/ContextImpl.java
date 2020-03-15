@@ -31,7 +31,7 @@ public final class ContextImpl implements ExtendedContext {
     private final static int NO_DATA = 0xFF;
     public final static int DEFAULT_FREQUENCY_KHZ = 20000;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(net.emustudio.plugins.cpu.intel8080.ContextImpl.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
     private final ConcurrentMap<Integer, DeviceContext<Short>> devices = new ConcurrentHashMap<>();
 
     private volatile EmulatorEngine cpu;
@@ -48,7 +48,7 @@ public final class ContextImpl implements ExtendedContext {
             return false;
         }
         if (devices.putIfAbsent(port, device) == null) {
-            LOGGER.info("[port={}] Attached device: {}", port, device);
+            LOGGER.debug("[port={}] Attached device: {}", port, device);
         }
         return true;
     }
@@ -56,7 +56,7 @@ public final class ContextImpl implements ExtendedContext {
     @Override
     public void detachDevice(int port) {
         if (devices.remove(port) != null) {
-            LOGGER.info("Detached device from port " + port);
+            LOGGER.debug("Detached device from port " + port);
         }
     }
 

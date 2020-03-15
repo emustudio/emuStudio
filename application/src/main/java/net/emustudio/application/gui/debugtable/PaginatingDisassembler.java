@@ -38,47 +38,6 @@ public class PaginatingDisassembler {
     private volatile Page currentPage = new Page(0, -1, -1);
     private volatile int lastKnownCurrentLocation;
 
-    private final class Page {
-        private final int index;
-        private volatile int minLocation;
-        private volatile int maxLocation;
-        private volatile int middleLocation = -1;
-        private volatile boolean lastPage = false;
-
-        Page(int index, int minLocation, int maxLocation) {
-            this.index = index;
-            this.minLocation = minLocation;
-            this.maxLocation = maxLocation;
-        }
-
-        void setMin(int location) {
-            minLocation = location;
-        }
-
-        void setMax(int location) {
-            maxLocation = location;
-        }
-
-        void setMiddleLocation(int middleLocation) {
-            this.middleLocation = middleLocation;
-        }
-
-        void setLastPage(boolean lastPage) {
-            this.lastPage = lastPage;
-        }
-
-        @Override
-        public String toString() {
-            return "P{" +
-                "index=" + index +
-                ", minLocation=" + minLocation +
-                ", maxLocation=" + maxLocation +
-                ", middleLocation=" + middleLocation +
-                ", lastPage=" + lastPage +
-                '}';
-        }
-    }
-
     PaginatingDisassembler(CallFlow callFlow, int memorySize) {
         if (memorySize < 0) {
             throw new IllegalArgumentException("Memory size < 0");
@@ -417,5 +376,46 @@ public class PaginatingDisassembler {
 
     void flushCache(int from, int to) {
         callFlow.flushCache(from, to + 1);
+    }
+
+    private static final class Page {
+        private final int index;
+        private volatile int minLocation;
+        private volatile int maxLocation;
+        private volatile int middleLocation = -1;
+        private volatile boolean lastPage = false;
+
+        Page(int index, int minLocation, int maxLocation) {
+            this.index = index;
+            this.minLocation = minLocation;
+            this.maxLocation = maxLocation;
+        }
+
+        void setMin(int location) {
+            minLocation = location;
+        }
+
+        void setMax(int location) {
+            maxLocation = location;
+        }
+
+        void setMiddleLocation(int middleLocation) {
+            this.middleLocation = middleLocation;
+        }
+
+        void setLastPage(boolean lastPage) {
+            this.lastPage = lastPage;
+        }
+
+        @Override
+        public String toString() {
+            return "Page{" +
+                "index=" + index +
+                ", minLocation=" + minLocation +
+                ", maxLocation=" + maxLocation +
+                ", middleLocation=" + middleLocation +
+                ", lastPage=" + lastPage +
+                '}';
+        }
     }
 }

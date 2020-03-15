@@ -38,10 +38,10 @@
 package net.emustudio.application.gui.dialogs;
 
 import java.awt.*;
+import java.util.MissingResourceException;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
-/**
- * The about dialog. Shows basic information about the emuStudio.
- */
 public class AboutDialog extends javax.swing.JDialog {
 
     public AboutDialog(java.awt.Frame parent) {
@@ -101,16 +101,19 @@ public class AboutDialog extends javax.swing.JDialog {
         lblName.setText("emuStudio");
 
         lblCopyright.setFont(lblCopyright.getFont().deriveFont(lblCopyright.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblCopyright.setText("© Copyright 2006-2017 Peter Jakubčo");
+        lblCopyright.setText(getCopyright());
 
         lblVersion.setFont(lblVersion.getFont().deriveFont(lblVersion.getFont().getStyle() | java.awt.Font.BOLD));
-        lblVersion.setText(getClass().getPackage().getImplementationVersion());
+        lblVersion.setText(getVersion());
 
         jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel4.setText("Version");
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
-        jLabel1.setText("<html>This software is released under GNU GPL license, version 2. For more information, please visit project web page at <a href=\"https://vbmacher.github.io/emuStudio/\">https://vbmacher.github.io/emuStudio/</a>.");
+        jLabel1.setText(
+            "<html>This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it " +
+                "under certain conditions; for details see <a href=\"https://www.gnu.org/licenses/gpl-3.0.html\">https://www.gnu.org/licenses/gpl-3.0.html</a>. " +
+                "For more information about emuStudio, see <a href=\"https://www.emustudio.net/\">official web</a>.");
 
         javax.swing.GroupLayout panelInfoLayout = new javax.swing.GroupLayout(panelInfo);
         panelInfo.setLayout(panelInfoLayout);
@@ -166,6 +169,22 @@ public class AboutDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    // End of variables declaration//GEN-END:variables
+    private String getVersion() {
+        return getResourceBundle()
+            .map(b -> b.getString("version"))
+            .orElse(getClass().getPackage().getImplementationVersion());
+    }
 
+    private String getCopyright() {
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
+    }
+
+
+    private Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.application.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
+    }
 }
