@@ -32,6 +32,8 @@ import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.PluginSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +46,8 @@ import java.util.stream.IntStream;
 import static net.emustudio.application.internal.Reflection.doesImplement;
 
 public class VirtualComputer implements PluginConnections {
+    private static final Logger LOGGER = LoggerFactory.getLogger(VirtualComputer.class);
+
     private static final Map<PLUGIN_TYPE, Class<? extends Plugin>> pluginInterfaces = Map.of(
         PLUGIN_TYPE.COMPILER, Compiler.class,
         PLUGIN_TYPE.CPU, CPU.class,
@@ -56,20 +60,17 @@ public class VirtualComputer implements PluginConnections {
     private final Map<Long, PluginMeta> pluginsById = new HashMap<>();
     private final Map<PLUGIN_TYPE, List<PluginMeta>> pluginsByType = new HashMap<>();
 
-    public VirtualComputer(ComputerConfig computerConfig, ApplicationApi applicationApi, ApplicationConfig applicationConfig)
-        throws IOException, InvalidPluginException {
-
+    public VirtualComputer(ComputerConfig computerConfig, Map<Long, PluginMeta> plugins) {
         this.computerConfig = Objects.requireNonNull(computerConfig);
-
-        Map<Long, PluginMeta> plugins = loadPlugins(applicationApi, applicationConfig);
-
         plugins.forEach((pluginId, pluginMeta) -> {
             pluginsById.put(pluginId, pluginMeta);
 
-            List<PluginMeta> metas = pluginsByType.putIfAbsent(pluginMeta.pluginConfig.getPluginType(), new ArrayList<>());
-            if (metas != null) {
-                metas.add(pluginMeta);
+            PLUGIN_TYPE pluginType = pluginMeta.pluginConfig.getPluginType();
+            if (!pluginsByType.containsKey(pluginType)) {
+                pluginsByType.put(pluginType, new ArrayList<>());
             }
+            List<PluginMeta> metas = pluginsByType.get(pluginType);
+            metas.add(pluginMeta);
         });
     }
 
@@ -103,24 +104,21 @@ public class VirtualComputer implements PluginConnections {
 
     public Optional<Compiler> getCompiler() {
         List<PluginMeta> meta = Optional.ofNullable(pluginsByType.get(PLUGIN_TYPE.COMPILER)).orElse(Collections.emptyList());
-        if (meta.isEmpty()) return Optional.empty();
-        else return Optional.of((Compiler) meta.get(0).pluginInstance);
+        return meta.stream().map(m -> (Compiler) m.pluginInstance).findFirst();
     }
 
     public Optional<CPU> getCPU() {
         List<PluginMeta> meta = Optional.ofNullable(pluginsByType.get(PLUGIN_TYPE.CPU)).orElse(Collections.emptyList());
-        if (meta.isEmpty()) return Optional.empty();
-        else return Optional.of((CPU) meta.get(0).pluginInstance);
+        return meta.stream().map(m -> (CPU) m.pluginInstance).findFirst();
     }
 
     public Optional<Memory> getMemory() {
         List<PluginMeta> meta = Optional.ofNullable(pluginsByType.get(PLUGIN_TYPE.MEMORY)).orElse(Collections.emptyList());
-        if (meta.isEmpty()) return Optional.empty();
-        else return Optional.of((Memory) meta.get(0).pluginInstance);
+        return meta.stream().map(m -> (Memory) m.pluginInstance).findFirst();
     }
 
     public List<Device> getDevices() {
-        List<PluginMeta> meta = Optional.ofNullable(pluginsByType.get(PLUGIN_TYPE.CPU)).orElse(Collections.emptyList());
+        List<PluginMeta> meta = Optional.ofNullable(pluginsByType.get(PLUGIN_TYPE.DEVICE)).orElse(Collections.emptyList());
         return meta.stream().map(m -> (Device) m.pluginInstance).collect(Collectors.toList());
     }
 
@@ -128,7 +126,14 @@ public class VirtualComputer implements PluginConnections {
         computerConfig.close();
     }
 
-    private Map<Long, PluginMeta> loadPlugins(ApplicationApi applicationApi, ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
+    public static VirtualComputer create(ComputerConfig computerConfig, ApplicationApi applicationApi,
+                                         ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
+        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, applicationConfig);
+        return new VirtualComputer(computerConfig, plugins);
+    }
+
+    private static Map<Long, PluginMeta> loadPlugins(ComputerConfig computerConfig, ApplicationApi applicationApi,
+                                                     ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
         List<PluginConfig> pluginConfigs = List.of(
             computerConfig.getCompiler(),
             computerConfig.getCPU(),
@@ -143,14 +148,17 @@ public class VirtualComputer implements PluginConnections {
             .map(c -> c.getPluginFile().toFile())
             .collect(Collectors.toList());
 
+        LOGGER.debug("Loading plugin files: {}", filesToLoad);
+
         PluginLoader pluginLoader = new PluginLoader();
         List<Class<Plugin>> pluginClasses = pluginLoader.loadPlugins(filesToLoad);
 
-        return constructPlugins(pluginClasses, pluginConfigs, applicationApi, applicationConfig);
+        return constructPlugins(computerConfig, pluginClasses, pluginConfigs, applicationApi, applicationConfig);
     }
 
-    private Map<Long, PluginMeta> constructPlugins(List<Class<Plugin>> pluginClasses, List<PluginConfig> pluginConfigs,
-                                                   ApplicationApi applicationApi, ApplicationConfig applicationConfig)
+    private static Map<Long, PluginMeta> constructPlugins(ComputerConfig computerConfig, List<Class<Plugin>> pluginClasses,
+                                                          List<PluginConfig> pluginConfigs, ApplicationApi applicationApi,
+                                                          ApplicationConfig applicationConfig)
         throws InvalidPluginException {
 
         Map<Long, PluginMeta> plugins = new HashMap<>();
@@ -183,7 +191,7 @@ public class VirtualComputer implements PluginConnections {
         return plugins;
     }
 
-    private Plugin createPluginInstance(long pluginID, Class<? extends Plugin> mainClass, ApplicationApi applicationApi,
+    private static Plugin createPluginInstance(long pluginID, Class<? extends Plugin> mainClass, ApplicationApi applicationApi,
                                         PluginSettings pluginSettings) throws InvalidPluginException {
         Objects.requireNonNull(mainClass);
         Objects.requireNonNull(applicationApi);

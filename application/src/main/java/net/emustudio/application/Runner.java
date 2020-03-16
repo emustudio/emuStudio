@@ -101,10 +101,11 @@ public class Runner {
             DebugTableModelImpl debugTableModel =  new DebugTableModelImpl();
             ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs);
 
-            VirtualComputer computer = new VirtualComputer(computerConfig, applicationApi, applicationConfig);
+            VirtualComputer computer = VirtualComputer.create(computerConfig, applicationApi, applicationConfig);
+            computer.initialize(contextPool);
+
             final int memorySize = computer.getMemory().map(Memory::getSize).orElse(0);
             computer.getCPU().ifPresent(cpu -> debugTableModel.setCPU(cpu, memorySize));
-            computer.initialize(contextPool);
 
             splash.ifPresent(Window::dispose);
 
