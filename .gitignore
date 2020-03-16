@@ -1,8 +1,6 @@
 # emuStudio
 *.hex
 *.jar
-artwork/
-tmp/
 
 # Created by https://www.gitignore.io/api/gradle,eclipse,netbeans,intellij+iml
 # Edit at https://www.gitignore.io/?templates=gradle,eclipse,netbeans,intellij+iml
