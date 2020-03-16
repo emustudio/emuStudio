@@ -1,5 +1,6 @@
 # ![emuStudio logo](logo.png "emuStudio logo") Welcome to emuStudio
 ![emuStudio Build](https://github.com/emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 [emuStudio](https://www.emustudio.net/) is a desktop application used for computers emulation and writing programs
 for emulated computers. It extensible; it encourages developers to write their own computer emulators.
@@ -30,10 +31,6 @@ since 2007.
 Big thanks goes to the one and only [simh](http://simh.trailing-edge.com/) project, which inspired me a lot, and helped
 me as a student and emulator enthusiast when working on emuStudio. I wish emuStudio will reach it's simplicity and
 emulators "richness" as the simh project has.
-
-## License
-
-This project is released under [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.html) license.
 
 ## Getting started
 

@@ -1,38 +1,41 @@
 # Welcome to emuStudio
 
-emuStudio is a desktop application which allows to write programs and emulate computers.
-In addition, it is easily extensible - acting as a framework it encourages developers to write their computer emulators.
-It is versatile, free, and written in Java.
+[emuStudio](https://www.emustudio.net/) is a desktop application used for computers emulation and writing programs
+for emulated computers. It extensible; it encourages developers to write their own computer emulators.
 
-The main goal is to support learning about older but important computers or abstract machines.
-I think it is also appropriate for schools; for example, emuStudio is used at
-[Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
+Main goal of emuStudio is support learning about older but important computers, or abstract machines, while
+having fun. Nowadays the ability to write programs for old computers is probably not quite interesting for the market,
+but I guess emulation has always be more about fun, trying to keeping alive something which was outstanding
+in it's peak, and preserve memories.
+
+emuStudio is very appropriate for using at schools, e.g. when students are doing first steps in assembler, or when they
+are taught about computers history. For example, emuStudio is used at [Technical University of Košice](http://www.fei.tuke.sk/en)
+since 2007.
+
+## Available emulators
+
+* [MITS Altair8800](https://www.emustudio.net/docuser/mits_altair_8800/index/)
+
+* [Manchester SSEM](https://www.emustudio.net/docuser/ssem/index/)
+
+* [Random Access Machine (RAM)](https://www.emustudio.net/docuser/ram/index/)
+
+* [Random Access Stored Program (RASP)](https://www.emustudio.net/docuser/rasp/index/) 
+
+* [BrainDuck (brainfuck interpreter)](https://www.emustudio.net/docuser/brainduck/index/)
+
 
 # License
 
-This project is released under GNU GPL v2 license.
+This project is released under GNU GPL v3 license.
 
 # Supported host platform
 
 Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
 
-# Available computer emulators
-
-* MITS Altair8800 with two processor choices: Intel 8080 or Zilog Z80 CPU. Includes 88-DISK drive, 88-SIO board,
-  LSI ADM-3A terminal, SIMH pseudo device (partially reimplemented from simh emulator), operating memory,
-  and 8080 + Z80 assembler compilers
-
-* Manchester Small-Scale Experimental Machine (SSEM) emulator, with programming tutorials
-
-* Random Access Machine (RAM) simulator
-
-* Random Access Stored Program (RASP) machine simulator
-
-* Brainfuck interpreter (designed as a "computer" which I called BrainDuck)
-
 # Installation
 
-Please follow the instructions on [project's web page](https://vbmacher.github.io/emuStudio/download/).
+Please follow the instructions on [project's web page](https://www.emustudio.net/download/).
 To run the project from the command line, type the following:
 
         java -jar "emuStudio.jar" 

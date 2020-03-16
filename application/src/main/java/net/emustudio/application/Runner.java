@@ -60,6 +60,7 @@ public class Runner {
     private static final long emustudioId = UUID.randomUUID().toString().hashCode();
 
     public static void main(String[] args) {
+        Dialogs dialogs = new NoGuiDialogsImpl();
         try {
             CommandLine commandLine = CommandLine.parse(args);
 
@@ -73,7 +74,9 @@ public class Runner {
                 configFile, commandLine.isNoGUI(), commandLine.isAuto()
             );
 
-            Dialogs dialogs = commandLine.isNoGUI() ? new NoGuiDialogsImpl() : new GuiDialogsImpl();
+            if (!commandLine.isNoGUI()) {
+                dialogs = new GuiDialogsImpl();
+            }
             ConfigFiles configFiles = new ConfigFiles();
 
             ComputerConfig computerConfig = null;
@@ -113,8 +116,8 @@ public class Runner {
                 System.err.println("No GUI is available; and no automatic emulation was set either. Exiting.");
             }
         } catch (CmdLineException | IOException | NoSuchElementException | InvalidPluginException | PluginInitializationException e) {
-            LOGGER.error("Could not run emuStudio", e);
-            e.printStackTrace();
+            LOGGER.error("Could not start emuStudio", e);
+            dialogs.showError("Could not start emuStudio. Please see log file for more details", "emuStudio");
             System.exit(1);
         }
     }
