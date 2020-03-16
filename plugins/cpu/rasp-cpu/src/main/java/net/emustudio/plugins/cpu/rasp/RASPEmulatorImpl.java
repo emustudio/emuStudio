@@ -34,7 +34,7 @@ import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
 import net.emustudio.plugins.cpu.rasp.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.rasp.gui.RASPCpuStatusPanel;
 import net.emustudio.plugins.cpu.rasp.gui.RASPDisassembler;
-import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
 import net.emustudio.plugins.memory.rasp.api.MemoryItem;
 import net.emustudio.plugins.memory.rasp.api.RASPInstruction;

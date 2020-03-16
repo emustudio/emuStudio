@@ -20,7 +20,7 @@
 package net.emustudio.plugins.cpu.ram.api;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
 public interface RAMContext extends CPUContext {
 

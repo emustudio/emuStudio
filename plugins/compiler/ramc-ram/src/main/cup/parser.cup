@@ -1,0 +1,164 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2020  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package net.emustudio.plugins.compiler.ramc;
+
+import java_cup.runtime.DefaultSymbolFactory;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
+import net.emustudio.emulib.plugins.compiler.Token;
+import net.emustudio.plugins.compiler.ramc.tree.Label;
+import net.emustudio.plugins.compiler.ramc.tree.Program;
+import net.emustudio.plugins.compiler.ramc.tree.RAMInstructionImpl;
+import net.emustudio.plugins.compiler.ramc.tree.Row;
+import net.emustudio.plugins.memory.ram.api.RAMInstruction;
+import net.emustudio.plugins.memory.ram.api.RAMInstruction.Direction;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+parser code {:
+    private CompilerImpl compiler;
+    private boolean syntaxErrors;
+
+        public ParserImpl(LexerImpl lexer, CompilerImpl compiler) {
+            super(lexer, new DefaultSymbolFactory());
+            this.compiler = Objects.requireNonNull(compiler);
+        }
+
+        @Override
+        public void report_fatal_error(String message, Object info) throws Exception {
+            done_parsing();
+            report_error(message, info);
+            throw new Exception("Can't recover from previous error(s)");
+        }
+
+        @Override
+        public void report_error(String messageText, Object current) {
+            syntaxErrors = true;
+
+            Token token = (Token)current;
+
+            messageText += ":" + token.getErrorString() + " ('" + token.getText() + "')";
+
+            List<String> expectedTokenIds = expected_token_ids()
+                .stream()
+                .map(this::symbl_name_from_id)
+                .collect(Collectors.toList());
+
+            if (!expectedTokenIds.isEmpty()) {
+                messageText += "\nExpected tokens: " + expectedTokenIds;
+            }
+
+            CompilerMessage message = new CompilerMessage(
+                CompilerMessage.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn()
+            );
+
+            compiler.notifyOnMessage(message);
+        }
+
+        public boolean hasSyntaxErrors() {
+            return syntaxErrors;
+        }
+:}
+
+terminal HALT,LOAD,STORE,READ,WRITE,ADD,SUB,MUL,DIV,JMP,JZ,JGTZ;
+terminal EOL;
+terminal DIRECT,INDIRECT;
+terminal String NUMBER, IDENT, LABELL,STRING;
+terminal TCOMMENT, INPUT;
+
+non terminal Program Program;
+non terminal Row Row;
+non terminal RAMInstructionImpl Statement;
+non terminal Comment;
+non terminal Integer Number;
+non terminal Label LabelOpt;
+non terminal List StringVector;
+
+start with Program;
+
+Program ::= Row:row
+            {:
+                Program program = new Program();
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :}
+          | Program:program EOL Row:row
+            {:
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :};
+
+Row ::= LabelOpt:label Statement:stmt Comment
+        {: RESULT = new Row(stmt, label); :}
+      | LabelOpt:label Comment
+        {: RESULT = (label==null)?null:new Row(label); :}
+      | INPUT StringVector:vector 
+        {: RESULT = new Row(vector); :};
+
+StringVector ::= STRING:str
+                 {: 
+                     ArrayList<String> v = new ArrayList<String>();
+                     v.add(str);
+                     RESULT = v;
+                 :}
+               | StringVector:v STRING:str
+                 {:
+                     v.add(str);
+                     RESULT = v;
+                 :};
+
+Comment ::= TCOMMENT | ;
+
+LabelOpt ::= LABELL:label {: RESULT = new Label(label); :}
+           |             {: RESULT = null; :}
+           ;
+
+
+Statement ::= READ Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.READ, Direction.REGISTER, num); :}
+            | READ INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.READ, Direction.INDIRECT, num); :}
+            | WRITE DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, Direction.DIRECT, str); :}
+            | WRITE Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, Direction.REGISTER, num); :}
+            | WRITE INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, Direction.INDIRECT, num); :}
+            | LOAD DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, Direction.DIRECT, str); :}
+            | LOAD Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, Direction.REGISTER, num); :}
+            | LOAD INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, Direction.INDIRECT, num); :}
+            | STORE Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.STORE, Direction.REGISTER, num); :}
+            | STORE INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.STORE, Direction.INDIRECT, num); :}
+            | ADD DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, Direction.DIRECT, str); :}
+            | ADD Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, Direction.REGISTER, num); :}
+            | ADD INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, Direction.INDIRECT, num); :}
+            | SUB DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, Direction.DIRECT, str); :}
+            | SUB Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, Direction.REGISTER, num); :}
+            | SUB INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, Direction.INDIRECT, num); :}
+            | MUL DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, Direction.DIRECT, str); :}
+            | MUL Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, Direction.REGISTER, num); :}
+            | MUL INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, Direction.INDIRECT, num); :}
+            | DIV DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, Direction.DIRECT, str); :}
+            | DIV Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, Direction.REGISTER, num); :}
+            | DIV INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, Direction.INDIRECT, num); :}
+            | JMP IDENT:label {: RESULT = new RAMInstructionImpl(RAMInstruction.JMP, label); :}
+            | JZ IDENT:label {: RESULT = new RAMInstructionImpl(RAMInstruction.JZ, label); :}
+            | JGTZ IDENT:label {: RESULT = new RAMInstructionImpl(RAMInstruction.JGTZ, label); :}
+            | HALT  {: RESULT = new RAMInstructionImpl(RAMInstruction.HALT, Direction.REGISTER,0); :}
+            ;
+
+Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num); :};
+

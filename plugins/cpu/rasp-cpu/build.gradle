@@ -32,8 +32,8 @@ dependencies {
   implementation libs.emuLib
   implementation libs.slf4JApi
 
-  memoryLib project(":plugins:mem:rasp-mem")
-  deviceLib project(":plugins:devices:abstractTape-ram")
+  memoryLib project(":plugins:memory:rasp-mem")
+  deviceLib project(":plugins:device:abstractTape-ram")
 
   testImplementation libs.junit
   testImplementation libs.slf4JSimple

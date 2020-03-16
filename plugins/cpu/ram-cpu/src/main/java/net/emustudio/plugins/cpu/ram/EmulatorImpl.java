@@ -34,7 +34,7 @@ import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
 import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.ram.gui.RAMDisassembler;
 import net.emustudio.plugins.cpu.ram.gui.RAMStatusPanel;
-import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

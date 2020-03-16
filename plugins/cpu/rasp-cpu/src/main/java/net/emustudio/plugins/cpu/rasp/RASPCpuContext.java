@@ -24,7 +24,7 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
 import java.util.ArrayList;
 import java.util.List;

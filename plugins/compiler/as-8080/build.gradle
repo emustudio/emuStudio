@@ -1,0 +1,84 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2020  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+  id 'java'
+  id 'org.xbib.gradle.plugin.jflex' version "1.2.1"
+  id "com.github.andrescv.jcup" version "1.0"
+}
+
+dependencies {
+  implementation libs.emuLib
+  implementation libs.slf4JApi
+  implementation libs.javaCupRuntime
+
+  testImplementation libs.cpuTestSuite
+  testImplementation libs.junit
+  testImplementation libs.easyMock
+  testImplementation libs.slf4JSimple
+}
+
+sourceSets.main.java {
+  srcDirs = [
+    "${buildDir}/generated-sources/jflex", "${buildDir}/generated-sources/cup", 'src/main/java'
+  ]
+  exclude "${buildDir}/generated-sources/cup/net/emustudio/plugins/compiler/as8080"
+}
+
+jflex {
+  generateDir = project.file("${buildDir}/generated-sources/jflex/net/emustudio/plugins/compiler/as8080")
+}
+
+jcup {
+  input = file('src/main/cup/parser.cup')
+  destdir = file("${buildDir}/generated-sources/cup/net/emustudio/plugins/compiler/as8080")
+  parser = 'ParserImpl'
+  symbols = 'Symbols'
+  iface = true
+}
+
+
+jar {
+  archiveVersion = ''
+  manifest {
+    attributes manifestAttributes('net.emustudio.plugins.compiler.as8080.Main')
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+      "project.version": project.version,
+      "today.year": new Date().format("yyyy")
+    ]
+  }
+}
+
+
+copy {
+  from('src/main/examples')
+  into "$buildDir/libs/examples"
+}
+
+copy {
+  from('src/main/scripts')
+  into "$buildDir/libs/scripts"
+}

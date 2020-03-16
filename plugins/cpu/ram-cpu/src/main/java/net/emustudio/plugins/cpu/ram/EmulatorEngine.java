@@ -20,7 +20,7 @@ package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.cpu.ram.api.RAMContext;
-import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import org.slf4j.Logger;

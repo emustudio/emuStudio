@@ -20,7 +20,7 @@ package net.emustudio.plugins.cpu.ram.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.cpu.ram.EmulatorImpl;
-import net.emustudio.plugins.devices.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
 import java.awt.*;
 

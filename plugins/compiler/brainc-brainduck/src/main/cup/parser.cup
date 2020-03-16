@@ -1,0 +1,112 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2020  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package net.emustudio.plugins.compiler.brainc;
+
+import java_cup.runtime.DefaultSymbolFactory;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
+import net.emustudio.emulib.plugins.compiler.Token;
+import net.emustudio.plugins.compiler.brainc.tree.Instruction;
+import net.emustudio.plugins.compiler.brainc.tree.Program;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+parser code {:
+    private CompilerImpl compiler;
+    private boolean syntaxErrors;
+
+    public ParserImpl(LexerImpl lexer, CompilerImpl compiler) {
+        super(lexer, new DefaultSymbolFactory());
+        this.compiler = Objects.requireNonNull(compiler);
+    }
+
+    @Override
+    public void report_fatal_error(String message, Object info) throws Exception {
+        done_parsing();
+        report_error(message, info);
+        throw new Exception("Can't recover from previous error(s)");
+    }
+
+    @Override
+    public void report_error(String messageText, Object current) {
+        syntaxErrors = true;
+
+        Token token = (Token)current;
+
+        messageText += ":" + token.getErrorString() + " ('" + token.getText() + "')";
+
+        List<String> expectedTokenIds = expected_token_ids()
+            .stream()
+            .map(this::symbl_name_from_id)
+            .collect(Collectors.toList());
+
+        if (!expectedTokenIds.isEmpty()) {
+            messageText += "\nExpected tokens: " + expectedTokenIds;
+        }
+
+        CompilerMessage message = new CompilerMessage(
+            CompilerMessage.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn()
+        );
+
+        compiler.notifyOnMessage(message);
+    }
+
+    public boolean hasSyntaxErrors() {
+        return syntaxErrors;
+    }
+:}
+
+terminal HALT,INC,DEC,INCV,DECV,PRINT,LOAD,LOOP,ENDL;
+terminal TCOMMENT;
+
+non terminal Program Program;
+non terminal Instruction Statement;
+
+start with Program;
+
+Program ::= Statement:statement
+            {:
+                Program program = new Program();
+                if (statement != null) {
+                    program.add(statement);
+                }
+                RESULT = program;
+            :} |
+            Program:program Statement:statement
+            {:
+                if (statement != null) {
+                    program.add(statement);
+                }
+                RESULT = program;
+            :};
+
+Statement ::=
+            INC   {: RESULT = new Instruction(Instruction.INC);   :} |
+            DEC   {: RESULT = new Instruction(Instruction.DEC);   :} |
+            INCV  {: RESULT = new Instruction(Instruction.INCV);  :} |
+            DECV  {: RESULT = new Instruction(Instruction.DECV);  :} |
+            PRINT {: RESULT = new Instruction(Instruction.PRINT); :} |
+            LOAD  {: RESULT = new Instruction(Instruction.LOAD);  :} |
+            LOOP  {: RESULT = new Instruction(Instruction.LOOP);  :} |
+            ENDL  {: RESULT = new Instruction(Instruction.ENDL);  :} |
+            HALT  {: RESULT = new Instruction(Instruction.HALT);  :} |
+            TCOMMENT {: RESULT = null; :}
+            ;
+

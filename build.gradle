@@ -60,9 +60,9 @@ allprojects {
 
   def libClassPath = {
     def libs = configurations.runtimeClasspath.files.collect { "lib/" + it.getName() } +
-      configurations.compilerLib.files.collect { "compilers/" + it.getName() } +
-      configurations.memoryLib.files.collect { "mem/" + it.getName() } +
-      configurations.deviceLib.files.collect { "devices/" + it.getName() } +
+      configurations.compilerLib.files.collect { "compiler/" + it.getName() } +
+      configurations.memoryLib.files.collect { "memory/" + it.getName() } +
+      configurations.deviceLib.files.collect { "device/" + it.getName() } +
       configurations.cpuLib.files.collect { "cpu/" + it.getName() }
 
     return libs.join(' ')
