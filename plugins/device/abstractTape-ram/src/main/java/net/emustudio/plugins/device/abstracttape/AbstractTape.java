@@ -82,10 +82,10 @@ public class AbstractTape extends AbstractDevice {
 
     @Override
     public void initialize() {
-        automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false);
-        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
+        automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
+        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
 
-        boolean showAtStartup = settings.getBoolean("showAtStartup").orElse(false);
+        boolean showAtStartup = settings.getBoolean("showAtStartup", false);
         if (showAtStartup) {
             showGUI();
         }
@@ -94,9 +94,9 @@ public class AbstractTape extends AbstractDevice {
 
     @Override
     public void showGUI() {
-        boolean alwaysOnTop = settings.getBoolean("alwaysOnTop").orElse(false);
         if (!guiNotSupported) {
             if (gui == null) {
+                boolean alwaysOnTop = settings.getBoolean("alwaysOnTop", false);
                 gui = new TapeDialog(getTitle(), context, alwaysOnTop, applicationApi.getDialogs());
             }
             gui.setVisible(true);

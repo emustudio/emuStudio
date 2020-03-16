@@ -42,10 +42,10 @@ public class SettingsDialog extends JDialog {
 
         initComponents();
         this.setSize(250, this.getHeight());
-        boolean alwaysOnTop = settings.getBoolean("alwaysOnTop").orElse(false);
+        boolean alwaysOnTop = settings.getBoolean("alwaysOnTop", false);
         chkAlwaysOnTop.setSelected(alwaysOnTop);
 
-        boolean showAtStartup = settings.getBoolean("showAtStartup").orElse(false);
+        boolean showAtStartup = settings.getBoolean("showAtStartup", false);
         chkShowAtStartup.setSelected(showAtStartup);
     }
 

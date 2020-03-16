@@ -70,7 +70,7 @@ public class DiskImpl extends AbstractDevice {
     public DiskImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
 
         for (int i = 0; i < DRIVES_COUNT; i++) {
             drives.add(new Drive(i));

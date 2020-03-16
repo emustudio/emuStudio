@@ -62,8 +62,8 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
             this.disassembler = createDisassembler(memory);
             this.engine = createEmulatorEngine(memory);
 
-            boolean settingPrintCode = settings.getBoolean(CpuImpl.PRINT_CODE).orElse(false);
-            boolean printCodeUseCache = settings.getBoolean(CpuImpl.PRINT_CODE_USE_CACHE).orElse(false);
+            boolean settingPrintCode = settings.getBoolean(CpuImpl.PRINT_CODE, false);
+            boolean printCodeUseCache = settings.getBoolean(CpuImpl.PRINT_CODE_USE_CACHE, false);
 
             this.dumpInstructions = settingPrintCode;
             if (settingPrintCode) {

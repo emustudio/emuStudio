@@ -71,7 +71,7 @@ public class CpuImpl extends AbstractCPU {
         disassembler = new DisassemblerImpl(memory, decoder);
         engine = new EmulatorEngine(memory, this);
 
-        if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO).orElse(false)) {
+        if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false)) {
             automaticEmulation = new AutomaticEmulation(this, engine, memory);
         }
     }
