@@ -136,8 +136,8 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void resetInternal(int pos) {
-        engine.reset(pos);
+    public void resetInternal(int location) {
+        engine.reset(location);
     }
 
     @Override
@@ -151,12 +151,12 @@ public class EmulatorImpl extends AbstractCPU {
                 if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                     return tmpRunState;
                 }
-            } catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException ex) {
                 return RunState.STATE_STOPPED_ADDR_FALLOUT;
-            } catch (IOException e) {
-                LOGGER.error("Unexpected error while reading/writing to the tape", e);
+            } catch (IOException ex) {
+                LOGGER.error("Unexpected error while reading/writing to the tape", ex);
                 return RunState.STATE_STOPPED_BAD_INSTR;
-            } catch (Breakpoint er) {
+            } catch (Breakpoint breakpoint) {
                 return RunState.STATE_STOPPED_BREAK;
             }
         }

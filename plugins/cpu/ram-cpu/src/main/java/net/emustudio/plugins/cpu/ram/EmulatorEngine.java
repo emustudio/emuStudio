@@ -63,16 +63,16 @@ public class EmulatorEngine {
         this.context = Objects.requireNonNull(context);
     }
 
-    public boolean setInstructionLocation(int pos) {
-        if (pos < 0) {
+    public boolean setInstructionLocation(int location) {
+        if (location < 0) {
             return false;
         }
-        IP = pos;
+        IP = location;
         return true;
     }
 
-    public void reset(int pos) {
-        IP = pos;
+    public void reset(int location) {
+        IP = location;
         loadInput(context.getInput());
         context.getStorage().clear();
         context.getOutput().clear();
