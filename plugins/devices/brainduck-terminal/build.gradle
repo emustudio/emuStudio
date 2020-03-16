@@ -29,6 +29,9 @@ dependencies {
   implementation libs.jcipAnnotations
 
   cpuLib project(":plugins:cpu:brainduck-cpu")
+
+  testImplementation libs.junit
+  testImplementation libs.slf4JSimple
 }
 
 jar {

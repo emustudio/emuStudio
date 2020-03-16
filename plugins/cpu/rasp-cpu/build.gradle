@@ -34,6 +34,9 @@ dependencies {
 
   memoryLib project(":plugins:mem:rasp-mem")
   deviceLib project(":plugins:devices:abstractTape-ram")
+
+  testImplementation libs.junit
+  testImplementation libs.slf4JSimple
 }
 
 jar {

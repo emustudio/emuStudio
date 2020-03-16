@@ -27,6 +27,9 @@ dependencies {
   implementation libs.emuLib
   implementation libs.slf4JApi
   implementation libs.jcipAnnotations
+
+  testImplementation libs.junit
+  testImplementation libs.slf4JSimple
 }
 
 jar {

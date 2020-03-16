@@ -32,6 +32,7 @@ dependencies {
 
   testImplementation libs.junit
   testImplementation libs.easyMock
+  testImplementation libs.slf4JSimple
 }
 
 jar {
