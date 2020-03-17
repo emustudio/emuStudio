@@ -38,7 +38,7 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractCompilerTest {
-    private CompilerImpl compiler;
+    protected CompilerImpl compiler;
     protected MemoryStub<Short> memoryStub;
 
     @Rule

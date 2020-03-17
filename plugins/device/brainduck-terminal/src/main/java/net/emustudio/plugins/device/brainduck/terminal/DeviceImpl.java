@@ -140,7 +140,7 @@ public class DeviceImpl extends AbstractDevice {
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.brainduck.terminal.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.brainduck.terminal.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

@@ -28,6 +28,7 @@ dependencies {
   implementation libs.jcipAnnotations
 
   testImplementation libs.junit
+  testImplementation libs.easyMock
 }
 
 jar {

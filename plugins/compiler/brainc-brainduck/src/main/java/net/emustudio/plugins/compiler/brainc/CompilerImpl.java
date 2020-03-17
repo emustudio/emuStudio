@@ -180,7 +180,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compilers.brainc.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.brainc.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

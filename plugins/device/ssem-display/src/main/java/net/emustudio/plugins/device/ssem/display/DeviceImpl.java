@@ -100,7 +100,7 @@ public class DeviceImpl extends AbstractDevice {
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.ssem.display.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.ssem.display.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

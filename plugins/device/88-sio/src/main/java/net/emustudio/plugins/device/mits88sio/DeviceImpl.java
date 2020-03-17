@@ -157,7 +157,7 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.mits88sio.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.mits88sio.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

@@ -188,7 +188,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.adm3a.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.adm3a.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

@@ -184,7 +184,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compilers.asZ80.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.asZ80.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

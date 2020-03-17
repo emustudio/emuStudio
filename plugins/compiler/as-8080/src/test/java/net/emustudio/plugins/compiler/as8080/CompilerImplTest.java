@@ -20,7 +20,19 @@ package net.emustudio.plugins.compiler.as8080;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertNotEquals;
+
 public class CompilerImplTest extends AbstractCompilerTest {
+
+    @Test
+    public void testVersionIsKnown() {
+        assertNotEquals("(unknown)", compiler.getVersion());
+    }
+
+    @Test
+    public void testCopyrightIsKnown() {
+        assertNotEquals("(unknown)", compiler.getCopyright());
+    }
 
     @Test
     public void testForwardAbsoluteJump() throws Exception {

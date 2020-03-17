@@ -55,7 +55,7 @@ jcup {
 jar {
   archiveVersion = ''
   manifest {
-    attributes manifestAttributes('net.emustudio.plugins.compiler.brainc.Main')
+    attributes manifestAttributes('net.emustudio.plugins.compiler.brainc.Runner')
   }
 
 }

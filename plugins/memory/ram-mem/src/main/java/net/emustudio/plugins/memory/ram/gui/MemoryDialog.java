@@ -21,17 +21,15 @@ package net.emustudio.plugins.memory.ram.gui;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
-import net.emustudio.plugins.memory.ram.RAMMemoryContextImpl;
+import net.emustudio.plugins.memory.ram.MemoryContextImpl;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 
@@ -40,11 +38,11 @@ public class MemoryDialog extends javax.swing.JDialog {
 
     private final Dialogs dialogs;
 
-    private final RAMMemoryContextImpl memory;
+    private final MemoryContextImpl memory;
     private final RAMTableModel tableModel;
     private File lastOpenedFile;
 
-    public MemoryDialog(RAMMemoryContextImpl memory, Dialogs dialogs) {
+    public MemoryDialog(MemoryContextImpl memory, Dialogs dialogs) {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.memory = Objects.requireNonNull(memory);
 

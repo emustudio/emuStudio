@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotEquals;
 
 public class CpuImplTest {
-    private CpuImpl emulator;
+    private CpuImpl cpu;
     private MemoryStub memory;
     private DeviceStub ioDevice;
 
@@ -60,8 +60,8 @@ public class CpuImplTest {
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
-        emulator = new CpuImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
-        emulator.initialize();
+        cpu = new CpuImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        cpu.initialize();
 
         BrainCPUContext cpuContext = cpuContextCapture.getValue();
         cpuContext.attachDevice(ioDevice);
@@ -69,12 +69,22 @@ public class CpuImplTest {
 
     @After
     public void tearDown() {
-        emulator.destroy();
+        cpu.destroy();
+    }
+
+    @Test
+    public void testVersionIsKnown() {
+        assertNotEquals("(unknown)", cpu.getVersion());
+    }
+
+    @Test
+    public void testCopyrightIsKnown() {
+        assertNotEquals("(unknown)", cpu.getCopyright());
     }
 
     private void setupEmulator(byte[] program, byte[] data, byte[] input) {
         memory.setProgram(Objects.requireNonNull(program));
-        emulator.reset();
+        cpu.reset();
         if (data != null) {
             memory.setData(data);
         }
@@ -85,25 +95,25 @@ public class CpuImplTest {
 
     private void emulateWithBreakpoint(byte[] program, byte[] input, int breakpoint) {
         setupEmulator(program, null, input);
-        emulator.setBreakpoint(breakpoint);
+        cpu.setBreakpoint(breakpoint);
         try {
-            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, emulator.call());
+            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, cpu.call());
         } finally {
-            emulator.unsetBreakpoint(breakpoint);
+            cpu.unsetBreakpoint(breakpoint);
         }
     }
 
     private void emulate(byte[] program, byte[] data, byte[] input) {
         setupEmulator(program, data, input);
-        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, emulator.call());
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.call());
     }
 
     @Test
     public void testResetSetsCorrectlyP() {
         memory.setProgram(new byte[]{7, 4, 8});
 
-        emulator.reset();
-        assertEquals(4, emulator.getEngine().P);
+        cpu.reset();
+        assertEquals(4, cpu.getEngine().P);
     }
 
     @Test(timeout = 3000)
@@ -111,19 +121,19 @@ public class CpuImplTest {
         // [-]
         memory.setProgram(new byte[]{7, 4, 8});
 
-        emulator.reset();
+        cpu.reset();
 
         memory.setData(new byte[]{2});
 
-        emulator.step(); // [
-        emulator.step(); // -
+        cpu.step(); // [
+        cpu.step(); // -
 
         assertEquals(1, memory.read(memory.getDataStart()).byteValue());
 
-        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, emulator.call());
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, cpu.call());
 
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
-        assertEquals(4, emulator.getInstructionLocation());
+        assertEquals(4, cpu.getInstructionLocation());
     }
 
     @Test(timeout = 3000)
@@ -152,7 +162,7 @@ public class CpuImplTest {
 
         emulate(program, data, null);
 
-        assertEquals(memory.getDataStart(), emulator.getEngine().P);
+        assertEquals(memory.getDataStart(), cpu.getEngine().P);
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
         assertEquals(4, memory.read(memory.getDataStart() + 1).byteValue());
     }
@@ -165,7 +175,7 @@ public class CpuImplTest {
 
         emulate(program, data, null);
 
-        assertEquals(memory.getDataStart(), emulator.getEngine().P);
+        assertEquals(memory.getDataStart(), cpu.getEngine().P);
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
         assertEquals(4, memory.read(memory.getDataStart() + 1).byteValue());
         assertEquals(4, memory.read(memory.getDataStart() + 2).byteValue());
@@ -182,7 +192,7 @@ public class CpuImplTest {
 
         emulate(program, data, null);
 
-        assertEquals(memory.getDataStart() + 2, emulator.getEngine().P);
+        assertEquals(memory.getDataStart() + 2, cpu.getEngine().P);
         assertEquals(4, memory.read(memory.getDataStart()).byteValue());
         assertEquals(4, memory.read(memory.getDataStart() + 1).byteValue());
         assertEquals(0, memory.read(memory.getDataStart() + 2).byteValue());
@@ -200,7 +210,7 @@ public class CpuImplTest {
 
         emulate(program, null, input);
 
-        assertEquals(memory.getDataStart() + 1, emulator.getEngine().P);
+        assertEquals(memory.getDataStart() + 1, cpu.getEngine().P);
         assertEquals('8', memory.read(memory.getDataStart()).byteValue());
         assertEquals('\n', memory.read(memory.getDataStart() + 1).byteValue());
 
@@ -223,7 +233,7 @@ public class CpuImplTest {
 
         emulate(program, null, input);
 
-        assertEquals(memory.getDataStart() + 1, emulator.getEngine().P);
+        assertEquals(memory.getDataStart() + 1, cpu.getEngine().P);
         assertEquals(64, memory.read(memory.getDataStart()).byteValue()); // 64 is ASCII for '0' + 16
         assertEquals('a', memory.read(memory.getDataStart() + 1).byteValue());
 
@@ -242,7 +252,7 @@ public class CpuImplTest {
 
         emulate(program, null, null);
 
-        assertEquals(memory.getDataStart(), emulator.getEngine().P);
+        assertEquals(memory.getDataStart(), cpu.getEngine().P);
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
         assertEquals(3 * 5, memory.read(memory.getDataStart() + 1).byteValue());
     }
@@ -262,7 +272,7 @@ public class CpuImplTest {
 
         emulate(program, data, null);
 
-        assertEquals(memory.getDataStart() + 3, emulator.getEngine().P);
+        assertEquals(memory.getDataStart() + 3, cpu.getEngine().P);
         assertEquals(20, memory.read(memory.getDataStart()).byteValue());
         assertEquals(5, memory.read(memory.getDataStart() + 1).byteValue());
         assertEquals(20 * 5, memory.read(memory.getDataStart() + 2).byteValue());
@@ -275,7 +285,7 @@ public class CpuImplTest {
 
         emulate(program, null, null);
 
-        assertEquals(memory.getDataStart(), emulator.getEngine().P);
+        assertEquals(memory.getDataStart(), cpu.getEngine().P);
         assertEquals(255, memory.read(memory.getDataStart()).shortValue());
     }
 
@@ -285,7 +295,7 @@ public class CpuImplTest {
         byte[] program = new byte[]{3, 7, 7, 4, 8, 3, 7, 4, 8, 8};
 
         emulate(program, null, null);
-        assertEquals(11, emulator.getInstructionLocation());
+        assertEquals(11, cpu.getInstructionLocation());
     }
 
     @Test(timeout = 3000)
@@ -294,7 +304,7 @@ public class CpuImplTest {
         byte[] program = new byte[]{4, 3};
 
         emulate(program, null, null);
-        assertEquals(0, memory.read(emulator.getEngine().P).byteValue());
+        assertEquals(0, memory.read(cpu.getEngine().P).byteValue());
     }
 
     @Test(timeout = 3000)
@@ -310,39 +320,39 @@ public class CpuImplTest {
 
         emulateWithBreakpoint(program, input, 19);
 
-        assertEquals(19, emulator.getInstructionLocation());
-        assertEquals(45, memory.read(emulator.getEngine().P + 1).shortValue());
+        assertEquals(19, cpu.getInstructionLocation());
+        assertEquals(45, memory.read(cpu.getEngine().P + 1).shortValue());
 
-        emulator.step(); // ,
-        assertEquals(1, memory.read(emulator.getEngine().P).shortValue());
+        cpu.step(); // ,
+        assertEquals(1, memory.read(cpu.getEngine().P).shortValue());
 
-        emulator.step(); // [
-        emulator.step(); // [
-        emulator.step(); // >
-        assertEquals(memory.getDataStart() + 1, emulator.getEngine().P);
-        assertEquals(45, memory.read(emulator.getEngine().P).shortValue());
+        cpu.step(); // [
+        cpu.step(); // [
+        cpu.step(); // >
+        assertEquals(memory.getDataStart() + 1, cpu.getEngine().P);
+        assertEquals(45, memory.read(cpu.getEngine().P).shortValue());
 
-        emulator.step(); // -
-        emulator.step(); // -
-        assertEquals(43, memory.read(emulator.getEngine().P).shortValue());
+        cpu.step(); // -
+        cpu.step(); // -
+        assertEquals(43, memory.read(cpu.getEngine().P).shortValue());
 
-        emulator.step(); // .
+        cpu.step(); // .
 
-        emulator.step(); // +
-        emulator.step(); // +
-        assertEquals(45, memory.read(emulator.getEngine().P).shortValue());
+        cpu.step(); // +
+        cpu.step(); // +
+        assertEquals(45, memory.read(cpu.getEngine().P).shortValue());
 
-        emulator.step(); // >
-        assertEquals(memory.getDataStart() + 2, emulator.getEngine().P);
-        assertEquals(0, memory.read(emulator.getEngine().P).shortValue());
-        assertEquals(29, emulator.getInstructionLocation());
-        assertEquals(3, memory.read(emulator.getInstructionLocation()).shortValue());
+        cpu.step(); // >
+        assertEquals(memory.getDataStart() + 2, cpu.getEngine().P);
+        assertEquals(0, memory.read(cpu.getEngine().P).shortValue());
+        assertEquals(29, cpu.getInstructionLocation());
+        assertEquals(3, memory.read(cpu.getInstructionLocation()).shortValue());
 
 
-        emulator.step(); // +
-        assertEquals(1, memory.read(emulator.getEngine().P).shortValue());
+        cpu.step(); // +
+        assertEquals(1, memory.read(cpu.getEngine().P).shortValue());
 
-        emulator.call();
+        cpu.call();
 
         assertTrue(ioDevice.wasInputRead());
 

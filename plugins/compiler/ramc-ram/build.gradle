@@ -31,7 +31,6 @@ dependencies {
   implementation libs.javaCupRuntime
   implementation libs.slf4JApi
 
-  testImplementation libs.cpuTestSuite
   testImplementation libs.junit
   testImplementation libs.easyMock
   testImplementation libs.slf4JSimple
@@ -56,7 +55,7 @@ jcup {
 jar {
   archiveVersion = ''
   manifest {
-    attributes manifestAttributes('net.emustudio.plugins.compiler.ramc.Main')
+    attributes manifestAttributes('net.emustudio.plugins.compiler.ramc.Runner')
   }
 }
 

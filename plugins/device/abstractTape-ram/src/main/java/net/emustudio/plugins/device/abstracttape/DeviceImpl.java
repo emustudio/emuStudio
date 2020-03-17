@@ -144,7 +144,7 @@ public class DeviceImpl extends AbstractDevice {
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.devices.abstracttape.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.abstracttape.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

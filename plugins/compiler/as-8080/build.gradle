@@ -59,7 +59,7 @@ jcup {
 jar {
   archiveVersion = ''
   manifest {
-    attributes manifestAttributes('net.emustudio.plugins.compiler.as8080.Main')
+    attributes manifestAttributes('net.emustudio.plugins.compiler.as8080.Runner')
   }
 }
 

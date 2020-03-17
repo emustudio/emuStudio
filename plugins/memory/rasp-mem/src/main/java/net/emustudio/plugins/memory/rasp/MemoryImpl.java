@@ -45,12 +45,12 @@ import java.util.ResourceBundle;
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
-    private final RASPMemoryContextImpl context;
+    private final MemoryContextImpl context;
     private MemoryWindow gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        this.context = new RASPMemoryContextImpl();
+        this.context = new MemoryContextImpl();
 
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {

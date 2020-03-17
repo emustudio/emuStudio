@@ -27,20 +27,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ConfigFiles {
-    private final static String CONFIGS_DIR = "config";
-    private final static String CPUS_DIR = "cpu";
-    private final static String COMPILERS_DIR = "compilers";
-    private final static String MEMORIES_DIR = "mem";
-    private final static String DEVICES_DIR = "devices";
+    private final static String DIR_CONFIG = "config";
+    private final static String DIR_CPU = "cpu";
+    private final static String DIR_COMPILER = "compiler";
+    private final static String DIR_MEMORY = "memory";
+    private final static String DIR_DEVICE = "device";
 
-    private final static Map<PLUGIN_TYPE, String> PLUGIN_SUBDIRS = new HashMap<>();
-    static {
-        PLUGIN_SUBDIRS.put(PLUGIN_TYPE.COMPILER, COMPILERS_DIR);
-        PLUGIN_SUBDIRS.put(PLUGIN_TYPE.CPU, CPUS_DIR);
-        PLUGIN_SUBDIRS.put(PLUGIN_TYPE.MEMORY, MEMORIES_DIR);
-        PLUGIN_SUBDIRS.put(PLUGIN_TYPE.DEVICE, DEVICES_DIR);
-    }
-
+    private final static Map<PLUGIN_TYPE, String> PLUGIN_SUBDIRS = Map.of(
+        PLUGIN_TYPE.COMPILER, DIR_COMPILER,
+        PLUGIN_TYPE.CPU, DIR_CPU,
+        PLUGIN_TYPE.MEMORY, DIR_MEMORY,
+        PLUGIN_TYPE.DEVICE, DIR_DEVICE
+    );
     private final String baseDirectory;
 
 
@@ -57,7 +55,7 @@ public class ConfigFiles {
     }
 
     public List<ComputerConfig> loadConfigurations() throws IOException {
-        return Files.list(Path.of(baseDirectory, CONFIGS_DIR))
+        return Files.list(Path.of(baseDirectory, DIR_CONFIG))
             .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
             .map(p -> {
                 try {
@@ -78,12 +76,12 @@ public class ConfigFiles {
     }
 
     public ComputerConfig createConfiguration(String computerName) {
-        Path configPath = Path.of(baseDirectory, CONFIGS_DIR, encodeToFileName(computerName) + ".toml");
+        Path configPath = Path.of(baseDirectory, DIR_CONFIG, encodeToFileName(computerName) + ".toml");
         return ComputerConfig.create(computerName, configPath);
     }
 
     public void removeConfiguration(String computerName) throws IOException {
-        Path configPath = Path.of(baseDirectory, CONFIGS_DIR, encodeToFileName(computerName) + ".toml");
+        Path configPath = Path.of(baseDirectory, DIR_CONFIG, encodeToFileName(computerName) + ".toml");
         Files.deleteIfExists(configPath);
     }
 

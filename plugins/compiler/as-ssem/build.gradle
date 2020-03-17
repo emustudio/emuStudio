@@ -56,7 +56,7 @@ jcup {
 jar {
   archiveVersion = ''
   manifest {
-    attributes manifestAttributes('net.emustudio.plugins.compiler.ssem.Main')
+    attributes manifestAttributes('net.emustudio.plugins.compiler.ssem.Runner')
   }
 }
 

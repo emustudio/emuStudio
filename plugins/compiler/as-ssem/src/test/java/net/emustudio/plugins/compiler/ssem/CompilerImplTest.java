@@ -36,6 +36,7 @@ import java.nio.file.StandardOpenOption;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class CompilerImplTest {
     private CompilerImpl compiler;
@@ -77,6 +78,16 @@ public class CompilerImplTest {
                 bytes[i], (int) memoryStub.read(i)
             );
         }
+    }
+
+    @Test
+    public void testVersionIsKnown() {
+        assertNotEquals("(unknown)", compiler.getVersion());
+    }
+
+    @Test
+    public void testCopyrightIsKnown() {
+        assertNotEquals("(unknown)", compiler.getCopyright());
     }
 
     @Test

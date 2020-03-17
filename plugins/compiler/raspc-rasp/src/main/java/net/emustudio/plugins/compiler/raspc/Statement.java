@@ -20,28 +20,28 @@
 package net.emustudio.plugins.compiler.raspc;
 
 import net.emustudio.plugins.compiler.raspc.tree.AbstractTreeNode;
+import net.emustudio.plugins.memory.rasp.InstructionImpl;
 import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
-import net.emustudio.plugins.memory.rasp.RASPInstructionImpl;
 
 public class Statement extends AbstractTreeNode {
 
-    private final RASPInstructionImpl instruction;
+    private final InstructionImpl instruction;
     private final Integer operand;
     private final String labelOperand;
 
-    public Statement(RASPInstructionImpl instruction, Integer operand) {
+    public Statement(InstructionImpl instruction, Integer operand) {
         this.instruction = instruction;
         this.operand = operand;
         this.labelOperand = null;
     }
 
-    public Statement(RASPInstructionImpl instruction, String labelOperand) {
+    public Statement(InstructionImpl instruction, String labelOperand) {
         this.instruction = instruction;
         this.labelOperand = labelOperand.toUpperCase();
         this.operand = null;
     }
 
-    public RASPInstructionImpl getInstruction() {
+    public InstructionImpl getInstruction() {
         return instruction;
     }
 

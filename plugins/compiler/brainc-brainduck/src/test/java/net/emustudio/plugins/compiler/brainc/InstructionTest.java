@@ -25,8 +25,19 @@ import net.emustudio.emulib.runtime.PluginSettings;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;
+import static org.junit.Assert.assertNotEquals;
 
 public class InstructionTest extends AbstractCompilerTest {
+
+    @Test
+    public void testVersionIsKnown() {
+        assertNotEquals("(unknown)", compiler.getVersion());
+    }
+
+    @Test
+    public void testCopyrightIsKnown() {
+        assertNotEquals("(unknown)", compiler.getCopyright());
+    }
 
     @Test
     public void testCompile() throws Exception {

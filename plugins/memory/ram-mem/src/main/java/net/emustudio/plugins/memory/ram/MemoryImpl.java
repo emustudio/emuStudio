@@ -36,14 +36,14 @@ import java.util.ResourceBundle;
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
-    private final RAMMemoryContextImpl context;
+    private final MemoryContextImpl context;
     private MemoryDialog gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         ContextPool contextPool = applicationApi.getContextPool();
 
-        context = new RAMMemoryContextImpl();
+        context = new MemoryContextImpl();
         try {
             contextPool.register(pluginID, context, RAMMemoryContext.class);
             contextPool.register(pluginID, context, MemoryContext.class);

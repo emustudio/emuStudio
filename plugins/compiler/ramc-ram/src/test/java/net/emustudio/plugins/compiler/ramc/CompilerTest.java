@@ -32,10 +32,20 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotEquals;
 
 public class CompilerTest extends AbstractCompilerTest {
+
+    @Test
+    public void testVersionIsKnown() {
+        assertNotEquals("(unknown)", compiler.getVersion());
+    }
+
+    @Test
+    public void testCopyrightIsKnown() {
+        assertNotEquals("(unknown)", compiler.getCopyright());
+    }
 
     @Test
     public void testREAD() throws Exception {

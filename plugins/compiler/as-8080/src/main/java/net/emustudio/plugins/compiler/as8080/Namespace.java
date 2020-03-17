@@ -94,8 +94,7 @@ public class Namespace {
         return variables.get(name);
     }
 
-    // odstrani vsetky existujuce definicie s danym nazvom
-    // vyuziva sa pri bloku macro
+    // used in macro block
     public void removeAllDefinitions(String name) {
         labels.remove(name);
         macros.remove(name);

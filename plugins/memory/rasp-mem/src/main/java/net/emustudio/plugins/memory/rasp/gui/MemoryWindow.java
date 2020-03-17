@@ -23,7 +23,7 @@ package net.emustudio.plugins.memory.rasp.gui;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
-import net.emustudio.plugins.memory.rasp.RASPMemoryContextImpl;
+import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +37,11 @@ public class MemoryWindow extends javax.swing.JFrame {
 
     private final Dialogs dialogs;
 
-    private final RASPMemoryContextImpl memory;
+    private final MemoryContextImpl memory;
     private final RASPTableModel tableModel;
     private File recentOpenPath;
 
-    public MemoryWindow(RASPMemoryContextImpl context, Dialogs dialogs) {
+    public MemoryWindow(MemoryContextImpl context, Dialogs dialogs) {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.memory = Objects.requireNonNull(context);
         this.recentOpenPath = new File(System.getProperty("user.home"));

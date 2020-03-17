@@ -123,6 +123,8 @@ distributions {
     version = ''
 
     contents {
+      fileMode = null // preserve attributes
+
       from jar
       from('src/main/files')
 
@@ -132,7 +134,7 @@ distributions {
       }
 
 
-      into('compilers') {
+      into('compiler') {
         include '*.jar'
         from(output(":plugins:compiler:as-8080"))
         from(output(":plugins:compiler:as-z80"))
@@ -142,7 +144,7 @@ distributions {
         from(output(":plugins:compiler:raspc-rasp"))
       }
 
-      into('mem') {
+      into('memory') {
         from(output(":plugins:memory:ram-mem"))
         from(output(":plugins:memory:rasp-mem"))
         from(output(":plugins:memory:brainduck-mem"))
@@ -159,7 +161,7 @@ distributions {
         from(output(":plugins:cpu:ssem-cpu"))
       }
 
-      into('devices') {
+      into('device') {
         from(output(":plugins:device:abstractTape-ram"))
         from(output(":plugins:device:88-disk"))
         from(output(":plugins:device:88-sio"))
@@ -179,6 +181,11 @@ distributions {
       // Scripts
       ["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"].collect { compiler ->
         from(scripts(":plugins:compiler:$compiler")) {
+          into "bin"
+        }
+      }
+      ["88-disk"].collect { device ->
+        from(scripts(":plugins:device:$device")) {
           into "bin"
         }
       }

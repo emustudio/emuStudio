@@ -209,7 +209,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compilers.raspc.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.raspc.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

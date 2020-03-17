@@ -38,7 +38,7 @@ dependencies {
 jar {
   archiveVersion = ''
   manifest {
-    attributes manifestAttributes('net.emustudio.plugins.device.mits88disk.Main')
+    attributes manifestAttributes('net.emustudio.plugins.device.mits88disk.Runner')
   }
 }
 
@@ -49,4 +49,9 @@ processResources {
       "today.year": new Date().format("yyyy")
     ]
   }
+}
+
+copy {
+  from('src/main/scripts')
+  into "$buildDir/libs/scripts"
 }

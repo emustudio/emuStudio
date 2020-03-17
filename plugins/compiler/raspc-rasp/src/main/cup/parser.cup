@@ -23,7 +23,7 @@ import java_cup.runtime.DefaultSymbolFactory;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.plugins.compiler.raspc.tree.*;
-import net.emustudio.plugins.memory.rasp.RASPInstructionImpl;
+import net.emustudio.plugins.memory.rasp.InstructionImpl;
 import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
 
 import java.util.List;
@@ -86,8 +86,8 @@ non terminal Row Row;
 non terminal Label Label;
 non terminal Comment;
 non terminal Statement Statement;
-non terminal RASPInstructionImpl Instruction;
-non terminal RASPInstructionImpl JumpInstruction;
+non terminal InstructionImpl Instruction;
+non terminal InstructionImpl JumpInstruction;
 non terminal Input Input;
 
 
@@ -120,30 +120,30 @@ Label ::= TLABEL:l                                                  {: RESULT = 
 
 Statement ::= Instruction:i NUMBER:operand 		{: RESULT = new Statement(i,operand); :}
             | JumpInstruction:i IDENT:label		{: RESULT = new Statement(i,label); :}	
-            | HALT					{: RESULT = new Statement(new RASPInstructionImpl(RASPInstruction.HALT), 0); :}
+            | HALT					{: RESULT = new Statement(new InstructionImpl(RASPInstruction.HALT), 0); :}
 ;
 
 Comment ::= TCOMMENT | /*no comment*/;     /*no action - ignore the comment*/
 
-Instruction ::=	READ				{: RESULT = new RASPInstructionImpl(RASPInstruction.READ); :}
-              |	WRITE OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.WRITE_CONSTANT); :}
-              |	WRITE 				{: RESULT = new RASPInstructionImpl(RASPInstruction.WRITE_REGISTER); :}
-              | LOAD OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.LOAD_CONSTANT); :}
-              | LOAD				{: RESULT = new RASPInstructionImpl(RASPInstruction.LOAD_REGISTER); :}
-              | STORE				{: RESULT = new RASPInstructionImpl(RASPInstruction.STORE); :}
-              | ADD OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.ADD_CONSTANT); :}
-              | ADD				{: RESULT = new RASPInstructionImpl(RASPInstruction.ADD_REGISTER); :}
-              | SUB OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.SUB_CONSTANT); :}
-              | SUB				{: RESULT = new RASPInstructionImpl(RASPInstruction.SUB_REGISTER); :}
-              | MUL OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.MUL_CONSTANT); :}
-              | MUL				{: RESULT = new RASPInstructionImpl(RASPInstruction.MUL_REGISTER); :}
-              | DIV OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.DIV_CONSTANT); :}
-              | DIV				{: RESULT = new RASPInstructionImpl(RASPInstruction.DIV_REGISTER); :}			
+Instruction ::=	READ				{: RESULT = new InstructionImpl(RASPInstruction.READ); :}
+              |	WRITE OPERATOR_CONSTANT		{: RESULT = new InstructionImpl(RASPInstruction.WRITE_CONSTANT); :}
+              |	WRITE 				{: RESULT = new InstructionImpl(RASPInstruction.WRITE_REGISTER); :}
+              | LOAD OPERATOR_CONSTANT		{: RESULT = new InstructionImpl(RASPInstruction.LOAD_CONSTANT); :}
+              | LOAD				{: RESULT = new InstructionImpl(RASPInstruction.LOAD_REGISTER); :}
+              | STORE				{: RESULT = new InstructionImpl(RASPInstruction.STORE); :}
+              | ADD OPERATOR_CONSTANT		{: RESULT = new InstructionImpl(RASPInstruction.ADD_CONSTANT); :}
+              | ADD				{: RESULT = new InstructionImpl(RASPInstruction.ADD_REGISTER); :}
+              | SUB OPERATOR_CONSTANT		{: RESULT = new InstructionImpl(RASPInstruction.SUB_CONSTANT); :}
+              | SUB				{: RESULT = new InstructionImpl(RASPInstruction.SUB_REGISTER); :}
+              | MUL OPERATOR_CONSTANT		{: RESULT = new InstructionImpl(RASPInstruction.MUL_CONSTANT); :}
+              | MUL				{: RESULT = new InstructionImpl(RASPInstruction.MUL_REGISTER); :}
+              | DIV OPERATOR_CONSTANT		{: RESULT = new InstructionImpl(RASPInstruction.DIV_CONSTANT); :}
+              | DIV				{: RESULT = new InstructionImpl(RASPInstruction.DIV_REGISTER); :}			
 ; 
 
-JumpInstruction ::= JMP 			{: RESULT =  new RASPInstructionImpl(RASPInstruction.JMP); :}
-		| JZ				{: RESULT =  new RASPInstructionImpl(RASPInstruction.JZ); :}
-		| JGTZ                          {: RESULT =  new RASPInstructionImpl(RASPInstruction.JGTZ); :}
+JumpInstruction ::= JMP 			{: RESULT =  new InstructionImpl(RASPInstruction.JMP); :}
+		| JZ				{: RESULT =  new InstructionImpl(RASPInstruction.JZ); :}
+		| JGTZ                          {: RESULT =  new InstructionImpl(RASPInstruction.JGTZ); :}
 ;
 
 
