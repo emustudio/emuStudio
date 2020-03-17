@@ -22,16 +22,15 @@ import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.device.mits88disk.DiskImpl;
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.plugins.device.mits88disk.DeviceImpl;
 import net.emustudio.plugins.device.mits88disk.Drive;
 import net.emustudio.plugins.device.mits88disk.SettingsConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.List;
@@ -485,29 +484,18 @@ public class SettingsDialog extends JDialog {
     }//GEN-LAST:event_btnMountActionPerformed
 
     private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrowseActionPerformed
-        JFileChooser fileChooser = new JFileChooser();
-        FileNameExtensionFilter imageFilter = new FileNameExtensionFilter("Image files (*.dsk, *.bin)", "dsk", "bin");
-        FileNameExtensionFilter allFilter = new FileNameExtensionFilter("All files (*.*)", "*");
+        int driveIndex = cmbDrive.getSelectedIndex();
+        Path imagePath = drives.get(driveIndex).getImagePath();
 
-        fileChooser.setDialogTitle("Open an image");
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.addChoosableFileFilter(imageFilter);
-        fileChooser.addChoosableFileFilter(allFilter);
-        fileChooser.setFileFilter(imageFilter);
-        fileChooser.setApproveButtonText("Open");
-        int i = cmbDrive.getSelectedIndex();
-        Path imagePath = drives.get(i).getImagePath();
-        if (imagePath == null) {
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            fileChooser.setSelectedFile(null);
-        } else {
-            fileChooser.setSelectedFile(imagePath.toFile());
-        }
-        int returnVal = fileChooser.showOpenDialog(this);
-        fileChooser.setVisible(true);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            txtImageFile.setText(fileChooser.getSelectedFile().getAbsolutePath());
-        }
+        Path currentDirectory = Optional
+            .ofNullable(imagePath)
+            .orElse(Path.of(System.getProperty("user.dir")));
+
+        dialogs.chooseFile(
+            "Open disk image", "Open", currentDirectory,
+            new FileExtensionsFilter("Disk images", "dsk", "bin"),
+            new FileExtensionsFilter("All files", "*")
+        ).ifPresent(path -> txtImageFile.setText(path.toString()));
     }//GEN-LAST:event_btnBrowseActionPerformed
 
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
@@ -553,9 +541,9 @@ public class SettingsDialog extends JDialog {
     }//GEN-LAST:event_btnOKActionPerformed
 
     private void btnDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDefaultActionPerformed
-        txtPort1.setText(String.format("0x%02X", DiskImpl.DEFAULT_CPU_PORT1));
-        txtPort2.setText(String.format("0x%02X", DiskImpl.DEFAULT_CPU_PORT2));
-        txtPort3.setText(String.format("0x%02X", DiskImpl.DEFAULT_CPU_PORT3));
+        txtPort1.setText(String.format("0x%02X", DeviceImpl.DEFAULT_CPU_PORT1));
+        txtPort2.setText(String.format("0x%02X", DeviceImpl.DEFAULT_CPU_PORT2));
+        txtPort3.setText(String.format("0x%02X", DeviceImpl.DEFAULT_CPU_PORT3));
     }//GEN-LAST:event_btnDefaultActionPerformed
 
     private void btnDefaultParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDefaultParamsActionPerformed

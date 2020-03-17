@@ -29,6 +29,7 @@ import net.emustudio.plugins.memory.standard.gui.MemoryDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Optional;
@@ -98,16 +99,18 @@ public class MemoryImpl extends AbstractMemory {
         try {
             int banksCount = settings.getInt("banksCount", 1);
             if (banksCount <= 0) {
-                throw new PluginInitializationException("Banks count must be >= 1");
+                LOGGER.warn("Banks count <= 0. Resetting to 1");
+                banksCount = 1;
             }
             int bankCommon = settings.getInt("commonBoundary", 0);
             if (bankCommon < 0) {
-                throw new PluginInitializationException("Common boundary must be >= 0");
+                LOGGER.warn("Common boundary < 0. Resetting to 0");
+                bankCommon = 0;
             }
 
             int memorySize = settings.getInt("memorySize", MemoryContextImpl.DEFAULT_MEM_SIZE);
             if (memorySize < 0) {
-                throw new PluginInitializationException("Memory size must be >= 0");
+                LOGGER.warn("Memory size < 0. Resetting to 0");
             }
 
             context.init(memorySize, banksCount, bankCommon);
@@ -145,11 +148,12 @@ public class MemoryImpl extends AbstractMemory {
     private void loadImages() throws PluginInitializationException {
         for (int i = 0; ; i++) {
             try {
-                Optional<String> imageName = settings.getString("imageName" + i);
+                Optional<Path> imageName = settings.getString("imageName" + i).map(Path::of);
                 Optional<Integer> imageAddress = settings.getInt("imageAddress" + i);
+                Optional<Integer> imageBank = settings.getInt("imageBank" + i);
 
                 if (imageName.isPresent() && imageAddress.isPresent()) {
-                    loadImage(imageName.get(), imageAddress.get());
+                    loadImage(imageName.get(), imageAddress.get(), imageBank.orElse(0));
                 } else {
                     break;
                 }
@@ -159,11 +163,11 @@ public class MemoryImpl extends AbstractMemory {
         }
     }
 
-    public void loadImage(String fileName, int address) {
-        if (fileName.toUpperCase().endsWith(".HEX")) {
-            context.loadHex(fileName, 0);
+    public void loadImage(Path imagePath, int address, int bank) {
+        if (imagePath.toString().toLowerCase().endsWith(".hex")) {
+            context.loadHex(imagePath, bank);
         } else {
-            context.loadBin(fileName, address, 0);
+            context.loadBin(imagePath, address, bank);
         }
     }
 
@@ -171,8 +175,9 @@ public class MemoryImpl extends AbstractMemory {
      * Save only banks (count, common) and images to load
      * after start of the emulator. These settings correspond to tab0 in frmSettings.
      */
-    public void saveCoreSettings(int banksCount, int commonBoundary,
-                                 List<String> imageFullNames, List<Integer> imageAddresses) throws CannotUpdateSettingException {
+    public void saveCoreSettings(int banksCount, int commonBoundary, List<String> imageFullNames,
+                                 List<Integer> imageAddresses, List<Integer> imageBanks) throws CannotUpdateSettingException {
+
         settings.setInt("banksCount", banksCount);
         settings.setInt("commonBoundary", commonBoundary);
 
@@ -183,6 +188,7 @@ public class MemoryImpl extends AbstractMemory {
         for (int i = 0; i < imageFullNames.size(); i++) {
             settings.setString("imageName" + i, imageFullNames.get(i));
             settings.setInt("imageAddress" + i, imageAddresses.get(i));
+            settings.setInt("imageBank" + i, imageBanks.get(i));
         }
     }
 

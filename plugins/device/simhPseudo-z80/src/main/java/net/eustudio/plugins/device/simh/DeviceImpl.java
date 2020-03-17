@@ -40,10 +40,10 @@ import java.util.ResourceBundle;
     title = "SIMH pseudo device"
 )
 @SuppressWarnings("unused")
-public class SIMHpseudo extends AbstractDevice {
+public class DeviceImpl extends AbstractDevice {
     private final PseudoContext context = new PseudoContext();
 
-    public SIMHpseudo(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
     }
 

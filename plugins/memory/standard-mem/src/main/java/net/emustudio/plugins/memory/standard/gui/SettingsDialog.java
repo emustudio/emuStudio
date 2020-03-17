@@ -22,6 +22,7 @@ import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import net.emustudio.plugins.memory.standard.gui.model.FileImagesModel;
 import net.emustudio.plugins.memory.standard.gui.model.ROMmodel;
 import net.emustudio.plugins.memory.standard.gui.model.TableMemory;
@@ -32,26 +33,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
 public class SettingsDialog extends javax.swing.JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
 
-    private final MemoryContextImpl memContext;
+    private final MemoryContextImpl context;
     private final MemoryImpl memory;
     private final TableMemory tblMem;
     private final FileImagesModel imagesModel;
     private final ROMmodel romModel;
     private final Dialogs dialogs;
 
-    public SettingsDialog(JDialog parent, MemoryImpl memory, MemoryContextImpl memContext, TableMemory tblMem,
+    public SettingsDialog(JDialog parent, MemoryImpl memory, MemoryContextImpl context, TableMemory tblMem,
                           PluginSettings settings, Dialogs dialogs) {
         super(parent, true);
 
         this.memory = Objects.requireNonNull(memory);
-        this.memContext = Objects.requireNonNull(memContext);
+        this.context = Objects.requireNonNull(context);
         this.tblMem = Objects.requireNonNull(tblMem);
         this.dialogs = Objects.requireNonNull(dialogs);
 
@@ -63,7 +64,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         imagesModel = new FileImagesModel(settings, dialogs);
         tblImages.setModel(imagesModel);
 
-        this.romModel = new ROMmodel(this.memContext);
+        this.romModel = new ROMmodel(this.context);
         tblROM.setModel(romModel);
     }
 
@@ -266,14 +267,14 @@ public class SettingsDialog extends javax.swing.JDialog {
 
             },
             new String[]{
-                "File name", "Load address (hex)"
+                "File name", "Address", "Bank"
             }
         ) {
             Class[] types = new Class[]{
-                java.lang.String.class, java.lang.String.class
+                String.class, String.class, Integer.class
             };
             boolean[] canEdit = new boolean[]{
-                false, false
+                false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -372,7 +373,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
             if (from.isPresent() && to.isPresent()) {
                 RangeTree.Range range = new RangeTree.Range(from.get(), to.get());
-                memContext.setReadOnly(range);
+                context.setReadOnly(range);
 
                 tblROM.revalidate();
                 tblROM.repaint();
@@ -406,7 +407,7 @@ public class SettingsDialog extends javax.swing.JDialog {
             }
 
             rangeOpt.ifPresent(range -> {
-                memContext.setReadWrite(range);
+                context.setReadWrite(range);
                 tblROM.revalidate();
                 tblROM.repaint();
                 tblMem.revalidate();
@@ -435,7 +436,8 @@ public class SettingsDialog extends javax.swing.JDialog {
             int bCount = getPositiveIntegerOrThrow("Banks count", txtBanksCount);
             int bCommon = getPositiveIntegerOrThrow("Common boundary", txtCommonBoundary);
             memory.saveCoreSettings(
-                bCount, bCommon, imagesModel.getImageFullNames(), imagesModel.getImageAddresses()
+                bCount, bCommon, imagesModel.getImageFullNames(), imagesModel.getImageAddresses(),
+                imagesModel.getImageBanks()
             );
             if (chkApplyROMatStartup.isSelected()) {
                 memory.saveROMRanges();
@@ -450,22 +452,27 @@ public class SettingsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnOKActionPerformed
 
     private void btnAddImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddImageActionPerformed
-        File fileSource = FileChooser.selectFile(this, "Add image");
-        if (fileSource != null) {
-            String suffix = fileSource.getName().toLowerCase();
+        dialogs.chooseFile(
+            "Add memory image", "Add", Path.of(System.getProperty("user.dir")),
+            new FileExtensionsFilter("Memory images", "hex", "bin"),
+            new FileExtensionsFilter("All files", "*")
+        ).ifPresent(path -> {
+            final int bank = (context.getBanksCount() > 1)
+                ? dialogs.readInteger("Enter memory bank index:", "Add memory image", 0).orElse(0)
+                : 0;
 
-            if (!suffix.endsWith(".hex")) {
+            if (!path.toString().toLowerCase().endsWith(".hex")) {
                 try {
                     dialogs
                         .readInteger("Enter image address:", "Add image", 0)
-                        .ifPresent(address -> imagesModel.addImage(fileSource, address));
+                        .ifPresent(address -> imagesModel.addImage(path, address, bank));
                 } catch (NumberFormatException e) {
                     dialogs.showError("Invalid number format", "Add image");
                 }
             } else {
-                imagesModel.addImage(fileSource, 0);
+                imagesModel.addImage(path, 0, bank);
             }
-        }
+        });
     }//GEN-LAST:event_btnAddImageActionPerformed
 
     private void btnRemoveImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveImageActionPerformed
@@ -487,7 +494,10 @@ public class SettingsDialog extends javax.swing.JDialog {
         if (index == -1) {
             dialogs.showError("Image has to be selected", "Load image now");
         } else {
-            memory.loadImage(imagesModel.getFileNameAtRow(index), imagesModel.getImageAddressAtRow(index));
+            memory.loadImage(
+                Path.of(imagesModel.getFileNameAtRow(index)), imagesModel.getImageAddressAtRow(index),
+                imagesModel.getImageBankAtRow(index)
+            );
             tblMem.getTableModel().fireTableDataChanged();
         }
     }//GEN-LAST:event_btnLoadNowActionPerformed

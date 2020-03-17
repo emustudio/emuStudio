@@ -18,6 +18,8 @@
  */
 package net.emustudio.plugins.device.brainduck.terminal;
 
+import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.device.brainduck.terminal.io.*;
 
 import javax.swing.*;
@@ -27,6 +29,8 @@ import java.util.Objects;
 import java.util.StringTokenizer;
 
 class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.KeyboardListener {
+    private final Dialogs dialogs;
+
     private final ImageIcon blueIcon;
     private final ImageIcon redIcon;
     private final ImageIcon greenIcon;
@@ -34,7 +38,9 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     private final Display canvas;
     private final Keyboard keyboard;
 
-    private BrainTerminalDialog(Keyboard keyboard) {
+    private BrainTerminalDialog(Keyboard keyboard, Dialogs dialogs) {
+        this.dialogs = Objects.requireNonNull(dialogs);
+
         URL blueIconURL = getClass().getResource(
                 "/net/emustudio/plugins/device/brainduck/terminal/16_circle_blue.png"
         );
@@ -58,18 +64,6 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
         canvas = new Display();
         scrollPane.setViewportView(canvas);
         canvas.start();
-    }
-
-    static BrainTerminalDialog create(Keyboard keyboard) {
-        BrainTerminalDialog dialog = new BrainTerminalDialog(keyboard);
-        GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
-        dialog.keyboard.addListener(dialog);
-        return dialog;
-    }
-
-    private void writeStarted() {
-        lblStatusIcon.setIcon(redIcon);
-        lblStatusIcon.repaint();
     }
 
     @Override
@@ -132,6 +126,19 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
         canvas.stop();
         GUIUtils.removeListenerRecursively(this, keyboard);
         dispose();
+    }
+
+
+    static BrainTerminalDialog create(Keyboard keyboard, Dialogs dialogs) {
+        BrainTerminalDialog dialog = new BrainTerminalDialog(keyboard, dialogs);
+        GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
+        dialog.keyboard.addListener(dialog);
+        return dialog;
+    }
+
+    private void writeStarted() {
+        lblStatusIcon.setIcon(redIcon);
+        lblStatusIcon.repaint();
     }
 
     /**
@@ -198,13 +205,21 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnASCIIActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnASCIIActionPerformed
-        String asciiString = JOptionPane.showInputDialog(this, "Enter ASCII codes separated with spaces", "0");
-        StringTokenizer tokenizer = new StringTokenizer(asciiString);
+        dialogs
+            .readString("Enter ASCII codes separated with spaces:", "Add ASCII codes")
+            .ifPresent(asciiCodes -> {
+                StringTokenizer tokenizer = new StringTokenizer(asciiCodes);
 
-        while (tokenizer.hasMoreTokens()) {
-            int ascii = Integer.decode(tokenizer.nextToken());
-            keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char) ascii));
-        }
+                RadixUtils radixUtils = RadixUtils.getInstance();
+                try {
+                    while (tokenizer.hasMoreTokens()) {
+                        int ascii = radixUtils.parseRadix(tokenizer.nextToken());
+                        keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char) ascii));
+                    }
+                } catch (NumberFormatException ex) {
+                    dialogs.showError("Invalid number format in the input: " + ex.getMessage(), "Add ASCII codes");
+                }
+            });
     }//GEN-LAST:event_btnASCIIActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

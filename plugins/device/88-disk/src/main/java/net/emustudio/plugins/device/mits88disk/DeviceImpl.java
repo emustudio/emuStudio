@@ -45,8 +45,8 @@ import java.util.*;
     title = "MITS 88-DISK device"
 )
 @SuppressWarnings("unused")
-public class DiskImpl extends AbstractDevice {
-    private final static Logger LOGGER = LoggerFactory.getLogger(DiskImpl.class);
+public class DeviceImpl extends AbstractDevice {
+    private final static Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private final static int DRIVES_COUNT = 16;
     public final static int DEFAULT_CPU_PORT1 = 0x8;
@@ -67,7 +67,7 @@ public class DiskImpl extends AbstractDevice {
     private DiskFrame gui;
     private final boolean guiNotSupported;
 
-    public DiskImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
@@ -131,6 +131,7 @@ public class DiskImpl extends AbstractDevice {
     public void destroy() {
         if (gui != null) {
             gui.dispose();
+            gui = null;
         }
         if (cpuContext != null) {
             cpuContext.detachDevice(0x8);

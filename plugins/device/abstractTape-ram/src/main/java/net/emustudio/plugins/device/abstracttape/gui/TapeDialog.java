@@ -143,18 +143,16 @@ public class TapeDialog extends JDialog {
 
         btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png"))); // NOI18N
         btnAddFirst.addActionListener(e -> {
-            String s = JOptionPane.showInputDialog(this, "Enter symbol value:");
-            if (s != null) {
-                tapeContext.addSymbolFirst(s);
-            }
+            dialogs
+                .readString("Symbol value:", "Add symbol (on top)")
+                .ifPresent(tapeContext::addSymbolFirst);
         });
 
         btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png"))); // NOI18N
         btnAddLast.addActionListener(e -> {
-            String s = JOptionPane.showInputDialog(this, "Enter symbol value:");
-            if (s != null) {
-                tapeContext.addSymbolLast(s);
-            }
+            dialogs
+                .readString("Symbol value:", "Add symbol (on bottom)")
+                .ifPresent(tapeContext::addSymbolLast);
         });
 
         btnEdit.addActionListener(e -> {

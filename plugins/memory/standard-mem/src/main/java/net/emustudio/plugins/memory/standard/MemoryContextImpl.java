@@ -25,9 +25,9 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
 
 import java.io.EOFException;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -96,32 +96,24 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         return bankCommon;
     }
 
-    @Override
-    public boolean loadHex(String filename, int bank) {
+    public void loadHex(Path hexFile, int bank) {
+        short currentBank = bankSelect;
         try {
-            lastImageStart = IntelHEX.loadIntoMemory(new File(filename), this);
+            bankSelect = (short)bank;
+            lastImageStart = IntelHEX.loadIntoMemory(hexFile.toFile(), this);
         } catch (FileNotFoundException ex) {
-            dialogs.showError("File not found: " + filename);
-            return false;
+            dialogs.showError("File not found: " + hexFile);
         } catch (Exception e) {
-            dialogs.showError("Error opening file: " + filename);
-            return false;
+            dialogs.showError("Error opening file: " + hexFile);
         } finally {
+            bankSelect = currentBank;
             notifyMemoryChanged(-1);
         }
-        return true;
     }
 
-    @Override
-    public boolean loadBin(String filename, int address, int bank) {
+    public void loadBin(Path binFile, int address, int bank) {
         lastImageStart = 0;
-        File f = new File(filename);
-        if (!f.isFile()) {
-            dialogs.showError("Specified file name doesn't point to a file");
-            return false;
-        }
-
-        try (RandomAccessFile binaryFile = new RandomAccessFile(f, "r")) {
+        try (RandomAccessFile binaryFile = new RandomAccessFile(binFile.toFile(), "r")) {
             long position = 0, length = binaryFile.length();
             while (position < length) {
                 mem[bank][address++] = (short) (binaryFile.readUnsignedByte() & 0xFF);
@@ -130,15 +122,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         } catch (EOFException ignored) {
             // ignored intentionally
         } catch (FileNotFoundException ex) {
-            dialogs.showError("File not found: " + filename);
-            return false;
+            dialogs.showError("File not found: " + binFile);
         } catch (Exception e) {
-            dialogs.showError("Error opening file: " + filename);
-            return false;
+            dialogs.showError("Error opening file: " + binFile);
         } finally {
             notifyMemoryChanged(-1);
         }
-        return true;
     }
 
     @Override

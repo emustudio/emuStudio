@@ -19,7 +19,7 @@
 package net.emustudio.plugins.device.mits88disk.ports;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.device.mits88disk.DiskImpl;
+import net.emustudio.plugins.device.mits88disk.DeviceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +34,9 @@ import java.util.Objects;
 public class DataPort implements DeviceContext<Short> {
     private final static Logger LOGGER = LoggerFactory.getLogger(DataPort.class);
 
-    private final DiskImpl disk;
+    private final DeviceImpl disk;
 
-    public DataPort(DiskImpl disk) {
+    public DataPort(DeviceImpl disk) {
         this.disk = Objects.requireNonNull(disk);
     }
 

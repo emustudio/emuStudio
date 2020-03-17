@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.memory.standard.gui;
 
+import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.memory.standard.gui.model.MemoryTableModel;
 
 import javax.swing.*;
@@ -27,14 +28,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FindTextDialog extends javax.swing.JDialog {
+    private final Dialogs dialogs;
     private final MemoryTableModel memModel;
     private final int currentAddress;
     private int foundAddress = -1;
 
-    public FindTextDialog(JDialog parent, MemoryTableModel memModel, int currentAddress) {
+    public FindTextDialog(Dialogs dialogs, JDialog parent, MemoryTableModel memModel, int currentAddress) {
         super(parent, true);
         super.setLocationRelativeTo(parent);
 
+        this.dialogs = Objects.requireNonNull(dialogs);
         this.memModel = Objects.requireNonNull(memModel);
         this.currentAddress = currentAddress;
         initComponents();
@@ -182,9 +185,9 @@ public class FindTextDialog extends javax.swing.JDialog {
         try {
             int from = radioCurrentPage.isSelected() ? currentAddress : Integer.decode(txtPosition.getText());
 
-            String text = txtSequence.getText();
+            String text = txtSequence.getText().trim();
             if (text.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Enter the sequence", "Find sequence", JOptionPane.ERROR_MESSAGE);
+                dialogs.showError("Sequence cannot be empty", "Find sequence");
                 txtSequence.requestFocus();
                 return;
             }
@@ -203,9 +206,7 @@ public class FindTextDialog extends javax.swing.JDialog {
             foundAddress = memModel.findSequence(sequence, from);
             dispose();
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(
-                this, "Specific position", "Please enter valid address", JOptionPane.ERROR_MESSAGE
-            );
+            dialogs.showError("Invalid address number format", "Find sequence");
             txtPosition.selectAll();
             txtPosition.requestFocus();
         }

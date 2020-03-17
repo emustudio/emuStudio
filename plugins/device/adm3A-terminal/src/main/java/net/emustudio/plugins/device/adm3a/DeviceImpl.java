@@ -41,8 +41,8 @@ import java.util.ResourceBundle;
     title = "LSI ADM-3A terminal"
 )
 @SuppressWarnings("unused")
-public class TerminalImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TerminalImpl.class);
+public class DeviceImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
     private static final int COLUMNS_COUNT = 80;
     private static final int ROWS_COUNT = 24;
 
@@ -55,7 +55,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
     private InputProvider keyboard;
     private DeviceContext<Short> connectedDevice;
 
-    public TerminalImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         terminalSettings = new TerminalSettings(settings, applicationApi.getDialogs());
         display = new Display(cursor, loadCursorPosition, terminalSettings);
@@ -80,19 +80,21 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
             this.connectedDevice = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
             if (connectedDevice.getDataType() != Short.class) {
                 throw new PluginInitializationException(
-""
+                    "Unexpected device data type. Expected Short but was: " + connectedDevice.getDataType()
                 );
             }
         } catch (ContextNotFoundException e) {
             LOGGER.warn("The terminal is not connected to any I/O device.");
         }
-        terminalGUI = new TerminalWindow(display);
-        display.start();
+        if (terminalSettings.isGuiSupported()) {
+            terminalGUI = new TerminalWindow(display);
+            display.start();
+        }
     }
 
     @Override
     public void showGUI() {
-        if (isGUIAllowed()) {
+        if (terminalSettings.isGuiSupported() && terminalGUI != null) {
             terminalGUI.setVisible(true);
         }
     }
@@ -140,10 +142,6 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         return terminalSettings.isGuiSupported();
     }
 
-    private boolean isGUIAllowed() {
-        return terminalSettings.isGuiSupported();
-    }
-
     private void destroyKeyboard() {
         if (keyboard != null) {
             keyboard.destroy();
@@ -176,7 +174,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
     @Override
     public void settingsChanged() throws FileNotFoundException {
-        if (isGUIAllowed() && !(keyboard instanceof Keyboard)) {
+        if (terminalSettings.isGuiSupported() && !(keyboard instanceof Keyboard)) {
             createKeyboard();
         } else if (!(keyboard instanceof KeyboardFromFile)) {
             createKeyboardFromFile();

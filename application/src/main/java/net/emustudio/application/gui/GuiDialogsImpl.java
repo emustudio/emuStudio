@@ -21,9 +21,15 @@ package net.emustudio.application.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class GuiDialogsImpl implements Dialogs {
     private final RadixUtils radixUtils = RadixUtils.getInstance();
@@ -120,5 +126,58 @@ public class GuiDialogsImpl implements Dialogs {
                 return DialogAnswer.ANSWER_NO;
         }
         return DialogAnswer.ANSWER_CANCEL;
+    }
+
+    @Override
+    public Optional<Path> chooseFile(String title, String approveButtonText, FileExtensionsFilter... filters) {
+        return chooseFile(title, approveButtonText, Path.of(System.getProperty("user.dir")), filters);
+    }
+
+    @Override
+    public Optional<Path> chooseFile(String title, String approveButtonTest, List<FileExtensionsFilter> filters) {
+        return chooseFile(title, approveButtonTest, filters.toArray(FileExtensionsFilter[]::new));
+    }
+
+    @Override
+    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
+                                     FileExtensionsFilter... filters) {
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle(title);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.setApproveButtonText(approveButtonText);
+        fileChooser.setCurrentDirectory(baseDirectory.toFile());
+
+        FileNameExtensionFilter firstFilter = null;
+        for (FileExtensionsFilter filter : filters) {
+            String formattedExtensions = filter.getExtensions().stream()
+                .map(e -> "*." + e)
+                .collect(Collectors.joining(", ", "(", ")"));
+
+            FileNameExtensionFilter extensionFilter = new FileNameExtensionFilter(
+                filter.getDescription() + formattedExtensions,
+                filter.getExtensions().toArray(new String[0])
+            );
+            if (firstFilter == null) {
+                firstFilter = extensionFilter;
+            }
+            fileChooser.addChoosableFileFilter(extensionFilter);
+        }
+        if (firstFilter != null) {
+            fileChooser.setFileFilter(firstFilter);
+        }
+
+        int result = fileChooser.showOpenDialog(null);
+        fileChooser.setVisible(true);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return Optional.ofNullable(fileChooser.getSelectedFile()).map(File::toPath);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
+                                     List<FileExtensionsFilter> filters) {
+        return chooseFile(title, approveButtonText, baseDirectory, filters.toArray(FileExtensionsFilter[]::new));
     }
 }

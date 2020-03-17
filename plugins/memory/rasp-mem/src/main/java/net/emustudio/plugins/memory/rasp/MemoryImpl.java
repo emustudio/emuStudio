@@ -42,13 +42,13 @@ import java.util.ResourceBundle;
     type = PLUGIN_TYPE.MEMORY,
     title = "RASP Memory"
 )
-public class RASPMemoryImpl extends AbstractMemory {
-    private final static Logger LOGGER = LoggerFactory.getLogger(RASPMemoryImpl.class);
+public class MemoryImpl extends AbstractMemory {
+    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final RASPMemoryContextImpl context;
     private MemoryWindow gui;
 
-    public RASPMemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         this.context = new RASPMemoryContextImpl();
 

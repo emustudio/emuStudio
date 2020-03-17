@@ -20,6 +20,7 @@ package net.emustudio.plugins.memory.standard.gui;
 
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import net.emustudio.plugins.memory.standard.gui.model.MemoryTableModel;
 import net.emustudio.plugins.memory.standard.gui.model.TableMemory;
 import net.emustudio.plugins.memory.standard.MemoryContextImpl;
@@ -28,12 +29,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
@@ -472,28 +473,30 @@ public class MemoryDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnLoadImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoadImageActionPerformed
-        File fileSource = FileChooser.selectFile(this, "Load image");
+        dialogs.chooseFile(
+            "Load memory image", "Load", Path.of(System.getProperty("user.dir")),
+            new FileExtensionsFilter("Memory image", "hex", "bin"),
+            new FileExtensionsFilter("All files", "*")
+        ).ifPresent(path -> {
+            try {
+                final int bank = (context.getBanksCount() > 1)
+                    ? dialogs.readInteger("Enter memory bank index:", "Load image", 0).orElse(0)
+                    : 0;
 
-        if (fileSource != null) {
-            if (fileSource.canRead()) {
-                if (fileSource.getName().toLowerCase().endsWith(".hex")) {
-                    context.loadHex(fileSource.getAbsolutePath(), 0);
+                if (path.toString().toLowerCase().endsWith(".hex")) {
+                    context.loadHex(path, bank);
                 } else {
-                    // ask for address where to load image
-                    try {
-                        dialogs
-                            .readInteger("Enter image location address:", "Load image")
-                            .ifPresent(address -> context.loadBin(fileSource.getAbsolutePath(), address, 0));
-                    } catch (NumberFormatException e) {
-                        dialogs.showError("Invalid number format", "Load image");
-                    }
+                    dialogs
+                        .readInteger("Enter image location address:", "Load image")
+                        .ifPresent(address -> context.loadBin(path, address, bank));
                 }
+
                 table.revalidate();
                 table.repaint();
-            } else {
-                dialogs.showError("File " + fileSource.getPath() + " can't be read (unknown reason)).", "Load image");
+            } catch (NumberFormatException e) {
+                dialogs.showError("Invalid number format", "Load image");
             }
-        }
+        });
     }//GEN-LAST:event_btnLoadImageActionPerformed
 
     private void btnCleanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCleanActionPerformed
@@ -520,7 +523,7 @@ public class MemoryDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnGotoAddressActionPerformed
 
     private void btnFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFindActionPerformed
-        FindTextDialog dialog = new FindTextDialog(this, tableModel, getCurrentAddress());
+        FindTextDialog dialog = new FindTextDialog(dialogs, this, tableModel, getCurrentAddress());
 
         dialog.setVisible(true);
 
@@ -535,37 +538,22 @@ public class MemoryDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnSettingsActionPerformed
 
     private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDumpActionPerformed
-        JFileChooser fileChooser = new JFileChooser();
-        FileNameExtensionFilter f1 = new FileNameExtensionFilter("Human-readable dump (*.txt)", "txt");
-        FileNameExtensionFilter f2 = new FileNameExtensionFilter("Binary dump (*.bin)", "bin");
-
-        fileChooser.setDialogTitle("Dump memory content into a file");
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.addChoosableFileFilter(f1);
-        fileChooser.addChoosableFileFilter(f2);
-        fileChooser.setFileFilter(f1);
-        fileChooser.setApproveButtonText("Dump");
-        fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-
-        int returnVal = fileChooser.showOpenDialog(this);
-        fileChooser.setVisible(true);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File fileSource = fileChooser.getSelectedFile();
+        Path currentDirectory = Path.of(System.getProperty("user.dir"));
+        dialogs.chooseFile(
+            "Dump memory content into a file", "Save", currentDirectory,
+            new FileExtensionsFilter("Human-readable dump", "txt"),
+            new FileExtensionsFilter("Binary dump", "bin"),
+            new FileExtensionsFilter("All files", "*")
+        ).ifPresent(path -> {
             try {
-                if (fileSource.exists()) {
-                    fileSource.delete();
-                }
-                fileSource.createNewFile();
-                if (fileChooser.getFileFilter().equals(f1)) {
-                    try (BufferedWriter out = new BufferedWriter(new FileWriter(fileSource))) {
+                if (path.toString().toLowerCase().endsWith(".txt")) {
+                    try (BufferedWriter out = new BufferedWriter(new FileWriter(path.toFile()))) {
                         for (int i = 0; i < context.getSize(); i++) {
                             out.write(String.format("%X:\t%02X\n", i, context.read(i)));
                         }
                     }
                 } else {
-                    // binary format
-                    FileOutputStream fos = new FileOutputStream(fileSource);
-                    try (DataOutputStream ds = new DataOutputStream(fos)) {
+                    try (DataOutputStream ds = new DataOutputStream(new FileOutputStream(path.toFile()))) {
                         for (int i = 0; i < context.getSize(); i++) {
                             ds.writeByte(context.read(i) & 0xff);
                         }
@@ -575,7 +563,7 @@ public class MemoryDialog extends javax.swing.JDialog {
                 LOGGER.error("Memory dump could not be created", e);
                 dialogs.showError("Memory dump could not be created. Please see log file for more details.");
             }
-        }
+        });
     }//GEN-LAST:event_btnDumpActionPerformed
 
     private int getCurrentAddress() {

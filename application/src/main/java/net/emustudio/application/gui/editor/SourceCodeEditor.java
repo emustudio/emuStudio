@@ -24,6 +24,7 @@ import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.*;
 import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
 import javax.swing.undo.CannotRedoException;
@@ -43,9 +43,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Timer;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class is extended JTextPane class. Support some awesome features like
@@ -118,7 +120,6 @@ public class SourceCodeEditor extends JTextPane {
             }
         });
         setStyledDocument(document);
-
 
         document.addUndoableEditListener(new UndoableEditListener() {
 
@@ -333,59 +334,32 @@ public class SourceCodeEditor extends JTextPane {
     }
 
     public boolean openFileDialog() {
-        if (this.confirmSaveButStillUnsaved()) {
-            return false;
-        }
+        if (this.confirmSaveAndSaved()) {
+            List<FileExtensionsFilter> filters = sourceFileExtensions.stream()
+                .map(FileExtensionsFilter::new).collect(Collectors.toList());
 
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Open a file");
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.setApproveButtonText("Open");
+            List<String> sourceExtensions = sourceFileExtensions.stream()
+                .map(SourceFileExtension::getExtension).collect(Collectors.toList());
+            filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
 
-        if (!sourceFileExtensions.isEmpty()) {
-            List<String> allExtensions = new ArrayList<>();
-            StringBuilder allDescription = new StringBuilder("All source files (");
-
-            for (SourceFileExtension extension : sourceFileExtensions) {
-                allExtensions.add(extension.getExtension());
-                allDescription.append("*.").append(extension.getExtension()).append(", ");
-
-                fileChooser.addChoosableFileFilter(new FileNameExtensionFilter(extension.getFormattedDescription(), extension.getExtension()));
+            File currentDirectory = Objects.requireNonNullElse(fileSource, new File(System.getProperty("user.dir")));
+            Optional<Path> openedFile = dialogs.chooseFile("Open a file", "Open", currentDirectory.toPath(), filters);
+            if (openedFile.isPresent()) {
+                fileSource = openedFile.get().toFile();
+                return openFile(fileSource);
             }
-            if (!allExtensions.isEmpty()) {
-                String rawAllDescription = allDescription.toString();
-                FileNameExtensionFilter allExtFilter = new FileNameExtensionFilter(
-                    rawAllDescription.substring(0, rawAllDescription.length() - 3) + ")",
-                    allExtensions.toArray(new String[0])
-                );
-                fileChooser.addChoosableFileFilter(allExtFilter);
-                fileChooser.setFileFilter(allExtFilter);
-            }
-        }
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("All files (*.*)", "*"));
-
-        fileChooser.setSelectedFile(fileSource);
-        if (fileSource == null) {
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-        }
-
-        int returnVal = fileChooser.showOpenDialog(this);
-        fileChooser.setVisible(true);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            fileSource = fileChooser.getSelectedFile();
-            return openFile(fileSource);
         }
         return false;
     }
 
-    public boolean confirmSaveButStillUnsaved() {
+    public boolean confirmSaveAndSaved() {
         if (!fileSaved) {
-            int r = JOptionPane.showConfirmDialog(null, "File is not saved yet. Do you want to save the file ?");
-            if (r == JOptionPane.YES_OPTION) {
-                return (!saveFile(true));
-            } else return r == JOptionPane.CANCEL_OPTION;
+            Dialogs.DialogAnswer answer = dialogs.ask("File is not saved yet. Do you want to save it?");
+            if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
+                return (saveFile(true));
+            } else return answer != Dialogs.DialogAnswer.ANSWER_CANCEL;
         }
-        return false;
+        return true;
     }
 
     public boolean saveFile(boolean showDialogIfFileIsInvalid) {
@@ -393,7 +367,7 @@ public class SourceCodeEditor extends JTextPane {
             if (showDialogIfFileIsInvalid) {
                 return saveFileDialog();
             } else {
-                dialogs.showError("Cannot save current (the file is not writable).");
+                dialogs.showError("Cannot save current file (either the file is not selected or it is not writable).");
                 return false;
             }
         }
@@ -411,39 +385,21 @@ public class SourceCodeEditor extends JTextPane {
     }
 
     public boolean saveFileDialog() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Save file");
-        fileChooser.setApproveButtonText("Save");
-        fileChooser.setAcceptAllFileFilterUsed(false);
+        List<FileExtensionsFilter> filters = sourceFileExtensions.stream()
+            .map(FileExtensionsFilter::new).collect(Collectors.toList());
 
-        for (SourceFileExtension extension : sourceFileExtensions) {
-            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter(extension.getFormattedDescription(), extension.getExtension()));
+        List<String> sourceExtensions = sourceFileExtensions.stream()
+            .map(SourceFileExtension::getExtension).collect(Collectors.toList());
+        filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
+
+        File currentDirectory = Objects.requireNonNullElse(fileSource, new File(System.getProperty("user.dir")));
+        Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", currentDirectory.toPath(), filters);
+        if (savedPath.isPresent()) {
+            // TODO: check if suffix is present
+            fileSource = savedPath.get().toFile();
+            return saveFile(false);
         }
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("All files (*.*)", "*"));
-        fileChooser.setFileFilter(fileChooser.getChoosableFileFilters()[0]);
-
-        if (fileSource != null) {
-            fileChooser.setCurrentDirectory(fileSource.getParentFile());
-        } else {
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-        }
-        fileChooser.setSelectedFile(null);
-
-        int returnVal = fileChooser.showSaveDialog(this);
-        if (returnVal != JFileChooser.APPROVE_OPTION) {
-            return false;
-        }
-
-        File selectedFile = fileChooser.getSelectedFile();
-        FileNameExtensionFilter selectedFileFilter = (FileNameExtensionFilter) fileChooser.getFileFilter();
-
-        String suffix = selectedFileFilter.getExtensions()[0];
-        if (!suffix.equals("*") && selectedFile.getName().toLowerCase().endsWith("." + suffix.toLowerCase())) {
-            fileSource = selectedFile;
-        } else {
-            fileSource = new File(selectedFile.getAbsolutePath() + "." + suffix.toLowerCase());
-        }
-        return saveFile(false);
+        return false;
     }
 
     public Optional<File> getCurrentFile() {
@@ -451,12 +407,11 @@ public class SourceCodeEditor extends JTextPane {
     }
 
     public void newFile() {
-        if (confirmSaveButStillUnsaved()) {
-            return;
+        if (confirmSaveAndSaved()) {
+            fileSource = null;
+            fileSaved = true;
+            this.setText("");
         }
-        fileSource = null;
-        fileSaved = true;
-        this.setText("");
     }
 
     private static class MyFlowStrategy extends FlowView.FlowStrategy {
@@ -513,5 +468,4 @@ public class SourceCodeEditor extends JTextPane {
 
         void redoStateChanged(boolean canRedo, String presentationName);
     }
-
 }

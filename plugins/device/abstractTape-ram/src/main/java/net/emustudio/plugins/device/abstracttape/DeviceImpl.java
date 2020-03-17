@@ -41,8 +41,8 @@ import java.util.ResourceBundle;
     title = "Abstract tape"
 )
 @SuppressWarnings("unused")
-public class AbstractTape extends AbstractDevice {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTape.class);
+public class DeviceImpl extends AbstractDevice {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private final AbstractTapeContextImpl context;
 
@@ -51,7 +51,7 @@ public class AbstractTape extends AbstractDevice {
     private boolean guiNotSupported;
     private boolean automaticEmulation;
 
-    public AbstractTape(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.context = new AbstractTapeContextImpl(this);
@@ -121,8 +121,8 @@ public class AbstractTape extends AbstractDevice {
     public void destroy() {
         if (gui != null) {
             gui.dispose();
+            gui = null;
         }
-        gui = null;
     }
 
     @Override

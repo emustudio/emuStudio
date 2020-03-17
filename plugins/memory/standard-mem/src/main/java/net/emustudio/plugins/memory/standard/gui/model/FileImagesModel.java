@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.table.AbstractTableModel;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,12 +37,14 @@ public class FileImagesModel extends AbstractTableModel {
     private final List<String> imageFullFileNames = new ArrayList<>();
     private final List<String> imageShortFileNames = new ArrayList<>();
     private final List<Integer> imageAddresses = new ArrayList<>();
+    private final List<Integer> imageBanks = new ArrayList<>();
 
     public FileImagesModel(PluginSettings settings, Dialogs dialogs) {
         for (int i = 0; ; i++) {
             try {
                 Optional<String> imageName = settings.getString("imageName" + i);
                 Optional<Integer> imageAddress = settings.getInt("imageAddress" + i);
+                Optional<Integer> imageBank = settings.getInt("imageBank" + i);
 
                 if (imageName.isPresent() && imageAddress.isPresent()) {
                     String fileName = imageName.get();
@@ -50,6 +53,7 @@ public class FileImagesModel extends AbstractTableModel {
                     imageFullFileNames.add(fileName);
                     imageShortFileNames.add(new File(fileName).getName());
                     imageAddresses.add(address);
+                    imageBanks.add(imageBank.orElse(0));
                 } else {
                     break;
                 }
@@ -69,39 +73,41 @@ public class FileImagesModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return 2;
+        return 3;
     }
 
     @Override
     public String getColumnName(int columnIndex) {
-        if (columnIndex == 0) {
-            return "File name";
-        } else {
-            return "Load address (hex)";
+        switch (columnIndex) {
+            case 0: return "File name";
+            case 1: return "Address";
+            case 2: return "Bank";
+            default: return "";
         }
     }
 
     @Override
     public Class<?> getColumnClass(int col) {
-        return String.class;
+        if (col == 2) {
+            return Integer.class;
+        } else {
+            return String.class;
+        }
     }
 
     @Override
-    public boolean isCellEditable(int r, int c) {
+    public boolean isCellEditable(int row, int col) {
         return false;
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if (columnIndex == 0) {
-            return imageShortFileNames.get(rowIndex);
-        } else {
-            return String.format("0x%04X", imageAddresses.get(rowIndex));
+        switch (columnIndex) {
+            case 0: return imageShortFileNames.get(rowIndex);
+            case 1: return String.format("0x%04X", imageAddresses.get(rowIndex));
+            case 2: return imageBanks.get(rowIndex);
         }
-    }
-
-    public void setValueAt(int r, int c) {
-        fireTableCellUpdated(r, c);
+        return null;
     }
 
     public List<String> getImageFullNames() {
@@ -112,10 +118,15 @@ public class FileImagesModel extends AbstractTableModel {
         return Collections.unmodifiableList(imageAddresses);
     }
 
-    public void addImage(File fileSource, int address) {
-        imageShortFileNames.add(fileSource.getName());
-        imageFullFileNames.add(fileSource.getAbsolutePath());
+    public List<Integer> getImageBanks() {
+        return Collections.unmodifiableList(imageBanks);
+    }
+
+    public void addImage(Path fileSource, int address, int bank) {
+        imageShortFileNames.add(fileSource.getFileName().toString());
+        imageFullFileNames.add(fileSource.toString());
         imageAddresses.add(address);
+        imageBanks.add(bank);
 
         fireTableDataChanged();
     }
@@ -124,6 +135,7 @@ public class FileImagesModel extends AbstractTableModel {
         imageShortFileNames.remove(index);
         imageFullFileNames.remove(index);
         imageAddresses.remove(index);
+        imageBanks.remove(index);
 
         fireTableDataChanged();
     }
@@ -134,5 +146,9 @@ public class FileImagesModel extends AbstractTableModel {
 
     public int getImageAddressAtRow(int index) {
         return imageAddresses.get(index);
+    }
+
+    public int getImageBankAtRow(int index) {
+        return imageBanks.get(index);
     }
 }

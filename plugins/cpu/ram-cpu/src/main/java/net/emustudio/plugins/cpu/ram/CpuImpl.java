@@ -51,8 +51,8 @@ import java.util.ResourceBundle;
     title = "Random Access Machine (RAM)"
 )
 @SuppressWarnings("unused")
-public class EmulatorImpl extends AbstractCPU {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
+public class CpuImpl extends AbstractCPU {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final RAMContextImpl context;
 
@@ -61,7 +61,7 @@ public class EmulatorImpl extends AbstractCPU {
     private RAMDisassembler disassembler;
     private boolean debugTableInitialized = false;
 
-    public EmulatorImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         context = new RAMContextImpl(applicationApi.getContextPool());

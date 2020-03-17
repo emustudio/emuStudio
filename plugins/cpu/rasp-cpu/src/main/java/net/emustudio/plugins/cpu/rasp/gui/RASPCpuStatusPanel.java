@@ -21,14 +21,14 @@
 package net.emustudio.plugins.cpu.rasp.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.plugins.cpu.rasp.RASPEmulatorImpl;
+import net.emustudio.plugins.cpu.rasp.CpuImpl;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class RASPCpuStatusPanel extends JPanel {
 
-    public RASPCpuStatusPanel(RASPEmulatorImpl cpu) {
+    public RASPCpuStatusPanel(CpuImpl cpu) {
         initComponents();
         cpu.addCPUListener(new CPU.CPUListener() {
 

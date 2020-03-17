@@ -40,8 +40,8 @@ import java.util.ResourceBundle;
     title = "MITS 88-SIO serial board"
 )
 @SuppressWarnings("unused")
-public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserver {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SIOImpl.class);
+public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObserver {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private final Transmitter transmitter = new Transmitter();
     private final StatusPort statusPort = new StatusPort(transmitter);
@@ -51,7 +51,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     private StatusDialog gui;
     private CPUPorts cpuPorts;
 
-    public SIOImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.sioSettings = new SIOSettings(settings);
@@ -127,8 +127,8 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
         transmitter.setDevice(null);
         if (gui != null) {
             gui.dispose();
+            gui = null;
         }
-        gui = null;
         sioSettings.removeChangedObserver(this);
     }
 

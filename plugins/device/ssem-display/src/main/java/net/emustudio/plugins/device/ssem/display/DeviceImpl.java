@@ -35,10 +35,10 @@ import java.util.ResourceBundle;
     title = "SSEM CRT display"
 )
 @SuppressWarnings("unused")
-public class DisplaySSEM extends AbstractDevice {
+public class DeviceImpl extends AbstractDevice {
     private DisplayDialog display;
 
-    public DisplaySSEM(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
     }
 

@@ -114,21 +114,21 @@ public class KeyboardHandler extends KeyAdapter {
         if (right_correct) {
             try {
                 tblMemory.setColumnSelectionInterval(0, 0);
-            } catch (Exception ex) {
+            } catch (Exception ignored) {
             }
             right_correct = false;
         }
         if (left_correct) {
             try {
                 tblMemory.setColumnSelectionInterval(columnCount - 1, columnCount - 1);
-            } catch (Exception ex) {
+            } catch (Exception ignored) {
             }
             left_correct = false;
         }
         if (up_correct) {
             try {
                 tblMemory.setRowSelectionInterval(rowCount - 1, rowCount - 1);
-            } catch (Exception ex) {
+            } catch (Exception ignored) {
             }
             tblMemory.scrollRectToVisible(tblMemory.getCellRect(selectedRow, selectedColumn, true));
             up_correct = false;
@@ -136,7 +136,7 @@ public class KeyboardHandler extends KeyAdapter {
         if (down_correct) {
             try {
                 tblMemory.setRowSelectionInterval(0, 0);
-            } catch (Exception ex) {
+            } catch (Exception ignored) {
             }
             tblMemory.scrollRectToVisible(tblMemory.getCellRect(selectedRow, selectedColumn, true));
             down_correct = false;

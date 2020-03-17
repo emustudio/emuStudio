@@ -98,24 +98,4 @@ public interface StandardMemoryContext extends MemoryContext<Short> {
      * @return common boundary address
      */
     int getCommonBoundary();
-
-    /**
-     * Loads a HEX file into the memory.
-     *
-     * @param filename file name
-     * @param bank     bank index
-     * @return true if the file was loaded successfully, false otherwise
-     */
-    boolean loadHex(String filename, int bank);
-
-    /**
-     * Loads a binary file into the memory.
-     *
-     * @param filename file name
-     * @param address  location in the memory
-     * @param bank     bank index
-     * @return true if the file was loaded successfully, false otherwise
-     */
-    boolean loadBin(String filename, int address, int bank);
-
 }

@@ -22,12 +22,12 @@ package net.emustudio.plugins.memory.rasp.gui;
 
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import net.emustudio.plugins.memory.rasp.RASPMemoryContextImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
@@ -131,28 +131,21 @@ public class MemoryWindow extends javax.swing.JFrame {
 
 
     private void onOpenClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onOpenClick
-        JFileChooser chooser = new JFileChooser();
-
-        FileNameExtensionFilter binaryFileFilter = new FileNameExtensionFilter("Compiled program for RASP (*.bin)", "bin");
-
-        chooser.setDialogTitle("Load memory with compiled program file");
-        chooser.addChoosableFileFilter(binaryFileFilter);
-        chooser.setFileFilter(binaryFileFilter);
-        chooser.setApproveButtonText("Load");
-        chooser.setCurrentDirectory(recentOpenPath);
-
-        int chooserReturnValue = chooser.showOpenDialog(this);
-        if (chooserReturnValue == JFileChooser.APPROVE_OPTION) {
-            String filePath = chooser.getSelectedFile().getAbsolutePath();
-            recentOpenPath = chooser.getCurrentDirectory();
+        File currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")));
+        dialogs.chooseFile(
+            "Load compiled RASP program", "Load", currentDirectory.toPath(),
+            new FileExtensionsFilter("RASP compiler file", "bin"),
+            new FileExtensionsFilter("All files", "*")
+        ).ifPresent(path -> {
+            recentOpenPath = path.toFile().getParentFile();
             try {
-                memory.loadFromFile(filePath);
+                memory.loadFromFile(path.toString());
                 updateTable();
             } catch (IOException | ClassNotFoundException ex) {
-                LOGGER.error("Could not read file: {}", filePath, ex);
-                dialogs.showError("Could not open file " + filePath + ". Please see log file for details.");
+                LOGGER.error("Could not read file: {}", path, ex);
+                dialogs.showError("Could not open file " + path + ". Please see log file for details.");
             }
-        }
+        });
     }//GEN-LAST:event_onOpenClick
 
     private void onClearClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onClearClick

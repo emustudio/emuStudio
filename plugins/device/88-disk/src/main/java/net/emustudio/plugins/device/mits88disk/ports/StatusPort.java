@@ -19,7 +19,7 @@
 package net.emustudio.plugins.device.mits88disk.ports;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.device.mits88disk.DiskImpl;
+import net.emustudio.plugins.device.mits88disk.DeviceImpl;
 import net.emustudio.plugins.device.mits88disk.Drive;
 
 import java.util.Objects;
@@ -31,9 +31,9 @@ import java.util.Objects;
  * OUT: select/unselect drive
  */
 public class StatusPort implements DeviceContext<Short> {
-    private final DiskImpl disk;
+    private final DeviceImpl disk;
 
-    public StatusPort(DiskImpl disk) {
+    public StatusPort(DeviceImpl disk) {
         this.disk = Objects.requireNonNull(disk);
     }
 

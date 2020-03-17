@@ -21,9 +21,12 @@ package net.emustudio.application.gui;
 
 import net.emustudio.application.gui.editor.SourceCodeEditor;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 public class NoGuiDialogsImpl implements Dialogs {
@@ -103,6 +106,26 @@ public class NoGuiDialogsImpl implements Dialogs {
     @Override
     public DialogAnswer ask(String message, String title) {
         throw new RuntimeException("Cannot ask for confirmation: implemented just for GUI version");
+    }
+
+    @Override
+    public Optional<Path> chooseFile(String title, String approveButtonText, FileExtensionsFilter... filters) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Path> chooseFile(String s, String s1, List<FileExtensionsFilter> list) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory, FileExtensionsFilter... filters) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Path> chooseFile(String s, String s1, Path path, List<FileExtensionsFilter> list) {
+        return Optional.empty();
     }
 
     public static String formatMessage(String title, String message) {

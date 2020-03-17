@@ -49,8 +49,8 @@ import java.util.*;
     type = PLUGIN_TYPE.CPU,
     title = "Random Access Stored Program (RASP) machine"
 )
-public class RASPEmulatorImpl extends AbstractCPU {
-    private final static Logger LOGGER = LoggerFactory.getLogger(RASPEmulatorImpl.class);
+public class CpuImpl extends AbstractCPU {
+    private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final RASPCpuContext context;
 
@@ -61,7 +61,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
     private boolean debugTableInitialized = false;
 
-    public RASPEmulatorImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         ContextPool contextPool = applicationApi.getContextPool();

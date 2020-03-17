@@ -22,17 +22,19 @@ import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.elements.ConnectionLine;
 import net.emustudio.application.gui.schema.elements.Element;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 public class SchemaPreviewPanel extends JPanel {
     private final static Logger LOGGER = LoggerFactory.getLogger(SchemaPreviewPanel.class);
@@ -196,42 +198,28 @@ public class SchemaPreviewPanel extends JPanel {
 
     public void saveSchemaImage() {
         if (schema != null) {
-            JFileChooser fileChooser = new JFileChooser();
 
-            fileChooser.setDialogTitle("Save schema image");
-            fileChooser.setAcceptAllFileFilterUsed(false);
+            Path currentDirectory = Optional
+                .ofNullable(lastImageFile.getParentFile())
+                .map(File::toPath)
+                .orElse(Path.of(System.getProperty("user.dir")));
 
-            ImageIO.scanForPlugins();
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG file", "png");
-            fileChooser.setFileFilter(filter);
-            fileChooser.setApproveButtonText("Save");
+            dialogs.chooseFile(
+                "Save schema image", "Save", currentDirectory,
+                new FileExtensionsFilter("PNG image", "png")
+            ).ifPresent(path -> {
+                lastImageFile = path.toFile();
 
-            if (lastImageFile != null) {
-                fileChooser.setCurrentDirectory(lastImageFile.getParentFile());
-            } else {
-                fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
-            fileChooser.setSelectedFile(null);
-
-            int returnVal = fileChooser.showSaveDialog(this);
-            if (returnVal != JFileChooser.APPROVE_OPTION) {
-                return;
-            }
-            File selectedFile = fileChooser.getSelectedFile();
-            if (!selectedFile.getName().toLowerCase().endsWith(".png")) {
-                selectedFile = new File(selectedFile.getAbsolutePath() + ".png");
-            }
-            lastImageFile = selectedFile;
-
-            // Save the image
-            BufferedImage bi = new BufferedImage(getSchemaWidth(), getSchemaHeight(), BufferedImage.TYPE_INT_RGB);
-            paint(bi.createGraphics());
-            try {
-                ImageIO.write(bi, "png", lastImageFile);
-            } catch (IOException e) {
-                LOGGER.error("Could not save schema image.", e);
-                dialogs.showError("Could not save schema image. Please see log file for details.");
-            }
+                // Save the image
+                BufferedImage bi = new BufferedImage(getSchemaWidth(), getSchemaHeight(), BufferedImage.TYPE_INT_RGB);
+                paint(bi.createGraphics());
+                try {
+                    ImageIO.write(bi, "png", lastImageFile);
+                } catch (IOException e) {
+                    LOGGER.error("Could not save schema image.", e);
+                    dialogs.showError("Could not save schema image. Please see log file for details.");
+                }
+            });
         }
     }
 }

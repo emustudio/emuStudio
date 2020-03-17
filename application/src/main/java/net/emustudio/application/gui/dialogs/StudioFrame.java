@@ -65,7 +65,7 @@ public class StudioFrame extends JFrame {
 
     private final Clipboard systemClipboard;
     private final FindText finder = new FindText();
-    private final SourceCodeEditor txtSource;
+    private final SourceCodeEditor sourceCodeEditor;
     private final JTable debugTable;
     private final DebugTableModel debugTableModel;
     private final Dialogs dialogs;
@@ -78,7 +78,7 @@ public class StudioFrame extends JFrame {
     public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
                        DebugTableModel debugTableModel, MemoryContext<?> memoryContext, String fileName) {
         this(computer, applicationConfig, dialogs, debugTableModel, memoryContext);
-        txtSource.openFile(fileName);
+        sourceCodeEditor.openFile(fileName);
     }
 
     public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
@@ -94,7 +94,7 @@ public class StudioFrame extends JFrame {
             cpu, computer.getMemory().orElse(null), computer.getDevices()
         )).orElse(null);
 
-        this.txtSource = new SourceCodeEditor(computer.getCompiler().orElse(null), dialogs);
+        this.sourceCodeEditor = new SourceCodeEditor(computer.getCompiler().orElse(null), dialogs);
         this.systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
         this.memoryListener = new Memory.MemoryListener() {
@@ -117,7 +117,7 @@ public class StudioFrame extends JFrame {
         initComponents();
 
         btnMemory.setEnabled(computer.getMemory().filter(Memory::isShowSettingsSupported).isPresent());
-        editorScrollPane.setViewportView(txtSource);
+        editorScrollPane.setViewportView(sourceCodeEditor);
         paneDebug.setViewportView(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
@@ -140,7 +140,7 @@ public class StudioFrame extends JFrame {
         pack();
         setupListeners();
         this.setLocationRelativeTo(null);
-        txtSource.grabFocus();
+        sourceCodeEditor.grabFocus();
         resizeComponents();
     }
 
@@ -296,7 +296,7 @@ public class StudioFrame extends JFrame {
                 btnRedo.setToolTipText(presentationName);
             }
         };
-        txtSource.setUndoActionListener(undoStateListener);
+        sourceCodeEditor.setUndoActionListener(undoStateListener);
     }
 
     private void setupClipboard() {
@@ -313,7 +313,7 @@ public class StudioFrame extends JFrame {
                 mnuEditPaste.setEnabled(true);
             }
         });
-        txtSource.addCaretListener(e -> {
+        sourceCodeEditor.addCaretListener(e -> {
             if (e.getDot() == e.getMark()) {
                 btnCut.setEnabled(false);
                 mnuEditCut.setEnabled(false);
@@ -336,17 +336,17 @@ public class StudioFrame extends JFrame {
 
                 @Override
                 public void onStart() {
-                    txtOutput.append("Compiling started...\n");
+                    compilerOutput.append("Compiling started...\n");
                 }
 
                 @Override
                 public void onMessage(CompilerMessage message) {
-                    txtOutput.append(message.getFormattedMessage() + "\n");
+                    compilerOutput.append(message.getFormattedMessage() + "\n");
                 }
 
                 @Override
                 public void onFinish() {
-                    txtOutput.append("Compiling has finished.\n");
+                    compilerOutput.append("Compiling has finished.\n");
                 }
             });
             if (!compiler.get().isShowSettingsSupported()) {
@@ -385,7 +385,7 @@ public class StudioFrame extends JFrame {
         splitSource = new JSplitPane();
         editorScrollPane = new JScrollPane();
         JScrollPane compilerPane = new JScrollPane();
-        txtOutput = new JTextArea();
+        compilerOutput = new JTextArea();
         JPanel panelEmulator = new JPanel();
         JSplitPane splitLeftRight = new JSplitPane();
         statusWindow = new JPanel();
@@ -437,7 +437,7 @@ public class StudioFrame extends JFrame {
         JMenu mnuHelp = new JMenu();
         JMenuItem mnuHelpAbout = new JMenuItem();
         JSeparator jSeparator7 = new JSeparator();
-        panelPages = PagesPanel.create(debugTableModel);
+        panelPages = PagesPanel.create(debugTableModel, dialogs);
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("emuStudio");
@@ -551,14 +551,14 @@ public class StudioFrame extends JFrame {
         splitSource.setOneTouchExpandable(true);
         splitSource.setLeftComponent(editorScrollPane);
 
-        txtOutput.setColumns(20);
-        txtOutput.setEditable(false);
-        txtOutput.setFont(Constants.MONOSPACED_PLAIN_12);
-        txtOutput.setLineWrap(true);
-        txtOutput.setRows(3);
-        txtOutput.setWrapStyleWord(true);
+        compilerOutput.setColumns(20);
+        compilerOutput.setEditable(false);
+        compilerOutput.setFont(Constants.MONOSPACED_PLAIN_12);
+        compilerOutput.setLineWrap(true);
+        compilerOutput.setRows(3);
+        compilerOutput.setWrapStyleWord(true);
 
-        compilerPane.setViewportView(txtOutput);
+        compilerPane.setViewportView(compilerOutput);
         splitSource.setRightComponent(compilerPane);
 
         GroupLayout panelSourceLayout = new GroupLayout(panelSource);
@@ -1030,11 +1030,11 @@ public class StudioFrame extends JFrame {
         computer.getCompiler().ifPresentOrElse(compiler -> {
             if (runState == CPU.RunState.STATE_RUNNING) {
                 dialogs.showError("Emulation must be stopped first.", "Compile");
-            } else if (txtSource.saveFile(true)) {
+            } else if (sourceCodeEditor.saveFile(true)) {
                 updateTitleOfSourceCodePanel();
 
-                txtSource.getCurrentFile().ifPresent(file -> {
-                    txtOutput.setText("");
+                sourceCodeEditor.getCurrentFile().ifPresent(file -> {
+                    compilerOutput.setText("");
 
                     try {
                         computer.getMemory().ifPresent(Memory::reset);
@@ -1045,7 +1045,7 @@ public class StudioFrame extends JFrame {
 
                         computer.getCPU().ifPresent(cpu -> cpu.reset(programStart));
                     } catch (Exception e) {
-                        txtOutput.append("Could not compile file: " + e.toString() + "\n");
+                        compilerOutput.append("Could not compile file: " + e.toString() + "\n");
                     }
                 });
             }
@@ -1084,7 +1084,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void mnuFileSaveAsActionPerformed(ActionEvent evt) {
-        txtSource.saveFileDialog();
+        sourceCodeEditor.saveFileDialog();
         updateTitleOfSourceCodePanel();
     }
 
@@ -1093,7 +1093,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnSaveActionPerformed(ActionEvent evt) {
-        txtSource.saveFile(true);
+        sourceCodeEditor.saveFile(true);
         updateTitleOfSourceCodePanel();
     }
 
@@ -1110,7 +1110,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void formWindowClosing() {
-        if (!txtSource.confirmSaveButStillUnsaved()) {
+        if (sourceCodeEditor.confirmSaveAndSaved()) {
             computer.close();
             dispose();
             System.exit(0); //calling the method is a must
@@ -1118,15 +1118,15 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnOpenActionPerformed(ActionEvent evt) {
-        if (txtSource.openFileDialog()) {
-            txtOutput.setText("");
+        if (sourceCodeEditor.openFileDialog()) {
+            compilerOutput.setText("");
         }
         updateTitleOfSourceCodePanel();
     }
 
     private void btnNewActionPerformed(ActionEvent evt) {
-        txtSource.newFile();
-        txtOutput.setText("");
+        sourceCodeEditor.newFile();
+        compilerOutput.setText("");
         updateTitleOfSourceCodePanel();
     }
 
@@ -1135,36 +1135,36 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnPasteActionPerformed(ActionEvent evt) {
-        txtSource.paste();
+        sourceCodeEditor.paste();
     }
 
     private void btnCopyActionPerformed(ActionEvent evt) {
-        txtSource.copy();
+        sourceCodeEditor.copy();
     }
 
     private void btnCutActionPerformed(ActionEvent evt) {
-        txtSource.cut();
+        sourceCodeEditor.cut();
     }
 
     private void btnRedoActionPerformed(ActionEvent evt) {
-        txtSource.redo();
+        sourceCodeEditor.redo();
     }
 
     private void btnUndoActionPerformed(ActionEvent evt) {
-        txtSource.undo();
+        sourceCodeEditor.undo();
     }
 
     private void mnuEditFindActionPerformed(ActionEvent evt) {
-        FindTextDialog.create(this, finder, txtSource, dialogs).setVisible(true);
+        FindTextDialog.create(this, finder, sourceCodeEditor, dialogs).setVisible(true);
     }
 
     private void mnuEditFindNextActionPerformed(ActionEvent evt) {
         try {
-            if (finder.findNext(txtSource.getText(),
-                txtSource.getCaretPosition(),
-                txtSource.getDocument().getEndPosition().getOffset() - 1)) {
-                txtSource.select(finder.getMatchStart(), finder.getMatchEnd());
-                txtSource.grabFocus();
+            if (finder.findNext(sourceCodeEditor.getText(),
+                sourceCodeEditor.getCaretPosition(),
+                sourceCodeEditor.getDocument().getEndPosition().getOffset() - 1)) {
+                sourceCodeEditor.select(finder.getMatchStart(), finder.getMatchEnd());
+                sourceCodeEditor.grabFocus();
             } else {
                 dialogs.showError("Text was not found", "Find next");
             }
@@ -1193,8 +1193,8 @@ public class StudioFrame extends JFrame {
 
     private void mnuEditReplaceNextActionPerformed(ActionEvent evt) {
         try {
-            if (finder.replaceNext(txtSource)) {
-                txtSource.grabFocus();
+            if (finder.replaceNext(sourceCodeEditor)) {
+                sourceCodeEditor.grabFocus();
             } else {
                 dialogs.showError("Text was not found", "Replace next");
             }
@@ -1204,7 +1204,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void updateTitleOfSourceCodePanel() {
-        txtSource.getCurrentFile().ifPresentOrElse(
+        sourceCodeEditor.getCurrentFile().ifPresentOrElse(
             file -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR + " (" + file.getName() + ")"),
             () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
         );
@@ -1232,7 +1232,7 @@ public class StudioFrame extends JFrame {
     private JMenuItem mnuEditUndo;
     private JScrollPane paneDebug;
     private JPanel statusWindow;
-    private JTextArea txtOutput;
+    private JTextArea compilerOutput;
     private JMenuItem mnuProjectCompilerSettings;
     private JButton btnMemory;
     private JButton btnCompile;

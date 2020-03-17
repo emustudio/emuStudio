@@ -20,6 +20,7 @@ package net.emustudio.plugins.memory.ram.gui;
 
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import net.emustudio.plugins.memory.ram.RAMMemoryContextImpl;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 
@@ -68,24 +70,13 @@ public class MemoryDialog extends javax.swing.JDialog {
     }
 
     private void openRAM() {
-        JFileChooser fileChooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("RAM compiled file (*.ro))", "ro");
-        FileNameExtensionFilter allFilesFilter = new FileNameExtensionFilter("All files (*.*)", "*");
-
-        fileChooser.setDialogTitle("Load compiled RAM program");
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.addChoosableFileFilter(filter);
-        fileChooser .addChoosableFileFilter(allFilesFilter);
-        fileChooser.setFileFilter(filter);
-        fileChooser.setApproveButtonText("Load");
-        fileChooser.setCurrentDirectory(
-            Objects.requireNonNullElseGet(lastOpenedFile, () -> new File(System.getProperty("user.dir")))
-        );
-
-        int returnVal = fileChooser.showOpenDialog(this);
-        fileChooser.setVisible(true);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            lastOpenedFile = fileChooser.getSelectedFile();
+        File currentDirectory = Objects.requireNonNullElse(lastOpenedFile, new File(System.getProperty("user.dir")));
+        dialogs.chooseFile(
+            "Load compiled RAM program", "Load", currentDirectory.toPath(),
+            new FileExtensionsFilter("RAM compiler file", "ro"),
+            new FileExtensionsFilter("All files", "*")
+        ).ifPresent(path -> {
+            lastOpenedFile = path.toFile();
             try {
                 memory.deserialize(lastOpenedFile.getAbsolutePath());
                 tableModel.fireTableDataChanged();
@@ -94,7 +85,7 @@ public class MemoryDialog extends javax.swing.JDialog {
                 dialogs.showError("Cannot open file " + lastOpenedFile.getPath() + ". Please see log file for details.");
                 LOGGER.error("Could not open file {}", lastOpenedFile, e);
             }
-        }
+        });
     }
 
     public final void refillTable() {

@@ -55,7 +55,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     private TapeListener listener;
     private boolean highlightCurrentPosition;
     private boolean clearAtReset = true;
-    private final AbstractTape abst;
+    private final DeviceImpl abst;
     private Writer outw;
     private boolean displayRowNumbers = false;
 
@@ -64,7 +64,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         void tapeChanged();
     }
 
-    AbstractTapeContextImpl(AbstractTape abst) {
+    AbstractTapeContextImpl(DeviceImpl abst) {
         this.abst = abst;
         listener = null;
         tape = new ArrayList<>();

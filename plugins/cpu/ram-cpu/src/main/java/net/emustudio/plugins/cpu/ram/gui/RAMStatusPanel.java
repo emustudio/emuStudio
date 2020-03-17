@@ -19,14 +19,14 @@
 package net.emustudio.plugins.cpu.ram.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.plugins.cpu.ram.EmulatorImpl;
+import net.emustudio.plugins.cpu.ram.CpuImpl;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
 import java.awt.*;
 
 public class RAMStatusPanel extends javax.swing.JPanel {
 
-    public RAMStatusPanel(final EmulatorImpl cpu, AbstractTapeContext input, AbstractTapeContext output) {
+    public RAMStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output) {
         initComponents();
 
         cpu.addCPUListener(new CPU.CPUListener() {

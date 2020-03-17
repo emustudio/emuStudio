@@ -45,13 +45,13 @@ import java.util.ResourceBundle;
     title = "BrainDuck terminal"
 )
 @SuppressWarnings("unused")
-public class BrainTerminal extends AbstractDevice {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BrainTerminal.class);
+public class DeviceImpl extends AbstractDevice {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private boolean guiNotSupported;
     private final BrainTerminalContext terminal = new BrainTerminalContext();
 
-    public BrainTerminal(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         try {
@@ -95,7 +95,7 @@ public class BrainTerminal extends AbstractDevice {
                 outputProvider = fileIOProvider;
             } else {
                 Keyboard keyboard = new Keyboard();
-                outputProvider = BrainTerminalDialog.create(keyboard);
+                outputProvider = BrainTerminalDialog.create(keyboard, applicationApi.getDialogs());
                 inputProvider = keyboard;
             }
             terminal.setInputProvider(inputProvider);

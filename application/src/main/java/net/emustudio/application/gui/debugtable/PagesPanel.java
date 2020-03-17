@@ -18,8 +18,11 @@
  */
 package net.emustudio.application.gui.debugtable;
 
+import net.emustudio.emulib.runtime.interaction.Dialogs;
+
 import javax.swing.*;
 import java.util.Objects;
+import java.util.Optional;
 
 public class PagesPanel extends JPanel {
     private static final String PAGE_FIRST_PNG = "/net/emustudio/application/gui/dialogs/page-first.png";
@@ -30,11 +33,13 @@ public class PagesPanel extends JPanel {
     private static final String PAGE_SEEK_BACKWARD_PNG = "/net/emustudio/application/gui/dialogs/page-seek-backward.png";
     private static final String PAGE_SEEK_FORWARD_PNG = "/net/emustudio/application/gui/dialogs/page-seek-forward.png";
 
+    private final Dialogs dialogs;
     private final DebugTableModel debugTableModel;
     private int pageSeekLastValue = 10;
 
-    private PagesPanel(DebugTableModel debugTableModel) {
+    private PagesPanel(DebugTableModel debugTableModel, Dialogs dialogs) {
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
+        this.dialogs = Objects.requireNonNull(dialogs);
     }
 
     private void initComponents() {
@@ -129,9 +134,9 @@ public class PagesPanel extends JPanel {
     }
 
     private boolean gatherPageValue(String message) {
-        String res = JOptionPane.showInputDialog(this, message, pageSeekLastValue);
-        if (res != null && !res.isEmpty()) {
-            pageSeekLastValue = Integer.decode(res);
+        Optional<Integer> result = dialogs.readInteger(message, "Seek", pageSeekLastValue);
+        if (result.isPresent()) {
+            pageSeekLastValue = result.get();
             return true;
         }
         return false;
@@ -149,8 +154,8 @@ public class PagesPanel extends JPanel {
         }
     }
 
-    public static PagesPanel create(DebugTableModel debugTableModel) {
-        PagesPanel pagesPanel = new PagesPanel(debugTableModel);
+    public static PagesPanel create(DebugTableModel debugTableModel, Dialogs dialogs) {
+        PagesPanel pagesPanel = new PagesPanel(debugTableModel, dialogs);
         pagesPanel.initComponents();
 
         return pagesPanel;
