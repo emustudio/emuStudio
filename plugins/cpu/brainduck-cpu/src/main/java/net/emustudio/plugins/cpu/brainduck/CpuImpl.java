@@ -43,8 +43,6 @@ import java.util.ResourceBundle;
 @PluginRoot(
     type = PLUGIN_TYPE.CPU,
     title = "BrainDuck CPU"
-    //copyright = ,
-    //description =
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {

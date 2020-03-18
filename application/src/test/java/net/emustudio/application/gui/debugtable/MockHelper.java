@@ -87,6 +87,7 @@ class MockHelper {
         return callFlowMock;
     }
 
+    @SuppressWarnings("unchecked")
     private static void expectTraverse(int from, int to, int instructionSize) {
         ArgumentCaptor<Consumer> lambdaCaptor = ArgumentCaptor.forClass(Consumer.class);
         when(callFlow.traverseUpTo(eq(from), eq(to), lambdaCaptor.capture())).thenAnswer(invocationOnMock -> {

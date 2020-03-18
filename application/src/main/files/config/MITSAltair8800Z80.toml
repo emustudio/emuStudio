@@ -2,49 +2,49 @@ name = "MITS Altair8800 (Z80)"
 
 [MEMORY]
 	schemaPoint = "60,160"
-	path = "/home/vbmacher/emuStudio/mem/standard-mem.jar"
+	path = "standard-mem.jar"
 	name = "standard-mem"
 	id = "1e13a25d-fb23-4061-853a-5fe996b03281"
 	type = "MEMORY"
 
 [COMPILER]
 	schemaPoint = "60,60"
-	path = "/home/vbmacher/emuStudio/compilers/as-z80.jar"
+	path = "as-z80.jar"
 	name = "as-z80"
 	id = "9233e0c2-b53c-41e7-9eca-bbb264fcd9da"
 	type = "COMPILER"
 
 [CPU]
 	schemaPoint = "180,160"
-	path = "/home/vbmacher/emuStudio/cpu/z80-cpu.jar"
+	path = "z80-cpu.jar"
 	name = "z80-cpu"
 	id = "b86d4bc2-632c-46e3-bba1-c088c9177983"
 	type = "CPU"
 
 [[DEVICE]]
 	schemaPoint = "180,60"
-	path = "/home/vbmacher/emuStudio/devices/88-disk.jar"
+	path = "88-disk.jar"
 	name = "88-disk"
 	id = "c94d0e9b-f394-4a71-94b0-87d0f970a3fd"
 	type = "DEVICE"
 
 [[DEVICE]]
 	schemaPoint = "280,160"
-	path = "/home/vbmacher/emuStudio/devices/88-sio.jar"
+	path = "88-sio.jar"
 	name = "88-sio"
 	id = "de2ce2e7-4365-406e-864a-b60f353d3fba"
 	type = "DEVICE"
 
 [[DEVICE]]
 	schemaPoint = "280,260"
-	path = "/home/vbmacher/emuStudio/devices/adm3A-terminal.jar"
+	path = "adm3A-terminal.jar"
 	name = "adm3A-terminal"
 	id = "0352cf74-2965-4723-bef9-3e918b1ac7c5"
 	type = "DEVICE"
 
 [[DEVICE]]
 	schemaPoint = "120,260"
-	path = "/home/vbmacher/emuStudio/devices/simhPseudo-z80.jar"
+	path = "simhPseudo-z80.jar"
 	name = "simhPseudo-z80"
 	id = "6c07bc70-db4f-4e7a-86f3-0ba0ce9bebf9"
 	type = "DEVICE"

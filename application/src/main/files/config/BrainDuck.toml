@@ -2,28 +2,28 @@ name = "BrainDuck"
 
 [MEMORY]
 	schemaPoint = "80,160"
-	path = "/home/vbmacher/emuStudio/mem/brainduck-mem.jar"
+	path = "brainduck-mem.jar"
 	name = "brainduck-mem"
 	id = "95e3a458-1d0f-40aa-9c38-f9efc5026738"
 	type = "MEMORY"
 
 [COMPILER]
 	schemaPoint = "80,60"
-	path = "/home/vbmacher/emuStudio/compilers/brainc-brainduck.jar"
+	path = "brainc-brainduck.jar"
 	name = "brainc-brainduck"
 	id = "de251cec-e053-4e2c-a647-9b71eb0f1b70"
 	type = "COMPILER"
 
 [CPU]
 	schemaPoint = "240,160"
-	path = "/home/vbmacher/emuStudio/cpu/brainduck-cpu.jar"
+	path = "brainduck-cpu.jar"
 	name = "brainduck-cpu"
 	id = "6c5df0df-4497-4a9d-b9dd-9a3f901864c1"
 	type = "CPU"
 
 [[DEVICE]]
 	schemaPoint = "240,60"
-	path = "/home/vbmacher/emuStudio/devices/brainduck-terminal.jar"
+	path = "brainduck-terminal.jar"
 	name = "brainduck-terminal"
 	id = "1d858668-d63d-4127-b881-226174a2b368"
 	type = "DEVICE"

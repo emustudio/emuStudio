@@ -2,35 +2,35 @@ name = "Random Access Machine (RAM)"
 
 [MEMORY]
 	schemaPoint = "220,60"
-	path = "/home/vbmacher/emuStudio/mem/ram-mem.jar"
+	path = "ram-mem.jar"
 	name = "ram-mem"
 	id = "98eb1bd9-52dc-4f8b-bb7c-6b1def31aa6e"
 	type = "MEMORY"
 
 [COMPILER]
 	schemaPoint = "80,60"
-	path = "/home/vbmacher/emuStudio/compilers/ramc-ram.jar"
+	path = "ramc-ram.jar"
 	name = "ramc-ram"
 	id = "d2ef750d-6617-44a7-8f17-93ff9d791d07"
 	type = "COMPILER"
 
 [CPU]
 	schemaPoint = "220,160"
-	path = "/home/vbmacher/emuStudio/cpu/ram-cpu.jar"
+	path = "ram-cpu.jar"
 	name = "ram-cpu"
 	id = "e0e2e308-eee2-414e-90e5-b69caea2b032"
 	type = "CPU"
 
 [[DEVICE]]
 	schemaPoint = "80,160"
-	path = "/home/vbmacher/emuStudio/devices/abstractTape-ram.jar"
+	path = "abstractTape-ram.jar"
 	name = "abstractTape-ram"
 	id = "ba7e7035-a074-4666-b3fc-d08ca55305f7"
 	type = "DEVICE"
 
 [[DEVICE]]
 	schemaPoint = "360,160"
-	path = "/home/vbmacher/emuStudio/devices/abstractTape-ram.jar"
+	path = "abstractTape-ram.jar"
 	name = "abstractTape-ram"
 	id = "57389401-fdf7-4bcd-8a66-f936332273bf"
 	type = "DEVICE"

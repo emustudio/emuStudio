@@ -23,13 +23,13 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'java'
-  id 'distribution'
+  id 'application'
 }
 
 configurations {
   extraLibs
   extraLibsRuntime
+  providedRuntime
 
   implementation.extendsFrom(extraLibs)
   runtimeOnly.extendsFrom(extraLibsRuntime)
@@ -45,38 +45,53 @@ dependencies {
   extraLibs libs.slf4JApi
 
   extraLibsRuntime libs.javaCupRuntime
-  runtimeOnly project(":plugins:compiler:as-8080")
-  runtimeOnly project(":plugins:compiler:as-ssem")
-  runtimeOnly project(":plugins:compiler:as-z80")
-  runtimeOnly project(":plugins:compiler:brainc-brainduck")
-  runtimeOnly project(":plugins:compiler:ramc-ram")
-  runtimeOnly project(":plugins:compiler:raspc-rasp")
+  providedRuntime project(":plugins:compiler:as-8080")
+  providedRuntime project(":plugins:compiler:as-ssem")
+  providedRuntime project(":plugins:compiler:as-z80")
+  providedRuntime project(":plugins:compiler:brainc-brainduck")
+  providedRuntime project(":plugins:compiler:ramc-ram")
+  providedRuntime project(":plugins:compiler:raspc-rasp")
 
-  runtimeOnly project(":plugins:memory:ram-mem")
-  runtimeOnly project(":plugins:memory:rasp-mem")
-  runtimeOnly project(":plugins:memory:brainduck-mem")
-  runtimeOnly project(":plugins:memory:ssem-mem")
-  runtimeOnly project(":plugins:memory:standard-mem")
+  providedRuntime project(":plugins:memory:ram-mem")
+  providedRuntime project(":plugins:memory:rasp-mem")
+  providedRuntime project(":plugins:memory:brainduck-mem")
+  providedRuntime project(":plugins:memory:ssem-mem")
+  providedRuntime project(":plugins:memory:standard-mem")
 
-  runtimeOnly project(":plugins:cpu:8080-cpu")
-  runtimeOnly project(":plugins:cpu:brainduck-cpu")
-  runtimeOnly project(":plugins:cpu:ram-cpu")
-  runtimeOnly project(":plugins:cpu:rasp-cpu")
-  runtimeOnly project(":plugins:cpu:z80-cpu")
-  runtimeOnly project(":plugins:cpu:ssem-cpu")
+  providedRuntime project(":plugins:cpu:8080-cpu")
+  providedRuntime project(":plugins:cpu:brainduck-cpu")
+  providedRuntime project(":plugins:cpu:ram-cpu")
+  providedRuntime project(":plugins:cpu:rasp-cpu")
+  providedRuntime project(":plugins:cpu:z80-cpu")
+  providedRuntime project(":plugins:cpu:ssem-cpu")
 
-  runtimeOnly project(":plugins:device:abstractTape-ram")
-  runtimeOnly project(":plugins:device:88-disk")
-  runtimeOnly project(":plugins:device:88-sio")
-  runtimeOnly project(":plugins:device:adm3A-terminal")
-  runtimeOnly project(":plugins:device:brainduck-terminal")
-  runtimeOnly project(":plugins:device:simhPseudo-z80")
-  runtimeOnly project(":plugins:device:ssem-display")
+  providedRuntime project(":plugins:device:abstractTape-ram")
+  providedRuntime project(":plugins:device:88-disk")
+  providedRuntime project(":plugins:device:88-sio")
+  providedRuntime project(":plugins:device:adm3A-terminal")
+  providedRuntime project(":plugins:device:brainduck-terminal")
+  providedRuntime project(":plugins:device:simhPseudo-z80")
+  providedRuntime project(":plugins:device:ssem-display")
 
   testImplementation libs.junit
   testImplementation libs.easyMock
   testImplementation libs.mockito
   testImplementation libs.slf4JSimple
+}
+
+
+application {
+  applicationName = 'emuStudio'
+  mainClassName = 'net.emustudio.application.Runner'
+  executableDir = ''
+}
+
+compileJava {
+  sourceSets.main.compileClasspath += configurations.providedRuntime
+}
+
+run {
+  classpath += configurations.providedRuntime
 }
 
 jar {
@@ -85,8 +100,7 @@ jar {
   manifest {
     attributes(
       'Main-Class': 'net.emustudio.application.Runner',
-      'Class-Path': configurations.extraLibs.files.collect { "lib/" + it.getName() }.join(' '),
-      "Implementation-Title": project.name,
+      "Implementation-Title": archivesBaseName,
       "Implementation-Version": project.version,
       'Build-Timestamp': new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
       'Build-Jdk': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
@@ -104,6 +118,13 @@ processResources {
   }
 }
 
+task copyTestResources(type: Copy) {
+  from "${projectDir}/src/test/resources"
+  into "${buildDir}/classes/java/test/"
+}
+processTestResources.dependsOn copyTestResources
+
+
 def output(String name) {
   return project(name).buildDir.getAbsolutePath() + "/libs"
 }
@@ -116,23 +137,21 @@ def scripts(String name) {
   return project(name).buildDir.getAbsolutePath() + "/libs/scripts"
 }
 
+distZip {
+  archiveVersion = ''
+}
+
+distTar {
+  archiveVersion = ''
+}
+
 distributions {
 
   main {
-    distributionBaseName = 'emuStudio'
-    version = ''
-
     contents {
       fileMode = null // preserve attributes
 
-      from jar
       from('src/main/files')
-
-      into('lib') {
-        from(configurations.extraLibs.collect { i -> i })
-        from(configurations.extraLibsRuntime.collect { i -> i })
-      }
-
 
       into('compiler') {
         include '*.jar'
@@ -145,6 +164,7 @@ distributions {
       }
 
       into('memory') {
+        include '*.jar'
         from(output(":plugins:memory:ram-mem"))
         from(output(":plugins:memory:rasp-mem"))
         from(output(":plugins:memory:brainduck-mem"))
@@ -153,6 +173,7 @@ distributions {
       }
 
       into('cpu') {
+        include '*.jar'
         from(output(":plugins:cpu:8080-cpu"))
         from(output(":plugins:cpu:brainduck-cpu"))
         from(output(":plugins:cpu:ram-cpu"))
@@ -162,6 +183,7 @@ distributions {
       }
 
       into('device') {
+        include '*.jar'
         from(output(":plugins:device:abstractTape-ram"))
         from(output(":plugins:device:88-disk"))
         from(output(":plugins:device:88-sio"))
@@ -192,10 +214,3 @@ distributions {
     }
   }
 }
-
-
-task copyTestResources(type: Copy) {
-  from "${projectDir}/src/test/resources"
-  into "${buildDir}/classes/java/test/"
-}
-processTestResources.dependsOn copyTestResources

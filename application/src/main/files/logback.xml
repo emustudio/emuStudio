@@ -18,17 +18,17 @@
   -->
 
 <configuration>
-
+    <property name="LOG_FOLDER" value="logs" />
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>emuStudio.log</file>
+        <file>${LOG_FOLDER}/emuStudio.log</file>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover. Make sure the path matches the one in the file element or else
              the rollover logs are placed in the working directory. -->
-            <fileNamePattern>emuStudio_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_FOLDER}/emuStudio_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
 
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>1MB</maxFileSize>
+                <maxFileSize>5MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
             <!-- keep 10 days' worth of history -->
             <maxHistory>10</maxHistory>
@@ -55,12 +55,11 @@
         <file>automation.html</file>
     </appender>
 
-    <root level="info">
-        <appender-ref ref="STDOUT"/>
-    </root>
-
     <logger name="automation" level="info">
         <appender-ref ref="AUTOMATION"/>
     </logger>
 
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+    </root>
 </configuration>

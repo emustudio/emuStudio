@@ -55,7 +55,6 @@ jcup {
   iface = true
 }
 
-
 jar {
   archiveVersion = ''
   manifest {

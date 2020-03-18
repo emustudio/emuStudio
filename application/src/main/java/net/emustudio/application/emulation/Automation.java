@@ -57,7 +57,7 @@ public class Automation implements Runnable {
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
         this.dialogs = Objects.requireNonNull(dialogs);
 
-        this.inputFile = new File(Objects.requireNonNull(inputFileName));
+        this.inputFile = new File(Objects.requireNonNull(inputFileName, "Input file must be defined"));
 
         if (!inputFile.exists()) {
             throw new AutomationException("Input file not found");
