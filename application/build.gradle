@@ -145,6 +145,16 @@ distTar {
   archiveVersion = ''
 }
 
+startScripts {
+  classpath += files('logback.xml') // for logback
+  doLast {
+    def windowsScriptFile = file getWindowsScript()
+    def unixScriptFile = file getUnixScript()
+    windowsScriptFile.text = windowsScriptFile.text.replace('%APP_HOME%\\lib\\logback.xml', '.')
+    unixScriptFile.text = unixScriptFile.text.replace('$APP_HOME/lib/logback.xml', '.')
+  }
+}
+
 distributions {
 
   main {

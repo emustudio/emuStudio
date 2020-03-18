@@ -18,22 +18,14 @@
   -->
 
 <configuration>
-    <property name="LOG_FOLDER" value="logs" />
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_FOLDER}/emuStudio.log</file>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- daily rollover. Make sure the path matches the one in the file element or else
-             the rollover logs are placed in the working directory. -->
-            <fileNamePattern>${LOG_FOLDER}/emuStudio_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>5MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <!-- keep 10 days' worth of history -->
+        <file>logs/emuStudio.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/emuStudio_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
             <maxHistory>10</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
         </rollingPolicy>
-
         <encoder>
             <pattern>%date [%level][%logger{10}] %msg%n</pattern>
         </encoder>
@@ -46,20 +38,19 @@
     </appender>
 
     <appender name="AUTOMATION" class="ch.qos.logback.core.FileAppender">
+        <file>logs/automation.log</file>
         <append>false</append>
-        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="ch.qos.logback.classic.html.HTMLLayout">
-                <pattern>%date%relative%level%msg</pattern>
-            </layout>
+        <encoder>
+            <pattern>%date [%level][%logger{10}] %msg%n</pattern>
         </encoder>
-        <file>automation.html</file>
     </appender>
 
-    <logger name="automation" level="info">
+    <logger name="automation" level="INFO">
         <appender-ref ref="AUTOMATION"/>
     </logger>
 
-    <root level="info">
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
