@@ -19,7 +19,6 @@
 package net.emustudio.application.gui.schema.mode;
 
 import net.emustudio.application.configuration.PluginConfig;
-import net.emustudio.application.gui.NamePath;
 import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.DrawingModel;
 import net.emustudio.application.gui.schema.DrawingPanel;
@@ -212,7 +211,10 @@ class ModelingMode extends AbstractMode {
     }
 
     private PluginConfig createConfig(PLUGIN_TYPE pluginType, Point clickPoint) {
-        NamePath namePath = drawingModel.pluginNamePath;
-        return PluginConfig.create(pluginType, namePath.name, namePath.path, searchGridPoint(clickPoint));
+        String pluginFile = drawingModel.pluginFileName;
+        return PluginConfig.create(
+            pluginType, pluginFile.substring(0, pluginFile.length() - ".jar".length()), pluginFile,
+            searchGridPoint(clickPoint)
+        );
     }
 }

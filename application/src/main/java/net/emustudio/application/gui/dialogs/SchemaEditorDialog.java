@@ -19,7 +19,6 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.configuration.ConfigFiles;
-import net.emustudio.application.gui.NamePath;
 import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.DrawingPanel.Tool;
 import net.emustudio.application.gui.schema.Schema;
@@ -32,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -332,17 +330,17 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
     }//GEN-LAST:event_btnLineActionPerformed
 
     private void cmbPluginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbPluginActionPerformed
-        Optional<NamePath> pluginPath = ((PluginComboModel) cmbPlugin.getModel()).getSelectedNamePath();
-        pluginPath.ifPresentOrElse(namePath -> {
+        Optional<String> pluginFile = ((PluginComboModel) cmbPlugin.getModel()).getSelectedFileName();
+        pluginFile.ifPresentOrElse(fileName -> {
             if (btnCompiler.isSelected()) {
-                panel.setTool(Tool.TOOL_COMPILER, namePath);
+                panel.setTool(Tool.TOOL_COMPILER, fileName);
             }
             if (btnCPU.isSelected()) {
-                panel.setTool(Tool.TOOL_CPU, namePath);
+                panel.setTool(Tool.TOOL_CPU, fileName);
             } else if (btnRAM.isSelected()) {
-                panel.setTool(Tool.TOOL_MEMORY, namePath);
+                panel.setTool(Tool.TOOL_MEMORY, fileName);
             } else if (btnDevice.isSelected()) {
-                panel.setTool(Tool.TOOL_DEVICE, namePath);
+                panel.setTool(Tool.TOOL_DEVICE, fileName);
             }
         }, () -> panel.cancelDrawing());
     }//GEN-LAST:event_cmbPluginActionPerformed
@@ -436,7 +434,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
 
     private void resetComboWithPluginFiles(PLUGIN_TYPE pluginType) {
         try {
-            List<Path> pluginFiles = configFiles.listPluginFiles(pluginType);
+            List<String> pluginFiles = configFiles.listPluginFiles(pluginType);
             cmbPlugin.setModel(new PluginComboModel(pluginFiles));
             selectFirstPlugin();
         } catch (IOException e) {

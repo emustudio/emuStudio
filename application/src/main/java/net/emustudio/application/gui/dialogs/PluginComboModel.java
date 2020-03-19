@@ -19,30 +19,26 @@
 
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.NamePath;
-
 import javax.swing.*;
 import javax.swing.event.ListDataListener;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class PluginComboModel implements ComboBoxModel<String> {
 
-    private final Map<Integer, NamePath> namePathsByIndex = new HashMap<>();
-    private final Map<String, Integer> nameIndexes = new HashMap<>();
-    private NamePath selected = null;
+    private final Map<Integer, String> fileNamesByIndex = new HashMap<>();
+    private final Map<String, Integer> indexesByFileName = new HashMap<>();
+    private String selected = null;
 
-    PluginComboModel(List<Path> pluginPaths) {
+    PluginComboModel(List<String> pluginFiles) {
         final AtomicInteger i = new AtomicInteger();
-        Objects.requireNonNull(pluginPaths).forEach(path -> {
-            String fileName = path.getFileName().toString();
+        Objects.requireNonNull(pluginFiles).forEach(fileName -> {
             int suffixIndex = fileName.lastIndexOf(".jar");
             if (suffixIndex != -1) {
                 fileName = fileName.substring(0, suffixIndex);
             }
-            this.namePathsByIndex.put(i.get(), new NamePath(fileName, path));
-            this.nameIndexes.put(fileName, i.getAndIncrement());
+            this.fileNamesByIndex.put(i.get(), fileName);
+            this.indexesByFileName.put(fileName, i.getAndIncrement());
         });
     }
 
@@ -51,23 +47,23 @@ public final class PluginComboModel implements ComboBoxModel<String> {
         if (item == null) {
             selected = null;
         } else {
-            selected = namePathsByIndex.get(nameIndexes.get(String.valueOf(item)));
+            selected = fileNamesByIndex.get(indexesByFileName.get(String.valueOf(item)));
         }
     }
 
     @Override
     public String getSelectedItem() {
-        return Optional.ofNullable(selected).map(s -> s.name).orElse(null);
+        return Optional.ofNullable(selected).orElse(null);
     }
 
     @Override
     public int getSize() {
-        return nameIndexes.size();
+        return indexesByFileName.size();
     }
 
     @Override
     public String getElementAt(int index) {
-        return namePathsByIndex.get(index).name;
+        return fileNamesByIndex.get(index);
     }
 
     @Override
@@ -78,7 +74,7 @@ public final class PluginComboModel implements ComboBoxModel<String> {
     public void removeListDataListener(ListDataListener l) {
     }
 
-    public Optional<NamePath> getSelectedNamePath() {
+    public Optional<String> getSelectedFileName() {
         return Optional.ofNullable(selected);
     }
 }

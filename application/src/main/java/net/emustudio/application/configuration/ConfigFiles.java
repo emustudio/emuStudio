@@ -39,15 +39,15 @@ public class ConfigFiles {
         PLUGIN_TYPE.MEMORY, DIR_MEMORY,
         PLUGIN_TYPE.DEVICE, DIR_DEVICE
     );
-    private final String baseDirectory;
+    private final Path basePath;
 
 
     public ConfigFiles() {
-        this.baseDirectory = System.getProperty("user.dir");
+        this.basePath = Path.of(System.getProperty("user.dir"));
     }
 
-    public ConfigFiles(String baseDirectory) {
-        this.baseDirectory = Objects.requireNonNull(baseDirectory);
+    public ConfigFiles(String basePath) {
+        this.basePath = Objects.requireNonNull(Path.of(basePath));
     }
 
     public Optional<ComputerConfig> loadConfiguration(String computerName) throws IOException {
@@ -55,7 +55,10 @@ public class ConfigFiles {
     }
 
     public List<ComputerConfig> loadConfigurations() throws IOException {
-        return Files.list(Path.of(baseDirectory, DIR_CONFIG))
+        if (!Files.exists(basePath.resolve(DIR_CONFIG))) {
+            return Collections.emptyList();
+        }
+        return Files.list(basePath.resolve(DIR_CONFIG))
             .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
             .map(p -> {
                 try {
@@ -69,19 +72,31 @@ public class ConfigFiles {
             .collect(Collectors.toList());
     }
 
-    public List<Path> listPluginFiles(PLUGIN_TYPE pluginType) throws IOException {
-        return Files.list(Path.of(baseDirectory, PLUGIN_SUBDIRS.get(pluginType)))
+    public Path getAbsolutePluginPath(String relativePluginPath, PLUGIN_TYPE pluginType) {
+        Path basicPath = Path.of(relativePluginPath);
+        if (basicPath.isAbsolute()) {
+            return basicPath;
+        } else {
+            Path pluginBasePath = basePath.resolve(PLUGIN_SUBDIRS.get(pluginType));
+            return pluginBasePath.resolve(relativePluginPath);
+        }
+    }
+
+    public List<String> listPluginFiles(PLUGIN_TYPE pluginType) throws IOException {
+        Path pluginBasePath = basePath.resolve(PLUGIN_SUBDIRS.get(pluginType));
+        return Files.list(pluginBasePath)
             .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
+            .map(p -> p.getFileName().toString())
             .collect(Collectors.toList());
     }
 
-    public ComputerConfig createConfiguration(String computerName) {
-        Path configPath = Path.of(baseDirectory, DIR_CONFIG, encodeToFileName(computerName) + ".toml");
+    public ComputerConfig createConfiguration(String computerName) throws IOException {
+        Path configPath = basePath.resolve(DIR_CONFIG).resolve(encodeToFileName(computerName) + ".toml");
         return ComputerConfig.create(computerName, configPath);
     }
 
     public void removeConfiguration(String computerName) throws IOException {
-        Path configPath = Path.of(baseDirectory, DIR_CONFIG, encodeToFileName(computerName) + ".toml");
+        Path configPath = basePath.resolve(DIR_CONFIG).resolve(encodeToFileName(computerName) + ".toml");
         Files.deleteIfExists(configPath);
     }
 

@@ -36,7 +36,6 @@
  */
 package net.emustudio.application.gui.schema;
 
-import net.emustudio.application.gui.NamePath;
 import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.elements.ConnectionLine;
 import net.emustudio.application.gui.schema.elements.Element;
@@ -228,11 +227,11 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
         drawingModel.clear();
     }
 
-    public void setTool(Tool tool, NamePath namePath) {
+    public void setTool(Tool tool, String fileName) {
         drawingModel.clear();
 
         drawingModel.drawTool = tool;
-        drawingModel.pluginNamePath = namePath;
+        drawingModel.pluginFileName = fileName;
 
         if ((tool == null) || (tool == Tool.TOOL_NOTHING)) {
             mode.select(ModeSelector.SelectMode.MOVING);

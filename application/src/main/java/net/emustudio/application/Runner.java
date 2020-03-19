@@ -101,7 +101,9 @@ public class Runner {
             DebugTableModelImpl debugTableModel =  new DebugTableModelImpl();
             ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs);
 
-            VirtualComputer computer = VirtualComputer.create(computerConfig, applicationApi, applicationConfig);
+            VirtualComputer computer = VirtualComputer.create(
+                computerConfig, applicationApi, applicationConfig, configFiles
+            );
             computer.initialize(contextPool);
 
             final int memorySize = computer.getMemory().map(Memory::getSize).orElse(0);

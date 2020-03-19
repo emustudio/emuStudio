@@ -18,10 +18,7 @@
  */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.PluginConfig;
-import net.emustudio.application.configuration.PluginSettingsImpl;
+import net.emustudio.application.configuration.*;
 import net.emustudio.application.internal.Unchecked;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
@@ -127,13 +124,13 @@ public class VirtualComputer implements PluginConnections {
     }
 
     public static VirtualComputer create(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                         ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
-        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, applicationConfig);
+                                         ApplicationConfig applicationConfig, ConfigFiles configFiles) throws IOException, InvalidPluginException {
+        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, applicationConfig, configFiles);
         return new VirtualComputer(computerConfig, plugins);
     }
 
     private static Map<Long, PluginMeta> loadPlugins(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                                     ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
+                                                     ApplicationConfig applicationConfig, ConfigFiles configFiles) throws IOException, InvalidPluginException {
         List<PluginConfig> pluginConfigs = List.of(
             computerConfig.getCompiler(),
             computerConfig.getCPU(),
@@ -145,7 +142,7 @@ public class VirtualComputer implements PluginConnections {
         pluginConfigs.addAll(computerConfig.getDevices());
 
         List<File> filesToLoad = pluginConfigs.stream()
-            .map(c -> c.getPluginFile().toFile())
+            .map(c -> c.getPluginPath(configFiles).toFile())
             .collect(Collectors.toList());
 
         LOGGER.debug("Loading plugin files: {}", filesToLoad);

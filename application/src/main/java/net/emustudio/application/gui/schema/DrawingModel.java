@@ -18,7 +18,6 @@
  */
 package net.emustudio.application.gui.schema;
 
-import net.emustudio.application.gui.NamePath;
 import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.elements.ConnectionLine;
 import net.emustudio.application.gui.schema.elements.Element;
@@ -88,7 +87,7 @@ public class DrawingModel {
      */
     public boolean elementDragged = false;
 
-    public NamePath pluginNamePath;
+    public String pluginFileName;
 
     /**
      * Future connection line direction. Holds true, if the drawing line should be bidirectional, false otherwise.
@@ -103,7 +102,7 @@ public class DrawingModel {
         selectionEnd = null;
         selectedPoint = null;
         selectedLine = null;
-        pluginNamePath = null;
+        pluginFileName = null;
         drawTool = DrawingPanel.Tool.TOOL_NOTHING;
     }
 }

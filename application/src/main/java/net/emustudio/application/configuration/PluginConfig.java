@@ -46,8 +46,12 @@ public class PluginConfig {
         return config.get("name");
     }
 
-    public Path getPluginFile() {
-        return Path.of(config.<String>get("path"));
+    public String getPluginFile() {
+        return config.get("path");
+    }
+
+    public Path getPluginPath(ConfigFiles configFiles) {
+        return configFiles.getAbsolutePluginPath(getPluginFile(), getPluginType());
     }
 
     public SchemaPoint getSchemaPoint() throws NumberFormatException {
@@ -76,12 +80,12 @@ public class PluginConfig {
 
 
 
-    public static PluginConfig create(PLUGIN_TYPE pluginType, String pluginName, Path pluginPath, Point schemaLocation) {
+    public static PluginConfig create(PLUGIN_TYPE pluginType, String pluginName, String pluginFile, Point schemaLocation) {
         Config config = Config.inMemory();
         config.set("id", UUID.randomUUID().toString());
         config.set("type", pluginType.toString());
         config.set("name", pluginName);
-        config.set("path", pluginPath.toString());
+        config.set("path", pluginFile);
         config.set("schemaPoint", schemaLocation.x + "," + schemaLocation.y);
 
         return new PluginConfig(config);

@@ -68,13 +68,13 @@ public class ComputerConfigTest {
     @Test
     public void testChangePluginConfig() {
         PluginConfig cpu = PluginConfig.create(
-            PLUGIN_TYPE.CPU, "cpu baby", Path.of("emptyfile.jar"), new Point(10,10)
+            PLUGIN_TYPE.CPU, "cpu baby", "emptyfile.jar", new Point(10,10)
         );
         config.setCPU(cpu);
 
         assertEquals(cpu.getPluginName(), "cpu baby");
         assertEquals(cpu.getPluginType(), PLUGIN_TYPE.CPU);
-        assertEquals(cpu.getPluginFile(), Path.of("emptyfile.jar"));
+        assertEquals(cpu.getPluginFile(), "emptyfile.jar");
         assertEquals(cpu.getSchemaPoint(), SchemaPoint.create(10, 10));
 
         SchemaPoint newSchemaPoint = SchemaPoint.create(20,30);

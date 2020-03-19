@@ -94,7 +94,7 @@ class ViewComputerDialog extends JDialog {
     private void setInfo(Plugin plugin, PluginConfig config) {
         lblName.setText(plugin.getTitle());
         lblVersion.setText(plugin.getVersion());
-        lblFileName.setText(config.getPluginFile().toString());
+        lblFileName.setText(config.getPluginFile());
         lblCopyright.setText(plugin.getCopyright());
         txtDescription.setText(plugin.getDescription());
     }

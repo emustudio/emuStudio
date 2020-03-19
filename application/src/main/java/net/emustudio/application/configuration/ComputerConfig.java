@@ -24,6 +24,7 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -140,11 +141,11 @@ public class ComputerConfig implements ConfigSaver, Closeable {
         return new ComputerConfig(config);
     }
 
-    public static ComputerConfig create(String computerName, Path configurationFile) {
+    public static ComputerConfig create(String computerName, Path configurationFile) throws IOException {
         if (Files.exists(configurationFile)) {
             throw new IllegalArgumentException("Configuration already exists");
         }
-
+        Files.createFile(configurationFile);
         FileConfig config = FileConfig.of(configurationFile);
         config.set("name", computerName);
         config.save();

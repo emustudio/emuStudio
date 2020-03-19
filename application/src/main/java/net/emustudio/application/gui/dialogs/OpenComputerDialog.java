@@ -24,6 +24,7 @@ import net.emustudio.application.configuration.ComputerConfig;
 import net.emustudio.application.configuration.ConfigFiles;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
+import net.emustudio.application.internal.Unchecked;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.Dialogs.DialogAnswer;
 import org.slf4j.Logger;
@@ -332,7 +333,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
                     .ifPresentOrElse(
                         c -> dialogs.showError("Computer '" + name + "' already exists, choose another name."),
                         () -> {
-                            ComputerConfig newComputer = configFiles.createConfiguration(name);
+                            ComputerConfig newComputer = Unchecked.call(() -> configFiles.createConfiguration(name));
                             Schema schema = new Schema(newComputer, applicationConfig);
                             SchemaEditorDialog di = new SchemaEditorDialog(this, schema, configFiles, dialogs);
                             di.setVisible(true);
