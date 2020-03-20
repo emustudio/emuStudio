@@ -20,8 +20,6 @@
 
 
 00 NUM 1    -- jump address
-
-start:
 01 LDN 30   -- Accumulator := -A
 02 STO 29   -- Store -A
 03 LDN 31   -- Accumulator := -B

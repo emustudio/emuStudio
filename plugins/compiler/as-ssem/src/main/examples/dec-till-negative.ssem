@@ -4,7 +4,6 @@
 -- Parameter Lines:  31: X
 -- Result Lines:     -
 
-start:
 01 LDN 31  -- A = -X
 02 STO 29  -- store -X
 03 LDN 29  -- A = -(-X) = X
@@ -13,7 +12,7 @@ start:
 06 JMP 28  -- otherwise go to line 4
 07 HLT     -- done, A has gone negative
 
-28 NUM 4   -- jump address
+28 NUM 3   -- jump address
 29         -- -X
 30 NUM 1   -- decrement
 31 NUM 7   -- X Parameter

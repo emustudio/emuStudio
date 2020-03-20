@@ -50,24 +50,32 @@ public class CpuPanel extends javax.swing.JPanel {
 
         @Override
         public void internalStateChanged() {
-            int acc = engine.Acc;
-            int ci = engine.CI;
-
-            Byte[] mCI = memory.readWord(ci);
-            int line = NumberUtils.reverseBits(mCI[0], 8);
-            Byte[] mLine = memory.readWord(line * 4);
+            int acc = engine.Acc.get();
+            int ci = engine.CI.get();
 
             txtA.setText(String.format("%08x", acc));
             txtCI.setText(String.format("%08x", ci / 4));
-            txtMCI.setText(String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
-            txtLine.setText(String.format("%02x", line));
-            txtMLine.setText(String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
-
             txtBinA.setText(formatBinary(acc));
             txtBinCI.setText(formatBinary(ci));
-            txtBinMCI.setText(formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN)));
-            txtBinLine.setText(formatBinary(line, 8));
-            txtBinMLine.setText(formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN)));
+
+            try {
+                Byte[] mCI = memory.readWord(ci);
+                byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
+                Byte[] mLine = memory.readWord(line * 4);
+
+                txtMCI.setText(String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
+                txtLine.setText(String.format("%02x", line));
+                txtMLine.setText(String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
+
+                txtBinMCI.setText(formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN)));
+                txtBinLine.setText(formatBinary(line, 8));
+                txtBinMLine.setText(formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN)));
+            } catch (IndexOutOfBoundsException e) {
+                txtMCI.setText("?");
+                txtMLine.setText("?");
+                txtBinMCI.setText("?");
+                txtBinMLine.setText("?");
+            }
         }
 
         private String formatBinary(int number) {

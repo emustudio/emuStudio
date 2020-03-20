@@ -1,5 +1,6 @@
-32
 0    NUM 0
+
+start:
 1    LDN 22
 2    SUB 27
 3    STO 25

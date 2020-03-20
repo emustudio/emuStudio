@@ -167,9 +167,16 @@ class HighlightThread extends Thread {
 
             synchronized (lock) {
                 if (!recolorEvents.isEmpty()) {
-                    RecolorEvent recolorEvent = recolorEvents.poll();
-                    position = recolorEvent.position;
-                    adjustment = recolorEvent.adjustment;
+                    Optional<RecolorEvent> recolorEventOpt = Optional.ofNullable(recolorEvents.poll());
+                    if (recolorEventOpt.isPresent()) {
+                        RecolorEvent recolorEvent = recolorEventOpt.get();
+                        position = recolorEvent.position;
+                        adjustment = recolorEvent.adjustment;
+                    } else {
+                        tryAgain = false;
+                        position = -1;
+                        adjustment = 0;
+                    }
                 } else {
                     tryAgain = false;
                     position = -1;
@@ -325,7 +332,7 @@ class HighlightThread extends Thread {
                     initPositions.addAll(newPositions);
                     newPositions.clear();
                 } catch (Exception x) { // catch all runtime exceptions as well, such as NumberFormatException
-                    LOGGER.error("There was an exception while performing syntax highlighting", x);
+                    LOGGER.debug("There was an exception while performing syntax highlighting", x);
                 }
                 synchronized (lock) {
                     lastPosition = -1;

@@ -79,8 +79,8 @@ class AutomaticEmulation {
             System.arraycopy(word, 0, memorySnapshot[i], 0, 4);
         }
 
-        int ciSnapshot = engine.CI;
-        int accSnapshot = engine.Acc;
+        int ciSnapshot = engine.CI.get();
+        int accSnapshot = engine.Acc.get();
 
         saveSnapshot(ciSnapshot, accSnapshot, memorySnapshot);
     }

@@ -14,8 +14,6 @@
 ; 24: X-1
 ; Result Lines:	27: Highest Factor of X
 
-start:
-
 01 LDN 24   -- Accumulator := -Initial Trial Divisor
 02 STO 26   -- Store as -Trial Divisor
 03 LDN 26   -- Accumulator := -(-Trial Divisor)

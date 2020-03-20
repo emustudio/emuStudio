@@ -29,6 +29,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.plugins.compiler.ssem.tree.Program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +96,10 @@ public class CompilerImpl extends AbstractCompiler {
 
                 program.accept(codeGenerator);
                 programLocation = program.getStartLine() * 4;
-                notifyInfo("Compile was successful. Output: " + outputFileName);
+                notifyInfo(
+                    "Compile was successful (program starts at " + RadixUtils.formatWordHexString(programLocation)
+                        + "). Output: " + outputFileName
+                );
             }
         } catch (Exception e) {
             LOGGER.trace("Compilation error.", e);

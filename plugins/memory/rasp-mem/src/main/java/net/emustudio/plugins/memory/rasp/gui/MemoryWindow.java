@@ -134,8 +134,7 @@ public class MemoryWindow extends javax.swing.JFrame {
         File currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")));
         dialogs.chooseFile(
             "Load compiled RASP program", "Load", currentDirectory.toPath(),
-            new FileExtensionsFilter("RASP compiler file", "bin"),
-            new FileExtensionsFilter("All files", "*")
+            new FileExtensionsFilter("RASP compiler file", "bin")
         ).ifPresent(path -> {
             recentOpenPath = path.toFile().getParentFile();
             try {

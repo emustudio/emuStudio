@@ -6,9 +6,7 @@ instruction = "JMP": line(5)     ignore8(8) 000 ignore16(16) |
               "CMP": 00000       ignore8(8) 011 ignore16(16) |
               "STP": 00000       ignore8(8) 111 ignore16(16);
 
-line = arg: arg(8);
-
-ignore5 = arg: arg(5);
+line = arg: arg(5);
 
 ignore8 = arg: arg(8);
 
@@ -16,5 +14,5 @@ ignore16 = arg: arg(16);
 
 %%
 
-"%s %X" = instruction line(bit_reverse) ignore8 ignore16;
+"%s %d" = instruction line(shift_left, shift_left, shift_left, bit_reverse, absolute) ignore8 ignore16;
 "%s" = instruction ignore8 ignore16;

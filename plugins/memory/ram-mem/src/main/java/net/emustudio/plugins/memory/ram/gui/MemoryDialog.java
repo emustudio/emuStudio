@@ -71,8 +71,7 @@ public class MemoryDialog extends javax.swing.JDialog {
         File currentDirectory = Objects.requireNonNullElse(lastOpenedFile, new File(System.getProperty("user.dir")));
         dialogs.chooseFile(
             "Load compiled RAM program", "Load", currentDirectory.toPath(),
-            new FileExtensionsFilter("RAM compiler file", "ro"),
-            new FileExtensionsFilter("All files", "*")
+            new FileExtensionsFilter("RAM compiler file", "ro")
         ).ifPresent(path -> {
             lastOpenedFile = path.toFile();
             try {

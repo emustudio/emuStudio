@@ -5,7 +5,6 @@
 --                   30: Y
 -- Result Lines:     31: Sum
 
-start:
 01 LDN 29  -- A = -X
 02 SUB 30  -- A = -X - Y
 03 STO 31  -- store -Sum

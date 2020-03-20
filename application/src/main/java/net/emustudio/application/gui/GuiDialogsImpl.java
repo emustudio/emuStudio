@@ -152,7 +152,7 @@ public class GuiDialogsImpl implements Dialogs {
         for (FileExtensionsFilter filter : filters) {
             String formattedExtensions = filter.getExtensions().stream()
                 .map(e -> "*." + e)
-                .collect(Collectors.joining(", ", "(", ")"));
+                .collect(Collectors.joining(", ", " (", ")"));
 
             FileNameExtensionFilter extensionFilter = new FileNameExtensionFilter(
                 filter.getDescription() + formattedExtensions,
@@ -161,6 +161,7 @@ public class GuiDialogsImpl implements Dialogs {
             if (firstFilter == null) {
                 firstFilter = extensionFilter;
             }
+            fileChooser.setAcceptAllFileFilterUsed(true);
             fileChooser.addChoosableFileFilter(extensionFilter);
         }
         if (firstFilter != null) {

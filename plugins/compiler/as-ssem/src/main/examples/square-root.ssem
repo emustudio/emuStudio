@@ -8,7 +8,6 @@
 -- Parameter Lines:	30: X
 -- Result Lines:	31: square root of X
 
-start:
 -- initialisation
 01 LDN 28
 02 STO 29  -- start odds at -1

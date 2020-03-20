@@ -85,7 +85,12 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     protected RunState stepInternal() {
-        return engine.step();
+        RunState result = engine.step();
+        if (result == RunState.STATE_RUNNING) {
+            return RunState.STATE_STOPPED_BREAK;
+        } else {
+            return result;
+        }
     }
 
     @Override
@@ -103,7 +108,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public int getInstructionLocation() {
-        return engine.CI;
+        return Math.max(0, engine.CI.get() + 4);
     }
 
     @Override
@@ -112,7 +117,7 @@ public class CpuImpl extends AbstractCPU {
         if (location < 0 || location >= memSize) {
             throw new IllegalArgumentException("Instruction position can be in <0," + memSize / 4 + ">, but was: " + location);
         }
-        engine.CI = location;
+        engine.CI.set(Math.max(0, location * 4 - 4));
         return true;
     }
 

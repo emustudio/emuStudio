@@ -79,7 +79,7 @@ public class EmulatorEngineTest {
             0, 0, 0, 0, 0, 0, 0, 0, 0xA0, 0, 0, 0, 0xC0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         });
 
-        engine.reset(4);
+        engine.reset(0);
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
         assertEquals(8, NumberUtils.readInt(memoryStub.readWord(31 * 4), memoryStub.getWordReadingStrategy()));
     }
@@ -88,6 +88,6 @@ public class EmulatorEngineTest {
     public void testEndlessLoopPrevention() {
         memoryStub.setMemory(new short[32 * 4]);
         engine.reset(0);
-        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
+        assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.run());
     }
 }

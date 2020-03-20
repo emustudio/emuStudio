@@ -25,6 +25,7 @@ import net.emustudio.emulib.runtime.helpers.NumberUtils.Strategy;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 public class EmulatorEngine {
@@ -34,8 +35,8 @@ public class EmulatorEngine {
     private final CPU cpu;
     private final MemoryContext<Byte> memory;
 
-    volatile int Acc;
-    volatile int CI;
+    final AtomicInteger Acc = new AtomicInteger();
+    final AtomicInteger CI = new AtomicInteger();
 
     private volatile long averageInstructionNanos;
 
@@ -45,41 +46,43 @@ public class EmulatorEngine {
     }
 
     void reset(int startingPos) {
-        Acc = 0;
-        CI = startingPos;
+        Acc.set(0);
+        CI.set(startingPos);
     }
 
     CPU.RunState step() {
-        Byte[] instruction = memory.readWord(CI);
-        CI += 4;
+        Byte[] instruction = memory.readWord(CI.addAndGet(4));
 
-        int line = NumberUtils.reverseBits(instruction[0], 8) * 4;
+        byte line = (byte)(NumberUtils.reverseBits(instruction[0] & 0b11111000, 8));
+        int lineAddress = line * 4;
         int opcode = instruction[1] & 7;
 
         switch (opcode) {
             case 0: // JMP
-                int oldCi = CI - 4;
-                CI = 4 * readInt(line);
-                if (CI == oldCi) {
+                int oldCi = CI.get() - 4;
+                int newLineAddress = readLineAddress(lineAddress);
+                CI.set(newLineAddress);
+                if (newLineAddress == oldCi) {
                     // endless loop detected;
-                    return CPU.RunState.STATE_STOPPED_NORMAL;
+                    return CPU.RunState.STATE_STOPPED_BREAK;
                 }
                 break;
             case 4: // JPR
-                CI = CI + 4 * readInt(line);
+                CI.addAndGet(readLineAddress(lineAddress));
                 break;
             case 2: // LDN
-                Acc = -readInt(line);
+                int tmp = readInt(lineAddress);
+                Acc.set((tmp != 0) ? -tmp : 0);
                 break;
             case 6: // STO
-                writeInt(line, Acc);
+                writeInt(lineAddress, Acc.get());
                 break;
             case 1: // SUB
-                Acc = Acc - readInt(line);
+                Acc.addAndGet(-readInt(lineAddress));
                 break;
             case 3: // CMP / SKN
-                if (Acc < 0) {
-                    CI += 4;
+                if (Acc.get() < 0) {
+                    CI.addAndGet(4);
                 }
                 break;
             case 7: // STP / HLT
@@ -87,7 +90,11 @@ public class EmulatorEngine {
             default:
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
-        return CPU.RunState.STATE_STOPPED_BREAK;
+        return CPU.RunState.STATE_RUNNING;
+    }
+
+    private int readLineAddress(int lineAddress) {
+        return 4 * NumberUtils.reverseBits(memory.read(lineAddress) & 0b11111000, 8);
     }
 
     private int readInt(int line) {
@@ -95,22 +102,22 @@ public class EmulatorEngine {
         return NumberUtils.readInt(word, Strategy.REVERSE_BITS);
     }
 
-    private void writeInt(int line, int value) {
+    private void writeInt(int lineAddress, int value) {
         Byte[] word = new Byte[4];
         NumberUtils.writeInt(value, word, Strategy.REVERSE_BITS);
-        memory.writeWord(line, word);
+        memory.writeWord(lineAddress, word);
     }
 
     CPU.RunState run() {
         if (averageInstructionNanos == 0) {
             measureAverageInstructionNanos();
         }
-        CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+        CPU.RunState currentRunState = CPU.RunState.STATE_RUNNING;
 
         long waitNanos = TimeUnit.SECONDS.toNanos(1) / averageInstructionNanos;
-        while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_STOPPED_BREAK) {
+        while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_RUNNING) {
             try {
-                if (cpu.isBreakpointSet(CI)) {
+                if (cpu.isBreakpointSet(CI.get())) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 }
                 currentRunState = step();
@@ -130,37 +137,30 @@ public class EmulatorEngine {
     }
 
     private void fakeStep() {
-        Byte[] instruction = memory.readWord(CI);
+        Byte[] instruction = memory.readWord(CI.get());
 
         int line = NumberUtils.reverseBits(instruction[0], 8);
         int opcode = instruction[1] & 3;
-        CI = (CI + 4) % MEMORY_CELLS;
-
+        CI.updateAndGet(ci -> (ci + 4) % MEMORY_CELLS);
 
         switch (opcode) {
             case 0:
-                break;
             case 1:
-                break;
             case 2:
-                break;
             case 3:
-                break;
             case 4:
-                break;
             case 6:
-                break;
             case 7:
                 break;
         }
 
-        Acc -= memory.read(line % MEMORY_CELLS);
+        Acc.addAndGet(- memory.read(line % MEMORY_CELLS));
     }
 
 
     private void measureAverageInstructionNanos() {
-        int oldCI = CI;
-        int oldAcc = Acc;
+        int oldCI = CI.get();
+        int oldAcc = Acc.get();
 
         long start = System.nanoTime();
         for (int i = 0; i < INSTRUCTIONS_PER_SECOND; i++) {
@@ -170,7 +170,7 @@ public class EmulatorEngine {
 
         averageInstructionNanos = elapsed / INSTRUCTIONS_PER_SECOND;
 
-        CI = oldCI;
-        Acc = oldAcc;
+        CI.set(oldCI);
+        Acc.set(oldAcc);
     }
 }

@@ -20,6 +20,8 @@ package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -27,6 +29,7 @@ import java.util.function.Consumer;
 
 @ThreadSafe
 class CallFlow {
+    private final static Logger LOGGER = LoggerFactory.getLogger(CallFlow.class);
 
     private final Disassembler disassembler;
     private final NavigableMap<Integer, Integer> flowGraph = new ConcurrentSkipListMap<>();
@@ -37,11 +40,15 @@ class CallFlow {
     }
 
     void updateCache(int currentLocation) {
-        int nextPosition = disassembler.getNextInstructionPosition(currentLocation);
-        if (nextPosition - currentLocation > longestInstructionSize) {
-            longestInstructionSize = nextPosition - currentLocation;
+        try {
+            int nextPosition = disassembler.getNextInstructionPosition(currentLocation);
+            if (nextPosition - currentLocation > longestInstructionSize) {
+                longestInstructionSize = nextPosition - currentLocation;
+            }
+            flowGraph.put(currentLocation, nextPosition);
+        } catch (RuntimeException ex) {
+            LOGGER.error("Could not update call-flow cache", ex);
         }
-        flowGraph.put(currentLocation, nextPosition);
     }
 
     /**

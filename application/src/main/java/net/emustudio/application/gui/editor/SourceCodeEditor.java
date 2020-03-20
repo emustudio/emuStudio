@@ -340,7 +340,9 @@ public class SourceCodeEditor extends JTextPane {
 
             List<String> sourceExtensions = sourceFileExtensions.stream()
                 .map(SourceFileExtension::getExtension).collect(Collectors.toList());
-            filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
+            if (sourceExtensions.size() > 1) {
+                filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
+            }
 
             File currentDirectory = Objects.requireNonNullElse(fileSource, new File(System.getProperty("user.dir")));
             Optional<Path> openedFile = dialogs.chooseFile("Open a file", "Open", currentDirectory.toPath(), filters);
