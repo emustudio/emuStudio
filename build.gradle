@@ -25,7 +25,7 @@ ext.versions = [
 
 ext.libs = [
   emuLib         : "net.emustudio:emulib:11.3.0",
-  cpuTestSuite   : "net.emustudio:cpu-testsuite_11.2:1.1.0",
+  cpuTestSuite   : "net.emustudio:cpu-testsuite_11.3:1.1.0",
 
   javaCupRuntime : "com.github.vbmacher:java-cup-runtime:11b-20160615",
   jcipAnnotations: "net.jcip:jcip-annotations:1.0",
@@ -37,6 +37,8 @@ ext.libs = [
 
   args4j         : "args4j:args4j:2.33",
   tomlj          : "com.electronwill.night-config:toml:3.6.2",
+
+  syntaxArea     : "com.fifesoft:rsyntaxtextarea:3.1.0",
 
   junit          : "junit:junit:4.13",
   easyMock       : "org.easymock:easymock:4.2",

@@ -39,6 +39,8 @@ dependencies {
   extraLibs libs.emuLib
 
   implementation libs.jcipAnnotations
+
+  extraLibs libs.syntaxArea
   extraLibs libs.args4j
   extraLibs libs.tomlj
   extraLibs libs.logback

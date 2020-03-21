@@ -1,0 +1,48 @@
+package net.emustudio.application.gui.editor;
+
+
+import javax.swing.text.Document;
+import java.awt.*;
+import java.io.File;
+import java.util.Optional;
+
+public interface Editor {
+
+    void newFile();
+
+    void openFile();
+
+    void openFile(String fileName);
+
+    boolean saveFile();
+
+    boolean saveFile(boolean showDialogIfFileIsInvalid);
+
+    boolean saveFileWithConfirmation();
+
+    String getText();
+
+
+    int getCaretPosition();
+
+    void setCaretPosition(int position);
+
+    void select(int start, int end);
+
+
+    Component getView();
+
+    void grabFocus();
+
+
+    Optional<File> getCurrentFile();
+
+
+    Document getDocument();
+
+    interface UndoListener {
+        void undoStateChanged(boolean canUndo, String presentationName);
+
+        void redoStateChanged(boolean canRedo, String presentationName);
+    }
+}

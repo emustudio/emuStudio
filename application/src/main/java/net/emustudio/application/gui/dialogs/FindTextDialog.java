@@ -19,6 +19,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.ConstantSizeButton;
+import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.gui.editor.FindText;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 
@@ -39,15 +40,15 @@ import static net.emustudio.application.gui.Components.addKeyListenerRecursively
 class FindTextDialog extends javax.swing.JDialog {
     private static final List<String> list = new ArrayList<>();
     private static final List<String> rlist = new ArrayList<>();
-    private final JTextPane textPane;
+    private final Editor editor;
     private final FindText finder;
     private final DialogKeyListener dialogKeyListener = new DialogKeyListener();
     private final Dialogs dialogs;
 
-    private FindTextDialog(JFrame parent, FindText finder, JTextPane pane, Dialogs dialogs) {
+    private FindTextDialog(JFrame parent, FindText finder, Editor pane, Dialogs dialogs) {
         super(parent, false);
 
-        this.textPane = Objects.requireNonNull(pane);
+        this.editor = Objects.requireNonNull(pane);
         this.finder = Objects.requireNonNull(finder);
         this.dialogs = Objects.requireNonNull(dialogs);
 
@@ -89,7 +90,7 @@ class FindTextDialog extends javax.swing.JDialog {
         this.setLocationRelativeTo(parent);
     }
 
-    static FindTextDialog create(JFrame parent, FindText finder, JTextPane pane, Dialogs dialogs) {
+    static FindTextDialog create(JFrame parent, FindText finder, Editor pane, Dialogs dialogs) {
         FindTextDialog dialog = new FindTextDialog(parent, finder, pane, dialogs);
         dialog.initialize();
         return dialog;
@@ -228,11 +229,11 @@ class FindTextDialog extends javax.swing.JDialog {
         String str = saveGUI();
         try {
             finder.createPattern(str);
-            if (finder.findNext(textPane.getText(),
-                textPane.getCaretPosition(),
-                textPane.getDocument().getEndPosition().getOffset() - 1)) {
-                textPane.select(finder.getMatchStart(), finder.getMatchEnd());
-                textPane.grabFocus();
+            if (finder.findNext(editor.getText(),
+                editor.getCaretPosition(),
+                editor.getDocument().getEndPosition().getOffset() - 1)) {
+                editor.select(finder.getMatchStart(), finder.getMatchEnd());
+                editor.grabFocus();
                 dispose();
             } else {
                 dialogs.showInfo("Text was not found", "Find text");
@@ -248,8 +249,8 @@ class FindTextDialog extends javax.swing.JDialog {
         try {
             finder.createPattern(str);
             finder.replacement = (String) cmbReplace.getEditor().getItem();
-            if (finder.replaceNext(textPane)) {
-                textPane.grabFocus();
+            if (finder.replaceNext(editor)) {
+                editor.grabFocus();
                 dispose();
             } else {
                 dialogs.showInfo("Text was not found", "Replace text");
@@ -265,8 +266,8 @@ class FindTextDialog extends javax.swing.JDialog {
         try {
             finder.createPattern(str);
             finder.replacement = (String) cmbReplace.getEditor().getItem();
-            if (finder.replaceAll(textPane)) {
-                textPane.grabFocus();
+            if (finder.replaceAll(editor)) {
+                editor.grabFocus();
                 dispose();
             } else {
                 dialogs.showInfo("Text was not found", "Replace all");
