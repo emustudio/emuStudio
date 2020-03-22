@@ -24,7 +24,7 @@ ext.versions = [
 ]
 
 ext.libs = [
-  emuLib         : "net.emustudio:emulib:11.3.0",
+  emuLib         : "net.emustudio:emulib:11.4.0-SNAPSHOT",
   cpuTestSuite   : "net.emustudio:cpu-testsuite_11.3:1.1.0",
 
   javaCupRuntime : "com.github.vbmacher:java-cup-runtime:11b-20160615",
@@ -90,6 +90,7 @@ allprojects {
 
 subprojects {
   repositories {
+    mavenLocal()
     mavenCentral()
   }
 }

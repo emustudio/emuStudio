@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 public class LexerTest {
 
@@ -115,7 +114,7 @@ public class LexerTest {
         TokenImpl token = lexer.next_token();
         assertEquals(Token.PREPROCESSOR, token.getType());
         assertEquals(TokenImpl.BNUM, token.getID());
-        assertFalse(token.isInitialLexicalState());
+        assertEquals(LexerImpl.BIN, token.getLexerState());
 
         token = lexer.next_token();
         assertEquals(Token.LITERAL, token.getType());

@@ -129,18 +129,20 @@ public class GuiDialogsImpl implements Dialogs {
     }
 
     @Override
-    public Optional<Path> chooseFile(String title, String approveButtonText, FileExtensionsFilter... filters) {
-        return chooseFile(title, approveButtonText, Path.of(System.getProperty("user.dir")), filters);
+    public Optional<Path> chooseFile(String title, String approveButtonText, boolean appendMissingExtension,
+                                     FileExtensionsFilter... filters) {
+        return chooseFile(title, approveButtonText, Path.of(System.getProperty("user.dir")), appendMissingExtension, filters);
     }
 
     @Override
-    public Optional<Path> chooseFile(String title, String approveButtonTest, List<FileExtensionsFilter> filters) {
-        return chooseFile(title, approveButtonTest, filters.toArray(FileExtensionsFilter[]::new));
+    public Optional<Path> chooseFile(String title, String approveButtonTest, boolean appendMissingExtension,
+                                     List<FileExtensionsFilter> filters) {
+        return chooseFile(title, approveButtonTest, appendMissingExtension, filters.toArray(FileExtensionsFilter[]::new));
     }
 
     @Override
     public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
-                                     FileExtensionsFilter... filters) {
+                                     boolean appendMissingExtension, FileExtensionsFilter... filters) {
 
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(title);
@@ -171,14 +173,31 @@ public class GuiDialogsImpl implements Dialogs {
         int result = fileChooser.showOpenDialog(null);
         fileChooser.setVisible(true);
         if (result == JFileChooser.APPROVE_OPTION) {
-            return Optional.ofNullable(fileChooser.getSelectedFile()).map(File::toPath);
+            FileNameExtensionFilter fileFilter = (FileNameExtensionFilter)fileChooser.getFileFilter();
+            File selectedFile = fileChooser.getSelectedFile();
+
+            if (selectedFile != null) {
+                String extension = "";
+                if (appendMissingExtension && fileFilter != null) {
+                    List<String> allExtensions = List.of(fileFilter.getExtensions());
+                    if (!allExtensions.isEmpty()) {
+                        extension = "." + allExtensions.get(0); // get the first one
+                    }
+                }
+                if (!extension.isEmpty() && !selectedFile.getName().endsWith(extension)) {
+                    selectedFile = new File(selectedFile.getAbsolutePath() + extension);
+                }
+                return Optional.of(selectedFile.toPath());
+            }
         }
         return Optional.empty();
     }
 
     @Override
     public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
-                                     List<FileExtensionsFilter> filters) {
-        return chooseFile(title, approveButtonText, baseDirectory, filters.toArray(FileExtensionsFilter[]::new));
+                                     boolean appendMissingExtension, List<FileExtensionsFilter> filters) {
+        return chooseFile(
+            title, approveButtonText, baseDirectory, appendMissingExtension, filters.toArray(FileExtensionsFilter[]::new)
+        );
     }
 }

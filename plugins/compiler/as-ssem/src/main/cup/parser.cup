@@ -77,7 +77,7 @@ parser code {:
 :};
 
 terminal JMP, JPR, LDN, STO, SUB, CMP, STP, NUM, BNUM;
-terminal SEPARATOR_EOL, TCOMMENT, ERROR_UNKNOWN_TOKEN;
+terminal SEPARATOR_EOL, TCOMMENT;
 terminal Integer NUMBER;
 terminal START;
 

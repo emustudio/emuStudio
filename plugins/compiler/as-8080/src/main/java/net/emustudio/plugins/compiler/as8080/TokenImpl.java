@@ -30,18 +30,18 @@ public class TokenImpl extends ComplexSymbol implements Token, Symbols {
     public final static int ERROR_UNKNOWN_TOKEN = 0xA05;
 
     private final int category;
-    private final boolean initial;
+    private final int lexerState;
 
-    public TokenImpl(int id, int category, String text, Location left, Location right, boolean initial) {
+    public TokenImpl(int id, int category, int lexerState, String text, Location left, Location right) {
         super(text, id, left, right);
         this.category = category;
-        this.initial = initial;
+        this.lexerState = lexerState;
     }
 
-    public TokenImpl(int id, int category, String text, Location left, Location right, Object value, boolean initial) {
+    public TokenImpl(int id, int category, int lexerState, String text, Location left, Location right, Object value) {
         super(text, id, left, right, value);
         this.category = category;
-        this.initial = initial;
+        this.lexerState = lexerState;
     }
 
     @Override
@@ -57,6 +57,11 @@ public class TokenImpl extends ComplexSymbol implements Token, Symbols {
     @Override
     public String getText() {
         return getName();
+    }
+
+    @Override
+    public int getLexerState() {
+        return lexerState;
     }
 
     @Override
@@ -92,10 +97,5 @@ public class TokenImpl extends ComplexSymbol implements Token, Symbols {
     @Override
     public int getLength() {
         return getRight().getOffset() - getLeft().getOffset();
-    }
-
-    @Override
-    public boolean isInitialLexicalState() {
-        return initial;
     }
 }

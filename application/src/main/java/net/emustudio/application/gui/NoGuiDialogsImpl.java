@@ -108,22 +108,26 @@ public class NoGuiDialogsImpl implements Dialogs {
     }
 
     @Override
-    public Optional<Path> chooseFile(String title, String approveButtonText, FileExtensionsFilter... filters) {
+    public Optional<Path> chooseFile(String title, String approveButtonText, boolean appendMissingExtension,
+                                     FileExtensionsFilter... filters) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Path> chooseFile(String s, String s1, List<FileExtensionsFilter> list) {
+    public Optional<Path> chooseFile(String title, String approveButtonText, boolean appendMissingExtension,
+                                     List<FileExtensionsFilter> list) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory, FileExtensionsFilter... filters) {
+    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
+                                     boolean appendMissingExtension, FileExtensionsFilter... filters) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Path> chooseFile(String s, String s1, Path path, List<FileExtensionsFilter> list) {
+    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
+                                     boolean appendMissingExtension, List<FileExtensionsFilter> list) {
         return Optional.empty();
     }
 

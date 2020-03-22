@@ -927,7 +927,7 @@ public class StudioFrame extends JFrame {
         computer.getCompiler().ifPresentOrElse(compiler -> {
             if (runState == CPU.RunState.STATE_RUNNING) {
                 dialogs.showError("Emulation must be stopped first.", "Compile");
-            } else if (editor.saveFile(true)) {
+            } else if (editor.saveFile()) {
                 updateTitleOfSourceCodePanel();
 
                 editor.getCurrentFile().ifPresent(file -> {
@@ -961,8 +961,9 @@ public class StudioFrame extends JFrame {
     }
 
     private void mnuFileSaveAsActionPerformed(ActionEvent evt) {
-        editor.saveFile();
-        updateTitleOfSourceCodePanel();
+        if (editor.saveFileAs()) {
+            updateTitleOfSourceCodePanel();
+        }
     }
 
     private void mnuFileSaveActionPerformed(ActionEvent evt) {
@@ -970,8 +971,9 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnSaveActionPerformed(ActionEvent evt) {
-        editor.saveFile(true);
-        updateTitleOfSourceCodePanel();
+        if (editor.saveFile()) {
+            updateTitleOfSourceCodePanel();
+        }
     }
 
     private void mnuFileOpenActionPerformed(ActionEvent evt) {
@@ -987,7 +989,8 @@ public class StudioFrame extends JFrame {
     }
 
     private void formWindowClosing() {
-        if (editor.saveFileWithConfirmation()) {
+        if (confirmSave()) {
+            Optional.ofNullable(emulationController).ifPresent(EmulationController::close);
             computer.close();
             dispose();
             System.exit(0); //calling the method is a must
@@ -995,15 +998,18 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnOpenActionPerformed(ActionEvent evt) {
-        editor.openFile();
-        compilerOutput.setText("");
-        updateTitleOfSourceCodePanel();
+        if (confirmSave() && editor.openFile()) {
+            compilerOutput.setText("");
+            updateTitleOfSourceCodePanel();
+        }
     }
 
     private void btnNewActionPerformed(ActionEvent evt) {
-        editor.newFile();
-        compilerOutput.setText("");
-        updateTitleOfSourceCodePanel();
+        if (confirmSave()) {
+            editor.newFile();
+            compilerOutput.setText("");
+            updateTitleOfSourceCodePanel();
+        }
     }
 
     private void btnFindReplaceActionPerformed(ActionEvent evt) {
@@ -1064,6 +1070,16 @@ public class StudioFrame extends JFrame {
             file -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR + " (" + file.getName() + ")"),
             () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
         );
+    }
+
+    private boolean confirmSave() {
+        if (editor.isDirty()) {
+            Dialogs.DialogAnswer answer = dialogs.ask("File is not saved yet. Do you want to save it?");
+            if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
+                return editor.saveFile();
+            } else return answer != Dialogs.DialogAnswer.ANSWER_CANCEL;
+        }
+        return true;
     }
 
     private ToolbarButton btnBack;

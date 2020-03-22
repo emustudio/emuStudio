@@ -139,6 +139,7 @@ public class EmulationController implements Closeable {
         try {
             executor.awaitTermination(5, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
+            executor.shutdownNow();
             Thread.currentThread().interrupt();
         }
     }

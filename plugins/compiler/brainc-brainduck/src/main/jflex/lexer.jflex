@@ -41,7 +41,7 @@ import java.io.IOException;
 
 %{
     @Override
-    public TokenImpl getSymbol() throws IOException {
+    public Token getToken() throws IOException {
         return next_token();
     }
 
@@ -52,20 +52,24 @@ import java.io.IOException;
         this.yychar = yychar;
         this.yycolumn = yycolumn;
     }
-    
+
     @Override
-    public void reset() {
-        yyline = yychar = yycolumn = 0;
+    public void reset(Reader in, int line, int offset, int column, int lexerState) {
+        yyreset(in);
+        this.yyline = line;
+        this.yychar = offset;
+        this.yycolumn = column;
+        this.zzLexicalState = lexerState;
     }
 
-    private TokenImpl token(int id, int category, boolean initial) {
+    private TokenImpl token(int id, int category) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(id, category, yytext(), left, right, initial);
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right);
     }
 %}
 %eofval{
-    return token(TokenImpl.EOF, Token.TEOF, true);
+    return token(TokenImpl.EOF, Token.TEOF);
 %eofval}
 
 LineTerminator = \r|\n|\r\n
@@ -76,16 +80,16 @@ Comment        = [^<>+\-\.,\[\]; \t\f\r\n]+ {InputCharacter}*
 
 %%
 
-";"  { return token(TokenImpl.HALT, Token.RESERVED,true); }
-">"  { return token(TokenImpl.INC,  Token.RESERVED,true); }
-"<"  { return token(TokenImpl.DEC,  Token.RESERVED,true); }
-"+"  { return token(TokenImpl.INCV, Token.RESERVED,true); }
-"-"  { return token(TokenImpl.DECV, Token.RESERVED,true); }
-"."  { return token(TokenImpl.PRINT,Token.RESERVED,true); }
-","  { return token(TokenImpl.LOAD, Token.RESERVED,true); }
-"["  { return token(TokenImpl.LOOP, Token.RESERVED,true); }
-"]"  { return token(TokenImpl.ENDL, Token.RESERVED,true); }
+";"  { return token(TokenImpl.HALT, Token.RESERVED); }
+">"  { return token(TokenImpl.INC,  Token.RESERVED); }
+"<"  { return token(TokenImpl.DEC,  Token.RESERVED); }
+"+"  { return token(TokenImpl.INCV, Token.RESERVED); }
+"-"  { return token(TokenImpl.DECV, Token.RESERVED); }
+"."  { return token(TokenImpl.PRINT,Token.RESERVED); }
+","  { return token(TokenImpl.LOAD, Token.RESERVED); }
+"["  { return token(TokenImpl.LOOP, Token.RESERVED); }
+"]"  { return token(TokenImpl.ENDL, Token.RESERVED); }
 
-{Comment}          { return token(TokenImpl.TCOMMENT, Token.COMMENT,true); }
-{WhiteSpace}+      { return token(TokenImpl.TCOMMENT, Token.COMMENT,true); }
-{LineTerminator}+  { return token(TokenImpl.TCOMMENT, Token.COMMENT,true); }
+{Comment}          { return token(TokenImpl.TCOMMENT, Token.COMMENT); }
+{WhiteSpace}+      { return token(TokenImpl.TCOMMENT, Token.COMMENT); }
+{LineTerminator}+  { return token(TokenImpl.TCOMMENT, Token.COMMENT); }

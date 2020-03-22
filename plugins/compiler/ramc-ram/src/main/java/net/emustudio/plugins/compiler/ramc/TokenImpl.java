@@ -24,18 +24,18 @@ import net.emustudio.emulib.plugins.compiler.Token;
 
 public class TokenImpl extends ComplexSymbol implements Token, Symbols {
     private final int category;
-    private final boolean initial;
+    private final int lexerState;
 
-    public TokenImpl(int id, int category, String text, Location left, Location right, boolean initial) {
+    public TokenImpl(int id, int category, int lexerState, String text, Location left, Location right) {
         super(text, id, left, right);
-        this.initial = initial;
         this.category = category;
+        this.lexerState = lexerState;
     }
 
-    public TokenImpl(int id, int category, String text, Location left, Location right, Object value, boolean initial) {
+    public TokenImpl(int id, int category, int lexerState, String text, Location left, Location right, Object value) {
         super(text, id, left, right, value);
-        this.initial = initial;
         this.category = category;
+        this.lexerState = lexerState;
     }
 
     @Override
@@ -79,7 +79,7 @@ public class TokenImpl extends ComplexSymbol implements Token, Symbols {
     }
 
     @Override
-    public boolean isInitialLexicalState() {
-        return initial;
+    public int getLexerState() {
+        return lexerState;
     }
 }

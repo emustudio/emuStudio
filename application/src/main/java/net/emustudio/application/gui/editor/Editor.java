@@ -10,15 +10,15 @@ public interface Editor {
 
     void newFile();
 
-    void openFile();
+    boolean openFile();
 
-    void openFile(String fileName);
+    boolean openFile(String fileName);
 
     boolean saveFile();
 
-    boolean saveFile(boolean showDialogIfFileIsInvalid);
+    boolean saveFileAs();
 
-    boolean saveFileWithConfirmation();
+    boolean isDirty();
 
     String getText();
 

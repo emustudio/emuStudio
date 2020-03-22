@@ -68,18 +68,19 @@ public class REditor implements Editor {
     }
 
     @Override
-    public boolean saveFile(boolean showDialogIfFileIsInvalid) {
+    public boolean isDirty() {
+        return textPane.isDirty();
+    }
+
+    @Override
+    public boolean saveFile() {
         Optional<File> fileSource = Optional.ofNullable(textPane.getFileFullPath()).map(File::new);
         if (isnew || fileSource.isEmpty() || fileSource.filter(File::canWrite).isEmpty()) {
-            if (showDialogIfFileIsInvalid) {
-                return saveFile();
-            } else {
-                dialogs.showError("Cannot save current file (either no file is selected or the file is not writable).");
-                return false;
-            }
+            return saveFileAs();
         } else {
             try {
                 textPane.save();
+                isnew = false;
                 return true;
             } catch (IOException e) {
                 LOGGER.error("Could not save file: " + fileSource.get().getPath(), e);
@@ -95,7 +96,7 @@ public class REditor implements Editor {
     }
 
     @Override
-    public boolean saveFile() {
+    public boolean saveFileAs() {
         List<FileExtensionsFilter> filters = sourceFileExtensions.stream()
             .map(FileExtensionsFilter::new).collect(Collectors.toList());
 
@@ -105,7 +106,7 @@ public class REditor implements Editor {
             .map(File::new)
             .orElse(new File(System.getProperty("user.dir")));
 
-        Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", currentDirectory.toPath(), filters);
+        Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", currentDirectory.toPath(), true, filters);
         if (savedPath.isPresent()) {
             try {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
@@ -120,51 +121,45 @@ public class REditor implements Editor {
     }
 
     @Override
-    public boolean saveFileWithConfirmation() {
-        if (textPane.isDirty()) {
-            Dialogs.DialogAnswer answer = dialogs.ask("File is not saved yet. Do you want to save it?");
-            if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
-                return (saveFile(true));
-            } else return answer != Dialogs.DialogAnswer.ANSWER_CANCEL;
+    public boolean openFile() {
+        List<FileExtensionsFilter> filters = new ArrayList<>();
+        List<String> sourceExtensions = sourceFileExtensions.stream()
+            .map(SourceFileExtension::getExtension).collect(Collectors.toList());
+        if (sourceExtensions.size() > 0) {
+            filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
         }
-        return true;
+
+        File currentDirectory = Optional
+            .ofNullable(textPane.getFileFullPath())
+            .filter(p -> !isnew)
+            .map(File::new)
+            .orElse(new File(System.getProperty("user.dir")));
+
+        Optional<Path> openedFile = dialogs.chooseFile(
+            "Open a file", "Open", currentDirectory.toPath(), false, filters
+        );
+        return openedFile.map(path -> openFile(path.toString())).orElse(false);
     }
 
     @Override
-    public void openFile() {
-        if (saveFileWithConfirmation()) {
-            List<FileExtensionsFilter> filters = new ArrayList<>();
-            List<String> sourceExtensions = sourceFileExtensions.stream()
-                .map(SourceFileExtension::getExtension).collect(Collectors.toList());
-            if (sourceExtensions.size() > 0) {
-                filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
-            }
-
-            File currentDirectory = Optional
-                .ofNullable(textPane.getFileFullPath())
-                .filter(p -> !isnew)
-                .map(File::new)
-                .orElse(new File(System.getProperty("user.dir")));
-
-            Optional<Path> openedFile = dialogs.chooseFile("Open a file", "Open", currentDirectory.toPath(), filters);
-            openedFile.ifPresent(path -> openFile(path.toString()));
-        }
-    }
-
-    @Override
-    public void openFile(String fileName) {
+    public boolean openFile(String fileName) {
         try {
             textPane.load(FileLocation.create(fileName));
+            textPane.discardAllEdits();
             isnew = false;
+            return true;
         } catch (IOException e) {
             LOGGER.error("Could not open file.", e);
             dialogs.showError("Could not open file: " + fileName + ". Please see log file for details.");
+            return false;
         }
     }
 
     @Override
     public void newFile() {
         textPane.setText("");
+        textPane.discardAllEdits();
+        textPane.setDirty(false);
         isnew = true;
     }
 

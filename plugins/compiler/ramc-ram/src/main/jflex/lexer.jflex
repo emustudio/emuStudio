@@ -42,7 +42,7 @@ import java.io.IOException;
 
 %{
     @Override
-    public TokenImpl getSymbol() throws IOException {
+    public Token getToken() throws IOException {
         return next_token();
     }
 
@@ -52,30 +52,32 @@ import java.io.IOException;
         this.yyline = yyline;
         this.yychar = yychar;
         this.yycolumn = yycolumn;
-        yybegin(YYINITIAL);
     }
-    
+
     @Override
-    public void reset() {
-        yyline = yychar = yycolumn = 0;
-        yybegin(YYINITIAL);
+    public void reset(Reader in, int line, int offset, int column, int lexerState) {
+        yyreset(in);
+        this.yyline = line;
+        this.yychar = offset;
+        this.yycolumn = column;
+        this.zzLexicalState = lexerState;
     }
 
-    private TokenImpl token(int id, int category, boolean initial) {
+    private TokenImpl token(int id, int category) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(id, category, yytext(), left, right, initial);
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right);
     }
 
-    private TokenImpl token(int id, int category, Object value, boolean initial) {
+    private TokenImpl token(int id, int category, Object value) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(id, category, yytext(), left, right, value, initial);
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right, value);
     }
 %}
 
 %eofval{
-  return token(TokenImpl.EOF, Token.TEOF, true);
+  return token(TokenImpl.EOF, Token.TEOF);
 %eofval}
 
 
@@ -91,45 +93,44 @@ MultiSpaceString = \"[^\"]*\"
 
 %%
 
-<YYINITIAL> "halt"  { return token(TokenImpl.HALT, Token.RESERVED,true); }
-<YYINITIAL> "read"  { return token(TokenImpl.READ, Token.RESERVED,true); }
-<YYINITIAL> "write" { return token(TokenImpl.WRITE, Token.RESERVED,true); }
-<YYINITIAL> "load"  { return token(TokenImpl.LOAD, Token.RESERVED,true); }
-<YYINITIAL> "store" { return token(TokenImpl.STORE, Token.RESERVED,true); }
-<YYINITIAL> "add"   { return token(TokenImpl.ADD,Token.RESERVED,true); }
-<YYINITIAL> "sub"   { return token(TokenImpl.SUB, Token.RESERVED,true); }
-<YYINITIAL> "mul"   { return token(TokenImpl.MUL, Token.RESERVED,true); }
-<YYINITIAL> "div"   { return token(TokenImpl.DIV, Token.RESERVED,true); }
-<YYINITIAL> "jmp"   { yybegin(IDENTIFIER); return token(TokenImpl.JMP, Token.RESERVED,true); }
-<YYINITIAL> "jgtz"  { yybegin(IDENTIFIER); return token(TokenImpl.JGTZ, Token.RESERVED,true); }
-<YYINITIAL> "jz"    { yybegin(IDENTIFIER); return token(TokenImpl.JZ, Token.RESERVED,true); }
+<YYINITIAL> "halt"  { return token(TokenImpl.HALT, Token.RESERVED); }
+<YYINITIAL> "read"  { return token(TokenImpl.READ, Token.RESERVED); }
+<YYINITIAL> "write" { return token(TokenImpl.WRITE, Token.RESERVED); }
+<YYINITIAL> "load"  { return token(TokenImpl.LOAD, Token.RESERVED); }
+<YYINITIAL> "store" { return token(TokenImpl.STORE, Token.RESERVED); }
+<YYINITIAL> "add"   { return token(TokenImpl.ADD,Token.RESERVED); }
+<YYINITIAL> "sub"   { return token(TokenImpl.SUB, Token.RESERVED); }
+<YYINITIAL> "mul"   { return token(TokenImpl.MUL, Token.RESERVED); }
+<YYINITIAL> "div"   { return token(TokenImpl.DIV, Token.RESERVED); }
+<YYINITIAL> "jmp"   { yybegin(IDENTIFIER); return token(TokenImpl.JMP, Token.RESERVED); }
+<YYINITIAL> "jgtz"  { yybegin(IDENTIFIER); return token(TokenImpl.JGTZ, Token.RESERVED); }
+<YYINITIAL> "jz"    { yybegin(IDENTIFIER); return token(TokenImpl.JZ, Token.RESERVED); }
 
-<YYINITIAL> "="     { yybegin(STRING); return token(TokenImpl.DIRECT, Token.OPERATOR,true); }
-<YYINITIAL> "*"     { return token(TokenImpl.INDIRECT, Token.OPERATOR,true); }
+<YYINITIAL> "="     { yybegin(STRING); return token(TokenImpl.DIRECT, Token.OPERATOR); }
+<YYINITIAL> "*"     { return token(TokenImpl.INDIRECT, Token.OPERATOR); }
 
-<YYINITIAL> "<input>" { yybegin(INPUT); return token(TokenImpl.INPUT, Token.PREPROCESSOR, true); }
+<YYINITIAL> "<input>" { yybegin(INPUT); return token(TokenImpl.INPUT, Token.PREPROCESSOR); }
 
 {WhiteSpace}   { }
-<YYINITIAL> {Eol} { return token(TokenImpl.EOL, Token.SEPARATOR,null,true); }
-{Eol} { yybegin(YYINITIAL); return token(TokenImpl.EOL, Token.SEPARATOR,null,false); }
+<YYINITIAL> {Eol} { return token(TokenImpl.EOL, Token.SEPARATOR,null); }
+{Eol} { yybegin(YYINITIAL); return token(TokenImpl.EOL, Token.SEPARATOR,null); }
 
-<YYINITIAL> {Comment} { yybegin(YYINITIAL); return token(TokenImpl.TCOMMENT, Token.COMMENT,true); }
-{Comment}             { yybegin(YYINITIAL); return token(TokenImpl.TCOMMENT, Token.COMMENT,false); }
+<YYINITIAL> {Comment} { yybegin(YYINITIAL); return token(TokenImpl.TCOMMENT, Token.COMMENT); }
+{Comment}             { yybegin(YYINITIAL); return token(TokenImpl.TCOMMENT, Token.COMMENT); }
 
-<YYINITIAL> {Number} { return token(TokenImpl.NUMBER, Token.LITERAL,yytext(),true); }
-<YYINITIAL> {Label} { return token(TokenImpl.LABELL, Token.LABEL,yytext(),true); }
-<IDENTIFIER> {Identifier} { yybegin(YYINITIAL); return token(TokenImpl.IDENT, Token.IDENTIFIER,yytext(),false); }
+<YYINITIAL> {Number} { return token(TokenImpl.NUMBER, Token.LITERAL,yytext()); }
+<YYINITIAL> {Label} { return token(TokenImpl.LABELL, Token.LABEL,yytext()); }
+<IDENTIFIER> {Identifier} { yybegin(YYINITIAL); return token(TokenImpl.IDENT, Token.IDENTIFIER,yytext()); }
 
-<STRING> {String} { yybegin(YYINITIAL); return token(TokenImpl.STRING, Token.LITERAL,yytext(),false); }
+<STRING> {String} { yybegin(YYINITIAL); return token(TokenImpl.STRING, Token.LITERAL,yytext()); }
 <STRING> {MultiSpaceString} {
           yybegin(YYINITIAL);
           String tmp = yytext();
-          return token(TokenImpl.STRING, Token.LITERAL,tmp.substring(1,tmp.length()-1),false); }
+          return token(TokenImpl.STRING, Token.LITERAL,tmp.substring(1,tmp.length()-1)); }
 
-<INPUT> {String} { return token(TokenImpl.STRING, Token.PREPROCESSOR,yytext(),false); }
+<INPUT> {String} { return token(TokenImpl.STRING, Token.PREPROCESSOR,yytext()); }
 <INPUT> {MultiSpaceString} {
           String tmp = yytext();
-          return token(TokenImpl.STRING, Token.PREPROCESSOR,tmp.substring(1,tmp.length()-1),false); }
+          return token(TokenImpl.STRING, Token.PREPROCESSOR,tmp.substring(1,tmp.length()-1)); }
 
-. { return token(TokenImpl.error, TokenImpl.ERROR,false); }
-
+. { return token(TokenImpl.error, TokenImpl.ERROR); }

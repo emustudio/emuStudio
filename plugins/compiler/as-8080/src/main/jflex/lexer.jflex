@@ -41,7 +41,7 @@ import java.io.Reader;
 
 %{
     @Override
-    public Token getSymbol() throws IOException {
+    public Token getToken() throws IOException {
         return next_token();
     }
 
@@ -54,26 +54,28 @@ import java.io.Reader;
     }
 
     @Override
-    public void reset() {
-        this.yyline = 0;
-        this.yychar = 0;
-        this.yycolumn = 0;
+    public void reset(Reader in, int line, int offset, int column, int lexerState) {
+        yyreset(in);
+        this.yyline = line;
+        this.yychar = offset;
+        this.yycolumn = column;
+        this.zzLexicalState = lexerState;
     }
 
-    private TokenImpl token(int id, int category, boolean initial) {
+    private TokenImpl token(int id, int category) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(id, category, yytext(), left, right, initial);
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right);
     }
 
-    private TokenImpl token(int id, int category, Object value, boolean initial) {
+    private TokenImpl token(int id, int category, Object value) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(id, category, yytext(), left, right, value, initial);
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right, value);
     }
 %}
 %eofval{
-    return token(TokenImpl.EOF, Token.TEOF, true);
+    return token(TokenImpl.EOF, Token.TEOF);
 %eofval}
 
 Comment =(";"[^\r\n]*)
@@ -97,134 +99,134 @@ Label ={Identifier}[\:]
 %%
 
 /* reserved words */
-"stc" { return token(TokenImpl.RESERVED_STC, Token.RESERVED, true);  }
-"cmc" { return token(TokenImpl.RESERVED_CMC, Token.RESERVED, true);  }
-"inr" { return token(TokenImpl.RESERVED_INR, Token.RESERVED, true);  }
-"dcr" { return token(TokenImpl.RESERVED_DCR, Token.RESERVED, true);  }
-"cma" { return token(TokenImpl.RESERVED_CMA, Token.RESERVED, true);  }
-"daa" { return token(TokenImpl.RESERVED_DAA, Token.RESERVED, true);  }
-"nop" { return token(TokenImpl.RESERVED_NOP, Token.RESERVED, true);  }
-"mov" { return token(TokenImpl.RESERVED_MOV, Token.RESERVED, true);  }
-"stax" { return token(TokenImpl.RESERVED_STAX, Token.RESERVED, true);  }
-"ldax" { return token(TokenImpl.RESERVED_LDAX, Token.RESERVED, true);  }
-"add" { return token(TokenImpl.RESERVED_ADD, Token.RESERVED, true);  }
-"adc" { return token(TokenImpl.RESERVED_ADC, Token.RESERVED, true);  }
-"sub" { return token(TokenImpl.RESERVED_SUB, Token.RESERVED, true);  }
-"sbb" { return token(TokenImpl.RESERVED_SBB, Token.RESERVED, true);  }
-"ana" { return token(TokenImpl.RESERVED_ANA, Token.RESERVED, true);  }
-"xra" { return token(TokenImpl.RESERVED_XRA, Token.RESERVED, true);  }
-"ora" { return token(TokenImpl.RESERVED_ORA, Token.RESERVED, true);  }
-"cmp" { return token(TokenImpl.RESERVED_CMP, Token.RESERVED, true);  }
-"rlc" { return token(TokenImpl.RESERVED_RLC, Token.RESERVED, true);  }
-"rrc" { return token(TokenImpl.RESERVED_RRC, Token.RESERVED, true);  }
-"ral" { return token(TokenImpl.RESERVED_RAL, Token.RESERVED, true);  }
-"rar" { return token(TokenImpl.RESERVED_RAR, Token.RESERVED, true);  }
-"push" { return token(TokenImpl.RESERVED_PUSH, Token.RESERVED, true);  }
-"pop" { return token(TokenImpl.RESERVED_POP, Token.RESERVED, true);  }
-"dad" { return token(TokenImpl.RESERVED_DAD, Token.RESERVED, true);  }
-"inx" { return token(TokenImpl.RESERVED_INX, Token.RESERVED, true);  }
-"dcx" { return token(TokenImpl.RESERVED_DCX, Token.RESERVED, true);  }
-"xchg" { return token(TokenImpl.RESERVED_XCHG, Token.RESERVED, true);  }
-"xthl" { return token(TokenImpl.RESERVED_XTHL, Token.RESERVED, true);  }
-"sphl" { return token(TokenImpl.RESERVED_SPHL, Token.RESERVED, true);  }
-"lxi" { return token(TokenImpl.RESERVED_LXI, Token.RESERVED, true);  }
-"mvi" { return token(TokenImpl.RESERVED_MVI, Token.RESERVED, true);  }
-"adi" { return token(TokenImpl.RESERVED_ADI, Token.RESERVED, true);  }
-"aci" { return token(TokenImpl.RESERVED_ACI, Token.RESERVED, true);  }
-"sui" { return token(TokenImpl.RESERVED_SUI, Token.RESERVED, true);  }
-"sbi" { return token(TokenImpl.RESERVED_SBI, Token.RESERVED, true);  }
-"ani" { return token(TokenImpl.RESERVED_ANI, Token.RESERVED, true);  }
-"xri" { return token(TokenImpl.RESERVED_XRI, Token.RESERVED, true);  }
-"ori" { return token(TokenImpl.RESERVED_ORI, Token.RESERVED, true);  }
-"cpi" { return token(TokenImpl.RESERVED_CPI, Token.RESERVED, true);  }
-"sta" { return token(TokenImpl.RESERVED_STA, Token.RESERVED, true);  }
-"lda" { return token(TokenImpl.RESERVED_LDA, Token.RESERVED, true);  }
-"shld" { return token(TokenImpl.RESERVED_SHLD, Token.RESERVED, true);  }
-"lhld" { return token(TokenImpl.RESERVED_LHLD, Token.RESERVED, true);  }
-"pchl" { return token(TokenImpl.RESERVED_PCHL, Token.RESERVED, true);  }
-"jmp" { return token(TokenImpl.RESERVED_JMP, Token.RESERVED, true);  }
-"jc" { return token(TokenImpl.RESERVED_JC, Token.RESERVED, true);  }
-"jnc" { return token(TokenImpl.RESERVED_JNC, Token.RESERVED, true);  }
-"jz" { return token(TokenImpl.RESERVED_JZ, Token.RESERVED, true);  }
-"jnz"  { return token(TokenImpl.RESERVED_JNZ, Token.RESERVED, true);  }
-"jp"  { return token(TokenImpl.RESERVED_JP, Token.RESERVED, true);  }
-"jm"  { return token(TokenImpl.RESERVED_JM, Token.RESERVED, true);  }
-"jpe"  { return token(TokenImpl.RESERVED_JPE, Token.RESERVED, true);  }
-"jpo"  { return token(TokenImpl.RESERVED_JPO, Token.RESERVED, true);  }
-"call"  { return token(TokenImpl.RESERVED_CALL, Token.RESERVED, true);  }
-"cc"  { return token(TokenImpl.RESERVED_CC, Token.RESERVED, true);  }
-"cnc"  { return token(TokenImpl.RESERVED_CNC, Token.RESERVED, true);  }
-"cz"  { return token(TokenImpl.RESERVED_CZ, Token.RESERVED, true);  }
-"cnz"  { return token(TokenImpl.RESERVED_CNZ, Token.RESERVED, true);  }
-"cp"  { return token(TokenImpl.RESERVED_CP, Token.RESERVED, true);  }
-"cm" { return token(TokenImpl.RESERVED_CM, Token.RESERVED, true);  }
-"cpe" { return token(TokenImpl.RESERVED_CPE, Token.RESERVED, true);  }
-"cpo"  { return token(TokenImpl.RESERVED_CPO, Token.RESERVED, true);  }
-"ret"  { return token(TokenImpl.RESERVED_RET, Token.RESERVED, true);  }
-"rc"  { return token(TokenImpl.RESERVED_RC, Token.RESERVED, true);  }
-"rnc"  { return token(TokenImpl.RESERVED_RNC, Token.RESERVED, true);  }
-"rz"  { return token(TokenImpl.RESERVED_RZ, Token.RESERVED, true);  }
-"rnz" { return token(TokenImpl.RESERVED_RNZ, Token.RESERVED, true);  }
-"rm" { return token(TokenImpl.RESERVED_RM, Token.RESERVED, true);  }
-"rp" { return token(TokenImpl.RESERVED_RP, Token.RESERVED, true);  }
-"rpe" { return token(TokenImpl.RESERVED_RPE, Token.RESERVED, true);  }
-"rpo" { return token(TokenImpl.RESERVED_RPO, Token.RESERVED, true);  }
-"rst" { return token(TokenImpl.RESERVED_RST, Token.RESERVED, true);  }
-"ei" { return token(TokenImpl.RESERVED_EI, Token.RESERVED, true);  }
-"di" { return token(TokenImpl.RESERVED_DI, Token.RESERVED, true);  }
-"in" { return token(TokenImpl.RESERVED_IN, Token.RESERVED, true);  }
-"out" { return token(TokenImpl.RESERVED_OUT, Token.RESERVED, true);  }
-"hlt" { return token(TokenImpl.RESERVED_HLT, Token.RESERVED, true);  }
+"stc" { return token(TokenImpl.RESERVED_STC, Token.RESERVED);  }
+"cmc" { return token(TokenImpl.RESERVED_CMC, Token.RESERVED);  }
+"inr" { return token(TokenImpl.RESERVED_INR, Token.RESERVED);  }
+"dcr" { return token(TokenImpl.RESERVED_DCR, Token.RESERVED);  }
+"cma" { return token(TokenImpl.RESERVED_CMA, Token.RESERVED);  }
+"daa" { return token(TokenImpl.RESERVED_DAA, Token.RESERVED);  }
+"nop" { return token(TokenImpl.RESERVED_NOP, Token.RESERVED);  }
+"mov" { return token(TokenImpl.RESERVED_MOV, Token.RESERVED);  }
+"stax" { return token(TokenImpl.RESERVED_STAX, Token.RESERVED);  }
+"ldax" { return token(TokenImpl.RESERVED_LDAX, Token.RESERVED);  }
+"add" { return token(TokenImpl.RESERVED_ADD, Token.RESERVED);  }
+"adc" { return token(TokenImpl.RESERVED_ADC, Token.RESERVED);  }
+"sub" { return token(TokenImpl.RESERVED_SUB, Token.RESERVED);  }
+"sbb" { return token(TokenImpl.RESERVED_SBB, Token.RESERVED);  }
+"ana" { return token(TokenImpl.RESERVED_ANA, Token.RESERVED);  }
+"xra" { return token(TokenImpl.RESERVED_XRA, Token.RESERVED);  }
+"ora" { return token(TokenImpl.RESERVED_ORA, Token.RESERVED);  }
+"cmp" { return token(TokenImpl.RESERVED_CMP, Token.RESERVED);  }
+"rlc" { return token(TokenImpl.RESERVED_RLC, Token.RESERVED);  }
+"rrc" { return token(TokenImpl.RESERVED_RRC, Token.RESERVED);  }
+"ral" { return token(TokenImpl.RESERVED_RAL, Token.RESERVED);  }
+"rar" { return token(TokenImpl.RESERVED_RAR, Token.RESERVED);  }
+"push" { return token(TokenImpl.RESERVED_PUSH, Token.RESERVED);  }
+"pop" { return token(TokenImpl.RESERVED_POP, Token.RESERVED);  }
+"dad" { return token(TokenImpl.RESERVED_DAD, Token.RESERVED);  }
+"inx" { return token(TokenImpl.RESERVED_INX, Token.RESERVED);  }
+"dcx" { return token(TokenImpl.RESERVED_DCX, Token.RESERVED);  }
+"xchg" { return token(TokenImpl.RESERVED_XCHG, Token.RESERVED);  }
+"xthl" { return token(TokenImpl.RESERVED_XTHL, Token.RESERVED);  }
+"sphl" { return token(TokenImpl.RESERVED_SPHL, Token.RESERVED);  }
+"lxi" { return token(TokenImpl.RESERVED_LXI, Token.RESERVED);  }
+"mvi" { return token(TokenImpl.RESERVED_MVI, Token.RESERVED);  }
+"adi" { return token(TokenImpl.RESERVED_ADI, Token.RESERVED);  }
+"aci" { return token(TokenImpl.RESERVED_ACI, Token.RESERVED);  }
+"sui" { return token(TokenImpl.RESERVED_SUI, Token.RESERVED);  }
+"sbi" { return token(TokenImpl.RESERVED_SBI, Token.RESERVED);  }
+"ani" { return token(TokenImpl.RESERVED_ANI, Token.RESERVED);  }
+"xri" { return token(TokenImpl.RESERVED_XRI, Token.RESERVED);  }
+"ori" { return token(TokenImpl.RESERVED_ORI, Token.RESERVED);  }
+"cpi" { return token(TokenImpl.RESERVED_CPI, Token.RESERVED);  }
+"sta" { return token(TokenImpl.RESERVED_STA, Token.RESERVED);  }
+"lda" { return token(TokenImpl.RESERVED_LDA, Token.RESERVED);  }
+"shld" { return token(TokenImpl.RESERVED_SHLD, Token.RESERVED);  }
+"lhld" { return token(TokenImpl.RESERVED_LHLD, Token.RESERVED);  }
+"pchl" { return token(TokenImpl.RESERVED_PCHL, Token.RESERVED);  }
+"jmp" { return token(TokenImpl.RESERVED_JMP, Token.RESERVED);  }
+"jc" { return token(TokenImpl.RESERVED_JC, Token.RESERVED);  }
+"jnc" { return token(TokenImpl.RESERVED_JNC, Token.RESERVED);  }
+"jz" { return token(TokenImpl.RESERVED_JZ, Token.RESERVED);  }
+"jnz"  { return token(TokenImpl.RESERVED_JNZ, Token.RESERVED);  }
+"jp"  { return token(TokenImpl.RESERVED_JP, Token.RESERVED);  }
+"jm"  { return token(TokenImpl.RESERVED_JM, Token.RESERVED);  }
+"jpe"  { return token(TokenImpl.RESERVED_JPE, Token.RESERVED);  }
+"jpo"  { return token(TokenImpl.RESERVED_JPO, Token.RESERVED);  }
+"call"  { return token(TokenImpl.RESERVED_CALL, Token.RESERVED);  }
+"cc"  { return token(TokenImpl.RESERVED_CC, Token.RESERVED);  }
+"cnc"  { return token(TokenImpl.RESERVED_CNC, Token.RESERVED);  }
+"cz"  { return token(TokenImpl.RESERVED_CZ, Token.RESERVED);  }
+"cnz"  { return token(TokenImpl.RESERVED_CNZ, Token.RESERVED);  }
+"cp"  { return token(TokenImpl.RESERVED_CP, Token.RESERVED);  }
+"cm" { return token(TokenImpl.RESERVED_CM, Token.RESERVED);  }
+"cpe" { return token(TokenImpl.RESERVED_CPE, Token.RESERVED);  }
+"cpo"  { return token(TokenImpl.RESERVED_CPO, Token.RESERVED);  }
+"ret"  { return token(TokenImpl.RESERVED_RET, Token.RESERVED);  }
+"rc"  { return token(TokenImpl.RESERVED_RC, Token.RESERVED);  }
+"rnc"  { return token(TokenImpl.RESERVED_RNC, Token.RESERVED);  }
+"rz"  { return token(TokenImpl.RESERVED_RZ, Token.RESERVED);  }
+"rnz" { return token(TokenImpl.RESERVED_RNZ, Token.RESERVED);  }
+"rm" { return token(TokenImpl.RESERVED_RM, Token.RESERVED);  }
+"rp" { return token(TokenImpl.RESERVED_RP, Token.RESERVED);  }
+"rpe" { return token(TokenImpl.RESERVED_RPE, Token.RESERVED);  }
+"rpo" { return token(TokenImpl.RESERVED_RPO, Token.RESERVED);  }
+"rst" { return token(TokenImpl.RESERVED_RST, Token.RESERVED);  }
+"ei" { return token(TokenImpl.RESERVED_EI, Token.RESERVED);  }
+"di" { return token(TokenImpl.RESERVED_DI, Token.RESERVED);  }
+"in" { return token(TokenImpl.RESERVED_IN, Token.RESERVED);  }
+"out" { return token(TokenImpl.RESERVED_OUT, Token.RESERVED);  }
+"hlt" { return token(TokenImpl.RESERVED_HLT, Token.RESERVED);  }
 
 /* preprocessor words */
-"org" { return token(TokenImpl.PREPROCESSOR_ORG, Token.PREPROCESSOR, true);  }
-"equ" { return token(TokenImpl.PREPROCESSOR_EQU, Token.PREPROCESSOR, true);  }
-"set" { return token(TokenImpl.PREPROCESSOR_SET, Token.PREPROCESSOR, true);  }
-"include" { return token(TokenImpl.PREPROCESSOR_INCLUDE, Token.PREPROCESSOR, true);  }
-"if" { return token(TokenImpl.PREPROCESSOR_IF, Token.PREPROCESSOR, true);  }
-"endif" { return token(TokenImpl.PREPROCESSOR_ENDIF, Token.PREPROCESSOR, true);  }
-"macro" { return token(TokenImpl.PREPROCESSOR_MACRO, Token.PREPROCESSOR, true);  }
-"endm" { return token(TokenImpl.PREPROCESSOR_ENDM, Token.PREPROCESSOR, true);  }
-"db" { return token(TokenImpl.PREPROCESSOR_DB, Token.PREPROCESSOR, true);  }
-"dw" { return token(TokenImpl.PREPROCESSOR_DW, Token.PREPROCESSOR, true);  }
-"ds" { return token(TokenImpl.PREPROCESSOR_DS, Token.PREPROCESSOR, true);  }
-"$" { return token(TokenImpl.PREPROCESSOR_ADDR, Token.PREPROCESSOR, true);  }
+"org" { return token(TokenImpl.PREPROCESSOR_ORG, Token.PREPROCESSOR);  }
+"equ" { return token(TokenImpl.PREPROCESSOR_EQU, Token.PREPROCESSOR);  }
+"set" { return token(TokenImpl.PREPROCESSOR_SET, Token.PREPROCESSOR);  }
+"include" { return token(TokenImpl.PREPROCESSOR_INCLUDE, Token.PREPROCESSOR);  }
+"if" { return token(TokenImpl.PREPROCESSOR_IF, Token.PREPROCESSOR);  }
+"endif" { return token(TokenImpl.PREPROCESSOR_ENDIF, Token.PREPROCESSOR);  }
+"macro" { return token(TokenImpl.PREPROCESSOR_MACRO, Token.PREPROCESSOR);  }
+"endm" { return token(TokenImpl.PREPROCESSOR_ENDM, Token.PREPROCESSOR);  }
+"db" { return token(TokenImpl.PREPROCESSOR_DB, Token.PREPROCESSOR);  }
+"dw" { return token(TokenImpl.PREPROCESSOR_DW, Token.PREPROCESSOR);  }
+"ds" { return token(TokenImpl.PREPROCESSOR_DS, Token.PREPROCESSOR);  }
+"$" { return token(TokenImpl.PREPROCESSOR_ADDR, Token.PREPROCESSOR);  }
 
 /* registers */
-"a" { return token(TokenImpl.REGISTERS_A, Token.REGISTER, true);  }
-"b" { return token(TokenImpl.REGISTERS_B, Token.REGISTER, true);  }
-"c" { return token(TokenImpl.REGISTERS_C, Token.REGISTER, true);  }
-"d" { return token(TokenImpl.REGISTERS_D, Token.REGISTER, true);  }
-"e" { return token(TokenImpl.REGISTERS_E, Token.REGISTER, true);  }
-"h" { return token(TokenImpl.REGISTERS_H, Token.REGISTER, true);  }
-"l" { return token(TokenImpl.REGISTERS_L, Token.REGISTER, true);  }
-"m" { return token(TokenImpl.REGISTERS_M, Token.REGISTER, true);  }
-"psw" { return token(TokenImpl.REGISTERS_PSW, Token.REGISTER, true);  }
-"sp" { return token(TokenImpl.REGISTERS_SP, Token.REGISTER, true);  }
+"a" { return token(TokenImpl.REGISTERS_A, Token.REGISTER);  }
+"b" { return token(TokenImpl.REGISTERS_B, Token.REGISTER);  }
+"c" { return token(TokenImpl.REGISTERS_C, Token.REGISTER);  }
+"d" { return token(TokenImpl.REGISTERS_D, Token.REGISTER);  }
+"e" { return token(TokenImpl.REGISTERS_E, Token.REGISTER);  }
+"h" { return token(TokenImpl.REGISTERS_H, Token.REGISTER);  }
+"l" { return token(TokenImpl.REGISTERS_L, Token.REGISTER);  }
+"m" { return token(TokenImpl.REGISTERS_M, Token.REGISTER);  }
+"psw" { return token(TokenImpl.REGISTERS_PSW, Token.REGISTER);  }
+"sp" { return token(TokenImpl.REGISTERS_SP, Token.REGISTER);  }
 
 /* separators */
-"(" { return token(TokenImpl.SEPARATOR_LPAR, Token.SEPARATOR, true);  }
-")" { return token(TokenImpl.SEPARATOR_RPAR, Token.SEPARATOR, true);  }
-"," { return token(TokenImpl.SEPARATOR_COMMA, Token.SEPARATOR, true);  }
-{Eol} { return token(TokenImpl.SEPARATOR_EOL, Token.SEPARATOR, true);  }
+"(" { return token(TokenImpl.SEPARATOR_LPAR, Token.SEPARATOR);  }
+")" { return token(TokenImpl.SEPARATOR_RPAR, Token.SEPARATOR);  }
+"," { return token(TokenImpl.SEPARATOR_COMMA, Token.SEPARATOR);  }
+{Eol} { return token(TokenImpl.SEPARATOR_EOL, Token.SEPARATOR);  }
 {WhiteSpace}+ { /* ignore white spaces */ }
 
 /* operators */
-"+" { return token(TokenImpl.OPERATOR_ADD, Token.OPERATOR, true);  }
-"-" { return token(TokenImpl.OPERATOR_SUBTRACT, Token.OPERATOR, true);  }
-"*" { return token(TokenImpl.OPERATOR_MULTIPLY, Token.OPERATOR, true);  }
-"/" { return token(TokenImpl.OPERATOR_DIVIDE, Token.OPERATOR, true);  }
-"=" { return token(TokenImpl.OPERATOR_EQUAL, Token.OPERATOR, true);  }
-"mod" { return token(TokenImpl.OPERATOR_MOD, Token.OPERATOR, true);  }
-"shr" { return token(TokenImpl.OPERATOR_SHR, Token.OPERATOR, true);  }
-"shl" { return token(TokenImpl.OPERATOR_SHL, Token.OPERATOR, true);  }
-"not" { return token(TokenImpl.OPERATOR_NOT, Token.OPERATOR, true);  }
-"and" { return token(TokenImpl.OPERATOR_AND, Token.OPERATOR, true);  }
-"or" { return token(TokenImpl.OPERATOR_OR, Token.OPERATOR, true);  }
-"xor" { return token(TokenImpl.OPERATOR_XOR, Token.OPERATOR, true);  }
+"+" { return token(TokenImpl.OPERATOR_ADD, Token.OPERATOR);  }
+"-" { return token(TokenImpl.OPERATOR_SUBTRACT, Token.OPERATOR);  }
+"*" { return token(TokenImpl.OPERATOR_MULTIPLY, Token.OPERATOR);  }
+"/" { return token(TokenImpl.OPERATOR_DIVIDE, Token.OPERATOR);  }
+"=" { return token(TokenImpl.OPERATOR_EQUAL, Token.OPERATOR);  }
+"mod" { return token(TokenImpl.OPERATOR_MOD, Token.OPERATOR);  }
+"shr" { return token(TokenImpl.OPERATOR_SHR, Token.OPERATOR);  }
+"shl" { return token(TokenImpl.OPERATOR_SHL, Token.OPERATOR);  }
+"not" { return token(TokenImpl.OPERATOR_NOT, Token.OPERATOR);  }
+"and" { return token(TokenImpl.OPERATOR_AND, Token.OPERATOR);  }
+"or" { return token(TokenImpl.OPERATOR_OR, Token.OPERATOR);  }
+"xor" { return token(TokenImpl.OPERATOR_XOR, Token.OPERATOR);  }
 
 /* comment */
-{Comment} { return token(TokenImpl.TCOMMENT, Token.COMMENT, true);  }
+{Comment} { return token(TokenImpl.TCOMMENT, Token.COMMENT);  }
 
 /* literals */
 {DecimalNum} {
@@ -247,7 +249,7 @@ Label ={Identifier}[\:]
         tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
         tokenType = Token.ERROR;
     }
-    return token(tokenId, tokenType, (Object)num, true);
+    return token(tokenId, tokenType, (Object)num);
 }
 {OctalNum} {
     String text = yytext().replaceFirst("[oOqQ]","");
@@ -269,7 +271,7 @@ Label ={Identifier}[\:]
         tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
         tokenType = Token.ERROR;
     }
-    return token(tokenId, tokenType, (Object)num, true);
+    return token(tokenId, tokenType, (Object)num);
 }
 {HexaNum} {
     String text = yytext().replaceFirst("[hH]","");
@@ -291,7 +293,7 @@ Label ={Identifier}[\:]
         tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
         tokenType = Token.ERROR;
     }
-    return token(tokenId, tokenType, (Object)num, true);
+    return token(tokenId, tokenType, (Object)num);
 }
 {BinaryNum} {
     String text = yytext().replaceFirst("[bB]","");
@@ -313,16 +315,16 @@ Label ={Identifier}[\:]
         tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
         tokenType = Token.ERROR;
     }
-    return token(tokenId, tokenType, (Object)num, true);
+    return token(tokenId, tokenType, (Object)num);
 }
 {UnclosedString} {
-    return token(TokenImpl.ERROR_UNCLOSED_STRING, Token.ERROR, true);
+    return token(TokenImpl.ERROR_UNCLOSED_STRING, Token.ERROR);
 }
 {String} {
     String text = yytext();
     String val = text.substring(1,text.length()-1);
     if (val.length() > 1) {
-        return token(TokenImpl.LITERAL_STRING, Token.LITERAL, val, true);
+        return token(TokenImpl.LITERAL_STRING, Token.LITERAL, val);
     } else {
         byte[] b = val.getBytes();
         int numval = b[0];
@@ -330,17 +332,17 @@ Label ={Identifier}[\:]
             numval = (numval <<8) + b[i];
 
         int tokenId = (numval > 255) ? TokenImpl.LITERAL_DECIMAL_16BIT : TokenImpl.LITERAL_DECIMAL_8BIT;
-        return token(tokenId, Token.LITERAL, numval, true);
+        return token(tokenId, Token.LITERAL, numval);
     }
 }
 {Identifier} {
-    return token(TokenImpl.TIDENTIFIER, Token.IDENTIFIER, yytext().toUpperCase(), true);
+    return token(TokenImpl.TIDENTIFIER, Token.IDENTIFIER, yytext().toUpperCase());
 }
 {Label} {
     String text = yytext();
     Object val = text.substring(0,text.length()-1).toUpperCase();
-    return token(TokenImpl.TLABEL, Token.LABEL, val, true);
+    return token(TokenImpl.TLABEL, Token.LABEL, val);
 }
 . {
-    return token(TokenImpl.ERROR_UNKNOWN_TOKEN, Token.ERROR, true);
+    return token(TokenImpl.ERROR_UNKNOWN_TOKEN, Token.ERROR);
 }

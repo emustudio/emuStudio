@@ -42,35 +42,37 @@ import java.io.Reader;
 
 %{
     @Override
-	public TokenImpl getSymbol() throws IOException{
-		return next_token();
-	}
+    public Token getToken() throws IOException {
+        return next_token();
+    }
 
-	@Override
-	public void reset(Reader in, int yyline, int yychar, int yycolumn){	
-		yyreset(in);
-		this.yyline = yyline;
-		this.yychar = yychar;
-		this.yycolumn = yycolumn;
-	}
+    @Override
+    public void reset(Reader in, int yyline, int yychar, int yycolumn) {
+        yyreset(in);
+        this.yyline = yyline;
+        this.yychar = yychar;
+        this.yycolumn = yycolumn;
+    }
 
-	@Override
-	public void reset(){
-		this.yyline = 0;
-		this.yychar = 0;
-		this.yycolumn = 0;
-	}	
+    @Override
+    public void reset(Reader in, int line, int offset, int column, int lexerState) {
+        yyreset(in);
+        this.yyline = line;
+        this.yychar = offset;
+        this.yycolumn = column;
+        this.zzLexicalState = lexerState;
+    }
 
     private TokenImpl token(int id, int category) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(id, category, yytext(), left, right);
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right);
     }
 
     private TokenImpl token(int id, int category, Object value) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(id, category, yytext(), left, right, value);
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right, value);
     }
 %}
 

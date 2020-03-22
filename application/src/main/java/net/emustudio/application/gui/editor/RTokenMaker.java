@@ -33,55 +33,45 @@ public class RTokenMaker extends AbstractTokenMaker {
         // 'newStartOffset+currentTokenStart'.
         int newStartOffset = startOffset - offset;
 
-        int currentTokenStart = offset;
-        boolean currentTokenInitialLexicalState = initialTokenType == Token.NULL;
-
-        System.out.println("'" + text + "'; startOffset=" + startOffset + ", initialTokenType=" + initialTokenType);
-
         lexicalAnalyzer.reset(new StringReader(text.toString()), 0, startOffset, 0);
         for (int i = offset; i < end; ) {
-
             try {
-                if (currentTokenInitialLexicalState) {
-                    currentTokenStart = i;
-                }
+                int expectedTokenStart = i;
 
-                net.emustudio.emulib.plugins.compiler.Token token = lexicalAnalyzer.getSymbol();
-                System.out.println("Token: " + token);
-                System.out.println("  [" + token.getOffset() + "; " + token.getLength() + "] '" + token.getText() + "'");
-                System.out.println("  " + tokenTypeString(token.getType()));
+                net.emustudio.emulib.plugins.compiler.Token token = lexicalAnalyzer.getToken();
+                int tokenStart = token.getOffset();
+                int tokenEnd = tokenStart + token.getLength() - 1;
+                int skipChars = token.getLength();
 
-                currentTokenInitialLexicalState = token.isInitialLexicalState();
+                if (token.getType() != TEOF && token.getLength() > 0) {
+                    int tokenMakerType = getTokenMakerType(token.getType());
+                    if (tokenStart > expectedTokenStart) {
+                        skipChars += tokenStart - expectedTokenStart;
+                        // fill the gap
+                        addToken(
+                            text, expectedTokenStart, tokenStart - 1, Token.WHITESPACE,
+                            newStartOffset + expectedTokenStart
+                        );
+                    }
 
-                int length = token.getLength();
-                int tokenMakerType = getTokenMakerType(token.getType());
-
-                if (token.getType() == TEOF) {
+                    addToken(
+                        text, tokenStart, tokenEnd, tokenMakerType, newStartOffset + tokenStart
+                    );
+                } else {
+                    // fill the gap
+                    addToken(
+                        text, expectedTokenStart, end - 1, Token.WHITESPACE, newStartOffset + expectedTokenStart
+                    );
                     break;
                 }
 
-                if (token.getOffset() > currentTokenStart) {
-                    currentTokenStart = token.getOffset();
-                }
-
-                addToken(
-                    text, currentTokenStart, currentTokenStart + length, tokenMakerType,
-                    newStartOffset + currentTokenStart
-                );
-
-                i += length;
-            } catch (IOException dontknowyet) {
-                dontknowyet.printStackTrace();
-                // TODO
+                i += skipChars;
+            } catch (IOException donotlogit) {
+                donotlogit.printStackTrace();
             }
         }
 
-        if (currentTokenInitialLexicalState) {
-            addNullToken();
-        } else {
-            addToken(text, currentTokenStart, end - 1, Token.COMMENT_MULTILINE, newStartOffset + currentTokenStart);
-        }
-
+        addNullToken();
         return firstToken;
     }
 
@@ -115,34 +105,6 @@ public class RTokenMaker extends AbstractTokenMaker {
             case ERROR:
                 return Token.ERROR_IDENTIFIER;
         }
-        return Token.NULL;
-    }
-
-    private String tokenTypeString(int type) {
-        switch (type) {
-            case TEOF:
-                return "TEOF";
-            case RESERVED:
-                return "RESERVED";
-            case PREPROCESSOR:
-                return "PREPROCESSOR";
-            case REGISTER:
-                return "REGISTER";
-            case SEPARATOR:
-                return "SEPARATOR";
-            case OPERATOR:
-                return "OPERATOR";
-            case COMMENT:
-                return "COMMENT";
-            case LITERAL:
-                return "LITERAL";
-            case IDENTIFIER:
-                return "IDENTIFIER";
-            case LABEL:
-                return "LABEL";
-            case ERROR:
-                return "ERROR";
-        }
-        return "dont know";
+        return Token.WHITESPACE;
     }
 }

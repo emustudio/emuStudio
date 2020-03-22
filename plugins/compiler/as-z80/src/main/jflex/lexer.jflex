@@ -40,37 +40,42 @@ import java.io.*;
 %states CONDITION,LD,LD_A,LD_RR,LD_II,LD_X_COMMA
 
 %{
-    public TokenImpl getSymbol() throws IOException {
+    @Override
+    public Token getToken() throws IOException {
         return next_token();
     }
 
+    @Override
     public void reset(Reader in, int yyline, int yychar, int yycolumn) {
         yyreset(in);
         this.yyline = yyline;
         this.yychar = yychar;
         this.yycolumn = yycolumn;
     }
-    
-    public void reset() {
-        this.yyline = 0;
-        this.yychar = 0;
-        this.yycolumn = 0;
+
+    @Override
+    public void reset(Reader in, int line, int offset, int column, int lexerState) {
+        yyreset(in);
+        this.yyline = line;
+        this.yychar = offset;
+        this.yycolumn = column;
+        this.zzLexicalState = lexerState;
     }
 
-    private TokenImpl token(int id, int category, boolean initial) {
+    private TokenImpl token(int id, int category) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(id, category, yytext(), left, right, initial);
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right);
     }
 
-    private TokenImpl token(int id, int category, Object value, boolean initial) {
+    private TokenImpl token(int id, int category, Object value) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(id, category, yytext(), left, right, value, initial);
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right, value);
     }
 %}
 %eofval{
-    return token(TokenImpl.EOF, Token.TEOF, true);
+    return token(TokenImpl.EOF, Token.TEOF);
 %eofval}
 
 Comment =(";"[^\r\n]*)
@@ -95,422 +100,422 @@ Label ={Identifier}[\:]
 
 /* reserved words */
 "adc" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_ADC, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_ADC, Token.RESERVED);
  }
 "add" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_ADD, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_ADD, Token.RESERVED);
 }
 "and" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_AND, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_AND, Token.RESERVED);
 }
 "bit" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_BIT, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_BIT, Token.RESERVED);
 }
 "call" { yybegin(CONDITION);
-    return token(TokenImpl.RESERVED_CALL, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_CALL, Token.RESERVED);
 }
 "ccf" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_CCF, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_CCF, Token.RESERVED);
 }
 "cp" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_CP, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_CP, Token.RESERVED);
 }
 "cpd" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_CPD, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_CPD, Token.RESERVED);
 }
 "cpdr" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_CPDR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_CPDR, Token.RESERVED);
 }
 "cpi" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_CPI, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_CPI, Token.RESERVED);
 }
 "cpir" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_CPIR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_CPIR, Token.RESERVED);
 }
 "cpl" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_CPL, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_CPL, Token.RESERVED);
 }
 "daa" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_DAA, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_DAA, Token.RESERVED);
 }
 "dec" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_DEC, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_DEC, Token.RESERVED);
 }
 "di" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_DI, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_DI, Token.RESERVED);
 }
 "djnz" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_DJNZ, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_DJNZ, Token.RESERVED);
 }
 "ei" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_EI, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_EI, Token.RESERVED);
 }
 "ex" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_EX, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_EX, Token.RESERVED);
 }
 "exx" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_EXX, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_EXX, Token.RESERVED);
 }
 "halt" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_HALT, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_HALT, Token.RESERVED);
 }
 "im" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_IM, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_IM, Token.RESERVED);
 }
 "in" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_IN, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_IN, Token.RESERVED);
 }
 "inc" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_INC, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_INC, Token.RESERVED);
 }
 "ind" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_IND, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_IND, Token.RESERVED);
 }
 "indr" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_INDR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_INDR, Token.RESERVED);
 }
 "ini" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_INI, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_INI, Token.RESERVED);
 }
 "inir" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_INIR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_INIR, Token.RESERVED);
 }
 "jp" { yybegin(CONDITION);
-    return token(TokenImpl.RESERVED_JP, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_JP, Token.RESERVED);
 }
 "jr" { yybegin(CONDITION);
-    return token(TokenImpl.RESERVED_JR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_JR, Token.RESERVED);
 }
 "ld" { yybegin(LD);
-    return token(TokenImpl.RESERVED_LD, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_LD, Token.RESERVED);
 }
 "ldd" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_LDD, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_LDD, Token.RESERVED);
 }
 "lddr" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_LDDR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_LDDR, Token.RESERVED);
 }
 "ldi" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_LDI, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_LDI, Token.RESERVED);
 }
 "ldir" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_LDIR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_LDIR, Token.RESERVED);
 }
 "neg" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_NEG, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_NEG, Token.RESERVED);
 }
 "nop" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_NOP, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_NOP, Token.RESERVED);
 }
 "or" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_OR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_OR, Token.RESERVED);
 }
 "otdr" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_OTDR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_OTDR, Token.RESERVED);
 }
 "otir" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_OTIR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_OTIR, Token.RESERVED);
 }
 "out" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_OUT, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_OUT, Token.RESERVED);
 }
 "outd" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_OUTD, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_OUTD, Token.RESERVED);
 }
 "outi" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_OUTI, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_OUTI, Token.RESERVED);
 }
 "pop" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_POP, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_POP, Token.RESERVED);
 }
 "push" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_PUSH, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_PUSH, Token.RESERVED);
 }
 "res" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RES, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RES, Token.RESERVED);
 }
 "ret" { yybegin(CONDITION);
-    return token(TokenImpl.RESERVED_RET, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RET, Token.RESERVED);
 }
 "reti" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RETI, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RETI, Token.RESERVED);
 }
 "retn" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RETN, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RETN, Token.RESERVED);
 }
 "rl" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RL, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RL, Token.RESERVED);
 }
 "rla"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RLA, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RLA, Token.RESERVED);
 }
 "rlc"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RLC, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RLC, Token.RESERVED);
 }
 "rlca"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RLCA, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RLCA, Token.RESERVED);
 }
 "rld"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RLD, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RLD, Token.RESERVED);
 }
 "rr"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RR, Token.RESERVED);
 }
 "rra"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RRA, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RRA, Token.RESERVED);
 }
 "rrc"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RRC, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RRC, Token.RESERVED);
 }
 "rrca"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RRCA, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RRCA, Token.RESERVED);
 }
 "rrd"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RRD, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RRD, Token.RESERVED);
 }
 "rst"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_RST, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_RST, Token.RESERVED);
 }
 "sbc"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_SBC, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_SBC, Token.RESERVED);
 }
 "scf" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_SCF, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_SCF, Token.RESERVED);
 }
 "set" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_SET, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_SET, Token.RESERVED);
 }
 "sla"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_SLA, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_SLA, Token.RESERVED);
 }
 "sra"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_SRA, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_SRA, Token.RESERVED);
 }
 "sll"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_SLL, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_SLL, Token.RESERVED);
 }
 "srl"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_SRL, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_SRL, Token.RESERVED);
 }
 "sub"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_SUB, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_SUB, Token.RESERVED);
 }
 "xor"  { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_XOR, Token.RESERVED, true);
+    return token(TokenImpl.RESERVED_XOR, Token.RESERVED);
 }
 /* CALL,JP,JR,RET */
 <CONDITION> "c" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_C, Token.RESERVED, false);
+    return token(TokenImpl.RESERVED_C, Token.RESERVED);
 }
 <CONDITION> "nc" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_NC, Token.RESERVED, false);
+    return token(TokenImpl.RESERVED_NC, Token.RESERVED);
 }
 <CONDITION> "z" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_Z, Token.RESERVED, false);
+    return token(TokenImpl.RESERVED_Z, Token.RESERVED);
 }
 <CONDITION> "nz" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_NZ, Token.RESERVED, false);
+    return token(TokenImpl.RESERVED_NZ, Token.RESERVED);
 }
 <CONDITION> "m" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_M, Token.RESERVED, false);
+    return token(TokenImpl.RESERVED_M, Token.RESERVED);
 }
 <CONDITION> "p" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_P, Token.RESERVED, false);
+    return token(TokenImpl.RESERVED_P, Token.RESERVED);
 }
 <CONDITION> "pe" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_PE, Token.RESERVED, false);
+    return token(TokenImpl.RESERVED_PE, Token.RESERVED);
 }
 <CONDITION> "po" { yybegin(YYINITIAL);
-    return token(TokenImpl.RESERVED_PO, Token.RESERVED, false);
+    return token(TokenImpl.RESERVED_PO, Token.RESERVED);
 }
 
 /* preprocessor words */
 "org" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_ORG, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_ORG, Token.PREPROCESSOR);
 }
 "equ" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_EQU, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_EQU, Token.PREPROCESSOR);
 }
 "var" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_VAR, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_VAR, Token.PREPROCESSOR);
 }
 "if" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_IF, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_IF, Token.PREPROCESSOR);
 }
 "endif" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_ENDIF, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_ENDIF, Token.PREPROCESSOR);
 }
 "macro" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_MACRO, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_MACRO, Token.PREPROCESSOR);
 }
 "endm" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_ENDM, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_ENDM, Token.PREPROCESSOR);
 }
 "db" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_DB, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_DB, Token.PREPROCESSOR);
 }
 "dw" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_DW, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_DW, Token.PREPROCESSOR);
 }
 "ds" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_DS, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_DS, Token.PREPROCESSOR);
 }
 "$" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_ADDR, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_ADDR, Token.PREPROCESSOR);
 }
 "include" { yybegin(YYINITIAL);
-    return token(TokenImpl.PREPROCESSOR_INCLUDE, Token.PREPROCESSOR, true);
+    return token(TokenImpl.PREPROCESSOR_INCLUDE, Token.PREPROCESSOR);
 }
 
 /* registers */
 <LD> "a" { yybegin(LD_A);
-    return token(TokenImpl.REGISTERS_A, Token.REGISTER, false);
+    return token(TokenImpl.REGISTERS_A, Token.REGISTER);
 }
 "a" {
-    return token(TokenImpl.REGISTERS_A, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_A, Token.REGISTER);
 }
 "b" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_B, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_B, Token.REGISTER);
 }
 "c" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_C, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_C, Token.REGISTER);
 }
 "d" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_D, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_D, Token.REGISTER);
 }
 "e" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_E, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_E, Token.REGISTER);
 }
 "h" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_H, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_H, Token.REGISTER);
 }
 "l" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_L, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_L, Token.REGISTER);
 }
 <LD> "ix" { yybegin(LD_II);
-    return token(TokenImpl.REGISTERS_IX, Token.REGISTER, false);
+    return token(TokenImpl.REGISTERS_IX, Token.REGISTER);
 }
 "ix" {
-    return token(TokenImpl.REGISTERS_IX, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_IX, Token.REGISTER);
 }
 <LD> "iy" { yybegin(LD_II);
-    return token(TokenImpl.REGISTERS_IY, Token.REGISTER, false);
+    return token(TokenImpl.REGISTERS_IY, Token.REGISTER);
 }
 "iy" {
-    return token(TokenImpl.REGISTERS_IY, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_IY, Token.REGISTER);
 }
 <LD> "sp" { yybegin(LD_RR);
-    return token(TokenImpl.REGISTERS_SP, Token.REGISTER, false);
+    return token(TokenImpl.REGISTERS_SP, Token.REGISTER);
 }
 "sp" {
-    return token(TokenImpl.REGISTERS_SP, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_SP, Token.REGISTER);
 }
 <LD> "bc" { yybegin(LD_RR);
-    return token(TokenImpl.REGISTERS_BC, Token.REGISTER, false);
+    return token(TokenImpl.REGISTERS_BC, Token.REGISTER);
 }
 "bc" {
-    return token(TokenImpl.REGISTERS_BC, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_BC, Token.REGISTER);
 }
 <LD> "de" { yybegin(LD_RR);
-    return token(TokenImpl.REGISTERS_DE, Token.REGISTER, false);
+    return token(TokenImpl.REGISTERS_DE, Token.REGISTER);
 }
 "de" {
-    return token(TokenImpl.REGISTERS_DE, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_DE, Token.REGISTER);
 }
 <LD> "hl" { yybegin(LD_RR);
-    return token(TokenImpl.REGISTERS_HL, Token.REGISTER, false);
+    return token(TokenImpl.REGISTERS_HL, Token.REGISTER);
 }
 "hl" {
-    return token(TokenImpl.REGISTERS_HL, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_HL, Token.REGISTER);
 }
 "af" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_AF, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_AF, Token.REGISTER);
 }
 "af'" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_AFF, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_AFF, Token.REGISTER);
 }
 "i" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_I, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_I, Token.REGISTER);
 }
 "r" { yybegin(YYINITIAL);
-    return token(TokenImpl.REGISTERS_R, Token.REGISTER, true);
+    return token(TokenImpl.REGISTERS_R, Token.REGISTER);
 }
 
 /* separators */
 <LD_X_COMMA> "(" { yybegin(YYINITIAL);
-    return token(TokenImpl.SEPARATOR_INDEXLPAR, Token.SEPARATOR, false);
+    return token(TokenImpl.SEPARATOR_INDEXLPAR, Token.SEPARATOR);
 }
 "(" {
-    return token(TokenImpl.SEPARATOR_LPAR, Token.SEPARATOR, true);
+    return token(TokenImpl.SEPARATOR_LPAR, Token.SEPARATOR);
 }
 ")" { yybegin(YYINITIAL);
-    return token(TokenImpl.SEPARATOR_RPAR, Token.SEPARATOR, true);
+    return token(TokenImpl.SEPARATOR_RPAR, Token.SEPARATOR);
 }
 <LD_A,LD_RR,LD_II> "," { yybegin(LD_X_COMMA);
-    return token(TokenImpl.SEPARATOR_COMMA, Token.SEPARATOR, false);
+    return token(TokenImpl.SEPARATOR_COMMA, Token.SEPARATOR);
 }
 <YYINITIAL> "," {
-    return token(TokenImpl.SEPARATOR_COMMA, Token.SEPARATOR, true);
+    return token(TokenImpl.SEPARATOR_COMMA, Token.SEPARATOR);
 }
 {Eol} { yybegin(YYINITIAL);
-    return token(TokenImpl.SEPARATOR_EOL, Token.SEPARATOR, true);
+    return token(TokenImpl.SEPARATOR_EOL, Token.SEPARATOR);
 }
 {WhiteSpace}+ { /* ignore white spaces */ }
 
 /* operators */
 "+" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_ADD, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_ADD, Token.OPERATOR);
 }
 "-" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_SUBTRACT, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_SUBTRACT, Token.OPERATOR);
 }
 "*" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_MULTIPLY, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_MULTIPLY, Token.OPERATOR);
 }
 "/" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_DIVIDE, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_DIVIDE, Token.OPERATOR);
 }
 "=" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_EQUAL, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_EQUAL, Token.OPERATOR);
 }
 ">" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_GREATER, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_GREATER, Token.OPERATOR);
 }
 "<" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_LESS, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_LESS, Token.OPERATOR);
 }
 ">=" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_GE, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_GE, Token.OPERATOR);
 }
 "<=" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_LE, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_LE, Token.OPERATOR);
 }
 "%" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_MOD, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_MOD, Token.OPERATOR);
 }
 ">>" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_SHR, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_SHR, Token.OPERATOR);
 }
 "<<" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_SHL, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_SHL, Token.OPERATOR);
 }
 "!" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_NOT, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_NOT, Token.OPERATOR);
 }
 "&" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_AND, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_AND, Token.OPERATOR);
 }
 "|" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_OR, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_OR, Token.OPERATOR);
 }
 "~" { yybegin(YYINITIAL);
-    return token(TokenImpl.OPERATOR_XOR, Token.OPERATOR, true);
+    return token(TokenImpl.OPERATOR_XOR, Token.OPERATOR);
 }
 
 /* comment */
 {Comment} {
     yybegin(YYINITIAL);
-    return token(TokenImpl.TCOMMENT, Token.COMMENT, true);
+    return token(TokenImpl.TCOMMENT, Token.COMMENT);
 }
 
 /* literals */
@@ -536,7 +541,7 @@ Label ={Identifier}[\:]
         tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
         tokenType = Token.ERROR;
     }
-    return token(tokenId, tokenType, (Object)num, true);
+    return token(tokenId, tokenType, (Object)num);
 }
 {OctalNum} {
     yybegin(YYINITIAL);
@@ -560,7 +565,7 @@ Label ={Identifier}[\:]
         tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
         tokenType = Token.ERROR;
     }
-    return token(tokenId, tokenType, (Object)num, true);
+    return token(tokenId, tokenType, (Object)num);
 }
 {HexaNum} {
     yybegin(YYINITIAL);
@@ -584,7 +589,7 @@ Label ={Identifier}[\:]
         tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
         tokenType = Token.ERROR;
     }
-    return token(tokenId, tokenType, (Object)num, true);
+    return token(tokenId, tokenType, (Object)num);
 }
 {BinaryNum} {
     yybegin(YYINITIAL);
@@ -608,11 +613,11 @@ Label ={Identifier}[\:]
         tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
         tokenType = Token.ERROR;
     }
-    return token(tokenId, tokenType, (Object)num, true);
+    return token(tokenId, tokenType, (Object)num);
 }
 {UnclosedString} {
     yybegin(YYINITIAL);
-    return token(TokenImpl.ERROR_UNCLOSED_STRING, Token.ERROR, true);
+    return token(TokenImpl.ERROR_UNCLOSED_STRING, Token.ERROR);
 }
 {String} {
     yybegin(YYINITIAL);
@@ -620,7 +625,7 @@ Label ={Identifier}[\:]
     String text = yytext();
     String val = text.substring(1,text.length()-1);
     if (val.length() > 1) {
-        return token(TokenImpl.LITERAL_STRING, Token.LITERAL, val, true);
+        return token(TokenImpl.LITERAL_STRING, Token.LITERAL, val);
     } else {
         byte[] b = val.getBytes();
         int numval = b[0];
@@ -628,20 +633,20 @@ Label ={Identifier}[\:]
             numval = (numval <<8) + b[i];
 
         int tokenId = (numval > 255) ? TokenImpl.LITERAL_DECIMAL_16BIT : TokenImpl.LITERAL_DECIMAL_8BIT;
-        return token(tokenId, Token.LITERAL, numval, true);
+        return token(tokenId, Token.LITERAL, numval);
     }
 }
 {Identifier} {
     yybegin(YYINITIAL);
-    return token(TokenImpl.TIDENTIFIER, Token.IDENTIFIER, yytext().toUpperCase(), true);
+    return token(TokenImpl.TIDENTIFIER, Token.IDENTIFIER, yytext().toUpperCase());
 }
 {Label} {
     yybegin(YYINITIAL);
     String text = yytext();
     Object val = text.substring(0,text.length()-1).toUpperCase();
-    return token(TokenImpl.TLABEL, Token.LABEL, val, true);
+    return token(TokenImpl.TLABEL, Token.LABEL, val);
 }
 . {
     yybegin(YYINITIAL);
-    return token(TokenImpl.ERROR_UNKNOWN_TOKEN, Token.ERROR, true);
+    return token(TokenImpl.ERROR_UNKNOWN_TOKEN, Token.ERROR);
 }
