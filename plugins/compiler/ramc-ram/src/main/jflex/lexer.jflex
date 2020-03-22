@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.ramc;
 
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
 
@@ -59,15 +60,22 @@ import java.io.IOException;
         yyline = yychar = yycolumn = 0;
         yybegin(YYINITIAL);
     }
-    
-    private TokenImpl token(int id, int type, Object val, boolean initial) {
-        return new TokenImpl(id,type,yytext(),yyline,yycolumn,yychar,val,initial);
+
+    private TokenImpl token(int id, int category, boolean initial) {
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(id, category, yytext(), left, right, initial);
     }
-    
+
+    private TokenImpl token(int id, int category, Object value, boolean initial) {
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(id, category, yytext(), left, right, value, initial);
+    }
 %}
 
 %eofval{
-  return token(TokenImpl.EOF, Token.TEOF,null,false);
+  return token(TokenImpl.EOF, Token.TEOF, true);
 %eofval}
 
 
@@ -83,30 +91,30 @@ MultiSpaceString = \"[^\"]*\"
 
 %%
 
-<YYINITIAL> "halt"  { return token(TokenImpl.HALT, Token.RESERVED,null,true); }
-<YYINITIAL> "read"  { return token(TokenImpl.READ,  Token.RESERVED,null,true); }
-<YYINITIAL> "write" { return token(TokenImpl.WRITE,  Token.RESERVED,null,true); }
-<YYINITIAL> "load"  { return token(TokenImpl.LOAD, Token.RESERVED,null,true); }
-<YYINITIAL> "store" { return token(TokenImpl.STORE, Token.RESERVED,null,true); }
-<YYINITIAL> "add"   { return token(TokenImpl.ADD,Token.RESERVED,null,true); }
-<YYINITIAL> "sub"   { return token(TokenImpl.SUB, Token.RESERVED,null,true); }
-<YYINITIAL> "mul"   { return token(TokenImpl.MUL, Token.RESERVED,null,true); }
-<YYINITIAL> "div"   { return token(TokenImpl.DIV, Token.RESERVED,null,true); }
-<YYINITIAL> "jmp"   { yybegin(IDENTIFIER); return token(TokenImpl.JMP, Token.RESERVED,null,true); }
-<YYINITIAL> "jgtz"  { yybegin(IDENTIFIER); return token(TokenImpl.JGTZ, Token.RESERVED,null,true); }
-<YYINITIAL> "jz"    { yybegin(IDENTIFIER); return token(TokenImpl.JZ, Token.RESERVED,null,true); }
+<YYINITIAL> "halt"  { return token(TokenImpl.HALT, Token.RESERVED,true); }
+<YYINITIAL> "read"  { return token(TokenImpl.READ, Token.RESERVED,true); }
+<YYINITIAL> "write" { return token(TokenImpl.WRITE, Token.RESERVED,true); }
+<YYINITIAL> "load"  { return token(TokenImpl.LOAD, Token.RESERVED,true); }
+<YYINITIAL> "store" { return token(TokenImpl.STORE, Token.RESERVED,true); }
+<YYINITIAL> "add"   { return token(TokenImpl.ADD,Token.RESERVED,true); }
+<YYINITIAL> "sub"   { return token(TokenImpl.SUB, Token.RESERVED,true); }
+<YYINITIAL> "mul"   { return token(TokenImpl.MUL, Token.RESERVED,true); }
+<YYINITIAL> "div"   { return token(TokenImpl.DIV, Token.RESERVED,true); }
+<YYINITIAL> "jmp"   { yybegin(IDENTIFIER); return token(TokenImpl.JMP, Token.RESERVED,true); }
+<YYINITIAL> "jgtz"  { yybegin(IDENTIFIER); return token(TokenImpl.JGTZ, Token.RESERVED,true); }
+<YYINITIAL> "jz"    { yybegin(IDENTIFIER); return token(TokenImpl.JZ, Token.RESERVED,true); }
 
-<YYINITIAL> "="     { yybegin(STRING); return token(TokenImpl.DIRECT, Token.OPERATOR,null,true); }
-<YYINITIAL> "*"     { return token(TokenImpl.INDIRECT, Token.OPERATOR,null,true); }
+<YYINITIAL> "="     { yybegin(STRING); return token(TokenImpl.DIRECT, Token.OPERATOR,true); }
+<YYINITIAL> "*"     { return token(TokenImpl.INDIRECT, Token.OPERATOR,true); }
 
-<YYINITIAL> "<input>" { yybegin(INPUT); return token(TokenImpl.INPUT, Token.PREPROCESSOR, null,true); }
+<YYINITIAL> "<input>" { yybegin(INPUT); return token(TokenImpl.INPUT, Token.PREPROCESSOR, true); }
 
 {WhiteSpace}   { }
 <YYINITIAL> {Eol} { return token(TokenImpl.EOL, Token.SEPARATOR,null,true); }
 {Eol} { yybegin(YYINITIAL); return token(TokenImpl.EOL, Token.SEPARATOR,null,false); }
 
-<YYINITIAL> {Comment} { yybegin(YYINITIAL); return token(TokenImpl.TCOMMENT, Token.COMMENT,null,true); }
-{Comment}             { yybegin(YYINITIAL); return token(TokenImpl.TCOMMENT, Token.COMMENT,null,false); }
+<YYINITIAL> {Comment} { yybegin(YYINITIAL); return token(TokenImpl.TCOMMENT, Token.COMMENT,true); }
+{Comment}             { yybegin(YYINITIAL); return token(TokenImpl.TCOMMENT, Token.COMMENT,false); }
 
 <YYINITIAL> {Number} { return token(TokenImpl.NUMBER, Token.LITERAL,yytext(),true); }
 <YYINITIAL> {Label} { return token(TokenImpl.LABELL, Token.LABEL,yytext(),true); }
@@ -123,7 +131,5 @@ MultiSpaceString = \"[^\"]*\"
           String tmp = yytext();
           return token(TokenImpl.STRING, Token.PREPROCESSOR,tmp.substring(1,tmp.length()-1),false); }
 
-
-//[^\n\r\ \t\f]+ { return token(TokenImpl.error, TokenImpl.ERROR); }
-.              { return token(TokenImpl.error, TokenImpl.ERROR,null,false); }
+. { return token(TokenImpl.error, TokenImpl.ERROR,false); }
 

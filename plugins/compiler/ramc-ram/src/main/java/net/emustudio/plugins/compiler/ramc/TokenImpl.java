@@ -18,29 +18,24 @@
  */
 package net.emustudio.plugins.compiler.ramc;
 
-import java_cup.runtime.Symbol;
+import java_cup.runtime.ComplexSymbolFactory.Location;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
 import net.emustudio.emulib.plugins.compiler.Token;
 
-public class TokenImpl extends Symbol implements Token, Symbols {
-    public final static int ERROR_UNKNOWN_TOKEN = 0xA05;
-    private final String text;
-    private final int row;
-    private final int col;
-    private final int offset;
-    private final int length;
-    private final int type;
+public class TokenImpl extends ComplexSymbol implements Token, Symbols {
+    private final int category;
     private final boolean initial;
 
-    public TokenImpl(int ID, int type, String text,
-                     int line, int column, int offset, Object val, boolean initial) {
-        super(ID, val);
-        this.type = type;
-        this.text = text;
-        this.row = line;
-        this.col = column;
-        this.offset = offset;
+    public TokenImpl(int id, int category, String text, Location left, Location right, boolean initial) {
+        super(text, id, left, right);
         this.initial = initial;
-        this.length = (text == null) ? 0 : text.length();
+        this.category = category;
+    }
+
+    public TokenImpl(int id, int category, String text, Location left, Location right, Object value, boolean initial) {
+        super(text, id, left, right, value);
+        this.initial = initial;
+        this.category = category;
     }
 
     @Override
@@ -50,40 +45,37 @@ public class TokenImpl extends Symbol implements Token, Symbols {
 
     @Override
     public int getType() {
-        return type;
+        return category;
     }
 
     @Override
     public String getText() {
-        return text;
+        return getName();
     }
 
     @Override
     public String getErrorString() {
-        if (super.sym == ERROR_UNKNOWN_TOKEN) {
-            return "Unknown token";
-        }
-        return "";
+        return (getType() == ERROR) ? "Unknown token" : "";
     }
 
     @Override
     public int getLine() {
-        return row;
+        return getLeft().getLine();
     }
 
     @Override
     public int getColumn() {
-        return col;
+        return getLeft().getColumn();
     }
 
     @Override
     public int getOffset() {
-        return offset;
+        return getLeft().getOffset();
     }
 
     @Override
     public int getLength() {
-        return length;
+        return getRight().getOffset() - getLeft().getOffset();
     }
 
     @Override

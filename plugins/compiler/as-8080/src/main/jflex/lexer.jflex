@@ -60,16 +60,16 @@ import java.io.Reader;
         this.yycolumn = 0;
     }
 
-    private TokenImpl token(int type, int category, boolean initial) {
+    private TokenImpl token(int id, int category, boolean initial) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(type, category, yytext(), left, right, initial);
+        return new TokenImpl(id, category, yytext(), left, right, initial);
     }
 
-    private TokenImpl token(int type, int category, Object value, boolean initial) {
+    private TokenImpl token(int id, int category, Object value, boolean initial) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(type, category, yytext(), left, right, value, initial);
+        return new TokenImpl(id, category, yytext(), left, right, value, initial);
     }
 %}
 %eofval{
@@ -228,9 +228,8 @@ Label ={Identifier}[\:]
 
 /* literals */
 {DecimalNum} {
-    String text = yytext();
-    text = text.replaceFirst("[dD]","");
-    int num=0;
+    String text = yytext().replaceFirst("[dD]","");
+    int num = 0;
     int tokenId;
     int tokenType = Token.LITERAL;
 
@@ -239,7 +238,7 @@ Label ={Identifier}[\:]
         if (num > 65535) {
             tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
             tokenType = Token.ERROR;
-        } else if (num > 255) { // || num < -128) {
+        } else if (num > 255) {
             tokenId = TokenImpl.LITERAL_DECIMAL_16BIT;
         } else {
             tokenId = TokenImpl.LITERAL_DECIMAL_8BIT;
@@ -252,16 +251,16 @@ Label ={Identifier}[\:]
 }
 {OctalNum} {
     String text = yytext().replaceFirst("[oOqQ]","");
-    int num=0;
+    int num = 0;
     int tokenId;
     int tokenType = Token.LITERAL;
 
     try {
         num = Integer.parseInt(text,8);
-        if (num > 65535) { // || num < -32768) {
+        if (num > 65535) {
             tokenId = TokenImpl.ERROR_DECIMAL_SIZE;
             tokenType = Token.ERROR;
-        } else if (num > 255) { // || num < -128) {
+        } else if (num > 255) {
             tokenId = TokenImpl.LITERAL_DECIMAL_16BIT;
         } else {
             tokenId = TokenImpl.LITERAL_DECIMAL_8BIT;
@@ -274,7 +273,7 @@ Label ={Identifier}[\:]
 }
 {HexaNum} {
     String text = yytext().replaceFirst("[hH]","");
-    int num=0;
+    int num = 0;
     int tokenId;
     int tokenType = Token.LITERAL;
 
@@ -296,7 +295,7 @@ Label ={Identifier}[\:]
 }
 {BinaryNum} {
     String text = yytext().replaceFirst("[bB]","");
-    int num=0;
+    int num = 0;
     int tokenId;
     int tokenType = Token.LITERAL;
 

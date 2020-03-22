@@ -67,7 +67,7 @@ public class TokenImpl extends ComplexSymbol implements Token, Symbols {
 
     @Override
     public String getErrorString() {
-        return "Unknown token";
+        return (getType() == ERROR) ? "Invalid token" : "";
     }
 
     @Override

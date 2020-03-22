@@ -62,16 +62,16 @@ import java.io.Reader;
         this.yycolumn = 0;
     }
 
-    private TokenImpl token(int type, int category) {
+    private TokenImpl token(int id, int category) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(type, category, yytext(), left, right);
+        return new TokenImpl(id, category, yytext(), left, right);
     }
 
-    private TokenImpl token(int type, int category, Object value) {
+    private TokenImpl token(int id, int category, Object value) {
         Location left = new Location("", yyline+1,yycolumn+1,yychar);
         Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
-        return new TokenImpl(type, category, yytext(), left, right, value);
+        return new TokenImpl(id, category, yytext(), left, right, value);
     }
 %}
 

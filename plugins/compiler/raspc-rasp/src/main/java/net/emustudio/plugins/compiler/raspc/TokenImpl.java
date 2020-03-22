@@ -19,31 +19,21 @@
  */
 package net.emustudio.plugins.compiler.raspc;
 
-import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import net.emustudio.emulib.plugins.compiler.Token;
 
-public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Token, Symbols {
+public class TokenImpl extends ComplexSymbol implements Token, Symbols {
+    private final int category;
 
-    /**
-     * The type of the Token (RESERVED, PREPROCESSOR...)
-     */
-    private final int type;
-
-    /**
-     * 0-based starting offset of token position
-     */
-    private final int offset;
-
-    public TokenImpl(int id, int type, String text, int line, int column, int offset) {
-        super(text, id, new ComplexSymbolFactory.Location(line, column), new ComplexSymbolFactory.Location(line, column));
-        this.type = type;
-        this.offset = offset;
+    public TokenImpl(int id, int category, String text, Location left, Location right) {
+        super(text, id, left, right);
+        this.category = category;
     }
 
-    public TokenImpl(int id, int type, String text, int line, int column, int offset, Object value) {
-        super(text, id, new ComplexSymbolFactory.Location(line, column), new ComplexSymbolFactory.Location(line, column), value);
-        this.type = type;
-        this.offset = offset;
+    public TokenImpl(int id, int category, String text, Location left, Location right, Object value) {
+        super(text, id, left, right, value);
+        this.category = category;
     }
 
     @Override
@@ -53,32 +43,32 @@ public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Tok
 
     @Override
     public int getType() {
-        return this.type;
+        return category;
     }
 
     @Override
     public int getLine() {
-        return super.getLeft().getLine();
+        return getLeft().getLine();
     }
 
     @Override
     public int getColumn() {
-        return super.getLeft().getColumn();
+        return getLeft().getColumn();
     }
 
     @Override
     public int getOffset() {
-        return this.offset;
+        return getLeft().getOffset();
     }
 
     @Override
     public int getLength() {
-        return getName().length();
+        return getRight().getOffset() - getLeft().getOffset();
     }
 
     @Override
     public String getErrorString() {
-        return "Invalid token";
+        return (getType() == ERROR) ? "Invalid token" : "";
     }
 
     @Override

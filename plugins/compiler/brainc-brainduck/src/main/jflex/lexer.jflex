@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.brainc;
 
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
 
@@ -36,11 +37,11 @@ import java.io.IOException;
 %char
 %caseless
 %unicode
-%type Tokens
+%type TokenImpl
 
 %{
     @Override
-    public Tokens getSymbol() throws IOException {
+    public TokenImpl getSymbol() throws IOException {
         return next_token();
     }
 
@@ -56,15 +57,15 @@ import java.io.IOException;
     public void reset() {
         yyline = yychar = yycolumn = 0;
     }
-    
-    private Tokens token(int id, int type, Object val,boolean initial) {
-        return new Tokens(id,type,yytext(),yyline,yycolumn,yychar,val,initial);
-    }
-    
-%}
 
+    private TokenImpl token(int id, int category, boolean initial) {
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(id, category, yytext(), left, right, initial);
+    }
+%}
 %eofval{
-  return token(Tokens.EOF, Token.TEOF, null, false);
+    return token(TokenImpl.EOF, Token.TEOF, true);
 %eofval}
 
 LineTerminator = \r|\n|\r\n
@@ -75,17 +76,16 @@ Comment        = [^<>+\-\.,\[\]; \t\f\r\n]+ {InputCharacter}*
 
 %%
 
-";"  { return token(Tokens.HALT, Token.RESERVED,null,true); }
-">"   { return token(Tokens.INC,  Token.RESERVED,null,true); }
-"<"   { return token(Tokens.DEC,  Token.RESERVED,null,true); }
-"+"  { return token(Tokens.INCV, Token.RESERVED,null,true); }
-"-"  { return token(Tokens.DECV, Token.RESERVED,null,true); }
-"." { return token(Tokens.PRINT,Token.RESERVED,null,true); }
-","  { return token(Tokens.LOAD, Token.RESERVED,null,true); }
-"["  { return token(Tokens.LOOP, Token.RESERVED,null,true); }
-"]"  { return token(Tokens.ENDL, Token.RESERVED,null,true); }
+";"  { return token(TokenImpl.HALT, Token.RESERVED,true); }
+">"  { return token(TokenImpl.INC,  Token.RESERVED,true); }
+"<"  { return token(TokenImpl.DEC,  Token.RESERVED,true); }
+"+"  { return token(TokenImpl.INCV, Token.RESERVED,true); }
+"-"  { return token(TokenImpl.DECV, Token.RESERVED,true); }
+"."  { return token(TokenImpl.PRINT,Token.RESERVED,true); }
+","  { return token(TokenImpl.LOAD, Token.RESERVED,true); }
+"["  { return token(TokenImpl.LOOP, Token.RESERVED,true); }
+"]"  { return token(TokenImpl.ENDL, Token.RESERVED,true); }
 
-{Comment}          { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
-{WhiteSpace}+      { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
-{LineTerminator}+  { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
-
+{Comment}          { return token(TokenImpl.TCOMMENT, Token.COMMENT,true); }
+{WhiteSpace}+      { return token(TokenImpl.TCOMMENT, Token.COMMENT,true); }
+{LineTerminator}+  { return token(TokenImpl.TCOMMENT, Token.COMMENT,true); }
