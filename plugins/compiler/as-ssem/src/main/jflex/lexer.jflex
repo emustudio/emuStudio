@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
@@ -25,7 +26,6 @@ import net.emustudio.emulib.runtime.helpers.RadixUtils;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Arrays;
 
 %%
 
@@ -42,8 +42,9 @@ import java.util.Arrays;
 %type TokenImpl
 
 %{
+
     @Override
-    public Token getSymbol() throws IOException {
+    public Token getToken() throws IOException {
         return next_token();
     }
 
@@ -56,18 +57,24 @@ import java.util.Arrays;
     }
 
     @Override
-    public void reset() {
-        this.yyline = 0;
-        this.yychar = 0;
-        this.yycolumn = 0;
+    public void reset(Reader in, int line, int offset, int column, int lexerState) {
+        yyreset(in);
+        this.yyline = line;
+        this.yychar = offset;
+        this.yycolumn = column;
+        this.zzLexicalState = lexerState;
     }
 
-    private TokenImpl token(int type, int category) {
-        return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar);
+    private TokenImpl token(int id, int category) {
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right);
     }
 
-    private TokenImpl token(int type, int category, Object value) {
-        return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar, value);
+    private TokenImpl token(int id, int category, Object value) {
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right, value);
     }
 %}
 
@@ -90,47 +97,21 @@ binnumber = [01]+
 
 <YYINITIAL> {
     /* reserved words */
-    "jmp" {
-        return token(JMP, Token.RESERVED);
-    }
-    "jrp" {
-        return token(JPR, Token.RESERVED);
-    }
-    "jpr" {
-        return token(JPR, Token.RESERVED);
-    }
-    "jmr" {
-        return token(JPR, Token.RESERVED);
-    }
-    "ldn" {
-        return token(LDN, Token.RESERVED);
-    }
-    "sto" {
-        return token(STO, Token.RESERVED);
-    }
-    "sub" {
-        return token(SUB, Token.RESERVED);
-    }
-    "cmp" {
-        return token(CMP, Token.RESERVED);
-    }
-    "skn" {
-        return token(CMP, Token.RESERVED);
-    }
-    "stp" {
-        return token(STP, Token.RESERVED);
-    }
-    "hlt" {
-        return token(STP, Token.RESERVED);
-    }
+    "jmp" { return token(JMP, Token.RESERVED); }
+    "jrp" { return token(JPR, Token.RESERVED); }
+    "jpr" { return token(JPR, Token.RESERVED); }
+    "jmr" { return token(JPR, Token.RESERVED); }
+    "ldn" { return token(LDN, Token.RESERVED); }
+    "sto" { return token(STO, Token.RESERVED); }
+    "sub" { return token(SUB, Token.RESERVED); }
+    "cmp" { return token(CMP, Token.RESERVED); }
+    "skn" { return token(CMP, Token.RESERVED); }
+    "stp" { return token(STP, Token.RESERVED); }
+    "hlt" { return token(STP, Token.RESERVED); }
 
     /* special */
-    "start:" {
-        return token(START, Token.PREPROCESSOR);
-    }
-    "num" {
-        return token(NUM, Token.PREPROCESSOR);
-    }
+    "start:" { return token(START, Token.PREPROCESSOR); }
+    "num" { return token(NUM, Token.PREPROCESSOR); }
     "bnum" {
         yybegin(BIN);
         return token(BNUM, Token.PREPROCESSOR);
@@ -141,15 +122,9 @@ binnumber = [01]+
     }
 
     /* comment */
-    {comment} {
-        return token(TCOMMENT, Token.COMMENT);
-    }
-    {comment2} {
-        return token(TCOMMENT, Token.COMMENT);
-    }
-    {comment3} {
-        return token(TCOMMENT, Token.COMMENT);
-    }
+    {comment} { return token(TCOMMENT, Token.COMMENT); }
+    {comment2} { return token(TCOMMENT, Token.COMMENT); }
+    {comment3} { return token(TCOMMENT, Token.COMMENT); }
 
     /* literals */
     {number} {
@@ -184,13 +159,13 @@ binnumber = [01]+
         return token(NUMBER, Token.LITERAL, num);
     }
 
-    [^] {
+    . {
         yybegin(YYINITIAL);
     }
 
 }
 
 /* error fallback */
-[^] {
-    return token(ERROR_UNKNOWN_TOKEN, Token.ERROR);
+. {
+    return token(Token.ERROR, Token.ERROR);
 }

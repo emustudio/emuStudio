@@ -18,7 +18,6 @@
  */
 package net.emustudio.application.gui.editor;
 
-import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -163,7 +162,7 @@ public class FindText {
      * it returns true.
      * @throws NullPointerException if the find pattern is null
      */
-    public boolean replaceNext(JTextPane textPane)
+    public boolean replaceNext(Editor textPane)
         throws NullPointerException {
         if ((matcher == null) && (pattern == null)) {
             throw new NullPointerException("matcher can't be null, use dialog");
@@ -220,7 +219,7 @@ public class FindText {
      * it returns true.
      * @throws NullPointerException if the find pattern is null
      */
-    public boolean replaceAll(JTextPane textPane)
+    public boolean replaceAll(Editor textPane)
         throws NullPointerException {
         if ((matcher == null) && (pattern == null)) {
             throw new NullPointerException("matcher can't be null, use dialog");
@@ -262,18 +261,18 @@ public class FindText {
         return match;
     }
 
-    private void replaceIfMatched(JTextPane textPane, boolean match) {
+    private void replaceIfMatched(Editor editor, boolean match) {
         if (match) {
-            replaceNow(textPane);
-            textPane.setCaretPosition(matcher.start() + replacement.length());
+            replaceNow(editor);
+            editor.setCaretPosition(matcher.start() + replacement.length());
         }
     }
 
-    private void replaceNow(JTextPane textPane) {
+    private void replaceNow(Editor editor) {
         try {
-            textPane.getDocument().remove(matcher.start(),
+            editor.getDocument().remove(matcher.start(),
                 matcher.end() - matcher.start());
-            textPane.getDocument().insertString(matcher.start(),
+            editor.getDocument().insertString(matcher.start(),
                 replacement, null);
         } catch (BadLocationException ignored) {
         }

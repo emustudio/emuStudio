@@ -28,6 +28,10 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
@@ -124,201 +128,178 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        groupDraw = new javax.swing.ButtonGroup();
-        javax.swing.JToolBar toolDraw = new javax.swing.JToolBar();
-        javax.swing.JButton btnSave = new javax.swing.JButton();
-        javax.swing.JToolBar.Separator jSeparator4 = new javax.swing.JToolBar.Separator();
-        btnCompiler = new javax.swing.JToggleButton();
-        btnCPU = new javax.swing.JToggleButton();
-        btnRAM = new javax.swing.JToggleButton();
-        btnDevice = new javax.swing.JToggleButton();
-        javax.swing.JToolBar.Separator jSeparator5 = new javax.swing.JToolBar.Separator();
-        btnLine = new javax.swing.JToggleButton();
-        btnBidirection = new javax.swing.JToggleButton();
-        javax.swing.JToolBar.Separator jSeparator2 = new javax.swing.JToolBar.Separator();
-        btnDelete = new javax.swing.JToggleButton();
-        javax.swing.JToolBar.Separator jSeparator1 = new javax.swing.JToolBar.Separator();
-        cmbPlugin = new javax.swing.JComboBox<>();
-        javax.swing.JToolBar.Separator jSeparator3 = new javax.swing.JToolBar.Separator();
-        btnUseGrid = new javax.swing.JToggleButton();
-        scrollScheme = new javax.swing.JScrollPane();
-        sliderGridGap = new javax.swing.JSlider();
+        groupDraw = new ButtonGroup();
+        JToolBar toolDraw = new JToolBar();
+        ToolbarButton btnSave = new ToolbarButton(
+            this::btnSaveActionPerformed,
+            "/net/emustudio/application/gui/dialogs/document-save.png",
+            "Save & Close"
+        );
+        JToolBar.Separator separator1 = new JToolBar.Separator();
+        btnCompiler = new ToolbarToggleButton(
+            this::btnCompilerActionPerformed,
+            this::btnCompilerItemStateChanged,
+            "/net/emustudio/application/gui/dialogs/compile.png",
+            "Set compiler"
+        );
+        btnCPU = new ToolbarToggleButton(
+            this::btnCPUActionPerformed,
+            this::btnCPUItemStateChanged,
+            "/net/emustudio/application/gui/dialogs/cpu.gif",
+            "Set CPU"
+        );
+        btnRAM = new ToolbarToggleButton(
+            this::btnRAMActionPerformed,
+            this::btnRAMItemStateChanged,
+            "/net/emustudio/application/gui/dialogs/ram.gif",
+            "Set operating memory"
+        );
+        btnDevice = new ToolbarToggleButton(
+            this::btnDeviceActionPerformed,
+            this::btnDeviceItemStateChanged,
+            "/net/emustudio/application/gui/dialogs/device.png",
+            "Add device"
+        );
+        JToolBar.Separator separator2 = new JToolBar.Separator();
+        btnLine = new ToolbarToggleButton(
+            this::btnLineActionPerformed,
+            this::btnLineItemStateChanged,
+            "/net/emustudio/application/gui/dialogs/connection.png",
+            "Add connection"
+        );
+        btnBidirection = new ToolbarToggleButton(
+            this::btnBidirectionActionPerformed,
+            "/net/emustudio/application/gui/dialogs/bidirection.gif",
+            "Bidirectional connection"
+        );
+        JToolBar.Separator separator3 = new JToolBar.Separator();
+        btnDelete = new ToolbarToggleButton(
+            this::btnDeleteActionPerformed,
+            this::btnDeleteItemStateChanged,
+            "/net/emustudio/application/gui/dialogs/edit-delete.png",
+            "Delete component or connection"
+        );
+        JToolBar.Separator separator4 = new JToolBar.Separator();
+        cmbPlugin = new JComboBox<>();
+        JToolBar.Separator separator5 = new JToolBar.Separator();
+        btnUseGrid = new ToolbarToggleButton(
+            this::btnUseGridActionPerformed,
+            "/net/emustudio/application/gui/dialogs/grid_memory.gif",
+            "Set/unset using grid"
+        );
+        scrollScheme = new JScrollPane();
+        sliderGridGap = new JSlider();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Computer editor");
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Virtual computer editor");
         setIconImages(null);
 
         toolDraw.setFloatable(false);
         toolDraw.setRollover(true);
 
-        btnSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/document-save.png"))); // NOI18N
-        btnSave.setToolTipText("Save & Close");
-        btnSave.setFocusable(false);
-        btnSave.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnSave.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnSave.addActionListener(this::btnSaveActionPerformed);
         toolDraw.add(btnSave);
-        toolDraw.add(jSeparator4);
-
-        groupDraw.add(btnCompiler);
-        btnCompiler.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/compile.png"))); // NOI18N
-        btnCompiler.setToolTipText("Set compiler");
-        btnCompiler.setFocusable(false);
-        btnCompiler.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnCompiler.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnCompiler.addItemListener(this::btnCompilerItemStateChanged);
-        btnCompiler.addActionListener(this::btnCompilerActionPerformed);
+        toolDraw.add(separator1);
         toolDraw.add(btnCompiler);
-
-        groupDraw.add(btnCPU);
-        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/cpu.gif"))); // NOI18N
-        btnCPU.setToolTipText("Set CPU");
-        btnCPU.setFocusable(false);
-        btnCPU.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnCPU.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnCPU.addItemListener(this::btnCPUItemStateChanged);
-        btnCPU.addActionListener(this::btnCPUActionPerformed);
         toolDraw.add(btnCPU);
-
-        groupDraw.add(btnRAM);
-        btnRAM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/ram.gif"))); // NOI18N
-        btnRAM.setToolTipText("Set main store");
-        btnRAM.setFocusable(false);
-        btnRAM.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnRAM.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnRAM.addItemListener(this::btnRAMItemStateChanged);
-        btnRAM.addActionListener(this::btnRAMActionPerformed);
         toolDraw.add(btnRAM);
-
-        groupDraw.add(btnDevice);
-        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/device.png"))); // NOI18N
-        btnDevice.setToolTipText("Add device");
-        btnDevice.setFocusable(false);
-        btnDevice.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnDevice.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnDevice.addItemListener(this::btnDeviceItemStateChanged);
-        btnDevice.addActionListener(this::btnDeviceActionPerformed);
         toolDraw.add(btnDevice);
-        toolDraw.add(jSeparator5);
-
-        groupDraw.add(btnLine);
-        btnLine.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/connection.png"))); // NOI18N
-        btnLine.setToolTipText("Add connection");
-        btnLine.setFocusable(false);
-        btnLine.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnLine.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnLine.addItemListener(this::btnLineItemStateChanged);
-        btnLine.addActionListener(this::btnLineActionPerformed);
+        toolDraw.add(separator2);
         toolDraw.add(btnLine);
 
-        btnBidirection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/bidirection.gif"))); // NOI18N
         btnBidirection.setSelected(true);
-        btnBidirection.setToolTipText("Bidirectional connection");
-        btnBidirection.setFocusable(false);
-        btnBidirection.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnBidirection.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnBidirection.addActionListener(this::btnBidirectionActionPerformed);
         toolDraw.add(btnBidirection);
-        toolDraw.add(jSeparator2);
-
-        groupDraw.add(btnDelete);
-        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/edit-delete.png"))); // NOI18N
-        btnDelete.setToolTipText("Delete component or connection");
-        btnDelete.setFocusable(false);
-        btnDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnDelete.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnDelete.addItemListener(this::btnDeleteItemStateChanged);
-        btnDelete.addActionListener(this::btnDeleteActionPerformed);
+        toolDraw.add(separator3);
         toolDraw.add(btnDelete);
-        toolDraw.add(jSeparator1);
+        toolDraw.add(separator4);
+
+        groupDraw.add(btnCompiler);
+        groupDraw.add(btnCPU);
+        groupDraw.add(btnRAM);
+        groupDraw.add(btnDevice);
+        groupDraw.add(btnLine);
+        groupDraw.add(btnDelete);
 
         cmbPlugin.setToolTipText("Select plug-in");
         cmbPlugin.addActionListener(this::cmbPluginActionPerformed);
         toolDraw.add(cmbPlugin);
-        toolDraw.add(jSeparator3);
+        toolDraw.add(separator5);
 
-        btnUseGrid.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/grid_memory.gif"))); // NOI18N
         btnUseGrid.setSelected(true);
-        btnUseGrid.setToolTipText("Use grid?");
-        btnUseGrid.setFocusable(false);
-        btnUseGrid.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnUseGrid.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnUseGrid.addActionListener(this::btnUseGridActionPerformed);
         toolDraw.add(btnUseGrid);
 
         sliderGridGap.setMinimum(5);
-        sliderGridGap.setOrientation(javax.swing.JSlider.VERTICAL);
+        sliderGridGap.setOrientation(JSlider.VERTICAL);
         sliderGridGap.setPaintTicks(true);
         sliderGridGap.setSnapToTicks(true);
         sliderGridGap.setToolTipText("Set grid size");
         sliderGridGap.setValue(30);
         sliderGridGap.addChangeListener(this::sliderGridGapStateChanged);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(toolDraw, javax.swing.GroupLayout.DEFAULT_SIZE, 641, Short.MAX_VALUE)
+                            .addComponent(toolDraw, GroupLayout.DEFAULT_SIZE, 641, Short.MAX_VALUE)
                             .addContainerGap())
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(sliderGridGap, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(scrollScheme, GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(sliderGridGap, GroupLayout.PREFERRED_SIZE, 31, GroupLayout.PREFERRED_SIZE))))
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(toolDraw, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(sliderGridGap, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
-                        .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE))
+                    .addComponent(toolDraw, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                        .addComponent(sliderGridGap, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
+                        .addComponent(scrollScheme, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE))
                     .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void sliderGridGapStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderGridGapStateChanged
+    private void sliderGridGapStateChanged(ChangeEvent evt) {
         panel.setGridGap(sliderGridGap.getValue());
         schema.setSchemaGridGap(sliderGridGap.getValue());
-    }//GEN-LAST:event_sliderGridGapStateChanged
+    }
 
-    private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilerActionPerformed
+    private void btnCompilerActionPerformed(ActionEvent evt) {
         if (checkUnsetDrawingTool()) {
             buttonSelected = true;
             resetComboWithPluginFiles(PLUGIN_TYPE.COMPILER);
         }
-    }//GEN-LAST:event_btnCompilerActionPerformed
+    }
 
-    private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
+    private void btnCPUActionPerformed(ActionEvent evt) {
         if (checkUnsetDrawingTool()) {
             buttonSelected = true;
             resetComboWithPluginFiles(PLUGIN_TYPE.CPU);
         }
-    }//GEN-LAST:event_btnCPUActionPerformed
+    }
 
 
-    private void btnRAMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRAMActionPerformed
+    private void btnRAMActionPerformed(ActionEvent evt) {
         if (checkUnsetDrawingTool()) {
             buttonSelected = true;
             resetComboWithPluginFiles(PLUGIN_TYPE.MEMORY);
         }
-    }//GEN-LAST:event_btnRAMActionPerformed
+    }
 
-    private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
+    private void btnDeviceActionPerformed(ActionEvent evt) {
         if (checkUnsetDrawingTool()) {
             buttonSelected = true;
             resetComboWithPluginFiles(PLUGIN_TYPE.DEVICE);
         }
-    }//GEN-LAST:event_btnDeviceActionPerformed
+    }
 
-    private void btnLineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLineActionPerformed
+    private void btnLineActionPerformed(ActionEvent evt) {
         panel.setTool(Tool.TOOL_NOTHING, null);
         cmbPlugin.setModel(EMPTY_MODEL);
         if (buttonSelected) {
@@ -327,9 +308,9 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         }
         panel.setTool(Tool.TOOL_CONNECTION, null);
         buttonSelected = true;
-    }//GEN-LAST:event_btnLineActionPerformed
+    }
 
-    private void cmbPluginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbPluginActionPerformed
+    private void cmbPluginActionPerformed(ActionEvent evt) {
         Optional<String> pluginFile = ((PluginComboModel) cmbPlugin.getModel()).getSelectedFileName();
         pluginFile.ifPresentOrElse(fileName -> {
             if (btnCompiler.isSelected()) {
@@ -343,45 +324,45 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
                 panel.setTool(Tool.TOOL_DEVICE, fileName);
             }
         }, () -> panel.cancelDrawing());
-    }//GEN-LAST:event_cmbPluginActionPerformed
+    }
 
-    private void btnCompilerItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCompilerItemStateChanged
+    private void btnCompilerItemStateChanged(ItemEvent evt) {
         if (!btnCompiler.isSelected()) {
             buttonSelected = false;
         }
-    }//GEN-LAST:event_btnCompilerItemStateChanged
+    }
 
-    private void btnCPUItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCPUItemStateChanged
+    private void btnCPUItemStateChanged(ItemEvent evt) {
         if (!btnCPU.isSelected()) {
             buttonSelected = false;
         }
-    }//GEN-LAST:event_btnCPUItemStateChanged
+    }
 
-    private void btnRAMItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnRAMItemStateChanged
+    private void btnRAMItemStateChanged(ItemEvent evt) {
         if (!btnRAM.isSelected()) {
             buttonSelected = false;
         }
-    }//GEN-LAST:event_btnRAMItemStateChanged
+    }
 
-    private void btnDeviceItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnDeviceItemStateChanged
+    private void btnDeviceItemStateChanged(ItemEvent evt) {
         if (!btnDevice.isSelected()) {
             buttonSelected = false;
         }
-    }//GEN-LAST:event_btnDeviceItemStateChanged
+    }
 
-    private void btnLineItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnLineItemStateChanged
+    private void btnLineItemStateChanged(ItemEvent evt) {
         if (!btnLine.isSelected()) {
             buttonSelected = false;
         }
-    }//GEN-LAST:event_btnLineItemStateChanged
+    }
 
-    private void btnDeleteItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnDeleteItemStateChanged
+    private void btnDeleteItemStateChanged(ItemEvent evt) {
         if (!btnDelete.isSelected()) {
             buttonSelected = false;
         }
-    }//GEN-LAST:event_btnDeleteItemStateChanged
+    }
 
-    private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
+    private void btnDeleteActionPerformed(ActionEvent evt) {
         panel.setTool(Tool.TOOL_NOTHING, null);
         cmbPlugin.setModel(EMPTY_MODEL);
         if (buttonSelected) {
@@ -390,9 +371,9 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
             panel.setTool(Tool.TOOL_DELETE, null);
             buttonSelected = true;
         }
-    }//GEN-LAST:event_btnDeleteActionPerformed
+    }
 
-    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
+    private void btnSaveActionPerformed(ActionEvent evt) {
         try {
             schema.save();
             odialog.setSelectedComputerConfig(schema.getComputerConfig());
@@ -402,34 +383,32 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
             dialogs.showError("Could not save computer schema. Please consult log file for details.", "Save schema");
         }
         dispose();
-    }//GEN-LAST:event_btnSaveActionPerformed
+    }
 
-    private void btnUseGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUseGridActionPerformed
+    private void btnUseGridActionPerformed(ActionEvent evt) {
         panel.setUsingGrid(btnUseGrid.isSelected());
         sliderGridGap.setEnabled(btnUseGrid.isSelected());
         schema.setUseSchemaGrid(btnUseGrid.isSelected());
         schema.setSchemaGridGap(sliderGridGap.getValue());
-    }//GEN-LAST:event_btnUseGridActionPerformed
+    }
 
 
-    private void btnBidirectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBidirectionActionPerformed
+    private void btnBidirectionActionPerformed(ActionEvent evt) {
         panel.setFutureLineDirection(btnBidirection.isSelected());
-    }//GEN-LAST:event_btnBidirectionActionPerformed
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JToggleButton btnBidirection;
-    private javax.swing.JToggleButton btnCPU;
-    private javax.swing.JToggleButton btnCompiler;
-    private javax.swing.JToggleButton btnDelete;
-    private javax.swing.JToggleButton btnDevice;
-    private javax.swing.JToggleButton btnLine;
-    private javax.swing.JToggleButton btnRAM;
-    private javax.swing.JToggleButton btnUseGrid;
-    private javax.swing.JComboBox<String> cmbPlugin;
-    private javax.swing.ButtonGroup groupDraw;
-    private javax.swing.JScrollPane scrollScheme;
-    private javax.swing.JSlider sliderGridGap;
-    // End of variables declaration//GEN-END:variables
+    }
+    
+    private ToolbarToggleButton btnBidirection;
+    private ToolbarToggleButton btnCPU;
+    private ToolbarToggleButton btnCompiler;
+    private ToolbarToggleButton btnDelete;
+    private ToolbarToggleButton btnDevice;
+    private ToolbarToggleButton btnLine;
+    private ToolbarToggleButton btnRAM;
+    private ToolbarToggleButton btnUseGrid;
+    private JComboBox<String> cmbPlugin;
+    private ButtonGroup groupDraw;
+    private JScrollPane scrollScheme;
+    private JSlider sliderGridGap;
 
 
     private void resetComboWithPluginFiles(PLUGIN_TYPE pluginType) {

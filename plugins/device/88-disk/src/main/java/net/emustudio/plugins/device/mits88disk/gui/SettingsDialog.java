@@ -492,7 +492,7 @@ public class SettingsDialog extends JDialog {
             .orElse(Path.of(System.getProperty("user.dir")));
 
         dialogs.chooseFile(
-            "Open disk image", "Open", currentDirectory,
+            "Open disk image", "Open", currentDirectory, false,
             new FileExtensionsFilter("Disk images", "dsk", "bin")
         ).ifPresent(path -> txtImageFile.setText(path.toString()));
     }//GEN-LAST:event_btnBrowseActionPerformed

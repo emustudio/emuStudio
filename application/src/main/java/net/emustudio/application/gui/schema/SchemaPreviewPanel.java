@@ -200,12 +200,13 @@ public class SchemaPreviewPanel extends JPanel {
         if (schema != null) {
 
             Path currentDirectory = Optional
-                .ofNullable(lastImageFile.getParentFile())
+                .ofNullable(lastImageFile)
+                .map(File::getParentFile)
                 .map(File::toPath)
                 .orElse(Path.of(System.getProperty("user.dir")));
 
             dialogs.chooseFile(
-                "Save schema image", "Save", currentDirectory,
+                "Save schema image", "Save", currentDirectory, true,
                 new FileExtensionsFilter("PNG image", "png")
             ).ifPresent(path -> {
                 lastImageFile = path.toFile();

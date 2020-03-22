@@ -474,7 +474,7 @@ public class MemoryDialog extends javax.swing.JDialog {
 
     private void btnLoadImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoadImageActionPerformed
         dialogs.chooseFile(
-            "Load memory image", "Load", Path.of(System.getProperty("user.dir")),
+            "Load memory image", "Load", Path.of(System.getProperty("user.dir")), false,
             new FileExtensionsFilter("Memory image", "hex", "bin")
         ).ifPresent(path -> {
             try {
@@ -539,7 +539,7 @@ public class MemoryDialog extends javax.swing.JDialog {
     private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDumpActionPerformed
         Path currentDirectory = Path.of(System.getProperty("user.dir"));
         dialogs.chooseFile(
-            "Dump memory content into a file", "Save", currentDirectory,
+            "Dump memory content into a file", "Save", currentDirectory, true,
             new FileExtensionsFilter("Human-readable dump", "txt"),
             new FileExtensionsFilter("Binary dump", "bin")
         ).ifPresent(path -> {

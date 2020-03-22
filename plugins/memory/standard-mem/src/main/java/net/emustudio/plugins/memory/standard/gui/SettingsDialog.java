@@ -453,7 +453,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     private void btnAddImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddImageActionPerformed
         dialogs.chooseFile(
-            "Add memory image", "Add", Path.of(System.getProperty("user.dir")),
+            "Add memory image", "Add", Path.of(System.getProperty("user.dir")), false,
             new FileExtensionsFilter("Memory images", "hex", "bin")
         ).ifPresent(path -> {
             final int bank = (context.getBanksCount() > 1)

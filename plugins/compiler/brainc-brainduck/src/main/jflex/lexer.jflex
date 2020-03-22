@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.brainc;
 
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
 
@@ -36,11 +37,11 @@ import java.io.IOException;
 %char
 %caseless
 %unicode
-%type Tokens
+%type TokenImpl
 
 %{
     @Override
-    public Tokens getSymbol() throws IOException {
+    public Token getToken() throws IOException {
         return next_token();
     }
 
@@ -51,20 +52,24 @@ import java.io.IOException;
         this.yychar = yychar;
         this.yycolumn = yycolumn;
     }
-    
-    @Override
-    public void reset() {
-        yyline = yychar = yycolumn = 0;
-    }
-    
-    private Tokens token(int id, int type, Object val,boolean initial) {
-        return new Tokens(id,type,yytext(),yyline,yycolumn,yychar,val,initial);
-    }
-    
-%}
 
+    @Override
+    public void reset(Reader in, int line, int offset, int column, int lexerState) {
+        yyreset(in);
+        this.yyline = line;
+        this.yychar = offset;
+        this.yycolumn = column;
+        this.zzLexicalState = lexerState;
+    }
+
+    private TokenImpl token(int id, int category) {
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right);
+    }
+%}
 %eofval{
-  return token(Tokens.EOF, Token.TEOF, null, false);
+    return token(TokenImpl.EOF, Token.TEOF);
 %eofval}
 
 LineTerminator = \r|\n|\r\n
@@ -75,17 +80,16 @@ Comment        = [^<>+\-\.,\[\]; \t\f\r\n]+ {InputCharacter}*
 
 %%
 
-";"  { return token(Tokens.HALT, Token.RESERVED,null,true); }
-">"   { return token(Tokens.INC,  Token.RESERVED,null,true); }
-"<"   { return token(Tokens.DEC,  Token.RESERVED,null,true); }
-"+"  { return token(Tokens.INCV, Token.RESERVED,null,true); }
-"-"  { return token(Tokens.DECV, Token.RESERVED,null,true); }
-"." { return token(Tokens.PRINT,Token.RESERVED,null,true); }
-","  { return token(Tokens.LOAD, Token.RESERVED,null,true); }
-"["  { return token(Tokens.LOOP, Token.RESERVED,null,true); }
-"]"  { return token(Tokens.ENDL, Token.RESERVED,null,true); }
+";"  { return token(TokenImpl.HALT, Token.RESERVED); }
+">"  { return token(TokenImpl.INC,  Token.RESERVED); }
+"<"  { return token(TokenImpl.DEC,  Token.RESERVED); }
+"+"  { return token(TokenImpl.INCV, Token.RESERVED); }
+"-"  { return token(TokenImpl.DECV, Token.RESERVED); }
+"."  { return token(TokenImpl.PRINT,Token.RESERVED); }
+","  { return token(TokenImpl.LOAD, Token.RESERVED); }
+"["  { return token(TokenImpl.LOOP, Token.RESERVED); }
+"]"  { return token(TokenImpl.ENDL, Token.RESERVED); }
 
-{Comment}          { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
-{WhiteSpace}+      { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
-{LineTerminator}+  { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
-
+{Comment}          { return token(TokenImpl.TCOMMENT, Token.COMMENT); }
+{WhiteSpace}+      { return token(TokenImpl.TCOMMENT, Token.COMMENT); }
+{LineTerminator}+  { return token(TokenImpl.TCOMMENT, Token.COMMENT); }

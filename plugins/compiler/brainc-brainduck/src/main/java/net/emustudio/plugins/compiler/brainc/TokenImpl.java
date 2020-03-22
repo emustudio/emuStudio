@@ -18,30 +18,18 @@
  */
 package net.emustudio.plugins.compiler.brainc;
 
-import java_cup.runtime.Symbol;
+import java_cup.runtime.ComplexSymbolFactory.Location;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
 import net.emustudio.emulib.plugins.compiler.Token;
 
-public class Tokens extends Symbol implements Token, Symbols {
-    public final static int ERROR_UNKNOWN_TOKEN = 0xA05;
+public class TokenImpl extends ComplexSymbol implements Token, Symbols {
+    private final int category;
+    private final int lexerState;
 
-    private final String text; // token value
-    private final int row;     // row index
-    private final int col;     // column index
-    private final int offset;  // token offset
-    private final int length;  // token length
-    private final int type;    // token type
-    private final boolean initial;
-
-    public Tokens(int ID, int type, String text,
-                  int line, int column, int offset, Object val, boolean initial) {
-        super(ID, val);
-        this.type = type;
-        this.text = text;
-        this.row = line;
-        this.col = column;
-        this.offset = offset;
-        this.initial = initial;
-        this.length = (text == null) ? 0 : text.length();
+    public TokenImpl(int id, int category, int lexerState, String text, Location left, Location right) {
+        super(text, id, left, right);
+        this.category = category;
+        this.lexerState = lexerState;
     }
 
     @Override
@@ -51,44 +39,41 @@ public class Tokens extends Symbol implements Token, Symbols {
 
     @Override
     public int getType() {
-        return type;
+        return category;
     }
 
     @Override
     public String getText() {
-        return text;
+        return getName();
     }
 
     @Override
     public String getErrorString() {
-        if (super.sym == ERROR_UNKNOWN_TOKEN) {
-            return "Unknown token";
-        }
-        return "";
+        return (getType() == ERROR) ? "Unknown token" : "";
     }
 
     @Override
     public int getLine() {
-        return row;
+        return getLeft().getLine();
     }
 
     @Override
     public int getColumn() {
-        return col;
+        return getLeft().getColumn();
     }
 
     @Override
     public int getOffset() {
-        return offset;
+        return getLeft().getOffset();
     }
 
     @Override
     public int getLength() {
-        return length;
+        return getRight().getOffset() - getLeft().getOffset();
     }
 
     @Override
-    public boolean isInitialLexicalState() {
-        return initial;
+    public int getLexerState() {
+        return lexerState;
     }
 }

@@ -19,7 +19,6 @@
 
 package net.emustudio.application.gui;
 
-import net.emustudio.application.gui.editor.SourceCodeEditor;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import org.slf4j.Logger;
@@ -30,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class NoGuiDialogsImpl implements Dialogs {
-    private final static Logger LOGGER = LoggerFactory.getLogger(SourceCodeEditor.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(NoGuiDialogsImpl.class);
     public final static String INPUT_MESSAGE = "Please insert a value";
 
     @Override
@@ -109,22 +108,26 @@ public class NoGuiDialogsImpl implements Dialogs {
     }
 
     @Override
-    public Optional<Path> chooseFile(String title, String approveButtonText, FileExtensionsFilter... filters) {
+    public Optional<Path> chooseFile(String title, String approveButtonText, boolean appendMissingExtension,
+                                     FileExtensionsFilter... filters) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Path> chooseFile(String s, String s1, List<FileExtensionsFilter> list) {
+    public Optional<Path> chooseFile(String title, String approveButtonText, boolean appendMissingExtension,
+                                     List<FileExtensionsFilter> list) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory, FileExtensionsFilter... filters) {
+    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
+                                     boolean appendMissingExtension, FileExtensionsFilter... filters) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Path> chooseFile(String s, String s1, Path path, List<FileExtensionsFilter> list) {
+    public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
+                                     boolean appendMissingExtension, List<FileExtensionsFilter> list) {
         return Optional.empty();
     }
 

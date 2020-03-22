@@ -19,6 +19,7 @@
  */
 package net.emustudio.plugins.compiler.raspc;
 
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
 
@@ -27,56 +28,56 @@ import java.io.Reader;
 
 %%
 
-/*options for the lexer*/
-
-/*name of lexer class*/
-%class LexerImpl  
-%cup  /*switch to CUP parser generator compatibility*/
-%public  
-%implements LexicalAnalyzer, Symbols /*interfaces that resulting lexer implements*/
-/*switch line and column counting on*/
+/*options*/
+%class LexerImpl
+%cup
+%public
+%implements LexicalAnalyzer
 %line
 %column
-/*turn character counting on (from the beginning of input to beginning of current token)*/
 %char
-%caseless /*ignore case in source file*/
+%caseless
 %unicode
-/*specify type of the return value of the scanning method*/
 %type TokenImpl
-        
+
 %{
     @Override
-	public Token getSymbol() throws IOException{
-		return next_token();
-	}
+    public Token getToken() throws IOException {
+        return next_token();
+    }
 
-	@Override
-	public void reset(Reader in, int yyline, int yychar, int yycolumn){	
-		yyreset(in);
-		this.yyline = yyline;
-		this.yychar = yychar;
-		this.yycolumn = yycolumn;
-	}
+    @Override
+    public void reset(Reader in, int yyline, int yychar, int yycolumn) {
+        yyreset(in);
+        this.yyline = yyline;
+        this.yychar = yychar;
+        this.yycolumn = yycolumn;
+    }
 
-	@Override
-	public void reset(){
-		this.yyline = 0;
-		this.yychar = 0;
-		this.yycolumn = 0;
-	}	
+    @Override
+    public void reset(Reader in, int line, int offset, int column, int lexerState) {
+        yyreset(in);
+        this.yyline = line;
+        this.yychar = offset;
+        this.yycolumn = column;
+        this.zzLexicalState = lexerState;
+    }
 
-	private TokenImpl token(int id, int type){
-		return new TokenImpl(id, type, yytext(), yyline, yycolumn, yychar);
-	}
-	
-	private TokenImpl token(int id, int type, Object value){
-		return new TokenImpl(id, type, yytext(), yyline, yycolumn, yychar, value);
-	}
+    private TokenImpl token(int id, int category) {
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right);
+    }
 
+    private TokenImpl token(int id, int category, Object value) {
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(id, category, zzLexicalState, yytext(), left, right, value);
+    }
 %}
 
 %eofval{
-	return token(EOF, Token.TEOF);
+	return token(TokenImpl.EOF, Token.TEOF);
 %eofval}
 
 comment = ";"[^\r\n]*
@@ -93,54 +94,54 @@ input=[\r|\n|\r\n]*"<input>"
 
 /*reserved words*/
 "read" {
-	return token(READ, Token.RESERVED);
+	return token(TokenImpl.READ, Token.RESERVED);
 }
 "write" {
-	return token(WRITE, Token.RESERVED);
+	return token(TokenImpl.WRITE, Token.RESERVED);
 }
 "load" {
-	return token(LOAD, Token.RESERVED);
+	return token(TokenImpl.LOAD, Token.RESERVED);
 }
 "store" {
-	return token(STORE, Token.RESERVED);
+	return token(TokenImpl.STORE, Token.RESERVED);
 }       
 "add" {
-	return token(ADD, Token.RESERVED);
+	return token(TokenImpl.ADD, Token.RESERVED);
 }
 "sub" {
-	return token(SUB, Token.RESERVED);
+	return token(TokenImpl.SUB, Token.RESERVED);
 }
 "mul" {
-	return token(MUL, Token.RESERVED);
+	return token(TokenImpl.MUL, Token.RESERVED);
 }
 "div" {
-	return token(DIV, Token.RESERVED);
+	return token(TokenImpl.DIV, Token.RESERVED);
 }
 "jmp" {
-	return token(JMP, Token.RESERVED);
+	return token(TokenImpl.JMP, Token.RESERVED);
 }
 "jz" {
-	return token(JZ, Token.RESERVED);
+	return token(TokenImpl.JZ, Token.RESERVED);
 }
 "jgtz" {
-	return token(JGTZ, Token.RESERVED);
+	return token(TokenImpl.JGTZ, Token.RESERVED);
 }
 "halt" {
-	return token(HALT, Token.RESERVED);
+	return token(TokenImpl.HALT, Token.RESERVED);
 }
 
 /*preprocessor directives*/
 {org} {
-	return token(ORG, Token.PREPROCESSOR); 
+	return token(TokenImpl.ORG, Token.PREPROCESSOR);
 }
 
 {input} {
-    return token(TINPUT, Token.PREPROCESSOR);
+    return token(TokenImpl.TINPUT, Token.PREPROCESSOR);
 }
 
 /*separators*/
 {eol} {
-	return token(SEPARATOR_EOL, Token.SEPARATOR);
+	return token(TokenImpl.SEPARATOR_EOL, Token.SEPARATOR);
 }
 
 {space} {
@@ -149,32 +150,32 @@ input=[\r|\n|\r\n]*"<input>"
 
 /*comments*/
 {comment} {
-	return token(TCOMMENT, Token.COMMENT);
+	return token(TokenImpl.TCOMMENT, Token.COMMENT);
 }
 
 /*literals*/
 {number} {
 	int value = Integer.parseInt(yytext());
-	return token(NUMBER, Token.LITERAL, value);
+	return token(TokenImpl.NUMBER, Token.LITERAL, value);
 }
 
 {identifier} {
-	return token(IDENT, Token.IDENTIFIER, yytext());
+	return token(TokenImpl.IDENT, Token.IDENTIFIER, yytext());
 }
 
 /*label*/
-{label} {	
-	return token(TLABEL, Token.LABEL, yytext());
+{label} {
+	return token(TokenImpl.TLABEL, Token.LABEL, yytext());
 }
 
 /*operator for constants as operands*/
 {operator_constant} {
-	return token(OPERATOR_CONSTANT, Token.OPERATOR);
+	return token(TokenImpl.OPERATOR_CONSTANT, Token.OPERATOR);
 }
 
 /*error occurence*/
 [^] {
-	return token(ERROR_UNKNOWN_TOKEN, Token.ERROR);
+	return token(TokenImpl.ERROR_UNKNOWN_TOKEN, Token.ERROR);
 }
 
 

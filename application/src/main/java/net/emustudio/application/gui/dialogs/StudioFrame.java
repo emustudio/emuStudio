@@ -26,9 +26,9 @@ import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.PagesPanel;
 import net.emustudio.application.gui.debugtable.PaginatingDisassembler;
+import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.gui.editor.FindText;
-import net.emustudio.application.gui.editor.SourceCodeEditor;
-import net.emustudio.application.gui.editor.SourceCodeEditor.UndoActionListener;
+import net.emustudio.application.gui.editor.REditor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.compiler.Compiler;
@@ -39,20 +39,24 @@ import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import org.fife.rsta.ui.search.ReplaceDialog;
+import org.fife.rsta.ui.search.SearchEvent;
+import org.fife.rsta.ui.search.SearchListener;
+import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+import org.fife.ui.rtextarea.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.event.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-public class StudioFrame extends JFrame {
+public class StudioFrame extends JFrame implements SearchListener {
     private final static Logger LOGGER = LoggerFactory.getLogger(StudioFrame.class);
     private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
     private final static int MIN_PERIPHERAL_PANEL_HEIGHT = 100;
@@ -63,9 +67,8 @@ public class StudioFrame extends JFrame {
     private final EmulationController emulationController;
     private final ApplicationConfig applicationConfig;
 
-    private final Clipboard systemClipboard;
     private final FindText finder = new FindText();
-    private final SourceCodeEditor sourceCodeEditor;
+    private final Editor editor;
     private final JTable debugTable;
     private final DebugTableModel debugTableModel;
     private final Dialogs dialogs;
@@ -78,7 +81,7 @@ public class StudioFrame extends JFrame {
     public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
                        DebugTableModel debugTableModel, MemoryContext<?> memoryContext, String fileName) {
         this(computer, applicationConfig, dialogs, debugTableModel, memoryContext);
-        sourceCodeEditor.openFile(fileName);
+        editor.openFile(fileName);
     }
 
     public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
@@ -94,8 +97,9 @@ public class StudioFrame extends JFrame {
             cpu, computer.getMemory().orElse(null), computer.getDevices()
         )).orElse(null);
 
-        this.sourceCodeEditor = new SourceCodeEditor(computer.getCompiler().orElse(null), dialogs);
-        this.systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        this.editor = computer.getCompiler()
+            .map(compiler -> new REditor(dialogs, compiler))
+            .orElse(new REditor(dialogs));
 
         this.memoryListener = new Memory.MemoryListener() {
             @Override
@@ -117,7 +121,7 @@ public class StudioFrame extends JFrame {
         initComponents();
 
         btnMemory.setEnabled(computer.getMemory().filter(Memory::isShowSettingsSupported).isPresent());
-        editorScrollPane.setViewportView(sourceCodeEditor);
+        editorScrollPane.setViewportView(editor.getView());
         paneDebug.setViewportView(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
@@ -140,8 +144,44 @@ public class StudioFrame extends JFrame {
         pack();
         setupListeners();
         this.setLocationRelativeTo(null);
-        sourceCodeEditor.grabFocus();
+        editor.grabFocus();
         resizeComponents();
+    }
+
+    @Override
+    public void searchEvent(SearchEvent e) {
+        SearchEvent.Type type = e.getType();
+        SearchContext context = e.getSearchContext();
+        SearchResult result;
+        TextEditorPane pane = editor.getView();
+
+        switch (type) {
+            default:
+            case MARK_ALL:
+                SearchEngine.markAll(pane, context);
+                break;
+            case FIND:
+                result = SearchEngine.find(pane, context);
+                if (!result.wasFound() || result.isWrapped()) {
+                    UIManager.getLookAndFeel().provideErrorFeedback(pane);
+                }
+                break;
+            case REPLACE:
+                result = SearchEngine.replace(pane, context);
+                if (!result.wasFound() || result.isWrapped()) {
+                    UIManager.getLookAndFeel().provideErrorFeedback(pane);
+                }
+                break;
+            case REPLACE_ALL:
+                result = SearchEngine.replaceAll(pane, context);
+                dialogs.showInfo(result.getCount() + " occurrences replaced.", "Replace all");
+                break;
+        }
+    }
+
+    @Override
+    public String getSelectedText() {
+        return editor.getView().getSelectedText();
     }
 
     private void setStatusGUI() {
@@ -160,9 +200,6 @@ public class StudioFrame extends JFrame {
     }
 
     private void setupListeners() {
-        setupClipboard();
-        setupUndoRedo();
-
         setupCompiler();
         setupCPU();
         setStateNotRunning(runState);
@@ -279,55 +316,6 @@ public class StudioFrame extends JFrame {
         memoryContext.removeMemoryListener(memoryListener);
     }
 
-    private void setupUndoRedo() {
-        UndoActionListener undoStateListener = new UndoActionListener() {
-
-            @Override
-            public void undoStateChanged(boolean canUndo, String presentationName) {
-                mnuEditUndo.setEnabled(canUndo);
-                btnUndo.setEnabled(canUndo);
-                btnUndo.setToolTipText(presentationName);
-            }
-
-            @Override
-            public void redoStateChanged(boolean canRedo, String presentationName) {
-                mnuEditRedo.setEnabled(canRedo);
-                btnRedo.setEnabled(canRedo);
-                btnRedo.setToolTipText(presentationName);
-            }
-        };
-        sourceCodeEditor.setUndoActionListener(undoStateListener);
-    }
-
-    private void setupClipboard() {
-        if (systemClipboard.getContents(null) != null) {
-            btnPaste.setEnabled(true);
-            mnuEditPaste.setEnabled(true);
-        }
-        systemClipboard.addFlavorListener(e -> {
-            if (systemClipboard.getContents(null) == null) {
-                btnPaste.setEnabled(false);
-                mnuEditPaste.setEnabled(false);
-            } else {
-                btnPaste.setEnabled(true);
-                mnuEditPaste.setEnabled(true);
-            }
-        });
-        sourceCodeEditor.addCaretListener(e -> {
-            if (e.getDot() == e.getMark()) {
-                btnCut.setEnabled(false);
-                mnuEditCut.setEnabled(false);
-                btnCopy.setEnabled(false);
-                mnuEditCopy.setEnabled(false);
-            } else {
-                btnCut.setEnabled(true);
-                mnuEditCut.setEnabled(true);
-                btnCopy.setEnabled(true);
-                mnuEditCopy.setEnabled(true);
-            }
-        });
-    }
-
     private void setupCompiler() {
         Optional<Compiler> compiler = computer.getCompiler();
 
@@ -369,21 +357,8 @@ public class StudioFrame extends JFrame {
     private void initComponents() {
         tabbedPane = new JTabbedPane();
         JPanel panelSource = new JPanel();
-        JToolBar toolStandard = new JToolBar();
-        JButton btnNew = new JButton();
-        JButton btnOpen = new JButton();
-        JButton btnSave = new JButton();
-        JSeparator jSeparator1 = new JSeparator();
-        btnCut = new JButton();
-        btnCopy = new JButton();
-        btnPaste = new JButton();
-        JButton btnFindReplace = new JButton();
-        btnUndo = new JButton();
-        btnRedo = new JButton();
-        JSeparator jSeparator2 = new JSeparator();
-        btnCompile = new JButton();
         splitSource = new JSplitPane();
-        editorScrollPane = new JScrollPane();
+        editorScrollPane = new RTextScrollPane(editor.getView());
         JScrollPane compilerPane = new JScrollPane();
         compilerOutput = new JTextArea();
         JPanel panelEmulator = new JPanel();
@@ -391,18 +366,7 @@ public class StudioFrame extends JFrame {
         statusWindow = new JPanel();
         splitPerDebug = new JSplitPane();
         JPanel debuggerPanel = new JPanel();
-        toolDebug = new JToolBar();
-        JButton btnReset = new JButton();
-        btnBeginning = new JButton();
-        btnBack = new JButton();
-        btnStop = new JButton();
-        btnPause = new JButton();
-        btnRun = new JButton();
-        btnRunTime = new JButton();
-        btnStep = new JButton();
-        JButton btnJump = new JButton();
-        btnBreakpoint = new JButton();
-        btnMemory = new JButton();
+
         paneDebug = new JScrollPane();
 
         JPanel peripheralPanel = new JPanel();
@@ -410,33 +374,7 @@ public class StudioFrame extends JFrame {
         lstDevices = new JList<>();
         JButton btnShowGUI = new ConstantSizeButton();
         final JButton btnShowSettings = new ConstantSizeButton();
-        JMenuBar jMenuBar2 = new JMenuBar();
-        JMenu mnuFile = new JMenu();
-        JMenuItem mnuFileNew = new JMenuItem();
-        JMenuItem mnuFileOpen = new JMenuItem();
-        JSeparator jSeparator3 = new JSeparator();
-        JMenuItem mnuFileSave = new JMenuItem();
-        JMenuItem mnuFileSaveAs = new JMenuItem();
-        JSeparator jSeparator4 = new JSeparator();
-        JMenuItem mnuFileExit = new JMenuItem();
-        JMenu mnuEdit = new JMenu();
-        mnuEditUndo = new JMenuItem();
-        mnuEditRedo = new JMenuItem();
-        JSeparator jSeparator6 = new JSeparator();
-        mnuEditCut = new JMenuItem();
-        mnuEditCopy = new JMenuItem();
-        mnuEditPaste = new JMenuItem();
-        JSeparator jSeparator5 = new JSeparator();
-        JMenuItem mnuEditFind = new JMenuItem();
-        JMenuItem mnuEditFindNext = new JMenuItem();
-        JMenuItem mnuEditReplaceNext = new JMenuItem();
-        JMenu mnuProject = new JMenu();
-        mnuProjectCompile = new JMenuItem();
-        JMenuItem mnuProjectViewConfig = new JMenuItem();
-        mnuProjectCompilerSettings = new JMenuItem();
-        JMenu mnuHelp = new JMenu();
-        JMenuItem mnuHelpAbout = new JMenuItem();
-        JSeparator jSeparator7 = new JSeparator();
+
         panelPages = PagesPanel.create(debugTableModel, dialogs);
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -453,98 +391,7 @@ public class StudioFrame extends JFrame {
         tabbedPane.setFont(tabbedPane.getFont().deriveFont(tabbedPane.getFont().getStyle() & ~java.awt.Font.BOLD));
         panelSource.setOpaque(true);
 
-        toolStandard.setFloatable(false);
-        toolStandard.setBorderPainted(false);
-        toolStandard.setRollover(true);
-
-        btnNew.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/document-new.png"))); // NOI18N
-        btnNew.setToolTipText("New file");
-        btnNew.setFocusable(false);
-        btnNew.addActionListener(this::btnNewActionPerformed);
-        btnNew.setBorderPainted(false);
-
-        btnOpen.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/document-open.png"))); // NOI18N
-        btnOpen.setToolTipText("Open file");
-        btnOpen.setFocusable(false);
-        btnOpen.addActionListener(this::btnOpenActionPerformed);
-        btnOpen.setBorderPainted(false);
-
-        btnSave.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/document-save.png"))); // NOI18N
-        btnSave.setToolTipText("Save file");
-        btnSave.setFocusable(false);
-        btnSave.addActionListener(this::btnSaveActionPerformed);
-        btnSave.setBorderPainted(false);
-
-        jSeparator1.setOrientation(SwingConstants.VERTICAL);
-        jSeparator1.setMaximumSize(new java.awt.Dimension(10, 32768));
-        jSeparator1.setPreferredSize(new java.awt.Dimension(10, 10));
-
-        btnCut.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/edit-cut.png"))); // NOI18N
-        btnCut.setToolTipText("Cut selection");
-        btnCut.setEnabled(false);
-        btnCut.setFocusable(false);
-        btnCut.addActionListener(this::btnCutActionPerformed);
-        btnCut.setBorderPainted(false);
-
-        btnCopy.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/edit-copy.png"))); // NOI18N
-        btnCopy.setToolTipText("Copy selection");
-        btnCopy.setEnabled(false);
-        btnCopy.setFocusable(false);
-        btnCopy.addActionListener(this::btnCopyActionPerformed);
-        btnCopy.setBorderPainted(false);
-
-        btnPaste.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/edit-paste.png"))); // NOI18N
-        btnPaste.setToolTipText("Paste selection");
-        btnPaste.setEnabled(false);
-        btnPaste.setFocusable(false);
-        btnPaste.addActionListener(this::btnPasteActionPerformed);
-        btnPaste.setBorderPainted(false);
-
-        btnFindReplace.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/edit-find-replace.png"))); // NOI18N
-        btnFindReplace.setToolTipText("Find/replace text...");
-        btnFindReplace.setFocusable(false);
-        btnFindReplace.addActionListener(this::btnFindReplaceActionPerformed);
-        btnFindReplace.setBorderPainted(false);
-
-        btnUndo.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/edit-undo.png"))); // NOI18N
-        btnUndo.setToolTipText("Undo");
-        btnUndo.setEnabled(false);
-        btnUndo.setFocusable(false);
-        btnUndo.addActionListener(this::btnUndoActionPerformed);
-        btnUndo.setBorderPainted(false);
-
-        btnRedo.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/edit-redo.png"))); // NOI18N
-        btnRedo.setToolTipText("Redo");
-        btnRedo.setEnabled(false);
-        btnRedo.setFocusable(false);
-        btnRedo.addActionListener(this::btnRedoActionPerformed);
-        btnRedo.setBorderPainted(false);
-
-        jSeparator2.setOrientation(SwingConstants.VERTICAL);
-        jSeparator2.setMaximumSize(new java.awt.Dimension(10, 32767));
-
-        jSeparator7.setOrientation(SwingConstants.VERTICAL);
-        jSeparator7.setMaximumSize(new java.awt.Dimension(10, 32767));
-
-        btnCompile.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/compile.png"))); // NOI18N
-        btnCompile.setToolTipText("Compile source");
-        btnCompile.setFocusable(false);
-        btnCompile.addActionListener(this::btnCompileActionPerformed);
-        btnCompile.setBorderPainted(false);
-
-        toolStandard.add(btnNew);
-        toolStandard.add(btnOpen);
-        toolStandard.add(btnSave);
-        toolStandard.add(jSeparator1);
-        toolStandard.add(btnUndo);
-        toolStandard.add(btnRedo);
-        toolStandard.add(jSeparator2);
-        toolStandard.add(btnFindReplace);
-        toolStandard.add(btnCut);
-        toolStandard.add(btnCopy);
-        toolStandard.add(btnPaste);
-        toolStandard.add(jSeparator7);
-        toolStandard.add(btnCompile);
+        JToolBar mainToolBar = setupMainToolbar();
 
         splitSource.setBorder(null);
         splitSource.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -565,7 +412,7 @@ public class StudioFrame extends JFrame {
         panelSource.setLayout(panelSourceLayout);
         panelSourceLayout.setHorizontalGroup(
             panelSourceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(toolStandard)
+                .addComponent(mainToolBar)
                 .addGroup(
                     panelSourceLayout
                         .createSequentialGroup()
@@ -577,7 +424,7 @@ public class StudioFrame extends JFrame {
         panelSourceLayout.setVerticalGroup(
             panelSourceLayout
                 .createSequentialGroup()
-                .addComponent(toolStandard, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                .addComponent(mainToolBar, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
                 .addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
                 .addContainerGap()
         );
@@ -606,90 +453,7 @@ public class StudioFrame extends JFrame {
         debuggerBorder.setTitleFont(debuggerBorder.getTitleFont().deriveFont(debuggerBorder.getTitleFont().getStyle() & ~Font.BOLD));
         debuggerPanel.setBorder(debuggerBorder);
 
-        toolDebug.setFloatable(false);
-        toolDebug.setRollover(true);
-        toolDebug.setBorder(null);
-        toolDebug.setBorderPainted(false);
-
-        btnReset.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/reset.png"))); // NOI18N
-        btnReset.setToolTipText("Reset emulation");
-        btnReset.setFocusable(false);
-        btnReset.addActionListener(this::btnResetActionPerformed);
-        btnReset.setBorderPainted(false);
-
-        btnBeginning.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/go-first.png"))); // NOI18N
-        btnBeginning.setToolTipText("Jump to beginning");
-        btnBeginning.setFocusable(false);
-        btnBeginning.addActionListener(this::btnBeginningActionPerformed);
-        btnBeginning.setBorderPainted(false);
-
-        btnBack.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/go-previous.png"))); // NOI18N
-        btnBack.setToolTipText("Step back");
-        btnBack.setFocusable(false);
-        btnBack.addActionListener(this::btnBackActionPerformed);
-        btnBack.setBorderPainted(false);
-
-        btnStop.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/go-stop.png"))); // NOI18N
-        btnStop.setToolTipText("Stop emulation");
-        btnStop.setFocusable(false);
-        btnStop.addActionListener(this::btnStopActionPerformed);
-        btnStop.setBorderPainted(false);
-
-        btnPause.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/go-pause.png"))); // NOI18N
-        btnPause.setToolTipText("Pause emulation");
-        btnPause.setFocusable(false);
-        btnPause.addActionListener(this::btnPauseActionPerformed);
-        btnPause.setBorderPainted(false);
-
-        btnRun.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/go-play.png"))); // NOI18N
-        btnRun.setToolTipText("Run emulation");
-        btnRun.setFocusable(false);
-        btnRun.addActionListener(this::btnRunActionPerformed);
-        btnRun.setBorderPainted(false);
-
-        btnRunTime.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/go-play-time.png"))); // NOI18N
-        btnRunTime.setToolTipText("Run emulation in time slices");
-        btnRunTime.setFocusable(false);
-        btnRunTime.addActionListener(this::btnRunTimeActionPerformed);
-        btnRunTime.setBorderPainted(false);
-
-        btnStep.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/go-next.png"))); // NOI18N
-        btnStep.setToolTipText("Step forward");
-        btnStep.setFocusable(false);
-        btnStep.addActionListener(this::btnStepActionPerformed);
-        btnStep.setBorderPainted(false);
-
-        btnJump.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/go-jump.png"))); // NOI18N
-        btnJump.setToolTipText("Jump to address");
-        btnJump.setFocusable(false);
-        btnJump.addActionListener(this::btnJumpActionPerformed);
-        btnJump.setBorderPainted(false);
-
-        btnBreakpoint.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/breakpoints.png"))); // NOI18N
-        btnBreakpoint.setToolTipText("Set/unset breakpoint to address...");
-        btnBreakpoint.setFocusable(false);
-        btnBreakpoint.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnBreakpoint.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnBreakpoint.addActionListener(this::btnBreakpointActionPerformed);
-        btnBreakpoint.setBorderPainted(false);
-
-        btnMemory.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/grid_memory.gif"))); // NOI18N
-        btnMemory.setToolTipText("Show operating memory");
-        btnMemory.setFocusable(false);
-        btnMemory.addActionListener(this::btnMemoryActionPerformed);
-        btnMemory.setBorderPainted(false);
-
-        toolDebug.add(btnReset);
-        toolDebug.add(btnBeginning);
-        toolDebug.add(btnBack);
-        toolDebug.add(btnStop);
-        toolDebug.add(btnPause);
-        toolDebug.add(btnRun);
-        toolDebug.add(btnRunTime);
-        toolDebug.add(btnStep);
-        toolDebug.add(btnJump);
-        toolDebug.add(btnBreakpoint);
-        toolDebug.add(btnMemory);
+        setupDebugToolbar();
 
         GroupLayout debuggerPanelLayout = new GroupLayout(debuggerPanel);
         debuggerPanel.setLayout(debuggerPanelLayout);
@@ -768,6 +532,41 @@ public class StudioFrame extends JFrame {
 
         tabbedPane.addTab("Emulator", panelEmulator);
 
+        setJMenuBar(setupMainMenu());
+
+        GroupLayout layout = new GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
+                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+        layout.setVerticalGroup(
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
+                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+    }
+
+    private JMenuBar setupMainMenu() {
+        JMenuBar mainMenuBar = new JMenuBar();
+        JMenu mnuFile = new JMenu();
+        JMenuItem mnuFileNew = new JMenuItem();
+        JMenuItem mnuFileOpen = new JMenuItem();
+        JSeparator jSeparator3 = new JSeparator();
+        JMenuItem mnuFileSave = new JMenuItem();
+        JMenuItem mnuFileSaveAs = new JMenuItem();
+        JSeparator jSeparator4 = new JSeparator();
+        JMenuItem mnuFileExit = new JMenuItem();
+        JMenu mnuEdit = new JMenu();
+        JSeparator jSeparator6 = new JSeparator();
+        JSeparator jSeparator5 = new JSeparator();
+        JMenuItem mnuEditFind = new JMenuItem();
+        JMenuItem mnuEditFindNext = new JMenuItem();
+        JMenuItem mnuEditReplaceNext = new JMenuItem();
+        JMenu mnuProject = new JMenu();
+        mnuProjectCompile = new JMenuItem();
+        JMenuItem mnuProjectViewConfig = new JMenuItem();
+        mnuProjectCompilerSettings = new JMenuItem();
+        JMenu mnuHelp = new JMenu();
+        JMenuItem mnuHelpAbout = new JMenuItem();
+
         mnuFile.setText("File");
         mnuFile.setFont(mnuFile.getFont().deriveFont(mnuFile.getFont().getStyle() & ~java.awt.Font.BOLD));
 
@@ -803,46 +602,17 @@ public class StudioFrame extends JFrame {
         mnuFileExit.addActionListener(this::mnuFileExitActionPerformed);
         mnuFile.add(mnuFileExit);
 
-        jMenuBar2.add(mnuFile);
+        mainMenuBar.add(mnuFile);
 
         mnuEdit.setText("Edit");
         mnuEdit.setFont(mnuEdit.getFont().deriveFont(mnuEdit.getFont().getStyle() & ~java.awt.Font.BOLD));
 
-        mnuEditUndo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK));
-        mnuEditUndo.setText("Undo");
-        mnuEditUndo.setFont(mnuEditUndo.getFont().deriveFont(mnuEditUndo.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditUndo.setEnabled(false);
-        mnuEditUndo.addActionListener(this::mnuEditUndoActionPerformed);
-        mnuEdit.add(mnuEditUndo);
-
-        mnuEditRedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK));
-        mnuEditRedo.setText("Redo");
-        mnuEditRedo.setEnabled(false);
-        mnuEditRedo.setFont(mnuEditRedo.getFont().deriveFont(mnuEditRedo.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditRedo.addActionListener(this::mnuEditRedoActionPerformed);
-        mnuEdit.add(mnuEditRedo);
+        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
+        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
         mnuEdit.add(jSeparator6);
-
-        mnuEditCut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK));
-        mnuEditCut.setText("Cut selection");
-        mnuEditCut.setEnabled(false);
-        mnuEditCut.setFont(mnuEditCut.getFont().deriveFont(mnuEditCut.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditCut.addActionListener(this::mnuEditCutActionPerformed);
-        mnuEdit.add(mnuEditCut);
-
-        mnuEditCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
-        mnuEditCopy.setText("Copy selection");
-        mnuEditCopy.setEnabled(false);
-        mnuEditCopy.setFont(mnuEditCopy.getFont().deriveFont(mnuEditCopy.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditCopy.addActionListener(this::mnuEditCopyActionPerformed);
-        mnuEdit.add(mnuEditCopy);
-
-        mnuEditPaste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
-        mnuEditPaste.setText("Paste selection");
-        mnuEditPaste.setEnabled(false);
-        mnuEditPaste.setFont(mnuEditPaste.getFont().deriveFont(mnuEditPaste.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditPaste.addActionListener(this::mnuEditPasteActionPerformed);
-        mnuEdit.add(mnuEditPaste);
+        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
+        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
+        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
         mnuEdit.add(jSeparator5);
 
         mnuEditFind.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
@@ -863,7 +633,7 @@ public class StudioFrame extends JFrame {
         mnuEditReplaceNext.addActionListener(this::mnuEditReplaceNextActionPerformed);
         mnuEdit.add(mnuEditReplaceNext);
 
-        jMenuBar2.add(mnuEdit);
+        mainMenuBar.add(mnuEdit);
 
         mnuProject.setText("Project");
         mnuProject.setFont(mnuProject.getFont().deriveFont(mnuProject.getFont().getStyle() & ~java.awt.Font.BOLD));
@@ -883,7 +653,7 @@ public class StudioFrame extends JFrame {
         mnuProjectCompilerSettings.addActionListener(this::mnuProjectCompilerSettingsActionPerformed);
         mnuProject.add(mnuProjectCompilerSettings);
 
-        jMenuBar2.add(mnuProject);
+        mainMenuBar.add(mnuProject);
 
         mnuHelp.setText("Help");
         mnuHelp.setFont(mnuHelp.getFont().deriveFont(mnuHelp.getFont().getStyle() & ~java.awt.Font.BOLD));
@@ -893,18 +663,184 @@ public class StudioFrame extends JFrame {
         mnuHelpAbout.addActionListener(this::mnuHelpAboutActionPerformed);
         mnuHelp.add(mnuHelpAbout);
 
-        jMenuBar2.add(mnuHelp);
+        mainMenuBar.add(mnuHelp);
+        return mainMenuBar;
+    }
 
-        setJMenuBar(jMenuBar2);
+    private JToolBar setupMainToolbar() {
+        JToolBar mainToolBar = new JToolBar();
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
-        layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+        JSeparator separator1 = new JSeparator();
+        JSeparator separator2 = new JSeparator();
+        JSeparator separator3 = new JSeparator();
+
+        ToolbarButton btnNew = new ToolbarButton(
+            this::btnNewActionPerformed,
+            "/net/emustudio/application/gui/dialogs/document-new.png",
+            "New file"
+        );
+        ToolbarButton btnOpen = new ToolbarButton(
+            this::btnOpenActionPerformed,
+            "/net/emustudio/application/gui/dialogs/document-open.png",
+            "Open file"
+        );
+        ToolbarButton btnSave = new ToolbarButton(
+            this::btnSaveActionPerformed,
+            "/net/emustudio/application/gui/dialogs/document-save.png",
+            "Save file"
+        );
+
+        ToolbarButton btnCut = new ToolbarButton(
+            RTextArea.getAction(RTextArea.CUT_ACTION),
+            "/net/emustudio/application/gui/dialogs/edit-cut.png",
+            "Cut selection"
+        );
+        ToolbarButton btnCopy = new ToolbarButton(
+            RTextArea.getAction(RTextArea.COPY_ACTION),
+            "/net/emustudio/application/gui/dialogs/edit-copy.png",
+            "Copy selection"
+        );
+        ToolbarButton btnPaste = new ToolbarButton(
+            RTextArea.getAction(RTextArea.PASTE_ACTION),
+            "/net/emustudio/application/gui/dialogs/edit-paste.png",
+            "Paste from clipboard"
+        );
+
+        ToolbarButton btnFindReplace = new ToolbarButton(
+            this::btnFindReplaceActionPerformed,
+            "/net/emustudio/application/gui/dialogs/edit-find-replace.png",
+            "Find/replace text..."
+        );
+
+        ToolbarButton btnUndo = new ToolbarButton(
+            RTextArea.getAction(RTextArea.UNDO_ACTION),
+            "/net/emustudio/application/gui/dialogs/edit-undo.png",
+            "Undo"
+        );
+        ToolbarButton btnRedo = new ToolbarButton(RTextArea.getAction(RTextArea.REDO_ACTION),
+            "/net/emustudio/application/gui/dialogs/edit-redo.png",
+            "Redo"
+        );
+
+        btnCompile = new ToolbarButton(
+            this::btnCompileActionPerformed,
+            "/net/emustudio/application/gui/dialogs/compile.png",
+            "Compile source"
+        );
+
+        mainToolBar.setFloatable(false);
+        mainToolBar.setBorderPainted(false);
+        mainToolBar.setRollover(true);
+
+        separator1.setOrientation(SwingConstants.VERTICAL);
+        separator1.setMaximumSize(new java.awt.Dimension(10, 32768));
+        separator1.setPreferredSize(new java.awt.Dimension(10, 10));
+
+        separator2.setOrientation(SwingConstants.VERTICAL);
+        separator2.setMaximumSize(new java.awt.Dimension(10, 32767));
+
+        separator3.setOrientation(SwingConstants.VERTICAL);
+        separator3.setMaximumSize(new java.awt.Dimension(10, 32767));
+
+        mainToolBar.add(btnNew);
+        mainToolBar.add(btnOpen);
+        mainToolBar.add(btnSave);
+        mainToolBar.add(separator1);
+        mainToolBar.add(btnUndo);
+        mainToolBar.add(btnRedo);
+        mainToolBar.add(separator2);
+        mainToolBar.add(btnFindReplace);
+        mainToolBar.add(btnCut);
+        mainToolBar.add(btnCopy);
+        mainToolBar.add(btnPaste);
+        mainToolBar.add(separator3);
+        mainToolBar.add(btnCompile);
+
+        return mainToolBar;
+    }
+
+
+    private void setupDebugToolbar() {
+        toolDebug = new JToolBar();
+        ToolbarButton btnReset = new ToolbarButton(
+            this::btnResetActionPerformed,
+            "/net/emustudio/application/gui/dialogs/reset.png",
+            "Reset emulation"
+        );
+        btnBeginning = new ToolbarButton(
+            this::btnBeginningActionPerformed,
+            "/net/emustudio/application/gui/dialogs/go-first.png",
+            "Jump to beginning"
+        );
+        btnBack = new ToolbarButton(
+            this::btnBackActionPerformed,
+            "/net/emustudio/application/gui/dialogs/go-previous.png",
+            "Step back"
+        );
+        btnStop = new ToolbarButton(
+            this::btnStopActionPerformed,
+            "/net/emustudio/application/gui/dialogs/go-stop.png",
+            "Stop emulation"
+        );
+        btnPause = new ToolbarButton(
+            this::btnPauseActionPerformed,
+            "/net/emustudio/application/gui/dialogs/go-pause.png",
+            "Pause emulation"
+        );
+        btnRun = new ToolbarButton(
+            this::btnRunActionPerformed,
+            "/net/emustudio/application/gui/dialogs/go-play.png",
+            "Run emulation"
+        );
+        btnRunTime = new ToolbarButton(
+            this::btnRunTimeActionPerformed,
+            "/net/emustudio/application/gui/dialogs/go-play-time.png",
+            "Run emulation in time slices"
+        );
+        btnStep = new ToolbarButton(
+            this::btnStepActionPerformed,
+            "/net/emustudio/application/gui/dialogs/go-next.png",
+            "Step forward"
+        );
+        ToolbarButton btnJump = new ToolbarButton(
+            this::btnJumpActionPerformed,
+            "/net/emustudio/application/gui/dialogs/go-jump.png",
+            "Jump to address"
+        );
+        btnBreakpoint = new ToolbarButton(
+            this::btnBreakpointActionPerformed,
+            "/net/emustudio/application/gui/dialogs/breakpoints.png",
+            "Set/unset breakpoint to address..."
+        );
+        btnMemory = new ToolbarButton(
+            this::btnMemoryActionPerformed,
+            "/net/emustudio/application/gui/dialogs/grid_memory.gif",
+            "Show operating memory"
+        );
+
+        toolDebug.setFloatable(false);
+        toolDebug.setRollover(true);
+        toolDebug.setBorder(null);
+        toolDebug.setBorderPainted(false);
+
+        toolDebug.add(btnReset);
+        toolDebug.add(btnBeginning);
+        toolDebug.add(btnBack);
+        toolDebug.add(btnStop);
+        toolDebug.add(btnPause);
+        toolDebug.add(btnRun);
+        toolDebug.add(btnRunTime);
+        toolDebug.add(btnStep);
+        toolDebug.add(btnJump);
+        toolDebug.add(btnBreakpoint);
+        toolDebug.add(btnMemory);
+    }
+
+
+    private static JMenuItem createMenuItem(Action action) {
+        JMenuItem item = new JMenuItem(action);
+        item.setToolTipText(null); // Swing annoyingly adds tool tip text to the menu item
+        return item;
     }
 
     private void btnPauseActionPerformed(ActionEvent evt) {
@@ -1030,10 +966,10 @@ public class StudioFrame extends JFrame {
         computer.getCompiler().ifPresentOrElse(compiler -> {
             if (runState == CPU.RunState.STATE_RUNNING) {
                 dialogs.showError("Emulation must be stopped first.", "Compile");
-            } else if (sourceCodeEditor.saveFile(true)) {
+            } else if (editor.saveFile()) {
                 updateTitleOfSourceCodePanel();
 
-                sourceCodeEditor.getCurrentFile().ifPresent(file -> {
+                editor.getCurrentFile().ifPresent(file -> {
                     compilerOutput.setText("");
 
                     try {
@@ -1063,29 +999,10 @@ public class StudioFrame extends JFrame {
         }
     }
 
-    private void mnuEditPasteActionPerformed(ActionEvent evt) {
-        btnPasteActionPerformed(evt);
-    }
-
-    private void mnuEditCopyActionPerformed(ActionEvent evt) {
-        btnCopyActionPerformed(evt);
-    }
-
-    private void mnuEditCutActionPerformed(ActionEvent evt) {
-        btnCutActionPerformed(evt);
-    }
-
-    private void mnuEditRedoActionPerformed(ActionEvent evt) {
-        btnRedoActionPerformed(evt);
-    }
-
-    private void mnuEditUndoActionPerformed(ActionEvent evt) {
-        btnUndoActionPerformed(evt);
-    }
-
     private void mnuFileSaveAsActionPerformed(ActionEvent evt) {
-        sourceCodeEditor.saveFileDialog();
-        updateTitleOfSourceCodePanel();
+        if (editor.saveFileAs()) {
+            updateTitleOfSourceCodePanel();
+        }
     }
 
     private void mnuFileSaveActionPerformed(ActionEvent evt) {
@@ -1093,8 +1010,9 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnSaveActionPerformed(ActionEvent evt) {
-        sourceCodeEditor.saveFile(true);
-        updateTitleOfSourceCodePanel();
+        if (editor.saveFile()) {
+            updateTitleOfSourceCodePanel();
+        }
     }
 
     private void mnuFileOpenActionPerformed(ActionEvent evt) {
@@ -1110,7 +1028,8 @@ public class StudioFrame extends JFrame {
     }
 
     private void formWindowClosing() {
-        if (sourceCodeEditor.confirmSaveAndSaved()) {
+        if (confirmSave()) {
+            Optional.ofNullable(emulationController).ifPresent(EmulationController::close);
             computer.close();
             dispose();
             System.exit(0); //calling the method is a must
@@ -1118,53 +1037,36 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnOpenActionPerformed(ActionEvent evt) {
-        if (sourceCodeEditor.openFileDialog()) {
+        if (confirmSave() && editor.openFile()) {
             compilerOutput.setText("");
+            updateTitleOfSourceCodePanel();
         }
-        updateTitleOfSourceCodePanel();
     }
 
     private void btnNewActionPerformed(ActionEvent evt) {
-        sourceCodeEditor.newFile();
-        compilerOutput.setText("");
-        updateTitleOfSourceCodePanel();
+        if (confirmSave()) {
+            editor.newFile();
+            compilerOutput.setText("");
+            updateTitleOfSourceCodePanel();
+        }
     }
 
     private void btnFindReplaceActionPerformed(ActionEvent evt) {
         mnuEditFindActionPerformed(evt);
     }
 
-    private void btnPasteActionPerformed(ActionEvent evt) {
-        sourceCodeEditor.paste();
-    }
-
-    private void btnCopyActionPerformed(ActionEvent evt) {
-        sourceCodeEditor.copy();
-    }
-
-    private void btnCutActionPerformed(ActionEvent evt) {
-        sourceCodeEditor.cut();
-    }
-
-    private void btnRedoActionPerformed(ActionEvent evt) {
-        sourceCodeEditor.redo();
-    }
-
-    private void btnUndoActionPerformed(ActionEvent evt) {
-        sourceCodeEditor.undo();
-    }
-
     private void mnuEditFindActionPerformed(ActionEvent evt) {
-        FindTextDialog.create(this, finder, sourceCodeEditor, dialogs).setVisible(true);
+        ReplaceDialog replaceDialog = new ReplaceDialog(this, this);
+        replaceDialog.setVisible(true);
     }
 
     private void mnuEditFindNextActionPerformed(ActionEvent evt) {
         try {
-            if (finder.findNext(sourceCodeEditor.getText(),
-                sourceCodeEditor.getCaretPosition(),
-                sourceCodeEditor.getDocument().getEndPosition().getOffset() - 1)) {
-                sourceCodeEditor.select(finder.getMatchStart(), finder.getMatchEnd());
-                sourceCodeEditor.grabFocus();
+            if (finder.findNext(editor.getText(),
+                editor.getCaretPosition(),
+                editor.getDocument().getEndPosition().getOffset() - 1)) {
+                editor.select(finder.getMatchStart(), finder.getMatchEnd());
+                editor.grabFocus();
             } else {
                 dialogs.showError("Text was not found", "Find next");
             }
@@ -1193,8 +1095,8 @@ public class StudioFrame extends JFrame {
 
     private void mnuEditReplaceNextActionPerformed(ActionEvent evt) {
         try {
-            if (finder.replaceNext(sourceCodeEditor)) {
-                sourceCodeEditor.grabFocus();
+            if (finder.replaceNext(editor)) {
+                editor.grabFocus();
             } else {
                 dialogs.showError("Text was not found", "Replace next");
             }
@@ -1204,38 +1106,38 @@ public class StudioFrame extends JFrame {
     }
 
     private void updateTitleOfSourceCodePanel() {
-        sourceCodeEditor.getCurrentFile().ifPresentOrElse(
+        editor.getCurrentFile().ifPresentOrElse(
             file -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR + " (" + file.getName() + ")"),
             () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
         );
     }
 
-    private JButton btnBack;
-    private JButton btnBeginning;
-    private JButton btnBreakpoint;
-    private JButton btnCopy;
-    private JButton btnCut;
-    private JButton btnPaste;
-    private JButton btnPause;
-    private JButton btnRedo;
-    private JButton btnRun;
-    private JButton btnRunTime;
-    private JButton btnStep;
-    private JButton btnStop;
-    private JButton btnUndo;
-    private JScrollPane editorScrollPane;
+    private boolean confirmSave() {
+        if (editor.isDirty()) {
+            Dialogs.DialogAnswer answer = dialogs.ask("File is not saved yet. Do you want to save it?");
+            if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
+                return editor.saveFile();
+            } else return answer != Dialogs.DialogAnswer.ANSWER_CANCEL;
+        }
+        return true;
+    }
+
+    private ToolbarButton btnBack;
+    private ToolbarButton btnBeginning;
+    private ToolbarButton btnBreakpoint;
+    private ToolbarButton btnPause;
+    private ToolbarButton btnRun;
+    private ToolbarButton btnRunTime;
+    private ToolbarButton btnStep;
+    private ToolbarButton btnStop;
+    private RTextScrollPane editorScrollPane;
     private JList<String> lstDevices;
-    private JMenuItem mnuEditCopy;
-    private JMenuItem mnuEditCut;
-    private JMenuItem mnuEditPaste;
-    private JMenuItem mnuEditRedo;
-    private JMenuItem mnuEditUndo;
     private JScrollPane paneDebug;
     private JPanel statusWindow;
     private JTextArea compilerOutput;
     private JMenuItem mnuProjectCompilerSettings;
-    private JButton btnMemory;
-    private JButton btnCompile;
+    private ToolbarButton btnMemory;
+    private ToolbarButton btnCompile;
     private JMenuItem mnuProjectCompile;
     private JSplitPane splitSource;
     private JSplitPane splitPerDebug;

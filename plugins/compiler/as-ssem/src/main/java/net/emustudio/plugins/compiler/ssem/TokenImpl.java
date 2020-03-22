@@ -18,27 +18,24 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
-import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import net.emustudio.emulib.plugins.compiler.Token;
 
-public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Token, Symbols {
+public class TokenImpl extends ComplexSymbol implements Token, Symbols {
     private final int category;
-    private final int cchar;
+    private final int lexerState;
 
-    public TokenImpl(int id, int category, String text, int line, int column, int cchar) {
-        super(
-            text, id, new ComplexSymbolFactory.Location(line, column), new ComplexSymbolFactory.Location(line, column)
-        );
+    public TokenImpl(int id, int category, int lexerState, String text, Location left, Location right) {
+        super(text, id, left, right);
         this.category = category;
-        this.cchar = cchar;
+        this.lexerState = lexerState;
     }
 
-    public TokenImpl(int id, int category, String text, int line, int column, int cchar, Object value) {
-        super(
-            text, id, new ComplexSymbolFactory.Location(line, column), new ComplexSymbolFactory.Location(line, column), value
-        );
+    public TokenImpl(int id, int category, int lexerState, String text, Location left, Location right, Object value) {
+        super(text, id, left, right, value);
         this.category = category;
-        this.cchar = cchar;
+        this.lexerState = lexerState;
     }
 
     @Override
@@ -53,27 +50,27 @@ public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Tok
 
     @Override
     public int getLine() {
-        return super.getLeft().getLine();
+        return getLeft().getLine();
     }
 
     @Override
     public int getColumn() {
-        return super.getLeft().getColumn();
+        return getLeft().getColumn();
     }
 
     @Override
     public int getOffset() {
-        return cchar;
+        return getLeft().getOffset();
     }
 
     @Override
     public int getLength() {
-        return getName().length();
+        return getRight().getOffset() - getLeft().getOffset();
     }
 
     @Override
     public String getErrorString() {
-        return "Unknown token";
+        return (getType() == ERROR) ? "Invalid token" : "";
     }
 
     @Override
@@ -82,7 +79,7 @@ public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Tok
     }
 
     @Override
-    public boolean isInitialLexicalState() {
-        return super.sym != BNUM;
+    public int getLexerState() {
+        return lexerState;
     }
 }
