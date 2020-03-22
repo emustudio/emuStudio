@@ -36,7 +36,7 @@ public class RTokenMaker extends AbstractTokenMaker {
         int currentTokenStart = offset;
         boolean currentTokenInitialLexicalState = initialTokenType == Token.NULL;
 
-        System.out.println(text);
+        System.out.println("'" + text + "'; startOffset=" + startOffset + ", initialTokenType=" + initialTokenType);
 
         lexicalAnalyzer.reset(new StringReader(text.toString()), 0, startOffset, 0);
         for (int i = offset; i < end; ) {
@@ -47,22 +47,29 @@ public class RTokenMaker extends AbstractTokenMaker {
                 }
 
                 net.emustudio.emulib.plugins.compiler.Token token = lexicalAnalyzer.getSymbol();
+                System.out.println("Token: " + token);
+                System.out.println("  [" + token.getOffset() + "; " + token.getLength() + "] '" + token.getText() + "'");
+                System.out.println("  " + tokenTypeString(token.getType()));
+
                 currentTokenInitialLexicalState = token.isInitialLexicalState();
 
-                System.out.println("emuStudio token: " + token);
+                int length = token.getLength();
+                int tokenMakerType = getTokenMakerType(token.getType());
 
-
-                if (token.getID() == TEOF) {
+                if (token.getType() == TEOF) {
                     break;
                 }
 
-                int tokenMakerType = getTokenMakerType(token.getType());
+                if (token.getOffset() > currentTokenStart) {
+                    currentTokenStart = token.getOffset();
+                }
+
                 addToken(
-                    text, currentTokenStart, token.getOffset() + token.getLength() - 1, tokenMakerType,
+                    text, currentTokenStart, currentTokenStart + length, tokenMakerType,
                     newStartOffset + currentTokenStart
                 );
 
-                i += token.getLength();
+                i += length;
             } catch (IOException dontknowyet) {
                 dontknowyet.printStackTrace();
                 // TODO
@@ -76,6 +83,11 @@ public class RTokenMaker extends AbstractTokenMaker {
         }
 
         return firstToken;
+    }
+
+    @Override
+    public TokenMap getWordsToHighlight() {
+        return new TokenMap();
     }
 
     private static int getTokenMakerType(int emuStudioTokenType) {
@@ -106,8 +118,31 @@ public class RTokenMaker extends AbstractTokenMaker {
         return Token.NULL;
     }
 
-    @Override
-    public TokenMap getWordsToHighlight() {
-        return new TokenMap();
+    private String tokenTypeString(int type) {
+        switch (type) {
+            case TEOF:
+                return "TEOF";
+            case RESERVED:
+                return "RESERVED";
+            case PREPROCESSOR:
+                return "PREPROCESSOR";
+            case REGISTER:
+                return "REGISTER";
+            case SEPARATOR:
+                return "SEPARATOR";
+            case OPERATOR:
+                return "OPERATOR";
+            case COMMENT:
+                return "COMMENT";
+            case LITERAL:
+                return "LITERAL";
+            case IDENTIFIER:
+                return "IDENTIFIER";
+            case LABEL:
+                return "LABEL";
+            case ERROR:
+                return "ERROR";
+        }
+        return "dont know";
     }
 }

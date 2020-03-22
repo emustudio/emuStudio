@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
@@ -25,7 +26,6 @@ import net.emustudio.emulib.runtime.helpers.RadixUtils;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Arrays;
 
 %%
 
@@ -63,11 +63,15 @@ import java.util.Arrays;
     }
 
     private TokenImpl token(int type, int category) {
-        return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar);
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(type, category, yytext(), left, right);
     }
 
     private TokenImpl token(int type, int category, Object value) {
-        return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar, value);
+        Location left = new Location("", yyline+1,yycolumn+1,yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        return new TokenImpl(type, category, yytext(), left, right, value);
     }
 %}
 

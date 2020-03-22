@@ -39,10 +39,4 @@ public interface Editor {
 
 
     Document getDocument();
-
-    interface UndoListener {
-        void undoStateChanged(boolean canUndo, String presentationName);
-
-        void redoStateChanged(boolean canRedo, String presentationName);
-    }
 }

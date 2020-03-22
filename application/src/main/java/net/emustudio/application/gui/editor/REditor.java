@@ -1,6 +1,6 @@
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
@@ -16,11 +16,10 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class REditor implements Editor {
@@ -28,14 +27,15 @@ public class REditor implements Editor {
 
     private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE, true);
     private final Dialogs dialogs;
-    private final List<SourceFileExtension> sourceFileExtensions = Collections.emptyList();
+    private final List<SourceFileExtension> sourceFileExtensions;
+    private boolean isnew = true;
 
     public REditor(Dialogs dialogs) {
         this(dialogs, null);
     }
 
     @SuppressWarnings("unused")
-    public REditor(Dialogs dialogs, LexicalAnalyzer lexicalAnalyzer) {
+    public REditor(Dialogs dialogs, Compiler compiler) {
         this.dialogs = Objects.requireNonNull(dialogs);
 
         textPane.setCodeFoldingEnabled(true);
@@ -44,13 +44,17 @@ public class REditor implements Editor {
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
         textPane.clearParsers();
-        Optional.ofNullable(lexicalAnalyzer).ifPresent(lex -> {
-            RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(lex);
+
+        if (compiler != null) {
+            sourceFileExtensions = compiler.getSourceFileExtensions();
+            RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler.getLexer(new StringReader(textPane.getText())));
 
             AbstractTokenMakerFactory atmf = (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
             atmf.putMapping("text/emustudio", RTokenMakerWrapper.class.getName());
             textPane.setSyntaxEditingStyle("text/emustudio");
-        });
+        } else {
+            sourceFileExtensions = Collections.emptyList();
+        }
     }
 
     @Override
@@ -66,7 +70,7 @@ public class REditor implements Editor {
     @Override
     public boolean saveFile(boolean showDialogIfFileIsInvalid) {
         Optional<File> fileSource = Optional.ofNullable(textPane.getFileFullPath()).map(File::new);
-        if (fileSource.isEmpty() || fileSource.filter(f -> f.exists() && f.canWrite()).isEmpty()) {
+        if (isnew || fileSource.isEmpty() || fileSource.filter(File::canWrite).isEmpty()) {
             if (showDialogIfFileIsInvalid) {
                 return saveFile();
             } else {
@@ -87,20 +91,17 @@ public class REditor implements Editor {
 
     @Override
     public Optional<File> getCurrentFile() {
-        return Optional.ofNullable(textPane.getFileFullPath()).map(File::new);
+        return isnew ? Optional.empty() : Optional.ofNullable(textPane.getFileFullPath()).map(File::new);
     }
 
     @Override
     public boolean saveFile() {
-        java.util.List<FileExtensionsFilter> filters = sourceFileExtensions.stream()
+        List<FileExtensionsFilter> filters = sourceFileExtensions.stream()
             .map(FileExtensionsFilter::new).collect(Collectors.toList());
-
-        List<String> sourceExtensions = sourceFileExtensions.stream()
-            .map(SourceFileExtension::getExtension).collect(Collectors.toList());
-        filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
 
         File currentDirectory = Optional
             .ofNullable(textPane.getFileFullPath())
+            .filter(p -> !isnew)
             .map(File::new)
             .orElse(new File(System.getProperty("user.dir")));
 
@@ -108,7 +109,8 @@ public class REditor implements Editor {
         if (savedPath.isPresent()) {
             try {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
-                return saveFile(false);
+                isnew = false;
+                return true;
             } catch (IOException e) {
                 LOGGER.error("Could not save file: " + savedPath.get().toString(), e);
                 dialogs.showError("Cannot save current file. Please see log file for details.");
@@ -130,18 +132,17 @@ public class REditor implements Editor {
 
     @Override
     public void openFile() {
-        if (this.saveFileWithConfirmation()) {
-            List<FileExtensionsFilter> filters = sourceFileExtensions.stream()
-                .map(FileExtensionsFilter::new).collect(Collectors.toList());
-
+        if (saveFileWithConfirmation()) {
+            List<FileExtensionsFilter> filters = new ArrayList<>();
             List<String> sourceExtensions = sourceFileExtensions.stream()
                 .map(SourceFileExtension::getExtension).collect(Collectors.toList());
-            if (sourceExtensions.size() > 1) {
+            if (sourceExtensions.size() > 0) {
                 filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
             }
 
             File currentDirectory = Optional
                 .ofNullable(textPane.getFileFullPath())
+                .filter(p -> !isnew)
                 .map(File::new)
                 .orElse(new File(System.getProperty("user.dir")));
 
@@ -154,6 +155,7 @@ public class REditor implements Editor {
     public void openFile(String fileName) {
         try {
             textPane.load(FileLocation.create(fileName));
+            isnew = false;
         } catch (IOException e) {
             LOGGER.error("Could not open file.", e);
             dialogs.showError("Could not open file: " + fileName + ". Please see log file for details.");
@@ -163,6 +165,7 @@ public class REditor implements Editor {
     @Override
     public void newFile() {
         textPane.setText("");
+        isnew = true;
     }
 
     @Override

@@ -48,7 +48,6 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.StringReader;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -96,7 +95,7 @@ public class StudioFrame extends JFrame {
         )).orElse(null);
 
         this.editor = computer.getCompiler()
-            .map(compiler -> new REditor(dialogs, compiler.getLexer(new StringReader(""))))
+            .map(compiler -> new REditor(dialogs, compiler))
             .orElse(new REditor(dialogs));
 
         this.memoryListener = new Memory.MemoryListener() {

@@ -161,9 +161,9 @@ public class GuiDialogsImpl implements Dialogs {
             if (firstFilter == null) {
                 firstFilter = extensionFilter;
             }
-            fileChooser.setAcceptAllFileFilterUsed(true);
             fileChooser.addChoosableFileFilter(extensionFilter);
         }
+        fileChooser.setAcceptAllFileFilterUsed(true);
         if (firstFilter != null) {
             fileChooser.setFileFilter(firstFilter);
         }

@@ -18,34 +18,30 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
-import java_cup.runtime.Symbol;
+import java_cup.runtime.ComplexSymbolFactory.Location;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
 import net.emustudio.emulib.plugins.compiler.Token;
 
-public class Tokens extends Symbol implements Token, Symbols {
+public class TokenImpl extends ComplexSymbol implements Token, Symbols {
 
     public final static int ERROR_DECIMAL_SIZE = 0xA01;
     public final static int ERROR_UNCLOSED_CHAR = 0xA02;
     public final static int ERROR_UNCLOSED_STRING = 0xA03;
     public final static int ERROR_UNKNOWN_TOKEN = 0xA05;
 
-    private final String text;
-    private final int lineNumber;
-    private final int columnNumber;
-    private final int offset;
-    private final int length;
-    private final int type;
+    private final int category;
     private final boolean initial;
 
-    public Tokens(int ID, int type, String text, Object value, int lineNumber,
-                  int columnNumber, int charBegin, int charEnd, boolean initial) {
-        super(ID, value);
-        this.text = text;
-        this.lineNumber = lineNumber;
-        this.columnNumber = columnNumber;
-        this.offset = charBegin;
-        this.length = charEnd - charBegin;
+    public TokenImpl(int id, int category, String text, Location left, Location right, boolean initial) {
+        super(text, id, left, right);
+        this.category = category;
         this.initial = initial;
-        this.type = type;
+    }
+
+    public TokenImpl(int id, int category, String text, Location left, Location right, Object value, boolean initial) {
+        super(text, id, left, right, value);
+        this.category = category;
+        this.initial = initial;
     }
 
     @Override
@@ -55,12 +51,12 @@ public class Tokens extends Symbol implements Token, Symbols {
 
     @Override
     public int getType() {
-        return this.type;
+        return this.category;
     }
 
     @Override
     public String getText() {
-        return text;
+        return getName();
     }
 
     @Override
@@ -80,22 +76,22 @@ public class Tokens extends Symbol implements Token, Symbols {
 
     @Override
     public int getLine() {
-        return lineNumber;
+        return getLeft().getLine();
     }
 
     @Override
     public int getColumn() {
-        return columnNumber;
+        return getLeft().getColumn();
     }
 
     @Override
     public int getOffset() {
-        return offset;
+        return getLeft().getOffset();
     }
 
     @Override
     public int getLength() {
-        return length;
+        return getRight().getOffset() - getLeft().getOffset();
     }
 
     @Override

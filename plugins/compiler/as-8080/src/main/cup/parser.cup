@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
-import java_cup.runtime.DefaultSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.Symbol;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.compiler.Token;
@@ -46,7 +46,7 @@ parser code {:
     private String reportPrefixString;
 
     public ParserImpl(LexerImpl lexer, CompilerImpl compiler) {
-        super(lexer, new DefaultSymbolFactory());
+        super(lexer, new ComplexSymbolFactory());
         this.compiler = Objects.requireNonNull(compiler);
     }
 
