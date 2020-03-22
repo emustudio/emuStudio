@@ -1,6 +1,8 @@
 package net.emustudio.application.gui.editor;
 
 
+import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+
 import javax.swing.text.Document;
 import java.awt.*;
 import java.io.File;
@@ -30,7 +32,7 @@ public interface Editor {
     void select(int start, int end);
 
 
-    Component getView();
+    TextEditorPane getView();
 
     void grabFocus();
 

@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.text.Document;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -58,7 +57,7 @@ public class REditor implements Editor {
     }
 
     @Override
-    public Component getView() {
+    public TextEditorPane getView() {
         return textPane;
     }
 

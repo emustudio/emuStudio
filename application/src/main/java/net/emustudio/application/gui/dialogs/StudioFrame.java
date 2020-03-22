@@ -39,8 +39,11 @@ import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import org.fife.ui.rtextarea.RTextArea;
-import org.fife.ui.rtextarea.RTextScrollPane;
+import org.fife.rsta.ui.search.ReplaceDialog;
+import org.fife.rsta.ui.search.SearchEvent;
+import org.fife.rsta.ui.search.SearchListener;
+import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+import org.fife.ui.rtextarea.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +56,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-public class StudioFrame extends JFrame {
+public class StudioFrame extends JFrame implements SearchListener {
     private final static Logger LOGGER = LoggerFactory.getLogger(StudioFrame.class);
     private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
     private final static int MIN_PERIPHERAL_PANEL_HEIGHT = 100;
@@ -143,6 +146,42 @@ public class StudioFrame extends JFrame {
         this.setLocationRelativeTo(null);
         editor.grabFocus();
         resizeComponents();
+    }
+
+    @Override
+    public void searchEvent(SearchEvent e) {
+        SearchEvent.Type type = e.getType();
+        SearchContext context = e.getSearchContext();
+        SearchResult result;
+        TextEditorPane pane = editor.getView();
+
+        switch (type) {
+            default:
+            case MARK_ALL:
+                SearchEngine.markAll(pane, context);
+                break;
+            case FIND:
+                result = SearchEngine.find(pane, context);
+                if (!result.wasFound() || result.isWrapped()) {
+                    UIManager.getLookAndFeel().provideErrorFeedback(pane);
+                }
+                break;
+            case REPLACE:
+                result = SearchEngine.replace(pane, context);
+                if (!result.wasFound() || result.isWrapped()) {
+                    UIManager.getLookAndFeel().provideErrorFeedback(pane);
+                }
+                break;
+            case REPLACE_ALL:
+                result = SearchEngine.replaceAll(pane, context);
+                dialogs.showInfo(result.getCount() + " occurrences replaced.", "Replace all");
+                break;
+        }
+    }
+
+    @Override
+    public String getSelectedText() {
+        return editor.getView().getSelectedText();
     }
 
     private void setStatusGUI() {
@@ -1017,7 +1056,8 @@ public class StudioFrame extends JFrame {
     }
 
     private void mnuEditFindActionPerformed(ActionEvent evt) {
-        FindTextDialog.create(this, finder, editor, dialogs).setVisible(true);
+        ReplaceDialog replaceDialog = new ReplaceDialog(this, this);
+        replaceDialog.setVisible(true);
     }
 
     private void mnuEditFindNextActionPerformed(ActionEvent evt) {

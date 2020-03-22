@@ -40,7 +40,8 @@ dependencies {
 
   implementation libs.jcipAnnotations
 
-  extraLibs libs.syntaxArea
+  extraLibs libs.editor
+  extraLibs libs.editorDialogs
   extraLibs libs.args4j
   extraLibs libs.tomlj
   extraLibs libs.logback
