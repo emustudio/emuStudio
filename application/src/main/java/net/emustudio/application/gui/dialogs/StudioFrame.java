@@ -47,8 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.Objects;
@@ -357,7 +355,6 @@ public class StudioFrame extends JFrame {
         });
 
         tabbedPane.setFocusable(false);
-        tabbedPane.setFont(tabbedPane.getFont().deriveFont(tabbedPane.getFont().getStyle() & ~java.awt.Font.BOLD));
         panelSource.setOpaque(true);
 
         JToolBar mainToolBar = setupMainToolbar();
@@ -366,7 +363,7 @@ public class StudioFrame extends JFrame {
 
         compilerOutput.setColumns(20);
         compilerOutput.setEditable(false);
-        compilerOutput.setFont(Constants.MONOSPACED_PLAIN_12);
+        compilerOutput.setFont(Constants.FONT_MONOSPACED);
         compilerOutput.setLineWrap(true);
         compilerOutput.setRows(3);
         compilerOutput.setWrapStyleWord(true);
@@ -394,7 +391,7 @@ public class StudioFrame extends JFrame {
         panelSourceLayout.setVerticalGroup(
             panelSourceLayout
                 .createSequentialGroup()
-                .addComponent(mainToolBar, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                .addComponent(mainToolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
                 .addContainerGap()
         );
@@ -407,10 +404,7 @@ public class StudioFrame extends JFrame {
         splitLeftRight.setContinuousLayout(true);
         splitLeftRight.setFocusable(false);
 
-        TitledBorder statusBorder = BorderFactory.createTitledBorder("Status");
-        statusBorder.setTitleFont(statusBorder.getTitleFont().deriveFont(statusBorder.getTitleFont().getStyle() & ~Font.BOLD));
-        statusWindow.setBorder(statusBorder);
-
+        statusWindow.setBorder(BorderFactory.createTitledBorder("Status"));
         splitLeftRight.setRightComponent(statusWindow);
 
         splitPerDebug.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
@@ -419,9 +413,7 @@ public class StudioFrame extends JFrame {
         splitPerDebug.setAutoscrolls(true);
         splitPerDebug.setContinuousLayout(true);
 
-        TitledBorder debuggerBorder = BorderFactory.createTitledBorder("Debugger");
-        debuggerBorder.setTitleFont(debuggerBorder.getTitleFont().deriveFont(debuggerBorder.getTitleFont().getStyle() & ~Font.BOLD));
-        debuggerPanel.setBorder(debuggerBorder);
+        debuggerPanel.setBorder(BorderFactory.createTitledBorder("Debugger"));
 
         setupDebugToolbar();
 
@@ -433,7 +425,7 @@ public class StudioFrame extends JFrame {
                 .addComponent(paneDebug, 10, 350, Short.MAX_VALUE));
         debuggerPanelLayout.setVerticalGroup(
             debuggerPanelLayout.createSequentialGroup()
-                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
+                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addComponent(paneDebug, GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -444,7 +436,6 @@ public class StudioFrame extends JFrame {
         peripheralPanel.setBorder(BorderFactory.createTitledBorder("Peripheral devices"));
 
         paneDevices.setViewportView(lstDevices);
-        lstDevices.setFont(lstDevices.getFont().deriveFont(lstDevices.getFont().getStyle() & ~java.awt.Font.BOLD));
         lstDevices.addMouseListener(new MouseListener() {
 
             @Override
@@ -477,11 +468,9 @@ public class StudioFrame extends JFrame {
         });
 
         btnShowSettings.setText("Settings");
-        btnShowSettings.setFont(btnShowSettings.getFont().deriveFont(btnShowSettings.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnShowSettings.addActionListener(this::showSettingsButtonActionPerformed);
 
         btnShowGUI.setText("Show");
-        btnShowGUI.setFont(btnShowGUI.getFont().deriveFont(btnShowGUI.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnShowGUI.addActionListener(this::showGUIButtonActionPerformed);
 
         GroupLayout peripheralPanelLayout = new GroupLayout(peripheralPanel);
@@ -502,7 +491,8 @@ public class StudioFrame extends JFrame {
 
         tabbedPane.addTab("Emulator", panelEmulator);
 
-        setJMenuBar(setupMainMenu());
+        JMenuBar mainMenu = setupMainMenu();
+        setJMenuBar(mainMenu);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -537,44 +527,34 @@ public class StudioFrame extends JFrame {
         JMenuItem mnuHelpAbout = new JMenuItem();
 
         mnuFile.setText("File");
-        mnuFile.setFont(mnuFile.getFont().deriveFont(mnuFile.getFont().getStyle() & ~java.awt.Font.BOLD));
-
-
         mnuFileNew.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK));
         mnuFileNew.setText("New");
-        mnuFile.setFont(mnuFile.getFont().deriveFont(mnuFile.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuFileNew.setFont(mnuFileNew.getFont().deriveFont(mnuFileNew.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileNew.addActionListener(this::mnuFileNewActionPerformed);
         mnuFile.add(mnuFileNew);
 
         mnuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         mnuFileOpen.setText("Open...");
-        mnuFileOpen.setFont(mnuFileOpen.getFont().deriveFont(mnuFileOpen.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileOpen.addActionListener(this::mnuFileOpenActionPerformed);
         mnuFile.add(mnuFileOpen);
         mnuFile.add(jSeparator3);
 
         mnuFileSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         mnuFileSave.setText("Save");
-        mnuFileSave.setFont(mnuFileSave.getFont().deriveFont(mnuFileSave.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileSave.addActionListener(this::mnuFileSaveActionPerformed);
         mnuFile.add(mnuFileSave);
 
         mnuFileSaveAs.setText("Save As...");
-        mnuFileSaveAs.setFont(mnuFileSaveAs.getFont().deriveFont(mnuFileSaveAs.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileSaveAs.addActionListener(this::mnuFileSaveAsActionPerformed);
         mnuFile.add(mnuFileSaveAs);
         mnuFile.add(jSeparator4);
 
         mnuFileExit.setText("Exit");
-        mnuFileExit.setFont(mnuFileExit.getFont().deriveFont(mnuFileExit.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileExit.addActionListener(this::mnuFileExitActionPerformed);
         mnuFile.add(mnuFileExit);
 
         mainMenuBar.add(mnuFile);
 
         mnuEdit.setText("Edit");
-        mnuEdit.setFont(mnuEdit.getFont().deriveFont(mnuEdit.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
         mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
@@ -600,30 +580,23 @@ public class StudioFrame extends JFrame {
         mainMenuBar.add(mnuEdit);
 
         mnuProject.setText("Project");
-        mnuProject.setFont(mnuProject.getFont().deriveFont(mnuProject.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         mnuProjectCompile.setText("Compile source...");
-        mnuProjectCompile.setFont(mnuProjectCompile.getFont().deriveFont(mnuProjectCompile.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuProjectCompile.addActionListener(this::mnuProjectCompileActionPerformed);
         mnuProject.add(mnuProjectCompile);
 
         mnuProjectViewConfig.setText("View computer...");
-        mnuProjectViewConfig.setFont(mnuProjectViewConfig.getFont().deriveFont(mnuProjectViewConfig.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuProjectViewConfig.addActionListener(this::mnuProjectViewConfigActionPerformed);
         mnuProject.add(mnuProjectViewConfig);
 
         mnuProjectCompilerSettings.setText("Compiler settings...");
-        mnuProjectCompilerSettings.setFont(mnuProjectCompilerSettings.getFont().deriveFont(mnuProjectCompilerSettings.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuProjectCompilerSettings.addActionListener(this::mnuProjectCompilerSettingsActionPerformed);
         mnuProject.add(mnuProjectCompilerSettings);
 
         mainMenuBar.add(mnuProject);
 
         mnuHelp.setText("Help");
-        mnuHelp.setFont(mnuHelp.getFont().deriveFont(mnuHelp.getFont().getStyle() & ~java.awt.Font.BOLD));
-
         mnuHelpAbout.setText("About...");
-        mnuHelpAbout.setFont(mnuHelpAbout.getFont().deriveFont(mnuHelpAbout.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuHelpAbout.addActionListener(this::mnuHelpAboutActionPerformed);
         mnuHelp.add(mnuHelpAbout);
 
@@ -672,7 +645,7 @@ public class StudioFrame extends JFrame {
 
         ToolbarButton btnFind = new ToolbarButton(
             findAction,
-            "/net/emustudio/application/gui/dialogs/edit-find-replace.png",
+            "/net/emustudio/application/gui/dialogs/edit-find.png",
             "Find text..."
         );
 
@@ -1059,7 +1032,7 @@ public class StudioFrame extends JFrame {
 
     private void updateTitleOfSourceCodePanel() {
         editor.getCurrentFile().ifPresentOrElse(
-            file -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR + " (" + file.getName() + ")"),
+            file -> tabbedPane.setTitleAt(0, file.getName()),
             () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
         );
     }

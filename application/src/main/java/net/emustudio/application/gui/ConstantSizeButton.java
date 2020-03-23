@@ -29,11 +29,6 @@ public class ConstantSizeButton extends JButton {
     private final static int NB_WIDTH = 95;
     private static int NB_HEIGHT = 30;
 
-    private void setHeight() {
-        FontMetrics metrics = this.getFontMetrics(getFont());
-        NB_HEIGHT = metrics.getHeight() + 9;
-    }
-
     public ConstantSizeButton() {
         setHeight();
         Dimension d = getPreferredSize();
@@ -42,5 +37,10 @@ public class ConstantSizeButton extends JButton {
         this.setSize(NB_WIDTH, NB_HEIGHT);
         this.setMinimumSize(d);
         this.setMaximumSize(d);
+    }
+
+    private void setHeight() {
+        FontMetrics metrics = this.getFontMetrics(getFont());
+        NB_HEIGHT = metrics.getHeight() + 9;
     }
 }

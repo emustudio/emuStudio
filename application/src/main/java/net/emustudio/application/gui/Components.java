@@ -33,12 +33,9 @@ public class Components {
     public static void addKeyListenerRecursively(Component c, KeyListener keyListener) {
         c.addKeyListener(keyListener);
         if (c instanceof Container) {
-            Container cont = (Container) c;
-            Component[] children = cont.getComponents();
-            for (Component child : children) {
+            for (Component child : ((Container)c).getComponents()) {
                 addKeyListenerRecursively(child, keyListener);
             }
         }
     }
-
 }

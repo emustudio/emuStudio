@@ -169,17 +169,68 @@ public class Runner {
 
     private static void setupLookAndFeel() {
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (javax.swing.UnsupportedLookAndFeelException | ClassNotFoundException
-            | InstantiationException | IllegalAccessException e) {
-            LOGGER.warn("Unable to set system look and feel", e);
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+        } catch (Exception ignored) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                LOGGER.warn("Unable to set system look and feel", e);
+            }
         }
         UIManager.put("TabbedPane.selected", UIManager.get("Panel.background"));
         UIManager.put("TabbedPane.background", UIManager.get("Panel.background"));
         UIManager.put("TabbedPane.contentAreaColor", UIManager.get("Panel.background"));
-        UIManager.put("TextPane.font", Constants.MONOSPACED_PLAIN_12);
-        UIManager.put("TextArea.font", Constants.MONOSPACED_PLAIN_12);
-        UIManager.put("List.font", Constants.MONOSPACED_PLAIN_12);
         UIManager.put("Button.background", UIManager.get("Panel.background"));
+
+        UIManager.put("TextPane.font", Constants.FONT_MONOSPACED);
+        UIManager.put("TextArea.font", Constants.FONT_MONOSPACED);
+        UIManager.put("EditorPane.font", Constants.FONT_MONOSPACED);
+
+        UIManager.put("List.font", Constants.FONT_MONOSPACED);
+        UIManager.put("TitledBorder.font", Constants.FONT_TITLE_BORDER);
+
+        UIManager.put("TextField.font", Constants.FONT_MONOSPACED);
+        UIManager.put("FormattedTextField.font", Constants.FONT_COMMON);
+
+        UIManager.put("InternalFrame.optionDialogTitleFont", Constants.FONT_TITLE_BORDER);
+        UIManager.put("InternalFrame.paletteTitleFont", Constants.FONT_TITLE_BORDER);
+        UIManager.put("InternalFrame.titleFont", Constants.FONT_TITLE_BORDER);
+
+        UIManager.put("TabbedPane.font", Constants.FONT_TITLE_BORDER);
+        UIManager.put("TabbedPane.smallFont", Constants.FONT_COMMON);
+        UIManager.put("TableHeader.font", Constants.FONT_TITLE_BORDER);
+
+        UIManager.put("Label.font", Constants.FONT_COMMON);
+        UIManager.put("Button.font", Constants.FONT_COMMON);
+        UIManager.put("CheckBox.font", Constants.FONT_COMMON);
+        UIManager.put("CheckBoxMenuItem.font", Constants.FONT_COMMON);
+        UIManager.put("CheckBoxMenuItem.acceleratorFont", Constants.FONT_COMMON);
+        UIManager.put("ColorChooser.font", Constants.FONT_COMMON);
+        UIManager.put("ComboBox.font", Constants.FONT_COMMON);
+        UIManager.put("IconButton.font", Constants.FONT_COMMON);
+        UIManager.put("Menu.acceleratorFont", Constants.FONT_COMMON);
+        UIManager.put("Menu.font", Constants.FONT_COMMON);
+        UIManager.put("MenuBar.font", Constants.FONT_COMMON);
+        UIManager.put("MenuItem.acceleratorFont", Constants.FONT_COMMON);
+        UIManager.put("MenuItem.font", Constants.FONT_COMMON);
+        UIManager.put("OptionPane.buttonFont", Constants.FONT_COMMON);
+        UIManager.put("OptionPane.font", Constants.FONT_COMMON);
+        UIManager.put("OptionPane.messageFont", Constants.FONT_COMMON);
+        UIManager.put("Panel.font", Constants.FONT_COMMON);
+        UIManager.put("PasswordField.font", Constants.FONT_COMMON);
+        UIManager.put("PopupMenu.font", Constants.FONT_COMMON);
+        UIManager.put("ProgressBar.font", Constants.FONT_COMMON);
+        UIManager.put("RadioButton.font", Constants.FONT_COMMON);
+        UIManager.put("RadioButtonMenuItem.acceleratorFont", Constants.FONT_COMMON);
+        UIManager.put("RadioButtonMenuItem.font", Constants.FONT_COMMON);
+        UIManager.put("ScrollPane.font", Constants.FONT_COMMON);
+        UIManager.put("Slider.font", Constants.FONT_COMMON);
+        UIManager.put("Spinner.font", Constants.FONT_COMMON);
+        UIManager.put("Table.font", Constants.FONT_COMMON);
+        UIManager.put("ToggleButton.font", Constants.FONT_COMMON);
+        UIManager.put("ToolBar.font", Constants.FONT_COMMON);
+        UIManager.put("ToolTip.font", Constants.FONT_COMMON);
+        UIManager.put("Tree.font", Constants.FONT_COMMON);
+        UIManager.put("Viewport.font", Constants.FONT_COMMON);
     }
 }

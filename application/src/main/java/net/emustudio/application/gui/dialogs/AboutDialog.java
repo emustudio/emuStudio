@@ -100,20 +100,16 @@ public class AboutDialog extends javax.swing.JDialog {
         lblName.setFont(new java.awt.Font("Tahoma", Font.BOLD, 18)); // NOI18N
         lblName.setText("emuStudio");
 
-        lblCopyright.setFont(lblCopyright.getFont().deriveFont(lblCopyright.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblCopyright.setText(getCopyright());
 
         lblVersion.setFont(lblVersion.getFont().deriveFont(lblVersion.getFont().getStyle() | java.awt.Font.BOLD));
         lblVersion.setText(getVersion());
 
-        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel4.setText("Version");
-
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText(
             "<html>This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it " +
-                "under certain conditions; for details see <a href=\"https://www.gnu.org/licenses/gpl-3.0.html\">https://www.gnu.org/licenses/gpl-3.0.html</a>. " +
-                "For more information about emuStudio, see <a href=\"https://www.emustudio.net/\">official web</a>.");
+                "under certain conditions; for details see https://www.gnu.org/licenses/gpl-3.0.html. " +
+                "For more information about emuStudio, see https://www.emustudio.net/.");
 
         javax.swing.GroupLayout panelInfoLayout = new javax.swing.GroupLayout(panelInfo);
         panelInfo.setLayout(panelInfoLayout);

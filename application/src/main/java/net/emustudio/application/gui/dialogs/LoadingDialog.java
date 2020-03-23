@@ -25,7 +25,7 @@ public class LoadingDialog extends JDialog {
     public LoadingDialog() {
         super();
         initComponents();
-        this.setLocationRelativeTo(null);
+        setLocationRelativeTo(null);
     }
 
     private void initComponents() {
@@ -42,7 +42,6 @@ public class LoadingDialog extends JDialog {
             .getResource("/net/emustudio/application/gui/dialogs/loading.gif"))); // NOI18N
         lblLoading.setText("Loading computer, please wait...");
 
-        lblWarning.setFont(lblWarning.getFont().deriveFont(java.awt.Font.PLAIN));
         lblWarning.setText("If you see some errors, please see the log file.");
 
         GroupLayout layout = new GroupLayout(getContentPane());

@@ -18,7 +18,6 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.Constants;
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.configuration.ComputerConfig;
 import net.emustudio.application.configuration.ConfigFiles;
@@ -134,7 +133,6 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
         panelConfig.setPreferredSize(new java.awt.Dimension(200, 297));
 
-        lstConfig.setFont(Constants.MONOSPACED_PLAIN_12);
         lstConfig.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lstConfigMouseClicked(evt);
@@ -202,7 +200,6 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         toolPreview.setFloatable(false);
         toolPreview.setRollover(true);
 
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("Computer preview:");
         toolPreview.add(jLabel2);
 
@@ -231,14 +228,12 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
         splitConfig.setRightComponent(panelPreview);
 
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Please select a virtual configuration that will be emulated:");
 
         btnOpen.setFont(btnOpen.getFont().deriveFont(btnOpen.getFont().getStyle() | java.awt.Font.BOLD));
         btnOpen.setText("Open");
         btnOpen.addActionListener(this::btnOpenActionPerformed);
 
-        btnClose.setFont(btnClose.getFont().deriveFont(btnClose.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnClose.setText("Close");
         btnClose.addActionListener(this::btnCloseActionPerformed);
 

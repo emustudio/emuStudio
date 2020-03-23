@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
@@ -147,8 +146,6 @@ class ViewComputerDialog extends JDialog {
         lblComputerName.setHorizontalAlignment(SwingConstants.CENTER);
         lblComputerName.setText("computer_name");
 
-        jTabbedPane1.setFont(jTabbedPane1.getFont().deriveFont(jTabbedPane1.getFont().getStyle() & ~java.awt.Font.BOLD));
-
         jToolBar1.setFloatable(false);
         jToolBar1.setOrientation(SwingConstants.VERTICAL);
         jToolBar1.setRollover(true);
@@ -191,27 +188,16 @@ class ViewComputerDialog extends JDialog {
         btnDevice.addActionListener(this::btnDeviceActionPerformed);
         jToolBar1.add(btnDevice);
 
-        lblSelectDevice.setFont(lblSelectDevice.getFont().deriveFont(lblSelectDevice.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblSelectDevice.setText("Select device:");
-
-        cmbDevice.setFont(cmbDevice.getFont().deriveFont(cmbDevice.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));
         lblName.setText("plugin_name");
 
-        lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblFileName.setText("plugin_file_name");
-
-        lblVersion.setFont(lblVersion.getFont().deriveFont(lblVersion.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblVersion.setText("plugin_version");
-
-        lblCopyright.setFont(lblCopyright.getFont().deriveFont(lblCopyright.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblCopyright.setText("plugin_copyright");
 
-        panelDescription.setBorder(BorderFactory.createTitledBorder(null, "Short description",
-            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-            javax.swing.border.TitledBorder.DEFAULT_POSITION,
-            new java.awt.Font("Dialog", Font.PLAIN, 12))); // NOI18N
+        panelDescription.setBorder(BorderFactory.createTitledBorder("Short description"));
 
         txtDescription.setColumns(20);
         txtDescription.setEditable(false);

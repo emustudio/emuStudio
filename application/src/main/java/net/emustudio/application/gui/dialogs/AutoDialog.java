@@ -37,7 +37,7 @@ public class AutoDialog extends JDialog {
         this.computer = Objects.requireNonNull(computer);
 
         initComponents();
-        this.setLocationRelativeTo(null);
+        setLocationRelativeTo(null);
     }
 
     private void initComponents() {

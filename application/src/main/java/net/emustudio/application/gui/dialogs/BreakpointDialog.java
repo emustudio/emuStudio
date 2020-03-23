@@ -41,7 +41,7 @@ class BreakpointDialog extends JDialog {
         this.dialogs = Objects.requireNonNull(dialogs);
 
         initComponents();
-        this.setLocationRelativeTo(parent);
+        setLocationRelativeTo(parent);
         txtAddress.grabFocus();
     }
 
@@ -64,16 +64,12 @@ class BreakpointDialog extends JDialog {
         setResizable(false);
 
         lblSetUnset.setText("Set/unset breakpoint to address:");
-        lblSetUnset.setFont(lblSetUnset.getFont().deriveFont(lblSetUnset.getFont().getStyle() & ~java.awt.Font.BOLD));
-
         txtAddress.setText("0");
 
         btnSet.setText("Set");
-        btnSet.setFont(btnSet.getFont().deriveFont(btnSet.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnSet.addActionListener(this::btnSetActionPerformed);
 
         btnUnset.setText("Unset");
-        btnUnset.setFont(btnUnset.getFont().deriveFont(btnUnset.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnUnset.addActionListener(this::btnUnsetActionPerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
