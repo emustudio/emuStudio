@@ -21,6 +21,7 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.application.Constants;
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.emulation.EmulationController;
+import net.emustudio.application.gui.Components;
 import net.emustudio.application.gui.ConstantSizeButton;
 import net.emustudio.application.gui.actions.ShowFindDialogAction;
 import net.emustudio.application.gui.actions.ShowReplaceDialogAction;
@@ -117,6 +118,11 @@ public class StudioFrame extends JFrame {
             }
         };
 
+        ReplaceDialog replaceDialog = new ReplaceDialog(this, editor);
+        FindDialog findDialog = new FindDialog(this, editor);
+        this.findAction = new ShowFindDialogAction(findDialog, replaceDialog);
+        this.replaceAction = new ShowReplaceDialogAction(findDialog, replaceDialog);
+
         initComponents();
 
         btnMemory.setEnabled(computer.getMemory().filter(Memory::isShowSettingsSupported).isPresent());
@@ -141,14 +147,29 @@ public class StudioFrame extends JFrame {
 
         pack();
         setupListeners();
-        this.setLocationRelativeTo(null);
+        setLocationRelativeTo(null);
         editor.grabFocus();
         resizeComponents();
 
-        ReplaceDialog replaceDialog = new ReplaceDialog(this, editor);
-        FindDialog findDialog = new FindDialog(this, editor);
-        this.findAction = new ShowFindDialogAction(findDialog, replaceDialog);
-        this.replaceAction = new ShowReplaceDialogAction(findDialog, replaceDialog);
+        Components.addKeyListenerRecursively(this, new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent keyEvent) {
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent keyEvent) {
+                if (keyEvent.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    editor.clearMarkedOccurences();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent keyEvent) {
+
+            }
+        });
+
     }
 
     private void setStatusGUI() {
@@ -170,7 +191,6 @@ public class StudioFrame extends JFrame {
         setupCompiler();
         setupCPU();
         setStateNotRunning(runState);
-
         setupWindowResized();
     }
 
@@ -572,7 +592,7 @@ public class StudioFrame extends JFrame {
         mnuEditFindNext.addActionListener(this::mnuEditFindNextActionPerformed);
         mnuEdit.add(mnuEditFindNext);
 
-        mnuEditFindPrevious.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, KeyEvent.CTRL_DOWN_MASK));
+        mnuEditFindPrevious.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, KeyEvent.SHIFT_DOWN_MASK));
         mnuEditFindPrevious.setText("Find previous");
         mnuEditFindPrevious.addActionListener(this::mnuEditFindPreviousActionPerformed);
         mnuEdit.add(mnuEditFindPrevious);

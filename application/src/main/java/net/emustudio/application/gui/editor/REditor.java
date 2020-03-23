@@ -74,6 +74,11 @@ public class REditor implements Editor {
     }
 
     @Override
+    public void clearMarkedOccurences() {
+        SearchEngine.find(textPane, new SearchContext());
+    }
+
+    @Override
     public void grabFocus() {
         textPane.grabFocus();
     }

@@ -26,6 +26,8 @@ public interface Editor extends SearchListener {
 
     Optional<Boolean> findPrevious();
 
+    void clearMarkedOccurences();
+
 
     Component getView();
 
