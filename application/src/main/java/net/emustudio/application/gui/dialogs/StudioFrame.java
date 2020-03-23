@@ -22,12 +22,13 @@ import net.emustudio.application.Constants;
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.ConstantSizeButton;
+import net.emustudio.application.gui.actions.ShowFindDialogAction;
+import net.emustudio.application.gui.actions.ShowReplaceDialogAction;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.PagesPanel;
 import net.emustudio.application.gui.debugtable.PaginatingDisassembler;
 import net.emustudio.application.gui.editor.Editor;
-import net.emustudio.application.gui.editor.FindText;
 import net.emustudio.application.gui.editor.REditor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.Plugin;
@@ -39,10 +40,8 @@ import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import org.fife.rsta.ui.search.FindDialog;
 import org.fife.rsta.ui.search.ReplaceDialog;
-import org.fife.rsta.ui.search.SearchEvent;
-import org.fife.rsta.ui.search.SearchListener;
-import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.fife.ui.rtextarea.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +55,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-public class StudioFrame extends JFrame implements SearchListener {
+public class StudioFrame extends JFrame {
     private final static Logger LOGGER = LoggerFactory.getLogger(StudioFrame.class);
     private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
     private final static int MIN_PERIPHERAL_PANEL_HEIGHT = 100;
@@ -67,11 +66,13 @@ public class StudioFrame extends JFrame implements SearchListener {
     private final EmulationController emulationController;
     private final ApplicationConfig applicationConfig;
 
-    private final FindText finder = new FindText();
     private final Editor editor;
     private final JTable debugTable;
     private final DebugTableModel debugTableModel;
     private final Dialogs dialogs;
+
+    private final ShowFindDialogAction findAction;
+    private final ShowReplaceDialogAction replaceAction;
 
     private final MemoryContext<?> memoryContext;
     private final Memory.MemoryListener memoryListener;
@@ -121,7 +122,6 @@ public class StudioFrame extends JFrame implements SearchListener {
         initComponents();
 
         btnMemory.setEnabled(computer.getMemory().filter(Memory::isShowSettingsSupported).isPresent());
-        editorScrollPane.setViewportView(editor.getView());
         paneDebug.setViewportView(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
@@ -146,42 +146,11 @@ public class StudioFrame extends JFrame implements SearchListener {
         this.setLocationRelativeTo(null);
         editor.grabFocus();
         resizeComponents();
-    }
 
-    @Override
-    public void searchEvent(SearchEvent e) {
-        SearchEvent.Type type = e.getType();
-        SearchContext context = e.getSearchContext();
-        SearchResult result;
-        TextEditorPane pane = editor.getView();
-
-        switch (type) {
-            default:
-            case MARK_ALL:
-                SearchEngine.markAll(pane, context);
-                break;
-            case FIND:
-                result = SearchEngine.find(pane, context);
-                if (!result.wasFound() || result.isWrapped()) {
-                    UIManager.getLookAndFeel().provideErrorFeedback(pane);
-                }
-                break;
-            case REPLACE:
-                result = SearchEngine.replace(pane, context);
-                if (!result.wasFound() || result.isWrapped()) {
-                    UIManager.getLookAndFeel().provideErrorFeedback(pane);
-                }
-                break;
-            case REPLACE_ALL:
-                result = SearchEngine.replaceAll(pane, context);
-                dialogs.showInfo(result.getCount() + " occurrences replaced.", "Replace all");
-                break;
-        }
-    }
-
-    @Override
-    public String getSelectedText() {
-        return editor.getView().getSelectedText();
+        ReplaceDialog replaceDialog = new ReplaceDialog(this, editor);
+        FindDialog findDialog = new FindDialog(this, editor);
+        this.findAction = new ShowFindDialogAction(findDialog, replaceDialog);
+        this.replaceAction = new ShowReplaceDialogAction(findDialog, replaceDialog);
     }
 
     private void setStatusGUI() {
@@ -358,7 +327,7 @@ public class StudioFrame extends JFrame implements SearchListener {
         tabbedPane = new JTabbedPane();
         JPanel panelSource = new JPanel();
         splitSource = new JSplitPane();
-        editorScrollPane = new RTextScrollPane(editor.getView());
+
         JScrollPane compilerPane = new JScrollPane();
         compilerOutput = new JTextArea();
         JPanel panelEmulator = new JPanel();
@@ -393,10 +362,7 @@ public class StudioFrame extends JFrame implements SearchListener {
 
         JToolBar mainToolBar = setupMainToolbar();
 
-        splitSource.setBorder(null);
-        splitSource.setOrientation(JSplitPane.VERTICAL_SPLIT);
-        splitSource.setOneTouchExpandable(true);
-        splitSource.setLeftComponent(editorScrollPane);
+        RTextScrollPane editorScrollPane = new RTextScrollPane(editor.getView());
 
         compilerOutput.setColumns(20);
         compilerOutput.setEditable(false);
@@ -404,8 +370,12 @@ public class StudioFrame extends JFrame implements SearchListener {
         compilerOutput.setLineWrap(true);
         compilerOutput.setRows(3);
         compilerOutput.setWrapStyleWord(true);
-
         compilerPane.setViewportView(compilerOutput);
+
+        splitSource.setBorder(null);
+        splitSource.setOrientation(JSplitPane.VERTICAL_SPLIT);
+        splitSource.setOneTouchExpandable(true);
+        splitSource.setLeftComponent(editorScrollPane);
         splitSource.setRightComponent(compilerPane);
 
         GroupLayout panelSourceLayout = new GroupLayout(panelSource);
@@ -557,9 +527,8 @@ public class StudioFrame extends JFrame implements SearchListener {
         JMenu mnuEdit = new JMenu();
         JSeparator jSeparator6 = new JSeparator();
         JSeparator jSeparator5 = new JSeparator();
-        JMenuItem mnuEditFind = new JMenuItem();
         JMenuItem mnuEditFindNext = new JMenuItem();
-        JMenuItem mnuEditReplaceNext = new JMenuItem();
+        JMenuItem mnuEditFindPrevious = new JMenuItem();
         JMenu mnuProject = new JMenu();
         mnuProjectCompile = new JMenuItem();
         JMenuItem mnuProjectViewConfig = new JMenuItem();
@@ -615,23 +584,18 @@ public class StudioFrame extends JFrame implements SearchListener {
         mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
         mnuEdit.add(jSeparator5);
 
-        mnuEditFind.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
-        mnuEditFind.setText("Find/replace text...");
-        mnuEditFind.setFont(mnuEditFind.getFont().deriveFont(mnuEditFind.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditFind.addActionListener(this::mnuEditFindActionPerformed);
-        mnuEdit.add(mnuEditFind);
+        mnuEdit.add(createMenuItem(findAction));
+        mnuEdit.add(createMenuItem(replaceAction));
 
         mnuEditFindNext.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
         mnuEditFindNext.setText("Find next");
-        mnuEditFindNext.setFont(mnuEditFindNext.getFont().deriveFont(mnuEditFindNext.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditFindNext.addActionListener(this::mnuEditFindNextActionPerformed);
         mnuEdit.add(mnuEditFindNext);
 
-        mnuEditReplaceNext.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
-        mnuEditReplaceNext.setText("Replace next");
-        mnuEditReplaceNext.setFont(mnuEditReplaceNext.getFont().deriveFont(mnuEditReplaceNext.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditReplaceNext.addActionListener(this::mnuEditReplaceNextActionPerformed);
-        mnuEdit.add(mnuEditReplaceNext);
+        mnuEditFindPrevious.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, KeyEvent.CTRL_DOWN_MASK));
+        mnuEditFindPrevious.setText("Find previous");
+        mnuEditFindPrevious.addActionListener(this::mnuEditFindPreviousActionPerformed);
+        mnuEdit.add(mnuEditFindPrevious);
 
         mainMenuBar.add(mnuEdit);
 
@@ -706,8 +670,14 @@ public class StudioFrame extends JFrame implements SearchListener {
             "Paste from clipboard"
         );
 
-        ToolbarButton btnFindReplace = new ToolbarButton(
-            this::btnFindReplaceActionPerformed,
+        ToolbarButton btnFind = new ToolbarButton(
+            findAction,
+            "/net/emustudio/application/gui/dialogs/edit-find-replace.png",
+            "Find text..."
+        );
+
+        ToolbarButton btnReplace = new ToolbarButton(
+            replaceAction,
             "/net/emustudio/application/gui/dialogs/edit-find-replace.png",
             "Find/replace text..."
         );
@@ -749,7 +719,8 @@ public class StudioFrame extends JFrame implements SearchListener {
         mainToolBar.add(btnUndo);
         mainToolBar.add(btnRedo);
         mainToolBar.add(separator2);
-        mainToolBar.add(btnFindReplace);
+        mainToolBar.add(btnFind);
+        mainToolBar.add(btnReplace);
         mainToolBar.add(btnCut);
         mainToolBar.add(btnCopy);
         mainToolBar.add(btnPaste);
@@ -1051,29 +1022,22 @@ public class StudioFrame extends JFrame implements SearchListener {
         }
     }
 
-    private void btnFindReplaceActionPerformed(ActionEvent evt) {
-        mnuEditFindActionPerformed(evt);
-    }
-
-    private void mnuEditFindActionPerformed(ActionEvent evt) {
-        ReplaceDialog replaceDialog = new ReplaceDialog(this, this);
-        replaceDialog.setVisible(true);
-    }
-
     private void mnuEditFindNextActionPerformed(ActionEvent evt) {
-        try {
-            if (finder.findNext(editor.getText(),
-                editor.getCaretPosition(),
-                editor.getDocument().getEndPosition().getOffset() - 1)) {
-                editor.select(finder.getMatchStart(), finder.getMatchEnd());
-                editor.grabFocus();
-            } else {
-                dialogs.showError("Text was not found", "Find next");
+        editor.findNext().ifPresentOrElse(found -> {
+            if (!found) {
+                dialogs.showInfo("Text was not found", "Find next");
             }
-        } catch (NullPointerException e) {
-            mnuEditFindActionPerformed(evt);
-        }
+        }, () -> findAction.actionPerformed(evt));
     }
+
+    private void mnuEditFindPreviousActionPerformed(ActionEvent evt) {
+        editor.findPrevious().ifPresentOrElse(found -> {
+            if (!found) {
+                dialogs.showInfo("Text was not found", "Find previous");
+            }
+        }, () -> findAction.actionPerformed(evt));
+    }
+
 
     private void btnBreakpointActionPerformed(ActionEvent evt) {
         computer.getCPU().ifPresent(cpu -> {
@@ -1091,18 +1055,6 @@ public class StudioFrame extends JFrame implements SearchListener {
             paneDebug.revalidate();
             refreshDebugTable();
         });
-    }
-
-    private void mnuEditReplaceNextActionPerformed(ActionEvent evt) {
-        try {
-            if (finder.replaceNext(editor)) {
-                editor.grabFocus();
-            } else {
-                dialogs.showError("Text was not found", "Replace next");
-            }
-        } catch (NullPointerException e) {
-            mnuEditFindActionPerformed(evt);
-        }
     }
 
     private void updateTitleOfSourceCodePanel() {
@@ -1130,7 +1082,6 @@ public class StudioFrame extends JFrame implements SearchListener {
     private ToolbarButton btnRunTime;
     private ToolbarButton btnStep;
     private ToolbarButton btnStop;
-    private RTextScrollPane editorScrollPane;
     private JList<String> lstDevices;
     private JScrollPane paneDebug;
     private JPanel statusWindow;

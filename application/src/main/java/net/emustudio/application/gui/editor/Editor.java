@@ -1,14 +1,13 @@
 package net.emustudio.application.gui.editor;
 
+import org.fife.rsta.ui.search.SearchListener;
 
-import org.fife.ui.rsyntaxtextarea.TextEditorPane;
-
-import javax.swing.text.Document;
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.Optional;
 
-public interface Editor {
+public interface Editor extends SearchListener {
 
     void newFile();
 
@@ -22,23 +21,18 @@ public interface Editor {
 
     boolean isDirty();
 
-    String getText();
+
+    Optional<Boolean> findNext();
+
+    Optional<Boolean> findPrevious();
 
 
-    int getCaretPosition();
+    Component getView();
 
-    void setCaretPosition(int position);
-
-    void select(int start, int end);
-
-
-    TextEditorPane getView();
+    JComponent getErrorStrip();
 
     void grabFocus();
 
 
     Optional<File> getCurrentFile();
-
-
-    Document getDocument();
 }

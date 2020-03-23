@@ -33,7 +33,8 @@ public class RTokenMaker extends AbstractTokenMaker {
         // 'newStartOffset+currentTokenStart'.
         int newStartOffset = startOffset - offset;
 
-        lexicalAnalyzer.reset(new StringReader(text.toString()), 0, startOffset, 0);
+        lexicalAnalyzer.reset(new StringReader(text.toString()), 0, offset, 0);
+        int lastOffset = offset;
         for (int i = offset; i < end; ) {
             try {
                 int expectedTokenStart = i;
@@ -52,16 +53,19 @@ public class RTokenMaker extends AbstractTokenMaker {
                             text, expectedTokenStart, tokenStart - 1, Token.WHITESPACE,
                             newStartOffset + expectedTokenStart
                         );
+                        lastOffset = tokenStart - 1;
                     }
 
                     addToken(
                         text, tokenStart, tokenEnd, tokenMakerType, newStartOffset + tokenStart
                     );
+                    lastOffset = tokenEnd;
                 } else {
                     // fill the gap
                     addToken(
                         text, expectedTokenStart, end - 1, Token.WHITESPACE, newStartOffset + expectedTokenStart
                     );
+                    lastOffset = end - 1;
                     break;
                 }
 
@@ -70,8 +74,9 @@ public class RTokenMaker extends AbstractTokenMaker {
                 donotlogit.printStackTrace();
             }
         }
-
-        addNullToken();
+        if (offset == end || lastOffset < end - 1) {
+            addNullToken();
+        }
         return firstToken;
     }
 

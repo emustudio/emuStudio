@@ -4,15 +4,17 @@ import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
-import org.fife.ui.rsyntaxtextarea.AbstractTokenMakerFactory;
-import org.fife.ui.rsyntaxtextarea.FileLocation;
-import org.fife.ui.rsyntaxtextarea.TextEditorPane;
-import org.fife.ui.rsyntaxtextarea.TokenMakerFactory;
+import org.fife.rsta.ui.search.SearchEvent;
+import org.fife.ui.rsyntaxtextarea.*;
 import org.fife.ui.rtextarea.RTextArea;
+import org.fife.ui.rtextarea.SearchContext;
+import org.fife.ui.rtextarea.SearchEngine;
+import org.fife.ui.rtextarea.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.text.Document;
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -25,9 +27,12 @@ public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
 
     private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE, true);
+    private final ErrorStrip errorStrip;
+
     private final Dialogs dialogs;
     private final List<SourceFileExtension> sourceFileExtensions;
     private boolean isnew = true;
+    private SearchContext lastSearchedContext;
 
     public REditor(Dialogs dialogs) {
         this(dialogs, null);
@@ -44,6 +49,8 @@ public class REditor implements Editor {
         textPane.setAntiAliasingEnabled(true);
         textPane.clearParsers();
 
+        errorStrip = new ErrorStrip(textPane);
+
         if (compiler != null) {
             sourceFileExtensions = compiler.getSourceFileExtensions();
             RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler.getLexer(new StringReader(textPane.getText())));
@@ -57,8 +64,13 @@ public class REditor implements Editor {
     }
 
     @Override
-    public TextEditorPane getView() {
+    public Component getView() {
         return textPane;
+    }
+
+    @Override
+    public JComponent getErrorStrip() {
+        return errorStrip;
     }
 
     @Override
@@ -163,27 +175,54 @@ public class REditor implements Editor {
     }
 
     @Override
-    public String getText() {
-        return textPane.getText();
+    public void searchEvent(SearchEvent e) {
+        SearchEvent.Type type = e.getType();
+        SearchContext context = e.getSearchContext();
+        SearchResult result;
+
+        lastSearchedContext = context.clone();
+        switch (type) {
+            default:
+            case MARK_ALL:
+                SearchEngine.markAll(textPane, context);
+                break;
+            case FIND:
+                result = SearchEngine.find(textPane, context);
+                if (!result.wasFound() || result.isWrapped()) {
+                    UIManager.getLookAndFeel().provideErrorFeedback(textPane);
+                }
+                break;
+            case REPLACE:
+                result = SearchEngine.replace(textPane, context);
+                if (!result.wasFound() || result.isWrapped()) {
+                    UIManager.getLookAndFeel().provideErrorFeedback(textPane);
+                }
+                break;
+            case REPLACE_ALL:
+                result = SearchEngine.replaceAll(textPane, context);
+                dialogs.showInfo(result.getCount() + " occurrences replaced.", "Replace all");
+                break;
+        }
     }
 
     @Override
-    public int getCaretPosition() {
-        return textPane.getCaretPosition();
+    public String getSelectedText() {
+        return textPane.getSelectedText();
     }
 
     @Override
-    public void setCaretPosition(int position) {
-        textPane.setCaretPosition(position);
+    public Optional<Boolean> findNext() {
+        return Optional.ofNullable(lastSearchedContext).map(context -> {
+            context.setSearchForward(true);
+            return SearchEngine.find(textPane, context).wasFound();
+        });
     }
 
     @Override
-    public Document getDocument() {
-        return textPane.getDocument();
-    }
-
-    @Override
-    public void select(int start, int end) {
-        textPane.select(start, end);
+    public Optional<Boolean> findPrevious() {
+        return Optional.ofNullable(lastSearchedContext).map(context -> {
+            context.setSearchForward(false);
+            return SearchEngine.find(textPane, context).wasFound();
+        });
     }
 }
