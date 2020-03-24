@@ -41,7 +41,6 @@ class CellRenderer extends JLabel implements TableCellRenderer {
         rowHeader = new JList<>(rowNames);
         rowHeader.setCellRenderer(rowHeaderRenderer);
 
-        super.setOpaque(true);
         super.setFont(DEFAULT_FONT);
         super.setHorizontalAlignment(CENTER);
     }

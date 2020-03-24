@@ -15,6 +15,14 @@ public class ToolbarButton extends JButton {
         setBorderPainted(false);
     }
 
+    public ToolbarButton(Action action, String tooltipText) {
+        super(action);
+        setHideActionText(true);
+        setToolTipText(tooltipText);
+        setFocusable(false);
+        setBorderPainted(false);
+    }
+
     public ToolbarButton(Consumer<ActionEvent> action, String iconResource, String tooltipText) {
         this(new AbstractAction() {
             @Override

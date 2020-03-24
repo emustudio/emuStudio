@@ -115,7 +115,7 @@ public class CPUImplStub extends AbstractCPUStub {
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
     }
 
     @Override

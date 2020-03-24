@@ -22,12 +22,14 @@ import net.emustudio.plugins.device.adm3a.interaction.Display;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
-public class TerminalWindow extends JFrame {
+public class TerminalWindow extends JDialog {
     private final Display display;
 
-    public TerminalWindow(Display display) {
-        this.display = display;
+    public TerminalWindow(JFrame parent, Display display) {
+        super(parent);
+        this.display = Objects.requireNonNull(display);
 
         initComponents();
         setVisible(false);

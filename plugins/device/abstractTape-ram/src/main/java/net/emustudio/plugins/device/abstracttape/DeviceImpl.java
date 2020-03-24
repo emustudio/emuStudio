@@ -31,6 +31,7 @@ import net.emustudio.plugins.device.abstracttape.gui.TapeDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.Optional;
@@ -87,17 +88,17 @@ public class DeviceImpl extends AbstractDevice {
 
         boolean showAtStartup = settings.getBoolean("showAtStartup", false);
         if (showAtStartup) {
-            showGUI();
+            showGUI(null);
         }
         context.setVerbose(automaticEmulation);
     }
 
     @Override
-    public void showGUI() {
+    public void showGUI(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
                 boolean alwaysOnTop = settings.getBoolean("alwaysOnTop", false);
-                gui = new TapeDialog(getTitle(), context, alwaysOnTop, applicationApi.getDialogs());
+                gui = new TapeDialog(parent, getTitle(), context, alwaysOnTop, applicationApi.getDialogs());
             }
             gui.setVisible(true);
         }
@@ -131,9 +132,9 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
-            new SettingsDialog(settings, applicationApi.getDialogs(), gui).setVisible(true);
+            new SettingsDialog(parent, settings, applicationApi.getDialogs(), gui).setVisible(true);
         }
     }
 

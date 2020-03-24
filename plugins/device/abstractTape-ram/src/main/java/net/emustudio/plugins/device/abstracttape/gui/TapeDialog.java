@@ -30,7 +30,8 @@ public class TapeDialog extends JDialog {
     private final AbstractTapeContextImpl tapeContext;
     private final TapeListModel listModel = new TapeListModel();
 
-    public TapeDialog(String title, AbstractTapeContextImpl tapeContext, boolean alwaysOnTop, Dialogs dialogs) {
+    public TapeDialog(JFrame parent, String title, AbstractTapeContextImpl tapeContext, boolean alwaysOnTop, Dialogs dialogs) {
+        super(parent);
         this.tapeContext = Objects.requireNonNull(tapeContext);
         this.dialogs = Objects.requireNonNull(dialogs);
 
@@ -83,7 +84,6 @@ public class TapeDialog extends JDialog {
         private Font plainFont;
 
         TapeCellRenderer() {
-            setOpaque(true);
             boldFont = getFont().deriveFont(Font.BOLD);
             plainFont = getFont().deriveFont(Font.PLAIN);
         }
@@ -138,22 +138,17 @@ public class TapeDialog extends JDialog {
         btnClear = new NiceButton("Clear tape");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        //setLocationRelativeTo(null);
         scrollTape.setViewportView(lstTape);
 
         btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png"))); // NOI18N
-        btnAddFirst.addActionListener(e -> {
-            dialogs
-                .readString("Symbol value:", "Add symbol (on top)")
-                .ifPresent(tapeContext::addSymbolFirst);
-        });
+        btnAddFirst.addActionListener(e -> dialogs
+            .readString("Symbol value:", "Add symbol (on top)")
+            .ifPresent(tapeContext::addSymbolFirst));
 
         btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png"))); // NOI18N
-        btnAddLast.addActionListener(e -> {
-            dialogs
-                .readString("Symbol value:", "Add symbol (on bottom)")
-                .ifPresent(tapeContext::addSymbolLast);
-        });
+        btnAddLast.addActionListener(e -> dialogs
+            .readString("Symbol value:", "Add symbol (on bottom)")
+            .ifPresent(tapeContext::addSymbolLast));
 
         btnEdit.addActionListener(e -> {
             int symbolIndex = lstTape.getSelectedIndex();

@@ -38,7 +38,8 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     private final Display canvas;
     private final Keyboard keyboard;
 
-    private BrainTerminalDialog(Keyboard keyboard, Dialogs dialogs) {
+    private BrainTerminalDialog(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
+        super(parent);
         this.dialogs = Objects.requireNonNull(dialogs);
 
         URL blueIconURL = getClass().getResource(
@@ -129,8 +130,8 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     }
 
 
-    static BrainTerminalDialog create(Keyboard keyboard, Dialogs dialogs) {
-        BrainTerminalDialog dialog = new BrainTerminalDialog(keyboard, dialogs);
+    static BrainTerminalDialog create(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
+        BrainTerminalDialog dialog = new BrainTerminalDialog(parent, keyboard, dialogs);
         GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
         dialog.keyboard.addListener(dialog);
         return dialog;

@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -48,6 +50,14 @@ public class REditor implements Editor {
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
         textPane.clearParsers();
+        textPane.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    clearMarkedOccurences();
+                }
+            }
+        });
 
         errorStrip = new ErrorStrip(textPane);
 

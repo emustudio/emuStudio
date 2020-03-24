@@ -164,16 +164,6 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public void showSettings() {
-
-    }
-
-    @Override
-    public boolean isShowSettingsSupported() {
-        return false;
-    }
-
-    @Override
     public String getVersion() {
         return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
     }

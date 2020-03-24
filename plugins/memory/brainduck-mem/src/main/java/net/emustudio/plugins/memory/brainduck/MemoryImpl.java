@@ -31,6 +31,7 @@ import net.emustudio.plugins.memory.brainduck.gui.MemoryGUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -45,6 +46,7 @@ public class MemoryImpl extends AbstractMemory {
 
     private final MemoryContextImpl memContext = new MemoryContextImpl();
     private MemoryGUI memoryGUI;
+    private boolean guiNotSupported;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -77,11 +79,7 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public void initialize() {
-        settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).ifPresent(nogui -> {
-            if (!nogui) {
-                memoryGUI = new MemoryGUI(memContext);
-            }
-        });
+        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI).orElse(false);
     }
 
     @Override
@@ -94,8 +92,11 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     @Override
-    public void showSettings() {
-        if (memoryGUI != null) {
+    public void showSettings(JFrame parent) {
+        if (!guiNotSupported) {
+            if (memoryGUI == null) {
+                memoryGUI = new MemoryGUI(parent, memContext);
+            }
             memoryGUI.setVisible(true);
         }
     }

@@ -27,7 +27,7 @@ import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 
-public class DiskFrame extends JFrame {
+public class DiskFrame extends JDialog {
     private final static String GUI_PATH = "/net/sf/emustudio/devices/mits88disk/gui/";
 
     private final List<Drive> drives;
@@ -50,7 +50,8 @@ public class DiskFrame extends JFrame {
         }
     }
 
-    public DiskFrame(List<Drive> drives) {
+    public DiskFrame(JFrame parent, List<Drive> drives) {
+        super(parent);
         this.drives = Objects.requireNonNull(drives);
 
         initComponents();

@@ -47,10 +47,11 @@ class BrainCPUContextImpl implements BrainCPUContext {
      * @param data value that will be written into the device
      */
     public void writeToDevice(short data) throws IOException {
-        if (device == null) {
+        DeviceContext<Short> tmp = device;
+        if (tmp == null) {
             return;
         }
-        device.writeData(data);
+        tmp.writeData(data);
     }
 
     /**
@@ -62,10 +63,11 @@ class BrainCPUContextImpl implements BrainCPUContext {
      * @return value from the device, or 0 if the device is null or there's anything
      */
     public short readFromDevice() throws IOException {
-        if (device == null) {
+        DeviceContext<Short> tmp = device;
+        if (tmp == null) {
             return 0;
         }
-        Short value = device.readData();
+        Short value = tmp.readData();
         return (value == null) ? 0 : value;
     }
 

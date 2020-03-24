@@ -33,6 +33,9 @@ import java.util.Objects;
 public class AutoDialog extends JDialog {
     private final VirtualComputer computer;
 
+    private final JLabel lblAction = new JLabel();
+    private final JButton btnStop = new JButton("Stop");
+
     public AutoDialog(VirtualComputer computer) {
         this.computer = Objects.requireNonNull(computer);
 
@@ -42,9 +45,6 @@ public class AutoDialog extends JDialog {
 
     private void initComponents() {
         JLabel lblPerforming = new JLabel();
-        lblAction = new JLabel();
-        btnStop = new JButton("Stop");
-
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setResizable(false);
 
@@ -60,9 +60,23 @@ public class AutoDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblAction, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE).addComponent(lblPerforming).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnStop))).addContainerGap());
+            layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(lblAction, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblPerforming)
+                    .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(btnStop))
+                ).addContainerGap());
         layout.setVerticalGroup(
-            layout.createSequentialGroup().addContainerGap().addComponent(lblPerforming).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblAction).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnStop).addContainerGap());
+            layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblPerforming)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblAction)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnStop)
+                .addContainerGap());
 
         pack();
     }
@@ -83,7 +97,4 @@ public class AutoDialog extends JDialog {
     private void btnStopActionPerformed(ActionEvent e) {
         computer.getCPU().ifPresent(CPU::stop);
     }
-
-    private JLabel lblAction;
-    private JButton btnStop;
 }

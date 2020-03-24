@@ -50,7 +50,9 @@ public class MemoryDialog extends javax.swing.JDialog {
     private TableMemory table;
     private MemoryTableModel tableModel;
 
-    public MemoryDialog(MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
+    public MemoryDialog(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
+        super(parent);
+
         this.context = Objects.requireNonNull(context);
         this.memory = Objects.requireNonNull(memory);
         this.settings = Objects.requireNonNull(settings);
@@ -189,7 +191,6 @@ public class MemoryDialog extends javax.swing.JDialog {
         btnLoadImage.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnLoadImage.setFocusable(false);
         btnLoadImage.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnLoadImage.setOpaque(false);
         btnLoadImage.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnLoadImage.addActionListener(this::btnLoadImageActionPerformed);
         jToolBar1.add(btnLoadImage);
@@ -199,7 +200,6 @@ public class MemoryDialog extends javax.swing.JDialog {
         btnDump.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnDump.setFocusable(false);
         btnDump.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnDump.setOpaque(false);
         btnDump.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnDump.addActionListener(this::btnDumpActionPerformed);
         jToolBar1.add(btnDump);
@@ -210,7 +210,6 @@ public class MemoryDialog extends javax.swing.JDialog {
         btnGotoAddress.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnGotoAddress.setFocusable(false);
         btnGotoAddress.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnGotoAddress.setOpaque(false);
         btnGotoAddress.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnGotoAddress.addActionListener(this::btnGotoAddressActionPerformed);
         jToolBar1.add(btnGotoAddress);
@@ -220,7 +219,6 @@ public class MemoryDialog extends javax.swing.JDialog {
         btnFind.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnFind.setFocusable(false);
         btnFind.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnFind.setOpaque(false);
         btnFind.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnFind.addActionListener(this::btnFindActionPerformed);
         jToolBar1.add(btnFind);
@@ -231,7 +229,6 @@ public class MemoryDialog extends javax.swing.JDialog {
         btnClean.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnClean.setFocusable(false);
         btnClean.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnClean.setOpaque(false);
         btnClean.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnClean.addActionListener(this::btnCleanActionPerformed);
         jToolBar1.add(btnClean);
@@ -242,7 +239,6 @@ public class MemoryDialog extends javax.swing.JDialog {
         btnSettings.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnSettings.setFocusable(false);
         btnSettings.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnSettings.setOpaque(false);
         btnSettings.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnSettings.addActionListener(this::btnSettingsActionPerformed);
         jToolBar1.add(btnSettings);

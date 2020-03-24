@@ -34,7 +34,6 @@ public class DebugTableImpl extends JTable  {
         this.tableModel = tableModel;
 
         super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        super.setOpaque(false);
         super.setGridColor(Constants.DEBUGTABLE_COLOR_TABLE_GRID);
         super.setIntercellSpacing(new Dimension(0, 0));
         // turn off grid painting as we'll handle this manually

@@ -60,7 +60,6 @@ public class TableMemory extends JTable {
 
         MemRowHeaderRenderer(JTable table) {
             JTableHeader header = table.getTableHeader();
-            setOpaque(true);
             setBorder(UIManager.getBorder("TableHeader.cellBorder"));
             setHorizontalAlignment(CENTER);
             setForeground(header.getForeground());
@@ -94,9 +93,8 @@ public class TableMemory extends JTable {
                 adresses[i] = RadixUtils.formatWordHexString(tableModel.getColumnCount() * i
                     + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage) + "h";
             }
-            this.setOpaque(true);
             rowHeader = new JList<>(adresses);
-            this.setFont(new Font("Monospaced", Font.PLAIN, 11));
+            this.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
             FontMetrics fm = rowHeader.getFontMetrics(rowHeader.getFont());
             int char_width = 17;

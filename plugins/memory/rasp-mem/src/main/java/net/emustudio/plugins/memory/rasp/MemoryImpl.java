@@ -33,6 +33,7 @@ import net.emustudio.plugins.memory.rasp.gui.MemoryWindow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -80,9 +81,9 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
         if (gui == null) {
-            gui = new MemoryWindow(context, applicationApi.getDialogs());
+            gui = new MemoryWindow(parent, context, applicationApi.getDialogs());
         }
         gui.setVisible(true);
     }

@@ -31,8 +31,6 @@ class TextCellRenderer extends JLabel implements TableCellRenderer {
     TextCellRenderer(DebugTableModel model) {
         super();
         this.model = model;
-        setOpaque(true);
-        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD));
     }
 
     @Override

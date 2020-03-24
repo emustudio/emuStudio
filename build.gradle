@@ -24,7 +24,7 @@ ext.versions = [
 ]
 
 ext.libs = [
-  emuLib         : "net.emustudio:emulib:11.4.0",
+  emuLib         : "net.emustudio:emulib:11.5.0",
   cpuTestSuite   : "net.emustudio:cpu-testsuite_11.4:1.1.0",
 
   javaCupRuntime : "com.github.vbmacher:java-cup-runtime:11b-20160615",

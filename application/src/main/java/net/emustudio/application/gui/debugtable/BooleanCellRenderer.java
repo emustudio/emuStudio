@@ -43,9 +43,9 @@ class BooleanCellRenderer extends JLabel implements TableCellRenderer {
     }
 
     @Override
-    public void paint(Graphics g) {
+    public void paintComponent(Graphics g) {
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, getWidth(), getHeight());
-        super.paint(g);
+        super.paintComponent(g);
     }
 }

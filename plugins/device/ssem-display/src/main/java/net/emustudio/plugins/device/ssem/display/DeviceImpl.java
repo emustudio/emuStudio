@@ -26,6 +26,7 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.PluginSettings;
 
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -36,6 +37,9 @@ import java.util.ResourceBundle;
 )
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {
+    private final DisplayPanel displayPanel = new DisplayPanel();
+    private MemoryContext<Byte> memory;
+    private boolean guiNotSupported;
     private DisplayDialog display;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -45,22 +49,18 @@ public class DeviceImpl extends AbstractDevice {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        MemoryContext<Byte> memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
+        memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
         if (memory.getDataType() != Byte.class) {
             throw new PluginInitializationException(
                 "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
             );
         }
-
-        boolean guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        if (!guiNotSupported) {
-            display = new DisplayDialog(memory);
-        }
+        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
     }
 
     @Override
     public void reset() {
-        Optional.ofNullable(display).ifPresent(DisplayDialog::reset);
+        displayPanel.reset(memory);
     }
 
     @Override
@@ -69,12 +69,17 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showGUI() {
-        Optional.ofNullable(display).ifPresent(displayDialog -> displayDialog.setVisible(true));
+    public void showGUI(JFrame parent) {
+        if (!guiNotSupported) {
+            if (display == null) {
+                display = new DisplayDialog(parent, memory, displayPanel);
+            }
+            display.setVisible(true);
+        }
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
         // we don't have settings GUI
     }
 

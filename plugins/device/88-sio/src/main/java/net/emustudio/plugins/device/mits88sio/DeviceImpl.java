@@ -31,6 +31,7 @@ import net.emustudio.plugins.device.mits88sio.gui.StatusDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -112,10 +113,10 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
     }
 
     @Override
-    public void showGUI() {
+    public void showGUI(JFrame parent) {
         if (!sioSettings.isGuiNotSupported()) {
             if (gui == null) {
-                gui = new StatusDialog(transmitter.getDeviceId(), transmitter, cpuPorts);
+                gui = new StatusDialog(parent, transmitter.getDeviceId(), transmitter, cpuPorts);
             }
             gui.setVisible(true);
         }
@@ -133,9 +134,9 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
         if (!sioSettings.isGuiNotSupported()) {
-            new ConfigDialog(sioSettings, applicationApi.getDialogs()).setVisible(true);
+            new ConfigDialog(parent, sioSettings, applicationApi.getDialogs()).setVisible(true);
         }
     }
 

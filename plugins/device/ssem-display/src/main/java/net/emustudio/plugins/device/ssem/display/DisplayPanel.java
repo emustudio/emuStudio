@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.ssem.display;
 
+import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.jcip.annotations.ThreadSafe;
 
@@ -57,6 +58,13 @@ public class DisplayPanel extends JPanel {
             Arrays.fill(memoryRow, false);
         }
         repaint();
+    }
+
+    void reset(MemoryContext<Byte> memory) {
+        clear();
+        for (int i = 0; i < 4 * 32; i += 4) {
+            writeRow(memory.readWord(i), i / 4);
+        }
     }
 
     @Override

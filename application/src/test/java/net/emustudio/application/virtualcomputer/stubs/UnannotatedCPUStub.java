@@ -120,7 +120,7 @@ public class UnannotatedCPUStub implements CPU {
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
 
     }
 

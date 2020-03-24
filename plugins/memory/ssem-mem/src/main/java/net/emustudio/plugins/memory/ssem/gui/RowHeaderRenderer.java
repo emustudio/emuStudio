@@ -28,7 +28,6 @@ class RowHeaderRenderer extends JLabel implements ListCellRenderer<String> {
     private int height;
 
     RowHeaderRenderer() {
-        super.setOpaque(true);
         super.setBorder(UIManager.getBorder("TableHeader.cellBorder"));
         super.setHorizontalAlignment(CENTER);
         super.setFont(Constants.DEFAULT_FONT);

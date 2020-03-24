@@ -36,6 +36,7 @@ import net.emustudio.plugins.device.mits88disk.ports.StatusPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -98,16 +99,15 @@ public class DeviceImpl extends AbstractDevice {
             port2CPU = attachPort(2, controlPort, port2CPU);
             port3CPU = attachPort(3, dataPort, port3CPU);
         }
-
-        if (!guiNotSupported) {
-            gui = new DiskFrame(drives);
-        }
     }
 
 
     @Override
-    public void showGUI() {
-        if (gui != null) {
+    public void showGUI(JFrame parent) {
+        if (!guiNotSupported) {
+            if (gui == null) {
+                gui = new DiskFrame(parent, drives);
+            }
             gui.setVisible(true);
         }
     }
@@ -142,11 +142,11 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
         if (guiNotSupported) {
             return;
         }
-        new SettingsDialog(gui, settings, drives, applicationApi.getDialogs()).setVisible(true);
+        new SettingsDialog(parent, settings, drives, applicationApi.getDialogs()).setVisible(true);
     }
 
     public Drive getCurrentDrive() {

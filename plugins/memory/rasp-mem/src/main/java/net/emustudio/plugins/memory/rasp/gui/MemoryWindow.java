@@ -32,7 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-public class MemoryWindow extends javax.swing.JFrame {
+public class MemoryWindow extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryWindow.class);
 
     private final Dialogs dialogs;
@@ -41,7 +41,9 @@ public class MemoryWindow extends javax.swing.JFrame {
     private final RASPTableModel tableModel;
     private File recentOpenPath;
 
-    public MemoryWindow(MemoryContextImpl context, Dialogs dialogs) {
+    public MemoryWindow(JFrame parent, MemoryContextImpl context, Dialogs dialogs) {
+        super(parent, false);
+
         this.dialogs = Objects.requireNonNull(dialogs);
         this.memory = Objects.requireNonNull(context);
         this.recentOpenPath = new File(System.getProperty("user.home"));

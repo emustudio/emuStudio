@@ -39,7 +39,7 @@ public class MemoryGUI extends JDialog {
         }
     }
 
-    public MemoryGUI(MemoryContext<Byte> memory) {
+    public MemoryGUI(JFrame parent, MemoryContext<Byte> memory) {
         initComponents();
         super.setLocationRelativeTo(null);
 

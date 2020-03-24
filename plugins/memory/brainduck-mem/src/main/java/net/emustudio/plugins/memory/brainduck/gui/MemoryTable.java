@@ -56,12 +56,11 @@ class MemoryTable extends JTable {
 
         MemRowHeaderRenderer(JTable table) {
             JTableHeader header = table.getTableHeader();
-            setOpaque(true);
             setBorder(UIManager.getBorder("TableHeader.cellBorder"));
             setHorizontalAlignment(CENTER);
             setForeground(header.getForeground());
             setBackground(header.getBackground());
-            setFont(new Font("Monospaced", Font.PLAIN, 11));
+            setFont(new Font("Monospaced", Font.PLAIN, 12));
             setPreferredSize(new Dimension(4 * CHAR_WIDTH, header.getPreferredSize().height));
         }
 
@@ -86,9 +85,8 @@ class MemoryTable extends JTable {
                     model.getColumnCount() * i + model.getColumnCount() * model.getRowCount() * currentPage
                 ) + "h";
             }
-            this.setOpaque(true);
             rowHeader = new JList<>(adresses);
-            this.setFont(new Font("Monospaced", Font.PLAIN, 11));
+            this.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
             FontMetrics fm = rowHeader.getFontMetrics(rowHeader.getFont());
             int char_width = CHAR_WIDTH;

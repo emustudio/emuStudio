@@ -33,8 +33,8 @@ public class ConfigDialog extends javax.swing.JDialog {
     private final TerminalWindow window;
     private final Dialogs dialogs;
 
-    public ConfigDialog(TerminalSettings settings, TerminalWindow window, Display lblTerminal, Dialogs dialogs) {
-        super((JFrame) null, true);
+    public ConfigDialog(JFrame parent, TerminalSettings settings, TerminalWindow window, Display lblTerminal, Dialogs dialogs) {
+        super(parent, true);
 
         this.dialogs = Objects.requireNonNull(dialogs);
 

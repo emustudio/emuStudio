@@ -28,6 +28,7 @@ import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
 import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
 
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -71,7 +72,7 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showGUI() {
+    public void showGUI(JFrame parent) {
         applicationApi.getDialogs().showInfo("GUI is not supported");
     }
 
@@ -96,7 +97,7 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
     }
 
     @Override

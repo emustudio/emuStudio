@@ -103,7 +103,7 @@ public class CompilerImpl extends AbstractCompiler {
             notifyCompileStart();
             IntelHEX hex = compileToHex(inputFileName);
 
-            hex.generateFile(outputFileName);
+            hex.generate(outputFileName);
             programLocation = hex.getProgramLocation();
             notifyInfo("Compilation was successful.\n Output file: " + outputFileName);
 
@@ -125,11 +125,6 @@ public class CompilerImpl extends AbstractCompiler {
     }
 
     @Override
-    public int getProgramLocation() {
-        return programLocation;
-    }
-
-    @Override
     public boolean compile(String inputFileName) {
         int i = inputFileName.lastIndexOf(".asm");
 
@@ -139,6 +134,11 @@ public class CompilerImpl extends AbstractCompiler {
         }
         outputFileName += ".hex";
         return compile(inputFileName, outputFileName);
+    }
+
+    @Override
+    public int getProgramLocation() {
+        return programLocation;
     }
 
     @Override

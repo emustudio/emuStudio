@@ -44,8 +44,8 @@ public class SettingsDialog extends JDialog {
     private final PluginSettings settings;
     private final List<Drive> drives;
 
-    public SettingsDialog(DiskFrame parent, PluginSettings settings, List<Drive> drives, Dialogs dialogs) {
-        super(parent);
+    public SettingsDialog(JFrame parent, PluginSettings settings, List<Drive> drives, Dialogs dialogs) {
+        super(parent, true);
 
         this.settings = Objects.requireNonNull(settings);
         this.drives = Objects.requireNonNull(drives);

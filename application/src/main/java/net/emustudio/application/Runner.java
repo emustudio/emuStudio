@@ -98,7 +98,7 @@ public class Runner {
             Optional<LoadingDialog> splash = showSplashScreen(commandLine.isNoGUI(), commandLine.getConfigName());
 
             ContextPoolImpl contextPool = new ContextPoolImpl(emustudioId);
-            DebugTableModelImpl debugTableModel =  new DebugTableModelImpl();
+            DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
             ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs);
 
             VirtualComputer computer = VirtualComputer.create(
@@ -232,5 +232,13 @@ public class Runner {
         UIManager.put("ToolTip.font", Constants.FONT_COMMON);
         UIManager.put("Tree.font", Constants.FONT_COMMON);
         UIManager.put("Viewport.font", Constants.FONT_COMMON);
+
+        UIManager.put("Button.opaque", true);
+        UIManager.put("InternalFrame.opaque", true);
+        UIManager.put("Label.opaque", true);
+        UIManager.put("Panel.opaque", true);
+        UIManager.put("TabbedPane.contentOpaque", true);
+        UIManager.put("TabbedPane.opaque", true);
+        UIManager.put("TabbedPane.tabsOpaque", true);
     }
 }

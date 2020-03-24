@@ -55,16 +55,20 @@ public class SIOSettings {
         observers.remove(observer);
     }
 
-    private void notifyObservers() {
-        observers.forEach(ChangedObserver::settingsChanged);
-    }
-
     boolean isGuiNotSupported() {
         return guiNotSupported;
     }
 
     public Collection<Integer> getStatusPorts() {
         return Collections.unmodifiableCollection(statusPorts);
+    }
+
+    public List<Integer> getDefaultStatusPorts() {
+        return List.of(3, 16, 20, 22, 24);
+    }
+
+    public List<Integer> getDefaultDataPorts() {
+        return List.of(2, 17, 21, 23, 25);
     }
 
     public void setStatusPorts(Collection<Integer> statusPorts) {
@@ -88,14 +92,6 @@ public class SIOSettings {
         writePorts(dataPorts, DATA_PORT_NUMBER);
     }
 
-    private void writePorts(Collection<Integer> ports, String baseName) throws CannotUpdateSettingException {
-        int i = 0;
-        for (int port : ports) {
-            settings.setInt(baseName + i, port);
-            i++;
-        }
-    }
-
     void read() {
         readPorts(statusPorts, STATUS_PORT_NUMBER);
         readPorts(dataPorts, DATA_PORT_NUMBER);
@@ -115,5 +111,17 @@ public class SIOSettings {
             }
             i++;
         } while(true);
+    }
+
+    private void writePorts(Collection<Integer> ports, String baseName) throws CannotUpdateSettingException {
+        int i = 0;
+        for (int port : ports) {
+            settings.setInt(baseName + i, port);
+            i++;
+        }
+    }
+
+    private void notifyObservers() {
+        observers.forEach(ChangedObserver::settingsChanged);
     }
 }

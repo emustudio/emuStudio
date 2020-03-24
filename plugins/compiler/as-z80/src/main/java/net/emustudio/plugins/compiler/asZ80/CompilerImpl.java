@@ -84,7 +84,7 @@ public class CompilerImpl extends AbstractCompiler {
             notifyCompileStart();
             IntelHEX hex = compileToHex(inputFileName);
 
-            hex.generateFile(outputFileName);
+            hex.generate(outputFileName);
             programLocation = hex.getProgramLocation();
             notifyInfo("Compile was successful.\nOutput: " + outputFileName);
 

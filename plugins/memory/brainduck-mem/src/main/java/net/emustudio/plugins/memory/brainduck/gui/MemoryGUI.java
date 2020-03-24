@@ -41,8 +41,9 @@ public class MemoryGUI extends JDialog {
         }
     }
 
-    public MemoryGUI(MemoryContext<Short> memory) {
-        setLocationRelativeTo(null);
+    public MemoryGUI(JFrame parent, MemoryContext<Short> memory) {
+        super(parent, false);
+        setLocationRelativeTo(parent);
         initComponents();
 
         this.memory = Objects.requireNonNull(memory);

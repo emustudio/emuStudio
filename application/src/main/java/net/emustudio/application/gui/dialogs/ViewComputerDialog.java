@@ -33,18 +33,19 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
-class ViewComputerDialog extends JDialog {
+public class ViewComputerDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);
 
     private final VirtualComputer computer;
     private final SchemaPreviewPanel panelSchema;
 
-    ViewComputerDialog(JFrame parent, VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs) {
+    public ViewComputerDialog(JFrame parent, VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs) {
         super(parent, true);
         this.computer = Objects.requireNonNull(computer);
 
         initComponents();
         setLocationRelativeTo(parent);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         lblComputerName.setText(computer.getComputerConfig().getName());
 
         final List<Device> devices = computer.getDevices();
@@ -139,7 +140,6 @@ class ViewComputerDialog extends JDialog {
         JButton btnSaveSchema = new JButton();
         scrollPane = new JScrollPane();
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Computer information preview");
 
         lblComputerName.setFont(lblComputerName.getFont().deriveFont(lblComputerName.getFont().getStyle() | java.awt.Font.BOLD, lblComputerName.getFont().getSize() + 3));

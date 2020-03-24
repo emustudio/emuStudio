@@ -21,9 +21,12 @@ package net.emustudio.plugins.device.mits88sio.gui;
 import net.emustudio.plugins.device.mits88sio.ports.CPUPorts;
 import net.emustudio.plugins.device.mits88sio.Transmitter;
 
+import javax.swing.*;
+
 public class StatusDialog extends javax.swing.JDialog {
 
-    public StatusDialog(String deviceName, Transmitter transmitter, CPUPorts cpuPorts) {
+    public StatusDialog(JFrame parent, String deviceName, Transmitter transmitter, CPUPorts cpuPorts) {
+        super(parent);
         initComponents();
         super.setLocationRelativeTo(null);
         tblCPUPorts.setModel(new CPUPortsTableModel(cpuPorts));

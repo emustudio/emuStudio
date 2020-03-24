@@ -35,7 +35,8 @@ public class SettingsDialog extends JDialog {
     private final Dialogs dialogs;
     private TapeDialog gui;
 
-    public SettingsDialog(PluginSettings settings, Dialogs dialogs, TapeDialog gui) {
+    public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeDialog gui) {
+        super(parent, true);
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.gui = gui;

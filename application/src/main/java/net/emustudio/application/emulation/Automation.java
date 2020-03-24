@@ -135,7 +135,7 @@ public class Automation implements Runnable {
         // Show all devices if GUI is supported
         for (Device device : computer.getDevices()) {
             if (!applicationConfig.noGUI) {
-                device.showGUI();
+                device.showGUI(null);
             }
         }
 

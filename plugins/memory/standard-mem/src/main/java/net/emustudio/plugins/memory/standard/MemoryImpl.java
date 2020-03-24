@@ -29,6 +29,7 @@ import net.emustudio.plugins.memory.standard.gui.MemoryDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -119,9 +120,7 @@ public class MemoryImpl extends AbstractMemory {
             throw new PluginInitializationException(this, "Could not parse settings: Invalid number format ", e);
         }
 
-        if (!guiNotSupported) {
-            gui = new MemoryDialog(this, context, settings, applicationApi.getDialogs());
-        }
+
 
         loadImages();
         loadRomRanges();
@@ -218,8 +217,11 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     @Override
-    public void showSettings() {
-        if (gui != null) {
+    public void showSettings(JFrame parent) {
+        if (!guiNotSupported) {
+            if (gui == null) {
+                gui = new MemoryDialog(parent, this, context, settings, applicationApi.getDialogs());
+            }
             gui.setVisible(true);
         }
     }

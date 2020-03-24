@@ -30,6 +30,7 @@ import net.emustudio.plugins.device.adm3a.interaction.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.MissingResourceException;
@@ -86,15 +87,15 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         } catch (ContextNotFoundException e) {
             LOGGER.warn("The terminal is not connected to any I/O device.");
         }
-        if (terminalSettings.isGuiSupported()) {
-            terminalGUI = new TerminalWindow(display);
-            display.start();
-        }
     }
 
     @Override
-    public void showGUI() {
-        if (terminalSettings.isGuiSupported() && terminalGUI != null) {
+    public void showGUI(JFrame parent) {
+        if (terminalSettings.isGuiSupported()) {
+            if (terminalGUI == null) {
+                terminalGUI = new TerminalWindow(parent, display);
+                display.startCursor();
+            }
             terminalGUI.setVisible(true);
         }
     }
@@ -131,9 +132,9 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
         if (terminalSettings.isGuiSupported()) {
-            new ConfigDialog(terminalSettings, terminalGUI, display, applicationApi.getDialogs()).setVisible(true);
+            new ConfigDialog(parent, terminalSettings, terminalGUI, display, applicationApi.getDialogs()).setVisible(true);
         }
     }
 

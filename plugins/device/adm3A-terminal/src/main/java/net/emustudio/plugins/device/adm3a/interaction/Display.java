@@ -101,7 +101,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         return 0;
     }
 
-    public void start() {
+    public void startCursor() {
         cursor.start(getGraphics(), displayParameters);
     }
 

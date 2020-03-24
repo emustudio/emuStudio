@@ -35,6 +35,7 @@ import net.emustudio.plugins.device.brainduck.terminal.io.OutputProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.MissingResourceException;
 import java.util.Optional;
@@ -49,7 +50,9 @@ public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private boolean guiNotSupported;
+    private boolean automaticEmulation;
     private final BrainTerminalContext terminal = new BrainTerminalContext();
+    private boolean keyboardSet = false;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -84,24 +87,21 @@ public class DeviceImpl extends AbstractDevice {
         BrainCPUContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, BrainCPUContext.class);
 
         guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
 
         InputProvider inputProvider;
         OutputProvider outputProvider;
 
         try {
-            if (guiNotSupported) {
+            cpu.attachDevice(terminal);
+
+            if (guiNotSupported || automaticEmulation) {
                 FileIOProvider fileIOProvider = new FileIOProvider();
                 inputProvider = fileIOProvider;
                 outputProvider = fileIOProvider;
-            } else {
-                Keyboard keyboard = new Keyboard();
-                outputProvider = BrainTerminalDialog.create(keyboard, applicationApi.getDialogs());
-                inputProvider = keyboard;
+                terminal.setInputProvider(inputProvider);
+                terminal.setOutputProvider(outputProvider);
             }
-            terminal.setInputProvider(inputProvider);
-            terminal.setOutputProvider(outputProvider);
-
-            cpu.attachDevice(terminal);
         } catch (IOException e) {
             throw new PluginInitializationException(this, e);
         }
@@ -122,20 +122,28 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showGUI() {
-        if (!guiNotSupported) {
-            terminal.showGUI();
-        }
-    }
-
-    @Override
-    public void showSettings() {
+    public void showSettings(JFrame jFrame) {
         // we don't have settings GUI
     }
 
     @Override
     public boolean isShowSettingsSupported() {
         return false;
+    }
+
+    @Override
+    public void showGUI(JFrame parent) {
+        if (!guiNotSupported && !automaticEmulation) {
+            if (!keyboardSet) {
+                Keyboard keyboard = new Keyboard();
+                OutputProvider outputProvider = BrainTerminalDialog.create(parent, keyboard, applicationApi.getDialogs());
+                terminal.setInputProvider(keyboard);
+                terminal.setOutputProvider(outputProvider);
+                keyboardSet = true;
+            }
+
+            terminal.showGUI();
+        }
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

@@ -29,13 +29,13 @@ import java.util.Objects;
  * The breakpoint dialog - it asks user for the address where should be
  * set or unset the breakpoint.
  */
-class BreakpointDialog extends JDialog {
+public class BreakpointDialog extends JDialog {
     private final Dialogs dialogs;
 
     private int address = -1; // if adr == -1 then it means cancel
     private boolean set = false;
 
-    BreakpointDialog(JFrame parent, Dialogs dialogs) {
+    public BreakpointDialog(JFrame parent, Dialogs dialogs) {
         super(parent, true);
 
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -45,7 +45,7 @@ class BreakpointDialog extends JDialog {
         txtAddress.grabFocus();
     }
 
-    int getAddress() {
+    public int getAddress() {
         return address;
     }
 
@@ -56,8 +56,8 @@ class BreakpointDialog extends JDialog {
     private void initComponents() {
         JLabel lblSetUnset = new JLabel();
         txtAddress = new JTextField();
-        ConstantSizeButton btnSet = new ConstantSizeButton();
-        ConstantSizeButton btnUnset = new ConstantSizeButton();
+        ConstantSizeButton btnSet = new ConstantSizeButton(this::btnSetActionPerformed);
+        ConstantSizeButton btnUnset = new ConstantSizeButton(this::btnUnsetActionPerformed);
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Set/unset breakpoint");
@@ -67,10 +67,7 @@ class BreakpointDialog extends JDialog {
         txtAddress.setText("0");
 
         btnSet.setText("Set");
-        btnSet.addActionListener(this::btnSetActionPerformed);
-
         btnUnset.setText("Unset");
-        btnUnset.addActionListener(this::btnUnsetActionPerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

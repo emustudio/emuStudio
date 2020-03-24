@@ -26,6 +26,7 @@ import net.emustudio.emulib.runtime.*;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import net.emustudio.plugins.memory.ram.gui.MemoryDialog;
 
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -83,9 +84,9 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
         if (gui == null) {
-            gui = new MemoryDialog(context, applicationApi.getDialogs());
+            gui = new MemoryDialog(parent, context, applicationApi.getDialogs());
         }
         gui.setVisible(true);
     }
