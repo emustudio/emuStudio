@@ -82,10 +82,12 @@ public class Runner {
             ComputerConfig computerConfig = null;
             if (commandLine.getConfigName() == null && !commandLine.isNoGUI()) {
                 OpenComputerDialog dialog = new OpenComputerDialog(configFiles, applicationConfig, dialogs);
+                ((GuiDialogsImpl)dialogs).setParent(dialog);
                 dialog.setVisible(true);
                 if (dialog.userPressedOK()) {
                     computerConfig = dialog.getSelectedComputerConfig();
                 }
+                ((GuiDialogsImpl)dialogs).setParent(null);
             } else {
                 computerConfig = configFiles.loadConfiguration(commandLine.getConfigName()).orElseThrow();
             }
@@ -114,7 +116,10 @@ public class Runner {
             if (commandLine.isAuto()) {
                 System.exit(runAutomation(computer, commandLine.getInputFileName(), applicationConfig, dialogs));
             } else if (!commandLine.isNoGUI()) {
-                showMainWindow(computer, applicationConfig, dialogs, debugTableModel, contextPool, commandLine.getInputFileName());
+                showMainWindow(
+                    computer, applicationConfig, (GuiDialogsImpl) dialogs, debugTableModel, contextPool,
+                    commandLine.getInputFileName()
+                );
             } else {
                 System.err.println("No GUI is available; and no automatic emulation was set either. Exiting.");
             }
@@ -140,7 +145,7 @@ public class Runner {
     }
 
     @SuppressWarnings("unchecked")
-    private static void showMainWindow(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
+    private static void showMainWindow(VirtualComputer computer, ApplicationConfig applicationConfig, GuiDialogsImpl dialogs,
                                        DebugTableModel debugTableModel, ContextPool contextPool, String inputFileName) {
         MemoryContext<?> memoryContext = null;
         try {
@@ -149,11 +154,12 @@ public class Runner {
             LOGGER.warn("No memory context is available", e);
         }
 
-        if (inputFileName != null) {
-            new StudioFrame(computer, applicationConfig, dialogs, debugTableModel, memoryContext, inputFileName).setVisible(true);
-        } else {
-            new StudioFrame(computer, applicationConfig, dialogs, debugTableModel, memoryContext).setVisible(true);
-        }
+        StudioFrame mainWindow = (inputFileName != null)
+            ? new StudioFrame(computer, applicationConfig, dialogs, debugTableModel, memoryContext, inputFileName)
+            : new StudioFrame(computer, applicationConfig, dialogs, debugTableModel, memoryContext);
+
+        dialogs.setParent(mainWindow);
+        mainWindow.setVisible(true);
     }
 
     private static Optional<LoadingDialog> showSplashScreen(boolean noGUI, String computerName) {

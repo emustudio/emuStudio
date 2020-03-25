@@ -33,11 +33,14 @@ public class DebugTableImpl extends JTable  {
         super(Objects.requireNonNull(tableModel));
         this.tableModel = tableModel;
 
-        super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        super.setGridColor(Constants.DEBUGTABLE_COLOR_TABLE_GRID);
-        super.setIntercellSpacing(new Dimension(0, 0));
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        setGridColor(Constants.DEBUGTABLE_COLOR_TABLE_GRID);
+        setIntercellSpacing(new Dimension(0, 0));
         // turn off grid painting as we'll handle this manually
-        super.setShowGrid(false);
+        setShowGrid(false);
+        setDoubleBuffered(true);
+        setFillsViewportHeight(true);
+        setOpaque(true);
 
         setupRenderers();
         setupBooleanCellEditorAndDefaultWidth();

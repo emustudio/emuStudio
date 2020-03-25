@@ -18,6 +18,7 @@
  */
 package net.emustudio.application.gui.debugtable;
 
+import net.emustudio.application.gui.dialogs.ToolbarButton;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 
 import javax.swing.*;
@@ -29,7 +30,6 @@ public class PagesPanel extends JPanel {
     private static final String PAGE_BACK_PNG = "/net/emustudio/application/gui/dialogs/page-back.png";
     private static final String PAGE_CURRENT_PNG = "/net/emustudio/application/gui/dialogs/page-current.png";
     private static final String PAGE_FORWARD_PNG = "/net/emustudio/application/gui/dialogs/page-forward.png";
-    private static final String PAGE_LAST_PNG = "/net/emustudio/application/gui/dialogs/page-last.png";
     private static final String PAGE_SEEK_BACKWARD_PNG = "/net/emustudio/application/gui/dialogs/page-seek-backward.png";
     private static final String PAGE_SEEK_FORWARD_PNG = "/net/emustudio/application/gui/dialogs/page-seek-forward.png";
 
@@ -43,42 +43,12 @@ public class PagesPanel extends JPanel {
     }
 
     private void initComponents() {
-        JButton btnFirst = new JButton();
-        JButton btnBackward = new JButton();
-        JButton btnCurrentPage = new JButton();
-        JButton btnForward = new JButton();
-        JButton btnLast = new JButton();
-        JButton btnSeekBackward = new JButton();
-        JButton btnSeekForward = new JButton();
-
-        btnFirst.setIcon(new ImageIcon(getClass().getResource(PAGE_FIRST_PNG)));
-        btnFirst.setToolTipText("Go to the first page");
-
-        btnBackward.setIcon(new ImageIcon(getClass().getResource(PAGE_BACK_PNG)));
-        btnBackward.setToolTipText("Go to the previous page");
-
-        btnCurrentPage.setIcon(new ImageIcon(getClass().getResource(PAGE_CURRENT_PNG)));
-        btnCurrentPage.setToolTipText("Go to the current page");
-
-        btnForward.setIcon(new ImageIcon(getClass().getResource(PAGE_FORWARD_PNG)));
-        btnForward.setToolTipText("Go to the next page");
-
-        btnLast.setIcon(new ImageIcon(getClass().getResource(PAGE_LAST_PNG)));
-        btnLast.setToolTipText("Go to the last page");
-
-        btnSeekBackward.setIcon(new ImageIcon(getClass().getResource(PAGE_SEEK_BACKWARD_PNG)));
-        btnSeekBackward.setToolTipText("Go to the current page");
-
-        btnSeekForward.setIcon(new ImageIcon(getClass().getResource(PAGE_SEEK_FORWARD_PNG)));
-        btnSeekForward.setToolTipText("Go to the current page");
-
-        btnFirst.addActionListener(evt -> gotoFirstPage());
-        btnBackward.addActionListener(evt -> gotoPreviousPage());
-        btnForward.addActionListener(evt -> gotoNextPage());
-        btnCurrentPage.addActionListener(evt -> gotoCurrentPage());
-        btnLast.addActionListener(evt -> gotoLastPage());
-        btnSeekBackward.addActionListener(evt -> seekBackward());
-        btnSeekForward.addActionListener(evt -> seekForward());
+        ToolbarButton btnFirst = new ToolbarButton(evt -> gotoFirstPage(), PAGE_FIRST_PNG, "Go to the first page");
+        ToolbarButton btnBackward = new ToolbarButton(evt -> gotoPreviousPage(), PAGE_BACK_PNG, "Go to the previous page");
+        ToolbarButton btnCurrentPage = new ToolbarButton(evt -> gotoCurrentPage(), PAGE_CURRENT_PNG, "Go to the current page");
+        ToolbarButton btnForward = new ToolbarButton(evt -> gotoNextPage(), PAGE_FORWARD_PNG, "Go to the next page");
+        ToolbarButton btnSeekBackward = new ToolbarButton(evt -> seekBackward(), PAGE_SEEK_BACKWARD_PNG, "Go to the current page");
+        ToolbarButton btnSeekForward = new ToolbarButton(evt -> seekForward(), PAGE_SEEK_FORWARD_PNG, "Go to the current page");
 
         GroupLayout pagesLayout = new GroupLayout(this);
         setLayout(pagesLayout);
@@ -95,15 +65,12 @@ public class PagesPanel extends JPanel {
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(btnForward)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnSeekForward)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnLast))
+                    .addComponent(btnSeekForward))
         );
         pagesLayout.setVerticalGroup(
             pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
                 .addGroup(pagesLayout.createSequentialGroup()
                     .addGroup(pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(btnLast)
                         .addComponent(btnSeekBackward)
                         .addComponent(btnBackward)
                         .addComponent(btnFirst)
@@ -127,10 +94,6 @@ public class PagesPanel extends JPanel {
 
     private void gotoNextPage() {
         debugTableModel.nextPage();
-    }
-
-    private void gotoLastPage() {
-        debugTableModel.lastPage();
     }
 
     private boolean gatherPageValue(String message) {

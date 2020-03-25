@@ -1,9 +1,8 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.application.gui.ConstantSizeButton;
-import net.emustudio.application.gui.actions.devices.ShowDeviceGuiAction;
-import net.emustudio.application.gui.actions.devices.ShowDeviceSettingsAction;
+import net.emustudio.application.gui.actions.emulator.ShowDeviceGuiAction;
+import net.emustudio.application.gui.actions.emulator.ShowDeviceSettingsAction;
 import net.emustudio.application.gui.actions.emulator.*;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -97,18 +96,21 @@ public class EmulatorPanel extends JPanel {
         JPanel debuggerPanel = new JPanel();
         debuggerPanel.setBorder(BorderFactory.createTitledBorder("Debugger"));
         GroupLayout debuggerPanelLayout = new GroupLayout(debuggerPanel);
+
+        debuggerPanelLayout.setAutoCreateGaps(true);
+        debuggerPanelLayout.setAutoCreateContainerGaps(true);
+
         debuggerPanel.setLayout(debuggerPanelLayout);
         debuggerPanelLayout.setHorizontalGroup(
-            debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.CENTER).addComponent(toolDebug)
-                .addGroup(debuggerPanelLayout.createSequentialGroup().addComponent(panelPages))
-                .addComponent(paneDebug, 10, 350, Short.MAX_VALUE));
+            debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addComponent(toolDebug)
+                .addComponent(paneDebug)
+                .addComponent(panelPages));
         debuggerPanelLayout.setVerticalGroup(
             debuggerPanelLayout.createSequentialGroup()
-                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addComponent(paneDebug, GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(panelPages)));
+                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addComponent(paneDebug, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(panelPages, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE));
 
         this.showDeviceSettingsAction = new ShowDeviceSettingsAction(parent, computer, dialogs, lstDevices::getSelectedIndex);
         this.showDeviceGuiAction = new ShowDeviceGuiAction(parent, computer, dialogs, lstDevices::getSelectedIndex);
@@ -129,9 +131,8 @@ public class EmulatorPanel extends JPanel {
         lstDevices.addListSelectionListener(listSelectionEvent -> {
             if (!listSelectionEvent.getValueIsAdjusting()) {
                 int i = lstDevices.getSelectedIndex();
-                if (i >= 0) {
-                    showDeviceSettingsAction.setEnabled(computer.getDevices().get(i).isShowSettingsSupported());
-                }
+                showDeviceSettingsAction.setEnabled(i >= 0 && computer.getDevices().get(i).isShowSettingsSupported());
+                showDeviceGuiAction.setEnabled(i >= 0);
             }
         });
         lstDevices.addMouseListener(new MouseAdapter() {
@@ -148,8 +149,8 @@ public class EmulatorPanel extends JPanel {
         JScrollPane paneDevices = new JScrollPane();
         paneDevices.setViewportView(lstDevices);
 
-        JButton btnShowSettings = new ConstantSizeButton(showDeviceSettingsAction);
-        JButton btnShowGUI = new ConstantSizeButton(showDeviceGuiAction);
+        JButton btnShowSettings = new JButton(showDeviceSettingsAction);
+        JButton btnShowGUI = new JButton(showDeviceGuiAction);
 
         GroupLayout peripheralPanelLayout = new GroupLayout(peripheralPanel);
         peripheralPanel.setLayout(peripheralPanelLayout);

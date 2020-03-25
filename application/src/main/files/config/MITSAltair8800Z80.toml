@@ -3,6 +3,7 @@ name = "MITS Altair8800 (Z80)"
 [MEMORY]
 	schemaPoint = "56,137"
 	path = "standard-mem.jar"
+	settings = {}
 	name = "standard-mem"
 	id = "1e13a25d-fb23-4061-853a-5fe996b03281"
 	type = "MEMORY"
@@ -10,6 +11,7 @@ name = "MITS Altair8800 (Z80)"
 [COMPILER]
 	schemaPoint = "56,37"
 	path = "as-z80.jar"
+	settings = {}
 	name = "as-z80"
 	id = "9233e0c2-b53c-41e7-9eca-bbb264fcd9da"
 	type = "COMPILER"
@@ -17,6 +19,7 @@ name = "MITS Altair8800 (Z80)"
 [CPU]
 	schemaPoint = "176,137"
 	path = "z80-cpu.jar"
+	settings = {}
 	name = "z80-cpu"
 	id = "b86d4bc2-632c-46e3-bba1-c088c9177983"
 	type = "CPU"
@@ -24,6 +27,7 @@ name = "MITS Altair8800 (Z80)"
 [[DEVICE]]
 	schemaPoint = "176,37"
 	path = "88-disk.jar"
+	settings = {}
 	name = "88-disk"
 	id = "c94d0e9b-f394-4a71-94b0-87d0f970a3fd"
 	type = "DEVICE"
@@ -35,9 +39,22 @@ name = "MITS Altair8800 (Z80)"
 	id = "de2ce2e7-4365-406e-864a-b60f353d3fba"
 	type = "DEVICE"
 
+	[DEVICE.settings]
+		statusPortNumber1 = 16
+		statusPortNumber0 = 3
+		statusPortNumber3 = 22
+		statusPortNumber2 = 20
+		dataPortNumber2 = 21
+		dataPortNumber3 = 23
+		dataPortNumber0 = 2
+		dataPortNumber1 = 17
+		dataPortNumber4 = 25
+		statusPortNumber4 = 24
+
 [[DEVICE]]
 	schemaPoint = "276,237"
 	path = "adm3A-terminal.jar"
+	settings = {}
 	name = "adm3A-terminal"
 	id = "0352cf74-2965-4723-bef9-3e918b1ac7c5"
 	type = "DEVICE"
@@ -45,6 +62,7 @@ name = "MITS Altair8800 (Z80)"
 [[DEVICE]]
 	schemaPoint = "116,237"
 	path = "simhPseudo-z80.jar"
+	settings = {}
 	name = "simhPseudo-z80"
 	id = "6c07bc70-db4f-4e7a-86f3-0ba0ce9bebf9"
 	type = "DEVICE"

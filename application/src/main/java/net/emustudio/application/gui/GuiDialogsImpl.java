@@ -25,6 +25,7 @@ import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
@@ -33,6 +34,11 @@ import java.util.stream.Collectors;
 
 public class GuiDialogsImpl implements Dialogs {
     private final RadixUtils radixUtils = RadixUtils.getInstance();
+    private Component parent;
+
+    public void setParent(Component parent) {
+        this.parent = parent;
+    }
 
     @Override
     public void showError(String message) {
@@ -41,7 +47,7 @@ public class GuiDialogsImpl implements Dialogs {
 
     @Override
     public void showError(String message, String title) {
-        JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
     @Override
@@ -51,7 +57,7 @@ public class GuiDialogsImpl implements Dialogs {
 
     @Override
     public void showInfo(String message, String title) {
-        JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(parent, message, title, JOptionPane.INFORMATION_MESSAGE);
     }
 
     @Override
@@ -67,7 +73,7 @@ public class GuiDialogsImpl implements Dialogs {
     @Override
     public Optional<Integer> readInteger(String message, String title, int initial) {
         Object inputValue = JOptionPane.showInputDialog(
-            null, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
+            parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
         );
         return Optional.ofNullable(inputValue).map(String::valueOf).map(radixUtils::parseRadix);
     }
@@ -85,7 +91,7 @@ public class GuiDialogsImpl implements Dialogs {
     @Override
     public Optional<String> readString(String message, String title, String initial) {
         Object inputValue = JOptionPane.showInputDialog(
-            null, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
+            parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
         );
         return Optional.ofNullable(inputValue).map(String::valueOf);
     }
@@ -103,7 +109,7 @@ public class GuiDialogsImpl implements Dialogs {
     @Override
     public Optional<Double> readDouble(String message, String title, double initial) {
         Object inputValue = JOptionPane.showInputDialog(
-            null, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
+            parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
         );
         return Optional.ofNullable(inputValue).map(String::valueOf).map(Double::parseDouble);
     }
@@ -116,7 +122,7 @@ public class GuiDialogsImpl implements Dialogs {
     @Override
     public DialogAnswer ask(String message, String title) {
         int answer = JOptionPane.showConfirmDialog(
-            null, message, title, JOptionPane.YES_NO_CANCEL_OPTION
+            parent, message, title, JOptionPane.YES_NO_CANCEL_OPTION
         );
 
         switch (answer) {
@@ -170,7 +176,7 @@ public class GuiDialogsImpl implements Dialogs {
             fileChooser.setFileFilter(firstFilter);
         }
 
-        int result = fileChooser.showOpenDialog(null);
+        int result = appendMissingExtension ? fileChooser.showSaveDialog(parent) : fileChooser.showOpenDialog(parent);
         fileChooser.setVisible(true);
         if (result == JFileChooser.APPROVE_OPTION) {
             FileNameExtensionFilter fileFilter = (FileNameExtensionFilter)fileChooser.getFileFilter();

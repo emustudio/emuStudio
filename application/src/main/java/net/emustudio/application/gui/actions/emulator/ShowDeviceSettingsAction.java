@@ -1,4 +1,4 @@
-package net.emustudio.application.gui.actions.devices;
+package net.emustudio.application.gui.actions.emulator;
 
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
@@ -24,6 +24,7 @@ public class ShowDeviceSettingsAction extends AbstractAction {
         this.computer = Objects.requireNonNull(computer);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.selectedIndex = Objects.requireNonNull(selectedIndex);
+        setEnabled(selectedIndex.get() != -1);
     }
 
     @Override

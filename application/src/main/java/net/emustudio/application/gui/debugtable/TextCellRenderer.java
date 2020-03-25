@@ -23,14 +23,15 @@ import net.emustudio.application.Constants;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.util.Objects;
 
 class TextCellRenderer extends JLabel implements TableCellRenderer {
 
     private final DebugTableModel model;
 
     TextCellRenderer(DebugTableModel model) {
-        super();
-        this.model = model;
+        this.model = Objects.requireNonNull(model);
+        setOpaque(true);
     }
 
     @Override

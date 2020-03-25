@@ -1,5 +1,6 @@
 package net.emustudio.application.gui.editor;
 
+import net.emustudio.application.Constants;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
@@ -58,6 +59,7 @@ public class REditor implements Editor {
                 }
             }
         });
+        setupSyntaxTheme();
 
         errorStrip = new ErrorStrip(textPane);
 
@@ -239,5 +241,28 @@ public class REditor implements Editor {
             context.setSearchForward(false);
             return SearchEngine.find(textPane, context).wasFound();
         });
+    }
+
+    private void setupSyntaxTheme() {
+        SyntaxScheme scheme = textPane.getSyntaxScheme();
+        scheme.getStyle(Token.COMMENT_MARKUP).foreground = Constants.TOKEN_COMMENT;
+        scheme.getStyle(Token.RESERVED_WORD).foreground = Constants.TOKEN_RESERVED;
+        scheme.getStyle(Token.IDENTIFIER).foreground = Constants.TOKEN_IDENTIFIER;
+        scheme.getStyle(Token.LITERAL_NUMBER_DECIMAL_INT).foreground = Constants.TOKEN_LITERAL;
+        scheme.getStyle(Token.LITERAL_BACKQUOTE).foreground = Constants.TOKEN_LITERAL;
+        scheme.getStyle(Token.LITERAL_BOOLEAN).foreground = Constants.TOKEN_LITERAL;
+        scheme.getStyle(Token.LITERAL_CHAR).foreground = Constants.TOKEN_LITERAL;
+        scheme.getStyle(Token.LITERAL_NUMBER_FLOAT).foreground = Constants.TOKEN_LITERAL;
+        scheme.getStyle(Token.LITERAL_NUMBER_HEXADECIMAL).foreground = Constants.TOKEN_LITERAL;
+        scheme.getStyle(Token.LITERAL_STRING_DOUBLE_QUOTE).foreground = Constants.TOKEN_LITERAL;
+        scheme.getStyle(Token.ANNOTATION).foreground = Constants.TOKEN_LABEL;
+        scheme.getStyle(Token.RESERVED_WORD_2).foreground = Constants.TOKEN_REGISTER;
+        scheme.getStyle(Token.PREPROCESSOR).foreground = Constants.TOKEN_PREPROCESSOR;
+        scheme.getStyle(Token.SEPARATOR).foreground = Constants.TOKEN_SEPARATOR;
+        scheme.getStyle(Token.OPERATOR).foreground = Constants.TOKEN_OPERATOR;
+        scheme.getStyle(Token.ERROR_IDENTIFIER).foreground = Constants.TOKEN_ERROR;
+        scheme.getStyle(Token.ERROR_CHAR).foreground = Constants.TOKEN_ERROR;
+        scheme.getStyle(Token.ERROR_NUMBER_FORMAT).foreground = Constants.TOKEN_ERROR;
+        scheme.getStyle(Token.ERROR_STRING_DOUBLE).foreground = Constants.TOKEN_ERROR;
     }
 }
