@@ -41,6 +41,7 @@ public class EmulationController implements Closeable {
 
     private volatile CountDownLatch countDownLatch;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
+    private volatile boolean timedRunning = false;
 
     public EmulationController(CPU cpu, Memory memory, List<Device> devices) {
         this.cpu = Objects.requireNonNull(cpu);
@@ -91,20 +92,32 @@ public class EmulationController implements Closeable {
         });
     }
 
-    public void step(final long sleep, final TimeUnit timeUnit) {
+    public boolean isTimedRunning() {
+        return timedRunning;
+    }
+
+    public void step(long sleep, TimeUnit timeUnit) {
+        this.timedRunning = true;
+        internalStep(sleep, timeUnit);
+    }
+
+    private void internalStep(final long sleep, final TimeUnit timeUnit) {
         executor.submit(() -> {
-            if (runState == CPU.RunState.STATE_STOPPED_BREAK) {
+            if (runState == CPU.RunState.STATE_STOPPED_BREAK && timedRunning) {
                 countDownLatch = new CountDownLatch(1);
                 cpu.step();
                 awaitLatch();
 
                 LockSupport.parkNanos(timeUnit.toNanos(sleep));
-                step(sleep, timeUnit);
+                internalStep(sleep, timeUnit);
+            } else {
+                timedRunning = false;
             }
         });
     }
 
     public void pause() {
+        timedRunning = false;
         executor.submit(() -> {
             if (runState == CPU.RunState.STATE_RUNNING) {
                 countDownLatch = new CountDownLatch(1);
@@ -115,6 +128,7 @@ public class EmulationController implements Closeable {
     }
 
     public void reset() {
+        timedRunning = false;
         executor.submit(() -> {
             countDownLatch = new CountDownLatch(1);
 
