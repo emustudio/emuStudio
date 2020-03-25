@@ -107,6 +107,7 @@ public class Runner {
                 computerConfig, applicationApi, applicationConfig, configFiles
             );
             computer.initialize(contextPool);
+            computer.reset();
 
             final int memorySize = computer.getMemory().map(Memory::getSize).orElse(0);
             computer.getCPU().ifPresent(cpu -> debugTableModel.setCPU(cpu, memorySize));

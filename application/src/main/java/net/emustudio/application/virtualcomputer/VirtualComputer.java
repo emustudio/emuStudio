@@ -87,6 +87,15 @@ public class VirtualComputer implements PluginConnections {
         pluginsToInitialize.forEach(meta -> Unchecked.run(meta.pluginInstance::initialize));
     }
 
+    public void reset() {
+        getCompiler().ifPresent(Compiler::reset);
+        getMemory().ifPresentOrElse(memory -> {
+            getCPU().ifPresent(cpu -> cpu.reset(memory.getProgramLocation()));
+            memory.reset();
+        }, () -> getCPU().ifPresent(CPU::reset));
+        getDevices().forEach(Device::reset);
+    }
+
     public boolean isConnected(long pluginA, long pluginB) {
         String fst = pluginsById.get(pluginA).pluginConfig.getPluginId();
         String snd = pluginsById.get(pluginB).pluginConfig.getPluginId();
