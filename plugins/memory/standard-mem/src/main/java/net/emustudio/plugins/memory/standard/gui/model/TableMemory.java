@@ -42,12 +42,13 @@ public class TableMemory extends JTable {
         super.setFocusCycleRoot(true);
         super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         super.getTableHeader().setFont(new Font("Monospaced", Font.PLAIN, 12));
-        super.setDefaultRenderer(Object.class, new MemCellRenderer(this));
+        super.setDefaultRenderer(Object.class, new MemCellRenderer());
+        setOpaque(true);
 
         MemoryCellEditor ed = new MemoryCellEditor();
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             TableColumn col = super.getColumnModel().getColumn(i);
-            col.setPreferredWidth(3 * 17);
+            col.setPreferredWidth(3 * 18);
             col.setCellEditor(ed);
         }
     }
@@ -60,12 +61,14 @@ public class TableMemory extends JTable {
 
         MemRowHeaderRenderer(JTable table) {
             JTableHeader header = table.getTableHeader();
-            setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+            setBorder(header.getBorder());
             setHorizontalAlignment(CENTER);
             setForeground(header.getForeground());
             setBackground(header.getBackground());
-            setFont(new Font("Monospaced", Font.PLAIN, 11));
-            this.setPreferredSize(new Dimension(4 * 17, header.getPreferredSize().height));
+            setFont(new Font("Monospaced", Font.PLAIN, 12));
+            setOpaque(true);
+            setDoubleBuffered(true);
+            this.setPreferredSize(new Dimension(4 * 18, header.getPreferredSize().height + 3));
         }
 
         @Override
@@ -77,16 +80,16 @@ public class TableMemory extends JTable {
     }
 
     private class MemCellRenderer extends JLabel implements TableCellRenderer {
-
         private JList<String> rowHeader;
         private String[] adresses;
         private int currentPage;
-        private TableMemory tm;
-        private Color romColor;
+        private final Color romColor = new Color(0xE8, 0x68, 0x50);
 
-        MemCellRenderer(TableMemory tm) {
-            this.tm = tm;
-            romColor = new Color(0xE8, 0x68, 0x50);
+        MemCellRenderer() {
+            setOpaque(true);
+            setDoubleBuffered(true);
+            setBorder(BorderFactory.createEmptyBorder());
+
             currentPage = tableModel.getPage();
             adresses = new String[tableModel.getRowCount()];
             for (int i = 0; i < adresses.length; i++) {
@@ -104,7 +107,7 @@ public class TableMemory extends JTable {
 
             rowHeader.setFixedCellWidth(char_width * 4);
             rowHeader.setFixedCellHeight(getRowHeight());
-            rowHeader.setCellRenderer(new MemRowHeaderRenderer(this.tm));
+            rowHeader.setCellRenderer(new MemRowHeaderRenderer(TableMemory.this));
             setHorizontalAlignment(CENTER);
             paneMemory.setRowHeaderView(rowHeader);
         }
@@ -126,8 +129,8 @@ public class TableMemory extends JTable {
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
             if (isSelected) {
-                this.setBackground(tm.getSelectionBackground());
-                this.setForeground(tm.getSelectionForeground());
+                this.setBackground(TableMemory.this.getSelectionBackground());
+                this.setForeground(TableMemory.this.getSelectionForeground());
             } else {
                 if (tableModel.isROMAt(row, column)) {
                     this.setBackground(romColor);
@@ -145,34 +148,29 @@ public class TableMemory extends JTable {
     }
 
     private class MemoryCellEditor extends AbstractCellEditor implements TableCellEditor {
-        // This is the component that will handle the editing of the cell value
-
-        JTextField component;
+        private final JTextField textField = new JTextField();
 
         public MemoryCellEditor() {
-            component = new JTextField();
             FontMetrics fm = getFontMetrics(getFont());
             if (fm != null) {
-                component.setSize(fm.stringWidth("0xFFFFFF"), fm.getHeight() + 10);
-                component.setBorder(null);
+                textField.setSize(fm.stringWidth("0xFFFFFFFF"), 2 * fm.getHeight());
+                textField.setBorder(BorderFactory.createEmptyBorder());
             }
         }
 
-        // This method is called when a cell value is edited by the user.
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
                                                      boolean isSelected, int rowIndex, int vColIndex) {
-            // 'value' is value contained in the cell located at (rowIndex, vColIndex)
             if (!isSelected) {
                 return null;
             }
-            component.setText("0x" + value);
-            return component;
+            textField.setText("0x" + value);
+            return textField;
         }
 
         @Override
         public Object getCellEditorValue() {
-            return component.getText();
+            return textField.getText();
         }
     }
 }

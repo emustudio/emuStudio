@@ -10,6 +10,7 @@ name = "MITS Altair8800"
 	[MEMORY.settings]
 		banksCount = 0
 		commonBoundary = 0
+		imageAddress0 = 65280
 
 [COMPILER]
 	schemaPoint = "56,37"
@@ -30,10 +31,46 @@ name = "MITS Altair8800"
 [[DEVICE]]
 	schemaPoint = "176,37"
 	path = "88-disk.jar"
-	settings = {}
 	name = "88-disk"
 	id = "ad934179-3690-4bbc-b6ab-f4634346927a"
 	type = "DEVICE"
+
+	[DEVICE.settings]
+		sectorLength8 = 137
+		sectorLength9 = 137
+		sectorLength6 = 137
+		sectorLength7 = 137
+		sectorLength4 = 137
+		sectorLength5 = 137
+		sectorLength2 = 137
+		sectorLength3 = 137
+		sectorLength0 = 137
+		sectorLength1 = 137
+		port2CPU = 9
+		sectorsPerTrack15 = 32
+		sectorsPerTrack14 = 32
+		sectorsPerTrack13 = 32
+		sectorsPerTrack12 = 32
+		sectorsPerTrack1 = 32
+		sectorsPerTrack11 = 32
+		sectorsPerTrack2 = 32
+		sectorsPerTrack10 = 32
+		sectorsPerTrack0 = 32
+		sectorsPerTrack5 = 32
+		sectorsPerTrack6 = 32
+		sectorsPerTrack3 = 32
+		sectorsPerTrack4 = 32
+		sectorsPerTrack9 = 32
+		sectorsPerTrack7 = 32
+		sectorsPerTrack8 = 32
+		port1CPU = 8
+		port3CPU = 10
+		sectorLength15 = 137
+		sectorLength13 = 137
+		sectorLength14 = 137
+		sectorLength11 = 137
+		sectorLength12 = 137
+		sectorLength10 = 137
 
 [[DEVICE]]
 	schemaPoint = "276,137"

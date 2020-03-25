@@ -3,10 +3,13 @@ name = "MITS Altair8800 (Z80)"
 [MEMORY]
 	schemaPoint = "56,137"
 	path = "standard-mem.jar"
-	settings = {}
 	name = "standard-mem"
 	id = "1e13a25d-fb23-4061-853a-5fe996b03281"
 	type = "MEMORY"
+
+	[MEMORY.settings]
+		banksCount = 8
+		commonBoundary = 49152
 
 [COMPILER]
 	schemaPoint = "56,37"
