@@ -22,6 +22,8 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.NumberUtils.Strategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 public class EmulatorEngine {
+    private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
+
     final static int INSTRUCTIONS_PER_SECOND = 700;
     private final static int MEMORY_CELLS = 32 * 4;
 
@@ -122,11 +126,13 @@ public class EmulatorEngine {
                 }
                 currentRunState = step();
             } catch (IllegalArgumentException e) {
+                LOGGER.debug("Unexpected error", e);
                 if (e.getCause() != null && e.getCause() instanceof IndexOutOfBoundsException) {
                     return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
                 }
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;
             } catch (IndexOutOfBoundsException e) {
+                LOGGER.debug("Unexpected error", e);
                 return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
             if (waitNanos > 0) {

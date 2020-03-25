@@ -108,8 +108,8 @@ public class Keyboard extends KeyAdapter implements ContainerListener, InputProv
     private final List<DeviceContext<Short>> observers = new ArrayList<>();
     private final LoadCursorPosition loadCursorPosition;
 
-    public Keyboard(LoadCursorPosition loadCursorPosition) {
-        this.loadCursorPosition = Objects.requireNonNull(loadCursorPosition);
+    public Keyboard(Cursor cursor) {
+        this.loadCursorPosition = new LoadCursorPosition(Objects.requireNonNull(cursor));
     }
 
     public void addListenerRecursively(Component c) {
@@ -154,8 +154,9 @@ public class Keyboard extends KeyAdapter implements ContainerListener, InputProv
             }
         }
         if (newKeyCode != 0) {
-            loadCursorPosition.accept((short) newKeyCode);
-            notifyObservers((short) newKeyCode);
+            if (loadCursorPosition.notAccepted((short) newKeyCode)){
+                notifyObservers((short) newKeyCode);
+            }
         }
     }
 

@@ -132,6 +132,7 @@ public class CpuImpl extends AbstractCPU {
                     return tmpRunState;
                 }
             } catch (IndexOutOfBoundsException ex) {
+                LOGGER.debug("Unexpected error", ex);
                 return RunState.STATE_STOPPED_ADDR_FALLOUT;
             } catch (IOException ex) {
                 LOGGER.error("Unexpected error while reading/writing to the tape", ex);

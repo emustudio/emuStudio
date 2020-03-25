@@ -52,13 +52,13 @@ public class LoadCursorPosition {
         return data >= ' ' && data <= 'o';
     }
 
-    boolean accept(Short data) {
+    boolean notAccepted(Short data) {
         if (expect == ESCAPE && data == ASCII_ESC) {
             expect = ASSIGN;
-            return true;
+            return false;
         } else if (expect == ASSIGN && data == '=') {
             expect = Y;
-            return true;
+            return false;
         } else if (expect == Y) {
             if (!checkBounds(data)) {
                 expect = ESCAPE;
@@ -67,18 +67,19 @@ public class LoadCursorPosition {
 
             cursorY = data - ASCII_COORDINATE_OFFSET;
             expect = X;
-            return true;
+            return false;
         } else if (expect == X) {
             int cursorX = data - ASCII_COORDINATE_OFFSET;
-
+            expect = ESCAPE;
             if (checkBounds(data)) {
                 cursor.set(cursorX, cursorY);
+                return false;
             }
-
-            expect = ESCAPE;
             return true;
+        } else {
+            expect = ESCAPE;
         }
 
-        return false;
+        return true;
     }
 }

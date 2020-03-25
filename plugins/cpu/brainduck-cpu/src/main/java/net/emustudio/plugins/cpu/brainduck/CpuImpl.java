@@ -134,6 +134,9 @@ public class CpuImpl extends AbstractCPU {
                     if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                         return tmpRunState;
                     }
+                } catch (IndexOutOfBoundsException e) {
+                    LOGGER.debug("Unexpected error", e);
+                    return RunState.STATE_STOPPED_ADDR_FALLOUT;
                 } catch (IOException e) {
                     LOGGER.error("Unexpected error", e);
                     return RunState.STATE_STOPPED_BAD_INSTR;

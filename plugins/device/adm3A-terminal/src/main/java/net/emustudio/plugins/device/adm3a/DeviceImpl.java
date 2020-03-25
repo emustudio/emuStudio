@@ -49,7 +49,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
 
     private final Display display;
     private final Cursor cursor = new Cursor(COLUMNS_COUNT, ROWS_COUNT);
-    private final LoadCursorPosition loadCursorPosition = new LoadCursorPosition(cursor);
     private final TerminalSettings terminalSettings;
 
     private TerminalWindow terminalGUI;
@@ -59,7 +58,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         terminalSettings = new TerminalSettings(settings, applicationApi.getDialogs());
-        display = new Display(cursor, loadCursorPosition, terminalSettings);
+        display = new Display(cursor, terminalSettings);
 
         try {
             applicationApi.getContextPool().register(pluginID, display, DeviceContext.class);
@@ -94,7 +93,12 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         if (terminalSettings.isGuiSupported()) {
             if (terminalGUI == null) {
                 terminalGUI = new TerminalWindow(parent, display);
-                display.startCursor();
+                display.initialize();
+                try {
+                    settingsChanged();
+                } catch (FileNotFoundException e) {
+                    LOGGER.error("Could not read ADM-3A terminal settings", e);
+                }
             }
             terminalGUI.setVisible(true);
         }
@@ -128,7 +132,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
             terminalGUI.destroy();
         }
         display.destroy();
-        cursor.destroy();
     }
 
     @Override
@@ -141,36 +144,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     @Override
     public boolean isShowSettingsSupported() {
         return terminalSettings.isGuiSupported();
-    }
-
-    private void destroyKeyboard() {
-        if (keyboard != null) {
-            keyboard.destroy();
-        }
-    }
-
-    private void connectKeyboard() {
-        if (connectedDevice != null) {
-            keyboard.addDeviceObserver(connectedDevice);
-        } else {
-            LOGGER.warn("Keyboard is unconnected");
-        }
-    }
-
-    private void createKeyboardFromFile() throws FileNotFoundException {
-        destroyKeyboard();
-        KeyboardFromFile tmp = new KeyboardFromFile(new File(terminalSettings.getInputFileName()));
-        keyboard = tmp;
-        connectKeyboard();
-        tmp.processInputFile(terminalSettings.getInputReadDelay());
-    }
-
-    private void createKeyboard() {
-        destroyKeyboard();
-        Keyboard tmp = new Keyboard(loadCursorPosition);
-        tmp.addListenerRecursively(terminalGUI);
-        keyboard = tmp;
-        connectKeyboard();
     }
 
     @Override
@@ -192,6 +165,36 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
             return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.adm3a.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
+        }
+    }
+
+    private void createKeyboardFromFile() throws FileNotFoundException {
+        destroyKeyboard();
+        KeyboardFromFile tmp = new KeyboardFromFile(new File(terminalSettings.getInputFileName()));
+        keyboard = tmp;
+        connectKeyboard();
+        tmp.processInputFile(terminalSettings.getInputReadDelay());
+    }
+
+    private void createKeyboard() {
+        destroyKeyboard();
+        Keyboard tmp = new Keyboard(cursor);
+        tmp.addListenerRecursively(terminalGUI);
+        keyboard = tmp;
+        connectKeyboard();
+    }
+
+    private void connectKeyboard() {
+        if (connectedDevice != null) {
+            keyboard.addDeviceObserver(connectedDevice);
+        } else {
+            LOGGER.warn("Keyboard is unconnected");
+        }
+    }
+
+    private void destroyKeyboard() {
+        if (keyboard != null) {
+            keyboard.destroy();
         }
     }
 }

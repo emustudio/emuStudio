@@ -246,5 +246,8 @@ public class Runner {
         UIManager.put("TabbedPane.contentOpaque", true);
         UIManager.put("TabbedPane.opaque", true);
         UIManager.put("TabbedPane.tabsOpaque", true);
+
+        UIManager.put("List.focusCellHighlightBorder", null);
+        UIManager.put("Table.focusCellHighlightBorder", null);
     }
 }

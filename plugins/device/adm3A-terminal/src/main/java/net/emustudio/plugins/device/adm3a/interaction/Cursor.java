@@ -20,183 +20,125 @@ package net.emustudio.plugins.device.adm3a.interaction;
 
 import net.jcip.annotations.ThreadSafe;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 @ThreadSafe
 public class Cursor {
-    private final int colCount;
-    private final int rowCount;
+    private final int columns;
+    private final int rows;
 
     private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
-
-    private volatile boolean reset = true;
-
-    private final CursorPainter cursorPainter = new CursorPainter();
-    private final Timer cursorPainterTimer = new Timer(0, cursorPainter);
 
     interface LineRoller {
 
         void rollLine();
     }
 
-    public Cursor(int colCount, int rowCount) {
-        this.colCount = colCount;
-        this.rowCount = rowCount;
+    public Cursor(int columns, int rows) {
+        this.columns = columns;
+        this.rows = rows;
+    }
+
+    int getColumns() {
+        return columns;
+    }
+
+    int getRows() {
+        return rows;
     }
 
     void home() {
         cursorPoint.set(new Point());
     }
 
-    void reset() {
-        this.reset = true;
-    }
-
-    int getColCount() {
-        return colCount;
-    }
-
-    int getRowCount() {
-        return rowCount;
-    }
-
-    Point getPoint() {
-        return new Point(cursorPoint.get());
-    }
-
     void set(int x, int y) {
         cursorPoint.set(new Point(x, y));
     }
 
-    void move(LineRoller lineRoller) {
-        Point oldPoint = cursorPoint.get();
-        Point newPoint;
-        do {
-            newPoint = new Point(oldPoint);
+    void moveForwardsRolling(LineRoller lineRoller) {
+        setCursorPoint(oldPoint -> {
+            Point newPoint = new Point(oldPoint);
 
             newPoint.x++;
-            if (newPoint.x > (colCount - 1)) {
+            if (newPoint.x > (columns - 1)) {
                 newPoint.x = 0;
                 newPoint.y++;
                 // automatic line rolling
-                if (newPoint.y > (rowCount - 1)) {
+                if (newPoint.y > (rows - 1)) {
                     lineRoller.rollLine();
-                    newPoint.y = (rowCount - 1);
+                    newPoint.y = (rows - 1);
                 }
             }
-        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
+            return newPoint;
+        });
     }
 
-    void back() {
-        Point oldPoint = cursorPoint.get();
-        Point newPoint;
-        do {
-            newPoint = new Point(oldPoint);
+    void moveForwards() {
+        setCursorPoint(oldPoint -> {
+            Point newPoint = new Point(oldPoint);
+
+            if (newPoint.x < (columns - 1)) {
+                newPoint.x++;
+            }
+            return newPoint;
+        });
+    }
+
+    void moveBackwards() {
+        setCursorPoint(oldPoint -> {
+            Point newPoint = new Point(oldPoint);
 
             if (newPoint.x > 0) {
                 newPoint.x--;
             }
-        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
+            return newPoint;
+        });
     }
 
-    void up() {
-        Point oldPoint = cursorPoint.get();
-        Point newPoint;
-        do {
-            newPoint = new Point(oldPoint);
+    void moveUp() {
+        setCursorPoint(oldPoint -> {
+            Point newPoint = new Point(oldPoint);
 
             if (newPoint.y > 0) {
                 newPoint.y--;
             }
-        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
+            return newPoint;
+        });
     }
 
-    void down(LineRoller lineRoller) {
-        Point oldPoint = cursorPoint.get();
-        Point newPoint;
-        do {
-            newPoint = new Point(oldPoint);
+    void moveDown(LineRoller lineRoller) {
+        setCursorPoint(oldPoint -> {
+            Point newPoint = new Point(oldPoint);
 
-            if (newPoint.y == (rowCount - 1)) {
+            if (newPoint.y == (rows - 1)) {
                 lineRoller.rollLine();
             } else {
                 newPoint.y++;
             }
-        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
+            return newPoint;
+        });
     }
 
-    void forward() {
-        Point oldPoint = cursorPoint.get();
-        Point newPoint;
-        do {
-            newPoint = new Point(oldPoint);
-
-            if (newPoint.x < (colCount - 1)) {
-                newPoint.x++;
-            }
-        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
-    }
 
     void carriageReturn() {
+        setCursorPoint(oldPoint -> {
+            Point newPoint = new Point(oldPoint);
+            newPoint.x = 0;
+            return newPoint;
+        });
+    }
+
+    Point getCursorPoint() {
+        return cursorPoint.get();
+    }
+
+    private void setCursorPoint(Function<Point, Point> changer) {
         Point oldPoint = cursorPoint.get();
         Point newPoint;
         do {
-            newPoint = new Point(oldPoint);
-            newPoint.x = 0;
+            newPoint = changer.apply(oldPoint);
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
-    }
-
-    synchronized void start(Graphics graphics, DisplayParameters displayParameters) {
-        cursorPainterTimer.stop();
-
-        cursorPainter.setDisplayParameters(displayParameters);
-        cursorPainter.setGraphics(graphics);
-        cursorPainterTimer.setDelay(800);
-        cursorPainterTimer.start();
-    }
-
-    public synchronized void destroy() {
-        cursorPainterTimer.stop();
-    }
-
-    // run by only one thread
-    private class CursorPainter implements ActionListener {
-        private Point visiblePoint;
-        private volatile DisplayParameters displayParameters;
-        private volatile Graphics graphics;
-
-        void setDisplayParameters(DisplayParameters displayParameters) {
-            this.displayParameters = Objects.requireNonNull(displayParameters);
-        }
-
-        void setGraphics(Graphics graphics) {
-            this.graphics = Objects.requireNonNull(graphics);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (displayParameters == null || graphics == null) {
-                return;
-            }
-            boolean currentReset = reset;
-
-            if (currentReset || visiblePoint == null) {
-                visiblePoint = cursorPoint.get();
-            }
-
-            graphics.setXORMode(Display.BACKGROUND);
-            graphics.setColor(Display.FOREGROUND);
-            graphics.fillRect(
-                visiblePoint.x * displayParameters.charWidth,
-                visiblePoint.y * displayParameters.charHeight + displayParameters.startY - displayParameters.charHeight,
-                displayParameters.charWidth, displayParameters.charHeight);
-            graphics.setPaintMode();
-            reset = !currentReset;
-        }
     }
 }

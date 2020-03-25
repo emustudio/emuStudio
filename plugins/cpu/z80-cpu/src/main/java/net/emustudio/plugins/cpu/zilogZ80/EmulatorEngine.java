@@ -172,11 +172,13 @@ public class EmulatorEngine implements CpuEngine {
                         throw new Breakpoint();
                     }
                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                    LOGGER.debug("Unexpected error", e);
                     if (e.getCause() != null && e.getCause() instanceof IndexOutOfBoundsException) {
                         return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
                     }
                     return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 } catch (IndexOutOfBoundsException e) {
+                    LOGGER.debug("Unexpected error", e);
                     return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
                 } catch (IOException e) {
                     LOGGER.error("Unexpected error", e);

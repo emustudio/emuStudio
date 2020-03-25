@@ -124,7 +124,7 @@ public class ContextPoolImpl implements ContextPool {
                 "Context " + contextInterface + " is not found in registered contexts list."
             );
         }
-        LOGGER.debug("Matching context " + contextInterface + " from " + contextsByHash.size() + " options...");
+        LOGGER.debug("Matching context " + contextInterface + " from " + contextsByHash.size() + " option(s)");
 
         // find context based on contextID
         int currentIndex = 0;

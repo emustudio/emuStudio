@@ -38,10 +38,21 @@ name = "MITS Altair8800"
 [[DEVICE]]
 	schemaPoint = "276,137"
 	path = "88-sio.jar"
-	settings = {}
 	name = "88-sio"
 	id = "515f3dfd-5005-4b62-b002-a20f23324573"
 	type = "DEVICE"
+
+	[DEVICE.settings]
+		statusPortNumber1 = 16
+		statusPortNumber0 = 3
+		statusPortNumber3 = 22
+		statusPortNumber2 = 20
+		dataPortNumber2 = 21
+		dataPortNumber3 = 23
+		dataPortNumber0 = 2
+		dataPortNumber1 = 17
+		dataPortNumber4 = 25
+		statusPortNumber4 = 24
 
 [[DEVICE]]
 	schemaPoint = "276,37"
