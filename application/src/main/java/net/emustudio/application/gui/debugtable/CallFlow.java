@@ -32,7 +32,7 @@ class CallFlow {
     private final static Logger LOGGER = LoggerFactory.getLogger(CallFlow.class);
 
     private final Disassembler disassembler;
-    private final NavigableMap<Integer, Integer> flowGraph = new ConcurrentSkipListMap<>();
+    private final NavigableMap<Integer, Integer> flowGraph = new TreeMap<>();
     private int longestInstructionSize = 1;
 
     CallFlow(Disassembler disassembler) {

@@ -54,8 +54,10 @@ public class TerminalWindow extends JDialog {
         lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12)); // NOI18N
         lblBack.setIcon(img); // NOI18N
         lblBack.setFocusable(false);
-
+        lblBack.setOpaque(true);
+        lblBack.setBackground(Color.BLACK);
         lblBack.setBounds(0, 0, img.getIconWidth(), img.getIconHeight());
+        lblBack.setDoubleBuffered(true);
 
         Container pane = getContentPane();
         pane.setBackground(Color.BLACK);
