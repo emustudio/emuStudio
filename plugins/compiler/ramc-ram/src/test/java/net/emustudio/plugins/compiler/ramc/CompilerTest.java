@@ -207,6 +207,6 @@ public class CompilerTest extends AbstractCompilerTest {
 
         tmpCompiler.compile(sourceFile.getPath());
 
-        assertTrue(sourceFile.getParentFile().toPath().resolve("test-ram.ro").toFile().exists());
+        assertTrue(sourceFile.getParentFile().toPath().resolve("test-ram.bram").toFile().exists());
     }
 }
