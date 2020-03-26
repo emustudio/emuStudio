@@ -94,10 +94,12 @@ public class IncludePseudoNode extends PseudoNode {
                 throw new CompilerException(line, column, "Infinite INCLUDE loop (" + file.getAbsolutePath() + ")");
             }
             program.pass1(namespace); // create symbol table
+        } catch (CompilerException e) {
+            throw e;
         } catch (IOException e) {
-            throw new CompilerException(line, column, fileName + ": I/O Error");
+            throw new CompilerException(line, column, fileName + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            throw new CompilerException(line, column, e.getMessage());
+            throw new CompilerException(line, column, e.getMessage(), e);
         }
     }
 

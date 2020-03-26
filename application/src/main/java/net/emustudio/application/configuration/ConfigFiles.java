@@ -54,6 +54,14 @@ public class ConfigFiles {
         return loadConfigurations().stream().filter(config -> config.getName().equals(computerName)).findAny();
     }
 
+    public Optional<ComputerConfig> loadConfiguration(Path computerPath) {
+        try {
+            return Optional.of(ComputerConfig.load(computerPath));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
     public List<ComputerConfig> loadConfigurations() throws IOException {
         if (!Files.exists(basePath.resolve(DIR_CONFIG))) {
             return Collections.emptyList();

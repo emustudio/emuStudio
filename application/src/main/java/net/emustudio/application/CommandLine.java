@@ -18,10 +18,14 @@
  */
 package net.emustudio.application;
 
+import net.emustudio.application.emulation.Automation;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.ParserProperties;
+
+import java.nio.file.Path;
+import java.util.Optional;
 
 @SuppressWarnings("unused")
 public class CommandLine {
@@ -33,10 +37,13 @@ public class CommandLine {
     private String outputFileName;
 
     @Option(name = "--config", metaVar = "filename", usage = "load configuration with file name")
-    private String configName;
+    private String configFileName;
 
     @Option(name = "--auto", usage = "run the emulation automation")
     private boolean auto;
+
+    @Option(name = "--waitmax", metaVar = "X", usage = "wait for emulation finish max X milliseconds", depends = "--auto")
+    private int waitForFinishMillis = Automation.DONT_WAIT;
 
     @Option(name = "--help", help = true, usage = "output this message")
     private boolean help;
@@ -48,8 +55,8 @@ public class CommandLine {
         return auto;
     }
 
-    public String getConfigName() {
-        return configName;
+    public Optional<Path> getConfigFileName() {
+        return Optional.ofNullable(configFileName).map(Path::of);
     }
 
     public String getInputFileName() {
@@ -62,6 +69,10 @@ public class CommandLine {
 
     public String getOutputFileName() {
         return outputFileName;
+    }
+
+    public int getWaitForFinishMillis() {
+        return waitForFinishMillis;
     }
 
     public static CommandLine parse(String[] args) throws CmdLineException {

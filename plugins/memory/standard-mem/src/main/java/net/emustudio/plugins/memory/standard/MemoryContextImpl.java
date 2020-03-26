@@ -147,7 +147,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
     @Override
     public Short[] readWord(int from) {
         int activeBank = (from < bankCommon) ? bankSelect : 0;
-        return new Short[]{mem[activeBank][from], mem[activeBank][from + 1]};
+        return new Short[]{mem[activeBank][from], mem[activeBank][(from + 1) & 0xFFFF]};
     }
 
     @Override

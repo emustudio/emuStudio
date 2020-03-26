@@ -80,7 +80,7 @@ public class Runner {
             ConfigFiles configFiles = new ConfigFiles();
 
             ComputerConfig computerConfig = null;
-            if (commandLine.getConfigName() == null && !commandLine.isNoGUI()) {
+            if (commandLine.getConfigFileName().isEmpty() && !commandLine.isNoGUI()) {
                 OpenComputerDialog dialog = new OpenComputerDialog(configFiles, applicationConfig, dialogs);
                 ((GuiDialogsImpl)dialogs).setParent(dialog);
                 dialog.setVisible(true);
@@ -89,7 +89,7 @@ public class Runner {
                 }
                 ((GuiDialogsImpl)dialogs).setParent(null);
             } else {
-                computerConfig = configFiles.loadConfiguration(commandLine.getConfigName()).orElseThrow();
+                computerConfig = commandLine.getConfigFileName().flatMap(configFiles::loadConfiguration).orElseThrow();
             }
 
             if (computerConfig == null) {
@@ -97,7 +97,9 @@ public class Runner {
                 System.exit(1);
             }
 
-            Optional<LoadingDialog> splash = showSplashScreen(commandLine.isNoGUI(), commandLine.getConfigName());
+            Optional<LoadingDialog> splash = showSplashScreen(
+                commandLine.isNoGUI(), commandLine.getConfigFileName().map(Path::toString).orElse("")
+            );
 
             ContextPoolImpl contextPool = new ContextPoolImpl(emustudioId);
             DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
@@ -115,7 +117,9 @@ public class Runner {
             splash.ifPresent(Window::dispose);
 
             if (commandLine.isAuto()) {
-                System.exit(runAutomation(computer, commandLine.getInputFileName(), applicationConfig, dialogs));
+                System.exit(runAutomation(
+                    computer, commandLine.getInputFileName(), applicationConfig, dialogs, commandLine.getWaitForFinishMillis()
+                ));
             } else if (!commandLine.isNoGUI()) {
                 showMainWindow(
                     computer, applicationConfig, (GuiDialogsImpl) dialogs, debugTableModel, contextPool,
@@ -132,9 +136,9 @@ public class Runner {
     }
 
     private static int runAutomation(VirtualComputer computer, String inputFileName, ApplicationConfig applicationConfig,
-                                     Dialogs dialogs) {
+                                     Dialogs dialogs, int waitForFinishMillis) {
         try {
-            new Automation(computer, inputFileName, applicationConfig, dialogs).run();
+            new Automation(computer, inputFileName, applicationConfig, dialogs, waitForFinishMillis).run();
             return 0;
         } catch (AutomationException e) {
             LOGGER.error("Unexpected error during automation.", e);

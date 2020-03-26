@@ -29,6 +29,13 @@ public class CompilerException extends Exception {
         this.line = line;
     }
 
+    public CompilerException(int column, int line, String message, Throwable cause) {
+        super("[" + line + "," + column + "] " + message, cause);
+
+        this.column = column;
+        this.line = line;
+    }
+
     public int getColumn() {
         return column;
     }

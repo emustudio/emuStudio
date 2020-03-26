@@ -98,11 +98,12 @@ public class PseudoINCLUDE extends Pseudo {
                 throw new CompilerException(line, column, "Error: Infinite INCLUDE loop (" + file.getAbsolutePath() + ")");
             }
             program.pass1(namespace); // create symbol table
+        } catch (CompilerException e) {
+            throw e;
         } catch (IOException e) {
-            throw new Exception(fileName + ": I/O Error");
+            throw new CompilerException(line, column, fileName + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new Exception("[" + line + "," + column + "] " + e.getMessage());
+            throw new CompilerException(line, column, e.getMessage(), e);
         }
     }
 

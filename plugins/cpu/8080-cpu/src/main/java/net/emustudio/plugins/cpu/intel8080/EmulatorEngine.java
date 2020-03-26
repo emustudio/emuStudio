@@ -181,7 +181,7 @@ public class EmulatorEngine implements CpuEngine {
 
     private void putpair(int reg, int val) {
         if (reg == 3) {
-            SP = val;
+            SP = val & 0xFFFF;
         } else {
             int index = reg * 2;
             regs[index] = (val >>> 8) & 0xFF;
@@ -647,7 +647,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int O249_SPHL(short OP) {
-        SP = (regs[REG_H] << 8) | regs[REG_L];
+        SP = ((regs[REG_H] << 8) | regs[REG_L]) & 0xFFFF;
         return 5;
     }
 

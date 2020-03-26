@@ -40,7 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * the emulation is started automatically and results are collected.
  */
 public class Automation implements Runnable {
-    private final static Logger LOGGER = LoggerFactory.getLogger("automation");
+    private static final Logger LOGGER = LoggerFactory.getLogger("automation");
+    public static final int DONT_WAIT = -1;
 
     private AutoDialog progressGUI;
     private File inputFile;
@@ -48,14 +49,16 @@ public class Automation implements Runnable {
     private final VirtualComputer computer;
     private final ApplicationConfig applicationConfig;
     private final Dialogs dialogs;
+    private final int waitForFinishMillis;
 
-    private CPU.RunState resultState;
+    private volatile CPU.RunState resultState;
 
     public Automation(VirtualComputer computer, String inputFileName, ApplicationConfig applicationConfig,
-                      Dialogs dialogs) throws AutomationException {
+                      Dialogs dialogs, int waitForFinishMillis) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.waitForFinishMillis = waitForFinishMillis;
 
         this.inputFile = new File(Objects.requireNonNull(inputFileName, "Input file must be defined"));
 
@@ -159,8 +162,13 @@ public class Automation implements Runnable {
 
         synchronized (resultStateLock) {
             try {
-                resultStateLock.wait();
+                if (waitForFinishMillis == DONT_WAIT) {
+                    resultStateLock.wait();
+                } else {
+                    resultStateLock.wait(waitForFinishMillis);
+                }
             } catch (InterruptedException e) {
+                LOGGER.error("Emulation has been interrupted");
                 Thread.currentThread().interrupt();
             }
         }
