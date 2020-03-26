@@ -40,8 +40,14 @@ The prerequisite is to have installed **Java Runtime Environment (JRE), at least
 
 Then, unzip the zip file (`emuStudio-xxx.zip`) and run it using command:
 
+- On Linux / Mac
 ```
-java -jar emuStudio.jar
+> ./emuStudio
+```
+
+- On Windows:
+```
+> emuStudio.bat
 ```
 
 NOTE: Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
