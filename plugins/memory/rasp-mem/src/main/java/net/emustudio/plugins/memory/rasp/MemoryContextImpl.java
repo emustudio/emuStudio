@@ -34,7 +34,7 @@ import java.util.*;
 public class MemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {
 
     private final List<MemoryItem> memory = new ArrayList<>();
-    private Integer programLocation;
+    private int programLocation;
     private final List<Integer> inputs = new ArrayList<>();
 
     private final Map<Integer, String> labels = new HashMap<>();
@@ -163,7 +163,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<MemoryItem> impleme
 
     @Override
     public void setProgramLocation(Integer programLocation) {
-        this.programLocation = programLocation;
+        this.programLocation = Optional.ofNullable(programLocation).orElse(0);
     }
 
     public void loadFromFile(String filename) throws IOException, ClassNotFoundException {
