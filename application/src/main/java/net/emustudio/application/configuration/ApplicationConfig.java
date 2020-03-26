@@ -31,8 +31,8 @@ import static net.emustudio.emulib.runtime.PluginSettings.*;
 
 @SuppressWarnings("unused")
 public class ApplicationConfig implements Closeable {
-    public final static String KEY_NOGUI = EMUSTUDIO_NO_GUI.substring(EMUSTUDIO_PREFIX.length(), EMUSTUDIO_NO_GUI.length() -1);
-    public final static String KEY_AUTO = EMUSTUDIO_AUTO.substring(EMUSTUDIO_PREFIX.length(), EMUSTUDIO_AUTO.length() -1);
+    public final static String KEY_NOGUI = EMUSTUDIO_NO_GUI.substring(EMUSTUDIO_PREFIX.length());
+    public final static String KEY_AUTO = EMUSTUDIO_AUTO.substring(EMUSTUDIO_PREFIX.length());
     public final static String KEY_USE_SCHEMA_GRID = "useSchemaGrid";
     public final static String KEY_SCHEMA_GRID_GAP = "schemaGridGap";
 

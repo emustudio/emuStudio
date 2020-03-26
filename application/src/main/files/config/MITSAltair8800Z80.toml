@@ -57,10 +57,13 @@ name = "MITS Altair8800 (Z80)"
 [[DEVICE]]
 	schemaPoint = "276,237"
 	path = "adm3A-terminal.jar"
-	settings = {}
 	name = "adm3A-terminal"
 	id = "0352cf74-2965-4723-bef9-3e918b1ac7c5"
 	type = "DEVICE"
+
+	[DEVICE.settings]
+		inputFileName = "adm3A-terminal.in"
+		outputFileName = "adm3A-terminal.out"
 
 [[DEVICE]]
 	schemaPoint = "116,237"

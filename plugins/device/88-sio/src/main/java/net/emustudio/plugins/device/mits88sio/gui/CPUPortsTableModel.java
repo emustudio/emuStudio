@@ -18,15 +18,15 @@
  */
 package net.emustudio.plugins.device.mits88sio.gui;
 
-import net.emustudio.plugins.device.mits88sio.ports.CPUPorts;
+import net.emustudio.plugins.device.mits88sio.ports.CpuPorts;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
 
 public class CPUPortsTableModel extends AbstractTableModel {
-    private final CPUPorts cpuPorts;
+    private final CpuPorts cpuPorts;
 
-    public CPUPortsTableModel(CPUPorts cpuPorts) {
+    public CPUPortsTableModel(CpuPorts cpuPorts) {
         this.cpuPorts = Objects.requireNonNull(cpuPorts);
     }
 

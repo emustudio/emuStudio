@@ -31,8 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -52,8 +50,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     private final TerminalSettings terminalSettings;
 
     private TerminalWindow terminalGUI;
-    private InputProvider keyboard;
-    private DeviceContext<Short> connectedDevice;
+    private Keyboard keyboard;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -73,19 +70,32 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        terminalSettings.addChangedObserver(this);
+        if (terminalSettings.isGuiSupported()) {
+            LOGGER.debug("Creating GUI-based keyboard");
+            keyboard = new KeyboardGui(cursor);
+        } else {
+            LOGGER.debug("Creating file-based keyboard ({})", terminalSettings.getInputPath());
+            keyboard = new KeyboardFromFile(terminalSettings.getInputPath(), terminalSettings.getInputReadDelay());
+        }
+        if (terminalSettings.isHalfDuplex()) {
+            keyboard.connect(display);
+        }
 
         // try to connect to a serial I/O board
         try {
-            this.connectedDevice = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
-            if (connectedDevice.getDataType() != Short.class) {
+            DeviceContext<Short> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
+            if (device.getDataType() != Short.class) {
                 throw new PluginInitializationException(
-                    "Unexpected device data type. Expected Short but was: " + connectedDevice.getDataType()
+                    "Unexpected device data type. Expected Short but was: " + device.getDataType()
                 );
             }
+            keyboard.connect(device);
         } catch (ContextNotFoundException e) {
             LOGGER.warn("The terminal is not connected to any I/O device.");
         }
+
+        keyboard.process();
+        terminalSettings.addChangedObserver(this);
     }
 
     @Override
@@ -93,12 +103,8 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         if (terminalSettings.isGuiSupported()) {
             if (terminalGUI == null) {
                 terminalGUI = new TerminalWindow(parent, display);
-                display.initialize();
-                try {
-                    settingsChanged();
-                } catch (FileNotFoundException e) {
-                    LOGGER.error("Could not read ADM-3A terminal settings", e);
-                }
+                ((KeyboardGui)keyboard).addListenerRecursively(terminalGUI);
+                display.startCursor();
             }
             terminalGUI.setVisible(true);
         }
@@ -136,7 +142,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
 
     @Override
     public void showSettings(JFrame parent) {
-        if (terminalSettings.isGuiSupported()) {
+        if (isShowSettingsSupported()) {
             new ConfigDialog(parent, terminalSettings, terminalGUI, display, applicationApi.getDialogs()).setVisible(true);
         }
     }
@@ -147,16 +153,11 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     }
 
     @Override
-    public void settingsChanged() throws FileNotFoundException {
-        if (terminalSettings.isGuiSupported() && !(keyboard instanceof Keyboard)) {
-            createKeyboard();
-        } else if (!(keyboard instanceof KeyboardFromFile)) {
-            createKeyboardFromFile();
-        }
+    public void settingsChanged() {
         if (terminalSettings.isHalfDuplex()) {
-            keyboard.addDeviceObserver(display);
+            keyboard.connect(display);
         } else {
-            keyboard.removeDeviceObserver(display);
+            keyboard.disconnect(display);
         }
     }
 
@@ -165,30 +166,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
             return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.adm3a.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
-        }
-    }
-
-    private void createKeyboardFromFile() throws FileNotFoundException {
-        destroyKeyboard();
-        KeyboardFromFile tmp = new KeyboardFromFile(new File(terminalSettings.getInputFileName()));
-        keyboard = tmp;
-        connectKeyboard();
-        tmp.processInputFile(terminalSettings.getInputReadDelay());
-    }
-
-    private void createKeyboard() {
-        destroyKeyboard();
-        Keyboard tmp = new Keyboard(cursor);
-        tmp.addListenerRecursively(terminalGUI);
-        keyboard = tmp;
-        connectKeyboard();
-    }
-
-    private void connectKeyboard() {
-        if (connectedDevice != null) {
-            keyboard.addDeviceObserver(connectedDevice);
-        } else {
-            LOGGER.warn("Keyboard is unconnected");
         }
     }
 

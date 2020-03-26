@@ -25,11 +25,11 @@ import org.junit.Test;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
-public class DataPortTest {
+public class CpuDataPortTest {
 
     @Test(expected = NullPointerException.class)
     public void testNullTransmitterInConstructorThrows() {
-        new DataPort(null);
+        new CpuDataPort(null);
     }
 
     @Test
@@ -38,8 +38,8 @@ public class DataPortTest {
         expect(transmitter.readBuffer()).andReturn((short) 5).once();
         replay(transmitter);
 
-        DataPort dataPort = new DataPort(transmitter);
-        assertEquals((short) 5, dataPort.readData().shortValue());
+        CpuDataPort cpuDataPort = new CpuDataPort(transmitter);
+        assertEquals((short) 5, cpuDataPort.readData().shortValue());
 
         verify(transmitter);
     }
@@ -51,8 +51,8 @@ public class DataPortTest {
         expectLastCall().once();
         replay(transmitter);
 
-        DataPort dataPort = new DataPort(transmitter);
-        dataPort.writeData((short) 5);
+        CpuDataPort cpuDataPort = new CpuDataPort(transmitter);
+        cpuDataPort.writeData((short) 5);
 
         verify(transmitter);
     }

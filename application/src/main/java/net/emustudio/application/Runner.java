@@ -89,7 +89,7 @@ public class Runner {
                 }
                 ((GuiDialogsImpl)dialogs).setParent(null);
             } else {
-                computerConfig = commandLine.getConfigFileName().flatMap(configFiles::loadConfiguration).orElseThrow();
+                computerConfig = commandLine.getConfigFileName().map(configFiles::loadConfiguration).orElseThrow();
             }
 
             if (computerConfig == null) {

@@ -45,12 +45,12 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private final Transmitter transmitter = new Transmitter();
-    private final StatusPort statusPort = new StatusPort(transmitter);
-    private final DataPort dataPort = new DataPort(transmitter);
+    private final CpuStatusPort cpuStatusPort = new CpuStatusPort(transmitter);
+    private final CpuDataPort cpuDataPort = new CpuDataPort(transmitter);
     private final SIOSettings sioSettings;
 
     private StatusDialog gui;
-    private CPUPorts cpuPorts;
+    private CpuPorts cpuPorts;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -93,7 +93,7 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
     public void initialize() throws PluginInitializationException {
         ExtendedContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, ExtendedContext.class);
 
-        cpuPorts = new CPUPorts(cpu);
+        cpuPorts = new CpuPorts(cpu);
         sioSettings.addChangedObserver(this);
 
         // get a device attached to this board
@@ -148,8 +148,8 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
     @Override
     public void settingsChanged() {
         try {
-            cpuPorts.reattachStatusPort(sioSettings.getStatusPorts(), statusPort);
-            cpuPorts.reattachDataPort(sioSettings.getDataPorts(), dataPort);
+            cpuPorts.reattachStatusPort(sioSettings.getStatusPorts(), cpuStatusPort);
+            cpuPorts.reattachDataPort(sioSettings.getDataPorts(), cpuDataPort);
         } catch (CouldNotAttachException e) {
             LOGGER.error(e.getMessage(), e);
             applicationApi.getDialogs().showError(e.getMessage(), "MITS 88-SIO");

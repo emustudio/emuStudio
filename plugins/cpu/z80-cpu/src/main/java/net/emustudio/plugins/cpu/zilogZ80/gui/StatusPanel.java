@@ -792,7 +792,7 @@ public class StatusPanel extends JPanel {
 
     private void chkPrintInstructionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkPrintInstructionsActionPerformed
         if (chkPrintInstructions.isSelected()) {
-            cpu.getEngine().setDispatchListener(new InstructionPrinter(cpu.getDisassembler(), cpu.getEngine(), true));
+            cpu.getEngine().setDispatchListener(new InstructionPrinter(cpu.getDisassembler(), cpu.getEngine(), true, System.err));
         } else {
             cpu.getEngine().setDispatchListener(null);
         }

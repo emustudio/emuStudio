@@ -18,30 +18,31 @@
  */
 package net.emustudio.plugins.device.mits88sio.ports;
 
+import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.device.mits88sio.Transmitter;
 
-import java.io.IOException;
 import java.util.Objects;
 
 /**
- * This is the data port of 88-SIO card.
- * <p>
- * This port is attached to a CPU.
- * <p>
- * A read to the data port gets the buffered character, a write to the data port
- * writes the character to the device.
+ * This is the status port of 88-SIO card.
  */
-public class DataPort implements DeviceContext<Short> {
+@PluginContext(id = "Status port")
+public class CpuStatusPort implements DeviceContext<Short> {
     private final Transmitter transmitter;
 
-    public DataPort(Transmitter transmitter) {
+    public CpuStatusPort(Transmitter transmitter) {
         this.transmitter = Objects.requireNonNull(transmitter);
     }
 
     @Override
-    public void writeData(Short data) throws IOException {
-        transmitter.writeToDevice(data);
+    public Short readData() {
+        return transmitter.readStatus();
+    }
+
+    @Override
+    public void writeData(Short data) {
+        transmitter.writeToStatus(data);
     }
 
     @Override
@@ -50,12 +51,7 @@ public class DataPort implements DeviceContext<Short> {
     }
 
     @Override
-    public Short readData() {
-        return transmitter.readBuffer();
-    }
-
-    @Override
     public String toString() {
-        return "88-SIO Data Port";
+        return "88-SIO Status Port";
     }
 }

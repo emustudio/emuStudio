@@ -29,6 +29,7 @@ import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
 import net.emustudio.plugins.cpu.intel8080.gui.DecoderImpl;
 import net.emustudio.plugins.cpu.intel8080.gui.DisassemblerImpl;
 
+import java.io.PrintStream;
 import java.util.Objects;
 
 public class InitializerFor8080 extends DefaultInitializer<EmulatorEngine> {
@@ -47,8 +48,9 @@ public class InitializerFor8080 extends DefaultInitializer<EmulatorEngine> {
     }
 
     @Override
-    protected DispatchListener createInstructionPrinter(Disassembler disassembler, EmulatorEngine engine, boolean useCache) {
-        return new InstructionPrinter(disassembler, engine, useCache);
+    protected DispatchListener createInstructionPrinter(Disassembler disassembler, EmulatorEngine engine,
+                                                        boolean useCache, PrintStream printStream) {
+        return new InstructionPrinter(disassembler, engine, useCache, printStream);
     }
 
     @Override

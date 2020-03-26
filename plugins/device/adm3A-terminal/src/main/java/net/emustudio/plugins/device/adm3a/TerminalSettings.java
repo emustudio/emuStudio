@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -48,8 +49,8 @@ public class TerminalSettings {
     private boolean halfDuplex = false;
     private boolean antiAliasing = true;
     private boolean alwaysOnTop = false;
-    private String inputFileName = DEFAULT_INPUT_FILE_NAME;
-    private String outputFileName = DEFAULT_OUTPUT_FILE_NAME;
+    private volatile Path inputPath = Path.of(DEFAULT_INPUT_FILE_NAME);
+    private volatile Path outputPath = Path.of(DEFAULT_OUTPUT_FILE_NAME);
     private int inputReadDelay = 0;
 
     private final List<ChangedObserver> observers = new ArrayList<>();
@@ -96,21 +97,21 @@ public class TerminalSettings {
         notifyObserversAndIgnoreError();
     }
 
-    public String getInputFileName() {
-        return inputFileName;
+    public Path getInputPath() {
+        return inputPath;
     }
 
-    public void setInputFileName(String inputFileName) throws IOException {
-        this.inputFileName = inputFileName;
+    public void setInputPath(Path inputPath) throws IOException {
+        this.inputPath = inputPath;
         notifyObservers();
     }
 
-    public String getOutputFileName() {
-        return outputFileName;
+    public Path getOutputPath() {
+        return outputPath;
     }
 
-    public void setOutputFileName(String outputFileName) throws IOException {
-        this.outputFileName = outputFileName;
+    public void setOutputPath(Path outputFileName) throws IOException {
+        this.outputPath = outputFileName;
         notifyObservers();
     }
 
@@ -138,8 +139,8 @@ public class TerminalSettings {
             settings.setBoolean(HALF_DUPLEX, halfDuplex);
             settings.setBoolean(ALWAYS_ON_TOP, alwaysOnTop);
             settings.setBoolean(ANTI_ALIASING, antiAliasing);
-            settings.setString(OUTPUT_FILE_NAME, outputFileName);
-            settings.setString(INPUT_FILE_NAME, inputFileName);
+            settings.setString(OUTPUT_FILE_NAME, outputPath.toString());
+            settings.setString(INPUT_FILE_NAME, inputPath.toString());
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not update settings", e);
             dialogs.showError("Could not save settings. Please see log file for details.", "ADM 3A");
@@ -152,8 +153,8 @@ public class TerminalSettings {
         halfDuplex = settings.getBoolean(HALF_DUPLEX, false);
         alwaysOnTop = settings.getBoolean(ALWAYS_ON_TOP, false);
         antiAliasing = settings.getBoolean(ANTI_ALIASING, true);
-        inputFileName = settings.getString(INPUT_FILE_NAME, DEFAULT_INPUT_FILE_NAME);
-        outputFileName = settings.getString(OUTPUT_FILE_NAME, DEFAULT_OUTPUT_FILE_NAME);
+        inputPath = Path.of(settings.getString(INPUT_FILE_NAME, DEFAULT_INPUT_FILE_NAME));
+        outputPath = Path.of(settings.getString(OUTPUT_FILE_NAME, DEFAULT_OUTPUT_FILE_NAME));
         try {
             inputReadDelay = settings.getInt(INPUT_READ_DELAY, 0);
         } catch (NumberFormatException e) {

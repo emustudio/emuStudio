@@ -23,29 +23,42 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
 
-public class KeyboardFromFile implements InputProvider {
+public class KeyboardFromFile implements Keyboard {
     private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardFromFile.class);
 
-    private List<DeviceContext<Short>> inputObservers = new CopyOnWriteArrayList<>();
-    private final File inputFile;
+    private List<DeviceContext<Short>> devices = new CopyOnWriteArrayList<>();
+    private final Path inputFile;
+    private final int delayInMilliseconds;
 
-    public KeyboardFromFile(File inputFile) throws FileNotFoundException {
+    public KeyboardFromFile(Path inputFile, int delayInMilliseconds) {
         this.inputFile = Objects.requireNonNull(inputFile);
-        if (!inputFile.canRead()) {
-            throw new FileNotFoundException("Input file: '" + inputFile + "' cannot be found or cannot be read");
-        }
+        this.delayInMilliseconds = delayInMilliseconds;
     }
 
-    public void processInputFile(int delayInMilliseconds) {
-        try (BufferedInputStream input = new BufferedInputStream(new FileInputStream(inputFile))) {
+    @Override
+    public void connect(DeviceContext<Short> device) {
+        Optional.ofNullable(device).ifPresent(devices::add);
+    }
+
+    @Override
+    public void disconnect(DeviceContext<Short> device) {
+        Optional.ofNullable(device).ifPresent(devices::remove);
+    }
+
+    @Override
+    public void process() {
+        LOGGER.info("Processing input file: '" + inputFile + "'; delay of chars read (ms): " + delayInMilliseconds);
+        try (InputStream input = new FileInputStream(inputFile.toFile())) {
             int key;
             while ((key = input.read()) != -1) {
-                notifyObservers((short) key);
+                inputReceived((short) key);
                 if (delayInMilliseconds > 0) {
                     LockSupport.parkNanos(delayInMilliseconds * 1000000);
                 }
@@ -55,29 +68,18 @@ public class KeyboardFromFile implements InputProvider {
         }
     }
 
-    @Override
-    public void addDeviceObserver(DeviceContext<Short> listener) {
-        inputObservers.add(listener);
-    }
-
-    @Override
-    public void removeDeviceObserver(DeviceContext<Short> listener) {
-        inputObservers.remove(listener);
-    }
-
-    private void notifyObservers(short input) {
-        for (DeviceContext<Short> observer : inputObservers) {
+    private void inputReceived(short input) {
+        for (DeviceContext<Short> device : devices) {
             try {
-                observer.writeData(input);
+                device.writeData(input);
             } catch (IOException e) {
-                LOGGER.error("[observer={}, input={}] Could not notify observer about key hit", observer, input, e);
+                LOGGER.error("[device={}, input={}] Could not notify device about key pressed", device, input, e);
             }
         }
     }
 
     @Override
     public void destroy() {
-        inputObservers.clear();
+        devices.clear();
     }
-
 }

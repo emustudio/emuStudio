@@ -26,30 +26,30 @@ import java.util.Collections;
 
 import static org.easymock.EasyMock.*;
 
-public class CPUPortsTest {
+public class CpuPortsTest {
 
 
     @Test
     public void testStatusPortsAreCorrectAfterReattaching() throws Exception {
-        StatusPort statusPort = mock(StatusPort.class);
+        CpuStatusPort cpuStatusPort = mock(CpuStatusPort.class);
         ExtendedContext cpu = mock(ExtendedContext.class);
 
-        expect(cpu.attachDevice(statusPort, 1)).andReturn(true);
-        expect(cpu.attachDevice(statusPort, 2)).andReturn(true);
+        expect(cpu.attachDevice(cpuStatusPort, 1)).andReturn(true);
+        expect(cpu.attachDevice(cpuStatusPort, 2)).andReturn(true);
 
         cpu.detachDevice(1);
         expectLastCall();
         cpu.detachDevice(2);
         expectLastCall();
 
-        expect(cpu.attachDevice(statusPort, 3)).andReturn(true);
-        expect(cpu.attachDevice(statusPort, 2)).andReturn(true);
+        expect(cpu.attachDevice(cpuStatusPort, 3)).andReturn(true);
+        expect(cpu.attachDevice(cpuStatusPort, 2)).andReturn(true);
         replay(cpu);
 
-        CPUPorts ports = new CPUPorts(cpu);
+        CpuPorts ports = new CpuPorts(cpu);
 
-        ports.reattachStatusPort(Arrays.asList(1, 2), statusPort);
-        ports.reattachStatusPort(Arrays.asList(3, 2), statusPort);
+        ports.reattachStatusPort(Arrays.asList(1, 2), cpuStatusPort);
+        ports.reattachStatusPort(Arrays.asList(3, 2), cpuStatusPort);
 
         verify(cpu);
     }
@@ -57,25 +57,25 @@ public class CPUPortsTest {
 
     @Test
     public void testDataPortsAreCorrectAfterReattaching() throws CouldNotAttachException {
-        DataPort dataPort = mock(DataPort.class);
+        CpuDataPort cpuDataPort = mock(CpuDataPort.class);
         ExtendedContext cpu = mock(ExtendedContext.class);
 
-        expect(cpu.attachDevice(dataPort, 1)).andReturn(true);
-        expect(cpu.attachDevice(dataPort, 2)).andReturn(true);
+        expect(cpu.attachDevice(cpuDataPort, 1)).andReturn(true);
+        expect(cpu.attachDevice(cpuDataPort, 2)).andReturn(true);
 
         cpu.detachDevice(1);
         expectLastCall();
         cpu.detachDevice(2);
         expectLastCall();
 
-        expect(cpu.attachDevice(dataPort, 3)).andReturn(true);
-        expect(cpu.attachDevice(dataPort, 2)).andReturn(true);
+        expect(cpu.attachDevice(cpuDataPort, 3)).andReturn(true);
+        expect(cpu.attachDevice(cpuDataPort, 2)).andReturn(true);
         replay(cpu);
 
-        CPUPorts ports = new CPUPorts(cpu);
+        CpuPorts ports = new CpuPorts(cpu);
 
-        ports.reattachDataPort(Arrays.asList(1, 2), dataPort);
-        ports.reattachDataPort(Arrays.asList(3, 2), dataPort);
+        ports.reattachDataPort(Arrays.asList(1, 2), cpuDataPort);
+        ports.reattachDataPort(Arrays.asList(3, 2), cpuDataPort);
 
         verify(cpu);
     }
@@ -91,10 +91,10 @@ public class CPUPortsTest {
         expectLastCall();
         replay(cpu);
 
-        CPUPorts ports = new CPUPorts(cpu);
+        CpuPorts ports = new CpuPorts(cpu);
 
-        ports.reattachStatusPort(Collections.singletonList(1), mock(StatusPort.class));
-        ports.reattachDataPort(Collections.singletonList(2), mock(DataPort.class));
+        ports.reattachStatusPort(Collections.singletonList(1), mock(CpuStatusPort.class));
+        ports.reattachDataPort(Collections.singletonList(2), mock(CpuDataPort.class));
 
         ports.destroy();
 

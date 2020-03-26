@@ -58,6 +58,7 @@ public class CpuImpl extends AbstractCPU {
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
 
     private final ContextImpl context = new ContextImpl();
+    private final InitializerForZ80 initializer;
 
     private StatusPanel statusPanel;
     private Disassembler disassembler;
@@ -73,6 +74,10 @@ public class CpuImpl extends AbstractCPU {
                 "Could not register Z80 CPU context. Please see log file for more details.", getTitle()
             );
         }
+
+        initializer = new InitializerForZ80(
+            this, pluginID, applicationApi.getContextPool(), settings, context
+        );
     }
 
     @Override
@@ -91,11 +96,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public void initialize() throws PluginInitializationException {
-        InitializerForZ80 initializer = new InitializerForZ80(
-            this, pluginID, applicationApi.getContextPool(), settings, context
-        );
         initializer.initialize();
-
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
         statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
@@ -174,6 +175,7 @@ public class CpuImpl extends AbstractCPU {
     @Override
     protected void destroyInternal() {
         context.clearDevices();
+        initializer.destroy();
     }
 
     @Override

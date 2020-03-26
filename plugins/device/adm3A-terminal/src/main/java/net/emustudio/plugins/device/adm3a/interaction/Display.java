@@ -31,7 +31,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.font.LineMetrics;
 import java.awt.geom.Rectangle2D;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,7 +73,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         this.columns = cursor.getColumns();
         this.rows = cursor.getRows();
         this.videoMemory = new char[rows * columns];
-        refillWithSpaces();
+        fillWithSpaces();
 
         setForeground(FOREGROUND);
         setBackground(BACKGROUND);
@@ -83,6 +82,10 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         setFont(loadFont());
         this.displayParameters = measure();
         this.size = new Dimension(displayParameters.maxWidth, displayParameters.maxHeight);
+
+        if (!settings.isGuiSupported()) {
+            openOutputWriter();
+        }
 
         settings.addChangedObserver(this);
     }
@@ -97,7 +100,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         return 0;
     }
 
-    public synchronized void initialize() {
+    public synchronized void startCursor() {
         cursorTimer.restart();
     }
 
@@ -108,7 +111,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     }
 
     public final void clearScreen() {
-        refillWithSpaces();
+        fillWithSpaces();
         cursor.home();
         repaint();
     }
@@ -168,12 +171,6 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
 
     @Override
     public void settingsChanged() {
-        if (!settings.isGuiSupported()) {
-            closeOutputWriter();
-            openOutputWriter();
-        } else {
-            closeOutputWriter();
-        }
         if (settings.isAntiAliasing()) {
             repaint();
         }
@@ -233,7 +230,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         }
 
         if (loadCursorPosition.notAccepted(data) && data >= 32) {
-            insertChar((char) (data & 0xFF));
+            drawChar((char) (data & 0xFF));
             cursor.moveForwardsRolling(this);
         }
         repaint();
@@ -246,7 +243,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
 
     private void insertHereIs() {
         for (char c : Display.HERE_IS_CONSTANT.toCharArray()) {
-            insertChar(c);
+            drawChar(c);
             cursor.moveForwardsRolling(this);
         }
     }
@@ -257,19 +254,19 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
                 outputWriter.write((char) val);
                 outputWriter.flush();
             } catch (IOException e) {
-                LOGGER.error("Could not write to file: " + settings.getOutputFileName(), e);
+                LOGGER.error("Could not write to file: " + settings.getOutputPath(), e);
             }
         }
     }
 
-    private void insertChar(char c) {
+    private void drawChar(char c) {
         Point cursorPoint = cursor.getCursorPoint();
         synchronized (videoMemory) {
             videoMemory[cursorPoint.y * columns + cursorPoint.x] = c;
         }
     }
 
-    private void refillWithSpaces() {
+    private void fillWithSpaces() {
         synchronized (videoMemory) {
             Arrays.fill(videoMemory, ' ');
         }
@@ -277,10 +274,9 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
 
     private void openOutputWriter() {
         try {
-            File tmpFile = new File(settings.getOutputFileName());
-            outputWriter = new FileWriter(tmpFile);
+            outputWriter = new FileWriter(settings.getOutputPath().toFile());
         } catch (IOException e) {
-            LOGGER.error("Could not open file for writing output: {}", settings.getOutputFileName(), e);
+            LOGGER.error("Could not open file for writing output: {}", settings.getOutputPath(), e);
         }
     }
 

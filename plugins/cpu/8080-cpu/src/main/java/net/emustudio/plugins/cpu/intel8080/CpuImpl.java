@@ -51,13 +51,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CpuImpl extends AbstractCPU {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
-    public static final String PRINT_CODE = "printCode";
-    public static final String PRINT_CODE_USE_CACHE = "printCodeUseCache";
-
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicReference<Future<?>> frequencyUpdaterFuture = new AtomicReference<>();
 
     private final ContextImpl context = new ContextImpl();
+    private final InitializerFor8080 initializer;
 
     private EmulatorEngine engine;
     private StatusPanel statusPanel;
@@ -74,6 +72,9 @@ public class CpuImpl extends AbstractCPU {
                 "Could not register CPU Context. Please see log file for details.", super.getTitle()
             );
         }
+        initializer = new InitializerFor8080(
+            this, pluginID, applicationApi.getContextPool(), settings, context
+        );
     }
 
     @Override
@@ -93,11 +94,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public void initialize() throws PluginInitializationException {
-        InitializerFor8080 initializer = new InitializerFor8080(
-            this, pluginID, applicationApi.getContextPool(), settings, context
-        );
         initializer.initialize();
-
         engine = initializer.getEngine();
         disassembler = initializer.getDisassembler();
         statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
@@ -106,6 +103,7 @@ public class CpuImpl extends AbstractCPU {
     @Override
     protected void destroyInternal() {
         context.clearDevices();
+        initializer.destroy();
     }
 
     public EmulatorEngine getEngine() {

@@ -26,12 +26,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class CPUPorts {
+public class CpuPorts {
     private final List<Integer> statusPorts = new ArrayList<>();
     private final List<Integer> dataPorts = new ArrayList<>();
     private final ExtendedContext cpu;
 
-    public CPUPorts(ExtendedContext cpu) {
+    public CpuPorts(ExtendedContext cpu) {
         this.cpu = Objects.requireNonNull(cpu);
     }
 
@@ -51,13 +51,13 @@ public class CPUPorts {
         return dataPorts.get(index);
     }
 
-    public void reattachStatusPort(Collection<Integer> intStatusPorts, StatusPort statusPort) throws CouldNotAttachException {
+    public void reattachStatusPort(Collection<Integer> intStatusPorts, CpuStatusPort cpuStatusPort) throws CouldNotAttachException {
         statusPorts.forEach(cpu::detachDevice);
         statusPorts.clear();
         statusPorts.addAll(intStatusPorts);
 
         List<Integer> unattachedPorts = statusPorts.stream()
-            .filter(port -> !cpu.attachDevice(statusPort, port))
+            .filter(port -> !cpu.attachDevice(cpuStatusPort, port))
             .collect(Collectors.toList());
 
         if (!unattachedPorts.isEmpty()) {
@@ -65,13 +65,13 @@ public class CPUPorts {
         }
     }
 
-    public void reattachDataPort(Collection<Integer> intDataPorts, DataPort dataPort) throws CouldNotAttachException {
+    public void reattachDataPort(Collection<Integer> intDataPorts, CpuDataPort cpuDataPort) throws CouldNotAttachException {
         dataPorts.forEach(cpu::detachDevice);
         dataPorts.clear();
         dataPorts.addAll(intDataPorts);
 
         List<Integer> unattachedPorts = dataPorts.stream()
-            .filter(port -> !cpu.attachDevice(dataPort, port))
+            .filter(port -> !cpu.attachDevice(cpuDataPort, port))
             .collect(Collectors.toList());
 
         if (!unattachedPorts.isEmpty()) {

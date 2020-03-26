@@ -106,7 +106,7 @@ public class Profiler {
         optimizeScanLoops(programSize);
         optimizeRepeatingOperations(programSize);
 
-        System.out.println(this);
+        System.err.println(this);
     }
 
     private void optimizeRepeatingOperations(int programSize) {

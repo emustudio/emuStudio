@@ -914,7 +914,7 @@ public class EmulatorEngine implements CpuEngine {
         try {
             OP = memory.read(PC);
         } catch (NullPointerException e) {
-            System.out.println("NPE; PC = " + Integer.toHexString(PC));
+            LOGGER.error("NPE; PC=" + Integer.toHexString(PC), e);
             currentRunState = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
             return 0;
         }

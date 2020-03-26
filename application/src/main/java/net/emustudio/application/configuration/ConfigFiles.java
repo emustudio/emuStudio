@@ -54,12 +54,8 @@ public class ConfigFiles {
         return loadConfigurations().stream().filter(config -> config.getName().equals(computerName)).findAny();
     }
 
-    public Optional<ComputerConfig> loadConfiguration(Path computerPath) {
-        try {
-            return Optional.of(ComputerConfig.load(computerPath));
-        } catch (Exception e) {
-            return Optional.empty();
-        }
+    public ComputerConfig loadConfiguration(Path computerPath) {
+        return ComputerConfig.load(computerPath);
     }
 
     public List<ComputerConfig> loadConfigurations() throws IOException {

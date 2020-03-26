@@ -105,7 +105,7 @@ public class StatusPanel extends JPanel {
 
     private void onDumpInstructionsSelect(ActionEvent e) {
         if (chkPrintInstructions.isSelected()) {
-            engine.setDispatchListener(new InstructionPrinter(cpu.getDisassembler(), engine, true));
+            engine.setDispatchListener(new InstructionPrinter(cpu.getDisassembler(), engine, true, System.err));
         } else {
             engine.setDispatchListener(null);
         }

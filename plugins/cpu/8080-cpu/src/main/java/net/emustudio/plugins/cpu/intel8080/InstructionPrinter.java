@@ -24,6 +24,7 @@ import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
 import net.jcip.annotations.ThreadSafe;
 
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -33,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class InstructionPrinter implements DispatchListener {
     private final Disassembler disassembler;
     private final EmulatorEngine emulatorEngine;
+    private final PrintStream writer;
 
     private final List<Integer> cache = new CopyOnWriteArrayList<>();
     private final AtomicInteger numberOfMatch = new AtomicInteger();
@@ -41,9 +43,10 @@ public class InstructionPrinter implements DispatchListener {
 
     private volatile long creationTimeStamp;
 
-    public InstructionPrinter(Disassembler disassembler, EmulatorEngine emulatorEngine, boolean useCache) {
+    public InstructionPrinter(Disassembler disassembler, EmulatorEngine emulatorEngine, boolean useCache, PrintStream writer) {
         this.disassembler = Objects.requireNonNull(disassembler);
         this.emulatorEngine = Objects.requireNonNull(emulatorEngine);
+        this.writer = Objects.requireNonNull(writer);
         this.useCache = useCache;
     }
 
@@ -60,7 +63,7 @@ public class InstructionPrinter implements DispatchListener {
 
             if (useCache && !cache.contains(emulatorEngine.PC)) {
                 if (numberOfMatch.get() != 0) {
-                    System.out.println(String.format("%04d | Block from %04X to %04X; count=%d",
+                    writer.println(String.format("%04d | Block from %04X to %04X; count=%d",
                         timeStamp, matchPC, emulatorEngine.PC, numberOfMatch.get())
                     );
                 } else {
@@ -73,20 +76,20 @@ public class InstructionPrinter implements DispatchListener {
             }
 
             if (numberOfMatch.get() <= 1) {
-                System.out.print(String.format("%04d | PC=%04x | %12s | %10s ",
+                writer.print(String.format("%04d | PC=%04x | %12s | %10s ",
                     timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
                 );
             }
 
         } catch (InvalidInstructionException e) {
-            System.out.println(String.format("%04d | Invalid instruction at %04X", timeStamp, emulatorEngine.PC));
+            writer.println(String.format("%04d | Invalid instruction at %04X", timeStamp, emulatorEngine.PC));
         }
     }
 
     @Override
     public void afterDispatch() {
         if (numberOfMatch.get() <= 1) {
-            System.out.println(String.format("|| regs=%s | flags=%s | SP=%04x | PC=%04x",
+            writer.println(String.format("|| regs=%s | flags=%s | SP=%04x | PC=%04x",
                 regsToString(), intToFlags(emulatorEngine.flags), emulatorEngine.SP, emulatorEngine.PC)
             );
         }
@@ -129,5 +132,4 @@ public class InstructionPrinter implements DispatchListener {
         }
         return flagsString;
     }
-
 }

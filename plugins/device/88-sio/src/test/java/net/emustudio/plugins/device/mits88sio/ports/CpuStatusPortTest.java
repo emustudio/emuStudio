@@ -25,11 +25,11 @@ import org.junit.Test;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
-public class StatusPortTest {
+public class CpuStatusPortTest {
 
     @Test(expected = NullPointerException.class)
     public void testNullTransmitterInConstructorThrows() {
-        new StatusPort(null);
+        new CpuStatusPort(null);
     }
 
     @Test
@@ -38,8 +38,8 @@ public class StatusPortTest {
         expect(transmitter.readStatus()).andReturn((short) 5).once();
         replay(transmitter);
 
-        StatusPort statusPort = new StatusPort(transmitter);
-        assertEquals((short) 5, statusPort.readData().shortValue());
+        CpuStatusPort cpuStatusPort = new CpuStatusPort(transmitter);
+        assertEquals((short) 5, cpuStatusPort.readData().shortValue());
 
         verify(transmitter);
     }
@@ -51,8 +51,8 @@ public class StatusPortTest {
         expectLastCall().once();
         replay(transmitter);
 
-        StatusPort statusPort = new StatusPort(transmitter);
-        statusPort.writeData((short) 5);
+        CpuStatusPort cpuStatusPort = new CpuStatusPort(transmitter);
+        cpuStatusPort.writeData((short) 5);
 
         verify(transmitter);
     }

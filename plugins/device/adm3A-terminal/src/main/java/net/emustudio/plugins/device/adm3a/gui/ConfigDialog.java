@@ -25,6 +25,7 @@ import net.emustudio.plugins.device.adm3a.TerminalSettings;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Objects;
 
 public class ConfigDialog extends javax.swing.JDialog {
@@ -52,8 +53,8 @@ public class ConfigDialog extends javax.swing.JDialog {
         chkHalfDuplex.setSelected(settings.isHalfDuplex());
         chkAlwaysOnTop.setSelected(settings.isAlwaysOnTop());
         chkAntiAliasing.setSelected(settings.isAntiAliasing());
-        txtInputFileName.setText(settings.getInputFileName());
-        txtOutputFileName.setText(settings.getOutputFileName());
+        txtInputFileName.setText(settings.getInputPath().toString());
+        txtOutputFileName.setText(settings.getOutputPath().toString());
         spnInputDelay.setValue(settings.getInputReadDelay());
     }
 
@@ -61,8 +62,8 @@ public class ConfigDialog extends javax.swing.JDialog {
         settings.setHalfDuplex(chkHalfDuplex.isSelected());
         settings.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
         settings.setAntiAliasing(chkAntiAliasing.isSelected());
-        settings.setInputFileName(txtInputFileName.getText());
-        settings.setOutputFileName(txtOutputFileName.getText());
+        settings.setInputPath(Path.of(txtInputFileName.getText()));
+        settings.setOutputPath(Path.of(txtOutputFileName.getText()));
         settings.setInputReadDelay((Integer) spnInputDelay.getValue());
         if (save) {
             settings.write();
