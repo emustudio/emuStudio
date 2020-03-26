@@ -8,9 +8,23 @@ name = "MITS Altair8800"
 	type = "MEMORY"
 
 	[MEMORY.settings]
-		banksCount = 0
+		banksCount = 1
 		commonBoundary = 0
-		imageAddress0 = 65280
+#       memorySize = 65536
+
+        # ROM areas are stored as pairs ROMfromN and ROMtoN, where N is 0-based counter. There can be multiple rom areas.
+#       ROMfromN = someAddress
+#       ROMtoN = someAddress
+
+        # Memory "images" (files) will be loaded at startup into memory. They are stored here as triplet:
+        # - imageNameN (file name),
+        # - imageAddressN (address where the file will be loaded),
+        # - imageBankN (if memory has >1 banksCount, then number of bank; 0 otherwise)
+        #
+        # where N is a 0-based counter
+#       imageNameN = imageFileName  # if the suffix ends with ".hex", the format will be Intel HEX; otherwise it will be binary
+#       imageAddressN = ...
+#       imageBankN = 0
 
 [COMPILER]
 	schemaPoint = "56,37"
@@ -28,6 +42,13 @@ name = "MITS Altair8800"
 	id = "0c7bc110-554b-433d-b6e2-29885379fac6"
 	type = "CPU"
 
+# Uncomment the following for specific settings (and remove settings = {} above)
+#    [CPU.settings]
+#        printCode = true
+#        printCodeUseCache = true
+#        printCodeFileName = syserr   # Or custom path to a file
+
+
 [[DEVICE]]
 	schemaPoint = "176,37"
 	path = "88-disk.jar"
@@ -36,6 +57,8 @@ name = "MITS Altair8800"
 	type = "DEVICE"
 
 	[DEVICE.settings]
+	    # imageN = "..."  # Load file into drive N at startup
+
 		sectorLength8 = 137
 		sectorLength9 = 137
 		sectorLength6 = 137
@@ -101,6 +124,10 @@ name = "MITS Altair8800"
 	[DEVICE.settings]
 		inputFileName = "adm3A-terminal.in"
 		outputFileName = "adm3A-terminal.out"
+#       halfDuplex = false
+#       alwaysOnTop = false
+#       inputReadDelay = 0
+#       antiAliasing = true
 
 [[connections]]
 	bidirectional = true

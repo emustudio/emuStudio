@@ -9,7 +9,22 @@ name = "MITS Altair8800 (Z80)"
 
 	[MEMORY.settings]
 		banksCount = 8
-		commonBoundary = 49152
+		commonBoundary = 0xC000
+#       memorySize = 65536
+
+        # ROM areas are stored as pairs ROMfromN and ROMtoN, where N is 0-based counter. There can be multiple rom areas.
+#       ROMfromN = someAddress
+#       ROMtoN = someAddress
+
+        # Memory "images" (files) will be loaded at startup into memory. They are stored here as triplet:
+        # - imageNameN (file name),
+        # - imageAddressN (address where the file will be loaded),
+        # - imageBankN (if memory has >1 banksCount, then number of bank; 0 otherwise)
+        #
+        # where N is a 0-based counter
+#       imageNameN = imageFileName  # if the suffix ends with ".hex", the format will be Intel HEX; otherwise it will be binary
+#       imageAddressN = ...
+#       imageBankN = 0
 
 [COMPILER]
 	schemaPoint = "56,37"
@@ -27,13 +42,58 @@ name = "MITS Altair8800 (Z80)"
 	id = "b86d4bc2-632c-46e3-bba1-c088c9177983"
 	type = "CPU"
 
+# Uncomment the following for specific settings (and remove settings = {} above)
+#    [CPU.settings]
+#        printCode = true
+#        printCodeUseCache = true
+#        printCodeFileName = syserr   # Or custom path to a file
+
+
 [[DEVICE]]
 	schemaPoint = "176,37"
 	path = "88-disk.jar"
-	settings = {}
 	name = "88-disk"
 	id = "c94d0e9b-f394-4a71-94b0-87d0f970a3fd"
 	type = "DEVICE"
+
+		[DEVICE.settings]
+    	    # imageN = "..."  # Load file into drive N at startup
+
+    		sectorLength8 = 137
+    		sectorLength9 = 137
+    		sectorLength6 = 137
+    		sectorLength7 = 137
+    		sectorLength4 = 137
+    		sectorLength5 = 137
+    		sectorLength2 = 137
+    		sectorLength3 = 137
+    		sectorLength0 = 137
+    		sectorLength1 = 137
+    		port2CPU = 9
+    		sectorsPerTrack15 = 32
+    		sectorsPerTrack14 = 32
+    		sectorsPerTrack13 = 32
+    		sectorsPerTrack12 = 32
+    		sectorsPerTrack1 = 32
+    		sectorsPerTrack11 = 32
+    		sectorsPerTrack2 = 32
+    		sectorsPerTrack10 = 32
+    		sectorsPerTrack0 = 32
+    		sectorsPerTrack5 = 32
+    		sectorsPerTrack6 = 32
+    		sectorsPerTrack3 = 32
+    		sectorsPerTrack4 = 32
+    		sectorsPerTrack9 = 32
+    		sectorsPerTrack7 = 32
+    		sectorsPerTrack8 = 32
+    		port1CPU = 8
+    		port3CPU = 10
+    		sectorLength15 = 137
+    		sectorLength13 = 137
+    		sectorLength14 = 137
+    		sectorLength11 = 137
+    		sectorLength12 = 137
+    		sectorLength10 = 137
 
 [[DEVICE]]
 	schemaPoint = "276,137"
@@ -64,6 +124,10 @@ name = "MITS Altair8800 (Z80)"
 	[DEVICE.settings]
 		inputFileName = "adm3A-terminal.in"
 		outputFileName = "adm3A-terminal.out"
+#       halfDuplex = false
+#       alwaysOnTop = false
+#       inputReadDelay = 0
+#       antiAliasing = true
 
 [[DEVICE]]
 	schemaPoint = "116,237"

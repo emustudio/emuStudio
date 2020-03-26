@@ -28,6 +28,10 @@ name = "Random Access Machine (RAM)"
 	id = "ba7e7035-a074-4666-b3fc-d08ca55305f7"
 	type = "DEVICE"
 
+# Uncomment to apply additional settings
+#	[DEVICE.settings]
+#	    showAtStartup = false
+
 [[DEVICE]]
 	schemaPoint = "345,137"
 	path = "abstractTape-ram.jar"
@@ -35,12 +39,20 @@ name = "Random Access Machine (RAM)"
 	id = "57389401-fdf7-4bcd-8a66-f936332273bf"
 	type = "DEVICE"
 
+# Uncomment to apply additional settings
+#	[DEVICE.settings]
+#	    showAtStartup = false
+
 [[DEVICE]]
 	schemaPoint = "200,240"
 	path = "abstractTape-ram.jar"
 	name = "abstractTape"
 	id = "c3d76043-bb08-4711-bb8c-14f908fa763b"
 	type = "DEVICE"
+
+# Uncomment to apply additional settings
+#	[DEVICE.settings]
+#	    showAtStartup = false
 
 [[connections]]
 	bidirectional = true

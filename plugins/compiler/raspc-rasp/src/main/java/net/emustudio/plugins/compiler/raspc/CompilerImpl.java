@@ -48,7 +48,7 @@ public class CompilerImpl extends AbstractCompiler {
     private static final List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(
         new SourceFileExtension("rasp", "RASP source file")
     );
-    private static final String OUTPUT_FILE_EXTENSION = "bin";
+    private static final String OUTPUT_FILE_EXTENSION = "brasp";
 
     private final ParserImpl parser;
     private final LexerImpl lexer;

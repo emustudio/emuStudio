@@ -119,7 +119,7 @@ public class CompilerImpl extends AbstractCompiler {
         if (i >= 0) {
             outputFileName = outputFileName.substring(0, i);
         }
-        outputFileName += ".ro";
+        outputFileName += ".bram";
         return compile(inputFileName, outputFileName);
     }
 

@@ -115,12 +115,9 @@ public class MemoryImpl extends AbstractMemory {
             }
 
             context.init(memorySize, banksCount, bankCommon);
-
         } catch (NumberFormatException e) {
             throw new PluginInitializationException(this, "Could not parse settings: Invalid number format ", e);
         }
-
-
 
         loadImages();
         loadRomRanges();

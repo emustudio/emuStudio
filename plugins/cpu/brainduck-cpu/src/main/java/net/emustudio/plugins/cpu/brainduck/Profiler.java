@@ -20,6 +20,8 @@
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +31,8 @@ import java.util.Objects;
 import static net.emustudio.plugins.cpu.brainduck.EmulatorEngine.*;
 
 public class Profiler {
+    private final static Logger LOGGER = LoggerFactory.getLogger(Profiler.class);
+
     private final short[] memory;
     private final CachedOperation[] operationsCache;
     private final Integer[] loopEndsCache;
@@ -106,7 +110,7 @@ public class Profiler {
         optimizeScanLoops(programSize);
         optimizeRepeatingOperations(programSize);
 
-        System.err.println(this);
+        LOGGER.debug(this.toString());
     }
 
     private void optimizeRepeatingOperations(int programSize) {
