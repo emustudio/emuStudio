@@ -56,6 +56,10 @@ processResources {
   }
 }
 
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
+
 edigen {
   decoderName = 'net.emustudio.plugins.cpu.intel8080.gui.DecoderImpl'
   disassemblerName = 'net.emustudio.plugins.cpu.intel8080.gui.DisassemblerImpl'

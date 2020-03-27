@@ -91,7 +91,10 @@ application {
 
 compileJava {
   sourceSets.main.compileClasspath += configurations.providedRuntime
+  options.encoding = 'UTF-8'
 }
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
 
 run {
   classpath += configurations.providedRuntime
