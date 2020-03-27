@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,7 +46,7 @@ public class ViewComputerDialog extends JDialog {
 
         initComponents();
         setLocationRelativeTo(parent);
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
         lblComputerName.setText(computer.getComputerConfig().getName());
 
         final List<Device> devices = computer.getDevices();
@@ -133,6 +134,9 @@ public class ViewComputerDialog extends JDialog {
         JToolBar jToolBar2 = new JToolBar();
         JButton btnSaveSchema = new JButton();
         scrollPane = new JScrollPane();
+
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         setTitle("Computer information preview");
 

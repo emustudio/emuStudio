@@ -25,12 +25,15 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
+import static net.emustudio.application.Constants.FONT_MONOSPACED;
+
 class TextCellRenderer extends JLabel implements TableCellRenderer {
 
     private final DebugTableModel model;
 
     TextCellRenderer(DebugTableModel model) {
         this.model = Objects.requireNonNull(model);
+        setFont(FONT_MONOSPACED);
         setOpaque(true);
     }
 

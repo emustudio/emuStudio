@@ -36,7 +36,6 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.Objects;
 
@@ -120,7 +119,14 @@ public class StudioFrame extends JFrame {
 
     private void initComponents() {
         setIconImage(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/favicon16.png")).getImage());
+
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+        getRootPane().registerKeyboardAction(
+            e ->editor.clearMarkedOccurences(),
+            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent evt) {

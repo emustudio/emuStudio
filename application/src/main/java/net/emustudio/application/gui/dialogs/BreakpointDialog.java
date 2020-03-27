@@ -23,6 +23,7 @@ import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 
 import javax.swing.*;
+import java.awt.event.KeyEvent;
 import java.util.Objects;
 
 /**
@@ -60,6 +61,8 @@ public class BreakpointDialog extends JDialog {
         ConstantSizeButton btnUnset = new ConstantSizeButton(this::btnUnsetActionPerformed);
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
         setTitle("Set/unset breakpoint");
         setResizable(false);
 

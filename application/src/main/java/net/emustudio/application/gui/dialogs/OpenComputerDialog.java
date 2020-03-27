@@ -31,11 +31,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import static net.emustudio.application.Constants.FONT_COMMON;
 
 /**
  * This dialog manages the virtual computers. It offers a list of all
@@ -60,6 +63,8 @@ public class OpenComputerDialog extends JDialog {
     private JScrollPane scrollPreview;
 
     public OpenComputerDialog(ConfigFiles configFiles, ApplicationConfig applicationConfig, Dialogs dialogs) {
+        super((JFrame)null, true);
+
         this.configFiles = Objects.requireNonNull(configFiles);
         this.configurationsModel = new ConfigurationsListModel(configFiles);
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
@@ -67,10 +72,9 @@ public class OpenComputerDialog extends JDialog {
         this.preview = new SchemaPreviewPanel(null, dialogs);
 
         initComponents();
-        lstConfig.setModel(configurationsModel);
-        super.setModal(true);
-        super.setLocationRelativeTo(null);
+        setLocationRelativeTo(null);
 
+        lstConfig.setModel(configurationsModel);
         scrollPreview.setViewportView(preview);
     }
 
@@ -122,6 +126,8 @@ public class OpenComputerDialog extends JDialog {
         JButton btnClose = new JButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
         setTitle("emuStudio - Open virtual computer");
 
         splitConfig.setDividerLocation(200);
@@ -130,6 +136,7 @@ public class OpenComputerDialog extends JDialog {
 
         panelConfig.setPreferredSize(new java.awt.Dimension(200, 297));
 
+        lstConfig.setFont(FONT_COMMON);
         lstConfig.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lstConfigMouseClicked(evt);

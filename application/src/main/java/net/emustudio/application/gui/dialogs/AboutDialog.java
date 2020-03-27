@@ -39,6 +39,7 @@ package net.emustudio.application.gui.dialogs;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -62,6 +63,8 @@ public class AboutDialog extends JDialog {
         JLabel jLabel1 = new JLabel();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
         setTitle("About emuStudio");
 
         lblLogo.setBackground(Color.WHITE);
