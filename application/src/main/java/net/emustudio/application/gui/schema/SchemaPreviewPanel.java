@@ -57,42 +57,20 @@ public class SchemaPreviewPanel extends JPanel {
      */
     private int topFactor = 0;
 
-    /* double buffering */
-    private Image dbImage;   // second buffer
-    private Graphics2D dbg;  // graphics for double buffering
     private boolean panelResized = false;
 
     public SchemaPreviewPanel(Schema schema, Dialogs dialogs) {
         this.dialogs = Objects.requireNonNull(dialogs);
-
-        super.setBackground(Color.WHITE);
-        super.setDoubleBuffered(true);
         this.schema = schema;
+
+        setBackground(Color.WHITE);
+        setDoubleBuffered(true);
+        setOpaque(true);
     }
 
     public void setSchema(Schema schema) {
         this.schema = schema;
-    }
-
-    @Override
-    public void update(Graphics g) {
-        // initialize buffer if needed
-        if (dbImage == null) {
-            dbImage = createImage(this.getSize().width,
-                this.getSize().height);
-            dbg = (Graphics2D) dbImage.getGraphics();
-        }
-        // clear screen in background
-        dbg.setColor(getBackground());
-        dbg.fillRect(0, 0, this.getSize().width,
-            this.getSize().height);
-
-        // draw elements in background
-        dbg.setColor(getForeground());
-        paint(dbg);
-
-        // draw image on the screen
-        g.drawImage(dbImage, 0, 0, this);
+        panelResized = false;
     }
 
     private void resizePanel(Graphics g) {
