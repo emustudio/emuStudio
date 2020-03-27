@@ -130,11 +130,11 @@ public class OpenComputerDialog extends JDialog {
 
         setTitle("emuStudio - Open virtual computer");
 
-        splitConfig.setDividerLocation(200);
+        splitConfig.setDividerLocation(300);
         splitConfig.setMinimumSize(new java.awt.Dimension(50, 102));
-        splitConfig.setPreferredSize(new java.awt.Dimension(300, 299));
+        splitConfig.setPreferredSize(new java.awt.Dimension(400, 300));
 
-        panelConfig.setPreferredSize(new java.awt.Dimension(200, 297));
+        panelConfig.setPreferredSize(new java.awt.Dimension(200, 300));
 
         lstConfig.setFont(FONT_COMMON);
         lstConfig.addMouseListener(new java.awt.event.MouseAdapter() {

@@ -25,6 +25,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.KeyEvent;
 
+import static net.emustudio.plugins.device.mits88sio.gui.Constants.MONOSPACED_PLAIN;
+
 public class SioGui extends JDialog {
 
     public SioGui(JFrame parent, String deviceName, Transmitter transmitter, CpuPorts cpuPorts) {
@@ -149,6 +151,7 @@ public class SioGui extends JDialog {
         ));
         tblCPUPorts.setRowSelectionAllowed(false);
         tblCPUPorts.setShowHorizontalLines(false);
+        tblCPUPorts.setFont(MONOSPACED_PLAIN);
         jScrollPane1.setViewportView(tblCPUPorts);
 
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);

@@ -1,35 +1,35 @@
 name = "Random-Access Stored Program (RASP)"
 
 [MEMORY]
-	schemaPoint = "60,160"
+	schemaPoint = "60,60"
 	path = "rasp-mem.jar"
 	name = "rasp-mem"
 	id = "e0de33c4-3547-4f1b-ae1f-9b7fad88bce2"
 	type = "MEMORY"
 
 [COMPILER]
-	schemaPoint = "60,60"
+	schemaPoint = "60,160"
 	path = "raspc-rasp.jar"
 	name = "raspc-rasp"
 	id = "20f5dc7e-e72b-4bbc-ab7a-3290a78a6f86"
 	type = "COMPILER"
 
 [CPU]
-	schemaPoint = "180,120"
+	schemaPoint = "200,60"
 	path = "rasp-cpu.jar"
 	name = "rasp-cpu"
 	id = "f6e16d46-1c77-4ac9-9029-1a8652bc0f68"
 	type = "CPU"
 
 [[DEVICE]]
-	schemaPoint = "320,60"
+	schemaPoint = "340,60"
 	path = "abstractTape-ram.jar"
 	name = "abstractTape-ram"
 	id = "d3ddf28a-b865-41af-986f-bd1b2584a1bc"
 	type = "DEVICE"
 
 [[DEVICE]]
-	schemaPoint = "320,160"
+	schemaPoint = "200,160"
 	path = "abstractTape-ram.jar"
 	name = "abstractTape-ram"
 	id = "c6bbc8b5-fed7-4940-8d08-fb5ecd3f41bc"
