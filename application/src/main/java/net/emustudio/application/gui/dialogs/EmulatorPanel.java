@@ -1,6 +1,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
+import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.emulator.ShowDeviceGuiAction;
 import net.emustudio.application.gui.actions.emulator.ShowDeviceSettingsAction;
 import net.emustudio.application.gui.actions.emulator.*;

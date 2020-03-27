@@ -19,6 +19,8 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.configuration.ConfigFiles;
+import net.emustudio.application.gui.ToolbarButton;
+import net.emustudio.application.gui.ToolbarToggleButton;
 import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.DrawingPanel.Tool;
 import net.emustudio.application.gui.schema.Schema;

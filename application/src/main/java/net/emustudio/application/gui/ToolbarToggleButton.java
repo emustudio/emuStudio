@@ -1,4 +1,4 @@
-package net.emustudio.application.gui.dialogs;
+package net.emustudio.application.gui;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

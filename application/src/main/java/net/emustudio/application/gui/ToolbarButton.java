@@ -1,4 +1,4 @@
-package net.emustudio.application.gui.dialogs;
+package net.emustudio.application.gui;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -12,7 +12,6 @@ public class ToolbarButton extends JButton {
         setIcon(new ImageIcon(getClass().getResource(iconResource)));
         setToolTipText(tooltipText);
         setFocusable(false);
-        setBorderPainted(false);
     }
 
     public ToolbarButton(Action action, String tooltipText) {
@@ -20,7 +19,6 @@ public class ToolbarButton extends JButton {
         setHideActionText(true);
         setToolTipText(tooltipText);
         setFocusable(false);
-        setBorderPainted(false);
     }
 
     public ToolbarButton(Consumer<ActionEvent> action, String iconResource, String tooltipText) {

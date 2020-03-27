@@ -1,6 +1,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.Constants;
+import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.CompileAction;
 import net.emustudio.application.gui.actions.editor.*;
 import net.emustudio.application.gui.editor.Editor;
@@ -74,6 +75,7 @@ public class EditorPanel extends JPanel {
         splitSource.setRightComponent(compilerPane);
 
         JToolBar mainToolBar = setupMainToolbar();
+        mainToolBar.setRollover(true);
 
         GroupLayout panelSourceLayout = new GroupLayout(this);
         setLayout(panelSourceLayout);

@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.application.gui.dialogs.ToolbarButton;
+import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 
 import javax.swing.*;
