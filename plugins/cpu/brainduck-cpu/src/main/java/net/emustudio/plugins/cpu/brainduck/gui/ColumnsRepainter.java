@@ -27,6 +27,8 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.Enumeration;
 
+import static net.emustudio.plugins.cpu.brainduck.gui.Constants.MONOSPACED_PLAIN;
+
 public class ColumnsRepainter {
 
     private static class UBorder extends LineBorder {
@@ -71,7 +73,7 @@ public class ColumnsRepainter {
     private static class MainRenderer extends JLabel implements TableCellRenderer {
 
         private MainRenderer(boolean upper) {
-            setFont(new java.awt.Font("Monospaced", 0, 12));
+            setFont(MONOSPACED_PLAIN);
             setBorder(new UBorder(Color.BLACK, 3, upper));
             setHorizontalAlignment(CENTER);
         }

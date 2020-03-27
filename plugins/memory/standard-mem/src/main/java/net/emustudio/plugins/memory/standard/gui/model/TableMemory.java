@@ -28,6 +28,8 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.Objects;
 
+import static net.emustudio.plugins.memory.standard.gui.Constants.MONOSPACED_PLAIN;
+
 public class TableMemory extends JTable {
     private final MemoryTableModel tableModel;
     private final JScrollPane paneMemory;
@@ -37,11 +39,11 @@ public class TableMemory extends JTable {
         this.tableModel = Objects.requireNonNull(tableModel);
 
         super.setModel(this.tableModel);
-        super.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        super.setFont(MONOSPACED_PLAIN);
         super.setCellSelectionEnabled(true);
         super.setFocusCycleRoot(true);
         super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        super.getTableHeader().setFont(new Font("Monospaced", Font.PLAIN, 12));
+        super.getTableHeader().setFont(MONOSPACED_PLAIN);
         super.setDefaultRenderer(Object.class, new MemCellRenderer());
         setOpaque(true);
 
@@ -65,7 +67,7 @@ public class TableMemory extends JTable {
             setHorizontalAlignment(CENTER);
             setForeground(header.getForeground());
             setBackground(header.getBackground());
-            setFont(new Font("Monospaced", Font.PLAIN, 12));
+            setFont(MONOSPACED_PLAIN);
             setOpaque(true);
             setDoubleBuffered(true);
             this.setPreferredSize(new Dimension(4 * 18, header.getPreferredSize().height + 3));
@@ -97,7 +99,7 @@ public class TableMemory extends JTable {
                     + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage) + "h";
             }
             rowHeader = new JList<>(adresses);
-            this.setFont(new Font("Monospaced", Font.PLAIN, 12));
+            this.setFont(MONOSPACED_PLAIN);
 
             FontMetrics fm = rowHeader.getFontMetrics(rowHeader.getFont());
             int char_width = 17;

@@ -77,11 +77,9 @@ public class FindTextDialog extends javax.swing.JDialog {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Sequence to find"));
 
-        radioPlainText.setFont(radioPlainText.getFont().deriveFont(radioPlainText.getFont().getStyle() & ~java.awt.Font.BOLD));
         radioPlainText.setSelected(true);
         radioPlainText.setText("Plain text (case-sensitive)");
 
-        radioBytes.setFont(radioBytes.getFont().deriveFont(radioBytes.getFont().getStyle() & ~java.awt.Font.BOLD));
         radioBytes.setText("Sequence of bytes (space-separated)");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -110,11 +108,9 @@ public class FindTextDialog extends javax.swing.JDialog {
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Start position"));
 
-        radioCurrentPage.setFont(radioCurrentPage.getFont().deriveFont(radioCurrentPage.getFont().getStyle() & ~java.awt.Font.BOLD));
         radioCurrentPage.setSelected(true);
         radioCurrentPage.setText("Current page");
 
-        radioSpecificPosition.setFont(radioSpecificPosition.getFont().deriveFont(radioSpecificPosition.getFont().getStyle() & ~java.awt.Font.BOLD));
         radioSpecificPosition.setText("Specific position:");
 
         txtPosition.setText("0");
@@ -148,7 +144,6 @@ public class FindTextDialog extends javax.swing.JDialog {
                     .addContainerGap(24, Short.MAX_VALUE))
         );
 
-        btnFind.setFont(btnFind.getFont().deriveFont(btnFind.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnFind.setText("Find");
         btnFind.addActionListener(this::btnFindActionPerformed);
 

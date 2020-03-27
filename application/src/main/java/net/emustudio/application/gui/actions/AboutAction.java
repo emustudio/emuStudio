@@ -11,7 +11,7 @@ public class AboutAction extends AbstractAction {
     private final JFrame parent;
 
     public AboutAction(JFrame parent) {
-        super("About...");
+        super("About...", new ImageIcon(AboutAction.class.getResource("/net/emustudio/application/gui/favicon16.png")));
 
         this.parent = Objects.requireNonNull(parent);
 

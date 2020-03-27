@@ -28,7 +28,7 @@ import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
-import net.emustudio.plugins.device.mits88disk.gui.DiskFrame;
+import net.emustudio.plugins.device.mits88disk.gui.DiskGui;
 import net.emustudio.plugins.device.mits88disk.gui.SettingsDialog;
 import net.emustudio.plugins.device.mits88disk.ports.ControlPort;
 import net.emustudio.plugins.device.mits88disk.ports.DataPort;
@@ -65,7 +65,7 @@ public class DeviceImpl extends AbstractDevice {
     private int port2CPU;
     private int port3CPU;
     private int currentDrive;
-    private DiskFrame gui;
+    private DiskGui gui;
     private final boolean guiNotSupported;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -106,7 +106,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
-                gui = new DiskFrame(parent, drives);
+                gui = new DiskGui(parent, drives);
             }
             gui.setVisible(true);
         }

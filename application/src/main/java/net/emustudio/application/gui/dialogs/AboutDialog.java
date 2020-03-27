@@ -64,12 +64,13 @@ public class AboutDialog extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("About emuStudio");
 
-        lblLogo.setBackground(java.awt.Color.white);
+        lblLogo.setBackground(Color.WHITE);
         lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
-        lblLogo.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/logo.png"))); // NOI18N
+        lblLogo.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/logo.png")));
         lblLogo.setBorder(BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         lblLogo.setDoubleBuffered(true);
         lblLogo.setFocusable(false);
+        lblLogo.setOpaque(true);
         lblLogo.setHorizontalTextPosition(SwingConstants.CENTER);
         lblLogo.setIconTextGap(0);
 
@@ -89,7 +90,7 @@ public class AboutDialog extends JDialog {
                     .addContainerGap())
         );
 
-        lblName.setFont(new java.awt.Font("Tahoma", Font.BOLD, 18)); // NOI18N
+        lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));
         lblName.setText("emuStudio");
 
         lblCopyright.setText(getCopyright());
@@ -100,7 +101,7 @@ public class AboutDialog extends JDialog {
         jLabel4.setText("Version");
         jLabel1.setText(
             "<html>This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it " +
-                "under certain conditions; for details see https://www.gnu.org/licenses/gpl-3.0.html. " +
+                "under certain conditions; for details see https://www.gnu.org/licenses/gpl-3.0.html.<br/><br/>" +
                 "For more information about emuStudio, see https://www.emustudio.net/.");
 
         GroupLayout panelInfoLayout = new GroupLayout(panelInfo);
@@ -115,7 +116,7 @@ public class AboutDialog extends JDialog {
                             .addComponent(jLabel4)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(lblVersion))
-                        .addComponent(jLabel1, GroupLayout.PREFERRED_SIZE, 340, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel1, GroupLayout.PREFERRED_SIZE, 400, GroupLayout.PREFERRED_SIZE)
                         .addComponent(lblCopyright))
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -131,7 +132,7 @@ public class AboutDialog extends JDialog {
                         .addComponent(lblVersion)
                         .addComponent(jLabel4))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(jLabel1, GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE)
+                    .addComponent(jLabel1, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
                     .addContainerGap())
         );
 
@@ -149,7 +150,7 @@ public class AboutDialog extends JDialog {
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(panelInfo, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(panelInfo, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
                         .addComponent(panelLogo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                     .addContainerGap())
         );

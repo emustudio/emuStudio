@@ -76,7 +76,7 @@ public class RASPCpuStatusPanel extends JPanel {
         instrPointerValue = new javax.swing.JTextPane();
         JLabel jLabel3 = new JLabel();
 
-        runState.setFont(new java.awt.Font("DejaVu Sans", Font.BOLD, 13)); // NOI18N
+        runState.setFont(new java.awt.Font("DejaVu Sans", Font.BOLD, 13));
         runState.setText("BREAKPOINT");
 
         jLabel1.setText("ACCUMULATOR (R0):");

@@ -25,7 +25,7 @@ import net.emustudio.emulib.plugins.memory.AbstractMemory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.*;
 import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
-import net.emustudio.plugins.memory.standard.gui.MemoryDialog;
+import net.emustudio.plugins.memory.standard.gui.MemoryGui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl context;
-    private MemoryDialog gui;
+    private MemoryGui gui;
     private boolean guiNotSupported = false;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -217,7 +217,7 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
-                gui = new MemoryDialog(parent, this, context, settings, applicationApi.getDialogs());
+                gui = new MemoryGui(parent, this, context, settings, applicationApi.getDialogs());
             }
             gui.setVisible(true);
         }

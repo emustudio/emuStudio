@@ -33,14 +33,14 @@ import java.util.concurrent.locks.LockSupport;
 public class EmulatorEngine {
     private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
 
-    final static int INSTRUCTIONS_PER_SECOND = 700;
+    public final static int INSTRUCTIONS_PER_SECOND = 700;
     private final static int MEMORY_CELLS = 32 * 4;
 
     private final CPU cpu;
     private final MemoryContext<Byte> memory;
 
-    final AtomicInteger Acc = new AtomicInteger();
-    final AtomicInteger CI = new AtomicInteger();
+    public final AtomicInteger Acc = new AtomicInteger();
+    public final AtomicInteger CI = new AtomicInteger();
 
     private volatile long averageInstructionNanos;
 

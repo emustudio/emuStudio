@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.Objects;
 
 public class SettingsDialog extends JDialog {
@@ -33,16 +34,18 @@ public class SettingsDialog extends JDialog {
 
     private final PluginSettings settings;
     private final Dialogs dialogs;
-    private TapeDialog gui;
+    private final TapeGui gui;
 
-    public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeDialog gui) {
+    public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeGui gui) {
         super(parent, true);
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.gui = gui;
 
         initComponents();
-        this.setSize(250, this.getHeight());
+        setSize(250, this.getHeight());
+        setLocationRelativeTo(parent);
+
         boolean alwaysOnTop = settings.getBoolean("alwaysOnTop", false);
         chkAlwaysOnTop.setSelected(alwaysOnTop);
 
@@ -56,9 +59,11 @@ public class SettingsDialog extends JDialog {
         JButton btnOK = new JButton("OK");
 
         setTitle("AbstractTape settings");
-        setLocationRelativeTo(null);
         setResizable(false);
+
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
 
         chkAlwaysOnTop.addActionListener(e -> {
             if (gui != null) {

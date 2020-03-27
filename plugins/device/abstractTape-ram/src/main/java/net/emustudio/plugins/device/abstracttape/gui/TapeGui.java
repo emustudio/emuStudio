@@ -23,14 +23,15 @@ import net.emustudio.plugins.device.abstracttape.AbstractTapeContextImpl;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-public class TapeDialog extends JDialog {
+public class TapeGui extends JDialog {
     private final Dialogs dialogs;
     private final AbstractTapeContextImpl tapeContext;
     private final TapeListModel listModel = new TapeListModel();
 
-    public TapeDialog(JFrame parent, String title, AbstractTapeContextImpl tapeContext, boolean alwaysOnTop, Dialogs dialogs) {
+    public TapeGui(JFrame parent, String title, AbstractTapeContextImpl tapeContext, boolean alwaysOnTop, Dialogs dialogs) {
         super(parent);
         this.tapeContext = Objects.requireNonNull(tapeContext);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -38,6 +39,7 @@ public class TapeDialog extends JDialog {
         initComponents();
         setTitle(title);
         setAlwaysOnTop(alwaysOnTop);
+        setLocationRelativeTo(parent);
 
         lstTape.setModel(listModel);
         lstTape.setCellRenderer(new TapeCellRenderer());
@@ -138,14 +140,16 @@ public class TapeDialog extends JDialog {
         btnClear = new NiceButton("Clear tape");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
         scrollTape.setViewportView(lstTape);
 
-        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png"))); // NOI18N
+        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png")));
         btnAddFirst.addActionListener(e -> dialogs
             .readString("Symbol value:", "Add symbol (on top)")
             .ifPresent(tapeContext::addSymbolFirst));
 
-        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png"))); // NOI18N
+        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png")));
         btnAddLast.addActionListener(e -> dialogs
             .readString("Symbol value:", "Add symbol (on bottom)")
             .ifPresent(tapeContext::addSymbolLast));

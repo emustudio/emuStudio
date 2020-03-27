@@ -26,8 +26,8 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.*;
 import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
 import net.emustudio.plugins.device.mits88sio.ports.*;
-import net.emustudio.plugins.device.mits88sio.gui.ConfigDialog;
-import net.emustudio.plugins.device.mits88sio.gui.StatusDialog;
+import net.emustudio.plugins.device.mits88sio.gui.SettingsDialog;
+import net.emustudio.plugins.device.mits88sio.gui.SioGui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
     private final CpuDataPort cpuDataPort = new CpuDataPort(transmitter);
     private final SIOSettings sioSettings;
 
-    private StatusDialog gui;
+    private SioGui gui;
     private CpuPorts cpuPorts;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -116,7 +116,7 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
     public void showGUI(JFrame parent) {
         if (!sioSettings.isGuiNotSupported()) {
             if (gui == null) {
-                gui = new StatusDialog(parent, transmitter.getDeviceId(), transmitter, cpuPorts);
+                gui = new SioGui(parent, transmitter.getDeviceId(), transmitter, cpuPorts);
             }
             gui.setVisible(true);
         }
@@ -136,7 +136,7 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
     @Override
     public void showSettings(JFrame parent) {
         if (!sioSettings.isGuiNotSupported()) {
-            new ConfigDialog(parent, sioSettings, applicationApi.getDialogs()).setVisible(true);
+            new SettingsDialog(parent, sioSettings, applicationApi.getDialogs()).setVisible(true);
         }
     }
 

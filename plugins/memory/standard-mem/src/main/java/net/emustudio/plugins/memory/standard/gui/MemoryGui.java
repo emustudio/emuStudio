@@ -29,18 +29,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 
-public class MemoryDialog extends JDialog {
-    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryDialog.class);
+public class MemoryGui extends JDialog {
+    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryGui.class);
 
     private final MemoryContextImpl context;
     private final MemoryImpl memory;
@@ -50,7 +47,7 @@ public class MemoryDialog extends JDialog {
     private TableMemory table;
     private MemoryTableModel tableModel;
 
-    public MemoryDialog(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
+    public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
         super(parent);
 
         this.context = Objects.requireNonNull(context);
@@ -60,7 +57,7 @@ public class MemoryDialog extends JDialog {
         this.tableModel = new MemoryTableModel(context);
 
         initComponents();
-        super.setLocationRelativeTo(null);
+        super.setLocationRelativeTo(parent);
 
         table = new TableMemory(tableModel, paneMemory);
         paneMemory.setViewportView(table);
@@ -169,13 +166,15 @@ public class MemoryDialog extends JDialog {
         paneMemory = new JScrollPane();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
         setTitle("Standard Operating Memory");
         setSize(new java.awt.Dimension(794, 629));
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
-        btnLoadImage.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/document-open.png"))); // NOI18N
+        btnLoadImage.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/document-open.png")));
         btnLoadImage.setToolTipText("Load image...");
         btnLoadImage.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnLoadImage.setFocusable(false);
@@ -184,7 +183,7 @@ public class MemoryDialog extends JDialog {
         btnLoadImage.addActionListener(this::btnLoadImageActionPerformed);
         jToolBar1.add(btnLoadImage);
 
-        btnDump.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/document-save.png"))); // NOI18N
+        btnDump.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/document-save.png")));
         btnDump.setToolTipText("Dump (save) memory...");
         btnDump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnDump.setFocusable(false);
@@ -194,7 +193,7 @@ public class MemoryDialog extends JDialog {
         jToolBar1.add(btnDump);
         jToolBar1.add(jSeparator1);
 
-        btnGotoAddress.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/format-indent-more.png"))); // NOI18N
+        btnGotoAddress.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/format-indent-more.png")));
         btnGotoAddress.setToolTipText("Go to address...");
         btnGotoAddress.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnGotoAddress.setFocusable(false);
@@ -203,7 +202,7 @@ public class MemoryDialog extends JDialog {
         btnGotoAddress.addActionListener(this::btnGotoAddressActionPerformed);
         jToolBar1.add(btnGotoAddress);
 
-        btnFind.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/edit-find.png"))); // NOI18N
+        btnFind.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/edit-find.png")));
         btnFind.setToolTipText("Find sequence...");
         btnFind.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnFind.setFocusable(false);
@@ -213,7 +212,7 @@ public class MemoryDialog extends JDialog {
         jToolBar1.add(btnFind);
         jToolBar1.add(jSeparator2);
 
-        btnClean.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/edit-clear.png"))); // NOI18N
+        btnClean.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/edit-clear.png")));
         btnClean.setToolTipText("Erase memory");
         btnClean.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnClean.setFocusable(false);
@@ -223,7 +222,7 @@ public class MemoryDialog extends JDialog {
         jToolBar1.add(btnClean);
         jToolBar1.add(jSeparator3);
 
-        btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/preferences-system.png"))); // NOI18N
+        btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/preferences-system.png")));
         btnSettings.setToolTipText("Settings...");
         btnSettings.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnSettings.setFocusable(false);
@@ -238,19 +237,13 @@ public class MemoryDialog extends JDialog {
 
         jPanel3.setBorder(BorderFactory.createTitledBorder("Memory control"));
 
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Page number:");
-
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("/");
 
         lblPageCount.setFont(lblPageCount.getFont().deriveFont(lblPageCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblPageCount.setText("0");
 
-        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel3.setText("Memory bank:");
-
-        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel4.setText("/");
 
         lblBanksCount.setText("0");
@@ -296,14 +289,12 @@ public class MemoryDialog extends JDialog {
 
         jPanel4.setBorder(BorderFactory.createTitledBorder("Selected value"));
 
-        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel5.setText("Address:");
 
         txtAddress.setEditable(false);
         txtAddress.setHorizontalAlignment(JTextField.RIGHT);
         txtAddress.setText("0000");
 
-        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel6.setText("Symbol:");
 
         txtChar.setEditable(false);
@@ -311,7 +302,6 @@ public class MemoryDialog extends JDialog {
 
         jSeparator4.setOrientation(SwingConstants.VERTICAL);
 
-        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel7.setText("Value:");
 
         txtValueDec.setEditable(false);
@@ -319,21 +309,18 @@ public class MemoryDialog extends JDialog {
         txtValueDec.setText("00");
         txtValueDec.setToolTipText("");
 
-        jLabel8.setFont(jLabel8.getFont().deriveFont(jLabel8.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel8.setText("(dec)");
 
         txtValueHex.setEditable(false);
         txtValueHex.setHorizontalAlignment(JTextField.RIGHT);
         txtValueHex.setText("00");
 
-        jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel9.setText("(hex)");
 
         txtValueOct.setEditable(false);
         txtValueOct.setHorizontalAlignment(JTextField.RIGHT);
         txtValueOct.setText("000");
 
-        jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel10.setText("(oct)");
 
         txtValueBin.setEditable(false);
@@ -341,7 +328,6 @@ public class MemoryDialog extends JDialog {
         txtValueBin.setText("0000 0000");
         txtValueBin.setToolTipText("");
 
-        jLabel11.setFont(jLabel11.getFont().deriveFont(jLabel11.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel11.setText("(bin)");
 
         GroupLayout jPanel4Layout = new GroupLayout(jPanel4);

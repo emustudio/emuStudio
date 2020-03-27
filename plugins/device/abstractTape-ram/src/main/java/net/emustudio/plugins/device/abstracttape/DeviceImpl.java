@@ -27,7 +27,7 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.gui.SettingsDialog;
-import net.emustudio.plugins.device.abstracttape.gui.TapeDialog;
+import net.emustudio.plugins.device.abstracttape.gui.TapeGui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,7 @@ public class DeviceImpl extends AbstractDevice {
     private final AbstractTapeContextImpl context;
 
     private String guiTitle;
-    private TapeDialog gui;
+    private TapeGui gui;
     private boolean guiNotSupported;
     private boolean automaticEmulation;
 
@@ -98,7 +98,7 @@ public class DeviceImpl extends AbstractDevice {
         if (!guiNotSupported) {
             if (gui == null) {
                 boolean alwaysOnTop = settings.getBoolean("alwaysOnTop", false);
-                gui = new TapeDialog(parent, getTitle(), context, alwaysOnTop, applicationApi.getDialogs());
+                gui = new TapeGui(parent, getTitle(), context, alwaysOnTop, applicationApi.getDialogs());
             }
             gui.setVisible(true);
         }

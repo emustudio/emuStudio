@@ -18,14 +18,13 @@
  */
 package net.emustudio.application;
 
-import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 
 public class Constants {
 
-    public static final Font FONT_MONOSPACED = new Font(FontUIResource.MONOSPACED, Font.PLAIN, 12);
-    public static final Font FONT_COMMON = new Font(FontUIResource.SANS_SERIF, Font.PLAIN, 12);
-    public static final Font FONT_TITLE_BORDER = new Font(FontUIResource.SANS_SERIF, Font.BOLD, 12);
+    public static final Font FONT_MONOSPACED = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+    public static final Font FONT_COMMON = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
+    public static final Font FONT_TITLE_BORDER = new Font(Font.SANS_SERIF, Font.BOLD, 12);
 
     public static final Color DEBUGTABLE_COLOR_ROW_EVEN = new Color(241, 245, 250);
     public static final Color DEBUGTABLE_COLOR_ROW_ODD = Color.WHITE;

@@ -27,7 +27,7 @@ import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
-import net.emustudio.plugins.memory.brainduck.gui.MemoryGUI;
+import net.emustudio.plugins.memory.brainduck.gui.MemoryGui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class MemoryImpl extends AbstractMemory {
     private static final Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl memContext = new MemoryContextImpl();
-    private MemoryGUI memoryGUI;
+    private MemoryGui memoryGUI;
     private boolean guiNotSupported;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -95,7 +95,7 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (memoryGUI == null) {
-                memoryGUI = new MemoryGUI(parent, memContext);
+                memoryGUI = new MemoryGui(parent, memContext);
             }
             memoryGUI.setVisible(true);
         }

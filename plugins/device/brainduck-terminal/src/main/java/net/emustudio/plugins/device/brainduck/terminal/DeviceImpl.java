@@ -136,7 +136,7 @@ public class DeviceImpl extends AbstractDevice {
         if (!guiNotSupported && !automaticEmulation) {
             if (!keyboardSet) {
                 Keyboard keyboard = new Keyboard();
-                OutputProvider outputProvider = BrainTerminalDialog.create(parent, keyboard, applicationApi.getDialogs());
+                OutputProvider outputProvider = BrainTerminalGui.create(parent, keyboard, applicationApi.getDialogs());
                 terminal.setInputProvider(keyboard);
                 terminal.setOutputProvider(outputProvider);
                 keyboardSet = true;

@@ -24,18 +24,18 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import javax.swing.*;
 import java.util.Objects;
 
-class DisplayDialog extends JDialog {
+class DisplayGui extends JDialog {
     private final MemoryContext<Byte> memory;
     private final DisplayPanel displayPanel;
 
-    DisplayDialog(JFrame parent, MemoryContext<Byte> memory, DisplayPanel displayPanel) {
+    DisplayGui(JFrame parent, MemoryContext<Byte> memory, DisplayPanel displayPanel) {
         super(parent);
 
         this.memory = Objects.requireNonNull(memory);
         this.displayPanel = Objects.requireNonNull(displayPanel);
 
-        super.setLocationRelativeTo(null);
         initComponents();
+        setLocationRelativeTo(parent);
 
         scrollPane.setViewportView(displayPanel);
         initListener();

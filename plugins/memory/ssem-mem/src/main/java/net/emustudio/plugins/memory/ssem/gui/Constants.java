@@ -26,8 +26,8 @@ public final class Constants {
     public final static Color COLOR_FORE = Color.BLACK;
     public final static Color COLOR_FORE_UNIMPORTANT = Color.DARK_GRAY;
 
-    public final static Font DEFAULT_FONT = new Font("Monospaced", Font.PLAIN, 12);
-    public final static Font BOLD_FONT = new Font("Monospaced", Font.BOLD, 12);
+    public final static Font DEFAULT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+    public final static Font BOLD_FONT = new Font(Font.MONOSPACED, Font.BOLD, 12);
 
     public final static int CHAR_WIDTH = 17;
     public final static int CHAR_HEIGHT = 5;

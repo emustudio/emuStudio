@@ -31,6 +31,7 @@ import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.OpcodeColumn;
+import net.emustudio.plugins.cpu.ssem.gui.CpuPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

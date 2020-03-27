@@ -23,15 +23,17 @@ import net.emustudio.plugins.device.mits88sio.Transmitter;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.event.KeyEvent;
 
-public class StatusDialog extends JDialog {
+public class SioGui extends JDialog {
 
-    public StatusDialog(JFrame parent, String deviceName, Transmitter transmitter, CpuPorts cpuPorts) {
+    public SioGui(JFrame parent, String deviceName, Transmitter transmitter, CpuPorts cpuPorts) {
         super(parent);
-        initComponents();
-        super.setLocationRelativeTo(null);
-        tblCPUPorts.setModel(new CPUPortsTableModel(cpuPorts));
 
+        initComponents();
+        setLocationRelativeTo(parent);
+
+        tblCPUPorts.setModel(new CPUPortsTableModel(cpuPorts));
         txtStatus.setText(String.format("0x%x", transmitter.readStatus()));
 
         lblAttachedDevice.setText(deviceName);
@@ -67,11 +69,13 @@ public class StatusDialog extends JDialog {
         tblCPUPorts = new JTable();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
         setTitle("MITS SIO Status");
 
         jPanel1.setBorder(BorderFactory.createTitledBorder("Attached device"));
 
-        lblAttachedDevice.setFont(lblAttachedDevice.getFont().deriveFont(lblAttachedDevice.getFont().getStyle() & ~java.awt.Font.BOLD, 14));
+        lblAttachedDevice.setFont(lblAttachedDevice.getFont().deriveFont(14.0f));
         lblAttachedDevice.setHorizontalAlignment(SwingConstants.CENTER);
         lblAttachedDevice.setText("N/A");
 
@@ -94,10 +98,7 @@ public class StatusDialog extends JDialog {
 
         jPanel2.setBorder(BorderFactory.createTitledBorder("SIO Ports (for reading)"));
 
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Status:");
-
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("Data:");
 
         txtData.setEditable(false);

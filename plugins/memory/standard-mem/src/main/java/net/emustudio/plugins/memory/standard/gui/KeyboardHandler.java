@@ -30,14 +30,14 @@ public class KeyboardHandler extends KeyAdapter {
     private final TableMemory tblMemory;
     private final SpinnerModel spnPageModel;
     private final MemoryTableModel memoryModel;
-    private final MemoryDialog memDialog;
+    private final MemoryGui memDialog;
 
     private boolean right_correct;
     private boolean left_correct;
     private boolean up_correct;
     private boolean down_correct;
 
-    public KeyboardHandler(TableMemory tblMemory, SpinnerModel spnPageModel, MemoryDialog memDialog) {
+    public KeyboardHandler(TableMemory tblMemory, SpinnerModel spnPageModel, MemoryGui memDialog) {
         this.tblMemory = Objects.requireNonNull(tblMemory);
         this.spnPageModel = Objects.requireNonNull(spnPageModel);
         this.memDialog = Objects.requireNonNull(memDialog);

@@ -28,7 +28,7 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.KeyboardListener {
+class BrainTerminalGui extends JDialog implements OutputProvider, Keyboard.KeyboardListener {
     private final Dialogs dialogs;
 
     private final ImageIcon blueIcon;
@@ -38,7 +38,7 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     private final Display canvas;
     private final Keyboard keyboard;
 
-    private BrainTerminalDialog(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
+    private BrainTerminalGui(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
         super(parent);
         this.dialogs = Objects.requireNonNull(dialogs);
 
@@ -60,7 +60,7 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
 
         setTitle("BrainDuck Terminal");
         initComponents();
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(parent);
 
         canvas = new Display();
         scrollPane.setViewportView(canvas);
@@ -130,8 +130,8 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     }
 
 
-    static BrainTerminalDialog create(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
-        BrainTerminalDialog dialog = new BrainTerminalDialog(parent, keyboard, dialogs);
+    static BrainTerminalGui create(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
+        BrainTerminalGui dialog = new BrainTerminalGui(parent, keyboard, dialogs);
         GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
         dialog.keyboard.addListener(dialog);
         return dialog;
@@ -161,7 +161,7 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
         lblStatusIcon.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
         btnASCII.setFont(btnASCII.getFont());
-        btnASCII.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/plugins/device/brainduck/terminal/16_ascii.png"))); // NOI18N
+        btnASCII.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/plugins/device/brainduck/terminal/16_ascii.png")));
         btnASCII.setToolTipText("Input by ASCII code");
         btnASCII.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         btnASCII.setEnabled(false);

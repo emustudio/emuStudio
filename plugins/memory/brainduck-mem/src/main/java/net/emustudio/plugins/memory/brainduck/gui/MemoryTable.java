@@ -26,6 +26,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
+import static net.emustudio.plugins.memory.brainduck.gui.Constants.MONOSPACED_PLAIN;
 
 class MemoryTable extends JTable {
     private final static int CHAR_WIDTH = 17;
@@ -37,11 +38,11 @@ class MemoryTable extends JTable {
         this.scrollPane = scrollPane;
         this.model = model;
         this.setModel(this.model);
-        this.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        this.setFont(MONOSPACED_PLAIN);
         this.setCellSelectionEnabled(true);
         this.setFocusCycleRoot(true);
         this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        this.getTableHeader().setFont(new Font("Monospaced", Font.PLAIN, 12));
+        this.getTableHeader().setFont(MONOSPACED_PLAIN);
         this.setDefaultRenderer(Object.class, new MemCellRenderer());
 
         MemoryCellEditor ed = new MemoryCellEditor();
@@ -60,7 +61,7 @@ class MemoryTable extends JTable {
             setHorizontalAlignment(CENTER);
             setForeground(header.getForeground());
             setBackground(header.getBackground());
-            setFont(new Font("Monospaced", Font.PLAIN, 12));
+            setFont(MONOSPACED_PLAIN);
             setPreferredSize(new Dimension(4 * CHAR_WIDTH, header.getPreferredSize().height));
         }
 
@@ -86,7 +87,7 @@ class MemoryTable extends JTable {
                 ) + "h";
             }
             rowHeader = new JList<>(adresses);
-            this.setFont(new Font("Monospaced", Font.PLAIN, 12));
+            this.setFont(MONOSPACED_PLAIN);
 
             FontMetrics fm = rowHeader.getFontMetrics(rowHeader.getFont());
             int char_width = CHAR_WIDTH;

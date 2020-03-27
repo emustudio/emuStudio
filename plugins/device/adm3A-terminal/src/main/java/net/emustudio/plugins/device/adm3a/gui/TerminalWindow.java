@@ -33,7 +33,7 @@ public class TerminalWindow extends JDialog {
 
         initComponents();
         setVisible(false);
-        this.setLocationRelativeTo(null);
+        setLocationRelativeTo(parent);
     }
 
     public void destroy() {
@@ -51,8 +51,8 @@ public class TerminalWindow extends JDialog {
         display.setBounds(53, 60, 653, 400);
 
         lblBack.setLocation(0, 0);
-        lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12)); // NOI18N
-        lblBack.setIcon(img); // NOI18N
+        lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        lblBack.setIcon(img);
         lblBack.setFocusable(false);
         lblBack.setOpaque(true);
         lblBack.setBackground(Color.BLACK);

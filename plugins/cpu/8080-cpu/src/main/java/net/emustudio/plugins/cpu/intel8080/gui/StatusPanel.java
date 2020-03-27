@@ -152,7 +152,7 @@ public class StatusPanel extends JPanel {
         chkPrintInstructions = new JCheckBox("Dump instructions history");
 
         setBorder(null);
-        paneRegisters.setBorder(null); // NOI18N
+        paneRegisters.setBorder(null);
 
         lblCPUFreq.setFont(lblCPUFreq.getFont().deriveFont(lblCPUFreq.getFont().getStyle() & ~Font.BOLD));
         lblRuntimeFreq.setFont(lblRuntimeFreq.getFont().deriveFont(lblRuntimeFreq.getFont().getStyle() & ~Font.BOLD));
@@ -231,7 +231,7 @@ public class StatusPanel extends JPanel {
             "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
             javax.swing.border.TitledBorder.DEFAULT_POSITION,
             new java.awt.Font("DejaVu Sans", Font.BOLD, 14),
-            new java.awt.Color(102, 102, 102))); // NOI18N
+            new java.awt.Color(102, 102, 102)));
 
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | java.awt.Font.BOLD));
         lblRun.setForeground(new java.awt.Color(0, 102, 0));

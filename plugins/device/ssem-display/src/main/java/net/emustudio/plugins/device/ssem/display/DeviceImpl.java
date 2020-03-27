@@ -40,7 +40,7 @@ public class DeviceImpl extends AbstractDevice {
     private final DisplayPanel displayPanel = new DisplayPanel();
     private MemoryContext<Byte> memory;
     private boolean guiNotSupported;
-    private DisplayDialog display;
+    private DisplayGui display;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -65,14 +65,14 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void destroy() {
-        Optional.ofNullable(display).ifPresent(DisplayDialog::dispose);
+        Optional.ofNullable(display).ifPresent(DisplayGui::dispose);
     }
 
     @Override
     public void showGUI(JFrame parent) {
         if (!guiNotSupported) {
             if (display == null) {
-                display = new DisplayDialog(parent, memory, displayPanel);
+                display = new DisplayGui(parent, memory, displayPanel);
             }
             display.setVisible(true);
         }

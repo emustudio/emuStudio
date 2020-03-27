@@ -30,6 +30,7 @@ import java.awt.*;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
+import static net.emustudio.plugins.cpu.zilogZ80.gui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
@@ -205,83 +206,81 @@ public class StatusPanel extends JPanel {
         lblFrequency = new JLabel();
         chkPrintInstructions = new JCheckBox();
 
-        jTabbedPane1.setFont(jTabbedPane1.getFont().deriveFont(jTabbedPane1.getFont().getStyle() & ~java.awt.Font.BOLD));
-
-        jLabel13.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel13.setFont(MONOSPACED_PLAIN);
         jLabel13.setText("A");
 
         txtA1.setEditable(false);
-        txtA1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtA1.setFont(MONOSPACED_PLAIN);
         txtA1.setText("00");
 
-        jLabel14.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel14.setFont(MONOSPACED_BOLD);
         jLabel14.setText("B");
 
         txtB1.setEditable(false);
-        txtB1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtB1.setFont(MONOSPACED_PLAIN);
         txtB1.setText("00");
 
         txtF1.setEditable(false);
-        txtF1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtF1.setFont(MONOSPACED_PLAIN);
         txtF1.setText("00");
 
-        jLabel15.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel15.setFont(MONOSPACED_BOLD);
         jLabel15.setText("F");
 
-        jLabel16.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel16.setFont(MONOSPACED_BOLD);
         jLabel16.setText("C");
 
         txtC1.setEditable(false);
-        txtC1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtC1.setFont(MONOSPACED_PLAIN);
         txtC1.setText("00");
 
         txtD1.setEditable(false);
-        txtD1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtD1.setFont(MONOSPACED_PLAIN);
         txtD1.setText("00");
 
-        jLabel17.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel17.setFont(MONOSPACED_BOLD);
         jLabel17.setText("D");
 
-        jLabel18.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel18.setFont(MONOSPACED_BOLD);
         jLabel18.setText("H");
 
         txtH1.setEditable(false);
-        txtH1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtH1.setFont(MONOSPACED_PLAIN);
         txtH1.setText("00");
 
-        jLabel19.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel19.setFont(MONOSPACED_BOLD);
         jLabel19.setText("L");
 
-        jLabel20.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel20.setFont(MONOSPACED_BOLD);
         jLabel20.setText("E");
 
         txtE1.setEditable(false);
-        txtE1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtE1.setFont(MONOSPACED_PLAIN);
         txtE1.setText("00");
 
         txtL1.setEditable(false);
-        txtL1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtL1.setFont(MONOSPACED_PLAIN);
         txtL1.setText("00");
 
         txtHL1.setEditable(false);
-        txtHL1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtHL1.setFont(MONOSPACED_PLAIN);
         txtHL1.setText("00");
 
         txtDE1.setEditable(false);
-        txtDE1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtDE1.setFont(MONOSPACED_PLAIN);
         txtDE1.setText("00");
 
         txtBC1.setEditable(false);
-        txtBC1.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtBC1.setFont(MONOSPACED_PLAIN);
         txtBC1.setText("00");
 
-        jLabel21.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel21.setFont(MONOSPACED_BOLD);
         jLabel21.setText("BC");
 
-        jLabel22.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel22.setFont(MONOSPACED_BOLD);
         jLabel22.setText("DE");
 
-        jLabel23.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel23.setFont(MONOSPACED_BOLD);
         jLabel23.setText("HL");
 
         jScrollPane2.setBorder(null);
@@ -297,7 +296,6 @@ public class StatusPanel extends JPanel {
         tblFlags1.setRowSelectionAllowed(false);
         jScrollPane2.setViewportView(tblFlags1);
 
-        jLabel24.setFont(jLabel24.getFont().deriveFont(jLabel24.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel24.setText("Flags:");
 
         GroupLayout panelSet1Layout = new GroupLayout(panelSet1);
@@ -401,81 +399,81 @@ public class StatusPanel extends JPanel {
 
         jTabbedPane1.addTab("Set 1", panelSet1);
 
-        jLabel1.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel1.setFont(MONOSPACED_BOLD);
         jLabel1.setText("B");
 
         txtB2.setEditable(false);
-        txtB2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtB2.setFont(MONOSPACED_PLAIN);
         txtB2.setText("00");
 
-        jLabel2.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel2.setFont(MONOSPACED_BOLD);
         jLabel2.setText("C");
 
         txtC2.setEditable(false);
-        txtC2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtC2.setFont(MONOSPACED_PLAIN);
         txtC2.setText("00");
 
-        jLabel3.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel3.setFont(MONOSPACED_BOLD);
         jLabel3.setText("BC");
 
         txtBC2.setEditable(false);
-        txtBC2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtBC2.setFont(MONOSPACED_PLAIN);
         txtBC2.setText("00");
 
-        jLabel4.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel4.setFont(MONOSPACED_BOLD);
         jLabel4.setText("D");
 
         txtD2.setEditable(false);
-        txtD2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtD2.setFont(MONOSPACED_PLAIN);
         txtD2.setText("00");
 
-        jLabel5.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel5.setFont(MONOSPACED_BOLD);
         jLabel5.setText("E");
 
         txtE2.setEditable(false);
-        txtE2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtE2.setFont(MONOSPACED_PLAIN);
         txtE2.setText("00");
 
-        jLabel6.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel6.setFont(MONOSPACED_BOLD);
         jLabel6.setText("DE");
 
         txtDE2.setEditable(false);
-        txtDE2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtDE2.setFont(MONOSPACED_PLAIN);
         txtDE2.setText("00");
 
-        jLabel7.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel7.setFont(MONOSPACED_BOLD);
         jLabel7.setText("H");
 
         txtH2.setEditable(false);
-        txtH2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtH2.setFont(MONOSPACED_PLAIN);
         txtH2.setText("00");
 
-        jLabel8.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel8.setFont(MONOSPACED_BOLD);
         jLabel8.setText("L");
 
         txtL2.setEditable(false);
-        txtL2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtL2.setFont(MONOSPACED_PLAIN);
         txtL2.setText("00");
 
-        jLabel9.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel9.setFont(MONOSPACED_BOLD);
         jLabel9.setText("HL");
 
         txtHL2.setEditable(false);
-        txtHL2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtHL2.setFont(MONOSPACED_PLAIN);
         txtHL2.setText("00");
 
-        jLabel10.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel10.setFont(MONOSPACED_BOLD);
         jLabel10.setText("A");
 
         txtA2.setEditable(false);
-        txtA2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtA2.setFont(MONOSPACED_PLAIN);
         txtA2.setText("00");
 
-        jLabel11.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel11.setFont(MONOSPACED_BOLD);
         jLabel11.setText("F");
 
         txtF2.setEditable(false);
-        txtF2.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtF2.setFont(MONOSPACED_PLAIN);
         txtF2.setText("00");
 
         jScrollPane1.setBorder(null);
@@ -594,46 +592,46 @@ public class StatusPanel extends JPanel {
 
         jTabbedPane1.addTab("Set 2", panelSet2);
 
-        jLabel26.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel26.setFont(MONOSPACED_BOLD);
         jLabel26.setText("PC");
 
         txtPC.setEditable(false);
-        txtPC.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtPC.setFont(MONOSPACED_PLAIN);
         txtPC.setText("00");
 
-        jLabel25.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel25.setFont(MONOSPACED_BOLD);
         jLabel25.setText("SP");
 
         txtSP.setEditable(false);
-        txtSP.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtSP.setFont(MONOSPACED_PLAIN);
         txtSP.setText("00");
 
-        jLabel27.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel27.setFont(MONOSPACED_BOLD);
         jLabel27.setText("IX");
 
         txtIX.setEditable(false);
-        txtIX.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtIX.setFont(MONOSPACED_PLAIN);
         txtIX.setText("00");
 
-        jLabel28.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel28.setFont(MONOSPACED_BOLD);
         jLabel28.setText("IY");
 
         txtIY.setEditable(false);
-        txtIY.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtIY.setFont(MONOSPACED_PLAIN);
         txtIY.setText("00");
 
-        jLabel29.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel29.setFont(MONOSPACED_BOLD);
         jLabel29.setText("I");
 
         txtI.setEditable(false);
-        txtI.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtI.setFont(MONOSPACED_PLAIN);
         txtI.setText("00");
 
-        jLabel30.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
+        jLabel30.setFont(MONOSPACED_BOLD);
         jLabel30.setText("R");
 
         txtR.setEditable(false);
-        txtR.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 12)); // NOI18N
+        txtR.setFont(MONOSPACED_PLAIN);
         txtR.setText("00");
 
         GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
@@ -695,27 +693,23 @@ public class StatusPanel extends JPanel {
 
         jPanel2.setBorder(BorderFactory.createTitledBorder("Run control"));
 
-        lblRunState.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 18)); // NOI18N
+        lblRunState.setFont(MONOSPACED_BIG_BOLD);
         lblRunState.setForeground(new java.awt.Color(0, 153, 51));
         lblRunState.setText("BREAKPOINT");
 
-        jLabel31.setFont(jLabel31.getFont().deriveFont(jLabel31.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel31.setText("CPU Frequency:");
 
-        spnFrequency.setFont(spnFrequency.getFont().deriveFont(spnFrequency.getFont().getStyle() & ~java.awt.Font.BOLD));
         spnFrequency.setModel(new SpinnerNumberModel(20000, 1, null, 100));
-        spnFrequency.setName("CPU frequency"); // NOI18N
+        spnFrequency.setName("CPU frequency");
 
         jLabel33.setFont(jLabel33.getFont().deriveFont(jLabel33.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel33.setText("kHz");
 
-        jLabel35.setFont(jLabel35.getFont().deriveFont(jLabel35.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel35.setText("Runtime frequency:");
 
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | java.awt.Font.BOLD));
         lblFrequency.setText("0.00 kHz");
 
-        chkPrintInstructions.setFont(chkPrintInstructions.getFont().deriveFont(chkPrintInstructions.getFont().getStyle() & ~java.awt.Font.BOLD));
         chkPrintInstructions.setText("Dump instructions history");
         chkPrintInstructions.addActionListener(this::chkPrintInstructionsActionPerformed);
 
