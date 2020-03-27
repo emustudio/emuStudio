@@ -31,6 +31,13 @@ public class TapeGui extends JDialog {
     private final AbstractTapeContextImpl tapeContext;
     private final TapeListModel listModel = new TapeListModel();
 
+    private NiceButton btnAddFirst;
+    private NiceButton btnAddLast;
+    private NiceButton btnRemove;
+    private NiceButton btnEdit;
+    private NiceButton btnClear;
+    private JList<String> lstTape;
+
     public TapeGui(JFrame parent, String title, AbstractTapeContextImpl tapeContext, boolean alwaysOnTop, Dialogs dialogs) {
         super(parent);
         this.tapeContext = Objects.requireNonNull(tapeContext);
@@ -49,6 +56,91 @@ public class TapeGui extends JDialog {
         });
 
         changeEditable();
+    }
+
+
+    private void changeEditable() {
+        boolean b = tapeContext.getEditable();
+        btnAddFirst.setEnabled(b && !tapeContext.isBounded());
+        btnAddLast.setEnabled(b);
+        btnRemove.setEnabled(b);
+        btnEdit.setEnabled(b);
+        btnClear.setEnabled(b);
+    }
+
+    private void initComponents() {
+        JScrollPane scrollTape = new JScrollPane();
+        lstTape = new JList<>();
+        btnAddFirst = new NiceButton("Add symbol");
+        btnAddLast = new NiceButton("Add symbol");
+        btnRemove = new NiceButton("Remove symbol");
+        btnEdit = new NiceButton("Edit symbol");
+        btnClear = new NiceButton("Clear tape");
+
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+        scrollTape.setViewportView(lstTape);
+
+        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png")));
+        btnAddFirst.addActionListener(e -> dialogs
+            .readString("Symbol value:", "Add symbol (on top)")
+            .ifPresent(tapeContext::addSymbolFirst));
+
+        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png")));
+        btnAddLast.addActionListener(e -> dialogs
+            .readString("Symbol value:", "Add symbol (on bottom)")
+            .ifPresent(tapeContext::addSymbolLast));
+
+        btnEdit.addActionListener(e -> {
+            int symbolIndex = lstTape.getSelectedIndex();
+            if (symbolIndex == -1) {
+                dialogs.showError("A symbol must be selected");
+            } else {
+                dialogs
+                    .readString("Enter symbol value:", "Edit symbol", tapeContext.getSymbolAt(symbolIndex))
+                    .ifPresent(symbol -> tapeContext.editSymbol(symbolIndex, symbol));
+            }
+        });
+        btnRemove.addActionListener(e -> {
+            int symbolIndex = lstTape.getSelectedIndex();
+            if (symbolIndex == -1) {
+                dialogs.showError("A symbol must be selected");
+                return;
+            }
+            tapeContext.removeSymbol(symbolIndex);
+        });
+        btnClear.addActionListener(e -> tapeContext.clear());
+
+        GroupLayout layout = new GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                    .addComponent(btnEdit, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnClear, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnRemove, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnAddLast, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnAddFirst, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(scrollTape, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
+                ).addContainerGap());
+        layout.setVerticalGroup(
+            layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(btnAddFirst)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrollTape, GroupLayout.PREFERRED_SIZE, 200, Short.MAX_VALUE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnAddLast)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(btnRemove)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnEdit)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnClear)
+                .addContainerGap());
+        pack();
     }
 
     private class TapeListModel extends AbstractListModel<String> {
@@ -120,73 +212,4 @@ public class TapeGui extends JDialog {
             return this;
         }
     }
-
-    private void changeEditable() {
-        boolean b = tapeContext.getEditable();
-        btnAddFirst.setEnabled(b && !tapeContext.isBounded());
-        btnAddLast.setEnabled(b);
-        btnRemove.setEnabled(b);
-        btnEdit.setEnabled(b);
-        btnClear.setEnabled(b);
-    }
-
-    private void initComponents() {
-        JScrollPane scrollTape = new JScrollPane();
-        lstTape = new JList<>();
-        btnAddFirst = new NiceButton("Add symbol");
-        btnAddLast = new NiceButton("Add symbol");
-        btnRemove = new NiceButton("Remove symbol");
-        btnEdit = new NiceButton("Edit symbol");
-        btnClear = new NiceButton("Clear tape");
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        scrollTape.setViewportView(lstTape);
-
-        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png")));
-        btnAddFirst.addActionListener(e -> dialogs
-            .readString("Symbol value:", "Add symbol (on top)")
-            .ifPresent(tapeContext::addSymbolFirst));
-
-        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png")));
-        btnAddLast.addActionListener(e -> dialogs
-            .readString("Symbol value:", "Add symbol (on bottom)")
-            .ifPresent(tapeContext::addSymbolLast));
-
-        btnEdit.addActionListener(e -> {
-            int symbolIndex = lstTape.getSelectedIndex();
-            if (symbolIndex == -1) {
-                dialogs.showError("A symbol must be selected");
-            } else {
-                dialogs
-                    .readString("Enter symbol value:", "Edit symbol", tapeContext.getSymbolAt(symbolIndex))
-                    .ifPresent(symbol -> tapeContext.editSymbol(symbolIndex, symbol));
-            }
-        });
-        btnRemove.addActionListener(e -> {
-            int symbolIndex = lstTape.getSelectedIndex();
-            if (symbolIndex == -1) {
-                dialogs.showError("A symbol must be selected");
-                return;
-            }
-            tapeContext.removeSymbol(symbolIndex);
-        });
-        btnClear.addActionListener(e -> tapeContext.clear());
-
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING, false).addComponent(btnEdit, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(btnClear, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(btnRemove, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(btnAddLast, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(btnAddFirst, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(scrollTape, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)).addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE));
-        layout.setVerticalGroup(
-            layout.createSequentialGroup().addContainerGap().addComponent(btnAddFirst).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(scrollTape, GroupLayout.PREFERRED_SIZE, 200, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnAddLast).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(btnRemove).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnEdit).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnClear).addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE));
-        pack();
-    }
-
-    private NiceButton btnAddFirst;
-    private NiceButton btnAddLast;
-    private NiceButton btnRemove;
-    private NiceButton btnEdit;
-    private NiceButton btnClear;
-    private JList<String> lstTape;
 }

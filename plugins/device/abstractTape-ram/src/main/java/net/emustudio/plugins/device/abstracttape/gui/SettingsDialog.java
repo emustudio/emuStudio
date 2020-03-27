@@ -56,7 +56,7 @@ public class SettingsDialog extends JDialog {
     private void initComponents() {
         chkAlwaysOnTop = new JCheckBox("Always on top");
         chkShowAtStartup = new JCheckBox("Show GUI at startup");
-        JButton btnOK = new JButton("OK");
+        JButton btnSave = new JButton("Save");
 
         setTitle("AbstractTape settings");
         setResizable(false);
@@ -64,13 +64,12 @@ public class SettingsDialog extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-
         chkAlwaysOnTop.addActionListener(e -> {
             if (gui != null) {
                 gui.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
             }
         });
-        btnOK.addActionListener(e -> {
+        btnSave.addActionListener(e -> {
             try {
                 settings.setBoolean("alwaysOnTop", chkAlwaysOnTop.isSelected());
                 settings.setBoolean("showAtStartup", chkShowAtStartup.isSelected());
@@ -90,9 +89,10 @@ public class SettingsDialog extends JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(chkAlwaysOnTop)
-                    .addComponent(chkShowAtStartup))
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                    .addComponent(btnOK))
+                    .addComponent(chkShowAtStartup)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap(-1, Short.MAX_VALUE)
+                        .addComponent(btnSave)))
                 .addContainerGap());
         layout.setVerticalGroup(
             layout.createSequentialGroup()
@@ -101,7 +101,8 @@ public class SettingsDialog extends JDialog {
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkShowAtStartup)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnOK));
+                .addComponent(btnSave)
+                .addContainerGap());
         pack();
     }
 
