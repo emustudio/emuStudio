@@ -33,9 +33,6 @@ public class CommandLine {
     @Option(name = "--input", metaVar = "filename", usage = "use the source code given by the file name")
     private String inputFileName;
 
-    @Option(name = "--output", metaVar = "filename", usage = "output compiler messages into this file name")
-    private String outputFileName;
-
     @Option(name = "--config", metaVar = "filename", usage = "load configuration with file name")
     private String configFileName;
 
@@ -65,10 +62,6 @@ public class CommandLine {
 
     public boolean isNoGUI() {
         return noGUI;
-    }
-
-    public String getOutputFileName() {
-        return outputFileName;
     }
 
     public int getWaitForFinishMillis() {
