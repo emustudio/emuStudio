@@ -96,7 +96,7 @@ class SelectingMode extends AbstractMode {
             h = -h;
         }
 
-        schema.selectElements(x, y, w, h);
+        schema.select(x, y, w, h);
 
         drawingModel.selectionStart = null;
         drawingModel.selectionEnd = null;

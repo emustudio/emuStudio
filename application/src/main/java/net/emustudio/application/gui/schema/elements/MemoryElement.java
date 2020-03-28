@@ -19,13 +19,24 @@
 package net.emustudio.application.gui.schema.elements;
 
 import net.emustudio.application.configuration.PluginConfig;
+import net.emustudio.application.gui.P;
+import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
 import java.awt.*;
+import java.util.UUID;
+import java.util.function.Function;
 
 public class MemoryElement extends Element {
     private final static Color BACK_COLOR = new Color(0xeeeeee);
 
-    public MemoryElement(PluginConfig config) {
-        super(config, BACK_COLOR);
+    public MemoryElement(P schemaPoint, String pluginName, String pluginFileName) {
+        super(BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.MEMORY, pluginName, pluginFileName);
+    }
+
+    public MemoryElement(PluginConfig config, Function<P, P> searchGridPoint) {
+        super(
+            BACK_COLOR, searchGridPoint.apply(P.of(config.getSchemaPoint())), config.getPluginId(), PLUGIN_TYPE.MEMORY,
+            config.getPluginName(), config.getPluginFile()
+        );
     }
 }

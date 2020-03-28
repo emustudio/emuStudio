@@ -24,8 +24,6 @@ import net.emustudio.application.configuration.SchemaPoint;
 import java.awt.*;
 
 public class P {
-    public final static int SELECTION_TOLERANCE = 5;
-
     public volatile double x;
     public volatile double y;
 
@@ -42,27 +40,21 @@ public class P {
         return (int) y;
     }
 
-    public void move(double x, double y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public void move(Point p) {
-        this.x = p.getX();
-        this.y = p.getY();
+    public void move(P p) {
+        this.x = p.x;
+        this.y = p.y;
     }
 
     public P minus(P other) {
         return new P(x - other.x, y - other.y);
     }
 
-    public P copy() {
-        return new P(x, y);
+    public P diff(int diffX, int diffY) {
+        return new P(x + diffX, y + diffY);
     }
 
-    public boolean equals(Point other) {
-        double d = Math.hypot(x - other.getX(), y - other.getY());
-        return (d < SELECTION_TOLERANCE);
+    public P copy() {
+        return new P(x, y);
     }
 
     public boolean isInRectangle(Point leftTop, Point rightBottom) {
@@ -71,7 +63,7 @@ public class P {
 
 
     public SchemaPoint toSchemaPoint() {
-        return SchemaPoint.create(ix(), iy());
+        return SchemaPoint.of(ix(), iy());
     }
 
     public static P of(double x, double y) {

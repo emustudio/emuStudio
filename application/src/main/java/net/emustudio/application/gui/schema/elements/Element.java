@@ -19,8 +19,8 @@
 package net.emustudio.application.gui.schema.elements;
 
 import net.emustudio.application.configuration.PluginConfig;
-import net.emustudio.application.configuration.SchemaPoint;
-import net.emustudio.application.gui.schema.Schema;
+import net.emustudio.application.gui.P;
+import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -37,7 +37,29 @@ public abstract class Element {
 
     final static int MOUSE_TOLERANCE = 5;
 
-    public final PluginConfig pluginConfig;
+    private final Font pluginNameFont = new Font(Font.DIALOG, Font.BOLD, 13);
+    private final Font pluginTypeFont = new Font(Font.MONOSPACED, Font.ITALIC, 12);
+
+    private final Color backColor;
+    private final Color foreColor = new Color(0x909090);
+
+    private final String pluginId;
+    private final PLUGIN_TYPE pluginType;
+    private final String pluginName;
+    private final String pluginFileName;
+
+    protected boolean selected = false;
+
+    /**
+     * This variable holds true, if the element size has been measured. The measurement process means the computation of
+     * the width and height, and the correction of the X and Y positions within the schema canvas.
+     * <p>
+     * The measurement is realized manually, by external call of the measure() method.
+     */
+    private boolean wasMeasured = false;
+    private GradientPaint gradient;
+
+    private P schemaPoint;
 
     private int width;
     private int height;
@@ -51,30 +73,17 @@ public abstract class Element {
     private int detailsX;
     private int detailsY;
 
-    /**
-     * This variable holds true, if the element size has been measured. The measurement process means the computation of
-     * the width and height, and the correction of the X and Y positions within the schema canvas.
-     * <p>
-     * The measurement is realized manually, by external call of the measure() method.
-     */
-    private boolean wasMeasured = false;
-
-    private Font boldFont;
-    private Font italicFont;
-
-    private final Color backColor;
-    private final Color foreColor = new Color(0x909090);
-
-    private GradientPaint gradient;
-    protected boolean selected = false;
-
-    public Element(PluginConfig config, Color backColor) {
-        this.pluginConfig = Objects.requireNonNull(config);
+    public Element(Color backColor, P schemaPoint, String pluginId, PLUGIN_TYPE pluginType, String pluginName,
+                   String pluginFileName) {
+        this.pluginId = Objects.requireNonNull(pluginId);
+        this.pluginType = Objects.requireNonNull(pluginType);
         this.backColor = Objects.requireNonNull(backColor);
+        this.schemaPoint = Objects.requireNonNull(schemaPoint);
+        this.pluginName = Objects.requireNonNull(pluginName);
+        this.pluginFileName = Objects.requireNonNull(pluginFileName);
 
-        SchemaPoint schemaPoint = config.getSchemaPoint();
-        int x = schemaPoint.x;
-        int y = schemaPoint.y;
+        int x = schemaPoint.ix();
+        int y = schemaPoint.iy();
 
         this.gradient = new GradientPaint(x, y, Color.WHITE, x, y + height, this.backColor, false);
     }
@@ -91,26 +100,21 @@ public abstract class Element {
             g.setColor(foreColor);
         }
         g.draw3DRect(leftX, topY, getWidth(), getHeight(), true);
-        g.setFont(boldFont);
+        g.setFont(pluginNameFont);
         if (!selected) {
             g.setColor(Color.BLACK);
         }
-        g.drawString(pluginConfig.getPluginType().name(), textX, textY);
-        g.setFont(italicFont);
-        g.drawString(pluginConfig.getPluginName(), detailsX, detailsY);
+        g.drawString(pluginName, textX, textY);
+        g.setFont(pluginTypeFont);
+        g.drawString(pluginType.name(), detailsX, detailsY);
     }
 
-    public void move(Schema schema, Point p) {
-        move(schema,p.x - pluginConfig.getSchemaPoint().x, p.y - pluginConfig.getSchemaPoint().y);
-    }
+    public void move(P newLocation) {
+        if (wasMeasured) {
+            int diffX = newLocation.ix() - schemaPoint.ix();
+            int diffY = newLocation.iy() - schemaPoint.iy();
 
-    public void move(Schema schema, int diffX, int diffY) {
-        SchemaPoint point = pluginConfig.getSchemaPoint();
-        int px = point.x;
-        int py = point.y;
-
-        if (wasMeasured && !schema.isElementNotMovable(px + diffX, py + diffY, this)) {
-            pluginConfig.setSchemaPoint(SchemaPoint.create(px + diffX, py + diffY));
+            schemaPoint = newLocation;
 
             // do not break internal state of the element
             leftX += diffX;
@@ -138,15 +142,11 @@ public abstract class Element {
      * @param g Graphics object
      */
     public void measure(Graphics g) {
-        Font f = g.getFont();
-        boldFont = f.deriveFont(Font.BOLD);
-        italicFont = f.deriveFont(Font.PLAIN);
-
         // First measure width and height of text
-        FontMetrics fm = g.getFontMetrics(boldFont);
-        Rectangle2D r = fm.getStringBounds(pluginConfig.getPluginType().name(), g);
-        FontMetrics fm1 = g.getFontMetrics(italicFont);
-        Rectangle2D r1 = fm1.getStringBounds(pluginConfig.getPluginName(), g);
+        FontMetrics fm = g.getFontMetrics(pluginNameFont);
+        Rectangle2D r = fm.getStringBounds(pluginName, g);
+        FontMetrics fm1 = g.getFontMetrics(pluginTypeFont);
+        Rectangle2D r1 = fm1.getStringBounds(pluginType.name(), g);
 
         int tW = (int) Math.max(r.getWidth(), r1.getWidth());
         int tH = (int) Math.max(r.getHeight(), r1.getHeight());
@@ -160,8 +160,8 @@ public abstract class Element {
         textY = height / 2 + 10 - fm.getAscent();
         // set starting x and y
 
-        leftX = pluginConfig.getSchemaPoint().x - getWidth() / 2;
-        topY = pluginConfig.getSchemaPoint().y - getHeight() / 2;
+        leftX = schemaPoint.ix() - getWidth() / 2;
+        topY = schemaPoint.iy() - getHeight() / 2;
 
         gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, getBottomY(), backColor, true);
 
@@ -183,11 +183,15 @@ public abstract class Element {
 
 
     public int getX() {
-        return pluginConfig.getSchemaPoint().x;
+        return schemaPoint.ix();
     }
 
     public int getY() {
-        return pluginConfig.getSchemaPoint().y;
+        return schemaPoint.iy();
+    }
+
+    public P getSchemaPoint() {
+        return schemaPoint;
     }
 
     private int getBottomY() {
@@ -303,9 +307,16 @@ public abstract class Element {
         return new Rectangle(leftX, topY, getWidth(), getHeight());
     }
 
+    public String getPluginId() {
+        return pluginId;
+    }
+
+    public PluginConfig save() {
+        return PluginConfig.create(pluginId, pluginType, pluginName, pluginFileName, schemaPoint);
+    }
+
     @Override
     public String toString() {
-        SchemaPoint point = pluginConfig.getSchemaPoint();
-        return pluginConfig.getPluginName() + "[x=" + point.x + ", y=" + point.y + ", rect=" + getRectangle() + ']';
+        return pluginName + "[x=" + schemaPoint.x + ", y=" + schemaPoint.y + ", rect=" + getRectangle() + ']';
     }
 }

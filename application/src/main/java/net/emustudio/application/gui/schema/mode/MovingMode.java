@@ -28,8 +28,6 @@ import net.emustudio.application.gui.schema.mode.ModeSelector.SelectMode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-import static net.emustudio.application.gui.P.SELECTION_TOLERANCE;
-
 /**
  * Moving drawing mode, initial.
  * <p>
@@ -37,10 +35,10 @@ import static net.emustudio.application.gui.P.SELECTION_TOLERANCE;
  * highlighted.
  * <p>
  * If a user presses left mouse button over existing selection, selected components are going to be moved by following
- * mouse moves. The mouse releasement finishes the movement.
+ * mouse moves. The mouse release finishes the movement.
  * <p>
  * If a user presses left mouse button over a line point, it is going to be moved by following mouse moves. The mouse
- * releasement finishes the movement.
+ * release finishes the movement.
  * <p>
  * If a user presses left mouse button over a line (not on a line point), new line point is created on this location and
  * it is immediately selected for movement.
@@ -68,14 +66,14 @@ class MovingMode extends AbstractMode {
 
     @Override
     public SelectMode mousePressed(MouseEvent e) {
-        Point p = e.getPoint();
+        Point clickPoint = e.getPoint();
         if (e.getButton() == MouseEvent.BUTTON1) {
             // detect if user wants to resize an element
-            drawingModel.tmpElem1 = schema.getElementByBorderPoint(p);
+            drawingModel.tmpElem1 = schema.getElementByBorderPoint(clickPoint);
             if (drawingModel.tmpElem1 != null) {
                 return SelectMode.RESIZING;
             }
-            drawingModel.tmpElem1 = schema.getCrossingElement(p);
+            drawingModel.tmpElem1 = schema.getCrossingElement(clickPoint);
             if (drawingModel.tmpElem1 != null) {
                 drawingModel.selectedLine = null;
                 drawingModel.elementDragged = false;
@@ -87,10 +85,10 @@ class MovingMode extends AbstractMode {
         // if the user is near a connection line
         drawingModel.selectedPoint = null;
         drawingModel.selectedLine = null;
-        drawingModel.selectedLine = schema.getCrossingLine(p);
+        drawingModel.selectedLine = schema.findCrossingLine(clickPoint);
 
         if (drawingModel.selectedLine != null) {
-            drawingModel.selectedPoint = drawingModel.selectedLine.findPoint(p, SELECTION_TOLERANCE);
+            drawingModel.selectedPoint = drawingModel.selectedLine.findPoint(clickPoint);
         }
         panel.repaint(); // because of drawing selected point
 
@@ -104,21 +102,20 @@ class MovingMode extends AbstractMode {
 
     @Override
     public SelectMode mouseReleased(MouseEvent e) {
-        Point p = e.getPoint();
+        Point clickPoint = e.getPoint();
         // if an element was clicked, selecting it, if user holds CTRL or SHIFT
         if (e.getButton() == MouseEvent.BUTTON1) {
-            int ctrl_shift = e.getModifiersEx() & (MouseEvent.SHIFT_DOWN_MASK
-                | MouseEvent.CTRL_DOWN_MASK);
+            int ctrl_shift = e.getModifiersEx() & (MouseEvent.SHIFT_DOWN_MASK | MouseEvent.CTRL_DOWN_MASK);
             if ((!drawingModel.elementDragged) && (ctrl_shift == 0)) {
-                schema.selectElements(-1, -1, 0, 0);
+                schema.select(-1, -1, 0, 0);
             }
-            Element elem = schema.getCrossingElement(p);
+            Element elem = schema.getCrossingElement(clickPoint);
             if ((drawingModel.tmpElem1 == elem) && (elem != null) && (!drawingModel.elementDragged)) {
                 elem.setSelected(true);
                 panel.repaint();
                 return SelectMode.MOVING;
             }
-            if ((drawingModel.selectedLine == null) || (drawingModel.selectedLine != schema.getCrossingLine(p))) {
+            if ((drawingModel.selectedLine == null) || (drawingModel.selectedLine != schema.findCrossingLine(clickPoint))) {
                 return SelectMode.MOVING;
             }
             drawingModel.selectedLine.setSelected(true);
@@ -129,8 +126,8 @@ class MovingMode extends AbstractMode {
             if (e.getButton() != MouseEvent.BUTTON3) {
                 return SelectMode.MOVING;
             }
-            P linePoint = drawingModel.selectedLine.findPoint(p, SELECTION_TOLERANCE);
-            if ((drawingModel.selectedLine != schema.getCrossingLine(p))
+            P linePoint = drawingModel.selectedLine.findPoint(clickPoint);
+            if ((drawingModel.selectedLine != schema.findCrossingLine(clickPoint))
                 || (drawingModel.selectedPoint != linePoint)) {
                 drawingModel.selectedLine = null;
                 drawingModel.selectedPoint = null;
@@ -145,42 +142,39 @@ class MovingMode extends AbstractMode {
 
     @Override
     public SelectMode mouseDragged(MouseEvent e) {
-        Point p = e.getPoint();
+        Point clickPoint = e.getPoint();
         if (drawingModel.selectedLine != null) {
-            if (p.getX() < 0 || p.getY() < 0) {
+            if (clickPoint.getX() < 0 || clickPoint.getY() < 0) {
                 return SelectMode.MOVING;
             }
-            Point gridPoint = searchGridPoint(p);
+
             if (drawingModel.selectedPoint == null) {
-                int pi = drawingModel.selectedLine.getCrossPoint(p, SELECTION_TOLERANCE); // should not be -1
-                if (pi == -1) {
+                int beforePointIndex = drawingModel.selectedLine.findCrossingPoint(clickPoint); // should not be -1
+                if (beforePointIndex == -1) {
                     return SelectMode.MOVING;
                 }
-                p.setLocation(gridPoint);
-                P linePoint = drawingModel.selectedLine.findPoint(p, SELECTION_TOLERANCE);
+                P linePoint = drawingModel.selectedLine.findPoint(clickPoint);
                 if (linePoint == null) {
-                    drawingModel.selectedLine.addPoint(pi, p);
-                    drawingModel.selectedPoint = P.of(p);
+                    schema.addLinePoint(drawingModel.selectedLine, beforePointIndex, clickPoint);
+                    drawingModel.selectedPoint = P.of(clickPoint);
                 }
             } else {
-                p.setLocation(gridPoint);
-                drawingModel.selectedLine.movePoint(schema, drawingModel.selectedPoint, p);
+                schema.moveLinePoint(drawingModel.selectedLine, drawingModel.selectedPoint, clickPoint);
             }
         } else if (drawingModel.tmpElem1 != null) {
-            if (p.getX() < 0 || p.getY() < 0) {
+            if (clickPoint.getX() < 0 || clickPoint.getY() < 0) {
                 return SelectMode.MOVING;
             }
-            p.setLocation(searchGridPoint(p));
 
             drawingModel.elementDragged = true;
-            // if the element is selected, we must moving all selected elements either.
+            // if the element is part of a selection, we must move the selection as well.
             if (drawingModel.tmpElem1.isSelected()) {
                 int diffX, diffY;
-                diffX = p.x - drawingModel.tmpElem1.getX();
-                diffY = p.y - drawingModel.tmpElem1.getY();
+                diffX = clickPoint.x - drawingModel.tmpElem1.getX();
+                diffY = clickPoint.y - drawingModel.tmpElem1.getY();
                 schema.moveSelection(diffX, diffY);
             } else {
-                drawingModel.tmpElem1.move(schema, p);
+                schema.moveElement(drawingModel.tmpElem1, clickPoint);
             }
         }
         return SelectMode.MOVING;
@@ -219,7 +213,7 @@ class MovingMode extends AbstractMode {
         outerloop:
         for (ConnectionLine line : schema.getConnectionLines()) {
             for (P point : line.getPoints()) {
-                if (point.equals(mousePoint)) {
+                if (line.findPoint(mousePoint) == point) {
                     drawingModel.selectedLine = line;
                     drawingModel.selectedPoint = point;
                     panel.repaint();

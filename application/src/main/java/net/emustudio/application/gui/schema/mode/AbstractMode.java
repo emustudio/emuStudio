@@ -35,22 +35,4 @@ abstract class AbstractMode implements Mode {
         this.drawingModel = Objects.requireNonNull(drawingModel);
         this.schema = Objects.requireNonNull(panel.getSchema());
     }
-
-    /**
-     * This method searches for the nearest point that crosses the grid. If the grid is not used, it just return the
-     * point represented by the parameter.
-     *
-     * @param old Point that needs to be corrected by the grid
-     * @return nearest grid point from the parameter, or the old point, if grid is not used.
-     */
-    Point searchGridPoint(Point old) {
-        boolean useGrid = schema.useSchemaGrid();
-        int gridGap = schema.getSchemaGridGap();
-        if (!useGrid || gridGap <= 0) {
-            return old;
-        }
-        int dX = (int) Math.round(old.x / (double) gridGap);
-        int dY = (int) Math.round(old.y / (double) gridGap);
-        return new Point(dX * gridGap, dY * gridGap);
-    }
 }

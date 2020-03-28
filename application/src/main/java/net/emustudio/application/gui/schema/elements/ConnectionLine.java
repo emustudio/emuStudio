@@ -28,9 +28,8 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static net.emustudio.application.gui.P.SELECTION_TOLERANCE;
 
 /**
  * The connection line within the abstract schemas.
@@ -39,6 +38,8 @@ import static net.emustudio.application.gui.P.SELECTION_TOLERANCE;
  */
 public class ConnectionLine {
     private final static int ARROW_ARM_LENGTH = 10;
+    private final static int SELECTION_TOLERANCE = 5;
+
     private final static BasicStroke thickLine = new BasicStroke(2);
 
     private final Color lineColor = new Color(0x333333);
@@ -615,10 +616,10 @@ public class ConnectionLine {
      * Adds a middle-point to this line.
      *
      * @param before index of the point before that a new point will be added
-     * @param p      the point that will be added
+     * @param point  the point that will be added
      */
-    public void addPoint(int before, Point p) {
-        points.add(before, P.of(p));
+    public void addPoint(int before, P point) {
+        points.add(before, point);
     }
 
     /**
@@ -643,15 +644,14 @@ public class ConnectionLine {
      * Test if given point is included within this line (with some tolerance).
      * If it is, return the original Point object, null otherwise.
      *
-     * @param p         Point to test
-     * @param tolerance Tolerance
+     * @param clickPoint Point to test
      * @return original point object of the line, null if the test point is not included
      */
-    public P findPoint(Point p, int tolerance) {
-        for (P tmp : points) {
-            if ((tmp.x >= (p.x - tolerance)) && (tmp.x <= (p.x + tolerance))
-                && (tmp.y >= (p.y - tolerance)) && (tmp.y <= (p.y + tolerance))) {
-                return tmp;
+    public P findPoint(Point clickPoint) {
+        for (P point : points) {
+            if ((point.x >= (clickPoint.x - SELECTION_TOLERANCE)) && (point.x <= (clickPoint.x + SELECTION_TOLERANCE))
+                && (point.y >= (clickPoint.y - SELECTION_TOLERANCE)) && (point.y <= (clickPoint.y + SELECTION_TOLERANCE))) {
+                return point;
             }
         }
         return null;
@@ -662,16 +662,15 @@ public class ConnectionLine {
      * <p>
      * If the point is not found, nothing is done.
      *
-     * @param p           the point that will be moved
-     * @param newLocation new location of the point
+     * @param originalPoint the point that will be moved
+     * @param newLocation   new location of the point
      */
-    public void movePoint(Schema schema, P p, Point newLocation) {
-        if (!schema.isPointNotMovable(newLocation.x, newLocation.y)) {
-            int i = points.indexOf(p);
-            if (i != -1) {
-                points.get(i).move(newLocation);
-            }
+    public void movePoint(P originalPoint, P newLocation) {
+        int i = points.indexOf(originalPoint);
+        if (i != -1) {
+            points.get(i).move(newLocation);
         }
+        computeArrows();
     }
 
     /**
@@ -681,23 +680,12 @@ public class ConnectionLine {
      * @param diffX The X difference between new and old location
      * @param diffY The Y difference between new and old location
      */
-    public void moveAllPoints(Schema schema, int diffX, int diffY) {
-        if (anyPointNotMovable(schema, diffX, diffY)) {
-            return;
-        }
+    public void moveAllPoints(int diffX, int diffY, Function<P, P> searchGridPoint) {
         for (P point : points) {
-            point.move(point.x + diffX, point.y + diffY);
+            P movedPoint = searchGridPoint.apply(point.diff(diffX, diffY));
+            point.move(movedPoint);
         }
         computeArrows();
-    }
-
-    public boolean anyPointNotMovable(Schema schema, int diffX, int diffY) {
-        for (P point : points) {
-            if (schema.isPointNotMovable(point.ix() + diffX, point.iy() + diffY)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -733,8 +721,7 @@ public class ConnectionLine {
      * If yes, return index of a nearest cross point. If new point is
      * going to be added, it should be added to replace returned point index.
      *
-     * @param point     point that is checked
-     * @param tolerance the tolerance
+     * @param clickPoint     point that is checked
      * @return 0 - if line doesn't contain any point, but point[x,y] is crossing the
      * line; or if point[x,y] crosses the line near the beginning of it
      * <p>
@@ -744,8 +731,8 @@ public class ConnectionLine {
      * <p>
      * Nearest point index of the line that the point crosses otherwise.
      */
-    public int getCrossPoint(Point point, int tolerance) {
-        if (point == null) {
+    public int findCrossingPoint(Point clickPoint) {
+        if (clickPoint == null) {
             return -1;
         }
         if ((arrow1 == null) || (arrow2 == null)) {
@@ -762,7 +749,7 @@ public class ConnectionLine {
             X2 = points.get(i);
             double len = Math.hypot(X2.x - X1.x, X2.y - X1.y);
             Point2D.Double vector1 = new Point2D.Double((X2.x - X1.x) / len, (X2.y - X1.y) / len); // normalized vector
-            Point2D.Double vector2 = new Point2D.Double((point.x - X1.x) / len, (point.y - X1.y) / len);
+            Point2D.Double vector2 = new Point2D.Double((clickPoint.x - X1.x) / len, (clickPoint.y - X1.y) / len);
 
             /*
              * Cross product is an area of parallelogram with sides vector1 and vector2
@@ -784,11 +771,11 @@ public class ConnectionLine {
              *
              */
             double crossproduct = vector2.y * vector1.x - vector2.x * vector1.y;
-            if ((Math.abs(crossproduct) * len <= tolerance)
-                && (Math.min(X1.x - tolerance, X2.x - tolerance) <= point.x)
-                && (point.x <= Math.max(X1.x + tolerance, X2.x + tolerance))
-                && (Math.min(X1.y - tolerance, X2.y - tolerance) <= point.y)
-                && (point.y <= Math.max(X1.y + tolerance, X2.y + tolerance))) {
+            if ((Math.abs(crossproduct) * len <= SELECTION_TOLERANCE)
+                && (Math.min(X1.x - SELECTION_TOLERANCE, X2.x - SELECTION_TOLERANCE) <= clickPoint.x)
+                && (clickPoint.x <= Math.max(X1.x + SELECTION_TOLERANCE, X2.x + SELECTION_TOLERANCE))
+                && (Math.min(X1.y - SELECTION_TOLERANCE, X2.y - SELECTION_TOLERANCE) <= clickPoint.y)
+                && (clickPoint.y <= Math.max(X1.y + SELECTION_TOLERANCE, X2.y + SELECTION_TOLERANCE))) {
                 return i;
             }
             X1 = X2;
@@ -796,13 +783,13 @@ public class ConnectionLine {
         X2 = arrow2.copy();
         double len = Math.hypot(X2.x - X1.x, X2.y - X1.y);
         Point2D.Double vector1 = new Point2D.Double((X2.x - X1.x) / len, (X2.y - X1.y) / len); // normalized vector
-        Point2D.Double vector2 = new Point2D.Double((point.x - X1.x) / len, (point.y - X1.y) / len);
+        Point2D.Double vector2 = new Point2D.Double((clickPoint.x - X1.x) / len, (clickPoint.y - X1.y) / len);
         double crossProduct = vector2.y * vector1.x - vector2.x * vector1.y;
-        if ((Math.abs(crossProduct) * len <= tolerance)
-            && (Math.min(X1.x - tolerance, X2.x - tolerance) <= point.x)
-            && (point.x <= Math.max(X1.x + tolerance, X2.x + tolerance))
-            && (Math.min(X1.y - tolerance, X2.y - tolerance) <= point.y)
-            && (point.y <= Math.max(X1.y + tolerance, X2.y + tolerance))) {
+        if ((Math.abs(crossProduct) * len <= SELECTION_TOLERANCE)
+            && (Math.min(X1.x - SELECTION_TOLERANCE, X2.x - SELECTION_TOLERANCE) <= clickPoint.x)
+            && (clickPoint.x <= Math.max(X1.x + SELECTION_TOLERANCE, X2.x + SELECTION_TOLERANCE))
+            && (Math.min(X1.y - SELECTION_TOLERANCE, X2.y - SELECTION_TOLERANCE) <= clickPoint.y)
+            && (clickPoint.y <= Math.max(X1.y + SELECTION_TOLERANCE, X2.y + SELECTION_TOLERANCE))) {
             return pointsSize; // as new point index
         }
         return -1;
@@ -812,8 +799,8 @@ public class ConnectionLine {
         List<SchemaPoint> schemaPoints = points.stream().map(P::toSchemaPoint).collect(Collectors.toList());
 
         return PluginConnection.create(
-            elementFrom.pluginConfig.getPluginId(),
-            elementTo.pluginConfig.getPluginId(),
+            elementFrom.getPluginId(),
+            elementTo.getPluginId(),
             bidirectional,
             schemaPoints
         );

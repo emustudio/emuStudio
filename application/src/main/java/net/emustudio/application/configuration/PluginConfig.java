@@ -19,12 +19,11 @@
 package net.emustudio.application.configuration;
 
 import com.electronwill.nightconfig.core.Config;
+import net.emustudio.application.gui.P;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
-import java.awt.*;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.UUID;
 
 public class PluginConfig {
     private final Config config;
@@ -80,13 +79,14 @@ public class PluginConfig {
 
 
 
-    public static PluginConfig create(PLUGIN_TYPE pluginType, String pluginName, String pluginFile, Point schemaLocation) {
+    public static PluginConfig create(String id, PLUGIN_TYPE pluginType, String pluginName, String pluginFile,
+                                      P schemaLocation) {
         Config config = Config.inMemory();
-        config.set("id", UUID.randomUUID().toString());
+        config.set("id", id);
         config.set("type", pluginType.toString());
         config.set("name", pluginName);
         config.set("path", pluginFile);
-        config.set("schemaPoint", schemaLocation.x + "," + schemaLocation.y);
+        config.set("schemaPoint", schemaLocation.toSchemaPoint().toString());
 
         return new PluginConfig(config);
     }

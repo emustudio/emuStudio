@@ -19,14 +19,25 @@
 package net.emustudio.application.gui.schema.elements;
 
 import net.emustudio.application.configuration.PluginConfig;
+import net.emustudio.application.gui.P;
+import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
 import java.awt.*;
+import java.util.UUID;
+import java.util.function.Function;
 
 public class CpuElement extends Element {
     private final static Color BACK_COLOR = new Color(0xffeeee);
 
-    public CpuElement(PluginConfig config) {
-        super(config, BACK_COLOR);
+    public CpuElement(P schemaPoint, String pluginName, String pluginFileName) {
+        super(BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.CPU, pluginName, pluginFileName);
+    }
+
+    public CpuElement(PluginConfig config, Function<P, P> searchGridPoint) {
+        super(
+            BACK_COLOR, searchGridPoint.apply(P.of(config.getSchemaPoint())), config.getPluginId(), PLUGIN_TYPE.CPU,
+            config.getPluginName(), config.getPluginFile()
+        );
     }
 }
 

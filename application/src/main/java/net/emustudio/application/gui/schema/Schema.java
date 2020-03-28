@@ -31,12 +31,6 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static net.emustudio.application.gui.P.SELECTION_TOLERANCE;
-
-/**
- * This class represents abstract schema of virtual computer configuration. It is created by the schema editor and used
- * by ArchLoader. It is a graphics model of the virtual computer.
- */
 public class Schema {
     public final static int MIN_LEFT_MARGIN = 5;
     public final static int MIN_TOP_MARGIN = 5;
@@ -77,54 +71,45 @@ public class Schema {
         applicationConfig.setSchemaGridGap(gridGap);
     }
 
-    public void setCompilerElement(CompilerElement compiler) {
-        if ((compiler == null) && (this.compilerElement != null)) {
-            removeIncidentLines(this.compilerElement);
-        } else if (this.compilerElement != null) {
-            updateIncidentLines(this.compilerElement, compiler);
+    public void setCompilerElement(Point clickPoint, String pluginFile) {
+        CompilerElement element = createCompilerElement(clickPoint, pluginFile);
+        if (this.compilerElement != null) {
+            updateIncidentLines(this.compilerElement, element);
         }
-        compilerElement = compiler;
+        compilerElement = element;
     }
 
-    public void setCpuElement(CpuElement cpuElement) {
-        if ((cpuElement == null) && (this.cpuElement != null)) {
-            removeIncidentLines(this.cpuElement);
-        } else if (this.cpuElement != null) {
-            updateIncidentLines(this.cpuElement, cpuElement);
+    public void setCpuElement(Point clickPoint, String pluginFile) {
+        CpuElement element = createCpuElement(clickPoint, pluginFile);
+        if (this.cpuElement != null) {
+            updateIncidentLines(this.cpuElement, element);
         }
-        this.cpuElement = cpuElement;
+        this.cpuElement = element;
     }
 
-    public void setMemoryElement(MemoryElement memoryElement) {
-        if ((memoryElement == null) && (this.memoryElement != null)) {
-            removeIncidentLines(this.memoryElement);
-        } else if (this.memoryElement != null) {
-            updateIncidentLines(this.memoryElement, memoryElement);
+    public void setMemoryElement(Point clickPoint, String pluginFile) {
+        MemoryElement element = createMemoryElement(clickPoint, pluginFile);
+        if (this.memoryElement != null) {
+            updateIncidentLines(this.memoryElement, element);
         }
-        this.memoryElement = memoryElement;
+        this.memoryElement = element;
     }
 
-    public void addDeviceElement(DeviceElement deviceElement) {
-        if (deviceElement == null) {
-            return;
-        }
-        deviceElements.add(deviceElement);
+    public void addDeviceElement(Point clickPoint, String pluginFile) {
+        DeviceElement element = createDeviceElement(clickPoint, pluginFile);
+        deviceElements.add(element);
     }
 
-    public void removeDeviceElement(DeviceElement device) {
-        removeIncidentLines(device);
-        deviceElements.remove(device);
-    }
-
-    public void removeElement(Element elem) {
-        if (elem instanceof CompilerElement) {
-            setCompilerElement(null);
-        } else if (elem instanceof CpuElement) {
-            setCpuElement(null);
-        } else if (elem instanceof MemoryElement) {
-            setMemoryElement(null);
-        } else if (elem instanceof DeviceElement) {
-            removeDeviceElement((DeviceElement) elem);
+    public void removeElement(Element element) {
+        removeIncidentLines(element);
+        if (element instanceof CompilerElement) {
+            cpuElement = null;
+        } else if (element instanceof CpuElement) {
+            cpuElement = null;
+        } else if (element instanceof MemoryElement) {
+            memoryElement = null;
+        } else if (element instanceof DeviceElement) {
+            deviceElements.remove(element);
         }
     }
 
@@ -143,12 +128,17 @@ public class Schema {
         return elements;
     }
 
+    public boolean isConnected(Element e1, Element e2) {
+        return lines.stream().anyMatch(l -> l.containsElement(e1) && l.containsElement(e2));
+    }
+
     public List<ConnectionLine> getConnectionLines() {
         return Collections.unmodifiableList(lines);
     }
 
-    public void addConnectionLine(ConnectionLine line) {
-        lines.add(line);
+    public void addConnectionLine(Element e1, Element e2, List<P> points, boolean bidirectional) {
+        List<P> linePoints = points.stream().map(this::searchGridPoint).collect(Collectors.toList());
+        lines.add(new ConnectionLine(e1, e2, linePoints, bidirectional));
     }
 
     public void removeConnectionLine(ConnectionLine line) {
@@ -190,9 +180,9 @@ public class Schema {
         return null;
     }
 
-    public ConnectionLine getCrossingLine(Point p) {
+    public ConnectionLine findCrossingLine(Point p) {
         for (ConnectionLine line : lines) {
-            if (line.getCrossPoint(p, SELECTION_TOLERANCE) != -1) {
+            if (line.findCrossingPoint(p) != -1) {
                 return line;
             }
         }
@@ -209,7 +199,7 @@ public class Schema {
      * @param width  width of the selection
      * @param height height of the selection
      */
-    public void selectElements(int x, int y, int width, int height) {
+    public void select(int x, int y, int width, int height) {
         Point p1 = new Point(x, y);
         Point p2 = new Point(x + width, y + height);
 
@@ -233,39 +223,6 @@ public class Schema {
         lines.forEach(line -> line.setSelected(false));
     }
 
-    /**
-     * This method moves all selected elements to a new location. The new location is computed as: old + diff (the
-     * parameter).
-     *
-     * @param diffX X difference between the new and old location
-     * @param diffY Y difference between the new and old location
-     */
-    public void moveSelection(int diffX, int diffY) {
-        List<Element> allElements = getAllElements();
-
-        // TODO: test only not selected element
-
-        // test for movement of all elements and line points first
-        for (Element elem : allElements) {
-            int x = elem.getX() + diffX;
-            int y = elem.getY() + diffY;
-            if (elem.isSelected() && isElementNotMovable(x, y, elem)) {
-                return;
-            }
-        }
-        if (lines.stream().anyMatch(line -> (line.isSelected() && line.anyPointNotMovable(this, diffX, diffY)))) {
-            return;
-        }
-
-        // actual movement
-        for (Element elem : allElements) {
-            if (elem.isSelected()) {
-                elem.move(this, diffX, diffY);
-            }
-        }
-        lines.stream().filter(ConnectionLine::isSelected).forEach(line -> line.moveAllPoints(this, diffX, diffY));
-    }
-
     public void deleteSelected() {
         List<Element> allElements = getAllElements();
 
@@ -283,7 +240,64 @@ public class Schema {
         }
     }
 
-    public boolean isElementNotMovable(int newX, int newY, Element element) {
+    /**
+     * This method moves all selected elements to a new location. The new location is computed as: old + diff (the
+     * parameter).
+     *
+     * @param diffX X difference between the new and old location
+     * @param diffY Y difference between the new and old location
+     */
+    public void moveSelection(int diffX, int diffY) {
+        List<Element> allElements = getAllElements();
+
+        // test for movement of all elements and line points first
+        for (Element elem : allElements) {
+            P movedPoint = searchGridPoint(elem.getX() + diffX, elem.getY() + diffY);
+            if (elem.isSelected() && isElementNotMovable(elem, movedPoint)) {
+                return;
+            }
+        }
+        if (lines.stream().anyMatch(line -> (line.isSelected() && !allPointMovable(line.getPoints(), diffX, diffY)))) {
+            return;
+        }
+
+        // actual movement
+        allElements.stream()
+            .filter(Element::isSelected)
+            .forEach(element -> {
+                P movedPoint = searchGridPoint(element.getX() + diffX, element.getY() + diffY);
+                element.move(movedPoint);
+            });
+
+        lines.stream()
+            .filter(ConnectionLine::isSelected)
+            .forEach(line -> line.moveAllPoints(diffX, diffY, this::searchGridPoint));
+    }
+
+    public void moveElement(Element element, Point newLocation) {
+        P movedPoint = searchGridPoint(newLocation);
+        if (!isElementNotMovable(element, newLocation.x, newLocation.y)) {
+            element.move(movedPoint);
+        }
+    }
+
+    public void moveLinePoint(ConnectionLine line, P p, Point newLocation) {
+        if (!isPointNotMovable(newLocation.x, newLocation.y)) {
+            P movedPoint = searchGridPoint(newLocation);
+            line.movePoint(p, movedPoint);
+        }
+    }
+
+    public void addLinePoint(ConnectionLine line, int beforePoint, Point point) {
+        P addedPoint = searchGridPoint(point);
+        line.addPoint(beforePoint, addedPoint);
+    }
+
+    private boolean isElementNotMovable(Element element, P newLocation) {
+        return isElementNotMovable(element, newLocation.ix(), newLocation.iy());
+    }
+
+    private boolean isElementNotMovable(Element element, int newX, int newY) {
         int eW = element.getWidth() / 2;
         int eH = element.getHeight() / 2;
 
@@ -292,7 +306,7 @@ public class Schema {
         if (doesNotFitToMargins(elementStart.x, elementStart.y)) {
             return true;
         }
-        if (getCrossingLine(elementStart, elementEnd) != null) {
+        if (findCrossingLine(elementStart, elementEnd) != null) {
             return true;
         }
 
@@ -334,14 +348,12 @@ public class Schema {
         return false;
     }
 
-    /**
-     * Determines if a point can be moved to given location.
-     *
-     * @param newX new X location for the point
-     * @param newY new Y location for the point
-     * @return true if the point can be moved, false otherwise (out of margins, or some element is in the way).
-     */
-    public boolean isPointNotMovable(int newX, int newY) {
+
+    private boolean isPointNotMovable(P newLocation) {
+        return isPointNotMovable(newLocation.ix(), newLocation.iy());
+    }
+
+    private boolean isPointNotMovable(int newX, int newY) {
         if (doesNotFitToMargins(newX, newY)) {
             return true;
         }
@@ -359,6 +371,16 @@ public class Schema {
         return false;
     }
 
+    private boolean allPointMovable(List<P> points, int diffX, int diffY) {
+        for (P point : points) {
+            P movedPoint = searchGridPoint(point.diff(point.ix() + diffX, point.iy() + diffY));
+            if (isPointNotMovable(movedPoint)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void save() throws CannotUpdateSettingException {
         List<PluginConnection> connections = lines.stream()
             .map(ConnectionLine::toPluginConnection)
@@ -367,16 +389,16 @@ public class Schema {
         config.replaceConnections(connections);
 
         Optional.ofNullable(compilerElement).ifPresentOrElse(
-            c -> config.setCompiler(c.pluginConfig), () -> config.setCompiler(null)
+            c -> config.setCompiler(c.save()), () -> config.setCompiler(null)
         );
         Optional.ofNullable(cpuElement).ifPresentOrElse(
-            c -> config.setCPU(c.pluginConfig), () -> config.setCPU(null)
+            c -> config.setCPU(c.save()), () -> config.setCPU(null)
         );
         Optional.ofNullable(memoryElement).ifPresentOrElse(
-            c -> config.setMemory(c.pluginConfig), () -> config.setMemory(null)
+            c -> config.setMemory(c.save()), () -> config.setMemory(null)
         );
 
-        List<PluginConfig> devices = deviceElements.stream().map(d -> d.pluginConfig).collect(Collectors.toList());
+        List<PluginConfig> devices = deviceElements.stream().map(Element::save).collect(Collectors.toList());
         config.setDevices(devices);
 
         config.save();
@@ -420,7 +442,7 @@ public class Schema {
         }
     }
 
-    private ConnectionLine getCrossingLine(Point selectionStart, Point selectionEnd) {
+    private ConnectionLine findCrossingLine(Point selectionStart, Point selectionEnd) {
         for (ConnectionLine line : lines) {
             if (line.isAreaCrossingPoint(selectionStart, selectionEnd)) {
                 return line;
@@ -440,19 +462,20 @@ public class Schema {
         Map<String, Element> elements = new HashMap<>();
 
         config.getCompiler().ifPresent(c -> {
-            compilerElement = new CompilerElement(c);
+            compilerElement = new CompilerElement(c, this::searchGridPoint);
+            compilerElement.move(searchGridPoint(compilerElement.getSchemaPoint()));
             elements.put(c.getPluginId(), compilerElement);
         });
         config.getCPU().ifPresent(c -> {
-            cpuElement = new CpuElement(c);
+            cpuElement = new CpuElement(c, this::searchGridPoint);
             elements.put(c.getPluginId(), cpuElement);
         });
         config.getMemory().ifPresent(c -> {
-            memoryElement = new MemoryElement(c);
+            memoryElement = new MemoryElement(c, this::searchGridPoint);
             elements.put(c.getPluginId(), memoryElement);
         });
         config.getDevices().forEach(c -> {
-            DeviceElement device = new DeviceElement(c);
+            DeviceElement device = new DeviceElement(c, this::searchGridPoint);
             elements.put(c.getPluginId(), device);
             deviceElements.add(device);
         });
@@ -465,5 +488,44 @@ public class Schema {
             ConnectionLine line = new ConnectionLine(from, to, points, c.isBidirectional());
             lines.add(line);
         });
+    }
+
+    private P searchGridPoint(Point old) {
+        return searchGridPoint(P.of(old));
+    }
+
+    private P searchGridPoint(int oldX, int oldY) {
+        return searchGridPoint(P.of(oldX, oldY));
+    }
+
+    private P searchGridPoint(P old) {
+        boolean useGrid = useSchemaGrid();
+        int gridGap = getSchemaGridGap();
+        if (!useGrid || gridGap <= 0) {
+            return old;
+        }
+        int dX = (int) Math.round(old.x / (double) gridGap);
+        int dY = (int) Math.round(old.y / (double) gridGap);
+        return P.of(dX * gridGap, dY * gridGap);
+    }
+
+    private CompilerElement createCompilerElement(Point clickPoint, String pluginFile) {
+        String pluginName = pluginFile.substring(0, pluginFile.length() - ".jar".length());
+        return new CompilerElement(searchGridPoint(P.of(clickPoint)), pluginName, pluginFile);
+    }
+
+    private CpuElement createCpuElement(Point clickPoint, String pluginFile) {
+        String pluginName = pluginFile.substring(0, pluginFile.length() - ".jar".length());
+        return new CpuElement(searchGridPoint(P.of(clickPoint)), pluginName, pluginFile);
+    }
+
+    private MemoryElement createMemoryElement(Point clickPoint, String pluginFile) {
+        String pluginName = pluginFile.substring(0, pluginFile.length() - ".jar".length());
+        return new MemoryElement(searchGridPoint(P.of(clickPoint)), pluginName, pluginFile);
+    }
+
+    private DeviceElement createDeviceElement(Point clickPoint, String pluginFile) {
+        String pluginName = pluginFile.substring(0, pluginFile.length() - ".jar".length());
+        return new DeviceElement(searchGridPoint(P.of(clickPoint)), pluginName, pluginFile);
     }
 }

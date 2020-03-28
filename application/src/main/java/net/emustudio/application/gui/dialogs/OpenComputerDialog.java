@@ -204,7 +204,7 @@ public class OpenComputerDialog extends JDialog {
         toolPreview.setFloatable(false);
         toolPreview.setRollover(true);
 
-        jLabel2.setText("Computer preview:");
+        jLabel2.setText("Computer:");
         toolPreview.add(jLabel2);
 
         jSeparator1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));

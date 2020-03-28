@@ -50,14 +50,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * This class handles the drawing canvas - panel by which the user can modelling abstract schemas of virtual computers.
- * <p>
- * The drawing is realized by capturing mouse events (motion, clicks). The "picture" is synchronized with the Schema
- * object automatically.
- * <p>
- * The panel has states, or modes. The initial mode is "moving" mode.
- */
 public class DrawingPanel extends JPanel implements MouseListener, MouseMotionListener {
     private final static float[] DASH = {10.0f};
     private final static float[] DOT = {1.0f};
@@ -94,9 +86,6 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
     private final DrawingModel drawingModel = new DrawingModel();
     private final Schema schema;
 
-    private Graphics2D doubleBufferingGraphics;
-    private Image secondBuffer;
-
     public interface ToolListener {
 
         void toolWasUsed();
@@ -108,7 +97,9 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
         mode = new ModeSelector(this, drawingModel);
         mode.select(ModeSelector.SelectMode.MOVING);
 
-        this.setBackground(Color.WHITE);
+        setBackground(Color.WHITE);
+        setDoubleBuffered(true);
+        setOpaque(true);
     }
 
     public void addToolListener(ToolListener listener) {
@@ -124,81 +115,9 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
         repaint();
     }
 
-    /**
-     * Set the grid gap. After this change, the panel is repainted.
-     *
-     * @param gridGap grid gap in pixels
-     */
     public void setGridGap(int gridGap) {
         schema.setSchemaGridGap(gridGap);
         repaint();
-    }
-
-    @Override
-    public void update(Graphics g) {
-        if (secondBuffer == null) {
-            secondBuffer = createImage(this.getSize().width, this.getSize().height);
-            doubleBufferingGraphics = (Graphics2D) secondBuffer.getGraphics();
-        }
-
-        doubleBufferingGraphics.setColor(getBackground());
-        doubleBufferingGraphics.fillRect(0, 0, this.getSize().width, this.getSize().height);
-
-        doubleBufferingGraphics.setColor(getForeground());
-        paint(doubleBufferingGraphics);
-
-        g.drawImage(secondBuffer, 0, 0, this);
-    }
-
-    private void correctPanelSize() {
-        Dimension convexHull = new Dimension(0, 0);
-
-        convexHull.width = 0;
-        convexHull.height = 0;
-        for (Element element : schema.getAllElements()) {
-            Rectangle rect = element.getRectangle();
-
-            int leftAndWidth = rect.x + rect.width;
-            if (leftAndWidth > convexHull.width) {
-                convexHull.width = leftAndWidth;
-            }
-
-            int topAndHeight = rect.y + rect.height;
-            if (topAndHeight > convexHull.height) {
-                convexHull.height = topAndHeight;
-            }
-        }
-
-        for (ConnectionLine line : schema.getConnectionLines()) {
-            for (P p : line.getPoints()) {
-                if (p.x > convexHull.width) {
-                    convexHull.width = p.ix();
-                }
-                if (p.y > convexHull.height) {
-                    convexHull.height = p.iy();
-                }
-            }
-        }
-
-        if (convexHull.width != 0 && convexHull.height != 0) {
-            this.setPreferredSize(convexHull);
-            this.revalidate();
-        }
-    }
-
-    private void paintGrid(Graphics2D graphics) {
-        if (schema.useSchemaGrid()) {
-            int gridGap = schema.getSchemaGridGap();
-            graphics.setColor(gridColor);
-            graphics.setStroke(DOTTED_LINE);
-
-            for (int x = 0; x < getWidth(); x += gridGap) {
-                graphics.drawLine(x, 0, x, getHeight());
-            }
-            for (int y = 0; y < getHeight(); y += gridGap) {
-                graphics.drawLine(0, y, getWidth(), y);
-            }
-        }
     }
 
     @Override
@@ -282,4 +201,54 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
         mode.select(mode.get().mouseMoved(e));
     }
 
+    private void paintGrid(Graphics2D graphics) {
+        if (schema.useSchemaGrid()) {
+            int gridGap = schema.getSchemaGridGap();
+            graphics.setColor(gridColor);
+            graphics.setStroke(DOTTED_LINE);
+
+            for (int x = 0; x < getWidth(); x += gridGap) {
+                graphics.drawLine(x, 0, x, getHeight());
+            }
+            for (int y = 0; y < getHeight(); y += gridGap) {
+                graphics.drawLine(0, y, getWidth(), y);
+            }
+        }
+    }
+
+    private void correctPanelSize() {
+        Dimension convexHull = new Dimension(0, 0);
+
+        convexHull.width = 0;
+        convexHull.height = 0;
+        for (Element element : schema.getAllElements()) {
+            Rectangle rect = element.getRectangle();
+
+            int leftAndWidth = rect.x + rect.width;
+            if (leftAndWidth > convexHull.width) {
+                convexHull.width = leftAndWidth;
+            }
+
+            int topAndHeight = rect.y + rect.height;
+            if (topAndHeight > convexHull.height) {
+                convexHull.height = topAndHeight;
+            }
+        }
+
+        for (ConnectionLine line : schema.getConnectionLines()) {
+            for (P p : line.getPoints()) {
+                if (p.x > convexHull.width) {
+                    convexHull.width = p.ix();
+                }
+                if (p.y > convexHull.height) {
+                    convexHull.height = p.iy();
+                }
+            }
+        }
+
+        if (convexHull.width != 0 && convexHull.height != 0) {
+            this.setPreferredSize(convexHull);
+            this.revalidate();
+        }
+    }
 }

@@ -58,7 +58,7 @@ public class SchemaPoint {
         return new SchemaPoint(x, y);
     }
 
-    public static SchemaPoint create(int x, int y) {
+    public static SchemaPoint of(int x, int y) {
         return new SchemaPoint(x, y);
     }
 }

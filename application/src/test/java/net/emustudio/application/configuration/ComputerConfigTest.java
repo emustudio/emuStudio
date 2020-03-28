@@ -19,6 +19,7 @@
 
 package net.emustudio.application.configuration;
 
+import net.emustudio.application.gui.P;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import org.junit.After;
 import org.junit.Before;
@@ -26,7 +27,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,16 +68,17 @@ public class ComputerConfigTest {
     @Test
     public void testChangePluginConfig() {
         PluginConfig cpu = PluginConfig.create(
-            PLUGIN_TYPE.CPU, "cpu baby", "emptyfile.jar", new Point(10,10)
+            "someId", PLUGIN_TYPE.CPU, "cpu baby", "emptyfile.jar", P.of(10, 10)
         );
         config.setCPU(cpu);
 
+        assertEquals(cpu.getPluginId(), "someId");
         assertEquals(cpu.getPluginName(), "cpu baby");
         assertEquals(cpu.getPluginType(), PLUGIN_TYPE.CPU);
         assertEquals(cpu.getPluginFile(), "emptyfile.jar");
-        assertEquals(cpu.getSchemaPoint(), SchemaPoint.create(10, 10));
+        assertEquals(cpu.getSchemaPoint(), SchemaPoint.of(10, 10));
 
-        SchemaPoint newSchemaPoint = SchemaPoint.create(20,30);
+        SchemaPoint newSchemaPoint = SchemaPoint.of(20,30);
         cpu.setSchemaPoint(newSchemaPoint);
         assertEquals(cpu.getSchemaPoint(), newSchemaPoint);
     }

@@ -104,7 +104,7 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         int kCode = e.getKeyCode();
         if (kCode == KeyEvent.VK_ESCAPE) {
             panel.cancelDrawing();
-            schema.selectElements(-1, -1, 0, 0);
+            schema.select(-1, -1, 0, 0);
         } else if (kCode == KeyEvent.VK_DELETE) {
             panel.cancelDrawing();
             schema.deleteSelected();

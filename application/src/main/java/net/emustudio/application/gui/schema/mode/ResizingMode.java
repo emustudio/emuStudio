@@ -73,29 +73,29 @@ class ResizingMode extends AbstractMode {
 
     @Override
     public SelectMode mouseDragged(MouseEvent e) {
-        Point p = e.getPoint();
+        Point clickPoint = e.getPoint();
 
         if (resizeMode == -1) {
-            computeResizeMode(p);
+            computeResizeMode(clickPoint);
         }
         if (drawingModel.tmpElem1 == null) {
             return SelectMode.RESIZING;
         }
-        p.setLocation(searchGridPoint(p));
         switch (resizeMode) {
             case RESIZE_TOP:
-                drawingModel.tmpElem1.setSize(drawingModel.tmpElem1.getWidth(), (drawingModel.tmpElem1.getY() - p.y) * 2);
+                drawingModel.tmpElem1.setSize(drawingModel.tmpElem1.getWidth(), (drawingModel.tmpElem1.getY() - clickPoint.y) * 2);
                 break;
             case RESIZE_BOTTOM:
-                drawingModel.tmpElem1.setSize(drawingModel.tmpElem1.getWidth(), (p.y - drawingModel.tmpElem1.getY()) * 2);
+                drawingModel.tmpElem1.setSize(drawingModel.tmpElem1.getWidth(), (clickPoint.y - drawingModel.tmpElem1.getY()) * 2);
                 break;
             case RESIZE_LEFT:
-                drawingModel.tmpElem1.setSize((drawingModel.tmpElem1.getX() - p.x) * 2, drawingModel.tmpElem1.getHeight());
+                drawingModel.tmpElem1.setSize((drawingModel.tmpElem1.getX() - clickPoint.x) * 2, drawingModel.tmpElem1.getHeight());
                 break;
             case RESIZE_RIGHT:
-                drawingModel.tmpElem1.setSize((p.x - drawingModel.tmpElem1.getX()) * 2, drawingModel.tmpElem1.getHeight());
+                drawingModel.tmpElem1.setSize((clickPoint.x - drawingModel.tmpElem1.getX()) * 2, drawingModel.tmpElem1.getHeight());
                 break;
         }
+        panel.repaint();
         return SelectMode.RESIZING;
     }
 

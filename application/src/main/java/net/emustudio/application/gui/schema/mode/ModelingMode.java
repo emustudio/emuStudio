@@ -18,13 +18,11 @@
  */
 package net.emustudio.application.gui.schema.mode;
 
-import net.emustudio.application.configuration.PluginConfig;
 import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.DrawingModel;
 import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.elements.*;
 import net.emustudio.application.gui.schema.mode.ModeSelector.SelectMode;
-import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -85,7 +83,7 @@ class ModelingMode extends AbstractMode {
                 }
                 // if user didn't clicked on an element, but on drawing area
                 // means that there a new line point should be created.
-                drawingModel.selectedPoint = P.of(searchGridPoint(clickPoint));
+                drawingModel.selectedPoint = P.of(clickPoint);
             }
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_DELETE) {
             // only left button is accepted
@@ -98,7 +96,7 @@ class ModelingMode extends AbstractMode {
 
             // delete line?
             if (elem == null) {
-                drawingModel.selectedLine = schema.getCrossingLine(clickPoint);
+                drawingModel.selectedLine = schema.findCrossingLine(clickPoint);
             }
         }
         return SelectMode.MODELING;
@@ -122,7 +120,7 @@ class ModelingMode extends AbstractMode {
                 panel.fireToolWasUsed();
             } else if (drawingModel.selectedLine != null) {
                 // if the mouse is released upon a point outside the selLine, nothing is done.
-                if (drawingModel.selectedLine != schema.getCrossingLine(clickPoint)) {
+                if (drawingModel.selectedLine != schema.findCrossingLine(clickPoint)) {
                     drawingModel.selectedLine = null;
                     return SelectMode.MODELING;
                 }
@@ -131,16 +129,16 @@ class ModelingMode extends AbstractMode {
                 panel.fireToolWasUsed();
             }
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_COMPILER) {
-            schema.setCompilerElement(new CompilerElement(createConfig(PLUGIN_TYPE.COMPILER, clickPoint)));
+            schema.setCompilerElement(clickPoint, drawingModel.pluginFileName);
             panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_CPU) {
-            schema.setCpuElement(new CpuElement(createConfig(PLUGIN_TYPE.CPU, clickPoint)));
+            schema.setCpuElement(clickPoint, drawingModel.pluginFileName);
             panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_MEMORY) {
-            schema.setMemoryElement(new MemoryElement(createConfig(PLUGIN_TYPE.MEMORY, clickPoint)));
+            schema.setMemoryElement(clickPoint, drawingModel.pluginFileName);
             panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_DEVICE) {
-            schema.addDeviceElement(new DeviceElement(createConfig(PLUGIN_TYPE.DEVICE, clickPoint)));
+            schema.addDeviceElement(clickPoint, drawingModel.pluginFileName);
             panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_CONNECTION) {
             sketchLastPoint = null;
@@ -164,16 +162,11 @@ class ModelingMode extends AbstractMode {
             }
             if ((drawingModel.tmpElem1 != null) && (drawingModel.tmpElem2 != null)) {
                 // check if the connection exists already, or if there is a self-connection
-                boolean alreadyConnected = schema.getConnectionLines().stream()
-                    .anyMatch(l -> l.containsElement(drawingModel.tmpElem1) && l.containsElement(drawingModel.tmpElem2));
-
+                boolean alreadyConnected = schema.isConnected(drawingModel.tmpElem1, drawingModel.tmpElem2);
                 if (!alreadyConnected && (drawingModel.tmpElem1 != drawingModel.tmpElem2)) {
-                    ConnectionLine line = new ConnectionLine(
-                        drawingModel.tmpElem1, drawingModel.tmpElem2,
-                        drawingModel.tmpPoints,
-                        drawingModel.bidirectional
+                    schema.addConnectionLine(
+                        drawingModel.tmpElem1, drawingModel.tmpElem2, drawingModel.tmpPoints, drawingModel.bidirectional
                     );
-                    schema.addConnectionLine(line);
                 }
                 drawingModel.tmpElem1 = null;
                 drawingModel.tmpElem2 = null;
@@ -189,13 +182,12 @@ class ModelingMode extends AbstractMode {
 
     @Override
     public SelectMode mouseDragged(MouseEvent e) {
-        Point p = e.getPoint();
+        Point clickPoint = e.getPoint();
         if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_CONNECTION) {
-            if (schema.getCrossingElement(p) == null) {
+            if (schema.getCrossingElement(clickPoint) == null) {
                 // if user didn't clicked on an element, but on drawing area means that there a new line point
                 // should be created.
-                p.setLocation(searchGridPoint(p));
-                drawingModel.selectedPoint =  P.of(p);
+                drawingModel.selectedPoint =  P.of(clickPoint);
             }
         }
         return SelectMode.MODELING;
@@ -208,13 +200,5 @@ class ModelingMode extends AbstractMode {
             panel.repaint();
         }
         return SelectMode.MODELING;
-    }
-
-    private PluginConfig createConfig(PLUGIN_TYPE pluginType, Point clickPoint) {
-        String pluginFile = drawingModel.pluginFileName;
-        return PluginConfig.create(
-            pluginType, pluginFile.substring(0, pluginFile.length() - ".jar".length()), pluginFile,
-            searchGridPoint(clickPoint)
-        );
     }
 }
