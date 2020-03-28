@@ -18,6 +18,7 @@
  */
 package net.emustudio.application.gui.schema.elements;
 
+import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.configuration.PluginConfig;
 import net.emustudio.application.gui.P;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -47,6 +48,7 @@ public abstract class Element {
     private final PLUGIN_TYPE pluginType;
     private final String pluginName;
     private final String pluginFileName;
+    private final Config pluginSettings;
 
     protected boolean selected = false;
 
@@ -74,13 +76,14 @@ public abstract class Element {
     private int detailsY;
 
     public Element(Color backColor, P schemaPoint, String pluginId, PLUGIN_TYPE pluginType, String pluginName,
-                   String pluginFileName) {
+                   String pluginFileName, Config pluginSettings) {
         this.pluginId = Objects.requireNonNull(pluginId);
         this.pluginType = Objects.requireNonNull(pluginType);
         this.backColor = Objects.requireNonNull(backColor);
         this.schemaPoint = Objects.requireNonNull(schemaPoint);
         this.pluginName = Objects.requireNonNull(pluginName);
         this.pluginFileName = Objects.requireNonNull(pluginFileName);
+        this.pluginSettings = Objects.requireNonNull(pluginSettings);
 
         int x = schemaPoint.ix();
         int y = schemaPoint.iy();
@@ -312,7 +315,7 @@ public abstract class Element {
     }
 
     public PluginConfig save() {
-        return PluginConfig.create(pluginId, pluginType, pluginName, pluginFileName, schemaPoint);
+        return PluginConfig.create(pluginId, pluginType, pluginName, pluginFileName, schemaPoint, pluginSettings);
     }
 
     @Override

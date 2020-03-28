@@ -80,13 +80,14 @@ public class PluginConfig {
 
 
     public static PluginConfig create(String id, PLUGIN_TYPE pluginType, String pluginName, String pluginFile,
-                                      P schemaLocation) {
+                                      P schemaLocation, Config pluginSettings) {
         Config config = Config.inMemory();
         config.set("id", id);
         config.set("type", pluginType.toString());
         config.set("name", pluginName);
         config.set("path", pluginFile);
         config.set("schemaPoint", schemaLocation.toSchemaPoint().toString());
+        config.set("settings", pluginSettings);
 
         return new PluginConfig(config);
     }

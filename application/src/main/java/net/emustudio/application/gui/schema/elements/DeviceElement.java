@@ -18,6 +18,7 @@
  */
 package net.emustudio.application.gui.schema.elements;
 
+import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.configuration.PluginConfig;
 import net.emustudio.application.gui.P;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -30,13 +31,16 @@ public class DeviceElement extends Element {
     private final static Color BACK_COLOR = new Color(0xe0e0e0);
 
     public DeviceElement(P schemaPoint, String pluginName, String pluginFileName) {
-        super(BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.DEVICE, pluginName, pluginFileName);
+        super(
+            BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.DEVICE, pluginName, pluginFileName,
+            Config.inMemory()
+        );
     }
 
     public DeviceElement(PluginConfig config, Function<P, P> searchGridPoint) {
         super(
             BACK_COLOR, searchGridPoint.apply(P.of(config.getSchemaPoint())), config.getPluginId(), PLUGIN_TYPE.DEVICE,
-            config.getPluginName(), config.getPluginFile()
+            config.getPluginName(), config.getPluginFile(), config.getPluginSettings()
         );
     }
 }

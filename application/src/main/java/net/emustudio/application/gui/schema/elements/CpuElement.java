@@ -18,6 +18,7 @@
  */
 package net.emustudio.application.gui.schema.elements;
 
+import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.configuration.PluginConfig;
 import net.emustudio.application.gui.P;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -30,13 +31,16 @@ public class CpuElement extends Element {
     private final static Color BACK_COLOR = new Color(0xffeeee);
 
     public CpuElement(P schemaPoint, String pluginName, String pluginFileName) {
-        super(BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.CPU, pluginName, pluginFileName);
+        super(
+            BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.CPU, pluginName, pluginFileName,
+            Config.inMemory()
+        );
     }
 
     public CpuElement(PluginConfig config, Function<P, P> searchGridPoint) {
         super(
             BACK_COLOR, searchGridPoint.apply(P.of(config.getSchemaPoint())), config.getPluginId(), PLUGIN_TYPE.CPU,
-            config.getPluginName(), config.getPluginFile()
+            config.getPluginName(), config.getPluginFile(), config.getPluginSettings()
         );
     }
 }
