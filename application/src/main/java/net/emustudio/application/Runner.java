@@ -140,7 +140,7 @@ public class Runner {
         try {
             new Automation(computer, inputFileName, applicationConfig, dialogs, waitForFinishMillis).run();
             return 0;
-        } catch (AutomationException e) {
+        } catch (Exception e) {
             LOGGER.error("Unexpected error during automation.", e);
             dialogs.showError("Unexpected error during automation. Please see log file for details.");
             return 1;
