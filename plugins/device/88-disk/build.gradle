@@ -27,6 +27,7 @@ dependencies {
   implementation libs.emuLib
   implementation libs.jcipAnnotations
   implementation libs.slf4JApi
+  implementation libs.args4j
 
   cpuLib project(":plugins:cpu:8080-cpu")
 
