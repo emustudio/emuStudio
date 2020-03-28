@@ -39,11 +39,13 @@ import java.util.ResourceBundle;
 public class MemoryImpl extends AbstractMemory {
     private final MemoryContextImpl context;
     private MemoryDialog gui;
+    private final boolean guiNotSupported;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         ContextPool contextPool = applicationApi.getContextPool();
 
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         context = new MemoryContextImpl();
         try {
             contextPool.register(pluginID, context, RAMMemoryContext.class);
@@ -85,10 +87,12 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public void showSettings(JFrame parent) {
-        if (gui == null) {
-            gui = new MemoryDialog(parent, context, applicationApi.getDialogs());
+        if (!guiNotSupported) {
+            if (gui == null) {
+                gui = new MemoryDialog(parent, context, applicationApi.getDialogs());
+            }
+            gui.setVisible(true);
         }
-        gui.setVisible(true);
     }
 
     @Override

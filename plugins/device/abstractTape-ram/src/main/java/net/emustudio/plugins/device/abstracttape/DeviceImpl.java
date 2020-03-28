@@ -46,16 +46,19 @@ public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private final AbstractTapeContextImpl context;
+    private final boolean guiNotSupported;
+    private final boolean automaticEmulation;
 
     private String guiTitle;
     private TapeGui gui;
-    private boolean guiNotSupported;
-    private boolean automaticEmulation;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.context = new AbstractTapeContextImpl(this);
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
+
         try {
             applicationApi.getContextPool().register(pluginID, context, AbstractTapeContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
@@ -83,14 +86,12 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void initialize() {
-        automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
-        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        context.setVerbose(automaticEmulation);
 
         boolean showAtStartup = settings.getBoolean("showAtStartup", false);
         if (showAtStartup) {
             showGUI(null);
         }
-        context.setVerbose(automaticEmulation);
     }
 
     @Override

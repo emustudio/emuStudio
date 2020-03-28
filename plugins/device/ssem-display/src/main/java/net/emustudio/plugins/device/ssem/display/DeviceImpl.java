@@ -38,12 +38,13 @@ import java.util.ResourceBundle;
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {
     private final DisplayPanel displayPanel = new DisplayPanel();
+    private final boolean guiNotSupported;
     private MemoryContext<Byte> memory;
-    private boolean guiNotSupported;
     private DisplayGui display;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
     }
 
     @SuppressWarnings("unchecked")
@@ -55,7 +56,6 @@ public class DeviceImpl extends AbstractDevice {
                 "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
             );
         }
-        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
     }
 
     @Override

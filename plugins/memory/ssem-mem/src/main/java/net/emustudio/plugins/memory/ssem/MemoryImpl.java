@@ -45,10 +45,12 @@ public class MemoryImpl extends AbstractMemory {
 
     private final MemoryContextImpl memContext = new MemoryContextImpl();
     private MemoryGui memoryGUI;
-    private boolean guiNotSupported;
+    private final boolean guiNotSupported;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
+
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
             applicationApi.getContextPool().register(pluginID, memContext, MemoryContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
@@ -72,11 +74,6 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public String getDescription() {
         return "Main store for SSEM machine";
-    }
-
-    @Override
-    public void initialize() {
-        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
     }
 
     @Override

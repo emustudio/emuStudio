@@ -58,6 +58,7 @@ public class DeviceImpl extends AbstractDevice {
     private final StatusPort statusPort;
     private final ControlPort controlPort;
     private final DataPort dataPort;
+    private final boolean guiNotSupported;
 
     private ExtendedContext cpuContext;
 
@@ -66,7 +67,6 @@ public class DeviceImpl extends AbstractDevice {
     private int port3CPU;
     private int currentDrive;
     private DiskGui gui;
-    private final boolean guiNotSupported;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -143,10 +143,9 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showSettings(JFrame parent) {
-        if (guiNotSupported) {
-            return;
+        if (!guiNotSupported) {
+            new SettingsDialog(parent, settings, drives, applicationApi.getDialogs()).setVisible(true);
         }
-        new SettingsDialog(parent, settings, drives, applicationApi.getDialogs()).setVisible(true);
     }
 
     public Drive getCurrentDrive() {

@@ -103,6 +103,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         if (terminalSettings.isGuiSupported()) {
             if (terminalGUI == null) {
                 terminalGUI = new TerminalWindow(parent, display);
+                terminalGUI.setAlwaysOnTop(terminalSettings.isAlwaysOnTop());
                 ((KeyboardGui)keyboard).addListenerRecursively(terminalGUI);
                 display.startCursor();
             }
@@ -158,6 +159,9 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
             keyboard.connect(display);
         } else {
             keyboard.disconnect(display);
+        }
+        if (terminalGUI != null) {
+            terminalGUI.setAlwaysOnTop(terminalSettings.isAlwaysOnTop());
         }
     }
 

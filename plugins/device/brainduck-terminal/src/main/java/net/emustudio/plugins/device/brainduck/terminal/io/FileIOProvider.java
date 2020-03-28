@@ -25,8 +25,8 @@ import java.io.*;
 
 public class FileIOProvider implements InputProvider, OutputProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileIOProvider.class);
-    private static final File OUTPUT_FILE_NAME = new File("brainduck-terminal.out");
-    private static final File INPUT_FILE_NAME = new File("brainduck-terminal.in");
+    public static final File OUTPUT_FILE_NAME = new File("brainduck-terminal.out");
+    public static final File INPUT_FILE_NAME = new File("brainduck-terminal.in");
 
     private final Reader reader;
     private final FileWriter writer;

@@ -48,11 +48,13 @@ public class MemoryImpl extends AbstractMemory {
 
     private final MemoryContextImpl context;
     private MemoryWindow gui;
+    private final boolean guiNotSupported;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         this.context = new MemoryContextImpl();
 
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
                 pool.register(pluginID, context, RASPMemoryContext.class);
@@ -82,10 +84,12 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public void showSettings(JFrame parent) {
-        if (gui == null) {
-            gui = new MemoryWindow(parent, context, applicationApi.getDialogs());
+        if (!guiNotSupported) {
+            if (gui == null) {
+                gui = new MemoryWindow(parent, context, applicationApi.getDialogs());
+            }
+            gui.setVisible(true);
         }
-        gui.setVisible(true);
     }
 
     @Override

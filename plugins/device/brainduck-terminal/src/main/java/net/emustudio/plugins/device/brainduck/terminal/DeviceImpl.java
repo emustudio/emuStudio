@@ -49,14 +49,14 @@ import java.util.ResourceBundle;
 public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
-    private boolean guiNotSupported;
-    private boolean automaticEmulation;
+    private final boolean guiNotSupported;
     private final BrainTerminalContext terminal = new BrainTerminalContext();
-    private boolean keyboardSet = false;
+    private boolean guiIOset = false;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
             applicationApi.getContextPool().register(pluginID, terminal, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
@@ -86,20 +86,18 @@ public class DeviceImpl extends AbstractDevice {
     public void initialize() throws PluginInitializationException {
         BrainCPUContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, BrainCPUContext.class);
 
-        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
-
-        InputProvider inputProvider;
+        InputProvider keyboard;
         OutputProvider outputProvider;
 
         try {
             cpu.attachDevice(terminal);
 
-            if (guiNotSupported || automaticEmulation) {
+            if (guiNotSupported) {
+                LOGGER.debug("Creating file-based keyboard: {}", FileIOProvider.INPUT_FILE_NAME);
                 FileIOProvider fileIOProvider = new FileIOProvider();
-                inputProvider = fileIOProvider;
+                keyboard = fileIOProvider;
                 outputProvider = fileIOProvider;
-                terminal.setInputProvider(inputProvider);
+                terminal.setInputProvider(keyboard);
                 terminal.setOutputProvider(outputProvider);
             }
         } catch (IOException e) {
@@ -133,13 +131,14 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showGUI(JFrame parent) {
-        if (!guiNotSupported && !automaticEmulation) {
-            if (!keyboardSet) {
+        if (!guiNotSupported) {
+            if (!guiIOset) {
+                LOGGER.debug("Creating GUI-based keyboard");
                 Keyboard keyboard = new Keyboard();
                 OutputProvider outputProvider = BrainTerminalGui.create(parent, keyboard, applicationApi.getDialogs());
                 terminal.setInputProvider(keyboard);
                 terminal.setOutputProvider(outputProvider);
-                keyboardSet = true;
+                guiIOset = true;
             }
 
             terminal.showGUI();

@@ -46,11 +46,12 @@ public class MemoryImpl extends AbstractMemory {
 
     private final MemoryContextImpl context;
     private MemoryGui gui;
-    private boolean guiNotSupported = false;
+    private final boolean guiNotSupported;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
+        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         this.context = new MemoryContextImpl(applicationApi.getDialogs());
         try {
             ContextPool contextPool = applicationApi.getContextPool();
@@ -95,8 +96,6 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public void initialize() throws PluginInitializationException {
-        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-
         try {
             int banksCount = settings.getInt("banksCount", 1);
             if (banksCount <= 0) {
