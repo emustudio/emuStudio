@@ -1,7 +1,7 @@
 name = "MITS Altair8800"
 
 [MEMORY]
-	schemaPoint = "56,137"
+	schemaPoint = "80,180"
 	path = "standard-mem.jar"
 	name = "standard-mem"
 	id = "fee24374-8d28-4472-85ef-e8ef182f44e3"
@@ -27,7 +27,7 @@ name = "MITS Altair8800"
 #       imageBankN = 0
 
 [COMPILER]
-	schemaPoint = "56,37"
+	schemaPoint = "80,60"
 	path = "as-8080.jar"
 	settings = {}
 	name = "as-8080"
@@ -35,7 +35,7 @@ name = "MITS Altair8800"
 	type = "COMPILER"
 
 [CPU]
-	schemaPoint = "176,137"
+	schemaPoint = "220,180"
 	path = "8080-cpu.jar"
 	settings = {}
 	name = "8080-cpu"
@@ -50,7 +50,7 @@ name = "MITS Altair8800"
 
 
 [[DEVICE]]
-	schemaPoint = "176,37"
+	schemaPoint = "220,60"
 	path = "88-disk.jar"
 	name = "88-disk"
 	id = "ad934179-3690-4bbc-b6ab-f4634346927a"
@@ -96,7 +96,7 @@ name = "MITS Altair8800"
 		sectorLength10 = 137
 
 [[DEVICE]]
-	schemaPoint = "276,137"
+	schemaPoint = "340,180"
 	path = "88-sio.jar"
 	name = "88-sio"
 	id = "515f3dfd-5005-4b62-b002-a20f23324573"
@@ -115,15 +115,20 @@ name = "MITS Altair8800"
 		statusPortNumber4 = 24
 
 [[DEVICE]]
-	schemaPoint = "276,37"
+	schemaPoint = "340,60"
 	path = "adm3A-terminal.jar"
 	name = "adm3A-terminal"
 	id = "654a684c-b65e-4c6d-b1f1-1371a3027a90"
 	type = "DEVICE"
 
 	[DEVICE.settings]
-		inputFileName = "adm3A-terminal.in"
+		antiAliasing = true
 		outputFileName = "adm3A-terminal.out"
+		inputFileName = "adm3A-terminal.in"
+		alwaysOnTop = true
+		inputReadDelay = 0
+		halfDuplex = false
+
 #       halfDuplex = false
 #       alwaysOnTop = false
 #       inputReadDelay = 0

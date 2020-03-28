@@ -1,7 +1,7 @@
 name = "MITS Altair8800 (Z80)"
 
 [MEMORY]
-	schemaPoint = "60,40"
+	schemaPoint = "80,220"
 	path = "standard-mem.jar"
 	name = "standard-mem"
 	id = "1e13a25d-fb23-4061-853a-5fe996b03281"
@@ -25,7 +25,7 @@ name = "MITS Altair8800 (Z80)"
 #       imageAddressN = ...
 #       imageBankN = 0
 [COMPILER]
-	schemaPoint = "60,200"
+	schemaPoint = "80,60"
 	path = "as-z80.jar"
 	settings = {}
 	name = "as-z80"
@@ -33,7 +33,7 @@ name = "MITS Altair8800 (Z80)"
 	type = "COMPILER"
 
 [CPU]
-	schemaPoint = "180,40"
+	schemaPoint = "220,220"
 	path = "z80-cpu.jar"
 	settings = {}
 	name = "z80-cpu"
@@ -45,7 +45,7 @@ name = "MITS Altair8800 (Z80)"
 #       inputReadDelay = 0
 #       antiAliasing = true
 [[DEVICE]]
-	schemaPoint = "300,40"
+	schemaPoint = "340,140"
 	path = "88-disk.jar"
 	name = "88-disk"
 	id = "c94d0e9b-f394-4a71-94b0-87d0f970a3fd"
@@ -90,7 +90,7 @@ name = "MITS Altair8800 (Z80)"
 		sectorLength10 = 137
 
 [[DEVICE]]
-	schemaPoint = "296,115"
+	schemaPoint = "340,220"
 	path = "88-sio.jar"
 	name = "88-sio"
 	id = "de2ce2e7-4365-406e-864a-b60f353d3fba"
@@ -109,7 +109,7 @@ name = "MITS Altair8800 (Z80)"
 		statusPortNumber4 = 24
 
 [[DEVICE]]
-	schemaPoint = "416,115"
+	schemaPoint = "480,220"
 	path = "adm3A-terminal.jar"
 	name = "adm3A-terminal"
 	id = "0352cf74-2965-4723-bef9-3e918b1ac7c5"
@@ -120,7 +120,7 @@ name = "MITS Altair8800 (Z80)"
 		inputFileName = "adm3A-terminal.in"
 
 [[DEVICE]]
-	schemaPoint = "180,200"
+	schemaPoint = "220,60"
 	path = "simhPseudo-z80.jar"
 	settings = {}
 	name = "simhPseudo-z80"
@@ -137,7 +137,7 @@ name = "MITS Altair8800 (Z80)"
 	bidirectional = true
 	from = "c94d0e9b-f394-4a71-94b0-87d0f970a3fd"
 	to = "b86d4bc2-632c-46e3-bba1-c088c9177983"
-	points = []
+	points = ["240,140"]
 
 [[connections]]
 	bidirectional = true
@@ -149,7 +149,7 @@ name = "MITS Altair8800 (Z80)"
 	bidirectional = true
 	from = "de2ce2e7-4365-406e-864a-b60f353d3fba"
 	to = "b86d4bc2-632c-46e3-bba1-c088c9177983"
-	points = ["240,120", "240,60"]
+	points = []
 
 [[connections]]
 	bidirectional = true
@@ -167,5 +167,5 @@ name = "MITS Altair8800 (Z80)"
 	bidirectional = true
 	from = "6c07bc70-db4f-4e7a-86f3-0ba0ce9bebf9"
 	to = "1e13a25d-fb23-4061-853a-5fe996b03281"
-	points = ["140,120", "80,120"]
+	points = ["200,140", "120,140"]
 

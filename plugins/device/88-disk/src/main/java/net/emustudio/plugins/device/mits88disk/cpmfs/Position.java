@@ -20,16 +20,19 @@ package net.emustudio.plugins.device.mits88disk.cpmfs;
 
 class Position {
     int track;
-    public int sector;
+    int sector;
 
     Position(int track, int sector) {
         this.track = track;
         this.sector = sector;
     }
 
-    void reset(int track, int sector) {
-        this.track = track;
-        this.sector = sector;
+    void next(int sectorsPerTrack) {
+        sector++;
+        if (sector >= sectorsPerTrack) {
+            track++;
+            sector = 0;
+        }
     }
 
     @Override

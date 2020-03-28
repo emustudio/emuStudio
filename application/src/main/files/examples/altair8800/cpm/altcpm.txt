@@ -5,3 +5,5 @@
 5. Open terminal
 6. Run emulation
 
+Parameters:
+- block length = 1024 (default)

@@ -1,21 +1,21 @@
 name = "Random Access Machine (RAM)"
 
 [MEMORY]
-	schemaPoint = "45,35"
+	schemaPoint = "80,200"
 	path = "ram-mem.jar"
 	name = "ram-mem"
 	id = "98eb1bd9-52dc-4f8b-bb7c-6b1def31aa6e"
 	type = "MEMORY"
 
 [COMPILER]
-	schemaPoint = "45,135"
+	schemaPoint = "80,60"
 	path = "ramc-ram.jar"
 	name = "ramc-ram"
 	id = "d2ef750d-6617-44a7-8f17-93ff9d791d07"
 	type = "COMPILER"
 
 [CPU]
-	schemaPoint = "165,35"
+	schemaPoint = "200,200"
 	path = "ram-cpu.jar"
 	name = "ram-cpu"
 	id = "e0e2e308-eee2-414e-90e5-b69caea2b032"
@@ -25,21 +25,21 @@ name = "Random Access Machine (RAM)"
 #	[DEVICE.settings]
 #	    showAtStartup = false
 [[DEVICE]]
-	schemaPoint = "325,35"
+	schemaPoint = "360,60"
 	path = "abstractTape-ram.jar"
 	name = "abstractTape-ram"
 	id = "ba7e7035-a074-4666-b3fc-d08ca55305f7"
 	type = "DEVICE"
 
 [[DEVICE]]
-	schemaPoint = "325,135"
+	schemaPoint = "360,200"
 	path = "abstractTape-ram.jar"
 	name = "abstractTape-ram"
 	id = "57389401-fdf7-4bcd-8a66-f936332273bf"
 	type = "DEVICE"
 
 [[DEVICE]]
-	schemaPoint = "165,135"
+	schemaPoint = "200,60"
 	path = "abstractTape-ram.jar"
 	name = "abstractTape"
 	id = "c3d76043-bb08-4711-bb8c-14f908fa763b"
@@ -64,13 +64,13 @@ name = "Random Access Machine (RAM)"
 	bidirectional = true
 	from = "ba7e7035-a074-4666-b3fc-d08ca55305f7"
 	to = "e0e2e308-eee2-414e-90e5-b69caea2b032"
-	points = []
+	points = ["360,120", "220,120"]
 
 [[connections]]
 	bidirectional = true
 	from = "57389401-fdf7-4bcd-8a66-f936332273bf"
 	to = "e0e2e308-eee2-414e-90e5-b69caea2b032"
-	points = ["240,140", "240,60"]
+	points = []
 
 [[connections]]
 	bidirectional = true

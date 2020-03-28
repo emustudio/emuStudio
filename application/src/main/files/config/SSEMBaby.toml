@@ -1,28 +1,28 @@
 name = "SSEM (Baby)"
 
 [MEMORY]
-	schemaPoint = "60,140"
+	schemaPoint = "80,180"
 	path = "ssem-mem.jar"
 	name = "ssem-mem"
 	id = "484b749c-22af-4179-90cd-e0cb1648c163"
 	type = "MEMORY"
 
 [COMPILER]
-	schemaPoint = "60,40"
+	schemaPoint = "80,60"
 	path = "as-ssem.jar"
 	name = "as-ssem"
 	id = "bb2bd08e-523b-4adf-936d-df77142b91d1"
 	type = "COMPILER"
 
 [CPU]
-	schemaPoint = "220,40"
+	schemaPoint = "220,180"
 	path = "ssem-cpu.jar"
 	name = "ssem-cpu"
 	id = "dd29f197-be51-4d24-b862-38db1565b4b0"
 	type = "CPU"
 
 [[DEVICE]]
-	schemaPoint = "220,140"
+	schemaPoint = "220,60"
 	path = "ssem-display.jar"
 	name = "ssem-display"
 	id = "3411f5ac-ef22-4b7f-b326-d90eab06da4a"
@@ -38,7 +38,7 @@ name = "SSEM (Baby)"
 	bidirectional = true
 	from = "484b749c-22af-4179-90cd-e0cb1648c163"
 	to = "dd29f197-be51-4d24-b862-38db1565b4b0"
-	points = ["140,120", "140,40"]
+	points = []
 
 [[connections]]
 	bidirectional = true
@@ -50,5 +50,5 @@ name = "SSEM (Baby)"
 	bidirectional = true
 	from = "484b749c-22af-4179-90cd-e0cb1648c163"
 	to = "3411f5ac-ef22-4b7f-b326-d90eab06da4a"
-	points = []
+	points = ["100,120", "200,120"]
 

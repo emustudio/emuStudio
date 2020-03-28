@@ -20,7 +20,6 @@ public class CpmFileSystem {
     private final int directoryTrack;
     private final int blockLength;
     private final boolean blocksAreTwoBytes;
-    private final Position position = new Position(0, 0);
 
     public CpmFileSystem(DriveIO driveIO, int directoryTrack, int blockLength, boolean blocksAreTwoBytes) {
         this.driveIO = Objects.requireNonNull(driveIO);
@@ -55,7 +54,7 @@ public class CpmFileSystem {
     public Optional<String> readContent(String fileName) throws IOException {
         List<CpmFile> foundExtents = listFiles().stream()
             .filter(file -> file.status < 32)
-            .filter(file -> file.toString().equals(fileName))
+            .filter(file -> file.toString().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)))
             .collect(Collectors.toList());
 
         if (foundExtents.isEmpty()) {
@@ -122,17 +121,13 @@ public class CpmFileSystem {
 
         int sectorsPerBlock = blockLength / sectorSize;
         final int sector = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) % sectorsPerTrack;
-        int track = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) / sectorsPerTrack;
+        final int track = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) / sectorsPerTrack;
 
-        position.reset(track, sector);
+        Position position = new Position(track, sector);
         List<ByteBuffer> block = new ArrayList<>();
         for (int counter = 0; counter < sectorsPerBlock; counter++) {
             block.add(driveIO.readSector(position));
-            position.sector++;
-            if (position.sector >= sectorsPerTrack) {
-                position.reset(track + 1, 0);
-                track++;
-            }
+            position.next(sectorsPerTrack);
         }
         return block;
     }
