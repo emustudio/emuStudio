@@ -1,0 +1,12 @@
+emulib.annotations
+emulib.emustudio
+emulib.emustudio.debugtable
+emulib.plugins
+emulib.plugins.compiler
+emulib.plugins.cpu
+emulib.plugins.device
+emulib.plugins.memory
+emulib.runtime
+emulib.runtime.exceptions
+emulib.runtime.interfaces
+emulib.runtime.internal
