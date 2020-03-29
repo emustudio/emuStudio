@@ -60,9 +60,9 @@ Then, navigate the browser to http://localhost:4000/.
 
 The documentation is organized in several subdirectories:
 
-- `_docdevel/emulator_tutorial` - tutorials for developing plugins for emuStudio. People reading these tutorials should
+- `_docs/developer/[version]/` - documentations for developing plugins for emuStudio. People reading these should
                   be Java developers.
-- `_docuser/` - user's manual. All official computers and plug-ins should be documented from the user
+- `_docs/user/[version]/` - user's manual. All official computers and plug-ins should be documented from the user
                 perspective. Here should be also placed all programming examples used in emulated machines.
 
 ## Who and How to contribute

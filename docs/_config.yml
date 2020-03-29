@@ -4,11 +4,6 @@ destination: ./_site
 plugins_dir: ./_plugins
 layouts_dir: ./_layouts
 data_dir:    ./_data
-collections:
-  docuser:
-    output: true
-  docdevel:
-    output: true
 
 # Serving
 baseurl: ""
@@ -16,13 +11,18 @@ url: http://www.net.emustudio.net/
 detach:  false
 port:    4000
 host:    0.0.0.0
-baseurl: "" # does not include hostname
 
 # Handling Reading
 safe:         true
-include:      [".htaccess"]
-exclude:      []
-keep_files:   [".git"]
+include:      [".htaccess", '_pages']
+exclude:
+  - .gitignore
+  - README.md
+  - build.sh
+  - Gemfile
+  - Gemfile.lock
+  - _docs
+keep_files: [docs, images, .git]
 encoding:     "utf-8"
 markdown_ext: "markdown,mkdown,mkdn,mkd,md"
 
@@ -34,8 +34,8 @@ unpublished: false
 
 # Plugins
 whitelist: [jekyll-asciidoc]
-gems:      [asciidoctor-diagram, jekyll-asciidoc, jekyll-sitemap]
-repository: vbmacher/emuStudio
+plugins:   [asciidoctor-diagram, jekyll-asciidoc, jekyll-sitemap]
+repository: emustudio/emuStudio
 
 google_analytics_id: UA-3492956-5
 
@@ -63,7 +63,6 @@ redcarpet:
 asciidoc:
   processor: asciidoctor
 
-keep_files: [images]
 asciidoctor:
   base_dir: :docdir
   safe: unsafe
@@ -91,13 +90,3 @@ kramdown:
     tab_width:         4
     bold_every:        10
     css:               style
-
-include: ['_pages' ]
-
-exclude:
-  - .gitignore
-  - README.md
-  - pom.xml
-  - build.sh
-  - Gemfile
-  - Gemfile.lock

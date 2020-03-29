@@ -1,0 +1,16 @@
+source 'https://rubygems.org'
+
+require 'json'
+require 'open-uri'
+versions = JSON.parse(open('https://pages.github.com/versions.json').read)
+
+gem 'asciidoctor', '1.5.5'
+gem 'pygments.rb', '1.1.1'
+gem 'just-the-docs'
+
+group :jekyll_plugins do
+  gem 'github-pages', versions['github-pages']
+  gem 'jekyll-sitemap', versions['jekyll-sitemap']
+  gem 'jekyll-asciidoc', '2.0.1'
+  gem 'asciidoctor-diagram', '1.5.4'
+end

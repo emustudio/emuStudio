@@ -1,0 +1,39 @@
+title: User documentation for emuStudio 0.39
+email: emustudio@googlegroups.com
+tagline: User documentation for emuStudio 0.39
+description: >- # this means to ignore newlines until "baseurl:"
+  User documentation for emuStudio 0.39. emuStudio is universal emulation platform
+  and framework targeting mainly academic sphere.
+baseurl: "/docs/user/0.39" # the subpath of your site, e.g. /blog
+url: "" 
+github_username:  emustudio
+ga_tracking: UA-3492956-5
+
+logo: "/assets/logo-1.svg"
+aux_links:
+  "Back to website":
+    - "//www.emustudio.net"
+
+# Build settings
+markdown: kramdown
+theme: "just-the-docs"
+plugins:
+  - jekyll-feed
+  - asciidoctor-diagram
+  - jekyll-asciidoc
+whitelist: [jekyll-asciidoc]
+
+asciidoc:
+  processor: asciidoctor
+
+asciidoctor:
+  base_dir: :docdir
+  safe: unsafe
+  attributes:
+    imagesdir: /docs/user/0.39/docs/
+    source-highlighter: pygments
+    pygments-css: style
+    icons: font
+
+
+destination: ../../../docs/user/0.39
