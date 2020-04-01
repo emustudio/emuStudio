@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
+<loc>/documentation/user/0.40/application/automation</loc>
+</url>
+<url>
 <loc>/documentation/user/0.40/application/</loc>
 </url>
 <url>
@@ -8,5 +11,17 @@
 </url>
 <url>
 <loc>/documentation/user/0.40/introduction/</loc>
+</url>
+<url>
+<loc>/documentation/user/0.40/application/logging</loc>
+</url>
+<url>
+<loc>/documentation/user/0.40/application/main-window</loc>
+</url>
+<url>
+<loc>/documentation/user/0.40/application/opening-computer</loc>
+</url>
+<url>
+<loc>/documentation/user/0.40/application/computer-schema</loc>
 </url>
 </urlset>

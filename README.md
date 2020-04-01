@@ -38,7 +38,7 @@ At first, either compile or [download](https://www.emustudio.net/download/) emuS
 The prerequisite is to have installed **Java Runtime Environment (JRE), at least version 11**
 (download [here](https://www.oracle.com/java/technologies/javase-downloads.html)). 
 
-Then, unzip the zip file (`emuStudio-xxx.zip`) and run it using command:
+Then, unzip the tar/zip file (`emuStudio-xxx.zip`) and run it using command:
 
 - On Linux / Mac
 ```
