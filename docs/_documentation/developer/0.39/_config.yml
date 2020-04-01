@@ -9,6 +9,9 @@ url: ""
 github_username:  emustudio
 ga_tracking: UA-3492956-5
 
+include:
+  - _doc
+
 logo: "/assets/logo-1.svg"
 aux_links:
   "Back to website":
@@ -29,7 +32,7 @@ asciidoctor:
   base_dir: :docdir
   safe: unsafe
   attributes:
-    imagesdir: /documentation/developer/0.39/docs/
+    imagesdir: /documentation/developer/0.39/_doc/
     source-highlighter: pygments
     pygments-css: style
     icons: font
