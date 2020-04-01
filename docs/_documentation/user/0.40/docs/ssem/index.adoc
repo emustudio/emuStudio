@@ -1,0 +1,10 @@
+---
+layout: default
+title: SSEM
+nav_order: 7
+---
+
+Well, there is no user documentation for the SSEM computer. This computer is provided as the result of the developer's
+tutorial of how to implement a custom computer in emuStudio.
+
+I strongly suggest to look at link:/docs/developer/0.39/index/[this nice tutorial]!

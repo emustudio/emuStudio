@@ -24,10 +24,12 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -179,13 +181,17 @@ public class GuiDialogsImpl implements Dialogs {
         int result = appendMissingExtension ? fileChooser.showSaveDialog(parent) : fileChooser.showOpenDialog(parent);
         fileChooser.setVisible(true);
         if (result == JFileChooser.APPROVE_OPTION) {
-            FileNameExtensionFilter fileFilter = (FileNameExtensionFilter)fileChooser.getFileFilter();
+            List<String> allExtensions = new ArrayList<>();
+            FileFilter selectedFilter = fileChooser.getFileFilter();
+            if (selectedFilter instanceof FileNameExtensionFilter) {
+                allExtensions.addAll(List.of(((FileNameExtensionFilter)selectedFilter).getExtensions()));
+            }
+
             File selectedFile = fileChooser.getSelectedFile();
 
             if (selectedFile != null) {
                 String extension = "";
-                if (appendMissingExtension && fileFilter != null) {
-                    List<String> allExtensions = List.of(fileFilter.getExtensions());
+                if (appendMissingExtension && selectedFilter != null) {
                     if (!allExtensions.isEmpty()) {
                         extension = "." + allExtensions.get(0); // get the first one
                     }

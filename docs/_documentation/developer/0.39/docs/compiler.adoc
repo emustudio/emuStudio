@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Writing a compiler
-nav_order: 4
+nav_order: 2
 ---
 
 == Writing a compiler
@@ -514,10 +514,10 @@ lexer and general syntax highlighter in emuStudio.
 Tokens are assigned into categories, as was already mentioned in section <<COMPILER_TOKEN_CATEGORIES>>. Token categories have
 assigned their specific editor style, like color or font.
 
-The content of the `net.sf.net.emustudio.ssem.assembler.TokenImpl` class is as follows:
+The content of the `net.sf.emustudio.ssem.assembler.TokenImpl` class is as follows:
 
 [source,java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/TokenImpl.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java`
 ----
 package net.sf.emustudio.ssem.assembler;
 
@@ -764,7 +764,7 @@ It's now time to implement them. Since we know all nodes are just nodes of our A
 interface first:
 
 [source, java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/tree/ASTnode.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java`
 ----
 package net.sf.emustudio.ssem.assembler.tree;
 
@@ -786,7 +786,7 @@ root of the tree.
 We can now define the visitor interface as follows:
 
 [source, java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/tree/ASTvisitor.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java`
 ----
 package net.sf.emustudio.ssem.assembler.tree;
 
@@ -810,7 +810,7 @@ The root node of the AST is the `Program` class. According to the grammar, it co
 either `Instruction` or `Constant`. Notice how we implemented traversing of the node:
 
 [source, java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/tree/Program.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java`
 ----
 package net.sf.emustudio.ssem.assembler.tree;
 
@@ -870,7 +870,7 @@ implemented in one AST node.
 Here's the source code:
 
 [source,java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/tree/Instruction.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java`
 ----
 package net.sf.emustudio.ssem.assembler.tree;
 
@@ -1042,7 +1042,7 @@ For lexer and parser we create unit test classes, which will be placed here (fol
         java/
           net/
             sf/
-              net.emustudio/
+              emustudio/
                 ssem/
                   assembler/
                     LexerTest.java
@@ -1051,7 +1051,7 @@ For lexer and parser we create unit test classes, which will be placed here (fol
 The content of the test classes are as follows:
 
 [source,java]
-.`src/test/java/net/sf/net.emustudio/ssem/assembler/LexerTest.java`
+.`src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java`
 ----
 package net.sf.emustudio.ssem.assembler;
 
@@ -1162,7 +1162,7 @@ public class LexerTest {
 ----
 
 [source,java]
-.`src/test/java/net/sf/net.emustudio/ssem/assembler/ParserTest.java`
+.`src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java`
 ----
 package net.sf.emustudio.ssem.assembler;
 
@@ -1318,7 +1318,7 @@ NOTE: The tests of parser are based on comparing `Instruction` and `Constant` in
 === The main class
 
 The time has come for implementing the main plug-in class. It will be placed in a package
-`net.sf.net.emustudio.ssem.assembler`, and the class will be named `CompilerImpl`.
+`net.sf.emustudio.ssem.assembler`, and the class will be named `CompilerImpl`.
 
 There are several requirements (behavioral contracts) put on the compiler main class:
 
@@ -1332,9 +1332,9 @@ There are several requirements (behavioral contracts) put on the compiler main c
 Now, the "skeleton" of the class follows:
 
 [source,java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/CompilerImpl.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java`
 ----
-package net.sf.net.emustudio.ssem.assembler;
+package net.sf.emustudio.ssem.assembler;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
@@ -1452,7 +1452,7 @@ binary representation into a file. However, it is generally better if I/O classe
 similar fashion. The code is as follows:
 
 [source,java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/CodeGenerator.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java`
 ----
 package net.sf.emustudio.ssem.assembler;
 
@@ -1547,7 +1547,7 @@ Code generator uses a "seekable" output stream, which allows to seek in the outp
 actually an abstract class, extending `OutputStream`. The reason is easier testing:
 
 [source,java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/SeekableOutputStream.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java`
 ----
 package net.sf.emustudio.ssem.assembler;
 
@@ -1564,7 +1564,7 @@ public abstract class SeekableOutputStream extends OutputStream {
 and here's the implementation:
 
 [source,java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/MemoryAndFileOutput.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java`
 ----
 package net.sf.emustudio.ssem.assembler;
 
@@ -1625,7 +1625,7 @@ It's not quite common, but it's possible.
 As being our practice, we must test it.
 
 [source,java]
-.`src/test/java/net/sf/net.emustudio/ssem/assembler/CodeGeneratorTest.java`
+.`src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java`
 ----
 package net.sf.emustudio.ssem.assembler;
 
@@ -1740,7 +1740,7 @@ We're almost done now! What is missing so far is to finish implementation of the
 Let's begin with it first.
 
 [source,java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/CompilerImpl.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java`
 ----
 public class CompilerImpl extends AbstractCompiler {
 
@@ -1810,7 +1810,7 @@ It might be sometimes useful to being able to run the compiler from the command 
 in the `Main` class, as follows:
 
 [source,java]
-.`src/main/java/net/sf/net.emustudio/ssem/assembler/Main.java`
+.`src/main/java/net/sf/emustudio/ssem/assembler/Main.java`
 ----
 package net.sf.emustudio.ssem.assembler;
 

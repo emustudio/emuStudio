@@ -13,8 +13,6 @@ modules.xml
 
 ### Jekyll ###
 _site/
-docs/
-images/
 .sass-cache/
 .jekyll-metadata
 

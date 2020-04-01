@@ -1,0 +1,13 @@
+digraph emulation_states {
+  ratio = 1;
+  node [shape = rect];
+
+  breakpoint [ style = filled, fillcolor=lightgrey ];
+
+  breakpoint -> running [ label = "run " ];
+  breakpoint -> stopped [ label = "stop " ];
+  breakpoint -> breakpoint   [ label = "step ", headport=w ];
+  running -> stopped [ label = "stop, error " ];
+  running -> breakpoint [ label = "pause, reset " ];
+  stopped -> breakpoint [ label = "reset " ];
+}

@@ -1,0 +1,20 @@
+---
+layout: default
+title: RAM
+nav_order: 5
+---
+
+:toc:
+:numbered:
+
+include::ram-intro.adoc[]
+
+include::ramc-ram.adoc[]
+
+include::ram-cpu.adoc[]
+
+include::ram-mem.adoc[]
+
+include::abstractTape-ram.adoc[]
+
+
