@@ -20,7 +20,7 @@
 import java.text.SimpleDateFormat
 
 ext.versions = [
-  slf4j: '1.7.25'
+  slf4j: '1.7.30'
 ]
 
 ext.libs = [

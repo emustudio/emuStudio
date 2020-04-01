@@ -1,0 +1,10 @@
+net.emustudio.emulib.plugins
+net.emustudio.emulib.plugins.annotations
+net.emustudio.emulib.plugins.compiler
+net.emustudio.emulib.plugins.cpu
+net.emustudio.emulib.plugins.device
+net.emustudio.emulib.plugins.memory
+net.emustudio.emulib.runtime
+net.emustudio.emulib.runtime.helpers
+net.emustudio.emulib.runtime.interaction
+net.emustudio.emulib.runtime.interaction.debugger

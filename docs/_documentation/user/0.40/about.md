@@ -6,7 +6,7 @@ permalink: /about/
 
 # What is emuStudio
 
-emuStudio is a toy-computer emulation platform and framework, targetting mainly academic sphere. A platform, because it supports full emulation "life-cycle". From writing and compiling programs for emulated machine, to running and debugging. A framework, because it provides API and documentation which encourages implementing your custom toy-computer, either real or abstract.
+emuStudio is a toy-computer emulation platform and framework, targeting mainly academic sphere. A platform, because it supports full emulation "life-cycle". From writing and compiling programs for emulated machine, to running and debugging. A framework, because it provides API and documentation which encourages implementing your custom toy-computer, either real or abstract.
 
 It does not aim to supersede other emulators which try to preserve history (e.g. [MAME][mame], or [simh][simh]), because they do better job, have big community around them and it does not make sense to provide the same goal. Instead, emuStudio focuses on allowing programming the emulated devices - in the style of "write program - load it into computer - emulate".
 

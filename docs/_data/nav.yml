@@ -1,7 +1,7 @@
 main:
   - { url: '/', text: 'Home' }
   - { url: '/download', text: 'Download' }
-  - { url: '/docs/user', text: 'Documentation' }
-  - { url: '/docs/developer', text: 'Developer' }
+  - { url: '/documentation/user', text: 'Documentation' }
+  - { url: '/documentation/developer', text: 'Developer' }
   - { url: '/roadmap', text: 'Roadmap' }
   - { url: '/about', text: 'About'}

@@ -23,7 +23,6 @@ import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
@@ -78,8 +77,6 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
                 writer = (dumpFile.equals("syserr")) ? System.err : new PrintStream(new FileOutputStream(Path.of(dumpFile).toFile()), true);
                 engine.setDispatchListener(createInstructionPrinter(disassembler, engine, printCodeUseCache, writer));
             }
-        } catch (InvalidContextException | ContextNotFoundException e) {
-            throw new PluginInitializationException(plugin, ": Could not get memory context", e);
         } catch (FileNotFoundException e) {
             throw new PluginInitializationException(plugin, "Could not find file?", e);
         }

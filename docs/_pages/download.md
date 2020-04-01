@@ -10,112 +10,103 @@ permalink: /download/
       <tr>
         <th>Version</th>
         <th>Released</th>
-        <th></th>
+        <th>Java Requirements</th>
+        <th>Download</th>
       </tr>
       <tr class="active">
+        <td>0.40</td>
+        <td>
+          <div>TBD 2020</div>
+          <div><a href="">Release notes</a></div>
+        </td>
+        <td><a href="https://jdk.java.net/archive/" target="_blank">Java 11</a></td>
+        <td>
+          <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+          <a href="https://github.com/emustudio/emuStudio/releases/download/RELEASE-0.40/emuStudio-0.40.zip" 
+             class="button btn-link btn-lg"
+             role="button"
+             target="_blank">emuStudio-0.40.zip</a>
+          <a href="https://github.com/emustudio/emuStudio/releases/download/RELEASE-0.40/emuStudio-0.40.tar" 
+             class="button btn-link btn-lg"
+             role="button"
+             target="_blank">emuStudio-0.40.tar</a>
+        </td>
+      </tr>
+      <tr>
         <td>0.39</td>
         <td>
           <div>20.3.2017</div>
-          <div><a href="https://sourceforge.net/projects/net.emustudio/files/dist/changelog-0.39.md/download"
-                  target="_blank">Release notes</a></div>
+          <div><a href="https://github.com/emustudio/emuStudio/releases/download/RELEASE-0.39/changelog-0.39.md" target="_blank">Release notes</a></div>
         </td>
+        <td><a href="http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html" target="_blank">Java 8</a></td>
         <td>
           <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-          <a href="https://sourceforge.net/projects/net.emustudio/files/dist/emuStudio-0.39.zip/download" 
+          <a href="https://github.com/emustudio/emuStudio/releases/download/RELEASE-0.39/emuStudio-0.39.zip" 
              class="button btn-link btn-lg"
              role="button"
              target="_blank">emuStudio-0.39.zip</a>
         </td>
       </tr>
       <tr>
-        <td>0.38 beta</td>
-        <td>
-          <div>24.10.2011</div>
-          <div><a href="https://sourceforge.net/projects/net.emustudio/files/dist/changelog-0.38.txt/download"
-                  target="_blank">Release notes</a></div>
-        </td>
-        <td>
-          <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-          <a href="https://sourceforge.net/projects/net.emustudio/files/dist/emuStudio-0.38b.zip/download" 
-             class="button btn-link btn-lg"
-             role="button"
-             target="_blank">emuStudio-0.38b.zip</a>
-        </td>
-      </tr>
-      <tr>
-        <td>0.0...001a</td>
+        <td>Very first</td>
         <td>
           <div>2007</div>
         </td>
+        <td>Java 6</td>
         <td>
           <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-          <a href="https://sourceforge.net/projects/net.emustudio/files/dist/emu8-very-first.zip/download" 
+          <a href="{{ site.baseurl }}/files/emu8-very-first.zip" 
              class="button btn-link btn-lg"
              role="button"
-             target="_blank">The very first emuStudio</a>
+             target="_blank">emu8-very-first.zip</a>
         </td>
       </tr>
     </table>
   </div>
   <p>
     Other versions of emuStudio are available at
-     <a href="https://sourceforge.net/projects/net.emustudio/files/dist/" target="_blank">SourceForge</a>.
+     <a href="https://github.com/emustudio/emuStudio/releases" target="_blank">GitHub</a>.     
   </p>
 </div>
 
 # Supported platforms
 
-Currently, supported platforms are Linux and Windows; theoretically emuStudio can work on any platform which supports
-Java SE.
+Currently, supported platforms are Linux and Windows. However, emuStudio might work (to some extent) on any platform
+(including Mac) which supports Java.
 
-# Installation
+# Installation & run
 
-The first step is to unpack the <code>emuStudio-xx.zip</code> file into location where you want to have emuStudio
-installed. The ZIP file contains the whole emuStudio with all official virtual computers, including examples and
-some of the sample images.
+Unpack <code>emuStudio-[version].tar</code> (or <code>emuStudio-[version].zip</code>) file into location where you want to have emuStudio
+installed. The archive file contains the whole emuStudio with all official computer emulators and examples.
  
 In order to run emuStudio, run the following command from console:
 
-<samp>java -jar emuStudio.jar</samp>
+- On Linux / Mac
+<code>./emuStudio</code>
 
-<div class="alert alert-info">
-  <span class="glyphicon glyphicon-exclamation-sign"></span> It is required to install a
-  <a href="http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html" target="_blank">Java Runtime Environment</a>
-  of version 8 or later.
-</div>
+- On Windows:
+<code>emuStudio.bat</code>
+
+For more information, please see the [documentation]({{ site.baseurl }}/docs/user/0.40/docs/main-module/).
 
 
-## Directory structure
+# Disk images, ROMs, etc.
 
-The directory structure of emuStudio is well-defined, and strict.
+There is possibility to run some original software for emulated computers on emuStudio (e.g. CP/M operating system on
+MITS Altair8800). In order to keep being "legal-safe", it is better to not share the images here or within the emuStudio
+release.
 
-<table class="table borderless">
-  <tr>
-    <td class="tree"><span class="treeitem"><code>config/</code></span></td>
-    <td>Configuration files of virtual computers.</td>
-  </tr>
-  <tr>
-    <td class="tree"><span class="treeitem"><code>compilers/</code></span></td>
-    <td>Compiler plug-ins</td>
-  </tr>
-  <tr>
-    <td class="tree"><span class="treeitem"><code>cpu/</code></span></td>
-    <td>CPU plug-ins</td>
-  </tr>
-  <tr>
-    <td class="tree"><span class="treeitem"><code>devices/</code></span></td>
-    <td>Devices plug-ins</td>
-  </tr>
-  <tr>
-    <td class="tree"><span class="treeitem"><code>mem/</code></span></td>
-    <td>Memory plug-ins</td>
-  </tr>
-  <tr>
-    <td class="tree"><span class="treeitem"><code>lib/</code></span></td>
-    <td>Shared run-time libraries</td>
-  </tr>
-</table>
+Still, the following table provides links to the images, with short description.
 
-If you want to use a custom virtual computer in emuStudio, it's plug-ins and shared libraries must be put into appropriate
-subdirectories. Then, the abstract schema editor will find new plug-ins right after fresh start of emuStudio, and
-they can be used immediately. 
+{:.table .table-condensed}
+|---
+| Image(s)| emuStudio computer | How to | Works?
+|-|-|-|-
+| [Original Altair software](https://schorn.ch/cpm/zip/altsw.zip) | MITS Altair8800       | See documentation | YES
+|---
+| [Burcon CP/M](https://schorn.ch/cpm/zip/burcon.zip)             | MITS Altair8800       | load <code>dbl.bin</code> at <code>0xFF00</code>    | Boots
+|---
+| [CP/M Version 3 with banked memory](https://schorn.ch/cpm/zip/cpm3.zip) | MITS Altair8800 (Z80) | See documentation | YES
+|===
+
+More images were not tested, or they don't work yet. Contributors are welcome here.
