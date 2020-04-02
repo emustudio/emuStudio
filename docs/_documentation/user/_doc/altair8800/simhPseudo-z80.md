@@ -6,16 +6,13 @@ parent: MITS Altair8800
 permalink: /altair8800/simhPseudo-z80
 ---
 
-== Virtual device "simhPseudo-z80"
+# Virtual device "simhPseudo-z80"
 
-Virtual device partially reimplemented from http://simh.trailing-edge.com/[simh] emulator. This device is used
-mainly for communication between CP/M 3 operating system for `simh` and emuStudio. Most of the original functionality
-is not implemented, but it is crucial for support of memory bank-switching.
+Virtual device partially reimplemented from [simh][simh]{:target="_blank"} emulator. This device is used mainly for communication between CP/M 3 operating system for `simh` and emuStudio. Most of the original functionality is not implemented, but it is crucial for support of memory bank-switching.
 
-=== Programming
+## Programming
 
-Z80 or 8080 programs communicate with the SIMH pseudo device via port `0xfe`. Programmers
-must apply the following principles:
+Z80 or 8080 programs communicate with the SIMH pseudo device via port `0xfe`. Programmers must apply the following principles:
 
 1. For commands that do not require parameters and do not return results:
 
@@ -50,3 +47,5 @@ must apply the following principles:
    the pseudo device is left in an undefined state.
 
 4. Commands requiring parameters and returning results do not exist currently.
+
+[simh]: http://simh.trailing-edge.com/

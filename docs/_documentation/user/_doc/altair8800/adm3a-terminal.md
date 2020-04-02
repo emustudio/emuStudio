@@ -6,56 +6,39 @@ parent: MITS Altair8800
 permalink: /altair8800/adm3a-terminal
 ---
 
-:imagepath: altair8800/images/
+# Terminal LSI ADM-3A
 
-== Terminal LSI ADM-3A
+Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. It had a nick name 'Dumb Terminal'. In the time (1974), due to its cheapness and speed capabilities required in that time, it became de facto standard in the industry. Often it was used in connection with MITS Altair 8800 computer, so the decision of which terminal to emulate was clear.
 
-Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. It had a nick name 'Dumb Terminal'. In the time (1974),
-due to its cheapness and speed capabilities required in that time, it became de facto standard in the industry.
-Often it was used in connection with MITS Altair 8800 computer, so the decision of which terminal to emulate was clear.
+Maintenance manual can be downloaded at [this link][manual1]{:target="_blank"}, operator's manual [here][manual2]{:target="_blank"}.
 
-NOTE: The maintenance manual can be downloaded at
-      http://www.mirrorservice.org/sites/www.bitsavers.org/pdf/learSiegler/ADM3A_Maint.pdf[this link], operator's manual
-      http://maben.homeip.net/static/s100/learSiegler/terminal/Lear%20Siegler%20ADM3A%20operators%20manual.pdf[here].
+## Display
 
-=== Display
-
-The terminal could display 128 ASCII characters (upper-case and lower-case letters, punctuation and numbers). The
-original ADM-3 could display only 64 (only capital-letters and some other). For saving very expensive RAM the terminal
-offered size 12 rows x 80 columns, with optional extension to 24 rows x 80 columns. The size used in the emulator is
-hardcoded to 80 columns x 24 rows.
+Terminal could display 128 ASCII characters (upper-case and lower-case letters, punctuation and numbers). Original ADM-3 could display only 64 (only capital-letters and some other). For saving very expensive RAM the terminal offered size 12 rows x 80 columns, with optional extension to 24 rows x 80 columns. The size used in the emulator is hardcoded to 80 columns x 24 rows.
 
 Besides, the emulator uses custom font colored green, with anti-aliasing support and double-buffering.
 
-=== Keyboard
+## Keyboard
 
-The terminal could generate always 128 ASCII characters (upper-case, lower-case, punctuation and numbers). Besides,
-it could generate special control characters which had effect on the current cursor position and were not sent to
-CPU.
+Terminal could generate always 128 ASCII characters (upper-case, lower-case, punctuation and numbers). Besides, it could generate special control characters which had effect on the current cursor position and were not sent to CPU.
 
-The emulator allows to generate almost anything what your host keyboard can give. It is only up to font which characters
-it can display. The font cannot display any special non-US characters used in various languages. Just classic ASCII.
+Emulated device allows to generate almost anything what your host keyboard can give. It is only up to font which characters it can display. The font cannot display any special non-US characters used in various languages. Just classic ASCII.
 
-Besides, the terminal can capture control codes (holding `CTRL` plus some key), and special control codes (`ESC + '='`
-plus some key). The following subsection lists all possible control and special control key combinations.
+Besides, the terminal can capture control codes (holding `CTRL` plus some key), and special control codes (`ESC + '=' + [X] + [Y]`, sets new cursor position, where `[X]` is a key translated to X position and `[Y]` a key translated into Y position of a cursor). The following subsection lists all possible control and special control key combinations.
 
-[[ADM3A-CONTROL_CODES]]
-==== Control codes
+### Control codes
 
-The following table shows control codes (`CTRL` plus some key combinations). The table can be found in original manuals.
-The emulator is following it.
+The following table shows control codes (`CTRL` plus some key combinations). The table can be found in original manuals. The emulator is following it.
 
-.Control codes
-[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
-|==========================================================================================
+|---
 | Code     | ASCII mnemonic | Function in ADM-3A
+|-|-|-
 |`CTRL+@`  | `NUL`   |
 |`CTRL+A`  | `SOH`   |
 |`CTRL+B`  | `STX`   |
 |`CTRL+C`  | `ETX`   |
 |`CTRL+D`  | `EOT`   |
-|`CTRL+E`  | `ENQ`   | Initiates ID message with automatic "Answer Back" option. footnoteref:[control,"In the original
-                       ADM-3A device, these codes were executable only from computer."]
+|`CTRL+E`  | `ENQ`   | Initiates ID message with automatic "Answer Back" option.
 |`CTRL+F`  | `ACK`   |
 |`CTRL+G`  | `BEL`   | Sounds audible beep in ADM-3A (not in emulator yet :( )
 |`CTRL+H`  | `BS`    | Backspace
@@ -64,8 +47,8 @@ The emulator is following it.
 |`CTRL+K`  | `VT`    | Upline
 |`CTRL+L`  | `FF`    | Forward space
 |`CTRL+M`  | `CR`    | Return
-|`CTRL+N`  | `SO`    | Unlock keyboard footnoteref:[control]
-|`CTRL+O`  | `SI`    | Lock keyboard footnoteref:[control]
+|`CTRL+N`  | `SO`    | Unlock keyboard
+|`CTRL+O`  | `SI`    | Lock keyboard
 |`CTRL+P`  | `OLE`   |
 |`CTRL+Q`  | `DCI`   |
 |`CTRL+R`  | `DC2`   |
@@ -81,20 +64,15 @@ The emulator is following it.
 |`CTRL+x`  | `FS`    |
 |`CTRL+]`  | `GS`    |
 |`CTRL+^`  | `RS`    | Home cursor
-|==========================================================================================
+|---
 
-==== Absolute cursor position from the keyboard
+### Absolute cursor position from the keyboard
 
-The terminal also allowed to set the absolute cursor position, when in "Cursor control Mode". The ADM-3A emulator
-does not have such mode, but `ESC+'=' X Y` combinations allows to set the cursor position. As you could see in
-the <<ADM3A-CONTROL_CODES>> section, pressing the `ESC` "Initiates load cursor" operation. If the user then presses `=` key, then
-the terminal takes next 2 keystrokes, and translates them into `X` and `Y` coordinates for the new position of the
-cursor. The following table shows the key-to-coordinate translation table.
+Terminal allows to set the absolute cursor position, when in "Cursor control Mode". ADM-3A emulator does not have such mode, but `ESC + '=' + [X] + [Y]` combination allows to set the cursor position. By pressing `ESC` key, it initiates the "load cursor" operation. If the user then presses `=` key, the terminal expects another two keystrokes, and translates them into `[X]` and `[Y]` coordinates for the new position of the cursor. The following table shows the key-to-coordinate translation table.
 
-.Translation of keystrokes to cursor coordinates
-[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
-|===================================================================================
+|---
 | Key  | Number
+|-|-
 |`' '` | 0
 |`!`   | 1
 |`"`   | 2
@@ -175,17 +153,15 @@ cursor. The following table shows the key-to-coordinate translation table.
 |`m`   | 77
 |`n`   | 78
 |`o`   | 79
-|===================================================================================
+|---
 
-=== ADM-3A Settings
+## ADM-3A Settings
 
-It is possible to configure the terminal either from GUI or manually modifying configuration settings. In the case
-of manual file modification, emuStudio must be restarted (for more information, see section <<ADM3A-CONFIG_FILE>>).
+It is possible to configure the terminal either from GUI or manually modifying configuration settings. Modification of settings requires restarting emuStudio.
 
-The "settings" window footnoteref:[peripheral] is
-shown in the following image:
+The "settings" window is shown in the following image:
 
-image::{imagepath}/adm3a-settings.png[Settings window of ADM-3A terminal]
+![Settings window of ADM-3A terminal]({{ site.baseurl }}/assets/altair8800/adm3a-settings.png)
 
 - *A*: File for reading input (when redirected)
 - *B*: File for writing output (when redirected)
@@ -200,31 +176,22 @@ image::{imagepath}/adm3a-settings.png[Settings window of ADM-3A terminal]
 - *I*: If checked, then by pressing OK the settings will be saved to the configuration file. If not, they will be not
        saved. In any case, the effect of the settings will be visible immediately.
 
-NOTE: The terminal behaves differently when emuStudio is run in automatic (no GUI) mode. In that moment, input is
-      redirected to be read from a file, and also output is redirected to be written to another file. The file names are
-      configurable in the computer config file. Using redirection in GUI mode is currently not possible.
+Terminal behaves differently when emuStudio is run in automatic (or "no GUI") mode. In that moment, input is redirected to be read from a file, and also output is redirected to be written to another file. File names are configurable in the computer config file. Using redirection in GUI mode is currently not possible.
 
-[[ADM3A-CONFIG_FILE]]
-=== Configuration file
-
-Configuration file of virtual computers contain also settings of all the used plug-ins, including devices. Please
-read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
-be accessed.
+## Configuration file
 
 The following table shows all the possible settings of ADM-3A plug-in:
 
-.Settings of LSI ADM-3A
-[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
-|=====================================================================================================
+|---
 |Name              | Default value        | Valid values          | Description
+|-|-|-|-
 |`inputFileName`   | `adm3A-terminal.in`  | Path to existing file | File for reading input (when redirected)
 |`outputFileName`  | `adm3A-terminal.out` | Path to existing file | File for writing output (when redirected)
-|`inputReadDelay`  | 0                    | > 0                   | How long the terminal should wait
-                                                                    until it reads next input character from the file
-                                                                    (in milliseconds)
-|`alwaysOnTop`     | false                | true / false          | Whether terminal GUI should be always-on-top of other
-                                                                    windows
+|`inputReadDelay`  | 0                    | > 0                   | How long the terminal should wait until it reads next input character from the file (in milliseconds)
 |`antiAliasing`    | false                | true / false          | Whether the display should use anti-aliasing.
-|`halfDuplex`      | false                | true / false          | Whether every keystroke will also cause to display
-                                                                    it.
-|=====================================================================================================
+|`halfDuplex`      | false                | true / false          | Whether every keystroke will also cause to display it.
+|---
+
+
+[manual1]: http://www.mirrorservice.org/sites/www.bitsavers.org/pdf/learSiegler/ADM3A_Maint.pdf
+[manual2]: http://maben.homeip.net/static/s100/learSiegler/terminal/Lear%20Siegler%20ADM3A%20operators%20manual.pdf

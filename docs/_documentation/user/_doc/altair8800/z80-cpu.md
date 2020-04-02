@@ -6,16 +6,9 @@ parent: MITS Altair8800
 permalink: /altair8800/z80-cpu
 ---
 
-:imagepath: altair8800/images/
+# Zilog Z80 CPU emulator
 
-[[CPU-Z80]]
-== Zilog Z80 CPU emulator
-
-It was possible to upgrade your Altair 8800 computer with a "better" 8-bit processor
-https://en.wikipedia.org/wiki/Zilog_Z80[Zilog Z80]. The processor was probably the most used 8-bit processor in
-80's. It was backward compatible with 8080, and brought many enhancements. It was originally targeted for embedded
-systems, but very soon it become very popular and used for all kinds of computers - including desktop computers,
-arcade games, etc. Today the CPU is still used in some MP3 players, see e.g. https://en.wikipedia.org/wiki/S1_MP3_player.
+It was possible to upgrade your Altair 8800 computer with a "better" 8-bit processor [Zilog Z80][z80]{:target="_blank"}. The processor was probably the most used 8-bit processor in 80's. It was backward compatible with 8080, and brought many enhancements. It was originally targeted for embedded systems, but very soon it become very popular and used for all kinds of computers - including desktop computers, arcade games, etc. Today the CPU is still used in some MP3 players, see e.g. [S1 MP3 Player][mp3]{:target="_blank"}.
 
 Main features of the emulator include:
 
@@ -29,23 +22,29 @@ Main features of the emulator include:
 * Ability of communication with up to 256 I/O devices,
 * Status window shows all registers, flags, and run-time frequency.
 
-=== Dumping executed instructions
+## Configuration file
 
-The CPU offers a quite unique feature, which is the ability to dump executed instructions as a sequence to the console.
-When enabled, then each executed instruction - together with content of flags and registers values after the execution
-are printed. This feature might be extremely useful in two cases:
+The following table shows all the possible settings of Zilog Z80 CPU plug-in:
+
+|---
+|Name              | Default value        | Valid values          | Description
+|-|-|-|-
+|`printCode`       | false                | true / false          | Whether the emulator should print executed instructions, and its internal state to console (dump)
+|`printCodeUseCache`| false               | true / false          | If `printCode` is set to `true`, then a cache will be used which remembers already visited blocks of code so the instruction dump will not be bloated with infinite loops
+|---
+
+## Dumping executed instructions
+
+The CPU offers a quite unique feature, which is the ability to dump executed instructions as a sequence to the console. When enabled, then each executed instruction - together with content of flags and registers values after the execution are printed. This feature might be extremely useful in two cases:
 
 1. Reverse engineering of some unknown software
-2. It allows to build tools for automatic checking of register values during the emulation,
-   when performing automatic emulation.
+2. It allows to build tools for automatic checking of register values during the emulation, when performing automatic emulation.
 
-In order to enable this feature, please see the section <<CPU-Z80-CONFIG_FILE>>.
+In order to enable this feature, please see the section "Configuration file".
 
 For example, let's take one of the examples which computes a reverse text:
 
-[source]
-.Example program for reversing text in Z80 assembly
-----
+```
 ; Print reversed text
 
 org 1000
@@ -101,12 +100,12 @@ include "include\newline.inc"
 text1: db "Reversed text ...",10,13,"Enter text: ",0
 text2: db 10,13,"Reversed: ",0
 input: ds 30
-----
+```
 
 When the program is being run, and the dump instructions feature is turned on, on console you can see the following
 output:
 
-----
+```
 0000 | PC=03e8 |          dec SP |        3B  || regs=00 00 00 00 00 00 00 00  IX=0000 IY=0000 IFF=0 I=00 R=01 | flags=       | SP=ffff | PC=03e9
 0001 | PC=03e9 |      ld HL, 485 |  21 85 04  || regs=00 00 00 00 04 85 00 00  IX=0000 IY=0000 IFF=0 I=00 R=02 | flags=       | SP=ffff | PC=03ec
 0002 | PC=03ec |        call 46D |  CD 6D 04  || regs=00 00 00 00 04 85 00 00  IX=0000 IY=0000 IFF=0 I=00 R=03 | flags=       | SP=fffd | PC=046d
@@ -184,17 +183,13 @@ output:
 8687 | PC=040f |      ld A, (BC) |        0A  || regs=04 b4 03 b8 04 a5 00 6f  IX=0000 IY=0000 IFF=0 I=00 R=1d | flags=  H N  | SP=ffff | PC=0410
 8687 | Block from 0418 to 041B; count=23
 8687 | PC=041b |            halt |        76  || regs=04 b1 00 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=34 | flags= ZH N  | SP=ffff | PC=041c
-----
+```
 
+The dump format consists of lines, each line represents one instruction execution. The line is separated by `|` chars, splitting it into so-called sections. Sections before the sequence `||` represent state *before* instruction execution, and sections after it represent the state *after* instruction execution. Particular sections are described in the following table.
 
-The dump format consists of lines, each line represents one instruction execution. The line is separated by `|` chars,
-splitting it into so-called sections. Sections before the sequence `||` represent state *before* instruction execution,
-and sections after it represent the state *after* instruction execution. Particular sections are described in the
-following table.
-
-[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
-|===================================================================================
+|---
 |Column | Description
+|-|-
 | 1     | Timestamp from program start (seconds)
 | 2     | Program counter before instruction execution
 | 3     | Disassembled instruction
@@ -204,26 +199,8 @@ following table.
 | 6     | Flags
 | 7     | Stack pointer register (`SP`)
 | 8     | Program counter after instruction execution
-|===================================================================================
+|---
 
 
-[[CPU-Z80-CONFIG_FILE]]
-=== Configuration file
-
-Configuration file of virtual computers contain also settings of all the used plug-ins, including CPUs. Please
-read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
-be accessed.
-
-The following table shows all the possible settings of Zilog Z80 CPU plug-in:
-
-.Settings of Zilog Z80 CPU emulator plug-in
-[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
-|=====================================================================================================
-|Name              | Default value        | Valid values          | Description
-|`printCode`       | false                | true / false          | Whether the emulator should print executed instructions,
-                                                                    and its internal state to console (dump)
-|`printCodeUseCache`| false               | true / false          | If `printCode` is set to `true`, then a cache will
-                                                                    be used which remembers already visited blocks of code
-                                                                    so the instruction dump will not be bloated with
-                                                                    infinite loops
-|=====================================================================================================
+[z80]: https://en.wikipedia.org/wiki/Zilog_Z80
+[mp3]: https://en.wikipedia.org/wiki/S1_MP3_player

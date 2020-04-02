@@ -15,7 +15,7 @@ emulation.
 
 ## Source code editor
 
-![Source code tab]({{ site.baseurl }}/application/images/source-code.png)
+![Source code tab]({{ site.baseurl }}/assets/application/source-code.png)
 
 In the source code editor, users can write programs for emulated computer. However, the most important tool which allows translation of the source code into binary program readable by emulated CPU is a compiler. Therefore, users must use the right compiler.
 
@@ -37,7 +37,7 @@ content is left unchanged.
 
 *Emulator tab* is shown in the following image. It is currently open with MITS Altair8800 computer with Intel 8080 CPU, and several devices:
 
-![Emulator tab]({{ site.baseurl}}/application/images/emulator.png)
+![Emulator tab]({{ site.baseurl}}/assets/application/emulator.png)
 
 The tab contains three main parts. The first one is very useful - listing of operating memory, disassembled into instructions. This part is called a debugger window, or "debugger". The other part, below the debugger window is a list of all computer devices used ("peripheral devices"). With a double-click user can open GUI window of that particular device, if it supports it.
 
@@ -52,7 +52,7 @@ a debugger toolbar and list of few disassembled instructions from memory. In com
 
 Debugger toolbar contains buttons (icons) for controlling the emulation and accessing memory content. Most of these buttons are self-explanatory. If you hover over those icons, a help text is displayed of how to use the icon.
 
-![Debugger toolbar]({{ site.baseurl}}/application/images/debugger-toolbar.png)
+![Debugger toolbar]({{ site.baseurl}}/assets/application/debugger-toolbar.png)
 
 - *A*: Reset emulation.
 - *B*: Set next instruction position to 0. CPU will perform the next instruction from there.
@@ -85,7 +85,7 @@ However, emuStudio is trying hard to find the nearest program start location at 
 
 It's possible to change the current instructions view. The window can be moved in a per-page fashion. The amount of instructions displayed in the window is always preserved. With the toolbar below the list it's possible to change "pages" of the displayed instructions.
 
-![Controlling instructions window]({{ site.baseurl }}/application/images/instructions-panel.png)
+![Controlling instructions window]({{ site.baseurl }}/assets/application/instructions-panel.png)
 
 - *A*: Go to the first page. The very first row corresponds to instruction position 0.
 - *B*: Go backwards. User will specify the number of pages for going back.

@@ -4,7 +4,7 @@ title: Introduction
 permalink: /introduction/
 ---
 
-# Welcome!
+# Introduction
 
 This guide shall help you, the developer, to write your own virtual computer for emuStudio. API is designed for simplicity and tries to save the developer from solving the most common problems. Created emulators can mimic either real or abstract computers. I hope you will have fun!
 

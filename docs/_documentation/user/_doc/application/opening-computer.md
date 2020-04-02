@@ -12,14 +12,14 @@ The first action which emuStudio does is loading a computer to be emulated. Virt
 
 Computers can be loaded either from command line, or manually in GUI (by default). The open dialog is the first thing which appears to a user.
 
-!["Open a computer" dialog]({{ site.baseurl}}/application/images/open-dialog.png)
+!["Open a computer" dialog]({{ site.baseurl}}/assets/application/open-dialog.png)
 
 Left part contains a control panel and a list of all available virtual computers. When a user clicks at a computer, it's abstract schema is displayed on the right. Double-clicking or clicking
 on the `Open` button loads selected computer.
 
 ## Managing virtual computers
 
-![Managing virtual computers]({{ site.baseurl}}/application/images/open-dialog-panel.png)
+![Managing virtual computers]({{ site.baseurl}}/assets/application/open-dialog-panel.png)
 
 - *A*: Adds new computer. The abstract schema editor will be opened.
 - *B*: Deletes selected computer. Be aware of what you are doing - the action cannot be undone.

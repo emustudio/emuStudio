@@ -47,7 +47,7 @@ Options:
 The assembler does not differentiate between upper and lower case (it is case-insensitive). The token/symbol types are as follows:
 
 
-{:.table .table-striped .table-condensed}
+
 |---
 |Type      | Description
 |-|-
@@ -82,7 +82,7 @@ The program is basically a sequence of instructions. The instructions are separa
 
     LABEL: CODE OPERANDS ; COMMENT
 
-{:.table .table-striped .table-condensed}
+
 |---
 | Part | Required | Notes
 |-|-|-
@@ -130,7 +130,7 @@ Expressions can be used anywhere a constant is expected.
 
 There exist several operators, such as:
 
-{:.table .table-striped .table-condensed}
+
 |---
 | Expression | Notes
 |-|-
@@ -154,7 +154,7 @@ There exist several operators, such as:
 
 Operator priorities are as follows:
 
-{:.table .table-striped .table-condensed}
+
 |---
 |Priority | Operator    | Type
 |-|-|-
@@ -175,7 +175,7 @@ Data can be defined using special pseudo-instructions. These accept constants. N
 
 The following table describes all possible data definition pseudo-instructions:
 
-{:.table .table-striped .table-condensed}
+
 |---
 | Expression | Notes
 |-|-
@@ -232,7 +232,7 @@ Sets the value to the `$` variable. It means that from now on, the following ins
 
 The following two code snippets are equal:
 
-{:.table .table-striped .table-condensed}
+
 |---
 | Address | Block 1       | Block 2       | Opcode
 |-|-|-|-
