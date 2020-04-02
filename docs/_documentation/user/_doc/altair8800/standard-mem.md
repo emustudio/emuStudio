@@ -3,6 +3,7 @@ layout: default
 title: Memory standard-mem
 nav_order: 5
 parent: MITS Altair8800
+permalink: /altair8800/standard-mem
 ---
 
 :imagepath: altair8800/images/

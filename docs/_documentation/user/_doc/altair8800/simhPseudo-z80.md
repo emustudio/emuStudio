@@ -3,6 +3,7 @@ layout: default
 title: Device simhPseudo-z80
 nav_order: 9
 parent: MITS Altair8800
+permalink: /altair8800/simhPseudo-z80
 ---
 
 == Virtual device "simhPseudo-z80"

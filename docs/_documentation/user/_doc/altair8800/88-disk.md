@@ -3,6 +3,7 @@ layout: default
 title: Device 88-disk
 nav_order: 6
 parent: MITS Altair8800
+permalink: /altair8800/88-disk
 ---
 
 :imagepath: altair8800/images/

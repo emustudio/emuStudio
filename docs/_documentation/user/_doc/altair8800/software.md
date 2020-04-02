@@ -3,6 +3,7 @@ layout: default
 title: Original software
 nav_order: 10
 parent: MITS Altair8800
+permalink: /altair8800/software
 ---
 
 :imagepath: altair8800/images/
