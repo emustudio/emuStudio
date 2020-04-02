@@ -87,26 +87,11 @@ In order to run emuStudio, run the following command from console:
 - On Windows:
 <code>emuStudio.bat</code>
 
-For more information, please see the [documentation]({{ site.baseurl }}/docs/user/0.40/docs/main-module/).
+For more information, please see the [documentation]({{ site.baseurl }}/documentation/user/application/).
 
 
 # Disk images, ROMs, etc.
 
 There is possibility to run some original software for emulated computers on emuStudio (e.g. CP/M operating system on
 MITS Altair8800). In order to keep being "legal-safe", it is better to not share the images here or within the emuStudio
-release.
-
-Still, the following table provides links to the images, with short description.
-
-{:.table .table-condensed}
-|---
-| Image(s)| emuStudio computer | How to | Works?
-|-|-|-|-
-| [Original Altair software](https://schorn.ch/cpm/zip/altsw.zip) | MITS Altair8800       | See documentation | YES
-|---
-| [Burcon CP/M](https://schorn.ch/cpm/zip/burcon.zip)             | MITS Altair8800       | load <code>dbl.bin</code> at <code>0xFF00</code>    | Boots
-|---
-| [CP/M Version 3 with banked memory](https://schorn.ch/cpm/zip/cpm3.zip) | MITS Altair8800 (Z80) | See documentation | YES
-|===
-
-More images were not tested, or they don't work yet. Contributors are welcome here.
+release. More information can be found in the virtual computers' documentation.

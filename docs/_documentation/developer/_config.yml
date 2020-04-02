@@ -1,0 +1,23 @@
+title: Developer documentation for emuStudio
+email: emustudio@googlegroups.com
+tagline: Developer documentation for emuStudio
+description: >- # this means to ignore newlines until "baseurl:"
+  Developer documentation for emuStudio. emuStudio is universal emulation platform and framework targeting mainly academic sphere.
+baseurl: "/documentation/developer" # the subpath of your site, e.g. /blog
+url: ""
+github_username:  emustudio
+ga_tracking: UA-3492956-5
+
+include:
+  - _doc
+
+logo: "/assets/logo-1.svg"
+aux_links:
+  "Back to website":
+    - "/"
+
+# Build settings
+markdown: kramdown
+theme: "just-the-docs"
+
+destination: ../../documentation/developer/

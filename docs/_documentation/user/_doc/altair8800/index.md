@@ -1,0 +1,79 @@
+---
+layout: default
+title: MITS Altair8800
+nav_order: 1
+has_children: true
+---
+
+# MITS Altair8800
+
+Computer MITS Altair 8800 was named after a planet in one of the first episodes of Star Trek series. Having Intel 8080
+CPU inside, with 256 bytes of memory, no display and keyboard is this computer, when comparing to the present era,
+absolutely ridiculous. His author, Ed Roberts, called the invention "personal computer", which is now very common term.
+As Wikipedia states:
+
+> The Altair is widely recognized as the spark that ignited the microcomputer revolution.
+>> Wikipedia, Altair 8800
+
+![MITS Altair8800 with LSI ADM-3A terminal and floppy drive, 100%]({{ site.baseurl }}/altair8800/images/altair8800.png)
+
+Altair 8800 is one of the oldest commercially available computers overall. Ed Roberts (founder and CEO of MITS
+corporation) was selling these machines by mail directly from the factory.
+
+Various enthusiasts understood the power of Altair and started to develop software and hardware for the computer. Those
+people saw a freedom in Altair - some kind of a release from batch tasks ran on mainframe systems, maintained by elite.
+The phenomenon of a computer which could be put on the kitchen table allowed to make enormous money by two smart
+university students. In 1975, Paul Allen and Bill Gates wrote a trimmed version of BASIC programming language, called
+Altair BASIC, which pushed them directly to foundation of Microsoft corporation.
+
+Basic configuration of MITS Altair 8800 was:
+
+
+
+
+[role="table table-striped table-condensed"]
+|======================================================================================================================
+|Processor        | Intel 8080 or 8080a
+|Speed            | 2 MHz
+|RAM              | from 256 bytes to 64 kB
+|ROM              | optional; usually EPROM Intel 1702 with 256 bytes. footnote:[They were used for various bootloaders]
+|Storage          | optional; paper tapes, cassette tapes or 5.25" or 8" floppy disks (MITS 88-DISK)
+|Extensions       | at first 16 slots, later 18 slots
+|Bus              | famous https://en.wikipedia.org/wiki/S-100_bus[S-100]
+|Video            | none
+|I/O              | optional; parallel or serial board (MITS 88-SIO)
+|Original software| http://altairclone.com/downloads/manuals/Altair%20DOS%20User's%20Manual.pdf[Altair DOS],
+http://www.classiccmp.org/dunfield/r/cpm22.pdf[CP/M],
+https://en.wikipedia.org/wiki/Altair_BASIC[Altair BASIC]
+|======================================================================================================================
+
+[[ALTAIR_FOR_EMUSTUDIO]]
+== Altair8800 for emuStudio
+
+In emuStudio, there exist two variants of the computer. These variants varies only with the used CPU. There is available
+either Intel 8080 emulator, or Zilog Z80 emulator. Lots of behavior and some devices was inspired by
+http://simh.trailing-edge.com/[simh] emulator.
+
+Abstract schema for emuStudio (Intel 8080):
+
+[.img-responsive]
+image::{imagepath}/altairscheme.png[Abstract schema of MITS Altair8800 (with Intel 8080)]
+
+Abstract schema for emuStudio (Zilog Z80):
+
+image::{imagepath}/altairz80.png[Abstract schema of MITS Altair8800 (with Zilog Z80)]
+
+The following plug-ins are used in the schemas. Each plug-in is described in further sections.
+
+[role="table table-striped table-condensed"]
+|======================================================================================================================
+|Compiler | https://github.com/vbmacher/emuStudio/tree/develop/plugins/compilers/as-8080[as-8080]
+|Compiler | https://github.com/vbmacher/emuStudio/tree/develop/plugins/compilers/as-z80[as-z80]
+|Operating memory (RAM) | https://github.com/vbmacher/emuStudio/tree/develop/plugins/mem/standard-mem[standard-mem]
+|CPU | https://github.com/vbmacher/emuStudio/tree/develop/plugins/cpu/8080-cpu[8080-cpu]
+|Another CPU | https://github.com/vbmacher/emuStudio/tree/develop/plugins/cpu/z80-cpu[z80-cpu]
+|Device | https://github.com/vbmacher/emuStudio/tree/develop/plugins/devices/88-sio[88-sio]
+|Device | https://github.com/vbmacher/emuStudio/tree/develop/plugins/devices/88-disk[88-disk]
+|Device | https://github.com/vbmacher/emuStudio/tree/develop/plugins/devices/simhPseudo-z80[simhPseudo-z80]
+|Device | https://github.com/vbmacher/emuStudio/tree/develop/plugins/devices/adm3A-terminal[adm3A-terminal]
+|======================================================================================================================

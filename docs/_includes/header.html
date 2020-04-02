@@ -40,11 +40,8 @@
           href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="{{ base }}css/style.css">
-    {% if documentation %}
-    <link rel="stylesheet" href="{{ base }}css/bootstrap-toc.min.css">
     <link rel="stylesheet" href="{{ base }}fonts/font-awesome.min.css">
-    {% endif %}
+    <link rel="stylesheet" href="{{ base }}css/style.css">
 
     <!-- Scripts -->
 
@@ -58,9 +55,6 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous">
     </script>
-    {% if documentation %}
-    <script src="{{ base }}js/bootstrap-toc.min.js"></script>
-    {% endif%}
 
     <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 
@@ -71,19 +65,12 @@
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-    
         gtag('config', '{{ site.google_analytics_id }}');
-
     </script>
     {% endif %}
 </head>
 
-{% if documentation %}
-<body data-spy="scroll" data-target="#toc">
-{% else %}
 <body>
-{% endif%}
-
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
