@@ -51,8 +51,13 @@ public class CompilerImpl extends AbstractCompiler {
     private MemoryContext<Byte> memory;
     private int programLocation;
 
+    private final LexerImpl lexer;
+    private final ParserImpl parser;
+
     public CompilerImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
+        lexer = new LexerImpl(null);
+        parser = new ParserImpl(lexer, this);
     }
 
     @SuppressWarnings("unchecked")
@@ -83,8 +88,8 @@ public class CompilerImpl extends AbstractCompiler {
 
         try (Reader reader = new FileReader(inputFileName)) {
             try (CodeGenerator codeGenerator = new CodeGenerator(new MemoryAndFileOutput(outputFileName, memory))) {
-                LexerImpl lexer = new LexerImpl(reader);
-                ParserImpl parser = new ParserImpl(lexer, this);
+                lexer.reset(reader, 0, 0, 0);
+                parser.reset();
 
                 Program program = (Program) parser.parse().value;
                 if (program == null) {

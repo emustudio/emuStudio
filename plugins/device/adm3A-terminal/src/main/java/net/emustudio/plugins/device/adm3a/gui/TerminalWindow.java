@@ -48,7 +48,7 @@ public class TerminalWindow extends JDialog {
         setTitle("Terminal ADM-3A");
         setResizable(false);
 
-        display.setBounds(90, 100, 700, 500);
+        display.setBounds(70, 120, 730, 500);
 
         lblBack.setLocation(0, 0);
         lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));

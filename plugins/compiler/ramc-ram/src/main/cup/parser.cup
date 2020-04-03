@@ -42,6 +42,10 @@ parser code {:
             this.compiler = Objects.requireNonNull(compiler);
         }
 
+        public void reset() {
+            syntaxErrors = false;
+        }
+
         @Override
         public void report_fatal_error(String message, Object info) throws Exception {
             done_parsing();

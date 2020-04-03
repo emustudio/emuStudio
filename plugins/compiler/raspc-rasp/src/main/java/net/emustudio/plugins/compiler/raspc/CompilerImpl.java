@@ -80,6 +80,7 @@ public class CompilerImpl extends AbstractCompiler {
 
         try (Reader reader = new FileReader(inputFileName)) {
             lexer.reset(reader, 0, 0, 0);
+            parser.reset();
             //ensure that file ends with a new line
             appendNewLine(inputFileName);
             SourceCode sourceCode = (SourceCode) parser.parse().value;

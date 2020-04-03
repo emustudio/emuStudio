@@ -158,6 +158,7 @@ public class CompilerImpl extends AbstractCompiler {
 
         try (Reader reader = new FileReader(inputFileName)) {
             lexer.reset(reader, 0, 0, 0);
+            parser.reset();
             parsedProgram = parser.parse().value;
 
             if (parsedProgram == null) {

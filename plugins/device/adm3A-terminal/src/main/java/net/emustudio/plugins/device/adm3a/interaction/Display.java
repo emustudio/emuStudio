@@ -296,11 +296,11 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     private Font loadFont() {
         Font font;
         try (InputStream fin = getClass().getResourceAsStream(TERMINAL_FONT_PATH)) {
-            font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(Font.PLAIN, 14f);
+            font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(Font.PLAIN, 15f);
             GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
         } catch (Exception e) {
             LOGGER.error("Could not load custom font, using default monospaced font", e);
-            font = new Font(Font.MONOSPACED, Font.PLAIN, 14);
+            font = new Font(Font.MONOSPACED, Font.PLAIN, 15);
         }
         return font;
     }
