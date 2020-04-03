@@ -73,6 +73,7 @@ public class Transmitter {
     }
 
     void reset() {
+        buffer.clear();
         writeToStatus((short) 0); // disable interrupts
     }
 
