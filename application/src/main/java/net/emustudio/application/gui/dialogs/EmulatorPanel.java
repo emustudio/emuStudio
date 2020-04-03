@@ -301,6 +301,7 @@ public class EmulatorPanel extends JPanel {
         paneDebug.setEnabled(true);
         debugTable.setEnabled(true);
         debugTable.setVisible(true);
+        panelPages.setVisible(true);
 
         if (state == CPU.RunState.STATE_STOPPED_BREAK && !timedRunning) {
             stopAction.setEnabled(true);
@@ -338,6 +339,7 @@ public class EmulatorPanel extends JPanel {
         debugTable.setEnabled(false);
         debugTable.setVisible(false);
         paneDebug.setEnabled(false);
+        panelPages.setVisible(false);
 
         memoryContext.removeMemoryListener(memoryListener);
     }

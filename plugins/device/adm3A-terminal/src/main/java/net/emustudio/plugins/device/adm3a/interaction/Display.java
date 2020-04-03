@@ -47,7 +47,8 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     private static final String HERE_IS_CONSTANT = Display.class.getAnnotation(PluginContext.class).id();
     static final Color FOREGROUND = new Color(0, 255, 0);
     static final Color BACKGROUND = Color.BLACK;
-    private static final String TERMINAL_FONT_PATH = "/net/emustudio/plugins/device/adm3a/gui/dos.ttf";
+    private static final String TERMINAL_FONT_PATH = "/net/emustudio/plugins/device/adm3a/gui/terminal.ttf";
+    private final Font terminalFont;
 
     private final char[] videoMemory;
     private final int columns;
@@ -73,13 +74,15 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
         this.columns = cursor.getColumns();
         this.rows = cursor.getRows();
         this.videoMemory = new char[rows * columns];
+
+        this.terminalFont = loadFont();
         fillWithSpaces();
 
         setForeground(FOREGROUND);
         setBackground(BACKGROUND);
         setDoubleBuffered(true);
         setOpaque(true);
-        setFont(loadFont());
+        setFont(terminalFont);
         this.displayParameters = measure();
         this.size = new Dimension(displayParameters.maxWidth, displayParameters.maxHeight);
 
@@ -309,14 +312,13 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
             graphics.setXORMode(Display.BACKGROUND);
             graphics.setColor(Display.FOREGROUND);
 
-            FontMetrics fontMetrics = graphics.getFontMetrics();
-            int charWidth = fontMetrics.charWidth('W');
-            int lineHeight = fontMetrics.getHeight();
+            Rectangle2D fontRectangle = terminalFont.getMaxCharBounds(graphics.getFontMetrics().getFontRenderContext());
+            int lineHeight = graphics.getFontMetrics().getHeight();
 
-            int x = paintPoint.x * charWidth;
-            int y = paintPoint.y * lineHeight;
+            int x = 2 + (int)(paintPoint.x * fontRectangle.getWidth());
+            int y = 3 + (paintPoint.y * lineHeight);
 
-            graphics.fillRect(x, y, charWidth, lineHeight);
+            graphics.fillRect(x, y, (int)fontRectangle.getWidth(), (int)fontRectangle.getHeight());
             graphics.setPaintMode();
 
             cursorShouldBePainted = true;

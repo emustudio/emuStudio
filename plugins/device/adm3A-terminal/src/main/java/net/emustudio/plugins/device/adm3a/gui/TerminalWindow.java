@@ -42,21 +42,21 @@ public class TerminalWindow extends JDialog {
 
     private void initComponents() {
         JLabel lblBack = new JLabel();
-        ImageIcon img = new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/adm3a/gui/display.gif"));
+        ImageIcon backgroundImage = new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/adm3a/gui/display.png"));
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Terminal ADM-3A");
         setResizable(false);
 
-        display.setBounds(53, 60, 653, 400);
+        display.setBounds(90, 100, 700, 500);
 
         lblBack.setLocation(0, 0);
         lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        lblBack.setIcon(img);
+        lblBack.setIcon(backgroundImage);
         lblBack.setFocusable(false);
         lblBack.setOpaque(true);
         lblBack.setBackground(Color.BLACK);
-        lblBack.setBounds(0, 0, img.getIconWidth(), img.getIconHeight());
+        lblBack.setBounds(0, 0, backgroundImage.getIconWidth(), backgroundImage.getIconHeight());
         lblBack.setDoubleBuffered(true);
 
         Container pane = getContentPane();
@@ -66,6 +66,6 @@ public class TerminalWindow extends JDialog {
         pane.add(display);
         pane.add(lblBack);
         pack();
-        setSize(img.getIconWidth(), img.getIconHeight());
+        setSize(backgroundImage.getIconWidth(), backgroundImage.getIconHeight());
     }
 }
