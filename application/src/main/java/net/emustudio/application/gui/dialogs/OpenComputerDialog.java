@@ -21,9 +21,11 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.configuration.ComputerConfig;
 import net.emustudio.application.configuration.ConfigFiles;
+import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.internal.Unchecked;
+import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.Dialogs.DialogAnswer;
 import org.slf4j.Logger;
@@ -31,46 +33,46 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
+
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static net.emustudio.application.Constants.FONT_COMMON;
 
-/**
- * This dialog manages the virtual computers. It offers a list of all
- * available virtual computers and allows to the user to select one for
- * emulation.
- * <p>
- * It is also available to create a new computer, delete or edit one.
- */
 public class OpenComputerDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);
 
-    private ComputerConfig selectedComputerConfig;
-    private boolean userPressedOK = false;
     private final ConfigurationsListModel configurationsModel;
     private final SchemaPreviewPanel preview;
     private final ConfigFiles configFiles;
     private final ApplicationConfig applicationConfig;
     private final Dialogs dialogs;
 
+    private final Consumer<ComputerConfig> selectComputer;
+
     private JLabel lblPreview;
     private JList<ComputerConfig> lstConfig;
     private JScrollPane scrollPreview;
 
-    public OpenComputerDialog(ConfigFiles configFiles, ApplicationConfig applicationConfig, Dialogs dialogs) {
-        super((JFrame)null, true);
-
+    public OpenComputerDialog(ConfigFiles configFiles, ApplicationConfig applicationConfig, Dialogs dialogs,
+                              Consumer<ComputerConfig> selectComputer) {
         this.configFiles = Objects.requireNonNull(configFiles);
         this.configurationsModel = new ConfigurationsListModel(configFiles);
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.selectComputer = Objects.requireNonNull(selectComputer);
+
         this.preview = new SchemaPreviewPanel(null, dialogs);
 
+        setModal(true);
         initComponents();
         setLocationRelativeTo(null);
 
@@ -78,43 +80,33 @@ public class OpenComputerDialog extends JDialog {
         scrollPreview.setViewportView(preview);
     }
 
-    public boolean userPressedOK() {
-        return userPressedOK;
-    }
-
-    public ComputerConfig getSelectedComputerConfig() {
-        return selectedComputerConfig;
-    }
-
-
     void update() {
         configurationsModel.update();
-        Optional.ofNullable(selectedComputerConfig).ifPresentOrElse(
-            c -> lblPreview.setText(c.getName()),
-            () -> lblPreview.setText("")
-        );
+        lblPreview.setText("");
         lstConfigValueChanged(null);
     }
 
-    /**
-     * Set the name of selected virtual computer.
-     *
-     * @param selectedComputerConfig new name of the virtual computer
-     */
-    void setSelectedComputerConfig(ComputerConfig selectedComputerConfig) {
-        this.selectedComputerConfig = selectedComputerConfig;
-    }
-    
     private void initComponents() {
         JSplitPane splitConfig = new JSplitPane();
         JPanel panelConfig = new JPanel();
-        JScrollPane jScrollPane1 = new JScrollPane();
+        JScrollPane configScrollPane = new JScrollPane();
         lstConfig = new JList<>();
         JToolBar toolConfig = new JToolBar();
-        JButton btnAdd = new JButton();
-        JButton btnDelete = new JButton();
-        JButton btnEdit = new JButton();
-        JButton btnSaveSchemaImage = new JButton();
+        ToolbarButton btnAdd = new ToolbarButton(
+            this::btnAddActionPerformed, "/net/emustudio/application/gui/dialogs/list-add.png", "Create new computer..."
+        );
+        ToolbarButton btnDelete = new ToolbarButton(
+            this::btnDeleteActionPerformed, "/net/emustudio/application/gui/dialogs/list-remove.png", "Remove computer"
+        );
+        ToolbarButton btnEdit = new ToolbarButton(
+            this::btnEditActionPerformed, "/net/emustudio/application/gui/dialogs/computer.png", "Edit existing computer..."
+        );
+        ToolbarButton btnRename = new ToolbarButton(
+            this::btnRenameActionPerformed, "/net/emustudio/application/gui/dialogs/rename-computer.png", "Rename computer"
+        );
+        ToolbarButton btnSaveSchemaImage = new ToolbarButton(
+            this::btnSaveSchemaImageActionPerformed, "/net/emustudio/application/gui/dialogs/document-save.png", "Save schema image"
+        );
         JPanel panelPreview = new JPanel();
         scrollPreview = new JScrollPane();
         JToolBar toolPreview = new JToolBar();
@@ -137,51 +129,23 @@ public class OpenComputerDialog extends JDialog {
         panelConfig.setPreferredSize(new java.awt.Dimension(200, 300));
 
         lstConfig.setFont(FONT_COMMON);
-        lstConfig.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
+        lstConfig.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
                 lstConfigMouseClicked(evt);
             }
         });
         lstConfig.addListSelectionListener(this::lstConfigValueChanged);
-        jScrollPane1.setViewportView(lstConfig);
+        lstConfig.registerKeyboardAction(this::btnOpenActionPerformed, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+        configScrollPane.setViewportView(lstConfig);
 
         toolConfig.setFloatable(false);
         toolConfig.setRollover(true);
 
-        btnAdd.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/list-add.png")));
-        btnAdd.setToolTipText("Create new computer...");
-        btnAdd.setFocusable(false);
-        btnAdd.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnAdd.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnAdd.addActionListener(this::btnAddActionPerformed);
-        btnAdd.setBorderPainted(false);
         toolConfig.add(btnAdd);
-
-        btnDelete.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/list-remove.png")));
-        btnDelete.setToolTipText("Remove computer");
-        btnDelete.setFocusable(false);
-        btnDelete.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnDelete.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnDelete.addActionListener(this::btnDeleteActionPerformed);
-        btnDelete.setBorderPainted(false);
         toolConfig.add(btnDelete);
-
-        btnEdit.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/computer.png")));
-        btnEdit.setToolTipText("Edit existing computer...");
-        btnEdit.setFocusable(false);
-        btnEdit.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnEdit.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnEdit.addActionListener(this::btnEditActionPerformed);
-        btnEdit.setBorderPainted(false);
         toolConfig.add(btnEdit);
-
-        btnSaveSchemaImage.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/document-save.png")));
-        btnSaveSchemaImage.setToolTipText("Save schema image");
-        btnSaveSchemaImage.setFocusable(false);
-        btnSaveSchemaImage.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnSaveSchemaImage.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnSaveSchemaImage.addActionListener(this::btnSaveSchemaImageActionPerformed);
-        btnSaveSchemaImage.setBorderPainted(false);
+        toolConfig.add(btnRename);
         toolConfig.add(btnSaveSchemaImage);
 
         GroupLayout panelConfigLayout = new GroupLayout(panelConfig);
@@ -189,14 +153,14 @@ public class OpenComputerDialog extends JDialog {
         panelConfigLayout.setHorizontalGroup(
             panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(toolConfig, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
         );
         panelConfigLayout.setVerticalGroup(
             panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(panelConfigLayout.createSequentialGroup()
-                    .addComponent(toolConfig, GroupLayout.PREFERRED_SIZE, 38, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(toolConfig, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE))
+                    .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE))
         );
 
         splitConfig.setLeftComponent(panelConfig);
@@ -235,10 +199,10 @@ public class OpenComputerDialog extends JDialog {
         jLabel1.setText("Please select a virtual configuration that will be emulated:");
 
         btnOpen.setFont(btnOpen.getFont().deriveFont(btnOpen.getFont().getStyle() | java.awt.Font.BOLD));
-        btnOpen.setText("Open");
+        btnOpen.setText("Open computer");
         btnOpen.addActionListener(this::btnOpenActionPerformed);
 
-        btnClose.setText("Close");
+        btnClose.setText("Exit");
         btnClose.addActionListener(this::btnCloseActionPerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
@@ -256,7 +220,7 @@ public class OpenComputerDialog extends JDialog {
                             .addGap(0, 0, Short.MAX_VALUE)
                             .addComponent(btnClose)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(btnOpen, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(btnOpen)))
                     .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -276,92 +240,112 @@ public class OpenComputerDialog extends JDialog {
         pack();
     }
 
-    private void lstConfigMouseClicked(java.awt.event.MouseEvent evt) {
+    private void lstConfigMouseClicked(MouseEvent evt) {
         if (evt.getClickCount() == 2) {
             btnOpenActionPerformed(null);
         }
     }
 
-    private void btnOpenActionPerformed(java.awt.event.ActionEvent evt) {
-        selectedComputerConfig = lstConfig.getSelectedValue();
-        if (selectedComputerConfig == null) {
-            dialogs.showError("A computer has to be selected!", "Open computer");
-        } else {
-            userPressedOK = true;
-            dispose();
-        }
+    private void btnOpenActionPerformed(ActionEvent evt) {
+        Optional
+            .ofNullable(lstConfig.getSelectedValue())
+            .ifPresentOrElse(computer -> {
+                selectComputer.accept(computer);
+                dispose();
+            }, () -> dialogs.showError("A computer has to be selected!", "Open computer"));
     }
 
-    private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {
-        selectedComputerConfig = lstConfig.getSelectedValue();
-        if (selectedComputerConfig == null) {
-            dialogs.showError("A computer has to be selected!", "Edit computer");
-        } else {
-            Schema schema = new Schema(selectedComputerConfig, applicationConfig);
-            SchemaEditorDialog d = new SchemaEditorDialog(this, schema, configFiles, dialogs);
-            d.setVisible(true);
-        }
+    private void btnEditActionPerformed(ActionEvent evt) {
+        Optional
+            .ofNullable(lstConfig.getSelectedValue())
+            .ifPresentOrElse(computer -> {
+                Schema schema = new Schema(computer, applicationConfig);
+                new SchemaEditorDialog(this, schema, configFiles, dialogs).setVisible(true);
+                update();
+            }, () -> dialogs.showError("A computer has to be selected!", "Edit computer"));
     }
 
-    private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {
-        selectedComputerConfig = lstConfig.getSelectedValue();
-        if (selectedComputerConfig == null) {
-            dialogs.showError("A computer has to be selected!", "Delete computer");
-        } else {
-            DialogAnswer answer = dialogs.ask("Do you really want to delete selected computer?", "Delete computer");
-            if (answer == DialogAnswer.ANSWER_YES) {
+    private void btnDeleteActionPerformed(ActionEvent evt) {
+        Optional
+            .ofNullable(lstConfig.getSelectedValue())
+            .ifPresentOrElse(computer -> {
+                DialogAnswer answer = dialogs.ask("Do you really want to delete selected computer?", "Delete computer");
+                if (answer == DialogAnswer.ANSWER_YES) {
+                    try {
+                        configFiles.removeConfiguration(computer.getName());
+                        lstConfig.clearSelection();
+                        update();
+                    } catch (IOException e) {
+                        LOGGER.error("Could not remove computer configuration", e);
+                        dialogs.showError("Computer could not be deleted. Please consult log for details.");
+                    }
+                }
+            }, () -> dialogs.showError("A computer has to be selected!", "Delete computer"));
+    }
+
+    private void btnRenameActionPerformed(ActionEvent evt) {
+        Optional
+            .ofNullable(lstConfig.getSelectedValue())
+            .ifPresentOrElse(computer -> dialogs
+                .readString("Enter new computer name:", "Rename computer")
+                .ifPresent(newName -> {
+                    if (newName.trim().isEmpty()) {
+                        dialogs.showError("Computer name must be non-empty", "Rename computer");
+                    } else {
+                        lstConfig.clearSelection();
+                        try {
+                            configFiles.renameConfiguration(computer, newName);
+                            update();
+                        } catch (CannotUpdateSettingException | IOException e) {
+                            LOGGER.error("Could not rename computer", e);
+                            dialogs.showError("Computer could not be renamed. Please see log file for details.");
+                        }
+                    }
+                }), () -> dialogs.showError("A computer has to be selected!", "Rename computer"));
+    }
+
+    private void btnAddActionPerformed(ActionEvent evt) {
+        Optional<String> computerName = dialogs.readString("Enter computer name:", "Create new computer");
+        computerName.ifPresent(name -> {
+            if (name.trim().isEmpty()) {
+                dialogs.showError("Computer name must be non-empty", "Create new computer");
+            } else {
                 try {
-                    configFiles.removeConfiguration(selectedComputerConfig.getName());
-                    lstConfig.clearSelection();
-                    selectedComputerConfig = null;
-                    update();
+                    configFiles
+                        .loadConfiguration(name)
+                        .ifPresentOrElse(
+                            c -> dialogs.showError("Computer '" + name + "' already exists, choose another name."),
+                            () -> {
+                                ComputerConfig newComputer = Unchecked.call(() -> configFiles.createConfiguration(name));
+                                Schema schema = new Schema(newComputer, applicationConfig);
+                                SchemaEditorDialog di = new SchemaEditorDialog(this, schema, configFiles, dialogs);
+                                di.setVisible(true);
+                            }
+                        );
                 } catch (IOException e) {
-                    LOGGER.error("Could not remove computer configuration", e);
-                    dialogs.showError("Computer could not be deleted. Please consult log for details.");
+                    LOGGER.error("Could not load computer with name '" + name + "'", e);
+                    dialogs.showError("Could not load computer with name '" + name + "'. Please see log file for details.");
                 }
             }
-        }
-    }
-
-    private void btnAddActionPerformed(java.awt.event.ActionEvent evt) {
-        Optional<String> computerName = dialogs.readString("Enter computer name:", "Create new computer");
-        computerName.ifPresentOrElse(name -> {
-            try {
-                configFiles
-                    .loadConfiguration(name)
-                    .ifPresentOrElse(
-                        c -> dialogs.showError("Computer '" + name + "' already exists, choose another name."),
-                        () -> {
-                            ComputerConfig newComputer = Unchecked.call(() -> configFiles.createConfiguration(name));
-                            Schema schema = new Schema(newComputer, applicationConfig);
-                            SchemaEditorDialog di = new SchemaEditorDialog(this, schema, configFiles, dialogs);
-                            di.setVisible(true);
-                        }
-                    );
-            } catch (IOException e) {
-                LOGGER.error("Could not load computer with name '" + name + "'", e);
-                dialogs.showError("Could not load computer with name '" + name + "'. Please see log file for details.");
-            }
-        }, () -> dialogs.showError("Computer name must be non-empty"));
+        });
     }
 
     private void lstConfigValueChanged(ListSelectionEvent evt) {
-        selectedComputerConfig = lstConfig.getSelectedValue();
-        if (selectedComputerConfig == null) {
-            preview.setSchema(null);
-        } else {
-            Schema schema = new Schema(selectedComputerConfig, applicationConfig);
-            preview.setSchema(schema);
-            lblPreview.setText(selectedComputerConfig.getName());
-        }
+        Optional
+            .ofNullable(lstConfig.getSelectedValue())
+            .ifPresentOrElse(computer -> {
+                Schema schema = new Schema(computer, applicationConfig);
+                preview.setSchema(schema);
+                lblPreview.setText(computer.getName());
+            }, () -> preview.setSchema(null));
         preview.repaint();
     }
 
-    private void btnSaveSchemaImageActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnSaveSchemaImageActionPerformed(ActionEvent evt) {
         preview.saveSchemaImage();
     }
 
-    private void btnCloseActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCloseActionPerformed(ActionEvent evt) {
         dispose();
     }
 

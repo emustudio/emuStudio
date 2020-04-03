@@ -19,7 +19,6 @@
 
 package net.emustudio.application.gui;
 
-import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-public class NoGuiDialogsImpl implements Dialogs {
+public class NoGuiDialogsImpl implements ExtendedDialogs {
     private final static Logger LOGGER = LoggerFactory.getLogger(NoGuiDialogsImpl.class);
     public final static String INPUT_MESSAGE = "Please insert a value";
 

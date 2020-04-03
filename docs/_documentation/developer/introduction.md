@@ -27,9 +27,6 @@ is [here][edigen]{:target="_blank"}.
 
 For reference, here are provided some documents for some older emuStudio versions.
 
-
-{:.table-responsive}
-{:.table .table-stripped .table-condensed}
 |---
 | Version | Year | Document or paper
 |-|-|-

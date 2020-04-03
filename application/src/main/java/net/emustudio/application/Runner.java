@@ -23,7 +23,7 @@ import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.configuration.ComputerConfig;
 import net.emustudio.application.configuration.ConfigFiles;
 import net.emustudio.application.emulation.Automation;
-import net.emustudio.application.emulation.AutomationException;
+import net.emustudio.application.gui.ExtendedDialogs;
 import net.emustudio.application.gui.GuiDialogsImpl;
 import net.emustudio.application.gui.NoGuiDialogsImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -54,13 +54,14 @@ import java.nio.file.Path;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Runner {
     private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
     private static final long emustudioId = UUID.randomUUID().toString().hashCode();
 
     public static void main(String[] args) {
-        Dialogs dialogs = new NoGuiDialogsImpl();
+        ExtendedDialogs dialogs = new NoGuiDialogsImpl();
         try {
             CommandLine commandLine = CommandLine.parse(args);
 
@@ -79,20 +80,17 @@ public class Runner {
             }
             ConfigFiles configFiles = new ConfigFiles();
 
-            ComputerConfig computerConfig = null;
+            final AtomicReference<ComputerConfig> computerConfig = new AtomicReference<>();
             if (commandLine.getConfigFileName().isEmpty() && !commandLine.isNoGUI()) {
-                OpenComputerDialog dialog = new OpenComputerDialog(configFiles, applicationConfig, dialogs);
-                ((GuiDialogsImpl)dialogs).setParent(dialog);
+                OpenComputerDialog dialog = new OpenComputerDialog(configFiles, applicationConfig, dialogs, computerConfig::set);
+                dialogs.setParent(dialog);
                 dialog.setVisible(true);
-                if (dialog.userPressedOK()) {
-                    computerConfig = dialog.getSelectedComputerConfig();
-                }
-                ((GuiDialogsImpl)dialogs).setParent(null);
+                dialogs.setParent(null);
             } else {
-                computerConfig = commandLine.getConfigFileName().map(configFiles::loadConfiguration).orElseThrow();
+                computerConfig.set(commandLine.getConfigFileName().map(configFiles::loadConfiguration).orElseThrow());
             }
 
-            if (computerConfig == null) {
+            if (computerConfig.get() == null) {
                 System.err.println("Virtual computer must be selected!");
                 System.exit(1);
             }
@@ -106,7 +104,7 @@ public class Runner {
             ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs);
 
             VirtualComputer computer = VirtualComputer.create(
-                computerConfig, applicationApi, applicationConfig, configFiles
+                computerConfig.get(), applicationApi, applicationConfig, configFiles
             );
             computer.initialize(contextPool);
             computer.reset();
@@ -122,8 +120,7 @@ public class Runner {
                 ));
             } else if (!commandLine.isNoGUI()) {
                 showMainWindow(
-                    computer, applicationConfig, (GuiDialogsImpl) dialogs, debugTableModel, contextPool,
-                    commandLine.getInputFileName()
+                    computer, applicationConfig, dialogs, debugTableModel, contextPool, commandLine.getInputFileName()
                 );
             } else {
                 System.err.println("No GUI is available; and no automatic emulation was set either. Exiting.");
@@ -150,7 +147,7 @@ public class Runner {
     }
 
     @SuppressWarnings("unchecked")
-    private static void showMainWindow(VirtualComputer computer, ApplicationConfig applicationConfig, GuiDialogsImpl dialogs,
+    private static void showMainWindow(VirtualComputer computer, ApplicationConfig applicationConfig, ExtendedDialogs dialogs,
                                        DebugTableModel debugTableModel, ContextPool contextPool, String inputFileName) {
         MemoryContext<?> memoryContext = null;
         try {

@@ -94,4 +94,4 @@ For more information, please see the [documentation]({{ site.baseurl }}/document
 
 There is possibility to run some original software for emulated computers on emuStudio (e.g. CP/M operating system on
 MITS Altair8800). In order to keep being "legal-safe", it is better to not share the images here or within the emuStudio
-release. More information can be found in the virtual computers' documentation.
+release. More information (e.g. links where the images can be downloaded, etc.) can be found in the virtual computers' documentation.

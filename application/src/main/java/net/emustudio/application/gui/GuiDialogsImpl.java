@@ -20,7 +20,6 @@
 package net.emustudio.application.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 
 import javax.swing.*;
@@ -34,10 +33,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class GuiDialogsImpl implements Dialogs {
+public class GuiDialogsImpl implements ExtendedDialogs {
     private final RadixUtils radixUtils = RadixUtils.getInstance();
     private Component parent;
 
+    @Override
     public void setParent(Component parent) {
         this.parent = parent;
     }

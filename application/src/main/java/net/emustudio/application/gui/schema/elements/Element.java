@@ -307,7 +307,7 @@ public abstract class Element {
     }
 
     public Rectangle getRectangle() {
-        return new Rectangle(leftX, topY, getWidth(), getHeight());
+        return new Rectangle(getX() - getWidth() / 2, getY() - getHeight() / 2, getWidth(), getHeight());
     }
 
     public String getPluginId() {

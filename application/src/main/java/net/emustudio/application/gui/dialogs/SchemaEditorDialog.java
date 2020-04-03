@@ -56,7 +56,6 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
 
     private DrawingPanel panel;
     private boolean buttonSelected = false;
-    private final OpenComputerDialog parentDialog;
 
     SchemaEditorDialog(OpenComputerDialog parent, Schema schema, ConfigFiles configFiles, Dialogs dialogs) {
         super(parent, true);
@@ -64,10 +63,9 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
         this.schema = Objects.requireNonNull(schema);
         this.configFiles = Objects.requireNonNull(configFiles);
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.parentDialog = Objects.requireNonNull(parent);
 
         initialize();
-        this.setTitle("Computer editor [" + schema.getComputerConfig().getName() + "]");
+        setTitle("Computer editor [" + schema.getComputerConfig().getName() + "]");
         setLocationRelativeTo(parent);
     }
 
@@ -366,8 +364,6 @@ class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
     private void btnSaveActionPerformed(ActionEvent evt) {
         try {
             schema.save();
-            parentDialog.setSelectedComputerConfig(schema.getComputerConfig());
-            parentDialog.update();
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not save computer schema", e);
             dialogs.showError("Could not save computer schema. Please consult log file for details.", "Save schema");

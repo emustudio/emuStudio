@@ -33,6 +33,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -73,84 +74,6 @@ public class SchemaPreviewPanel extends JPanel {
         panelResized = false;
     }
 
-    private void resizePanel(Graphics g) {
-        if (schema == null) {
-            return;
-        }
-        // searching for the farthest elements (or points, because a line cannot be farther than a point)
-        int width = 0, height = 0, minLeft = -1, minTop = -1;
-
-        schema.getAllElements().forEach(elem -> elem.measure(g));
-
-        for (Element elem : schema.getAllElements()) {
-            int eX = elem.getX() - elem.getWidth() / 2;
-            int eY = elem.getY() - elem.getHeight() / 2;
-            int eWidth = elem.getWidth();
-            int eHeight = elem.getHeight();
-
-            if (minLeft == -1) {
-                minLeft = eX;
-            } else if (minLeft > eX) {
-                minLeft = eX;
-            }
-
-            if (minTop == -1) {
-                minTop = eY;
-            } else if (minTop > eY) {
-                minTop = eY;
-            }
-
-            if (eX + eWidth > width) {
-                width = eX + eWidth;
-            }
-            if (eY + eHeight > height) {
-                height = eY + eHeight;
-            }
-        }
-
-        for (ConnectionLine line : schema.getConnectionLines()) {
-            for (P p : line.getPoints()) {
-                if (minLeft == -1) {
-                    minLeft = p.ix();
-                } else if (minLeft > p.x) {
-                    minLeft = p.ix();
-                }
-
-                if (minTop == -1) {
-                    minTop = p.iy();
-                } else if (minTop > p.y) {
-                    minTop = p.iy();
-                }
-
-                if (p.x > width) {
-                    width = p.ix();
-                }
-                if (p.y > height) {
-                    height = p.iy();
-                }
-            }
-        }
-
-        leftFactor = minLeft - Schema.MIN_LEFT_MARGIN;
-        topFactor = minTop - Schema.MIN_TOP_MARGIN;
-        if (width != 0 && height != 0) {
-            this.setSize(width - leftFactor + Schema.MIN_LEFT_MARGIN,
-                height - topFactor + Schema.MIN_TOP_MARGIN);
-            this.revalidate();
-        }
-        schemaWidth = width;
-        schemaHeight = height;
-        panelResized = true;
-    }
-
-    private int getSchemaWidth() {
-        return schemaWidth;
-    }
-
-    private int getSchemaHeight() {
-        return schemaHeight;
-    }
-
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -175,8 +98,7 @@ public class SchemaPreviewPanel extends JPanel {
     }
 
     public void saveSchemaImage() {
-        if (schema != null) {
-
+        if (schema != null && panelResized) {
             Path currentDirectory = Optional
                 .ofNullable(lastImageFile)
                 .map(File::getParentFile)
@@ -190,15 +112,66 @@ public class SchemaPreviewPanel extends JPanel {
                 lastImageFile = path.toFile();
 
                 // Save the image
-                BufferedImage bi = new BufferedImage(getSchemaWidth(), getSchemaHeight(), BufferedImage.TYPE_INT_RGB);
-                paint(bi.createGraphics());
+                BufferedImage bi = new BufferedImage(schemaWidth, schemaHeight, BufferedImage.TYPE_INT_RGB);
+
+                Graphics2D graphics = bi.createGraphics();
+                graphics.setBackground(Color.WHITE);
+                graphics.fillRect(0, 0, schemaWidth, schemaHeight);
+                RenderingHints hints = new RenderingHints(Map.of(
+                    RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON,
+                    RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY,
+                    RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON
+                ));
+
+                graphics.setRenderingHints(hints);
+                paintComponent(graphics);
                 try {
                     ImageIO.write(bi, "png", lastImageFile);
                 } catch (IOException e) {
                     LOGGER.error("Could not save schema image.", e);
-                    dialogs.showError("Could not save schema image. Please see log file for details.");
+                    dialogs.showError("Could not save schema image. Please see log file for details.", "Save schema image");
                 }
             });
+        } else {
+            dialogs.showError("Could not save schema image: schema is not set.", "Save schema image");
         }
+    }
+
+    private void resizePanel(Graphics graphics) {
+        if (schema == null) {
+            schemaHeight = 0;
+            schemaWidth = 0;
+            leftFactor = 0;
+            topFactor = 0;
+            panelResized = true;
+            return;
+        }
+
+        schema.getAllElements().forEach(element -> element.measure(graphics));
+
+        Rectangle schemaRectangle = new Rectangle(-1, -1, 0, 0);
+        for (Element element : schema.getAllElements()) {
+            Rectangle rectangle = element.getRectangle();
+            schemaRectangle.add(rectangle);
+        }
+
+        for (ConnectionLine line : schema.getConnectionLines()) {
+            for (P p : line.getPoints()) {
+                schemaRectangle.add(p.x, p.y);
+            }
+        }
+
+        leftFactor = schemaRectangle.x - Schema.MIN_LEFT_MARGIN;
+        topFactor = schemaRectangle.y - Schema.MIN_TOP_MARGIN;
+        if (schemaRectangle.width != 0 && schemaRectangle.height != 0) {
+            this.setSize(
+                schemaRectangle.width - leftFactor + Schema.MIN_LEFT_MARGIN,
+                schemaRectangle.height - topFactor + Schema.MIN_TOP_MARGIN
+            );
+            this.revalidate();
+        }
+        schemaWidth = schemaRectangle.width + Schema.MIN_LEFT_MARGIN;
+        schemaHeight = schemaRectangle.height + Schema.MIN_TOP_MARGIN;
+        panelResized = true;
     }
 }

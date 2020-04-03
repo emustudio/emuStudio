@@ -19,6 +19,7 @@
 package net.emustudio.application.configuration;
 
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
+import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -73,6 +74,7 @@ public class ConfigFiles {
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
+            .sorted(Comparator.comparing(ComputerConfig::getName))
             .collect(Collectors.toList());
     }
 
@@ -91,6 +93,7 @@ public class ConfigFiles {
         return Files.list(pluginBasePath)
             .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
             .map(p -> p.getFileName().toString())
+            .sorted()
             .collect(Collectors.toList());
     }
 
@@ -102,6 +105,15 @@ public class ConfigFiles {
     public void removeConfiguration(String computerName) throws IOException {
         Path configPath = basePath.resolve(DIR_CONFIG).resolve(encodeToFileName(computerName) + ".toml");
         Files.deleteIfExists(configPath);
+    }
+
+    public void renameConfiguration(ComputerConfig originalConfiguration, String newName) throws IOException, CannotUpdateSettingException {
+        ComputerConfig newConfig = createConfiguration(newName);
+        originalConfiguration.copyTo(newConfig);
+        newConfig.save();
+
+        originalConfiguration.close();
+        removeConfiguration(originalConfiguration.getName());
     }
 
     private String encodeToFileName(String name) {

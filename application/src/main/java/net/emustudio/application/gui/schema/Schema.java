@@ -386,7 +386,7 @@ public class Schema {
             .map(ConnectionLine::toPluginConnection)
             .collect(Collectors.toList());
 
-        config.replaceConnections(connections);
+        config.setConnections(connections);
 
         Optional.ofNullable(compilerElement).ifPresentOrElse(
             c -> config.setCompiler(c.save()), () -> config.setCompiler(null)

@@ -41,6 +41,14 @@ public class ComputerConfig implements ConfigSaver, Closeable {
         this.config = Objects.requireNonNull(config);
     }
 
+    public void copyTo(ComputerConfig other) {
+        getCompiler().ifPresent(other::setCompiler);
+        getCPU().ifPresent(other::setCPU);
+        getMemory().ifPresent(other::setMemory);
+        other.setDevices(getDevices());
+        other.setConnections(getConnections());
+    }
+
     public String getName() {
         return config.get("name");
     }
@@ -110,7 +118,7 @@ public class ComputerConfig implements ConfigSaver, Closeable {
             .orElse(Collections.emptyList());
     }
 
-    public void replaceConnections(List<PluginConnection> connections) {
+    public void setConnections(List<PluginConnection> connections) {
         List<Config> configs = connections.stream().map(PluginConnection::getConfig).collect(toList());
         config.set("connections", configs);
     }
