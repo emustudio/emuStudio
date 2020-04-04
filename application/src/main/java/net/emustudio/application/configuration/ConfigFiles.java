@@ -74,6 +74,7 @@ public class ConfigFiles {
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
+            .filter(c -> c.getName() != null)
             .sorted(Comparator.comparing(ComputerConfig::getName))
             .collect(Collectors.toList());
     }

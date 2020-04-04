@@ -44,7 +44,7 @@ import java.util.Optional;
 
 import static net.emustudio.application.gui.Components.addKeyListenerRecursively;
 
-class SchemaEditorDialog extends JDialog implements KeyListener {
+public class SchemaEditorDialog extends JDialog implements KeyListener {
     private final static Logger LOGGER = LoggerFactory.getLogger(SchemaEditorDialog.class);
     private final static PluginComboModel EMPTY_MODEL = new PluginComboModel(Collections.emptyList());
 
@@ -56,7 +56,7 @@ class SchemaEditorDialog extends JDialog implements KeyListener {
     private DrawingPanel panel;
     private boolean buttonSelected = false;
 
-    SchemaEditorDialog(OpenComputerDialog parent, Schema schema, ConfigFiles configFiles, Dialogs dialogs) {
+    public SchemaEditorDialog(JDialog parent, Schema schema, ConfigFiles configFiles, Dialogs dialogs) {
         super(parent, true);
 
         this.schema = Objects.requireNonNull(schema);
