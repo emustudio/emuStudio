@@ -325,7 +325,7 @@ public class EmulatorPanel extends JPanel {
         }
         refreshDebugTable();
 
-        memoryContext.addMemoryListener(memoryListener);
+        Optional.ofNullable(memoryContext).ifPresent(m -> m.addMemoryListener(memoryListener));
     }
 
     private void setStateRunning() {
@@ -341,6 +341,6 @@ public class EmulatorPanel extends JPanel {
         paneDebug.setEnabled(false);
         panelPages.setVisible(false);
 
-        memoryContext.removeMemoryListener(memoryListener);
+        Optional.ofNullable(memoryContext).ifPresent(m -> m.removeMemoryListener(memoryListener));
     }
 }

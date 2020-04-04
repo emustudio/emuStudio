@@ -26,44 +26,51 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class PluginComboModel implements ComboBoxModel<String> {
 
+    private final Map<Integer, String> namesByIndex = new HashMap<>();
     private final Map<Integer, String> fileNamesByIndex = new HashMap<>();
-    private final Map<String, Integer> indexesByFileName = new HashMap<>();
-    private String selected = null;
+    private final Map<String, Integer> indexesByName = new HashMap<>();
+    private String selectedName = null;
+    private String selectedFileName = null;
 
     PluginComboModel(List<String> pluginFiles) {
         final AtomicInteger i = new AtomicInteger();
         Objects.requireNonNull(pluginFiles).forEach(fileName -> {
-            int suffixIndex = fileName.lastIndexOf(".jar");
+            String name = fileName;
+            int suffixIndex = name.lastIndexOf(".jar");
             if (suffixIndex != -1) {
-                fileName = fileName.substring(0, suffixIndex);
+                name = name.substring(0, suffixIndex);
             }
+            this.namesByIndex.put(i.get(), name);
             this.fileNamesByIndex.put(i.get(), fileName);
-            this.indexesByFileName.put(fileName, i.getAndIncrement());
+            this.indexesByName.put(name, i.getAndIncrement());
         });
     }
 
     @Override
     public void setSelectedItem(Object item) {
         if (item == null) {
-            selected = null;
+            selectedName = null;
+            selectedFileName = null;
         } else {
-            selected = fileNamesByIndex.get(indexesByFileName.get(String.valueOf(item)));
+            int index = indexesByName.get(String.valueOf(item));
+            selectedName = namesByIndex.get(index);
+            selectedFileName = fileNamesByIndex.get(index);
         }
     }
 
     @Override
     public String getSelectedItem() {
-        return Optional.ofNullable(selected).orElse(null);
+        return Optional.ofNullable(selectedName).orElse(null);
     }
 
     @Override
     public int getSize() {
-        return indexesByFileName.size();
+        return indexesByName.size();
     }
 
     @Override
     public String getElementAt(int index) {
-        return fileNamesByIndex.get(index);
+        return namesByIndex.get(index);
     }
 
     @Override
@@ -75,6 +82,6 @@ public final class PluginComboModel implements ComboBoxModel<String> {
     }
 
     public Optional<String> getSelectedFileName() {
-        return Optional.ofNullable(selected);
+        return Optional.ofNullable(selectedFileName);
     }
 }
