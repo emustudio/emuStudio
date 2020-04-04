@@ -21,7 +21,6 @@ Various enthusiasts understood the power of Altair and started to develop softwa
 
 Basic configuration of MITS Altair 8800 was:
 
-{:class="table table-striped table-condensed"}
 |---
 | Item | Notes
 |-|-
