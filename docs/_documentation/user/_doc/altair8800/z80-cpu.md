@@ -24,7 +24,7 @@ Main features of the emulator include:
 
 ## Configuration file
 
-The following table shows all the possible settings of Zilog Z80 CPU plug-in:
+The following table shows all the possible settings of Zilog Z80 CPU plugin:
 
 |---
 |Name              | Default value        | Valid values          | Description

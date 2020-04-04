@@ -18,7 +18,7 @@ Compilation takes part by user request (clicking on 'compile' icon in the main w
 
 Language of BrainDuck compiler is almost identical with the original brainfuck. However, brainfuck interpreter is not specified well-enough, so there are open questions how to treat with some special situations, which are described below.
 
-Generally, the language knows eight instructions. They are best described when they are compared with C language equivalent. Brainfuck uses only single data pointer called `P`, pointing to bounded memory. The boundary is specified in `brainduck-mem` plug-in.
+Generally, the language knows eight instructions. They are best described when they are compared with C language equivalent. Brainfuck uses only single data pointer called `P`, pointing to bounded memory. The boundary is specified in `brainduck-mem` plugin.
 
 NOTE: BrainDuck architecture conforms to true von-Neumann model, instead of classic Harvard-style interpreters. It means that program memory and data memory are not separated. The data pointer is therefore not initialized to 0 as programmers might expect and potentially there can be written brainfuck programs with self-modifications.
 
@@ -56,14 +56,14 @@ A memory cell has 8-bits (cells are bytes).
 
 ### Memory size
 
-Memory size is defined in `brainduck-mem` plug-in. In this version of emuStudio, it is 65536 cells.
+Memory size is defined in `brainduck-mem` plugin. In this version of emuStudio, it is 65536 cells.
 
 ### End-of-line code
 
-EOL is defined in `brainduck-terminal` plug-in. In the current version of emuStudio, it is a Newline character with ASCII code 10.
+EOL is defined in `brainduck-terminal` plugin. In the current version of emuStudio, it is a Newline character with ASCII code 10.
 
 ### End-of-file behavior
 
-EOF is defined in `brainduck-cpu` and `brainduck-terminal` plug-ins. In the current version of emuStudio, current cell (where `P` is pointing at) is changed to value 0. This is not how original brainfuck behaves, which is doing no change to the cell on EOF.
+EOF is defined in `brainduck-cpu` and `brainduck-terminal` plugins. In the current version of emuStudio, current cell (where `P` is pointing at) is changed to value 0. This is not how original brainfuck behaves, which is doing no change to the cell on EOF.
 
 [intelhex]: http://en.wikipedia.org/wiki/Intel_HEX

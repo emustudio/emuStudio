@@ -12,7 +12,7 @@ BrainDuck memory is used as a part of BrainDuck computer, which acts as the oper
 
 BrainDuck CPU reads/writes instructions from/to the memory. Memory updates its cells and notifies debugger in emuStudio about the update.
 
-Memory plug-in contains simple graphical window, a GUI, which provides a set of the following features:
+Memory plugin contains simple graphical window, a GUI, which provides a set of the following features:
 
 - paginated view of memory cells, arranged into 16x16 table per page.
 - cells are displayed in hexadecimal form and can be changed directly by user.

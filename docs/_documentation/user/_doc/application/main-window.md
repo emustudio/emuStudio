@@ -64,7 +64,7 @@ Debugger toolbar contains buttons (icons) for controlling the emulation and acce
 - *H*: Step emulation (which is paused). CPU will execute only one - the very next - instruction.
 - *I*: Jump to location. User will manually specify location (address in memory) for the next instruction to execute.
 - *J*: Set/unset breakpoint. User can set or unset a breakpoint on specific memory location. When CPU reaches the breakpoint, it will pause there, waiting for next user action.
-- *K*: Show operating memory. If the memory plug-in does not have a GUI, the icon is disabled.
+- *K*: Show operating memory. If the memory plugin does not have a GUI, the icon is disabled.
 
 #### List of instructions
 

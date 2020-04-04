@@ -10,7 +10,7 @@ permalink: /brainduck/
 
 BrainDuck is an abstract computer for emuStudio, which mimics [brainfuck][brainfuck]{:target="_blank"} programming language. Originally, brainfuck was developed by [Urban Miller][miller]{:target="_blank"} and it is well-known fact that the language has minimalistic compiler and it's eight instructions don't prevent it to be Turing complete. Also, there exist many extensions of the language and there are organized programming contests in brainfuck worldwide. But all of that can be read at Wikipedia or at other sources.
 
-BrainDuck architecture is just a name for virtual computer in emuStudio, and consists of these plug-ins:
+BrainDuck architecture is just a name for virtual computer in emuStudio, and consists of these plugins:
 
 - `brainc-brainduck`: Compiler of brainfuck language (original, without extensions)
 - `brainduck-cpu`: Brainfuck emulator acting like CPU with two registers
@@ -26,7 +26,7 @@ As implementing a brainfuck interpreter, one must deal with several [portability
 - End-of-line code (solved in `brainduck-terminal`)
 - End-of-file behavior (solved in `brainduck-cpu` and `brainduck-terminal`)
 
-The solution is spread across the plug-ins, as you can see in the parentheses. Chapters devoted to plug-ins' description contain specific information.
+The solution is spread across the plugins, as you can see in the parentheses. Chapters devoted to plugins' description contain specific information.
 
 ## BrainDuck for emuStudio
 
@@ -38,7 +38,7 @@ The "->" arrows are in direction of dependency. So for example `brainc-brainduck
 
 Between `brainduck-cpu` and `brainduck-terminal` exists bidirectional dependency, because input gained from terminal is passed to the CPU, and output is pushed from CPU to the terminal.
 
-Plug-in `brainduck-cpu` also depends on `brainduck-mem`, because memory is a place where program and data are stored.
+plugin `brainduck-cpu` also depends on `brainduck-mem`, because memory is a place where program and data are stored.
 
 [brainfuck]: http://en.wikipedia.org/wiki/Brainfuck
 [miller]: http://esolangs.org/wiki/Urban_M%C3%BCller

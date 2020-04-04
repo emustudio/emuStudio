@@ -10,6 +10,9 @@
 <loc>/documentation/user/altair8800/88-sio</loc>
 </url>
 <url>
+<loc>/documentation/user/ram/abstract-tape</loc>
+</url>
+<url>
 <loc>/documentation/user/altair8800/adm3a-terminal</loc>
 </url>
 <url>
@@ -23,6 +26,9 @@
 </url>
 <url>
 <loc>/documentation/user/brainduck/automation</loc>
+</url>
+<url>
+<loc>/documentation/user/ram/automation</loc>
 </url>
 <url>
 <loc>/documentation/user/brainduck/compiler</loc>
@@ -46,6 +52,9 @@
 <loc>/documentation/user/brainduck/</loc>
 </url>
 <url>
+<loc>/documentation/user/ram/</loc>
+</url>
+<url>
 <loc>/documentation/user/</loc>
 </url>
 <url>
@@ -59,6 +68,15 @@
 </url>
 <url>
 <loc>/documentation/user/application/opening-computer</loc>
+</url>
+<url>
+<loc>/documentation/user/ram/ram-cpu</loc>
+</url>
+<url>
+<loc>/documentation/user/ram/ram-mem</loc>
+</url>
+<url>
+<loc>/documentation/user/ram/ramc-ram</loc>
 </url>
 <url>
 <loc>/documentation/user/application/computer-schema</loc>

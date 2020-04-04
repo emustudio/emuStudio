@@ -44,8 +44,7 @@ import java.util.Optional;
 
 import static net.emustudio.application.gui.Components.addKeyListenerRecursively;
 
-// TODO: Allow renaming computer during editing
-class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
+class SchemaEditorDialog extends JDialog implements KeyListener {
     private final static Logger LOGGER = LoggerFactory.getLogger(SchemaEditorDialog.class);
     private final static PluginComboModel EMPTY_MODEL = new PluginComboModel(Collections.emptyList());
 

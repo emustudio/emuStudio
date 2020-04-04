@@ -180,7 +180,7 @@ Terminal behaves differently when emuStudio is run in automatic (or "no GUI") mo
 
 ## Configuration file
 
-The following table shows all the possible settings of ADM-3A plug-in:
+The following table shows all the possible settings of ADM-3A plugin:
 
 |---
 |Name              | Default value        | Valid values          | Description

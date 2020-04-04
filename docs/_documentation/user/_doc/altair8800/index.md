@@ -46,7 +46,7 @@ Abstract schema for emuStudio (Zilog Z80):
 
 ![Abstract schema of MITS Altair8800 (with Zilog Z80)]({{ site.baseurl }}/assets/altair8800/altairz80.png){:class="img-responsive" width="526px"}
 
-Each plug-in is described in further sections.
+Each plugin is described in further sections.
 
 
 [simh]: http://simh.trailing-edge.com/

@@ -8,7 +8,7 @@ permalink: /altair8800/standard-mem
 
 # Operating memory "standard-mem"
 
-This plug-in emulates an operating memory, in a quite broad meaning. It can be used for any virtual computer which can benefit from the following basic properties:
+This plugin emulates an operating memory, in a quite broad meaning. It can be used for any virtual computer which can benefit from the following basic properties:
 
 - A memory cell has size of 1 byte (8 bits)
 - Memory cells are linearly ordered (sequential)
@@ -66,7 +66,7 @@ ROM areas and memory bank-switching is explained in the following sections.
 
 Some "controllers" - used as embedded devices - usually logically organize memory into areas, some of which are read only, which usually contains the firmware, and some are rewritable. Physically, these memories are wired to specific addresses, so the programmer can access them.
 
-Standard operating memory plug-in emulates this behavior. It allows to define ROM areas which represent read only memory. There can be set up multiple ROM areas, and they can overlap. Effectively it means that memory cells in ROM area cannot be changed from software running on the emulator. All writes to the memory will be ignored.
+Standard operating memory plugin emulates this behavior. It allows to define ROM areas which represent read only memory. There can be set up multiple ROM areas, and they can overlap. Effectively it means that memory cells in ROM area cannot be changed from software running on the emulator. All writes to the memory will be ignored.
 
 Manually, as a user it is possible to change the values, but only by loading new memory image. Editing the value will not work.
 
@@ -90,7 +90,7 @@ To summarize, let's consider an example. If a CPU is 8-bit, it means it has addr
 
 ## Configuration file
 
-The following table shows all the possible settings of Standard operating memory plug-in:
+The following table shows all the possible settings of Standard operating memory plugin:
 
 |---
 |Name              | Default value        | Valid values          | Description
@@ -106,9 +106,9 @@ The following table shows all the possible settings of Standard operating memory
 
 ## Using memory in custom computers
 
-This section is for developers of emulators. If you do not plan to create custom virtual computers, you can safely skip this section. In order to get started with developing plug-ins for emuStudio, please read tutorial "Developing emuStudio Plugins".
+This section is for developers of emulators. If you do not plan to create custom virtual computers, you can safely skip this section. In order to get started with developing plugins for emuStudio, please read tutorial "Developing emuStudio Plugins".
 
-As it was mentioned in the earlier sections, the Standard operating memory plug-in can be used in other computers, too. Besides standard operations which are provided by `net.emustudio.emulib.plugins.memory.MemoryContext` interface, it provides custom context API, enabling to use more features - e.g. bank-switching.
+As it was mentioned in the earlier sections, the Standard operating memory plugin can be used in other computers, too. Besides standard operations which are provided by `net.emustudio.emulib.plugins.memory.MemoryContext` interface, it provides custom context API, enabling to use more features - e.g. bank-switching.
 
 You can obtain the context in [Plugin.initialize()][pluginInitialize]{:target="_blank"} method. The context is named `net.emustudio.plugins.memory.standard.api.StandardMemoryContext`:
 

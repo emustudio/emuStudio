@@ -16,7 +16,7 @@ Input file is called `brainduck-terminal.in` and must be placed in the directory
 
 Output file is called `brainduck-terminal.out` and it will be created automatically, or appended when it exists in the location from which emuStudio was executed.
 
-NOTE: Take care about end-of-line characters. Most of brainfuck programs count with Unix-like EOLs, i.e. characters with ASCII code 10. Plug-in `brainduck-terminal` interprets ENTER key in the interactive mode as Unix-like EOL. In the non-interactive mode, EOL may be of any-like type.
+NOTE: Take care about end-of-line characters. Most of brainfuck programs count with Unix-like EOLs, i.e. characters with ASCII code 10. plugin `brainduck-terminal` interprets ENTER key in the interactive mode as Unix-like EOL. In the non-interactive mode, EOL may be of any-like type.
 
 Command line for starting non-interactive automatic emulation:
 

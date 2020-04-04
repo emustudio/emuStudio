@@ -18,7 +18,7 @@ Original manual of MITS 88-SIO serial board can be downloaded at [this link][man
 
 ## Features
 
-The plug-in emulates only basic functionality of the board. It has the following features:
+The plugin emulates only basic functionality of the board. It has the following features:
 
 - allows to connect one device only
 - CPU ports can be set manually
@@ -52,9 +52,9 @@ These numbers can be changed in the Settings window:
 
 ## Connecting devices
 
-MITS 88-SIO board as emuStudio plug-in is a device which does nothing really useful. It just listens (and understands) commands coming from CPU through the I/O ports. The command is either a request for reading or request for writing to the attached device.
+MITS 88-SIO board as emuStudio plugin is a device which does nothing really useful. It just listens (and understands) commands coming from CPU through the I/O ports. The command is either a request for reading or request for writing to the attached device.
 
-Theoretically any device which supports the basic I/O (reading/writing), can be attached to the board. More about plug-in internals can be found in programmer's manual of emuStudio, which is not part of the user documentation.
+Theoretically any device which supports the basic I/O (reading/writing), can be attached to the board. More about plugin internals can be found in programmer's manual of emuStudio, which is not part of the user documentation.
 
 Usually, attached devices were:
 
@@ -66,7 +66,7 @@ In current implementation of Altair 8800 emulator, the only suitable device whic
 
 ## Configuration file
 
-The following table shows all the possible settings of MITS 88-SIO plug-in:
+The following table shows all the possible settings of MITS 88-SIO plugin:
 
 |---
 |Name                | Default value | Valid values                          | Description
@@ -104,7 +104,7 @@ Default addresses: `0x03`, `0x10`, `0x14`, `0x16`, `0x18` (preferred is `0x10`)
 
 *WRITE*:
 
-Controls input/output interrupts enable. If both interrupts are set to be enabled, it only empties transmitter buffer in the device, which was a post-step after interrupts being enabled. However, the plug-in does not implement interrupts support.
+Controls input/output interrupts enable. If both interrupts are set to be enabled, it only empties transmitter buffer in the device, which was a post-step after interrupts being enabled. However, the plugin does not implement interrupts support.
 
 - `D7 D6 D5 D4 D3 D2` : unused bits
 - `D1 D0`             : Used for enabling/disabling interrupts. Not used in emuStudio.
