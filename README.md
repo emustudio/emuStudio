@@ -35,7 +35,7 @@ emulators "richness" as the simh project has.
 ## Getting started
 
 At first, either compile or [download](https://www.emustudio.net/download/) emuStudio.
-The prerequisite is to have installed **Java Runtime Environment (JRE), at least version 11**
+The prerequisite is to have installed **Java, at least version 11**
 (download [here](https://www.oracle.com/java/technologies/javase-downloads.html)). 
 
 Then, unzip the tar/zip file (`emuStudio-xxx.zip`) and run it using command:
