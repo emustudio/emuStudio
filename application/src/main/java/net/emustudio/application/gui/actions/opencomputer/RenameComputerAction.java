@@ -42,7 +42,6 @@ public class RenameComputerAction extends AbstractAction {
                     if (newName.trim().isEmpty()) {
                         dialogs.showError("Computer name must be non-empty", "Rename computer");
                     } else {
-                        lstConfig.clearSelection();
                         try {
                             configFiles.renameConfiguration(computer, newName);
                             update.run();

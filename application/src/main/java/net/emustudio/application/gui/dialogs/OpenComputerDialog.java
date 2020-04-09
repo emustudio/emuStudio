@@ -88,6 +88,7 @@ public class OpenComputerDialog extends JDialog {
     void update() {
         configurationsModel.update();
         lblPreview.setText("");
+        lstConfig.clearSelection();
         lstConfigValueChanged(null);
     }
 

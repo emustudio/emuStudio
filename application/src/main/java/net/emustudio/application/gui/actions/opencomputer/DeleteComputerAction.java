@@ -40,7 +40,6 @@ public class DeleteComputerAction extends AbstractAction {
                 if (answer == Dialogs.DialogAnswer.ANSWER_YES) {
                     try {
                         configFiles.removeConfiguration(computer.getName());
-                        lstConfig.clearSelection();
                         update.run();
                     } catch (IOException ex) {
                         LOGGER.error("Could not remove computer configuration", ex);

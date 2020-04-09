@@ -65,7 +65,8 @@ public class TerminalWindow extends JDialog {
 
         pane.add(display);
         pane.add(lblBack);
+        pane.setPreferredSize(new Dimension(backgroundImage.getIconWidth(), backgroundImage.getIconHeight()));
+
         pack();
-        setSize(backgroundImage.getIconWidth(), backgroundImage.getIconHeight());
     }
 }
