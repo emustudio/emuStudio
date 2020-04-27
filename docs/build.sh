@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo Deleting generated sites
-rm -rf ./_documentation/
+rm -rf ./documentation/
 bundle exec jekyll clean
 
 echo Building site...

@@ -8,7 +8,7 @@ permalink: /altair8800/88-disk
 
 # Disk controller "88-disk"
 
-Altair Disk offered the advantage of fixed memory including relatively fast access to data. Data were transferred with speed 250 Kb/s (The plugin does not emulate this). Disk was connected with disk controller (or board), and the data were transferred in serial fashion, bit after bit.
+Altair Disk offered the advantage of fixed memory including relatively fast access to data. The speed of data transfer was 250 Kb/s (The plugin does not emulate this). Disk was connected with disk controller (or board), and the data were transferred in serial fashion, bit after bit.
 
 Disk controller, on the other hand communicated with CPU. It transformed these serial data into 8-bit words which were stored/read by CPU into/from operating memory.
 

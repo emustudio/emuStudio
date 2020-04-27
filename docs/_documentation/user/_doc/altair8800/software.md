@@ -13,6 +13,7 @@ Since Altair8800 virtual computer emulates a real machine, it's possible to use 
 - [Peter Schorn][schorn]{:target="_blank"}
 - [Altair clone][aclone]{:target="_blank"}
 - [SIMH][simhf]{:target="_blank"}
+- [DeRamp][deramp]{:target="_blank"}
 
 If you want to manipulate with disk images, please follow this [link][cpmtools]{:target="_blank"}.
 
@@ -86,7 +87,7 @@ Also, the operating memory needs to be set for memory banks. The following param
 
 There exist specific version of boot loader (modified probably by [simh][simh]{:target="_blank"} authors) to load CP/M into banked memory. It is available in `examples/altair8800/mboot.bin` in your emuStudio installation. Before other steps, please load this image into operating memory at address `0xFF00` (hexadecimal).
 
-==== Steps for booting CP/M 3
+### Steps for booting CP/M 3
 
 Specific steps how to boot CP/M 3 in emuStudio follow:
 
@@ -153,6 +154,7 @@ The following image shows the look right after the boot:
 [schorn]: http://schorn.ch/altair_4.php
 [aclone]: http://altairclone.com/support.htm
 [simhf]: http://www.classiccmp.org/cpmarchives/cpm/mirrors/www.schorn.ch/cpm/intro.php
+[deramp]: https://deramp.com/downloads/altair/
 [simh]: http://simh.trailing-edge.com/
 [altsw]: http://schorn.ch/cpm/zip/altsw.zip
 [cpm22]: http://www.classiccmp.org/dunfield/r/cpm22.pdf
