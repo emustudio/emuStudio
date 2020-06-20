@@ -70,7 +70,7 @@ public class ContextImpl implements ExtendedContext {
      *
      * @param port I/O port
      * @param read whether method should read or write to the port
-     * @param data data to be written to the port. if parameter read is set to true, then val is ignored.
+     * @param data data to be written to the port. if parameter read is set to true, then data are ignored.
      * @return value from the port if read is true, otherwise 0
      */
     public short fireIO(int port, boolean read, short data) throws IOException {

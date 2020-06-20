@@ -85,7 +85,7 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
 
     @Override
     public void reset() {
-        transmitter.reset();
+        transmitter.reset(sioSettings.isGuiNotSupported());
     }
 
     @SuppressWarnings("unchecked")

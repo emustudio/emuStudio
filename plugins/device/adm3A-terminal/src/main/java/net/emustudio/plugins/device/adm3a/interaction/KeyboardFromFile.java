@@ -33,7 +33,7 @@ import java.util.concurrent.locks.LockSupport;
 public class KeyboardFromFile implements Keyboard {
     private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardFromFile.class);
 
-    private List<DeviceContext<Short>> devices = new CopyOnWriteArrayList<>();
+    private final List<DeviceContext<Short>> devices = new CopyOnWriteArrayList<>();
     private final Path inputFile;
     private final int delayInMilliseconds;
 

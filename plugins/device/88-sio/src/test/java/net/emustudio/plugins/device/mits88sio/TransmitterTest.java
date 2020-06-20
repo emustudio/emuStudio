@@ -43,7 +43,7 @@ public class TransmitterTest {
     @Test
     public void testResetOnEmptyBufferSetStatusTo0x02() {
         Transmitter transmitter = new Transmitter();
-        transmitter.reset();
+        transmitter.reset(false);
         assertEquals(0x02, transmitter.readStatus());
     }
 

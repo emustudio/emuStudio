@@ -72,9 +72,11 @@ public class Transmitter {
         return (pluginContext != null) ? pluginContext.id() : tmpDevice.toString();
     }
 
-    void reset() {
-        buffer.clear();
-        writeToStatus((short) 0); // disable interrupts
+    void reset(boolean noGUI) {
+        if (!noGUI) {
+            buffer.clear();
+            writeToStatus((short) 0); // disable interrupts
+        }
     }
 
     public void writeToStatus(short value) {
@@ -82,8 +84,6 @@ public class Transmitter {
 
         bufferAndStatusLock.lock();
         try {
-            // TODO: Wrong implementation; buffer SHOULD be emptied.
-            // However, it messes up the automation.
             inputInterruptEnabled = (value & 1) == 1;
             outputInterruptEnabled = (value & 2) == 2;
 
