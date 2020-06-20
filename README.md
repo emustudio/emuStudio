@@ -4,16 +4,15 @@
 
 <a href="https://www.buymeacoffee.com/vbmacher" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
-[emuStudio](https://www.emustudio.net/) is a desktop application used for computers emulation and writing programs
+[emuStudio](https://www.emustudio.net/) is a desktop application used for computer emulation and writing programs
 for emulated computers. It extensible; it encourages developers to write their own computer emulators.
 
-Main goal of emuStudio is support learning about older but important computers, or abstract machines, while
-having fun. Nowadays the ability to write programs for old computers is probably not quite interesting for the market,
-but I guess emulation has always be more about fun, trying to keeping alive something which was outstanding
-in it's peak, and preserve memories.
+The main goal of emuStudio is to support the "compile-load-emulate" workflow, aiming at students or anyone to help to learn about older but important computers or even abstract machines.
+ 
+Nowadays, the ability to write programs for vintage computers is probably not quite interesting for the market,
+but I guess emulation has always been more about fun, nostalgia, and culture - trying to keep alive something which was outstanding at its peak, and preserve memories.
 
-emuStudio is very appropriate for using at schools, e.g. when students are doing first steps in assembler, or when they
-are taught about computers history. For example, emuStudio is used at [Technical University of Košice](http://www.fei.tuke.sk/en)
+emuStudio is very appropriate for use at schools, e.g. when students are doing first steps in assembler, or when they are taught about computer history. For example, emuStudio is used at the [Technical University of Košice](http://www.fei.tuke.sk/en)
 since 2007.
 
 ## Available emulators
