@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -61,7 +62,6 @@ public class OpenComputerDialog extends JDialog {
     private final SaveSchemaAction saveSchemaAction;
 
     private final JList<ComputerConfig> lstConfig = new JList<>();
-    private final JLabel lblPreview = new JLabel();
 
     public OpenComputerDialog(ConfigFiles configFiles, ApplicationConfig applicationConfig, Dialogs dialogs,
                               Consumer<ComputerConfig> selectComputer) {
@@ -87,7 +87,6 @@ public class OpenComputerDialog extends JDialog {
 
     void update() {
         configurationsModel.update();
-        lblPreview.setText("");
         lstConfig.clearSelection();
         lstConfigValueChanged(null);
     }
@@ -104,9 +103,6 @@ public class OpenComputerDialog extends JDialog {
         ToolbarButton btnSaveSchemaImage = new ToolbarButton(saveSchemaAction, "Save schema image...");
         JPanel panelPreview = new JPanel();
         JScrollPane scrollPreview = new JScrollPane();
-        JToolBar toolPreview = new JToolBar();
-        JLabel jLabel2 = new JLabel();
-        JToolBar.Separator jSeparator1 = new JToolBar.Separator();
         JLabel jLabel1 = new JLabel();
         JButton btnOpen = new JButton();
         JButton btnClose = new JButton();
@@ -122,7 +118,7 @@ public class OpenComputerDialog extends JDialog {
 
         panelConfig.setPreferredSize(new java.awt.Dimension(200, 300));
 
-        lstConfig.setFont(FONT_COMMON);
+    //    lstConfig.setFont(FONT_COMMON);
         lstConfig.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
                 lstConfigMouseClicked(evt);
@@ -159,18 +155,6 @@ public class OpenComputerDialog extends JDialog {
 
         splitConfig.setLeftComponent(panelConfig);
 
-        toolPreview.setFloatable(false);
-        toolPreview.setRollover(true);
-
-        jLabel2.setText("Computer:");
-        toolPreview.add(jLabel2);
-
-        jSeparator1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        toolPreview.add(jSeparator1);
-
-        lblPreview.setFont(lblPreview.getFont().deriveFont(lblPreview.getFont().getStyle() | java.awt.Font.BOLD));
-        toolPreview.add(lblPreview);
-
         scrollPreview.setViewportView(preview);
 
         GroupLayout panelPreviewLayout = new GroupLayout(panelPreview);
@@ -178,15 +162,10 @@ public class OpenComputerDialog extends JDialog {
         panelPreviewLayout.setHorizontalGroup(
             panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
-                .addGroup(panelPreviewLayout.createSequentialGroup()
-                    .addGap(10, 10, 10)
-                    .addComponent(toolPreview, GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE))
         );
         panelPreviewLayout.setVerticalGroup(
             panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(panelPreviewLayout.createSequentialGroup()
-                    .addComponent(toolPreview, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE))
         );
 
@@ -248,7 +227,6 @@ public class OpenComputerDialog extends JDialog {
             .ifPresentOrElse(computer -> {
                 Schema schema = new Schema(computer, applicationConfig);
                 preview.setSchema(schema);
-                lblPreview.setText(computer.getName());
             }, () -> preview.setSchema(null));
         preview.repaint();
     }

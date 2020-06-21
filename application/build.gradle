@@ -86,6 +86,7 @@ dependencies {
 application {
   applicationName = 'emuStudio'
   mainClassName = 'net.emustudio.application.Runner'
+  applicationDefaultJvmArgs = ['-Dawt.useSystemAAFontSettings=on', '-Dswing.aatext=true', '-Dsun.java2d.xrender=true']
   executableDir = ''
 }
 

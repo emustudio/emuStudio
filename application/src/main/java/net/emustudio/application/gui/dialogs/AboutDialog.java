@@ -103,9 +103,9 @@ public class AboutDialog extends JDialog {
 
         jLabel4.setText("Version");
         jLabel1.setText(
-            "<html>This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it " +
-                "under certain conditions; for details see https://www.gnu.org/licenses/gpl-3.0.html.<br/><br/>" +
-                "For more information about emuStudio, see https://www.emustudio.net/.");
+            "<html><p>This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it " +
+                "under certain conditions; for details see https://www.gnu.org/licenses/gpl-3.0.html.<br/>" +
+                "For more information about emuStudio, see https://www.emustudio.net/.</p></html>");
 
         GroupLayout panelInfoLayout = new GroupLayout(panelInfo);
         panelInfo.setLayout(panelInfoLayout);
