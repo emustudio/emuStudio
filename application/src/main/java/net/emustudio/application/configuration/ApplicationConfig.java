@@ -35,6 +35,7 @@ public class ApplicationConfig implements Closeable {
     public final static String KEY_AUTO = EMUSTUDIO_AUTO.substring(EMUSTUDIO_PREFIX.length());
     public final static String KEY_USE_SCHEMA_GRID = "useSchemaGrid";
     public final static String KEY_SCHEMA_GRID_GAP = "schemaGridGap";
+    public final static String KEY_LOOK_AND_FEEL = "lookAndFeel";
 
     public transient final boolean emuStudioAuto;
     public transient final boolean noGUI;
@@ -49,7 +50,7 @@ public class ApplicationConfig implements Closeable {
 
     public boolean contains(String key) {
         return KEY_NOGUI.equals(key) || KEY_AUTO.equals(key) || KEY_USE_SCHEMA_GRID.equals(key)
-            || KEY_SCHEMA_GRID_GAP.equals(key);
+            || KEY_SCHEMA_GRID_GAP.equals(key) || KEY_LOOK_AND_FEEL.equals(key);
     }
 
     public Optional<Boolean> getBoolean(String key) {
@@ -81,6 +82,9 @@ public class ApplicationConfig implements Closeable {
     }
 
     public Optional<String> getString(String key) {
+        if (KEY_LOOK_AND_FEEL.equals(key)) {
+            return getLookAndFeel();
+        }
         return Optional.empty();
     }
 
@@ -102,6 +106,14 @@ public class ApplicationConfig implements Closeable {
 
     public void setSchemaGridGap(int schemaGridGap) {
         config.set(KEY_SCHEMA_GRID_GAP, schemaGridGap);
+    }
+
+    public Optional<String> getLookAndFeel() {
+        return config.getOptional(KEY_LOOK_AND_FEEL);
+    }
+
+    public void setLookAndFeel(String lookAndFeel) {
+        config.set(KEY_LOOK_AND_FEEL, lookAndFeel);
     }
 
     public void save() {

@@ -1,2 +1,3 @@
 useSchemaGrid = true
 # schemaGridGap = 20
+lookAndFeel = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel"

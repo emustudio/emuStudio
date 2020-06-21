@@ -63,8 +63,6 @@ public class Runner {
         try {
             CommandLine commandLine = CommandLine.parse(args);
 
-            setupLookAndFeel();
-
             Path configFile = Path.of("emuStudio.toml");
             if (Files.notExists(configFile)) {
                 Files.createFile(configFile);
@@ -72,6 +70,8 @@ public class Runner {
             ApplicationConfig applicationConfig = ApplicationConfig.fromFile(
                 configFile, commandLine.isNoGUI(), commandLine.isAuto()
             );
+
+            setupLookAndFeel(applicationConfig);
 
             if (!commandLine.isNoGUI()) {
                 dialogs = new GuiDialogsImpl();
@@ -173,9 +173,11 @@ public class Runner {
         return Optional.ofNullable(splash);
     }
 
-    private static void setupLookAndFeel() {
+    private static void setupLookAndFeel(ApplicationConfig config) {
+        String lookAndFeel = config.getLookAndFeel().orElse("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+
         try {
-            UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+            UIManager.setLookAndFeel(lookAndFeel);
         } catch (Exception ignored) {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
