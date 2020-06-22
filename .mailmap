@@ -1,0 +1,11 @@
+#
+# This list is used by git-shortlog to aggregate contributions.  It is
+# necessary when either the author's full name is not always written
+# the same way, and/or the same author contributes from different
+# email addresses.
+#
+
+Peter Jakubčo <pjakubco@gmail.com>
+Michal Šipoš <michal.sipos@gmail.com>
+Matúš Sulír <matus.sulir@gmail.com>
+Marcin Wieczorek <marcin@marcin.co>
