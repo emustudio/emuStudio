@@ -28,10 +28,13 @@ import java.util.Objects;
 
 public class DebugTableImpl extends JTable  {
     private final DebugTableModel tableModel;
+    private final BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
+    private final TextCellRenderer textRenderer;
 
     public DebugTableImpl(DebugTableModel tableModel) {
         super(Objects.requireNonNull(tableModel));
         this.tableModel = tableModel;
+        this.textRenderer = new TextCellRenderer(tableModel);
 
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         setGridColor(Constants.DEBUGTABLE_COLOR_TABLE_GRID);
@@ -53,7 +56,7 @@ public class DebugTableImpl extends JTable  {
             DebuggerColumn<?> debugColumn = tableModel.getColumnAt(i);
 
             if (debugColumn.getClassType() == Boolean.class) {
-                tableColumn.setCellEditor(new DefaultCellEditor(new InvisibleJCheckBox()));
+                tableColumn.setCellEditor(new BooleanCellEditor());
             }
             if (debugColumn.getDefaultWidth() != -1) {
                 tableColumn.setPreferredWidth(debugColumn.getDefaultWidth());
@@ -62,8 +65,6 @@ public class DebugTableImpl extends JTable  {
     }
 
     private void setupRenderers() {
-        BreakpointCellRenderer boolRenderer = new BreakpointCellRenderer();
-        TextCellRenderer textRenderer = new TextCellRenderer(tableModel);
         super.setDefaultRenderer(Object.class, textRenderer);
         super.setDefaultRenderer(String.class, textRenderer);
         super.setDefaultRenderer(Boolean.class, boolRenderer);

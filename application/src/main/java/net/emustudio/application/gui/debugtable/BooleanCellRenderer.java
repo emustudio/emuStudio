@@ -21,16 +21,15 @@ package net.emustudio.application.gui.debugtable;
 import net.emustudio.application.Constants;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-class BreakpointCellRenderer extends JLabel implements TableCellRenderer {
-    private final Icon bpIcon = new ImageIcon(BreakpointCellRenderer.class.getResource("/net/emustudio/application/gui/dialogs/breakpoint.png"));
+import static net.emustudio.application.gui.debugtable.BooleanComponent.BOOLEAN_ICON;
 
-    public BreakpointCellRenderer() {
-        setDoubleBuffered(true);
-        setOpaque(true);
-        setText(" ");
+class BooleanCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
+
+    public BooleanCellRenderer() {
         setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
     }
 
@@ -38,13 +37,15 @@ class BreakpointCellRenderer extends JLabel implements TableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                    boolean hasFocus, int row, int column) {
 
+        setBackground((row % 2 == 0) ? Constants.DEBUGTABLE_COLOR_ROW_ODD : Constants.DEBUGTABLE_COLOR_ROW_EVEN);
+        super.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
+
         boolean isBreakpointSet = (value == null) ? false : (Boolean) value;
         if (isBreakpointSet) {
-            setIcon(bpIcon);
+            setIcon(BOOLEAN_ICON);
         } else {
             setIcon(null);
         }
-        setBackground((row % 2 == 0) ? Constants.DEBUGTABLE_COLOR_ROW_ODD : Constants.DEBUGTABLE_COLOR_ROW_EVEN);
         return this;
     }
 }

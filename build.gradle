@@ -38,7 +38,7 @@ ext.libs = [
   args4j         : "args4j:args4j:2.33",
   tomlj          : "com.electronwill.night-config:toml:3.6.2",
 
-  editor         : "com.fifesoft:rsyntaxtextarea:3.1.0",
+  editor         : "com.fifesoft:rsyntaxtextarea:3.1.1",
   editorDialogs  : "com.fifesoft:rstaui:3.1.0",
 
   junit          : "junit:junit:4.13",
