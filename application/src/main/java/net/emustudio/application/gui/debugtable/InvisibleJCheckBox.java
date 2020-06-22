@@ -24,6 +24,6 @@ import java.awt.*;
 class InvisibleJCheckBox extends JCheckBox {
 
     @Override
-    public void paint(Graphics g) {
+    public void paintComponent(Graphics g) {
     }
 }

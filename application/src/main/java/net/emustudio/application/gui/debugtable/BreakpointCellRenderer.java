@@ -24,28 +24,27 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-class BooleanCellRenderer extends JLabel implements TableCellRenderer {
+class BreakpointCellRenderer extends JLabel implements TableCellRenderer {
+    private final Icon bpIcon = new ImageIcon(BreakpointCellRenderer.class.getResource("/net/emustudio/application/gui/dialogs/breakpoint.png"));
+
+    public BreakpointCellRenderer() {
+        setDoubleBuffered(true);
+        setOpaque(true);
+        setText(" ");
+        setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                    boolean hasFocus, int row, int column) {
-        boolean boolValue = (value == null) ? false : (Boolean) value;
 
-        if (boolValue) {
-            setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/breakpoint.png")));
+        boolean isBreakpointSet = (value == null) ? false : (Boolean) value;
+        if (isBreakpointSet) {
+            setIcon(bpIcon);
         } else {
             setIcon(null);
         }
         setBackground((row % 2 == 0) ? Constants.DEBUGTABLE_COLOR_ROW_ODD : Constants.DEBUGTABLE_COLOR_ROW_EVEN);
-        setText(" ");
-        this.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         return this;
-    }
-
-    @Override
-    public void paintComponent(Graphics g) {
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, getWidth(), getHeight());
-        super.paintComponent(g);
     }
 }

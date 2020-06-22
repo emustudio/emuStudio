@@ -62,7 +62,7 @@ public class DebugTableImpl extends JTable  {
     }
 
     private void setupRenderers() {
-        BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
+        BreakpointCellRenderer boolRenderer = new BreakpointCellRenderer();
         TextCellRenderer textRenderer = new TextCellRenderer(tableModel);
         super.setDefaultRenderer(Object.class, textRenderer);
         super.setDefaultRenderer(String.class, textRenderer);

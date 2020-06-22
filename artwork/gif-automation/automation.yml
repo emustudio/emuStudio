@@ -1,0 +1,408 @@
+# The configurations that used for the recording, feel free to edit them
+config:
+
+  # Specify a command to be executed
+  # like `/bin/bash -l`, `ls`, or any other commands
+  # the default is bash for Linux
+  # or powershell.exe for Windows
+  command: bash -l
+  
+  # Specify the current working directory path
+  # the default is the current working directory path
+  cwd: /home/vbmacher/emuStudio
+  
+  # Export additional ENV variables
+  env:
+    recording: true
+  
+  # Explicitly set the number of columns
+  # or use `auto` to take the current
+  # number of columns of your shell
+  cols: 127
+  
+  # Explicitly set the number of rows
+  # or use `auto` to take the current
+  # number of rows of your shell
+  rows: 37
+  
+  # Amount of times to repeat GIF
+  # If value is -1, play once
+  # If value is 0, loop indefinitely
+  # If value is a positive number, loop n times
+  repeat: 0
+  
+  # Quality
+  # 1 - 100
+  quality: 100
+  
+  # Delay between frames in ms
+  # If the value is `auto` use the actual recording delays
+  frameDelay: auto
+  
+  # Maximum delay between frames in ms
+  # Ignored if the `frameDelay` isn't set to `auto`
+  # Set to `auto` to prevent limiting the max idle time
+  maxIdleTime: 2000
+  
+  # The surrounding frame box
+  # The `type` can be null, window, floating, or solid`
+  # To hide the title use the value null
+  # Don't forget to add a backgroundColor style with a null as type
+  frameBox:
+    type: null
+    title: null
+    style:
+      padding: 15px
+      border: 2px gray solid
+      boxShadow: none
+      margin: 0px
+      backgroundColor: black
+  
+  # Add a watermark image to the rendered gif
+  # You need to specify an absolute path for
+  # the image on your machine or a URL, and you can also
+  # add your own CSS styles
+  watermark:
+    imagePath: watermark.svg # TODO: change to absolute path!
+    style:
+      position: absolute
+      right: 15px
+      bottom: 15px
+      width: 100px
+      opacity: 0.3
+      
+  
+  # Cursor style can be one of
+  # `block`, `underline`, or `bar`
+  cursorStyle: block
+  
+  # Font family
+  # You can use any font that is installed on your machine
+  # in CSS-like syntax
+  fontFamily: "Monaco, Lucida Console, Ubuntu Mono, Monospace"
+  
+  # The size of the font
+  fontSize: 14
+  
+  # The height of lines
+  lineHeight: 1
+  
+  # The spacing between letters
+  letterSpacing: 0
+  
+  # Theme
+  theme:
+    background: "transparent"
+    foreground: "#afafaf"
+    cursor: "#c7c7c7"
+    black: "#232628"
+    red: "#fc4384"
+    green: "#b3e33b"
+    yellow: "#ffa727"
+    blue: "#75dff2"
+    magenta: "#ae89fe"
+    cyan: "#708387"
+    white: "#d5d5d0"
+    brightBlack: "#626566"
+    brightRed: "#ff7fac"
+    brightGreen: "#c8ed71"
+    brightYellow: "#ebdf86"
+    brightBlue: "#75dff2"
+    brightMagenta: "#ae89fe"
+    brightCyan: "#b1c6ca"
+    brightWhite: "#f9f9f4"
+  
+# Records, feel free to edit them
+records:
+  - delay: 325
+    content: '$ '
+  - delay: 998
+    content: l
+  - delay: 215
+    content: l
+  - delay: 680
+    content: "\r\n"
+  - delay: 5
+    content: "total 64\r\n-rw-rw-r--. 1    13 Jun 21 10:25 adm3A-terminal.in\r\ndrwxr-xr-x. 1   300 Jun 16 11:03 \e[0m\e[01;34mbin\e[0m\r\ndrwxr-xr-x. 1   156 Jun 16 11:03 \e[01;34mcompiler\e[0m\r\ndrwxrwxr-x. 1   258 Jun 20 06:34 \e[01;34mconfig\e[0m\r\ndrwxr-xr-x. 1   150 Jun 16 11:03 \e[01;34mcpu\e[0m\r\ndrwxr-xr-x. 1   230 Jun 16 11:03 \e[01;34mdevice\e[0m\r\n-rwxr-xr-x. 1  6204 Jun 21 07:25 \e[01;32memuStudio\e[0m\r\n-rwxr-xr-x. 1  3442 Apr  8 22:47 \e[01;32memuStudio.bat\e[0m\r\n-rw-rw-r--. 1    83 Jun 21 08:50 emuStudio.toml\r\ndrwxrwxr-x. 1   128 Mar 16 07:23 \e[01;34mexamples\e[0m\r\ndrwxr-xr-x. 1   520 Jun 16 11:03 \e[01;34mlib\e[0m\r\n-rw-rw-r--. 1 35149 Mar 16 07:23 LICENSE\r\n-rw-rw-r--. 1  2012 Jun 20 08:49 logback.xml\r\ndrwxrwxr-x. 1   158 Jun 21 07:24 \e[01;34mlogs\e[0m\r\ndrwxr-xr-x. 1   136 Jun 16 11:03 \e[01;34mmemory\e[0m\r\n-rw-rw-r--. 1  1710 Mar 16 11:46 README.md\r\n"
+  - delay: 12
+    content: '$ '
+  - delay: 614
+    content: "\r\n"
+  - delay: 13
+    content: '$ '
+  - delay: 970
+    content: l
+  - delay: 153
+    content: s
+  - delay: 192
+    content: ' '
+  - delay: 216
+    content: c
+  - delay: 128
+    content: o
+  - delay: 144
+    content: 'n'
+  - delay: 145
+    content: fig/
+  - delay: 439
+    content: "\r\nBrainDuck.toml       MITSAltair8800Z80.toml       RandomAccessStoredProgramRASP.toml\r\nMITSAltair8800.toml  RandomAccessMachineRAM.toml  SSEMBaby.toml\r\n"
+  - delay: 13
+    content: '$ '
+  - delay: 512
+    content: "\r\n"
+  - delay: 12
+    content: '$ '
+  - delay: 1379
+    content: l
+  - delay: 137
+    content: s
+  - delay: 152
+    content: ' '
+  - delay: 208
+    content: e
+  - delay: 200
+    content: x
+  - delay: 233
+    content: amples/
+  - delay: 278
+    content: a
+  - delay: 177
+    content: s
+  - delay: 201
+    content: "\a-"
+  - delay: 823
+    content: '8'
+  - delay: 125
+    content: 080/
+  - delay: 1123
+    content: "\r\nchar_max_code.asm  \e[0m\e[01;34minclude\e[0m  numbers_count.asm  reverse.asm\r\n"
+  - delay: 13
+    content: '$ '
+  - delay: 536
+    content: "\r\n"
+  - delay: 13
+    content: '$ '
+  - delay: 2242
+    content: e
+  - delay: 209
+    content: c
+  - delay: 71
+    content: h
+  - delay: 233
+    content: o
+  - delay: 128
+    content: ' '
+  - delay: 216
+    content: '"'
+  - delay: 504
+    content: H
+  - delay: 320
+    content: e
+  - delay: 128
+    content: l
+  - delay: 184
+    content: l
+  - delay: 160
+    content: o
+  - delay: 184
+    content: ','
+  - delay: 87
+    content: ' '
+  - delay: 193
+    content: w
+  - delay: 88
+    content: o
+  - delay: 120
+    content: r
+  - delay: 584
+    content: l
+  - delay: 96
+    content: d
+  - delay: 608
+    content: '!'
+  - delay: 232
+    content: '"'
+  - delay: 160
+    content: ' '
+  - delay: 136
+    content: '>'
+  - delay: 239
+    content: ' '
+  - delay: 273
+    content: a
+  - delay: 480
+    content: 'dm3A-terminal.in '
+  - delay: 1128
+    content: "\r\n"
+  - delay: 13
+    content: '$ '
+  - delay: 627
+    content: "\r\n"
+  - delay: 13
+    content: '$ '
+  - delay: 339
+    content: "\r\n"
+  - delay: 12
+    content: '$ '
+  - delay: 1692
+    content: .
+  - delay: 72
+    content: /
+  - delay: 184
+    content: e
+  - delay: 184
+    content: m
+  - delay: 88
+    content: "\auStudio"
+  - delay: 1008
+    content: ' '
+  - delay: 440
+    content: '-'
+  - delay: 144
+    content: '-'
+  - delay: 103
+    content: a
+  - delay: 249
+    content: u
+  - delay: 119
+    content: t
+  - delay: 169
+    content: o
+  - delay: 176
+    content: ' '
+  - delay: 288
+    content: '-'
+  - delay: 152
+    content: '-'
+  - delay: 239
+    content: 'n'
+  - delay: 216
+    content: o
+  - delay: 545
+    content: g
+  - delay: 159
+    content: u
+  - delay: 176
+    content: i
+  - delay: 240
+    content: ' '
+  - delay: 1241
+    content: '-'
+  - delay: 159
+    content: '-'
+  - delay: 200
+    content: c
+  - delay: 128
+    content: o
+  - delay: 208
+    content: 'n'
+  - delay: 112
+    content: f
+  - delay: 96
+    content: i
+  - delay: 120
+    content: g
+  - delay: 112
+    content: ' '
+  - delay: 264
+    content: c
+  - delay: 80
+    content: o
+  - delay: 168
+    content: 'n'
+  - delay: 72
+    content: fig/
+  - delay: 592
+    content: M
+  - delay: 160
+    content: I
+  - delay: 298
+    content: "\aTSAltair8800"
+  - delay: 645
+    content: "\a"
+  - delay: 466
+    content: .
+  - delay: 487
+    content: t
+  - delay: 136
+    content: o
+  - delay: 223
+    content: 'ml '
+  - delay: 1929
+    content: '-'
+  - delay: 160
+    content: '-'
+  - delay: 280
+    content: i
+  - delay: 72
+    content: 'n'
+  - delay: 224
+    content: p
+  - delay: 352
+    content: t
+  - delay: 656
+    content: "\b\e[K"
+  - delay: 576
+    content: u
+  - delay: 103
+    content: t
+  - delay: 128
+    content: ' '
+  - delay: 240
+    content: e
+  - delay: 200
+    content: x
+  - delay: 219
+    content: amples/
+  - delay: 2438
+    content: a
+  - delay: 159
+    content: s
+  - delay: 215
+    content: "\a-"
+  - delay: 309
+    content: "\a"
+  - delay: 143
+    content: "\r\nas-8080/ as-ssem/ as-z80/  \r\n$ ./emuStudio --auto --nogui --config config/MITSAltair8800.toml --input examples/as-8080/reverse.asm"
+  - delay: 938
+    content: "\r\n"
+  - delay: 447
+    content: "[INFO] Loading virtual computer: config/MITSAltair8800.toml\r\n"
+  - delay: 217
+    content: "[INFO] [device=LSI ADM-3A Terminal] Device was attached to 88-SIO\r\n[INFO] Processing input file: 'adm3A-terminal.in'; delay of chars read (ms): 0\r\n"
+  - delay: 11
+    content: "[INFO] Starting emulation automation...\r\n[INFO] Compiler: Intel 8080 Assembler, version 0.40-SNAPSHOT\r\n[INFO] CPU: Intel 8080 CPU, version 0.40-SNAPSHOT\r\n[INFO] Memory: Standard operating memory, version 0.40-SNAPSHOT\r\n[INFO] Memory size: 65536\r\n[INFO] Device: MITS 88-DISK device, version 0.40-SNAPSHOT\r\n[INFO] Device: MITS 88-SIO serial board, version 0.40-SNAPSHOT\r\n[INFO] Device: LSI ADM-3A terminal, version 0.40-SNAPSHOT\r\n[INFO] Compiling input file: examples/as-8080/reverse.asm\r\n[INFO] Compiler started working.\r\n[INFO] [Info   ] Intel 8080 Assembler, version 0.40-SNAPSHOT\r\n"
+  - delay: 21
+    content: "[INFO] [Info   ] Compilation was successful.\r\n Output file: /home/vbmacher/emuStudio/examples/as-8080/reverse.hex\r\n[INFO] [Info   ] Compiled file was loaded into memory.\r\n[INFO] Compilation finished.\r\n[INFO] Program start address: 03E8h\r\n[INFO] Resetting CPU...\r\n[INFO] Running emulation...\r\n"
+  - delay: 110
+    content: "[INFO] Normal stop\r\n[INFO] Instruction location = 041Ch\r\n[INFO] Emulation completed\r\n"
+  - delay: 280
+    content: '$ '
+  - delay: 801
+    content: "\r\n$ "
+  - delay: 197
+    content: "\r\n"
+  - delay: 13
+    content: '$ '
+  - delay: 723
+    content: c
+  - delay: 248
+    content: a
+  - delay: 120
+    content: t
+  - delay: 160
+    content: ' '
+  - delay: 368
+    content: .
+  - delay: 72
+    content: /
+  - delay: 192
+    content: a
+  - delay: 240
+    content: d
+  - delay: 217
+    content: "\am3A-terminal.out"
+  - delay: 415
+    content: "\r\nReversed text ...\r\n\rEnter text: Hello, world!\r\n\r!dlrow ,olleH"
+  - delay: 5177
+    content: "\r\n"

@@ -34,6 +34,7 @@ class TextCellRenderer extends JLabel implements TableCellRenderer {
     TextCellRenderer(DebugTableModel model) {
         this.model = Objects.requireNonNull(model);
         setFont(FONT_MONOSPACED);
+        setDoubleBuffered(true);
         setOpaque(true);
     }
 
@@ -48,11 +49,10 @@ class TextCellRenderer extends JLabel implements TableCellRenderer {
             setForeground(Color.BLACK);
         }
         if (value != null) {
-            setText(" " + value.toString());
+            setText(value.toString());
         } else {
-            setText(" ");
+            setText("");
         }
         return this;
     }
-
 }
