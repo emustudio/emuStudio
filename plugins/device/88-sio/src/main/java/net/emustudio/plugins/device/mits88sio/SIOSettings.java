@@ -119,6 +119,10 @@ public class SIOSettings {
             settings.setInt(baseName + i, port);
             i++;
         }
+        while (settings.contains(baseName + i)) {
+            settings.remove(baseName + i);
+            i++;
+        }
     }
 
     private void notifyObservers() {

@@ -45,6 +45,7 @@ public final class ContextImpl implements ExtendedContext {
     @Override
     public boolean attachDevice(DeviceContext<Short> device, int port) {
         if (devices.containsKey(port)) {
+            LOGGER.debug("[port={}, device={}] Could not attach device to given port. The port is already taken by: {}", port, device, devices.get(port));
             return false;
         }
         if (devices.putIfAbsent(port, device) == null) {

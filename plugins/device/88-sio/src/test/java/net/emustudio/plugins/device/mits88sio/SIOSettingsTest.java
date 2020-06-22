@@ -100,6 +100,8 @@ public class SIOSettingsTest {
         expectLastCall().once();
         pluginSettings.setInt(eq(SIOSettings.DATA_PORT_NUMBER + "0"), eq(10));
         expectLastCall().once();
+        expect(pluginSettings.contains("statusPortNumber1")).andReturn(false).once();
+        expect(pluginSettings.contains("dataPortNumber1")).andReturn(false).once();
         replay(pluginSettings);
 
         SIOSettings settings = new SIOSettings(pluginSettings);
