@@ -287,8 +287,6 @@ public class EmulatorPanel extends JPanel {
 
     private void refreshDebugTable() {
         if (debugTable.isEnabled()) {
-            paneDebug.revalidate();
-            debugTable.revalidate();
             debugTable.repaint();
         }
     }
