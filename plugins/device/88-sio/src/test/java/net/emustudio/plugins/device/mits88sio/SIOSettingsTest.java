@@ -21,6 +21,7 @@ package net.emustudio.plugins.device.mits88sio;
 import net.emustudio.emulib.runtime.PluginSettings;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -107,6 +108,32 @@ public class SIOSettingsTest {
         SIOSettings settings = new SIOSettings(pluginSettings);
         settings.setDataPorts(Collections.singletonList(10));
         settings.setStatusPorts(Collections.singletonList(5));
+        settings.write();
+
+        verify(pluginSettings);
+    }
+
+    @Test
+    public void testRemovedPortsAreReallyRemoved() throws Exception {
+        PluginSettings pluginSettings = createMock(PluginSettings.class);
+        expect(pluginSettings.getBoolean(eq(PluginSettings.EMUSTUDIO_NO_GUI), eq(false))).andReturn(false).anyTimes();
+
+        pluginSettings.setInt(eq(SIOSettings.STATUS_PORT_NUMBER + "0"), eq(10));
+        expectLastCall().once();
+        expect(pluginSettings.contains("statusPortNumber0")).andReturn(true).once();
+        expect(pluginSettings.contains("statusPortNumber1")).andReturn(false).times(2);
+        expect(pluginSettings.contains("dataPortNumber0")).andReturn(false).times(2);
+
+        pluginSettings.remove("statusPortNumber0");
+        expectLastCall().once();
+
+        replay(pluginSettings);
+
+        SIOSettings settings = new SIOSettings(pluginSettings);
+        settings.setStatusPorts(Collections.singletonList(10));
+        settings.write();
+
+        settings.setStatusPorts(Collections.emptyList());
         settings.write();
 
         verify(pluginSettings);

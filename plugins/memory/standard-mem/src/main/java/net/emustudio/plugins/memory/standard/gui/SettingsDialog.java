@@ -23,17 +23,16 @@ import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
-import net.emustudio.plugins.memory.standard.gui.model.FileImagesModel;
-import net.emustudio.plugins.memory.standard.gui.model.ROMmodel;
-import net.emustudio.plugins.memory.standard.gui.model.TableMemory;
 import net.emustudio.plugins.memory.standard.MemoryContextImpl;
 import net.emustudio.plugins.memory.standard.MemoryImpl;
 import net.emustudio.plugins.memory.standard.RangeTree;
+import net.emustudio.plugins.memory.standard.gui.model.FileImagesModel;
+import net.emustudio.plugins.memory.standard.gui.model.ROMmodel;
+import net.emustudio.plugins.memory.standard.gui.model.TableMemory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -75,7 +74,7 @@ public class SettingsDialog extends JDialog {
             txtBanksCount.setText(String.valueOf(settings.getInt("banksCount", 0)));
             txtCommonBoundary.setText(String.format("0x%04X", settings.getInt("commonBoundary", 0)));
         } catch (NumberFormatException e) {
-            dialogs.showError("Invalid number format while loading settings: ", "Loa");
+            dialogs.showError("Invalid number format while loading settings: ", "Load settings");
         }
     }
     
@@ -111,29 +110,6 @@ public class SettingsDialog extends JDialog {
 
         jPanel1.setBorder(BorderFactory.createTitledBorder("ROM areas"));
 
-        tblROM.setModel(new DefaultTableModel(
-            new Object[][]{
-
-            },
-            new String[]{
-                "From (hex)", "To (hex)"
-            }
-        ) {
-            Class[] types = new Class[]{
-                java.lang.String.class, java.lang.String.class
-            };
-            boolean[] canEdit = new boolean[]{
-                false, false
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types[columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit[columnIndex];
-            }
-        });
         tblROM.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jScrollPane1.setViewportView(tblROM);
 
@@ -246,29 +222,6 @@ public class SettingsDialog extends JDialog {
 
         jPanel2.setBorder(BorderFactory.createTitledBorder("Files to load at startup"));
 
-        tblImages.setModel(new DefaultTableModel(
-            new Object[][]{
-
-            },
-            new String[]{
-                "File name", "Address", "Bank"
-            }
-        ) {
-            Class[] types = new Class[]{
-                String.class, String.class, Integer.class
-            };
-            boolean[] canEdit = new boolean[]{
-                false, false, false
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types[columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit[columnIndex];
-            }
-        });
         tblImages.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(tblImages);
 
@@ -437,20 +390,25 @@ public class SettingsDialog extends JDialog {
             "Add memory image", "Add", Path.of(System.getProperty("user.dir")), false,
             new FileExtensionsFilter("Memory images", "hex", "bin")
         ).ifPresent(path -> {
-            final int bank = (context.getBanksCount() > 1)
-                ? dialogs.readInteger("Enter memory bank index:", "Add memory image", 0).orElse(0)
-                : 0;
+            try {
 
-            if (!path.toString().toLowerCase().endsWith(".hex")) {
-                try {
-                    dialogs
-                        .readInteger("Enter image address:", "Add image", 0)
-                        .ifPresent(address -> imagesModel.addImage(path, address, bank));
-                } catch (NumberFormatException e) {
-                    dialogs.showError("Invalid number format", "Add image");
+                boolean isHex = path.toString().toLowerCase().endsWith(".hex");
+                Optional<Integer> imageAddress = Optional.empty();
+                if (!isHex) {
+                    imageAddress = dialogs.readInteger("Enter image address:", "Add image", 0);
                 }
-            } else {
-                imagesModel.addImage(path, 0, bank);
+
+                final int bank = (context.getBanksCount() > 1)
+                    ? dialogs.readInteger("Enter memory bank index:", "Add memory image", 0).orElse(0)
+                    : 0;
+
+                if (!isHex) {
+                    imageAddress.ifPresent(address -> imagesModel.addImage(path, address, bank));
+                } else {
+                    imagesModel.addImage(path, 0, bank);
+                }
+            } catch (NumberFormatException e) {
+                dialogs.showError("Invalid number format", "Add image");
             }
         });
     }

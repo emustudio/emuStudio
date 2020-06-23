@@ -77,7 +77,7 @@ public class DeviceImpl extends AbstractDevice {
             drives.add(new Drive(i));
         }
 
-        this.currentDrive = 0xFF;
+        this.currentDrive = 0;  // TODO: what should be here?
         port1CPU = DEFAULT_CPU_PORT1;
         port2CPU = DEFAULT_CPU_PORT2;
         port3CPU = DEFAULT_CPU_PORT3;
