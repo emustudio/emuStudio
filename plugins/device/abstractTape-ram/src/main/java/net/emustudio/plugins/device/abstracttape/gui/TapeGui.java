@@ -27,9 +27,11 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 
 public class TapeGui extends JDialog {
+    public static final Font FONT_MONOSPACED = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+
     private final Dialogs dialogs;
     private final AbstractTapeContextImpl tapeContext;
-    private final TapeListModel listModel = new TapeListModel();
+    private final TapeModel listModel;
 
     private NiceButton btnAddFirst;
     private NiceButton btnAddLast;
@@ -42,15 +44,14 @@ public class TapeGui extends JDialog {
         super(parent);
         this.tapeContext = Objects.requireNonNull(tapeContext);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.listModel = new TapeModel(tapeContext);
 
         initComponents();
         setTitle(title);
         setAlwaysOnTop(alwaysOnTop);
         setLocationRelativeTo(parent);
 
-        lstTape.setModel(listModel);
-        lstTape.setCellRenderer(new TapeCellRenderer());
-        this.tapeContext.setListener(() -> {
+        tapeContext.setListener(() -> {
             listModel.fireChange();
             lstTape.ensureIndexIsVisible(tapeContext.getHeadPosition());
         });
@@ -70,7 +71,7 @@ public class TapeGui extends JDialog {
 
     private void initComponents() {
         JScrollPane scrollTape = new JScrollPane();
-        lstTape = new JList<>();
+        lstTape = new JList<>(listModel);
         btnAddFirst = new NiceButton("Add symbol");
         btnAddLast = new NiceButton("Add symbol");
         btnRemove = new NiceButton("Remove symbol");
@@ -80,6 +81,9 @@ public class TapeGui extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
+        lstTape.setFont(FONT_MONOSPACED);
+        lstTape.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        lstTape.setCellRenderer(new TapeCellRenderer(tapeContext));
         scrollTape.setViewportView(lstTape);
 
         btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png")));
@@ -141,75 +145,5 @@ public class TapeGui extends JDialog {
                 .addComponent(btnClear)
                 .addContainerGap());
         pack();
-    }
-
-    private class TapeListModel extends AbstractListModel<String> {
-
-        @Override
-        public String getElementAt(int index) {
-            String element = "";
-
-            if (tapeContext.showPositions()) {
-                element += String.format("%02d: ", index);
-            }
-            String symbolAtIndex = tapeContext.getSymbolAt(index);
-            if (symbolAtIndex == null || symbolAtIndex.isEmpty()) {
-                element += "<empty>";
-            } else {
-                element += symbolAtIndex;
-            }
-
-            return element;
-        }
-
-        @Override
-        public int getSize() {
-            return tapeContext.getSize();
-        }
-
-        public void fireChange() {
-            this.fireContentsChanged(this, 0, tapeContext.getSize() - 1);
-        }
-    }
-
-    private class TapeCellRenderer extends JLabel implements ListCellRenderer<String> {
-
-        private Font boldFont;
-        private Font plainFont;
-
-        TapeCellRenderer() {
-            boldFont = getFont().deriveFont(Font.BOLD);
-            plainFont = getFont().deriveFont(Font.PLAIN);
-        }
-
-        @Override
-        public Component getListCellRendererComponent(JList list, String value, int index, boolean isSelected,
-                                                      boolean cellHasFocus) {
-            if (tapeContext.highlightCurrentPosition() && (tapeContext.getHeadPosition() == index)) {
-                this.setBackground(Color.BLUE);
-                this.setForeground(Color.WHITE);
-            } else {
-                this.setBackground(Color.WHITE);
-
-                String s = tapeContext.getSymbolAt(index);
-                if (s == null || s.equals("")) {
-                    this.setForeground(Color.LIGHT_GRAY);
-                } else {
-                    this.setForeground(Color.BLACK);
-                }
-            }
-            if (isSelected) {
-                this.setFont(boldFont);
-            } else {
-                this.setFont(plainFont);
-            }
-
-            if (value != null) {
-                setText(" " + value);
-            } else {
-                setText("");
-            }
-            return this;
-        }
     }
 }
