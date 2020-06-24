@@ -24,11 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Program {
-    private List<Row> instructionsList;
-
-    public Program() {
-        instructionsList = new ArrayList<>();
-    }
+    private final List<Row> instructionsList = new ArrayList<>();
 
     public void addRow(Row node) {
         if (node != null) {
@@ -36,13 +32,11 @@ public class Program {
         }
     }
 
-    public int pass1(int addr_start) throws Exception {
+    public void pass1(int addr_start) {
         int curr_addr = addr_start;
-
         for (Row anInstructionsList : instructionsList) {
             curr_addr = anInstructionsList.pass1(curr_addr);
         }
-        return curr_addr;
     }
 
     public void pass2(CompiledCode hex) throws Exception {

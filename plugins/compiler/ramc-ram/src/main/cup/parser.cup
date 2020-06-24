@@ -114,8 +114,9 @@ Row ::= LabelOpt:label Statement:stmt Comment
         {: RESULT = new Row(stmt, label); :}
       | LabelOpt:label Comment
         {: RESULT = (label==null)?null:new Row(label); :}
-      | INPUT StringVector:vector 
-        {: RESULT = new Row(vector); :};
+      | INPUT StringVector:vector Comment
+        {: RESULT = new Row(vector); :}
+      ;
 
 StringVector ::= STRING:str
                  {: 

@@ -87,9 +87,6 @@ number = "-"?[0-9]+
 identifier = [a-zA-Z][a-zA-Z0-9]*
 label = {identifier}[":"]
 operator_constant = "="
-org=[\r|\n|\r\n]*"org"
-input=[\r|\n|\r\n]*"<input>"
-
 %%
 
 /*reserved words*/
@@ -131,11 +128,11 @@ input=[\r|\n|\r\n]*"<input>"
 }
 
 /*preprocessor directives*/
-{org} {
+"org" {
 	return token(TokenImpl.ORG, Token.PREPROCESSOR);
 }
 
-{input} {
+"<input>" {
     return token(TokenImpl.TINPUT, Token.PREPROCESSOR);
 }
 

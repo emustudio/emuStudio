@@ -20,16 +20,22 @@
 package net.emustudio.plugins.compiler.raspc.tree;
 
 import net.emustudio.plugins.compiler.raspc.CompilerOutput;
+import net.emustudio.plugins.compiler.raspc.Namespace;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Program extends AbstractTreeNode {
-
     private final List<Row> rows = new ArrayList<>();
+    private final Namespace namespace = new Namespace();
 
     public void addRow(Row r) {
         rows.add(r);
+
+        namespace.addInput(r.getInput());
+        if (r.getProgramStart() > -1) {
+            namespace.setProgramStart(r.getProgramStart());
+        }
     }
 
     @Override
@@ -39,6 +45,10 @@ public class Program extends AbstractTreeNode {
         for (Row row : rows) {
             row.pass();
         }
+    }
+
+    public Namespace getNamespace() {
+        return namespace;
     }
 
     private void translateLabels() {
@@ -51,5 +61,4 @@ public class Program extends AbstractTreeNode {
             }
         }
     }
-
 }

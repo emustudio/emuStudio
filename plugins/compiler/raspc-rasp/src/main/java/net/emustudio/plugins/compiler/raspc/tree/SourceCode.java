@@ -20,43 +20,36 @@
 package net.emustudio.plugins.compiler.raspc.tree;
 
 import net.emustudio.plugins.compiler.raspc.CompilerOutput;
+import net.emustudio.plugins.compiler.raspc.Namespace;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class SourceCode extends AbstractTreeNode {
 
-    private final int programStart;
-    private final List<Integer> inputs = new ArrayList<>();
     private final Program program;
     private boolean programStartZero;
     private boolean programStartUndefined;
 
-    public SourceCode(int programStart, Input inputs, Program program) {
-        if (programStart == 0) {
+    private final int programStart;
+    private final List<Integer> inputs;
+
+    public SourceCode(Program program) {
+        this.program = Objects.requireNonNull(program);
+
+        Namespace namespace = program.getNamespace();
+        if (namespace.getProgramStart() == 0) {
             this.programStart = 20;
             this.programStartZero = true;
-        } else if (programStart == -1) {
+        } else if (namespace.getProgramStart() == -1) {
             this.programStart = 20;
             this.programStartUndefined = true;
         } else {
-            this.programStart = programStart;
+            this.programStart = namespace.getProgramStart();
         }
 
-        this.inputs.addAll(inputs.getAll());
-        this.program = program;
-    }
-
-    public SourceCode(int programStart, Program program) {
-        this(programStart, new Input(), program);
-    }
-
-    public SourceCode(Input input, Program program) {
-        this(-1, input, program);
-    }
-
-    public SourceCode(Program program) {
-        this(-1, new Input(), program);
+        this.inputs = new ArrayList<>(namespace.getInputs());
     }
 
     @Override
@@ -73,5 +66,4 @@ public class SourceCode extends AbstractTreeNode {
     public boolean isProgramStartUndefined() {
         return programStartUndefined;
     }
-
 }

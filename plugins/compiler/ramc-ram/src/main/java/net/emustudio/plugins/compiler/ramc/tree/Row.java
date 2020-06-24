@@ -24,7 +24,7 @@ import net.emustudio.plugins.compiler.ramc.Namespace;
 import java.util.List;
 
 public class Row {
-    private RAMInstructionImpl stat;
+    private final RAMInstructionImpl stat;
     private Label label;
 
     public Row(RAMInstructionImpl stat, Label label) {
@@ -49,7 +49,7 @@ public class Row {
         Namespace.addInputs(inputs);
     }
 
-    public int pass1(int addr_start) throws Exception {
+    public int pass1(int addr_start) {
         if (label != null) {
             label.pass1(addr_start);
         }

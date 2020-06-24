@@ -31,9 +31,9 @@ public class CompilerOutput {
     private int programStart;
     private final List<Integer> inputs = new ArrayList<>();
 
-    private HashMap<Integer, String> labels = new HashMap<>();
-    private HashMap<String, Integer> reversedLabels = new HashMap<>();
-    private List<MemoryItem> memoryItems = new ArrayList<>();
+    private final HashMap<Integer, String> labels = new HashMap<>();
+    private final HashMap<String, Integer> reversedLabels = new HashMap<>();
+    private final List<MemoryItem> memoryItems = new ArrayList<>();
     private static CompilerOutput instance = null;
 
     private CompilerOutput() {
@@ -89,8 +89,6 @@ public class CompilerOutput {
                 objectOutputStream.writeObject(inputs);
                 objectOutputStream.writeObject(memoryItems);
             }
-        } catch (FileNotFoundException ex) {
-            System.out.println("Error saving to file.");
         } catch (IOException ex) {
             System.out.println("Error saving to file.");
         }
@@ -109,14 +107,6 @@ public class CompilerOutput {
         }
 
         memory.addInputs(inputs);
-    }
-
-    public HashMap<String, Integer> getReversedLabels() {
-        return reversedLabels;
-    }
-
-    public List<Integer> getInputs() {
-        return inputs;
     }
 
     public void addInputs(List<Integer> inputs) {

@@ -21,30 +21,39 @@ package net.emustudio.plugins.compiler.raspc.tree;
 
 import net.emustudio.plugins.compiler.raspc.Statement;
 
+import java.util.Objects;
+
 public class Row extends AbstractTreeNode {
 
     private final Label label;
+    private final Input input;
+    private final int programStart;
     private final Statement statement;
 
-    public Row(Label label, Statement statement) {
+    public Row(Label label, Input input, int programStart, Statement statement) {
         this.statement = statement;
         this.label = label;
+        this.input = Objects.requireNonNullElse(input, new Input());
+        this.programStart = programStart;
     }
 
     public Label getLabel() {
         return label;
     }
 
-    public Statement getStatement() {
-        return statement;
+    public Input getInput() {
+        return input;
+    }
+
+    public int getProgramStart() {
+        return programStart;
     }
 
     @Override
     public void pass() throws Exception {
-        /*pass() only for statement, label was already passed in translateLabels()
-         method in Program node
-         */
-        statement.pass();
+        // pass() only for statement, label was already passed in translateLabels() method in Program node
+        if (statement != null) {
+            statement.pass();
+        }
     }
-
 }
