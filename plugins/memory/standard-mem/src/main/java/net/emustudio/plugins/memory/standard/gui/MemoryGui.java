@@ -131,12 +131,9 @@ public class MemoryGui extends JDialog {
         JToolBar jToolBar1 = new JToolBar();
         JButton btnLoadImage = new JButton();
         JButton btnDump = new JButton();
-        JToolBar.Separator jSeparator1 = new JToolBar.Separator();
         JButton btnGotoAddress = new JButton();
         JButton btnFind = new JButton();
-        JToolBar.Separator jSeparator2 = new JToolBar.Separator();
         JButton btnClean = new JButton();
-        JToolBar.Separator jSeparator3 = new JToolBar.Separator();
         JButton btnSettings = new JButton();
         JSplitPane splitPane = new JSplitPane();
         JPanel jPanel2 = new JPanel();
@@ -192,7 +189,7 @@ public class MemoryGui extends JDialog {
         btnDump.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnDump.addActionListener(this::btnDumpActionPerformed);
         jToolBar1.add(btnDump);
-        jToolBar1.add(jSeparator1);
+        jToolBar1.addSeparator();
 
         btnGotoAddress.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/format-indent-more.png")));
         btnGotoAddress.setToolTipText("Go to address...");
@@ -211,7 +208,7 @@ public class MemoryGui extends JDialog {
         btnFind.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnFind.addActionListener(this::btnFindActionPerformed);
         jToolBar1.add(btnFind);
-        jToolBar1.add(jSeparator2);
+        jToolBar1.addSeparator();
 
         btnClean.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/edit-clear.png")));
         btnClean.setToolTipText("Erase memory");
@@ -221,7 +218,7 @@ public class MemoryGui extends JDialog {
         btnClean.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnClean.addActionListener(this::btnCleanActionPerformed);
         jToolBar1.add(btnClean);
-        jToolBar1.add(jSeparator3);
+        jToolBar1.addSeparator();
 
         btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/preferences-system.png")));
         btnSettings.setToolTipText("Settings...");

@@ -154,32 +154,28 @@ public class StudioFrame extends JFrame {
     private JMenuBar setupMainMenu() {
         JMenuBar mainMenuBar = new JMenuBar();
         JMenu mnuFile = new JMenu();
-        JSeparator separator1 = new JSeparator();
-        JSeparator separator2 = new JSeparator();
         JMenu mnuEdit = new JMenu();
-        JSeparator separator3 = new JSeparator();
-        JSeparator separator4 = new JSeparator();
         JMenu mnuProject = new JMenu();
         JMenu mnuHelp = new JMenu();
 
         mnuFile.setText("File");
         mnuFile.add(createMenuItem(editorPanel.getNewFileAction()));
         mnuFile.add(createMenuItem(editorPanel.getOpenFileAction()));
-        mnuFile.add(separator1);
+        mnuFile.addSeparator();
         mnuFile.add(createMenuItem(editorPanel.getSaveFileAction()));
         mnuFile.add(saveFileAsAction);
-        mnuFile.add(separator2);
+        mnuFile.addSeparator();
         mnuFile.add(createMenuItem(exitAction));
         mainMenuBar.add(mnuFile);
 
         mnuEdit.setText("Edit");
         mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
         mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
-        mnuEdit.add(separator3);
+        mnuEdit.addSeparator();
         mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
         mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
         mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
-        mnuEdit.add(separator4);
+        mnuEdit.addSeparator();
         mnuEdit.add(createMenuItem(editorPanel.getFindAction()));
         mnuEdit.add(createMenuItem(editorPanel.getReplaceAction()));
         mnuEdit.add(createMenuItem(findNextAction));

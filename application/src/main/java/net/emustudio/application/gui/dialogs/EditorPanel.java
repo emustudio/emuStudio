@@ -14,7 +14,6 @@ import org.fife.ui.rtextarea.RTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -151,28 +150,14 @@ public class EditorPanel extends JPanel {
     private JToolBar setupMainToolbar() {
         JToolBar mainToolBar = new JToolBar();
 
-        JSeparator separator1 = new JSeparator();
-        JSeparator separator2 = new JSeparator();
-        JSeparator separator3 = new JSeparator();
-
         mainToolBar.setFloatable(false);
         mainToolBar.setBorderPainted(false);
         mainToolBar.setRollover(true);
 
-        separator1.setOrientation(SwingConstants.VERTICAL);
-        separator1.setMaximumSize(new Dimension(10, 32768));
-        separator1.setPreferredSize(new Dimension(10, 10));
-
-        separator2.setOrientation(SwingConstants.VERTICAL);
-        separator2.setMaximumSize(new Dimension(10, 32767));
-
-        separator3.setOrientation(SwingConstants.VERTICAL);
-        separator3.setMaximumSize(new Dimension(10, 32767));
-
         mainToolBar.add(new ToolbarButton(newFileAction, "New file"));
         mainToolBar.add(new ToolbarButton(openFileAction, "Open file"));
         mainToolBar.add(new ToolbarButton(saveFileAction, "Save file"));
-        mainToolBar.add(separator1);
+        mainToolBar.addSeparator();
         mainToolBar.add(new ToolbarButton(
             RTextArea.getAction(RTextArea.UNDO_ACTION),
             "/net/emustudio/application/gui/dialogs/edit-undo.png",
@@ -182,9 +167,7 @@ public class EditorPanel extends JPanel {
             "/net/emustudio/application/gui/dialogs/edit-redo.png",
             "Redo"
         ));
-        mainToolBar.add(separator2);
-        mainToolBar.add(new ToolbarButton(findAction, "Find text..."));
-        mainToolBar.add(new ToolbarButton(replaceAction, "Find/replace text..."));
+        mainToolBar.addSeparator();
         mainToolBar.add(new ToolbarButton(
             RTextArea.getAction(RTextArea.CUT_ACTION),
             "/net/emustudio/application/gui/dialogs/edit-cut.png",
@@ -200,7 +183,10 @@ public class EditorPanel extends JPanel {
             "/net/emustudio/application/gui/dialogs/edit-paste.png",
             "Paste from clipboard"
         ));
-        mainToolBar.add(separator3);
+        mainToolBar.addSeparator();
+        mainToolBar.add(new ToolbarButton(findAction, "Find text..."));
+        mainToolBar.add(new ToolbarButton(replaceAction, "Find/replace text..."));
+        mainToolBar.addSeparator();
         mainToolBar.add(new ToolbarButton(compileAction, "Compile source"));
 
         return mainToolBar;

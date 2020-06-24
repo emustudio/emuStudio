@@ -5,6 +5,7 @@ import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import org.fife.io.UnicodeWriter;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.ui.rsyntaxtextarea.*;
 import org.fife.ui.rtextarea.RTextArea;
@@ -21,6 +22,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
@@ -45,7 +47,10 @@ public class REditor implements Editor {
     public REditor(Dialogs dialogs, Compiler compiler) {
         this.dialogs = Objects.requireNonNull(dialogs);
 
+        UnicodeWriter.setWriteUtf8BOM(false);
+
         textPane.setCodeFoldingEnabled(true);
+        textPane.setEncoding(StandardCharsets.UTF_8.name());
         textPane.setAnimateBracketMatching(true);
         textPane.setAutoIndentEnabled(true);
         textPane.setBracketMatchingEnabled(true);

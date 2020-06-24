@@ -103,13 +103,13 @@ public class EmulatorPanel extends JPanel {
 
         debuggerPanel.setLayout(debuggerPanelLayout);
         debuggerPanelLayout.setHorizontalGroup(
-            debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+            debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(toolDebug)
                 .addComponent(paneDebug)
                 .addComponent(panelPages));
         debuggerPanelLayout.setVerticalGroup(
             debuggerPanelLayout.createSequentialGroup()
-                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addComponent(paneDebug, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(panelPages, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE));
 
@@ -269,10 +269,10 @@ public class EmulatorPanel extends JPanel {
     private void setupDebugToolbar() {
         toolDebug.setFloatable(false);
         toolDebug.setRollover(true);
-        toolDebug.setBorder(null);
         toolDebug.setBorderPainted(false);
 
         toolDebug.add(new ToolbarButton(resetAction, "Reset emulation"));
+        toolDebug.addSeparator();
         toolDebug.add(new ToolbarButton(jumpToBeginningAction, "Jump to beginning"));
         toolDebug.add(new ToolbarButton(stepBackAction,"Step back"));
         toolDebug.add(new ToolbarButton(stopAction, "Stop emulation"));
@@ -280,8 +280,11 @@ public class EmulatorPanel extends JPanel {
         toolDebug.add(new ToolbarButton(runAction, "Run emulation"));
         toolDebug.add(new ToolbarButton(runTimedAction, "Run \"timed\" emulation"));
         toolDebug.add(new ToolbarButton(stepAction, "Step forward"));
+        toolDebug.addSeparator();
         toolDebug.add(new ToolbarButton(jumpAction, "Jump to address"));
+        toolDebug.addSeparator();
         toolDebug.add(new ToolbarButton(breakpointAction, "Set/unset breakpoint to address..."));
+        toolDebug.addSeparator();
         toolDebug.add(new ToolbarButton(showMemoryAction, "Show operating memory"));
     }
 

@@ -129,7 +129,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public String getDescription() {
-        return "Custom assembler targeting Z80 processor.";
+        return "Assembler targeting Z80 processor.";
     }
 
     @Override
