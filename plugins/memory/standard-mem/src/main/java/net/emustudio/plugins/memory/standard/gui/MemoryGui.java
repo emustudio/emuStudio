@@ -33,6 +33,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 
@@ -44,8 +45,8 @@ public class MemoryGui extends JDialog {
     private final PluginSettings settings;
     private final Dialogs dialogs;
 
-    private TableMemory table;
-    private MemoryTableModel tableModel;
+    private final TableMemory table;
+    private final MemoryTableModel tableModel;
 
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
         super(parent);
@@ -441,9 +442,9 @@ public class MemoryGui extends JDialog {
         );
 
         pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
-    private void btnLoadImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoadImageActionPerformed
+    private void btnLoadImageActionPerformed(java.awt.event.ActionEvent evt) {
         dialogs.chooseFile(
             "Load memory image", "Load", Path.of(System.getProperty("user.dir")), false,
             new FileExtensionsFilter("Memory image", "hex", "bin")
@@ -467,14 +468,14 @@ public class MemoryGui extends JDialog {
                 dialogs.showError("Invalid number format", "Load image");
             }
         });
-    }//GEN-LAST:event_btnLoadImageActionPerformed
+    }
 
-    private void btnCleanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCleanActionPerformed
+    private void btnCleanActionPerformed(java.awt.event.ActionEvent evt) {
         context.clear();
         tableModel.fireTableDataChanged();
-    }//GEN-LAST:event_btnCleanActionPerformed
+    }
 
-    private void btnGotoAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGotoAddressActionPerformed
+    private void btnGotoAddressActionPerformed(java.awt.event.ActionEvent evt) {
         try {
             dialogs
                 .readInteger("Enter memory address:", "Go to address")
@@ -490,24 +491,27 @@ public class MemoryGui extends JDialog {
         } catch (NumberFormatException e) {
             dialogs.showError("Invalid number format", "Go to address");
         }
-    }//GEN-LAST:event_btnGotoAddressActionPerformed
+    }
 
-    private void btnFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFindActionPerformed
-        FindTextDialog dialog = new FindTextDialog(dialogs, this, tableModel, getCurrentAddress());
+    private void btnFindActionPerformed(java.awt.event.ActionEvent evt) {
+        AtomicInteger foundAddress = new AtomicInteger(-1);
+        FindSequenceDialog dialog = new FindSequenceDialog(
+            dialogs, this, tableModel, getCurrentAddress(), foundAddress::set
+        );
 
         dialog.setVisible(true);
 
-        int address = dialog.getFoundAddress();
+        int address = foundAddress.get();
         if (address != -1) {
             setPageFromAddress(address);
         }
-    }//GEN-LAST:event_btnFindActionPerformed
+    }
 
-    private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSettingsActionPerformed
+    private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {
         new SettingsDialog(this, memory, context, table, settings, dialogs).setVisible(true);
-    }//GEN-LAST:event_btnSettingsActionPerformed
+    }
 
-    private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDumpActionPerformed
+    private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {
         Path currentDirectory = Path.of(System.getProperty("user.dir"));
         dialogs.chooseFile(
             "Dump memory content into a file", "Save", currentDirectory, true,
@@ -533,7 +537,7 @@ public class MemoryGui extends JDialog {
                 dialogs.showError("Memory dump could not be created. Please see log file for more details.");
             }
         });
-    }//GEN-LAST:event_btnDumpActionPerformed
+    }
 
     private int getCurrentAddress() {
         return tableModel.getPage() * (tableModel.getRowCount() * tableModel.getColumnCount());

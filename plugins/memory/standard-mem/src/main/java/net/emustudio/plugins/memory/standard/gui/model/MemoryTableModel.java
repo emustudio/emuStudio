@@ -22,27 +22,18 @@ import net.emustudio.plugins.memory.standard.MemoryContextImpl;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
+import java.util.Optional;
 
-/**
- * tabulka ma 16 riadkov a 16 stlpcov (od 0 po FF)
- * celkovo tak zobrazuje 16*16 = 256 hodnot na stranku
- * ----------------------------------------------------------------------------
- * model pre tabulku operacnej pamate podporuje strankovanie (zobrazuje len
- * urcity pocet riadkov na stranku) - kvoli zvyseniu rychlosti + pridana podpora
- * "bankovania" pamate = pamat od adresy 0 po COMMON sa da prepinat = banky,
- * zvysna pamat je rovnaka pre vsetky banky
- */
 public class MemoryTableModel extends AbstractTableModel {
     private static final int ROW_COUNT = 16;
     private static final int COLUMN_COUNT = 16;
 
-    private final MemoryContextImpl mem;
+    private final MemoryContextImpl memory;
     private int currentPage = 0;
     private int currentBank = 0;
 
-    public MemoryTableModel(MemoryContextImpl mem) {
-        this.mem = Objects.requireNonNull(mem);
-        currentPage = 0;
+    public MemoryTableModel(MemoryContextImpl memory) {
+        this.memory = Objects.requireNonNull(memory);
     }
 
     @Override
@@ -62,28 +53,28 @@ public class MemoryTableModel extends AbstractTableModel {
 
     boolean isROMAt(int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
-        return mem.isReadOnly(pos);
+        return memory.isReadOnly(pos);
     }
 
     boolean isAtBANK(int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
-        return pos < mem.getCommonBoundary();
+        return pos < memory.getCommonBoundary();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
-        if (pos >= mem.getSize()) {
+        if (pos >= memory.getSize()) {
             return ".";
         }
-        return String.format("%1$02X", mem.read(pos, currentBank));
+        return String.format("%1$02X", memory.read(pos, currentBank));
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
         try {
-            mem.write(pos, Short.decode(String.valueOf(aValue)), currentBank);
+            memory.write(pos, Short.decode(String.valueOf(aValue)), currentBank);
             fireTableCellUpdated(rowIndex, columnIndex);
         } catch (NumberFormatException e) {
             // ignored
@@ -103,12 +94,12 @@ public class MemoryTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    public int findSequence(byte[] sequence, int from) {
-        final int size = mem.getSize();
+    public Optional<Integer> findSequence(byte[] sequence, int from) {
+        final int size = memory.getSize();
         int offset = 0;
         int foundAddress = -1;
         for (int currentAddr = from; currentAddr < size && offset < sequence.length; currentAddr++) {
-            if ((mem.read(currentAddr, currentBank)).byteValue() == sequence[offset]) {
+            if ((memory.read(currentAddr, currentBank)).byteValue() == sequence[offset]) {
                 if (offset == 0) {
                     foundAddress = currentAddr;
                 }
@@ -119,7 +110,11 @@ public class MemoryTableModel extends AbstractTableModel {
             }
         }
 
-        return foundAddress;
+        if (foundAddress == -1) {
+            return Optional.empty();
+        } else {
+            return Optional.of(foundAddress);
+        }
     }
 
     public int getPage() {
@@ -127,11 +122,11 @@ public class MemoryTableModel extends AbstractTableModel {
     }
 
     public int getPageCount() {
-        return mem.getSize() / (ROW_COUNT * COLUMN_COUNT);
+        return memory.getSize() / (ROW_COUNT * COLUMN_COUNT);
     }
 
     public void setCurrentBank(int bank) {
-        if (bank >= mem.getBanksCount() || bank < 0) {
+        if (bank >= memory.getBanksCount() || bank < 0) {
             throw new IndexOutOfBoundsException();
         }
         currentBank = bank;

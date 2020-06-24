@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -42,8 +41,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-
-import static net.emustudio.application.Constants.FONT_COMMON;
 
 public class OpenComputerDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);
@@ -118,7 +115,6 @@ public class OpenComputerDialog extends JDialog {
 
         panelConfig.setPreferredSize(new java.awt.Dimension(200, 300));
 
-    //    lstConfig.setFont(FONT_COMMON);
         lstConfig.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
                 lstConfigMouseClicked(evt);
