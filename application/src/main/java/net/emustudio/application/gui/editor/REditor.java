@@ -24,9 +24,12 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
+import static net.emustudio.application.Constants.FONT_DEFAULT_SIZE;
 
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
@@ -56,6 +59,17 @@ public class REditor implements Editor {
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
         textPane.clearParsers();
+
+        textPane.addMouseWheelListener(e -> {
+            int wheelRotation = e.getWheelRotation();
+            if (wheelRotation != 0 && (e.getModifiersEx() & CTRL_DOWN_MASK) != 0) {
+                Font font = textPane.getFont();
+                int currentSize = font.getSize();
+                float newSize = (wheelRotation > 0) ? Math.max(currentSize - 1, FONT_DEFAULT_SIZE) : (currentSize + 1);
+                textPane.setFont(font.deriveFont(newSize));
+            }
+        });
+
         textPane.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
