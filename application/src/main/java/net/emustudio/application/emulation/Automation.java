@@ -44,7 +44,7 @@ public class Automation implements Runnable {
     public static final int DONT_WAIT = -1;
 
     private AutoDialog progressGUI;
-    private File inputFile;
+    private final File inputFile;
 
     private final VirtualComputer computer;
     private final ApplicationConfig applicationConfig;
@@ -60,11 +60,15 @@ public class Automation implements Runnable {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.waitForFinishMillis = waitForFinishMillis;
 
-        this.inputFile = new File(Objects.requireNonNull(inputFileName, "Input file must be defined"));
-
-        if (!inputFile.exists()) {
-            throw new AutomationException("Input file not found");
+        if (inputFileName != null) {
+            this.inputFile = new File(Objects.requireNonNull(inputFileName, "Input file must be defined"));
+            if (!inputFile.exists()) {
+                throw new AutomationException("Input file not found");
+            }
+        } else {
+            this.inputFile = null;
         }
+
         if (!applicationConfig.noGUI) {
             progressGUI = new AutoDialog(computer);
         }
