@@ -8,10 +8,7 @@ import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import org.fife.io.UnicodeWriter;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.ui.rsyntaxtextarea.*;
-import org.fife.ui.rtextarea.RTextArea;
-import org.fife.ui.rtextarea.SearchContext;
-import org.fife.ui.rtextarea.SearchEngine;
-import org.fife.ui.rtextarea.SearchResult;
+import org.fife.ui.rtextarea.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -35,6 +33,7 @@ public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
 
     private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE, true);
+    private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
     private final ErrorStrip errorStrip;
 
     private final Dialogs dialogs;
@@ -60,13 +59,29 @@ public class REditor implements Editor {
         textPane.setAntiAliasingEnabled(true);
         textPane.clearParsers();
 
-        textPane.addMouseWheelListener(e -> {
+        textPane.setCaretPosition(0);
+        textPane.requestFocusInWindow();
+        textPane.setMarkOccurrences(true);
+        textPane.setClearWhitespaceLinesEnabled(false);
+
+        // CTRL+{mouse wheel} zooms text
+        MouseWheelListener[] listeners = scrollPane.getMouseWheelListeners();
+        for (MouseWheelListener listener : listeners) {
+            scrollPane.removeMouseWheelListener(listener);
+        }
+
+        scrollPane.addMouseWheelListener(e -> {
             int wheelRotation = e.getWheelRotation();
             if (wheelRotation != 0 && (e.getModifiersEx() & CTRL_DOWN_MASK) != 0) {
                 Font font = textPane.getFont();
                 int currentSize = font.getSize();
                 float newSize = (wheelRotation > 0) ? Math.max(currentSize - 1, FONT_DEFAULT_SIZE) : (currentSize + 1);
                 textPane.setFont(font.deriveFont(newSize));
+                e.consume();
+            } else {
+                for (MouseWheelListener listener : listeners) {
+                    listener.mouseWheelMoved(e);
+                }
             }
         });
 
@@ -96,7 +111,7 @@ public class REditor implements Editor {
 
     @Override
     public Component getView() {
-        return textPane;
+        return scrollPane;
     }
 
     @Override

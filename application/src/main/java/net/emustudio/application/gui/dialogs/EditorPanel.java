@@ -11,7 +11,6 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.fife.rsta.ui.search.FindDialog;
 import org.fife.rsta.ui.search.ReplaceDialog;
 import org.fife.ui.rtextarea.RTextArea;
-import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -62,15 +61,13 @@ public class EditorPanel extends JPanel {
             computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
-        RTextScrollPane editorScrollPane = new RTextScrollPane(editor.getView());
-
         JScrollPane compilerPane = new JScrollPane();
         compilerPane.setViewportView(compilerOutput);
 
         splitSource.setBorder(null);
         splitSource.setOrientation(JSplitPane.VERTICAL_SPLIT);
         splitSource.setOneTouchExpandable(true);
-        splitSource.setLeftComponent(editorScrollPane);
+        splitSource.setLeftComponent(editor.getView());
         splitSource.setRightComponent(compilerPane);
 
         JToolBar mainToolBar = setupMainToolbar();
