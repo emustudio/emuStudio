@@ -45,6 +45,10 @@ public class Row extends AbstractTreeNode {
         return input;
     }
 
+    public boolean hasStatement() {
+        return statement != null;
+    }
+
     public int getProgramStart() {
         return programStart;
     }

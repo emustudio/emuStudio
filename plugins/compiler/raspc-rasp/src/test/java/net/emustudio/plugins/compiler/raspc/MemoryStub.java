@@ -7,28 +7,32 @@ import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 import java.util.*;
 
 public class MemoryStub extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {
-    private final MemoryItem[] memory = new MemoryItem[1000];
+    private final Map<Integer, MemoryItem> memory = new HashMap<>();
     private final Map<Integer, String> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
 
     @Override
     public MemoryItem read(int memoryPosition) {
-        return memory[memoryPosition];
+        return memory.get(memoryPosition);
     }
 
     @Override
     public MemoryItem[] readWord(int memoryPosition) {
-        throw new UnsupportedOperationException();
+        return new MemoryItem[] {
+            memory.get(memoryPosition),
+            memory.get(memoryPosition + 1)
+        };
     }
 
     @Override
     public void write(int memoryPosition, MemoryItem value) {
-        memory[memoryPosition] = value;
+        memory.put(memoryPosition, value);
     }
 
     @Override
     public void writeWord(int memoryPosition, MemoryItem[] value) {
-        throw new UnsupportedOperationException();
+        memory.put(memoryPosition, value[0]);
+        memory.put(memoryPosition + 1, value[1]);
     }
 
     @Override
@@ -38,14 +42,14 @@ public class MemoryStub extends AbstractMemoryContext<MemoryItem> implements RAS
 
     @Override
     public void clear() {
-        Arrays.fill(memory, null);
+        memory.clear();
         labels.clear();
         inputs.clear();
     }
 
     @Override
     public int getSize() {
-        return memory.length;
+        return memory.size();
     }
 
     @Override

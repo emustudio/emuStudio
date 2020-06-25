@@ -41,18 +41,6 @@ public class Statement extends AbstractTreeNode {
         this.operand = null;
     }
 
-    public InstructionImpl getInstruction() {
-        return instruction;
-    }
-
-    public Integer getOperand() {
-        return operand;
-    }
-
-    public String getLabelOperand() {
-        return labelOperand;
-    }
-
     @Override
     public void pass() throws Exception {
         //add instruction

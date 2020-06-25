@@ -52,12 +52,16 @@ public class Program extends AbstractTreeNode {
     }
 
     private void translateLabels() {
-        int programStart = CompilerOutput.getInstance().getProgramStart();
+        int currentAddress = CompilerOutput.getInstance().getProgramStart();
+
         for (Row row : rows) {
             Label label = row.getLabel();
             if (label != null) {
-                label.setAddress(programStart + rows.indexOf(row) * 2);
+                label.setAddress(currentAddress);
                 label.pass();
+            }
+            if (row.hasStatement()) {
+                currentAddress += 2;
             }
         }
     }

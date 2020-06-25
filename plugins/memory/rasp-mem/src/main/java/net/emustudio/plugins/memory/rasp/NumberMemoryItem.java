@@ -22,6 +22,8 @@ package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.plugins.memory.rasp.api.MemoryItem;
 
+import java.util.Objects;
+
 /**
  * Value as a memory item, either value of register, or instruction operand.
  */
@@ -35,6 +37,19 @@ public class NumberMemoryItem implements MemoryItem {
 
     public int getValue() {
         return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NumberMemoryItem that = (NumberMemoryItem) o;
+        return value == that.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
     }
 
     @Override

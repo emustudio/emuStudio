@@ -22,6 +22,8 @@ package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
 
+import java.util.Objects;
+
 public class InstructionImpl implements RASPInstruction {
 
     /**
@@ -36,6 +38,19 @@ public class InstructionImpl implements RASPInstruction {
     @Override
     public int getCode() {
         return instructionCode;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InstructionImpl that = (InstructionImpl) o;
+        return instructionCode == that.instructionCode;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(instructionCode);
     }
 
     @Override

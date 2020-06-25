@@ -1,5 +1,7 @@
 package net.emustudio.plugins.compiler.raspc;
 
+import net.emustudio.emulib.plugins.compiler.CompilerListener;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
@@ -45,6 +47,22 @@ public abstract class AbstractCompilerTest {
         Files.write(sourceFile.toPath(), content.getBytes(), StandardOpenOption.WRITE);
 
         File outputFile = folder.newFile();
+        compiler.addCompilerListener(new CompilerListener() {
+            @Override
+            public void onStart() {
+
+            }
+
+            @Override
+            public void onMessage(CompilerMessage compilerMessage) {
+                System.out.println(compilerMessage);
+            }
+
+            @Override
+            public void onFinish() {
+
+            }
+        });
         if (!compiler.compile(sourceFile.getAbsolutePath(), outputFile.getAbsolutePath())) {
             throw new Exception("Compilation failed");
         }
