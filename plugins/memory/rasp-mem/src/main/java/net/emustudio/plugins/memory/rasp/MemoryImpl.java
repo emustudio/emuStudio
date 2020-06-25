@@ -29,7 +29,7 @@ import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
-import net.emustudio.plugins.memory.rasp.gui.MemoryWindow;
+import net.emustudio.plugins.memory.rasp.gui.MemoryDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl context;
-    private MemoryWindow gui;
+    private MemoryDialog gui;
     private final boolean guiNotSupported;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -86,7 +86,7 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
-                gui = new MemoryWindow(parent, context, applicationApi.getDialogs());
+                gui = new MemoryDialog(parent, context, applicationApi.getDialogs());
             }
             gui.setVisible(true);
         }

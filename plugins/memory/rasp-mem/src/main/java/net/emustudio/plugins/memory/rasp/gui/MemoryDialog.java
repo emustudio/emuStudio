@@ -33,8 +33,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-public class MemoryWindow extends JDialog {
-    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryWindow.class);
+public class MemoryDialog extends JDialog {
+    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryDialog.class);
 
     private final Dialogs dialogs;
 
@@ -42,7 +42,7 @@ public class MemoryWindow extends JDialog {
     private final RASPTableModel tableModel;
     private File recentOpenPath;
 
-    public MemoryWindow(JFrame parent, MemoryContextImpl context, Dialogs dialogs) {
+    public MemoryDialog(JFrame parent, MemoryContextImpl context, Dialogs dialogs) {
         super(parent, false);
 
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -50,6 +50,8 @@ public class MemoryWindow extends JDialog {
         this.recentOpenPath = new File(System.getProperty("user.home"));
 
         initComponents();
+        setLocationRelativeTo(parent);
+
         tableModel = new RASPTableModel(memory);
         updateTable();
         memory.addMemoryListener(new Memory.MemoryListener() {
@@ -98,12 +100,12 @@ public class MemoryWindow extends JDialog {
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/raspm/gui/document-open.png")));
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/rasp/gui/document-open.png")));
         jButton1.setFocusable(false);
         jButton1.addActionListener(this::onOpenClick);
         jToolBar1.add(jButton1);
 
-        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/raspm/gui/edit-delete.png")));
+        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/rasp/gui/edit-delete.png")));
         jButton2.setFocusable(false);
         jButton2.addActionListener(this::onClearClick);
         jToolBar1.add(jButton2);
