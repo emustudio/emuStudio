@@ -99,7 +99,7 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public boolean isShowSettingsSupported() {
-        return memoryGUI != null;
+        return !guiNotSupported;
     }
 
     private Optional<ResourceBundle> getResourceBundle() {
