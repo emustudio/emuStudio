@@ -36,7 +36,7 @@ public class RAMContextImpl implements RAMContext {
     }
 
     public void init(long pluginID, EmulatorEngine engine) throws PluginInitializationException {
-        tapes[0] = prepareTape(pluginID, "Registers (storage tape)", true, false, true, 0);
+        tapes[0] = prepareTape(pluginID, "Storage", true, false, true, 0);
         tapes[1] = prepareTape(pluginID, "Input tape", false, true, true, 1);
         tapes[2] = prepareTape(pluginID, "Output tape", true, true, false, 2);
 

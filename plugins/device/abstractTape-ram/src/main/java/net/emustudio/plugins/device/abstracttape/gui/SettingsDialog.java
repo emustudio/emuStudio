@@ -36,7 +36,7 @@ public class SettingsDialog extends JDialog {
     private final Dialogs dialogs;
     private final TapeGui gui;
 
-    public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeGui gui) {
+    public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeGui gui, String title) {
         super(parent, true);
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -45,6 +45,7 @@ public class SettingsDialog extends JDialog {
         initComponents();
         setSize(250, this.getHeight());
         setLocationRelativeTo(parent);
+        setTitle(title + " settings");
 
         boolean alwaysOnTop = settings.getBoolean("alwaysOnTop", false);
         chkAlwaysOnTop.setSelected(alwaysOnTop);
@@ -58,7 +59,6 @@ public class SettingsDialog extends JDialog {
         chkShowAtStartup = new JCheckBox("Show GUI at startup");
         JButton btnSave = new JButton("Save");
 
-        setTitle("AbstractTape settings");
         setResizable(false);
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

@@ -49,7 +49,7 @@ public class DeviceImpl extends AbstractDevice {
     private final boolean guiNotSupported;
     private final boolean automaticEmulation;
 
-    private String guiTitle;
+    private String guiTitle = super.getTitle();
     private TapeGui gui;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -135,7 +135,7 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
-            new SettingsDialog(parent, settings, applicationApi.getDialogs(), gui).setVisible(true);
+            new SettingsDialog(parent, settings, applicationApi.getDialogs(), gui, guiTitle).setVisible(true);
         }
     }
 
