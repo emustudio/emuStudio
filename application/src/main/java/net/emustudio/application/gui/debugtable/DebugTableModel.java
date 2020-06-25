@@ -51,4 +51,6 @@ public abstract class DebugTableModel extends AbstractTableModel implements Debu
     public abstract void setDefaultColumns();
 
     public abstract int guessPreviousInstructionLocation();
+
+    public abstract void setMaxRows(int maxRows);
 }

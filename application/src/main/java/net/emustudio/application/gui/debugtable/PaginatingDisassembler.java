@@ -26,8 +26,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 @ThreadSafe
 public class PaginatingDisassembler {
     public final static int INSTR_PER_PAGE = 2 * 10 + 1;
-    final static int CURRENT_INSTR_ROW = INSTR_PER_PAGE / 2; // do not touch this; the algorithm depends on it
-    final static int INSTR_PER_HALF_PAGE = INSTR_PER_PAGE / 2;
 
     private final CallFlow callFlow;
     private final NavigableMap<Integer, Page> bytesPerPageCache = new ConcurrentSkipListMap<>();
@@ -37,6 +35,10 @@ public class PaginatingDisassembler {
 
     private volatile Page currentPage = new Page(0, -1, -1);
     private volatile int lastKnownCurrentLocation;
+
+    private volatile int instructionsPerPage = INSTR_PER_PAGE;
+    private volatile int currentInstrRow = instructionsPerPage / 2;
+    private volatile int instrPerHalfPage = instructionsPerPage / 2;
 
     PaginatingDisassembler(CallFlow callFlow, int memorySize) {
         if (memorySize < 0) {
@@ -48,8 +50,22 @@ public class PaginatingDisassembler {
         bytesPerPageCache.put(0, currentPage);
     }
 
+    void setInstructionsPerPage(int value) {
+        instructionsPerPage = value;
+        currentInstrRow = instructionsPerPage / 2;
+        instrPerHalfPage = instructionsPerPage / 2;
+    }
+
+    int getInstructionsPerPage() {
+        return instructionsPerPage;
+    }
+
+    int getCurrentInstructionRow() {
+        return currentInstrRow;
+    }
+
     private int maxBytesPerPage() {
-        return INSTR_PER_PAGE * callFlow.getLongestInstructionSize();
+        return instructionsPerPage * callFlow.getLongestInstructionSize();
     }
 
     int getPageIndex() {
@@ -147,7 +163,7 @@ public class PaginatingDisassembler {
     }
 
     boolean isRowAtCurrentInstruction(int row) {
-        return (pageIndex == 0) && (CURRENT_INSTR_ROW == row);
+        return (pageIndex == 0) && (currentInstrRow == row);
     }
 
     void setMemorySize(int memorySize) {
@@ -176,13 +192,13 @@ public class PaginatingDisassembler {
             callFlow.updateCache(currentLocation);
         }
 
-        if (row == CURRENT_INSTR_ROW) {
+        if (row == currentInstrRow) {
             return newCurrentLocation;
         }
 
-        int half = callFlow.getLongestInstructionSize() * INSTR_PER_HALF_PAGE;
+        int half = callFlow.getLongestInstructionSize() * instrPerHalfPage;
 
-        if (row < INSTR_PER_HALF_PAGE) {
+        if (row < instrPerHalfPage) {
             return findLocationBelowHalf(newCurrentLocation, row, half, tmpCurrentPage);
         } else {
             return findLocationAboveHalf(newCurrentLocation, row, half, tmpCurrentPage);
@@ -307,9 +323,9 @@ public class PaginatingDisassembler {
         List<Integer> halfPage = callFlow.getLocations(currentLocation, realUpTo);
         int loadedHalfSize = halfPage.size();
 
-        if (realUpTo < lastMemoryIndex && loadedHalfSize < INSTR_PER_HALF_PAGE) {
+        if (realUpTo < lastMemoryIndex && loadedHalfSize < instrPerHalfPage) {
             // try to fill it up (the "half" was not enough)
-            callFlow.traverseForInstructionCount(realUpTo, INSTR_PER_HALF_PAGE - loadedHalfSize + 1, halfPage::add);
+            callFlow.traverseForInstructionCount(realUpTo, instrPerHalfPage - loadedHalfSize + 1, halfPage::add);
             loadedHalfSize = halfPage.size();
         }
 
@@ -319,14 +335,14 @@ public class PaginatingDisassembler {
         halfPage.remove(0); // current instruction would be twice otherwise
         loadedHalfSize--;
 
-        int lastInstructionIndex = INSTR_PER_HALF_PAGE + loadedHalfSize;
+        int lastInstructionIndex = instrPerHalfPage + loadedHalfSize;
 
         tmpCurrentPage.setLastPage(lastInstructionIndex < INSTR_PER_PAGE - 1);
         if (row > lastInstructionIndex) {
             return -1;
         }
 
-        int rowLocation = halfPage.get(row - INSTR_PER_HALF_PAGE - 1);
+        int rowLocation = halfPage.get(row - instrPerHalfPage - 1);
         if (row == Math.min(INSTR_PER_PAGE - 1, lastInstructionIndex)) {
             tmpCurrentPage.setMax(rowLocation);
         }
@@ -356,12 +372,12 @@ public class PaginatingDisassembler {
         }
 
         int i = 0;
-        while (halfPage.size() > INSTR_PER_HALF_PAGE && i < INSTR_PER_HALF_PAGE) {
+        while (halfPage.size() > instrPerHalfPage && i < instrPerHalfPage) {
             halfPage.remove(0);
             i++;
         }
 
-        int firstInstructionIndex = INSTR_PER_HALF_PAGE - halfPage.size();
+        int firstInstructionIndex = instrPerHalfPage - halfPage.size();
         if (row < firstInstructionIndex) {
             return -1;
         }

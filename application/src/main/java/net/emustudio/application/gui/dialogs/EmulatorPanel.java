@@ -2,13 +2,10 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.ToolbarButton;
-import net.emustudio.application.gui.actions.emulator.ShowDeviceGuiAction;
-import net.emustudio.application.gui.actions.emulator.ShowDeviceSettingsAction;
 import net.emustudio.application.gui.actions.emulator.*;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.PagesPanel;
-import net.emustudio.application.gui.debugtable.PaginatingDisassembler;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
@@ -17,9 +14,7 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -67,6 +62,14 @@ public class EmulatorPanel extends JPanel {
 
         paneDebug.setViewportView(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        debugTable.setFillsViewportHeight(true);
+
+        paneDebug.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                debugTable.dispatchEvent(e); // Debug table is not shrinking, just expanding...
+            }
+        });
 
         statusWindow.setBorder(BorderFactory.createTitledBorder("Status"));
         statusWindow.setLayout(statusWindowLayout);
@@ -242,7 +245,7 @@ public class EmulatorPanel extends JPanel {
     public void resizeComponents(int height) {
         double rowHeight = debugTable.getRowHeight();
         double additionalHeight = toolDebug.getHeight() + panelPages.getHeight() + 140;
-        double heightTogether = additionalHeight + rowHeight * PaginatingDisassembler.INSTR_PER_PAGE;
+        double heightTogether = additionalHeight + rowHeight * debugTableModel.getRowCount();
 
         if (heightTogether + MIN_PERIPHERAL_PANEL_HEIGHT > height) {
             heightTogether = Math.max(0, height - MIN_PERIPHERAL_PANEL_HEIGHT);

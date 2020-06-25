@@ -24,6 +24,8 @@ import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.Objects;
 
 public class DebugTableImpl extends JTable  {
@@ -47,6 +49,15 @@ public class DebugTableImpl extends JTable  {
 
         setupRenderers();
         setupBooleanCellEditorAndDefaultWidth();
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                Rectangle vr = getVisibleRect();
+                int rowHeight = getRowHeight();
+                tableModel.setMaxRows(vr.height / rowHeight);
+            }
+        });
     }
 
     private void setupBooleanCellEditorAndDefaultWidth() {

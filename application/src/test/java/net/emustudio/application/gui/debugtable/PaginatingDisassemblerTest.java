@@ -47,7 +47,7 @@ public class PaginatingDisassemblerTest {
 
         PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
-        assertEquals(50, asm.rowToLocation(50, CURRENT_INSTR_ROW));
+        assertEquals(50, asm.rowToLocation(50, INSTR_PER_HALF_PAGE));
         verify(callFlow).updateCache(50);
     }
 
@@ -66,7 +66,7 @@ public class PaginatingDisassemblerTest {
 
         assertEquals(
             -1,
-            asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW - 1)
+            asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE - 1)
         );
     }
 
@@ -85,7 +85,7 @@ public class PaginatingDisassemblerTest {
 
         assertEquals(
             -1,
-            asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW + 1)
+            asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE + 1)
         );
     }
 
@@ -97,7 +97,7 @@ public class PaginatingDisassemblerTest {
 
         assertEquals(
             CURRENT_INSTR - 1,
-            asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW - 1)
+            asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE - 1)
         );
     }
 
@@ -201,11 +201,11 @@ public class PaginatingDisassemblerTest {
             CURRENT_INSTR, 2, LONGEST_INSTR, true
         );
 
-        int page2curr = asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW);
+        int page2curr = asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE);
         asm.pagePrevious();
-        int page1curr = asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW);
+        int page1curr = asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE);
         asm.pagePrevious();
-        int page0curr = asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW);
+        int page0curr = asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE);
 
         assertEquals((INSTR_PER_PAGE - 1) * LONGEST_INSTR, page2curr - page1curr);
         assertEquals((INSTR_PER_PAGE - 1) * LONGEST_INSTR, page1curr - page0curr);
@@ -233,7 +233,7 @@ public class PaginatingDisassemblerTest {
         PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         asm.rowToLocation(CURRENT_INSTR, 0);
-        asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW);
+        asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE);
         asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
 
         assertEquals(
@@ -251,7 +251,7 @@ public class PaginatingDisassemblerTest {
 
         assertEquals(
             0,
-            asm.rowToLocation(10, CURRENT_INSTR_ROW)
+            asm.rowToLocation(10, INSTR_PER_HALF_PAGE)
         );
     }
 
@@ -261,13 +261,13 @@ public class PaginatingDisassemblerTest {
         PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
         assertEquals(-1, asm.rowToLocation(CURRENT_INSTR, 0));
-        assertEquals(CURRENT_INSTR, asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW));
+        assertEquals(CURRENT_INSTR, asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE));
         assertEquals(
             CURRENT_INSTR + INSTR_PER_HALF_PAGE, asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1)
         );
 
-        assertEquals(CURRENT_INSTR, asm.rowToLocation(CURRENT_INSTR + 1, CURRENT_INSTR_ROW - 1));
-        assertEquals(CURRENT_INSTR + 1, asm.rowToLocation(CURRENT_INSTR + 1, CURRENT_INSTR_ROW));
+        assertEquals(CURRENT_INSTR, asm.rowToLocation(CURRENT_INSTR + 1, INSTR_PER_HALF_PAGE - 1));
+        assertEquals(CURRENT_INSTR + 1, asm.rowToLocation(CURRENT_INSTR + 1, INSTR_PER_HALF_PAGE));
         assertEquals(
             CURRENT_INSTR + INSTR_PER_HALF_PAGE + 1,
             asm.rowToLocation(CURRENT_INSTR + 1, INSTR_PER_PAGE - 1)
@@ -283,7 +283,7 @@ public class PaginatingDisassemblerTest {
         asm.pageNext();
 
         assertEquals(CURRENT_INSTR + INSTR_PER_HALF_PAGE, asm.rowToLocation(CURRENT_INSTR, 0));
-        assertEquals(CURRENT_INSTR + INSTR_PER_PAGE - 1, asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW));
+        assertEquals(CURRENT_INSTR + INSTR_PER_PAGE - 1, asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE));
         assertEquals(
             CURRENT_INSTR + INSTR_PER_PAGE - 1 + INSTR_PER_HALF_PAGE,
             asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1)
@@ -297,7 +297,7 @@ public class PaginatingDisassemblerTest {
         );
         assertEquals(
             CURRENT_INSTR + INSTR_PER_PAGE,
-            asm.rowToLocation(CURRENT_INSTR + 1, CURRENT_INSTR_ROW)
+            asm.rowToLocation(CURRENT_INSTR + 1, INSTR_PER_HALF_PAGE)
         );
         assertEquals(
             CURRENT_INSTR + INSTR_PER_PAGE + INSTR_PER_HALF_PAGE,
@@ -316,7 +316,7 @@ public class PaginatingDisassemblerTest {
         asm.pagePrevious();
 
         assertEquals(CURRENT_INSTR - INSTR_PER_PAGE + 1 - INSTR_PER_HALF_PAGE, asm.rowToLocation(CURRENT_INSTR, 0));
-        assertEquals(CURRENT_INSTR - INSTR_PER_PAGE + 1, asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW));
+        assertEquals(CURRENT_INSTR - INSTR_PER_PAGE + 1, asm.rowToLocation(CURRENT_INSTR, INSTR_PER_HALF_PAGE));
         assertEquals(
             CURRENT_INSTR - INSTR_PER_HALF_PAGE,
             asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1)
@@ -329,7 +329,7 @@ public class PaginatingDisassemblerTest {
         );
         assertEquals(
             CURRENT_INSTR - INSTR_PER_PAGE + 2,
-            asm.rowToLocation(CURRENT_INSTR + 1, CURRENT_INSTR_ROW)
+            asm.rowToLocation(CURRENT_INSTR + 1, INSTR_PER_HALF_PAGE)
         );
         assertEquals(
             CURRENT_INSTR - INSTR_PER_HALF_PAGE + 1,

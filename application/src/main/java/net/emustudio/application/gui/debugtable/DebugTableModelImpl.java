@@ -42,9 +42,15 @@ public class DebugTableModelImpl extends DebugTableModel {
         setDefaultColumns();
     }
 
+    public void setMaxRows(int maxRows) {
+        if (ida != null) {
+            ida.setInstructionsPerPage(maxRows);
+        }
+    }
+
     @Override
     public int getRowCount() {
-        return (ida != null) ? PaginatingDisassembler.INSTR_PER_PAGE : 0;
+        return (ida != null) ? ida.getInstructionsPerPage() : 0;
     }
 
     @Override
@@ -195,7 +201,7 @@ public class DebugTableModelImpl extends DebugTableModel {
         PaginatingDisassembler i = ida;
         CPU cpu = this.cpu;
         if (i != null && cpu != null) {
-            int location = i.rowToLocation(cpu.getInstructionLocation(), PaginatingDisassembler.CURRENT_INSTR_ROW - 1);
+            int location = i.rowToLocation(cpu.getInstructionLocation(), i.getCurrentInstructionRow() - 1);
             if (location < 0) {
                 return Math.max(0, cpu.getInstructionLocation() - 1);
             }

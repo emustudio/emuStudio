@@ -35,6 +35,7 @@ class MockHelper {
     final static int MEMORY_SIZE = 0x10000;
     final static int LONGEST_INSTR = 2;
     final static int CURRENT_INSTR = 50;
+    final static int INSTR_PER_HALF_PAGE = INSTR_PER_PAGE / 2;
     final static int HALF_PAGE_MAX_BYTES = INSTR_PER_HALF_PAGE * LONGEST_INSTR;
 
     private static CallFlow callFlow;
@@ -171,7 +172,7 @@ class MockHelper {
 
         currentInstructions.forEach(location -> {
             asm.rowToLocation(currentLocation, 0);
-            asm.rowToLocation(currentLocation, CURRENT_INSTR_ROW);
+            asm.rowToLocation(currentLocation, INSTR_PER_HALF_PAGE);
             asm.rowToLocation(currentLocation, INSTR_PER_PAGE - 1);
 
             if (next) {
