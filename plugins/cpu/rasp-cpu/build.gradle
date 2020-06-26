@@ -33,7 +33,7 @@ dependencies {
   implementation libs.slf4JApi
 
   memoryLib project(":plugins:memory:rasp-mem")
-  deviceLib project(":plugins:device:abstractTape-ram")
+  deviceLib project(":plugins:device:abstract-tape")
 
   testImplementation libs.junit
   testImplementation libs.slf4JSimple

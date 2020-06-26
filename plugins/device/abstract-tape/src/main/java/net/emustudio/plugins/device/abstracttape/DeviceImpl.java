@@ -81,7 +81,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public String getDescription() {
-        return "Abstract tape is used by abstract machines such as RAM machine";
+        return "The device represents a tape used by abstract machines";
     }
 
     @Override

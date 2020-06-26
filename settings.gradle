@@ -37,7 +37,7 @@ include ':plugins:cpu:z80-cpu'
 
 include ':plugins:device:88-disk'
 include ':plugins:device:88-sio'
-include ':plugins:device:abstractTape-ram'
+include ':plugins:device:abstract-tape'
 include ':plugins:device:adm3A-terminal'
 include ':plugins:device:brainduck-terminal'
 include ':plugins:device:simhPseudo-z80'

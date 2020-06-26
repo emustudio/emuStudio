@@ -34,7 +34,7 @@ dependencies {
 
   compilerLib project(":plugins:compiler:ramc-ram")
   memoryLib project(":plugins:memory:ram-mem")
-  deviceLib project(":plugins:device:abstractTape-ram")
+  deviceLib project(":plugins:device:abstract-tape")
 
   testImplementation libs.junit
   testImplementation libs.easyMock

@@ -68,7 +68,7 @@ dependencies {
   providedRuntime project(":plugins:cpu:z80-cpu")
   providedRuntime project(":plugins:cpu:ssem-cpu")
 
-  providedRuntime project(":plugins:device:abstractTape-ram")
+  providedRuntime project(":plugins:device:abstract-tape")
   providedRuntime project(":plugins:device:88-disk")
   providedRuntime project(":plugins:device:88-sio")
   providedRuntime project(":plugins:device:adm3A-terminal")
@@ -201,7 +201,7 @@ distributions {
 
       into('device') {
         include '*.jar'
-        from(output(":plugins:device:abstractTape-ram"))
+        from(output(":plugins:device:abstract-tape"))
         from(output(":plugins:device:88-disk"))
         from(output(":plugins:device:88-sio"))
         from(output(":plugins:device:adm3A-terminal"))
