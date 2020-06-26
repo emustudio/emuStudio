@@ -31,7 +31,7 @@ import java.util.Optional;
 @SuppressWarnings("unused")
 public class CommandLine {
 
-    @Option(name = "-i", aliases = "-input", metaVar = "filename", usage = "use the source code given by the file name")
+    @Option(name = "-i", aliases = "--input", metaVar = "filename", usage = "use the source code given by the file name")
     private String inputFileName;
 
     @Option(name = "-c", aliases = "--config", metaVar = "filename", usage = "load configuration with file name")
