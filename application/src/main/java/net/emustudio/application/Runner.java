@@ -114,7 +114,8 @@ public class Runner {
 
             if (commandLine.isAuto()) {
                 System.exit(runAutomation(
-                    computer, commandLine.getInputFileName(), applicationConfig, dialogs, commandLine.getWaitForFinishMillis()
+                    computer, commandLine.getInputFileName(), applicationConfig, dialogs,
+                    commandLine.getWaitForFinishMillis(), commandLine.getProgramStart()
                 ));
             } else if (!commandLine.isNoGUI()) {
                 showMainWindow(
@@ -131,9 +132,9 @@ public class Runner {
     }
 
     private static int runAutomation(VirtualComputer computer, String inputFileName, ApplicationConfig applicationConfig,
-                                     Dialogs dialogs, int waitForFinishMillis) {
+                                     Dialogs dialogs, int waitForFinishMillis, int programStart) {
         try {
-            new Automation(computer, inputFileName, applicationConfig, dialogs, waitForFinishMillis).run();
+            new Automation(computer, inputFileName, applicationConfig, dialogs, waitForFinishMillis, programStart).run();
             return 0;
         } catch (Exception e) {
             LOGGER.error("Unexpected error during automation.", e);

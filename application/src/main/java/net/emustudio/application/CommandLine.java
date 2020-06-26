@@ -19,6 +19,7 @@
 package net.emustudio.application;
 
 import net.emustudio.application.emulation.Automation;
+import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -30,23 +31,26 @@ import java.util.Optional;
 @SuppressWarnings("unused")
 public class CommandLine {
 
-    @Option(name = "--input", metaVar = "filename", usage = "use the source code given by the file name")
+    @Option(name = "-i", aliases = "-input", metaVar = "filename", usage = "use the source code given by the file name")
     private String inputFileName;
 
-    @Option(name = "--config", metaVar = "filename", usage = "load configuration with file name")
+    @Option(name = "-c", aliases = "--config", metaVar = "filename", usage = "load configuration with file name")
     private String configFileName;
 
-    @Option(name = "--auto", usage = "run the emulation automation")
+    @Option(name = "-a", aliases = "--auto", usage = "run the emulation automation")
     private boolean auto;
 
-    @Option(name = "--waitmax", metaVar = "X", usage = "wait for emulation finish max X milliseconds", depends = "--auto")
+    @Option(name = "-w", aliases = "--waitmax", metaVar = "X", usage = "wait for emulation finish max X milliseconds", depends = "--auto")
     private int waitForFinishMillis = Automation.DONT_WAIT;
 
-    @Option(name = "--help", help = true, usage = "output this message")
+    @Option(name = "-h", aliases = "--help", help = true, usage = "output this message")
     private boolean help;
 
-    @Option(name = "--nogui", usage = "try to not show GUI in automation", depends = "--auto")
+    @Option(name = "-n", aliases = "--nogui", usage = "try to not show GUI in automation", depends = "--auto")
     private boolean noGUI;
+
+    @Option(name = "-s", aliases = "--programStart", usage = "set program start address", metaVar = "X")
+    private String programStart = "0";
 
     public boolean isAuto() {
         return auto;
@@ -66,6 +70,10 @@ public class CommandLine {
 
     public int getWaitForFinishMillis() {
         return waitForFinishMillis;
+    }
+
+    public int getProgramStart() {
+        return RadixUtils.getInstance().parseRadix(programStart);
     }
 
     public static CommandLine parse(String[] args) throws CmdLineException {

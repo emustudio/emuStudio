@@ -50,15 +50,17 @@ public class Automation implements Runnable {
     private final ApplicationConfig applicationConfig;
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
+    private final int programStart;
 
     private volatile CPU.RunState resultState;
 
     public Automation(VirtualComputer computer, String inputFileName, ApplicationConfig applicationConfig,
-                      Dialogs dialogs, int waitForFinishMillis) throws AutomationException {
+                      Dialogs dialogs, int waitForFinishMillis, int programStart) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.waitForFinishMillis = waitForFinishMillis;
+        this.programStart = programStart;
 
         if (inputFileName != null) {
             this.inputFile = new File(Objects.requireNonNull(inputFileName, "Input file must be defined"));
@@ -228,21 +230,19 @@ public class Automation implements Runnable {
         );
 
         try {
-            AtomicReference<Integer> programLocation = new AtomicReference<>();
+            AtomicReference<Integer> programLocation = new AtomicReference<>(0);
             computer.getCompiler().ifPresent(compiler -> {
                 Unchecked.run(() -> autoCompile(compiler));
                 programLocation.set(compiler.getProgramLocation());
                 setProgramLocation(programLocation.get());
             });
+            if (programStart > 0) {
+                programLocation.set(programStart);
+            }
 
             computer.getCPU().ifPresent(cpu -> {
                 setProgress("Resetting CPU...", false);
-                Integer ps = programLocation.get();
-                if (ps == null) {
-                    cpu.reset();
-                } else {
-                    cpu.reset(ps);
-                }
+                cpu.reset(programLocation.get());
                 autoEmulate(cpu);
             });
         } catch (Exception e) {
