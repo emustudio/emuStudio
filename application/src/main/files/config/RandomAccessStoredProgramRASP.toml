@@ -23,15 +23,15 @@ name = "Random-Access Stored Program (RASP)"
 
 [[DEVICE]]
 	schemaPoint = "220,60"
-	path = "abstractTape-ram.jar"
-	name = "abstractTape-ram"
+	path = "abstract-tape.jar"
+	name = "abstract-tape"
 	id = "d3ddf28a-b865-41af-986f-bd1b2584a1bc"
 	type = "DEVICE"
 
 [[DEVICE]]
 	schemaPoint = "380,180"
-	path = "abstractTape-ram.jar"
-	name = "abstractTape-ram"
+	path = "abstract-tape.jar"
+	name = "abstract-tape"
 	id = "c6bbc8b5-fed7-4940-8d08-fb5ecd3f41bc"
 	type = "DEVICE"
 

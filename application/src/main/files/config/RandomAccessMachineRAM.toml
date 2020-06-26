@@ -26,22 +26,22 @@ name = "Random Access Machine (RAM)"
 #	    showAtStartup = false
 [[DEVICE]]
 	schemaPoint = "360,60"
-	path = "abstractTape-ram.jar"
-	name = "abstractTape-ram"
+	path = "abstract-tape.jar"
+	name = "abstract-tape"
 	id = "ba7e7035-a074-4666-b3fc-d08ca55305f7"
 	type = "DEVICE"
 
 [[DEVICE]]
 	schemaPoint = "360,200"
-	path = "abstractTape-ram.jar"
-	name = "abstractTape-ram"
+	path = "abstract-tape.jar"
+	name = "abstract-tape"
 	id = "57389401-fdf7-4bcd-8a66-f936332273bf"
 	type = "DEVICE"
 
 [[DEVICE]]
 	schemaPoint = "200,60"
-	path = "abstractTape-ram.jar"
-	name = "abstractTape"
+	path = "abstract-tape.jar"
+	name = "abstract-tape"
 	id = "c3d76043-bb08-4711-bb8c-14f908fa763b"
 	type = "DEVICE"
 
