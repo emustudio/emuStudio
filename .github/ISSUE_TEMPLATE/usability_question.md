@@ -2,7 +2,7 @@
 name: Usability question
 about: Get help with using emuStudio
 title: ''
-labels: ''
+labels: 'question'
 assignees: ''
 
 ---
