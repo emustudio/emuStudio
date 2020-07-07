@@ -19,8 +19,8 @@
 package net.emustudio.plugins.device.mits88disk.ports;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.device.mits88disk.DeviceImpl;
-import net.emustudio.plugins.device.mits88disk.Drive;
+import net.emustudio.plugins.device.mits88disk.drive.Drive;
+import net.emustudio.plugins.device.mits88disk.drive.DriveCollection;
 
 import java.util.Objects;
 
@@ -31,9 +31,9 @@ import java.util.Objects;
  * OUT: set flags
  */
 public class ControlPort implements DeviceContext<Short> {
-    private final DeviceImpl disk;
+    private final DriveCollection disk;
 
-    public ControlPort(DeviceImpl disk) {
+    public ControlPort(DriveCollection disk) {
         this.disk = Objects.requireNonNull(disk);
     }
 

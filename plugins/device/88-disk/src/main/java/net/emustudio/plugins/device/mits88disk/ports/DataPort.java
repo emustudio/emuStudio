@@ -19,9 +19,7 @@
 package net.emustudio.plugins.device.mits88disk.ports;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.device.mits88disk.DeviceImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.emustudio.plugins.device.mits88disk.drive.DriveCollection;
 
 import java.util.Objects;
 
@@ -32,32 +30,20 @@ import java.util.Objects;
  * OUT: write data
  */
 public class DataPort implements DeviceContext<Short> {
-    private final static Logger LOGGER = LoggerFactory.getLogger(DataPort.class);
+    private final DriveCollection disk;
 
-    private final DeviceImpl disk;
-
-    public DataPort(DeviceImpl disk) {
+    public DataPort(DriveCollection disk) {
         this.disk = Objects.requireNonNull(disk);
     }
 
     @Override
     public Short readData() {
-        short data = 0;
-        try {
-            data = disk.getCurrentDrive().readData();
-        } catch (Exception e) {
-            LOGGER.error("Could not read from disk", e);
-        }
-        return data;
+        return disk.getCurrentDrive().readData();
     }
 
     @Override
     public void writeData(Short data) {
-        try {
-            disk.getCurrentDrive().writeData(data);
-        } catch (Exception e) {
-            LOGGER.error("Could not write to disk", e);
-        }
+        disk.getCurrentDrive().writeData(data);
     }
 
     @Override

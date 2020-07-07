@@ -18,6 +18,9 @@
  */
 package net.emustudio.plugins.device.mits88disk;
 
+import net.emustudio.plugins.device.mits88disk.drive.Drive;
+import net.emustudio.plugins.device.mits88disk.drive.DriveListener;
+import net.emustudio.plugins.device.mits88disk.drive.DriveParameters;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Rule;
@@ -62,7 +65,7 @@ public class DriveTest {
     public void testInitialDriveParameters() {
         Drive drive = new Drive(0);
 
-        Drive.DriveParameters params = drive.getDriveParameters();
+        DriveParameters params = drive.getDriveParameters();
         assertEquals(0, params.sector);
         assertEquals(0, params.sectorOffset);
         assertEquals(0, params.track);
@@ -102,7 +105,7 @@ public class DriveTest {
         drive.mount(testImageFile);
         drive.umount();
 
-        Drive.DriveParameters params = drive.getDriveParameters();
+        DriveParameters params = drive.getDriveParameters();
         assertNull(params.mountedFloppy);
     }
 
@@ -115,7 +118,7 @@ public class DriveTest {
         drive.mount(testImageFile);
         drive.select();
 
-        Drive.DriveParameters params = drive.getDriveParameters();
+        DriveParameters params = drive.getDriveParameters();
 
         assertEquals(0xA5, params.port1status);
         assertEquals(0xC1, params.port2status);
@@ -134,7 +137,7 @@ public class DriveTest {
         drive.select();
         drive.deselect();
 
-        Drive.DriveParameters params = drive.getDriveParameters();
+        DriveParameters params = drive.getDriveParameters();
         assertEquals(0, params.sector);
         assertEquals(0, params.sectorOffset);
         assertEquals(0, params.track);
@@ -236,15 +239,15 @@ public class DriveTest {
 
     @Test
     public void testDriveListenerIsCalledWhenDiskIsSelected() throws Exception {
-        Drive.DriveListener listener = EasyMock.createMock(Drive.DriveListener.class);
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
         listener.driveSelect(true);
         expectLastCall().once();
-        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        listener.driveParamsChanged(anyObject(DriveParameters.class));
         expectLastCall().once();
         replay(listener);
 
         Drive drive = new Drive(0);
-        drive.setDriveListener(listener);
+        drive.addDriveListener(listener);
         drive.mount(testImageFile);
         drive.select();
 
@@ -253,17 +256,17 @@ public class DriveTest {
 
     @Test
     public void testDriveListenerIsCalledWhenDiskIsDeselected() throws Exception {
-        Drive.DriveListener listener = EasyMock.createMock(Drive.DriveListener.class);
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
         listener.driveSelect(false);
         expectLastCall().once();
-        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        listener.driveParamsChanged(anyObject(DriveParameters.class));
         expectLastCall().once();
         replay(listener);
 
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
-        drive.setDriveListener(listener);
+        drive.addDriveListener(listener);
         drive.deselect();
 
         verify(listener);
@@ -271,15 +274,15 @@ public class DriveTest {
 
     @Test
     public void testDriveListenerIsCalledWhenSectorNumberIsChanged() throws Exception {
-        Drive.DriveListener listener = EasyMock.createMock(Drive.DriveListener.class);
-        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveParamsChanged(anyObject(DriveParameters.class));
         expectLastCall().once();
         replay(listener);
 
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
-        drive.setDriveListener(listener);
+        drive.addDriveListener(listener);
         drive.nextSectorIfHeadIsLoaded();
 
         verify(listener);
@@ -287,8 +290,8 @@ public class DriveTest {
 
     @Test
     public void testDriveListenerIsCalledWhenDataAreRead() throws Exception {
-        Drive.DriveListener listener = EasyMock.createMock(Drive.DriveListener.class);
-        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveParamsChanged(anyObject(DriveParameters.class));
         expectLastCall().once();
         replay(listener);
 
@@ -296,7 +299,7 @@ public class DriveTest {
         drive.mount(testImageFile);
         drive.select();
         drive.writeToPort2((short) 0x04);
-        drive.setDriveListener(listener);
+        drive.addDriveListener(listener);
         drive.readData();
 
         verify(listener);
@@ -304,8 +307,8 @@ public class DriveTest {
 
     @Test
     public void testDriveListenerIsCalledWhenDataAreWritten() throws Exception {
-        Drive.DriveListener listener = EasyMock.createMock(Drive.DriveListener.class);
-        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveParamsChanged(anyObject(DriveParameters.class));
         expectLastCall().once();
         replay(listener);
 
@@ -314,7 +317,7 @@ public class DriveTest {
         drive.select();
         drive.writeToPort2((short) 0x04);
         drive.writeToPort2((short) 0x80);
-        drive.setDriveListener(listener);
+        drive.addDriveListener(listener);
         drive.writeData(1);
 
         verify(listener);
@@ -322,15 +325,15 @@ public class DriveTest {
 
     @Test
     public void testDriveListenerIsCalledWhenFlagsAreSet() throws Exception {
-        Drive.DriveListener listener = EasyMock.createMock(Drive.DriveListener.class);
-        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveParamsChanged(anyObject(DriveParameters.class));
         expectLastCall().once();
         replay(listener);
 
         Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
-        drive.setDriveListener(listener);
+        drive.addDriveListener(listener);
         drive.writeToPort2((short) 0x04);
 
         verify(listener);

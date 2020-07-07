@@ -28,6 +28,8 @@ import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.device.mits88disk.drive.Drive;
+import net.emustudio.plugins.device.mits88disk.drive.DriveCollection;
 import net.emustudio.plugins.device.mits88disk.gui.DiskGui;
 import net.emustudio.plugins.device.mits88disk.gui.SettingsDialog;
 import net.emustudio.plugins.device.mits88disk.ports.ControlPort;
@@ -49,12 +51,10 @@ import java.util.*;
 public class DeviceImpl extends AbstractDevice {
     private final static Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
-    private final static int DRIVES_COUNT = 16;
     public final static int DEFAULT_CPU_PORT1 = 0x8;
     public final static int DEFAULT_CPU_PORT2 = 0x9;
     public final static int DEFAULT_CPU_PORT3 = 0xA;
 
-    private final List<Drive> drives = new ArrayList<>();
     private final StatusPort statusPort;
     private final ControlPort controlPort;
     private final DataPort dataPort;
@@ -65,26 +65,22 @@ public class DeviceImpl extends AbstractDevice {
     private int port1CPU;
     private int port2CPU;
     private int port3CPU;
-    private int currentDrive;
+
     private DiskGui gui;
+    private final DriveCollection drives = new DriveCollection();
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
 
-        for (int i = 0; i < DRIVES_COUNT; i++) {
-            drives.add(new Drive(i));
-        }
-
-        this.currentDrive = 0;  // TODO: what should be here?
         port1CPU = DEFAULT_CPU_PORT1;
         port2CPU = DEFAULT_CPU_PORT2;
         port3CPU = DEFAULT_CPU_PORT3;
 
-        statusPort = new StatusPort(this);
-        controlPort = new ControlPort(this);
-        dataPort = new DataPort(this);
+        statusPort = new StatusPort(drives);
+        controlPort = new ControlPort(drives);
+        dataPort = new DataPort(drives);
     }
 
     @Override
@@ -138,7 +134,7 @@ public class DeviceImpl extends AbstractDevice {
             cpuContext.detachDevice(0x9);
             cpuContext.detachDevice(0xA);
         }
-        drives.clear();
+        drives.destroy();
     }
 
     @Override
@@ -146,14 +142,6 @@ public class DeviceImpl extends AbstractDevice {
         if (!guiNotSupported) {
             new SettingsDialog(parent, settings, drives, applicationApi.getDialogs()).setVisible(true);
         }
-    }
-
-    public Drive getCurrentDrive() {
-        return drives.get(currentDrive);
-    }
-
-    public void setCurrentDrive(int index) {
-        currentDrive = index;
     }
 
     @Override
@@ -166,16 +154,13 @@ public class DeviceImpl extends AbstractDevice {
         port2CPU = settings.getInt(SettingsConstants.PORT2_CPU, DEFAULT_CPU_PORT2);
         port3CPU = settings.getInt(SettingsConstants.PORT3_CPU, DEFAULT_CPU_PORT3);
 
-        for (int i = 0; i < DRIVES_COUNT; i++) {
-            Drive drive = drives.get(i);
-
+        drives.foreach((i, drive) -> {
             int sectorLength = settings.getInt(SettingsConstants.SECTOR_LENGTH + i, Drive.DEFAULT_SECTOR_LENGTH);
-            drive.setSectorLength(sectorLength);
-
             int sectorsCount = settings.getInt(SettingsConstants.SECTORS_COUNT + i, Drive.DEFAULT_SECTORS_COUNT);
-            drive.setSectorsCount(sectorsCount);
-
             String imagePath = settings.getString(SettingsConstants.IMAGE + i, null);
+
+            drive.setSectorLength(sectorLength);
+            drive.setSectorsCount(sectorsCount);
             Optional.ofNullable(imagePath).ifPresent(path -> {
                 try {
                     drive.mount(Path.of(path));
@@ -187,7 +172,8 @@ public class DeviceImpl extends AbstractDevice {
                     );
                 }
             });
-        }
+            return null;
+        });
     }
 
     private int attachPort(int diskPortNumber, DeviceContext<Short> diskPort, int cpuPort) throws PluginInitializationException {

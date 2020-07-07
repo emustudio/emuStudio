@@ -23,8 +23,9 @@ import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
-import net.emustudio.plugins.device.mits88disk.Drive;
 import net.emustudio.plugins.device.mits88disk.SettingsConstants;
+import net.emustudio.plugins.device.mits88disk.drive.Drive;
+import net.emustudio.plugins.device.mits88disk.drive.DriveCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,6 @@ import javax.swing.border.TitledBorder;
 import java.awt.event.KeyEvent;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -45,9 +45,9 @@ public class SettingsDialog extends JDialog {
 
     private final Dialogs dialogs;
     private final PluginSettings settings;
-    private final List<Drive> drives;
+    private final DriveCollection drives;
 
-    public SettingsDialog(JFrame parent, PluginSettings settings, List<Drive> drives, Dialogs dialogs) {
+    public SettingsDialog(JFrame parent, PluginSettings settings, DriveCollection drives, Dialogs dialogs) {
         super(parent, true);
 
         this.settings = Objects.requireNonNull(settings);
@@ -82,20 +82,23 @@ public class SettingsDialog extends JDialog {
             settings.setInt(SettingsConstants.PORT2_CPU, radixUtils.parseRadix(txtPort2.getText()));
             settings.setInt(SettingsConstants.PORT3_CPU, radixUtils.parseRadix(txtPort3.getText()));
 
-            for (int i = 0; i < drives.size(); i++) {
-                Drive drive = drives.get(i);
+            drives.foreach((i, drive) -> {
+                try {
+                    settings.setInt(SettingsConstants.SECTORS_COUNT + i, drive.getSectorsCount());
+                    settings.setInt(SettingsConstants.SECTOR_LENGTH + i, drive.getSectorLength());
 
-                settings.setInt(SettingsConstants.SECTORS_COUNT + i, drive.getSectorsCount());
-                settings.setInt(SettingsConstants.SECTOR_LENGTH + i, drive.getSectorLength());
-
-                Path imagePath = drive.getImagePath();
-                if (imagePath != null) {
-                    settings.setString(SettingsConstants.IMAGE + i, imagePath.toAbsolutePath().toString());
-                } else {
-                    settings.remove(SettingsConstants.IMAGE + i);
+                    Path imagePath = drive.getImagePath();
+                    if (imagePath != null) {
+                        settings.setString(SettingsConstants.IMAGE + i, imagePath.toAbsolutePath().toString());
+                    } else {
+                        settings.remove(SettingsConstants.IMAGE + i);
+                    }
+                } catch (CannotUpdateSettingException e) {
+                    throw new RuntimeException(e);
                 }
-            }
-        } catch (CannotUpdateSettingException e) {
+                return null;
+            });
+        } catch (CannotUpdateSettingException | RuntimeException e) {
             LOGGER.error("Could not write MITS 88-DISK settings", e);
             dialogs.showError("Could not write settings. Please see log for more details.", "MITS 88-DISK");
         }
@@ -439,11 +442,7 @@ public class SettingsDialog extends JDialog {
     }
 
     private void txtImageFileInputMethodTextChanged() {
-        if (txtImageFile.getText().equals("")) {
-            btnMount.setEnabled(false);
-        } else {
-            btnMount.setEnabled(true);
-        }
+        btnMount.setEnabled(!txtImageFile.getText().equals(""));
     }
 
     private void btnUnmountActionPerformed(java.awt.event.ActionEvent evt) {

@@ -18,13 +18,14 @@
  */
 package net.emustudio.plugins.device.mits88disk.gui;
 
-import net.emustudio.plugins.device.mits88disk.Drive;
+import net.emustudio.plugins.device.mits88disk.drive.DriveCollection;
+import net.emustudio.plugins.device.mits88disk.drive.DriveListener;
+import net.emustudio.plugins.device.mits88disk.drive.DriveParameters;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
@@ -49,7 +50,7 @@ public class DiskGui extends JDialog {
         new DriveButton("O", () -> updateDriveInfo(14)),
         new DriveButton("P", () -> updateDriveInfo(15)),
     };
-    private final List<Drive> drives;
+    private final DriveCollection drives;
 
     private final JLabel lblOffset = createMonospacedLabel("0");
     private final JLabel lblSector = createMonospacedLabel("0");
@@ -58,23 +59,24 @@ public class DiskGui extends JDialog {
     private final JLabel lblPort2Status = createMonospacedLabel("00000000");
     private final JTextArea txtMountedImage = new JTextArea();
 
-    public DiskGui(JFrame parent, List<Drive> drives) {
+    public DiskGui(JFrame parent, DriveCollection drives) {
         super(parent);
         this.drives = Objects.requireNonNull(drives);
 
         initComponents();
         setLocationRelativeTo(parent);
 
-        for (int index = 0; index < drives.size(); index++) {
-            drives.get(index).setDriveListener(new GUIDriveListener(index));
-        }
+        drives.foreach((i, drive) -> {
+            drive.addDriveListener(new GUIDriveListener(i));
+            return null;
+        });
     }
 
     private void updateDriveInfo(int index) {
         updateDriveInfo(drives.get(index).getDriveParameters());
     }
 
-    private void updateDriveInfo(Drive.DriveParameters parameters) {
+    private void updateDriveInfo(DriveParameters parameters) {
         lblPort1Status.setText(formatBinaryString(parameters.port1status, 8));
         lblPort2Status.setText(formatBinaryString(parameters.port2status, 8));
 
@@ -308,7 +310,7 @@ public class DiskGui extends JDialog {
         return label;
     }
 
-    private class GUIDriveListener implements Drive.DriveListener {
+    private class GUIDriveListener implements DriveListener {
         private final int index;
 
         private GUIDriveListener(int index) {
@@ -321,7 +323,7 @@ public class DiskGui extends JDialog {
         }
 
         @Override
-        public void driveParamsChanged(final Drive.DriveParameters parameters) {
+        public void driveParamsChanged(final DriveParameters parameters) {
             SwingUtilities.invokeLater(() -> updateDriveInfo(parameters));
         }
     }
