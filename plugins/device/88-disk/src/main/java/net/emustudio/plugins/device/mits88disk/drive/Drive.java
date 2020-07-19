@@ -48,6 +48,15 @@ public class Drive {
     public final static short DEFAULT_SECTORS_COUNT = 32;
     public final static short DEFAULT_SECTOR_LENGTH = 137;
 
+    public static final short DEAD_DRIVE = 0b11100111;
+    private static final short ALIVE_DRIVE = 0b11100101;
+    private static final short MASK_TRACK0 = 0b10111111;
+
+    public static final short SECTOR0 = 0b11000001;
+
+    private static final short MASK_HEAD_LOAD = 0b11111011;
+    private static final short MASK_DATA_AVAILABLE = 0b01111111;
+
     private final int driveIndex;
 
     private final ReadWriteLock positionLock = new ReentrantReadWriteLock();
@@ -57,7 +66,6 @@ public class Drive {
     private int sectorsCount = DEFAULT_SECTORS_COUNT;
     private int sectorLength = DEFAULT_SECTOR_LENGTH;
 
-    private final ReadWriteLock mountLock = new ReentrantReadWriteLock();
     private Path mountedFloppy = null;
     private SeekableByteChannel imageChannel;
     private boolean selected = false;
@@ -67,7 +75,7 @@ public class Drive {
 
 
     /*
-     7   6   5   4   3   2   1   0
+       7   6   5   4   3   2   1   0
      +---+---+---+---+---+---+---+---+
      | R | Z | I | X | X | H | M | W |
      +---+---+---+---+---+---+---+---+
@@ -80,8 +88,8 @@ public class Drive {
      Z - When 0, indicates head is on track 0
      R - When 0, indicates that read circuit has new byte to read
      */
-    private short port1status;
-    private short port2status;
+    private short port1status = DEAD_DRIVE;
+    private short port2status = SECTOR0;
 
     public Drive(int driveIndex) {
         this.driveIndex = driveIndex;
@@ -118,7 +126,7 @@ public class Drive {
 
     public DriveParameters getDriveParameters() {
         return inReadLock(
-            () -> new DriveParameters(port1status, port2status, track, sector, sectorOffset, mountedFloppy)
+            () -> new DriveParameters(port1status, port2status, track, sector, getOffset(), mountedFloppy)
         );
     }
 
@@ -130,29 +138,36 @@ public class Drive {
         if (mountedFloppy == null) {
             LOGGER.warn("[drive={}] Could not select drive; image is not mounted", driveIndex);
         } else {
-            inWriteLock(() -> {
-                selected = true;
-                port1status = 0xE5; // 11100101b
-                port2status = 0xC1; // 11000001b
-                sector = 0;
-                sectorOffset = 0;
-                if (track == 0) {
-                    port1status &= 0xBF; // 10111111b
-                } // head is on track 0
-            });
+            selectInternal();
             notifyDiskSelected();
             notifyParamsChanged();
         }
     }
 
-    public void deselect() {
+    private void selectInternal() {
         inWriteLock(() -> {
-            selected = false;
-            port1status = 0xE7;
-            port2status = 0xC1;
+            selected = true;
+            port1status = ALIVE_DRIVE;
+            port2status = SECTOR0;
+            sector = 0;
+            sectorOffset = sectorLength;
+            if (track == 0) {
+                port1status &= MASK_TRACK0;
+            }
         });
+    }
+
+    public void deselect() {
+        deselectInternal();
         notifyDiskSelected();
         notifyParamsChanged();
+    }
+
+    private void deselectInternal() {
+        inWriteLock(() -> {
+            selected = false;
+            port1status = DEAD_DRIVE;
+        });
     }
 
     public void mount(Path imagePath) throws IOException {
@@ -192,15 +207,23 @@ public class Drive {
     }
 
     public short getPort2status() {
-        return inReadLock(() -> port2status);
+        return inReadLock(() -> {
+            if (((~port1status) & (~MASK_HEAD_LOAD)) != 0) {
+                return port2status;
+            } else {
+                return (short) 0;
+            }
+        });
     }
 
     public void writeToPort2(short val) {
         inWriteLock(() -> {
             if ((val & 0x01) != 0) { /* Step head in */
                 track++;
+                // TODO: do not allow more tracks than available
                 sector = 0;
-                sectorOffset = 0;
+                sectorOffset = sectorLength;
+                port2status = SECTOR0;
             }
             if ((val & 0x02) != 0) { /* Step head out */
                 track--;
@@ -209,25 +232,28 @@ public class Drive {
                     port1status &= 0xBF; // head is on track 0
                 }
                 sector = 0;
-                sectorOffset = 0;
+                sectorOffset = sectorLength;
+                port2status = SECTOR0;
             }
             if ((val & 0x04) != 0) { /* Head load */
-                // 11111011
-                port1status &= 0xFB; /* turn on head loaded bit */
-                port1status &= 0x7F; /* turn on 'read data available */
-
+                port1status &= MASK_HEAD_LOAD;
+                port1status &= MASK_DATA_AVAILABLE;
                 port2status = (short) ((sector << 1) & 0x3E | 0xC0);
+                if (sectorOffset != 0) {
+                    port2status |= 1; // SR0 = false
+                }
             }
             if ((val & 0x08) != 0) { /* Head Unload */
-                port1status |= 0x04; /* turn off 'head loaded' */
-                port1status |= 0x80; /* turn off 'read data avail */
-
+                port1status |= (~MASK_HEAD_LOAD); /* turn off 'head loaded' */
+                port1status |= (~MASK_DATA_AVAILABLE); /* turn off 'read data avail */
                 sector = 0;
-                sectorOffset = 0;
+                sectorOffset = sectorLength;
+                port2status = SECTOR0;
             }
             /* Interrupts & head current are ignored */
             if ((val & 0x80) != 0) { /* write sequence start */
-                sectorOffset = 0; // sectorLength-1;
+                sectorOffset = 0;
+                port2status &= 0xFE; // SR0 = true
                 port1status &= 0xFE; /* enter new write data on */
             }
         });
@@ -236,13 +262,10 @@ public class Drive {
 
     public void nextSectorIfHeadIsLoaded() {
         inWriteLock(() -> {
-            if (((~port1status) & 0x04) != 0) { /* head loaded? */
-                sector = (short) ((sector + 1) % 32);
-                sectorOffset = 0;
+            if (((~port1status) & (~MASK_HEAD_LOAD)) != 0) { /* head loaded? */
+                sector = (short) ((sector + 1) % sectorsCount);
+                sectorOffset = sectorLength;
                 port2status = (short) ((sector << 1) & 0x3E | 0xC0);
-            } else {
-                // head not loaded - sector true is 1 (false)
-                port2status = 0xC1;
             }
         });
         notifyParamsChanged();
@@ -254,16 +277,21 @@ public class Drive {
             byteBuffer.put((byte) (data & 0xFF));
             byteBuffer.flip();
 
+            if (sectorOffset == sectorLength) {
+                port1status |= 1; /* ENWD off */
+                port2status &= 0xFE; // SR0 = TRUE
+                return;
+            }
+
+            int pos = sectorsCount * sectorLength * track + sectorLength * sector + sectorOffset;
             try {
-                imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + sectorOffset);
+                imageChannel.position(pos);
                 imageChannel.write(byteBuffer);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             } finally {
-                sectorOffset = (short) ((sectorOffset + 1) % sectorLength);
-                if (sectorOffset == 0) {
-                    port1status |= 1; /* ENWD off */
-                }
+                sectorOffset = (sectorOffset == sectorLength) ? sectorLength : (sectorOffset + 1);
+                port2status |= 1;
             }
         });
         notifyParamsChanged();
@@ -273,12 +301,10 @@ public class Drive {
         if (mountedFloppy == null) {
             return 0;
         }
-//        LOGGER.trace("[T={}, S={}, O={}, imagePos={}] Reading", track, sector, sectorOffset,
-//            sectorsPerTrack * sectorLength * track + sectorLength * sector + sectorOffset
-//        );
         short result = inWriteLock(() -> {
             try {
-                imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + sectorOffset);
+                int offset = (sectorOffset == sectorLength) ? 0 : sectorOffset;
+                imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + offset);
                 byteBuffer.clear();
                 int bytesRead = imageChannel.read(byteBuffer);
                 if (bytesRead != byteBuffer.capacity()) {
@@ -289,7 +315,12 @@ public class Drive {
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             } finally {
-                sectorOffset = (short) ((sectorOffset + 1) % sectorLength);
+                sectorOffset = (sectorOffset == sectorLength) ? 1 : (sectorOffset + 1);
+                if (sectorOffset == sectorLength) {
+                    port2status &= 0xFE;
+                } else {
+                    port2status |= 1;
+                }
             }
         });
         notifyParamsChanged();
@@ -305,42 +336,16 @@ public class Drive {
     }
 
     public int getOffset() {
-        return inReadLock(() -> sectorOffset);
-    }
-
-    public String portStatusToString(short status) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("DRIVE[" + driveIndex + "] ");
-
-        if ((status & 1) == 0) {
-            sb.append("W ");
-        }
-        if ((status & 2) == 0) {
-            sb.append("M ");
-        }
-        if ((status & 4) == 0) {
-            sb.append("H ");
-        }
-        if ((status & 32) == 0) {
-            sb.append("I ");
-        }
-        if ((status & 64) == 0) {
-            sb.append("Z ");
-        }
-        if ((status & 128) == 0) {
-            sb.append("R");
-        }
-
-        return sb.toString();
+        return inReadLock(() -> sectorOffset == sectorLength ? 0 : sectorOffset);
     }
 
     private void reset() {
         inWriteLock(() -> {
             track = 0;
             sector = 0;
-            sectorOffset = 0;
-            port1status = 0xE7; // 11100111b
-            port2status = 0xC1;
+            sectorOffset = sectorLength;
+            port1status = DEAD_DRIVE;
+            port2status = SECTOR0;
         });
     }
 
@@ -352,9 +357,7 @@ public class Drive {
     }
 
     private void notifyParamsChanged() {
-        DriveParameters parameters = inReadLock(() -> new DriveParameters(
-            port1status, port2status, track, sector, sectorOffset, mountedFloppy
-        ));
+        DriveParameters parameters = getDriveParameters();
         for (DriveListener listener : listeners) {
             listener.driveParamsChanged(parameters);
         }
@@ -386,15 +389,6 @@ public class Drive {
             return action.call();
         } catch (Exception e) {
             throw new RuntimeException(e);
-        } finally {
-            positionLock.readLock().unlock();
-        }
-    }
-
-    private void inReadLock(Runnable action) {
-        positionLock.readLock().lock();
-        try {
-            action.run();
         } finally {
             positionLock.readLock().unlock();
         }

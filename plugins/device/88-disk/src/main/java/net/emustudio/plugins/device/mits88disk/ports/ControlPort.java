@@ -39,15 +39,15 @@ public class ControlPort implements DeviceContext<Short> {
 
     @Override
     public Short readData() {
-        Drive currentDrive = disk.getCurrentDrive();
-        currentDrive.nextSectorIfHeadIsLoaded();
-
-        return currentDrive.getPort2status();
+        return disk.getCurrentDrive().map(drive -> {
+            drive.nextSectorIfHeadIsLoaded();
+            return drive.getPort2status();
+        }).orElse(Drive.SECTOR0);
     }
 
     @Override
     public void writeData(Short val) {
-        disk.getCurrentDrive().writeToPort2(val);
+        disk.getCurrentDrive().ifPresent(drive -> drive.writeToPort2(val));
     }
 
     @Override

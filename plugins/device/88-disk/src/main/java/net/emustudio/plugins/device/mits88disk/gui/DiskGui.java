@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88disk.gui;
 
+import net.emustudio.plugins.device.mits88disk.drive.Drive;
 import net.emustudio.plugins.device.mits88disk.drive.DriveCollection;
 import net.emustudio.plugins.device.mits88disk.drive.DriveListener;
 import net.emustudio.plugins.device.mits88disk.drive.DriveParameters;
@@ -28,7 +29,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 import static net.emustudio.plugins.device.mits88disk.gui.Constants.MONOSPACED_PLAIN;
 
 public class DiskGui extends JDialog {
@@ -55,8 +55,8 @@ public class DiskGui extends JDialog {
     private final JLabel lblOffset = createMonospacedLabel("0");
     private final JLabel lblSector = createMonospacedLabel("0");
     private final JLabel lblTrack = createMonospacedLabel("0");
-    private final JLabel lblPort1Status = createMonospacedLabel("11100111");
-    private final JLabel lblPort2Status = createMonospacedLabel("00000000");
+    private final JLabel lblPort1Status = createMonospacedLabel(DriveParameters.port1StatusString(Drive.DEAD_DRIVE));
+    private final JLabel lblPort2Status = createMonospacedLabel(DriveParameters.port2StatusString(Drive.SECTOR0));
     private final JTextArea txtMountedImage = new JTextArea();
 
     public DiskGui(JFrame parent, DriveCollection drives) {
@@ -77,8 +77,8 @@ public class DiskGui extends JDialog {
     }
 
     private void updateDriveInfo(DriveParameters parameters) {
-        lblPort1Status.setText(formatBinaryString(parameters.port1status, 8));
-        lblPort2Status.setText(formatBinaryString(parameters.port2status, 8));
+        lblPort1Status.setText(parameters.port1statusString);
+        lblPort2Status.setText(parameters.port2statusString);
 
         lblSector.setText(String.valueOf(parameters.sector));
         lblTrack.setText(String.valueOf(parameters.track));

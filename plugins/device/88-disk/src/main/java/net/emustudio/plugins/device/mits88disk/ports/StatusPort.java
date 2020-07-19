@@ -39,21 +39,17 @@ public class StatusPort implements DeviceContext<Short> {
 
     @Override
     public Short readData() {
-        // interpret port1 status
-        return disk.getCurrentDrive().getPort1status();
+        return disk.getCurrentDrive().map(Drive::getPort1status).orElse(Drive.DEAD_DRIVE);
     }
 
     @Override
     public void writeData(Short value) {
-        // select device
-        disk.setCurrentDrive(value & 0x0F);
-        Drive drive = disk.getCurrentDrive();
         if ((value & 0x80) != 0) {
-            // disable device
-            drive.deselect();
-            disk.setCurrentDrive(0xFF);
+            disk.getCurrentDrive().ifPresent(Drive::deselect);
+            disk.unsetCurrentDrive();
         } else {
-            drive.select();
+            disk.setCurrentDrive(value & 0x0F);
+            disk.getCurrentDrive().ifPresent(Drive::select);
         }
     }
 

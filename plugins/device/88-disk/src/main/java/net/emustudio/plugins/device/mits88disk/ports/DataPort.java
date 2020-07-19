@@ -19,6 +19,7 @@
 package net.emustudio.plugins.device.mits88disk.ports;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.device.mits88disk.drive.Drive;
 import net.emustudio.plugins.device.mits88disk.drive.DriveCollection;
 
 import java.util.Objects;
@@ -38,12 +39,12 @@ public class DataPort implements DeviceContext<Short> {
 
     @Override
     public Short readData() {
-        return disk.getCurrentDrive().readData();
+        return disk.getCurrentDrive().map(Drive::readData).orElse((short)0);
     }
 
     @Override
     public void writeData(Short data) {
-        disk.getCurrentDrive().writeData(data);
+        disk.getCurrentDrive().ifPresent(drive -> drive.writeData(data));
     }
 
     @Override
