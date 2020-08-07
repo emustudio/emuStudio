@@ -12,15 +12,15 @@ since 2007.
 
 ## Available emulators
 
-* [MITS Altair8800](https://www.emustudio.net/docuser/mits_altair_8800/index/)
+* [MITS Altair8800](https://www.emustudio.net/documentation/user/altair8800/)
 
-* [Manchester SSEM](https://www.emustudio.net/docuser/ssem/index/)
+* [Manchester SSEM](https://www.emustudio.net/documentation/user/ssem/)
 
-* [Random Access Machine (RAM)](https://www.emustudio.net/docuser/ram/index/)
+* [Random Access Machine (RAM)](https://www.emustudio.net/documentation/user/ram/)
 
-* [Random Access Stored Program (RASP)](https://www.emustudio.net/docuser/rasp/index/) 
+* [Random Access Stored Program (RASP)](https://www.emustudio.net/documentation/user/rasp/) 
 
-* [BrainDuck (brainfuck interpreter)](https://www.emustudio.net/docuser/brainduck/index/)
+* [BrainDuck (brainfuck interpreter)](https://www.emustudio.net/documentation/user/brainduck/)
 
 ## BIG THANKS
 
@@ -48,12 +48,12 @@ Then, unzip the tar/zip file (`emuStudio-xxx.zip`) and run it using command:
 
 NOTE: Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
 
-For more information, please read [user documentation](https://www.emustudio.net/docs/).
+For more information, please read [user documentation](https://www.emustudio.net/documentation/user/introduction/).
 
 ## Contributing
 
 Anyone can contribute. Before start, please read
-[developer documentation](https://www.emustudio.net/devel/),
+[developer documentation](https://www.emustudio.net/documentation/developer/introduction/),
 which includes information like:
 
 - Which tools to use and how to set up the environment
