@@ -35,7 +35,7 @@ include ':plugins:cpu:rasp-cpu'
 include ':plugins:cpu:ssem-cpu'
 include ':plugins:cpu:z80-cpu'
 
-include ':plugins:device:88-disk'
+include ':plugins:device:88-dcdd'
 include ':plugins:device:88-sio'
 include ':plugins:device:abstract-tape'
 include ':plugins:device:adm3A-terminal'
