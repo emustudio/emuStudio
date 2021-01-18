@@ -38,7 +38,6 @@ public class LexerTest {
 
         TokenImpl token = lexer.next_token();
         assertEquals(Token.LITERAL, token.getType());
-        assertEquals(TokenImpl.NUMBER, token.getID());
         assertEquals(31, token.value);
     }
 
@@ -48,7 +47,6 @@ public class LexerTest {
 
         TokenImpl token = lexer.next_token();
         assertEquals(Token.LITERAL, token.getType());
-        assertEquals(TokenImpl.NUMBER, token.getID());
         assertEquals(0, token.value);
     }
 
@@ -58,14 +56,12 @@ public class LexerTest {
 
         TokenImpl token = lexer.next_token();
         assertEquals(Token.LITERAL, token.getType());
-        assertEquals(TokenImpl.NUMBER, token.getID());
         assertEquals(22, token.value);
     }
 
     private void checkInstruction(int id, LexerImpl lexer) throws IOException {
         TokenImpl token = lexer.next_token();
         assertEquals(Token.RESERVED, token.getType());
-        assertEquals(id, token.getID());
     }
 
     private void checkInstructionWithOperand(int id, LexerImpl lexer) throws IOException {
@@ -73,7 +69,6 @@ public class LexerTest {
 
         TokenImpl token = lexer.next_token();
         assertEquals(Token.LITERAL, token.getType());
-        assertEquals(TokenImpl.NUMBER, token.getID());
     }
 
     @Test
@@ -99,12 +94,10 @@ public class LexerTest {
         LexerImpl lexer = lexer("// cmp");
         TokenImpl token = lexer.next_token();
 
-        assertEquals(TokenImpl.TCOMMENT, token.getID());
         assertEquals(Token.COMMENT, token.getType());
 
         token = lexer.next_token();
         assertEquals(Token.TEOF, token.getType());
-        assertEquals(TokenImpl.EOF, token.getID());
     }
 
     @Test
@@ -113,11 +106,9 @@ public class LexerTest {
 
         TokenImpl token = lexer.next_token();
         assertEquals(Token.PREPROCESSOR, token.getType());
-        assertEquals(TokenImpl.BNUM, token.getID());
         assertEquals(LexerImpl.BIN, token.getLexerState());
 
         token = lexer.next_token();
         assertEquals(Token.LITERAL, token.getType());
-        assertEquals(TokenImpl.NUMBER, token.getID());
     }
 }

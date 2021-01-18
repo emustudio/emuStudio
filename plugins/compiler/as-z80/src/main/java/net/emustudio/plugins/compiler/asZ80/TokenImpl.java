@@ -26,7 +26,6 @@ public class TokenImpl extends ComplexSymbol implements Token, Symbols {
     public final static int ERROR_DECIMAL_SIZE = 0xA01;
     public final static int ERROR_UNCLOSED_CHAR = 0xA02;
     public final static int ERROR_UNCLOSED_STRING = 0xA03;
-    public final static int ERROR_UNKNOWN_TOKEN = 0xA04;
 
     private final int category;
     private final int lexerState;
@@ -68,7 +67,7 @@ public class TokenImpl extends ComplexSymbol implements Token, Symbols {
                 return "Char is not closed with single quote (')";
             case ERROR_UNCLOSED_STRING:
                 return "String is not closed with single quote (')";
-            case ERROR_UNKNOWN_TOKEN:
+            case ERROR:
                 return "Unknown token";
         }
         return "";

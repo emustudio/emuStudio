@@ -63,14 +63,14 @@ import java.io.Reader;
     }
 
     private TokenImpl token(int id, int category) {
-        Location left = new Location("", yyline+1,yycolumn+1,yychar);
-        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        Location left = new Location("", yyline+1,yycolumn+1, (int)yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), (int)yychar+yylength());
         return new TokenImpl(id, category, zzLexicalState, yytext(), left, right);
     }
 
     private TokenImpl token(int id, int category, Object value) {
-        Location left = new Location("", yyline+1,yycolumn+1,yychar);
-        Location right= new Location("", yyline+1,yycolumn+yylength(), yychar+yylength());
+        Location left = new Location("", yyline+1,yycolumn+1, (int)yychar);
+        Location right= new Location("", yyline+1,yycolumn+yylength(), (int)yychar+yylength());
         return new TokenImpl(id, category, zzLexicalState, yytext(), left, right, value);
     }
 %}
@@ -344,5 +344,5 @@ Label ={Identifier}[\:]
     return token(TokenImpl.TLABEL, Token.LABEL, val);
 }
 . {
-    return token(TokenImpl.ERROR_UNKNOWN_TOKEN, Token.ERROR);
+    return token(TokenImpl.error, Token.ERROR);
 }
