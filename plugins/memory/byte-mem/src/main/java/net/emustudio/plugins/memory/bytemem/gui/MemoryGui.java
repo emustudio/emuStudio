@@ -166,13 +166,13 @@ public class MemoryGui extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        setTitle("Standard Operating Memory");
+        setTitle("Byte Operating Memory");
         setSize(new java.awt.Dimension(794, 629));
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
-        btnLoadImage.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/document-open.png")));
+        btnLoadImage.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/document-open.png")));
         btnLoadImage.setToolTipText("Load image...");
         btnLoadImage.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnLoadImage.setFocusable(false);
@@ -181,7 +181,7 @@ public class MemoryGui extends JDialog {
         btnLoadImage.addActionListener(this::btnLoadImageActionPerformed);
         jToolBar1.add(btnLoadImage);
 
-        btnDump.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/document-save.png")));
+        btnDump.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/document-save.png")));
         btnDump.setToolTipText("Dump (save) memory...");
         btnDump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnDump.setFocusable(false);
@@ -191,7 +191,7 @@ public class MemoryGui extends JDialog {
         jToolBar1.add(btnDump);
         jToolBar1.addSeparator();
 
-        btnGotoAddress.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/format-indent-more.png")));
+        btnGotoAddress.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/format-indent-more.png")));
         btnGotoAddress.setToolTipText("Go to address...");
         btnGotoAddress.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnGotoAddress.setFocusable(false);
@@ -200,7 +200,7 @@ public class MemoryGui extends JDialog {
         btnGotoAddress.addActionListener(this::btnGotoAddressActionPerformed);
         jToolBar1.add(btnGotoAddress);
 
-        btnFind.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/edit-find.png")));
+        btnFind.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/edit-find.png")));
         btnFind.setToolTipText("Find sequence...");
         btnFind.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnFind.setFocusable(false);
@@ -210,7 +210,7 @@ public class MemoryGui extends JDialog {
         jToolBar1.add(btnFind);
         jToolBar1.addSeparator();
 
-        btnClean.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/edit-clear.png")));
+        btnClean.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/edit-clear.png")));
         btnClean.setToolTipText("Erase memory");
         btnClean.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnClean.setFocusable(false);
@@ -220,7 +220,7 @@ public class MemoryGui extends JDialog {
         jToolBar1.add(btnClean);
         jToolBar1.addSeparator();
 
-        btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/standard/gui/preferences-system.png")));
+        btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/preferences-system.png")));
         btnSettings.setToolTipText("Settings...");
         btnSettings.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnSettings.setFocusable(false);
