@@ -39,7 +39,7 @@ dependencies {
 jar {
   archiveVersion = ''
   manifest {
-    attributes manifestAttributes('net.emustudio.plugins.device.mits88disk.Runner')
+    attributes manifestAttributes('net.emustudio.plugins.device.mits88dcdd.Runner')
   }
 }
 

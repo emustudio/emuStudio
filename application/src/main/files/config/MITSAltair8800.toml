@@ -51,8 +51,8 @@ name = "MITS Altair8800"
 
 [[DEVICE]]
 	schemaPoint = "220,60"
-	path = "88-disk.jar"
-	name = "88-disk"
+	path = "88-dcdd.jar"
+	name = "88-dcdd"
 	id = "ad934179-3690-4bbc-b6ab-f4634346927a"
 	type = "DEVICE"
 
