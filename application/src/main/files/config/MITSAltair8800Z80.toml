@@ -46,8 +46,8 @@ name = "MITS Altair8800 (Z80)"
 #       antiAliasing = true
 [[DEVICE]]
 	schemaPoint = "340,140"
-	path = "88-disk.jar"
-	name = "88-disk"
+	path = "88-dcdd.jar"
+	name = "88-dcdd"
 	id = "c94d0e9b-f394-4a71-94b0-87d0f970a3fd"
 	type = "DEVICE"
 
