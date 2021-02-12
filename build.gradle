@@ -36,14 +36,14 @@ ext.libs = [
   logback        : "ch.qos.logback:logback-classic:1.2.3",
 
   args4j         : "args4j:args4j:2.33",
-  tomlj          : "com.electronwill.night-config:toml:3.6.2",
+  tomlj          : "com.electronwill.night-config:toml:3.6.3",
 
-  editor         : "com.fifesoft:rsyntaxtextarea:3.1.1",
-  editorDialogs  : "com.fifesoft:rstaui:3.1.0",
+  editor         : "com.fifesoft:rsyntaxtextarea:3.1.2",
+  editorDialogs  : "com.fifesoft:rstaui:3.1.1",
 
   junit          : "junit:junit:4.13",
   easyMock       : "org.easymock:easymock:4.2",
-  mockito        : "org.mockito:mockito-all:1.9.5"
+  mockito        : "org.mockito:mockito-all:1.10.19"
 ]
 
 allprojects {
@@ -92,5 +92,6 @@ allprojects {
 subprojects {
   repositories {
     mavenCentral()
+    mavenLocal()
   }
 }

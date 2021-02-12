@@ -79,7 +79,7 @@ parser code{:
         }
 :};
 
-terminal READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT, ORG, SEPARATOR_EOL, TCOMMENT, OPERATOR_CONSTANT, ERROR_UNKNOWN_TOKEN;
+terminal READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT, ORG, SEPARATOR_EOL, TCOMMENT, OPERATOR_CONSTANT;
 terminal Integer NUMBER;
 terminal String TLABEL, IDENT;
 terminal TINPUT;
@@ -93,7 +93,6 @@ non terminal Statement Statement;
 non terminal InstructionImpl Instruction;
 non terminal InstructionImpl JumpInstruction;
 non terminal Input Input;
-non terminal Integer MaybeOrg;
 
 
 start with SourceCode;
