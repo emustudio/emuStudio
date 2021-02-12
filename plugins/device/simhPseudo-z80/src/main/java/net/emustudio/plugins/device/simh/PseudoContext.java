@@ -19,7 +19,7 @@
 package net.emustudio.plugins.device.simh;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ import java.util.Calendar;
 class PseudoContext implements DeviceContext<Short> {
     private final static Logger LOGGER = LoggerFactory.getLogger(PseudoContext.class);
 
-    private StandardMemoryContext mem;
+    private ByteMemoryContext mem;
 
     /* SIMH pseudo device status registers                                                                          */
     /* ZSDOS clock definitions                                                                                      */
@@ -90,7 +90,7 @@ class PseudoContext implements DeviceContext<Short> {
     private final static int SECONDS_PER_HOUR = (60 * SECONDS_PER_MINUTE);
     private final static int SECONDS_PER_DAY = (24 * SECONDS_PER_HOUR);
 
-    void setMemory(StandardMemoryContext mem) {
+    void setMemory(ByteMemoryContext mem) {
         this.mem = mem;
     }
 

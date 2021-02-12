@@ -1,6 +1,0 @@
-# standard-mem
-
-This project is emulator of "standard" operating memory for various machines.
-It is part of [emuStudio](https://www.emustudio.net/).
-
-The official documentation can be found [here](https://www.emustudio.net/docuser/mits_altair_8800/index/#operating-memory-code-standard-mem-code)

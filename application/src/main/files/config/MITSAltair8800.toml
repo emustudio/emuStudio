@@ -2,8 +2,8 @@ name = "MITS Altair8800"
 
 [MEMORY]
 	schemaPoint = "80,180"
-	path = "standard-mem.jar"
-	name = "standard-mem"
+	path = "byte-mem.jar"
+	name = "byte-mem"
 	id = "fee24374-8d28-4472-85ef-e8ef182f44e3"
 	type = "MEMORY"
 
