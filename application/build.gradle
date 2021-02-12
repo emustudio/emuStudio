@@ -59,7 +59,7 @@ dependencies {
   providedRuntime project(":plugins:memory:rasp-mem")
   providedRuntime project(":plugins:memory:brainduck-mem")
   providedRuntime project(":plugins:memory:ssem-mem")
-  providedRuntime project(":plugins:memory:standard-mem")
+  providedRuntime project(":plugins:memory:byte-mem")
 
   providedRuntime project(":plugins:cpu:8080-cpu")
   providedRuntime project(":plugins:cpu:brainduck-cpu")
@@ -186,7 +186,7 @@ distributions {
         from(output(":plugins:memory:rasp-mem"))
         from(output(":plugins:memory:brainduck-mem"))
         from(output(":plugins:memory:ssem-mem"))
-        from(output(":plugins:memory:standard-mem"))
+        from(output(":plugins:memory:byte-mem"))
       }
 
       into('cpu') {

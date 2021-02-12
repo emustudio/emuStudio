@@ -26,7 +26,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
-import net.emustudio.plugins.memory.standard.api.StandardMemoryContext;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import javax.swing.*;
 import java.util.MissingResourceException;
@@ -53,7 +53,7 @@ public class DeviceImpl extends AbstractDevice {
         ContextPool contextPool = applicationApi.getContextPool();
 
         ExtendedContext cpu = contextPool.getCPUContext(pluginID, ExtendedContext.class);
-        StandardMemoryContext mem = contextPool.getMemoryContext(pluginID, StandardMemoryContext.class);
+        ByteMemoryContext mem = contextPool.getMemoryContext(pluginID, ByteMemoryContext.class);
 
         context.setMemory(mem);
 
