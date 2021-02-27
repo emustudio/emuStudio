@@ -38,6 +38,7 @@ class DisplayGui extends JDialog {
         setLocationRelativeTo(parent);
 
         scrollPane.setViewportView(displayPanel);
+        displayPanel.reset(memory);
         initListener();
     }
 
@@ -49,7 +50,7 @@ class DisplayGui extends JDialog {
                     displayPanel.reset(memory);
                 } else {
                     int row = bytePosition / 4;
-                    displayPanel.writeRow(memory.readWord(row * 4), row);
+                    displayPanel.writeRow(memory.readWord(bytePosition), row);
                 }
             }
 
