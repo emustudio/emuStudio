@@ -107,6 +107,7 @@ public class REditor implements Editor {
         } else {
             sourceFileExtensions = Collections.emptyList();
         }
+        textPane.setDirty(false);
     }
 
     @Override
