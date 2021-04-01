@@ -105,7 +105,7 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
             "STACK EQU TEMPP+256");
 
         assertProgram(
-            0x31, 0x2C, 0x01, 0, 0, 0
+            0x31, 0x03, 0x01, 5, 0, 0
         );
     }
 
