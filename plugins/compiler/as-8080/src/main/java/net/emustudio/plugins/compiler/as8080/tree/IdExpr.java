@@ -20,7 +20,6 @@ package net.emustudio.plugins.compiler.as8080.tree;
 
 import net.emustudio.plugins.compiler.as8080.Namespace;
 import net.emustudio.plugins.compiler.as8080.exceptions.NeedMorePassException;
-import net.emustudio.plugins.compiler.as8080.exceptions.UnknownIdentifierException;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;
 
 public class IdExpr extends ExprNode {

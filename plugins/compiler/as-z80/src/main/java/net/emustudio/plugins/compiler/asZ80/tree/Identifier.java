@@ -20,13 +20,12 @@ package net.emustudio.plugins.compiler.asZ80.tree;
 
 import net.emustudio.plugins.compiler.asZ80.Namespace;
 import net.emustudio.plugins.compiler.asZ80.exceptions.NeedMorePassException;
-import net.emustudio.plugins.compiler.asZ80.exceptions.UnknownIdentifierException;
 import net.emustudio.plugins.compiler.asZ80.treeAbstract.Expression;
 
 public class Identifier extends Expression {
-    private String name;
-    private int line;
-    private int col;
+    private final String name;
+    private final int line;
+    private final int col;
 
     public Identifier(String name, int line, int col) {
         this.name = name;
@@ -61,7 +60,7 @@ public class Identifier extends Expression {
             this.value = set.getValue();
             return this.value;
         } else {
-            throw new UnknownIdentifierException(line, col, this.name);
+            throw new NeedMorePassException(line, col);
         }
     }
 }

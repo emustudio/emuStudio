@@ -48,13 +48,14 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
         );
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void testRecursiveConstantDefinitionsDoesNotWork() throws Exception {
         compile(
             "here equ there\n"
                 + "there equ here\n"
                 + "jp z, here"
         );
+        assertProgram(0xCA, 0, 0);
     }
 
     @Test(expected = Exception.class)
@@ -94,5 +95,22 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
         compile(
             "here: db 4\nhere equ 1\n"
         );
+    }
+
+    @Test
+    public void testForwardReferenceOfConstantShouldWork() throws Exception {
+        compile("LD SP,STACK\n" +
+            "TEMPP: DW TEMP0\n" +
+            "TEMP0: DS 1\n" +
+            "STACK EQU TEMPP+256");
+
+        assertProgram(
+            0x31, 0x03, 0x01, 0x05, 0, 0
+        );
+    }
+
+    @Test(expected = Exception.class)
+    public void testUnknownIdentifier() throws Exception {
+        compile("LD SP,STACK");
     }
 }
