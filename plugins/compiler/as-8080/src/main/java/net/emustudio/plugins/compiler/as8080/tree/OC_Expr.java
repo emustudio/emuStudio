@@ -115,7 +115,6 @@ public class OC_Expr extends OpCodeNode {
 
     @Override
     public int getSize() {
-        System.out.println("Getting size: " + mnemo);
         return INSTRUCTION_SIZE.get(mnemo);
     }
 
