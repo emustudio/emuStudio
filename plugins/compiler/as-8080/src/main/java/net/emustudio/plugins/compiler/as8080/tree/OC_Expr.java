@@ -67,6 +67,8 @@ public class OC_Expr extends OpCodeNode {
         INSTRUCTION_SIZE.put("xri", 2);
         INSTRUCTION_SIZE.put("ori", 2);
         INSTRUCTION_SIZE.put("cpi", 2);
+        INSTRUCTION_SIZE.put("in", 2);
+        INSTRUCTION_SIZE.put("out", 2);
 
         OPCODES_BASE_198.put("adi", 0);
         OPCODES_BASE_198.put("aci", 8);
@@ -113,6 +115,7 @@ public class OC_Expr extends OpCodeNode {
 
     @Override
     public int getSize() {
+        System.out.println("Getting size: " + mnemo);
         return INSTRUCTION_SIZE.get(mnemo);
     }
 
