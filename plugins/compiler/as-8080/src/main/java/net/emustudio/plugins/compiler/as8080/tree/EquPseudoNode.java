@@ -25,8 +25,8 @@ import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.PseudoNode;
 
 public class EquPseudoNode extends PseudoNode {
-    private ExprNode expr;
-    private String mnemo;
+    private final ExprNode expr;
+    private final String mnemo;
 
     public EquPseudoNode(String id, ExprNode expr, int line, int column) {
         super(line, column);

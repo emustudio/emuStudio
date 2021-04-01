@@ -79,4 +79,13 @@ public class IfPseudoNode extends PseudoBlock {
             stat.pass4(hex);
         }
     }
+
+    @Override
+    public String toString() {
+        return "IfPseudoNode{" +
+            "expr=" + expr +
+            ", stat=" + stat +
+            ", condTrue=" + condTrue +
+            '}';
+    }
 }

@@ -45,4 +45,11 @@ public abstract class ExprNode {
             return String.format("%02X%02X", (value & 0xFF), ((value >> 8) & 0xFF));
         }
     }
+
+    @Override
+    public String toString() {
+        return "ExprNode{" +
+            "value=" + value +
+            '}';
+    }
 }

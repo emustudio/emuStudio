@@ -112,6 +112,7 @@ public class IncludePseudoNode extends PseudoNode {
     @Override
     public void pass4(IntelHEX hex) throws Exception {
         while (program.pass3(namespace)) {
+            // ignore
         }
         if (namespace.getPassNeedCount() != 0) {
             throw new Exception("Error: can't evaluate all expressions");
@@ -122,5 +123,15 @@ public class IncludePseudoNode extends PseudoNode {
     @Override
     public String getName() {
         return fileName;
+    }
+
+    @Override
+    public String toString() {
+        return "IncludePseudoNode{" +
+            "fileName='" + fileName + '\'' +
+            ", compiler=" + compiler +
+            ", program=" + program +
+            ", namespace=" + namespace +
+            '}';
     }
 }

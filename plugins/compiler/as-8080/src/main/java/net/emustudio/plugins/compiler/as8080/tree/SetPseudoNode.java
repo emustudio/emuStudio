@@ -60,4 +60,12 @@ public class SetPseudoNode extends PseudoNode {
     @Override
     public void pass4(IntelHEX hex) {
     }
+
+    @Override
+    public String toString() {
+        return "SetPseudoNode{" +
+            "expr=" + expr +
+            ", mnemo='" + mnemo + '\'' +
+            '}';
+    }
 }

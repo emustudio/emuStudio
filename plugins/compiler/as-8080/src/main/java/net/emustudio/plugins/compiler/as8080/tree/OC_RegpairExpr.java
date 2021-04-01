@@ -51,4 +51,12 @@ public class OC_RegpairExpr extends OpCodeNode {
         hex.putCode(String.format("%1$02X", opCode));
         hex.putCode(expr.getEncValue(false));
     }
+
+    @Override
+    public String toString() {
+        return "OC_RegpairExpr{" +
+            "regpair=" + regpair +
+            ", expr=" + expr +
+            '}';
+    }
 }

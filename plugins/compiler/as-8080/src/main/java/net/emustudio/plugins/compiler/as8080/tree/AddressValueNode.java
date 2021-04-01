@@ -28,4 +28,9 @@ public class AddressValueNode extends ExprNode {
         this.value = curr_addr;
         return curr_addr;
     }
+
+    @Override
+    public String toString() {
+        return "AddressValueNode{value="+ value +"}";
+    }
 }

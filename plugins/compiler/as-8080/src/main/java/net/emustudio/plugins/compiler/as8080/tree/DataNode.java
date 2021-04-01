@@ -60,4 +60,11 @@ public class DataNode extends CodeNode {
             dataValue.pass4(hex);
         }
     }
+
+    @Override
+    public String toString() {
+        return "DataNode{" +
+            "dataValues=" + dataValues +
+            '}';
+    }
 }

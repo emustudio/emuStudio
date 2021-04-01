@@ -99,4 +99,15 @@ public class MacroPseudoNode extends PseudoBlock {
     public void pass4(IntelHEX hex) throws Exception {
         stat.pass4(hex, newEnv);
     }
+
+    @Override
+    public String toString() {
+        return "MacroPseudoNode{" +
+            "newEnv=" + newEnv +
+            ", params=" + params +
+            ", call_params=" + call_params +
+            ", stat=" + stat +
+            ", mnemo='" + mnemo + '\'' +
+            '}';
+    }
 }

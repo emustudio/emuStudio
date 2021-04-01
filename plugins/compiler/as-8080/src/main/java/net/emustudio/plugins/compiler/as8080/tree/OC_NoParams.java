@@ -120,4 +120,9 @@ public class OC_NoParams extends OpCodeNode {
         }
         hex.putCode(String.format("%1$02X", opCode));
     }
+
+    @Override
+    public String toString() {
+        return "OC_NoParams{mnemo="+mnemo+"}";
+    }
 }

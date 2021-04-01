@@ -102,4 +102,12 @@ public class InstructionNode {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return "InstructionNode{" +
+            "label=" + label +
+            ", codePseudo=" + codePseudo +
+            ", current_address=" + current_address +
+            '}';
+    }
 }

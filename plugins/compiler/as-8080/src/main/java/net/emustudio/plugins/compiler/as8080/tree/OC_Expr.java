@@ -193,4 +193,11 @@ public class OC_Expr extends OpCodeNode {
         }
         hex.putCode(code);
     }
+
+    @Override
+    public String toString() {
+        return "OC_Expr{" +
+            "expr=" + expr +
+            '}';
+    }
 }

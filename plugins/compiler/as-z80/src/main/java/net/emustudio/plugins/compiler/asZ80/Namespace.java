@@ -125,6 +125,10 @@ public class Namespace {
         return passNeed.size();
     }
 
+    public List<Row> getPassNeedView() {
+        return Collections.unmodifiableList(passNeed);
+    }
+
     public Row getPassNeed(int index) {
         return passNeed.get(index);
     }

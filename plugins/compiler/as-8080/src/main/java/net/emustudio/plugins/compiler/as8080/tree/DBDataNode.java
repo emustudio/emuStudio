@@ -88,4 +88,13 @@ public class DBDataNode extends DataValueNode {
             opcode.pass4(hex);
         }
     }
+
+    @Override
+    public String toString() {
+        return "DBDataNode{" +
+            "expression=" + expression +
+            ", literalString='" + literalString + '\'' +
+            ", opcode=" + opcode +
+            '}';
+    }
 }

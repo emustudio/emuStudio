@@ -82,4 +82,14 @@ public class MacroCallPseudo extends PseudoNode {
     public void pass4(IntelHEX hex) {
         hex.addTable(statHex.getTable());
     }
+
+    @Override
+    public String toString() {
+        return "MacroCallPseudo{" +
+            "params=" + params +
+            ", macro=" + macro +
+            ", statHex=" + statHex +
+            ", mnemo='" + mnemo + '\'' +
+            '}';
+    }
 }

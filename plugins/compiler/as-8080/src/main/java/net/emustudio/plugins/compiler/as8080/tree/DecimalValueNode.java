@@ -38,4 +38,9 @@ public class DecimalValueNode extends ExprNode {
     public int eval(Namespace env, int curr_addr) throws Exception {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "DecimalValueNode{value="+ value +"}";
+    }
 }

@@ -121,6 +121,10 @@ public class Namespace {
         return passNeed.get(index);
     }
 
+    public List<InstructionNode> getPassNeedView() {
+        return Collections.unmodifiableList(passNeed);
+    }
+
     public void removePassNeed(int index) {
         passNeed.remove(index);
     }

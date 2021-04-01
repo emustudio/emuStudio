@@ -22,9 +22,9 @@ import net.emustudio.plugins.compiler.as8080.Namespace;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;
 
 public class ArithNode extends ExprNode {
-    private ExprNode left;
-    private ExprNode right;
-    private String operator;
+    private final ExprNode left;
+    private final ExprNode right;
+    private final String operator;
 
     public ArithNode(ExprNode left, ExprNode right, String operator) {
         this.left = left;
@@ -83,4 +83,12 @@ public class ArithNode extends ExprNode {
         return this.value;
     }
 
+    @Override
+    public String toString() {
+        return "ArithNode{" +
+            "left=" + left +
+            ", right=" + right +
+            ", operator='" + operator + '\'' +
+            '}';
+    }
 }

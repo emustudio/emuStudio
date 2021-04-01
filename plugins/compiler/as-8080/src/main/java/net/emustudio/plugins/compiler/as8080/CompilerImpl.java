@@ -175,7 +175,7 @@ public class CompilerImpl extends AbstractCompiler {
                 // don't worry about deadlock
             }
             if (env.getPassNeedCount() != 0) {
-                throw new Exception("Error: could not evaulate all expressions");
+                throw new Exception("Could not evaluate: " + env.getPassNeedView());
             }
             stat.pass4(hex, env);
             return hex;
