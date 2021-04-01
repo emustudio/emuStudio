@@ -25,41 +25,50 @@ import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.OpCodeNode;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class OC_Expr extends OpCodeNode {
-    private final static Set<String> INSTRUCTION_WITH_SIZE_3 = new HashSet<>();
     private final static Map<String, Integer> OPCODES_BASE_198 = new HashMap<>();
     private final static Map<String, Integer> OPCODES_BASE_34 = new HashMap<>();
     private final static Map<String, Integer> OPCODES_BASE_194 = new HashMap<>();
     private final static Map<String, Integer> OPCODES_BASE_196 = new HashMap<>();
 
+    private final static  Map<String, Integer> INSTRUCTION_SIZE = new HashMap<>();
+
     static {
-        INSTRUCTION_WITH_SIZE_3.add("sta");
-        INSTRUCTION_WITH_SIZE_3.add("lda");
-        INSTRUCTION_WITH_SIZE_3.add("shld");
-        INSTRUCTION_WITH_SIZE_3.add("lhld");
-        INSTRUCTION_WITH_SIZE_3.add("jmp");
-        INSTRUCTION_WITH_SIZE_3.add("jc");
-        INSTRUCTION_WITH_SIZE_3.add("jnc");
-        INSTRUCTION_WITH_SIZE_3.add("jz");
-        INSTRUCTION_WITH_SIZE_3.add("jnz");
-        INSTRUCTION_WITH_SIZE_3.add("jm");
-        INSTRUCTION_WITH_SIZE_3.add("jp");
-        INSTRUCTION_WITH_SIZE_3.add("jpe");
-        INSTRUCTION_WITH_SIZE_3.add("jpo");
-        INSTRUCTION_WITH_SIZE_3.add("call");
-        INSTRUCTION_WITH_SIZE_3.add("cc");
-        INSTRUCTION_WITH_SIZE_3.add("cnc");
-        INSTRUCTION_WITH_SIZE_3.add("cz");
-        INSTRUCTION_WITH_SIZE_3.add("cnz");
-        INSTRUCTION_WITH_SIZE_3.add("cm");
-        INSTRUCTION_WITH_SIZE_3.add("cp");
-        INSTRUCTION_WITH_SIZE_3.add("cpe");
-        INSTRUCTION_WITH_SIZE_3.add("cpo");
-        INSTRUCTION_WITH_SIZE_3.add("rst");
+        INSTRUCTION_SIZE.put("sta", 3);
+        INSTRUCTION_SIZE.put("lda", 3);
+        INSTRUCTION_SIZE.put("shld", 3);
+        INSTRUCTION_SIZE.put("lhld", 3);
+        INSTRUCTION_SIZE.put("jmp", 3);
+        INSTRUCTION_SIZE.put("jc", 3);
+        INSTRUCTION_SIZE.put("jnc", 3);
+        INSTRUCTION_SIZE.put("jz", 3);
+        INSTRUCTION_SIZE.put("jnz", 3);
+        INSTRUCTION_SIZE.put("jm", 3);
+        INSTRUCTION_SIZE.put("jp", 3);
+        INSTRUCTION_SIZE.put("jpe", 3);
+        INSTRUCTION_SIZE.put("jpo", 3);
+        INSTRUCTION_SIZE.put("call", 3);
+        INSTRUCTION_SIZE.put("cc", 3);
+        INSTRUCTION_SIZE.put("cnc", 3);
+        INSTRUCTION_SIZE.put("cz", 3);
+        INSTRUCTION_SIZE.put("cnz", 3);
+        INSTRUCTION_SIZE.put("cm", 3);
+        INSTRUCTION_SIZE.put("cp", 3);
+        INSTRUCTION_SIZE.put("cpe", 3);
+        INSTRUCTION_SIZE.put("cpo", 3);
+        INSTRUCTION_SIZE.put("rst", 1);
+        INSTRUCTION_SIZE.put("adi", 2);
+        INSTRUCTION_SIZE.put("aci", 2);
+        INSTRUCTION_SIZE.put("sui", 2);
+        INSTRUCTION_SIZE.put("sbi", 2);
+        INSTRUCTION_SIZE.put("ani", 2);
+        INSTRUCTION_SIZE.put("xri", 2);
+        INSTRUCTION_SIZE.put("ori", 2);
+        INSTRUCTION_SIZE.put("cpi", 2);
+        INSTRUCTION_SIZE.put("in", 2);
+        INSTRUCTION_SIZE.put("out", 2);
 
         OPCODES_BASE_198.put("adi", 0);
         OPCODES_BASE_198.put("aci", 8);
@@ -106,10 +115,7 @@ public class OC_Expr extends OpCodeNode {
 
     @Override
     public int getSize() {
-        if (INSTRUCTION_WITH_SIZE_3.contains(mnemo)) {
-            return 3;
-        }
-        return 2;
+        return INSTRUCTION_SIZE.get(mnemo);
     }
 
     @Override
