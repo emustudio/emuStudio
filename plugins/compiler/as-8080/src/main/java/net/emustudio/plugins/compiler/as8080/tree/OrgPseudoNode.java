@@ -63,4 +63,11 @@ public class OrgPseudoNode extends PseudoNode {
     public void pass4(IntelHEX hex) {
         hex.setNextAddress(expr.getValue());
     }
+
+    @Override
+    public String toString() {
+        return "OrgPseudoNode{" +
+            "expr=" + expr +
+            '}';
+    }
 }

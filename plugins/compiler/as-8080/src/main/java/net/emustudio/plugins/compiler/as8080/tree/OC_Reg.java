@@ -79,4 +79,11 @@ public class OC_Reg extends OpCodeNode {
 
         hex.putCode(String.format("%1$02X", opCode));
     }
+
+    @Override
+    public String toString() {
+        return "OC_Reg{" +
+            "reg=" + reg +
+            '}';
+    }
 }

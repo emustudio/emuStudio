@@ -25,7 +25,7 @@ import net.emustudio.plugins.compiler.as8080.treeAbstract.DataValueNode;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;
 
 public class DWDataNode extends DataValueNode {
-    private ExprNode expression;
+    private final ExprNode expression;
 
     public DWDataNode(ExprNode expr, int line, int column) {
         super(line, column);
@@ -53,5 +53,12 @@ public class DWDataNode extends DataValueNode {
         }
 
         hex.putCode(expression.getEncValue(false));
+    }
+
+    @Override
+    public String toString() {
+        return "DWDataNode{" +
+            "expression=" + expression +
+            '}';
     }
 }

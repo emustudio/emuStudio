@@ -29,7 +29,7 @@ import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;
 
 public class DSDataNode extends DataValueNode {
 
-    private ExprNode expression;
+    private final ExprNode expression;
 
     public DSDataNode(ExprNode expr, int line, int column) {
         super(line, column);
@@ -63,5 +63,12 @@ public class DSDataNode extends DataValueNode {
 
         str.append("00".repeat(Math.max(0, expression.getValue())));
         hex.putCode(str.toString());
+    }
+
+    @Override
+    public String toString() {
+        return "DSDataNode{" +
+            "expression=" + expression +
+            '}';
     }
 }

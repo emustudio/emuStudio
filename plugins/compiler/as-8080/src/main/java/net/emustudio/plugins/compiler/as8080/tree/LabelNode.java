@@ -19,10 +19,10 @@
 package net.emustudio.plugins.compiler.as8080.tree;
 
 public class LabelNode {
-    private String name;
+    private final String name;
     private Integer address;
-    private int line;
-    private int column;
+    private final int line;
+    private final int column;
 
     public LabelNode(String name, int line, int column) {
         this.name = name;
@@ -50,5 +50,15 @@ public class LabelNode {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String toString() {
+        return "LabelNode{" +
+            "name='" + name + '\'' +
+            ", address=" + address +
+            ", line=" + line +
+            ", column=" + column +
+            '}';
     }
 }

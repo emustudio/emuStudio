@@ -24,7 +24,7 @@ import net.emustudio.plugins.compiler.as8080.exceptions.UnknownIdentifierExcepti
 import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;
 
 public class IdExpr extends ExprNode {
-    private String name;
+    private final String name;
 
     public IdExpr(String name) {
         this.name = name;
@@ -56,7 +56,14 @@ public class IdExpr extends ExprNode {
             this.value = set.getValue();
             return this.value;
         } else {
-            throw new UnknownIdentifierException(this.name);
+            throw new NeedMorePassException(0,0);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "IdExpr{" +
+            "name='" + name + '\'' +
+            '}';
     }
 }
