@@ -60,7 +60,7 @@ public class KeyboardFromFile implements Keyboard {
             while ((key = input.read()) != -1) {
                 inputReceived((short) key);
                 if (delayInMilliseconds > 0) {
-                    LockSupport.parkNanos(delayInMilliseconds * 1000000);
+                    LockSupport.parkNanos(delayInMilliseconds * 1000000L);
                 }
             }
         } catch (Exception e) {

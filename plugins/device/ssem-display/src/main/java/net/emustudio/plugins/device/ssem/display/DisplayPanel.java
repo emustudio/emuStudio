@@ -33,7 +33,7 @@ public class DisplayPanel extends JPanel {
     private final static int CELL_SIZE = 32;
     private final static int ROWS = 32;
 
-    private final boolean[][] memory = new boolean[CELL_SIZE][CELL_SIZE];
+    private final boolean[][] memory = new boolean[ROWS][CELL_SIZE];
 
     DisplayPanel() {
         super.setBackground(Color.BLACK);
@@ -42,13 +42,8 @@ public class DisplayPanel extends JPanel {
 
     void writeRow(Byte[] value, int row) {
         int number = NumberUtils.readInt(value, NumberUtils.Strategy.BIG_ENDIAN);
-        Boolean[] bits = String
-            .format("%" + CELL_SIZE + "s", Integer.toBinaryString(number))
-            .chars()
-            .mapToObj(c -> c == '1').toArray(Boolean[]::new);
-
-        for (int i = 0; i < ROWS; i++) {
-            memory[row][i] = bits[i];
+        for (int i = 0; i < CELL_SIZE; i++) {
+            memory[row][i] = (number & (1 << (CELL_SIZE - i - 1))) != 0;
         }
         repaint();
     }
@@ -62,8 +57,8 @@ public class DisplayPanel extends JPanel {
 
     void reset(MemoryContext<Byte> memory) {
         clear();
-        for (int i = 0; i < 4 * 32; i += 4) {
-            writeRow(memory.readWord(i), i / 4);
+        for (int i = 0; i < ROWS; i++) {
+            writeRow(memory.readWord(i * 4), i);
         }
     }
 

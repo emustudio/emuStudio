@@ -53,12 +53,11 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
     }
 
     @Override
-    public void writeWord(int to, Byte[] cells) {
+    public void writeWord(int bytePosition, Byte[] cells) {
         int i = 0;
-        for (byte cell : cells) {
-            memory[to + i] = cell;
-            notifyMemoryChanged(to + i);
-            i++;
+        for(byte b: cells) {
+            memory[bytePosition + (i++)] = b;
+            notifyMemoryChanged(bytePosition + i - 1);
         }
     }
 

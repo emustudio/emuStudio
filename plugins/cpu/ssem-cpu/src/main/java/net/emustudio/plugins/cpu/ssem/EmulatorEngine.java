@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
 
 public class EmulatorEngine {
     private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
@@ -57,7 +56,7 @@ public class EmulatorEngine {
     CPU.RunState step() {
         Byte[] instruction = memory.readWord(CI.addAndGet(4));
 
-        byte line = (byte)(NumberUtils.reverseBits(instruction[0] & 0b11111000, 8));
+        byte line = (byte) (NumberUtils.reverseBits(instruction[0] & 0b11111000, 8));
         int lineAddress = line * 4;
         int opcode = instruction[1] & 7;
 
@@ -136,10 +135,38 @@ public class EmulatorEngine {
                 return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
             if (waitNanos > 0) {
-                LockSupport.parkNanos(waitNanos);
+                try {
+                    sleepNanos(waitNanos);
+                } catch (InterruptedException ex) {
+                    // ignored; will be considered in the beginning of the loop
+                }
             }
         }
         return currentRunState;
+    }
+
+    final static long SLEEP_PRECISION = TimeUnit.MILLISECONDS.toNanos(2);
+    final static long SPIN_YIELD_PRECISION = TimeUnit.MILLISECONDS.toNanos(2);
+
+    // On Windows, both Thread.sleep() and LockSupport.parkNanos() are veeery unprecise :(
+    // https://stackoverflow.com/questions/824110/accurate-sleep-for-java-on-windows
+    public static void sleepNanos(long nanoDuration) throws InterruptedException {
+        final long end = System.nanoTime() + nanoDuration;
+        long timeLeft = nanoDuration;
+        do {
+            if (timeLeft > SLEEP_PRECISION)
+                Thread.sleep(1);
+            else if (timeLeft > SPIN_YIELD_PRECISION)
+                Thread.yield();
+
+            timeLeft = end - System.nanoTime();
+        } while (timeLeft > 0);
+    }
+
+    private void fakeInstr() {
+        Acc.addAndGet(readInt(0));
+        if (Acc.get() > 0) Acc.addAndGet(1000);
+        else Acc.addAndGet(-1000);
     }
 
     private void fakeStep() {
@@ -151,16 +178,23 @@ public class EmulatorEngine {
 
         switch (opcode) {
             case 0:
+                fakeInstr();
             case 1:
+                fakeInstr();
             case 2:
+                fakeInstr();
             case 3:
+                fakeInstr();
             case 4:
+                fakeInstr();
             case 6:
+                fakeInstr();
             case 7:
+                fakeInstr();
                 break;
         }
 
-        Acc.addAndGet(- memory.read(line % MEMORY_CELLS));
+        Acc.addAndGet(-memory.read(line % MEMORY_CELLS));
     }
 
 
@@ -169,12 +203,12 @@ public class EmulatorEngine {
         int oldAcc = Acc.get();
 
         long start = System.nanoTime();
-        for (int i = 0; i < INSTRUCTIONS_PER_SECOND; i++) {
+        for (int i = 0; i < 5 * INSTRUCTIONS_PER_SECOND; i++) {
             fakeStep();
         }
         long elapsed = System.nanoTime() - start;
 
-        averageInstructionNanos = elapsed / INSTRUCTIONS_PER_SECOND;
+        averageInstructionNanos = elapsed / (5 * INSTRUCTIONS_PER_SECOND);
 
         CI.set(oldCI);
         Acc.set(oldAcc);
