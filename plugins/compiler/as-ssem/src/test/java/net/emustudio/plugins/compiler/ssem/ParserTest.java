@@ -35,6 +35,28 @@ import static org.junit.Assert.*;
 
 public class ParserTest {
 
+    // PASS:
+    // -- COMMENT
+    // <EOL>
+    // 01 STP -- COMMENT
+
+    // FAIL:
+    // STP
+
+    // PASS:
+    // 01
+
+    // PASS:
+    // --
+
+    // PASS:
+    // <EOL>
+
+    // FAIL:
+    // 01 STP 01 STP
+
+
+
     private ParserImpl program(String program) {
         return new ParserImpl(
             new LexerImpl(new StringReader(program)),

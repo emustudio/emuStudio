@@ -21,11 +21,16 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
+  id 'idea'
   id 'org.xbib.gradle.plugin.jflex' version "1.5.0"
   id "com.github.andrescv.jcup" version "1.0"
+  id 'antlr'
 }
 
 dependencies {
+  antlr "org.antlr:antlr4:4.9.2"
+  compile "org.antlr:antlr4-runtime:4.9.2"
+
   implementation libs.emuLib
   implementation libs.slf4JApi
   implementation libs.jcipAnnotations
@@ -37,9 +42,31 @@ dependencies {
   testImplementation libs.slf4JSimple
 }
 
-sourceSets.main.java.srcDirs = [
-  "${buildDir}/generated-sources/jflex", "${buildDir}/generated-sources/cup", 'src/main/java'
-]
+generateGrammarSource {
+  maxHeapSize = "128m"
+  arguments += ['-package', 'net.emustudio.plugins.compiler.ssem', '-visitor', '-no-listener']
+  outputDirectory = file("${buildDir}/generated-src/antlr/main/net/emustudio/plugins/compiler/ssem")
+}
+compileJava.dependsOn generateGrammarSource
+
+sourceSets {
+  generated {
+    java.srcDir "${buildDir}/generated-src/antlr/main"
+  }
+  main {
+    java.srcDirs = [
+      "${buildDir}/generated-sources/jflex", "${buildDir}/generated-sources/cup",
+      'src/main/java', "${buildDir}/generated-src/antlr/main"
+    ]
+  }
+}
+compileJava.source sourceSets.generated.java, sourceSets.main.java
+
+idea {
+  module {
+    sourceDirs += file("build/generated-src/antlr")
+  }
+}
 
 jflex {
   no_backup = true
@@ -81,4 +108,11 @@ copy {
 copy {
   from('src/main/scripts')
   into "$buildDir/libs/scripts"
+}
+
+
+test {
+  testLogging {
+    events "passed", "skipped", "failed"
+  }
 }

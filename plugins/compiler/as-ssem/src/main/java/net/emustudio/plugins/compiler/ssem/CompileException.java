@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
-public class CompileException extends Exception {
+public class CompileException extends RuntimeException {
 
     public CompileException(String message) {
         super(message);
