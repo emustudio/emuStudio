@@ -67,6 +67,7 @@ public class ProgramParserTest {
     public void testParseError() {
         String program = "001 B INS 011010";
         SSEMLexer lexer = new SSEMLexer(CharStreams.fromString(program));
+        lexer.removeErrorListeners();
         List<Token> tokens = new ArrayList<>();
         while (!lexer._hitEOF) {
             tokens.add(lexer.nextToken());

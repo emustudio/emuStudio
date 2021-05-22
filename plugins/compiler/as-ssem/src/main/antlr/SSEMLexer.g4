@@ -51,7 +51,9 @@ BNUM: ((B N U M) | (B I N S)) -> pushMode(BIN);
 // literals
 NUMBER: [\-]? [0-9]+;
 HEXNUMBER: [\-]? ('0x'|'0X') [0-9a-fA-F]+;
+ERROR : .;
 
 mode BIN;
 BWS : (' ' | '\t') -> channel(HIDDEN);
 BinaryNumber: [01]+ -> popMode;
+BERROR : .;

@@ -22,8 +22,8 @@ package net.emustudio.plugins.compiler.ssem;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
-import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
@@ -38,7 +38,10 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
@@ -75,11 +78,6 @@ public class CompilerImpl extends AbstractCompiler {
                 LOGGER.warn("Memory is not available", e);
             }
         });
-    }
-
-    @Override
-    public void parse(Parser parser) {
-        ((SSEMParser) parser).start();
     }
 
     @Override
@@ -161,53 +159,9 @@ public class CompilerImpl extends AbstractCompiler {
     }
 
     @Override
-    public SSEMLexer createLexer(CharStream input) {
-        SSEMLexer lexer = new SSEMLexer(input);
-        lexer.removeErrorListeners();
-        return lexer;
-    }
-
-    @Override
-    public SSEMParser createParser(TokenStream tokenStream) {
-        SSEMParser parser = new SSEMParser(tokenStream);
-        parser.removeErrorListeners();
-        return parser;
-    }
-
-    @Override
-    public int convertLexerTokenType(int tokenType) {
-        switch (tokenType) {
-            case SSEMLexer.COMMENT:
-                return Token.COMMENT;
-            case SSEMLexer.EOL:
-            case SSEMLexer.WS:
-            case SSEMLexer.BWS:
-                return Token.WHITESPACE;
-            case SSEMLexer.JMP:
-            case SSEMLexer.JRP:
-            case SSEMLexer.JPR:
-            case SSEMLexer.JMR:
-            case SSEMLexer.LDN:
-            case SSEMLexer.STO:
-            case SSEMLexer.SKN:
-            case SSEMLexer.SUB:
-            case SSEMLexer.CMP:
-            case SSEMLexer.STP:
-            case SSEMLexer.HLT:
-                return Token.RESERVED;
-            case SSEMLexer.START:
-                return Token.LABEL;
-            case SSEMLexer.NUM:
-            case SSEMLexer.BNUM:
-                return Token.PREPROCESSOR;
-            case SSEMLexer.NUMBER:
-            case SSEMLexer.HEXNUMBER:
-            case SSEMLexer.BinaryNumber:
-                return Token.LITERAL;
-            case SSEMLexer.EOF:
-                return Token.TEOF;
-        }
-        return Token.ERROR;
+    public LexicalAnalyzer createLexer(String s) {
+        SSEMLexer lexer = createLexer(CharStreams.fromString(s));
+        return new LexicalAnalyzerImpl(lexer);
     }
 
     @Override
@@ -233,6 +187,18 @@ public class CompilerImpl extends AbstractCompiler {
     @Override
     public String getDescription() {
         return "Assembler of SSEM computer language";
+    }
+
+    private SSEMLexer createLexer(CharStream input) {
+        SSEMLexer lexer = new SSEMLexer(input);
+        lexer.removeErrorListeners();
+        return lexer;
+    }
+
+    private SSEMParser createParser(TokenStream tokenStream) {
+        SSEMParser parser = new SSEMParser(tokenStream);
+        parser.removeErrorListeners();
+        return parser;
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

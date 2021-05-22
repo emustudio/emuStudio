@@ -18,89 +18,110 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
+
 public class LexerTest {
 
-//    LexerImpl lexer(String tokens) {
-//        return new LexerImpl(new StringReader(tokens));
-//    }
-//
-//    @Test
-//    public void testNumberUpperBoundary() throws Exception {
-//        LexerImpl lexer = lexer("31");
-//
-//        TokenImpl token = lexer.next_token();
-//        assertEquals(Token.LITERAL, token.getType());
-//        assertEquals(31, token.value);
-//    }
-//
-//    @Test
-//    public void testNumberLowerBoundary() throws Exception {
-//        LexerImpl lexer = lexer("0");
-//
-//        TokenImpl token = lexer.next_token();
-//        assertEquals(Token.LITERAL, token.getType());
-//        assertEquals(0, token.value);
-//    }
-//
-//    @Test
-//    public void testNumber() throws Exception {
-//        LexerImpl lexer = lexer("22");
-//
-//        TokenImpl token = lexer.next_token();
-//        assertEquals(Token.LITERAL, token.getType());
-//        assertEquals(22, token.value);
-//    }
-//
-//    private void checkInstruction(int id, LexerImpl lexer) throws IOException {
-//        TokenImpl token = lexer.next_token();
-//        assertEquals(Token.RESERVED, token.getType());
-//    }
-//
-//    private void checkInstructionWithOperand(int id, LexerImpl lexer) throws IOException {
-//        checkInstruction(id, lexer);
-//
-//        TokenImpl token = lexer.next_token();
-//        assertEquals(Token.LITERAL, token.getType());
-//    }
-//
-//    @Test
-//    public void testInstructionsWithOperand() throws Exception {
-//        checkInstructionWithOperand(TokenImpl.JMP, lexer("jmp 12"));
-//        checkInstructionWithOperand(TokenImpl.JPR, lexer("jrp 12"));
-//        checkInstructionWithOperand(TokenImpl.JPR, lexer("jpr 12"));
-//        checkInstructionWithOperand(TokenImpl.JPR, lexer("jmr 12"));
-//        checkInstructionWithOperand(TokenImpl.LDN, lexer("ldn 12"));
-//        checkInstructionWithOperand(TokenImpl.STO, lexer("sto 12"));
-//        checkInstructionWithOperand(TokenImpl.SUB, lexer("sub 12"));
-//    }
-//
-//    @Test
-//    public void testInstructionsWithoutOperand() throws Exception {
-//        checkInstruction(TokenImpl.CMP, lexer("cmp"));
-//        checkInstruction(TokenImpl.CMP, lexer("skn"));
-//        checkInstruction(TokenImpl.STP, lexer("stp"));
-//    }
-//
-//    @Test
-//    public void testInstructionInComment() throws Exception {
-//        LexerImpl lexer = lexer("// cmp");
-//        TokenImpl token = lexer.next_token();
-//
-//        assertEquals(Token.COMMENT, token.getType());
-//
-//        token = lexer.next_token();
-//        assertEquals(Token.TEOF, token.getType());
-//    }
-//
-//    @Test
-//    public void testBinaryNumber() throws Exception {
-//        LexerImpl lexer = lexer("BNUM 10011011111000101111110000111111\n");
-//
-//        TokenImpl token = lexer.next_token();
-//        assertEquals(Token.PREPROCESSOR, token.getType());
-//        assertEquals(LexerImpl.BIN, token.getLexerState());
-//
-//        token = lexer.next_token();
-//        assertEquals(Token.LITERAL, token.getType());
-//    }
+    @Test
+    public void testParseError() {
+        assertTokenTypes("B I", SSEMLexer.ERROR, SSEMLexer.WS, SSEMLexer.ERROR, SSEMLexer.EOF);
+        assertTokenTypes("BINS ha", SSEMLexer.BNUM, SSEMLexer.BWS, SSEMLexer.BERROR, SSEMLexer.BERROR, SSEMLexer.EOF);
+    }
+
+    @Test
+    public void testParseReservedWords() {
+        assertTokenTypesForCaseVariations("jmp", SSEMLexer.JMP, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("jrp", SSEMLexer.JRP, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("jpr", SSEMLexer.JPR, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("jmr", SSEMLexer.JMR, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("ldn", SSEMLexer.LDN, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("sto", SSEMLexer.STO, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("sub", SSEMLexer.SUB, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("cmp", SSEMLexer.CMP, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("skn", SSEMLexer.SKN, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("stp", SSEMLexer.STP, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("hlt", SSEMLexer.HLT, SSEMLexer.EOF);
+    }
+
+    @Test
+    public void testParsePreprocessor() {
+        assertTokenTypesForCaseVariations("start", SSEMLexer.START, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("num", SSEMLexer.NUM, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("bnum", SSEMLexer.BNUM, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("bins", SSEMLexer.BNUM, SSEMLexer.EOF);
+    }
+
+    @Test
+    public void testParseWhitespaces() {
+        assertTokenTypes(" ", SSEMLexer.WS, SSEMLexer.EOF);
+        assertTokenTypes("\t", SSEMLexer.WS, SSEMLexer.EOF);
+        assertTokenTypes("\n", SSEMLexer.EOL, SSEMLexer.EOF);
+        assertTokenTypes("", SSEMLexer.EOF);
+    }
+
+    @Test
+    public void testParseComments() {
+        assertTokenTypes("-- comment baybe", SSEMLexer.COMMENT, SSEMLexer.EOF);
+        assertTokenTypes("# comment baybe", SSEMLexer.COMMENT, SSEMLexer.EOF);
+        assertTokenTypes("// comment baybe", SSEMLexer.COMMENT, SSEMLexer.EOF);
+        assertTokenTypes("; comment baybe", SSEMLexer.COMMENT, SSEMLexer.EOF);
+    }
+
+    @Test
+    public void testLiterals() {
+        assertTokenTypes("10", SSEMLexer.NUMBER, SSEMLexer.EOF);
+        assertTokenTypes("0xAF", SSEMLexer.HEXNUMBER, SSEMLexer.EOF);
+        assertTokenTypes("BINS 1010", SSEMLexer.BNUM, SSEMLexer.BWS, SSEMLexer.BinaryNumber, SSEMLexer.EOF);
+    }
+
+    private List<Token> getTokens(String variation) {
+        SSEMLexer lexer = new SSEMLexer(CharStreams.fromString(variation));
+        CommonTokenStream stream = new CommonTokenStream(lexer);
+        stream.fill();
+        return stream.getTokens();
+    }
+
+    private void assertTokenTypes(String variation, int... expectedTypes) {
+        List<Token> tokens = getTokens(variation);
+        assertTokenTypes(tokens, expectedTypes);
+    }
+
+    private void assertTokenTypes(List<Token> tokens, int... expectedTypes) {
+        assertEquals(expectedTypes.length, tokens.size());
+        for (int i = 0; i < expectedTypes.length; i++) {
+            Token token = tokens.get(i);
+            assertEquals(expectedTypes[i], token.getType());
+        }
+    }
+
+    private void assertTokenTypesForCaseVariations(String base, int... expectedTypes) {
+        Random r = new Random();
+        List<String> variations = new ArrayList<>();
+        variations.add(base);
+        variations.add(base.toLowerCase());
+        variations.add(base.toUpperCase());
+        for (int i = 0; i < 5; i++) {
+            byte[] chars = base.getBytes();
+            for (int j = 0; j < base.length(); j++) {
+                if (r.nextBoolean()) {
+                    chars[j] = Character.valueOf((char)chars[j]).toString().toUpperCase().getBytes()[0];
+                } else {
+                    chars[j] = Character.valueOf((char)chars[j]).toString().toLowerCase().getBytes()[0];
+                }
+            }
+            variations.add(new String(chars));
+        }
+        for (String variation : variations) {
+            assertTokenTypes(variation, expectedTypes);
+        }
+    }
 }

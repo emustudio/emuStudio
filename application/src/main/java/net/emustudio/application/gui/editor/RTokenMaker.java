@@ -1,8 +1,7 @@
 package net.emustudio.application.gui.editor;
 
 import net.emustudio.emulib.plugins.compiler.Compiler;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.Lexer;
+import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import org.fife.ui.rsyntaxtextarea.AbstractTokenMaker;
 import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rsyntaxtextarea.TokenMap;
@@ -20,20 +19,17 @@ public class RTokenMaker extends AbstractTokenMaker {
     @Override
     public Token getTokenList(Segment text, int initialTokenType, int startOffset) {
         resetTokenList();
-        Lexer lexer = compiler.createLexer(CharStreams.fromString(Objects.requireNonNull(text).toString()));
+        LexicalAnalyzer lexer = compiler.createLexer((Objects.requireNonNull(text).toString()));
         int previousEnd = -1;
         int previousStartOffset = -1;
 
-        while (!lexer._hitEOF) {
+        for (net.emustudio.emulib.plugins.compiler.Token token : lexer) {
             try {
-                org.antlr.v4.runtime.Token token = lexer.nextToken();
-                int emuStudioType = compiler.convertLexerTokenType(token.getType());
-                int tokenMakerType = getTokenMakerType(emuStudioType);
+                int tokenMakerType = getTokenMakerType(token.getType());
 
-                String tokenText = token.getText();
-                int tokenStartIndex = token.getStartIndex();
-                int tokenLength = tokenText.length() - 1;
-                if (token.getType() == org.antlr.v4.runtime.Token.EOF) {
+                int tokenStartIndex = token.getOffset();
+                int tokenLength = token.getLength() - 1;
+                if (token.getType() == net.emustudio.emulib.plugins.compiler.Token.EOF) {
                     tokenLength = 0;
                 }
 
@@ -54,7 +50,8 @@ public class RTokenMaker extends AbstractTokenMaker {
                 previousStartOffset = tokenStartOffset;
 
                 addToken(text, start, end, tokenMakerType, tokenStartOffset);
-            } catch (Exception ignore) {
+            } catch (Exception ignored) {
+
             }
         }
         return firstToken;
@@ -87,7 +84,7 @@ public class RTokenMaker extends AbstractTokenMaker {
                 return Token.ANNOTATION;
             case net.emustudio.emulib.plugins.compiler.Token.ERROR:
                 return Token.ERROR_IDENTIFIER;
-            case net.emustudio.emulib.plugins.compiler.Token.TEOF:
+            case net.emustudio.emulib.plugins.compiler.Token.EOF:
                 return Token.NULL;
         }
         return Token.WHITESPACE;
