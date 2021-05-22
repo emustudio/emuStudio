@@ -91,10 +91,12 @@ public class CompilerImpl extends AbstractCompiler {
 
         try (Reader reader = new FileReader(inputFileName)) {
             Lexer lexer = createLexer(CharStreams.fromReader(reader));
+            lexer.removeErrorListeners();
             lexer.addErrorListener(new ParserErrorListener());
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             SSEMParser parser = createParser(tokens);
+            parser.removeErrorListeners();
             parser.addErrorListener(new ParserErrorListener());
 
             ParseTree tree = parser.start();
