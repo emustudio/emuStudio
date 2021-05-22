@@ -24,10 +24,6 @@ public class CodeGenerator {
     }
 
     private void writeInstruction(int opcode, int operand) {
-        if (operand < 0 || operand > 31) {
-            throw new CompileException("Operand must be between <0, 31>; it was " + operand);
-        }
-
         byte address = (byte)(NumberUtils.reverseBits((byte)(operand & 0xFF), 8) & 0xF8);
         // 5 bits address + 3 empty bits
         code.put(address);

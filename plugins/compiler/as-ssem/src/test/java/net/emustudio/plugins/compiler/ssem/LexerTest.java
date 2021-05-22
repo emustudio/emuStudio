@@ -18,16 +18,10 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Token;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
+import static net.emustudio.plugins.compiler.ssem.Utils.assertTokenTypes;
+import static net.emustudio.plugins.compiler.ssem.Utils.assertTokenTypesForCaseVariations;
 
 public class LexerTest {
 
@@ -81,47 +75,5 @@ public class LexerTest {
         assertTokenTypes("10", SSEMLexer.NUMBER, SSEMLexer.EOF);
         assertTokenTypes("0xAF", SSEMLexer.HEXNUMBER, SSEMLexer.EOF);
         assertTokenTypes("BINS 1010", SSEMLexer.BNUM, SSEMLexer.BWS, SSEMLexer.BinaryNumber, SSEMLexer.EOF);
-    }
-
-    private List<Token> getTokens(String variation) {
-        SSEMLexer lexer = new SSEMLexer(CharStreams.fromString(variation));
-        CommonTokenStream stream = new CommonTokenStream(lexer);
-        stream.fill();
-        return stream.getTokens();
-    }
-
-    private void assertTokenTypes(String variation, int... expectedTypes) {
-        List<Token> tokens = getTokens(variation);
-        assertTokenTypes(tokens, expectedTypes);
-    }
-
-    private void assertTokenTypes(List<Token> tokens, int... expectedTypes) {
-        assertEquals(expectedTypes.length, tokens.size());
-        for (int i = 0; i < expectedTypes.length; i++) {
-            Token token = tokens.get(i);
-            assertEquals(expectedTypes[i], token.getType());
-        }
-    }
-
-    private void assertTokenTypesForCaseVariations(String base, int... expectedTypes) {
-        Random r = new Random();
-        List<String> variations = new ArrayList<>();
-        variations.add(base);
-        variations.add(base.toLowerCase());
-        variations.add(base.toUpperCase());
-        for (int i = 0; i < 5; i++) {
-            byte[] chars = base.getBytes();
-            for (int j = 0; j < base.length(); j++) {
-                if (r.nextBoolean()) {
-                    chars[j] = Character.valueOf((char)chars[j]).toString().toUpperCase().getBytes()[0];
-                } else {
-                    chars[j] = Character.valueOf((char)chars[j]).toString().toLowerCase().getBytes()[0];
-                }
-            }
-            variations.add(new String(chars));
-        }
-        for (String variation : variations) {
-            assertTokenTypes(variation, expectedTypes);
-        }
     }
 }

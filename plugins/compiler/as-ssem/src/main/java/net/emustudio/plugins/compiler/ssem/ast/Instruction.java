@@ -25,16 +25,15 @@ public class Instruction {
     public final int operand;
 
     public Instruction(int tokenType) {
-        if (!OPCODES.containsKey(tokenType)) {
-            throw new CompileException("Unknown instruction");
-        }
-        this.tokenType = tokenType;
-        this.operand = 0;
+        this(tokenType, 0);
     }
 
     public Instruction(int tokenType, int operand) {
         if (!OPCODES.containsKey(tokenType)) {
             throw new CompileException("Unknown instruction");
+        }
+        if (operand < 0 || operand > 31) {
+            throw new CompileException("Operand must be between <0, 31>; it was " + operand);
         }
         this.tokenType = tokenType;
         this.operand = operand;
