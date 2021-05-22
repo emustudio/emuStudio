@@ -46,7 +46,6 @@ public class EmulatorEngineTest {
 
         CpuImpl cpuImpl = new CpuImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
         memoryStub = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
-        memoryStub.setWordCellsCount(4);
         engine = new EmulatorEngine(memoryStub, cpuImpl);
     }
 
@@ -81,7 +80,7 @@ public class EmulatorEngineTest {
 
         engine.reset(0);
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
-        assertEquals(8, NumberUtils.readInt(memoryStub.readWord(31 * 4), memoryStub.getWordReadingStrategy()));
+        assertEquals(8, NumberUtils.readInt(memoryStub.read(31 * 4, 4), memoryStub.getWordReadingStrategy()));
     }
 
     @Test(timeout = 500)

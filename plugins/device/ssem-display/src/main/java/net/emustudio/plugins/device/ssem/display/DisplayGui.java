@@ -50,7 +50,8 @@ class DisplayGui extends JDialog {
                     displayPanel.reset(memory);
                 } else {
                     int row = bytePosition / 4;
-                    displayPanel.writeRow(memory.readWord(bytePosition), row);
+                    int rowBytePosition = row * 4;
+                    displayPanel.writeRow(memory.read(rowBytePosition, 4), row);
                 }
             }
 

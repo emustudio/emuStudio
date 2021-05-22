@@ -62,9 +62,9 @@ public class CpuPanel extends JPanel {
             txtBinCI.setText(formatBinary(ci));
 
             try {
-                Byte[] mCI = memory.readWord(ci);
+                Byte[] mCI = memory.read(ci, 4);
                 byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
-                Byte[] mLine = memory.readWord(line * 4);
+                Byte[] mLine = memory.read(line * 4, 4);
 
                 txtMCI.setText(String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
                 txtLine.setText(String.format("%02x", line));

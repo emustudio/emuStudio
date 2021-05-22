@@ -19,9 +19,21 @@
 package net.emustudio.plugins.compiler.ssem;
 
 public class CompileException extends RuntimeException {
+    final int line;
+    final int column;
 
     public CompileException(String message) {
-        super(message);
+        this(message, -1, -1);
     }
 
+    public CompileException(String message, int line, int column) {
+        super(message);
+        this.line = line;
+        this.column = column;
+    }
+
+    @Override
+    public String toString() {
+        return "line " + line + ":" + column + " " + super.getMessage();
+    }
 }

@@ -5,6 +5,7 @@ import net.emustudio.plugins.compiler.ssem.SSEMParser;
 import net.jcip.annotations.Immutable;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Immutable
 public class Instruction {
@@ -45,5 +46,18 @@ public class Instruction {
 
     public String toString() {
         return String.format("%02d %02d", getOpcode(), operand);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Instruction that = (Instruction) o;
+        return tokenType == that.tokenType && operand == that.operand;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tokenType, operand);
     }
 }

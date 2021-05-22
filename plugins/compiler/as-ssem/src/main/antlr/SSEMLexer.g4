@@ -2,13 +2,13 @@ lexer grammar SSEMLexer;
 
 tokens {
   COMMENT,
-  EOL,
+  EOL, WS, BWS,
   JMP, JRP, JPR, JMR, LDN, STO, SUB, CMP, SKN, STP, HLT,
   START, NUM, BNUM,
-  NUMBER, HEXNUMBER
+  NUMBER, HEXNUMBER, BinaryNumber
 }
 
-WS : (' ' | '\t') -> skip;
+WS : (' ' | '\t') -> channel(HIDDEN);
 COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]*;
 EOL: '\r'? '\n';
 
@@ -53,5 +53,5 @@ NUMBER: [\-]? [0-9]+;
 HEXNUMBER: [\-]? ('0x'|'0X') [0-9a-fA-F]+;
 
 mode BIN;
-BWS : (' ' | '\t') -> skip;
+BWS : (' ' | '\t') -> channel(HIDDEN);
 BinaryNumber: [01]+ -> popMode;

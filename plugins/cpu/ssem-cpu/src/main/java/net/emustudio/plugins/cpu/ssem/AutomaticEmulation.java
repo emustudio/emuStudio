@@ -75,7 +75,7 @@ class AutomaticEmulation {
         Byte[][] memorySnapshot = new Byte[memory.getSize() / 4][4];
 
         for (int i = 0; i < memorySnapshot.length; i++) {
-            Byte[] word = memory.readWord(i * 4);
+            Byte[] word = memory.read(i * 4, 4);
             System.arraycopy(word, 0, memorySnapshot[i], 0, 4);
         }
 

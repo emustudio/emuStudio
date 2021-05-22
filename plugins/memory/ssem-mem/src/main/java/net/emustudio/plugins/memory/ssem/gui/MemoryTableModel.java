@@ -106,7 +106,7 @@ public class MemoryTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         try {
-            Byte[] row = memory.readWord(rowIndex * 4);
+            Byte[] row = memory.read(rowIndex * 4, 4);
             int value = NumberUtils.readInt(row, NumberUtils.Strategy.REVERSE_BITS);
 
             switch (columnIndex) {
@@ -129,7 +129,7 @@ public class MemoryTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (isCellEditable(rowIndex, columnIndex)) {
             try {
-                Byte[] row = memory.readWord(rowIndex * 4);
+                Byte[] row = memory.read(rowIndex * 4, 4);
                 String str = String.valueOf(aValue);
 
                 if (columnIndex == COLUMN_HEX_VALUE) {
@@ -139,7 +139,7 @@ public class MemoryTableModel extends AbstractTableModel {
                 } else if (columnIndex >= 0 && columnIndex < 33) {
                     writeBit(str, columnIndex, row);
                 }
-                memory.writeWord(rowIndex * 4, row);
+                memory.write(rowIndex * 4, row);
 
                 fireTableCellUpdated(rowIndex, columnIndex);
             } catch (Exception e) {

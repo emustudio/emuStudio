@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class RunnerTest {
@@ -44,7 +45,10 @@ public class RunnerTest {
         List<String> lines = Files.readAllLines(outputFile.toPath());
 
         assertEquals(1, lines.size());
-        assertEquals("\150\6\0\0", lines.get(0));
+        byte[] expected = new byte[33 * 4]; // 32 words of 32 bits + 4 bytes for startLine
+        expected[4] = 104;
+        expected[5] = 6;
+        assertArrayEquals(expected, lines.get(0).getBytes());
     }
 
     @Test

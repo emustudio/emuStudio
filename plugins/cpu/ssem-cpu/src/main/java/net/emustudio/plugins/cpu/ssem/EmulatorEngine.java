@@ -55,7 +55,7 @@ public class EmulatorEngine {
     }
 
     CPU.RunState step() {
-        Byte[] instruction = memory.readWord(CI.addAndGet(4));
+        Byte[] instruction = memory.read(CI.addAndGet(4), 4);
 
         byte line = (byte)(NumberUtils.reverseBits(instruction[0] & 0b11111000, 8));
         int lineAddress = line * 4;
@@ -102,14 +102,14 @@ public class EmulatorEngine {
     }
 
     private int readInt(int line) {
-        Byte[] word = memory.readWord(line);
+        Byte[] word = memory.read(line, 4);
         return NumberUtils.readInt(word, Strategy.REVERSE_BITS);
     }
 
     private void writeInt(int lineAddress, int value) {
         Byte[] word = new Byte[4];
         NumberUtils.writeInt(value, word, Strategy.REVERSE_BITS);
-        memory.writeWord(lineAddress, word);
+        memory.write(lineAddress, word);
     }
 
     CPU.RunState run() {
@@ -143,7 +143,7 @@ public class EmulatorEngine {
     }
 
     private void fakeStep() {
-        Byte[] instruction = memory.readWord(CI.get());
+        Byte[] instruction = memory.read(CI.get(), 4);
 
         int line = NumberUtils.reverseBits(instruction[0], 8);
         int opcode = instruction[1] & 3;

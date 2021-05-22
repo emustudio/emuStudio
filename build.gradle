@@ -24,11 +24,12 @@ ext.versions = [
 ]
 
 ext.libs = [
-  emuLib         : "net.emustudio:emulib:11.5.0",
-  cpuTestSuite   : "net.emustudio:cpu-testsuite_11.5:1.1.0",
+  emuLib         : "net.emustudio:emulib:11.6.0-SNAPSHOT",
+  cpuTestSuite   : "net.emustudio:cpu-testsuite_11.6:1.2.0-SNAPSHOT",
 
   javaCupRuntime : "com.github.vbmacher:java-cup-runtime:11b-20160615",
   jcipAnnotations: "net.jcip:jcip-annotations:1.0",
+  antlrRuntime   : "org.antlr:antlr4-runtime:4.9.2",
 
   slf4JApi       : "org.slf4j:slf4j-api:${versions.slf4j}",
   slf4JSimple    : "org.slf4j:slf4j-simple:${versions.slf4j}",
@@ -91,7 +92,7 @@ allprojects {
 
 subprojects {
   repositories {
-    mavenCentral()
     mavenLocal()
+    mavenCentral()
   }
 }

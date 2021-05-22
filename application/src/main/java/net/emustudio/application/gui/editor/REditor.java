@@ -19,7 +19,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
@@ -51,7 +50,7 @@ public class REditor implements Editor {
 
         UnicodeWriter.setWriteUtf8BOM(false);
 
-        textPane.setCodeFoldingEnabled(true);
+        textPane.setCodeFoldingEnabled(false);
         textPane.setEncoding(StandardCharsets.UTF_8.name());
         textPane.setAnimateBracketMatching(true);
         textPane.setAutoIndentEnabled(true);
@@ -99,7 +98,7 @@ public class REditor implements Editor {
 
         if (compiler != null) {
             sourceFileExtensions = compiler.getSourceFileExtensions();
-            RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler.getLexer(new StringReader(textPane.getText())));
+            RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler);
 
             AbstractTokenMakerFactory atmf = (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
             atmf.putMapping("text/emustudio", RTokenMakerWrapper.class.getName());
@@ -176,7 +175,7 @@ public class REditor implements Editor {
                 isnew = false;
                 return true;
             } catch (IOException e) {
-                LOGGER.error("Could not save file: " + savedPath.get().toString(), e);
+                LOGGER.error("Could not save file: " + savedPath.get(), e);
                 dialogs.showError("Cannot save current file. Please see log file for details.");
             }
         }

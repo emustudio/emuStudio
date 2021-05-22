@@ -63,7 +63,7 @@ public class DisplayPanel extends JPanel {
     void reset(MemoryContext<Byte> memory) {
         clear();
         for (int i = 0; i < 4 * 32; i += 4) {
-            writeRow(memory.readWord(i), i / 4);
+            writeRow(memory.read(i, 4), i / 4);
         }
     }
 

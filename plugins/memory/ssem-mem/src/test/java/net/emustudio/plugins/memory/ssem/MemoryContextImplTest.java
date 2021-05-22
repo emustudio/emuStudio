@@ -19,7 +19,6 @@
 package net.emustudio.plugins.memory.ssem;
 
 import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;
@@ -113,17 +112,17 @@ public class MemoryContextImplTest {
     }
 
     @Test
-    public void testReadWordIsSupported() {
-        assertArrayEquals(new Byte[]{0, 0, 0, 0}, new MemoryContextImpl().readWord(0));
+    public void testReadArrayIsSupported() {
+        assertArrayEquals(new Byte[]{0, 0, 0, 0}, new MemoryContextImpl().read(0, 4));
     }
 
     @Test
-    public void testWriteWordIsSupported() {
+    public void testWriteArrayIsSupported() {
         MemoryContextImpl mem = new MemoryContextImpl();
 
         Byte[] row = new Byte[]{1, 2, 3, 4};
-        mem.writeWord(0, row);
+        mem.write(0, row);
 
-        assertArrayEquals(row, mem.readWord(0));
+        assertArrayEquals(row, mem.read(0, 4));
     }
 }

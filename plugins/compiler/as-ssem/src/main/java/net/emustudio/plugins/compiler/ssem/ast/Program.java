@@ -2,6 +2,7 @@ package net.emustudio.plugins.compiler.ssem.ast;
 
 import net.emustudio.plugins.compiler.ssem.CompileException;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -14,7 +15,7 @@ public class Program {
 
     public void setStartLine(int startLine) {
         if (startLineDefined) {
-            throw new CompileException("Start line is already defined!");
+            throw new CompileException("Start line is already defined (at line " + startLine + ")!");
         }
         this.startLine = startLine;
         startLineDefined = true;
@@ -36,6 +37,10 @@ public class Program {
 
     public void forEach(BiConsumer<Integer, Instruction> processor) {
         instructions.forEach(processor);
+    }
+
+    public Map<Integer,Instruction> getInstructions() {
+        return Collections.unmodifiableMap(instructions);
     }
 
     public String toString() {

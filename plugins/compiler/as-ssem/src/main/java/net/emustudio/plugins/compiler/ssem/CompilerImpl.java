@@ -22,20 +22,25 @@ package net.emustudio.plugins.compiler.ssem;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
+import net.emustudio.emulib.plugins.compiler.Token;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.plugins.compiler.ssem.tree.Program;
+import net.emustudio.plugins.compiler.ssem.ast.Program;
+import net.emustudio.plugins.compiler.ssem.ast.ProgramParser;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileReader;
-import java.io.Reader;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.*;
 
 @PluginRoot(
@@ -51,13 +56,8 @@ public class CompilerImpl extends AbstractCompiler {
     private MemoryContext<Byte> memory;
     private int programLocation;
 
-    private final LexerImpl lexer;
-    private final ParserImpl parser;
-
     public CompilerImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        lexer = new LexerImpl(null);
-        parser = new ParserImpl(lexer, this);
     }
 
     @SuppressWarnings("unchecked")
@@ -78,6 +78,11 @@ public class CompilerImpl extends AbstractCompiler {
     }
 
     @Override
+    public void parse(Parser parser) {
+        ((SSEMParser) parser).start();
+    }
+
+    @Override
     public boolean compile(String inputFileName, String outputFileName) {
         notifyCompileStart();
         notifyInfo(getTitle() + ", version " + getVersion());
@@ -87,35 +92,60 @@ public class CompilerImpl extends AbstractCompiler {
         }
 
         try (Reader reader = new FileReader(inputFileName)) {
-            try (CodeGenerator codeGenerator = new CodeGenerator(new MemoryAndFileOutput(outputFileName, memory))) {
-                lexer.reset(reader, 0, 0, 0);
-                parser.reset();
+            Lexer lexer = createLexer(CharStreams.fromReader(reader));
+            lexer.addErrorListener(new ParserErrorListener());
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
 
-                Program program = (Program) parser.parse().value;
-                if (program == null) {
-                    throw new Exception("Unexpected end of file");
-                }
-                if (parser.hasSyntaxErrors()) {
-                    throw new Exception("One or more errors has been found, cannot continue.");
-                }
+            SSEMParser parser = createParser(tokens);
+            parser.addErrorListener(new ParserErrorListener());
 
-                program.accept(codeGenerator);
-                programLocation = program.getStartLine() * 4;
-                notifyInfo(
-                    "Compile was successful (program starts at " + RadixUtils.formatWordHexString(programLocation)
-                        + "). Output: " + outputFileName
-                );
+            ParseTree tree = parser.start();
+            ProgramParser programParser = new ProgramParser();
+            programParser.visit(tree);
+
+            Program program = programParser.getProgram();
+            CodeGenerator codeGenerator = new CodeGenerator();
+            ByteBuffer code = codeGenerator.generateCode(program);
+
+            if (code.hasRemaining()) {
+                writeToFile(code, outputFileName);
+                writeToMemory(code);
             }
-        } catch (Exception e) {
-            LOGGER.trace("Compilation error.", e);
-            notifyError("Compilation error: " + e.getMessage());
 
+            programLocation = program.getStartLine() * 4;
+
+            notifyInfo(String.format(
+                "Compile was successful (program starts at %s). Output: %s",
+                RadixUtils.formatWordHexString(programLocation), outputFileName
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOGGER.trace("Compilation error.", e);
+            notifyError(e.toString());
             return false;
         } finally {
             notifyCompileFinish();
         }
 
         return true;
+    }
+
+    private void writeToFile(ByteBuffer code, String outputFileName) throws IOException {
+        code.rewind();
+        try (FileChannel channel = new FileOutputStream(outputFileName, false).getChannel()) {
+            channel.write(code);
+        }
+    }
+
+    private void writeToMemory(ByteBuffer code) {
+        if (memory != null) {
+            code.rewind();
+            code.position(4); // First 4 bytes is start line
+            byte[] data = new byte[code.remaining()];
+            code.get(data);
+            memory.clear();
+            memory.write(0, NumberUtils.nativeBytesToBytes(data));
+        }
     }
 
     @Override
@@ -131,13 +161,58 @@ public class CompilerImpl extends AbstractCompiler {
     }
 
     @Override
-    public int getProgramLocation() {
-        return programLocation;
+    public SSEMLexer createLexer(CharStream input) {
+        SSEMLexer lexer = new SSEMLexer(input);
+        lexer.removeErrorListeners();
+        return lexer;
     }
 
     @Override
-    public LexicalAnalyzer getLexer(Reader reader) {
-        return new LexerImpl(reader);
+    public SSEMParser createParser(TokenStream tokenStream) {
+        SSEMParser parser = new SSEMParser(tokenStream);
+        parser.removeErrorListeners();
+        return parser;
+    }
+
+    @Override
+    public int convertLexerTokenType(int tokenType) {
+        switch (tokenType) {
+            case SSEMLexer.COMMENT:
+                return Token.COMMENT;
+            case SSEMLexer.EOL:
+            case SSEMLexer.WS:
+            case SSEMLexer.BWS:
+                return Token.WHITESPACE;
+            case SSEMLexer.JMP:
+            case SSEMLexer.JRP:
+            case SSEMLexer.JPR:
+            case SSEMLexer.JMR:
+            case SSEMLexer.LDN:
+            case SSEMLexer.STO:
+            case SSEMLexer.SKN:
+            case SSEMLexer.SUB:
+            case SSEMLexer.CMP:
+            case SSEMLexer.STP:
+            case SSEMLexer.HLT:
+                return Token.RESERVED;
+            case SSEMLexer.START:
+                return Token.LABEL;
+            case SSEMLexer.NUM:
+            case SSEMLexer.BNUM:
+                return Token.PREPROCESSOR;
+            case SSEMLexer.NUMBER:
+            case SSEMLexer.HEXNUMBER:
+            case SSEMLexer.BinaryNumber:
+                return Token.LITERAL;
+            case SSEMLexer.EOF:
+                return Token.TEOF;
+        }
+        return Token.ERROR;
+    }
+
+    @Override
+    public int getProgramLocation() {
+        return programLocation;
     }
 
     @Override
