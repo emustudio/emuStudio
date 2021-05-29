@@ -1,3 +1,9 @@
+; Written by: 	Bas Wijnen of Holland.
+; Obtained from: 	The 1998 SSEM Programming Competition.
+; Description: 	Each time the program is run (pressing the EXEC button) the next prime number in the sequence is generated.
+; Parameter Lines: 	-
+; Result Lines: 	21: generated primes
+
 0000 JMP 24
 0001 LDN 21
 0002 STO 21
