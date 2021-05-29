@@ -13,6 +13,6 @@ class ParserErrorListener extends BaseErrorListener {
         int charPositionInLine,
         String msg,
         RecognitionException e) {
-        throw new CompileException(msg, line, charPositionInLine);
+        throw new CompileException(line, charPositionInLine, msg);
     }
 }

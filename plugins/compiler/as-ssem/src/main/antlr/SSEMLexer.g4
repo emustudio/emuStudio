@@ -1,12 +1,5 @@
 lexer grammar SSEMLexer;
 
-tokens {
-  COMMENT,
-  EOL, WS, BWS,
-  JMP, JRP, JPR, JMR, LDN, STO, SUB, CMP, SKN, STP, HLT,
-  START, NUM, BNUM,
-  NUMBER, HEXNUMBER, BinaryNumber
-}
 
 WS : (' ' | '\t') -> channel(HIDDEN);
 COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]*;
@@ -32,16 +25,12 @@ fragment I: [iI];
 
 // reserved
 JMP: J M P;
-JRP: J R P;
-JPR: J P R;
-JMR: J M R;
+JPR: (J P R) | (J R P) | (J M R);
 LDN: L D N;
 STO: S T O;
 SUB: S U B;
-CMP: C M P;
-SKN: S K N;
-STP: S T P;
-HLT: H L T;
+CMP: (C M P) | (S K N);
+STP: (S T P) | (H L T);
 
 // preprocessor
 START: S T A R T;

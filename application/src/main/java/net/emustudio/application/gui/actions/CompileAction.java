@@ -25,7 +25,11 @@ public class CompileAction extends AbstractAction {
 
     public CompileAction(VirtualComputer computer, Dialogs dialogs, Editor editor, Supplier<CPU.RunState> runState,
                          JTextArea compilerOutput, Runnable updateTitle) {
-        super("Compile", new ImageIcon(CompileAction.class.getResource("/net/emustudio/application/gui/dialogs/compile.png")));
+        super("Compile",
+            new ImageIcon(Objects.requireNonNull(
+                CompileAction.class.getResource("/net/emustudio/application/gui/dialogs/compile.png")
+            ))
+        );
 
         this.computer = Objects.requireNonNull(computer);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -48,6 +52,7 @@ public class CompileAction extends AbstractAction {
             @Override
             public void onMessage(CompilerMessage message) {
                 compilerOutput.append(message.getFormattedMessage() + "\n");
+                editor.setPosition(message.getLine(), message.getColumn());
             }
 
             @Override
@@ -77,7 +82,7 @@ public class CompileAction extends AbstractAction {
 
                         computer.getCPU().ifPresent(cpu -> cpu.reset(programStart));
                     } catch (Exception e) {
-                        compilerOutput.append("Could not compile file: " + e.toString() + "\n");
+                        compilerOutput.append("Could not compile file: " + e + "\n");
                     }
                 });
             }

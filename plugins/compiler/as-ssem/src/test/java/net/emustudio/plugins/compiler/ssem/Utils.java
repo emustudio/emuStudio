@@ -75,7 +75,10 @@ public class Utils {
         Map<Integer, Instruction> pinstr = program.getInstructions();
         assertEquals(instructions.length, pinstr.size());
         for (ParsedInstruction instruction : instructions) {
-            assertEquals(new Instruction(instruction.opcode, instruction.operand), pinstr.get(instruction.line));
+            assertEquals(
+                new Instruction(instruction.opcode, instruction.operand, Position.unknown(), Position.unknown()),
+                pinstr.get(instruction.line)
+            );
         }
     }
 

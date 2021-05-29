@@ -73,6 +73,45 @@ public class ParserTest {
     }
 
     @Test
+    public void testParseAllInstructions() {
+        Program program = parseProgram(
+            "01 jmp 0x1F\n" +
+                "02 jrp 0x1F\n" +
+                "03 jpr 0x1F\n" +
+                "04 jmr 0x1F\n" +
+                "05 ldn 0x1F\n" +
+                "06 sto 0x1F\n" +
+                "07 sub 0x1F\n" +
+                "08 cmp\n" +
+                "09 skn\n" +
+                "10 stp\n" +
+                "11 hlt\n"
+        );
+        assertInstructions(
+            program,
+            new Utils.ParsedInstruction(1, SSEMParser.JMP, 0x1F),
+            new Utils.ParsedInstruction(2, SSEMParser.JPR, 0x1F),
+            new Utils.ParsedInstruction(3, SSEMParser.JPR, 0x1F),
+            new Utils.ParsedInstruction(4, SSEMParser.JPR, 0x1F),
+            new Utils.ParsedInstruction(5, SSEMParser.LDN, 0x1F),
+            new Utils.ParsedInstruction(6, SSEMParser.STO, 0x1F),
+            new Utils.ParsedInstruction(7, SSEMParser.SUB, 0x1F),
+            new Utils.ParsedInstruction(8, SSEMParser.CMP, 0),
+            new Utils.ParsedInstruction(9, SSEMParser.CMP, 0),
+            new Utils.ParsedInstruction(10, SSEMParser.STP, 0),
+            new Utils.ParsedInstruction(11, SSEMParser.STP, 0)
+        );
+    }
+
+    @Test
+    public void testParseNegativeNumber() {
+        Program program = parseProgram(
+            "01 NUM -3"
+        );
+        assertInstructions(program, new Utils.ParsedInstruction(1, SSEMLexer.NUM, -3));
+    }
+
+    @Test
     public void testStartingPointIsAccepted() {
         Program program = parseProgram(
             "02 start\n" +
@@ -80,6 +119,12 @@ public class ParserTest {
                 "02 STP"
         );
         assertEquals(2, program.getStartLine());
+    }
+
+    @Test
+    public void testParseLongBinaryNumber() {
+        Program program = parseProgram("0000 BINS 11001000000000000000000000000000");
+        assertEquals(3355443200L, program.getInstructions().get(0).operand);
     }
 
     @Test(expected = CompileException.class)

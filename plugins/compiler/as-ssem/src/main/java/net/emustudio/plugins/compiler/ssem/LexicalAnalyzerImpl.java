@@ -2,7 +2,10 @@ package net.emustudio.plugins.compiler.ssem;
 
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
+import org.antlr.v4.runtime.CharStreams;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
@@ -27,11 +30,6 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
             }
 
             @Override
-            public int getLength() {
-                return token.getText().length();
-            }
-
-            @Override
             public String getText() {
                 return token.getText();
             }
@@ -43,6 +41,11 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         return lexer._hitEOF;
     }
 
+    @Override
+    public void reset(InputStream inputStream) throws IOException {
+        lexer.setInputStream(CharStreams.fromStream(inputStream));
+    }
+
     private int convertLexerTokenType(int tokenType) {
         switch (tokenType) {
             case SSEMLexer.COMMENT:
@@ -52,16 +55,12 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
             case SSEMLexer.BWS:
                 return Token.WHITESPACE;
             case SSEMLexer.JMP:
-            case SSEMLexer.JRP:
             case SSEMLexer.JPR:
-            case SSEMLexer.JMR:
             case SSEMLexer.LDN:
             case SSEMLexer.STO:
-            case SSEMLexer.SKN:
             case SSEMLexer.SUB:
             case SSEMLexer.CMP:
             case SSEMLexer.STP:
-            case SSEMLexer.HLT:
                 return Token.RESERVED;
             case SSEMLexer.START:
                 return Token.LABEL;

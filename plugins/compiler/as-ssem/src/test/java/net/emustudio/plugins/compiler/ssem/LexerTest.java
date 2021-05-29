@@ -34,16 +34,16 @@ public class LexerTest {
     @Test
     public void testParseReservedWords() {
         assertTokenTypesForCaseVariations("jmp", SSEMLexer.JMP, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("jrp", SSEMLexer.JRP, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("jrp", SSEMLexer.JPR, SSEMLexer.EOF);
         assertTokenTypesForCaseVariations("jpr", SSEMLexer.JPR, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("jmr", SSEMLexer.JMR, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("jmr", SSEMLexer.JPR, SSEMLexer.EOF);
         assertTokenTypesForCaseVariations("ldn", SSEMLexer.LDN, SSEMLexer.EOF);
         assertTokenTypesForCaseVariations("sto", SSEMLexer.STO, SSEMLexer.EOF);
         assertTokenTypesForCaseVariations("sub", SSEMLexer.SUB, SSEMLexer.EOF);
         assertTokenTypesForCaseVariations("cmp", SSEMLexer.CMP, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("skn", SSEMLexer.SKN, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("skn", SSEMLexer.CMP, SSEMLexer.EOF);
         assertTokenTypesForCaseVariations("stp", SSEMLexer.STP, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("hlt", SSEMLexer.HLT, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("hlt", SSEMLexer.STP, SSEMLexer.EOF);
     }
 
     @Test

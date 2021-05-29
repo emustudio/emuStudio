@@ -28,7 +28,7 @@ public class RTokenMaker extends AbstractTokenMaker {
                 int tokenMakerType = getTokenMakerType(token.getType());
 
                 int tokenStartIndex = token.getOffset();
-                int tokenLength = token.getLength() - 1;
+                int tokenLength = token.getText().length() - 1;
                 if (token.getType() == net.emustudio.emulib.plugins.compiler.Token.EOF) {
                     tokenLength = 0;
                 }

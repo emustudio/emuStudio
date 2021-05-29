@@ -18,6 +18,7 @@ comment: COMMENT? ;
 
 statement:
   instr=START
+  | instr=JMP operand=(NUMBER|HEXNUMBER)
   | instr=JPR operand=(NUMBER|HEXNUMBER)
   | instr=LDN operand=(NUMBER|HEXNUMBER)
   | instr=STO operand=(NUMBER|HEXNUMBER)

@@ -34,7 +34,6 @@ import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
 import net.emustudio.plugins.compiler.ssem.ast.ProgramParser;
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,15 +50,15 @@ import java.util.*;
     title = "SSEM Assembler"
 )
 @SuppressWarnings("unused")
-public class CompilerImpl extends AbstractCompiler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
+public class SSEMCompiler extends AbstractCompiler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SSEMCompiler.class);
     private static final List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(
         new SourceFileExtension("ssem", "SSEM source file")
     );
     private MemoryContext<Byte> memory;
     private int programLocation;
 
-    public CompilerImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public SSEMCompiler(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
     }
 
@@ -91,17 +90,14 @@ public class CompilerImpl extends AbstractCompiler {
 
         try (Reader reader = new FileReader(inputFileName)) {
             Lexer lexer = createLexer(CharStreams.fromReader(reader));
-            lexer.removeErrorListeners();
             lexer.addErrorListener(new ParserErrorListener());
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             SSEMParser parser = createParser(tokens);
-            parser.removeErrorListeners();
             parser.addErrorListener(new ParserErrorListener());
 
-            ParseTree tree = parser.start();
             ProgramParser programParser = new ProgramParser();
-            programParser.visit(tree);
+            programParser.visit(parser.start());
 
             Program program = programParser.getProgram();
             CodeGenerator codeGenerator = new CodeGenerator();
@@ -115,13 +111,15 @@ public class CompilerImpl extends AbstractCompiler {
             programLocation = program.getStartLine() * 4;
 
             notifyInfo(String.format(
-                "Compile was successful (program starts at %s). Output: %s",
+                "Compile was successful. Output: %s\nProgram starts at %s",
                 RadixUtils.formatWordHexString(programLocation), outputFileName
             ));
-        } catch (Exception e) {
-            e.printStackTrace();
-            LOGGER.trace("Compilation error.", e);
-            notifyError(e.toString());
+        } catch (CompileException e) {
+            notifyError(e.line, e.column, e.getMessage());
+            return false;
+        } catch (IOException e) {
+            notifyError("Compilation error: " + e);
+            LOGGER.error("Compilation error", e);
             return false;
         } finally {
             notifyCompileFinish();

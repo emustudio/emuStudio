@@ -1,11 +1,13 @@
 package net.emustudio.plugins.compiler.ssem.ast;
 
-import net.emustudio.plugins.compiler.ssem.CompileException;
+import net.emustudio.plugins.compiler.ssem.Position;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
+
+import static net.emustudio.plugins.compiler.ssem.CompilerChecks.*;
 
 public class Program {
     private int startLine;
@@ -13,10 +15,9 @@ public class Program {
 
     private final Map<Integer, Instruction> instructions = new HashMap<>();
 
-    public void setStartLine(int startLine) {
-        if (startLineDefined) {
-            throw new CompileException("Start line is already defined (at line " + startLine + ")!");
-        }
+    public void setStartLine(int startLine, Position pos) {
+        checkStartLineDefined(startLineDefined, pos, this.startLine);
+        checkLineOutOfBounds(pos, startLine);
         this.startLine = startLine;
         startLineDefined = true;
     }
@@ -25,13 +26,9 @@ public class Program {
         return startLine;
     }
 
-    public void add(int line, Instruction instruction) {
-        if (instructions.containsKey(line)) {
-            throw new CompileException("Duplicate line definition: " + line);
-        }
-        if (line > 31) {
-            throw new CompileException("Line number is out of bounds <0;31>: " + line);
-        }
+    public void add(int line, Instruction instruction, Position pos) {
+        checkDuplicateLineDefinition(instructions.containsKey(line), pos, line);
+        checkLineOutOfBounds(pos, line);
         instructions.put(line, instruction);
     }
 
@@ -46,9 +43,7 @@ public class Program {
     public String toString() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(startLine).append(" start\n");
-        forEach((line, instr) -> {
-            buffer.append(String.format("%02d %s\n", line, instr));
-        });
+        forEach((line, instr) -> buffer.append(String.format("%02d %s\n", line, instr)));
         return buffer.toString();
     }
 }

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -33,7 +34,6 @@ public class REditor implements Editor {
 
     private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE, true);
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
-    private final ErrorStrip errorStrip;
 
     private final Dialogs dialogs;
     private final List<SourceFileExtension> sourceFileExtensions;
@@ -94,8 +94,6 @@ public class REditor implements Editor {
         });
         setupSyntaxTheme();
 
-        errorStrip = new ErrorStrip(textPane);
-
         if (compiler != null) {
             sourceFileExtensions = compiler.getSourceFileExtensions();
             RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler);
@@ -115,11 +113,6 @@ public class REditor implements Editor {
     }
 
     @Override
-    public JComponent getErrorStrip() {
-        return errorStrip;
-    }
-
-    @Override
     public void clearMarkedOccurences() {
         SearchEngine.find(textPane, new SearchContext());
     }
@@ -127,6 +120,20 @@ public class REditor implements Editor {
     @Override
     public void grabFocus() {
         textPane.grabFocus();
+    }
+
+    @Override
+    public void setPosition(int line, int column) {
+        if (line >= 0) {
+            try {
+                int position = textPane.getLineStartOffset(Math.max(0, line - 1));
+                if (column >= 0) {
+                    position += column;
+                }
+                textPane.setCaretPosition(position);
+            } catch (BadLocationException ignored) {
+            }
+        }
     }
 
     @Override

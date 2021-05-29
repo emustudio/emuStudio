@@ -31,9 +31,14 @@ public interface Editor extends SearchListener {
 
     Component getView();
 
-    JComponent getErrorStrip();
-
     void grabFocus();
+
+    /**
+     * Set caret position.
+     * @param line line (if -1 does nothing)
+     * @param column column (if -1 only sets the line)
+     */
+    void setPosition(int line, int column);
 
 
     Optional<File> getCurrentFile();

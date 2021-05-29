@@ -38,8 +38,8 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-public class CompilerImplTest {
-    private CompilerImpl compiler;
+public class SSEMCompilerTest {
+    private SSEMCompiler compiler;
     private MemoryStub<Byte> memoryStub;
 
     @Rule
@@ -57,7 +57,7 @@ public class CompilerImplTest {
         expect(applicationApi.getContextPool()).andReturn(pool).anyTimes();
         replay(applicationApi);
 
-        compiler = new CompilerImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        compiler = new SSEMCompiler(0L, applicationApi, PluginSettings.UNAVAILABLE);
         compiler.initialize();
     }
 
