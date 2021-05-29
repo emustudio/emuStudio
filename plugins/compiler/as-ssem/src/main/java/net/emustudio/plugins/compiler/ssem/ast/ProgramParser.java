@@ -1,10 +1,11 @@
 package net.emustudio.plugins.compiler.ssem.ast;
 
-import net.emustudio.plugins.compiler.ssem.CompileException;
 import net.emustudio.plugins.compiler.ssem.Position;
 import net.emustudio.plugins.compiler.ssem.SSEMParser;
 import net.emustudio.plugins.compiler.ssem.SSEMParserBaseVisitor;
 import org.antlr.v4.runtime.Token;
+
+import static net.emustudio.plugins.compiler.ssem.CompilerChecks.checkedParseNumber;
 
 public class ProgramParser extends SSEMParserBaseVisitor<Program> {
     private final Program program = new Program();
@@ -42,47 +43,33 @@ public class ProgramParser extends SSEMParserBaseVisitor<Program> {
         return program;
     }
 
+    public Program getProgram() {
+        return program;
+    }
+
     private long parseBinary(Token token) {
-        try {
-            return Long.parseLong(token.getText(), 2);
-        } catch (NumberFormatException e) {
-            throw new CompileException(
-                token.getLine(), token.getCharPositionInLine(), "Could not parse number: " + token.getText()
-            );
-        }
+        return checkedParseNumber(token, t -> Long.parseLong(t.getText(), 2));
     }
 
     private long parseNumber(Token token) {
-        try {
-            if (token.getType() == SSEMParser.HEXNUMBER) {
-                return Long.decode(token.getText());
+        return checkedParseNumber(token, t -> {
+            if (t.getType() == SSEMParser.HEXNUMBER) {
+                return Long.decode(t.getText());
             } else {
                 // Do not use decode because we don't support octal numbers
-                return Long.parseLong(token.getText());
+                return Long.parseLong(t.getText());
             }
-        } catch (NumberFormatException e) {
-            throw new CompileException(
-                token.getLine(), token.getCharPositionInLine(), "Could not parse number: " + token.getText()
-            );
-        }
+        });
     }
 
     private int parsePositiveInteger(Token token) {
-        try {
-            if (token.getType() == SSEMParser.HEXNUMBER) {
-                return Integer.decode(token.getText());
+        return checkedParseNumber(token, t -> {
+            if (t.getType() == SSEMParser.HEXNUMBER) {
+                return Integer.decode(t.getText());
             } else {
                 // Do not use decode because we don't support octal numbers
-                return Integer.parseUnsignedInt(token.getText());
+                return Integer.parseUnsignedInt(t.getText());
             }
-        } catch (NumberFormatException e) {
-            throw new CompileException(
-                token.getLine(), token.getCharPositionInLine(), "Could not parse number: " + token.getText()
-            );
-        }
-    }
-
-    public Program getProgram() {
-        return program;
+        });
     }
 }

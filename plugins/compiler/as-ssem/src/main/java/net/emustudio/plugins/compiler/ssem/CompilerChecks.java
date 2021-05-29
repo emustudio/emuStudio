@@ -1,5 +1,9 @@
 package net.emustudio.plugins.compiler.ssem;
 
+import org.antlr.v4.runtime.Token;
+
+import java.util.function.Function;
+
 public class CompilerChecks {
 
     public static void checkStartLineDefined(boolean defined, Position pos, int startLine) {
@@ -30,6 +34,16 @@ public class CompilerChecks {
         if (tokenType != SSEMLexer.BNUM && tokenType != SSEMLexer.NUM && (operand < 0 || operand > 31)) {
             throw new CompileException(
                 pos.line, pos.column, "Operand must be between <0, 31>; it was " + operand
+            );
+        }
+    }
+
+    public static <T extends Number> T checkedParseNumber(Token token, Function<Token, T> parser) {
+        try {
+            return parser.apply(token);
+        } catch (NumberFormatException e) {
+            throw new CompileException(
+                token.getLine(), token.getCharPositionInLine(), "Could not parse number: " + token.getText()
             );
         }
     }

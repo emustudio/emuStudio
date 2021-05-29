@@ -71,7 +71,7 @@ public class EmulatorEngine {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 }
                 break;
-            case 4: // JPR
+            case 4: // JPR, JRP, JMR
                 CI.addAndGet(readLineAddress(lineAddress));
                 break;
             case 2: // LDN
@@ -84,12 +84,12 @@ public class EmulatorEngine {
             case 1: // SUB
                 Acc.addAndGet(-readInt(lineAddress));
                 break;
-            case 3: // CMP / SKN
+            case 3: // CMP, SKN
                 if (Acc.get() < 0) {
                     CI.addAndGet(4);
                 }
                 break;
-            case 7: // STP / HLT
+            case 7: // STP, HLT
                 return CPU.RunState.STATE_STOPPED_NORMAL;
             default:
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;
