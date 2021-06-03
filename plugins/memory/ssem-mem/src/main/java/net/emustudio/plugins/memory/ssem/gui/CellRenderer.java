@@ -36,7 +36,7 @@ class CellRenderer extends JLabel implements TableCellRenderer {
 
         String[] rowNames = new String[model.getColumnCount()];
         for (int i = 0; i < rowNames.length; i++) {
-            rowNames[i] = String.format("%02X", i);
+            rowNames[i] = String.format("%02X / %02d", i, i);
         }
         rowHeader = new JList<>(rowNames);
         rowHeader.setCellRenderer(rowHeaderRenderer);
@@ -73,7 +73,11 @@ class CellRenderer extends JLabel implements TableCellRenderer {
                 setFont(DEFAULT_FONT);
             }
 
-            setBackground(back);
+            if (MemoryTableModel.isBitLine(column)) {
+                setBackground(COLOR_BACK_LINE);
+            } else {
+                setBackground(back);
+            }
             setForeground(front);
         }
         setText(value.toString());

@@ -31,10 +31,11 @@ public class MemoryTableModel extends AbstractTableModel {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
 
     final static int COLUMN_HEX_VALUE = 32;
-    final static int COLUMN_RAW_VALUE = 33;
+    final static int COLUMN_DEC_VALUE = 33;
+    final static int COLUMN_RAW_VALUE = 34;
 
     private final static int ROW_COUNT = 32;
-    private final static int COLUMN_COUNT = 2 + 32;
+    private final static int COLUMN_COUNT = 3 + 32;
 
     private final MemoryContext<Byte> memory;
 
@@ -78,9 +79,11 @@ public class MemoryTableModel extends AbstractTableModel {
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case COLUMN_HEX_VALUE:
-                return "Value (hex)";
+                return "Hex";
+            case COLUMN_DEC_VALUE:
+                return "Dec";
             case COLUMN_RAW_VALUE:
-                return "Raw";
+                return "Char";
         }
         if (isBitLine(columnIndex)) {
             return "L";
@@ -112,6 +115,8 @@ public class MemoryTableModel extends AbstractTableModel {
             switch (columnIndex) {
                 case COLUMN_HEX_VALUE:
                     return RadixUtils.formatDwordHexString(value).toUpperCase();
+                case COLUMN_DEC_VALUE:
+                    return String.valueOf(value);
                 case COLUMN_RAW_VALUE:
                     return "" + (char) ((value >>> 24) & 0xFF) + (char) ((value >>> 16) & 0xFF)
                         + (char) ((value >>> 8) & 0xFF) + (char) (value & 0xFF);
@@ -133,6 +138,8 @@ public class MemoryTableModel extends AbstractTableModel {
                 String str = String.valueOf(aValue);
 
                 if (columnIndex == COLUMN_HEX_VALUE) {
+                    writeHex(str, row);
+                } else if (columnIndex == COLUMN_DEC_VALUE) {
                     writeHex(str, row);
                 } else if (columnIndex == COLUMN_RAW_VALUE) {
                     writeChar((String) aValue, row);
@@ -187,12 +194,13 @@ public class MemoryTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex >= 0 && columnIndex <= 33;
+        return columnIndex >= 0 && columnIndex <= 34;
     }
 
     void dataChangedAt(int address) {
+        int row = address / 4;
         for (int i = 0; i < COLUMN_COUNT; i++) {
-            fireTableCellUpdated(address, i);
+            fireTableCellUpdated(row, i);
         }
     }
 

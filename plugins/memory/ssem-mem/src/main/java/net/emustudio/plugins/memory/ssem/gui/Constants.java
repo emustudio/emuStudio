@@ -26,6 +26,8 @@ public final class Constants {
     public final static Color COLOR_FORE = Color.BLACK;
     public final static Color COLOR_FORE_UNIMPORTANT = Color.DARK_GRAY;
 
+    public final static Color COLOR_BACK_LINE = new Color(0xF3, 0xE3, 0xEC);
+
     public final static Font DEFAULT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     public final static Font BOLD_FONT = new Font(Font.MONOSPACED, Font.BOLD, 12);
 
@@ -38,6 +40,6 @@ public final class Constants {
         TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS,
         TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS,
         TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS,
-        10 * CHAR_WIDTH, 5 * CHAR_WIDTH
+        10 * CHAR_WIDTH, 10 * CHAR_WIDTH, 5 * CHAR_WIDTH
     };
 }

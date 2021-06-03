@@ -72,7 +72,7 @@ public class EmulatorEngine {
                 }
                 break;
             case 4: // JPR, JRP, JMR
-                CI.addAndGet(readLineAddress(lineAddress));
+                CI.addAndGet(readInt(lineAddress)*4);
                 break;
             case 2: // LDN
                 int tmp = readInt(lineAddress);

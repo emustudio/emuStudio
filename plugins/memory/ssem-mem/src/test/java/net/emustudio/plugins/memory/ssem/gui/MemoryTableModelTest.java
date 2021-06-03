@@ -37,8 +37,9 @@ public class MemoryTableModelTest {
         MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
 
         assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_HEX_VALUE));
+        assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_DEC_VALUE));
         assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_RAW_VALUE));
-        assertFalse(model.isCellEditable(0, 34));
+        assertFalse(model.isCellEditable(0, 35));
 
         for (int i = 0; i < 32; i++) {
             assertTrue(model.isCellEditable(0, i));
@@ -91,6 +92,24 @@ public class MemoryTableModelTest {
 
         MemoryTableModel model = new MemoryTableModel(memoryContext);
         model.setValueAt("0xFF", 10, MemoryTableModel.COLUMN_HEX_VALUE);
+
+        verify(memoryContext);
+    }
+
+    @Test
+    public void testSetDecValueCellsMemoryWrite() {
+        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
+
+        Byte[] row = new Byte[]{1, 2, 3, 4};
+        Byte[] modified = new Byte[]{(byte) 0xFF, 0, 0, 0};
+
+        expect(memoryContext.read(10 * 4, 4)).andReturn(row);
+        memoryContext.write(eq(10 * 4), aryEq(modified));
+        expectLastCall().once();
+        replay(memoryContext);
+
+        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        model.setValueAt("0xFF", 10, MemoryTableModel.COLUMN_DEC_VALUE);
 
         verify(memoryContext);
     }

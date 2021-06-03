@@ -14,8 +14,10 @@ public class CodeGenerator {
 
         program.forEach((line, instruction) -> {
             code.position(4 * (line + 1));
-            if (instruction.tokenType == SSEMParser.BNUM || instruction.tokenType == SSEMParser.NUM) {
+            if (instruction.tokenType == SSEMParser.BNUM) {
                 code.putInt((int)instruction.operand);
+            } else if (instruction.tokenType == SSEMParser.NUM) {
+                code.putInt((int)NumberUtils.reverseBits(instruction.operand, 32));
             } else {
                 writeInstruction(instruction.getOpcode(), instruction.operand);
             }
