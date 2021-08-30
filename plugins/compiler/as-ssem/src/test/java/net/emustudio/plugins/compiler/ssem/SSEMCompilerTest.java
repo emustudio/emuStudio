@@ -97,7 +97,7 @@ public class SSEMCompilerTest {
         );
 
         assertProgram(
-            0x68, 6, 0, 0
+            0, 0, 0x60, 0x0D
         );
     }
 }

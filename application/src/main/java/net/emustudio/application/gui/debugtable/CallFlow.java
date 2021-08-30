@@ -46,7 +46,7 @@ class CallFlow {
             }
             flowGraph.put(currentLocation, nextPosition);
         } catch (RuntimeException ex) {
-            LOGGER.error("Could not update call-flow cache", ex);
+            LOGGER.warn("Could not update call-flow cache", ex);
         }
     }
 

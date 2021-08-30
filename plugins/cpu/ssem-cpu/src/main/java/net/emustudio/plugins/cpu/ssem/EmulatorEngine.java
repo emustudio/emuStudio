@@ -35,6 +35,7 @@ public class EmulatorEngine {
 
     public final static int INSTRUCTIONS_PER_SECOND = 700;
     private final static int MEMORY_CELLS = 32 * 4;
+    private final static int LINE_MASK = 0b11111000;
 
     private final CPU cpu;
     private final MemoryContext<Byte> memory;
@@ -57,7 +58,7 @@ public class EmulatorEngine {
     CPU.RunState step() {
         Byte[] instruction = memory.read(CI.addAndGet(4), 4);
 
-        byte line = (byte)(NumberUtils.reverseBits(instruction[0] & 0b11111000, 8));
+        byte line = (byte)(NumberUtils.reverseBits(instruction[0] & LINE_MASK, 8));
         int lineAddress = line * 4;
         int opcode = instruction[1] & 7;
 
@@ -98,7 +99,7 @@ public class EmulatorEngine {
     }
 
     private int readLineAddress(int lineAddress) {
-        return 4 * NumberUtils.reverseBits(memory.read(lineAddress) & 0b11111000, 8);
+        return 4 * NumberUtils.reverseBits(memory.read(lineAddress) & LINE_MASK, 8);
     }
 
     private int readInt(int line) {
@@ -145,7 +146,7 @@ public class EmulatorEngine {
     private void fakeStep() {
         Byte[] instruction = memory.read(CI.get(), 4);
 
-        int line = NumberUtils.reverseBits(instruction[0], 8);
+        int line = NumberUtils.reverseBits(instruction[0] & LINE_MASK, 8);
         int opcode = instruction[1] & 3;
         CI.updateAndGet(ci -> (ci + 4) % MEMORY_CELLS);
 

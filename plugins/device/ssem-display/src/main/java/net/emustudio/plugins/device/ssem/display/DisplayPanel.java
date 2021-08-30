@@ -28,50 +28,43 @@ import java.util.Arrays;
 
 @ThreadSafe
 public class DisplayPanel extends JPanel {
-    private final static int PIXEL_SIZE = 10;
-    private final static int PIXEL_SIZE_PLUS_GAP = PIXEL_SIZE + 2;
-    private final static int CELL_SIZE = 32;
-    private final static int ROWS = 32;
+    private final static int CELL_SIZE_BITS = 32;
+    private final static int CELL_SIZE_BYTES = CELL_SIZE_BITS / 8;
 
-    private final boolean[][] memory = new boolean[CELL_SIZE][CELL_SIZE];
+    private final static int PIXEL_SIZE = 10;
+    private final static int PIXEL_SIZE_WITH_GAP = PIXEL_SIZE + 2;
+
+    private final boolean[][] memory = new boolean[CELL_SIZE_BITS][CELL_SIZE_BITS];
 
     DisplayPanel() {
         super.setBackground(Color.BLACK);
         super.setDoubleBuffered(true);
     }
 
-    void writeRow(Byte[] value, int row) {
-        int number = NumberUtils.readInt(value, NumberUtils.Strategy.BIG_ENDIAN);
-        Boolean[] bits = String
-            .format("%" + CELL_SIZE + "s", Integer.toBinaryString(number))
-            .chars()
-            .mapToObj(c -> c == '1').toArray(Boolean[]::new);
-
-        for (int i = 0; i < ROWS; i++) {
-            memory[row][i] = bits[i];
-        }
-        repaint();
-    }
-
-    void clear() {
-        for (boolean[] memoryRow : memory) {
+    void reset(MemoryContext<Byte> memory) {
+        for (boolean[] memoryRow : this.memory) {
             Arrays.fill(memoryRow, false);
         }
+        for (int i = 0; i < CELL_SIZE_BITS; i++) {
+            Byte[] value = memory.read(i * CELL_SIZE_BYTES, CELL_SIZE_BYTES);
+            writeRow(value, i);
+        }
         repaint();
     }
 
-    void reset(MemoryContext<Byte> memory) {
-        clear();
-        for (int i = 0; i < 4 * 32; i += 4) {
-            writeRow(memory.read(i, 4), i / 4);
+    void writeRow(Byte[] value, int row) {
+        int number = NumberUtils.readInt(value, NumberUtils.Strategy.REVERSE_BITS);
+        for (int i = 0; i < CELL_SIZE_BITS; i++) {
+            memory[row][i] = (((number >>> i) & 1) == 1);
         }
+        repaint();
     }
 
     @Override
     public void paintComponent(Graphics g) {
         Dimension size = getSize();
-        int startX = size.width / 2 - (CELL_SIZE / 2) * PIXEL_SIZE_PLUS_GAP - PIXEL_SIZE;
-        int startY = size.height / 2 - (ROWS / 2) * PIXEL_SIZE_PLUS_GAP;
+        int startX = size.width / 2 - (CELL_SIZE_BITS / 2) * PIXEL_SIZE_WITH_GAP - PIXEL_SIZE;
+        int startY = size.height / 2 - (CELL_SIZE_BITS / 2) * PIXEL_SIZE_WITH_GAP;
 
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, size.width, size.height);
@@ -80,23 +73,16 @@ public class DisplayPanel extends JPanel {
             for (int j = 0; j < memory[i].length; j++) {
                 if (memory[i][j]) {
                     g.setColor(Color.GREEN);
-                    g.fillRect(
-                        startX + j * PIXEL_SIZE_PLUS_GAP,
-                        startY + i * PIXEL_SIZE_PLUS_GAP,
-                        PIXEL_SIZE,
-                        PIXEL_SIZE
-                    );
                 } else {
                     g.setColor(Color.DARK_GRAY);
-                    g.fillRect(
-                        startX + j * PIXEL_SIZE_PLUS_GAP,
-                        startY + i * PIXEL_SIZE_PLUS_GAP,
-                        PIXEL_SIZE,
-                        PIXEL_SIZE
-                    );
                 }
+                g.fillRect(
+                    startX + j * PIXEL_SIZE_WITH_GAP,
+                    startY + i * PIXEL_SIZE_WITH_GAP,
+                    PIXEL_SIZE,
+                    PIXEL_SIZE
+                );
             }
         }
     }
-
 }

@@ -70,7 +70,7 @@ public class SSEMCompiler extends AbstractCompiler {
                 memory = pool.getMemoryContext(pluginID, MemoryContext.class);
                 if (memory.getDataType() != Byte.class) {
                     throw new InvalidContextException(
-                        "Unexpected memory cell type. Expected Short but was: " + memory.getDataType()
+                        "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
                     );
                 }
             } catch (InvalidContextException | ContextNotFoundException e) {
@@ -83,10 +83,6 @@ public class SSEMCompiler extends AbstractCompiler {
     public boolean compile(String inputFileName, String outputFileName) {
         notifyCompileStart();
         notifyInfo(getTitle() + ", version " + getVersion());
-
-        if (memory == null) {
-            notifyWarning("Memory is not available.");
-        }
 
         try (Reader reader = new FileReader(inputFileName)) {
             Lexer lexer = createLexer(CharStreams.fromReader(reader));
@@ -111,8 +107,8 @@ public class SSEMCompiler extends AbstractCompiler {
             programLocation = program.getStartLine() * 4;
 
             notifyInfo(String.format(
-                "Compile was successful. Output: %s\nProgram starts at %s",
-                RadixUtils.formatWordHexString(programLocation), outputFileName
+                "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
+                outputFileName, RadixUtils.formatWordHexString(programLocation)
             ));
         } catch (CompileException e) {
             notifyError(e.line, e.column, e.getMessage());
@@ -143,6 +139,8 @@ public class SSEMCompiler extends AbstractCompiler {
             code.get(data);
             memory.clear();
             memory.write(0, NumberUtils.nativeBytesToBytes(data));
+        } else {
+            notifyWarning("Memory is not available.");
         }
     }
 

@@ -19,14 +19,21 @@
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+}
+
 plugins {
   id 'java'
-  id 'net.emustudio.edigen-plugin' version '1.2.0'
+  id 'net.emustudio.edigen-plugin' version '1.4.0'
 }
 
 repositories {
+  mavenLocal()
   mavenCentral()
-  jcenter()
 }
 
 dependencies {

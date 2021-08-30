@@ -1,3 +1,5 @@
+root instruction, data;
+
 instruction = "JMP": line(5)     ignore8(8) 000 ignore16(16) |
               "JPR": line(5)     ignore8(8) 100 ignore16(16) |
               "LDN": line(5)     ignore8(8) 010 ignore16(16) |
@@ -6,13 +8,10 @@ instruction = "JMP": line(5)     ignore8(8) 000 ignore16(16) |
               "CMP": 00000       ignore8(8) 011 ignore16(16) |
               "STP": 00000       ignore8(8) 111 ignore16(16);
 
-line = arg: arg(5);
-
-ignore8 = arg: arg(8);
-
-ignore16 = arg: arg(16);
+data = data: data(32);
 
 %%
 
-"%s %d" = instruction line(shift_left, shift_left, shift_left, bit_reverse, absolute) ignore8 ignore16;
+"%s %d" = instruction line ignore8 ignore16;
 "%s" = instruction ignore8 ignore16;
+"%x" = data;

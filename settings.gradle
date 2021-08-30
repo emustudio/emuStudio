@@ -17,6 +17,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+pluginManagement {
+    includeBuild '/home/vbmacher/projects/emustudio/edigen-gradle-plugin'
+}
+
+
 rootProject.name = 'emuStudio'
 
 include ':application'
@@ -28,7 +33,7 @@ include ':plugins:compiler:as-ssem'
 //include ':plugins:compiler:ramc-ram'
 //include ':plugins:compiler:raspc-rasp'
 
-//include ':plugins:cpu:8080-cpu'
+include ':plugins:cpu:8080-cpu'
 //include ':plugins:cpu:brainduck-cpu'
 //include ':plugins:cpu:ram-cpu'
 //include ':plugins:cpu:rasp-cpu'
@@ -48,3 +53,4 @@ include ':plugins:device:ssem-display'
 //include ':plugins:memory:rasp-mem'
 include ':plugins:memory:ssem-mem'
 //include ':plugins:memory:byte-mem'
+

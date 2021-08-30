@@ -258,12 +258,12 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int readWord(int address) {
-        Short[] read = memory.readWord(address);
+        Short[] read = memory.read(address, 2);
         return (read[1] << 8) | read[0];
     }
 
     private void writeWord(int address, int value) {
-        memory.writeWord(address, new Short[]{(short) (value & 0xFF), (short) ((value >>> 8) & 0xFF)});
+        memory.write(address, new Short[]{(short) (value & 0xFF), (short) ((value >>> 8) & 0xFF)}, 2);
     }
 
     private static final Method[] DISPATCH_TABLE = new Method[256];
@@ -428,7 +428,7 @@ public class EmulatorEngine implements CpuEngine {
     private int O34_SHLD(short OP) {
         int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
-        memory.writeWord(DAR, new Short[]{(short) regs[REG_L], (short) regs[REG_H]});
+        memory.write(DAR, new Short[]{(short) regs[REG_L], (short) regs[REG_H]}, 2);
         return 16;
     }
 

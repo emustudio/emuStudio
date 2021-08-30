@@ -42,13 +42,15 @@ public class RunnerTest {
 
         Runner.main("--output", outputFile.getPath(), sourceFile.getPath());
 
-        List<String> lines = Files.readAllLines(outputFile.toPath());
+        byte[] bytes = Files.readAllBytes(outputFile.toPath());
 
-        assertEquals(1, lines.size());
-        byte[] expected = new byte[33 * 4]; // 32 words of 32 bits + 4 bytes for startLine
-        expected[4] = 104;
-        expected[5] = 6;
-        assertArrayEquals(expected, lines.get(0).getBytes());
+        // 32 words of 32 bits + 4 bytes for startLine
+        assertEquals(33 * 4, bytes.length);
+
+        byte[] expected = new byte[33 * 4];
+        expected[6] = 0x60;
+        expected[7] = 0x0D;
+        assertArrayEquals(expected, bytes);
     }
 
     @Test

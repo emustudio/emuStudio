@@ -19,6 +19,7 @@
 package net.emustudio.plugins.memory.ssem;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.Arrays;
@@ -47,9 +48,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
 
     @Override
     public Byte[] read(int from, int count) {
-        Byte[] result = new Byte[count];
-        System.arraycopy(memory, from, result, 0, count);
-        return result;
+        return Arrays.copyOfRange(memory, from, from + count); // from+count can be >= memory.length
     }
 
     @Override

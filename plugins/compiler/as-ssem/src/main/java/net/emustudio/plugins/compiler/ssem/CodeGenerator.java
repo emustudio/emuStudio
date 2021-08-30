@@ -15,9 +15,9 @@ public class CodeGenerator {
         program.forEach((line, instruction) -> {
             code.position(4 * (line + 1));
             if (instruction.tokenType == SSEMParser.BNUM) {
-                code.putInt((int)instruction.operand);
+                code.putInt((int) instruction.operand);
             } else if (instruction.tokenType == SSEMParser.NUM) {
-                code.putInt((int)NumberUtils.reverseBits(instruction.operand, 32));
+                code.putInt((int) NumberUtils.reverseBits(instruction.operand, 32));
             } else {
                 writeInstruction(instruction.getOpcode(), instruction.operand);
             }
@@ -26,13 +26,7 @@ public class CodeGenerator {
     }
 
     private void writeInstruction(int opcode, long operand) {
-        byte address = (byte)(NumberUtils.reverseBits((byte)(operand & 0xFF), 8) & 0xF8);
-        // 5 bits address + 3 empty bits
-        code.put(address);
-        // next: 5 empty bits + 3 bit instruction
-        code.put((byte)(opcode & 0xFF));
-        // 16 empty bits
-        code.put((byte)0);
-        code.put((byte)0);
+        int instruction = (int)((((operand & 0x1F) << 27)) | (((opcode & 0x07) << 16)));
+        code.putInt(NumberUtils.reverseBits(instruction, 32));
     }
 }
