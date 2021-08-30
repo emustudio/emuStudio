@@ -31,12 +31,13 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
 public class SSEMCompilerTest {
     private SSEMCompiler compiler;
@@ -72,12 +73,16 @@ public class SSEMCompilerTest {
     }
 
     private void assertProgram(int... bytes) {
-        for (int i = 0; i < bytes.length; i++) {
-            assertEquals(
-                String.format("%d. expected=%x, but was=%x", i, bytes[i], memoryStub.read(i)),
-                bytes[i], (int) memoryStub.read(i)
-            );
-        }
+        Byte[] value = memoryStub.read(0, bytes.length);
+
+        assertArrayEquals(
+            String.format(
+                "Expected=%x, but was=%x",
+                NumberUtils.readInt(bytes, NumberUtils.Strategy.BIG_ENDIAN),
+                NumberUtils.readInt(value, NumberUtils.Strategy.BIG_ENDIAN)
+            ),
+            NumberUtils.nativeIntsToNativeBytes(bytes), NumberUtils.numbersToNativeBytes(value)
+        );
     }
 
     @Test
@@ -96,8 +101,9 @@ public class SSEMCompilerTest {
             "0 sto 22\n"
         );
 
+        // 01101000 00000110 0000 0000
         assertProgram(
-            0, 0, 0x60, 0x0D
+            0x68, 6, 0, 0
         );
     }
 }

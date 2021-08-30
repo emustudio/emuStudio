@@ -25,7 +25,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -48,8 +47,8 @@ public class RunnerTest {
         assertEquals(33 * 4, bytes.length);
 
         byte[] expected = new byte[33 * 4];
-        expected[6] = 0x60;
-        expected[7] = 0x0D;
+        expected[4] = 0x68;
+        expected[5] = 0x06;
         assertArrayEquals(expected, bytes);
     }
 
@@ -67,6 +66,4 @@ public class RunnerTest {
     public void testCommandLinePrintVersion() {
         Runner.main("--version");
     }
-
-
 }
