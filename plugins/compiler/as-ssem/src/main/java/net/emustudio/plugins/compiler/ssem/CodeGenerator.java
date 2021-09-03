@@ -19,7 +19,6 @@ public class CodeGenerator {
             } else if (instruction.tokenType == SSEMParser.NUM) {
                 code.putInt((int) NumberUtils.reverseBits(instruction.operand, 32));
             } else {
-                System.out.println(instruction);
                 writeInstruction(instruction.getOpcode(), instruction.operand);
             }
         });
@@ -27,7 +26,7 @@ public class CodeGenerator {
     }
 
     private void writeInstruction(int opcode, long operand) {
-        int instruction = (int)((operand & 0x1F) | (((opcode & 0x07) << 12)));
+        int instruction = (int)((operand & 0x1F) | (((opcode & 0x07) << 13)));
         code.putInt(NumberUtils.reverseBits(instruction, 32));
     }
 }
