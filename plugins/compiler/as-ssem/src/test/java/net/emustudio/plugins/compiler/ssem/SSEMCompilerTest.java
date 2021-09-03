@@ -97,13 +97,25 @@ public class SSEMCompilerTest {
 
     @Test
     public void testSTO() throws Exception {
-        compile(
-            "0 sto 22\n"
-        );
+        compile("00 STO 22\n");
+        assertProgram(0x68, 6, 0, 0);
+    }
 
-        // 01101000 00000110 0000 0000
-        assertProgram(
-            0x68, 6, 0, 0
-        );
+    @Test
+    public void testLDN() throws Exception {
+        compile("00 LDN 29");
+        assertProgram(0xB8,4,0,0);
+    }
+
+    @Test
+    public void testSUB() throws Exception {
+        compile("00 SUB 30");
+        assertProgram(0x78,8,0,0);
+    }
+
+    @Test
+    public void testSTP() throws Exception {
+        compile("00 STP");
+        assertProgram(0,0x0E,0,0);
     }
 }

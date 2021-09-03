@@ -12,6 +12,6 @@ data = data: data(32);
 
 %%
 
-"%s %d" = instruction line ignore8 ignore16;
+"%s %d" = instruction line(bit_reverse) ignore8 ignore16;
 "%s" = instruction ignore8 ignore16;
 "%x" = data;
