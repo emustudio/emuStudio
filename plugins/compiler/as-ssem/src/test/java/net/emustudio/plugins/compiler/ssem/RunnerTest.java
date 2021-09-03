@@ -48,7 +48,7 @@ public class RunnerTest {
 
         byte[] expected = new byte[33 * 4];
         expected[4] = 0x68;
-        expected[5] = 0x03;
+        expected[5] = 0x6;
         assertArrayEquals(expected, bytes);
     }
 
