@@ -56,35 +56,42 @@ public class MemoryGui extends JDialog {
 
     private void initComponents() {
         scrollPane = new JScrollPane();
-        JToolBar jToolBar1 = new JToolBar();
+        JToolBar toolBar = new JToolBar();
         JButton btnClear = new JButton();
+        JButton btnDump = new JButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         setTitle("SSEM Memory (Williams-Killburn Tube)");
 
-        jToolBar1.setFloatable(false);
-        jToolBar1.setRollover(true);
+        toolBar.setFloatable(false);
+        toolBar.setRollover(true);
 
         btnClear.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/ssem/gui/clear.png")));
         btnClear.setFocusable(false);
         btnClear.setHorizontalTextPosition(SwingConstants.CENTER);
         btnClear.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnClear.addActionListener(this::btnClearActionPerformed);
-        jToolBar1.add(btnClear);
+
+        btnDump.setText("Dump to console");
+        btnDump.setFocusable(false);
+        btnDump.addActionListener(e -> tableModel.dump());
+
+        toolBar.add(btnClear);
+        toolBar.add(btnDump);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 965, Short.MAX_VALUE)
-                .addComponent(jToolBar1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(toolBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(toolBar, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE))
         );

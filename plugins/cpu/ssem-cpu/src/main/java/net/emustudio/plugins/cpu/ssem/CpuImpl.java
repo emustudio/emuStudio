@@ -70,7 +70,7 @@ public class CpuImpl extends AbstractCPU {
         }
         Decoder decoder = new DecoderImpl(memory);
         disassembler = new DisassemblerImpl(memory, decoder);
-        engine = new EmulatorEngine(memory, this);
+        engine = new EmulatorEngine(memory, this::isBreakpointSet);
 
         if (settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false)) {
             automaticEmulation = new AutomaticEmulation(this, engine, memory);

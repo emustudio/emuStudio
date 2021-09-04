@@ -43,6 +43,13 @@ public class MemoryTableModel extends AbstractTableModel {
         this.memory = Objects.requireNonNull(memory);
     }
 
+    public void dump() {
+        for (int i = 0; i < 32; i++) {
+            Byte[] v = memory.read(i * 4, 4);
+            System.out.printf("0x%02X, 0x%02X, 0x%02X, 0x%02X,\n", v[0], v[1], v[2], v[3]);
+        }
+    }
+
     @Override
     public int getRowCount() {
         return ROW_COUNT;

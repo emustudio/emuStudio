@@ -20,6 +20,7 @@ package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
 import net.emustudio.plugins.cpu.intel8080.api.FrequencyChangedListener;
@@ -32,7 +33,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.LockSupport;
 
 public class EmulatorEngine implements CpuEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
@@ -62,6 +62,7 @@ public class EmulatorEngine implements CpuEngine {
     private final ContextImpl context;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
+    private final SleepUtils.Sleep sleep = SleepUtils.sleep;
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
@@ -145,7 +146,7 @@ public class EmulatorEngine implements CpuEngine {
             endTime = System.nanoTime() - startTime;
             if (endTime < slice) {
                 // time correction
-                LockSupport.parkNanos(slice - endTime);
+                sleep.sleep(slice - endTime);
             }
         }
         return currentRunState;
