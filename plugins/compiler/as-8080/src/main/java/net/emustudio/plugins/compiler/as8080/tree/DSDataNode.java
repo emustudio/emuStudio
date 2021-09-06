@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.tree;
 
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.Namespace;
 import net.emustudio.plugins.compiler.as8080.exceptions.AmbiguousException;
 import net.emustudio.plugins.compiler.as8080.exceptions.NeedMorePassException;
@@ -62,7 +62,7 @@ public class DSDataNode extends DataValueNode {
         }
 
         str.append("00".repeat(Math.max(0, expression.getValue())));
-        hex.putCode(str.toString());
+        hex.add(str.toString());
     }
 
     @Override

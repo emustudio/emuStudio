@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.tree;
 
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.Namespace;
 import net.emustudio.plugins.compiler.as8080.exceptions.AmbiguousException;
 import net.emustudio.plugins.compiler.as8080.exceptions.NeedMorePassException;
@@ -80,7 +80,7 @@ public class MacroCallPseudo extends PseudoNode {
 
     @Override
     public void pass4(IntelHEX hex) {
-        hex.addTable(statHex.getTable());
+        hex.add(statHex.getTable());
     }
 
     @Override

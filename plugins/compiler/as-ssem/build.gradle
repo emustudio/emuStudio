@@ -32,7 +32,6 @@ dependencies {
   implementation libs.emuLib
   implementation libs.slf4JApi
   implementation libs.jcipAnnotations
-  implementation libs.javaCupRuntime
 
   testImplementation libs.cpuTestSuite
   testImplementation libs.junit
@@ -94,7 +93,6 @@ copy {
   from('src/main/scripts')
   into "$buildDir/libs/scripts"
 }
-
 
 test {
   testLogging {

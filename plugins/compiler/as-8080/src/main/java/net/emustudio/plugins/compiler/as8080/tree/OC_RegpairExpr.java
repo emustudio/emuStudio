@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.tree;
 
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.Namespace;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.OpCodeNode;
@@ -48,8 +48,8 @@ public class OC_RegpairExpr extends OpCodeNode {
     @Override
     public void pass4(IntelHEX hex) {
         int opCode = 1 | (regpair << 4);
-        hex.putCode(String.format("%1$02X", opCode));
-        hex.putCode(expr.getEncValue(false));
+        hex.add(String.format("%1$02X", opCode));
+        hex.add(expr.getEncValue(false));
     }
 
     @Override

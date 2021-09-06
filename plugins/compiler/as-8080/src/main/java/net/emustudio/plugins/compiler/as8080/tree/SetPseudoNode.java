@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.tree;
 
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.Namespace;
 import net.emustudio.plugins.compiler.as8080.exceptions.AlreadyDefinedException;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;

@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.tree;
 
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.Namespace;
 import net.emustudio.plugins.compiler.as8080.exceptions.ValueTooBigException;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.DataValueNode;
@@ -81,9 +81,9 @@ public class DBDataNode extends DataValueNode {
             if (expression.getValue() < -128) {
                 throw new ValueTooBigException(line, column, expression.getValue(), -128);
             }
-            hex.putCode(expression.getEncValue(true));
+            hex.add(expression.getEncValue(true));
         } else if (literalString != null) {
-            hex.putCode(this.getEncString(literalString));
+            hex.add(this.getEncString(literalString));
         } else if (opcode != null) {
             opcode.pass4(hex);
         }

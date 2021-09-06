@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.tree;
 
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.Namespace;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.OpCodeNode;
 
@@ -68,7 +68,7 @@ public class OC_Regpair extends OpCodeNode {
                 break;
         }
 
-        hex.putCode(String.format("%1$02X", opCode));
+        hex.add(String.format("%1$02X", opCode));
     }
 
     @Override

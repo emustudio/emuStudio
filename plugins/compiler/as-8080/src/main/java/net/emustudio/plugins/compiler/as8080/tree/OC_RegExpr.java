@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.tree;
 
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.Namespace;
 import net.emustudio.plugins.compiler.as8080.exceptions.ValueTooBigException;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.ExprNode;
@@ -59,8 +59,8 @@ public class OC_RegExpr extends OpCodeNode {
             throw new ValueTooBigException(line, column, expr.getValue(), 0xFF);
         }
         opCode |= (reg << 3);
-        hex.putCode(String.format("%1$02X", opCode));
-        hex.putCode(expr.getEncValue(true));
+        hex.add(String.format("%1$02X", opCode));
+        hex.add(expr.getEncValue(true));
     }
 
     @Override

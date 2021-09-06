@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.treeAbstract;
 
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.Namespace;
 
 public abstract class DataValueNode {

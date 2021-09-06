@@ -18,11 +18,9 @@
  */
 package net.emustudio.plugins.compiler.as8080.tree;
 
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.CompilerImpl;
-import net.emustudio.plugins.compiler.as8080.LexerImpl;
 import net.emustudio.plugins.compiler.as8080.Namespace;
-import net.emustudio.plugins.compiler.as8080.ParserImpl;
 import net.emustudio.plugins.compiler.as8080.exceptions.CompilerException;
 import net.emustudio.plugins.compiler.as8080.exceptions.UnexpectedEOFException;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.PseudoNode;
