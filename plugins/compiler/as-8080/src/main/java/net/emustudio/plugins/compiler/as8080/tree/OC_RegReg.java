@@ -20,7 +20,7 @@ package net.emustudio.plugins.compiler.as8080.tree;
 
 import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.Namespace;
-import net.emustudio.plugins.compiler.as8080.exceptions.CompilerException;
+import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.OpCodeNode;
 
 // only for mov instruction
@@ -43,7 +43,7 @@ public class OC_RegReg extends OpCodeNode {
     @Override
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         if ((reg_src == reg_dst) && (reg_src == 6)) {
-            throw new CompilerException(line, column, "Can't use M register on both src and dst");
+            throw new CompileException(line, column, "Can't use M register on both src and dst");
         }
         return addr_start + 1;
     }

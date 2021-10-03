@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.exceptions;
 
-public class AlreadyDefinedException extends CompilerException {
+public class AlreadyDefinedException extends CompileException {
 
     public AlreadyDefinedException(int line, int column, String what) {
         super(line, column, what + " is already defined!");

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
@@ -27,7 +28,6 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.plugins.compiler.as8080.CompilerImpl;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
@@ -40,8 +40,8 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractCompilerTest {
-    protected CompilerImpl compiler;
-    protected MemoryStub<Short> memoryStub;
+    protected Assembler8080 compiler;
+    protected MemoryStub<Byte> memoryStub;
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
@@ -49,7 +49,7 @@ public abstract class AbstractCompilerTest {
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
-        memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();
@@ -59,7 +59,7 @@ public abstract class AbstractCompilerTest {
         expect(applicationApi.getContextPool()).andReturn(contextPool);
         replay(applicationApi);
 
-        compiler = new CompilerImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        compiler = new Assembler8080(0L, applicationApi, PluginSettings.UNAVAILABLE);
         compiler.addCompilerListener(new CompilerListener() {
             @Override
             public void onStart() {

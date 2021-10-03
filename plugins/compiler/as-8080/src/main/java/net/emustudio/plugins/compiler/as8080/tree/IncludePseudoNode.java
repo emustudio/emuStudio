@@ -19,9 +19,9 @@
 package net.emustudio.plugins.compiler.as8080.tree;
 
 import net.emustudio.emulib.runtime.io.IntelHEX;
-import net.emustudio.plugins.compiler.as8080.CompilerImpl;
+import net.emustudio.plugins.compiler.as8080.Assembler8080;
 import net.emustudio.plugins.compiler.as8080.Namespace;
-import net.emustudio.plugins.compiler.as8080.exceptions.CompilerException;
+import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 import net.emustudio.plugins.compiler.as8080.exceptions.UnexpectedEOFException;
 import net.emustudio.plugins.compiler.as8080.treeAbstract.PseudoNode;
 
@@ -32,11 +32,11 @@ import java.util.List;
 
 public class IncludePseudoNode extends PseudoNode {
     private final String fileName;
-    private final CompilerImpl compiler;
+    private final Assembler8080 compiler;
     private Statement program;
     private Namespace namespace;
 
-    public IncludePseudoNode(String filename, int line, int column, CompilerImpl compiler) {
+    public IncludePseudoNode(String filename, int line, int column, Assembler8080 compiler) {
         super(line, column);
         this.fileName = filename.replace("\\", File.separator);
         this.compiler = compiler;
@@ -68,37 +68,37 @@ public class IncludePseudoNode extends PseudoNode {
     }
 
     void pass1(List<String> includefiles, Namespace parentEnv) throws Exception {
-        try {
-            namespace = new Namespace(parentEnv.getInputFile().getAbsolutePath());
-
-            File file = findIncludeFile(fileName);
-            FileReader f = new FileReader(file);
-            LexerImpl lexer = new LexerImpl(f);
-            ParserImpl parser = new ParserImpl(lexer, compiler);
-
-            parser.setReportPrefixString(file.getName() + ": ");
-            Object s = parser.parse().value;
-            parser.setReportPrefixString(null);
-
-            if (s == null) {
-                throw new UnexpectedEOFException(line, column, file.getAbsolutePath());
-            }
-
-            program = (Statement) s;
-            program.addIncludeFiles(includefiles);
-            namespace = parentEnv;
-
-            if (program.getIncludeLoops(file.getAbsolutePath())) {
-                throw new CompilerException(line, column, "Infinite INCLUDE loop (" + file.getAbsolutePath() + ")");
-            }
-            program.pass1(namespace); // create symbol table
-        } catch (CompilerException e) {
-            throw e;
-        } catch (IOException e) {
-            throw new CompilerException(line, column, fileName + ": " + e.getMessage(), e);
-        } catch (Exception e) {
-            throw new CompilerException(line, column, e.getMessage(), e);
-        }
+//        try {
+//            namespace = new Namespace(parentEnv.getInputFile().getAbsolutePath());
+//
+//            File file = findIncludeFile(fileName);
+//            FileReader f = new FileReader(file);
+//            LexerImpl lexer = new LexerImpl(f);
+//            ParserImpl parser = new ParserImpl(lexer, compiler);
+//
+//            parser.setReportPrefixString(file.getName() + ": ");
+//            Object s = parser.parse().value;
+//            parser.setReportPrefixString(null);
+//
+//            if (s == null) {
+//                throw new UnexpectedEOFException(line, column, file.getAbsolutePath());
+//            }
+//
+//            program = (Statement) s;
+//            program.addIncludeFiles(includefiles);
+//            namespace = parentEnv;
+//
+//            if (program.getIncludeLoops(file.getAbsolutePath())) {
+//                throw new CompileException(line, column, "Infinite INCLUDE loop (" + file.getAbsolutePath() + ")");
+//            }
+//            program.pass1(namespace); // create symbol table
+//        } catch (CompileException e) {
+//            throw e;
+//        } catch (IOException e) {
+//            throw new CompileException(line, column, fileName + ": " + e.getMessage(), e);
+//        } catch (Exception e) {
+//            throw new CompileException(line, column, e.getMessage(), e);
+//        }
     }
 
     @Override

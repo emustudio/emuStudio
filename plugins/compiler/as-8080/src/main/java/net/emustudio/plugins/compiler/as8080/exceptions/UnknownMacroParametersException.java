@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.exceptions;
 
-public class UnknownMacroParametersException extends CompilerException {
+public class UnknownMacroParametersException extends CompileException {
     public UnknownMacroParametersException(int column, int line, String name) {
         super(column, line, "Unknown macro(" + name + ") parameters");
     }

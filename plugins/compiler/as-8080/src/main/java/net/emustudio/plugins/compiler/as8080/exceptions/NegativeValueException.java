@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.exceptions;
 
-public class NegativeValueException extends CompilerException {
+public class NegativeValueException extends CompileException {
 
     public NegativeValueException(int line, int column, int value) {
         super(line, column, "Value(" + value + ") cannot be negative!");

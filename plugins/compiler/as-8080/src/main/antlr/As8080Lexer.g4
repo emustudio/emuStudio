@@ -1,5 +1,8 @@
 lexer grammar As8080Lexer;
 
+options {
+  backtrack=false;
+}
 
 WS : (' ' | '\t' | '\f') -> channel(HIDDEN);
 COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]*;
@@ -158,7 +161,7 @@ OP_XOR: X O R;
 
 // literals
 LIT_NUMBER: [\-]? [0-9]+ D?;
-LIT_HEXNUMBER_1: [\-]? ('0x'|'0X') [0-9a-fA-F]+;
+LIT_HEXNUMBER_1: [\-]? '0' X [0-9a-fA-F]+;
 LIT_HEXNUMBER_2: [\-]? [0-9a-fA-F]+ H;
 LIT_OCTNUMBER: [\-]? [0-7]+ [oOqQ];
 LIT_BINNUMBER: [01]+ B;

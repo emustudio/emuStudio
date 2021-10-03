@@ -24,7 +24,7 @@ package net.emustudio.plugins.compiler.as8080.exceptions;
  * Expression with forward reference for label can't be evaulated without knowing a value of the label (its address that
  * label is pointing at).
  */
-public class NeedMorePassException extends CompilerException {
+public class NeedMorePassException extends CompileException {
 
     public NeedMorePassException(int line, int column) {
         super(line, column, "");

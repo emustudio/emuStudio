@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.exceptions;
 
-public class ValueTooBigException extends CompilerException {
+public class ValueTooBigException extends CompileException {
 
     public ValueTooBigException(int line, int column, int currentValue, int maximumValue) {
         super(column, line, "Value (" + currentValue + ") too large (maximum is " + maximumValue + ")");

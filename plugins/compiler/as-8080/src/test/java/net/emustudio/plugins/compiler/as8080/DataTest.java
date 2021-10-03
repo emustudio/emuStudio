@@ -18,8 +18,10 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class DataTest extends AbstractCompilerTest {
 
     @Test
@@ -162,8 +164,8 @@ public class DataTest extends AbstractCompilerTest {
 
     @Test
     public void testDSbreaksPreviousMemoryContent() throws Exception {
-        memoryStub.write(0, (short) 0x10);
-        memoryStub.write(1, (short) 0x11);
+        memoryStub.write(0, (byte) 0x10);
+        memoryStub.write(1, (byte) 0x11);
 
         compile(
             "ds 2\n" + "now: mov a,b\n"

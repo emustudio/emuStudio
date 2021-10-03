@@ -80,7 +80,7 @@ public class MacroCallPseudo extends PseudoNode {
 
     @Override
     public void pass4(IntelHEX hex) {
-        hex.add(statHex.getTable());
+        //hex.add(statHex.getTable());
     }
 
     @Override

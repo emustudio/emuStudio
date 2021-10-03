@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.exceptions;
 
-public class UnexpectedEOFException extends CompilerException {
+public class UnexpectedEOFException extends CompileException {
 
     public UnexpectedEOFException(int line, int column, String filename) {
         super(line, column, "Unexpected end of file (" + filename + ")");

@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.exceptions;
 
-public class InvalidMacroParamsCountException extends CompilerException {
+public class InvalidMacroParamsCountException extends CompileException {
 
     public InvalidMacroParamsCountException(int column, int line, String name, int expected, int was) {
         super(column, line, "Invalid macro(" + name + ") parameters count, expected  " + expected + ", but was " + was);

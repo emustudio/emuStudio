@@ -18,10 +18,12 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 
+@Ignore
 public class IncludeTest extends AbstractCompilerTest {
 
     @Test

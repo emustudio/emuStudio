@@ -18,11 +18,13 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotEquals;
 
-public class CompilerImplTest extends AbstractCompilerTest {
+@Ignore
+public class Assembler8080Test extends AbstractCompilerTest {
 
     @Test
     public void testVersionIsKnown() {

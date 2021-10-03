@@ -18,8 +18,10 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class IfNodeTest extends AbstractCompilerTest {
 
     @Test

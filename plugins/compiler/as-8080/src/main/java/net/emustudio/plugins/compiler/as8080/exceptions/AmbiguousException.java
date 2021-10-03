@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.exceptions;
 
-public class AmbiguousException extends CompilerException {
+public class AmbiguousException extends CompileException {
 
     public AmbiguousException(int line, int column, String whatIsAmbiguous) {
         super(line, column, whatIsAmbiguous + " is ambiguous!");

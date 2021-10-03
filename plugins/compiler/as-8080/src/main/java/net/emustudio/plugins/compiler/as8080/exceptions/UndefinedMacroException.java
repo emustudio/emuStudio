@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.exceptions;
 
-public class UndefinedMacroException extends CompilerException {
+public class UndefinedMacroException extends CompileException {
 
     public UndefinedMacroException(int column, int line, String macroName) {
         super(column, line, "Undefined macro: " + macroName);

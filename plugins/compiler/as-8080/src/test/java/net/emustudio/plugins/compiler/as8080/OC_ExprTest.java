@@ -1,7 +1,9 @@
 package net.emustudio.plugins.compiler.as8080;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class OC_ExprTest extends AbstractCompilerTest {
 
     @Test

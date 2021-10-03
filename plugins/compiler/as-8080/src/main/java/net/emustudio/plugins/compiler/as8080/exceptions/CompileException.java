@@ -18,29 +18,21 @@
  */
 package net.emustudio.plugins.compiler.as8080.exceptions;
 
-public class CompilerException extends Exception {
-    private final int line;
-    private final int column;
+public class CompileException extends RuntimeException {
+    public final int line;
+    public final int column;
 
-    public CompilerException(int column, int line, String message) {
+    public CompileException(int column, int line, String message) {
         super("[" + line + "," + column + "] " + message);
 
         this.column = column;
         this.line = line;
     }
 
-    public CompilerException(int column, int line, String message, Throwable cause) {
+    public CompileException(int column, int line, String message, Throwable cause) {
         super("[" + line + "," + column + "] " + message, cause);
 
         this.column = column;
         this.line = line;
-    }
-
-    public int getColumn() {
-        return column;
-    }
-
-    public int getLine() {
-        return line;
     }
 }
