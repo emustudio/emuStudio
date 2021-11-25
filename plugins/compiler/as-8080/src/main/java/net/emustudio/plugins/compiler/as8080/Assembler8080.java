@@ -93,7 +93,7 @@ public class Assembler8080 extends AbstractCompiler {
     @Override
     public LexicalAnalyzer createLexer(String s) {
         As8080Lexer lexer = createLexer(CharStreams.fromString(s));
-        return new LexicalAnalyzerImpl(lexer);
+        return new Lexer(lexer);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class Assembler8080 extends AbstractCompiler {
         notifyInfo(getTitle() + ", version " + getVersion());
 
         try (Reader reader = new FileReader(inputFileName)) {
-            Lexer lexer = createLexer(CharStreams.fromReader(reader));
+            org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
             lexer.addErrorListener(new ParserErrorListener());
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 

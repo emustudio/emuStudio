@@ -1,11 +1,7 @@
 lexer grammar As8080Lexer;
 
-options {
-  backtrack=false;
-}
-
-WS : (' ' | '\t' | '\f') -> channel(HIDDEN);
-COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]*;
+COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]* -> skip;
+COMMENT2: '/*' .*? '*/' -> skip;
 EOL: '\r'? '\n';
 
 fragment A: [aA];
@@ -140,17 +136,7 @@ REG_M: M;
 REG_PSW: P S W;
 REG_SP: S P;
 
-// separators
-SEP_LPAR: '(';
-SEP_RPAR: ')';
-SEP_COMMA: ',';
-
 // operators
-OP_ADD: '+';
-OP_SUBTRACT: '-';
-OP_MULTIPLY: '*';
-OP_DIVIDE: '/';
-OP_EQUAL: '=';
 OP_MOD: M O D;
 OP_SHR: S H R;
 OP_SHL: S H L;
@@ -160,17 +146,32 @@ OP_OR: O R;
 OP_XOR: X O R;
 
 // literals
-LIT_NUMBER: [\-]? [0-9]+ D?;
 LIT_HEXNUMBER_1: [\-]? '0' X [0-9a-fA-F]+;
+LIT_NUMBER: [\-]? [0-9]+ D?;
 LIT_HEXNUMBER_2: [\-]? [0-9a-fA-F]+ H;
 LIT_OCTNUMBER: [\-]? [0-7]+ [oOqQ];
 LIT_BINNUMBER: [01]+ B;
-LIT_STRING_1: ['] [^']+ ['];
-LIT_STRING_2: '"' [^"]+ '"';
+LIT_STRING_1: '\'' ~[']* '\'';
+LIT_STRING_2: '"' ~["]* '"';
 
 // other
 
 ID_IDENTIFIER: [a-zA-Z_?@] [a-zA-Z_?@0-9]*;
 ID_LABEL: [a-zA-Z_?@] [a-zA-Z_?@0-9]* ':';
 
-ERROR : .;
+ERROR : ~[+* \t\f(),=/-]+; // below: everything which does not require space
+
+//\+\*
+// separators - not requiring space inbetween
+SEP_LPAR: '(';
+SEP_RPAR: ')';
+SEP_COMMA: ',';
+
+// operators not requiring space inbetween
+OP_ADD: '+';
+OP_SUBTRACT: '-';
+OP_MULTIPLY: '*';
+OP_DIVIDE: '/';
+OP_EQUAL: '=';
+
+WS : [ \t\f]+ -> skip;

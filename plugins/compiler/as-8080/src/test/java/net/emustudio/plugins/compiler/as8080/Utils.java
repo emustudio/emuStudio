@@ -27,11 +27,11 @@ public class Utils {
         assertEquals("Tokens: " + tokens, expectedTypes.length, tokens.size());
         for (int i = 0; i < expectedTypes.length; i++) {
             Token token = tokens.get(i);
-            assertEquals(expectedTypes[i], token.getType());
+            assertEquals(token.toString(), expectedTypes[i], token.getType());
         }
     }
 
-    public static void assertTokenTypesForCaseVariations(String base, int... expectedTypes) {
+    public static void assertTokenTypesIgnoreCase(String base, int... expectedTypes) {
         Random r = new Random();
         List<String> variations = new ArrayList<>();
         variations.add(base);
