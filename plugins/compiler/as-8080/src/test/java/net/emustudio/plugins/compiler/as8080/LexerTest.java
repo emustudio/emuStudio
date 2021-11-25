@@ -9,6 +9,11 @@ import static net.emustudio.plugins.compiler.as8080.Utils.assertTokenTypesIgnore
 public class LexerTest {
 
     @Test
+    public void testParseEols() {
+        assertTokenTypes("\n\n\n\n\n", EOL, EOL, EOL, EOL, EOL, EOF);
+    }
+
+    @Test
     public void testParseError1() {
         assertTokenTypes("B &", REG_B, ERROR, EOF);
     }

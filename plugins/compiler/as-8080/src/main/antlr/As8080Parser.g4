@@ -5,16 +5,11 @@ options {
 }
 
 rStart:
- (rLine EOL rLine)* EOF
- | rLine EOF
+ EOL* rLine? (EOL+ rLine)* EOL* EOF
  ;
 
 rLine:
-  label=ID_LABEL? statement=rStatement? rComment
-  | rComment
-  ;
-
-rComment: COMMENT? ;
+  label=ID_LABEL? statement=rStatement;
 
 rStatement:
   instr=rInstruction
@@ -115,13 +110,13 @@ rRegister:
   ;
 
 rPseudoCode:
-  PREP_ORG expr=rExpression                                                                 # pseudoOrg
-  | id=ID_IDENTIFIER PREP_EQU expr=rExpression                                              # pseudoEqu
-  | id=ID_IDENTIFIER PREP_SET expr=rExpression                                              # pseudoSet
-  | PREP_IF expr=rExpression rComment EOL statement=rStatement EOL PREP_ENDIF               # pseudoIf
-  | id=ID_IDENTIFIER PREP_MACRO macro=rMacro? rComment EOL statement=rStatement PREP_ENDM   # pseudoMacroDef
-  | id=ID_IDENTIFIER macroArgs=rMacroArguments?                                             # pseudoMacroCall
-  | PREP_INCLUDE filename=(LIT_STRING_1|LIT_STRING_2)                                       # pseudoInclude
+  PREP_ORG expr=rExpression                                                         # pseudoOrg
+  | id=ID_IDENTIFIER PREP_EQU expr=rExpression                                      # pseudoEqu
+  | id=ID_IDENTIFIER PREP_SET expr=rExpression                                      # pseudoSet
+  | PREP_IF expr=rExpression EOL statement=rStatement EOL PREP_ENDIF                # pseudoIf
+  | id=ID_IDENTIFIER PREP_MACRO macro=rMacro? EOL statement=rStatement PREP_ENDM    # pseudoMacroDef
+  | id=ID_IDENTIFIER macroArgs=rMacroArguments?                                     # pseudoMacroCall
+  | PREP_INCLUDE filename=(LIT_STRING_1|LIT_STRING_2)                               # pseudoInclude
   ;
 
 rMacro:

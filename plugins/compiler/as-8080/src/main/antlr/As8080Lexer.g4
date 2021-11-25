@@ -2,7 +2,6 @@ lexer grammar As8080Lexer;
 
 COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]* -> skip;
 COMMENT2: '/*' .*? '*/' -> skip;
-EOL: '\r'? '\n';
 
 fragment A: [aA];
 fragment B: [bB];
@@ -159,7 +158,7 @@ LIT_STRING_2: '"' ~["]* '"';
 ID_IDENTIFIER: [a-zA-Z_?@] [a-zA-Z_?@0-9]*;
 ID_LABEL: [a-zA-Z_?@] [a-zA-Z_?@0-9]* ':';
 
-ERROR : ~[+* \t\f(),=/-]+; // below: everything which does not require space
+ERROR : ~[+* \t\f\r\n(),=/-]+; // below: everything which does not require space
 
 //\+\*
 // separators - not requiring space inbetween
@@ -175,3 +174,4 @@ OP_DIVIDE: '/';
 OP_EQUAL: '=';
 
 WS : [ \t\f]+ -> skip;
+EOL: '\r'? '\n';
