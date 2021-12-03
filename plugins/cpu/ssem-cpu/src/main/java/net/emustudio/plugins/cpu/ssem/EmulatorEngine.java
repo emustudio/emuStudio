@@ -45,7 +45,6 @@ public class EmulatorEngine {
     public final static int INSTRUCTIONS_PER_SECOND = 700;
     final static int LINE_MASK = 0b11111000;
 
-    private final SleepUtils.Sleep sleep = SleepUtils.sleep;
     private final TimingEstimator estimator = new TimingEstimator();
     private volatile long waitNanos = -1;
 
@@ -183,7 +182,7 @@ public class EmulatorEngine {
                 LOGGER.debug("Unexpected error", e);
                 return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
-            sleep.sleep(waitNanos);
+            SleepUtils.preciseSleepNanos(waitNanos);
         }
         return currentRunState;
     }

@@ -62,7 +62,6 @@ public class EmulatorEngine implements CpuEngine {
     private final ContextImpl context;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
-    private final SleepUtils.Sleep sleep = SleepUtils.sleep;
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
@@ -146,7 +145,7 @@ public class EmulatorEngine implements CpuEngine {
             endTime = System.nanoTime() - startTime;
             if (endTime < slice) {
                 // time correction
-                sleep.sleep(slice - endTime);
+                SleepUtils.preciseSleepNanos(slice - endTime);
             }
         }
         return currentRunState;
