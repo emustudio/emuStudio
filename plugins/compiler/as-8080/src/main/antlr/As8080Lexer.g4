@@ -156,7 +156,7 @@ LIT_STRING_2: '"' ~["]* '"';
 // other
 
 ID_IDENTIFIER: [a-zA-Z_?@] [a-zA-Z_?@0-9]*;
-ID_LABEL: [a-zA-Z_?@] [a-zA-Z_?@0-9]* ':';
+ID_LABEL: ID_IDENTIFIER ':';
 
 ERROR : ~[+* \t\f\r\n(),=/-]+; // below: everything which does not require space
 

@@ -1,4 +1,5 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
-public class Statement {
+public class Statement extends AbstractNode {
+
 }

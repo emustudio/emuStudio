@@ -4,18 +4,21 @@ import net.emustudio.plugins.compiler.as8080.As8080Parser;
 import net.emustudio.plugins.compiler.as8080.As8080ParserBaseVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 
-import java.util.Optional;
+import java.util.Objects;
 
 /**
  * The visitor creates internal AST (= "Program") of the parse tree.
  */
 public class CreateProgramVisitor extends As8080ParserBaseVisitor<Program> {
-    private final Program program = new Program();
+    private final Program program;
+
+    public CreateProgramVisitor(Program program) {
+        this.program = Objects.requireNonNull(program);
+    }
 
     @Override
     public Program visitRLine(As8080Parser.RLineContext ctx) {
-        Optional.ofNullable(ctx.label).ifPresent(program.env()::addLabel);
-        program.addChild(AllVisitors.statement.visit(ctx.statement));
+        program.addChild(Visitors.line.visitRLine(ctx));
         return program;
     }
 }

@@ -1,6 +1,6 @@
 package net.emustudio.plugins.compiler.as8080.visitors;
 
-public class AllVisitors {
+public class Visitors {
 
     static PseudoVisitor pseudo = new PseudoVisitor();
     static ExprVisitor expr = new ExprVisitor();
@@ -8,4 +8,5 @@ public class AllVisitors {
     static DataVisitor data = new DataVisitor();
     static StatementVisitor statement = new StatementVisitor();
     static LineVisitor line = new LineVisitor();
+
 }

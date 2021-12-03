@@ -5,11 +5,11 @@ options {
 }
 
 rStart:
- EOL* rLine? (EOL+ rLine)* EOL* EOF
+ EOL* rLine (EOL+ rLine)* EOL* EOF
  ;
 
 rLine:
-  label=ID_LABEL? statement=rStatement;
+  label=ID_LABEL? EOL* statement=rStatement?;
 
 rStatement:
   instr=rInstruction
@@ -18,6 +18,44 @@ rStatement:
   ;
 
 rInstruction:
+  r8bitInstruction                                                                    # instr8bit
+  | opcode=OPCODE_MVI reg=rRegister SEP_COMMA expr=rExpression                        # instrRegExpr
+  | opcode=OPCODE_LXI regpair=(REG_B|REG_D|REG_H|REG_SP) SEP_COMMA expr=rExpression   # instrRegPairExpr
+  | opcode=OPCODE_LDA expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_STA expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_LHLD expr=rExpression                                               # instrExpr
+  | opcode=OPCODE_SHLD expr=rExpression                                               # instrExpr
+  | opcode=OPCODE_ADI expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_ACI expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_SUI expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_SBI expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_ANI expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_ORI expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_XRI expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_CPI expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_JMP expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_JC expr=rExpression                                                 # instrExpr
+  | opcode=OPCODE_JNC expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_JZ expr=rExpression                                                 # instrExpr
+  | opcode=OPCODE_JNZ expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_JM expr=rExpression                                                 # instrExpr
+  | opcode=OPCODE_JP expr=rExpression                                                 # instrExpr
+  | opcode=OPCODE_JPE expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_JPO expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_CALL expr=rExpression                                               # instrExpr
+  | opcode=OPCODE_CC expr=rExpression                                                 # instrExpr
+  | opcode=OPCODE_CNC expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_CZ expr=rExpression                                                 # instrExpr
+  | opcode=OPCODE_CNZ expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_CM expr=rExpression                                                 # instrExpr
+  | opcode=OPCODE_CP expr=rExpression                                                 # instrExpr
+  | opcode=OPCODE_CPE expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_CPO expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_IN expr=rExpression                                                 # instrExpr
+  | opcode=OPCODE_OUT expr=rExpression                                                # instrExpr
+  ;
+
+r8bitInstruction:
   opcode=OPCODE_STC                                                                   # instrNoArgs
   | opcode=OPCODE_CMC                                                                 # instrNoArgs
   | opcode=OPCODE_CMA                                                                 # instrNoArgs
@@ -61,41 +99,7 @@ rInstruction:
   | opcode=OPCODE_DAD regpair=(REG_B|REG_D|REG_H|REG_SP)                              # instrRegPair
   | opcode=OPCODE_INX regpair=(REG_B|REG_D|REG_H|REG_SP)                              # instrRegPair
   | opcode=OPCODE_DCX regpair=(REG_B|REG_D|REG_H|REG_SP)                              # instrRegPair
-  | opcode=OPCODE_LXI regpair=(REG_B|REG_D|REG_H|REG_SP) SEP_COMMA expr=rExpression   # instrRegPairExpr
-  | opcode=OPCODE_MVI reg=rRegister SEP_COMMA expr=rExpression                        # instrRegExpr
-  | opcode=OPCODE_ADI expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_ACI expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_SUI expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_SBI expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_ANI expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_XRI expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_ORI expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_CPI expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_STA expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_LDA expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_SHLD expr=rExpression                                               # instrExpr
-  | opcode=OPCODE_LHLD expr=rExpression                                               # instrExpr
-  | opcode=OPCODE_JMP expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_JC expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_JNC expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_JZ expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_JNZ expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_JM expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_JP expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_JPE expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_JPO expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_CALL expr=rExpression                                               # instrExpr
-  | opcode=OPCODE_CC expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_CNC expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_CZ expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_CNZ expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_CM expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_CP expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_CPE expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_CPO expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_RST expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_IN expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_OUT expr=rExpression                                                # instrExpr
+  | opcode=OPCODE_RST expr=rExpression                                                # instr8bitExpr
   ;
 
 rRegister:
@@ -110,41 +114,33 @@ rRegister:
   ;
 
 rPseudoCode:
-  PREP_ORG expr=rExpression                                                         # pseudoOrg
-  | id=ID_IDENTIFIER PREP_EQU expr=rExpression                                      # pseudoEqu
-  | id=ID_IDENTIFIER PREP_SET expr=rExpression                                      # pseudoSet
-  | PREP_IF expr=rExpression EOL statement=rStatement EOL PREP_ENDIF                # pseudoIf
-  | id=ID_IDENTIFIER PREP_MACRO macro=rMacro? EOL statement=rStatement PREP_ENDM    # pseudoMacroDef
-  | id=ID_IDENTIFIER macroArgs=rMacroArguments?                                     # pseudoMacroCall
-  | PREP_INCLUDE filename=(LIT_STRING_1|LIT_STRING_2)                               # pseudoInclude
+  PREP_ORG expr=rExpression                                                              # pseudoOrg
+  | id=ID_IDENTIFIER PREP_EQU expr=rExpression                                           # pseudoEqu
+  | id=ID_IDENTIFIER PREP_SET expr=rExpression                                           # pseudoSet
+  | PREP_IF expr=rExpression EOL statement=rStatement EOL+ PREP_ENDIF                    # pseudoIf
+  | id=ID_IDENTIFIER PREP_MACRO params=rMacroParameters? (EOL+ rLine)+ EOL+ PREP_ENDM    # pseudoMacroDef
+  | id=ID_IDENTIFIER args=rMacroArguments?                                               # pseudoMacroCall
+  | PREP_INCLUDE filename=(LIT_STRING_1|LIT_STRING_2)                                    # pseudoInclude
   ;
 
-rMacro:
-  id=ID_IDENTIFIER (SEP_COMMA ids=ID_IDENTIFIER)*
+rMacroParameters:
+  id=ID_IDENTIFIER (SEP_COMMA ID_IDENTIFIER)*
   ;
 
 rMacroArguments:
-  expr=rExpression (SEP_COMMA exprs=rExpression)*
+  expr=rExpression (SEP_COMMA rExpression)*
   ;
 
 rData:
-  PREP_DB data=rDB            # dataDB
-  | PREP_DW data=rDW          # dataDW
-  | PREP_DS data=rExpression  # dataDS
-  ;
-
-rDB:
-  data=rDBdata (SEP_COMMA data=rDBdata)*
-  ;
-
-rDW:
-  data=rDWdata (SEP_COMMA data=rDWdata)*
+  PREP_DB data=rDBdata (SEP_COMMA rDBdata)*    # dataDB
+  | PREP_DW data=rDWdata (SEP_COMMA rDWdata)*  # dataDW
+  | PREP_DS data=rExpression                   # dataDS
   ;
 
 rDBdata:
   expr=rExpression
   | str=(LIT_STRING_1|LIT_STRING_2)
-  | instr=rInstruction
+  | instr=r8bitInstruction
   ;
 
 rDWdata:
@@ -152,8 +148,7 @@ rDWdata:
   ;
 
 rExpression:
- SEP_LPAR expr=rExpression SEP_RPAR                                                       # exprParens
- | num=LIT_NUMBER                                                                         # exprDec
+ num=LIT_NUMBER                                                                         # exprDec
  | num=LIT_HEXNUMBER_1                                                                    # exprHex1
  | num=LIT_HEXNUMBER_2                                                                    # exprHex2
  | num=LIT_OCTNUMBER                                                                      # exprOct
@@ -166,4 +161,5 @@ rExpression:
  | unaryop=OP_NOT expr=rExpression                                                        # exprUnary
  | expr1=rExpression op=OP_AND expr2=rExpression                                          # exprInfix
  | expr1=rExpression op=(OP_OR|OP_XOR) expr2=rExpression                                  # exprInfix
+ | SEP_LPAR expr=rExpression SEP_RPAR                                                     # exprParens
  ;
