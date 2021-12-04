@@ -4,7 +4,7 @@ import org.antlr.v4.runtime.Token;
 
 public class InstrRegReg extends Instr {
 
-    public InstrRegReg(Token opcode, Token dst, Token src) {
+    public InstrRegReg(int opcode, int dst, int src) {
 
     }
 }

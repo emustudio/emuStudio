@@ -6,11 +6,11 @@ import org.antlr.v4.runtime.Token;
 import java.util.Objects;
 
 public class InstrExpr extends Instr {
-    private final Token opcode;
+    private final int opcode;
     private final Expr expr;
 
-    public InstrExpr(Token opcode, Expr expr) {
-        this.opcode = Objects.requireNonNull(opcode);
+    public InstrExpr(int opcode, Expr expr) {
+        this.opcode = opcode;
         this.expr = Objects.requireNonNull(expr);
     }
 }

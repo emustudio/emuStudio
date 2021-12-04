@@ -148,7 +148,7 @@ rDWdata:
   ;
 
 rExpression:
- num=LIT_NUMBER                                                                         # exprDec
+ num=LIT_NUMBER                                                                           # exprDec
  | num=LIT_HEXNUMBER_1                                                                    # exprHex1
  | num=LIT_HEXNUMBER_2                                                                    # exprHex2
  | num=LIT_OCTNUMBER                                                                      # exprOct

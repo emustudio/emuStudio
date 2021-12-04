@@ -5,10 +5,10 @@ import org.antlr.v4.runtime.Token;
 import java.util.Objects;
 
 public class InstrNoArgs extends Instr {
-    private final Token opcode;
+    private final int opcode;
 
-    public InstrNoArgs(Token opcode) {
-        this.opcode = Objects.requireNonNull(opcode);
+    public InstrNoArgs(int opcode) {
+        this.opcode = opcode;
     }
 
 

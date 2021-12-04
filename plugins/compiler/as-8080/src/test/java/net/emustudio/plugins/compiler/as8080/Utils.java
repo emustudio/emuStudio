@@ -1,5 +1,6 @@
 package net.emustudio.plugins.compiler.as8080;
 
+import net.emustudio.plugins.compiler.as8080.ast.Node;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
@@ -59,6 +60,16 @@ public class Utils {
         }
         for (String variation : variations) {
             assertTokenTypes(variation, expectedTypes);
+        }
+    }
+
+    public static void assertTrees(Node expected, Node result) {
+        assertEquals("Children size does not match", expected.getChildren().size(), result.getChildren().size());
+        assertEquals("Nodes are different", expected.getClass(), result.getClass());
+        for (int i = 0; i < expected.getChildren().size(); i++) {
+            Node expectedChild = expected.getChild(i);
+            Node resultChild = result.getChild(i);
+            assertTrees(expectedChild, resultChild);
         }
     }
 }
