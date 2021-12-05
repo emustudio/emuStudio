@@ -52,17 +52,17 @@ public class RunnerTest {
     }
 
     @Test
-    public void testCommandLinePrintHelp() throws Exception {
+    public void testCommandLinePrintHelp() {
         Runner.main("--help");
     }
 
     @Test
-    public void testCommandLineNonexistantSourceFileDoesNotThrow() throws Exception {
+    public void testCommandLineNonexistantSourceFileDoesNotThrow() {
         Runner.main("slfjkdf");
     }
 
     @Test
-    public void testCommandLinePrintVersion() throws Exception {
+    public void testCommandLinePrintVersion() {
         Runner.main("--version");
     }
 

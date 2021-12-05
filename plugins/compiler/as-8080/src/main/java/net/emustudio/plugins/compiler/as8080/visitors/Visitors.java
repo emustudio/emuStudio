@@ -6,7 +6,6 @@ public class Visitors {
     static ExprVisitor expr = new ExprVisitor();
     static InstrVisitor instr = new InstrVisitor();
     static DataVisitor data = new DataVisitor();
-    static StatementVisitor statement = new StatementVisitor();
     static LineVisitor line = new LineVisitor();
 
 }

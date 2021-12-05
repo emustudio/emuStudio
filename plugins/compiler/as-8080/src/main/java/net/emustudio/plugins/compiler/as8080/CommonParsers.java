@@ -243,4 +243,9 @@ public class CommonParsers {
         }
         throw new CompileException(token.getCharPositionInLine(), token.getLine(), "Unknown register pair: " + token.getText());
     }
+
+    public static String parseLabel(Token token) {
+        String rawText = token.getText();
+        return rawText.substring(0, rawText.length() - 1);
+    }
 }

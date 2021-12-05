@@ -1,6 +1,8 @@
 package net.emustudio.plugins.compiler.as8080;
 
 import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
+import net.emustudio.plugins.compiler.as8080.visitors.CreateProgramVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
@@ -9,6 +11,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 
@@ -28,6 +31,14 @@ public class Utils {
         return parser.rStart();
     }
 
+    public static Program parseProgram(String programString) {
+        ParseTree tree = Utils.parse(programString);
+        Program program = new Program();
+        CreateProgramVisitor visitor = new CreateProgramVisitor(program);
+        visitor.visit(tree);
+        return program;
+    }
+
     public static void assertTokenTypes(String variation, int... expectedTypes) {
         List<Token> tokens = getTokens(variation);
         assertTokenTypes(tokens, expectedTypes);
@@ -42,6 +53,10 @@ public class Utils {
     }
 
     public static void assertTokenTypesIgnoreCase(String base, int... expectedTypes) {
+        forStringCaseVariations(base, variation -> assertTokenTypes(variation, expectedTypes));
+    }
+
+    public static void forStringCaseVariations(String base, Consumer<String> f) {
         Random r = new Random();
         List<String> variations = new ArrayList<>();
         variations.add(base);
@@ -58,8 +73,8 @@ public class Utils {
             }
             variations.add(new String(chars));
         }
-        for (String variation : variations) {
-            assertTokenTypes(variation, expectedTypes);
+        for (String variation: variations) {
+            f.accept(variation);
         }
     }
 

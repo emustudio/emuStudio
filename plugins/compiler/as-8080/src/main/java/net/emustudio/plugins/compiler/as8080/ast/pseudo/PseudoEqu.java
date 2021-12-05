@@ -5,7 +5,8 @@ import org.antlr.v4.runtime.Token;
 
 public class PseudoEqu extends Pseudo {
 
-    public PseudoEqu(Token id, Expr expr) {
+    public PseudoEqu(String id) {
+        // expr is the only child
 
     }
 }

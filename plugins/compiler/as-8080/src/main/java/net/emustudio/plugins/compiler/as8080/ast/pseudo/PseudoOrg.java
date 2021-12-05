@@ -5,7 +5,8 @@ import net.emustudio.plugins.compiler.as8080.ast.expr.Expr;
 public class PseudoOrg extends Pseudo {
 
 
-    public PseudoOrg(Expr expr) {
+    public PseudoOrg() {
+        // expr is the only child
 
     }
 }

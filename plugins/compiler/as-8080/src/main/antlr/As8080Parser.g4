@@ -117,24 +117,24 @@ rPseudoCode:
   PREP_ORG expr=rExpression                                                              # pseudoOrg
   | id=ID_IDENTIFIER PREP_EQU expr=rExpression                                           # pseudoEqu
   | id=ID_IDENTIFIER PREP_SET expr=rExpression                                           # pseudoSet
-  | PREP_IF expr=rExpression EOL statement=rStatement EOL+ PREP_ENDIF                    # pseudoIf
+  | PREP_IF expr=rExpression (EOL+ rLine)+ EOL+ PREP_ENDIF                               # pseudoIf
   | id=ID_IDENTIFIER PREP_MACRO params=rMacroParameters? (EOL+ rLine)+ EOL+ PREP_ENDM    # pseudoMacroDef
   | id=ID_IDENTIFIER args=rMacroArguments?                                               # pseudoMacroCall
   | PREP_INCLUDE filename=(LIT_STRING_1|LIT_STRING_2)                                    # pseudoInclude
   ;
 
 rMacroParameters:
-  id=ID_IDENTIFIER (SEP_COMMA ID_IDENTIFIER)*
+  ID_IDENTIFIER (SEP_COMMA ID_IDENTIFIER)*
   ;
 
 rMacroArguments:
-  expr=rExpression (SEP_COMMA rExpression)*
+  rExpression (SEP_COMMA rExpression)*
   ;
 
 rData:
-  PREP_DB data=rDBdata (SEP_COMMA rDBdata)*    # dataDB
-  | PREP_DW data=rDWdata (SEP_COMMA rDWdata)*  # dataDW
-  | PREP_DS data=rExpression                   # dataDS
+  PREP_DB rDBdata (SEP_COMMA rDBdata)*    # dataDB
+  | PREP_DW rDWdata (SEP_COMMA rDWdata)*  # dataDW
+  | PREP_DS data=rExpression              # dataDS
   ;
 
 rDBdata:

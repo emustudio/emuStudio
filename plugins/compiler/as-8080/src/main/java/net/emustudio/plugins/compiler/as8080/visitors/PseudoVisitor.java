@@ -2,69 +2,74 @@ package net.emustudio.plugins.compiler.as8080.visitors;
 
 import net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 import net.emustudio.plugins.compiler.as8080.As8080ParserBaseVisitor;
-import net.emustudio.plugins.compiler.as8080.ast.Statement;
-import net.emustudio.plugins.compiler.as8080.ast.expr.Expr;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.ArrayList;
-import java.util.List;
+import static net.emustudio.plugins.compiler.as8080.CommonParsers.parseLitString;
 
 public class PseudoVisitor extends As8080ParserBaseVisitor<Pseudo>  {
 
     @Override
     public Pseudo visitPseudoOrg(PseudoOrgContext ctx) {
-        return new PseudoOrg(Visitors.expr.visit(ctx.expr));
+        PseudoOrg pseudo = new PseudoOrg();
+        pseudo.addChild(Visitors.expr.visit(ctx.expr));
+        return pseudo;
     }
 
     @Override
     public Pseudo visitPseudoEqu(PseudoEquContext ctx) {
-        return new PseudoEqu(ctx.id, Visitors.expr.visit(ctx.expr));
+        PseudoEqu pseudo = new PseudoEqu(ctx.id.getText());
+        pseudo.addChild(Visitors.expr.visit(ctx.expr));
+        return pseudo;
     }
 
     @Override
     public Pseudo visitPseudoSet(PseudoSetContext ctx) {
-        return new PseudoSet(ctx.id, Visitors.expr.visit(ctx.expr));
+        PseudoSet pseudo = new PseudoSet(ctx.id.getText());
+        pseudo.addChild(Visitors.expr.visit(ctx.expr));
+        return pseudo;
     }
 
     @Override
     public Pseudo visitPseudoIf(PseudoIfContext ctx) {
-        return new PseudoIf(Visitors.expr.visit(ctx.expr), Visitors.statement.visit(ctx.statement));
+        PseudoIf pseudo = new PseudoIf();
+        pseudo.addChild(Visitors.expr.visit(ctx.expr));
+        for (RLineContext line : ctx.rLine()) {
+            pseudo.addChild(Visitors.line.visitRLine(line));
+        }
+        return pseudo;
     }
 
     @Override
     public Pseudo visitPseudoMacroDef(PseudoMacroDefContext ctx) {
-        List<Token> params = new ArrayList<>();
+        PseudoMacroDef pseudo = new PseudoMacroDef(ctx.id.getText());
+
         if (ctx.params != null) {
-            params.add(ctx.params.id);
             for (TerminalNode next : ctx.params.ID_IDENTIFIER()) {
-                params.add(next.getSymbol());
+                pseudo.addChild(new ExprId(next.getSymbol().getText()));
             }
         }
-
-        List<Statement> statements = new ArrayList<>();
         for (RLineContext line : ctx.rLine()) {
-            statements.add(AllVisitors.line.visitRLine(line));
+            pseudo.addChild(Visitors.line.visitRLine(line));
         }
-
-        return new PseudoMacroDef(ctx.id, params, statements);
+        return pseudo;
     }
 
     @Override
     public Pseudo visitPseudoMacroCall(PseudoMacroCallContext ctx) {
-        List<Expr> arguments = new ArrayList<>();
+        PseudoMacroCall pseudo = new PseudoMacroCall(ctx.id.getText());
+
         if (ctx.args != null) {
-            arguments.add(AllVisitors.expr.visit(ctx.args.expr));
             for (RExpressionContext next : ctx.args.rExpression()) {
-                arguments.add(AllVisitors.expr.visit(next));
+                pseudo.addChild(Visitors.expr.visit(next));
             }
         }
-        return new PseudoMacroCall(ctx.id, arguments);
+        return pseudo;
     }
 
     @Override
     public Pseudo visitPseudoInclude(PseudoIncludeContext ctx) {
-        return new PseudoInclude(ctx.filename);
+        return new PseudoInclude(parseLitString(ctx.filename));
     }
 }

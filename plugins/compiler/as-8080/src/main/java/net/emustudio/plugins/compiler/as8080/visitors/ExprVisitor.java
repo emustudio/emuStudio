@@ -39,12 +39,17 @@ public class ExprVisitor extends As8080ParserBaseVisitor<Expr> {
 
     @Override
     public Expr visitExprUnary(As8080Parser.ExprUnaryContext ctx) {
-        return new ExprUnary(ctx.unaryop.getType(), visit(ctx.expr));
+        ExprUnary unary = new ExprUnary(ctx.unaryop.getType());
+        unary.addChild(visit(ctx.expr));
+        return unary;
     }
 
     @Override
     public Expr visitExprInfix(As8080Parser.ExprInfixContext ctx) {
-        return new ExprInfix(ctx.op, visit(ctx.expr1), visit(ctx.expr2));
+        ExprInfix infix = new ExprInfix(ctx.op.getType());
+        infix.addChild(visit(ctx.expr1));
+        infix.addChild(visit(ctx.expr2));
+        return infix;
     }
 
     @Override

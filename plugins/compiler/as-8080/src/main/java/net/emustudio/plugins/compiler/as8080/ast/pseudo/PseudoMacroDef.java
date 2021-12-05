@@ -1,12 +1,13 @@
 package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
-import net.emustudio.plugins.compiler.as8080.ast.Statement;
-import org.antlr.v4.runtime.Token;
-
-import java.util.List;
+import java.util.Objects;
 
 public class PseudoMacroDef extends Pseudo {
+    private final String id;
 
-    public PseudoMacroDef(Token id, List<Token> parameters, List<Statement> statements) {
+    public PseudoMacroDef(String id) {
+        this.id = Objects.requireNonNull(id);
+        // parameters are the first children
+        // statements are followed
     }
 }
