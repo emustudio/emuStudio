@@ -2,10 +2,14 @@ package net.emustudio.plugins.compiler.as8080;
 
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.Statement;
-import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
-import net.emustudio.plugins.compiler.as8080.ast.instr.InstrReg;
+import net.emustudio.plugins.compiler.as8080.ast.expr.Expr;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprCurrentAddress;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.instr.*;
 import org.junit.Test;
 
+import java.util.Locale;
 import java.util.Map;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
@@ -55,6 +59,124 @@ public class ParseInstrTest {
         assertInstrReg("cmp", OPCODE_CMP);
     }
 
+    @Test
+    public void testInstrExpr() {
+        assertInstrExpr("lda", OPCODE_LDA);
+        assertInstrExpr("sta", OPCODE_STA);
+        assertInstrExpr("lhld", OPCODE_LHLD);
+        assertInstrExpr("shld", OPCODE_SHLD);
+        assertInstrExpr("adi", OPCODE_ADI);
+        assertInstrExpr("aci", OPCODE_ACI);
+        assertInstrExpr("sui", OPCODE_SUI);
+        assertInstrExpr("sbi", OPCODE_SBI);
+        assertInstrExpr("ani", OPCODE_ANI);
+        assertInstrExpr("ori", OPCODE_ORI);
+        assertInstrExpr("xri", OPCODE_XRI);
+        assertInstrExpr("cpi", OPCODE_CPI);
+        assertInstrExpr("jmp", OPCODE_JMP);
+        assertInstrExpr("jc", OPCODE_JC);
+        assertInstrExpr("jnc", OPCODE_JNC);
+        assertInstrExpr("jz", OPCODE_JZ);
+        assertInstrExpr("jnz", OPCODE_JNZ);
+        assertInstrExpr("jm", OPCODE_JM);
+        assertInstrExpr("jp", OPCODE_JP);
+        assertInstrExpr("jpe", OPCODE_JPE);
+        assertInstrExpr("jpo", OPCODE_JPO);
+        assertInstrExpr("call", OPCODE_CALL);
+        assertInstrExpr("cc", OPCODE_CC);
+        assertInstrExpr("cnc", OPCODE_CNC);
+        assertInstrExpr("cz", OPCODE_CZ);
+        assertInstrExpr("cnz", OPCODE_CNZ);
+        assertInstrExpr("cm", OPCODE_CM);
+        assertInstrExpr("cp", OPCODE_CP);
+        assertInstrExpr("cpe", OPCODE_CPE);
+        assertInstrExpr("cpo", OPCODE_CPO);
+        assertInstrExpr("in", OPCODE_IN);
+        assertInstrExpr("out", OPCODE_OUT);
+        assertInstrExpr("rst", OPCODE_RST);
+    }
+
+    @Test
+    public void testRegPair() {
+        assertInstrRegPair("stax", OPCODE_STAX, regPairsBD);
+        assertInstrRegPair("ldax", OPCODE_LDAX, regPairsBD);
+        assertInstrRegPair("dad", OPCODE_DAD, regPairsBDHSP);
+        assertInstrRegPair("inx", OPCODE_INX, regPairsBDHSP);
+        assertInstrRegPair("dcx", OPCODE_DCX, regPairsBDHSP);
+        assertInstrRegPair("push", OPCODE_PUSH, regPairsBDHPSW);
+        assertInstrRegPair("pop", OPCODE_POP, regPairsBDHPSW);
+    }
+
+    @Test
+    public void testMVI() {
+        Expr expr = (Expr) new ExprInfix(OP_ADD)
+            .addChild(new ExprCurrentAddress())
+            .addChild(new ExprNumber(5));
+
+        forStringCaseVariations("mvi", instrVariation -> {
+            for (Map.Entry<String, Integer> register : registers.entrySet()) {
+                forStringCaseVariations(register.getKey(), registerVariation -> {
+                    String row = instrVariation + " " + registerVariation + ", $ + 5";
+                    Program program = parseProgram(row);
+                    assertTrees(
+                        new Program()
+                            .addChild(new Statement()
+                                .addChild(new InstrRegExpr(OPCODE_MVI, register.getValue())
+                                    .addChild(expr))),
+                        program
+                    );
+                });
+            }
+        });
+    }
+
+    @Test
+    public void testLXI() {
+        Expr expr = (Expr) new ExprInfix(OP_ADD)
+            .addChild(new ExprCurrentAddress())
+            .addChild(new ExprNumber(5));
+
+        forStringCaseVariations("lxi", instrVariation -> {
+            for (Map.Entry<String, Integer> regPair : regPairsBDHSP.entrySet()) {
+                forStringCaseVariations(regPair.getKey(), registerVariation -> {
+                    String row = instrVariation + " " + registerVariation + ", $ + 5";
+                    Program program = parseProgram(row);
+                    assertTrees(
+                        new Program()
+                            .addChild(new Statement()
+                                .addChild(new InstrRegPairExpr(OPCODE_LXI, regPair.getValue())
+                                    .addChild(expr))),
+                        program
+                    );
+                });
+            }
+        });
+    }
+
+    @Test
+    public void testMOV() {
+        forStringCaseVariations("mov", instrVariation -> {
+            for (Map.Entry<String, Integer> register1 : registers.entrySet()) {
+                forStringCaseVariations(register1.getKey(), registerVariation1 -> {
+                    for (Map.Entry<String, Integer> register2 : registers.entrySet()) {
+                        forStringCaseVariations(register2.getKey(), registerVariation2 -> {
+                            if (!registerVariation1.toLowerCase(Locale.ENGLISH).equals("m") || !registerVariation1.equals(registerVariation2)) {
+                                String row = instrVariation + " " + registerVariation1 + ", " + registerVariation2;
+                                Program program = parseProgram(row);
+                                assertTrees(
+                                    new Program()
+                                        .addChild(new Statement()
+                                            .addChild(new InstrRegReg(OPCODE_MOV, register1.getValue(), register2.getValue()))),
+                                    program
+                                );
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
     private void assertInstrNoArgs(String instr, int instrType) {
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation);
@@ -63,17 +185,6 @@ public class ParseInstrTest {
     }
 
     private void assertInstrReg(String instr, int instrType) {
-        Map<String, Integer> registers = Map.of(
-            "a", REG_A,
-            "b", REG_B,
-            "c", REG_C,
-            "d", REG_D,
-            "e", REG_E,
-            "h", REG_H,
-            "l", REG_L,
-            "m", REG_M
-        );
-
         forStringCaseVariations(instr, instrVariation -> {
             for (Map.Entry<String, Integer> register : registers.entrySet()) {
                 forStringCaseVariations(register.getKey(), registerVariation -> {
@@ -83,6 +194,34 @@ public class ParseInstrTest {
                         new Program()
                         .addChild(new Statement()
                             .addChild(new InstrReg(instrType, register.getValue()))),
+                        program
+                    );
+                });
+            }
+        });
+    }
+
+    private void assertInstrExpr(String instr, int instrType) {
+        Expr expr = (Expr) new ExprInfix(OP_ADD)
+            .addChild(new ExprCurrentAddress())
+            .addChild(new ExprNumber(5));
+
+        forStringCaseVariations(instr, variation -> {
+            Program program = parseProgram(variation + " $ + 5");
+            assertTrees(new Program().addChild(new Statement().addChild(new InstrExpr(instrType).addChild(expr))), program);
+        });
+    }
+
+    private void assertInstrRegPair(String instr, int instrType, Map<String, Integer> regPairs) {
+        forStringCaseVariations(instr, instrVariation -> {
+            for (Map.Entry<String, Integer> regPair : regPairs.entrySet()) {
+                forStringCaseVariations(regPair.getKey(), registerVariation -> {
+                    String row = instrVariation + " " + registerVariation;
+                    Program program = parseProgram(row);
+                    assertTrees(
+                        new Program()
+                            .addChild(new Statement()
+                                .addChild(new InstrRegPair(instrType, regPair.getValue()))),
                         program
                     );
                 });

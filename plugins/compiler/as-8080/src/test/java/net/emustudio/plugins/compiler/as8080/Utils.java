@@ -10,12 +10,44 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
 
+import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
+import static net.emustudio.plugins.compiler.as8080.As8080Parser.REG_M;
 import static org.junit.Assert.assertEquals;
 
 public class Utils {
+    public static Map<String, Integer> registers = Map.of(
+        "a", REG_A,
+        "b", REG_B,
+        "c", REG_C,
+        "d", REG_D,
+        "e", REG_E,
+        "h", REG_H,
+        "l", REG_L,
+        "m", REG_M
+    );
+
+    public static Map<String, Integer> regPairsBD = Map.of(
+        "b", REG_B,
+        "d", REG_D
+    );
+    public static Map<String, Integer> regPairsBDHSP = Map.of(
+        "b", REG_B,
+        "d", REG_D,
+        "h", REG_H,
+        "sp", REG_SP
+    );
+    public static Map<String, Integer> regPairsBDHPSW = Map.of(
+        "b", REG_B,
+        "d", REG_D,
+        "h", REG_H,
+        "psw", REG_PSW
+    );
+
+
     public static List<Token> getTokens(String variation) {
         As8080Lexer lexer = new As8080Lexer(CharStreams.fromString(variation));
         CommonTokenStream stream = new CommonTokenStream(lexer);
