@@ -5,7 +5,7 @@ import net.emustudio.plugins.compiler.as8080.As8080ParserBaseVisitor;
 import net.emustudio.plugins.compiler.as8080.CommonParsers;
 import net.emustudio.plugins.compiler.as8080.ast.data.*;
 
-public class DataVisitor extends As8080ParserBaseVisitor<Data> {
+public class CreateDataVisitor extends As8080ParserBaseVisitor<Data> {
 
     @Override
     public Data visitDataDB(DataDBContext ctx) {

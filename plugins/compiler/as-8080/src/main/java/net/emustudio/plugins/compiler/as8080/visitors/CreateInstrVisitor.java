@@ -6,7 +6,7 @@ import net.emustudio.plugins.compiler.as8080.ast.instr.*;
 
 import static net.emustudio.plugins.compiler.as8080.CommonParsers.*;
 
-public class InstrVisitor extends As8080ParserBaseVisitor<Instr> {
+public class CreateInstrVisitor extends As8080ParserBaseVisitor<Instr> {
 
     @Override
     public Instr visitInstrNoArgs(As8080Parser.InstrNoArgsContext ctx) {

@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import static net.emustudio.plugins.compiler.as8080.CommonParsers.parseLitString;
 
-public class PseudoVisitor extends As8080ParserBaseVisitor<Pseudo>  {
+public class CreatePseudoVisitor extends As8080ParserBaseVisitor<Pseudo>  {
 
     @Override
     public Pseudo visitPseudoOrg(PseudoOrgContext ctx) {

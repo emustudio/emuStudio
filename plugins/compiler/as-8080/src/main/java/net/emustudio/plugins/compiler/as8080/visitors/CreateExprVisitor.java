@@ -5,7 +5,7 @@ import net.emustudio.plugins.compiler.as8080.As8080ParserBaseVisitor;
 import net.emustudio.plugins.compiler.as8080.CommonParsers;
 import net.emustudio.plugins.compiler.as8080.ast.expr.*;
 
-public class ExprVisitor extends As8080ParserBaseVisitor<Expr> {
+public class CreateExprVisitor extends As8080ParserBaseVisitor<Expr> {
 
     @Override
     public Expr visitExprOct(As8080Parser.ExprOctContext ctx) {

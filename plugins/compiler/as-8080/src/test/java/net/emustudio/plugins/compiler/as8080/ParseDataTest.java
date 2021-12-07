@@ -80,9 +80,9 @@ public class ParseDataTest {
                 .addChild(new Statement()
                     .addChild(new Data()
                         .addChild(new DataDW()
-                            .addChild(new ExprNumber(-1)))
+                            .addChild(new ExprNumber(-1))
                             .addChild(new ExprNumber(2))
-                            .addChild(new ExprNumber(3)))),
+                            .addChild(new ExprNumber(3))))),
             program
         );
     }

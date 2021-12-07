@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.as8080.CommonParsers.parseLabel;
 
-public class LineVisitor extends As8080ParserBaseVisitor<Node> {
+public class CreateLineVisitor extends As8080ParserBaseVisitor<Node> {
 
     @Override
     public Statement visitRLine(As8080Parser.RLineContext ctx) {
