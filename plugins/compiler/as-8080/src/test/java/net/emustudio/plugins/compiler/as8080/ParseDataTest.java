@@ -1,8 +1,10 @@
 package net.emustudio.plugins.compiler.as8080;
 
 import net.emustudio.plugins.compiler.as8080.ast.Program;
-import net.emustudio.plugins.compiler.as8080.ast.Statement;
-import net.emustudio.plugins.compiler.as8080.ast.data.*;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
+import net.emustudio.plugins.compiler.as8080.ast.data.DataPlainString;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import org.junit.Test;
@@ -16,10 +18,8 @@ public class ParseDataTest {
     public void testDBstring1() {
         Program program = parseProgram("db 'hello,world!'");
         assertTrees(new Program()
-                .addChild(new Statement()
-                    .addChild(new Data()
-                        .addChild(new DataDB()
-                            .addChild(new DataPlainString("hello,world!"))))),
+                .addChild(new DataDB(0, 0)
+                    .addChild(new DataPlainString(0, 0, "hello,world!"))),
             program
         );
     }
@@ -28,10 +28,8 @@ public class ParseDataTest {
     public void testDBstring2() {
         Program program = parseProgram("db \"hello,world!\"");
         assertTrees(new Program()
-                .addChild(new Statement()
-                    .addChild(new Data()
-                        .addChild(new DataDB()
-                            .addChild(new DataPlainString("hello,world!"))))),
+                .addChild(new DataDB(0, 0)
+                    .addChild(new DataPlainString(0, 0, "hello,world!"))),
             program
         );
     }
@@ -40,10 +38,8 @@ public class ParseDataTest {
     public void testDBinstruction() {
         Program program = parseProgram("db stc");
         assertTrees(new Program()
-                .addChild(new Statement()
-                    .addChild(new Data()
-                        .addChild(new DataDB()
-                            .addChild(new InstrNoArgs(0))))),
+                .addChild(new DataDB(0, 0)
+                    .addChild(new InstrNoArgs(0, 0, 0))),
             program
         );
     }
@@ -52,12 +48,10 @@ public class ParseDataTest {
     public void testMultipleDB() {
         Program program = parseProgram("db -1,2,3");
         assertTrees(new Program()
-                .addChild(new Statement()
-                    .addChild(new Data()
-                        .addChild(new DataDB()
-                            .addChild(new ExprNumber(-1))
-                            .addChild(new ExprNumber(2))
-                            .addChild(new ExprNumber(3))))),
+                .addChild(new DataDB(0, 0)
+                    .addChild(new ExprNumber(0, 0, -1))
+                    .addChild(new ExprNumber(0, 0, 2))
+                    .addChild(new ExprNumber(0, 0, 3))),
             program
         );
     }
@@ -66,9 +60,8 @@ public class ParseDataTest {
     public void testDBwithNegativeValue() {
         Program program = parseProgram("db -1");
         assertTrees(new Program()
-            .addChild(new Statement()
-                .addChild(new Data()
-                    .addChild(new DataDB().addChild(new ExprNumber(-1))))),
+                .addChild(new DataDB(0, 0)
+                    .addChild(new ExprNumber(0, 0, -1))),
             program
         );
     }
@@ -77,12 +70,10 @@ public class ParseDataTest {
     public void testMultipleDW() {
         Program program = parseProgram("dw -1,2,3");
         assertTrees(new Program()
-                .addChild(new Statement()
-                    .addChild(new Data()
-                        .addChild(new DataDW()
-                            .addChild(new ExprNumber(-1))
-                            .addChild(new ExprNumber(2))
-                            .addChild(new ExprNumber(3))))),
+                .addChild(new DataDW(0, 0)
+                    .addChild(new ExprNumber(0, 0, -1))
+                    .addChild(new ExprNumber(0, 0, 2))
+                    .addChild(new ExprNumber(0, 0, 3))),
             program
         );
     }
@@ -91,10 +82,8 @@ public class ParseDataTest {
     public void testDWwithNegativeValue() {
         Program program = parseProgram("dw -1");
         assertTrees(new Program()
-                .addChild(new Statement()
-                    .addChild(new Data()
-                        .addChild(new DataDW()
-                            .addChild(new ExprNumber(-1))))),
+                .addChild(new DataDW(0, 0)
+                    .addChild(new ExprNumber(0, 0, -1))),
             program
         );
     }
@@ -103,9 +92,8 @@ public class ParseDataTest {
     public void testDS() {
         Program program = parseProgram("ds 0x55");
         assertTrees(new Program()
-                .addChild(new Statement()
-                    .addChild(new DataDS()
-                        .addChild(new ExprNumber(0x55)))),
+                .addChild(new DataDS(0, 0)
+                    .addChild(new ExprNumber(0, 0, 0x55))),
             program
         );
     }

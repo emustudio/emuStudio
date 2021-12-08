@@ -1,9 +1,17 @@
 package net.emustudio.plugins.compiler.as8080.ast.data;
 
-public class DataDW extends Data {
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 
-    public DataDW() {
+public class DataDW extends Node {
+
+    public DataDW(int line, int column) {
+        super(line, column);
         // child is expr
+    }
 
+    @Override
+    public void accept(NodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

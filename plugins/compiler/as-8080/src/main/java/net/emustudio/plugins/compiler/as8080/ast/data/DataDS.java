@@ -1,11 +1,17 @@
 package net.emustudio.plugins.compiler.as8080.ast.data;
 
-import net.emustudio.plugins.compiler.as8080.ast.expr.Expr;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 
-public class DataDS extends Data {
-    public DataDS() {
+public class DataDS extends Node {
+    public DataDS(int line, int column) {
+        super(line, column);
         // child is expr
         // expr cannot be negative
+    }
 
+    @Override
+    public void accept(NodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

@@ -22,14 +22,14 @@ public class CompileException extends RuntimeException {
     public final int line;
     public final int column;
 
-    public CompileException(int column, int line, String message) {
+    public CompileException(int line, int column, String message) {
         super("[" + line + "," + column + "] " + message);
 
         this.column = column;
         this.line = line;
     }
 
-    public CompileException(int column, int line, String message, Throwable cause) {
+    public CompileException(int line, int column, String message, Throwable cause) {
         super("[" + line + "," + column + "] " + message, cause);
 
         this.column = column;

@@ -1,8 +1,7 @@
 package net.emustudio.plugins.compiler.as8080;
 
+import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
-import net.emustudio.plugins.compiler.as8080.ast.Statement;
-import net.emustudio.plugins.compiler.as8080.ast.expr.Expr;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprCurrentAddress;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
@@ -109,9 +108,9 @@ public class ParseInstrTest {
 
     @Test
     public void testMVI() {
-        Expr expr = (Expr) new ExprInfix(OP_ADD)
-            .addChild(new ExprCurrentAddress())
-            .addChild(new ExprNumber(5));
+        Node expr = new ExprInfix(0, 0, OP_ADD)
+            .addChild(new ExprCurrentAddress(0, 0))
+            .addChild(new ExprNumber(0, 0, 5));
 
         forStringCaseVariations("mvi", instrVariation -> {
             for (Map.Entry<String, Integer> register : registers.entrySet()) {
@@ -120,9 +119,8 @@ public class ParseInstrTest {
                     Program program = parseProgram(row);
                     assertTrees(
                         new Program()
-                            .addChild(new Statement()
-                                .addChild(new InstrRegExpr(OPCODE_MVI, register.getValue())
-                                    .addChild(expr))),
+                            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, register.getValue())
+                                .addChild(expr)),
                         program
                     );
                 });
@@ -132,9 +130,9 @@ public class ParseInstrTest {
 
     @Test
     public void testLXI() {
-        Expr expr = (Expr) new ExprInfix(OP_ADD)
-            .addChild(new ExprCurrentAddress())
-            .addChild(new ExprNumber(5));
+        Node expr = new ExprInfix(0, 0, OP_ADD)
+            .addChild(new ExprCurrentAddress(0, 0))
+            .addChild(new ExprNumber(0, 0, 5));
 
         forStringCaseVariations("lxi", instrVariation -> {
             for (Map.Entry<String, Integer> regPair : regPairsBDHSP.entrySet()) {
@@ -143,9 +141,8 @@ public class ParseInstrTest {
                     Program program = parseProgram(row);
                     assertTrees(
                         new Program()
-                            .addChild(new Statement()
-                                .addChild(new InstrRegPairExpr(OPCODE_LXI, regPair.getValue())
-                                    .addChild(expr))),
+                            .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, regPair.getValue())
+                                .addChild(expr)),
                         program
                     );
                 });
@@ -165,8 +162,7 @@ public class ParseInstrTest {
                                 Program program = parseProgram(row);
                                 assertTrees(
                                     new Program()
-                                        .addChild(new Statement()
-                                            .addChild(new InstrRegReg(OPCODE_MOV, register1.getValue(), register2.getValue()))),
+                                        .addChild(new InstrRegReg(0, 0, OPCODE_MOV, register1.getValue(), register2.getValue())),
                                     program
                                 );
                             }
@@ -180,7 +176,7 @@ public class ParseInstrTest {
     private void assertInstrNoArgs(String instr, int instrType) {
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation);
-            assertTrees(new Program().addChild(new Statement().addChild(new InstrNoArgs(instrType))), program);
+            assertTrees(new Program().addChild(new InstrNoArgs(0, 0, instrType)), program);
         });
     }
 
@@ -191,9 +187,7 @@ public class ParseInstrTest {
                     String row = instrVariation + " " + registerVariation;
                     Program program = parseProgram(row);
                     assertTrees(
-                        new Program()
-                        .addChild(new Statement()
-                            .addChild(new InstrReg(instrType, register.getValue()))),
+                        new Program().addChild(new InstrReg(0, 0, instrType, register.getValue())),
                         program
                     );
                 });
@@ -202,13 +196,13 @@ public class ParseInstrTest {
     }
 
     private void assertInstrExpr(String instr, int instrType) {
-        Expr expr = (Expr) new ExprInfix(OP_ADD)
-            .addChild(new ExprCurrentAddress())
-            .addChild(new ExprNumber(5));
+        Node expr = new ExprInfix(0, 0, OP_ADD)
+            .addChild(new ExprCurrentAddress(0, 0))
+            .addChild(new ExprNumber(0, 0, 5));
 
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation + " $ + 5");
-            assertTrees(new Program().addChild(new Statement().addChild(new InstrExpr(instrType).addChild(expr))), program);
+            assertTrees(new Program().addChild(new InstrExpr(0, 0, instrType).addChild(expr)), program);
         });
     }
 
@@ -219,9 +213,7 @@ public class ParseInstrTest {
                     String row = instrVariation + " " + registerVariation;
                     Program program = parseProgram(row);
                     assertTrees(
-                        new Program()
-                            .addChild(new Statement()
-                                .addChild(new InstrRegPair(instrType, regPair.getValue()))),
+                        new Program().addChild(new InstrRegPair(0, 0, instrType, regPair.getValue())),
                         program
                     );
                 });

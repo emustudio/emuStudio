@@ -1,15 +1,20 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class Node {
-
+    protected Node parent;
     protected final List<Node> children = new ArrayList<>();
+    public final int line;
+    public final int column;
+
+    public Node(int line, int column) {
+        this.line = line;
+        this.column = column;
+    }
 
     public Node addChild(Node node) {
+        node.parent = this;
         children.add(Objects.requireNonNull(node));
         return this;
     }
@@ -18,8 +23,21 @@ public abstract class Node {
         return Collections.unmodifiableList(children);
     }
 
+    public Optional<Node> getParent() {
+        return Optional.ofNullable(parent);
+    }
+
     public Node getChild(int index) {
         return children.get(index);
+    }
+
+    public void removeChild(Node node) {
+        node.parent = null;
+        children.remove(node);
+    }
+
+    public void accept(NodeVisitor visitor) {
+        visitor.visit(this);
     }
 
     @Override

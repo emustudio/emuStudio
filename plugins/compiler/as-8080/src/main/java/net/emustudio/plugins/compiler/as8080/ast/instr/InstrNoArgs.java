@@ -1,11 +1,23 @@
 package net.emustudio.plugins.compiler.as8080.ast.instr;
 
-public class InstrNoArgs extends Instr {
-    private final int opcode;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import org.antlr.v4.runtime.Token;
 
-    public InstrNoArgs(int opcode) {
+public class InstrNoArgs extends Node {
+    public final int opcode;
+
+    public InstrNoArgs(int line, int column, int opcode) {
+        super(line, column);
         this.opcode = opcode;
     }
 
+    public InstrNoArgs(Token opcode) {
+        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType());
+    }
 
+    @Override
+    public void accept(NodeVisitor visitor) {
+        visitor.visit(this);
+    }
 }

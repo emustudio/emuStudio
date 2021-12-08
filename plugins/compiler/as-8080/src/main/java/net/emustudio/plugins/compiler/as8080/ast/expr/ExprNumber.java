@@ -1,8 +1,25 @@
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-public class ExprNumber extends Expr {
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import org.antlr.v4.runtime.Token;
 
-    public ExprNumber(int number) {
+import java.util.function.Function;
 
+public class ExprNumber extends Node {
+    public final int number;
+
+    public ExprNumber(int line, int column, int number) {
+        super(line, column);
+        this.number = number;
+    }
+
+    public ExprNumber(Token number, Function<Token, Integer> parser) {
+        this(number.getLine(), number.getCharPositionInLine(), parser.apply(number));
+    }
+
+    @Override
+    public void accept(NodeVisitor visitor) {
+        visitor.visit(this);
     }
 }
