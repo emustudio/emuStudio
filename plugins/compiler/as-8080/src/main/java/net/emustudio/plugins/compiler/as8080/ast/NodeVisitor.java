@@ -14,6 +14,10 @@ public class NodeVisitor {
         visitChildren(node);
     }
 
+    public void visit(Program node) {
+        visitChildren(node);
+    }
+
     public void visit(DataDB node) {
         visitChildren(node);
     }
@@ -110,7 +114,7 @@ public class NodeVisitor {
         visitChildren(node);
     }
 
-    private void visitChildren(Node node) {
+    protected void visitChildren(Node node) {
         for (Node child : node.getChildren()) {
             child.accept(this);
         }

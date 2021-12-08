@@ -20,7 +20,7 @@ public abstract class Node {
     }
 
     public List<Node> getChildren() {
-        return Collections.unmodifiableList(children);
+        return List.copyOf(children);
     }
 
     public Optional<Node> getParent() {

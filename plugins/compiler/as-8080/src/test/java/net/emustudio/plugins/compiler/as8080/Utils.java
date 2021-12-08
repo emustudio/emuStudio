@@ -1,5 +1,6 @@
 package net.emustudio.plugins.compiler.as8080;
 
+import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.visitors.CreateProgramVisitor;

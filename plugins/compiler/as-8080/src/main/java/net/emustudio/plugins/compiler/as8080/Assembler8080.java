@@ -29,8 +29,16 @@ import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
-import org.antlr.v4.runtime.*;
+import net.emustudio.plugins.compiler.as8080.visitors.CreateProgramVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.ExpandIncludesVisitor;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.TokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,6 +117,16 @@ public class Assembler8080 extends AbstractCompiler {
             As8080Parser parser = createParser(tokens);
             parser.addErrorListener(new ParserErrorListener());
 
+            Program program = new Program();
+            new CreateProgramVisitor(program).visit(parser.rStart());
+
+            NodeVisitor[] visitors = new NodeVisitor[] {
+                new ExpandIncludesVisitor()
+            };
+
+            for (NodeVisitor visitor : visitors) {
+                visitor.visit(program);
+            }
 
 
 //            ProgramParser programParser = new ProgramParser();
