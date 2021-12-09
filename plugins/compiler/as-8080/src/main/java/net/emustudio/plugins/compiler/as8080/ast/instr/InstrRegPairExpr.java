@@ -23,4 +23,27 @@ public class InstrRegPairExpr extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "InstrRegPairExpr(" + opcode + "," + regPair +")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        InstrRegPairExpr that = (InstrRegPairExpr) o;
+
+        if (opcode != that.opcode) return false;
+        return regPair == that.regPair;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = opcode;
+        result = 31 * result + regPair;
+        return result;
+    }
 }

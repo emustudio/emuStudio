@@ -23,4 +23,23 @@ public class PseudoInclude extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "PseudoInclude('" + filename + "')";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PseudoInclude that = (PseudoInclude) o;
+        return Objects.equals(filename, that.filename);
+    }
+
+    @Override
+    public int hashCode() {
+        return filename != null ? filename.hashCode() : 0;
+    }
 }

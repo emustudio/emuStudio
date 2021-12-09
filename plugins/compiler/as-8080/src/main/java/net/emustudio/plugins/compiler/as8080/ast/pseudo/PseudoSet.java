@@ -23,4 +23,23 @@ public class PseudoSet extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "PseudoSet(" + id + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PseudoSet pseudoSet = (PseudoSet) o;
+        return Objects.equals(id, pseudoSet.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
 }

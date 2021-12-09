@@ -48,10 +48,17 @@ public abstract class Node {
     private String toString(int indent) {
         String spaces = new String(new char[indent]).replace("\0", " ");
         StringBuilder builder = new StringBuilder(spaces);
-        builder.append(getClass().getSimpleName()).append("\n");
+        builder.append(toStringShallow());
+        if (!children.isEmpty()) {
+            builder.append("\n");
+        }
         for (Node child : children) {
             builder.append(child.toString(indent + 2));
         }
         return builder.toString();
+    }
+
+    protected String toStringShallow() {
+        return getClass().getSimpleName();
     }
 }

@@ -9,12 +9,16 @@ import net.emustudio.plugins.compiler.as8080.ast.instr.*;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 
 public class NodeVisitor {
+    protected NameSpace env;
 
     public void visit(Node node) {
         visitChildren(node);
     }
 
     public void visit(Program node) {
+        if (env == null) {
+            this.env = node.env();
+        }
         visitChildren(node);
     }
 

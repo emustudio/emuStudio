@@ -21,4 +21,23 @@ public class InstrExpr extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "InstrExpr(" + opcode + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        InstrExpr instrExpr = (InstrExpr) o;
+        return opcode == instrExpr.opcode;
+    }
+
+    @Override
+    public int hashCode() {
+        return opcode;
+    }
 }

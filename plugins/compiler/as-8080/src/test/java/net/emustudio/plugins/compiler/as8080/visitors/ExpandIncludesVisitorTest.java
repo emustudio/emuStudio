@@ -6,7 +6,8 @@ import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
-import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
+import net.emustudio.plugins.compiler.as8080.exceptions.CouldNotReadFileException;
+import net.emustudio.plugins.compiler.as8080.exceptions.InfiniteIncludeLoopException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -64,14 +65,14 @@ public class ExpandIncludesVisitorTest {
         assertTrees(expected, program);
     }
 
-    @Test(expected = CompileException.class)
+    @Test(expected = CouldNotReadFileException.class)
     public void testNonExistingFileThrows() {
         Program program = parseProgram("cmc\ninclude 'non-existant.asm'");
         ExpandIncludesVisitor visitor = new ExpandIncludesVisitor();
         visitor.visit(program);
     }
 
-    @Test(expected = CompileException.class)
+    @Test(expected = InfiniteIncludeLoopException.class)
     public void testIndefiniteLoopDetected() throws IOException {
         File fileA = folder.newFile("file-a.asm");
         File fileB = folder.newFile("file-b.asm");

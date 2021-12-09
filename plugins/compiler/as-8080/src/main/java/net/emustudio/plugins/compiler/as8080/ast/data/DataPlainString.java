@@ -24,4 +24,23 @@ public class DataPlainString extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "DataPlainString('" + string + "')";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DataPlainString that = (DataPlainString) o;
+        return Objects.equals(string, that.string);
+    }
+
+    @Override
+    public int hashCode() {
+        return string != null ? string.hashCode() : 0;
+    }
 }

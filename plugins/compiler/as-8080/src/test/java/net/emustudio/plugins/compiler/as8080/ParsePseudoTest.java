@@ -9,7 +9,10 @@ import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
+import net.emustudio.plugins.compiler.as8080.exceptions.SyntaxErrorException;
 import org.junit.Test;
+
+import java.util.List;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Lexer.*;
 import static net.emustudio.plugins.compiler.as8080.Utils.assertTrees;
@@ -66,6 +69,28 @@ public class ParsePseudoTest {
     }
 
     @Test
+    public void testIfEmpty() {
+        List<String> programs = List.of(
+            "if 1\n\n\nendif",
+            "if 1\n\nendif",
+            "if 1\nendif"
+        );
+
+        for (String src : programs) {
+            Program program = parseProgram(src);
+            Node expected = new Program()
+                .addChild(new PseudoIf(0,0)
+                    .addChild(new ExprNumber(0,0,1)));
+            assertTrees(expected, program);
+        }
+    }
+
+    @Test(expected = SyntaxErrorException.class)
+    public void testIfEndifMustBeOnNewLine() {
+        parseProgram("if 1\nrrc\nrrc endif");
+    }
+
+    @Test
     public void testTwoLabelsInsideIf() {
         Program program = parseProgram("if 1\n"
             + "  label1:\n"
@@ -107,6 +132,26 @@ public class ParsePseudoTest {
                         .addChild(new ExprNumber(0, 0, 0x7F)))));
 
         assertTrees(expected, program);
+    }
+
+    @Test
+    public void testMacroDefEmpty() {
+        List<String> programs = List.of(
+            "shrt macro\n\n\nendm",
+            "shrt macro\n\nendm",
+            "shrt macro\nendm"
+        );
+
+        for (String src : programs) {
+            Program program = parseProgram(src);
+            Node expected = new Program().addChild(new PseudoMacroDef(0, 0, "shrt"));
+            assertTrees(expected, program);
+        }
+    }
+
+    @Test(expected = SyntaxErrorException.class)
+    public void testMacroDefEndmMustBeOnNewLine() {
+        parseProgram("shrt macro\nrrc\nrrc endm");
     }
 
     @Test

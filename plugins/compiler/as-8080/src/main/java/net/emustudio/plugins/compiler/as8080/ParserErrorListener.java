@@ -1,6 +1,6 @@
 package net.emustudio.plugins.compiler.as8080;
 
-import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
+import net.emustudio.plugins.compiler.as8080.exceptions.SyntaxErrorException;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
@@ -14,6 +14,11 @@ class ParserErrorListener extends BaseErrorListener {
         int charPositionInLine,
         String msg,
         RecognitionException e) {
-        throw new CompileException(charPositionInLine, line, msg);
+
+        if (e == null) {
+            throw new SyntaxErrorException(line, charPositionInLine, msg);
+        } else {
+            throw new SyntaxErrorException(line, charPositionInLine, msg, e);
+        }
     }
 }

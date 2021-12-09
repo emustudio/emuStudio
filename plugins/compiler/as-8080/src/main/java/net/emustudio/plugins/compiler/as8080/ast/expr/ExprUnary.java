@@ -21,4 +21,23 @@ public class ExprUnary extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "ExprUnary(" + operation + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ExprUnary exprUnary = (ExprUnary) o;
+        return operation == exprUnary.operation;
+    }
+
+    @Override
+    public int hashCode() {
+        return operation;
+    }
 }

@@ -2,11 +2,11 @@ package net.emustudio.plugins.compiler.as8080.visitors;
 
 import net.emustudio.plugins.compiler.as8080.As8080Lexer;
 import net.emustudio.plugins.compiler.as8080.As8080Parser;
-import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoInclude;
-import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
+import net.emustudio.plugins.compiler.as8080.exceptions.CouldNotReadFileException;
+import net.emustudio.plugins.compiler.as8080.exceptions.InfiniteIncludeLoopException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -18,8 +18,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ExpandIncludesVisitor extends NodeVisitor {
-    private NameSpace parentEnv;
-    private final Set<String> includedFiles;
+    private final Set<String> includedFiles; // TODO: windows platform case-insensitive!
 
     public ExpandIncludesVisitor() {
         this.includedFiles = Collections.emptySet();
@@ -30,15 +29,9 @@ public class ExpandIncludesVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(Program node) {
-        parentEnv = node.env();
-        visitChildren(node);
-    }
-
-    @Override
     public void visit(PseudoInclude node) {
         if (includedFiles.contains(node.filename)) {
-            throw new CompileException(node.line, node.column, "Infinite INCLUDE loop detected");
+            throw new InfiniteIncludeLoopException(node.line, node.column);
         }
 
         try {
@@ -47,7 +40,7 @@ public class ExpandIncludesVisitor extends NodeVisitor {
             As8080Parser parser = new As8080Parser(stream);
             stream.fill();
             ParseTree tree = parser.rStart();
-            Program program = new Program(node.line, node.column, parentEnv);
+            Program program = new Program(node.line, node.column, env);
             program.setFileName(node.filename);
 
             new CreateProgramVisitor(program).visit(tree);
@@ -62,7 +55,7 @@ public class ExpandIncludesVisitor extends NodeVisitor {
                 parent.addChild(program);
             });
         } catch (IOException e) {
-            throw new CompileException(node.line, node.column, "Could not read file: " + node.filename, e);
+            throw new CouldNotReadFileException(node.line, node.column, node.filename, e);
         }
     }
 }

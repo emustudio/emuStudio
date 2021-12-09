@@ -21,4 +21,23 @@ public class ExprInfix extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "ExprInfix(" + operation + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ExprInfix infix = (ExprInfix) o;
+        return operation == infix.operation;
+    }
+
+    @Override
+    public int hashCode() {
+        return operation;
+    }
 }

@@ -22,4 +22,27 @@ public class InstrReg extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "InstrReg(" + opcode + "," + reg +")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        InstrReg instrReg = (InstrReg) o;
+
+        if (opcode != instrReg.opcode) return false;
+        return reg == instrReg.reg;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = opcode;
+        result = 31 * result + reg;
+        return result;
+    }
 }

@@ -22,4 +22,23 @@ public class Label extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "Label(" + label +")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Label label1 = (Label) o;
+        return Objects.equals(label, label1.label);
+    }
+
+    @Override
+    public int hashCode() {
+        return label != null ? label.hashCode() : 0;
+    }
 }

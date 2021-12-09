@@ -24,4 +24,29 @@ public class InstrRegReg extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "InstrRegReg(" + opcode + ","+ dstReg +","+ srcReg +")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        InstrRegReg that = (InstrRegReg) o;
+
+        if (opcode != that.opcode) return false;
+        if (srcReg != that.srcReg) return false;
+        return dstReg == that.dstReg;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = opcode;
+        result = 31 * result + srcReg;
+        result = 31 * result + dstReg;
+        return result;
+    }
 }

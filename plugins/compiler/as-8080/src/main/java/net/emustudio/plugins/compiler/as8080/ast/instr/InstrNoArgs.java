@@ -20,4 +20,23 @@ public class InstrNoArgs extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "InstrNoArgs(" + opcode + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        InstrNoArgs that = (InstrNoArgs) o;
+        return opcode == that.opcode;
+    }
+
+    @Override
+    public int hashCode() {
+        return opcode;
+    }
 }

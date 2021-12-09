@@ -60,12 +60,14 @@ public class Utils {
         As8080Lexer lexer = new As8080Lexer(CharStreams.fromString(program));
         CommonTokenStream stream = new CommonTokenStream(lexer);
         As8080Parser parser = new As8080Parser(stream);
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ParserErrorListener());
         stream.fill();
         return parser.rStart();
     }
 
     public static Program parseProgram(String programString) {
-        ParseTree tree = Utils.parse(programString);
+        ParseTree tree = parse(programString);
         Program program = new Program();
         CreateProgramVisitor visitor = new CreateProgramVisitor(program);
         visitor.visit(tree);
