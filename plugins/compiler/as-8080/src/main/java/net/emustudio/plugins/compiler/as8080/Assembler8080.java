@@ -29,13 +29,12 @@ import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 import net.emustudio.plugins.compiler.as8080.visitors.CreateProgramVisitor;
 import net.emustudio.plugins.compiler.as8080.visitors.ExpandIncludesVisitor;
-import net.emustudio.plugins.compiler.as8080.visitors.FindDeclarationsVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.CheckDeclarationsVisitor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -124,7 +123,7 @@ public class Assembler8080 extends AbstractCompiler {
 
             NodeVisitor[] visitors = new NodeVisitor[] {
                 new ExpandIncludesVisitor(),
-                new FindDeclarationsVisitor()
+                new CheckDeclarationsVisitor()
             };
 
             for (NodeVisitor visitor : visitors) {
