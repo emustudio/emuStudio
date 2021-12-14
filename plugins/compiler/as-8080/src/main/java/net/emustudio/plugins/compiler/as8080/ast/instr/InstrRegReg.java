@@ -31,6 +31,11 @@ public class InstrRegReg extends Node {
     }
 
     @Override
+    protected Node mkCopy() {
+        return new InstrRegReg(line, column, opcode, dstReg, srcReg);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

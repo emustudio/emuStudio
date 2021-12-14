@@ -15,4 +15,9 @@ public class PseudoIf extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected Node mkCopy() {
+        return new PseudoIf(line, column);
+    }
 }

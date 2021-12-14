@@ -1,4 +1,6 @@
-package net.emustudio.plugins.compiler.as8080.exceptions;
+package net.emustudio.plugins.compiler.as8080.exceptions.used;
+
+import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 
 public class CouldNotReadFileException extends CompileException {
     private final static String MSG = "Could not read file: ";

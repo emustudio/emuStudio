@@ -29,6 +29,11 @@ public class ExprNumber extends Node {
     }
 
     @Override
+    protected Node mkCopy() {
+        return new ExprNumber(line, column, number);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

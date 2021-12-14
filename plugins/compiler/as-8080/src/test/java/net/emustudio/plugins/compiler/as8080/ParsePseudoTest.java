@@ -9,7 +9,7 @@ import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
-import net.emustudio.plugins.compiler.as8080.exceptions.SyntaxErrorException;
+import net.emustudio.plugins.compiler.as8080.exceptions.used.SyntaxErrorException;
 import org.junit.Test;
 
 import java.util.List;

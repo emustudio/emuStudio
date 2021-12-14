@@ -14,4 +14,9 @@ public class DataDS extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected Node mkCopy() {
+        return new DataDS(line, column);
+    }
 }

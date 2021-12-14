@@ -30,6 +30,11 @@ public class PseudoInclude extends Node {
     }
 
     @Override
+    protected Node mkCopy() {
+        return new PseudoInclude(line, column, filename);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

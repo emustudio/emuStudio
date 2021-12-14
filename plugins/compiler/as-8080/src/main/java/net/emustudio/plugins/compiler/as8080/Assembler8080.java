@@ -35,6 +35,7 @@ import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 import net.emustudio.plugins.compiler.as8080.visitors.CreateProgramVisitor;
 import net.emustudio.plugins.compiler.as8080.visitors.ExpandIncludesVisitor;
 import net.emustudio.plugins.compiler.as8080.visitors.CheckDeclarationsVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.ExpandMacrosVisitor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -123,7 +124,8 @@ public class Assembler8080 extends AbstractCompiler {
 
             NodeVisitor[] visitors = new NodeVisitor[] {
                 new ExpandIncludesVisitor(),
-                new CheckDeclarationsVisitor()
+                new CheckDeclarationsVisitor(),
+                new ExpandMacrosVisitor()
             };
 
             for (NodeVisitor visitor : visitors) {

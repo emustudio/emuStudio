@@ -1,5 +1,6 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
+import net.emustudio.plugins.compiler.as8080.CompileError;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
@@ -7,9 +8,18 @@ import net.emustudio.plugins.compiler.as8080.ast.data.DataPlainString;
 import net.emustudio.plugins.compiler.as8080.ast.expr.*;
 import net.emustudio.plugins.compiler.as8080.ast.instr.*;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
+import net.emustudio.plugins.compiler.as8080.exceptions.used.FatalError;
 
 public class NodeVisitor {
     protected NameSpace env;
+
+    protected void error(CompileError error) {
+        env.error(error);
+    }
+
+    protected void fatalError(CompileError error) {
+        FatalError.now(error);
+    }
 
     public void visit(Node node) {
         visitChildren(node);

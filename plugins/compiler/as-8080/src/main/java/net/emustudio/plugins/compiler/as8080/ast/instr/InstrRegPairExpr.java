@@ -30,6 +30,11 @@ public class InstrRegPairExpr extends Node {
     }
 
     @Override
+    protected Node mkCopy() {
+        return new InstrRegPairExpr(line, column, opcode, regPair);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

@@ -15,8 +15,15 @@ public abstract class Node {
 
     public Node addChild(Node node) {
         node.parent = this;
-        children.add(Objects.requireNonNull(node));
+        children.add(node);
         return this;
+    }
+
+    public void addChildren(List<Node> nodes) {
+        for (Node node : nodes) {
+            node.parent = this;
+        }
+        children.addAll(nodes);
     }
 
     public List<Node> getChildren() {
@@ -34,6 +41,12 @@ public abstract class Node {
     public void removeChild(Node node) {
         node.parent = null;
         children.remove(node);
+    }
+
+    public Optional<Node> remove() {
+        Optional<Node> parent = getParent();
+        parent.ifPresent(p -> p.removeChild(this));
+        return parent;
     }
 
     public void accept(NodeVisitor visitor) {
@@ -60,5 +73,15 @@ public abstract class Node {
 
     protected String toStringShallow() {
         return getClass().getSimpleName();
+    }
+
+    protected abstract Node mkCopy();
+
+    public Node copy() {
+        Node copied = mkCopy();
+        for (Node child : children) {
+            copied.addChild(child.copy());
+        }
+        return copied;
     }
 }

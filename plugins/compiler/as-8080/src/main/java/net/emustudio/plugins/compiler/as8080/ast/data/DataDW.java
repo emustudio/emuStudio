@@ -14,4 +14,9 @@ public class DataDW extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected Node mkCopy() {
+        return new DataDW(line, column);
+    }
 }

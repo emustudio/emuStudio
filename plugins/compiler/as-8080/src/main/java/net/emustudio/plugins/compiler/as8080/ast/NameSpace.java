@@ -1,40 +1,17 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
-import net.emustudio.plugins.compiler.as8080.exceptions.AlreadyDeclaredException;
+import net.emustudio.plugins.compiler.as8080.CompileError;
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class NameSpace {
+    private final List<CompileError> errors = new ArrayList<>();
 
-    private final Map<String, Node> declarations = new HashMap<>();
-    private final Map<String, Node> macros = new HashMap<>();
-
-    public void addDeclaration(String id, Node node) {
-        String idLower = id.toLowerCase(Locale.ENGLISH);
-
-        if (declarations.containsKey(idLower)) {
-            throw new AlreadyDeclaredException(node.line, node.column, id);
-        }
-        declarations.put(idLower, node);
+    public void error(CompileError error) {
+        errors.add(Objects.requireNonNull(error));
     }
 
-    public void addMacro(String id, Node node) {
-        String idLower = id.toLowerCase(Locale.ENGLISH);
-
-        if (macros.containsKey(idLower)) {
-            throw new AlreadyDeclaredException(node.line, node.column, id);
-        }
-        macros.put(idLower, node);
-    }
-
-    public Optional<Node> getDeclaration(String id) {
-        return Optional.ofNullable(declarations.get(id.toLowerCase(Locale.ENGLISH)));
-    }
-
-    public Optional<Node> getMacro(String id) {
-        return Optional.ofNullable(macros.get(id.toLowerCase(Locale.ENGLISH)));
+    public boolean hasError(int errorCode) {
+        return errors.stream().anyMatch(e -> e.errorCode == errorCode);
     }
 }

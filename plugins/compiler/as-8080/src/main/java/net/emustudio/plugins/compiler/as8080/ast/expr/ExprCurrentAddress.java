@@ -13,4 +13,9 @@ public class ExprCurrentAddress extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected Node mkCopy() {
+        return new ExprCurrentAddress(line, column);
+    }
 }

@@ -6,9 +6,12 @@ import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoEqu;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroDef;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoSet;
-import net.emustudio.plugins.compiler.as8080.exceptions.AlreadyDeclaredException;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+
+import static net.emustudio.plugins.compiler.as8080.CompileError.alreadyDeclared;
 
 public class CheckDeclarationsVisitor extends NodeVisitor {
     private final Set<String> declarations = new HashSet<>();
@@ -49,7 +52,7 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
         String idLower = id.toLowerCase(Locale.ENGLISH);
 
         if (declarations.contains(idLower) && (!isVariable || !variables.contains(id))) {
-            throw new AlreadyDeclaredException(node.line, node.column, id);
+            error(alreadyDeclared(node, id));
         }
         declarations.add(idLower);
         if (isVariable) {
@@ -61,7 +64,7 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
         String idLower = id.toLowerCase(Locale.ENGLISH);
 
         if (macros.contains(idLower)) {
-            throw new AlreadyDeclaredException(node.line, node.column, id);
+            error(alreadyDeclared(node, id));
         }
         macros.add(idLower);
     }

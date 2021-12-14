@@ -28,6 +28,11 @@ public class ExprUnary extends Node {
     }
 
     @Override
+    protected Node mkCopy() {
+        return new ExprUnary(line, column, operation);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

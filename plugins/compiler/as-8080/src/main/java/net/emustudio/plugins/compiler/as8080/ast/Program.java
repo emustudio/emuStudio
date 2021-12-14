@@ -37,4 +37,11 @@ public class Program extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    protected Node mkCopy() {
+        Program program = new Program(line, column, env);
+        program.setFileName(filename);
+        return program;
+    }
 }
