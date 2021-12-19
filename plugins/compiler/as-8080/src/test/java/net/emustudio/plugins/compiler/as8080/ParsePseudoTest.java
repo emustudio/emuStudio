@@ -124,8 +124,10 @@ public class ParsePseudoTest {
 
         Node expected = new Program()
             .addChild(new PseudoMacroDef(0, 0, "shrt")
-                .addChild(new ExprId(0, 0, "param1"))
-                .addChild(new ExprId(0, 0, "param2"))
+                .addChild(new PseudoMacroParameter()
+                    .addChild(new ExprId(0, 0, "param1")))
+                .addChild(new PseudoMacroParameter()
+                    .addChild(new ExprId(0, 0, "param2")))
                 .addChild(new InstrNoArgs(0, 0, OPCODE_RRC))
                 .addChild(new Label(0, 0, "heylabel")
                     .addChild(new InstrExpr(0, 0, OPCODE_ANI)
@@ -167,8 +169,10 @@ public class ParsePseudoTest {
 
         Node expected = new Program()
             .addChild(new PseudoMacroCall(0, 0, "shrt")
-                .addChild(new ExprId(0, 0, "param1"))
-                .addChild(new ExprNumber(0, 0, 45)));
+                .addChild(new PseudoMacroArgument()
+                    .addChild(new ExprId(0, 0, "param1")))
+                .addChild(new PseudoMacroArgument()
+                    .addChild(new ExprNumber(0, 0, 45))));
 
         assertTrees(expected, program);
     }

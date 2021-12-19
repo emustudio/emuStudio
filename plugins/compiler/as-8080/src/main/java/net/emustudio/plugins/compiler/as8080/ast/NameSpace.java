@@ -14,4 +14,15 @@ public class NameSpace {
     public boolean hasError(int errorCode) {
         return errors.stream().anyMatch(e -> e.errorCode == errorCode);
     }
+
+    public boolean hasNoErrors() {
+        return errors.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        return "NameSpace{" +
+            "errors=" + errors +
+            '}';
+    }
 }

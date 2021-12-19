@@ -3,8 +3,10 @@ package net.emustudio.plugins.compiler.as8080.visitors;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroArgument;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroCall;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroDef;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroParameter;
 import net.emustudio.plugins.compiler.as8080.exceptions.used.FatalError;
 import org.junit.Rule;
 import org.junit.Test;
@@ -93,13 +95,19 @@ public class ExpandMacrosTest {
 
         assertTrees(new Program()
                 .addChild(new PseudoMacroCall(0, 0, "x")
-                    .addChild(new ExprNumber(0, 0, 1))
-                    .addChild(new ExprNumber(0, 0, 2))
-                    .addChild(new ExprNumber(0, 0, 3))
+                    .addChild(new PseudoMacroArgument()
+                        .addChild(new ExprNumber(0, 0, 1)))
+                    .addChild(new PseudoMacroArgument()
+                        .addChild(new ExprNumber(0, 0, 2)))
+                    .addChild(new PseudoMacroArgument()
+                        .addChild(new ExprNumber(0, 0, 3)))
                     .addChild(new PseudoMacroDef(0, 0, "x")
-                        .addChild(new ExprId(0, 0, "q"))
-                        .addChild(new ExprId(0, 0, "r"))
-                        .addChild(new ExprId(0, 0, "t")))),
+                        .addChild(new PseudoMacroParameter()
+                            .addChild(new ExprId(0, 0, "q")))
+                        .addChild(new PseudoMacroParameter()
+                            .addChild(new ExprId(0, 0, "r")))
+                        .addChild(new PseudoMacroParameter()
+                            .addChild(new ExprId(0, 0, "t"))))),
             program
         );
     }

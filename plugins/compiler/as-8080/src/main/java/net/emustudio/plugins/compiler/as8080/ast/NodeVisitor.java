@@ -112,6 +112,14 @@ public class NodeVisitor {
         visitChildren(node);
     }
 
+    public void visit(PseudoMacroArgument node) {
+        visitChildren(node);
+    }
+
+    public void visit(PseudoMacroParameter node) {
+        visitChildren(node);
+    }
+
     public void visit(PseudoMacroDef node) {
         visitChildren(node);
     }

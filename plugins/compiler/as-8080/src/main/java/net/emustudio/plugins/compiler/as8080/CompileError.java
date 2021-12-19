@@ -43,4 +43,14 @@ public class CompileError {
     public static CompileError notDefined(Node node, String what) {
         return new CompileError(node, ERROR_NOT_DEFINED, "Not defined: " + what);
     }
+
+    @Override
+    public String toString() {
+        return "CompileError{" +
+            "line=" + line +
+            ", column=" + column +
+            ", msg='" + msg + '\'' +
+            ", errorCode=" + errorCode +
+            '}';
+    }
 }

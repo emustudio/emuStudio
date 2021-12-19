@@ -61,4 +61,68 @@ public class CheckDeclarationsVisitorTest {
         visitor.visit(program);
         assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
     }
+
+    @Test
+    public void testMacroParametersCollideWithLabel() {
+        Program program = parseProgram("label: x macro label\nendm");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
+    }
+
+    @Test
+    public void testMacroParametersCollideWithConstant() {
+        Program program = parseProgram("const equ 1\nx macro const\nendm");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
+    }
+
+    @Test
+    public void testMacroParametersCollideWithVariable() {
+        Program program = parseProgram("variable set 1\nx macro variable\nendm");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
+    }
+
+    @Test
+    public void testMacroParametersCollideParentMacroParameters() {
+        Program program = parseProgram("x macro f,g,n\ny macro p,g,o\nendm\nendm");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
+    }
+
+    @Test
+    public void testMacroParametersAfterMacroEndStillCollideWithLabel() {
+        Program program = parseProgram("x macro tt\nendm\ntt:");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
+    }
+
+    @Test
+    public void testMacroParametersCollideWithConstantInsideMacro() {
+        Program program = parseProgram("x macro tt\ntt equ 1\nendm");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
+    }
+
+    @Test
+    public void testMacroNameCollidesWithParameterName() {
+        Program program = parseProgram("x macro x\nendm");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
+    }
+
+    @Test
+    public void testMacroReuseParameterNamesIsPossible() {
+        Program program = parseProgram("x macro t\nendm\ny macro t\nendm");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasNoErrors());
+    }
 }
