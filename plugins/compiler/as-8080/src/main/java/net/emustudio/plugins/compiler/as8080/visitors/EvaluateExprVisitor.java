@@ -44,6 +44,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(Program node) {
+        if (env == null) {
+            this.env = node.env();
+        }
+
         currentAddress = 0;
         visitChildren(node);
 
@@ -71,7 +75,6 @@ public class EvaluateExprVisitor extends NodeVisitor {
                 break;
             }
         }
-
     }
 
     @Override

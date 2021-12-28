@@ -43,4 +43,12 @@ public class Evaluated extends Node {
     public int hashCode() {
         return Objects.hash(super.hashCode(), address, sizeBytes);
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "Evaluated(" +
+            "addr=" + address +
+            ", size=" + sizeBytes +
+            ')';
+    }
 }
