@@ -1,10 +1,12 @@
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.Either;
+import net.emustudio.plugins.compiler.as8080.ast.*;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
+
+import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
 
 public class ExprId extends Node {
     public final String id;
@@ -16,6 +18,15 @@ public class ExprId extends Node {
 
     public ExprId(Token id) {
         this(id.getLine(), id.getCharPositionInLine(), id.getText());
+    }
+
+    @Override
+    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+        return env.get(normalizeId(id)).orElseGet(() -> {
+            NeedMorePass needMorePass = new NeedMorePass(line, column);
+            needMorePass.addChild(this);
+            return Either.ofLeft(needMorePass);
+        });
     }
 
     @Override

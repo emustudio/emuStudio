@@ -123,6 +123,7 @@ public class Utils {
         for (int i = 0; i < expected.getChildren().size(); i++) {
             Node expectedChild = expected.getChild(i);
             Node resultChild = result.getChild(i);
+            assertEquals(expectedChild, resultChild);
             assertTrees(expectedChild, resultChild);
         }
     }

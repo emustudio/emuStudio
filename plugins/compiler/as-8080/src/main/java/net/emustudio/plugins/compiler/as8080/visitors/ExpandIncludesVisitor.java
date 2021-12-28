@@ -18,6 +18,9 @@ import java.util.Set;
 import static net.emustudio.plugins.compiler.as8080.CompileError.couldNotReadFile;
 import static net.emustudio.plugins.compiler.as8080.CompileError.infiniteLoopDetected;
 
+/**
+ * Integrate "include" files and remove PseudoInclude
+ */
 public class ExpandIncludesVisitor extends NodeVisitor {
     private final Set<String> includedFiles; // TODO: windows platform case-insensitive!
 

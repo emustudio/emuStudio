@@ -22,7 +22,8 @@ public class CreateDataVisitor extends As8080ParserBaseVisitor<Node> {
             } else if (next.instr != null) {
                 db.addChild(Visitors.instr.visit(next.instr));
             } else {
-                db.addChild(new DataPlainString(next.str));
+                DataPlainString str = new DataPlainString(next.str);
+                db.addChild(str);
             }
         }
         return db;

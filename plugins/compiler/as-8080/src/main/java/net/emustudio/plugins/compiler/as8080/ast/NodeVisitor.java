@@ -10,6 +10,8 @@ import net.emustudio.plugins.compiler.as8080.ast.instr.*;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 import net.emustudio.plugins.compiler.as8080.exceptions.used.FatalError;
 
+import java.util.List;
+
 public class NodeVisitor {
     protected NameSpace env;
 
@@ -132,13 +134,28 @@ public class NodeVisitor {
         visitChildren(node);
     }
 
-    public void visit(Label node) {
+    public void visit(PseudoLabel node) {
+        visitChildren(node);
+    }
+
+    public void visit(Evaluated node) {
+        visitChildren(node);
+    }
+
+    public void visit(NeedMorePass node) {
         visitChildren(node);
     }
 
     protected void visitChildren(Node node) {
         for (Node child : node.getChildren()) {
             child.accept(this);
+        }
+    }
+
+    protected void visitChildren(Node node, int skipFirstN) {
+        List<Node> children = node.getChildren();
+        for (int i = skipFirstN; i < children.size(); i++) {
+            children.get(i).accept(this);
         }
     }
 }

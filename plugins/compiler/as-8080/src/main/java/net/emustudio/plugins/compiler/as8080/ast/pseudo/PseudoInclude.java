@@ -1,6 +1,6 @@
 package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
-import net.emustudio.plugins.compiler.as8080.CommonParsers;
+import net.emustudio.plugins.compiler.as8080.ParsingUtils;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -16,7 +16,7 @@ public class PseudoInclude extends Node {
     }
 
     public PseudoInclude(Token fileName) {
-        this(fileName.getLine(), fileName.getCharPositionInLine(), CommonParsers.parseLitString(fileName));
+        this(fileName.getLine(), fileName.getCharPositionInLine(), ParsingUtils.parseLitString(fileName));
     }
 
     @Override

@@ -1,24 +1,26 @@
 package net.emustudio.plugins.compiler.as8080.visitors;
 
-import net.emustudio.plugins.compiler.as8080.ast.Label;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
-import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoEqu;
-import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroDef;
-import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroParameter;
-import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoSet;
 
 import java.util.*;
 
-import static net.emustudio.plugins.compiler.as8080.CompileError.alreadyDeclared;
+import static net.emustudio.plugins.compiler.as8080.CompileError.*;
+import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
 
 /**
  * Checks if all declarations are valid:
- * - ID of constant,variable and macro can be used just once in whole program.
+ * - ID of constant,variable and macro can be used just once in the whole program.
+ * - ID of constant and macro cannot reference itself in the declaration
+ * - ID of variable cannot reference itself in the declaration only if it wasn't already declared
  * - macro parameters should not conflict with:
  *   - declarations in and out of the macro scope
  *   - previously declared parameters in current or parent macros if the current one is nested
+ * - if expressions should not reference declarations inside that if (including all nested ifs)
+ *
+ * - cyclic references will be checked in evaluator since it requires > 1 passes
  */
 public class CheckDeclarationsVisitor extends NodeVisitor {
     private final Set<String> allDeclarations = new HashSet<>();
@@ -34,11 +36,20 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
     // for easier removal of current macro params from macroParamsInScope when the macro definition ends
     private Set<String> currentMacroParams;
 
+    // if expr references
+    private final Set<String> currentIfReferences = new HashSet<>();
+
     private boolean insideMacroParameter = false;
+    private int insideIfLevel = 0; // if nesting level, to know how long to keep currentIfReferences
+    private boolean insideIfExpr = false;
+
+    private String currentDeclarationId;
 
     @Override
     public void visit(PseudoEqu node) {
         addDeclaration(node.id, node);
+        currentDeclarationId = normalizeId(node.id);
+        visitChildren(node);
     }
 
     @Override
@@ -52,11 +63,13 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoSet node) {
+        currentDeclarationId = normalizeId(node.id);
+        visitChildren(node);
         addVariable(node.id, node);
     }
 
     @Override
-    public void visit(Label node) {
+    public void visit(PseudoLabel node) {
         addDeclaration(node.label, node);
         visitChildren(node);
     }
@@ -73,6 +86,27 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
         if (insideMacroParameter) {
             addMacroParameter(node.id, node);
         }
+        if (insideIfExpr) {
+            addIfReference(node);
+        }
+        String idLower = normalizeId(node.id);
+        if (!variables.contains(idLower) && idLower.equals(currentDeclarationId)) {
+            error(declarationReferencesItself(node));
+        }
+    }
+
+    @Override
+    public void visit(PseudoIf node) {
+        insideIfLevel++;
+        insideIfExpr = true;
+        visit(node.getChild(0)); // visiting only expr
+        insideIfExpr = false;
+        visitChildren(node, 1);
+        insideIfLevel--;
+
+        if (insideIfLevel == 0) {
+            currentIfReferences.clear();
+        }
     }
 
     private void addVariable(String id, Node node) {
@@ -84,14 +118,20 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
     }
 
     private void addDeclaration(String id, boolean isVariable, Node node) {
-        String idLower = id.toLowerCase(Locale.ENGLISH);
+        String normId = normalizeId(id);
 
-        if (allMacroParams.contains(idLower) || buildDeclarations().contains(idLower) && (!isVariable || !variables.contains(id))) {
+        if (currentIfReferences.contains(normId)) {
+            error(ifExpressionReferencesOwnBlock(node));
+        }
+
+        // if we're in macro (arbitrary nesting level) and it has param named the same way -> error
+        // if there exist any declaration with that name, but either this declaration is not a variable or the name was taken by not a variable
+        if (allMacroParams.contains(normId) || buildDeclarations().contains(normId) && (!isVariable || !variables.contains(id))) {
             error(alreadyDeclared(node, id));
         }
-        allDeclarations.add(idLower);
+        allDeclarations.add(normId);
         if (isVariable) {
-            variables.add(idLower);
+            variables.add(normId);
         }
     }
 
@@ -110,6 +150,15 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
         }
         currentMacroParams.add(idLower);
         allMacroParams.add(idLower);
+    }
+
+    private void addIfReference(ExprId node) {
+        String idLower = node.id.toLowerCase(Locale.ENGLISH);
+        if (currentIfReferences.contains(idLower)) {
+            error(ifExpressionReferencesOwnBlock(node));
+        } else {
+            currentIfReferences.add(idLower);
+        }
     }
 
     private Set<String> buildDeclarations() {

@@ -159,6 +159,7 @@ rExpression:
  | unaryop=(OP_ADD|OP_SUBTRACT) expr=rExpression                                          # exprUnary
  | expr1=rExpression op=(OP_MULTIPLY|OP_DIVIDE|OP_MOD|OP_SHL|OP_SHR) expr2=rExpression    # exprInfix
  | expr1=rExpression op=(OP_ADD|OP_SUBTRACT) expr2=rExpression                            # exprInfix
+ | expr1=rExpression op=OP_EQUAL expr2=rExpression                                        # exprInfix
  | unaryop=OP_NOT expr=rExpression                                                        # exprUnary
  | expr1=rExpression op=OP_AND expr2=rExpression                                          # exprInfix
  | expr1=rExpression op=(OP_OR|OP_XOR) expr2=rExpression                                  # exprInfix

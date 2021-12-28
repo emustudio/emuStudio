@@ -1,11 +1,13 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
 import net.emustudio.plugins.compiler.as8080.CompileError;
+import net.emustudio.plugins.compiler.as8080.Either;
 
 import java.util.*;
 
 public class NameSpace {
     private final List<CompileError> errors = new ArrayList<>();
+    private final Map<String, Either<NeedMorePass, Evaluated>> definitions = new HashMap<>();
 
     public void error(CompileError error) {
         errors.add(Objects.requireNonNull(error));
@@ -18,6 +20,19 @@ public class NameSpace {
     public boolean hasNoErrors() {
         return errors.isEmpty();
     }
+
+    public void put(String id, Either<NeedMorePass, Evaluated> value) {
+        definitions.put(id, value);
+    }
+
+    public void remove(String id) {
+        definitions.remove(id);
+    }
+
+    public Optional<Either<NeedMorePass, Evaluated>> get(String id) {
+        return Optional.ofNullable(definitions.get(id));
+    }
+
 
     @Override
     public String toString() {

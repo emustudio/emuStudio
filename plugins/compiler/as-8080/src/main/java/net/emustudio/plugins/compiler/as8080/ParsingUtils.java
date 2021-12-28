@@ -5,7 +5,7 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.Locale;
 
-public class CommonParsers {
+public class ParsingUtils {
 
     public static String parseLitString(Token token) {
         // LIT_STRING_1: '\'' ~[']* '\'';
@@ -247,5 +247,9 @@ public class CommonParsers {
     public static String parseLabel(Token token) {
         String rawText = token.getText();
         return rawText.substring(0, rawText.length() - 1);
+    }
+
+    public static String normalizeId(String id) {
+        return id.toLowerCase(Locale.ENGLISH);
     }
 }

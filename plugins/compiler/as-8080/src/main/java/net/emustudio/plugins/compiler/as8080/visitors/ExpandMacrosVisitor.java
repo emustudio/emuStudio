@@ -10,6 +10,7 @@ import java.util.*;
 
 import static net.emustudio.plugins.compiler.as8080.CompileError.infiniteLoopDetected;
 import static net.emustudio.plugins.compiler.as8080.CompileError.notDefined;
+import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
 
 /**
  * Expands macros. It means - find macro definitions, remove them from the parent node and put them as a child under
@@ -31,7 +32,7 @@ public class ExpandMacrosVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoMacroDef node) {
-        String id = node.id.toLowerCase(Locale.ENGLISH);
+        String id = normalizeId(node.id);
 
         // save macro
         macros.put(id, node);
@@ -49,7 +50,7 @@ public class ExpandMacrosVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoMacroCall node) {
-        String id = node.id.toLowerCase(Locale.ENGLISH);
+        String id = normalizeId(node.id);
         if (macros.containsKey(id)) {
             node.addChild(macros.get(id).copy());
         } else {
@@ -62,12 +63,12 @@ public class ExpandMacrosVisitor extends NodeVisitor {
     }
 
     private void checkInfiniteLoop(PseudoMacroCall node) {
-        String id = node.id.toLowerCase(Locale.ENGLISH);
+        String id = normalizeId(node.id);
         Optional<Node> parent = node.getParent();
         while (parent.isPresent()) {
             Node parentValue = parent.get();
             if (parentValue instanceof PseudoMacroDef) {
-                String parentId = ((PseudoMacroDef) parentValue).id.toLowerCase(Locale.ENGLISH);
+                String parentId = normalizeId(((PseudoMacroDef) parentValue).id);
                 if (parentId.equals(id)) {
                     fatalError(infiniteLoopDetected(node, "macro call '" + id + "'"));
                 }

@@ -7,7 +7,7 @@ public class DataDW extends Node {
 
     public DataDW(int line, int column) {
         super(line, column);
-        // child is expr
+        // child is expr 2 byte
     }
 
     @Override

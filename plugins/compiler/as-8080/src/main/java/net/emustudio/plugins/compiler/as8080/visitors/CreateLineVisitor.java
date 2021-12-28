@@ -2,7 +2,7 @@ package net.emustudio.plugins.compiler.as8080.visitors;
 
 import net.emustudio.plugins.compiler.as8080.As8080Parser;
 import net.emustudio.plugins.compiler.as8080.As8080ParserBaseVisitor;
-import net.emustudio.plugins.compiler.as8080.ast.Label;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoLabel;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 
 public class CreateLineVisitor extends As8080ParserBaseVisitor<Node> {
@@ -11,7 +11,7 @@ public class CreateLineVisitor extends As8080ParserBaseVisitor<Node> {
     public Node visitRLine(As8080Parser.RLineContext ctx) {
         Node label = null;
         if (ctx.label != null) {
-            label = new Label(ctx.label);
+            label = new PseudoLabel(ctx.label);
         }
         Node statement = null;
         if (ctx.statement != null) {

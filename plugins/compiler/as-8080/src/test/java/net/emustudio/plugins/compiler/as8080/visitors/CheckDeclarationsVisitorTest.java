@@ -3,7 +3,7 @@ package net.emustudio.plugins.compiler.as8080.visitors;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import org.junit.Test;
 
-import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_ALREADY_DECLARED;
+import static net.emustudio.plugins.compiler.as8080.CompileError.*;
 import static net.emustudio.plugins.compiler.as8080.Utils.parseProgram;
 import static org.junit.Assert.assertTrue;
 
@@ -124,5 +124,54 @@ public class CheckDeclarationsVisitorTest {
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
         assertTrue(program.env().hasNoErrors());
+    }
+
+    @Test
+    public void testIfExpressionReferencesOwnBlockDeclarations() {
+        Program program = parseProgram("if var + 1\nvar set -1\nendif");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_IF_EXPRESSION_REFERENCES_OWN_BLOCK));
+    }
+
+    @Test
+    public void testNestedIfExpressionReferencesOwnBlockDeclarations() {
+        Program program = parseProgram("if var + 1\nif 0\nvar:\nendif\nendif");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_IF_EXPRESSION_REFERENCES_OWN_BLOCK));
+    }
+
+    @Test
+    public void testSelfReferencingConstant() {
+        Program program = parseProgram("self equ self + 1");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_DECLARATION_REFERENCES_ITSELF));
+    }
+
+    @Test
+    public void testSelfReferencingNoneExistingVariableIsNotFine() {
+        Program program = parseProgram("self set self + 1");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_DECLARATION_REFERENCES_ITSELF));
+    }
+
+    @Test
+    public void testSelfReferencingExistingVariableIsFine() {
+        Program program = parseProgram("self set 1\n self set self + 1");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        assertTrue(program.env().hasNoErrors());
+    }
+
+    @Test
+    public void testDeclarationsReferencingInCycle() {
+        Program program = parseProgram("one equ two\ntwo equ three\nthree equ one");
+        CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
+        visitor.visit(program);
+        System.out.println(program);
+        System.out.println(program.env());
     }
 }

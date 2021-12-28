@@ -1,6 +1,6 @@
 package net.emustudio.plugins.compiler.as8080.visitors;
 
-import net.emustudio.plugins.compiler.as8080.ast.Label;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoLabel;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
@@ -32,7 +32,7 @@ public class ExpandIncludesVisitorTest {
 
         Node expected = new Program()
             .addChild(new InstrNoArgs(0, 0, OPCODE_CMC))
-            .addChild(new Label(0, 0, "sample")
+            .addChild(new PseudoLabel(0, 0, "sample")
                 .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
                     .addChild(new ExprNumber(0, 0, 0))))
             .addChild(new InstrNoArgs(0, 0, OPCODE_RET));

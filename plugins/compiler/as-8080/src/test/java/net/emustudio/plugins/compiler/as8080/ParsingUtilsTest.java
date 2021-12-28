@@ -9,30 +9,30 @@ import static net.emustudio.plugins.compiler.as8080.Utils.assertTokenTypes;
 import static net.emustudio.plugins.compiler.as8080.Utils.getTokens;
 import static org.junit.Assert.assertEquals;
 
-public class CommonParsersTest {
+public class ParsingUtilsTest {
 
     @Test
     public void testParseLitString() {
         List<Token> tokens = getTokens("'te\"x\"t1' \"te'x't2\"");
         assertTokenTypes(tokens, As8080Parser.LIT_STRING_1, As8080Parser.LIT_STRING_2, As8080Parser.EOF);
-        assertEquals("te\"x\"t1", CommonParsers.parseLitString(tokens.get(0)));
-        assertEquals("te'x't2", CommonParsers.parseLitString(tokens.get(1)));
+        assertEquals("te\"x\"t1", ParsingUtils.parseLitString(tokens.get(0)));
+        assertEquals("te'x't2", ParsingUtils.parseLitString(tokens.get(1)));
     }
 
     @Test
     public void testParseLitHex1() {
         List<Token> tokens = getTokens("-0x22F 0XAA55");
         assertTokenTypes(tokens, As8080Parser.LIT_HEXNUMBER_1, As8080Parser.LIT_HEXNUMBER_1, As8080Parser.EOF);
-        assertEquals(-0x22F, CommonParsers.parseLitHex1(tokens.get(0)));
-        assertEquals(0xAA55, CommonParsers.parseLitHex1(tokens.get(1)));
+        assertEquals(-0x22F, ParsingUtils.parseLitHex1(tokens.get(0)));
+        assertEquals(0xAA55, ParsingUtils.parseLitHex1(tokens.get(1)));
     }
 
     @Test
     public void testParseLitHex2() {
         List<Token> tokens = getTokens("-022Fh AA55H");
         assertTokenTypes(tokens, As8080Parser.LIT_HEXNUMBER_2, As8080Parser.LIT_HEXNUMBER_2, As8080Parser.EOF);
-        assertEquals(-0x22F, CommonParsers.parseLitHex2(tokens.get(0)));
-        assertEquals(0xAA55, CommonParsers.parseLitHex2(tokens.get(1)));
+        assertEquals(-0x22F, ParsingUtils.parseLitHex2(tokens.get(0)));
+        assertEquals(0xAA55, ParsingUtils.parseLitHex2(tokens.get(1)));
     }
 
     @Test
@@ -43,10 +43,10 @@ public class CommonParsersTest {
             As8080Parser.LIT_OCTNUMBER, As8080Parser.LIT_OCTNUMBER, As8080Parser.LIT_OCTNUMBER,
             As8080Parser.LIT_OCTNUMBER, As8080Parser.EOF
         );
-        assertEquals(-18, CommonParsers.parseLitOct(tokens.get(0)));
-        assertEquals(45, CommonParsers.parseLitOct(tokens.get(1)));
-        assertEquals(63, CommonParsers.parseLitOct(tokens.get(2)));
-        assertEquals(-1, CommonParsers.parseLitOct(tokens.get(3)));
+        assertEquals(-18, ParsingUtils.parseLitOct(tokens.get(0)));
+        assertEquals(45, ParsingUtils.parseLitOct(tokens.get(1)));
+        assertEquals(63, ParsingUtils.parseLitOct(tokens.get(2)));
+        assertEquals(-1, ParsingUtils.parseLitOct(tokens.get(3)));
     }
 
     @Test
@@ -56,9 +56,9 @@ public class CommonParsersTest {
             tokens,
             As8080Parser.LIT_NUMBER, As8080Parser.LIT_NUMBER, As8080Parser.LIT_NUMBER, As8080Parser.EOF
         );
-        assertEquals(-22, CommonParsers.parseLitDec(tokens.get(0)));
-        assertEquals(55, CommonParsers.parseLitDec(tokens.get(1)));
-        assertEquals(0, CommonParsers.parseLitDec(tokens.get(2)));
+        assertEquals(-22, ParsingUtils.parseLitDec(tokens.get(0)));
+        assertEquals(55, ParsingUtils.parseLitDec(tokens.get(1)));
+        assertEquals(0, ParsingUtils.parseLitDec(tokens.get(2)));
     }
 
     @Test
@@ -68,8 +68,8 @@ public class CommonParsersTest {
             tokens,
             As8080Parser.LIT_BINNUMBER, As8080Parser.LIT_BINNUMBER, As8080Parser.LIT_BINNUMBER, As8080Parser.EOF
         );
-        assertEquals(0, CommonParsers.parseLitBin(tokens.get(0)));
-        assertEquals(45, CommonParsers.parseLitBin(tokens.get(1)));
-        assertEquals(7, CommonParsers.parseLitBin(tokens.get(2)));
+        assertEquals(0, ParsingUtils.parseLitBin(tokens.get(0)));
+        assertEquals(45, ParsingUtils.parseLitBin(tokens.get(1)));
+        assertEquals(7, ParsingUtils.parseLitBin(tokens.get(2)));
     }
 }

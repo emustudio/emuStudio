@@ -1,5 +1,7 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
+import net.emustudio.plugins.compiler.as8080.Either;
+
 import java.util.*;
 
 public abstract class Node {
@@ -11,6 +13,12 @@ public abstract class Node {
     public Node(int line, int column) {
         this.line = line;
         this.column = column;
+    }
+
+    public Node addChildFirst(Node node) {
+        node.parent = this;
+        children.add(0, node);
+        return this;
     }
 
     public Node addChild(Node node) {
@@ -30,6 +38,15 @@ public abstract class Node {
         return List.copyOf(children);
     }
 
+    public <T extends Node> Optional<T> collectChild(Class<T> cl) {
+        for (Node child : children) {
+            if (cl.isInstance(child)) {
+                return Optional.of((T) child);
+            }
+        }
+        return Optional.empty();
+    }
+
     public Optional<Node> getParent() {
         return Optional.ofNullable(parent);
     }
@@ -47,6 +64,12 @@ public abstract class Node {
         Optional<Node> parent = getParent();
         parent.ifPresent(p -> p.removeChild(this));
         return parent;
+    }
+
+    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+        NeedMorePass needMorePass = new NeedMorePass(line, column);
+        needMorePass.addChild(this);
+        return Either.ofLeft(needMorePass);
     }
 
     public void accept(NodeVisitor visitor) {
@@ -80,5 +103,18 @@ public abstract class Node {
             copied.addChild(child.copy());
         }
         return copied;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Node node = (Node) o;
+        return line == node.line && column == node.column && Objects.equals(parent, node.parent);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parent, line, column);
     }
 }

@@ -1,15 +1,28 @@
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.Either;
+import net.emustudio.plugins.compiler.as8080.ast.*;
 import org.antlr.v4.runtime.Token;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+
+import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
+
 public class ExprUnary extends Node {
-    public final int operation;
+    private final static Map<Integer, Function<Integer, Integer>> unaryOps = Map.of(
+        OP_ADD,  x -> x,
+        OP_SUBTRACT, x -> -x,
+        OP_NOT, x -> ~x
+    );
+    private final Function<Integer, Integer> operation;
+    public final int operationCode;
 
     public ExprUnary(int line, int column, int op) {
         super(line, column);
-        this.operation = op;
+        this.operationCode = op;
+        this.operation = Objects.requireNonNull(unaryOps.get(op), "Unknown unary operation");
         // child is expr
     }
 
@@ -23,26 +36,44 @@ public class ExprUnary extends Node {
     }
 
     @Override
+    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+        Node child = getChild(0);
+        Either<NeedMorePass, Evaluated> childEval = child.eval(currentAddress, expectedSizeBytes, env);
+        if (childEval.isRight()) {
+            int value = childEval.right.getValue();
+            int result = operation.apply(value);
+
+            Evaluated evaluated = new Evaluated(line, column, currentAddress, expectedSizeBytes);
+            evaluated.addChild(new ExprNumber(line, column, result));
+            return Either.ofRight(evaluated);
+        }
+
+        NeedMorePass needMorePass = new NeedMorePass(line, column);
+        needMorePass.addChild(this);
+        return Either.ofLeft(needMorePass);
+    }
+
+    @Override
     protected String toStringShallow() {
-        return "ExprUnary(" + operation + ")";
+        return "ExprUnary(" + operationCode + ")";
     }
 
     @Override
     protected Node mkCopy() {
-        return new ExprUnary(line, column, operation);
+        return new ExprUnary(line, column, operationCode);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
+        if (!super.equals(o)) return false;
         ExprUnary exprUnary = (ExprUnary) o;
-        return operation == exprUnary.operation;
+        return operationCode == exprUnary.operationCode;
     }
 
     @Override
     public int hashCode() {
-        return operation;
+        return Objects.hash(super.hashCode(), operationCode);
     }
 }

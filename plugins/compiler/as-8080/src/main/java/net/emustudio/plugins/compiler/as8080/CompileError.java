@@ -10,6 +10,10 @@ public class CompileError {
     public static final int ERROR_INFINITE_LOOP_DETECTED = 2;
     public static final int ERROR_CANNOT_READ_FILE = 3;
     public static final int ERROR_NOT_DEFINED = 4;
+    public static final int ERROR_AMBIGUOUS_EXPRESSION = 5;
+    public static final int ERROR_IF_EXPRESSION_REFERENCES_OWN_BLOCK = 6;
+    public static final int ERROR_DECLARATION_REFERENCES_ITSELF = 7;
+    public static final int ERROR_MACRO_ARGUMENTS_DO_NOT_MATCH = 8;
 
     public final int line;
     public final int column;
@@ -42,6 +46,22 @@ public class CompileError {
 
     public static CompileError notDefined(Node node, String what) {
         return new CompileError(node, ERROR_NOT_DEFINED, "Not defined: " + what);
+    }
+
+    public static CompileError ambiguousExpression(Node node) {
+        return new CompileError(node, ERROR_AMBIGUOUS_EXPRESSION, "Ambiguous expression");
+    }
+
+    public static CompileError ifExpressionReferencesOwnBlock(Node node) {
+        return new CompileError(node, ERROR_IF_EXPRESSION_REFERENCES_OWN_BLOCK, "If expression references declaration in its own block");
+    }
+
+    public static CompileError declarationReferencesItself(Node node) {
+        return new CompileError(node, ERROR_DECLARATION_REFERENCES_ITSELF, "Declaration references itself");
+    }
+
+    public static CompileError macroArgumentsDoNotMatch(Node node) {
+        return new CompileError(node, ERROR_MACRO_ARGUMENTS_DO_NOT_MATCH, "Macro call arguments do not match with defined parameters");
     }
 
     @Override

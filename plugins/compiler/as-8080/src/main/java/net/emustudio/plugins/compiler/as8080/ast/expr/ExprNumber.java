@@ -1,7 +1,7 @@
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.Either;
+import net.emustudio.plugins.compiler.as8080.ast.*;
 import org.antlr.v4.runtime.Token;
 
 import java.util.function.Function;
@@ -16,6 +16,13 @@ public class ExprNumber extends Node {
 
     public ExprNumber(Token number, Function<Token, Integer> parser) {
         this(number.getLine(), number.getCharPositionInLine(), parser.apply(number));
+    }
+
+    @Override
+    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+        Evaluated evaluated = new Evaluated(line, column, currentAddress, expectedSizeBytes);
+        evaluated.addChild(new ExprNumber(line, column, number));
+        return Either.ofRight(evaluated);
     }
 
     @Override
