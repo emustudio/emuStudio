@@ -2,20 +2,27 @@ package net.emustudio.plugins.compiler.as8080.visitors;
 
 import net.emustudio.plugins.compiler.as8080.Either;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
-import net.emustudio.plugins.compiler.as8080.ast.NeedMorePass;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataPlainString;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprCurrentAddress;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
+import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoEqu;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoIf;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoLabel;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoSet;
 import org.junit.Test;
 
-import static net.emustudio.plugins.compiler.as8080.As8080Parser.OP_ADD;
+import java.util.List;
+
+import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_AMBIGUOUS_EXPRESSION;
 import static net.emustudio.plugins.compiler.as8080.Utils.assertTrees;
 import static org.junit.Assert.assertEquals;
@@ -117,7 +124,7 @@ public class EvaluateExprVisitorTest {
     }
 
     @Test
-    public void testEvaluateDScontReference() {
+    public void testEvaluateDSconstReference() {
         Program program = new Program();
         program
             .addChild(new DataDS(0, 0)
@@ -130,7 +137,7 @@ public class EvaluateExprVisitorTest {
 
         assertTrue(program.env().hasNoErrors());
 
-        Either<NeedMorePass, Evaluated> label = program.env().get("label").orElseThrow();
+        Either<Node, Evaluated> label = program.env().get("label").orElseThrow();
         assertTrue(label.isRight());
         assertEquals(5, label.right.getSizeBytes());
         assertEquals(0, label.right.address);
@@ -139,6 +146,108 @@ public class EvaluateExprVisitorTest {
             new Program()
                 .addChild(new DataDS(0, 0)
                     .addChild(new ExprId(0, 0, "label"))),
+            program
+        );
+    }
+
+    @Test
+    public void testEvaluateEQUfivePasses() {
+        Program program = new Program();
+        program
+            .addChild(new PseudoEqu(0, 0, "one")
+                .addChild(new ExprId(0, 0, "two")))
+            .addChild(new PseudoEqu(0, 0, "two")
+                .addChild(new ExprId(0, 0, "three")))
+            .addChild(new PseudoEqu(0, 0, "three")
+                .addChild(new ExprId(0, 0, "four")))
+            .addChild(new PseudoEqu(0, 0, "four")
+                .addChild(new ExprId(0, 0, "five")))
+            .addChild(new PseudoEqu(0, 0, "five")
+                .addChild(new ExprCurrentAddress(0, 0)));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        assertTrue(program.env().hasNoErrors());
+        assertTrees(new Program(), program);
+
+        List<String> constants = List.of("one", "two", "three", "four", "five");
+        for (String c : constants) {
+            Either<Node, Evaluated> constant = program.env().get(c).orElseThrow();
+            assertTrue(constant.isRight());
+            assertEquals(0, constant.right.getSizeBytes());
+            assertEquals(0, constant.right.address);
+            assertEquals(0, constant.right.getValue());
+        }
+    }
+
+    @Test
+    public void testEvaluateIFwithForwardConst() {
+        Program program = new Program();
+        program
+            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
+                .addChild(new ExprId(0, 0, "const")))
+            .addChild(new PseudoIf(0, 0)
+                .addChild(new ExprInfix(0, 0, OP_EQUAL)
+                    .addChild(new ExprCurrentAddress(0, 0))
+                    .addChild(new ExprNumber(0, 0, 2)))
+                .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                    .addChild(new ExprNumber(0, 0, 0))))
+            .addChild(new PseudoEqu(0, 0, "const")
+                .addChild(new ExprInfix(0, 0, OP_ADD)
+                    .addChild(new ExprCurrentAddress(0, 0))
+                    .addChild(new ExprCurrentAddress(0, 0))));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        System.out.println(program);
+
+        assertTrees(
+            new Program()
+                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
+                    .addChild(new Evaluated(0, 0, 0, 1)
+                        .addChild(new ExprNumber(0, 0, 6))))
+                .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                    .addChild(new Evaluated(0, 0, 2, 1)
+                        .addChild(new ExprNumber(0, 0, 0)))),
+            program
+        );
+    }
+
+    @Test
+    public void testEvaluateSETforwardTwoTimes() {
+        Program program = new Program();
+        program
+            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
+                .addChild(new ExprId(0, 0, "const")))
+            .addChild(new PseudoSet(0, 0, "const")
+                .addChild(new ExprNumber(0, 0, 1)))
+            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_B)
+                .addChild(new ExprId(0, 0, "const")))
+            .addChild(new PseudoSet(0, 0, "const")
+                .addChild(new ExprNumber(0, 0, 2)));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        System.out.println(program);
+        System.out.println(program.env());
+
+        assertTrees(
+            new Program()
+                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
+                    .addChild(new Evaluated(0, 0, 0, 1)
+                        .addChild(new ExprNumber(0, 0, 1))))
+                .addChild(new PseudoSet(0, 0, "const")
+                    .addChild(new Evaluated(0, 0, 2, 0)
+                        .addChild(new ExprNumber(0, 0, 1))))
+                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_B)
+                    .addChild(new Evaluated(0, 0, 2, 1)
+                        .addChild(new ExprNumber(0, 0, 1))))
+                .addChild(new PseudoSet(0, 0, "const")
+                    .addChild(new Evaluated(0, 0, 4, 0)
+                        .addChild(new ExprNumber(0, 0, 2)))),
             program
         );
     }

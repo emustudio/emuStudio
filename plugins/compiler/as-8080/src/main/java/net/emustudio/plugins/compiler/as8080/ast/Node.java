@@ -66,10 +66,8 @@ public abstract class Node {
         return parent;
     }
 
-    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
-        NeedMorePass needMorePass = new NeedMorePass(line, column);
-        needMorePass.addChild(this);
-        return Either.ofLeft(needMorePass);
+    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+        return Either.ofLeft(this);
     }
 
     public void accept(NodeVisitor visitor) {
@@ -115,6 +113,6 @@ public abstract class Node {
 
     @Override
     public int hashCode() {
-        return Objects.hash(parent, line, column);
+        return System.identityHashCode(this);
     }
 }

@@ -46,12 +46,4 @@ public class InstrRegReg extends Node {
         if (srcReg != that.srcReg) return false;
         return dstReg == that.dstReg;
     }
-
-    @Override
-    public int hashCode() {
-        int result = opcode;
-        result = 31 * result + srcReg;
-        result = 31 * result + dstReg;
-        return result;
-    }
 }

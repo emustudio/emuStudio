@@ -22,17 +22,15 @@ public class PseudoLabel extends Node {
     }
 
     @Override
-    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
         Evaluated evaluated = new Evaluated(line, column, currentAddress, expectedSizeBytes);
         evaluated.addChild(new ExprNumber(line, column, currentAddress));
         return Either.ofRight(evaluated);
     }
 
-    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env, boolean evalLeft) {
+    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env, boolean evalLeft) {
         if (evalLeft) {
-            NeedMorePass needMorePass = new NeedMorePass(line, column);
-            needMorePass.addChild(this);
-            return Either.ofLeft(needMorePass);
+            return Either.ofLeft(this);
         }
         return eval(currentAddress, expectedSizeBytes, env);
     }
@@ -59,10 +57,5 @@ public class PseudoLabel extends Node {
 
         PseudoLabel pseudoLabel1 = (PseudoLabel) o;
         return Objects.equals(label, pseudoLabel1.label);
-    }
-
-    @Override
-    public int hashCode() {
-        return label != null ? label.hashCode() : 0;
     }
 }

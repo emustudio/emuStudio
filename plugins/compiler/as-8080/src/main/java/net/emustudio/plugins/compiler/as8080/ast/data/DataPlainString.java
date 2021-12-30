@@ -22,7 +22,7 @@ public class DataPlainString extends Node {
     }
 
     @Override
-    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
         int sizeBytes = string.length();
         Evaluated evaluated = new Evaluated(line, column, currentAddress, sizeBytes);
         for (byte b : string.getBytes()) {
@@ -53,10 +53,5 @@ public class DataPlainString extends Node {
 
         DataPlainString that = (DataPlainString) o;
         return Objects.equals(string, that.string);
-    }
-
-    @Override
-    public int hashCode() {
-        return string != null ? string.hashCode() : 0;
     }
 }

@@ -42,9 +42,4 @@ public class PseudoMacroCall extends Node {
         PseudoMacroCall that = (PseudoMacroCall) o;
         return Objects.equals(id, that.id);
     }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
 }

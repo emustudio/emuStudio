@@ -42,9 +42,4 @@ public class PseudoSet extends Node {
         PseudoSet pseudoSet = (PseudoSet) o;
         return Objects.equals(id, pseudoSet.id);
     }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
 }

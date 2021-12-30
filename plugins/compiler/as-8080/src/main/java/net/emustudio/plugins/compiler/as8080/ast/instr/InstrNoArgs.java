@@ -39,9 +39,4 @@ public class InstrNoArgs extends Node {
         InstrNoArgs that = (InstrNoArgs) o;
         return opcode == that.opcode;
     }
-
-    @Override
-    public int hashCode() {
-        return opcode;
-    }
 }

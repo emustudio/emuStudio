@@ -44,11 +44,4 @@ public class InstrRegPairExpr extends Node {
         if (opcode != that.opcode) return false;
         return regPair == that.regPair;
     }
-
-    @Override
-    public int hashCode() {
-        int result = opcode;
-        result = 31 * result + regPair;
-        return result;
-    }
 }

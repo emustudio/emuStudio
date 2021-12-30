@@ -42,9 +42,4 @@ public class PseudoEqu extends Node {
         PseudoEqu pseudoEqu = (PseudoEqu) o;
         return Objects.equals(id, pseudoEqu.id);
     }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
 }

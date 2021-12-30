@@ -39,11 +39,6 @@ public class PseudoMacroDef extends Node {
         return Objects.equals(id, that.id);
     }
 
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
-
     public PseudoMacroDef mkCopy() {
         return new PseudoMacroDef(line, column, id);
     }

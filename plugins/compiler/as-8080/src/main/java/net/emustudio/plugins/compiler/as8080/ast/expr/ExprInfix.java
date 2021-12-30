@@ -49,12 +49,12 @@ public class ExprInfix extends Node {
     }
 
     @Override
-    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
         Node leftChild = getChild(0);
         Node rightChild = getChild(1);
 
-        Either<NeedMorePass, Evaluated> left = leftChild.eval(currentAddress, expectedSizeBytes, env);
-        Either<NeedMorePass, Evaluated> right = rightChild.eval(currentAddress, expectedSizeBytes, env);
+        Either<Node, Evaluated> left = leftChild.eval(currentAddress, expectedSizeBytes, env);
+        Either<Node, Evaluated> right = rightChild.eval(currentAddress, expectedSizeBytes, env);
 
         if (left.isRight() && right.isRight()) {
             int l = left.right.getValue();
@@ -66,9 +66,7 @@ public class ExprInfix extends Node {
             return Either.ofRight(evaluated);
         }
 
-        NeedMorePass needMorePass = new NeedMorePass(line, column);
-        needMorePass.addChild(this);
-        return Either.ofLeft(needMorePass);
+        return Either.ofLeft(this);
     }
 
     @Override
@@ -88,10 +86,5 @@ public class ExprInfix extends Node {
         if (!super.equals(o)) return false;
         ExprInfix exprInfix = (ExprInfix) o;
         return operationCode == exprInfix.operationCode;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), operationCode);
     }
 }

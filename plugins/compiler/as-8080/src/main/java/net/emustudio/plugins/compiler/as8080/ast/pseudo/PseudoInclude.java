@@ -42,9 +42,4 @@ public class PseudoInclude extends Node {
         PseudoInclude that = (PseudoInclude) o;
         return Objects.equals(filename, that.filename);
     }
-
-    @Override
-    public int hashCode() {
-        return filename != null ? filename.hashCode() : 0;
-    }
 }

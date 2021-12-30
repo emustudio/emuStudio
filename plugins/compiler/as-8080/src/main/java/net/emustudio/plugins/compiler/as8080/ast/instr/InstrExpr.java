@@ -68,9 +68,4 @@ public class InstrExpr extends Node {
         InstrExpr instrExpr = (InstrExpr) o;
         return opcode == instrExpr.opcode;
     }
-
-    @Override
-    public int hashCode() {
-        return opcode;
-    }
 }

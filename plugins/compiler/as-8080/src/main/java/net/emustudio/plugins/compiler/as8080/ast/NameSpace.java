@@ -7,7 +7,7 @@ import java.util.*;
 
 public class NameSpace {
     private final List<CompileError> errors = new ArrayList<>();
-    private final Map<String, Either<NeedMorePass, Evaluated>> definitions = new HashMap<>();
+    private final Map<String, Either<Node, Evaluated>> definitions = new HashMap<>();
 
     public void error(CompileError error) {
         errors.add(Objects.requireNonNull(error));
@@ -21,7 +21,7 @@ public class NameSpace {
         return errors.isEmpty();
     }
 
-    public void put(String id, Either<NeedMorePass, Evaluated> value) {
+    public void put(String id, Either<Node, Evaluated> value) {
         definitions.put(id, value);
     }
 
@@ -29,7 +29,7 @@ public class NameSpace {
         definitions.remove(id);
     }
 
-    public Optional<Either<NeedMorePass, Evaluated>> get(String id) {
+    public Optional<Either<Node, Evaluated>> get(String id) {
         return Optional.ofNullable(definitions.get(id));
     }
 

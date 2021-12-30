@@ -21,12 +21,8 @@ public class ExprId extends Node {
     }
 
     @Override
-    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
-        return env.get(normalizeId(id)).orElseGet(() -> {
-            NeedMorePass needMorePass = new NeedMorePass(line, column);
-            needMorePass.addChild(this);
-            return Either.ofLeft(needMorePass);
-        });
+    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+        return env.get(normalizeId(id)).orElseGet(() -> Either.ofLeft(this));
     }
 
     @Override
@@ -51,10 +47,5 @@ public class ExprId extends Node {
 
         ExprId exprId = (ExprId) o;
         return Objects.equals(id, exprId.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
     }
 }

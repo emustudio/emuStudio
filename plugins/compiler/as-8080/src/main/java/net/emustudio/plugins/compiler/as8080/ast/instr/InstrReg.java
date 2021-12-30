@@ -43,11 +43,4 @@ public class InstrReg extends Node {
         if (opcode != instrReg.opcode) return false;
         return reg == instrReg.reg;
     }
-
-    @Override
-    public int hashCode() {
-        int result = opcode;
-        result = 31 * result + reg;
-        return result;
-    }
 }

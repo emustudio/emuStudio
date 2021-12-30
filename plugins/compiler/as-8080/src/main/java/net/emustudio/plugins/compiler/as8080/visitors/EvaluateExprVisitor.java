@@ -37,7 +37,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     private int expectedBytes = 0;
     private boolean doNotEvaluateCurrentAddress = false;
 
-    private Either<NeedMorePass, Evaluated> latestEval;
+    private Either<Node, Evaluated> latestEval;
     private Set<Node> needMorePassThings = new HashSet<>();
     private final Map<String, List<String>> macroArguments = new HashMap<>();
     private String currentMacro;
@@ -123,7 +123,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoLabel node) {
-        Either<NeedMorePass, Evaluated> eval = node.eval(currentAddress, 2, env, doNotEvaluateCurrentAddress);
+        Either<Node, Evaluated> eval = node.eval(currentAddress, 2, env, doNotEvaluateCurrentAddress);
         env.put(normalizeId(node.label), eval);
         if (eval.isRight()) {
             node.remove(); // we don't need to re-evaluate label
@@ -214,7 +214,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(DataPlainString node) {
-        Either<NeedMorePass, Evaluated> eval = node.eval(currentAddress, -1, env);
+        Either<Node, Evaluated> eval = node.eval(currentAddress, -1, env);
         node.remove().ifPresent(p -> p.addChild(eval.right));
         currentAddress += eval.right.getSizeBytes();
     }
@@ -251,8 +251,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     private void evalExpr(Node node) {
+        System.out.println("EVAL " + node.toString());
         latestEval = node.eval(currentAddress, expectedBytes, env);
         if (latestEval.isRight()) {
+            System.out.println("RIG: " +  node  + " " + node.getParent().get());
             node.remove().ifPresent(p -> p.addChild(latestEval.right));
         } else {
             needMorePassThings.add(node);

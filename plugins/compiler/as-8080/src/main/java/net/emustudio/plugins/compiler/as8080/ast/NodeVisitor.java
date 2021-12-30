@@ -142,10 +142,6 @@ public class NodeVisitor {
         visitChildren(node);
     }
 
-    public void visit(NeedMorePass node) {
-        visitChildren(node);
-    }
-
     protected void visitChildren(Node node) {
         for (Node child : node.getChildren()) {
             child.accept(this);

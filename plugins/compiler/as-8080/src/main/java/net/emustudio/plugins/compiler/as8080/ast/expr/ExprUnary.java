@@ -36,9 +36,9 @@ public class ExprUnary extends Node {
     }
 
     @Override
-    public Either<NeedMorePass, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
         Node child = getChild(0);
-        Either<NeedMorePass, Evaluated> childEval = child.eval(currentAddress, expectedSizeBytes, env);
+        Either<Node, Evaluated> childEval = child.eval(currentAddress, expectedSizeBytes, env);
         if (childEval.isRight()) {
             int value = childEval.right.getValue();
             int result = operation.apply(value);
@@ -47,10 +47,7 @@ public class ExprUnary extends Node {
             evaluated.addChild(new ExprNumber(line, column, result));
             return Either.ofRight(evaluated);
         }
-
-        NeedMorePass needMorePass = new NeedMorePass(line, column);
-        needMorePass.addChild(this);
-        return Either.ofLeft(needMorePass);
+        return Either.ofLeft(this);
     }
 
     @Override
@@ -70,10 +67,5 @@ public class ExprUnary extends Node {
         if (!super.equals(o)) return false;
         ExprUnary exprUnary = (ExprUnary) o;
         return operationCode == exprUnary.operationCode;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), operationCode);
     }
 }
