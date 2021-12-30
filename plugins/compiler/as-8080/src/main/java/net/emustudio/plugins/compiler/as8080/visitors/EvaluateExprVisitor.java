@@ -95,7 +95,9 @@ public class EvaluateExprVisitor extends NodeVisitor {
         visitChildren(node);
         if (latestEval.isRight()) {
             // TODO: check 2 bytes
-            currentAddress += latestEval.right.getValue();
+            int value = latestEval.right.getValue();
+            currentAddress += value;
+            latestEval.right.setSizeBytes(value);
         } else {
             // we don't know now how the address changes since we can't evaluate the expr yet
             doNotEvaluateCurrentAddress = true;
@@ -214,7 +216,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     public void visit(DataPlainString node) {
         Either<NeedMorePass, Evaluated> eval = node.eval(currentAddress, -1, env);
         node.remove().ifPresent(p -> p.addChild(eval.right));
-        currentAddress += eval.right.sizeBytes;
+        currentAddress += eval.right.getSizeBytes();
     }
 
     @Override

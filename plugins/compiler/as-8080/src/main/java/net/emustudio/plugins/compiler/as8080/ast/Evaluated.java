@@ -6,7 +6,7 @@ import java.util.Objects;
 
 public class Evaluated extends Node {
     public final int address;
-    public final int sizeBytes;
+    private int sizeBytes;
 
     public Evaluated(int line, int column, int address, int sizeBytes) {
         super(line, column);
@@ -18,6 +18,14 @@ public class Evaluated extends Node {
 
     public int getValue() {
         return ((ExprNumber) getChild(0)).number;
+    }
+
+    public int getSizeBytes() {
+        return sizeBytes;
+    }
+
+    public void setSizeBytes(int sizeBytes) {
+        this.sizeBytes = sizeBytes;
     }
 
     @Override
