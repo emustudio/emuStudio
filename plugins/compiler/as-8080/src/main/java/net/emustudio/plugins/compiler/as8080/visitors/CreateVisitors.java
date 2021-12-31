@@ -1,6 +1,6 @@
 package net.emustudio.plugins.compiler.as8080.visitors;
 
-public class Visitors {
+public class CreateVisitors {
 
     static CreatePseudoVisitor pseudo = new CreatePseudoVisitor();
     static CreateExprVisitor expr = new CreateExprVisitor();

@@ -19,7 +19,7 @@ public class CreateProgramVisitor extends As8080ParserBaseVisitor<Program> {
 
     @Override
     public Program visitRLine(As8080Parser.RLineContext ctx) {
-        Node statement = Visitors.line.visitRLine(ctx);
+        Node statement = CreateVisitors.line.visitRLine(ctx);
         if (statement != null) {
             program.addChild(statement);
         }

@@ -10,6 +10,8 @@ public abstract class Node {
     public final int line;
     public final int column;
 
+    private int address;
+
     public Node(int line, int column) {
         this.line = line;
         this.column = column;
@@ -66,7 +68,15 @@ public abstract class Node {
         return parent;
     }
 
-    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+    public int getAddress() {
+        return address;
+    }
+
+    public void setAddress(int address) {
+        this.address = address;
+    }
+
+    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
         return Either.ofLeft(this);
     }
 
@@ -109,10 +119,5 @@ public abstract class Node {
         if (o == null || getClass() != o.getClass()) return false;
         Node node = (Node) o;
         return line == node.line && column == node.column && Objects.equals(parent, node.parent);
-    }
-
-    @Override
-    public int hashCode() {
-        return System.identityHashCode(this);
     }
 }

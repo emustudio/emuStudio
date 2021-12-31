@@ -22,9 +22,8 @@ public class DataPlainString extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
-        int sizeBytes = string.length();
-        Evaluated evaluated = new Evaluated(line, column, currentAddress, sizeBytes);
+    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
+        Evaluated evaluated = new Evaluated(line, column);
         for (byte b : string.getBytes()) {
             evaluated.addChild(new ExprNumber(line, column, b));
         }

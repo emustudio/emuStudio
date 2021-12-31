@@ -29,11 +29,11 @@ public class CreateLineVisitor extends As8080ParserBaseVisitor<Node> {
     @Override
     public Node visitRStatement(As8080Parser.RStatementContext ctx) {
         if (ctx.instr != null) {
-            return Visitors.instr.visit(ctx.instr);
+            return CreateVisitors.instr.visit(ctx.instr);
         } else if (ctx.data != null) {
-            return Visitors.data.visit(ctx.data);
+            return CreateVisitors.data.visit(ctx.data);
         } else if (ctx.pseudo != null) {
-            return Visitors.pseudo.visit(ctx.pseudo);
+            return CreateVisitors.pseudo.visit(ctx.pseudo);
         }
         throw new IllegalStateException("No statement defined!");
     }

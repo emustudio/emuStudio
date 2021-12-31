@@ -14,10 +14,7 @@ import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
-import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoEqu;
-import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoIf;
-import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoLabel;
-import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoSet;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 import org.junit.Test;
 
 import java.util.List;
@@ -45,9 +42,9 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new DataDB(0, 0)
-                    .addChild(new Evaluated(0, 0, 0, 1)
-                        .addChild(new ExprNumber(0, 0, 3))
-                    ).addChild(new Evaluated(0, 0, 1, 5)
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 3)))
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 'h'))
                         .addChild(new ExprNumber(0, 0, 'e'))
                         .addChild(new ExprNumber(0, 0, 'l'))
@@ -74,13 +71,15 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new DataDW(0, 0)
-                    .addChild(new Evaluated(0, 0, 0, 2)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 3))))
                 .addChild(new DataDW(0, 0)
-                    .addChild(new Evaluated(0, 0, 2, 2)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 0)))),
             program
         );
+        assertEquals(0, program.getChild(0).getAddress());
+        assertEquals(2, program.getChild(1).getAddress());
     }
 
     @Test
@@ -100,13 +99,15 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new DataDS(0, 0)
-                    .addChild(new Evaluated(0, 0, 0, 0)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 3))))
                 .addChild(new DataDB(0, 0)
-                    .addChild(new Evaluated(0, 0, 3, 1)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 0)))),
             program
         );
+        assertEquals(0, program.getChild(0).getAddress());
+        assertEquals(3, program.getChild(1).getAddress());
     }
 
     @Test
@@ -139,13 +140,13 @@ public class EvaluateExprVisitorTest {
 
         Either<Node, Evaluated> label = program.env().get("label").orElseThrow();
         assertTrue(label.isRight());
-        assertEquals(5, label.right.getSizeBytes());
-        assertEquals(0, label.right.address);
+        assertEquals(0, label.right.getAddress());
 
         assertTrees(
             new Program()
                 .addChild(new DataDS(0, 0)
-                    .addChild(new ExprId(0, 0, "label"))),
+                    .addChild(new Evaluated(0,0)
+                        .addChild(new ExprNumber(0,0, 5)))),
             program
         );
     }
@@ -175,8 +176,7 @@ public class EvaluateExprVisitorTest {
         for (String c : constants) {
             Either<Node, Evaluated> constant = program.env().get(c).orElseThrow();
             assertTrue(constant.isRight());
-            assertEquals(0, constant.right.getSizeBytes());
-            assertEquals(0, constant.right.address);
+            assertEquals(0, constant.right.getAddress());
             assertEquals(0, constant.right.getValue());
         }
     }
@@ -188,9 +188,10 @@ public class EvaluateExprVisitorTest {
             .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
                 .addChild(new ExprId(0, 0, "const")))
             .addChild(new PseudoIf(0, 0)
-                .addChild(new ExprInfix(0, 0, OP_EQUAL)
-                    .addChild(new ExprCurrentAddress(0, 0))
-                    .addChild(new ExprNumber(0, 0, 2)))
+                .addChild(new PseudoIfExpression(0, 0)
+                    .addChild(new ExprInfix(0, 0, OP_EQUAL)
+                        .addChild(new ExprCurrentAddress(0, 0))
+                        .addChild(new ExprNumber(0, 0, 2))))
                 .addChild(new InstrExpr(0, 0, OPCODE_RST)
                     .addChild(new ExprNumber(0, 0, 0))))
             .addChild(new PseudoEqu(0, 0, "const")
@@ -201,18 +202,18 @@ public class EvaluateExprVisitorTest {
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
         visitor.visit(program);
 
-        System.out.println(program);
-
         assertTrees(
             new Program()
                 .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                    .addChild(new Evaluated(0, 0, 0, 1)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 6))))
                 .addChild(new InstrExpr(0, 0, OPCODE_RST)
-                    .addChild(new Evaluated(0, 0, 2, 1)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 0)))),
             program
         );
+        assertEquals(0, program.getChild(0).getAddress());
+        assertEquals(2, program.getChild(1).getAddress());
     }
 
     @Test
@@ -237,16 +238,16 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                    .addChild(new Evaluated(0, 0, 0, 1)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 1))))
                 .addChild(new PseudoSet(0, 0, "const")
-                    .addChild(new Evaluated(0, 0, 2, 0)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 1))))
                 .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_B)
-                    .addChild(new Evaluated(0, 0, 2, 1)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 1))))
                 .addChild(new PseudoSet(0, 0, "const")
-                    .addChild(new Evaluated(0, 0, 4, 0)
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 2)))),
             program
         );

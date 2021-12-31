@@ -106,6 +106,10 @@ public class NodeVisitor {
         visitChildren(node);
     }
 
+    public void visit(PseudoIfExpression node) {
+        visitChildren(node);
+    }
+
     public void visit(PseudoInclude node) {
         visitChildren(node);
     }

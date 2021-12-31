@@ -79,25 +79,25 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(DataDB node) {
+        node.setAddress(currentAddress);
         expectedBytes = 1;
         visitChildren(node);
     }
 
     @Override
     public void visit(DataDW node) {
+        node.setAddress(currentAddress);
         expectedBytes = 2;
         visitChildren(node);
     }
 
     @Override
     public void visit(DataDS node) {
+        node.setAddress(currentAddress);
         expectedBytes = 0;
         visitChildren(node);
         if (latestEval.isRight()) {
-            // TODO: check 2 bytes
-            int value = latestEval.right.getValue();
-            currentAddress += value;
-            latestEval.right.setSizeBytes(value);
+            currentAddress += latestEval.right.getValue();
         } else {
             // we don't know now how the address changes since we can't evaluate the expr yet
             doNotEvaluateCurrentAddress = true;
@@ -123,7 +123,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoLabel node) {
-        Either<Node, Evaluated> eval = node.eval(currentAddress, 2, env, doNotEvaluateCurrentAddress);
+        Either<Node, Evaluated> eval = node.eval(currentAddress, env, doNotEvaluateCurrentAddress);
         env.put(normalizeId(node.label), eval);
         if (eval.isRight()) {
             node.remove(); // we don't need to re-evaluate label
@@ -134,6 +134,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoOrg node) {
+        node.setAddress(currentAddress);
         expectedBytes = 0;
         visitChildren(node);
         if (latestEval.isRight()) {
@@ -147,9 +148,13 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(PseudoIf node) {
         expectedBytes = 0;
-        visit(node.getChild(0));
+        Optional<Evaluated> expr = node
+            .collectChild(PseudoIfExpression.class)
+            .flatMap(p -> {
+                visit(p);
+                return p.collectChild(Evaluated.class);
+            });
 
-        Optional<Evaluated> expr = node.collectChild(Evaluated.class);
         boolean includeBlock = expr.filter(p -> p.getValue() != 0).isPresent();
         boolean excludeBlock = expr.filter(p -> p.getValue() == 0).isPresent();
 
@@ -168,6 +173,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(InstrExpr node) {
+        node.setAddress(currentAddress);
         expectedBytes = node.getExprSizeBytes();
         visitChildren(node);
         currentAddress++; // opcode
@@ -175,6 +181,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(InstrRegExpr node) {
+        node.setAddress(currentAddress);
         expectedBytes = 1;
         visitChildren(node);
         currentAddress++; // opcode
@@ -182,6 +189,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(InstrRegPairExpr node) {
+        node.setAddress(currentAddress);
         expectedBytes = 2;
         visitChildren(node);
         currentAddress++; // opcode
@@ -214,9 +222,9 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(DataPlainString node) {
-        Either<Node, Evaluated> eval = node.eval(currentAddress, -1, env);
+        Either<Node, Evaluated> eval = node.eval(currentAddress, env);
         node.remove().ifPresent(p -> p.addChild(eval.right));
-        currentAddress += eval.right.getSizeBytes();
+        currentAddress += node.string.length();
     }
 
     @Override
@@ -251,11 +259,13 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     private void evalExpr(Node node) {
-        System.out.println("EVAL " + node.toString());
-        latestEval = node.eval(currentAddress, expectedBytes, env);
+        latestEval = node.eval(currentAddress, env);
         if (latestEval.isRight()) {
-            System.out.println("RIG: " +  node  + " " + node.getParent().get());
-            node.remove().ifPresent(p -> p.addChild(latestEval.right));
+            node.remove().ifPresent(p -> {
+                Evaluated evaluated = (Evaluated) latestEval.right.copy();
+                evaluated.setAddress(currentAddress);
+                p.addChild(evaluated);
+            });
         } else {
             needMorePassThings.add(node);
         }

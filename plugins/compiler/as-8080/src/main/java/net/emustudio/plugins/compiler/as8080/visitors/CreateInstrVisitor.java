@@ -30,28 +30,28 @@ public class CreateInstrVisitor extends As8080ParserBaseVisitor<Node> {
     @Override
     public Node visitInstrRegPairExpr(As8080Parser.InstrRegPairExprContext ctx) {
         InstrRegPairExpr instr = new InstrRegPairExpr(ctx.opcode, ctx.regpair);
-        instr.addChild(Visitors.expr.visit(ctx.expr));
+        instr.addChild(CreateVisitors.expr.visit(ctx.expr));
         return instr;
     }
 
     @Override
     public Node visitInstrRegExpr(As8080Parser.InstrRegExprContext ctx) {
         InstrRegExpr instr = new InstrRegExpr(ctx.opcode, ctx.reg.getStart());
-        instr.addChild(Visitors.expr.visit(ctx.expr));
+        instr.addChild(CreateVisitors.expr.visit(ctx.expr));
         return instr;
     }
 
     @Override
     public Node visitInstrExpr(As8080Parser.InstrExprContext ctx) {
         InstrExpr instr = new InstrExpr(ctx.opcode);
-        instr.addChild(Visitors.expr.visit(ctx.expr));
+        instr.addChild(CreateVisitors.expr.visit(ctx.expr));
         return instr;
     }
 
     @Override
     public Node visitInstr8bitExpr(As8080Parser.Instr8bitExprContext ctx) {
         InstrExpr instr = new InstrExpr(ctx.opcode);
-        instr.addChild(Visitors.expr.visit(ctx.expr));
+        instr.addChild(CreateVisitors.expr.visit(ctx.expr));
         return instr;
     }
 }

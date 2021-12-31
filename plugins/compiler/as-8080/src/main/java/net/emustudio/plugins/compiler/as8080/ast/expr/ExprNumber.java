@@ -19,8 +19,8 @@ public class ExprNumber extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
-        Evaluated evaluated = new Evaluated(line, column, currentAddress, expectedSizeBytes);
+    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
+        Evaluated evaluated = new Evaluated(line, column);
         evaluated.addChild(new ExprNumber(line, column, number));
         return Either.ofRight(evaluated);
     }

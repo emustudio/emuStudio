@@ -49,19 +49,19 @@ public class ExprInfix extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
         Node leftChild = getChild(0);
         Node rightChild = getChild(1);
 
-        Either<Node, Evaluated> left = leftChild.eval(currentAddress, expectedSizeBytes, env);
-        Either<Node, Evaluated> right = rightChild.eval(currentAddress, expectedSizeBytes, env);
+        Either<Node, Evaluated> left = leftChild.eval(currentAddress, env);
+        Either<Node, Evaluated> right = rightChild.eval(currentAddress, env);
 
         if (left.isRight() && right.isRight()) {
             int l = left.right.getValue();
             int r = right.right.getValue();
             int result = operation.apply(l, r);
 
-            Evaluated evaluated = new Evaluated(line, column, currentAddress, expectedSizeBytes);
+            Evaluated evaluated = new Evaluated(line, column);
             evaluated.addChild(new ExprNumber(line, column, result));
             return Either.ofRight(evaluated);
         }

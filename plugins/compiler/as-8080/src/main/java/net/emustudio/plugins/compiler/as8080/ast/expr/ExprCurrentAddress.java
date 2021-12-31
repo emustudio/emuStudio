@@ -20,13 +20,13 @@ public class ExprCurrentAddress extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
-        Evaluated evaluated = new Evaluated(line, column, currentAddress, expectedSizeBytes);
+    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
+        Evaluated evaluated = new Evaluated(line, column);
         evaluated.addChild(new ExprNumber(line, column, currentAddress));
         return Either.ofRight(evaluated);
     }
 
-    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env, boolean evalLeft) {
-        return evalLeft ? Either.ofLeft(this) : eval(currentAddress, expectedSizeBytes, env);
+    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env, boolean evalLeft) {
+        return evalLeft ? Either.ofLeft(this) : eval(currentAddress, env);
     }
 }

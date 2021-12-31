@@ -36,14 +36,14 @@ public class ExprUnary extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
         Node child = getChild(0);
-        Either<Node, Evaluated> childEval = child.eval(currentAddress, expectedSizeBytes, env);
+        Either<Node, Evaluated> childEval = child.eval(currentAddress, env);
         if (childEval.isRight()) {
             int value = childEval.right.getValue();
             int result = operation.apply(value);
 
-            Evaluated evaluated = new Evaluated(line, column, currentAddress, expectedSizeBytes);
+            Evaluated evaluated = new Evaluated(line, column);
             evaluated.addChild(new ExprNumber(line, column, result));
             return Either.ofRight(evaluated);
         }

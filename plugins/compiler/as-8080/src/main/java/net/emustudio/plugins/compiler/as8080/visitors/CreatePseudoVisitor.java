@@ -14,21 +14,21 @@ public class CreatePseudoVisitor extends As8080ParserBaseVisitor<Node>  {
     public Node visitPseudoOrg(PseudoOrgContext ctx) {
         Token start = ctx.getStart();
         PseudoOrg pseudo = new PseudoOrg(start.getLine(), start.getCharPositionInLine());
-        pseudo.addChild(Visitors.expr.visit(ctx.expr));
+        pseudo.addChild(CreateVisitors.expr.visit(ctx.expr));
         return pseudo;
     }
 
     @Override
     public Node visitPseudoEqu(PseudoEquContext ctx) {
         PseudoEqu pseudo = new PseudoEqu(ctx.id);
-        pseudo.addChild(Visitors.expr.visit(ctx.expr));
+        pseudo.addChild(CreateVisitors.expr.visit(ctx.expr));
         return pseudo;
     }
 
     @Override
     public Node visitPseudoSet(PseudoSetContext ctx) {
         PseudoSet pseudo = new PseudoSet(ctx.id);
-        pseudo.addChild(Visitors.expr.visit(ctx.expr));
+        pseudo.addChild(CreateVisitors.expr.visit(ctx.expr));
         return pseudo;
     }
 
@@ -37,9 +37,12 @@ public class CreatePseudoVisitor extends As8080ParserBaseVisitor<Node>  {
         Token start = ctx.getStart();
 
         PseudoIf pseudo = new PseudoIf(start.getLine(), start.getCharPositionInLine());
-        pseudo.addChild(Visitors.expr.visit(ctx.expr));
+        Node expr = CreateVisitors.expr.visit(ctx.expr);
+        PseudoIfExpression ifExpr = new PseudoIfExpression(expr.line, expr.column);
+        ifExpr.addChild(expr);
+        pseudo.addChild(ifExpr);
         for (RLineContext line : ctx.rLine()) {
-            pseudo.addChild(Visitors.line.visitRLine(line));
+            pseudo.addChild(CreateVisitors.line.visitRLine(line));
         }
         return pseudo;
     }
@@ -56,7 +59,7 @@ public class CreatePseudoVisitor extends As8080ParserBaseVisitor<Node>  {
             }
         }
         for (RLineContext line : ctx.rLine()) {
-            pseudo.addChild(Visitors.line.visitRLine(line));
+            pseudo.addChild(CreateVisitors.line.visitRLine(line));
         }
         return pseudo;
     }
@@ -68,7 +71,7 @@ public class CreatePseudoVisitor extends As8080ParserBaseVisitor<Node>  {
         if (ctx.args != null) {
             for (RExpressionContext next : ctx.args.rExpression()) {
                 PseudoMacroArgument argument = new PseudoMacroArgument();
-                pseudo.addChild(argument.addChild(Visitors.expr.visit(next)));
+                pseudo.addChild(argument.addChild(CreateVisitors.expr.visit(next)));
             }
         }
         return pseudo;

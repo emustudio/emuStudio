@@ -21,7 +21,7 @@ public class ExprId extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, int expectedSizeBytes, NameSpace env) {
+    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
         return env.get(normalizeId(id)).orElseGet(() -> Either.ofLeft(this));
     }
 

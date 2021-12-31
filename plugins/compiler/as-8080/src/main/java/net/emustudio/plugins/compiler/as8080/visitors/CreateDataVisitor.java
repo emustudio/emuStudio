@@ -18,9 +18,9 @@ public class CreateDataVisitor extends As8080ParserBaseVisitor<Node> {
 
         for (RDBdataContext next : ctx.rDBdata()) {
             if (next.expr != null) {
-                db.addChild(Visitors.expr.visit(next.expr));
+                db.addChild(CreateVisitors.expr.visit(next.expr));
             } else if (next.instr != null) {
-                db.addChild(Visitors.instr.visit(next.instr));
+                db.addChild(CreateVisitors.instr.visit(next.instr));
             } else {
                 DataPlainString str = new DataPlainString(next.str);
                 db.addChild(str);
@@ -36,7 +36,7 @@ public class CreateDataVisitor extends As8080ParserBaseVisitor<Node> {
 
         for (RDWdataContext next : ctx.rDWdata()) {
             if (next.expr != null) {
-                dw.addChild(Visitors.expr.visit(next.expr));
+                dw.addChild(CreateVisitors.expr.visit(next.expr));
             }
         }
 
@@ -47,7 +47,7 @@ public class CreateDataVisitor extends As8080ParserBaseVisitor<Node> {
     public Node visitDataDS(DataDSContext ctx) {
         Token start = ctx.getStart();
         DataDS ds = new DataDS(start.getLine(), start.getCharPositionInLine());
-        ds.addChild(Visitors.expr.visit(ctx.data));
+        ds.addChild(CreateVisitors.expr.visit(ctx.data));
         return ds;
     }
 }
