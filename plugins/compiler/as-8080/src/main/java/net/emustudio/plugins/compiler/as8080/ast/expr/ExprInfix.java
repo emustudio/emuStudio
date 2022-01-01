@@ -1,12 +1,15 @@
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-import net.emustudio.plugins.compiler.as8080.Either;
-import net.emustudio.plugins.compiler.as8080.ast.*;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
@@ -49,24 +52,24 @@ public class ExprInfix extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
+    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
         Node leftChild = getChild(0);
         Node rightChild = getChild(1);
 
-        Either<Node, Evaluated> left = leftChild.eval(currentAddress, env);
-        Either<Node, Evaluated> right = rightChild.eval(currentAddress, env);
+        Optional<Evaluated> left = leftChild.eval(currentAddress, env);
+        Optional<Evaluated> right = rightChild.eval(currentAddress, env);
 
-        if (left.isRight() && right.isRight()) {
-            int l = left.right.getValue();
-            int r = right.right.getValue();
+        if (left.isPresent() && right.isPresent()) {
+            int l = left.get().getValue();
+            int r = right.get().getValue();
             int result = operation.apply(l, r);
 
             Evaluated evaluated = new Evaluated(line, column);
             evaluated.addChild(new ExprNumber(line, column, result));
-            return Either.ofRight(evaluated);
+            return Optional.of(evaluated);
         }
 
-        return Either.ofLeft(this);
+        return Optional.empty();
     }
 
     @Override

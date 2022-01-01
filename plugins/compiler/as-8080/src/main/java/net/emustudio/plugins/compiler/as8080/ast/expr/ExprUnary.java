@@ -1,18 +1,21 @@
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-import net.emustudio.plugins.compiler.as8080.Either;
-import net.emustudio.plugins.compiler.as8080.ast.*;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 
 public class ExprUnary extends Node {
     private final static Map<Integer, Function<Integer, Integer>> unaryOps = Map.of(
-        OP_ADD,  x -> x,
+        OP_ADD, x -> x,
         OP_SUBTRACT, x -> -x,
         OP_NOT, x -> ~x
     );
@@ -36,18 +39,17 @@ public class ExprUnary extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
-        Node child = getChild(0);
-        Either<Node, Evaluated> childEval = child.eval(currentAddress, env);
-        if (childEval.isRight()) {
-            int value = childEval.right.getValue();
-            int result = operation.apply(value);
+    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
+        return getChild(0)
+            .eval(currentAddress, env)
+            .map(childEval -> {
+                int value = childEval.getValue();
+                int result = operation.apply(value);
 
-            Evaluated evaluated = new Evaluated(line, column);
-            evaluated.addChild(new ExprNumber(line, column, result));
-            return Either.ofRight(evaluated);
-        }
-        return Either.ofLeft(this);
+                Evaluated evaluated = new Evaluated(line, column);
+                evaluated.addChild(new ExprNumber(line, column, result));
+                return evaluated;
+            });
     }
 
     @Override

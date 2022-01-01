@@ -1,10 +1,13 @@
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-import net.emustudio.plugins.compiler.as8080.Either;
-import net.emustudio.plugins.compiler.as8080.ast.*;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
 
@@ -21,8 +24,8 @@ public class ExprId extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
-        return env.get(normalizeId(id)).orElseGet(() -> Either.ofLeft(this));
+    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
+        return env.get(normalizeId(id));
     }
 
     @Override

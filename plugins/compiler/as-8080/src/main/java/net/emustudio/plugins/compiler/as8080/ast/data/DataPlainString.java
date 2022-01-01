@@ -1,11 +1,14 @@
 package net.emustudio.plugins.compiler.as8080.ast.data;
 
-import net.emustudio.plugins.compiler.as8080.Either;
-import net.emustudio.plugins.compiler.as8080.ast.*;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.as8080.ParsingUtils.parseLitString;
 
@@ -22,12 +25,12 @@ public class DataPlainString extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
+    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
         Evaluated evaluated = new Evaluated(line, column);
         for (byte b : string.getBytes()) {
             evaluated.addChild(new ExprNumber(line, column, b));
         }
-        return Either.ofRight(evaluated);
+        return Optional.of(evaluated);
     }
 
     @Override

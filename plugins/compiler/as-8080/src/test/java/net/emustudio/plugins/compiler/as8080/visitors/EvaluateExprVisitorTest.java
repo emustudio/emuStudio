@@ -1,8 +1,6 @@
 package net.emustudio.plugins.compiler.as8080.visitors;
 
-import net.emustudio.plugins.compiler.as8080.Either;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
-import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
@@ -18,6 +16,7 @@ import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_AMBIGUOUS_EXPRESSION;
@@ -138,15 +137,15 @@ public class EvaluateExprVisitorTest {
 
         assertTrue(program.env().hasNoErrors());
 
-        Either<Node, Evaluated> label = program.env().get("label").orElseThrow();
-        assertTrue(label.isRight());
-        assertEquals(0, label.right.getAddress());
+        Optional<Evaluated> label = program.env().get("label");
+        assertTrue(label.isPresent());
+        assertEquals(0, label.get().getAddress());
 
         assertTrees(
             new Program()
                 .addChild(new DataDS(0, 0)
-                    .addChild(new Evaluated(0,0)
-                        .addChild(new ExprNumber(0,0, 5)))),
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 5)))),
             program
         );
     }
@@ -174,10 +173,10 @@ public class EvaluateExprVisitorTest {
 
         List<String> constants = List.of("one", "two", "three", "four", "five");
         for (String c : constants) {
-            Either<Node, Evaluated> constant = program.env().get(c).orElseThrow();
-            assertTrue(constant.isRight());
-            assertEquals(0, constant.right.getAddress());
-            assertEquals(0, constant.right.getValue());
+            Optional<Evaluated> constant = program.env().get(c);
+            assertTrue(constant.isPresent());
+            assertEquals(0, constant.get().getAddress());
+            assertEquals(0, constant.get().getValue());
         }
     }
 
@@ -253,5 +252,38 @@ public class EvaluateExprVisitorTest {
         );
     }
 
+    @Test
+    public void testEvaluateSETforwardMoreTimes() {
+        Program program = new Program();
+        program
+            .addChild(new DataDB(0, 0)
+                .addChild(new ExprId(0, 0, "id")))
+            .addChild(new PseudoSet(0, 0, "id")
+                .addChild(new ExprId(0, 0, "const")))
+            .addChild(new PseudoSet(0, 0, "id")
+                .addChild(new ExprNumber(0, 0, 2)))
+            .addChild(new PseudoEqu(0, 0, "const")
+                .addChild(new ExprNumber(0, 0, 1)));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        System.out.println(program);
+        System.out.println(program.env());
+
+        assertTrees(
+            new Program()
+                .addChild(new DataDB(0, 0)
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 1))))
+                .addChild(new PseudoSet(0, 0, "id")
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 1))))
+                .addChild(new PseudoSet(0, 0, "id")
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 2)))),
+            program
+        );
+    }
 
 }

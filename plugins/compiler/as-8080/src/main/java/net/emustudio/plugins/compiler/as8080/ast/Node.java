@@ -1,8 +1,9 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
-import net.emustudio.plugins.compiler.as8080.Either;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public abstract class Node {
     protected Node parent;
@@ -76,8 +77,8 @@ public abstract class Node {
         this.address = address;
     }
 
-    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
-        return Either.ofLeft(this);
+    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
+        return Optional.empty();
     }
 
     public void accept(NodeVisitor visitor) {

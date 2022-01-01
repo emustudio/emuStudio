@@ -1,7 +1,11 @@
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-import net.emustudio.plugins.compiler.as8080.Either;
-import net.emustudio.plugins.compiler.as8080.ast.*;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+
+import java.util.Optional;
 
 public class ExprCurrentAddress extends Node {
 
@@ -20,13 +24,13 @@ public class ExprCurrentAddress extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
+    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
         Evaluated evaluated = new Evaluated(line, column);
         evaluated.addChild(new ExprNumber(line, column, currentAddress));
-        return Either.ofRight(evaluated);
+        return Optional.of(evaluated);
     }
 
-    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env, boolean evalLeft) {
-        return evalLeft ? Either.ofLeft(this) : eval(currentAddress, env);
+    public Optional<Evaluated> eval(int currentAddress, NameSpace env, boolean evalLeft) {
+        return evalLeft ? Optional.empty() : eval(currentAddress, env);
     }
 }

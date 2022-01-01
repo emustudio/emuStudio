@@ -1,9 +1,12 @@
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
-import net.emustudio.plugins.compiler.as8080.Either;
-import net.emustudio.plugins.compiler.as8080.ast.*;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 public class ExprNumber extends Node {
@@ -19,10 +22,10 @@ public class ExprNumber extends Node {
     }
 
     @Override
-    public Either<Node, Evaluated> eval(int currentAddress, NameSpace env) {
+    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
         Evaluated evaluated = new Evaluated(line, column);
         evaluated.addChild(new ExprNumber(line, column, number));
-        return Either.ofRight(evaluated);
+        return Optional.of(evaluated);
     }
 
     @Override

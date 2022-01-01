@@ -1,7 +1,9 @@
 package net.emustudio.plugins.compiler.as8080.visitors;
 
-import net.emustudio.plugins.compiler.as8080.Either;
-import net.emustudio.plugins.compiler.as8080.ast.*;
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
+import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
@@ -25,7 +27,7 @@ import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
  * - replace ExprCurrentAddress with the current address
  * - address changes after processing Expr*, DataDS, PseudoOrg
  * - eliminate or include code block of PseudoIf if expr evaluates to 1
- *
+ * <p>
  * After finishing this visitor, there should be:
  * - no PseudoEqu
  * - no ExprId
@@ -37,7 +39,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     private int expectedBytes = 0;
     private boolean doNotEvaluateCurrentAddress = false;
 
-    private Either<Node, Evaluated> latestEval;
+    private Optional<Evaluated> latestEval;
     private Set<Node> needMorePassThings = new HashSet<>();
     private final Map<String, List<String>> macroArguments = new HashMap<>();
     private String currentMacro;
@@ -96,12 +98,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.setAddress(currentAddress);
         expectedBytes = 0;
         visitChildren(node);
-        if (latestEval.isRight()) {
-            currentAddress += latestEval.right.getValue();
-        } else {
-            // we don't know now how the address changes since we can't evaluate the expr yet
-            doNotEvaluateCurrentAddress = true;
-        }
+        latestEval.ifPresentOrElse(
+            e -> currentAddress += e.getValue(),
+            () -> doNotEvaluateCurrentAddress = true
+        );
     }
 
     @Override
@@ -109,9 +109,9 @@ public class EvaluateExprVisitor extends NodeVisitor {
         expectedBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
         visitChildren(node);
         env.put(normalizeId(node.id), latestEval);
-        if (latestEval.isRight()) {
-            node.remove(); // we don't need to re-evaluate the constant
-        }
+
+        // we don't need to re-evaluate the constant
+        latestEval.ifPresent(e -> node.remove());
     }
 
     @Override
@@ -123,13 +123,12 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoLabel node) {
-        Either<Node, Evaluated> eval = node.eval(currentAddress, env, doNotEvaluateCurrentAddress);
+        Optional<Evaluated> eval = node.eval(currentAddress, env, doNotEvaluateCurrentAddress);
         env.put(normalizeId(node.label), eval);
-        if (eval.isRight()) {
-            node.remove(); // we don't need to re-evaluate label
-        } else {
-            needMorePassThings.add(node);
-        }
+        eval.ifPresentOrElse(
+            e -> node.remove(), // we don't need to re-evaluate label
+            () -> needMorePassThings.add(node)
+        );
     }
 
     @Override
@@ -137,12 +136,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.setAddress(currentAddress);
         expectedBytes = 0;
         visitChildren(node);
-        if (latestEval.isRight()) {
-            currentAddress = latestEval.right.getValue();
-        } else {
-            // if we can't evaluate current address now, we cannot evaluate it below too
-            doNotEvaluateCurrentAddress = true;
-        }
+        latestEval.ifPresentOrElse(
+            e -> currentAddress = e.getValue(),
+            () -> doNotEvaluateCurrentAddress = true
+        );
     }
 
     @Override
@@ -222,14 +219,14 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(DataPlainString node) {
-        Either<Node, Evaluated> eval = node.eval(currentAddress, env);
-        node.remove().ifPresent(p -> p.addChild(eval.right));
+        node.eval(currentAddress, env)
+            .ifPresent(e -> node.remove().ifPresent(p -> p.addChild(e)));
         currentAddress += node.string.length();
     }
 
     @Override
     public void visit(Evaluated node) {
-        latestEval = Either.ofRight(node);
+        latestEval = Optional.of(node);
         currentAddress += expectedBytes;
     }
 
@@ -260,15 +257,14 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     private void evalExpr(Node node) {
         latestEval = node.eval(currentAddress, env);
-        if (latestEval.isRight()) {
-            node.remove().ifPresent(p -> {
-                Evaluated evaluated = (Evaluated) latestEval.right.copy();
+        latestEval.ifPresentOrElse(
+            e -> node.remove().ifPresent(p -> {
+                Evaluated evaluated = (Evaluated) e.copy();
                 evaluated.setAddress(currentAddress);
                 p.addChild(evaluated);
-            });
-        } else {
-            needMorePassThings.add(node);
-        }
+            }),
+            () -> needMorePassThings.add(node)
+        );
         currentAddress += expectedBytes;
     }
 }
