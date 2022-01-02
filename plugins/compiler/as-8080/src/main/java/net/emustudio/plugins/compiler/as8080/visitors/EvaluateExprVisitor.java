@@ -44,7 +44,6 @@ public class EvaluateExprVisitor extends NodeVisitor {
     private Optional<Evaluated> latestEval;
     private Set<Node> needMorePassThings = new HashSet<>();
 
-
     private final Map<String, List<String>> macroArguments = new HashMap<>();
     private String currentMacro;
 

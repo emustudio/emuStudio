@@ -280,4 +280,35 @@ public class EvaluateExprVisitorTest {
         );
     }
 
+    @Test
+    public void testTwoSETthenReference() {
+        Program program = new Program();
+        program
+            .addChild(new PseudoSet(0, 0, "id")
+                .addChild(new ExprId(0, 0, "const")))
+            .addChild(new PseudoSet(0, 0, "id")
+                .addChild(new ExprNumber(0, 0, 2)))
+            .addChild(new PseudoEqu(0, 0, "const")
+                .addChild(new ExprNumber(0, 0, 1)))
+            .addChild(new DataDB(0, 0)
+                .addChild(new ExprId(0, 0, "id")));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        assertTrees(
+            new Program()
+                .addChild(new PseudoSet(0, 0, "id")
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 1))))
+                .addChild(new PseudoSet(0, 0, "id")
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 2))))
+                .addChild(new DataDB(0, 0)
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 2)))),
+            program
+        );
+    }
+
 }
