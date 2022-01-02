@@ -2,7 +2,6 @@ package net.emustudio.plugins.compiler.as8080.ast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public abstract class Node {
@@ -119,6 +118,6 @@ public abstract class Node {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Node node = (Node) o;
-        return line == node.line && column == node.column && Objects.equals(parent, node.parent);
+        return line == node.line && column == node.column;
     }
 }

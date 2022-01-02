@@ -231,9 +231,6 @@ public class EvaluateExprVisitorTest {
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
         visitor.visit(program);
 
-        System.out.println(program);
-        System.out.println(program.env());
-
         assertTrees(
             new Program()
                 .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
@@ -267,9 +264,6 @@ public class EvaluateExprVisitorTest {
 
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
         visitor.visit(program);
-
-        System.out.println(program);
-        System.out.println(program.env());
 
         assertTrees(
             new Program()

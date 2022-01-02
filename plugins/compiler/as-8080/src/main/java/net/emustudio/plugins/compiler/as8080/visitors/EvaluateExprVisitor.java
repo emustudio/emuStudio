@@ -38,9 +38,13 @@ public class EvaluateExprVisitor extends NodeVisitor {
     private int currentAddress = 0;
     private int expectedBytes = 0;
     private boolean doNotEvaluateCurrentAddress = false;
+    private final Set<String> doNotEvaluateVariables = new HashSet<>();
+    private final Set<String> forwardReferences = new HashSet<>();
 
     private Optional<Evaluated> latestEval;
     private Set<Node> needMorePassThings = new HashSet<>();
+
+
     private final Map<String, List<String>> macroArguments = new HashMap<>();
     private String currentMacro;
 
@@ -57,7 +61,12 @@ public class EvaluateExprVisitor extends NodeVisitor {
         while (!needMorePassThings.isEmpty()) {
             oldNeedMorePass = needMorePassThings;
             needMorePassThings = new HashSet<>();
+
             currentAddress = 0;
+            doNotEvaluateCurrentAddress = false;
+            doNotEvaluateVariables.clear();
+            forwardReferences.clear();
+
             visitChildren(node);
 
             // at least one thing must disappear from "oldNeedMorePass";
@@ -117,8 +126,14 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(PseudoSet node) {
         expectedBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
-        visitChildren(node);
-        env.put(normalizeId(node.id), latestEval);
+        String normalizedId = normalizeId(node.id);
+        if (!doNotEvaluateVariables.contains(normalizedId)) {
+            visitChildren(node);
+            env.put(normalizedId, latestEval);
+        }
+        if (forwardReferences.contains(normalizedId)) {
+            doNotEvaluateVariables.add(normalizedId);
+        }
     }
 
     @Override
@@ -210,11 +225,12 @@ public class EvaluateExprVisitor extends NodeVisitor {
         expectedBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
         visitChildren(node, 1); // expected two children: ExprId and Expr*
 
-        node.collectChild(ExprId.class).ifPresent(exprId -> {
-            String macroParameter = normalizeId(exprId.id);
-            macroArguments.get(currentMacro).add(macroParameter);
-            env.put(macroParameter, latestEval);
-        });
+        node.collectChild(ExprId.class)
+            .ifPresent(exprId -> {
+                String macroParameter = normalizeId(exprId.id);
+                macroArguments.get(currentMacro).add(macroParameter);
+                env.put(macroParameter, latestEval);
+            });
     }
 
     @Override
@@ -253,16 +269,15 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(ExprId node) {
         evalExpr(node);
+        if (latestEval.isEmpty()) {
+            forwardReferences.add(normalizeId(node.id));
+        }
     }
 
     private void evalExpr(Node node) {
         latestEval = node.eval(currentAddress, env);
         latestEval.ifPresentOrElse(
-            e -> node.remove().ifPresent(p -> {
-                Evaluated evaluated = (Evaluated) e.copy();
-                evaluated.setAddress(currentAddress);
-                p.addChild(evaluated);
-            }),
+            e -> node.remove().ifPresent(p -> p.addChild(e)),
             () -> needMorePassThings.add(node)
         );
         currentAddress += expectedBytes;
