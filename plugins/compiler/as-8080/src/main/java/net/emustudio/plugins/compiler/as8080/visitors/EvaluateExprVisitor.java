@@ -129,9 +129,15 @@ public class EvaluateExprVisitor extends NodeVisitor {
         if (!doNotEvaluateVariables.contains(normalizedId)) {
             visitChildren(node);
             env.put(normalizedId, latestEval);
-        }
-        if (forwardReferences.contains(normalizedId)) {
-            doNotEvaluateVariables.add(normalizedId);
+
+            if (forwardReferences.contains(normalizedId)) {
+                // if there are forward references for this ID and the variable is redefined (defined more than once),
+                // the second pass would evaluate the reference with the latest variable redefinition instead of the
+                // first definition which appears after the reference. The reason is that references are evaluated by
+                // looking at env - and env contains previously defined values which are "inherited" in upcoming passes.
+                // So in the second pass env would contain the latest definition from the previous pass.
+                doNotEvaluateVariables.add(normalizedId);
+            }
         }
     }
 
