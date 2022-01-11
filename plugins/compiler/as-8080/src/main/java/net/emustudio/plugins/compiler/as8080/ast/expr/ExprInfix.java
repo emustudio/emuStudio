@@ -60,13 +60,9 @@ public class ExprInfix extends Node {
         Optional<Evaluated> right = rightChild.eval(currentAddress, env);
 
         if (left.isPresent() && right.isPresent()) {
-            int l = left.get().getValue();
-            int r = right.get().getValue();
-            int result = operation.apply(l, r);
-
-            Evaluated evaluated = new Evaluated(line, column);
-            evaluated.addChild(new ExprNumber(line, column, result));
-            return Optional.of(evaluated);
+            int l = left.get().value;
+            int r = right.get().value;
+            return Optional.of(new Evaluated(line, column, operation.apply(l, r)));
         }
 
         return Optional.empty();

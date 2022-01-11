@@ -106,7 +106,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
         expectedBytes = 0;
         visitChildren(node);
         latestEval.ifPresentOrElse(
-            e -> currentAddress += e.getValue(),
+            e -> currentAddress += e.value,
             () -> doNotEvaluateCurrentAddress = true
         );
     }
@@ -156,7 +156,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
         expectedBytes = 0;
         visitChildren(node);
         latestEval.ifPresentOrElse(
-            e -> currentAddress = e.getValue(),
+            e -> currentAddress = e.value,
             () -> doNotEvaluateCurrentAddress = true
         );
     }
@@ -171,8 +171,8 @@ public class EvaluateExprVisitor extends NodeVisitor {
                 return p.collectChild(Evaluated.class);
             });
 
-        boolean includeBlock = expr.filter(p -> p.getValue() != 0).isPresent();
-        boolean excludeBlock = expr.filter(p -> p.getValue() == 0).isPresent();
+        boolean includeBlock = expr.filter(p -> p.value != 0).isPresent();
+        boolean excludeBlock = expr.filter(p -> p.value == 0).isPresent();
 
         if (includeBlock) {
             List<Node> codeChildren = node.getChildren().stream().skip(1).collect(Collectors.toList());

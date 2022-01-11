@@ -25,10 +25,6 @@ public class ExprCurrentAddress extends Node {
 
     @Override
     public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return currentAddress.map(addr -> {
-            Evaluated evaluated = new Evaluated(line, column);
-            evaluated.addChild(new ExprNumber(line, column, addr));
-            return evaluated;
-        });
+        return currentAddress.map(addr -> new Evaluated(line, column, addr));
     }
 }

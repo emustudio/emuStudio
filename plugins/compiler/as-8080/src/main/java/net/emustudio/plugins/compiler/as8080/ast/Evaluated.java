@@ -1,25 +1,30 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
-import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
-
 public class Evaluated extends Node {
+    public final int value;
 
-    public Evaluated(int line, int column) {
+    public Evaluated(int line, int column, int value) {
         super(line, column);
-        // children are sizeBytes * 1-byte ExprNumbers
-    }
-
-    public int getValue() {
-        return ((ExprNumber) getChild(0)).number;
+        this.value = value;
     }
 
     @Override
     protected Node mkCopy() {
-        return new Evaluated(line, column);
+        return new Evaluated(line, column, value);
     }
 
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        Evaluated evaluated = (Evaluated) o;
+        return value == evaluated.value;
     }
 }

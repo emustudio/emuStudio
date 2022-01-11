@@ -23,9 +23,7 @@ public class ExprNumber extends Node {
 
     @Override
     public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        Evaluated evaluated = new Evaluated(line, column);
-        evaluated.addChild(new ExprNumber(line, column, number));
-        return Optional.of(evaluated);
+        return Optional.of(new Evaluated(line, column, number));
     }
 
     @Override

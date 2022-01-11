@@ -4,7 +4,6 @@ import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
-import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
@@ -26,11 +25,7 @@ public class PseudoLabel extends Node {
 
     @Override
     public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return currentAddress.map(addr -> {
-            Evaluated evaluated = new Evaluated(line, column);
-            evaluated.addChild(new ExprNumber(line, column, addr));
-            return evaluated;
-        });
+        return currentAddress.map(addr -> new Evaluated(line, column, addr));
     }
 
     @Override

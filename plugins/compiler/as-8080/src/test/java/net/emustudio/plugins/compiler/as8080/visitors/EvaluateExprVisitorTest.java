@@ -46,18 +46,12 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new DataDB(0, 0)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 3)))
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 'h')))
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 'e')))
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 'l')))
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 'l')))
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 'o')))),
+                    .addChild(new Evaluated(0, 0, 3))
+                    .addChild(new Evaluated(0, 0, 'h'))
+                    .addChild(new Evaluated(0, 0, 'e'))
+                    .addChild(new Evaluated(0, 0, 'l'))
+                    .addChild(new Evaluated(0, 0, 'l'))
+                    .addChild(new Evaluated(0, 0, 'o'))),
             program
         );
     }
@@ -79,11 +73,9 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new DataDW(0, 0)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 3))))
+                    .addChild(new Evaluated(0, 0, 3)))
                 .addChild(new DataDW(0, 0)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 0)))),
+                    .addChild(new Evaluated(0, 0, 0))),
             program
         );
         assertEquals(0, program.getChild(0).getAddress());
@@ -107,11 +99,9 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new DataDS(0, 0)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 3))))
+                    .addChild(new Evaluated(0, 0, 3)))
                 .addChild(new DataDB(0, 0)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 0)))),
+                    .addChild(new Evaluated(0, 0, 0))),
             program
         );
         assertEquals(0, program.getChild(0).getAddress());
@@ -153,8 +143,7 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new DataDS(0, 0)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 5)))),
+                    .addChild(new Evaluated(0, 0, 5))),
             program
         );
     }
@@ -185,7 +174,7 @@ public class EvaluateExprVisitorTest {
             Optional<Evaluated> constant = program.env().get(c);
             assertTrue(constant.isPresent());
             assertEquals(0, constant.get().getAddress());
-            assertEquals(0, constant.get().getValue());
+            assertEquals(0, constant.get().value);
         }
     }
 
@@ -213,11 +202,9 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 6))))
+                    .addChild(new Evaluated(0, 0, 6)))
                 .addChild(new InstrExpr(0, 0, OPCODE_RST)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 0)))),
+                    .addChild(new Evaluated(0, 0, 0))),
             program
         );
         assertEquals(0, program.getChild(0).getAddress());
@@ -281,17 +268,13 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 1))))
+                    .addChild(new Evaluated(0, 0, 1)))
                 .addChild(new PseudoSet(0, 0, "const")
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 1))))
+                    .addChild(new Evaluated(0, 0, 1)))
                 .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_B)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 1))))
+                    .addChild(new Evaluated(0, 0, 1)))
                 .addChild(new PseudoSet(0, 0, "const")
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 2)))),
+                    .addChild(new Evaluated(0, 0, 2))),
             program
         );
     }
@@ -315,14 +298,11 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new DataDB(0, 0)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 1))))
+                    .addChild(new Evaluated(0, 0, 1)))
                 .addChild(new PseudoSet(0, 0, "id")
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 1))))
+                    .addChild(new Evaluated(0, 0, 1)))
                 .addChild(new PseudoSet(0, 0, "id")
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 2)))),
+                    .addChild(new Evaluated(0, 0, 2))),
             program
         );
     }
@@ -346,14 +326,11 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new PseudoSet(0, 0, "id")
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 1))))
+                    .addChild(new Evaluated(0, 0, 1)))
                 .addChild(new PseudoSet(0, 0, "id")
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 2))))
+                    .addChild(new Evaluated(0, 0, 2)))
                 .addChild(new DataDB(0, 0)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 2)))),
+                    .addChild(new Evaluated(0, 0, 2))),
             program
         );
     }
@@ -380,12 +357,9 @@ public class EvaluateExprVisitorTest {
         assertTrees(
             new Program()
                 .addChild(new DataDB(0, 0)
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 3)))
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 4)))
-                    .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 5)))),
+                    .addChild(new Evaluated(0, 0, 3))
+                    .addChild(new Evaluated(0, 0, 4))
+                    .addChild(new Evaluated(0, 0, 5))),
             program
         );
     }

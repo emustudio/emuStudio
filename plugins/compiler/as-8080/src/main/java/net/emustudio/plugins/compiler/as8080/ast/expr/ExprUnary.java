@@ -42,14 +42,7 @@ public class ExprUnary extends Node {
     public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
         return getChild(0)
             .eval(currentAddress, env)
-            .map(childEval -> {
-                int value = childEval.getValue();
-                int result = operation.apply(value);
-
-                Evaluated evaluated = new Evaluated(line, column);
-                evaluated.addChild(new ExprNumber(line, column, result));
-                return evaluated;
-            });
+            .map(childEval -> new Evaluated(line, column, operation.apply(childEval.value)));
     }
 
     @Override
