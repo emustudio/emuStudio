@@ -1,6 +1,5 @@
 package net.emustudio.plugins.compiler.as8080;
 
-import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoLabel;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
@@ -61,7 +60,8 @@ public class ParsePseudoTest {
 
         assertTrees(new Program()
                 .addChild(new PseudoIf(0, 0)
-                    .addChild(new ExprNumber(0, 0, 1))
+                    .addChild(new PseudoIfExpression(0, 0)
+                        .addChild(new ExprNumber(0, 0, 1)))
                     .addChild(new InstrNoArgs(0, 0, OPCODE_RRC))
                     .addChild(new InstrNoArgs(0, 0, OPCODE_RRC))),
             program
@@ -79,8 +79,9 @@ public class ParsePseudoTest {
         for (String src : programs) {
             Program program = parseProgram(src);
             Node expected = new Program()
-                .addChild(new PseudoIf(0,0)
-                    .addChild(new ExprNumber(0,0,1)));
+                .addChild(new PseudoIf(0, 0)
+                    .addChild(new PseudoIfExpression(0, 0)
+                        .addChild(new ExprNumber(0, 0, 1))));
             assertTrees(expected, program);
         }
     }
@@ -99,7 +100,8 @@ public class ParsePseudoTest {
 
         assertTrees(new Program()
                 .addChild(new PseudoIf(0, 0)
-                    .addChild(new ExprNumber(0, 0, 1))
+                    .addChild(new PseudoIfExpression(0, 0)
+                        .addChild(new ExprNumber(0, 0, 1)))
                     .addChild(new PseudoLabel(0, 0, "label1"))
                     .addChild(new PseudoLabel(0, 0, "label2"))),
             program

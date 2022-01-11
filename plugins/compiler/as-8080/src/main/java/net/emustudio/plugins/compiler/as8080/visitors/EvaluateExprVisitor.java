@@ -7,7 +7,6 @@ import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
-import net.emustudio.plugins.compiler.as8080.ast.data.DataPlainString;
 import net.emustudio.plugins.compiler.as8080.ast.expr.*;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
@@ -143,7 +142,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoLabel node) {
-        Optional<Evaluated> eval = node.eval(currentAddress, env, doNotEvaluateCurrentAddress);
+        Optional<Evaluated> eval = node.eval(getCurrentAddress(), env);
         env.put(normalizeId(node.label), eval);
         eval.ifPresentOrElse(
             e -> node.remove(), // we don't need to re-evaluate label
@@ -239,13 +238,6 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(DataPlainString node) {
-        node.eval(currentAddress, env)
-            .ifPresent(e -> node.remove().ifPresent(p -> p.addChild(e)));
-        currentAddress += node.string.length();
-    }
-
-    @Override
     public void visit(Evaluated node) {
         latestEval = Optional.of(node);
         currentAddress += expectedBytes;
@@ -279,8 +271,12 @@ public class EvaluateExprVisitor extends NodeVisitor {
         }
     }
 
+    private Optional<Integer> getCurrentAddress() {
+        return doNotEvaluateCurrentAddress ? Optional.empty() : Optional.of(currentAddress);
+    }
+
     private void evalExpr(Node node) {
-        latestEval = node.eval(currentAddress, env);
+        latestEval = node.eval(getCurrentAddress(), env);
         latestEval.ifPresentOrElse(
             e -> node.remove().ifPresent(p -> p.addChild(e)),
             () -> needMorePassThings.add(node)

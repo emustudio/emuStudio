@@ -88,7 +88,7 @@ public class ExpandMacrosTest {
     }
 
     @Test(expected = FatalError.class)
-    public void testRecursiveMacroCallComplex() {
+    public void testMacroCallComplexInfiniteLoop() {
         Program program = parseProgram("x macro\ny\nendm\ny macro\nx\nendm");
         ExpandMacrosVisitor macrosVisitor = new ExpandMacrosVisitor();
         macrosVisitor.visit(program);

@@ -4,7 +4,6 @@ import net.emustudio.plugins.compiler.as8080.CompileError;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
-import net.emustudio.plugins.compiler.as8080.ast.data.DataPlainString;
 import net.emustudio.plugins.compiler.as8080.ast.expr.*;
 import net.emustudio.plugins.compiler.as8080.ast.instr.*;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
@@ -43,10 +42,6 @@ public class NodeVisitor {
     }
 
     public void visit(DataDS node) {
-        visitChildren(node);
-    }
-
-    public void visit(DataPlainString node) {
         visitChildren(node);
     }
 

@@ -52,7 +52,7 @@ public class ExprInfix extends Node {
     }
 
     @Override
-    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
+    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
         Node leftChild = getChild(0);
         Node rightChild = getChild(1);
 

@@ -5,7 +5,6 @@ import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
-import net.emustudio.plugins.compiler.as8080.ast.data.DataPlainString;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprCurrentAddress;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
@@ -29,11 +28,17 @@ public class EvaluateExprVisitorTest {
     @Test
     public void testEvaluateDB() {
         Program program = new Program();
-        program.addChild(new DataDB(0, 0)
-            .addChild(new ExprInfix(0, 0, OP_ADD)
-                .addChild(new ExprNumber(0, 0, 1))
-                .addChild(new ExprNumber(0, 0, 2))
-            ).addChild(new DataPlainString(0, 0, "hello")));
+        program
+            .addChild(new DataDB(0, 0)
+                .addChild(new ExprInfix(0, 0, OP_ADD)
+                    .addChild(new ExprNumber(0, 0, 1))
+                    .addChild(new ExprNumber(0, 0, 2)))
+                .addChild(new ExprNumber(0, 0, 'h'))
+                .addChild(new ExprNumber(0, 0, 'e'))
+                .addChild(new ExprNumber(0, 0, 'l'))
+                .addChild(new ExprNumber(0, 0, 'l'))
+                .addChild(new ExprNumber(0, 0, 'o'))
+            );
 
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
         visitor.visit(program);
@@ -44,10 +49,14 @@ public class EvaluateExprVisitorTest {
                     .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 3)))
                     .addChild(new Evaluated(0, 0)
-                        .addChild(new ExprNumber(0, 0, 'h'))
-                        .addChild(new ExprNumber(0, 0, 'e'))
-                        .addChild(new ExprNumber(0, 0, 'l'))
-                        .addChild(new ExprNumber(0, 0, 'l'))
+                        .addChild(new ExprNumber(0, 0, 'h')))
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 'e')))
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 'l')))
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 'l')))
+                    .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 'o')))),
             program
         );
@@ -216,6 +225,44 @@ public class EvaluateExprVisitorTest {
     }
 
     @Test
+    public void testEvaluateIFwithForwardAddressReference() {
+        Program program = new Program();
+        program
+            .addChild(new PseudoIf(0, 0)
+                .addChild(new PseudoIfExpression(0, 0)
+                    .addChild(new ExprInfix(0, 0, OP_EQUAL)
+                        .addChild(new ExprCurrentAddress(0, 0))
+                        .addChild(new ExprId(0, 0, "const"))))
+                .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                    .addChild(new ExprNumber(0, 0, 0))))
+            .addChild(new PseudoEqu(0, 0, "const")
+                .addChild(new ExprInfix(0, 0, OP_ADD)
+                    .addChild(new ExprCurrentAddress(0, 0))
+                    .addChild(new ExprCurrentAddress(0, 0))));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        assertTrue(program.env().hasError(ERROR_AMBIGUOUS_EXPRESSION));
+    }
+
+    @Test
+    public void testEvaluateIFexcludeBlock() {
+        Program program = new Program();
+        program
+            .addChild(new PseudoIf(0, 0)
+                .addChild(new PseudoIfExpression(0, 0)
+                    .addChild(new ExprNumber(0, 0, 0)))
+                .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                    .addChild(new ExprNumber(0, 0, 0))));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        assertTrees(new Program(), program);
+    }
+
+    @Test
     public void testEvaluateSETforwardTwoTimes() {
         Program program = new Program();
         program
@@ -307,6 +354,38 @@ public class EvaluateExprVisitorTest {
                 .addChild(new DataDB(0, 0)
                     .addChild(new Evaluated(0, 0)
                         .addChild(new ExprNumber(0, 0, 2)))),
+            program
+        );
+    }
+
+    @Test
+    public void testEvaluateLABEL() {
+        Program program = new Program();
+        program
+            .addChild(new DataDB(0, 0)
+                .addChild(new ExprInfix(0, 0, OP_ADD)
+                    .addChild(new ExprCurrentAddress(0, 0))
+                    .addChild(new ExprId(0, 0, "label")))
+                .addChild(new ExprInfix(0, 0, OP_ADD)
+                    .addChild(new ExprCurrentAddress(0, 0))
+                    .addChild(new ExprId(0, 0, "label")))
+                .addChild(new ExprInfix(0, 0, OP_ADD)
+                    .addChild(new ExprCurrentAddress(0, 0))
+                    .addChild(new ExprId(0, 0, "label"))))
+            .addChild(new PseudoLabel(0, 0, "label"));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        assertTrees(
+            new Program()
+                .addChild(new DataDB(0, 0)
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 3)))
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 4)))
+                    .addChild(new Evaluated(0, 0)
+                        .addChild(new ExprNumber(0, 0, 5)))),
             program
         );
     }

@@ -76,7 +76,7 @@ public abstract class Node {
         this.address = address;
     }
 
-    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
+    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
         return Optional.empty();
     }
 
@@ -116,8 +116,6 @@ public abstract class Node {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Node node = (Node) o;
-        return line == node.line && column == node.column;
+        return !(o == null || getClass() != o.getClass());
     }
 }

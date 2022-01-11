@@ -24,7 +24,7 @@ public class ExprId extends Node {
     }
 
     @Override
-    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
+    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
         return env.get(normalizeId(id));
     }
 

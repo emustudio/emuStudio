@@ -24,13 +24,11 @@ public class ExprCurrentAddress extends Node {
     }
 
     @Override
-    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
-        Evaluated evaluated = new Evaluated(line, column);
-        evaluated.addChild(new ExprNumber(line, column, currentAddress));
-        return Optional.of(evaluated);
-    }
-
-    public Optional<Evaluated> eval(int currentAddress, NameSpace env, boolean evalLeft) {
-        return evalLeft ? Optional.empty() : eval(currentAddress, env);
+    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
+        return currentAddress.map(addr -> {
+            Evaluated evaluated = new Evaluated(line, column);
+            evaluated.addChild(new ExprNumber(line, column, addr));
+            return evaluated;
+        });
     }
 }

@@ -39,7 +39,7 @@ public class ExprUnary extends Node {
     }
 
     @Override
-    public Optional<Evaluated> eval(int currentAddress, NameSpace env) {
+    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
         return getChild(0)
             .eval(currentAddress, env)
             .map(childEval -> {

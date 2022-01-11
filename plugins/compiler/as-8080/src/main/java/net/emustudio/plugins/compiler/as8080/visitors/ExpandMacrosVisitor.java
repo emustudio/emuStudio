@@ -20,12 +20,12 @@ import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
  */
 public class ExpandMacrosVisitor extends NodeVisitor {
     private final Map<String, Node> macros = new HashMap<>();
-    private final Map<String, List<Node>> forwardMacroCalls = new HashMap<>();
+    private final Map<String, List<PseudoMacroCall>> forwardMacroCalls = new HashMap<>();
 
     @Override
     public void visit(Program node) {
         visitChildren(node);
-        for (Map.Entry<String, List<Node>> entry : forwardMacroCalls.entrySet()) {
+        for (Map.Entry<String, List<PseudoMacroCall>> entry : forwardMacroCalls.entrySet()) {
             error(notDefined(entry.getValue().get(0), "Macro '" + entry.getKey() + "'"));
         }
     }
@@ -40,12 +40,14 @@ public class ExpandMacrosVisitor extends NodeVisitor {
 
         // expand macro if we had earlier calls (as a forward reference)
         if (forwardMacroCalls.containsKey(id)) {
-            for (Node macroCall : forwardMacroCalls.get(id)) {
-                macroCall.addChild(node.copy());
+            for (PseudoMacroCall macroCall : forwardMacroCalls.remove(id)) {
+                Node def = node.copy();
+                macroCall.addChild(def);
+                visitChildren(def); // b/c original node does not have a parent
             }
-            forwardMacroCalls.remove(id);
+        } else {
+            visitChildren(node);
         }
-        visitChildren(node);
     }
 
     @Override
@@ -53,19 +55,20 @@ public class ExpandMacrosVisitor extends NodeVisitor {
         String id = normalizeId(node.id);
         if (macros.containsKey(id)) {
             node.addChild(macros.get(id).copy());
+            checkInfiniteLoop(node);
         } else {
             // maybe the macro is defined later
             forwardMacroCalls.putIfAbsent(id, new ArrayList<>());
-            List<Node> macroCalls = forwardMacroCalls.get(id);
+            List<PseudoMacroCall> macroCalls = forwardMacroCalls.get(id);
             macroCalls.add(node);
         }
-        checkInfiniteLoop(node);
     }
 
     private void checkInfiniteLoop(PseudoMacroCall node) {
         String id = normalizeId(node.id);
         Optional<Node> parent = node.getParent();
         while (parent.isPresent()) {
+            // search all parents to the top for PseudoMacroDef
             Node parentValue = parent.get();
             if (parentValue instanceof PseudoMacroDef) {
                 String parentId = normalizeId(((PseudoMacroDef) parentValue).id);
@@ -73,7 +76,7 @@ public class ExpandMacrosVisitor extends NodeVisitor {
                     fatalError(infiniteLoopDetected(node, "macro call '" + id + "'"));
                 }
             }
-            parent = parent.get().getParent();
+            parent = parentValue.getParent();
         }
     }
 }
