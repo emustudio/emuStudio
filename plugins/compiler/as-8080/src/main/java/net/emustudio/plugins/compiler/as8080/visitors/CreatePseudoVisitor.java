@@ -53,7 +53,8 @@ public class CreatePseudoVisitor extends As8080ParserBaseVisitor<Node>  {
 
         if (ctx.params != null) {
             for (TerminalNode next : ctx.params.ID_IDENTIFIER()) {
-                PseudoMacroParameter parameter = new PseudoMacroParameter();
+                Token symbol = next.getSymbol();
+                PseudoMacroParameter parameter = new PseudoMacroParameter(symbol.getLine(), symbol.getCharPositionInLine());
                 parameter.addChild(new ExprId(next.getSymbol()));
                 pseudo.addChild(parameter);
             }
@@ -70,7 +71,8 @@ public class CreatePseudoVisitor extends As8080ParserBaseVisitor<Node>  {
 
         if (ctx.args != null) {
             for (RExpressionContext next : ctx.args.rExpression()) {
-                PseudoMacroArgument argument = new PseudoMacroArgument();
+                Token start = next.getStart();
+                PseudoMacroArgument argument = new PseudoMacroArgument(start.getLine(), start.getCharPositionInLine());
                 pseudo.addChild(argument.addChild(CreateVisitors.expr.visit(next)));
             }
         }

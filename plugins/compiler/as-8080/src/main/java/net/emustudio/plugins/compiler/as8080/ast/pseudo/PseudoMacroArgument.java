@@ -8,8 +8,8 @@ import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
  */
 public class PseudoMacroArgument extends Node {
 
-    public PseudoMacroArgument() {
-        super(0, 0);
+    public PseudoMacroArgument(int line, int column) {
+        super(line, column);
         // the only child is expr
     }
 
@@ -20,6 +20,6 @@ public class PseudoMacroArgument extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new PseudoMacroArgument();
+        return new PseudoMacroArgument(line, column);
     }
 }

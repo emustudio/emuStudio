@@ -44,7 +44,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     private Set<Node> needMorePassThings = new HashSet<>();
 
     private final Map<String, List<String>> macroArguments = new HashMap<>();
-    private String currentMacro;
+    private String currentMacroId;
 
     @Override
     public void visit(Program node) {
@@ -213,15 +213,28 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoMacroCall node) {
-        currentMacro = normalizeId(node.id);
-        macroArguments.put(currentMacro, new ArrayList<>());
+        // save old current macro, including its params
+        String oldCurrentMacroId = currentMacroId;
+        Map<String, Optional<Evaluated>> oldMacroParams = new HashMap<>();
+        if (oldCurrentMacroId != null) {
+            for (String macroParameter : macroArguments.get(oldCurrentMacroId)) {
+                oldMacroParams.put(macroParameter, env.get(macroParameter));
+            }
+        }
+
+        currentMacroId = normalizeId(node.id);
+        macroArguments.put(currentMacroId, new ArrayList<>());
         visitChildren(node);
 
         // on macro exit, remove current macro arguments from env
-        for (String macroParameter : macroArguments.get(currentMacro)) {
+        for (String macroParameter : macroArguments.get(currentMacroId)) {
             env.remove(macroParameter);
         }
-        macroArguments.remove(currentMacro);
+        // and put back old current macro arguments to env
+        oldMacroParams.forEach((macroParam, expr) -> env.put(macroParam, expr));
+
+        macroArguments.remove(currentMacroId);
+        currentMacroId = oldCurrentMacroId;
     }
 
     @Override
@@ -232,7 +245,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.collectChild(ExprId.class)
             .ifPresent(exprId -> {
                 String macroParameter = normalizeId(exprId.id);
-                macroArguments.get(currentMacro).add(macroParameter);
+                macroArguments.get(currentMacroId).add(macroParameter);
                 env.put(macroParameter, latestEval);
             });
     }

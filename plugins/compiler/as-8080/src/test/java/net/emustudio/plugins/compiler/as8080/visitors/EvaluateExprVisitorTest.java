@@ -11,6 +11,7 @@ import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
+import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegPairExpr;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 import org.junit.Test;
 
@@ -364,4 +365,90 @@ public class EvaluateExprVisitorTest {
         );
     }
 
+    @Test
+    public void testEvaluateMacroCalls() {
+        Program program = new Program();
+        program
+            .addChild(new PseudoLabel(0, 0, "label"))
+            .addChild(new PseudoMacroCall(0, 0, "x")
+                .addChild(new PseudoMacroArgument(0, 0)
+                    .addChild(new ExprId(0, 0, "addr"))
+                    .addChild(new ExprId(0, 0, "label")))
+                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new ExprId(0, 0, "addr"))));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        assertTrees(
+            new Program()
+                .addChild(new PseudoMacroCall(0, 0, "x")
+                    .addChild(new PseudoMacroArgument(0, 0)
+                        .addChild(new ExprId(0, 0, "addr"))
+                        .addChild(new Evaluated(0, 0, 0)))
+                    .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                        .addChild(new Evaluated(0, 0, 0)))),
+            program
+        );
+    }
+
+    @Test
+    public void testEvaluateMacroCallAmbiguous() {
+        Program program = new Program();
+        program
+            .addChild(new PseudoMacroCall(0, 0, "x")
+                .addChild(new PseudoMacroArgument(0, 0)
+                    .addChild(new ExprId(0, 0, "label"))
+                    .addChild(new ExprId(0, 0, "addr")))
+                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new ExprId(0, 0, "addr"))))
+            .addChild(new PseudoLabel(0, 0, "label"));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        assertTrue(program.env().hasError(ERROR_AMBIGUOUS_EXPRESSION));
+    }
+
+    @Test
+    public void testEvaluateMacroScopedArguments() {
+        Program program = new Program();
+        program
+            .addChild(new PseudoMacroCall(0, 0, "x")
+                .addChild(new PseudoMacroArgument(0, 0)
+                    .addChild(new ExprId(0, 0, "arg"))
+                    .addChild(new ExprNumber(0, 0, 0)))
+                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new ExprId(0, 0, "arg")))
+                .addChild(new PseudoMacroCall(0, 0, "y")
+                    .addChild(new PseudoMacroArgument(0, 0)
+                        .addChild(new ExprId(0, 0, "arg"))
+                        .addChild(new ExprNumber(0, 0, 1)))
+                    .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                        .addChild(new ExprId(0, 0, "arg"))))
+                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new ExprId(0, 0, "arg"))));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        assertTrees(
+            new Program()
+                .addChild(new PseudoMacroCall(0, 0, "x")
+                    .addChild(new PseudoMacroArgument(0, 0)
+                        .addChild(new ExprId(0, 0, "arg"))
+                        .addChild(new Evaluated(0, 0, 0)))
+                    .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                        .addChild(new Evaluated(0, 0, 0)))
+                    .addChild(new PseudoMacroCall(0, 0, "y")
+                        .addChild(new PseudoMacroArgument(0, 0)
+                            .addChild(new ExprId(0, 0, "arg"))
+                            .addChild(new Evaluated(0, 0, 1)))
+                        .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                            .addChild(new Evaluated(0, 0, 1))))
+                    .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                        .addChild(new Evaluated(0, 0, 0)))),
+            program
+        );
+    }
 }

@@ -27,4 +27,9 @@ public class Evaluated extends Node {
         Evaluated evaluated = (Evaluated) o;
         return value == evaluated.value;
     }
+
+    @Override
+    protected String toStringShallow() {
+        return "Evaluated(" + value + ")";
+    }
 }
