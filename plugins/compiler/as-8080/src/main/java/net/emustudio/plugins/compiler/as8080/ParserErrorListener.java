@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 
 class ParserErrorListener extends BaseErrorListener {
+    // TODO: parse message expected tokens to token categories
     @Override
     public void syntaxError(
         Recognizer<?, ?> recognizer,

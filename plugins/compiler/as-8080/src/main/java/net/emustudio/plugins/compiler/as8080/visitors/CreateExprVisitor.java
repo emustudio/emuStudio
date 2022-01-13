@@ -55,6 +55,11 @@ public class CreateExprVisitor extends As8080ParserBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitExprParens(As8080Parser.ExprParensContext ctx) {
+        return visit(ctx.expr);
+    }
+
+    @Override
     public Node visitExprCurrentAddress(As8080Parser.ExprCurrentAddressContext ctx) {
         Token start = ctx.getStart();
         return new ExprCurrentAddress(start.getLine(), start.getCharPositionInLine());

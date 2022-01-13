@@ -12,7 +12,7 @@ import static net.emustudio.plugins.compiler.as8080.As8080Lexer.*;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     private final As8080Lexer lexer;
-    private static final int[] tokenMap = new int[As8080Lexer.ERROR + 1]; // As8080Lexer.ERROR is the highest number
+    private static final int[] tokenMap = new int[As8080Lexer.EOL + 1]; // As8080Lexer.ERROR is the highest number
 
     static {
         tokenMap[COMMENT] = Token.COMMENT;
