@@ -29,6 +29,7 @@ import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
@@ -119,6 +120,7 @@ public class Assembler8080 extends AbstractCompiler {
             Program program = new Program();
             new CreateProgramVisitor(program).visit(parser.rStart());
 
+            IntelHEX hex = new IntelHEX();
             NodeVisitor[] visitors = new NodeVisitor[] {
                 new ExpandIncludesVisitor(),
                 new CheckDeclarationsVisitor(),
@@ -128,67 +130,46 @@ public class Assembler8080 extends AbstractCompiler {
                 // until the macro is properly integrated (b/c we could see multiple macro defs on multiple calls)
                 new CheckDeclarationsVisitor(),
                 new EvaluateExprVisitor(),
-                new CheckExprSizesVisitor()
+                new CheckExprSizesVisitor(),
+                new GenerateCodeVisitor(hex)
             };
 
             for (NodeVisitor visitor : visitors) {
                 visitor.visit(program);
             }
 
+            programLocation = 0;
+            if (program.env().hasNoErrors()) {
+                hex.generate(outputFileName);
+                programLocation = hex.findProgramLocation();
 
-//            ProgramParser programParser = new ProgramParser();
-//            programParser.visit(parser.start());
-//
-//            Program program = programParser.getProgram();
-//            CodeGenerator codeGenerator = new CodeGenerator();
-//            ByteBuffer code = codeGenerator.generateCode(program);
-//
-//            if (code.hasRemaining()) {
-//                writeToFile(code, outputFileName);
-//                writeToMemory(code);
-//            }
+                notifyInfo(String.format(
+                    "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
+                    outputFileName, RadixUtils.formatWordHexString(programLocation)
+                ));
 
-         //   programLocation = program.getStartLine() * 4;
-
-            notifyInfo(String.format(
-                "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                outputFileName, RadixUtils.formatWordHexString(programLocation)
-            ));
+                if (memory != null) {
+                    hex.loadIntoMemory(memory, b -> b);
+                    notifyInfo("Compiled file was loaded into memory.");
+                } else {
+                    notifyWarning("Memory is not available.");
+                }
+                return true;
+            } else {
+                for (CompileError error : program.env().getErrors()) {
+                    notifyError(error.line, error.column, error.msg);
+                }
+                return false;
+            }
         } catch (CompileException e) {
             notifyError(e.line, e.column, e.getMessage());
             return false;
         } catch (IOException e) {
             notifyError("Compilation error: " + e);
-            LOGGER.error("Compilation error", e);
             return false;
         } finally {
             notifyCompileFinish();
         }
-
-        return true;
-
-//        try {
-//            IntelHEX hex = compileToHex(inputFileName);
-//
-//            hex.generate(outputFileName);
-//            programLocation = hex.getProgramLocation();
-//            notifyInfo("Compilation was successful.\n Output file: " + outputFileName);
-//
-//            if (memory != null) {
-//                hex.loadIntoMemory(memory);
-//                notifyInfo("Compiled file was loaded into memory.");
-//            } else {
-//                notifyWarning("Memory is not available.");
-//            }
-//            return true;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            LOGGER.trace("Compiler exception", e);
-//            notifyError("Compilation error: " + e.getMessage());
-//            return false;
-//        } finally {
-//            notifyCompileFinish();
-//        }
     }
 
     @Override
@@ -212,42 +193,6 @@ public class Assembler8080 extends AbstractCompiler {
     public List<SourceFileExtension> getSourceFileExtensions() {
         return SOURCE_FILE_EXTENSIONS;
     }
-
-//    private IntelHEX compileToHex(String inputFileName) throws Exception {
-//        Objects.requireNonNull(inputFileName);
-//
-//        notifyInfo(getTitle() + ", version " + getVersion());
-//
-//        Object parsedAST;
-//        IntelHEX hex = new IntelHEX();
-//
-//        try (Reader reader = new FileReader(inputFileName)) {
-//            lexer.reset(reader, 0, 0, 0);
-//            parser.reset();
-//            parsedAST = parser.parse().value;
-//
-//            if (parsedAST == null) {
-//                throw new Exception("Unexpected end of file");
-//            }
-//            if (parser.hasSyntaxErrors()) {
-//                throw new Exception("One or more errors has been found, cannot continue.");
-//            }
-//
-//            // do several passes for compiling
-//            Statement stat = (Statement) parsedAST;
-//            Namespace env = new Namespace(inputFileName);
-//            stat.pass1(env); // create symbol table
-//            stat.pass2(0); // try to evaluate all expressions + compute relative addresses
-//            while (stat.pass3(env)) {
-//                // don't worry about deadlock
-//            }
-//            if (env.getPassNeedCount() != 0) {
-//                throw new Exception("Could not evaluate: " + env.getPassNeedView());
-//            }
-//            stat.pass4(hex, env);
-//            return hex;
-//        }
-//    }
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {

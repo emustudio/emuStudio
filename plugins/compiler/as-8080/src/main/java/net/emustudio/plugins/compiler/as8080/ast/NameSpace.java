@@ -32,6 +32,9 @@ public class NameSpace {
         return Optional.ofNullable(definitions.get(id)).flatMap(e -> e);
     }
 
+    public List<CompileError> getErrors() {
+        return Collections.unmodifiableList(errors);
+    }
 
     @Override
     public String toString() {
