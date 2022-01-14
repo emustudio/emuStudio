@@ -14,6 +14,7 @@ public class CompileError {
     public static final int ERROR_IF_EXPRESSION_REFERENCES_OWN_BLOCK = 6;
     public static final int ERROR_DECLARATION_REFERENCES_ITSELF = 7;
     public static final int ERROR_MACRO_ARGUMENTS_DO_NOT_MATCH = 8;
+    public static final int ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED = 9;
 
     public final int line;
     public final int column;
@@ -62,6 +63,14 @@ public class CompileError {
 
     public static CompileError macroArgumentsDoNotMatch(Node node) {
         return new CompileError(node, ERROR_MACRO_ARGUMENTS_DO_NOT_MATCH, "Macro call arguments do not match with defined parameters");
+    }
+
+    public static CompileError expressionIsBiggerThanExpected(Node node, int expectedBytes, int wasBytes) {
+        return new CompileError(
+            node,
+            ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED,
+            "Expression (" + wasBytes + " bytes) is bigger than expected (" + expectedBytes + " byte(s))"
+        );
     }
 
     @Override

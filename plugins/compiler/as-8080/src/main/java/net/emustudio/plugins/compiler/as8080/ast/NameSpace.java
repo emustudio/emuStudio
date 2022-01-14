@@ -1,7 +1,6 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
 import net.emustudio.plugins.compiler.as8080.CompileError;
-import net.emustudio.plugins.compiler.as8080.Either;
 
 import java.util.*;
 

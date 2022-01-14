@@ -21,42 +21,42 @@ public class ParsingUtilsTest {
 
     @Test
     public void testParseLitHex1() {
-        List<Token> tokens = getTokens("-0x22F 0XAA55");
+        List<Token> tokens = getTokens("0x22F 0XAA55");
         assertTokenTypes(tokens, As8080Parser.LIT_HEXNUMBER_1, As8080Parser.LIT_HEXNUMBER_1, As8080Parser.EOF);
-        assertEquals(-0x22F, ParsingUtils.parseLitHex1(tokens.get(0)));
+        assertEquals(0x22F, ParsingUtils.parseLitHex1(tokens.get(0)));
         assertEquals(0xAA55, ParsingUtils.parseLitHex1(tokens.get(1)));
     }
 
     @Test
     public void testParseLitHex2() {
-        List<Token> tokens = getTokens("-022Fh AA55H");
+        List<Token> tokens = getTokens("022Fh AA55H");
         assertTokenTypes(tokens, As8080Parser.LIT_HEXNUMBER_2, As8080Parser.LIT_HEXNUMBER_2, As8080Parser.EOF);
-        assertEquals(-0x22F, ParsingUtils.parseLitHex2(tokens.get(0)));
+        assertEquals(0x22F, ParsingUtils.parseLitHex2(tokens.get(0)));
         assertEquals(0xAA55, ParsingUtils.parseLitHex2(tokens.get(1)));
     }
 
     @Test
     public void testParseLitOct() {
-        List<Token> tokens = getTokens("-22q 55O 77Q -001o");
+        List<Token> tokens = getTokens("22q 55O 77Q 001o");
         assertTokenTypes(
             tokens,
             As8080Parser.LIT_OCTNUMBER, As8080Parser.LIT_OCTNUMBER, As8080Parser.LIT_OCTNUMBER,
             As8080Parser.LIT_OCTNUMBER, As8080Parser.EOF
         );
-        assertEquals(-18, ParsingUtils.parseLitOct(tokens.get(0)));
+        assertEquals(18, ParsingUtils.parseLitOct(tokens.get(0)));
         assertEquals(45, ParsingUtils.parseLitOct(tokens.get(1)));
         assertEquals(63, ParsingUtils.parseLitOct(tokens.get(2)));
-        assertEquals(-1, ParsingUtils.parseLitOct(tokens.get(3)));
+        assertEquals(1, ParsingUtils.parseLitOct(tokens.get(3)));
     }
 
     @Test
     public void testParseLitDec() {
-        List<Token> tokens = getTokens("-22 55 00");
+        List<Token> tokens = getTokens("22 55 00");
         assertTokenTypes(
             tokens,
             As8080Parser.LIT_NUMBER, As8080Parser.LIT_NUMBER, As8080Parser.LIT_NUMBER, As8080Parser.EOF
         );
-        assertEquals(-22, ParsingUtils.parseLitDec(tokens.get(0)));
+        assertEquals(22, ParsingUtils.parseLitDec(tokens.get(0)));
         assertEquals(55, ParsingUtils.parseLitDec(tokens.get(1)));
         assertEquals(0, ParsingUtils.parseLitDec(tokens.get(2)));
     }

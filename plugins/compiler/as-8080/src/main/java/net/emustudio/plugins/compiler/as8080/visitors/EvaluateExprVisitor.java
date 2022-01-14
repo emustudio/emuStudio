@@ -35,7 +35,7 @@ import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
  */
 public class EvaluateExprVisitor extends NodeVisitor {
     private int currentAddress = 0;
-    private int expectedBytes = 0;
+    private int sizeBytes = 0;
     private boolean doNotEvaluateCurrentAddress = false;
     private final Set<String> doNotEvaluateVariables = new HashSet<>();
     private final Set<String> forwardReferences = new HashSet<>();
@@ -89,21 +89,21 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(DataDB node) {
         node.setAddress(currentAddress);
-        expectedBytes = 1;
+        sizeBytes = 1;
         visitChildren(node);
     }
 
     @Override
     public void visit(DataDW node) {
         node.setAddress(currentAddress);
-        expectedBytes = 2;
+        sizeBytes = 2;
         visitChildren(node);
     }
 
     @Override
     public void visit(DataDS node) {
         node.setAddress(currentAddress);
-        expectedBytes = 0;
+        sizeBytes = 0;
         visitChildren(node);
         latestEval.ifPresentOrElse(
             e -> currentAddress += e.value,
@@ -113,7 +113,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoEqu node) {
-        expectedBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
+        sizeBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
         visitChildren(node);
         env.put(normalizeId(node.id), latestEval);
 
@@ -123,7 +123,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoSet node) {
-        expectedBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
+        sizeBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
         String normalizedId = normalizeId(node.id);
         if (!doNotEvaluateVariables.contains(normalizedId)) {
             visitChildren(node);
@@ -153,7 +153,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(PseudoOrg node) {
         node.setAddress(currentAddress);
-        expectedBytes = 0;
+        sizeBytes = 0;
         visitChildren(node);
         latestEval.ifPresentOrElse(
             e -> currentAddress = e.value,
@@ -163,7 +163,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoIf node) {
-        expectedBytes = 0;
+        sizeBytes = 0;
         Optional<Evaluated> expr = node
             .collectChild(PseudoIfExpression.class)
             .flatMap(p -> {
@@ -190,7 +190,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(InstrExpr node) {
         node.setAddress(currentAddress);
-        expectedBytes = node.getExprSizeBytes();
+        sizeBytes = node.getExprSizeBytes();
         visitChildren(node);
         currentAddress++; // opcode
     }
@@ -198,7 +198,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(InstrRegExpr node) {
         node.setAddress(currentAddress);
-        expectedBytes = 1;
+        sizeBytes = 1;
         visitChildren(node);
         currentAddress++; // opcode
     }
@@ -206,7 +206,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(InstrRegPairExpr node) {
         node.setAddress(currentAddress);
-        expectedBytes = 2;
+        sizeBytes = 2;
         visitChildren(node);
         currentAddress++; // opcode
     }
@@ -239,7 +239,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoMacroArgument node) {
-        expectedBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
+        sizeBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
         visitChildren(node, 1); // expected two children: ExprId and Expr*
 
         node.collectChild(ExprId.class)
@@ -253,7 +253,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(Evaluated node) {
         latestEval = Optional.of(node);
-        currentAddress += expectedBytes;
+        currentAddress += sizeBytes;
     }
 
     @Override
@@ -294,6 +294,6 @@ public class EvaluateExprVisitor extends NodeVisitor {
             e -> node.remove().ifPresent(p -> p.addChild(e)),
             () -> needMorePassThings.add(node)
         );
-        currentAddress += expectedBytes;
+        currentAddress += sizeBytes;
     }
 }

@@ -127,7 +127,8 @@ public class Assembler8080 extends AbstractCompiler {
                 // macro expansion could bring re-definition of declarations, but we cannot check declarations again
                 // until the macro is properly integrated (b/c we could see multiple macro defs on multiple calls)
                 new CheckDeclarationsVisitor(),
-                new EvaluateExprVisitor()
+                new EvaluateExprVisitor(),
+                new CheckExprSizesVisitor()
             };
 
             for (NodeVisitor visitor : visitors) {

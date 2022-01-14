@@ -25,14 +25,18 @@ public class LexerTest {
 
     @Test
     public void testParseHex1() {
-        assertTokenTypes("0x1 0x0 -0x5f -0xFffF 0x1BC", LIT_HEXNUMBER_1, LIT_HEXNUMBER_1, LIT_HEXNUMBER_1, LIT_HEXNUMBER_1, LIT_HEXNUMBER_1, EOF);
+        assertTokenTypes(
+            "0x1 0x0 -0x5f -0xFffF 0x1BC",
+            LIT_HEXNUMBER_1, LIT_HEXNUMBER_1, OP_SUBTRACT, LIT_HEXNUMBER_1, OP_SUBTRACT, LIT_HEXNUMBER_1, LIT_HEXNUMBER_1, EOF
+        );
     }
 
     @Test
     public void testParseHex2() {
         assertTokenTypes(
             "1h 0h -5Fh -FFFFh 1BCh 5h -5h",
-            LIT_HEXNUMBER_2, LIT_HEXNUMBER_2, LIT_HEXNUMBER_2, LIT_HEXNUMBER_2, LIT_HEXNUMBER_2, LIT_HEXNUMBER_2, LIT_HEXNUMBER_2, EOF
+            LIT_HEXNUMBER_2, LIT_HEXNUMBER_2, OP_SUBTRACT, LIT_HEXNUMBER_2, OP_SUBTRACT, LIT_HEXNUMBER_2, LIT_HEXNUMBER_2,
+            LIT_HEXNUMBER_2, OP_SUBTRACT, LIT_HEXNUMBER_2, EOF
         );
     }
 
@@ -40,13 +44,14 @@ public class LexerTest {
     public void testParseDecimal() {
         assertTokenTypes(
             "0 1 -2 3 -4 5 66 999",
-            LIT_NUMBER, LIT_NUMBER, LIT_NUMBER, LIT_NUMBER, LIT_NUMBER, LIT_NUMBER, LIT_NUMBER, LIT_NUMBER, EOF
+            LIT_NUMBER, LIT_NUMBER, OP_SUBTRACT, LIT_NUMBER, LIT_NUMBER, OP_SUBTRACT, LIT_NUMBER, LIT_NUMBER, LIT_NUMBER,
+            LIT_NUMBER, EOF
         );
     }
 
     @Test
     public void testParseOctal() {
-        assertTokenTypes("-6o 7q 11q -345O", LIT_OCTNUMBER, LIT_OCTNUMBER, LIT_OCTNUMBER, LIT_OCTNUMBER, EOF);
+        assertTokenTypes("-6o 7q 11q -345O", OP_SUBTRACT, LIT_OCTNUMBER, LIT_OCTNUMBER, LIT_OCTNUMBER, OP_SUBTRACT, LIT_OCTNUMBER, EOF);
     }
 
     @Test
