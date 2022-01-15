@@ -1,10 +1,13 @@
 package net.emustudio.plugins.compiler.as8080.ast.instr;
 
+import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
@@ -12,6 +15,7 @@ import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 public class InstrExpr extends Node {
     public final int opcode;
     private final static Set<Integer> twoBytes = new HashSet<>();
+    private final static Map<Integer, Integer> opcodes = new HashMap<>();
 
     static {
         twoBytes.add(OPCODE_ADI);
@@ -24,6 +28,39 @@ public class InstrExpr extends Node {
         twoBytes.add(OPCODE_CPI);
         twoBytes.add(OPCODE_IN);
         twoBytes.add(OPCODE_OUT);
+
+        opcodes.put(OPCODE_LDA, 0x3A);
+        opcodes.put(OPCODE_STA, 0x32);
+        opcodes.put(OPCODE_LHLD, 0x2A);
+        opcodes.put(OPCODE_SHLD, 0x22);
+        opcodes.put(OPCODE_ADI, 0xC6);
+        opcodes.put(OPCODE_ACI, 0xCE);
+        opcodes.put(OPCODE_SUI, 0xD6);
+        opcodes.put(OPCODE_SBI, 0xDE);
+        opcodes.put(OPCODE_ANI, 0xE6);
+        opcodes.put(OPCODE_ORI, 0xF6);
+        opcodes.put(OPCODE_XRI, 0xEE);
+        opcodes.put(OPCODE_CPI, 0xFE);
+        opcodes.put(OPCODE_JMP, 0xC3);
+        opcodes.put(OPCODE_JC, 0xDA);
+        opcodes.put(OPCODE_JNC, 0xD2);
+        opcodes.put(OPCODE_JZ, 0xCA);
+        opcodes.put(OPCODE_JNZ, 0xC2);
+        opcodes.put(OPCODE_JM, 0xFA);
+        opcodes.put(OPCODE_JP, 0xF2);
+        opcodes.put(OPCODE_JPE, 0xEA);
+        opcodes.put(OPCODE_JPO, 0xE2);
+        opcodes.put(OPCODE_CALL, 0xCD);
+        opcodes.put(OPCODE_CC, 0xDC);
+        opcodes.put(OPCODE_CNC, 0xD4);
+        opcodes.put(OPCODE_CNZ, 0xC4);
+        opcodes.put(OPCODE_CM, 0xFC);
+        opcodes.put(OPCODE_CP, 0xF4);
+        opcodes.put(OPCODE_CPE, 0xEC);
+        opcodes.put(OPCODE_CPO, 0xE4);
+        opcodes.put(OPCODE_IN, 0xDB);
+        opcodes.put(OPCODE_OUT, 0xD3);
+        opcodes.put(OPCODE_RST, 0xC7);
     }
 
     public InstrExpr(int line, int column, int opcode) {
@@ -43,6 +80,25 @@ public class InstrExpr extends Node {
             return 1;
         }
         return 2; // address
+    }
+
+    public int getExprMaxValue() {
+        if (opcode == OPCODE_RST) {
+            return 7;
+        } else if (twoBytes.contains(opcode)) {
+            return 0xFFFF;
+        }
+        return 0xFF;
+    }
+
+    public byte eval() {
+        byte result = (byte) (opcodes.get(opcode) & 0xFF);
+        if (opcode == OPCODE_RST) {
+            int value = collectChild(Evaluated.class).get().value;
+            result = (byte) (result | (value << 3));
+        }
+
+        return result;
     }
 
     @Override

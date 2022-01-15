@@ -19,6 +19,11 @@ public class InstrRegPairExpr extends Node {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), regPair.getType());
     }
 
+    public byte eval() {
+        int rp = InstrRegPair.regpairs.get(regPair);
+        return (byte) ((1 | (rp << 4)) & 0xFF);
+    }
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
@@ -26,7 +31,7 @@ public class InstrRegPairExpr extends Node {
 
     @Override
     protected String toStringShallow() {
-        return "InstrRegPairExpr(" + opcode + "," + regPair +")";
+        return "InstrRegPairExpr(" + opcode + "," + regPair + ")";
     }
 
     @Override

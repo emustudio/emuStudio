@@ -4,9 +4,33 @@ import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
+
 public class InstrRegPair extends Node {
+    private final static Map<Integer, Integer> opcodes = new HashMap<>();
+    public final static Map<Integer, Integer> regpairs = new HashMap<>();
+
     public final int opcode;
     public final int regPair;
+
+    static {
+        opcodes.put(OPCODE_STAX, 2);
+        opcodes.put(OPCODE_LDAX, 0xA);
+        opcodes.put(OPCODE_PUSH, 0xC5);
+        opcodes.put(OPCODE_POP, 0xC1);
+        opcodes.put(OPCODE_DAD, 9);
+        opcodes.put(OPCODE_INX, 3);
+        opcodes.put(OPCODE_DCX, 0xB);
+
+        regpairs.put(REG_B, 0);
+        regpairs.put(REG_D, 1);
+        regpairs.put(REG_H, 2);
+        regpairs.put(REG_PSW, 3);
+        regpairs.put(REG_SP, 3);
+    }
 
     public InstrRegPair(int line, int column, int opcode, int regPair) {
         super(line, column);
@@ -18,6 +42,12 @@ public class InstrRegPair extends Node {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), regPair.getType());
     }
 
+    public byte eval() {
+        int result = opcodes.get(opcode);
+        int rp = regpairs.get(regPair);
+        return (byte) ((result | (rp << 4)) & 0xFF);
+    }
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
@@ -25,7 +55,7 @@ public class InstrRegPair extends Node {
 
     @Override
     protected String toStringShallow() {
-        return "InstrRegPair(" + opcode + "," + regPair +")";
+        return "InstrRegPair(" + opcode + "," + regPair + ")";
     }
 
     @Override

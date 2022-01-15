@@ -5,7 +5,7 @@ import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 public class InstrRegReg extends Node {
-    public final int opcode;
+    public final int opcode; // MOV only
     public final int srcReg;
     public final int dstReg;
 
@@ -18,6 +18,12 @@ public class InstrRegReg extends Node {
 
     public InstrRegReg(Token opcode, Token dst, Token src) {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), dst.getType(), src.getType());
+    }
+
+    public byte eval() {
+        int srcRegister = InstrReg.registers.get(srcReg);
+        int dstRegister = InstrReg.registers.get(dstReg);
+        return (byte)((0x40 | (dstRegister << 3) | (srcRegister)) & 0xFF); // TODO: mov M, M == HLT
     }
 
     @Override

@@ -5,7 +5,7 @@ import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 public class InstrRegExpr extends Node {
-    public final int opcode;
+    public final int opcode; // MVI only
     public final int reg;
 
     public InstrRegExpr(int line, int column, int opcode, int reg) {
@@ -19,6 +19,11 @@ public class InstrRegExpr extends Node {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), reg.getType());
     }
 
+    public byte eval() {
+        int register = InstrReg.registers.get(reg);
+        return (byte) ((6 | (register << 3)) & 0xFF);
+    }
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
@@ -26,7 +31,7 @@ public class InstrRegExpr extends Node {
 
     @Override
     protected String toStringShallow() {
-        return "InstrRegExpr(" + opcode + "," + reg +")";
+        return "InstrRegExpr(" + opcode + "," + reg + ")";
     }
 
     @Override

@@ -5,8 +5,10 @@ import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
+import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegPairExpr;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroArgument;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoOrg;
 
 import static net.emustudio.plugins.compiler.as8080.CompileError.expressionIsBiggerThanExpected;
@@ -36,6 +38,12 @@ public class CheckExprSizesVisitor extends NodeVisitor {
     }
 
     @Override
+    public void visit(InstrExpr node) {
+        expectedBytes = node.getExprSizeBytes();
+        visitChildren(node);
+    }
+
+    @Override
     public void visit(InstrRegExpr node) {
         expectedBytes = 1;
         visitChildren(node);
@@ -51,6 +59,11 @@ public class CheckExprSizesVisitor extends NodeVisitor {
     public void visit(PseudoOrg node) {
         expectedBytes = 2;
         visitChildren(node);
+    }
+
+    @Override
+    public void visit(PseudoMacroArgument node) {
+        node.remove();
     }
 
     @Override

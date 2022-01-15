@@ -5,13 +5,17 @@ import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegPairExpr;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroArgument;
+import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroCall;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoOrg;
 import org.junit.Test;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED;
+import static net.emustudio.plugins.compiler.as8080.Utils.assertTrees;
 import static org.junit.Assert.assertTrue;
 
 public class CheckExprSizesVisitorTest {
@@ -172,5 +176,41 @@ public class CheckExprSizesVisitorTest {
         visitor.visit(program);
 
         assertTrue(program.env().hasError(ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED));
+    }
+
+    @Test
+    public void testMacroArgumentsAreRemoved() {
+        Program program = new Program();
+        program
+            .addChild(new PseudoMacroCall(0, 0, "x")
+                .addChild(new PseudoMacroArgument(0, 0)
+                    .addChild(new ExprId(0, 0, "arg"))
+                    .addChild(new Evaluated(0, 0, 0)))
+                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new Evaluated(0, 0, 0)))
+                .addChild(new PseudoMacroCall(0, 0, "y")
+                    .addChild(new PseudoMacroArgument(0, 0)
+                        .addChild(new ExprId(0, 0, "arg"))
+                        .addChild(new Evaluated(0, 0, 1)))
+                    .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                        .addChild(new Evaluated(0, 0, 1))))
+                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new Evaluated(0, 0, 0))));
+
+        CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
+        visitor.visit(program);
+
+        assertTrees(
+            new Program()
+                .addChild(new PseudoMacroCall(0, 0, "x")
+                    .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                        .addChild(new Evaluated(0, 0, 0)))
+                    .addChild(new PseudoMacroCall(0, 0, "y")
+                        .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                            .addChild(new Evaluated(0, 0, 1))))
+                    .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
+                        .addChild(new Evaluated(0, 0, 0)))),
+            program
+        );
     }
 }
