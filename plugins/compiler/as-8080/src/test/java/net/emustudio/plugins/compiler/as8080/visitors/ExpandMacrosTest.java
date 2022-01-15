@@ -7,7 +7,7 @@ import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroArgument;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroCall;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroDef;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroParameter;
-import net.emustudio.plugins.compiler.as8080.exceptions.used.FatalError;
+import net.emustudio.plugins.compiler.as8080.exceptions.FatalError;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

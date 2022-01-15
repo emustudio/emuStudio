@@ -2,7 +2,7 @@ package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
 
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 
 /**
  * Macro definition parameter

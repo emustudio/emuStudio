@@ -2,7 +2,7 @@ package net.emustudio.plugins.compiler.as8080.ast.instr;
 
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.HashMap;
@@ -82,20 +82,14 @@ public class InstrExpr extends Node {
         return 2; // address
     }
 
-    public int getExprMaxValue() {
-        if (opcode == OPCODE_RST) {
-            return 7;
-        } else if (twoBytes.contains(opcode)) {
-            return 0xFFFF;
-        }
-        return 0xFF;
-    }
-
     public byte eval() {
         byte result = (byte) (opcodes.get(opcode) & 0xFF);
         if (opcode == OPCODE_RST) {
-            int value = collectChild(Evaluated.class).get().value;
-            result = (byte) (result | (value << 3));
+            result = (byte) (result | collectChild(Evaluated.class)
+                .map(e -> {
+                    int value = e.value;
+                    return (byte) (value << 3);
+                }).orElse((byte) 0));
         }
 
         return result;

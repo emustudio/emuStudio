@@ -1,5 +1,7 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
+import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+
 public class Evaluated extends Node {
     public final int value;
 

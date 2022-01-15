@@ -2,7 +2,6 @@ package net.emustudio.plugins.compiler.as8080.visitors;
 
 import net.emustudio.plugins.compiler.as8080.As8080Lexer;
 import net.emustudio.plugins.compiler.as8080.As8080Parser;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoInclude;
 import org.antlr.v4.runtime.CharStreams;

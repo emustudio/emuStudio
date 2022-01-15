@@ -1,7 +1,7 @@
 package net.emustudio.plugins.compiler.as8080.ast.instr;
 
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.HashMap;

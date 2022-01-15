@@ -1,6 +1,5 @@
 package net.emustudio.plugins.compiler.as8080;
 
-import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.visitors.CreateProgramVisitor;
@@ -20,7 +19,6 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
-import static net.emustudio.plugins.compiler.as8080.As8080Parser.REG_M;
 import static org.junit.Assert.assertEquals;
 
 public class Utils {

@@ -6,7 +6,7 @@ import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
-import net.emustudio.plugins.compiler.as8080.exceptions.used.FatalError;
+import net.emustudio.plugins.compiler.as8080.exceptions.FatalError;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

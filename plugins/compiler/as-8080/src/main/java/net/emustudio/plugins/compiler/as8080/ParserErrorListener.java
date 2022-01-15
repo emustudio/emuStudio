@@ -1,6 +1,6 @@
 package net.emustudio.plugins.compiler.as8080;
 
-import net.emustudio.plugins.compiler.as8080.exceptions.used.SyntaxErrorException;
+import net.emustudio.plugins.compiler.as8080.exceptions.SyntaxErrorException;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;

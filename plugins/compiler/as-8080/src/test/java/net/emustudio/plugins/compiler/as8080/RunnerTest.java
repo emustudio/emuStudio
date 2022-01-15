@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -30,7 +29,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-@Ignore
 public class RunnerTest {
 
     @Rule

@@ -2,7 +2,7 @@ package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
 import net.emustudio.plugins.compiler.as8080.ParsingUtils;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;

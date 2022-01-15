@@ -1,7 +1,6 @@
 package net.emustudio.plugins.compiler.as8080.visitors;
 
 import net.emustudio.plugins.compiler.as8080.ast.Node;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroArgument;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroCall;

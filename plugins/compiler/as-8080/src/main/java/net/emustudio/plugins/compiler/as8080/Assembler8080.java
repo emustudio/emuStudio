@@ -30,7 +30,7 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.io.IntelHEX;
-import net.emustudio.plugins.compiler.as8080.ast.NodeVisitor;
+import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 import net.emustudio.plugins.compiler.as8080.visitors.*;
@@ -99,8 +99,13 @@ public class Assembler8080 extends AbstractCompiler {
 
     @Override
     public LexicalAnalyzer createLexer(String s) {
+        //    @Override
+        //    public LexicalAnalyzer createLexer(String s) {
+        //        SSEMLexer lexer = createLexer(CharStreams.fromString(s));
+        //        return new LexicalAnalyzerImpl(lexer);
+        //    }
         As8080Lexer lexer = createLexer(CharStreams.fromString(s));
-        return new Lexer(lexer);
+        return new LexicalAnalyzerImpl(lexer);
     }
 
     @Override

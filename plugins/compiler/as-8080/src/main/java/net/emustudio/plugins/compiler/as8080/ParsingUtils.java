@@ -1,6 +1,5 @@
 package net.emustudio.plugins.compiler.as8080;
 
-import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Locale;
@@ -46,17 +45,6 @@ public class ParsingUtils {
         String rawText = token.getText();
         return Integer.parseInt(rawText.substring(0, rawText.length() - 1), 2);
     }
-
-    public static int parseOpcode(Token token) {
-        switch (token.getText().toLowerCase(Locale.ENGLISH)) {
-            case "rst":
-                return 0xC7;
-        }
-        throw new CompileException(token.getCharPositionInLine(), token.getLine(), "Unknown instruction opcode: " + token.getText());
-    }
-
-
-
 
     public static String parseLabel(Token token) {
         String rawText = token.getText();

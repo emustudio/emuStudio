@@ -1,5 +1,7 @@
 package net.emustudio.plugins.compiler.as8080.ast;
 
+import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -17,10 +19,9 @@ public abstract class Node {
         this.column = column;
     }
 
-    public Node addChildFirst(Node node) {
+    public void addChildFirst(Node node) {
         node.parent = this;
         children.add(0, node);
-        return this;
     }
 
     public Node addChild(Node node) {
