@@ -40,6 +40,11 @@ public class CreateExprVisitor extends As8080ParserBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitExprString(As8080Parser.ExprStringContext ctx) {
+        return new ExprString(ctx.str);
+    }
+
+    @Override
     public Node visitExprUnary(As8080Parser.ExprUnaryContext ctx) {
         ExprUnary unary = new ExprUnary(ctx.unaryop);
         unary.addChild(visit(ctx.expr));

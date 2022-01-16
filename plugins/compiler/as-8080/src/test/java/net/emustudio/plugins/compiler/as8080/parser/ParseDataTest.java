@@ -5,6 +5,7 @@ import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.as8080.ast.expr.ExprString;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprUnary;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import org.junit.Test;
@@ -21,11 +22,7 @@ public class ParseDataTest {
         Program program = parseProgram("db 'hello'");
         assertTrees(new Program()
                 .addChild(new DataDB(0, 0)
-                    .addChild(new ExprNumber(0, 0, 'h'))
-                    .addChild(new ExprNumber(0, 0, 'e'))
-                    .addChild(new ExprNumber(0, 0, 'l'))
-                    .addChild(new ExprNumber(0, 0, 'l'))
-                    .addChild(new ExprNumber(0, 0, 'o'))),
+                    .addChild(new ExprString(0, 0, "hello"))),
             program
         );
     }
@@ -35,11 +32,7 @@ public class ParseDataTest {
         Program program = parseProgram("db \"hello\"");
         assertTrees(new Program()
                 .addChild(new DataDB(0, 0)
-                    .addChild(new ExprNumber(0, 0, 'h'))
-                    .addChild(new ExprNumber(0, 0, 'e'))
-                    .addChild(new ExprNumber(0, 0, 'l'))
-                    .addChild(new ExprNumber(0, 0, 'l'))
-                    .addChild(new ExprNumber(0, 0, 'o'))),
+                    .addChild(new ExprString(0, 0, "hello"))),
             program
         );
     }
@@ -47,7 +40,6 @@ public class ParseDataTest {
     @Test
     public void testDBinstruction() {
         Program program = parseProgram("db stc");
-        System.out.println(program);
         assertTrees(
             new Program()
                 .addChild(new DataDB(0, 0)
@@ -87,11 +79,7 @@ public class ParseDataTest {
                 .addChild(new DataDB(0, 0)
                     .addChild(new ExprUnary(0, 0, OP_SUBTRACT)
                         .addChild(new ExprNumber(0, 0, 1)))
-                    .addChild(new ExprNumber(0, 0, 'h'))
-                    .addChild(new ExprNumber(0, 0, 'e'))
-                    .addChild(new ExprNumber(0, 0, 'l'))
-                    .addChild(new ExprNumber(0, 0, 'l'))
-                    .addChild(new ExprNumber(0, 0, 'o'))
+                    .addChild(new ExprString(0, 0, "hello"))
                     .addChild(new ExprNumber(0, 0, 3))),
             program
         );

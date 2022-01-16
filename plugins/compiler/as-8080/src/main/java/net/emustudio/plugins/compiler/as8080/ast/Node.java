@@ -46,6 +46,10 @@ public abstract class Node {
         return List.copyOf(children);
     }
 
+    public int getChildrenCount() {
+        return children.size();
+    }
+
     public <T extends Node> Optional<T> collectChild(Class<T> cl) {
         for (Node child : children) {
             if (cl.isInstance(child)) {

@@ -61,6 +61,10 @@ public class NodeVisitor {
         visitChildren(node);
     }
 
+    public void visit(ExprString node) {
+        visitChildren(node);
+    }
+
     public void visit(ExprNumber node) {
         visitChildren(node);
     }

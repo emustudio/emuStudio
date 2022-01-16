@@ -140,7 +140,6 @@ rData:
 
 rDBdata:
   expr=rExpression
-  | str=(LIT_STRING_1|LIT_STRING_2)
   | instr=r8bitInstruction
   ;
 
@@ -165,4 +164,5 @@ rExpression:
  | num=LIT_BINNUMBER                                                                    # exprBin
  | PREP_ADDR                                                                            # exprCurrentAddress
  | id=ID_IDENTIFIER                                                                     # exprId
+ | str=(LIT_STRING_1|LIT_STRING_2)                                                      # exprString
  ;

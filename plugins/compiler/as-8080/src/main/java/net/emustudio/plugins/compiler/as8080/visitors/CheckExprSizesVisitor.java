@@ -39,12 +39,18 @@ public class CheckExprSizesVisitor extends NodeVisitor {
     @Override
     public void visit(InstrExpr node) {
         expectedBytes = node.getExprSizeBytes();
+        if (expectedBytes == 1 && node.getChildrenCount() > 1) {
+            error(expressionIsBiggerThanExpected(node, expectedBytes, node.getChildrenCount()));
+        }
         visitChildren(node);
     }
 
     @Override
     public void visit(InstrRegExpr node) {
         expectedBytes = 1;
+        if (node.getChildrenCount() > 1) {
+            error(expressionIsBiggerThanExpected(node, expectedBytes, node.getChildrenCount()));
+        }
         visitChildren(node);
     }
 
@@ -68,8 +74,8 @@ public class CheckExprSizesVisitor extends NodeVisitor {
     @Override
     public void visit(Evaluated node) {
         long maxNumber = Long.MAX_VALUE >>> (63 - expectedBytes * 8);
-        if (node.value != (node.value & maxNumber)) {
-            int wasBits = (int)Math.ceil(Math.log10(node.value) / Math.log10(2)) + 1;
+        if (expectedBytes > 0 && node.value != (node.value & maxNumber)) {
+            int wasBits = (int) Math.ceil(Math.log10(node.value) / Math.log10(2)) + 1;
             int wasBytes = wasBits / 8 + wasBits % 8;
             error(expressionIsBiggerThanExpected(node, expectedBytes, wasBytes));
         }

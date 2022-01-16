@@ -13,7 +13,7 @@ import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static net.emustudio.plugins.compiler.as8080.CompileError.ambiguousExpression;
+import static net.emustudio.plugins.compiler.as8080.CompileError.*;
 import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
 
 /**
@@ -307,6 +307,29 @@ public class EvaluateExprVisitor extends NodeVisitor {
         if (latestEval.isEmpty()) {
             forwardReferences.add(normalizeId(node.id));
         }
+    }
+
+    @Override
+    public void visit(ExprString node) {
+        // 2-byte sized strings are merged, for simplicity. 1-bytes will be added byte per byte.
+        // hopefully this covers all cases.
+
+        int strLen = node.string.length();
+        if (sizeBytes == 2) {
+            if (strLen > sizeBytes) {
+                error(expressionIsBiggerThanExpected(node, sizeBytes, strLen));
+            }
+            int result = node.string.charAt(0);
+            if (strLen > 1) {
+                result |= (node.string.charAt(1) << 8);
+            }
+            node.addChild(new Evaluated(node.line, node.column, result));
+        } else {
+            for (int i = 0; i < strLen; i++) {
+                node.addChild(new Evaluated(node.line, node.column, node.string.charAt(i)));
+            }
+        }
+        node.exclude();
     }
 
     private Optional<Integer> getCurrentAddress() {

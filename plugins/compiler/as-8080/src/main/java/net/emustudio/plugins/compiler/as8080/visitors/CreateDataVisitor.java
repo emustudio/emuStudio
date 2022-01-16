@@ -6,10 +6,7 @@ import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
-import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import org.antlr.v4.runtime.Token;
-
-import static net.emustudio.plugins.compiler.as8080.ParsingUtils.parseLitString;
 
 public class CreateDataVisitor extends As8080ParserBaseVisitor<Node> {
 
@@ -23,12 +20,6 @@ public class CreateDataVisitor extends As8080ParserBaseVisitor<Node> {
                 db.addChild(CreateVisitors.expr.visit(next.expr));
             } else if (next.instr != null) {
                 db.addChild(CreateVisitors.instr.visit(next.instr));
-            } else {
-                Token token = next.str;
-                String text = parseLitString(next.str);
-                for (byte c : text.getBytes()) {
-                    db.addChild(new ExprNumber(token.getLine(), token.getCharPositionInLine(), c));
-                }
             }
         }
         return db;

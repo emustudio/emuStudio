@@ -48,15 +48,13 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
         );
     }
 
-    @Test
-    public void testRecursiveConstantDefinitionsWorks() throws Exception {
+    @Test(expected = Exception.class)
+    public void testRecursiveConstantDefinitionsDoesNotWork() throws Exception {
         compile(
             "here equ there\n"
                 + "there equ here\n"
                 + "jz here"
         );
-
-        assertProgram(0xCA, 0, 0);
     }
 
     @Test(expected = Exception.class)
