@@ -52,7 +52,8 @@ public class ExpandIncludesVisitor extends NodeVisitor {
             alreadyIncludedFiles.add(node.filename);
             new ExpandIncludesVisitor(alreadyIncludedFiles).visit(program);
 
-            node.remove().ifPresent(parent -> parent.addChildren(program.getChildren())); // TODO: custom error space?
+            node.addChildren(program.getChildren());
+            node.exclude();
         } catch (IOException e) {
             error(couldNotReadFile(node, node.filename, e));
         }

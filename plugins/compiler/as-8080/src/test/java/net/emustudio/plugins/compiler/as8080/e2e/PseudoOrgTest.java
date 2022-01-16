@@ -18,19 +18,29 @@
  */
 package net.emustudio.plugins.compiler.as8080.e2e;
 
+import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
+import java.util.Objects;
+
 
 public class PseudoOrgTest extends AbstractCompilerTest {
+    private String sampleFile;
+    private String sample2File;
+
+    @Before
+    public void setup() {
+        sampleFile = Objects.requireNonNull(getClass().getResource("/sample.asm")).getFile();
+        sample2File = Objects.requireNonNull(getClass().getResource("/sample2.asm")).getFile();
+    }
+
 
     @Test
     public void testORGwithInclude() throws Exception {
-        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
         compile(
             "org 3\n"
                 + "call sample\n"
-                + "include '" + includeFile.getAbsolutePath() + "'\n"
+                + "include '" + sampleFile + "'\n"
         );
 
         assertProgram(
@@ -40,13 +50,11 @@ public class PseudoOrgTest extends AbstractCompilerTest {
 
     @Test
     public void testORGwithDoubleInclude() throws Exception {
-        File first = new File(getClass().getResource("/sample.asm").toURI());
-        File second = new File(getClass().getResource("/sample2.asm").toURI());
         compile(
             "org 3\n"
                 + "call sample\n"
-                + "include '" + second.getAbsolutePath() + "'\n"
-                + "include '" + first.getAbsolutePath() + "'\n"
+                + "include '" + sample2File + "'\n"
+                + "include '" + sampleFile + "'\n"
         );
 
         assertProgram(
@@ -56,13 +64,11 @@ public class PseudoOrgTest extends AbstractCompilerTest {
 
     @Test
     public void testORGwithDoubleIncludeAndJMPafter() throws Exception {
-        File first = new File(getClass().getResource("/sample.asm").toURI());
-        File second = new File(getClass().getResource("/sample2.asm").toURI());
         compile(
             "org 3\n"
                 + "jmp next\n"
-                + "include '" + first.getAbsolutePath() + "'\n"
-                + "include '" + second.getAbsolutePath() + "'\n"
+                + "include '" + sampleFile + "'\n"
+                + "include '" + sample2File + "'\n"
                 + "next:\n"
                 + "mov a, b\n"
         );

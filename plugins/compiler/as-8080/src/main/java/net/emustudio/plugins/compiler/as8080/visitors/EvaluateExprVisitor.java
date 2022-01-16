@@ -7,9 +7,7 @@ import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
 import net.emustudio.plugins.compiler.as8080.ast.expr.*;
-import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
-import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
-import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegPairExpr;
+import net.emustudio.plugins.compiler.as8080.ast.instr.*;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 
 import java.util.*;
@@ -144,9 +142,13 @@ public class EvaluateExprVisitor extends NodeVisitor {
         Optional<Evaluated> eval = node.eval(getCurrentAddress(), env);
         env.put(normalizeId(node.label), eval);
         eval.ifPresentOrElse(
-            e -> node.remove(), // we don't need to re-evaluate label
+            e -> {
+                // we don't need to re-evaluate label
+                node.exclude();
+            },
             () -> needMorePassThings.add(node)
         );
+        visitChildren(node);
     }
 
     @Override
@@ -166,7 +168,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
         Optional<Evaluated> expr = node
             .collectChild(PseudoIfExpression.class)
             .flatMap(p -> {
-                visit(p);
+                visitChildren(p);
                 return p.collectChild(Evaluated.class);
             });
 
@@ -208,6 +210,30 @@ public class EvaluateExprVisitor extends NodeVisitor {
         sizeBytes = 2;
         visitChildren(node);
         currentAddress++; // opcode
+    }
+
+    @Override
+    public void visit(InstrNoArgs node) {
+        node.setAddress(currentAddress);
+        currentAddress++;
+    }
+
+    @Override
+    public void visit(InstrRegReg node) {
+        node.setAddress(currentAddress);
+        currentAddress++;
+    }
+
+    @Override
+    public void visit(InstrReg node) {
+        node.setAddress(currentAddress);
+        currentAddress++;
+    }
+
+    @Override
+    public void visit(InstrRegPair node) {
+        node.setAddress(currentAddress);
+        currentAddress++;
     }
 
     @Override

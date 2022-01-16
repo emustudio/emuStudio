@@ -126,7 +126,7 @@ public class Assembler8080 extends AbstractCompiler {
             new CreateProgramVisitor(program).visit(parser.rStart());
 
             IntelHEX hex = new IntelHEX();
-            NodeVisitor[] visitors = new NodeVisitor[] {
+            NodeVisitor[] visitors = new NodeVisitor[]{
                 new ExpandIncludesVisitor(),
                 new CheckDeclarationsVisitor(),
                 new ExpandMacrosVisitor(),

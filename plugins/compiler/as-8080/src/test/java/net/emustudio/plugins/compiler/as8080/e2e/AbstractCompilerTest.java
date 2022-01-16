@@ -20,7 +20,6 @@ package net.emustudio.plugins.compiler.as8080.e2e;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -91,14 +90,14 @@ public abstract class AbstractCompilerTest {
     protected void assertProgram(int... bytes) {
         for (int i = 0; i < bytes.length; i++) {
             assertEquals(
-                String.format("%d. expected=%x, but was=%x", i, bytes[i], memoryStub.read(i)),
-                bytes[i], (int) memoryStub.read(i)
+                String.format("[addr=%x] expected=%x, but was=%x", i, bytes[i], memoryStub.read(i)),
+                (byte)bytes[i], memoryStub.read(i).byteValue()
             );
         }
         for (int i = bytes.length; i < memoryStub.getSize(); i++) {
             assertEquals(
-                String.format("%d. expected=%x, but was=%x", i, 0, memoryStub.read(i)),
-                0, (int) memoryStub.read(i)
+                String.format("[addr=%x] expected=%x, but was=%x", i, 0, memoryStub.read(i)),
+                0, memoryStub.read(i).byteValue()
             );
         }
     }

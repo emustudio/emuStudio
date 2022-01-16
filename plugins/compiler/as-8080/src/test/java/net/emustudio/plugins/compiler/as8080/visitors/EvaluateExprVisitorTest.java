@@ -10,6 +10,7 @@ import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
+import net.emustudio.plugins.compiler.as8080.ast.instr.InstrNoArgs;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegPairExpr;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
@@ -448,6 +449,22 @@ public class EvaluateExprVisitorTest {
                             .addChild(new Evaluated(0, 0, 1))))
                     .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
                         .addChild(new Evaluated(0, 0, 0)))),
+            program
+        );
+    }
+
+    @Test
+    public void testLabelKeepsChildren() {
+        Program program = new Program();
+        program
+            .addChild(new PseudoLabel(0, 0, "label")
+                .addChild(new InstrNoArgs(0, 0, OPCODE_RET)));
+
+        EvaluateExprVisitor visitor = new EvaluateExprVisitor();
+        visitor.visit(program);
+
+        assertTrees(
+            new Program().addChild(new InstrNoArgs(0, 0, OPCODE_RET)),
             program
         );
     }

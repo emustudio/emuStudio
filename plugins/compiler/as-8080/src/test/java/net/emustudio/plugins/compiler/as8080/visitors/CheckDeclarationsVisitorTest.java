@@ -167,11 +167,10 @@ public class CheckDeclarationsVisitorTest {
     }
 
     @Test
-    public void testDeclarationsReferencingInCycle() {
-        Program program = parseProgram("one equ two\ntwo equ three\nthree equ one");
+    public void testConstantIfReference() {
+        Program program = parseProgram("const equ 1\nif const\nrrc\nendif");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
-        System.out.println(program);
-        System.out.println(program.env());
+        assertTrue(program.env().hasNoErrors());
     }
 }

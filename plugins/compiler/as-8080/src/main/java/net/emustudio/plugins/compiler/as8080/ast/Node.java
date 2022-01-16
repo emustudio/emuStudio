@@ -30,6 +30,11 @@ public abstract class Node {
         return this;
     }
 
+    public void addChildAt(int index, Node node) {
+        node.parent = this;
+        children.add(index, node);
+    }
+
     public void addChildren(List<Node> nodes) {
         for (Node node : nodes) {
             node.parent = this;
@@ -69,6 +74,17 @@ public abstract class Node {
         return parent;
     }
 
+    public void exclude() {
+        Optional<Node> parent = getParent();
+        parent.ifPresent(p -> {
+            int index = p.getChildren().indexOf(this);
+            p.removeChild(this);
+            for (Node child : getChildren()) {
+                p.addChildAt(index++, child);
+            }
+        });
+    }
+
     public int getAddress() {
         return address;
     }
@@ -93,7 +109,7 @@ public abstract class Node {
     private String toString(int indent) {
         String spaces = new String(new char[indent]).replace("\0", " ");
         StringBuilder builder = new StringBuilder(spaces);
-        builder.append(toStringShallow());
+        builder.append(address).append("> ").append(toStringShallow());
         for (Node child : children) {
             builder.append("\n").append(child.toString(indent + 2));
         }

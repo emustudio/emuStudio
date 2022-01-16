@@ -87,7 +87,7 @@ public class SortMacroArgumentsVisitor extends NodeVisitor {
                     .collectChild(ExprId.class)
                     .ifPresentOrElse(macroArgument::addChildFirst, () -> error(macroArgumentsDoNotMatch(node)));
             }
-            node.remove().ifPresent(p -> p.addChildren(node.getChildren()));
+            node.exclude();
         }
     }
 

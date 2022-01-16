@@ -49,6 +49,7 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
         addDeclaration(node.id, node);
         currentDeclarationId = normalizeId(node.id);
         visitChildren(node);
+        currentDeclarationId = null;
     }
 
     @Override
@@ -65,6 +66,7 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
         currentDeclarationId = normalizeId(node.id);
         visitChildren(node);
         addVariable(node.id, node);
+        currentDeclarationId = null;
     }
 
     @Override

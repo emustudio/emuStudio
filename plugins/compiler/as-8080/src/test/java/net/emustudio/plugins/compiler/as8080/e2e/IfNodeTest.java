@@ -74,16 +74,6 @@ public class IfNodeTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testIfCannotEvaluateForwardReferenceInExpression() throws Exception {
-        compile(
-            "if present\n"
-                + "  rrc\n"
-                + "endif\n"
-                + "present equ 1\n"
-        );
-    }
-
-    @Test(expected = Exception.class)
     public void testIfCannotRedefineIdentifierInside() throws Exception {
         compile(
             "text: db 6\n"
