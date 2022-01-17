@@ -161,7 +161,73 @@ public class GenerateCodeVisitorTest {
             .addChild(new InstrRegPair(0, 0, OPCODE_DCX, REG_SP))
             .addChild(new InstrReg(0, 0, OPCODE_INR, REG_A))
             .addChild(new InstrReg(0, 0, OPCODE_DCR, REG_A))
-
+            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
+                .addChild(new Evaluated(0, 0, -128)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_CMC))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_B, REG_B))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_B, REG_C))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_B, REG_D))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_B, REG_E))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_B, REG_H))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_B, REG_L))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_B, REG_M))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_B, REG_A))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_C, REG_B))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_C, REG_C))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_C, REG_D))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_C, REG_E))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_C, REG_H))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_C, REG_L))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_C, REG_M))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_C, REG_A))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_D, REG_B))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_D, REG_C))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_D, REG_D))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_D, REG_E))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_D, REG_H))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_D, REG_L))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_D, REG_M))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_D, REG_A))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_E, REG_B))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_E, REG_C))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_E, REG_D))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_E, REG_E))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_E, REG_H))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_E, REG_L))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_E, REG_M))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_E, REG_A))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_H, REG_B))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_H, REG_C))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_H, REG_D))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_H, REG_E))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_H, REG_H))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_H, REG_L))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_H, REG_M))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_H, REG_A))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_L, REG_B))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_L, REG_C))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_L, REG_D))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_L, REG_E))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_L, REG_H))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_L, REG_L))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_L, REG_M))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_L, REG_A))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_M, REG_B))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_M, REG_C))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_M, REG_D))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_M, REG_E))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_M, REG_H))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_M, REG_L))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_M, REG_M)) // HLT
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_M, REG_A))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_B))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_C))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_D))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_E))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_H))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_L))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_M))
+            .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_A))
         ;
 
         IntelHEX hex = new IntelHEX();
@@ -247,74 +313,76 @@ public class GenerateCodeVisitorTest {
         assertEquals(0x3B, code.get(75).byteValue()); // DCX SP
         assertEquals(0x3C, code.get(76).byteValue()); // INR A
         assertEquals(0x3D, code.get(77).byteValue()); // DCR A
+        assertEquals(0x3E, code.get(78).byteValue()); // MVI A
+        assertEquals(-128, code.get(79).byteValue());
+        assertEquals(0x3F, code.get(80).byteValue()); // CMC
+        assertEquals(0x40, code.get(81).byteValue()); // MOV B,B
+        assertEquals(0x41, code.get(82).byteValue()); // MOV B,C
+        assertEquals(0x42, code.get(83).byteValue()); // MOV B,D
+        assertEquals(0x43, code.get(84).byteValue()); // MOV B,E
+        assertEquals(0x44, code.get(85).byteValue()); // MOV B,H
+        assertEquals(0x45, code.get(86).byteValue()); // MOV B,L
+        assertEquals(0x46, code.get(87).byteValue()); // MOV B,M
+        assertEquals(0x47, code.get(88).byteValue()); // MOV B,A
+        assertEquals(0x48, code.get(89).byteValue()); // MOV C,B
+        assertEquals(0x49, code.get(90).byteValue()); // MOV C,C
+        assertEquals(0x4A, code.get(91).byteValue()); // MOV C,D
+        assertEquals(0x4B, code.get(92).byteValue()); // MOV C,E
+        assertEquals(0x4C, code.get(93).byteValue()); // MOV C,H
+        assertEquals(0x4D, code.get(94).byteValue()); // MOV C,L
+        assertEquals(0x4E, code.get(95).byteValue()); // MOV C,M
+        assertEquals(0x4F, code.get(96).byteValue()); // MOV C,A
+        assertEquals(0x50, code.get(97).byteValue()); // MOV D,B
+        assertEquals(0x51, code.get(98).byteValue()); // MOV D,C
+        assertEquals(0x52, code.get(99).byteValue()); // MOV D,D
+        assertEquals(0x53, code.get(100).byteValue()); // MOV D,E
+        assertEquals(0x54, code.get(101).byteValue()); // MOV D,H
+        assertEquals(0x55, code.get(102).byteValue()); // MOV D,L
+        assertEquals(0x56, code.get(103).byteValue()); // MOV D,M
+        assertEquals(0x57, code.get(104).byteValue()); // MOV D,A
+        assertEquals(0x58, code.get(105).byteValue()); // MOV E,B
+        assertEquals(0x59, code.get(106).byteValue()); // MOV E,C
+        assertEquals(0x5A, code.get(107).byteValue()); // MOV E,D
+        assertEquals(0x5B, code.get(108).byteValue()); // MOV E,E
+        assertEquals(0x5C, code.get(109).byteValue()); // MOV E,H
+        assertEquals(0x5D, code.get(110).byteValue()); // MOV E,L
+        assertEquals(0x5E, code.get(111).byteValue()); // MOV E,M
+        assertEquals(0x5F, code.get(112).byteValue()); // MOV E,A
+        assertEquals(0x60, code.get(113).byteValue()); // MOV H,B
+        assertEquals(0x61, code.get(114).byteValue()); // MOV H,C
+        assertEquals(0x62, code.get(115).byteValue()); // MOV H,D
+        assertEquals(0x63, code.get(116).byteValue()); // MOV H,E
+        assertEquals(0x64, code.get(117).byteValue()); // MOV H,H
+        assertEquals(0x65, code.get(118).byteValue()); // MOV H,L
+        assertEquals(0x66, code.get(119).byteValue()); // MOV H,M
+        assertEquals(0x67, code.get(120).byteValue()); // MOV H,A
+        assertEquals(0x68, code.get(121).byteValue()); // MOV L,B
+        assertEquals(0x69, code.get(122).byteValue()); // MOV L,C
+        assertEquals(0x6A, code.get(123).byteValue()); // MOV L,D
+        assertEquals(0x6B, code.get(124).byteValue()); // MOV L,E
+        assertEquals(0x6C, code.get(125).byteValue()); // MOV L,H
+        assertEquals(0x6D, code.get(126).byteValue()); // MOV L,L
+        assertEquals(0x6E, code.get(127).byteValue()); // MOV L,M
+        assertEquals(0x6F, code.get(128).byteValue()); // MOV L,A
+        assertEquals(0x70, code.get(129).byteValue()); // MOV M,B
+        assertEquals(0x71, code.get(130).byteValue()); // MOV M,C
+        assertEquals(0x72, code.get(131).byteValue()); // MOV M,D
+        assertEquals(0x73, code.get(132).byteValue()); // MOV M,E
+        assertEquals(0x74, code.get(133).byteValue()); // MOV M,H
+        assertEquals(0x75, code.get(134).byteValue()); // MOV M,L
+        assertEquals(0x76, code.get(135).byteValue()); // MOV M,M / HLT
+        assertEquals(0x77, code.get(136).byteValue()); // MOV M,A
+        assertEquals(0x78, code.get(137).byteValue()); // MOV A,B
+        assertEquals(0x79, code.get(138).byteValue()); // MOV A,C
+        assertEquals(0x7A, code.get(139).byteValue()); // MOV A,D
+        assertEquals(0x7B, code.get(140).byteValue()); // MOV A,E
+        assertEquals(0x7C, code.get(141).byteValue()); // MOV A,H
+        assertEquals(0x7D, code.get(142).byteValue()); // MOV A,L
+        assertEquals(0x7E, code.get(143).byteValue()); // MOV A,M
+        assertEquals(0x7F, code.get(144).byteValue()); // MOV A,A
 
 
-        //0x3e	MVI A,D8	2		A <- byte 2
-        //0x3f	CMC	1	CY	CY=!CY
-        //0x40	MOV B,B	1		B <- B
-        //0x41	MOV B,C	1		B <- C
-        //0x42	MOV B,D	1		B <- D
-        //0x43	MOV B,E	1		B <- E
-        //0x44	MOV B,H	1		B <- H
-        //0x45	MOV B,L	1		B <- L
-        //0x46	MOV B,M	1		B <- (HL)
-        //0x47	MOV B,A	1		B <- A
-        //0x48	MOV C,B	1		C <- B
-        //0x49	MOV C,C	1		C <- C
-        //0x4a	MOV C,D	1		C <- D
-        //0x4b	MOV C,E	1		C <- E
-        //0x4c	MOV C,H	1		C <- H
-        //0x4d	MOV C,L	1		C <- L
-        //0x4e	MOV C,M	1		C <- (HL)
-        //0x4f	MOV C,A	1		C <- A
-        //0x50	MOV D,B	1		D <- B
-        //0x51	MOV D,C	1		D <- C
-        //0x52	MOV D,D	1		D <- D
-        //0x53	MOV D,E	1		D <- E
-        //0x54	MOV D,H	1		D <- H
-        //0x55	MOV D,L	1		D <- L
-        //0x56	MOV D,M	1		D <- (HL)
-        //0x57	MOV D,A	1		D <- A
-        //0x58	MOV E,B	1		E <- B
-        //0x59	MOV E,C	1		E <- C
-        //0x5a	MOV E,D	1		E <- D
-        //0x5b	MOV E,E	1		E <- E
-        //0x5c	MOV E,H	1		E <- H
-        //0x5d	MOV E,L	1		E <- L
-        //0x5e	MOV E,M	1		E <- (HL)
-        //0x5f	MOV E,A	1		E <- A
-        //0x60	MOV H,B	1		H <- B
-        //0x61	MOV H,C	1		H <- C
-        //0x62	MOV H,D	1		H <- D
-        //0x63	MOV H,E	1		H <- E
-        //0x64	MOV H,H	1		H <- H
-        //0x65	MOV H,L	1		H <- L
-        //0x66	MOV H,M	1		H <- (HL)
-        //0x67	MOV H,A	1		H <- A
-        //0x68	MOV L,B	1		L <- B
-        //0x69	MOV L,C	1		L <- C
-        //0x6a	MOV L,D	1		L <- D
-        //0x6b	MOV L,E	1		L <- E
-        //0x6c	MOV L,H	1		L <- H
-        //0x6d	MOV L,L	1		L <- L
-        //0x6e	MOV L,M	1		L <- (HL)
-        //0x6f	MOV L,A	1		L <- A
-        //0x70	MOV M,B	1		(HL) <- B
-        //0x71	MOV M,C	1		(HL) <- C
-        //0x72	MOV M,D	1		(HL) <- D
-        //0x73	MOV M,E	1		(HL) <- E
-        //0x74	MOV M,H	1		(HL) <- H
-        //0x75	MOV M,L	1		(HL) <- L
-        //0x76	HLT	1		special
-        //0x77	MOV M,A	1		(HL) <- A
-        //0x78	MOV A,B	1		A <- B
-        //0x79	MOV A,C	1		A <- C
-        //0x7a	MOV A,D	1		A <- D
-        //0x7b	MOV A,E	1		A <- E
-        //0x7c	MOV A,H	1		A <- H
-        //0x7d	MOV A,L	1		A <- L
-        //0x7e	MOV A,M	1		A <- (HL)
-        //0x7f	MOV A,A	1		A <- A
+
         //0x80	ADD B	1	Z, S, P, CY, AC	A <- A + B
         //0x81	ADD C	1	Z, S, P, CY, AC	A <- A + C
         //0x82	ADD D	1	Z, S, P, CY, AC	A <- A + D
