@@ -126,7 +126,43 @@ public class GenerateCodeVisitorTest {
             .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_E)
                 .addChild(new Evaluated(0, 0, 10)))
             .addChild(new InstrNoArgs(0, 0, OPCODE_RAR))
-            ;
+            .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_H)
+                .addChild(new Evaluated(0, 0, 0x2345)))
+            .addChild(new InstrExpr(0, 0, OPCODE_SHLD)
+                .addChild(new Evaluated(0, 0, 0x2345)))
+            .addChild(new InstrRegPair(0, 0, OPCODE_INX, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_INR, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_DCR, REG_H))
+            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_H)
+                .addChild(new Evaluated(0, 0, 0x28)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_DAA))
+            .addChild(new InstrRegPair(0, 0, OPCODE_DAD, REG_H))
+            .addChild(new InstrExpr(0, 0, OPCODE_LHLD)
+                .addChild(new Evaluated(0, 0, 0x2345)))
+            .addChild(new InstrRegPair(0, 0, OPCODE_DCX, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_INR, REG_L))
+            .addChild(new InstrReg(0, 0, OPCODE_DCR, REG_L))
+            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_L)
+                .addChild(new Evaluated(0, 0, 10)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_CMA))
+            .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_SP)
+                .addChild(new Evaluated(0, 0, 0x2345)))
+            .addChild(new InstrExpr(0, 0, OPCODE_STA)
+                .addChild(new Evaluated(0, 0, 0x2345)))
+            .addChild(new InstrRegPair(0, 0, OPCODE_INX, REG_SP))
+            .addChild(new InstrReg(0, 0, OPCODE_INR, REG_M))
+            .addChild(new InstrReg(0, 0, OPCODE_DCR, REG_M))
+            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_M)
+                .addChild(new Evaluated(0, 0, 7)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_STC))
+            .addChild(new InstrRegPair(0, 0, OPCODE_DAD, REG_SP))
+            .addChild(new InstrExpr(0, 0, OPCODE_LDA)
+                .addChild(new Evaluated(0, 0, 0x2345)))
+            .addChild(new InstrRegPair(0, 0, OPCODE_DCX, REG_SP))
+            .addChild(new InstrReg(0, 0, OPCODE_INR, REG_A))
+            .addChild(new InstrReg(0, 0, OPCODE_DCR, REG_A))
+
+        ;
 
         IntelHEX hex = new IntelHEX();
         GenerateCodeVisitor visitor = new GenerateCodeVisitor(hex);
@@ -170,36 +206,49 @@ public class GenerateCodeVisitorTest {
         assertEquals(0x1E, code.get(34).byteValue()); // MVI E
         assertEquals(10, code.get(35).byteValue());
         assertEquals(0x1F, code.get(36).byteValue()); // RAR
+        assertEquals(0x21, code.get(37).byteValue()); // LXI H
+        assertEquals(0x45, code.get(38).byteValue());
+        assertEquals(0x23, code.get(39).byteValue());
+        assertEquals(0x22, code.get(40).byteValue()); // SHLD
+        assertEquals(0x45, code.get(41).byteValue());
+        assertEquals(0x23, code.get(42).byteValue());
+        assertEquals(0x23, code.get(43).byteValue()); // INX H
+        assertEquals(0x24, code.get(44).byteValue()); // INR H
+        assertEquals(0x25, code.get(45).byteValue()); // DCR H
+        assertEquals(0x26, code.get(46).byteValue()); // MVI H
+        assertEquals(0x28, code.get(47).byteValue());
+        assertEquals(0x27, code.get(48).byteValue()); // DAA
+        assertEquals(0x29, code.get(49).byteValue()); // DAD H
+        assertEquals(0x2A, code.get(50).byteValue()); // LHLD
+        assertEquals(0x45, code.get(51).byteValue());
+        assertEquals(0x23, code.get(52).byteValue());
+        assertEquals(0x2B, code.get(53).byteValue()); // DCX H
+        assertEquals(0x2C, code.get(54).byteValue()); // INR L
+        assertEquals(0x2D, code.get(55).byteValue()); // DCR L
+        assertEquals(0x2E, code.get(56).byteValue()); // MVI L
+        assertEquals(10, code.get(57).byteValue());
+        assertEquals(0x2F, code.get(58).byteValue()); // CMA
+        assertEquals(0x31, code.get(59).byteValue()); // LXI SP
+        assertEquals(0x45, code.get(60).byteValue());
+        assertEquals(0x23, code.get(61).byteValue());
+        assertEquals(0x32, code.get(62).byteValue()); // STA
+        assertEquals(0x45, code.get(63).byteValue());
+        assertEquals(0x23, code.get(64).byteValue());
+        assertEquals(0x33, code.get(65).byteValue()); // INX SP
+        assertEquals(0x34, code.get(66).byteValue()); // INR M
+        assertEquals(0x35, code.get(67).byteValue()); // DCR M
+        assertEquals(0x36, code.get(68).byteValue()); // MVI M
+        assertEquals(7, code.get(69).byteValue());
+        assertEquals(0x37, code.get(70).byteValue()); // STC
+        assertEquals(0x39, code.get(71).byteValue()); // DAD SP
+        assertEquals(0x3A, code.get(72).byteValue()); // LDA
+        assertEquals(0x45, code.get(73).byteValue());
+        assertEquals(0x23, code.get(74).byteValue());
+        assertEquals(0x3B, code.get(75).byteValue()); // DCX SP
+        assertEquals(0x3C, code.get(76).byteValue()); // INR A
+        assertEquals(0x3D, code.get(77).byteValue()); // DCR A
 
-        //0x21	LXI H,D16	3		H <- byte 3, L <- byte 2
-        //0x22	SHLD adr	3		(adr) <-L; (adr+1)<-H
-        //0x23	INX H	1		HL <- HL + 1
-        //0x24	INR H	1	Z, S, P, AC	H <- H+1
-        //0x25	DCR H	1	Z, S, P, AC	H <- H-1
-        //0x26	MVI H,D8	2		H <- byte 2
-        //0x27	DAA	1		special
-        //0x28	-
-        //0x29	DAD H	1	CY	HL = HL + HI
-        //0x2a	LHLD adr	3		L <- (adr); H<-(adr+1)
-        //0x2b	DCX H	1		HL = HL-1
-        //0x2c	INR L	1	Z, S, P, AC	L <- L+1
-        //0x2d	DCR L	1	Z, S, P, AC	L <- L-1
-        //0x2e	MVI L, D8	2		L <- byte 2
-        //0x2f	CMA	1		A <- !A
-        //0x30	-
-        //0x31	LXI SP, D16	3		SP.hi <- byte 3, SP.lo <- byte 2
-        //0x32	STA adr	3		(adr) <- A
-        //0x33	INX SP	1		SP = SP + 1
-        //0x34	INR M	1	Z, S, P, AC	(HL) <- (HL)+1
-        //0x35	DCR M	1	Z, S, P, AC	(HL) <- (HL)-1
-        //0x36	MVI M,D8	2		(HL) <- byte 2
-        //0x37	STC	1	CY	CY = 1
-        //0x38	-
-        //0x39	DAD SP	1	CY	HL = HL + SP
-        //0x3a	LDA adr	3		A <- (adr)
-        //0x3b	DCX SP	1		SP = SP-1
-        //0x3c	INR A	1	Z, S, P, AC	A <- A+1
-        //0x3d	DCR A	1	Z, S, P, AC	A <- A-1
+
         //0x3e	MVI A,D8	2		A <- byte 2
         //0x3f	CMC	1	CY	CY=!CY
         //0x40	MOV B,B	1		B <- B

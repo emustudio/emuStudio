@@ -16,6 +16,7 @@ public class CompileError {
     public static final int ERROR_MACRO_ARGUMENTS_DO_NOT_MATCH = 8;
     public static final int ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED = 9;
     public static final int ERROR_VALUE_MUST_BE_POSITIVE = 10;
+    public static final int ERROR_VALUE_OUT_OF_BOUNDS = 11;
 
     public final int line;
     public final int column;
@@ -82,6 +83,12 @@ public class CompileError {
 
     public static CompileError valueMustBePositive(Node node) {
         return new CompileError(node, ERROR_VALUE_MUST_BE_POSITIVE, "Value must be positive");
+    }
+
+    public static CompileError valueOutOfBounds(Node node, int min, int max) {
+        return new CompileError(
+            node, ERROR_VALUE_OUT_OF_BOUNDS, "Value is out of bounds (min=" + min + ", max=" + max + ")"
+        );
     }
 
     @Override

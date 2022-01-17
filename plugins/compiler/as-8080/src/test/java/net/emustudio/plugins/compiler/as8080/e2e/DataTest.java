@@ -189,14 +189,4 @@ public class DataTest extends AbstractCompilerTest {
             0, 0, 0x78, 0, 0, 0xFE, 0x43, 0xCA, 0x02, 0x00, 0x77
         );
     }
-
-    @Test(expected = Exception.class)
-    public void testDS_ValueTooBig() throws Exception {
-        compile(
-            "org 0FFh\n"
-                + "rrc\n"
-                + "test:\n"
-                + "ds test"
-        );
-    }
 }

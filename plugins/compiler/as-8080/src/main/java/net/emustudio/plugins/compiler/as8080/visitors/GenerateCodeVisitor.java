@@ -11,6 +11,7 @@ import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoOrg;
 import java.util.Objects;
 
 import static net.emustudio.plugins.compiler.as8080.CompileError.valueMustBePositive;
+import static net.emustudio.plugins.compiler.as8080.CompileError.valueOutOfBounds;
 
 public class GenerateCodeVisitor extends NodeVisitor {
     private final IntelHEX hex;
@@ -48,7 +49,11 @@ public class GenerateCodeVisitor extends NodeVisitor {
 
     @Override
     public void visit(InstrExpr node) {
-        hex.add(node.eval());
+        node.eval()
+            .ifPresentOrElse(
+                hex::add,
+                () -> error(valueOutOfBounds(node, 0, 7))
+            );
         expectedBytes = node.getExprSizeBytes();
         visitChildren(node);
     }

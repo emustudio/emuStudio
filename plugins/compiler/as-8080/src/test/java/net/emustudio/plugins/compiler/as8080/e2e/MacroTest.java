@@ -64,8 +64,8 @@ public class MacroTest extends AbstractCompilerTest {
         );
     }
 
-    @Test(expected = Exception.class)
-    public void testDBinMacroIsNotVisibleFromOutside() throws Exception {
+    @Test
+    public void testDBinMacroIsVisibleFromOutside() throws Exception {
         compile(
             "shrt macro\n"
                 + "  text: db 0Fh\n"
@@ -73,6 +73,9 @@ public class MacroTest extends AbstractCompilerTest {
                 + "endm\n\n"
                 + "shrt\n"
                 + "lxi h, text\n"
+        );
+        assertProgram(
+            0x0F, 0xE6, 0x7F, 0x21, 0, 0
         );
     }
 
@@ -95,14 +98,17 @@ public class MacroTest extends AbstractCompilerTest {
         );
     }
 
-    @Test(expected = Exception.class)
-    public void testMacroCannotGetForwardLabelReferences() throws Exception {
+    @Test
+    public void testMacroCanGetForwardLabelReferences() throws Exception {
         compile(
             "shrt macro param\n"
                 + "  lxi h, param\n"
                 + "endm\n"
                 + "shrt text\n"
                 + "text: db 1\n"
+        );
+        assertProgram(
+            0x21, 3, 0, 1
         );
     }
 

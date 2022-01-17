@@ -5,10 +5,7 @@ import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 
@@ -82,17 +79,15 @@ public class InstrExpr extends Node {
         return 2; // address
     }
 
-    public byte eval() {
+    public Optional<Byte> eval() {
         byte result = (byte) (opcodes.get(opcode) & 0xFF);
         if (opcode == OPCODE_RST) {
-            result = (byte) (result | collectChild(Evaluated.class)
-                .map(e -> {
-                    int value = e.value;
-                    return (byte) (value << 3);
-                }).orElse((byte) 0));
+            return collectChild(Evaluated.class)
+                .filter(e -> e.value >= 0 && e.value <= 7)
+                .map(e -> (byte) (result | (e.value << 3)));
         }
 
-        return result;
+        return Optional.of(result);
     }
 
     @Override

@@ -330,6 +330,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
             }
         }
         node.exclude();
+        currentAddress += sizeBytes;
     }
 
     private Optional<Integer> getCurrentAddress() {
