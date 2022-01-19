@@ -228,7 +228,81 @@ public class GenerateCodeVisitorTest {
             .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_L))
             .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_M))
             .addChild(new InstrRegReg(0, 0, OPCODE_MOV, REG_A, REG_A))
+            .addChild(new InstrReg(0, 0, OPCODE_ADD, REG_B))
+            .addChild(new InstrReg(0, 0, OPCODE_ADD, REG_C))
+            .addChild(new InstrReg(0, 0, OPCODE_ADD, REG_D))
+            .addChild(new InstrReg(0, 0, OPCODE_ADD, REG_E))
+            .addChild(new InstrReg(0, 0, OPCODE_ADD, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_ADD, REG_L))
+            .addChild(new InstrReg(0, 0, OPCODE_ADD, REG_M))
+            .addChild(new InstrReg(0, 0, OPCODE_ADD, REG_A))
+            .addChild(new InstrReg(0, 0, OPCODE_ADC, REG_B))
+            .addChild(new InstrReg(0, 0, OPCODE_ADC, REG_C))
+            .addChild(new InstrReg(0, 0, OPCODE_ADC, REG_D))
+            .addChild(new InstrReg(0, 0, OPCODE_ADC, REG_E))
+            .addChild(new InstrReg(0, 0, OPCODE_ADC, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_ADC, REG_L))
+            .addChild(new InstrReg(0, 0, OPCODE_ADC, REG_M))
+            .addChild(new InstrReg(0, 0, OPCODE_ADC, REG_A))
+            .addChild(new InstrReg(0, 0, OPCODE_SUB, REG_B))
+            .addChild(new InstrReg(0, 0, OPCODE_SUB, REG_C))
+            .addChild(new InstrReg(0, 0, OPCODE_SUB, REG_D))
+            .addChild(new InstrReg(0, 0, OPCODE_SUB, REG_E))
+            .addChild(new InstrReg(0, 0, OPCODE_SUB, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_SUB, REG_L))
+            .addChild(new InstrReg(0, 0, OPCODE_SUB, REG_M))
+            .addChild(new InstrReg(0, 0, OPCODE_SUB, REG_A))
+            .addChild(new InstrReg(0, 0, OPCODE_SBB, REG_B))
+            .addChild(new InstrReg(0, 0, OPCODE_SBB, REG_C))
+            .addChild(new InstrReg(0, 0, OPCODE_SBB, REG_D))
+            .addChild(new InstrReg(0, 0, OPCODE_SBB, REG_E))
+            .addChild(new InstrReg(0, 0, OPCODE_SBB, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_SBB, REG_L))
+            .addChild(new InstrReg(0, 0, OPCODE_SBB, REG_M))
+            .addChild(new InstrReg(0, 0, OPCODE_SBB, REG_A))
+            .addChild(new InstrReg(0, 0, OPCODE_ANA, REG_B))
+            .addChild(new InstrReg(0, 0, OPCODE_ANA, REG_C))
+            .addChild(new InstrReg(0, 0, OPCODE_ANA, REG_D))
+            .addChild(new InstrReg(0, 0, OPCODE_ANA, REG_E))
+            .addChild(new InstrReg(0, 0, OPCODE_ANA, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_ANA, REG_L))
+            .addChild(new InstrReg(0, 0, OPCODE_ANA, REG_M))
+            .addChild(new InstrReg(0, 0, OPCODE_ANA, REG_A))
+            .addChild(new InstrReg(0, 0, OPCODE_XRA, REG_B))
+            .addChild(new InstrReg(0, 0, OPCODE_XRA, REG_C))
+            .addChild(new InstrReg(0, 0, OPCODE_XRA, REG_D))
+            .addChild(new InstrReg(0, 0, OPCODE_XRA, REG_E))
+            .addChild(new InstrReg(0, 0, OPCODE_XRA, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_XRA, REG_L))
+            .addChild(new InstrReg(0, 0, OPCODE_XRA, REG_M))
+            .addChild(new InstrReg(0, 0, OPCODE_XRA, REG_A))
+            .addChild(new InstrReg(0, 0, OPCODE_ORA, REG_B))
+            .addChild(new InstrReg(0, 0, OPCODE_ORA, REG_C))
+            .addChild(new InstrReg(0, 0, OPCODE_ORA, REG_D))
+            .addChild(new InstrReg(0, 0, OPCODE_ORA, REG_E))
+            .addChild(new InstrReg(0, 0, OPCODE_ORA, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_ORA, REG_L))
+            .addChild(new InstrReg(0, 0, OPCODE_ORA, REG_M))
+            .addChild(new InstrReg(0, 0, OPCODE_ORA, REG_A))
+            .addChild(new InstrReg(0, 0, OPCODE_CMP, REG_B))
+            .addChild(new InstrReg(0, 0, OPCODE_CMP, REG_C))
+            .addChild(new InstrReg(0, 0, OPCODE_CMP, REG_D))
+            .addChild(new InstrReg(0, 0, OPCODE_CMP, REG_E))
+            .addChild(new InstrReg(0, 0, OPCODE_CMP, REG_H))
+            .addChild(new InstrReg(0, 0, OPCODE_CMP, REG_L))
+            .addChild(new InstrReg(0, 0, OPCODE_CMP, REG_M))
+            .addChild(new InstrReg(0, 0, OPCODE_CMP, REG_A))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_RNZ))
+            .addChild(new InstrRegPair(0, 0, OPCODE_POP, REG_B))
+            .addChild(new InstrExpr(0, 0, OPCODE_JNZ)
+                .addChild(new Evaluated(0, 0, 2)))
+            .addChild(new InstrExpr(0, 0, OPCODE_JMP)
+                .addChild(new Evaluated(0, 0, 0x200)))
+            .addChild(new InstrExpr(0, 0, OPCODE_CNZ)
+                .addChild(new Evaluated(0, 0, 0xF0A0)))
+            .addChild(new InstrRegPair(0, 0, OPCODE_PUSH, REG_B))
         ;
+
 
         IntelHEX hex = new IntelHEX();
         GenerateCodeVisitor visitor = new GenerateCodeVisitor(hex);
@@ -380,79 +454,85 @@ public class GenerateCodeVisitorTest {
         assertEquals(0x7D, code.get(142).byteValue()); // MOV A,L
         assertEquals(0x7E, code.get(143).byteValue()); // MOV A,M
         assertEquals(0x7F, code.get(144).byteValue()); // MOV A,A
+        assertEquals(0x80, code.get(145) & 0xFF); // ADD B
+        assertEquals(0x81, code.get(146) & 0xFF); // ADD C
+        assertEquals(0x82, code.get(147) & 0xFF); // ADD D
+        assertEquals(0x83, code.get(148) & 0xFF); // ADD E
+        assertEquals(0x84, code.get(149) & 0xFF); // ADD H
+        assertEquals(0x85, code.get(150) & 0xFF); // ADD L
+        assertEquals(0x86, code.get(151) & 0xFF); // ADD M
+        assertEquals(0x87, code.get(152) & 0xFF); // ADD A
+        assertEquals(0x88, code.get(153) & 0xFF); // ADC B
+        assertEquals(0x89, code.get(154) & 0xFF); // ADC C
+        assertEquals(0x8A, code.get(155) & 0xFF); // ADC D
+        assertEquals(0x8B, code.get(156) & 0xFF); // ADC E
+        assertEquals(0x8C, code.get(157) & 0xFF); // ADC H
+        assertEquals(0x8D, code.get(158) & 0xFF); // ADC L
+        assertEquals(0x8E, code.get(159) & 0xFF); // ADC M
+        assertEquals(0x8F, code.get(160) & 0xFF); // ADC A
+        assertEquals(0x90, code.get(161) & 0xFF); // SUB B
+        assertEquals(0x91, code.get(162) & 0xFF); // SUB C
+        assertEquals(0x92, code.get(163) & 0xFF); // SUB D
+        assertEquals(0x93, code.get(164) & 0xFF); // SUB E
+        assertEquals(0x94, code.get(165) & 0xFF); // SUB H
+        assertEquals(0x95, code.get(166) & 0xFF); // SUB L
+        assertEquals(0x96, code.get(167) & 0xFF); // SUB M
+        assertEquals(0x97, code.get(168) & 0xFF); // SUB A
+        assertEquals(0x98, code.get(169) & 0xFF); // SBB B
+        assertEquals(0x99, code.get(170) & 0xFF); // SBB C
+        assertEquals(0x9A, code.get(171) & 0xFF); // SBB D
+        assertEquals(0x9B, code.get(172) & 0xFF); // SBB E
+        assertEquals(0x9C, code.get(173) & 0xFF); // SBB H
+        assertEquals(0x9D, code.get(174) & 0xFF); // SBB L
+        assertEquals(0x9E, code.get(175) & 0xFF); // SBB M
+        assertEquals(0x9F, code.get(176) & 0xFF); // SBB A
+        assertEquals(0xA0, code.get(177) & 0xFF); // ANA B
+        assertEquals(0xA1, code.get(178) & 0xFF); // ANA C
+        assertEquals(0xA2, code.get(179) & 0xFF); // ANA D
+        assertEquals(0xA3, code.get(180) & 0xFF); // ANA E
+        assertEquals(0xA4, code.get(181) & 0xFF); // ANA H
+        assertEquals(0xA5, code.get(182) & 0xFF); // ANA L
+        assertEquals(0xA6, code.get(183) & 0xFF); // ANA M
+        assertEquals(0xA7, code.get(184) & 0xFF); // ANA A
+        assertEquals(0xA8, code.get(185) & 0xFF); // XRA B
+        assertEquals(0xA9, code.get(186) & 0xFF); // XRA C
+        assertEquals(0xAA, code.get(187) & 0xFF); // XRA D
+        assertEquals(0xAB, code.get(188) & 0xFF); // XRA E
+        assertEquals(0xAC, code.get(189) & 0xFF); // XRA H
+        assertEquals(0xAD, code.get(190) & 0xFF); // XRA L
+        assertEquals(0xAE, code.get(191) & 0xFF); // XRA M
+        assertEquals(0xAF, code.get(192) & 0xFF); // XRA A
+        assertEquals(0xB0, code.get(193) & 0xFF); // ORA B
+        assertEquals(0xB1, code.get(194) & 0xFF); // ORA C
+        assertEquals(0xB2, code.get(195) & 0xFF); // ORA D
+        assertEquals(0xB3, code.get(196) & 0xFF); // ORA E
+        assertEquals(0xB4, code.get(197) & 0xFF); // ORA H
+        assertEquals(0xB5, code.get(198) & 0xFF); // ORA L
+        assertEquals(0xB6, code.get(199) & 0xFF); // ORA M
+        assertEquals(0xB7, code.get(200) & 0xFF); // ORA A
+        assertEquals(0xB8, code.get(201) & 0xFF); // CMP B
+        assertEquals(0xB9, code.get(202) & 0xFF); // CMP C
+        assertEquals(0xBA, code.get(203) & 0xFF); // CMP D
+        assertEquals(0xBB, code.get(204) & 0xFF); // CMP E
+        assertEquals(0xBC, code.get(205) & 0xFF); // CMP H
+        assertEquals(0xBD, code.get(206) & 0xFF); // CMP L
+        assertEquals(0xBE, code.get(207) & 0xFF); // CMP M
+        assertEquals(0xBF, code.get(208) & 0xFF); // CMP A
+        assertEquals(0xC0, code.get(209) & 0xFF); // RNZ
+        assertEquals(0xC1, code.get(210) & 0xFF); // POP B
+        assertEquals(0xC2, code.get(211) & 0xFF); // JNZ
+        assertEquals(2, code.get(212).byteValue());
+        assertEquals(0, code.get(213).byteValue());
+        assertEquals(0xC3, code.get(214) & 0xFF); // JMP
+        assertEquals(0, code.get(215).byteValue());
+        assertEquals(2, code.get(216).byteValue());
+        assertEquals(0xC4, code.get(217) & 0xFF); // CNZ
+        assertEquals(0xA0, code.get(218) & 0xFF);
+        assertEquals(0xF0, code.get(219) & 0xFF);
+        assertEquals(0xC5, code.get(220) & 0xFF); // PUSH B
 
 
 
-        //0x80	ADD B	1	Z, S, P, CY, AC	A <- A + B
-        //0x81	ADD C	1	Z, S, P, CY, AC	A <- A + C
-        //0x82	ADD D	1	Z, S, P, CY, AC	A <- A + D
-        //0x83	ADD E	1	Z, S, P, CY, AC	A <- A + E
-        //0x84	ADD H	1	Z, S, P, CY, AC	A <- A + H
-        //0x85	ADD L	1	Z, S, P, CY, AC	A <- A + L
-        //0x86	ADD M	1	Z, S, P, CY, AC	A <- A + (HL)
-        //0x87	ADD A	1	Z, S, P, CY, AC	A <- A + A
-        //0x88	ADC B	1	Z, S, P, CY, AC	A <- A + B + CY
-        //0x89	ADC C	1	Z, S, P, CY, AC	A <- A + C + CY
-        //0x8a	ADC D	1	Z, S, P, CY, AC	A <- A + D + CY
-        //0x8b	ADC E	1	Z, S, P, CY, AC	A <- A + E + CY
-        //0x8c	ADC H	1	Z, S, P, CY, AC	A <- A + H + CY
-        //0x8d	ADC L	1	Z, S, P, CY, AC	A <- A + L + CY
-        //0x8e	ADC M	1	Z, S, P, CY, AC	A <- A + (HL) + CY
-        //0x8f	ADC A	1	Z, S, P, CY, AC	A <- A + A + CY
-        //0x90	SUB B	1	Z, S, P, CY, AC	A <- A - B
-        //0x91	SUB C	1	Z, S, P, CY, AC	A <- A - C
-        //0x92	SUB D	1	Z, S, P, CY, AC	A <- A + D
-        //0x93	SUB E	1	Z, S, P, CY, AC	A <- A - E
-        //0x94	SUB H	1	Z, S, P, CY, AC	A <- A + H
-        //0x95	SUB L	1	Z, S, P, CY, AC	A <- A - L
-        //0x96	SUB M	1	Z, S, P, CY, AC	A <- A + (HL)
-        //0x97	SUB A	1	Z, S, P, CY, AC	A <- A - A
-        //0x98	SBB B	1	Z, S, P, CY, AC	A <- A - B - CY
-        //0x99	SBB C	1	Z, S, P, CY, AC	A <- A - C - CY
-        //0x9a	SBB D	1	Z, S, P, CY, AC	A <- A - D - CY
-        //0x9b	SBB E	1	Z, S, P, CY, AC	A <- A - E - CY
-        //0x9c	SBB H	1	Z, S, P, CY, AC	A <- A - H - CY
-        //0x9d	SBB L	1	Z, S, P, CY, AC	A <- A - L - CY
-        //0x9e	SBB M	1	Z, S, P, CY, AC	A <- A - (HL) - CY
-        //0x9f	SBB A	1	Z, S, P, CY, AC	A <- A - A - CY
-        //0xa0	ANA B	1	Z, S, P, CY, AC	A <- A & B
-        //0xa1	ANA C	1	Z, S, P, CY, AC	A <- A & C
-        //0xa2	ANA D	1	Z, S, P, CY, AC	A <- A & D
-        //0xa3	ANA E	1	Z, S, P, CY, AC	A <- A & E
-        //0xa4	ANA H	1	Z, S, P, CY, AC	A <- A & H
-        //0xa5	ANA L	1	Z, S, P, CY, AC	A <- A & L
-        //0xa6	ANA M	1	Z, S, P, CY, AC	A <- A & (HL)
-        //0xa7	ANA A	1	Z, S, P, CY, AC	A <- A & A
-        //0xa8	XRA B	1	Z, S, P, CY, AC	A <- A ^ B
-        //0xa9	XRA C	1	Z, S, P, CY, AC	A <- A ^ C
-        //0xaa	XRA D	1	Z, S, P, CY, AC	A <- A ^ D
-        //0xab	XRA E	1	Z, S, P, CY, AC	A <- A ^ E
-        //0xac	XRA H	1	Z, S, P, CY, AC	A <- A ^ H
-        //0xad	XRA L	1	Z, S, P, CY, AC	A <- A ^ L
-        //0xae	XRA M	1	Z, S, P, CY, AC	A <- A ^ (HL)
-        //0xaf	XRA A	1	Z, S, P, CY, AC	A <- A ^ A
-        //0xb0	ORA B	1	Z, S, P, CY, AC	A <- A | B
-        //0xb1	ORA C	1	Z, S, P, CY, AC	A <- A | C
-        //0xb2	ORA D	1	Z, S, P, CY, AC	A <- A | D
-        //0xb3	ORA E	1	Z, S, P, CY, AC	A <- A | E
-        //0xb4	ORA H	1	Z, S, P, CY, AC	A <- A | H
-        //0xb5	ORA L	1	Z, S, P, CY, AC	A <- A | L
-        //0xb6	ORA M	1	Z, S, P, CY, AC	A <- A | (HL)
-        //0xb7	ORA A	1	Z, S, P, CY, AC	A <- A | A
-        //0xb8	CMP B	1	Z, S, P, CY, AC	A - B
-        //0xb9	CMP C	1	Z, S, P, CY, AC	A - C
-        //0xba	CMP D	1	Z, S, P, CY, AC	A - D
-        //0xbb	CMP E	1	Z, S, P, CY, AC	A - E
-        //0xbc	CMP H	1	Z, S, P, CY, AC	A - H
-        //0xbd	CMP L	1	Z, S, P, CY, AC	A - L
-        //0xbe	CMP M	1	Z, S, P, CY, AC	A - (HL)
-        //0xbf	CMP A	1	Z, S, P, CY, AC	A - A
-        //0xc0	RNZ	1		if NZ, RET
-        //0xc1	POP B	1		C <- (sp); B <- (sp+1); sp <- sp+2
-        //0xc2	JNZ adr	3		if NZ, PC <- adr
-        //0xc3	JMP adr	3		PC <= adr
-        //0xc4	CNZ adr	3		if NZ, CALL adr
-        //0xc5	PUSH B	1		(sp-2)<-C; (sp-1)<-B; sp <- sp - 2
         //0xc6	ADI D8	2	Z, S, P, CY, AC	A <- A + byte
         //0xc7	RST 0	1		CALL $0
         //0xc8	RZ	1		if Z, RET
