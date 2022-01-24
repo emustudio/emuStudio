@@ -6,6 +6,7 @@ import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDS;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDW;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
+import net.emustudio.plugins.compiler.as8080.ast.instr.InstrExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegExpr;
 import net.emustudio.plugins.compiler.as8080.ast.instr.InstrRegPairExpr;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoMacroArgument;
@@ -93,6 +94,32 @@ public class CheckExprSizesVisitorTest {
         program
             .addChild(new DataDS(0, 0)
                 .addChild(new Evaluated(0,0, 0x10000)));
+
+        CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
+        visitor.visit(program);
+
+        assertTrue(program.env().hasError(ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED));
+    }
+
+    @Test
+    public void testInstrExprTwoBytes() {
+        Program program = new Program();
+        program
+            .addChild(new InstrExpr(0, 0, OPCODE_ADI)
+                .addChild(new Evaluated(0,0, 0xFF00)));
+
+        CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
+        visitor.visit(program);
+
+        assertTrue(program.env().hasError(ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED));
+    }
+
+    @Test
+    public void testInstrExprThreeBytes() {
+        Program program = new Program();
+        program
+            .addChild(new InstrExpr(0, 0, OPCODE_JMP)
+                .addChild(new Evaluated(0,0, 0xFF000)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);

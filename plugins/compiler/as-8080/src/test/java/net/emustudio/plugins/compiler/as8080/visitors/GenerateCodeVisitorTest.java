@@ -301,8 +301,92 @@ public class GenerateCodeVisitorTest {
             .addChild(new InstrExpr(0, 0, OPCODE_CNZ)
                 .addChild(new Evaluated(0, 0, 0xF0A0)))
             .addChild(new InstrRegPair(0, 0, OPCODE_PUSH, REG_B))
-        ;
-
+            .addChild(new InstrExpr(0, 0, OPCODE_ADI)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                .addChild(new Evaluated(0, 0, 0)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_RZ))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_RET))
+            .addChild(new InstrExpr(0, 0, OPCODE_JZ)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrExpr(0, 0, OPCODE_CZ)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrExpr(0, 0, OPCODE_CALL)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrExpr(0, 0, OPCODE_ACI)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                .addChild(new Evaluated(0, 0, 1)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_RNC))
+            .addChild(new InstrRegPair(0, 0, OPCODE_POP, REG_D))
+            .addChild(new InstrExpr(0, 0, OPCODE_JNC)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrExpr(0, 0, OPCODE_OUT)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_CNC)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrRegPair(0, 0, OPCODE_PUSH, REG_D))
+            .addChild(new InstrExpr(0, 0, OPCODE_SUI)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                .addChild(new Evaluated(0, 0, 2)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_RC))
+            .addChild(new InstrExpr(0, 0, OPCODE_JC)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrExpr(0, 0, OPCODE_IN)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_CC)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrExpr(0, 0, OPCODE_SBI)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                .addChild(new Evaluated(0, 0, 3)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_RPO))
+            .addChild(new InstrRegPair(0, 0, OPCODE_POP, REG_H))
+            .addChild(new InstrExpr(0, 0, OPCODE_JPO)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_XTHL))
+            .addChild(new InstrExpr(0, 0, OPCODE_CPO)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrRegPair(0, 0, OPCODE_PUSH, REG_H))
+            .addChild(new InstrExpr(0, 0, OPCODE_ANI)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                .addChild(new Evaluated(0, 0, 4)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_RPE))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_PCHL))
+            .addChild(new InstrExpr(0, 0, OPCODE_JPE)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_XCHG))
+            .addChild(new InstrExpr(0, 0, OPCODE_CPE)
+                .addChild(new Evaluated(0, 0, 0x1234)))
+            .addChild(new InstrExpr(0, 0, OPCODE_XRI)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                .addChild(new Evaluated(0, 0, 5)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_RP))
+            .addChild(new InstrRegPair(0, 0, OPCODE_POP, REG_PSW))
+            .addChild(new InstrExpr(0, 0, OPCODE_JP)
+                .addChild(new Evaluated(0, 0, 0x200)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_DI))
+            .addChild(new InstrExpr(0, 0, OPCODE_CP)
+                .addChild(new Evaluated(0, 0, 0x200)))
+            .addChild(new InstrRegPair(0, 0, OPCODE_PUSH, REG_PSW))
+            .addChild(new InstrExpr(0, 0, OPCODE_ORI)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                .addChild(new Evaluated(0, 0, 6)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_RM))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_SPHL))
+            .addChild(new InstrExpr(0, 0, OPCODE_JM)
+                .addChild(new Evaluated(0, 0, 0x200)))
+            .addChild(new InstrNoArgs(0, 0, OPCODE_EI))
+            .addChild(new InstrExpr(0, 0, OPCODE_CM)
+                .addChild(new Evaluated(0, 0, 0x200)))
+            .addChild(new InstrExpr(0, 0, OPCODE_CPI)
+                .addChild(new Evaluated(0, 0, 0xF0)))
+            .addChild(new InstrExpr(0, 0, OPCODE_RST)
+                .addChild(new Evaluated(0, 0, 7)));
 
         IntelHEX hex = new IntelHEX();
         GenerateCodeVisitor visitor = new GenerateCodeVisitor(hex);
@@ -530,67 +614,98 @@ public class GenerateCodeVisitorTest {
         assertEquals(0xA0, code.get(218) & 0xFF);
         assertEquals(0xF0, code.get(219) & 0xFF);
         assertEquals(0xC5, code.get(220) & 0xFF); // PUSH B
-
-
-
-        //0xc6	ADI D8	2	Z, S, P, CY, AC	A <- A + byte
-        //0xc7	RST 0	1		CALL $0
-        //0xc8	RZ	1		if Z, RET
-        //0xc9	RET	1		PC.lo <- (sp); PC.hi<-(sp+1); SP <- SP+2
-        //0xca	JZ adr	3		if Z, PC <- adr
-        //0xcb	-
-        //0xcc	CZ adr	3		if Z, CALL adr
-        //0xcd	CALL adr	3		(SP-1)<-PC.hi;(SP-2)<-PC.lo;SP<-SP-2;PC=adr
-        //0xce	ACI D8	2	Z, S, P, CY, AC	A <- A + data + CY
-        //0xcf	RST 1	1		CALL $8
-        //0xd0	RNC	1		if NCY, RET
-        //0xd1	POP D	1		E <- (sp); D <- (sp+1); sp <- sp+2
-        //0xd2	JNC adr	3		if NCY, PC<-adr
-        //0xd3	OUT D8	2		special
-        //0xd4	CNC adr	3		if NCY, CALL adr
-        //0xd5	PUSH D	1		(sp-2)<-E; (sp-1)<-D; sp <- sp - 2
-        //0xd6	SUI D8	2	Z, S, P, CY, AC	A <- A - data
-        //0xd7	RST 2	1		CALL $10
-        //0xd8	RC	1		if CY, RET
-        //0xd9	-
-        //0xda	JC adr	3		if CY, PC<-adr
-        //0xdb	IN D8	2		special
-        //0xdc	CC adr	3		if CY, CALL adr
-        //0xdd	-
-        //0xde	SBI D8	2	Z, S, P, CY, AC	A <- A - data - CY
-        //0xdf	RST 3	1		CALL $18
-        //0xe0	RPO	1		if PO, RET
-        //0xe1	POP H	1		L <- (sp); H <- (sp+1); sp <- sp+2
-        //0xe2	JPO adr	3		if PO, PC <- adr
-        //0xe3	XTHL	1		L <-> (SP); H <-> (SP+1)
-        //0xe4	CPO adr	3		if PO, CALL adr
-        //0xe5	PUSH H	1		(sp-2)<-L; (sp-1)<-H; sp <- sp - 2
-        //0xe6	ANI D8	2	Z, S, P, CY, AC	A <- A & data
-        //0xe7	RST 4	1		CALL $20
-        //0xe8	RPE	1		if PE, RET
-        //0xe9	PCHL	1		PC.hi <- H; PC.lo <- L
-        //0xea	JPE adr	3		if PE, PC <- adr
-        //0xeb	XCHG	1		H <-> D; L <-> E
-        //0xec	CPE adr	3		if PE, CALL adr
-        //0xed	-
-        //0xee	XRI D8	2	Z, S, P, CY, AC	A <- A ^ data
-        //0xef	RST 5	1		CALL $28
-        //0xf0	RP	1		if P, RET
-        //0xf1	POP PSW	1		flags <- (sp); A <- (sp+1); sp <- sp+2
-        //0xf2	JP adr	3		if P=1 PC <- adr
-        //0xf3	DI	1		special
-        //0xf4	CP adr	3		if P, PC <- adr
-        //0xf5	PUSH PSW	1		(sp-2)<-flags; (sp-1)<-A; sp <- sp - 2
-        //0xf6	ORI D8	2	Z, S, P, CY, AC	A <- A | data
-        //0xf7	RST 6	1		CALL $30
-        //0xf8	RM	1		if M, RET
-        //0xf9	SPHL	1		SP=HL
-        //0xfa	JM adr	3		if M, PC <- adr
-        //0xfb	EI	1		special
-        //0xfc	CM adr	3		if M, CALL adr
-        //0xfd	-
-        //0xfe	CPI D8	2	Z, S, P, CY, AC	A - data
-        //0xff	RST 7	1		CALL $38
+        assertEquals(0xC6, code.get(221) & 0xFF); // ADI
+        assertEquals(0xF0, code.get(222) & 0xFF);
+        assertEquals(0xC7, code.get(223) & 0xFF); // RST 0
+        assertEquals(0xC8, code.get(224) & 0xFF); // RZ
+        assertEquals(0xC9, code.get(225) & 0xFF); // RET
+        assertEquals(0xCA, code.get(226) & 0xFF); // JZ
+        assertEquals(0x34, code.get(227) & 0xFF);
+        assertEquals(0x12, code.get(228) & 0xFF);
+        assertEquals(0xCC, code.get(229) & 0xFF); // CZ
+        assertEquals(0x34, code.get(230) & 0xFF);
+        assertEquals(0x12, code.get(231) & 0xFF);
+        assertEquals(0xCD, code.get(232) & 0xFF); // CALL
+        assertEquals(0x34, code.get(233) & 0xFF);
+        assertEquals(0x12, code.get(234) & 0xFF);
+        assertEquals(0xCE, code.get(235) & 0xFF); // ACI
+        assertEquals(0xF0, code.get(236) & 0xFF);
+        assertEquals(0xCF, code.get(237) & 0xFF); // RST 1
+        assertEquals(0xD0, code.get(238) & 0xFF); // RNC
+        assertEquals(0xD1, code.get(239) & 0xFF); // POP D
+        assertEquals(0xD2, code.get(240) & 0xFF); // JNC
+        assertEquals(0x34, code.get(241) & 0xFF);
+        assertEquals(0x12, code.get(242) & 0xFF);
+        assertEquals(0xD3, code.get(243) & 0xFF); // OUT
+        assertEquals(0xF0, code.get(244) & 0xFF);
+        assertEquals(0xD4, code.get(245) & 0xFF); // CNC
+        assertEquals(0x34, code.get(246) & 0xFF);
+        assertEquals(0x12, code.get(247) & 0xFF);
+        assertEquals(0xD5, code.get(248) & 0xFF); // PUSH D
+        assertEquals(0xD6, code.get(249) & 0xFF); // SUI
+        assertEquals(0xF0, code.get(250) & 0xFF);
+        assertEquals(0xD7, code.get(251) & 0xFF); // RST 2
+        assertEquals(0xD8, code.get(252) & 0xFF); // RC
+        assertEquals(0xDA, code.get(253) & 0xFF); // JC
+        assertEquals(0x34, code.get(254) & 0xFF);
+        assertEquals(0x12, code.get(255) & 0xFF);
+        assertEquals(0xDB, code.get(256) & 0xFF); // IN
+        assertEquals(0xF0, code.get(257) & 0xFF);
+        assertEquals(0xDC, code.get(258) & 0xFF); // CC
+        assertEquals(0x34, code.get(259) & 0xFF);
+        assertEquals(0x12, code.get(260) & 0xFF);
+        assertEquals(0xDE, code.get(261) & 0xFF); // SBI
+        assertEquals(0xF0, code.get(262) & 0xFF);
+        assertEquals(0xDF, code.get(263) & 0xFF); // RST 3
+        assertEquals(0xE0, code.get(264) & 0xFF); // RPO
+        assertEquals(0xE1, code.get(265) & 0xFF); // POP H
+        assertEquals(0xE2, code.get(266) & 0xFF); // JPO
+        assertEquals(0x34, code.get(267) & 0xFF);
+        assertEquals(0x12, code.get(268) & 0xFF);
+        assertEquals(0xE3, code.get(269) & 0xFF); // XTHL
+        assertEquals(0xE4, code.get(270) & 0xFF); // CPO
+        assertEquals(0x34, code.get(271) & 0xFF);
+        assertEquals(0x12, code.get(272) & 0xFF);
+        assertEquals(0xE5, code.get(273) & 0xFF); // PUSH H
+        assertEquals(0xE6, code.get(274) & 0xFF); // ANI
+        assertEquals(0xF0, code.get(275) & 0xFF);
+        assertEquals(0xE7, code.get(276) & 0xFF); // RST
+        assertEquals(0xE8, code.get(277) & 0xFF); // RPE
+        assertEquals(0xE9, code.get(278) & 0xFF); // PCHL
+        assertEquals(0xEA, code.get(279) & 0xFF); // JPE
+        assertEquals(0x34, code.get(280) & 0xFF);
+        assertEquals(0x12, code.get(281) & 0xFF);
+        assertEquals(0xEB, code.get(282) & 0xFF); // XCHG
+        assertEquals(0xEC, code.get(283) & 0xFF); // CPE
+        assertEquals(0x34, code.get(284) & 0xFF);
+        assertEquals(0x12, code.get(285) & 0xFF);
+        assertEquals(0xEE, code.get(286) & 0xFF); // XRI
+        assertEquals(0xF0, code.get(287) & 0xFF);
+        assertEquals(0xEF, code.get(288) & 0xFF); // RST
+        assertEquals(0xF0, code.get(289) & 0xFF); // RP
+        assertEquals(0xF1, code.get(290) & 0xFF); // POP PSW
+        assertEquals(0xF2, code.get(291) & 0xFF); // JP
+        assertEquals(0x00, code.get(292) & 0xFF);
+        assertEquals(0x02, code.get(293) & 0xFF);
+        assertEquals(0xF3, code.get(294) & 0xFF); // DI
+        assertEquals(0xF4, code.get(295) & 0xFF); // CP
+        assertEquals(0x00, code.get(296) & 0xFF);
+        assertEquals(0x02, code.get(297) & 0xFF);
+        assertEquals(0xF5, code.get(298) & 0xFF); // PUSH PSW
+        assertEquals(0xF6, code.get(299) & 0xFF); // ORI
+        assertEquals(0xF0, code.get(300) & 0xFF);
+        assertEquals(0xF7, code.get(301) & 0xFF); // RST 6
+        assertEquals(0xF8, code.get(302) & 0xFF); // RM
+        assertEquals(0xF9, code.get(303) & 0xFF); // SPHL
+        assertEquals(0xFA, code.get(304) & 0xFF); // JM
+        assertEquals(0x00, code.get(305) & 0xFF);
+        assertEquals(0x02, code.get(306) & 0xFF);
+        assertEquals(0xFB, code.get(307) & 0xFF); // EI
+        assertEquals(0xFC, code.get(308) & 0xFF); // CM
+        assertEquals(0x00, code.get(309) & 0xFF);
+        assertEquals(0x02, code.get(310) & 0xFF);
+        assertEquals(0xFE, code.get(311) & 0xFF); // CPI
+        assertEquals(0xF0, code.get(312) & 0xFF);
+        assertEquals(0xFF, code.get(313) & 0xFF); // RST 7
     }
-
 }

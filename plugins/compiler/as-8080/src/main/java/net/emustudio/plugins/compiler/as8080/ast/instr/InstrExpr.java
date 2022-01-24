@@ -49,6 +49,7 @@ public class InstrExpr extends Node {
         opcodes.put(OPCODE_JPO, 0xE2);
         opcodes.put(OPCODE_CALL, 0xCD);
         opcodes.put(OPCODE_CC, 0xDC);
+        opcodes.put(OPCODE_CZ, 0xCC);
         opcodes.put(OPCODE_CNC, 0xD4);
         opcodes.put(OPCODE_CNZ, 0xC4);
         opcodes.put(OPCODE_CM, 0xFC);
