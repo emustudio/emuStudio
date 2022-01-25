@@ -45,17 +45,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class Drive {
     private static final Logger LOGGER = LoggerFactory.getLogger(Drive.class);
 
-    public final static short DEFAULT_SECTORS_COUNT = 32;
-    public final static short DEFAULT_SECTOR_LENGTH = 137;
+    public final static byte DEFAULT_SECTORS_COUNT = 32;
+    public final static byte DEFAULT_SECTOR_LENGTH = (byte)137;
 
-    public static final short DEAD_DRIVE = 0b11100111;
-    private static final short ALIVE_DRIVE = 0b11100101;
-    private static final short MASK_TRACK0 = 0b10111111;
+    public static final byte DEAD_DRIVE = (byte)0b11100111;
+    private static final byte ALIVE_DRIVE = (byte)0b11100101;
+    private static final byte MASK_TRACK0 = (byte)0b10111111;
 
-    public static final short SECTOR0 = 0b11000001;
+    public static final byte SECTOR0 = (byte)0b11000001;
 
-    private static final short MASK_HEAD_LOAD = 0b11111011;
-    private static final short MASK_DATA_AVAILABLE = 0b01111111;
+    private static final byte MASK_HEAD_LOAD = (byte)0b11111011;
+    private static final byte MASK_DATA_AVAILABLE = 0b01111111;
 
     private final int driveIndex;
 
@@ -88,8 +88,8 @@ public class Drive {
      Z - When 0, indicates head is on track 0
      R - When 0, indicates that read circuit has new byte to read
      */
-    private short port1status = DEAD_DRIVE;
-    private short port2status = SECTOR0;
+    private byte port1status = DEAD_DRIVE;
+    private byte port2status = SECTOR0;
 
     public Drive(int driveIndex) {
         this.driveIndex = driveIndex;
@@ -202,16 +202,16 @@ public class Drive {
         return mountedFloppy;
     }
 
-    public short getPort1status() {
+    public byte getPort1status() {
         return inReadLock(() -> port1status);
     }
 
-    public short getPort2status() {
+    public byte getPort2status() {
         return inReadLock(() -> {
             if (((~port1status) & (~MASK_HEAD_LOAD)) != 0) {
                 return port2status;
             } else {
-                return (short) 0;
+                return (byte)0;
             }
         });
     }
@@ -238,7 +238,7 @@ public class Drive {
             if ((val & 0x04) != 0) { /* Head load */
                 port1status &= MASK_HEAD_LOAD;
                 port1status &= MASK_DATA_AVAILABLE;
-                port2status = (short) ((sector << 1) & 0x3E | 0xC0);
+                port2status = (byte) ((sector << 1) & 0x3E | 0xC0);
                 if (sectorOffset != 0) {
                     port2status |= 1; // SR0 = false
                 }
@@ -263,9 +263,9 @@ public class Drive {
     public void nextSectorIfHeadIsLoaded() {
         inWriteLock(() -> {
             if (((~port1status) & (~MASK_HEAD_LOAD)) != 0) { /* head loaded? */
-                sector = (short) ((sector + 1) % sectorsCount);
+                sector = (byte) ((sector + 1) % sectorsCount);
                 sectorOffset = sectorLength;
-                port2status = (short) ((sector << 1) & 0x3E | 0xC0);
+                port2status = (byte) ((sector << 1) & 0x3E | 0xC0);
             }
         });
         notifyParamsChanged();
@@ -297,21 +297,21 @@ public class Drive {
         notifyParamsChanged();
     }
 
-    public short readData() {
+    public byte readData() {
         if (mountedFloppy == null) {
             return 0;
         }
-        short result = inWriteLock(() -> {
+        byte result = inWriteLock(() -> {
             try {
                 int offset = (sectorOffset == sectorLength) ? 0 : sectorOffset;
-                imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + offset);
+                imageChannel.position((long) sectorsCount * sectorLength * track + (long) sectorLength * sector + offset);
                 byteBuffer.clear();
                 int bytesRead = imageChannel.read(byteBuffer);
                 if (bytesRead != byteBuffer.capacity()) {
                     throw new IOException("[drive=" + driveIndex + "] Could not read data from disk image");
                 }
                 byteBuffer.flip();
-                return (short) (byteBuffer.get() & 0xFF);
+                return (byte) (byteBuffer.get() & 0xFF);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             } finally {

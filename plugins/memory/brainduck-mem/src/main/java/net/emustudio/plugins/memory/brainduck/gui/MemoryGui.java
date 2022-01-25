@@ -27,7 +27,7 @@ import java.util.Objects;
 
 public class MemoryGui extends JDialog {
     private final MemoryTableModel tableModel;
-    private final MemoryContext<Short> memory;
+    private final MemoryContext<Byte> memory;
 
     private class MemoryListenerImpl implements Memory.MemoryListener {
 
@@ -42,7 +42,7 @@ public class MemoryGui extends JDialog {
         }
     }
 
-    public MemoryGui(JFrame parent, MemoryContext<Short> memory) {
+    public MemoryGui(JFrame parent, MemoryContext<Byte> memory) {
         super(parent, false);
         setLocationRelativeTo(parent);
         initComponents();

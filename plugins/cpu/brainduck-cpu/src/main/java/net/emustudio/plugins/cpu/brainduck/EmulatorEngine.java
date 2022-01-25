@@ -28,19 +28,19 @@ import java.util.Deque;
 import java.util.Objects;
 
 public class EmulatorEngine {
-    final static short I_STOP = 0; // ;
-    final static short I_INC = 1; // >
-    final static short I_DEC = 2; // <
-    final static short I_INCV = 3; // +
-    final static short I_DECV = 4; // -
-    final static short I_PRINT = 5; // .
-    final static short I_READ = 6; // ,
-    final static short I_LOOP_START = 7; // [
-    final static short I_LOOP_END = 8; // ]
-    final static short I_COPY_AND_CLEAR = 0xA1; // any copyloop, including clear
-    final static short I_SCANLOOP = 0xA2; // [<] or [>]
+    final static byte I_STOP = 0; // ;
+    final static byte I_INC = 1; // >
+    final static byte I_DEC = 2; // <
+    final static byte I_INCV = 3; // +
+    final static byte I_DECV = 4; // -
+    final static byte I_PRINT = 5; // .
+    final static byte I_READ = 6; // ,
+    final static byte I_LOOP_START = 7; // [
+    final static byte I_LOOP_END = 8; // ]
+    final static byte I_COPY_AND_CLEAR = (byte)0xA1; // any copyloop, including clear
+    final static byte I_SCANLOOP = (byte)0xA2; // [<] or [>]
 
-    private final short[] rawMemory;
+    private final Byte[] rawMemory;
     private final BrainCPUContextImpl context;
     private final Deque<Integer> loopPointers = new ArrayDeque<>();
     private final Profiler profiler;
@@ -106,10 +106,10 @@ public class EmulatorEngine {
                 }
                 break;
             case I_INCV: /* + */
-                rawMemory[P] = (short) ((rawMemory[P] + argument) & 0xFF);
+                rawMemory[P] = (byte) ((rawMemory[P] + argument) & 0xFF);
                 break;
             case I_DECV: /* - */
-                rawMemory[P] = (short) ((rawMemory[P] - argument) & 0xFF);
+                rawMemory[P] = (byte) ((rawMemory[P] - argument) & 0xFF);
                 break;
             case I_PRINT: /* . */
                 while (argument > 0) {
@@ -144,7 +144,7 @@ public class EmulatorEngine {
                     } else if (copyLoop.specialOP == I_READ) {
                         rawMemory[P] = context.readFromDevice();
                     } else {
-                        rawMemory[P + copyLoop.relativePosition] = (short)
+                        rawMemory[P + copyLoop.relativePosition] = (byte)
                             ((rawMemory[P] * copyLoop.factor + rawMemory[P + copyLoop.relativePosition]) & 0xFF);
                     }
                 }

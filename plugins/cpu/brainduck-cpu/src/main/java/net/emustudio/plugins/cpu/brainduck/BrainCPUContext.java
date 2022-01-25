@@ -24,7 +24,7 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 
 @PluginContext
 public interface BrainCPUContext extends CPUContext {
-    void attachDevice(DeviceContext<Short> device);
+    void attachDevice(DeviceContext<Byte> device);
 
     void detachDevice();
 }

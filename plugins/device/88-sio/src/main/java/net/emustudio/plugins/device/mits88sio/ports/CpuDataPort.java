@@ -32,7 +32,7 @@ import java.util.Objects;
  * A read to the data port gets the buffered character, a write to the data port
  * writes the character to the device.
  */
-public class CpuDataPort implements DeviceContext<Short> {
+public class CpuDataPort implements DeviceContext<Byte> {
     private final Transmitter transmitter;
 
     public CpuDataPort(Transmitter transmitter) {
@@ -40,17 +40,17 @@ public class CpuDataPort implements DeviceContext<Short> {
     }
 
     @Override
-    public void writeData(Short data) throws IOException {
+    public void writeData(Byte data) throws IOException {
         transmitter.writeToDevice(data);
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     @Override
-    public Short readData() {
+    public Byte readData() {
         return transmitter.readBuffer();
     }
 

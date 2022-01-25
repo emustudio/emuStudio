@@ -69,6 +69,15 @@ public class RangeTree {
         return values.contains(value);
     }
 
+    public boolean intersects(int from, int to) {
+        for (int i = from; i <= to; i++) {
+            if (values.contains(i)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public final static class Range implements ByteMemoryContext.AddressRange {
         public final int from;
         public final int to;

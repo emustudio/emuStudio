@@ -35,7 +35,7 @@ public interface ExtendedContext extends CPUContext {
      * @param port   CPU port where the device should be attached
      * @return true on success, false otherwise
      */
-    boolean attachDevice(DeviceContext<Short> device, int port);
+    boolean attachDevice(DeviceContext<Byte> device, int port);
 
     /**
      * Detach a device from the CPU.

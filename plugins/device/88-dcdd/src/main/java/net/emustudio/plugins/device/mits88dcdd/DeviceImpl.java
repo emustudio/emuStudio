@@ -177,7 +177,7 @@ public class DeviceImpl extends AbstractDevice {
         });
     }
 
-    private int attachPort(int diskPortNumber, DeviceContext<Short> diskPort, int cpuPort) throws PluginInitializationException {
+    private int attachPort(int diskPortNumber, DeviceContext<Byte> diskPort, int cpuPort) throws PluginInitializationException {
         if (cpuContext.attachDevice(diskPort, cpuPort)) {
             return cpuPort;
         } else {

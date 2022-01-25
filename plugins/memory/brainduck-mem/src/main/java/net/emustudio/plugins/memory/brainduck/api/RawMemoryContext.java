@@ -23,7 +23,7 @@ import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 
 @PluginContext(id = "BrainDuck Raw Memory")
-public interface RawMemoryContext extends MemoryContext<Short> {
+public interface RawMemoryContext extends MemoryContext<Byte> {
 
     /**
      * Returns raw memory represented by Java array.
@@ -32,5 +32,5 @@ public interface RawMemoryContext extends MemoryContext<Short> {
      *
      * @return raw memory
      */
-    short[] getRawMemory();
+    Byte[] getRawMemory();
 }

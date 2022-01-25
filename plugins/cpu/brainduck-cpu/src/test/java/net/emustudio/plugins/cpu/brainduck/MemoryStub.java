@@ -18,13 +18,13 @@
  */
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
 
 @PluginContext
-public class MemoryStub extends ShortMemoryStub implements RawMemoryContext {
+public class MemoryStub extends ByteMemoryStub implements RawMemoryContext {
     private int afterProgram;
 
     MemoryStub() {
@@ -49,7 +49,7 @@ public class MemoryStub extends ShortMemoryStub implements RawMemoryContext {
     }
 
     @Override
-    public short[] getRawMemory() {
+    public Byte[] getRawMemory() {
         return memory;
     }
 

@@ -28,7 +28,7 @@ import java.util.Objects;
  * This is the status port of 88-SIO card.
  */
 @PluginContext(id = "Status port")
-public class CpuStatusPort implements DeviceContext<Short> {
+public class CpuStatusPort implements DeviceContext<Byte> {
     private final Transmitter transmitter;
 
     public CpuStatusPort(Transmitter transmitter) {
@@ -36,18 +36,18 @@ public class CpuStatusPort implements DeviceContext<Short> {
     }
 
     @Override
-    public Short readData() {
+    public Byte readData() {
         return transmitter.readStatus();
     }
 
     @Override
-    public void writeData(Short data) {
+    public void writeData(Byte data) {
         transmitter.writeToStatus(data);
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     @Override

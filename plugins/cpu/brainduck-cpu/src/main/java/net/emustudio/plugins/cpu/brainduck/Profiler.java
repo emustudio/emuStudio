@@ -33,7 +33,7 @@ import static net.emustudio.plugins.cpu.brainduck.EmulatorEngine.*;
 public class Profiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(Profiler.class);
 
-    private final short[] memory;
+    private final Byte[] memory;
     private final CachedOperation[] operationsCache;
     private final Integer[] loopEndsCache;
 

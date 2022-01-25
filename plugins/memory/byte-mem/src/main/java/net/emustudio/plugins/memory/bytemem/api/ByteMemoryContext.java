@@ -28,8 +28,9 @@ import java.util.List;
  * <p>
  * Supports bank switching, ROM ranges, and loading HEX/BIN files.
  */
+@SuppressWarnings("unused")
 @PluginContext(id = "Byte memory")
-public interface ByteMemoryContext extends MemoryContext<Short> {
+public interface ByteMemoryContext extends MemoryContext<Byte> {
 
     /**
      * This interface represents a range of addresses in the memory.

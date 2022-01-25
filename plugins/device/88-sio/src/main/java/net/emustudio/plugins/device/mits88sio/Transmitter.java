@@ -48,23 +48,23 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Transmitter {
     private final static Logger LOGGER = LoggerFactory.getLogger(Transmitter.class);
 
-    private final Queue<Short> buffer = new ConcurrentLinkedQueue<>();
+    private final Queue<Byte> buffer = new ConcurrentLinkedQueue<>();
     private final Lock bufferAndStatusLock = new ReentrantLock();
 
-    private volatile DeviceContext<Short> device;
-    private volatile short status = 0x2;
+    private volatile DeviceContext<Byte> device;
+    private volatile byte status = 0x2;
     private volatile boolean inputInterruptEnabled;
     private volatile boolean outputInterruptEnabled;
 
     private final List<Observer> observers = new ArrayList<>();
 
-    void setDevice(DeviceContext<Short> device) {
+    void setDevice(DeviceContext<Byte> device) {
         this.device = device;
         LOGGER.info("[device={}] Device was attached to 88-SIO", getDeviceId());
     }
 
     String getDeviceId() {
-        DeviceContext<Short> tmpDevice = device;
+        DeviceContext<Byte> tmpDevice = device;
         if (tmpDevice == null) {
             return "unknown";
         }
@@ -99,7 +99,7 @@ public class Transmitter {
         }
     }
 
-    public void writeFromDevice(short data) {
+    public void writeFromDevice(byte data) {
         boolean wasEmpty = false;
         int newStatus = status;
 
@@ -109,7 +109,7 @@ public class Transmitter {
                 wasEmpty = true;
             }
             buffer.add(data);
-            status = (short) (status | 1);
+            status = (byte) (status | 1);
             newStatus = status;
         } finally {
             bufferAndStatusLock.unlock();
@@ -121,24 +121,24 @@ public class Transmitter {
         }
     }
 
-    public void writeToDevice(short data) throws IOException {
-        DeviceContext<Short> tmpDevice = device;
+    public void writeToDevice(byte data) throws IOException {
+        DeviceContext<Byte> tmpDevice = device;
         if (tmpDevice != null) {
             tmpDevice.writeData(data);
         }
     }
 
-    public short readBuffer() {
+    public byte readBuffer() {
         int newData = 0;
         boolean isNotEmpty = false;
         int newStatus = status; // what to do..
 
         bufferAndStatusLock.lock();
         try {
-            Short result = buffer.poll();
+            Byte result = buffer.poll();
 
             isNotEmpty = !buffer.isEmpty();
-            status = isNotEmpty ? (short) (status | 1) : (short) (status & 0xFE);
+            status = (byte) (isNotEmpty ? (status | 1) : (status & 0xFE));
             newStatus = status;
 
             if (isNotEmpty) {
@@ -158,7 +158,7 @@ public class Transmitter {
         }
     }
 
-    public short readStatus() {
+    public byte readStatus() {
         return status;
     }
 

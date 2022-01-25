@@ -146,7 +146,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
 
         assertEquals(3, output.size());
         assertEquals(4, output.get(0).byteValue());
@@ -216,7 +216,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
         assertEquals(2, output.size());
         assertEquals('8', output.get(0).byteValue());
         assertEquals('\n', output.get(1).byteValue());
@@ -239,7 +239,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
         assertEquals(2, output.size());
         assertEquals(64, output.get(0).byteValue());
         assertEquals('a', output.get(1).byteValue());
@@ -286,7 +286,7 @@ public class CpuImplTest {
         emulate(program, null, null);
 
         assertEquals(memory.getDataStart(), cpu.getEngine().P);
-        assertEquals(255, memory.read(memory.getDataStart()).shortValue());
+        assertEquals(255, memory.read(memory.getDataStart()) & 0xFF);
     }
 
     @Test(timeout = 3000)
@@ -356,7 +356,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
         assertEquals(3, output.size());
     }
 

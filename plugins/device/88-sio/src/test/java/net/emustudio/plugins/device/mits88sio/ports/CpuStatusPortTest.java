@@ -35,7 +35,7 @@ public class CpuStatusPortTest {
     @Test
     public void testReadCallsReadStatusOnTransmitter() {
         Transmitter transmitter = EasyMock.createMock(Transmitter.class);
-        expect(transmitter.readStatus()).andReturn((short) 5).once();
+        expect(transmitter.readStatus()).andReturn((byte) 5).once();
         replay(transmitter);
 
         CpuStatusPort cpuStatusPort = new CpuStatusPort(transmitter);
@@ -52,7 +52,7 @@ public class CpuStatusPortTest {
         replay(transmitter);
 
         CpuStatusPort cpuStatusPort = new CpuStatusPort(transmitter);
-        cpuStatusPort.writeData((short) 5);
+        cpuStatusPort.writeData((byte) 5);
 
         verify(transmitter);
     }

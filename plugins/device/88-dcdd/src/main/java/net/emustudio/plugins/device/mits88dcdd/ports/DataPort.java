@@ -32,7 +32,7 @@ import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE
  * IN: read data
  * OUT: write data
  */
-public class DataPort implements DeviceContext<Short> {
+public class DataPort implements DeviceContext<Byte> {
     private final DriveCollection disk;
 
     public DataPort(DriveCollection disk) {
@@ -40,18 +40,18 @@ public class DataPort implements DeviceContext<Short> {
     }
 
     @Override
-    public Short readData() {
-        return disk.getCurrentDrive().map(Drive::readData).orElse((short)0);
+    public Byte readData() {
+        return disk.getCurrentDrive().map(Drive::readData).orElse((byte)0);
     }
 
     @Override
-    public void writeData(Short data) {
+    public void writeData(Byte data) {
         disk.getCurrentDrive().ifPresent(drive -> drive.writeData(data));
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     @Override

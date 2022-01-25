@@ -32,7 +32,7 @@ import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE
  * IN: sector pos
  * OUT: set flags
  */
-public class ControlPort implements DeviceContext<Short> {
+public class ControlPort implements DeviceContext<Byte> {
     private final DriveCollection disk;
 
     public ControlPort(DriveCollection disk) {
@@ -40,7 +40,7 @@ public class ControlPort implements DeviceContext<Short> {
     }
 
     @Override
-    public Short readData() {
+    public Byte readData() {
         return disk.getCurrentDrive().map(drive -> {
             drive.nextSectorIfHeadIsLoaded();
             return drive.getPort2status();
@@ -48,13 +48,13 @@ public class ControlPort implements DeviceContext<Short> {
     }
 
     @Override
-    public void writeData(Short val) {
+    public void writeData(Byte val) {
         disk.getCurrentDrive().ifPresent(drive -> drive.writeToPort2(val));
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     @Override

@@ -19,7 +19,7 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.cpu.testsuite.Generator;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
@@ -49,7 +49,7 @@ public class InstructionsTest {
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws PluginInitializationException {
-        ShortMemoryStub memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class))

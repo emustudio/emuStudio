@@ -20,7 +20,7 @@ package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
-public class FakeDevice implements DeviceContext<Short> {
+public class FakeDevice implements DeviceContext<Byte> {
     private byte value;
 
     public void setValue(byte value) {
@@ -32,17 +32,17 @@ public class FakeDevice implements DeviceContext<Short> {
     }
 
     @Override
-    public Short readData() {
-        return (short) (value & 0xFF);
+    public Byte readData() {
+        return (byte) (value & 0xFF);
     }
 
     @Override
-    public void writeData(Short value) {
-        this.value = value.byteValue();
+    public void writeData(Byte value) {
+        this.value = value;
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 }

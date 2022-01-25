@@ -20,8 +20,8 @@ package net.emustudio.plugins.memory.bytemem;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.io.EOFException;
@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Objects;
 
 @PluginContext(id = "Byte Memory")
-public class MemoryContextImpl extends AbstractMemoryContext<Short> implements ByteMemoryContext {
+public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements ByteMemoryContext {
     final static int DEFAULT_MEM_SIZE = 65536;
 
     private final RangeTree romRanges = new RangeTree();
@@ -44,7 +44,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements B
     }
 
     int lastImageStart = 0;
-    private short[][] mem = new short[1][0];
+    private Byte[][] mem = new Byte[1][0];
     private int banksCount;
     private short bankSelect = 0;
     private int bankCommon = 0;
@@ -56,13 +56,13 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements B
 
         this.bankCommon = bankCommon;
         this.banksCount = banks;
-        mem = new short[banks][size];
+        mem = new Byte[banks][size];
     }
 
     @Override
     public void clear() {
-        for (short[] mem1 : mem) {
-            Arrays.fill(mem1, (short) 0);
+        for (Byte[] bank : mem) {
+            Arrays.fill(bank, (byte) 0);
         }
         lastImageStart = 0;
         notifyMemoryChanged(-1);
@@ -99,8 +99,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements B
     public void loadHex(Path hexFile, int bank) {
         short currentBank = bankSelect;
         try {
-            bankSelect = (short)bank;
-            lastImageStart = IntelHEX.loadIntoMemory(hexFile.toFile(), this);
+            bankSelect = (short) bank;
+            lastImageStart = IntelHEX.loadIntoMemory(hexFile.toFile(), this, p -> p);
         } catch (FileNotFoundException ex) {
             dialogs.showError("File not found: " + hexFile);
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements B
         try (RandomAccessFile binaryFile = new RandomAccessFile(binFile.toFile(), "r")) {
             long position = 0, length = binaryFile.length();
             while (position < length) {
-                mem[bank][address++] = (short) (binaryFile.readUnsignedByte() & 0xFF);
+                mem[bank][address++] = (byte) (binaryFile.readUnsignedByte() & 0xFF);
                 position++;
             }
         } catch (EOFException ignored) {
@@ -131,12 +131,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements B
     }
 
     @Override
-    public Short read(int from) {
+    public Byte read(int from) {
         int activeBank = (from < bankCommon) ? bankSelect : 0;
         return mem[activeBank][from];
     }
 
-    public Short read(int from, int bank) {
+    public Byte readBank(int from, int bank) {
         if (from < bankCommon) {
             return mem[bank][from];
         } else {
@@ -145,48 +145,38 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements B
     }
 
     @Override
-    public Short[] readWord(int from) {
-        int activeBank = (from < bankCommon) ? bankSelect : 0;
-        return new Short[]{mem[activeBank][from], mem[activeBank][(from + 1) & 0xFFFF]};
+    public Byte[] read(int from, int count) {
+        return Arrays.copyOfRange(mem[bank(from)], from, from + count); // from+count can be >= memory.length
     }
 
     @Override
-    public void write(int to, Short val) {
+    public void write(int to, Byte value) {
         if (!isReadOnly(to)) {
-            int activeBank = (to < bankCommon) ? bankSelect : 0;
-            mem[activeBank][to] = (short) (val & 0xFF);
+            mem[bank(to)][to] = value;
             notifyMemoryChanged(to);
         }
     }
 
-    public void write(int to, short val, int bank) {
+    public void writeBank(int to, byte val, int bank) {
         if (!isReadOnly(to)) {
             int activeBank = (to < bankCommon) ? bank : 0;
-            mem[activeBank][to] = (short) (val & 0xFF);
+            mem[activeBank][to] = val;
             notifyMemoryChanged(to);
         }
     }
 
-    @Override
-    public void writeWord(int to, Short[] cells) {
-        if (isReadOnly(to)) {
-            return;
+    public void write(int to, Byte[] values, int count) {
+        if (!romRanges.intersects(to, to + count)) {
+            System.arraycopy(values, 0, mem[bank(to)], to, count);
+            for (int i = 0; i < values.length; i++) {
+                notifyMemoryChanged(to + i);
+            }
         }
-        int activeBank = (to < bankCommon) ? bankSelect : 0;
-        mem[activeBank][to] = (short) (cells[0] & 0xFF);
-
-        if (isReadOnly(to + 1)) {
-            return;
-        }
-
-        mem[activeBank][to + 1] = (short) (cells[1] & 0xFF);
-        notifyMemoryChanged(to);
-        notifyMemoryChanged(to + 1);
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     @Override
@@ -226,5 +216,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements B
 
     private void addRomRange(AddressRange range) {
         romRanges.add(range.getStartAddress(), range.getStopAddress());
+    }
+
+    private int bank(int address) {
+        return (address < bankCommon) ? bankSelect : 0;
     }
 }

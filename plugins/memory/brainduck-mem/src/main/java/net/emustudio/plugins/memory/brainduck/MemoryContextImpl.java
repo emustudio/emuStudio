@@ -23,47 +23,42 @@ import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
 
 import java.util.Arrays;
 
-public class MemoryContextImpl extends AbstractMemoryContext<Short> implements RawMemoryContext {
-    private final short[] memory = new short[65536];
+public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements RawMemoryContext {
+    private final Byte[] memory = new Byte[65536];
 
     @Override
     public void clear() {
-        Arrays.fill(memory, (short) 0);
+        Arrays.fill(memory, (byte) 0);
         notifyMemoryChanged(-1); // notify that all memory has changed
     }
 
     @Override
-    public Short read(int from) {
+    public Byte read(int from) {
         return memory[from];
     }
 
     @Override
-    public Short[] readWord(int from) {
-        if (from == memory.length - 1) {
-            return new Short[]{memory[from], 0};
-        }
-        return new Short[]{memory[from], memory[from + 1]};
+    public Byte[] read(int from, int count) {
+        return Arrays.copyOfRange(memory, from, from + count); // from+count can be >= memory.length
     }
 
     @Override
-    public void write(int to, Short val) {
-        memory[to] = val;
+    public void write(int to, Byte value) {
+        memory[to] = value;
         notifyMemoryChanged(to);
     }
 
     @Override
-    public void writeWord(int to, Short[] cells) {
-        memory[to] = cells[0];
-        notifyMemoryChanged(to);
-        if (to < memory.length - 1) {
-            memory[to + 1] = cells[1];
-            notifyMemoryChanged(to + 1);
+    public void write(int to, Byte[] values, int count) {
+        System.arraycopy(values, 0, memory, to, count);
+        for (int i = 0; i < values.length; i++) {
+            notifyMemoryChanged(to + i);
         }
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     @Override
@@ -72,7 +67,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements R
     }
 
     @Override
-    public short[] getRawMemory() {
+    public Byte[] getRawMemory() {
         return memory;
     }
 }

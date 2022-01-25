@@ -24,12 +24,12 @@ import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
 
 public class MemoryTableModel extends AbstractTableModel {
-    private final MemoryContext<Short> mem;
+    private final MemoryContext<Byte> mem;
     private int currentPage = 0;
     private final int ROW_COUNT = 16;
     private final int COLUMN_COUNT = 16;
 
-    MemoryTableModel(MemoryContext<Short> memory) {
+    MemoryTableModel(MemoryContext<Byte> memory) {
         this.mem = Objects.requireNonNull(memory);
     }
 
@@ -62,7 +62,7 @@ public class MemoryTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
         try {
-            mem.write(pos, Short.decode(String.valueOf(aValue)));
+            mem.write(pos, Byte.decode(String.valueOf(aValue)));
             fireTableCellUpdated(rowIndex, columnIndex);
         } catch (NumberFormatException ignored) {
         }

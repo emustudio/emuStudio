@@ -25,14 +25,13 @@ import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 
 import static net.emustudio.plugins.cpu.brainduck.gui.Constants.MONOSPACED_PLAIN;
 
 public class StatusPanel extends JPanel {
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();
     private final MemoryTableModel tableModel;
-    private final short[] memory;
+    private final Byte[] memory;
     private final EmulatorEngine cpu;
 
     private class CPUStatusListener implements CPU.CPUListener {
@@ -263,7 +262,7 @@ public class StatusPanel extends JPanel {
             }
         ) {
             Class[] types = new Class[]{
-                java.lang.Short.class, java.lang.Short.class, java.lang.Short.class, java.lang.Short.class, java.lang.Short.class
+                java.lang.Byte.class, java.lang.Byte.class, java.lang.Byte.class, java.lang.Byte.class, java.lang.Byte.class
             };
 
             public Class getColumnClass(int columnIndex) {

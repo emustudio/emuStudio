@@ -32,7 +32,7 @@ import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE
  * IN: disk flags
  * OUT: select/unselect drive
  */
-public class StatusPort implements DeviceContext<Short> {
+public class StatusPort implements DeviceContext<Byte> {
     private final DriveCollection disk;
 
     public StatusPort(DriveCollection disk) {
@@ -40,12 +40,12 @@ public class StatusPort implements DeviceContext<Short> {
     }
 
     @Override
-    public Short readData() {
+    public Byte readData() {
         return disk.getCurrentDrive().map(Drive::getPort1status).orElse(Drive.DEAD_DRIVE);
     }
 
     @Override
-    public void writeData(Short value) {
+    public void writeData(Byte value) {
         if ((value & 0x80) != 0) {
             disk.getCurrentDrive().ifPresent(Drive::deselect);
             disk.unsetCurrentDrive();
@@ -56,8 +56,8 @@ public class StatusPort implements DeviceContext<Short> {
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     @Override

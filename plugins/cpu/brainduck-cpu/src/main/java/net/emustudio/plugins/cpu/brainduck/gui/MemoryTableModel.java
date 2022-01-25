@@ -23,7 +23,7 @@ import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
 import javax.swing.table.AbstractTableModel;
 
 public class MemoryTableModel extends AbstractTableModel {
-    private final short[] memory;
+    private final Byte[] memory;
     private volatile int P;
 
     MemoryTableModel(RawMemoryContext memory) {
