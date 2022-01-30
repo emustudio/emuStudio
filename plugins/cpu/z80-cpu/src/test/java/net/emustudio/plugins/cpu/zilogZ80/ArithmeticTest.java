@@ -444,6 +444,47 @@ public class ArithmeticTest extends InstructionsTest {
         );
     }
 
+    @Test
+    public void testINC_IXH() {
+
+    }
+
+    @Test
+    public void testINC_IYH() {
+
+    }
+
+    @Test
+    public void testDEC_IXH() {
+
+    }
+
+    @Test
+    public void testDEC_IYH() {
+
+    }
+
+    @Test
+    public void testINC_IXL() {
+
+    }
+
+    @Test
+    public void testINC_IYL() {
+
+    }
+
+    @Test
+    public void testDEC_IXL() {
+
+    }
+
+    @Test
+    public void testDEC_IYL() {
+
+    }
+
+
     private ByteTestBuilder additionTestBuilder() {
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)

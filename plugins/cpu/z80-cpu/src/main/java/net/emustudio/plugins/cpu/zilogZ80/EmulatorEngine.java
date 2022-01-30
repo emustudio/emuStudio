@@ -2353,14 +2353,95 @@ public class EmulatorEngine implements CpuEngine {
         return 23;
     }
 
-    //inc ixh
-//    int I_INC_IIH(short OP, short special) {
-//        int reg = (OP >>> 3) & 0x07;
-//        int value = (getreg(reg) + 1) & 0xFF;
-//        flags = EmulatorTables.INC_TABLE[value] | (flags & FLAG_C);
-//        putreg(reg, value);
-//        return (reg == 6) ? 11 : 4;
-//    }
+    int I_INC_IXH(short OP) {
+        IX = ((I_INC_IIH(IX) << 8) | (IX & 0xFF)) & 0xFFFF;
+        return 8;
+    }
 
+    int I_INC_IYH(short OP) {
+        IY = ((I_INC_IIH(IY) << 8) | (IY & 0xFF)) & 0xFFFF;
+        return 8;
+    }
 
+    int I_INC_IIH(int special) {
+        int reg = special >>> 8;
+        int value = (reg + 1) & 0xFF;
+        flags = EmulatorTables.INC_TABLE[value] | (flags & FLAG_C);
+        return value;
+    }
+
+    int I_INC_IXL(short OP) {
+        IX = ((IX & 0xFF00) | (I_INC_IIL(IX) & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_INC_IYL(short OP) {
+        IY = ((IY & 0xFF00) | (I_INC_IIL(IY) & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_INC_IIL(int special) {
+        int reg = special & 0xFF;
+        int value = (reg + 1) & 0xFF;
+        flags = EmulatorTables.INC_TABLE[value] | (flags & FLAG_C);
+        return value;
+    }
+
+    int I_DEC_IXH(short OP) {
+        IX = ((I_DEC_IIH(IX) << 8) | (IX & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_DEC_IYH(short OP) {
+        IY = ((I_DEC_IIH(IY) << 8) | (IY & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_DEC_IIH(int special) {
+        int reg = special >>> 8;
+        int value = (reg - 1) & 0xFF;
+        flags = EmulatorTables.DEC_TABLE[value] | (flags & FLAG_C);
+        return value;
+    }
+
+    int I_DEC_IXL(short OP) {
+        IX = ((IX & 0xFF00) | (I_DEC_IIL(IX) & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_DEC_IYL(short OP) {
+        IY = ((IY & 0xFF00) | (I_DEC_IIL(IY) & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_DEC_IIL(int special) {
+        int reg = special & 0xFF;
+        int value = (reg - 1) & 0xFF;
+        flags = EmulatorTables.DEC_TABLE[value] | (flags & FLAG_C);
+        return value;
+    }
+
+    int I_LD_IXH_N(short OP) {
+        IX = ((readByte(PC) << 8) | (IX & 0xFF)) & 0xFFFF;
+        PC = (PC + 1) & 0xFFFF;
+        return 11;
+    }
+
+    int I_LD_IYH_N(short OP) {
+        IY = ((readByte(PC) << 8) | (IY & 0xFF)) & 0xFFFF;
+        PC = (PC + 1) & 0xFFFF;
+        return 11;
+    }
+
+    int I_LD_IXL_N(short OP) {
+        IX = ((IX & 0xFF00) | (readByte(PC) & 0xFF)) & 0xFFFF;
+        PC = (PC + 1) & 0xFFFF;
+        return 11;
+    }
+
+    int I_LD_IYL_N(short OP) {
+        IY = ((IY & 0xFF00) | (readByte(PC) & 0xFF)) & 0xFFFF;
+        PC = (PC + 1) & 0xFFFF;
+        return 11;
+    }
 }

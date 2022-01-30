@@ -565,6 +565,26 @@ public class TransferTest extends InstructionsTest {
         );
     }
 
+    @Test
+    public void testLD_IXH_N() {
+
+    }
+
+    @Test
+    public void testLD_IYH_N() {
+
+    }
+
+    @Test
+    public void testLD_IXL_N() {
+
+    }
+
+    @Test
+    public void testLD_IYL_N() {
+
+    }
+
     private void runLD_R_R_test(int register, int... opcodes) {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(register)
