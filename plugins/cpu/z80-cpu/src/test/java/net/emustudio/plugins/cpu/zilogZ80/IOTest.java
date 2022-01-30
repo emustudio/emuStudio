@@ -33,7 +33,7 @@ import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 public class IOTest extends InstructionsTest {
 
     @Test
-    public void testIN_A__n() {
+    public void testIN_A_REF_N() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsDeviceAndSecondIsPort()
             .secondIsRegister(REG_A)
@@ -45,7 +45,7 @@ public class IOTest extends InstructionsTest {
     }
 
     @Test
-    public void testIN_r__C() {
+    public void testIN_R_REF_C() {
         Function<RunnerContext<Byte>, Integer> operation = context -> context.first & 0xFF;
 
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -68,7 +68,7 @@ public class IOTest extends InstructionsTest {
     }
 
     @Test
-    public void testIN__C() {
+    public void testIN_REF_C() {
         Function<RunnerContext<Byte>, Integer> operation = context -> context.first & 0xFF;
 
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -86,12 +86,6 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testINI() {
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) -> false;
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsCheckImpl.isParity(
-                ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) + 1) & 0xFF)) & 7) ^ result.byteValue()
-            );
-
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBisDeviceAndFirst8LSBIsPort()
             .first8LSBisRegister(REG_C)
@@ -101,13 +95,9 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
-                .expectFlagOnlyWhen(FLAG_N,
-                    (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
-                )
-                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().zero()
+                .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
             );
 
         Generator.forSome16bitBinary(2,
@@ -117,12 +107,6 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testINIR() {
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) -> false;
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsCheckImpl.isParity(
-                ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) + 1) & 0xFF)) & 7) ^ result.byteValue()
-            );
-
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBisDeviceAndFirst8LSBIsPort()
             .first8LSBisRegister(REG_C)
@@ -132,11 +116,10 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
                 .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
-                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+                .expectFlagOnlyWhen(FLAG_Z, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
             )
             .verifyPC(context -> {
                 if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
@@ -152,13 +135,6 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testIND() {
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            (((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) > 0xFF;
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsCheckImpl.isParity(
-                ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) & 7) ^ result.byteValue()
-            );
-
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBisDeviceAndFirst8LSBIsPort()
             .first8LSBisRegister(REG_C)
@@ -168,13 +144,9 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
-                .expectFlagOnlyWhen(FLAG_N,
-                    (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
-                )
-                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().zero()
+                .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
             );
 
         Generator.forSome16bitBinary(2,
@@ -184,13 +156,6 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testINDR() {
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            (((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) > 0xFF;
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsCheckImpl.isParity(
-                ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) & 7) ^ result.byteValue()
-            );
-
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBisDeviceAndFirst8LSBIsPort()
             .first8LSBisRegister(REG_C)
@@ -200,13 +165,10 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
-                .expectFlagOnlyWhen(FLAG_N,
-                    (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
-                )
-                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .expectFlagOnlyWhen(FLAG_Z, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
             )
             .verifyPC(context -> {
                 if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
@@ -221,7 +183,7 @@ public class IOTest extends InstructionsTest {
     }
 
     @Test
-    public void testOUT_n__A() {
+    public void testOUT_REF_N_A() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .verifyDeviceWhenSecondIsPort(context -> context.first & 0xFF);
@@ -232,7 +194,7 @@ public class IOTest extends InstructionsTest {
     }
 
     @Test
-    public void testOUT_C__r() {
+    public void testOUT_REF_C_R() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .secondIsRegister(REG_C)
             .verifyDeviceWhenSecondIsPort(context -> context.first & 0xFF)
@@ -253,7 +215,7 @@ public class IOTest extends InstructionsTest {
     }
 
     @Test
-    public void testOUT_C_0() {
+    public void testOUT_REF_C_0() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .secondIsRegister(REG_C)
             .verifyDeviceWhenSecondIsPort(context -> 0)
@@ -266,13 +228,6 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testOUTI() {
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + ((context.first + 1) & 0xFF)) > 0xFF;
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsCheckImpl.isParity(
-                (((context.second & 0xFF) + ((context.first + 1) & 0xFF)) & 7) ^ result.byteValue()
-            );
-
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()
             .firstIsPair(REG_PAIR_HL)
@@ -281,13 +236,9 @@ public class IOTest extends InstructionsTest {
             .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
-                .expectFlagOnlyWhen(FLAG_N,
-                    (context, result) -> ((context.second & 0x80) == 0x80)
-                )
-                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().zero()
+                .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
             );
 
         Generator.forSome16bitBinary(2,
@@ -297,13 +248,6 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testOTIR() {
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + ((context.first + 1) & 0xFF)) > 0xFF;
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsCheckImpl.isParity(
-                (((context.second & 0xFF) + (context.first + 1) & 0xFF) & 7) ^ result.byteValue()
-            );
-
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()
             .firstIsPair(REG_PAIR_HL)
@@ -312,13 +256,10 @@ public class IOTest extends InstructionsTest {
             .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
-                .expectFlagOnlyWhen(FLAG_N,
-                    (context, result) -> ((context.second & 0x80) == 0x80)
-                )
-                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_Z, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
             )
             .verifyPC(context -> {
                 if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
@@ -334,13 +275,6 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testOUTD() {
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + ((context.first - 1) & 0xFF)) > 0xFF;
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsCheckImpl.isParity(
-                (((context.second & 0xFF) + ((context.first - 1) & 0xFF)) & 7) ^ result.byteValue()
-            );
-
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()
             .firstIsPair(REG_PAIR_HL)
@@ -349,13 +283,9 @@ public class IOTest extends InstructionsTest {
             .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
-                .expectFlagOnlyWhen(FLAG_N,
-                    (context, result) -> ((context.second & 0x80) == 0x80)
-                )
-                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().zero()
+                .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
             );
 
         Generator.forSome16bitBinary(2,
@@ -365,13 +295,6 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testOTDR() {
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + ((context.first - 1) & 0xFF)) > 0xFF;
-        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsCheckImpl.isParity(
-                (((context.second & 0xFF) + ((context.first - 1) & 0xFF)) & 7) ^ result.byteValue()
-            );
-
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()
             .firstIsPair(REG_PAIR_HL)
@@ -380,13 +303,10 @@ public class IOTest extends InstructionsTest {
             .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
-                .expectFlagOnlyWhen(FLAG_N,
-                    (context, result) -> ((context.second & 0x80) == 0x80)
-                )
-                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
-                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_Z, (context, result) -> true)
+                .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
             )
             .verifyPC(context -> {
                 if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {

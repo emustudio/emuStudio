@@ -18,9 +18,82 @@
  */
 package net.emustudio.plugins.cpu.zilogZ80;
 
-class EmulatorTables {
+import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 
-    final static short[] SIGN_ZERO_CARRY_TABLE = new short[]{
+class EmulatorTables {
+    private final static int FLAG_S_SHIFT = 7;
+    private final static int FLAG_Z_SHIFT = 6;
+    private final static int FLAG_H_SHIFT = 4;
+    private final static int FLAG_PV_SHIFT = 2;
+    private final static int FLAG_N_SHIFT = 1;
+    private final static int FLAG_C_SHIFT = 0;
+
+    // INDEX IS:
+    //  - for ADD: A+B
+    //  - for ADC: A+B+carry
+    //  - for SUB: A+(~B + 1)
+    //  - for SBC: A+(~B + 1)-carry
+    //
+    // carryIns = *acc ^ a ^ b;
+    // carryOut = 1 IFF (a + b > 0xFF) or,
+    //   equivalently, but avoiding overflow in C: (a > 0xFF - b).
+    // overflowOut = (carryIns >> 7) ^ carryOut;
+    // halfCarryOut = (carryIns >> 4) & 1;
+    // zeroOut = sum == 0
+    // signOut = sum & 0x80
+//    final static byte[] SZHPC_TABLE = new byte[511];
+//
+//    public static String intToFlags(int flags) {
+//        String flagsString = "";
+//        if ((flags & FLAG_S) == FLAG_S) {
+//            flagsString += "S";
+//        }
+//        if ((flags & FLAG_Z) == FLAG_Z) {
+//            flagsString += "Z";
+//        }
+//        if ((flags & FLAG_H) == FLAG_H) {
+//            flagsString += "H";
+//        }
+//        if ((flags & FLAG_PV) == FLAG_PV) {
+//            flagsString += "P";
+//        }
+//        if ((flags & FLAG_N) == FLAG_N) {
+//            flagsString += "N";
+//        }
+//        if ((flags & FLAG_C) == FLAG_C) {
+//            flagsString += "C";
+//        }
+//        return flagsString;
+//    }
+//
+//    static {
+//        for (int a = 0; a < 256; a++) {
+//            for (int b = 0; b < 256; b++) {
+//                int sum = (a + b) & 0xFF; // index to the array
+//
+//                int carryOut = (a > 0xFF - b) ? FLAG_C : 0;
+//                int carryIns = sum ^ a ^ b;
+//                int halfCarryOut = (carryIns >> 4) & 1;
+//                int overflowOut = (((carryIns >> 7) ^ carryOut) != 0) ? FLAG_PV : 0;
+//
+//                int result = carryOut | (halfCarryOut << FLAG_H_SHIFT) | (overflowOut) | (sum == 0 ? FLAG_Z : 0) | (sum & 0x80);
+//
+//                if (a == 0x65 && b == 0x1C) {
+//                    System.out.println("TABLE  = " + intToFlags(result));
+//                }
+//                if (sum == (0x65 + 0x1C)) {
+//                    System.out.println("TABLE(SUM)  = " + intToFlags(result));
+//                    System.out.println("  a = " + Integer.toHexString(a));
+//                    System.out.println("  b = " + Integer.toHexString(b));
+//                }
+//
+//                SZHPC_TABLE[(a + b) & 0x1FF] = (byte)result;
+//            }
+//        }
+//    }
+
+
+    final static short[] SIGN_ZERO_CARRY_TABLE = {
         64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -220,4 +293,9 @@ class EmulatorTables {
         218, 91, 219, 92, 220, 93, 221, 94, 222, 95, 223, 96, 224, 97, 225, 98, 226, 99, 227, 100, 228, 101, 229, 102, 230, 103, 231, 104, 232, 105, 233, 106, 234, 107, 235, 108, 236, 109, 237, 110, 238, 111, 239, 112, 240,
         113, 241, 114, 242, 115, 243, 116, 244, 117, 245, 118, 246, 119, 247, 120, 248, 121, 249, 122, 250, 123, 251, 124, 252, 125, 253, 126, 254, 127, 255
     };
+
+
+
+
+
 }

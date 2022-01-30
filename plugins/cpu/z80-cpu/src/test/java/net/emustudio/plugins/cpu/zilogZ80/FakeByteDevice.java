@@ -20,7 +20,7 @@ package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
-public class FakeDevice implements DeviceContext<Byte> {
+public class FakeByteDevice implements DeviceContext<Byte> {
     private byte value;
 
     public void setValue(byte value) {

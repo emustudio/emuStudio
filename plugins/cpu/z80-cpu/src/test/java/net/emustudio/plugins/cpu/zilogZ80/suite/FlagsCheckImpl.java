@@ -151,6 +151,29 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
         return this;
     }
 
+    public FlagsCheckImpl<T> borrow() {
+        // doesn't work if sub is using carry=1 (SBC)
+        evaluators.add((context, result) -> {
+            if ((context.first.intValue() & 0xFF) > (0xFF - (((~context.second.intValue()) + 1) & 0xFF))) {
+                expectedFlags |= FLAG_C;
+            } else {
+                expectedNotFlags |= FLAG_C;
+            }
+        });
+        return this;
+    }
+
+    public FlagsCheckImpl<T> borrowWithCarry() {
+        evaluators.add((context, result) -> {
+            if ((context.first.intValue() & 0xFF) > (0xFF - (((~context.second.intValue()) + 1 - (context.flags & FLAG_C)) & 0xFF))) {
+                expectedFlags |= FLAG_C;
+            } else {
+                expectedNotFlags |= FLAG_C;
+            }
+        });
+        return this;
+    }
+
     public FlagsCheckImpl<T> carryIsFirstOperandMSB() {
         evaluators.add((context, result) -> {
             if ((context.first.intValue() & 0x80) == 0x80) {
@@ -196,6 +219,35 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
             byte diff = (byte) ((result - firstInt) & 0xFF);
 
             if (isAuxCarry(firstInt & 0xFF, diff)) {
+                expectedFlags |= FLAG_H;
+            } else {
+                expectedNotFlags |= FLAG_H;
+            }
+        });
+        return this;
+    }
+
+    public FlagsCheckImpl<T> halfBorrow() {
+        evaluators.add((context, result) -> {
+            int carryIns = result ^ (context.first.intValue() & 0xFF) ^ (((~context.second.intValue()) + 1) & 0xFF);
+            int halfCarryOut = (carryIns >> 4) & 1;
+
+            if (halfCarryOut == 1) {
+                expectedFlags |= FLAG_H;
+            } else {
+                expectedNotFlags |= FLAG_H;
+            }
+        });
+        return this;
+    }
+
+    public FlagsCheckImpl<T> halfBorrowWithCarry() {
+        evaluators.add((context, result) -> {
+            int b = (((~context.second.intValue()) + 1 - (context.flags & FLAG_C)) & 0xFF);
+            int carryIns = result ^ (context.first.intValue() & 0xFF) ^ b;
+            int halfCarryOut = (carryIns >> 4) & 1;
+
+            if (halfCarryOut == 1) {
                 expectedFlags |= FLAG_H;
             } else {
                 expectedNotFlags |= FLAG_H;

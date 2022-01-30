@@ -19,7 +19,7 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.cpu.testsuite.Generator;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -50,12 +50,12 @@ public class InstructionsTest {
     private CpuImpl cpu;
     CpuRunnerImpl cpuRunnerImpl;
     CpuVerifierImpl cpuVerifierImpl;
-    private final List<FakeDevice> devices = new ArrayList<>();
+    private final List<FakeByteDevice> devices = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
-        ShortMemoryStub memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         Capture<ExtendedContext> cpuContext = Capture.newInstance();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
@@ -73,7 +73,7 @@ public class InstructionsTest {
         assertTrue(cpuContext.hasCaptured());
 
         for (int i = 0; i < 256; i++) {
-            FakeDevice device = new FakeDevice();
+            FakeByteDevice device = new FakeByteDevice();
             devices.add(device);
             cpuContext.getValue().attachDevice(device, i);
         }
