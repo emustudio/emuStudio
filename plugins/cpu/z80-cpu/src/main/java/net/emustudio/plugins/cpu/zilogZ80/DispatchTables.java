@@ -26,7 +26,7 @@ public class DispatchTables {
         try {
             DISPATCH_TABLE[0x00] = lookup.findVirtual(EmulatorEngine.class, "I_NOP", intShort);
             DISPATCH_TABLE[0x01] = lookup.findVirtual(EmulatorEngine.class, "I_LD_RP_NN", intShort);
-            DISPATCH_TABLE[0x02] = lookup.findVirtual(EmulatorEngine.class, "I_LD_REF_BC_A", intShort); // TODO: unify
+            DISPATCH_TABLE[0x02] = lookup.findVirtual(EmulatorEngine.class, "I_LD_REF_BC_A", intShort);
             DISPATCH_TABLE[0x03] = lookup.findVirtual(EmulatorEngine.class, "I_INC_RP", intShort);
             DISPATCH_TABLE[0x04] = lookup.findVirtual(EmulatorEngine.class, "I_INC_R", intShort);
             DISPATCH_TABLE[0x05] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_R", intShort);
@@ -34,7 +34,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0x07] = lookup.findVirtual(EmulatorEngine.class, "I_RLCA", intShort);
             DISPATCH_TABLE[0x08] = lookup.findVirtual(EmulatorEngine.class, "I_EX_AF_AFF", intShort);
             DISPATCH_TABLE[0x09] = lookup.findVirtual(EmulatorEngine.class, "I_ADD_HL_RP", intShort);
-            DISPATCH_TABLE[0x0A] = lookup.findVirtual(EmulatorEngine.class, "I_LD_A_REF_BC", intShort); // TODO: unify
+            DISPATCH_TABLE[0x0A] = lookup.findVirtual(EmulatorEngine.class, "I_LD_A_REF_BC", intShort);
             DISPATCH_TABLE[0x0B] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_RP", intShort);
             DISPATCH_TABLE[0x0C] = lookup.findVirtual(EmulatorEngine.class, "I_INC_R", intShort);
             DISPATCH_TABLE[0x0D] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_R", intShort);
@@ -42,7 +42,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0x0F] = lookup.findVirtual(EmulatorEngine.class, "I_RRCA", intShort);
             DISPATCH_TABLE[0x10] = lookup.findVirtual(EmulatorEngine.class, "I_DJNZ", intShort);
             DISPATCH_TABLE[0x11] = lookup.findVirtual(EmulatorEngine.class, "I_LD_RP_NN", intShort);
-            DISPATCH_TABLE[0x12] = lookup.findVirtual(EmulatorEngine.class, "I_LD_REF_DE_A", intShort); // TODO: unify
+            DISPATCH_TABLE[0x12] = lookup.findVirtual(EmulatorEngine.class, "I_LD_REF_DE_A", intShort);
             DISPATCH_TABLE[0x13] = lookup.findVirtual(EmulatorEngine.class, "I_INC_RP", intShort);
             DISPATCH_TABLE[0x14] = lookup.findVirtual(EmulatorEngine.class, "I_INC_R", intShort);
             DISPATCH_TABLE[0x15] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_R", intShort);
@@ -50,7 +50,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0x17] = lookup.findVirtual(EmulatorEngine.class, "I_RLA", intShort);
             DISPATCH_TABLE[0x18] = lookup.findVirtual(EmulatorEngine.class, "I_JR_N", intShort);
             DISPATCH_TABLE[0x19] = lookup.findVirtual(EmulatorEngine.class, "I_ADD_HL_RP", intShort);
-            DISPATCH_TABLE[0x1A] = lookup.findVirtual(EmulatorEngine.class, "I_LD_A_REF_DE", intShort); // TODO: unify
+            DISPATCH_TABLE[0x1A] = lookup.findVirtual(EmulatorEngine.class, "I_LD_A_REF_DE", intShort);
             DISPATCH_TABLE[0x1B] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_RP", intShort);
             DISPATCH_TABLE[0x1C] = lookup.findVirtual(EmulatorEngine.class, "I_INC_R", intShort);
             DISPATCH_TABLE[0x1D] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_R", intShort);
@@ -58,7 +58,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0x1F] = lookup.findVirtual(EmulatorEngine.class, "I_RRA", intShort);
             DISPATCH_TABLE[0x20] = lookup.findVirtual(EmulatorEngine.class, "I_JR_CC_N", intShort);
             DISPATCH_TABLE[0x21] = lookup.findVirtual(EmulatorEngine.class, "I_LD_RP_NN", intShort);
-            DISPATCH_TABLE[0x22] = lookup.findVirtual(EmulatorEngine.class, "I_LD_REF_NN_HL", intShort); // TODO: unify???
+            DISPATCH_TABLE[0x22] = lookup.findVirtual(EmulatorEngine.class, "I_LD_REF_NN_HL", intShort);
             DISPATCH_TABLE[0x23] = lookup.findVirtual(EmulatorEngine.class, "I_INC_RP", intShort);
             DISPATCH_TABLE[0x24] = lookup.findVirtual(EmulatorEngine.class, "I_INC_R", intShort);
             DISPATCH_TABLE[0x25] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_R", intShort);
@@ -66,7 +66,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0x27] = lookup.findVirtual(EmulatorEngine.class, "I_DAA", intShort);
             DISPATCH_TABLE[0x28] = lookup.findVirtual(EmulatorEngine.class, "I_JR_CC_N", intShort);
             DISPATCH_TABLE[0x29] = lookup.findVirtual(EmulatorEngine.class, "I_ADD_HL_RP", intShort);
-            DISPATCH_TABLE[0x2A] = lookup.findVirtual(EmulatorEngine.class, "I_LD_HL_REF_NN", intShort); // TODO: unify ???
+            DISPATCH_TABLE[0x2A] = lookup.findVirtual(EmulatorEngine.class, "I_LD_HL_REF_NN", intShort);
             DISPATCH_TABLE[0x2B] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_RP", intShort);
             DISPATCH_TABLE[0x2C] = lookup.findVirtual(EmulatorEngine.class, "I_INC_R", intShort);
             DISPATCH_TABLE[0x2D] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_R", intShort);
@@ -74,7 +74,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0x2F] = lookup.findVirtual(EmulatorEngine.class, "I_CPL", intShort);
             DISPATCH_TABLE[0x30] = lookup.findVirtual(EmulatorEngine.class, "I_JR_CC_N", intShort);
             DISPATCH_TABLE[0x31] = lookup.findVirtual(EmulatorEngine.class, "I_LD_RP_NN", intShort);
-            DISPATCH_TABLE[0x32] = lookup.findVirtual(EmulatorEngine.class, "I_LD_REF_NN_A", intShort); // TODO: unify
+            DISPATCH_TABLE[0x32] = lookup.findVirtual(EmulatorEngine.class, "I_LD_REF_NN_A", intShort);
             DISPATCH_TABLE[0x33] = lookup.findVirtual(EmulatorEngine.class, "I_INC_RP", intShort);
             DISPATCH_TABLE[0x34] = lookup.findVirtual(EmulatorEngine.class, "I_INC_R", intShort);
             DISPATCH_TABLE[0x35] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_R", intShort);
@@ -82,7 +82,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0x37] = lookup.findVirtual(EmulatorEngine.class, "I_SCF", intShort);
             DISPATCH_TABLE[0x38] = lookup.findVirtual(EmulatorEngine.class, "I_JR_CC_N", intShort);
             DISPATCH_TABLE[0x39] = lookup.findVirtual(EmulatorEngine.class, "I_ADD_HL_RP", intShort);
-            DISPATCH_TABLE[0x3A] = lookup.findVirtual(EmulatorEngine.class, "I_LD_A_REF_NN", intShort); // TODO: unify
+            DISPATCH_TABLE[0x3A] = lookup.findVirtual(EmulatorEngine.class, "I_LD_A_REF_NN", intShort);
             DISPATCH_TABLE[0x3B] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_RP", intShort);
             DISPATCH_TABLE[0x3C] = lookup.findVirtual(EmulatorEngine.class, "I_INC_R", intShort);
             DISPATCH_TABLE[0x3D] = lookup.findVirtual(EmulatorEngine.class, "I_DEC_R", intShort);
@@ -152,7 +152,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0x7D] = lookup.findVirtual(EmulatorEngine.class, "I_LD_R_R", intShort);
             DISPATCH_TABLE[0x7E] = lookup.findVirtual(EmulatorEngine.class, "I_LD_R_R", intShort);
             DISPATCH_TABLE[0x7F] = lookup.findVirtual(EmulatorEngine.class, "I_LD_R_R", intShort);
-            DISPATCH_TABLE[0x80] = lookup.findVirtual(EmulatorEngine.class, "I_ADD_A_R", intShort); // TODO: ADD R, R
+            DISPATCH_TABLE[0x80] = lookup.findVirtual(EmulatorEngine.class, "I_ADD_A_R", intShort);
             DISPATCH_TABLE[0x81] = lookup.findVirtual(EmulatorEngine.class, "I_ADD_A_R", intShort);
             DISPATCH_TABLE[0x82] = lookup.findVirtual(EmulatorEngine.class, "I_ADD_A_R", intShort);
             DISPATCH_TABLE[0x83] = lookup.findVirtual(EmulatorEngine.class, "I_ADD_A_R", intShort);
@@ -251,7 +251,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0xE0] = lookup.findVirtual(EmulatorEngine.class, "I_RET_CC", intShort);
             DISPATCH_TABLE[0xE1] = lookup.findVirtual(EmulatorEngine.class, "I_POP_RP", intShort);
             DISPATCH_TABLE[0xE2] = lookup.findVirtual(EmulatorEngine.class, "I_JP_CC_NN", intShort);
-            DISPATCH_TABLE[0xE3] = lookup.findVirtual(EmulatorEngine.class, "I_EX_REF_SP_HL", intShort); // TODO: unify ???
+            DISPATCH_TABLE[0xE3] = lookup.findVirtual(EmulatorEngine.class, "I_EX_REF_SP_HL", intShort);
             DISPATCH_TABLE[0xE4] = lookup.findVirtual(EmulatorEngine.class, "I_CALL_CC_NN", intShort);
             DISPATCH_TABLE[0xE5] = lookup.findVirtual(EmulatorEngine.class, "I_PUSH_RP", intShort);
             DISPATCH_TABLE[0xE6] = lookup.findVirtual(EmulatorEngine.class, "I_AND_N", intShort);
@@ -259,7 +259,7 @@ public class DispatchTables {
             DISPATCH_TABLE[0xE8] = lookup.findVirtual(EmulatorEngine.class, "I_RET_CC", intShort);
             DISPATCH_TABLE[0xE9] = lookup.findVirtual(EmulatorEngine.class, "I_JP_REF_HL", intShort);
             DISPATCH_TABLE[0xEA] = lookup.findVirtual(EmulatorEngine.class, "I_JP_CC_NN", intShort);
-            DISPATCH_TABLE[0xEB] = lookup.findVirtual(EmulatorEngine.class, "I_EX_DE_HL", intShort); // TODO: union???
+            DISPATCH_TABLE[0xEB] = lookup.findVirtual(EmulatorEngine.class, "I_EX_DE_HL", intShort);
             DISPATCH_TABLE[0xEC] = lookup.findVirtual(EmulatorEngine.class, "I_CALL_CC_NN", intShort);
             DISPATCH_TABLE[0xED] = lookup.findVirtual(EmulatorEngine.class, "ED_DISPATCH", intShort);
             DISPATCH_TABLE[0xEE] = lookup.findVirtual(EmulatorEngine.class, "I_XOR_N", intShort);

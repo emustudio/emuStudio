@@ -139,7 +139,7 @@ public class EmulatorEngine implements CpuEngine {
         boolean oldIFF = IFF[0];
         noWait = false;
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
-        short opcode = (short)(memory.read(PC) & 0xFF);
+        short opcode = (short) (memory.read(PC) & 0xFF);
         PC = (PC + 1) & 0xFFFF;
         try {
             dispatch(opcode);
@@ -256,7 +256,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int DISPATCH(MethodHandle[] table) throws Throwable {
-        short OP = (short)(memory.read(PC) & 0xFF);
+        short OP = (short) (memory.read(PC) & 0xFF);
         incrementR();
         PC = (PC + 1) & 0xFFFF;
 
@@ -272,7 +272,7 @@ public class EmulatorEngine implements CpuEngine {
         byte operand = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
 
-        short OP = (short)(memory.read(PC) & 0xFF);
+        short OP = (short) (memory.read(PC) & 0xFF);
         PC = (PC + 1) & 0xFFFF;
         incrementR();
 
@@ -337,7 +337,6 @@ public class EmulatorEngine implements CpuEngine {
         return cycles;
     }
 
-
     private int getreg(int reg) {
         if (reg == 6) {
             return readByte((regs[REG_H] << 8) | regs[REG_L]);
@@ -345,23 +344,10 @@ public class EmulatorEngine implements CpuEngine {
         return regs[reg];
     }
 
-    private byte getreg2(int reg) {
-        if (reg == 6) {
-            return 0;
-        }
-        return (byte)regs[reg];
-    }
-
     private void putreg(int reg, int val) {
         if (reg == 6) {
             memory.write((regs[REG_H] << 8) | regs[REG_L], (byte) (val & 0xFF));
         } else {
-            regs[reg] = val & 0xFF;
-        }
-    }
-
-    private void putreg2(int reg, int val) {
-        if (reg != 6) {
             regs[reg] = val & 0xFF;
         }
     }
@@ -393,16 +379,6 @@ public class EmulatorEngine implements CpuEngine {
 
     }
 
-    private int getpair(short special, int reg) {
-        if (reg == 3) {
-            return SP;
-        } else if (reg == 2) {
-            return (special == 0xDD) ? IX : IY;
-        }
-        int index = reg * 2;
-        return regs[index] << 8 | regs[index + 1];
-    }
-
     private boolean getCC1(int cc) {
         switch (cc) {
             case 0:
@@ -415,28 +391,6 @@ public class EmulatorEngine implements CpuEngine {
                 return ((flags & FLAG_C) != 0); // C
         }
         return false;
-    }
-
-    private void putspecial(short spec, int val) {
-        val &= 0xFFFF;
-        switch (spec) {
-            case 0xDD:
-                IX = val;
-                break;
-            case 0xFD:
-                IY = val;
-                break;
-        }
-    }
-
-    private int getspecial(short spec) {
-        switch (spec) {
-            case 0xDD:
-                return IX;
-            case 0xFD:
-                return IY;
-        }
-        return 0;
     }
 
     private int readByte(int address) {
@@ -897,7 +851,7 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_OUT_REF_C_R(short OP) throws IOException {
         int tmp = (OP >>> 3) & 0x7;
-        context.writeIO(regs[REG_C], (byte)getreg(tmp));
+        context.writeIO(regs[REG_C], (byte) getreg(tmp));
         return 12;
     }
 
@@ -1637,7 +1591,7 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_RL_R(short OP) {
         int tmp = OP & 7;
-        int tmp1 = getreg(tmp)& 0xFF;
+        int tmp1 = getreg(tmp) & 0xFF;
 
         int tmp2 = (tmp1 >>> 7) & 1;
         tmp1 = ((((tmp1 << 1) & 0xFF) | flags & FLAG_C) & 0xFF);
@@ -1780,116 +1734,116 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_ADD_IX_RP(short OP) {
-        return I_ADD_II_RP(OP, (short) 0xDD);
-    }
-
-    int I_ADD_IY_RP(short OP) {
-        return I_ADD_II_RP(OP, (short) 0xFD);
-    }
-
-    int I_ADD_II_RP(short OP, short special) {
-        int tmp = getspecial(special);
-        int tmp1 = getpair(special, (OP >>> 4) & 0x03);
-
-        carry15(tmp, tmp1);
-        halfCarry11(tmp, tmp1);
-        flags &= (~(FLAG_N | FLAG_S | FLAG_Z));
-
-        tmp += tmp1;
-        flags |= ((tmp & 0x8000) == 0x8000) ? FLAG_S : 0;
-        flags |= (tmp == 0) ? FLAG_Z : 0;
-        putspecial(special, tmp);
+        IX = I_ADD_II_RP(OP, IX);
         return 15;
     }
 
+    int I_ADD_IY_RP(short OP) {
+        IY = I_ADD_II_RP(OP, IY);
+        return 15;
+    }
+
+    int I_ADD_II_RP(short OP, int special) {
+        int tmp = special;
+        int pair;
+        int reg = (OP >>> 4) & 0x03;
+        switch (reg) {
+            case 3:
+                pair = SP;
+                break;
+            case 2:
+                pair = special;
+                break;
+            default:
+                int index = reg * 2;
+                pair = regs[index] << 8 | regs[index + 1];
+        }
+
+        carry15(tmp, pair);
+        halfCarry11(tmp, pair);
+        flags &= (~(FLAG_N | FLAG_S | FLAG_Z));
+
+        tmp += pair;
+        flags |= ((tmp & 0x8000) == 0x8000) ? FLAG_S : 0;
+        flags |= (tmp == 0) ? FLAG_Z : 0;
+        return tmp & 0xFFFF;
+    }
+
     int I_LD_IX_NN(short OP) {
-        return I_LD_II_NN(OP, (short) 0xDD);
+        IX = readWord(PC);
+        PC = (PC + 2) & 0xFFFF;
+        return 14;
     }
 
     int I_LD_IY_NN(short OP) {
-        return I_LD_II_NN(OP, (short) 0xFD);
-    }
-
-    int I_LD_II_NN(short OP, short special) {
-        int tmp = readWord(PC);
+        IY = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
-        putspecial(special, tmp);
         return 14;
     }
 
     int I_LD_REF_NN_IX(short OP) {
-        return I_LD_REF_NN_II(OP, (short) 0xDD);
+        return I_LD_REF_NN_II(OP, IX);
     }
 
     int I_LD_REF_NN_IY(short OP) {
-        return I_LD_REF_NN_II(OP, (short) 0xFD);
+        return I_LD_REF_NN_II(OP, IY);
     }
 
-    int I_LD_REF_NN_II(short OP, short special) {
+    int I_LD_REF_NN_II(short OP, int special) {
         int tmp = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
-        writeWord(tmp, getspecial(special));
+        writeWord(tmp, special);
         return 16;
     }
 
     int I_INC_IX(short OP) {
-        return I_INC_II(OP, (short) 0xDD);
+        IX = (IX + 1) & 0xFFFF;
+        return 10;
     }
 
     int I_INC_IY(short OP) {
-        return I_INC_II(OP, (short) 0xFD);
-    }
-
-    int I_INC_II(short OP, short special) {
-        if (special == 0xDD) {
-            IX = (IX + 1) & 0xFFFF;
-        } else {
-            IY = (IY + 1) & 0xFFFF;
-        }
+        IY = (IY + 1) & 0xFFFF;
         return 10;
     }
 
     int I_LD_IX_REF_NN(short OP) {
-        return I_LD_II_REF_NN(OP, (short) 0xDD);
-    }
-
-    int I_LD_IY_REF_NN(short OP) {
-        return I_LD_II_REF_NN(OP, (short) 0xFD);
-    }
-
-    int I_LD_II_REF_NN(short OP, short special) {
-        int tmp = readWord(PC);
-        PC = (PC + 2) & 0xFFFF;
-        int tmp1 = readWord(tmp);
-        putspecial(special, tmp1);
+        IX = I_LD_II_REF_NN();
         return 20;
     }
 
+    int I_LD_IY_REF_NN(short OP) {
+        IY = I_LD_II_REF_NN();
+        return 20;
+    }
+
+    int I_LD_II_REF_NN() {
+        int tmp = readWord(PC);
+        PC = (PC + 2) & 0xFFFF;
+        return readWord(tmp);
+    }
+
     int I_DEC_IX(short OP) {
-        return I_DEC_II(OP, (short) 0xDD);
+        IX = (IX - 1) & 0xFFFF;
+        return 10;
     }
 
     int I_DEC_IY(short OP) {
-        return I_DEC_II(OP, (short) 0xFD);
-    }
-
-    int I_DEC_II(short OP, short special) {
-        putspecial(special, getspecial(special) - 1);
+        IY = (IY - 1) & 0xFFFF;
         return 10;
     }
 
     int I_INC_REF_IX_N(short OP) {
-        return I_INC_REF_II_N(OP, (short) 0xDD);
+        return I_INC_REF_II_N(OP, IX);
     }
 
     int I_INC_REF_IY_N(short OP) {
-        return I_INC_REF_II_N(OP, (short) 0xFD);
+        return I_INC_REF_II_N(OP, IY);
     }
 
-    int I_INC_REF_II_N(short OP, short special) {
-        int tmp = readByte(PC);
+    int I_INC_REF_II_N(short OP, int special) {
+        byte tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int tmp1 = (getspecial(special) + (byte) tmp) & 0xFFFF;
+        int tmp1 = (special + tmp) & 0xFFFF;
         int tmp2 = (memory.read(tmp1) + 1) & 0xFF;
 
         memory.write(tmp1, (byte) tmp2);
@@ -1898,17 +1852,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_DEC_REF_IX_N(short OP) {
-        return I_DEC_REF_II_N(OP, (short) 0xDD);
+        return I_DEC_REF_II_N(OP, IX);
     }
 
     int I_DEC_REF_IY_N(short OP) {
-        return I_DEC_REF_II_N(OP, (short) 0xFD);
+        return I_DEC_REF_II_N(OP, IY);
     }
 
-    int I_DEC_REF_II_N(short OP, short special) {
+    int I_DEC_REF_II_N(short OP, int special) {
         int tmp = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
-        int tmp1 = (getspecial(special) + (byte) tmp) & 0xFFFF;
+        int tmp1 = (special + (byte) tmp) & 0xFFFF;
         int tmp2 = (memory.read(tmp1) - 1) & 0xFF;
         memory.write(tmp1, (byte) tmp2);
         flags = EmulatorTables.DEC_TABLE[tmp2] | (flags & FLAG_C);
@@ -1916,66 +1870,65 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_REF_IX_N_N(short OP) {
-        return I_LD_REF_II_N_N(OP, (short) 0xDD);
+        return I_LD_REF_II_N_N(OP, IX);
     }
 
     int I_LD_REF_IY_N_N(short OP) {
-        return I_LD_REF_II_N_N(OP, (short) 0xFD);
+        return I_LD_REF_II_N_N(OP, IY);
     }
 
-    int I_LD_REF_II_N_N(short OP, short special) {
+    int I_LD_REF_II_N_N(short OP, int special) {
         byte offset = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         byte number = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        memory.write((getspecial(special) + offset) & 0xFFFF, number);
+        memory.write((special + offset) & 0xFFFF, number);
         return 19;
     }
 
     int I_LD_R_REF_IX_N(short OP) {
-        return I_LD_R_REF_II_N(OP, (short) 0xDD);
+        return I_LD_R_REF_II_N(OP, IX);
     }
 
     int I_LD_R_REF_IY_N(short OP) {
-        return I_LD_R_REF_II_N(OP, (short) 0xFD);
+        return I_LD_R_REF_II_N(OP, IY);
     }
 
-    int I_LD_R_REF_II_N(short OP, short special) {
+    int I_LD_R_REF_II_N(short OP, int special) {
         byte offset = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         int tmp1 = (OP >>> 3) & 7;
-        putreg2(tmp1, memory.read((getspecial(special) + offset) & 0xFFFF));
+        putreg(tmp1, memory.read((special + offset) & 0xFFFF));
         return 19;
     }
 
     int I_LD_REF_IX_N_R(short OP) {
-        return I_LD_REF_II_N_R(OP, (short)0xDD);
+        return I_LD_REF_II_N_R(OP, IX);
     }
 
     int I_LD_REF_IY_N_R(short OP) {
-        return I_LD_REF_II_N_R(OP, (short)0xFD);
+        return I_LD_REF_II_N_R(OP, IY);
     }
 
-    int I_LD_REF_II_N_R(short OP, short special) {
-        byte tmp = memory.read(PC);
+    int I_LD_REF_II_N_R(short OP, int special) {
+        byte offset = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int tmp1 = (OP & 7);
-        memory.write((getspecial(special) + tmp) & 0xFFFF, getreg2(tmp1));
+        memory.write((special + offset) & 0xFFFF, (byte) getreg(OP & 7));
         return 19;
     }
 
     int I_ADD_A_REF_IX_N(short OP) {
-        return I_ADD_A_REF_II_N(OP, (short)0xDD);
+        return I_ADD_A_REF_II_N(OP, IX);
     }
 
     int I_ADD_A_REF_IY_N(short OP) {
-        return I_ADD_A_REF_II_N(OP, (short)0xFD);
+        return I_ADD_A_REF_II_N(OP, IY);
     }
 
-    int I_ADD_A_REF_II_N(short OP, short special) {
+    int I_ADD_A_REF_II_N(short OP, int special) {
         byte offset = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = readByte((getspecial(special) + offset) & 0xFFFF);
+        int value = readByte((special + offset) & 0xFFFF);
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value) & 0xFF;
         flags = flagSZHPC(oldA, value, regs[REG_A]);
@@ -1983,17 +1936,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_ADC_A_REF_IX_N(short OP) {
-        return I_ADC_A_REF_II_N(OP, (short) 0xDD);
+        return I_ADC_A_REF_II_N(OP, IX);
     }
 
     int I_ADC_A_REF_IY_N(short OP) {
-        return I_ADC_A_REF_II_N(OP, (short) 0xFD);
+        return I_ADC_A_REF_II_N(OP, IY);
     }
 
-    int I_ADC_A_REF_II_N(short OP, short special) {
+    int I_ADC_A_REF_II_N(short OP, int special) {
         byte offset = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = readByte((getspecial(special) + offset) & 0xFFFF);
+        int value = readByte((special + offset) & 0xFFFF);
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value + (flags & FLAG_C)) & 0xFF;
         flags = flagSZHPC(oldA, (value + (flags & FLAG_C)) & 0xFF, regs[REG_A]);
@@ -2001,17 +1954,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SUB_REF_IX_N(short OP) {
-        return I_SUB_REF_II_N(OP, (short) 0xDD);
+        return I_SUB_REF_II_N(OP, IX);
     }
 
     int I_SUB_REF_IY_N(short OP) {
-        return I_SUB_REF_II_N(OP, (short) 0xFD);
+        return I_SUB_REF_II_N(OP, IY);
     }
 
-    int I_SUB_REF_II_N(short OP, short special) {
+    int I_SUB_REF_II_N(short OP, int special) {
         byte offset = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = ((~readByte((getspecial(special) + offset) & 0xFFFF)) + 1) & 0xFF;
+        int value = ((~readByte((special + offset) & 0xFFFF)) + 1) & 0xFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value) & 0xFF;
         flags = flagSZHPC(oldA, value, regs[REG_A]) | FLAG_N;
@@ -2019,17 +1972,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SBC_A_REF_IX_N(short OP) {
-        return I_SBC_A_REF_II_N(OP, (short) 0xDD);
+        return I_SBC_A_REF_II_N(OP, IX);
     }
 
     int I_SBC_A_REF_IY_N(short OP) {
-        return I_SBC_A_REF_II_N(OP, (short) 0xFD);
+        return I_SBC_A_REF_II_N(OP, IY);
     }
 
-    int I_SBC_A_REF_II_N(short OP, short special) {
+    int I_SBC_A_REF_II_N(short OP, int special) {
         byte offset = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = ((~readByte((getspecial(special) + offset) & 0xFFFF)) + 1) & 0xFF;
+        int value = ((~readByte((special + offset) & 0xFFFF)) + 1) & 0xFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value - (flags & FLAG_C)) & 0xFF;
         flags = flagSZHPC(oldA, (value - (flags & FLAG_C)) & 0xFF, regs[REG_A]) | FLAG_N;
@@ -2037,70 +1990,70 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_AND_REF_IX_N(short OP) {
-        return I_AND_REF_II_N(OP, (short) 0xDD);
+        return I_AND_REF_II_N(OP, IX);
     }
 
     int I_AND_REF_IY_N(short OP) {
-        return I_AND_REF_II_N(OP, (short) 0xFD);
+        return I_AND_REF_II_N(OP, IY);
     }
 
-    int I_AND_REF_II_N(short OP, short special) {
+    int I_AND_REF_II_N(short OP, int special) {
         byte tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
 
-        int tmp1 = memory.read((getspecial(special) + tmp) & 0xFFFF);
+        int tmp1 = memory.read((special + tmp) & 0xFFFF);
         regs[REG_A] = (regs[REG_A] & tmp1) & 0xFF;
         flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
         return 19;
     }
 
     int I_XOR_REF_IX_N(short OP) {
-        return I_XOR_REF_II_N(OP, (short) 0xDD);
+        return I_XOR_REF_II_N(OP, IX);
     }
 
     int I_XOR_REF_IY_N(short OP) {
-        return I_XOR_REF_II_N(OP, (short) 0xFD);
+        return I_XOR_REF_II_N(OP, IY);
     }
 
-    int I_XOR_REF_II_N(short OP, short special) {
+    int I_XOR_REF_II_N(short OP, int special) {
         byte tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
 
-        int tmp1 = memory.read((getspecial(special) + tmp) & 0xFFFF);
+        int tmp1 = memory.read((special + tmp) & 0xFFFF);
         regs[REG_A] = ((regs[REG_A] ^ tmp1) & 0xff);
         flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
         return 19;
     }
 
     int I_OR_REF_IX_N(short OP) {
-        return I_OR_REF_II_N(OP, (short) 0xDD);
+        return I_OR_REF_II_N(OP, IX);
     }
 
     int I_OR_REF_IY_N(short OP) {
-        return I_OR_REF_II_N(OP, (short) 0xFD);
+        return I_OR_REF_II_N(OP, IY);
     }
 
-    int I_OR_REF_II_N(short OP, short special) {
+    int I_OR_REF_II_N(short OP, int special) {
         byte tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int tmp1 = memory.read((getspecial(special) + tmp) & 0xFFFF);
+        int tmp1 = memory.read((special + tmp) & 0xFFFF);
         regs[REG_A] = ((regs[REG_A] | tmp1) & 0xff);
         flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
         return 19;
     }
 
     int I_CP_REF_IX_N(short OP) {
-        return I_CP_REF_II_N(OP, (short) 0xDD);
+        return I_CP_REF_II_N(OP, IX);
     }
 
     int I_CP_REF_IY_N(short OP) {
-        return I_CP_REF_II_N(OP, (short) 0xFD);
+        return I_CP_REF_II_N(OP, IY);
     }
 
-    int I_CP_REF_II_N(short OP, short special) {
+    int I_CP_REF_II_N(short OP, int special) {
         byte offset = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = ((~readByte((getspecial(special) + offset) & 0xFFFF)) + 1) & 0xFF;
+        int value = ((~readByte((special + offset) & 0xFFFF)) + 1) & 0xFF;
         int diff = (regs[REG_A] + value) & 0xFF;
         flags = flagSZHPC(regs[REG_A], value, diff) | FLAG_N;
         return 19;
@@ -2167,15 +2120,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RLC_REF_IX_N_R(short OP, byte operand) {
-        return I_RLC_REF_II_N_R(OP, operand, (short) 0xDD);
+        return I_RLC_REF_II_N_R(OP, operand, IX);
     }
 
     int I_RLC_REF_IY_N_R(short OP, byte operand) {
-        return I_RLC_REF_II_N_R(OP, operand, (short) 0xFD);
+        return I_RLC_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_RLC_REF_II_N_R(short OP, byte operand, short special) {
-        int address = (getspecial(special) + operand) & 0xFFFF;
+    int I_RLC_REF_II_N_R(short OP, byte operand, int special) {
+        int address = (special + operand) & 0xFFFF;
         int value = readByte(address);
         int bit7 = (value >>> 7) & 1;
 
@@ -2189,15 +2142,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RRC_REF_IX_N_R(short OP, byte operand) {
-        return I_RRC_REF_II_N_R(OP, operand, (short) 0xDD);
+        return I_RRC_REF_II_N_R(OP, operand, IX);
     }
 
     int I_RRC_REF_IY_N_R(short OP, byte operand) {
-        return I_RRC_REF_II_N_R(OP, operand, (short) 0xFD);
+        return I_RRC_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_RRC_REF_II_N_R(short OP, byte operand, short special) {
-        int tmp = (getspecial(special) + operand) & 0xffff;
+    int I_RRC_REF_II_N_R(short OP, byte operand, int special) {
+        int tmp = (special + operand) & 0xffff;
         int tmp1 = memory.read(tmp);
 
         int tmp2 = tmp1 & 1;
@@ -2212,15 +2165,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RL_REF_IX_N_R(short OP, byte operand) {
-        return I_RL_REF_II_N_R(OP, operand, (short) 0xDD);
+        return I_RL_REF_II_N_R(OP, operand, IX);
     }
 
     int I_RL_REF_IY_N_R(short OP, byte operand) {
-        return I_RL_REF_II_N_R(OP, operand, (short) 0xFD);
+        return I_RL_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_RL_REF_II_N_R(short OP, byte operand, short special) {
-        int tmp = (getspecial(special) + operand) & 0xffff;
+    int I_RL_REF_II_N_R(short OP, byte operand, int special) {
+        int tmp = (special + operand) & 0xffff;
         int tmp1 = memory.read(tmp);
 
         int tmp2 = (tmp1 >>> 7) & 1;
@@ -2234,15 +2187,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RR_REF_IX_N_R(short OP, byte operand) {
-        return I_RR_REF_II_N_R(OP, operand, (short) 0xDD);
+        return I_RR_REF_II_N_R(OP, operand, IX);
     }
 
     int I_RR_REF_IY_N_R(short OP, byte operand) {
-        return I_RR_REF_II_N_R(OP, operand, (short) 0xFD);
+        return I_RR_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_RR_REF_II_N_R(short OP, byte operand, short special) {
-        int address = (getspecial(special) + operand) & 0xffff;
+    int I_RR_REF_II_N_R(short OP, byte operand, int special) {
+        int address = (special + operand) & 0xffff;
         int value = readByte(address);
 
         int bit0 = value & 1;
@@ -2256,15 +2209,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SLA_REF_IX_N_R(short OP, byte operand) {
-        return I_SLA_REF_II_N_R(OP, operand, (short) 0xDD);
+        return I_SLA_REF_II_N_R(OP, operand, IX);
     }
 
     int I_SLA_REF_IY_N_R(short OP, byte operand) {
-        return I_SLA_REF_II_N_R(OP, operand, (short) 0xFD);
+        return I_SLA_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_SLA_REF_II_N_R(short OP, byte operand, short special) {
-        int tmp = (getspecial(special) + operand) & 0xffff;
+    int I_SLA_REF_II_N_R(short OP, byte operand, int special) {
+        int tmp = (special + operand) & 0xFFFF;
         int tmp1 = memory.read(tmp);
 
         int tmp2 = (tmp1 >>> 7) & 1;
@@ -2278,15 +2231,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SRA_REF_IX_N_R(short OP, byte operand) {
-        return I_SRA_REF_II_N_R(OP, operand, (short) 0xDD);
+        return I_SRA_REF_II_N_R(OP, operand, IX);
     }
 
     int I_SRA_REF_IY_N_R(short OP, byte operand) {
-        return I_SRA_REF_II_N_R(OP, operand, (short) 0xFD);
+        return I_SRA_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_SRA_REF_II_N_R(short OP, byte operand, short special) {
-        int tmp = (getspecial(special) + operand) & 0xffff;
+    int I_SRA_REF_II_N_R(short OP, byte operand, int special) {
+        int tmp = (special + operand) & 0xffff;
         int tmp1 = memory.read(tmp);
 
         int tmp2 = tmp1 & 1;
@@ -2300,15 +2253,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SLL_REF_IX_N_R(short OP, byte operand) {
-        return I_SLL_REF_II_N_R(OP, operand, (short) 0xDD);
+        return I_SLL_REF_II_N_R(OP, operand, IX);
     }
 
     int I_SLL_REF_IY_N_R(short OP, byte operand) {
-        return I_SLL_REF_II_N_R(OP, operand, (short) 0xFD);
+        return I_SLL_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_SLL_REF_II_N_R(short OP, byte operand, short special) {
-        int tmp = (getspecial(special) + operand) & 0xffff;
+    int I_SLL_REF_II_N_R(short OP, byte operand, int special) {
+        int tmp = (special + operand) & 0xffff;
         int tmp1 = memory.read(tmp);
 
         int tmp2 = (tmp1 >>> 7) & 1;
@@ -2322,15 +2275,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SRL_REF_IX_N_R(short OP, byte operand) {
-        return I_SRL_REF_II_N_R(OP, operand, (short)0xDD);
+        return I_SRL_REF_II_N_R(OP, operand, IX);
     }
 
     int I_SRL_REF_IY_N_R(short OP, byte operand) {
-        return I_SRL_REF_II_N_R(OP, operand, (short)0xFD);
+        return I_SRL_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_SRL_REF_II_N_R(short OP, byte operand, short special) {
-        int tmp = (getspecial(special) + operand) & 0xffff;
+    int I_SRL_REF_II_N_R(short OP, byte operand, int special) {
+        int tmp = (special + operand) & 0xffff;
         int tmp1 = memory.read(tmp);
 
         int tmp2 = tmp1 & 1;
@@ -2344,16 +2297,16 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_BIT_N_REF_IX_N(short OP, byte operand) {
-        return I_BIT_N_REF_II_N(OP, operand, (short) 0xDD);
+        return I_BIT_N_REF_II_N(OP, operand, IX);
     }
 
     int I_BIT_N_REF_IY_N(short OP, byte operand) {
-        return I_BIT_N_REF_II_N(OP, operand, (short) 0xFD);
+        return I_BIT_N_REF_II_N(OP, operand, IY);
     }
 
-    int I_BIT_N_REF_II_N(short OP, byte operand, short special) {
+    int I_BIT_N_REF_II_N(short OP, byte operand, int special) {
         int bitNumber = (OP >>> 3) & 7;
-        int tmp1 = memory.read((getspecial(special) + operand) & 0xFFFF);
+        int tmp1 = memory.read((special + operand) & 0xFFFF);
         flags = ((flags & FLAG_C) | FLAG_H | (((tmp1 & (1 << bitNumber)) == 0) ? (FLAG_Z | FLAG_PV) : 0));
         if (bitNumber == 7) {
             flags |= (((tmp1 & (1 << 7)) == 0x80) ? FLAG_S : 0);
@@ -2362,16 +2315,16 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RES_N_REF_IX_N_R(short OP, byte operand) {
-        return I_RES_N_REF_II_N_R(OP, operand, (short) 0xDD);
+        return I_RES_N_REF_II_N_R(OP, operand, IX);
     }
 
     int I_RES_N_REF_IY_N_R(short OP, byte operand) {
-        return I_RES_N_REF_II_N_R(OP, operand, (short) 0xFD);
+        return I_RES_N_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_RES_N_REF_II_N_R(short OP, byte operand, short special) {
+    int I_RES_N_REF_II_N_R(short OP, byte operand, int special) {
         int tmp2 = (OP >>> 3) & 7;
-        int tmp3 = (getspecial(special) + operand) & 0xffff;
+        int tmp3 = (special + operand) & 0xffff;
         int tmp1 = memory.read(tmp3);
         tmp1 = (tmp1 & (~(1 << tmp2)));
         memory.write(tmp3, (byte) (tmp1 & 0xff));
@@ -2381,16 +2334,16 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SET_N_REF_IX_N_R(short OP, byte operand) {
-        return I_SET_N_REF_II_N_R(OP, operand, (short) 0xDD);
+        return I_SET_N_REF_II_N_R(OP, operand, IX);
     }
 
     int I_SET_N_REF_IY_N_R(short OP, byte operand) {
-        return I_SET_N_REF_II_N_R(OP, operand, (short) 0xFD);
+        return I_SET_N_REF_II_N_R(OP, operand, IY);
     }
 
-    int I_SET_N_REF_II_N_R(short OP, byte operand, short special) {
+    int I_SET_N_REF_II_N_R(short OP, byte operand, int special) {
         int tmp2 = (OP >>> 3) & 7;
-        int tmp3 = (getspecial(special) + operand) & 0xffff;
+        int tmp3 = (special + operand) & 0xffff;
         int tmp1 = memory.read(tmp3);
         tmp1 = (tmp1 | (1 << tmp2));
         memory.write(tmp3, (byte) (tmp1 & 0xff));
@@ -2399,4 +2352,15 @@ public class EmulatorEngine implements CpuEngine {
         regs[OP & 7] = tmp1 & 0xFF;
         return 23;
     }
+
+    //inc ixh
+//    int I_INC_IIH(short OP, short special) {
+//        int reg = (OP >>> 3) & 0x07;
+//        int value = (getreg(reg) + 1) & 0xFF;
+//        flags = EmulatorTables.INC_TABLE[value] | (flags & FLAG_C);
+//        putreg(reg, value);
+//        return (reg == 6) ? 11 : 4;
+//    }
+
+
 }
