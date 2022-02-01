@@ -2354,37 +2354,29 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_INC_IXH(short OP) {
-        IX = ((I_INC_IIH(IX) << 8) | (IX & 0xFF)) & 0xFFFF;
+        IX = ((I_INC(IX >>> 8) << 8) | (IX & 0xFF)) & 0xFFFF;
         return 8;
     }
 
     int I_INC_IYH(short OP) {
-        IY = ((I_INC_IIH(IY) << 8) | (IY & 0xFF)) & 0xFFFF;
+        IY = ((I_INC(IY >>> 8) << 8) | (IY & 0xFF)) & 0xFFFF;
         return 8;
     }
 
-    int I_INC_IIH(int special) {
-        int reg = special >>> 8;
-        int value = (reg + 1) & 0xFF;
-        flags = EmulatorTables.INC_TABLE[value] | (flags & FLAG_C);
-        return value;
-    }
-
     int I_INC_IXL(short OP) {
-        IX = ((IX & 0xFF00) | (I_INC_IIL(IX) & 0xFF)) & 0xFFFF;
+        IX = ((IX & 0xFF00) | I_INC(IX & 0xFF)) & 0xFFFF;
         return 8;
     }
 
     int I_INC_IYL(short OP) {
-        IY = ((IY & 0xFF00) | (I_INC_IIL(IY) & 0xFF)) & 0xFFFF;
+        IY = ((IY & 0xFF00) | I_INC(IY & 0xFF)) & 0xFFFF;
         return 8;
     }
 
-    int I_INC_IIL(int special) {
-        int reg = special & 0xFF;
-        int value = (reg + 1) & 0xFF;
-        flags = EmulatorTables.INC_TABLE[value] | (flags & FLAG_C);
-        return value;
+    int I_INC(int value) {
+        int valueInc = (value + 1) & 0xFF;
+        flags = EmulatorTables.INC_TABLE[valueInc] | (flags & FLAG_C);
+        return valueInc;
     }
 
     int I_DEC_IXH(short OP) {
@@ -2443,5 +2435,268 @@ public class EmulatorEngine implements CpuEngine {
         IY = ((IY & 0xFF00) | (readByte(PC) & 0xFF)) & 0xFFFF;
         PC = (PC + 1) & 0xFFFF;
         return 11;
+    }
+
+    int I_LD_R_IXH(short OP) {
+        return I_LD_R_IIH(OP, IX);
+    }
+
+    int I_LD_R_IYH(short OP) {
+        return I_LD_R_IIH(OP, IY);
+    }
+
+    int I_LD_R_IIH(short OP, int special) {
+        int reg = ((OP >>> 2) & 0x0F) / 2; // 4,5,6 not supported
+        regs[reg] = special >>> 8;
+        return 8;
+    }
+
+    int I_LD_R_IXL(short OP) {
+        return I_LD_R_IIL(OP, IX);
+    }
+
+    int I_LD_R_IYL(short OP) {
+        return I_LD_R_IIL(OP, IY);
+    }
+
+    int I_LD_R_IIL(short OP, int special) {
+        int reg = ((OP >>> 2) & 0x0F) / 2; // 4,5,6 not supported
+        regs[reg] = special & 0xFF;
+        return 8;
+    }
+
+    int I_LD_IXH_R(short OP) {
+        int reg = OP & 7; // 4,5,6 not supported
+        IX = (IX & 0xFF) | ((regs[reg] << 8) & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IYH_R(short OP) {
+        int reg = OP & 7; // 4,5,6 not supported
+        IY = (IY & 0xFF) | ((regs[reg] << 8) & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IIH_IIH(short OP) {
+        return 8;
+    }
+
+    int I_LD_IXH_IXL(short OP) {
+        IX = (IX & 0xFF) | ((IX << 8) & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IYH_IYL(short OP) {
+        IY = (IY & 0xFF) | ((IY << 8) & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IXL_R(short OP) {
+        int reg = OP & 7; // 4,5,6 not supported
+        IX = (IX & 0xFF00) | (regs[reg] & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IYL_R(short OP) {
+        int reg = OP & 7; // 4,5,6 not supported
+        IY = (IY & 0xFF00) | (regs[reg] & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IXL_IXH(short OP) {
+        IX = (IX & 0xFF00) | (IX >>> 8);
+        return 8;
+    }
+
+    int I_LD_IYL_IYH(short OP) {
+        IY = (IY & 0xFF00) | (IY >>> 8);
+        return 8;
+    }
+
+    int I_LD_IIL_IIL(short OP) {
+        return 8;
+    }
+
+    int I_ADD_A_IXH(short OP) {
+        return I_ADD_A(IX >>> 8);
+    }
+
+    int I_ADD_A_IYH(short OP) {
+        return I_ADD_A(IY >>> 8);
+    }
+
+    int I_ADD_A_IXL(short OP) {
+        return I_ADD_A(IX & 0xFF);
+    }
+
+    int I_ADD_A_IYL(short OP) {
+        return I_ADD_A(IY & 0xFF);
+    }
+
+    int I_ADD_A(int value) {
+        int oldA = regs[REG_A];
+        regs[REG_A] = (oldA + value) & 0xFF;
+        flags = flagSZHPC(oldA, value, regs[REG_A]);
+        return 8;
+    }
+
+    int I_ADC_A_IXH(short OP) {
+        return I_ADC_A(IX >>> 8);
+    }
+
+    int I_ADC_A_IYH(short OP) {
+        return I_ADC_A(IY >>> 8);
+    }
+
+    int I_ADC_A_IXL(short OP) {
+        return I_ADC_A(IX & 0xFF);
+    }
+
+    int I_ADC_A_IYL(short OP) {
+        return I_ADC_A(IY & 0xFF);
+    }
+
+    int I_ADC_A(int value) {
+        int oldA = regs[REG_A];
+        regs[REG_A] = (oldA + value + (flags & FLAG_C)) & 0xFF;
+        flags = flagSZHPC(oldA, (value + (flags & FLAG_C)) & 0xFF, regs[REG_A]);
+        return 8;
+    }
+
+    int I_SUB_IXH(short OP) {
+        return I_SUB(IX >>> 8);
+    }
+
+    int I_SUB_IYH(short OP) {
+        return I_SUB(IY >>> 8);
+    }
+
+    int I_SUB_IXL(short OP) {
+        return I_SUB(IX & 0xFF);
+    }
+
+    int I_SUB_IYL(short OP) {
+        return I_SUB(IY & 0xFF);
+    }
+
+    int I_SUB(int value) {
+        int valueNeg = ((~value) + 1) & 0xFF;
+        int oldA = regs[REG_A];
+        regs[REG_A] = (oldA + valueNeg) & 0xFF;
+        flags = flagSZHPC(oldA, valueNeg, regs[REG_A]) | FLAG_N;
+        return 8;
+    }
+
+    int I_SBC_A_IXH(short OP) {
+        return I_SBC_A(IX >>> 8);
+    }
+
+    int I_SBC_A_IYH(short OP) {
+        return I_SBC_A(IY >>> 8);
+    }
+
+    int I_SBC_A_IXL(short OP) {
+        return I_SBC_A(IX & 0xFF);
+    }
+
+    int I_SBC_A_IYL(short OP) {
+        return I_SBC_A(IY & 0xFF);
+    }
+
+    int I_SBC_A(int value) {
+        int valueNeg = ((~value) + 1) & 0xFF;
+        int oldA = regs[REG_A];
+        regs[REG_A] = (oldA + valueNeg - (flags & FLAG_C)) & 0xFF;
+        flags = flagSZHPC(oldA, (valueNeg - (flags & FLAG_C)) & 0xFF, regs[REG_A]) | FLAG_N;
+        return 8;
+    }
+
+    int I_AND_IXH(short OP) {
+        return I_AND(IX >>> 8);
+    }
+
+    int I_AND_IYH(short OP) {
+        return I_AND(IY >>> 8);
+    }
+
+    int I_AND_IXL(short OP) {
+        return I_AND(IX & 0xFF);
+    }
+
+    int I_AND_IYL(short OP) {
+        return I_AND(IY & 0xFF);
+    }
+
+    int I_AND(int value) {
+        regs[REG_A] = (regs[REG_A] & value) & 0xFF;
+        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        return 8;
+    }
+
+    int I_XOR_IXH(short OP) {
+        return I_XOR(IX >>> 8);
+    }
+
+    int I_XOR_IYH(short OP) {
+        return I_XOR(IY >>> 8);
+    }
+
+    int I_XOR_IXL(short OP) {
+        return I_XOR(IX & 0xFF);
+    }
+
+    int I_XOR_IYL(short OP) {
+        return I_XOR(IY & 0xFF);
+    }
+
+    int I_XOR(int value) {
+        regs[REG_A] = ((regs[REG_A] ^ value) & 0xFF);
+        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        return 8;
+    }
+
+    int I_OR_IXH(short OP) {
+        return I_OR(IX >>> 8);
+    }
+
+    int I_OR_IXL(short OP) {
+        return I_OR(IX & 0xFF);
+    }
+
+    int I_OR_IYH(short OP) {
+        return I_OR(IY >>> 8);
+    }
+
+    int I_OR_IYL(short OP) {
+        return I_OR(IY & 0xFF);
+    }
+
+    int I_OR(int value) {
+        regs[REG_A] = (regs[REG_A] | value) & 0xFF;
+        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        return 8;
+    }
+
+    int I_CP_IXH(short OP) {
+        return I_CP(IX >>> 8);
+    }
+
+    int I_CP_IXL(short OP) {
+        return I_CP(IX & 0xFF);
+    }
+
+    int I_CP_IYH(short OP) {
+        return I_CP(IY >>> 8);
+    }
+
+    int I_CP_IYL(short OP) {
+        return I_CP(IY & 0xFF);
+    }
+
+    int I_CP(int value) {
+        int valueNeg = ((~value) + 1) & 0xFF;
+        int result = (regs[REG_A] + valueNeg) & 0xFF;
+        flags = flagSZHPC(regs[REG_A], valueNeg, result) | FLAG_N;
+        return 8;
     }
 }

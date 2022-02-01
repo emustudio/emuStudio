@@ -744,6 +744,88 @@ public class LogicTest extends InstructionsTest {
         );
     }
 
+    @Test
+    public void testAND_IXH() {
+
+    }
+
+    @Test
+    public void testAND_IXL() {
+
+    }
+
+    @Test
+    public void testAND_IYH() {
+
+    }
+
+    @Test
+    public void testAND_IYL() {
+
+    }
+
+    @Test
+    public void testXOR_IXH() {
+
+    }
+
+    @Test
+    public void testXOR_IXL() {
+
+    }
+
+    @Test
+    public void testXOR_IYH() {
+
+    }
+
+    @Test
+    public void testXOR_IYL() {
+
+    }
+
+    @Test
+    public void testOR_IXH() {
+
+    }
+
+    @Test
+    public void testOR_IXL() {
+
+    }
+
+    @Test
+    public void testOR_IYH() {
+
+    }
+
+    @Test
+    public void testOR_IYL() {
+
+    }
+
+    @Test
+    public void testCP_IXH() {
+
+    }
+
+    @Test
+    public void testCP_IYH() {
+
+    }
+
+    @Test
+    public void testCP_IXL() {
+
+    }
+
+    @Test
+    public void testCP_IYL() {
+
+    }
+
+
+
     private IntegerTestBuilder prepareCPxTest(Function<RunnerContext<Integer>, Integer> hlOperation) {
         return new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()

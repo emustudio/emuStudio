@@ -97,18 +97,18 @@ public class TransferTest extends InstructionsTest {
     }
 
     @Test
-    public void testLD_R_II_N() {
-        runLD_R_II_N(REG_A, 0x7E);
-        runLD_R_II_N(REG_B, 0x46);
-        runLD_R_II_N(REG_C, 0x4E);
-        runLD_R_II_N(REG_D, 0x56);
-        runLD_R_II_N(REG_E, 0x5E);
-        runLD_R_II_N(REG_H, 0x66);
-        runLD_R_II_N(REG_L, 0x6E);
+    public void testLD_R_REF_II_N() {
+        runLD_R_REF_II_N(REG_A, 0x7E);
+        runLD_R_REF_II_N(REG_B, 0x46);
+        runLD_R_REF_II_N(REG_C, 0x4E);
+        runLD_R_REF_II_N(REG_D, 0x56);
+        runLD_R_REF_II_N(REG_E, 0x5E);
+        runLD_R_REF_II_N(REG_H, 0x66);
+        runLD_R_REF_II_N(REG_L, 0x6E);
     }
 
     @Test
-    public void testLD_IX_N_R() {
+    public void testLD_REF_IX_N_R() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .first8MSBisIX()
@@ -127,7 +127,7 @@ public class TransferTest extends InstructionsTest {
     }
 
     @Test
-    public void testLD_IY_N_R() {
+    public void testLD_REF_IY_N_R() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .first8MSBisIY()
@@ -146,7 +146,7 @@ public class TransferTest extends InstructionsTest {
     }
 
     @Test
-    public void testLD_II_N_N() {
+    public void testLD_REF_II_N_N() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .verifyByte(context -> Utils.get8MSBplus8LSB(context.first), context -> context.first & 0xFF)
@@ -159,7 +159,7 @@ public class TransferTest extends InstructionsTest {
     }
 
     @Test
-    public void testLD_A_RP() {
+    public void testLD_A_REF_RP() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()
             .verifyRegister(REG_A, context -> context.second & 0xFF)
@@ -172,7 +172,7 @@ public class TransferTest extends InstructionsTest {
     }
 
     @Test
-    public void testLD_A_NN() {
+    public void testLD_A_REF_NN() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()
             .verifyRegister(REG_A, context -> context.second & 0xFF);
@@ -197,7 +197,7 @@ public class TransferTest extends InstructionsTest {
     }
 
     @Test
-    public void testLD_NN_A() {
+    public void testLD_REF_NN_A() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()
             .first8LSBisRegister(REG_A)
@@ -567,22 +567,218 @@ public class TransferTest extends InstructionsTest {
 
     @Test
     public void testLD_IXH_N() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .secondIsIX()
+            .verifyIX(context -> (context.second & 0xFF) | ((context.first << 8) & 0xFF00));
 
+        Generator.forSome16bitBinary(
+            test.runWithFirst8bitOperand(0xDD, 0x26)
+        );
     }
 
     @Test
     public void testLD_IYH_N() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .secondIsIY()
+            .verifyIY(context -> (context.second & 0xFF) | ((context.first << 8) & 0xFF00));
 
+        Generator.forSome16bitBinary(
+            test.runWithFirst8bitOperand(0xFD, 0x26)
+        );
     }
 
     @Test
     public void testLD_IXL_N() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .secondIsIX()
+            .verifyIX(context -> (context.second & 0xFF00) | (context.first & 0xFF));
 
+        Generator.forSome16bitBinary(
+            test.runWithFirst8bitOperand(0xDD, 0x2E)
+        );
     }
 
     @Test
     public void testLD_IYL_N() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .secondIsIY()
+            .verifyIY(context -> (context.second & 0xFF00) | (context.first & 0xFF));
 
+        Generator.forSome16bitBinary(
+            test.runWithFirst8bitOperand(0xFD, 0x2E)
+        );
+    }
+
+    @Test
+    public void testLD_R_IXH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
+        int[][] regOpcodes = { {REG_B, 0x44}, {REG_C, 0x4C}, {REG_D, 0x54}, {REG_E, 0x5C}, {REG_A, 0x7C} };
+
+        for (int[] regOpcode : regOpcodes) {
+            test.secondIsIX()
+                .first8LSBisRegister(regOpcode[0])
+                .verifyRegister(regOpcode[0], context -> (context.second >>> 8) & 0xFF);
+
+            Generator.forSome16bitBinary(
+                test.run(0xDD, regOpcode[1])
+            );
+        }
+    }
+
+    @Test
+    public void testLD_R_IXL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
+        int[][] regOpcodes = { {REG_B, 0x45}, {REG_C, 0x4D}, {REG_D, 0x55}, {REG_E, 0x5D}, {REG_A, 0x7D} };
+
+        for (int[] regOpcode : regOpcodes) {
+            test.secondIsIX()
+                .first8LSBisRegister(regOpcode[0])
+                .verifyRegister(regOpcode[0], context -> context.second & 0xFF);
+
+            Generator.forSome16bitBinary(
+                test.run(0xDD, regOpcode[1])
+            );
+        }
+    }
+
+    @Test
+    public void testLD_R_IYH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
+        int[][] regOpcodes = { {REG_B, 0x44}, {REG_C, 0x4C}, {REG_D, 0x54}, {REG_E, 0x5C}, {REG_A, 0x7C} };
+
+        for (int[] regOpcode : regOpcodes) {
+            test.secondIsIY()
+                .first8LSBisRegister(regOpcode[0])
+                .verifyRegister(regOpcode[0], context -> (context.second >>> 8) & 0xFF);
+
+            Generator.forSome16bitBinary(
+                test.run(0xFD, regOpcode[1])
+            );
+        }
+    }
+
+    @Test
+    public void testLD_R_IYL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
+        int[][] regOpcodes = { {REG_B, 0x45}, {REG_C, 0x4D}, {REG_D, 0x55}, {REG_E, 0x5D}, {REG_A, 0x7D} };
+
+        for (int[] regOpcode : regOpcodes) {
+            test.secondIsIY()
+                .first8LSBisRegister(regOpcode[0])
+                .verifyRegister(regOpcode[0], context -> context.second & 0xFF);
+
+            Generator.forSome16bitBinary(
+                test.run(0xFD, regOpcode[1])
+            );
+        }
+    }
+
+    @Test
+    public void testLD_IXH_R() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
+        int[][] regOpcodes = { {REG_B, 0x60}, {REG_C, 0x61}, {REG_D, 0x62}, {REG_E, 0x63}, {REG_A, 0x67} };
+
+        for (int[] regOpcode : regOpcodes) {
+            test.secondIsIX()
+                .first8LSBisRegister(regOpcode[0])
+                .verifyIX(context -> (context.second & 0xFF) | ((context.first << 8) & 0xFF00));
+
+            Generator.forSome16bitBinary(
+                test.run(0xDD, regOpcode[1])
+            );
+        }
+    }
+
+    @Test
+    public void testLD_IYH_R() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
+        int[][] regOpcodes = { {REG_B, 0x60}, {REG_C, 0x61}, {REG_D, 0x62}, {REG_E, 0x63}, {REG_A, 0x67} };
+
+        for (int[] regOpcode : regOpcodes) {
+            test.secondIsIY()
+                .first8LSBisRegister(regOpcode[0])
+                .verifyIY(context -> (context.second & 0xFF) | ((context.first << 8) & 0xFF00));
+
+            Generator.forSome16bitBinary(
+                test.run(0xFD, regOpcode[1])
+            );
+        }
+    }
+
+    @Test
+    public void testLD_IXH_IXL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIX()
+            .verifyIX(context -> ((context.first << 8) & 0xFF00) | (context.first & 0xFF));
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x65)
+        );
+    }
+
+    @Test
+    public void testLD_IYH_IYL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIY()
+            .verifyIY(context -> ((context.first << 8) & 0xFF00) | (context.first & 0xFF));
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x65)
+        );
+    }
+
+    @Test
+    public void testLD_IXL_R() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
+        int[][] regOpcodes = { {REG_B, 0x68}, {REG_C, 0x69}, {REG_D, 0x6A}, {REG_E, 0x6B}, {REG_A, 0x6F} };
+
+        for (int[] regOpcode : regOpcodes) {
+            test.secondIsIX()
+                .first8LSBisRegister(regOpcode[0])
+                .verifyIX(context -> (context.second & 0xFF00) | (context.first & 0xFF));
+
+            Generator.forSome16bitBinary(
+                test.run(0xDD, regOpcode[1])
+            );
+        }
+    }
+
+    @Test
+    public void testLD_IYL_R() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
+        int[][] regOpcodes = { {REG_B, 0x68}, {REG_C, 0x69}, {REG_D, 0x6A}, {REG_E, 0x6B}, {REG_A, 0x6F} };
+
+        for (int[] regOpcode : regOpcodes) {
+            test.secondIsIY()
+                .first8LSBisRegister(regOpcode[0])
+                .verifyIY(context -> (context.second & 0xFF00) | (context.first & 0xFF));
+
+            Generator.forSome16bitBinary(
+                test.run(0xFD, regOpcode[1])
+            );
+        }
+    }
+
+    @Test
+    public void testLD_IXL_IXH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIX()
+            .verifyIX(context -> (context.first >>> 8) | (context.first & 0xFF00));
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x6C)
+        );
+    }
+
+    @Test
+    public void testLD_IYL_IYH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIY()
+            .verifyIY(context -> (context.first >>> 8) | (context.first & 0xFF00));
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x6C)
+        );
     }
 
     private void runLD_R_R_test(int register, int... opcodes) {
@@ -615,7 +811,7 @@ public class TransferTest extends InstructionsTest {
         );
     }
 
-    private void runLD_R_II_N(int register, int opcode) {
+    private void runLD_R_REF_II_N(int register, int opcode) {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .first8LSBisRegister(register)

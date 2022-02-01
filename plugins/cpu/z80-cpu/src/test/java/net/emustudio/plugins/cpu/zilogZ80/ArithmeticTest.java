@@ -446,42 +446,338 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testINC_IXH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIX()
+            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().overflowOfFirst8MSB().halfCarryOfFirst8MSB().subtractionIsReset(),
+                context -> ((context.first >>> 8) + 1) & 0xFF)
+            .verifyIX(context -> (context.first & 0xFF) | ((((context.first >>> 8) + 1) & 0xFF) << 8));
 
+        Generator.forSome16bitUnary(
+            test.run(0xDD, 0x24)
+        );
     }
 
     @Test
     public void testINC_IYH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIY()
+            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().overflowOfFirst8MSB().halfCarryOfFirst8MSB().subtractionIsReset(),
+                context -> ((context.first >>> 8) + 1) & 0xFF)
+            .verifyIY(context -> (context.first & 0xFF) | ((((context.first >>> 8) + 1) & 0xFF) << 8));
 
+        Generator.forSome16bitUnary(
+            test.run(0xFD, 0x24)
+        );
     }
 
     @Test
     public void testDEC_IXH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIX()
+            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().overflowOfFirst8MSB().halfCarryOfFirst8MSB().subtractionIsSet(),
+                context -> ((context.first >>> 8) - 1) & 0xFF)
+            .verifyIX(context -> (context.first & 0xFF) | ((((context.first >>> 8) - 1) & 0xFF) << 8));
 
+        Generator.forSome16bitUnary(
+            test.run(0xDD, 0x25)
+        );
     }
 
     @Test
     public void testDEC_IYH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIY()
+            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().overflowOfFirst8MSB().halfCarryOfFirst8MSB().subtractionIsSet(),
+                context -> ((context.first >>> 8) - 1) & 0xFF)
+            .verifyIY(context -> (context.first & 0xFF) | ((((context.first >>> 8) - 1) & 0xFF) << 8));
 
+        Generator.forSome16bitUnary(
+            test.run(0xFD, 0x25)
+        );
     }
 
     @Test
     public void testINC_IXL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIX()
+            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().overflowOfFirst8LSB().halfCarryOfFirst8LSB().subtractionIsReset(),
+                context -> ((context.first & 0xFF) + 1) & 0xFF)
+            .verifyIX(context -> (context.first & 0xFF00) | (((context.first & 0xFF) + 1) & 0xFF));
 
+        Generator.forSome16bitUnary(
+            test.run(0xDD, 0x2C)
+        );
     }
 
     @Test
     public void testINC_IYL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIY()
+            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().overflowOfFirst8LSB().halfCarryOfFirst8LSB().subtractionIsReset(),
+                context -> ((context.first & 0xFF) + 1) & 0xFF)
+            .verifyIY(context -> (context.first & 0xFF00) | (((context.first & 0xFF) + 1) & 0xFF));
 
+        Generator.forSome16bitUnary(
+            test.run(0xFD, 0x2C)
+        );
     }
 
     @Test
     public void testDEC_IXL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIX()
+            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().overflowOfFirst8LSB().halfCarryOfFirst8LSB().subtractionIsSet(),
+                context -> ((context.first & 0xFF) - 1) & 0xFF)
+            .verifyIX(context -> (context.first & 0xFF00) | (((context.first & 0xFF) - 1) & 0xFF));
 
+        Generator.forSome16bitUnary(
+            test.run(0xDD, 0x2D)
+        );
     }
 
     @Test
     public void testDEC_IYL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsIY()
+            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().overflowOfFirst8LSB().halfCarryOfFirst8LSB().subtractionIsSet(),
+                context -> ((context.first & 0xFF) - 1) & 0xFF)
+            .verifyIY(context -> (context.first & 0xFF00) | (((context.first & 0xFF) - 1) & 0xFF));
 
+        Generator.forSome16bitUnary(
+            test.run(0xFD, 0x2D)
+        );
+    }
+
+    @Test
+    public void testADD_A_IXH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIX()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second >>> 8))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().carry().halfCarry().overflow().subtractionIsReset());
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x84)
+        );
+    }
+
+    @Test
+    public void testADD_A_IYH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIY()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second >>> 8))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().carry().halfCarry().overflow().subtractionIsReset());
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x84)
+        );
+    }
+
+    @Test
+    public void testADD_A_IXL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIX()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().carry().halfCarry().overflow().subtractionIsReset());
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x85)
+        );
+    }
+
+    @Test
+    public void testADD_A_IYL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIY()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().carry().halfCarry().overflow().subtractionIsReset());
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x85)
+        );
+    }
+
+    @Test
+    public void testADC_A_IXH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIX()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second >>> 8) + (context.flags & FLAG_C))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().carry().halfCarry().overflow().subtractionIsReset());
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x8C)
+        );
+    }
+
+    @Test
+    public void testADC_A_IYH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIY()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second >>> 8) + (context.flags & FLAG_C))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().carry().halfCarry().overflow().subtractionIsReset());
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x8C)
+        );
+    }
+
+    @Test
+    public void testADC_A_IXL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIX()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & FLAG_C))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().carry().halfCarry().overflow().subtractionIsReset());
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x8D)
+        );
+    }
+
+    @Test
+    public void testADC_A_IYL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIY()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & FLAG_C))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().carry().halfCarry().overflow().subtractionIsReset());
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x8D)
+        );
+    }
+
+    @Test
+    public void testSUB_IXH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIX()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (((~(context.second >>> 8)) + 1) & 0xFF))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .sign().zero()
+                .borrow(context -> context.second >>> 8)
+                .halfBorrow(context -> context.second >>> 8)
+                .overflow().subtractionIsSet());
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x94)
+        );
+    }
+
+    @Test
+    public void testSUB_IYH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIY()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (((~(context.second >>> 8)) + 1) & 0xFF))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .sign().zero()
+                .borrow(context -> context.second >>> 8)
+                .halfBorrow(context -> context.second >>> 8)
+                .overflow().subtractionIsSet());
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x94)
+        );
+    }
+
+    @Test
+    public void testSUB_IXL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIX()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (((~(context.second & 0xFF)) + 1) & 0xFF))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .sign().zero()
+                .borrow()
+                .halfBorrow()
+                .overflow().subtractionIsSet());
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x95)
+        );
+    }
+
+    @Test
+    public void testSUB_IYL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIY()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (((~(context.second & 0xFF)) + 1) & 0xFF))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .sign().zero()
+                .borrow()
+                .halfBorrow()
+                .overflow().subtractionIsSet());
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x95)
+        );
+    }
+
+    @Test
+    public void testSBC_A_IXH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIX()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (((~(context.second >>> 8)) + 1) & 0xFF) - (context.flags & FLAG_C))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .sign().zero()
+                .borrowWithCarry(context -> context.second >>> 8)
+                .halfBorrowWithCarry(context -> context.second >>> 8)
+                .overflow().subtractionIsSet());
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x9C)
+        );
+    }
+
+    @Test
+    public void testSBC_A_IYH() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIY()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (((~(context.second >>> 8)) + 1) & 0xFF) - (context.flags & FLAG_C))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .sign().zero()
+                .borrowWithCarry(context -> context.second >>> 8)
+                .halfBorrowWithCarry(context -> context.second >>> 8)
+                .overflow().subtractionIsSet());
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x9C)
+        );
+    }
+
+    @Test
+    public void testSBC_A_IXL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIX()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (((~(context.second & 0xFF)) + 1) & 0xFF) - (context.flags & FLAG_C))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().borrowWithCarry().halfBorrowWithCarry().overflow().subtractionIsSet());
+
+        Generator.forSome16bitBinary(
+            test.run(0xDD, 0x9D)
+        );
+    }
+
+    @Test
+    public void testSBC_A_IYL() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8LSBisRegister(REG_A)
+            .secondIsIY()
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (((~(context.second & 0xFF)) + 1) & 0xFF) - (context.flags & FLAG_C))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero().borrowWithCarry().halfBorrowWithCarry().overflow().subtractionIsSet());
+
+        Generator.forSome16bitBinary(
+            test.run(0xFD, 0x9D)
+        );
     }
 
 
