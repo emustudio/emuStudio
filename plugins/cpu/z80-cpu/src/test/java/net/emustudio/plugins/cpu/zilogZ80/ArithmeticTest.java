@@ -64,7 +64,7 @@ public class ArithmeticTest extends InstructionsTest {
     public void testADC_A_R() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
-            .verifyRegister(REG_A, context -> ((context.first & 0xFF) + (context.second & 0xFF) + (context.flags & FLAG_C)) & 0xFF)
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & FLAG_C))
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().carry().halfCarry().overflow().subtractionIsReset())
             .keepCurrentInjectorsAfterRun();
 
@@ -86,7 +86,7 @@ public class ArithmeticTest extends InstructionsTest {
     public void testADC_A_N() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
-            .verifyRegister(REG_A, context -> ((context.first & 0xFF) + (context.second & 0xFF) + (context.flags & FLAG_C)) & 0xFF)
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & FLAG_C))
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().carry().halfCarry().overflow().subtractionIsReset());
 
         Generator.forSome8bitBinary(
