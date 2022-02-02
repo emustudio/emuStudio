@@ -28,11 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static net.emustudio.plugins.cpu.intel8080.DispatchTables.DISPATCH_TABLE;
 
 public class EmulatorEngine implements CpuEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
@@ -57,7 +58,7 @@ public class EmulatorEngine implements CpuEngine {
     public int[] regs = new int[8];
     public short flags = 2; // registers
     public volatile CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_NORMAL;
-    private byte lastOpcode;
+    private int lastOpcode;
 
     private final MemoryContext<Byte> memory;
     private final ContextImpl context;
@@ -106,7 +107,13 @@ public class EmulatorEngine implements CpuEngine {
 
     public CPU.RunState step() throws Exception {
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
-        dispatch();
+        try {
+            dispatch();
+        } catch (Exception e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new Exception(e);
+        }
         return currentRunState;
     }
 
@@ -130,17 +137,17 @@ public class EmulatorEngine implements CpuEngine {
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }
-                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                    LOGGER.debug("Unexpected error", e);
-                    if (e.getCause() != null && e.getCause() instanceof IndexOutOfBoundsException) {
-                        return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                    }
-                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+                } catch (Breakpoint e) {
+                    return CPU.RunState.STATE_STOPPED_BREAK;
                 } catch (IndexOutOfBoundsException e) {
                     LOGGER.debug("Unexpected error", e);
                     return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                } catch (Breakpoint e) {
-                    return CPU.RunState.STATE_STOPPED_BREAK;
+                } catch (IOException e) {
+                    LOGGER.error("Unexpected error", e);
+                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+                } catch (Throwable e) {
+                    LOGGER.debug("Unexpected error", e);
+                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 }
             }
             endTime = System.nanoTime() - startTime;
@@ -150,6 +157,56 @@ public class EmulatorEngine implements CpuEngine {
             }
         }
         return currentRunState;
+    }
+
+    private int dispatch() throws Throwable {
+        DispatchListener tmpListener = dispatchListener;
+        if (tmpListener != null) {
+            tmpListener.beforeDispatch();
+        }
+
+        /* if interrupt is waiting, instruction won't be read from memory
+         * but from one or all of 3 bytes (b1,b2,b3) which represents either
+         * rst or call instruction incomed from external peripheral device
+         */
+        if (isINT) {
+            if (INTE) {
+                if ((b1 & 0xC7) == 0xC7) {                      /* RST */
+                    SP = (SP - 2) & 0xFFFF;
+                    writeWord(SP, PC);
+                    PC = b1 & 0x38;
+                    return 11;
+                } else if (b1 == 0xCD) {                        /* CALL */
+                    SP = (SP - 2) & 0xFFFF;
+                    writeWord(SP, (PC + 2) & 0xFFFF);
+                    PC = ((b3 & 0xFF) << 8) | (b2 & 0xFF);
+                    return 17;
+                }
+            }
+            isINT = false;
+        }
+
+        try {
+            lastOpcode = readByte(PC);
+        } catch (NullPointerException e) {
+            LOGGER.error("NPE; PC=" + Integer.toHexString(PC), e);
+            currentRunState = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+            return 0;
+        }
+        PC = (PC + 1) & 0xFFFF;
+
+        try {
+            MethodHandle instr = DISPATCH_TABLE[lastOpcode];
+            if (instr != null) {
+                return (int) instr.invokeExact(this);
+            }
+            currentRunState = CPU.RunState.STATE_STOPPED_BAD_INSTR;
+            return 0;
+        } finally {
+            if (tmpListener != null) {
+                tmpListener.afterDispatch();
+            }
+        }
     }
 
 
@@ -195,11 +252,6 @@ public class EmulatorEngine implements CpuEngine {
             return SP;
         }
         int index = reg * 2;
-
-        System.out.println("REG: " + index);
-        System.out.println("REG: " + regs[index]);
-        System.out.println("REG: " + regs[index + 1]);
-
         return regs[index] << 8 | regs[index + 1];
     }
 
@@ -276,264 +328,11 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(address, new Byte[]{(byte) (value & 0xFF), (byte) ((value >>> 8) & 0xFF)}, 2);
     }
 
-    private static final Method[] DISPATCH_TABLE = new Method[256];
-
-    static {
-        try {
-            DISPATCH_TABLE[0x00] = EmulatorEngine.class.getDeclaredMethod("I_NOP");
-            DISPATCH_TABLE[0x01] = EmulatorEngine.class.getDeclaredMethod("I_LXI");
-            DISPATCH_TABLE[0x02] = EmulatorEngine.class.getDeclaredMethod("I_STAX");
-            DISPATCH_TABLE[0x03] = EmulatorEngine.class.getDeclaredMethod("I_INX");
-            DISPATCH_TABLE[0x04] = EmulatorEngine.class.getDeclaredMethod("I_INR");
-            DISPATCH_TABLE[0x05] = EmulatorEngine.class.getDeclaredMethod("I_DCR");
-            DISPATCH_TABLE[0x06] = EmulatorEngine.class.getDeclaredMethod("I_MVI");
-            DISPATCH_TABLE[0x07] = EmulatorEngine.class.getDeclaredMethod("I_RLC");
-            DISPATCH_TABLE[0x09] = EmulatorEngine.class.getDeclaredMethod("I_DAD");
-            DISPATCH_TABLE[0x0A] = EmulatorEngine.class.getDeclaredMethod("I_LDAX");
-            DISPATCH_TABLE[0x0B] = EmulatorEngine.class.getDeclaredMethod("I_DCX");
-            DISPATCH_TABLE[0x0C] = EmulatorEngine.class.getDeclaredMethod("I_INR");
-            DISPATCH_TABLE[0x0D] = EmulatorEngine.class.getDeclaredMethod("I_DCR");
-            DISPATCH_TABLE[0x0E] = EmulatorEngine.class.getDeclaredMethod("I_MVI");
-            DISPATCH_TABLE[0x0F] = EmulatorEngine.class.getDeclaredMethod("I_RRC");
-            DISPATCH_TABLE[0x11] = EmulatorEngine.class.getDeclaredMethod("I_LXI");
-            DISPATCH_TABLE[0x12] = EmulatorEngine.class.getDeclaredMethod("I_STAX");
-            DISPATCH_TABLE[0x13] = EmulatorEngine.class.getDeclaredMethod("I_INX");
-            DISPATCH_TABLE[0x14] = EmulatorEngine.class.getDeclaredMethod("I_INR");
-            DISPATCH_TABLE[0x15] = EmulatorEngine.class.getDeclaredMethod("I_DCR");
-            DISPATCH_TABLE[0x16] = EmulatorEngine.class.getDeclaredMethod("I_MVI");
-            DISPATCH_TABLE[0x17] = EmulatorEngine.class.getDeclaredMethod("I_RAL");
-            DISPATCH_TABLE[0x19] = EmulatorEngine.class.getDeclaredMethod("I_DAD");
-            DISPATCH_TABLE[0x1A] = EmulatorEngine.class.getDeclaredMethod("I_LDAX");
-            DISPATCH_TABLE[0x1B] = EmulatorEngine.class.getDeclaredMethod("I_DCX");
-            DISPATCH_TABLE[0x1C] = EmulatorEngine.class.getDeclaredMethod("I_INR");
-            DISPATCH_TABLE[0x1D] = EmulatorEngine.class.getDeclaredMethod("I_DCR");
-            DISPATCH_TABLE[0x1E] = EmulatorEngine.class.getDeclaredMethod("I_MVI");
-            DISPATCH_TABLE[0x1F] = EmulatorEngine.class.getDeclaredMethod("I_RAR");
-            DISPATCH_TABLE[0x21] = EmulatorEngine.class.getDeclaredMethod("I_LXI");
-            DISPATCH_TABLE[0x22] = EmulatorEngine.class.getDeclaredMethod("I_SHLD");
-            DISPATCH_TABLE[0x23] = EmulatorEngine.class.getDeclaredMethod("I_INX");
-            DISPATCH_TABLE[0x24] = EmulatorEngine.class.getDeclaredMethod("I_INR");
-            DISPATCH_TABLE[0x25] = EmulatorEngine.class.getDeclaredMethod("I_DCR");
-            DISPATCH_TABLE[0x26] = EmulatorEngine.class.getDeclaredMethod("I_MVI");
-            DISPATCH_TABLE[0x27] = EmulatorEngine.class.getDeclaredMethod("I_DAA");
-            DISPATCH_TABLE[0x29] = EmulatorEngine.class.getDeclaredMethod("I_DAD");
-            DISPATCH_TABLE[0x2A] = EmulatorEngine.class.getDeclaredMethod("I_LHLD");
-            DISPATCH_TABLE[0x2B] = EmulatorEngine.class.getDeclaredMethod("I_DCX");
-            DISPATCH_TABLE[0x2C] = EmulatorEngine.class.getDeclaredMethod("I_INR");
-            DISPATCH_TABLE[0x2D] = EmulatorEngine.class.getDeclaredMethod("I_DCR");
-            DISPATCH_TABLE[0x2E] = EmulatorEngine.class.getDeclaredMethod("I_MVI");
-            DISPATCH_TABLE[0x2F] = EmulatorEngine.class.getDeclaredMethod("I_CMA");
-            DISPATCH_TABLE[0x31] = EmulatorEngine.class.getDeclaredMethod("I_LXI");
-            DISPATCH_TABLE[0x32] = EmulatorEngine.class.getDeclaredMethod("I_STA");
-            DISPATCH_TABLE[0x33] = EmulatorEngine.class.getDeclaredMethod("I_INX");
-            DISPATCH_TABLE[0x34] = EmulatorEngine.class.getDeclaredMethod("I_INR");
-            DISPATCH_TABLE[0x35] = EmulatorEngine.class.getDeclaredMethod("I_DCR");
-            DISPATCH_TABLE[0x36] = EmulatorEngine.class.getDeclaredMethod("I_MVI");
-            DISPATCH_TABLE[0x37] = EmulatorEngine.class.getDeclaredMethod("I_STC");
-            DISPATCH_TABLE[0x39] = EmulatorEngine.class.getDeclaredMethod("I_DAD");
-            DISPATCH_TABLE[0x3A] = EmulatorEngine.class.getDeclaredMethod("I_LDA");
-            DISPATCH_TABLE[0x3B] = EmulatorEngine.class.getDeclaredMethod("I_DCX");
-            DISPATCH_TABLE[0x3C] = EmulatorEngine.class.getDeclaredMethod("I_INR");
-            DISPATCH_TABLE[0x3D] = EmulatorEngine.class.getDeclaredMethod("I_DCR");
-            DISPATCH_TABLE[0x3E] = EmulatorEngine.class.getDeclaredMethod("I_MVI");
-            DISPATCH_TABLE[0x3F] = EmulatorEngine.class.getDeclaredMethod("I_CMC");
-            DISPATCH_TABLE[0x40] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x41] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x42] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x43] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x44] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x45] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x46] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x47] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x48] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x49] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x4A] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x4B] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x4C] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x4D] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x4E] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x4F] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x50] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x51] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x52] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x53] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x54] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x55] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x56] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x57] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x58] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x59] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x5A] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x5B] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x5C] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x5D] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x5E] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x5F] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x60] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x61] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x62] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x63] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x64] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x65] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x66] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x67] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x68] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x69] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x6A] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x6B] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x6C] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x6D] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x6E] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x6F] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x70] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x71] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x72] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x73] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x74] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x75] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x76] = EmulatorEngine.class.getDeclaredMethod("I_HLT");
-            DISPATCH_TABLE[0x77] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x78] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x79] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x7A] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x7B] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x7C] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x7D] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x7E] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x7F] = EmulatorEngine.class.getDeclaredMethod("I_MOV");
-            DISPATCH_TABLE[0x80] = EmulatorEngine.class.getDeclaredMethod("I_ADD");
-            DISPATCH_TABLE[0x81] = EmulatorEngine.class.getDeclaredMethod("I_ADD");
-            DISPATCH_TABLE[0x82] = EmulatorEngine.class.getDeclaredMethod("I_ADD");
-            DISPATCH_TABLE[0x83] = EmulatorEngine.class.getDeclaredMethod("I_ADD");
-            DISPATCH_TABLE[0x84] = EmulatorEngine.class.getDeclaredMethod("I_ADD");
-            DISPATCH_TABLE[0x85] = EmulatorEngine.class.getDeclaredMethod("I_ADD");
-            DISPATCH_TABLE[0x86] = EmulatorEngine.class.getDeclaredMethod("I_ADD");
-            DISPATCH_TABLE[0x87] = EmulatorEngine.class.getDeclaredMethod("I_ADD");
-            DISPATCH_TABLE[0x88] = EmulatorEngine.class.getDeclaredMethod("I_ADC");
-            DISPATCH_TABLE[0x89] = EmulatorEngine.class.getDeclaredMethod("I_ADC");
-            DISPATCH_TABLE[0x8A] = EmulatorEngine.class.getDeclaredMethod("I_ADC");
-            DISPATCH_TABLE[0x8B] = EmulatorEngine.class.getDeclaredMethod("I_ADC");
-            DISPATCH_TABLE[0x8C] = EmulatorEngine.class.getDeclaredMethod("I_ADC");
-            DISPATCH_TABLE[0x8D] = EmulatorEngine.class.getDeclaredMethod("I_ADC");
-            DISPATCH_TABLE[0x8E] = EmulatorEngine.class.getDeclaredMethod("I_ADC");
-            DISPATCH_TABLE[0x8F] = EmulatorEngine.class.getDeclaredMethod("I_ADC");
-            DISPATCH_TABLE[0x90] = EmulatorEngine.class.getDeclaredMethod("I_SUB");
-            DISPATCH_TABLE[0x91] = EmulatorEngine.class.getDeclaredMethod("I_SUB");
-            DISPATCH_TABLE[0x92] = EmulatorEngine.class.getDeclaredMethod("I_SUB");
-            DISPATCH_TABLE[0x93] = EmulatorEngine.class.getDeclaredMethod("I_SUB");
-            DISPATCH_TABLE[0x94] = EmulatorEngine.class.getDeclaredMethod("I_SUB");
-            DISPATCH_TABLE[0x95] = EmulatorEngine.class.getDeclaredMethod("I_SUB");
-            DISPATCH_TABLE[0x96] = EmulatorEngine.class.getDeclaredMethod("I_SUB");
-            DISPATCH_TABLE[0x97] = EmulatorEngine.class.getDeclaredMethod("I_SUB");
-            DISPATCH_TABLE[0x98] = EmulatorEngine.class.getDeclaredMethod("I_SBB");
-            DISPATCH_TABLE[0x99] = EmulatorEngine.class.getDeclaredMethod("I_SBB");
-            DISPATCH_TABLE[0x9A] = EmulatorEngine.class.getDeclaredMethod("I_SBB");
-            DISPATCH_TABLE[0x9B] = EmulatorEngine.class.getDeclaredMethod("I_SBB");
-            DISPATCH_TABLE[0x9C] = EmulatorEngine.class.getDeclaredMethod("I_SBB");
-            DISPATCH_TABLE[0x9D] = EmulatorEngine.class.getDeclaredMethod("I_SBB");
-            DISPATCH_TABLE[0x9E] = EmulatorEngine.class.getDeclaredMethod("I_SBB");
-            DISPATCH_TABLE[0x9F] = EmulatorEngine.class.getDeclaredMethod("I_SBB");
-            DISPATCH_TABLE[0xA0] = EmulatorEngine.class.getDeclaredMethod("I_ANA");
-            DISPATCH_TABLE[0xA1] = EmulatorEngine.class.getDeclaredMethod("I_ANA");
-            DISPATCH_TABLE[0xA2] = EmulatorEngine.class.getDeclaredMethod("I_ANA");
-            DISPATCH_TABLE[0xA3] = EmulatorEngine.class.getDeclaredMethod("I_ANA");
-            DISPATCH_TABLE[0xA4] = EmulatorEngine.class.getDeclaredMethod("I_ANA");
-            DISPATCH_TABLE[0xA5] = EmulatorEngine.class.getDeclaredMethod("I_ANA");
-            DISPATCH_TABLE[0xA6] = EmulatorEngine.class.getDeclaredMethod("I_ANA");
-            DISPATCH_TABLE[0xA7] = EmulatorEngine.class.getDeclaredMethod("I_ANA");
-            DISPATCH_TABLE[0xA8] = EmulatorEngine.class.getDeclaredMethod("I_XRA");
-            DISPATCH_TABLE[0xA9] = EmulatorEngine.class.getDeclaredMethod("I_XRA");
-            DISPATCH_TABLE[0xAA] = EmulatorEngine.class.getDeclaredMethod("I_XRA");
-            DISPATCH_TABLE[0xAB] = EmulatorEngine.class.getDeclaredMethod("I_XRA");
-            DISPATCH_TABLE[0xAC] = EmulatorEngine.class.getDeclaredMethod("I_XRA");
-            DISPATCH_TABLE[0xAD] = EmulatorEngine.class.getDeclaredMethod("I_XRA");
-            DISPATCH_TABLE[0xAE] = EmulatorEngine.class.getDeclaredMethod("I_XRA");
-            DISPATCH_TABLE[0xAF] = EmulatorEngine.class.getDeclaredMethod("I_XRA");
-            DISPATCH_TABLE[0xB0] = EmulatorEngine.class.getDeclaredMethod("I_ORA");
-            DISPATCH_TABLE[0xB1] = EmulatorEngine.class.getDeclaredMethod("I_ORA");
-            DISPATCH_TABLE[0xB2] = EmulatorEngine.class.getDeclaredMethod("I_ORA");
-            DISPATCH_TABLE[0xB3] = EmulatorEngine.class.getDeclaredMethod("I_ORA");
-            DISPATCH_TABLE[0xB4] = EmulatorEngine.class.getDeclaredMethod("I_ORA");
-            DISPATCH_TABLE[0xB5] = EmulatorEngine.class.getDeclaredMethod("I_ORA");
-            DISPATCH_TABLE[0xB6] = EmulatorEngine.class.getDeclaredMethod("I_ORA");
-            DISPATCH_TABLE[0xB7] = EmulatorEngine.class.getDeclaredMethod("I_ORA");
-            DISPATCH_TABLE[0xB8] = EmulatorEngine.class.getDeclaredMethod("I_CMP");
-            DISPATCH_TABLE[0xB9] = EmulatorEngine.class.getDeclaredMethod("I_CMP");
-            DISPATCH_TABLE[0xBA] = EmulatorEngine.class.getDeclaredMethod("I_CMP");
-            DISPATCH_TABLE[0xBB] = EmulatorEngine.class.getDeclaredMethod("I_CMP");
-            DISPATCH_TABLE[0xBC] = EmulatorEngine.class.getDeclaredMethod("I_CMP");
-            DISPATCH_TABLE[0xBD] = EmulatorEngine.class.getDeclaredMethod("I_CMP");
-            DISPATCH_TABLE[0xBE] = EmulatorEngine.class.getDeclaredMethod("I_CMP");
-            DISPATCH_TABLE[0xBF] = EmulatorEngine.class.getDeclaredMethod("I_CMP");
-            DISPATCH_TABLE[0xC0] = EmulatorEngine.class.getDeclaredMethod("I_RET_COND"); // RNZ
-            DISPATCH_TABLE[0xC1] = EmulatorEngine.class.getDeclaredMethod("I_POP");
-            DISPATCH_TABLE[0xC2] = EmulatorEngine.class.getDeclaredMethod("I_JMP_COND"); // JNZ
-            DISPATCH_TABLE[0xC3] = EmulatorEngine.class.getDeclaredMethod("I_JMP");
-            DISPATCH_TABLE[0xC4] = EmulatorEngine.class.getDeclaredMethod("I_CALL_COND"); // CNZ
-            DISPATCH_TABLE[0xC5] = EmulatorEngine.class.getDeclaredMethod("I_PUSH");
-            DISPATCH_TABLE[0xC6] = EmulatorEngine.class.getDeclaredMethod("I_ADI");
-            DISPATCH_TABLE[0xC7] = EmulatorEngine.class.getDeclaredMethod("I_RST");
-            DISPATCH_TABLE[0xC8] = EmulatorEngine.class.getDeclaredMethod("I_RET_COND"); // RZ
-            DISPATCH_TABLE[0xC9] = EmulatorEngine.class.getDeclaredMethod("I_RET");
-            DISPATCH_TABLE[0xCA] = EmulatorEngine.class.getDeclaredMethod("I_JMP_COND"); // JZ
-            DISPATCH_TABLE[0xCC] = EmulatorEngine.class.getDeclaredMethod("I_CALL_COND"); // CZ
-            DISPATCH_TABLE[0xCD] = EmulatorEngine.class.getDeclaredMethod("I_CALL");
-            DISPATCH_TABLE[0xCE] = EmulatorEngine.class.getDeclaredMethod("I_ACI");
-            DISPATCH_TABLE[0xCF] = EmulatorEngine.class.getDeclaredMethod("I_RST");
-            DISPATCH_TABLE[0xD0] = EmulatorEngine.class.getDeclaredMethod("I_RET_COND"); // RNC
-            DISPATCH_TABLE[0xD1] = EmulatorEngine.class.getDeclaredMethod("I_POP");
-            DISPATCH_TABLE[0xD2] = EmulatorEngine.class.getDeclaredMethod("I_JMP_COND"); // JNC
-            DISPATCH_TABLE[0xD3] = EmulatorEngine.class.getDeclaredMethod("I_OUT");
-            DISPATCH_TABLE[0xD4] = EmulatorEngine.class.getDeclaredMethod("I_CALL_COND"); // CNC
-            DISPATCH_TABLE[0xD5] = EmulatorEngine.class.getDeclaredMethod("I_PUSH");
-            DISPATCH_TABLE[0xD6] = EmulatorEngine.class.getDeclaredMethod("I_SUI");
-            DISPATCH_TABLE[0xD7] = EmulatorEngine.class.getDeclaredMethod("I_RST");
-            DISPATCH_TABLE[0xD8] = EmulatorEngine.class.getDeclaredMethod("I_RET_COND"); // RC
-            DISPATCH_TABLE[0xDA] = EmulatorEngine.class.getDeclaredMethod("I_JMP_COND"); // JC
-            DISPATCH_TABLE[0xDB] = EmulatorEngine.class.getDeclaredMethod("I_IN");
-            DISPATCH_TABLE[0xDC] = EmulatorEngine.class.getDeclaredMethod("I_CALL_COND"); // CC
-            DISPATCH_TABLE[0xDE] = EmulatorEngine.class.getDeclaredMethod("I_SBI");
-            DISPATCH_TABLE[0xDF] = EmulatorEngine.class.getDeclaredMethod("I_RST");
-            DISPATCH_TABLE[0xE0] = EmulatorEngine.class.getDeclaredMethod("I_RET_COND"); // RPO
-            DISPATCH_TABLE[0xE1] = EmulatorEngine.class.getDeclaredMethod("I_POP");
-            DISPATCH_TABLE[0xE2] = EmulatorEngine.class.getDeclaredMethod("I_JMP_COND"); // JPO
-            DISPATCH_TABLE[0xE3] = EmulatorEngine.class.getDeclaredMethod("I_XTHL");
-            DISPATCH_TABLE[0xE4] = EmulatorEngine.class.getDeclaredMethod("I_CALL_COND"); // CPO
-            DISPATCH_TABLE[0xE5] = EmulatorEngine.class.getDeclaredMethod("I_PUSH");
-            DISPATCH_TABLE[0xE6] = EmulatorEngine.class.getDeclaredMethod("I_ANI");
-            DISPATCH_TABLE[0xE7] = EmulatorEngine.class.getDeclaredMethod("I_RST");
-            DISPATCH_TABLE[0xE8] = EmulatorEngine.class.getDeclaredMethod("I_RET_COND"); // RPE
-            DISPATCH_TABLE[0xE9] = EmulatorEngine.class.getDeclaredMethod("I_PCHL");
-            DISPATCH_TABLE[0xEA] = EmulatorEngine.class.getDeclaredMethod("I_JMP_COND"); // JPE
-            DISPATCH_TABLE[0xEB] = EmulatorEngine.class.getDeclaredMethod("I_XCHG");
-            DISPATCH_TABLE[0xEC] = EmulatorEngine.class.getDeclaredMethod("I_CALL_COND"); // CPE
-            DISPATCH_TABLE[0xEE] = EmulatorEngine.class.getDeclaredMethod("I_XRI");
-            DISPATCH_TABLE[0xEF] = EmulatorEngine.class.getDeclaredMethod("I_RST");
-            DISPATCH_TABLE[0xF0] = EmulatorEngine.class.getDeclaredMethod("I_RET_COND"); // RP
-            DISPATCH_TABLE[0xF1] = EmulatorEngine.class.getDeclaredMethod("I_POP");
-            DISPATCH_TABLE[0xF2] = EmulatorEngine.class.getDeclaredMethod("I_JMP_COND"); // JP
-            DISPATCH_TABLE[0xF3] = EmulatorEngine.class.getDeclaredMethod("I_DI");
-            DISPATCH_TABLE[0xF4] = EmulatorEngine.class.getDeclaredMethod("I_CALL_COND"); // CP
-            DISPATCH_TABLE[0xF5] = EmulatorEngine.class.getDeclaredMethod("I_PUSH");
-            DISPATCH_TABLE[0xF6] = EmulatorEngine.class.getDeclaredMethod("I_ORI");
-            DISPATCH_TABLE[0xF7] = EmulatorEngine.class.getDeclaredMethod("I_RST");
-            DISPATCH_TABLE[0xF8] = EmulatorEngine.class.getDeclaredMethod("I_RET_COND"); // RM
-            DISPATCH_TABLE[0xF9] = EmulatorEngine.class.getDeclaredMethod("I_SPHL");
-            DISPATCH_TABLE[0xFA] = EmulatorEngine.class.getDeclaredMethod("I_JMP_COND"); // JM
-            DISPATCH_TABLE[0xFB] = EmulatorEngine.class.getDeclaredMethod("I_EI");
-            DISPATCH_TABLE[0xFC] = EmulatorEngine.class.getDeclaredMethod("I_CALL_COND"); // CM
-            DISPATCH_TABLE[0xFE] = EmulatorEngine.class.getDeclaredMethod("I_CPI");
-            DISPATCH_TABLE[0xFF] = EmulatorEngine.class.getDeclaredMethod("I_RST");
-        } catch (NoSuchMethodException e) {
-            LOGGER.error("Could not set up dispatch table. The emulator won't work correctly", e);
-        }
-    }
-
-    private int I_NOP() {
+    public int I_NOP() {
         return 4;
     }
 
-    private int I_RLC() {
+    public int I_RLC() {
         int temp = (regs[REG_A] & 0x80) >>> 7;
 
         flags &= (~FLAG_C);
@@ -543,7 +342,7 @@ public class EmulatorEngine implements CpuEngine {
         return 4;
     }
 
-    private int I_RRC() {
+    public int I_RRC() {
         int temp = regs[REG_A] & 0x01;
 
         flags &= (~FLAG_C);
@@ -553,7 +352,7 @@ public class EmulatorEngine implements CpuEngine {
         return 4;
     }
 
-    private int I_RAL() {
+    public int I_RAL() {
         int temp = regs[REG_A] << 1;
         regs[REG_A] = temp & 0xFF;
         regs[REG_A] |= (flags & FLAG_C);
@@ -563,7 +362,7 @@ public class EmulatorEngine implements CpuEngine {
         return 4;
     }
 
-    private int I_RAR() {
+    public int I_RAR() {
         int newCarry = regs[REG_A] & 1;
         regs[REG_A] = regs[REG_A] >>> 1;
         if ((flags & FLAG_C) == FLAG_C) {
@@ -575,14 +374,14 @@ public class EmulatorEngine implements CpuEngine {
         return 4;
     }
 
-    private int I_SHLD() {
+    public int I_SHLD() {
         int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         memory.write(DAR, new Byte[]{(byte) regs[REG_L], (byte) regs[REG_H]}, 2);
         return 16;
     }
 
-    private int I_DAA() {
+    public int I_DAA() {
         int temp = regs[REG_A];
 
         boolean acFlag = (flags & FLAG_AC) == FLAG_AC;
@@ -610,7 +409,7 @@ public class EmulatorEngine implements CpuEngine {
         return 4;
     }
 
-    private int I_LHLD() {
+    public int I_LHLD() {
         int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         regs[REG_L] = readByte(DAR);
@@ -618,32 +417,32 @@ public class EmulatorEngine implements CpuEngine {
         return 16;
     }
 
-    private int I_CMA() {
+    public int I_CMA() {
         regs[REG_A] = ~regs[REG_A];
         regs[REG_A] &= 0xFF;
         return 4;
     }
 
-    private int I_STA() {
+    public int I_STA() {
         int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         memory.write(DAR, (byte) regs[REG_A]);
         return 13;
     }
 
-    private int I_STC() {
+    public int I_STC() {
         flags |= FLAG_C;
         return 4;
     }
 
-    private int I_LDA() {
+    public int I_LDA() {
         int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         regs[REG_A] = readByte(DAR);
         return 13;
     }
 
-    private int I_CMC() {
+    public int I_CMC() {
         if ((flags & FLAG_C) != 0) {
             flags &= (~FLAG_C);
         } else {
@@ -652,17 +451,17 @@ public class EmulatorEngine implements CpuEngine {
         return 4;
     }
 
-    private int I_HLT() {
+    public int I_HLT() {
         currentRunState = CPU.RunState.STATE_STOPPED_NORMAL;
         return 7;
     }
 
-    private int I_JMP() {
+    public int I_JMP() {
         PC = readWord(PC);
         return 10;
     }
 
-    private int I_ADI() {
+    public int I_ADI() {
         int DAR = regs[REG_A];
         int diff = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
@@ -675,20 +474,20 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    private int I_RET() {
+    public int I_RET() {
         PC = readWord(SP);
         SP = (SP + 2) & 0xFFFF;
         return 10;
     }
 
-    private int I_CALL() {
+    public int I_CALL() {
         SP = (SP - 2) & 0xFFFF;
         writeWord(SP, (PC + 2) & 0xFFFF);
         PC = readWord(PC);
         return 17;
     }
 
-    private int I_ACI() {
+    public int I_ACI() {
         int X = regs[REG_A];
         int diff = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
@@ -704,14 +503,14 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    private int I_OUT() throws IOException {
+    public int I_OUT() throws IOException {
         int DAR = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
         context.fireIO(DAR, false, (byte) regs[REG_A]);
         return 10;
     }
 
-    private int I_SUI() {
+    public int I_SUI() {
         int DAR = regs[REG_A];
         int diff = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
@@ -724,14 +523,14 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    private int I_IN() throws IOException {
+    public int I_IN() throws IOException {
         int DAR = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
         regs[REG_A] = context.fireIO(DAR, true, (byte) 0) & 0xFF;
         return 10;
     }
 
-    private int I_SBI() {
+    public int I_SBI() {
         int DAR = regs[REG_A];
         int diff = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
@@ -747,7 +546,7 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    private int I_XTHL() {
+    public int I_XTHL() {
         int DAR = readWord(SP);
         writeWord(SP, (regs[REG_H] << 8) | regs[REG_L]);
         regs[REG_H] = (DAR >>> 8) & 0xFF;
@@ -755,19 +554,19 @@ public class EmulatorEngine implements CpuEngine {
         return 18;
     }
 
-    private int I_ANI() {
+    public int I_ANI() {
         regs[REG_A] &= readByte(PC);
         PC = (PC + 1) & 0xFFFF;
         flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 7;
     }
 
-    private int I_PCHL() {
+    public int I_PCHL() {
         PC = (regs[REG_H] << 8) | regs[REG_L];
         return 5;
     }
 
-    private int I_XCHG() {
+    public int I_XCHG() {
         int x = regs[REG_H];
         int y = regs[REG_L];
         regs[REG_H] = regs[REG_D];
@@ -777,36 +576,36 @@ public class EmulatorEngine implements CpuEngine {
         return 4;
     }
 
-    private int I_XRI() {
+    public int I_XRI() {
         regs[REG_A] ^= readByte(PC);
         PC = (PC + 1) & 0xFFFF;
         flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 7;
     }
 
-    private int I_DI() {
+    public int I_DI() {
         INTE = false;
         return 4;
     }
 
-    private int I_ORI() {
+    public int I_ORI() {
         regs[REG_A] |= readByte(PC);
         PC = (PC + 1) & 0xFFFF;
         flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 7;
     }
 
-    private int I_SPHL() {
+    public int I_SPHL() {
         SP = ((regs[REG_H] << 8) | regs[REG_L]) & 0xFFFF;
         return 5;
     }
 
-    private int I_EI() {
+    public int I_EI() {
         INTE = true;
         return 4;
     }
 
-    private int I_CPI() {
+    public int I_CPI() {
         int X = regs[REG_A];
         int DAR = regs[REG_A] & 0xFF;
         int diff = readByte(PC);
@@ -819,7 +618,7 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    private int I_MOV() {
+    public int I_MOV() {
         putreg((lastOpcode >>> 3) & 0x07, getreg(lastOpcode & 0x07));
         if (((lastOpcode & 0x07) == 6) || (((lastOpcode >>> 3) & 0x07) == 6)) {
             return 7;
@@ -828,7 +627,7 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    private int I_MVI() {
+    public int I_MVI() {
         putreg((lastOpcode >>> 3) & 0x07, readByte(PC));
         PC = (PC + 1) & 0xFFFF;
         if (((lastOpcode >>> 3) & 0x07) == 6) {
@@ -838,25 +637,25 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    private int I_LXI() {
+    public int I_LXI() {
         putpair((lastOpcode >>> 4) & 0x03, readWord(PC));
         PC = (PC + 2) & 0xFFFF;
         return 10;
     }
 
-    private int I_LDAX() {
+    public int I_LDAX() {
         int address = getpair((lastOpcode >>> 4) & 0x03);
         System.out.println(address);
         putreg(7, readByte(address));
         return 7;
     }
 
-    private int I_STAX() {
+    public int I_STAX() {
         memory.write(getpair((lastOpcode >>> 4) & 0x03), (byte) getreg(7));
         return 7;
     }
 
-    private int I_CMP() {
+    public int I_CMP() {
         int X = regs[REG_A];
         int DAR = X & 0xFF;
         int diff = getreg(lastOpcode & 0x07);
@@ -868,7 +667,7 @@ public class EmulatorEngine implements CpuEngine {
         return ((lastOpcode & 0x07) == 6) ? 7 : 4;
     }
 
-    private int I_JMP_COND() {
+    public int I_JMP_COND() {
         int index = (lastOpcode >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
             PC = readWord(PC);
@@ -878,7 +677,7 @@ public class EmulatorEngine implements CpuEngine {
         return 10;
     }
 
-    private int I_CALL_COND() {
+    public int I_CALL_COND() {
         int index = (lastOpcode >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
             int DAR = readWord(PC);
@@ -892,7 +691,7 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    private int I_RET_COND() {
+    public int I_RET_COND() {
         int index = (lastOpcode >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
             PC = readWord(SP);
@@ -901,28 +700,28 @@ public class EmulatorEngine implements CpuEngine {
         return 10;
     }
 
-    private int I_RST() {
+    public int I_RST() {
         SP = (SP - 2) & 0xFFFF;
         writeWord(SP, PC);
         PC = lastOpcode & 0x38;
         return 11;
     }
 
-    private int I_PUSH() {
+    public int I_PUSH() {
         int DAR = getpush((lastOpcode >>> 4) & 0x03);
         SP = (SP - 2) & 0xFFFF;
         writeWord(SP, DAR);
         return 11;
     }
 
-    private int I_POP() {
+    public int I_POP() {
         int DAR = readWord(SP);
         SP = (SP + 2) & 0xFFFF;
         putpush((lastOpcode >>> 4) & 0x03, DAR);
         return 10;
     }
 
-    private int I_ADD() {
+    public int I_ADD() {
         int X = regs[REG_A];
         int diff = getreg(lastOpcode & 0x07);
         regs[REG_A] += diff;
@@ -934,7 +733,7 @@ public class EmulatorEngine implements CpuEngine {
         return ((lastOpcode & 0x07) == 6) ? 7 : 4;
     }
 
-    private int I_ADC() {
+    public int I_ADC() {
         int X = regs[REG_A];
         int diff = getreg(lastOpcode & 0x07);
         if ((flags & FLAG_C) == FLAG_C) {
@@ -949,7 +748,7 @@ public class EmulatorEngine implements CpuEngine {
         return ((lastOpcode & 0x07) == 6) ? 7 : 4;
     }
 
-    private int I_SUB() {
+    public int I_SUB() {
         int X = regs[REG_A];
         int diff = getreg(lastOpcode & 0x07);
         regs[REG_A] -= diff;
@@ -961,7 +760,7 @@ public class EmulatorEngine implements CpuEngine {
         return ((lastOpcode & 0x07) == 6) ? 7 : 4;
     }
 
-    private int I_SBB() {
+    public int I_SBB() {
         int X = regs[REG_A];
         int diff = getreg(lastOpcode & 0x07);
         if ((flags & FLAG_C) != 0) {
@@ -976,33 +775,33 @@ public class EmulatorEngine implements CpuEngine {
         return ((lastOpcode & 0x07) == 6) ? 7 : 4;
     }
 
-    private int I_INR() {
+    public int I_INR() {
         int DAR = (getreg((lastOpcode >>> 3) & 0x07) + 1) & 0xFF;
         flags = (short) (EmulatorTables.INC_TABLE[DAR] | (flags & FLAG_C));
         putreg((lastOpcode >>> 3) & 0x07, DAR);
         return 5;
     }
 
-    private int I_DCR() {
+    public int I_DCR() {
         int DAR = (getreg((lastOpcode >>> 3) & 0x07) - 1) & 0xFF;
         flags = (short) (EmulatorTables.DEC_TABLE[DAR] | (flags & FLAG_C));
         putreg((lastOpcode >>> 3) & 0x07, DAR);
         return 5;
     }
 
-    private int I_INX() {
+    public int I_INX() {
         int DAR = (getpair((lastOpcode >>> 4) & 0x03) + 1) & 0xFFFF;
         putpair((lastOpcode >>> 4) & 0x03, DAR);
         return 5;
     }
 
-    private int I_DCX() {
+    public int I_DCX() {
         int DAR = (getpair((lastOpcode >>> 4) & 0x03) - 1) & 0xFFFF;
         putpair((lastOpcode >>> 4) & 0x03, DAR);
         return 5;
     }
 
-    private int I_DAD() {
+    public int I_DAD() {
         int DAR = getpair((lastOpcode >>> 4) & 0x03);
         DAR += getpair(2);
         if ((DAR & 0x10000) != 0) {
@@ -1015,72 +814,21 @@ public class EmulatorEngine implements CpuEngine {
         return 10;
     }
 
-    private int I_ANA() {
+    public int I_ANA() {
         regs[REG_A] &= getreg(lastOpcode & 0x07);
         flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 4;
     }
 
-    private int I_XRA() {
+    public int I_XRA() {
         regs[REG_A] ^= getreg(lastOpcode & 0x07);
         flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 4;
     }
 
-    private int I_ORA() {
+    public int I_ORA() {
         regs[REG_A] |= getreg(lastOpcode & 0x07);
         flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 4;
-    }
-
-    private int dispatch() throws InvocationTargetException, IllegalAccessException {
-        DispatchListener tmpListener = dispatchListener;
-        if (tmpListener != null) {
-            tmpListener.beforeDispatch();
-        }
-
-        /* if interrupt is waiting, instruction won't be read from memory
-         * but from one or all of 3 bytes (b1,b2,b3) which represents either
-         * rst or call instruction incomed from external peripheral device
-         */
-        if (isINT) {
-            if (INTE) {
-                if ((b1 & 0xC7) == 0xC7) {                      /* RST */
-                    SP = (SP - 2) & 0xFFFF;
-                    writeWord(SP, PC);
-                    PC = b1 & 0x38;
-                    return 11;
-                } else if (b1 == 0xCD) {                        /* CALL */
-                    SP = (SP - 2) & 0xFFFF;
-                    writeWord(SP, (PC + 2) & 0xFFFF);
-                    PC = ((b3 & 0xFF) << 8) | (b2 & 0xFF);
-                    return 17;
-                }
-            }
-            isINT = false;
-        }
-
-        lastOpcode = 0;
-        try {
-            lastOpcode = (byte)readByte(PC);
-        } catch (NullPointerException e) {
-            LOGGER.error("NPE; PC=" + Integer.toHexString(PC), e);
-            currentRunState = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-            return 0;
-        }
-        PC = (PC + 1) & 0xFFFF;
-
-        try {
-            Method instr = DISPATCH_TABLE[lastOpcode & 0xFF];
-            if (instr == null) {
-                currentRunState = CPU.RunState.STATE_STOPPED_BAD_INSTR;
-                return 0;
-            }
-            return (Integer) instr.invoke(this);
-        } finally {
-            if (tmpListener != null) {
-                tmpListener.afterDispatch();
-            }
-        }
     }
 }

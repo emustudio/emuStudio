@@ -49,7 +49,7 @@ dependencies {
   extraLibs libs.slf4JApi
 
   extraLibsRuntime libs.javaCupRuntime
-//  providedRuntime project(":plugins:compiler:as-8080")
+  providedRuntime project(":plugins:compiler:as-8080")
   providedRuntime project(":plugins:compiler:as-ssem")
 //  providedRuntime project(":plugins:compiler:as-z80")
 //  providedRuntime project(":plugins:compiler:brainc-brainduck")
@@ -58,23 +58,23 @@ dependencies {
 
 //  providedRuntime project(":plugins:memory:ram-mem")
  // providedRuntime project(":plugins:memory:rasp-mem")
- // providedRuntime project(":plugins:memory:brainduck-mem")
+  providedRuntime project(":plugins:memory:brainduck-mem")
   providedRuntime project(":plugins:memory:ssem-mem")
- // providedRuntime project(":plugins:memory:byte-mem")
+  providedRuntime project(":plugins:memory:byte-mem")
 
- // providedRuntime project(":plugins:cpu:8080-cpu")
- // providedRuntime project(":plugins:cpu:brainduck-cpu")
+  providedRuntime project(":plugins:cpu:8080-cpu")
+  providedRuntime project(":plugins:cpu:brainduck-cpu")
 //  providedRuntime project(":plugins:cpu:ram-cpu")
  // providedRuntime project(":plugins:cpu:rasp-cpu")
- // providedRuntime project(":plugins:cpu:z80-cpu")
+  providedRuntime project(":plugins:cpu:z80-cpu")
   providedRuntime project(":plugins:cpu:ssem-cpu")
 
-//  providedRuntime project(":plugins:device:abstract-tape")
-//  providedRuntime project(":plugins:device:88-dcdd")
-//  providedRuntime project(":plugins:device:88-sio")
-//  providedRuntime project(":plugins:device:adm3A-terminal")
+  providedRuntime project(":plugins:device:abstract-tape")
+  providedRuntime project(":plugins:device:88-dcdd")
+  providedRuntime project(":plugins:device:88-sio")
+  providedRuntime project(":plugins:device:adm3A-terminal")
 //  providedRuntime project(":plugins:device:brainduck-terminal")
-//  providedRuntime project(":plugins:device:simhPseudo-z80")
+  providedRuntime project(":plugins:device:simhPseudo-z80")
   providedRuntime project(":plugins:device:ssem-display")
 
   testImplementation libs.junit
