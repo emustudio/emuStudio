@@ -76,7 +76,7 @@ instruction =
   "jp (HL)": 0xE9                         |   # 0xE9
   "ex DE, HL": 0xEB                       |   # 0xEB
 
-  0xED edINSTR                            |   # 0xED
+  0xED edInstruction                      |   # 0xED
 
   "xor": 0xEE imm8                        |   # 0xEE
   "ret P": 0xF0                           |   # 0xF0
@@ -86,7 +86,7 @@ instruction =
   "ld SP,HL": 0xF9                        |   # 0xF9
   "ei": 0xFB                              |   # 0xFB
 
-  0xFD fdINSTR                            |   # 0xFD
+  0xFD fdInstruction                      |   # 0xFD
 
   "cp": 0xFE imm8                         ;   # 0xFE
 
@@ -104,18 +104,10 @@ cbInstruction =
   "res": 10 BIT(3) REG |  # 0x80 - 0xBF
   "set": 11 BIT(3) REG ;  # 0xC0 - 0xFF
 
-
-
-
-
-# DISPATCH_TABLE_DD[0xE9] = lookup.findVirtual(EmulatorEngine.class, "I_JP_REF_IX", retInt);
-# DISPATCH_TABLE_DD[0xF9] = lookup.findVirtual(EmulatorEngine.class, "I_LD_SP_IX", retInt);
-
-
 ddInstruction =
   "add IX,": 00 BC_DE_IX_SP(2) 1001       |  # 0x09, 0x19, 0x29, 0x39
   "ld IX,": 0x21 imm16                    |  # 0x21
-  "ld": 0x22 REF_imm16_IX                 |  # 0x22
+  "ld": 0x22 REF_imm16_II                 |  # 0x22
   "inc IX": 0x23                          |  # 0x23
   "inc IXH": 0x24                         |  # 0x24
   "dec IXH": 0x25                         |  # 0x25
@@ -128,9 +120,9 @@ ddInstruction =
   "inc": 0x34 REF_II_N                    |  # 0x34
   "dec": 0x35 REF_II_N                    |  # 0x35
   "ld": 0x36 REF_II_N(8) imm8             |  # 0x36
-  "ld": 010 REG_B_C_D_E_IXH(2) 100        |  # 0x44, 0x4C, 0x54, 0x5C
+  "ld": 010 REG_B_C_D_E_IIH(2) 100        |  # 0x44, 0x4C, 0x54, 0x5C
   "ld A, IXH": 0x7C                       |  # 0x7C
-  "ld": 010 REG_B_C_D_E_IXL(2) 101        |  # 0x45, 0x4D, 0x55, 0x5D
+  "ld": 010 REG_B_C_D_E_IIL(2) 101        |  # 0x45, 0x4D, 0x55, 0x5D
   "ld A, IXL": 0x7D                       |  # 0x7D
   "ld": 010 REG_B_C_D_E(2) 110 REF_II_N   |  # 0x46, 0x4E, 0x56, 0x5E
   "ld": 0110 REG_H_L(1) 110 REF_II_N      |  # 0x66, 0x6E
@@ -177,93 +169,268 @@ ddInstruction =
   "ex (SP), IX": 0xE3                     |  # 0xE3
   "push IX": 0xE5                         |  # 0xE5
   "jp (IX)": 0xE9                         |  # 0xE9
-  "ld SP,IX": 0xF9                        ;  # 0xF9
+  "ld SP, IX": 0xF9                       ;  # 0xF9
 
+fdInstruction =
+  "add IY,": 00 BC_DE_IY_SP(2) 1001       |  # 0x09, 0x19, 0x29, 0x39
+  "ld IY,": 0x21 imm16                    |  # 0x21
+  "ld": 0x22 REF_imm16_II                 |  # 0x22
+  "inc IY": 0x23                          |  # 0x23
+  "inc IYH": 0x24                         |  # 0x24
+  "dec IYH": 0x25                         |  # 0x25
+  "ld IYH,": 0x26 imm8                    |  # 0x26
+  "ld IY,": 0x2A REF_imm16                |  # 0x2A
+  "dec IY": 0x2B                          |  # 0x2B
+  "inc IYL": 0x2C                         |  # 0x2C
+  "dec IYL": 0x2D                         |  # 0x2D
+  "ld IYL,": 0x2E imm8                    |  # 0x2E
+  "inc": 0x34 REF_II_N                    |  # 0x34
+  "dec": 0x35 REF_II_N                    |  # 0x35
+  "ld": 0x36 REF_II_N(8) imm8             |  # 0x36
+  "ld": 010 REG_B_C_D_E_IIH(2) 100        |  # 0x44, 0x4C, 0x54, 0x5C
+  "ld A, IYH": 0x7C                       |  # 0x7C
+  "ld": 010 REG_B_C_D_E_IIL(2) 101        |  # 0x45, 0x4D, 0x55, 0x5D
+  "ld A, IYL": 0x7D                       |  # 0x7D
+  "ld": 010 REG_B_C_D_E(2) 110 REF_II_N   |  # 0x46, 0x4E, 0x56, 0x5E
+  "ld": 0110 REG_H_L(1) 110 REF_II_N      |  # 0x66, 0x6E
+  "ld A,": 0x7E REF_II_N                  |  # 0x7E
+  "ld IYH,": 0110 00 REG_B_C_D_E(2)       |  # 0x60 - 063
+  "ld IYH, IYH": 0x64                     |  # 0x64
+  "ld IYH, IYL": 0x65                     |  # 0x65
+  "ld IYH, A": 0x67                       |  # 0x67
+  "ld IYL,": 0110 10 REG_B_C_D_E(2)       |  # 0x68 - 0x6B
+  "ld IYL, IYH": 0x6C                     |  # 0x6C
+  "ld IYL, IYL": 0x6D                     |  # 0x6D
+  "ld IYL, A": 0x6F                       |  # 0x6F
+  "ld": 01110 0 REG_B_C_D_E(2) REF_II_N_2 |  # 0x70 - 0x73
+  "ld": 01110 10 REG_H_L(1) REF_II_N_2    |  # 0x74, 0x75
+  "ld": 01110 REG_A[111](3) REF_II_N_2    |  # 0x77
+  "add A, IYH": 0x84                      |  # 0x84
+  "add A, IYL": 0x85                      |  # 0x85
+  "add A,": 0x86 REF_II_N                 |  # 0x86
+  "adc A, IYH": 0x8C                      |  # 0x8C
+  "adc A, IYL": 0x8D                      |  # 0x8D
+  "adc A,": 0x8E REF_II_N                 |  # 0x8E
+  "sub IYH": 0x94                         |  # 0x94
+  "sub IYL": 0x95                         |  # 0x95
+  "sub": 0x96 REF_II_N                    |  # 0x96
+  "sbc A, IYH": 0x9C                      |  # 0x9C
+  "sbc A, IYL": 0x9D                      |  # 0x9D
+  "sbc A,": 0x9E REF_II_N                 |  # 0x9E
+  "and IYH": 0xA4                         |  # 0xA4
+  "and IYL": 0xA5                         |  # 0xA5
+  "and": 0xA6 REF_II_N                    |  # 0xA6
+  "xor IYH": 0xAC                         |  # 0xAC
+  "xor IYL": 0xAD                         |  # 0xAD
+  "xor": 0xAE REF_II_N                    |  # 0xAE
+  "or IYH": 0xB4                          |  # 0xB4
+  "or IYL": 0xB5                          |  # 0xB5
+  "or": 0xB6 REF_II_N                     |  # 0xB6
+  "cp IYH": 0xBC                          |  # 0xBC
+  "cp IYL": 0xBD                          |  # 0xBD
+  "cp": 0xBE REF_II_N                     |  # 0xBE
 
-fdINSTR = "ld": 010 REG_B_C_D_E(2) 110 REF_II_N |
+  0xCB REF_II_N(8) fdcbInstruction        |  # 0xCB
 
-          "ld": 0110 REG_H_L(1) 110 REF_II_N |
+  "pop IY": 0xE1                          |  # 0xE1
+  "ex (SP), IY": 0xE3                     |  # 0xE3
+  "push IY": 0xE5                         |  # 0xE5
+  "jp (IY)": 0xE9                         |  # 0xE9
+  "ld SP, IY": 0xF9                       ;  # 0xF9
 
-          "ld": 01 REG_A[111](3) 110 REF_II_N |
+ddcbInstruction =
+  "rlc": 0000 00 REG_B_C_D_E(2)  |  # 0x00 - 0x03
+  "rlc": 0000 01 0 REG_H_L(1)    |  # 0x04, 0x05
+  "rlc": 0000 0110               |  # 0x06
+  "rlc": 0000 0  REG_A[111](3)   |  # 0x07
+  "rrc": 0000 10 REG_B_C_D_E(2)  |  # 0x08 - 0x0B
+  "rrc": 0000 110 REG_H_L(1)     |  # 0x0C, 0x0D
+  "rrc": 0x0E                    |  # 0x0E
+  "rrc": 0000 1 REG_A[111](3)    |  # 0x0F
+  "rl":  0001 00 REG_B_C_D_E     |  # 0x10 - 0x13
+  "rl":  0001 010 REG_H_L        |  # 0x14, 0x15
+  "rl":  0x16                    |  # 0x16
+  "rl":  0001 0 REG_A[111](3)    |  # 0x17
+  "rr":  0001 10 REG_B_C_D_E     |  # 0x18 - 0x1B
+  "rr":  0001 110 REG_H_L        |  # 0x1C, 0x1D
+  "rr":  0x1E                    |  # 0x1E
+  "rr":  0001 1 REG_A[111](3)    |  # 0x1F
+  "sla": 0010 00 REG_B_C_D_E     |  # 0x20 - 0x23
+  "sla": 0010 010 REG_H_L        |  # 0x24, 0x25
+  "sla": 0x26                    |  # 0x26
+  "sla": 0010 0 REG_A[111](3)    |  # 0x27
+  "sra": 0010 10 REG_B_C_D_E     |  # 0x28 - 0x2B
+  "sra": 0010 110 REG_H_L        |  # 0x2C, 0x2D
+  "sra": 0x2E                    |  # 0x2E
+  "sra": 0010 1 REG_A[111](3)    |  # 0x2F
+  "sll": 0011 00 REG_B_C_D_E     |  # 0x30 - 0x33
+  "sll": 0011 010 REG_H_L        |  # 0x34, 0x35
+  "sll": 0x36                    |  # 0x36
+  "sll": 0011 0 REG_A[111](3)    |  # 0x37
+  "srl": 0011 10 REG_B_C_D_E     |  # 0x38 - 0x3B
+  "srl": 0011 110 REG_H_L        |  # 0x3C, 0x3D
+  "srl": 0x3E                    |  # 0x3E
+  "srl": 0011 1 REG_A[111](3)    |  # 0x3F
+  "bit": 01 BIT(3) IGNORE(3)     |  # 0x40 - 0x7F
+  "res": 10 BIT(3) 0 REG_B_C_D_E |  # 0x80-0x83, 0x88-0x8B, 0x90-0x93, 0x98-0x9B, 0xA0-0xA3, 0xA8-0xAB, 0xB0-0xB3, 0xB8-0xBB
+  "res": 10 BIT(3) 10 REG_H_L    |  # 0x84, 0x85, 0x8C, 0x8D, 0x94, 0x95, 0x9C, 0x9D, 0xA4, 0xA5, 0xAC, 0xAD, 0xB4, 0xB5, 0xBC, 0xBD
+  "res": 10 BIT(3) 110           |  # 0x86, 0x8E, 0x96, 0x9E, 0xA6, 0xAE, 0xB6, 0xBE
+  "res": 10 BIT(3) REG_A[111](3) |  # 0x87, 0x8F, 0x97, 0x9F, 0xA7, 0xAF, 0xB7, 0xBF
+  "set": 11 BIT(3) 0 REG_B_C_D_E |  # 0xC0-0xC3, 0xC8-0xCB, 0xD0-0xD3, 0xD8-0xDB, 0xE0-0xE3, 0xE8-0xEB, 0xF0-0xF3, 0xF8-0xFB
+  "set": 11 BIT(3) 10 REG_H_L    |  # 0xC4, 0xC5, 0xCC, 0xCD, 0xD4, 0xD5, 0xDC, 0xDD, 0xE4, 0xE5, 0xEC, 0xED, 0xF4, 0xF5, 0xFC, 0xFD
+  "set": 11 BIT(3) 110           |  # 0xC6, 0xCE, 0xD6, 0xDE, 0xE6, 0xEE, 0xF6, 0xFE
+  "set": 11 BIT(3) REG_A[111](3) ;  # 0xC7, 0xCF, 0xD7, 0xDF, 0xE7, 0xEF, 0xF7, 0xFF
 
-          "ld": 01 M[110](3) 0 REG_B_C_D_E(2) REF_II_N |
+fdcbInstruction =
+  "rlc": 0000 00 REG_B_C_D_E     |  # 0x00 - 0x03
+  "rlc": 0000 010 REG_H_L        |  # 0x04, 0x05
+  "rlc": 0x06                    |  # 0x06
+  "rlc": 0000 0 REG_A[111](3)    |  # 0x07
+  "rrc": 0000 10 REG_B_C_D_E     |  # 0x08 - 0x0B
+  "rrc": 0000 110 REG_H_L        |  # 0x0C, 0x0D
+  "rrc": 0x0E                    |  # 0x0E
+  "rrc": 0000 1 REG_A[111](3)    |  # 0x0F
+  "rl": 0001 00 REG_B_C_D_E      |  # 0x10 - 0x13
+  "rl": 0001 010 REG_H_L         |  # 0x14, 0x15
+  "rl": 0x16                     |  # 0x16
+  "rl": 0001 0 REG_A[111](3)     |  # 0x17
+  "rr": 0001 10 REG_B_C_D_E      |  # 0x18 - 0x1B
+  "rr": 0001 110 REG_H_L         |  # 0x1C, 0x1D
+  "rr": 0x1E                     |  # 0x1E
+  "rr": 0001 1 REG_A[111](3)     |  # 0x1F
+  "sla": 0010 00 REG_B_C_D_E     |  # 0x20 - 0x23
+  "sla": 0010 010 REG_H_L        |  # 0x24, 0x25
+  "sla": 0x26                    |  # 0x26
+  "sla": 0010 0 REG_A[111](3)    |  # 0x27
+  "sra": 0010 10 REG_B_C_D_E     |  # 0x28 - 0x2B
+  "sra": 0010 110 REG_H_L        |  # 0x2C, 0x2D
+  "sra": 0x2E                    |  # 0x2E
+  "sra": 0010 1 REG_A[111](3)    |  # 0x2F
+  "sll": 0011 00 REG_B_C_D_E     |  # 0x30 - 0x33
+  "sll": 0011 010 REG_H_L        |  # 0x34, 0x35
+  "sll": 0x36                    |  # 0x36
+  "sll": 0011 0 REG_A[111](3)    |  # 0x37
+  "srl": 0011 10 REG_B_C_D_E     |  # 0x38 - 0x3B
+  "srl": 0011 110 REG_H_L        |  # 0x3C, 0x3D
+  "srl": 0x3E                    |  # 0x3E
+  "srl": 0011 1 REG_A[111](3)    |  # 0x3F
+  "bit": 01 BIT(3) IGNORE(3)     |  # 0x40 - 0x7F
+  "res": 10 BIT(3) 0 REG_B_C_D_E |  # 0x80-0x83, 0x88-0x8B, 0x90-0x93, 0x98-0x9B, 0xA0-0xA3, 0xA8-0xAB, 0xB0-0xB3, 0xB8-0xBB
+  "res": 10 BIT(3) 10 REG_H_L    |  # 0x84, 0x85, 0x8C, 0x8D, 0x94, 0x95, 0x9C, 0x9D, 0xA4, 0xA5, 0xAC, 0xAD, 0xB4, 0xB5, 0xBC, 0xBD
+  "res": 10 BIT(3) 110           |  # 0x86, 0x8E, 0x96, 0x9E, 0xA6, 0xAE, 0xB6, 0xBE
+  "res": 10 BIT(3) REG_A[111](3) |  # 0x87, 0x8F, 0x97, 0x9F, 0xA7, 0xAF, 0xB7, 0xBF
+  "set": 11 BIT(3) 0 REG_B_C_D_E |  # 0xC0-0xC3, 0xC8-0xCB, 0xD0-0xD3, 0xD8-0xDB, 0xE0-0xE3, 0xE8-0xEB, 0xF0-0xF3, 0xF8-0xFB
+  "set": 11 BIT(3) 10 REG_H_L    |  # 0xC4, 0xC5, 0xCC, 0xCD, 0xD4, 0xD5, 0xDC, 0xDD, 0xE4, 0xE5, 0xEC, 0xED, 0xF4, 0xF5, 0xFC, 0xFD
+  "set": 11 BIT(3) 110           |  # 0xC6, 0xCE, 0xD6, 0xDE, 0xE6, 0xEE, 0xF6, 0xFE
+  "set": 11 BIT(3) REG_A[111](3) ;  # 0xC7, 0xCF, 0xD7, 0xDF, 0xE7, 0xEF, 0xF7, 0xFF
 
-          "ld": 01 M[110](3) 10 REG_H_L(1) REF_II_N |
-
-          "ld": 01 M[110](3) REG_A[111](3) REF_II_N |
-
-          "ld": 0x36 REF_II_N(8) imm8 |
-
-          "ld": 00100001 imm16 |
-
-          "ld": 00101010 address |
-
-          "ld": 00100010 address_LDIX |
-
-          "ld SP,IY": 0xF9 | "ex (SP),IY": 0xE3 | "inc IY" : 0x23 | "dec IY": 0x2B | "jp (IY)": 0xE9 | "push IY": 0xE5 |
-          "pop IY": 0xE1 |
-
-          "add": 0x86 REF_II_N | "adc": 0x8E REF_II_N | "sub": 0x96 REF_II_N | "sbc": 0x9E REF_II_N | "inc": 0x34 REF_II_N |
-          "dec": 0x35 REF_II_N | "and": 0xA6 REF_II_N | "xor": 0xAE REF_II_N | "or": 0xB6 REF_II_N | "cp": 0xBE REF_II_N |
-
-          "add": 00 BCDEIYSP(2) 1001 | 
-
-          "ld": 0x76 REF_II_N(8) imm8 |
-
-          0xCB REF_II_N(8) fdcbINSTR;
-
-
-ddcbInstruction = "rlc": 00000110 | "rl": 00010110 | "rrc": 00001110 | "rr": 00011110 | "sla": 0x26 | "sra": 0x2E |
-            "srl": 0x3E | "sll": 0x36 | "bit": 01 BIT(3) 110 | "res": 10 BIT(3) 110 | "set": 11 BIT(3) 110;
-
-fdcbINSTR = "rlc": 00000110 | "rl": 00010110 | "rrc": 00001110 | "rr": 00011110 | "sla": 0x26 | "sra": 0x2E |
-            "srl": 0x3E | "sll": 0x36 | "bit": 01 BIT(3) 110 | "res": 10 BIT(3) 110 | "set": 11 BIT(3) 110;
-
-edINSTR = "ld": 010 BC_DE(1) 1011 imm16 | "ld": 011 HLSP(1) 1011 imm16 |
-
-          "ld": 010 BC_DE(1) 0011 address | "ld": 011 HLSP(1) 0011 address |
-
-          "adc HL,": 010 BC_DE(1) 1010 | "sbc HL,": 010 BC_DE(1) 0010 |
-
-          "adc HL,": 011 HLSP(1) 1010 | "sbc HL,": 011 HLSP(1) 0010 |
-
-          "im 0": 0x46 | "im 1": 0x56 | "im 2": 0x5E | "ld A,I": 0x57 | "ld I,A": 0x47 | "ld A,R": 0x5F |
-          "ld R,A": 0x4F | "neg": 0x44 | "rld": 0x6F | "rrd": 0x67 | "cpi": 0xA1 | "cpir": 0xB1 | "cpd": 0xA9 |
-          "cpdr": 0xB9 | "reti": 0x4D | "retn": 0x45 | "ini": 0xA2 | "inir": 0xB2 | "ind": 0xAA | "indr": 0xBA |
-          "outi": 0xA3 | "otir": 0xB3 | "outd": 0xAB | "otdr": 0xBB | "ldi": 0xA0 | "ldir": 0xB0 | "ldd": 0xA8 |
-          "lddr": 0xB8 |
-
-          "in": 01 REG(3) 000 | "out": 01 REG_OUT(3) 001;
+edInstruction =
+  "in": 01 0 REG_B_C_D_E(2) 000      |  # 0x40, 0x48, 0x50, 0x58
+  "out": 01 0 REG_B_C_D_E_OUT(2) 001 |  # 0x41, 0x49, 0x51, 0x59
+  "sbc HL,": 010 BC_DE(1) 0010       |  # 0x42, 0x52
+  "ld": 010 BC_DE(1) 0011 REF_imm16  |  # 0x43, 0x53
+  "neg": 0x44                        |  # 0x44
+  "retn": 0x45                       |  # 0x45
+  "im 0": 0x46                       |  # 0x46
+  "ld I, A": 0x47                    |  # 0x47
+  "adc HL,": 010 BC_DE(1) 1010       |  # 0x4A, 0x5A
+  "ld": 010 BC_DE(1) 1011 imm16      |  # 0x4B, 0x5B
+  "neg": 0x4C                        |  # 0x4C
+  "reti": 0x4D                       |  # 0x4D
+  "im 0": 0x4E                       |  # 0x4E
+  "ld R, A": 0x4F                    |  # 0x4F
+  "neg": 0x54                        |  # 0x54
+  "retn": 0x55                       |  # 0x55
+  "im 1": 0x56                       |  # 0x56
+  "ld A, I": 0x57                    |  # 0x57
+  "neg": 0x5C                        |  # 0x5C
+  "retn": 0x5D                       |  # 0x5D
+  "im 2": 0x5E                       |  # 0x5E
+  "ld A, R": 0x5F                    |  # 0x5F
+  "in": 01 10 REG_H_L(1) 000         |  # 0x60, 0x68
+  "out": 01 10 REG_H_L_OUT(1) 001    |  # 0x61, 0x69
+  "sbc HL,": 011 HL_SP(1) 0010       |  # 0x62, 0x72
+  "ld": 011 HL_SP(1) 0011 REF_imm16  |  # 0x63, 0x73
+  "neg": 0x64                        |  # 0x64
+  "retn": 0x65                       |  # 0x65
+  "im 0": 0x66                       |  # 0x66
+  "rrd": 0x67                        |  # 0x67
+  "adc HL,": 011 HL_SP(1) 1010       |  # 0x6A, 0x7A
+  "ld": 011 HL_SP(1) 1011 imm16      |  # 0x6B, 0x7B
+  "neg": 0x6C                        |  # 0x6C
+  "retn": 0x6D                       |  # 0x6D
+  "im 0": 0x6E                       |  # 0x6E
+  "rld": 0x6F                        |  # 0x6F
+  "in (C)": 0x70                     |  # 0x70
+  "out (C), 0": 0x71                 |  # 0x71
+  "neg": 0x74                        |  # 0x74
+  "retn": 0x75                       |  # 0x75
+  "im 1": 0x76                       |  # 0x76
+  "in": 01 REG_A[111](3) 000         |  # 0x78
+  "out": 01 REG_A_OUT[111](3) 001    |  # 0x79
+  "neg": 0x7C                        |  # 0x7C
+  "retn": 0x7D                       |  # 0x7D
+  "im 2": 0x7E                       |  # 0x7E
+  "ldi": 0xA0                        |  # 0xA0
+  "cpi": 0xA1                        |  # 0xA1
+  "ini": 0xA2                        |  # 0xA2
+  "outi": 0xA3                       |  # 0xA3
+  "ldd": 0xA8                        |  # 0xA8
+  "cpd": 0xA9                        |  # 0xA9
+  "ind": 0xAA                        |  # 0xAA
+  "outd": 0xAB                       |  # 0xAB
+  "ldir": 0xB0                       |  # 0xB0
+  "cpir": 0xB1                       |  # 0xB1
+  "inir": 0xB2                       |  # 0xB2
+  "otir": 0xB3                       |  # 0xB3
+  "lddr": 0xB8                       |  # 0xB8
+  "cpdr": 0xB9                       |  # 0xB9
+  "indr": 0xBA                       |  # 0xBA
+  "otdr": 0xBB                       ;  # 0xBB
 
 BC_DE_HL_SP = "BC": 00 | "DE": 01 | "HL": 10 | "SP": 11;
+BC_DE_IX_SP = "BC": 00 | "DE": 01 | "IX": 10 | "SP": 11;
+BC_DE_IY_SP = "BC": 00 | "DE": 01 | "IY": 10 | "SP": 11;
+
+BC_DE, REF_BC_DE_A, A_REF_BC_DE = "BC" : 0 | "DE" : 1;
+HL_SP = "HL": 0 | "SP": 1;
+
+REG_B_C_D_E, REG_B_C_D_E_IIH, REG_B_C_D_E_IIL, REG_B_C_D_E_OUT = "B": 00 | "C": 01 | "D": 10 | "E": 11;
+REG_H_L, REG_H_L_OUT = "H": 0 | "L": 1;
+REG_A, REG_A_OUT = "A": 111;
+
 FLAGS_JR = "NZ": 00 |  "Z": 01 | "NC": 10 | "C": 11;
 FLAGS = "NZ": 000 |  "Z": 001 | "NC": 010 | "C": 011 | "PO": 100 | "PE": 101 | "P": 110 | "M": 111;
 
-REG_B_C_D_E,REG_B_C_D_E_IXH,REG_B_C_D_E_IXL = "B": 00 | "C": 01 | "D": 10 | "E": 11;
-REG_H_L = "H": 0 | "L": 1;
-REG_A = "A": 111;
-
-
-
-
-BC_DE_IX_SP = "BC": 00 | "DE": 01 | "IX": 10 | "SP": 11;
-BCDEIYSP = "BC": 00 | "DE": 01 | "IY": 10 | "SP": 11;
-
-
-HLSP = "HL": 0 | "SP" : 1;
-
-BC_DE, REF_BC_DE_A, A_REF_BC_DE = "BC" : 0 | "DE" : 1;
 HL_AF = "HL" : 0 | "AF" : 1;
-REG,REG_OUT = "B": 000 | "C": 001 | "D": 010 | "E": 011 | "H": 100 | "L": 101 | "(HL)": 110 | "A": 111;
-
-M = "(HL)": 110;
+REG = "B": 000 | "C": 001 | "D": 010 | "E": 011 | "H": 100 | "L": 101 | "(HL)": 110 | "A": 111;
 
 NUMBER = "00": 000 | "08": 001 | "10": 010 | "18": 011 | "20": 100 | "28": 101 | "30": 110 | "38": 111;
 imm8,REF_II_N,REF_II_N_2,REF_imm8_A,REF_imm8 = imm8: imm8(8);
 BIT = bit: bit(3);
-REF_imm16_HL, HL_REF_imm16, imm16, REF_imm16, REF_imm16_IX, address, address_LDIX, A_REF_imm16, REF_imm16_A = imm16: imm16(16);
+REF_imm16_HL, HL_REF_imm16, imm16, REF_imm16, REF_imm16_II, A_REF_imm16, REF_imm16_A = imm16: imm16(16);
+
 
 %%
+
+"%s %d, (IX + %X), %s" = ddcbInstruction BIT REF_II_N REG_B_C_D_E;
+"%s %d, (IX + %X), %s" = ddcbInstruction BIT REF_II_N REG_H_L;
+"%s %d, (IX + %X), %s" = ddcbInstruction BIT REF_II_N REG_A;
+
+"%s %d, (IY + %X), %s" = fdcbInstruction BIT REF_II_N REG_B_C_D_E;
+"%s %d, (IY + %X), %s" = fdcbInstruction BIT REF_II_N REG_H_L;
+"%s %d, (IY + %X), %s" = fdcbInstruction BIT REF_II_N REG_A;
+
+"%s (IX + %X), %s" = ddcbInstruction REF_II_N REG_B_C_D_E;
+"%s (IX + %X), %s" = ddcbInstruction REF_II_N REG_H_L;
+"%s (IX + %X), %s" = ddcbInstruction REF_II_N REG_A;
+"%s %d, (IX + %X)" = ddcbInstruction BIT REF_II_N;
+
+"%s (IY + %X), %s" = fdcbInstruction REF_II_N REG_B_C_D_E;
+"%s (IY + %X), %s" = fdcbInstruction REF_II_N REG_H_L;
+"%s (IY + %X), %s" = fdcbInstruction REF_II_N REG_A;
+"%s %d, (IY + %X)" = fdcbInstruction BIT REF_II_N;
+
 "%s %d, %s" = cbInstruction BIT REG;
 
 "%s (IX + %X), %X" = ddInstruction REF_II_N imm8;
@@ -273,6 +440,18 @@ REF_imm16_HL, HL_REF_imm16, imm16, REF_imm16, REF_imm16_IX, address, address_LDI
 "%s (IX + %X), %s" = ddInstruction REF_II_N_2 REG_H_L;
 "%s (IX + %X), %s" = ddInstruction REF_II_N_2 REG_A;
 
+"%s (IY + %X), %X" = fdInstruction REF_II_N imm8;
+"%s %s, (IY + %X)" = fdInstruction REG_B_C_D_E REF_II_N;
+"%s (IY + %X), %s" = fdInstruction REF_II_N_2 REG_B_C_D_E;
+"%s %s, (IY + %X)" = fdInstruction REG_H_L REF_II_N;
+"%s (IY + %X), %s" = fdInstruction REF_II_N_2 REG_H_L;
+"%s (IY + %X), %s" = fdInstruction REF_II_N_2 REG_A;
+
+"%s (%X), %s" = edInstruction REF_imm16 BC_DE;
+"%s (%X), %s" = edInstruction REF_imm16 HL_SP;
+"%s %s, (%X)" = edInstruction BC_DE imm16;
+"%s %s, (%X)" = edInstruction HL_SP imm16;
+
 "%s %s, %X" = instruction BC_DE_HL_SP imm16;
 "%s %s, %s" = instruction REG_B_C_D_E REG;
 "%s %s, %s" = instruction REG_H_L REG;
@@ -280,22 +459,44 @@ REF_imm16_HL, HL_REF_imm16, imm16, REF_imm16, REF_imm16_IX, address, address_LDI
 "%s %s, %X" = instruction FLAGS_JR imm8;
 "%s %s, %X" = instruction FLAGS imm16;
 
+"%s (IX + %X)" = ddcbInstruction REF_II_N;
+"%s (IY + %X)" = fdcbInstruction REF_II_N;
+
 "%s %s" = cbInstruction REG;
 
 "%s %s" = ddInstruction BC_DE_IX_SP;
 "%s %X" = ddInstruction imm8;
 "%s %X" = ddInstruction imm16;
 "%s (%X)" = ddInstruction REF_imm16;
-"%s (%X), IX" = ddInstruction REF_imm16_IX;
+"%s (%X), IX" = ddInstruction REF_imm16_II;
 "%s (IX + %X)" = ddInstruction REF_II_N;
 "%s %s" = ddInstruction REG_B_C_D_E;
-"%s %s, IXH" = ddInstruction REG_B_C_D_E_IXH;
-"%s %s, IXL" = ddInstruction REG_B_C_D_E_IXL;
+"%s %s, IXH" = ddInstruction REG_B_C_D_E_IIH;
+"%s %s, IXL" = ddInstruction REG_B_C_D_E_IIL;
 
+"%s %s" = fdInstruction BC_DE_IY_SP;
+"%s %X" = fdInstruction imm8;
+"%s %X" = fdInstruction imm16;
+"%s (%X)" = fdInstruction REF_imm16;
+"%s (%X), IY" = fdInstruction REF_imm16_II;
+"%s (IY + %X)" = fdInstruction REF_II_N;
+"%s %s" = fdInstruction REG_B_C_D_E;
+"%s %s, IYH" = fdInstruction REG_B_C_D_E_IIH;
+"%s %s, IYL" = fdInstruction REG_B_C_D_E_IIL;
+
+"%s %s, (C)" = edInstruction REG_B_C_D_E;
+"%s %s, (C)" = edInstruction REG_H_L;
+"%s %s, (C)" = edInstruction REG_A;
+"%s (C), %s" = edInstruction REG_B_C_D_E_OUT;
+"%s (C), %s" = edInstruction REG_H_L_OUT;
+"%s (C), %s" = edInstruction REG_A_OUT;
+"%s %s" = edInstruction BC_DE;
+"%s %s" = edInstruction HL_SP;
 
 "%s (%s), A" = instruction REF_BC_DE_A;
 "%s A, (%s)" = instruction A_REF_BC_DE;
 "%s %s" = instruction BC_DE_HL_SP;
+"%s %s" = instruction REG_B_C_D_E;
 "%s %s" = instruction REG;
 "%s %X" = instruction imm8;
 "%s A, (%X)" = instruction A_REF_imm16;
@@ -307,58 +508,10 @@ REF_imm16_HL, HL_REF_imm16, imm16, REF_imm16, REF_imm16_IX, address, address_LDI
 "%s %s" = instruction NUMBER;
 "%s (%X), A" = instruction REF_imm8_A;
 "%s (%X)" = instruction REF_imm8;
-
-"%s" = ddInstruction;
-"%s" = instruction;
-
-
-
-###############################
-
-
 "%s (%X), HL" = instruction REF_imm16_HL;
 "%s HL, (%X)" = instruction HL_REF_imm16;
 
-"%s %X" = instruction address;
-"%s %s" = instruction HLSP; # TODO: get rid
-
-"%s %s" = instruction REG_B_C_D_E;
-
-
-"%s A,(IX+%X)" = ddInstruction REG_A REF_II_N;
-"%s (IX+%X),%s" = ddInstruction REF_II_N REG_B_C_D_E M;
-"%s (IX+%X),%s" = ddInstruction REF_II_N REG_H_L M;
-"%s (IX+%X),A" = ddInstruction REF_II_N REG_A M;
-
-"%s (IX+%X)" = ddcbInstruction REF_II_N;
-"%s %d,(IX+%X)" = ddcbInstruction BIT REF_II_N;
-
-"%s %s,(IY+%X)" = fdINSTR REG_B_C_D_E REF_II_N;
-"%s %s,(IY+%X)" = fdINSTR REG_H_L REF_II_N;
-"%s A,(IY+%X)" = fdINSTR REG_A REF_II_N;
-"%s (IY+%X),%s" = fdINSTR REF_II_N REG_B_C_D_E M;
-"%s (IY+%X),%s" = fdINSTR REF_II_N REG_H_L M;
-"%s (IY+%X),A" = fdINSTR REF_II_N REG_A M;
-"%s (IY+%X),%X" = fdINSTR REF_II_N imm8;
-"%s (IY+%X)" = fdcbINSTR REF_II_N;
-"%s (IY+%X)" = fdINSTR REF_II_N;
-"%s IY,%s" = fdINSTR BCDEIYSP;
-"%s IY,%X" = fdINSTR imm16;
-"%s IY,(%X)" = fdINSTR address;
-"%s (%X),IY" = fdINSTR address_LDIX;
-"%s %d,(IY+%X)" = fdcbINSTR BIT REF_II_N;
-"%s" = fdINSTR;
-
-
-
-"%s %s,%X" = edINSTR BC_DE imm16;
-"%s %s,%X" = edINSTR HLSP imm16;
-"%s (%X),%s" = edINSTR address BC_DE;
-"%s (%X),%s" = edINSTR address HLSP;
-"%s%s" = edINSTR BC_DE;
-"%s%s" = edINSTR HLSP;
-"%s %s,(C)" = edINSTR REG;
-"%s (C),%s" = edINSTR REG_OUT;
-"%s" = edINSTR;
-
-
+"%s" = edInstruction;
+"%s" = fdInstruction;
+"%s" = ddInstruction;
+"%s" = instruction;
