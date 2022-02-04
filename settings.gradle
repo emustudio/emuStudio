@@ -23,7 +23,7 @@ include ':application'
 
 include ':plugins:compiler:as-8080'
 include ':plugins:compiler:as-ssem'
-//include ':plugins:compiler:as-z80'
+include ':plugins:compiler:as-z80'
 //include ':plugins:compiler:brainc-brainduck'
 //include ':plugins:compiler:ramc-ram'
 //include ':plugins:compiler:raspc-rasp'

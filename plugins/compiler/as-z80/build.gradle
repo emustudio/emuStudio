@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2022  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,16 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
-  id 'org.xbib.gradle.plugin.jflex' version "1.5.0"
-  id "com.github.andrescv.jcup" version "1.0"
+  id 'idea'
+  id 'antlr'
 }
 
 dependencies {
+  antlr "org.antlr:antlr4:4.9.2"
+  implementation "org.antlr:antlr4-runtime:4.9.2"
+
   implementation libs.emuLib
   implementation libs.slf4JApi
-  implementation libs.javaCupRuntime
 
   testImplementation libs.cpuTestSuite
   testImplementation libs.junit
@@ -36,20 +38,29 @@ dependencies {
   testImplementation libs.slf4JSimple
 }
 
-sourceSets.main.java.srcDirs = [
-  "${buildDir}/generated-sources/jflex", "${buildDir}/generated-sources/cup", 'src/main/java'
-]
-
-jflex {
-  no_backup = true
+generateGrammarSource {
+  maxHeapSize = "128m"
+  arguments += ['-package', 'net.emustudio.plugins.compiler.asZ80', '-visitor', '-no-listener']
+  outputDirectory = file("${buildDir}/generated-src/antlr/main/net/emustudio/plugins/compiler/asZ80")
 }
+compileJava.dependsOn generateGrammarSource
 
-jcup {
-  input = file('src/main/cup/parser.cup')
-  destdir = file("${buildDir}/generated-sources/cup/net/emustudio/plugins/compiler/asZ80")
-  parser = 'ParserImpl'
-  symbols = 'Symbols'
-  iface = true
+sourceSets {
+  generated {
+    java.srcDir "${buildDir}/generated-src/antlr/main"
+  }
+  main {
+    java.srcDirs = [
+      'src/main/java', "${buildDir}/generated-src/antlr/main"
+    ]
+  }
+}
+compileJava.source sourceSets.generated.java, sourceSets.main.java
+
+idea {
+  module {
+    sourceDirs += file("build/generated-src/antlr")
+  }
 }
 
 jar {
@@ -80,4 +91,10 @@ copy {
 copy {
   from('src/main/scripts')
   into "$buildDir/libs/scripts"
+}
+
+test {
+  testLogging {
+    events "passed", "skipped", "failed"
+  }
 }

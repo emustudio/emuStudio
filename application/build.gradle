@@ -51,7 +51,7 @@ dependencies {
   extraLibsRuntime libs.javaCupRuntime
   providedRuntime project(":plugins:compiler:as-8080")
   providedRuntime project(":plugins:compiler:as-ssem")
-//  providedRuntime project(":plugins:compiler:as-z80")
+  providedRuntime project(":plugins:compiler:as-z80")
 //  providedRuntime project(":plugins:compiler:brainc-brainduck")
 //  providedRuntime project(":plugins:compiler:ramc-ram")
 //  providedRuntime project(":plugins:compiler:raspc-rasp")
@@ -176,8 +176,8 @@ distributions {
 
       into('compiler') {
         include '*.jar'
-//        from(output(":plugins:compiler:as-8080"))
-  //      from(output(":plugins:compiler:as-z80"))
+        from(output(":plugins:compiler:as-8080"))
+        from(output(":plugins:compiler:as-z80"))
         from(output(":plugins:compiler:as-ssem"))
     //    from(output(":plugins:compiler:brainc-brainduck"))
       //  from(output(":plugins:compiler:ramc-ram"))
@@ -188,35 +188,35 @@ distributions {
         include '*.jar'
 //        from(output(":plugins:memory:ram-mem"))
   //      from(output(":plugins:memory:rasp-mem"))
-    //    from(output(":plugins:memory:brainduck-mem"))
+        from(output(":plugins:memory:brainduck-mem"))
         from(output(":plugins:memory:ssem-mem"))
-    //    from(output(":plugins:memory:byte-mem"))
+        from(output(":plugins:memory:byte-mem"))
       }
 
       into('cpu') {
         include '*.jar'
-//        from(output(":plugins:cpu:8080-cpu"))
-  //      from(output(":plugins:cpu:brainduck-cpu"))
+        from(output(":plugins:cpu:8080-cpu"))
+        from(output(":plugins:cpu:brainduck-cpu"))
       //  from(output(":plugins:cpu:ram-cpu"))
   //      from(output(":plugins:cpu:rasp-cpu"))
-    //    from(output(":plugins:cpu:z80-cpu"))
+        from(output(":plugins:cpu:z80-cpu"))
         from(output(":plugins:cpu:ssem-cpu"))
       }
 
       into('device') {
         include '*.jar'
-//        from(output(":plugins:device:abstract-tape"))
-  //      from(output(":plugins:device:88-dcdd"))
-    //    from(output(":plugins:device:88-sio"))
-      //  from(output(":plugins:device:adm3A-terminal"))
+        from(output(":plugins:device:abstract-tape"))
+        from(output(":plugins:device:88-dcdd"))
+        from(output(":plugins:device:88-sio"))
+        from(output(":plugins:device:adm3A-terminal"))
         //from(output(":plugins:device:brainduck-terminal"))
-      //  from(output(":plugins:device:simhPseudo-z80"))
+        from(output(":plugins:device:simhPseudo-z80"))
         from(output(":plugins:device:ssem-display"))
       }
 
       // Examples
       //["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"]
-      ["as-ssem"].collect { compiler ->
+      ["as-8080", "as-z80", "as-ssem"].collect { compiler ->
         from(examples(":plugins:compiler:$compiler")) {
           into "examples/$compiler"
         }
@@ -224,16 +224,16 @@ distributions {
 
       // Scripts
       // ["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"]
-      ["as-ssem"].collect { compiler ->
+      ["as-8080", "as-z80", "as-ssem"].collect { compiler ->
         from(scripts(":plugins:compiler:$compiler")) {
           into "bin"
         }
       }
-//      ["88-dcdd"].collect { device ->
-//        from(scripts(":plugins:device:$device")) {
-//          into "bin"
-//        }
-//      }
+      ["88-dcdd"].collect { device ->
+        from(scripts(":plugins:device:$device")) {
+          into "bin"
+        }
+      }
     }
   }
 }
