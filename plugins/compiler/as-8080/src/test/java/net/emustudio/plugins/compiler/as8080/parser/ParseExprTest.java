@@ -152,6 +152,35 @@ public class ParseExprTest {
     }
 
     @Test
+    public void testAndMulXorDivNotPlusMinusWithOperators() {
+        Program program = parseProgram("db ~1 & 2 | 2 ^ 5 = -5 * 6 << 4 - 1 >> 2");
+        assertTrees(
+            new Program()
+                .addChild(new DataDB(0, 0)
+                    .addChild(new ExprInfix(0, 0, OP_EQUAL)
+                        .addChild(new ExprInfix(0, 0, OP_OR_2)
+                            .addChild(new ExprInfix(0, 0, OP_AND_2)
+                                .addChild(new ExprUnary(0, 0, OP_NOT_2)
+                                    .addChild(new ExprNumber(0, 0, 1)))
+                                .addChild(new ExprNumber(0, 0, 2)))
+                            .addChild(new ExprInfix(0, 0, OP_XOR_2)
+                                .addChild(new ExprNumber(0, 0, 2))
+                                .addChild(new ExprNumber(0, 0, 5))))
+                        .addChild(new ExprInfix(0, 0, OP_SHR_2) // shl/shr associates to the right
+                            .addChild(new ExprInfix(0, 0, OP_SHL_2)
+                                .addChild(new ExprInfix(0, 0, OP_MULTIPLY)
+                                    .addChild(new ExprUnary(0, 0, OP_SUBTRACT)
+                                        .addChild(new ExprNumber(0, 0, 5)))
+                                    .addChild(new ExprNumber(0, 0, 6)))
+                                .addChild(new ExprInfix(0, 0, OP_SUBTRACT)
+                                    .addChild(new ExprNumber(0, 0, 4))
+                                    .addChild(new ExprNumber(0, 0, 1))))
+                            .addChild(new ExprNumber(0, 0, 2))))),
+            program
+        );
+    }
+
+    @Test
     public void testParenthesis() {
         Program program = parseProgram("db (2 + 3) * (4 - 2)");
         assertTrees(

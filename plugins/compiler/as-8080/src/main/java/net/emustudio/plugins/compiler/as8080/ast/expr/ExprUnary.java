@@ -17,7 +17,8 @@ public class ExprUnary extends Node {
     private final static Map<Integer, Function<Integer, Integer>> unaryOps = Map.of(
         OP_ADD, x -> x,
         OP_SUBTRACT, x -> -x,
-        OP_NOT, x -> ~x
+        OP_NOT, x -> ~x,
+        OP_NOT_2, x -> ~x
     );
     private final Function<Integer, Integer> operation;
     public final int operationCode;

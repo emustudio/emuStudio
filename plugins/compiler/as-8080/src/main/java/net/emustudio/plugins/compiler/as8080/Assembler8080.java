@@ -94,16 +94,11 @@ public class Assembler8080 extends AbstractCompiler {
 
     @Override
     public String getDescription() {
-        return "Lightly modified/extended clone of original Intel's 8080 assembler.";
+        return "Modified and extended clone of original Intel's 8080 assembler.";
     }
 
     @Override
     public LexicalAnalyzer createLexer(String s) {
-        //    @Override
-        //    public LexicalAnalyzer createLexer(String s) {
-        //        SSEMLexer lexer = createLexer(CharStreams.fromString(s));
-        //        return new LexicalAnalyzerImpl(lexer);
-        //    }
         As8080Lexer lexer = createLexer(CharStreams.fromString(s));
         return new LexicalAnalyzerImpl(lexer);
     }

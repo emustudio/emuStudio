@@ -148,21 +148,22 @@ rDWdata:
   ;
 
 rExpression:
- <assoc=right> unaryop=(OP_ADD|OP_SUBTRACT|OP_NOT) expr=rExpression                     # exprUnary
- | <assoc=left> expr1=rExpression op=(OP_MULTIPLY|OP_DIVIDE|OP_MOD) expr2=rExpression   # exprInfix
- | <assoc=left> expr1=rExpression op=(OP_ADD|OP_SUBTRACT) expr2=rExpression             # exprInfix
- | <assoc=left> expr1=rExpression op=(OP_SHL|OP_SHR) expr2=rExpression                  # exprInfix
- | <assoc=left> expr1=rExpression op=OP_AND expr2=rExpression                           # exprInfix
- | <assoc=left> expr1=rExpression op=OP_XOR expr2=rExpression                           # exprInfix
- | <assoc=left> expr1=rExpression op=OP_OR expr2=rExpression                            # exprInfix
- | <assoc=right> expr1=rExpression op=OP_EQUAL expr2=rExpression                        # exprInfix
- | SEP_LPAR expr=rExpression SEP_RPAR                                                   # exprParens
- | num=LIT_NUMBER                                                                       # exprDec
- | num=LIT_HEXNUMBER_1                                                                  # exprHex1
- | num=LIT_HEXNUMBER_2                                                                  # exprHex2
- | num=LIT_OCTNUMBER                                                                    # exprOct
- | num=LIT_BINNUMBER                                                                    # exprBin
- | PREP_ADDR                                                                            # exprCurrentAddress
- | id=ID_IDENTIFIER                                                                     # exprId
- | str=(LIT_STRING_1|LIT_STRING_2)                                                      # exprString
+ <assoc=right> unaryop=(OP_ADD|OP_SUBTRACT|OP_NOT|OP_NOT_2) expr=rExpression                     # exprUnary
+ | <assoc=left> expr1=rExpression op=(OP_MULTIPLY|OP_DIVIDE|OP_MOD|OP_MOD_2) expr2=rExpression   # exprInfix
+ | <assoc=left> expr1=rExpression op=(OP_ADD|OP_SUBTRACT) expr2=rExpression                      # exprInfix
+ | <assoc=left> expr1=rExpression op=(OP_SHL|OP_SHR|OP_SHR_2|OP_SHL_2) expr2=rExpression         # exprInfix
+ | <assoc=right> expr1=rExpression op=(OP_GT|OP_GTE|OP_LT|OP_LTE) expr2=rExpression              # exprInfix
+ | <assoc=left> expr1=rExpression op=(OP_AND|OP_AND_2) expr2=rExpression                         # exprInfix
+ | <assoc=left> expr1=rExpression op=(OP_XOR|OP_XOR_2) expr2=rExpression                         # exprInfix
+ | <assoc=left> expr1=rExpression op=(OP_OR|OP_OR_2) expr2=rExpression                           # exprInfix
+ | <assoc=right> expr1=rExpression op=OP_EQUAL expr2=rExpression                                 # exprInfix
+ | SEP_LPAR expr=rExpression SEP_RPAR                                                            # exprParens
+ | num=LIT_NUMBER                                                                                # exprDec
+ | num=LIT_HEXNUMBER_1                                                                           # exprHex1
+ | num=LIT_HEXNUMBER_2                                                                           # exprHex2
+ | num=LIT_OCTNUMBER                                                                             # exprOct
+ | num=LIT_BINNUMBER                                                                             # exprBin
+ | PREP_ADDR                                                                                     # exprCurrentAddress
+ | id=ID_IDENTIFIER                                                                              # exprId
+ | str=(LIT_STRING_1|LIT_STRING_2)                                                               # exprString
  ;

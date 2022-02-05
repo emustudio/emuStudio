@@ -38,7 +38,7 @@ public class Runner {
                 printHelp();
                 return;
             } else if (arg.equals("--version") || arg.equals("-v")) {
-                System.out.println(new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
+                System.out.println(new AssemblerZ80(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
                 return;
             } else {
                 break;
@@ -59,7 +59,7 @@ public class Runner {
             outputFile += ".hex";
         }
 
-        CompilerImpl compiler = new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
+        AssemblerZ80 compiler = new AssemblerZ80(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
         compiler.addCompilerListener(new CompilerListener() {
             @Override
             public void onStart() {
@@ -73,7 +73,6 @@ public class Runner {
             @Override
             public void onFinish() {
                 System.err.println("Compilation finished");
-
             }
         });
         try {

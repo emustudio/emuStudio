@@ -158,7 +158,7 @@ LIT_STRING_2: '"' ~["]* '"';
 ID_IDENTIFIER: [a-zA-Z_?@] [a-zA-Z_?@0-9]*;
 ID_LABEL: ID_IDENTIFIER ':';
 
-ERROR : ~[+* \t\f\r\n(),=/-]+; // below: everything which does not require space
+ERROR : ~([+* \t\f\r\n(),=/-]|'~'|'>'|'<'|'&'|'|'|'%'|'^')+; // below: everything which does not require space
 
 //\+\*
 // separators - not requiring space inbetween
@@ -172,6 +172,17 @@ OP_SUBTRACT: '-';
 OP_MULTIPLY: '*';
 OP_DIVIDE: '/';
 OP_EQUAL: '=';
+OP_GT: '>';
+OP_GTE: '>=';
+OP_LT: '<';
+OP_LTE: '<=';
+OP_MOD_2: '%';
+OP_SHR_2: '>>';
+OP_SHL_2: '<<';
+OP_NOT_2: '~';
+OP_AND_2: '&';
+OP_OR_2: '|';
+OP_XOR_2: '^';
 
 WS : [ \t\f]+ -> skip;
 EOL: '\r'? '\n';

@@ -20,19 +20,27 @@ public class ExprInfix extends Node {
     public final int operationCode;
 
     static {
-        infixOps.putAll(Map.of(
-            OP_ADD, Integer::sum,
-            OP_SUBTRACT, (x, y) -> x - y,
-            OP_DIVIDE, (x, y) -> x / y, // can throw!
-            OP_MULTIPLY, (x, y) -> x * y,
-            OP_MOD, (x, y) -> x % y,
-            OP_AND, (x, y) -> x & y,
-            OP_OR, (x, y) -> x | y,
-            OP_XOR, (x, y) -> x ^ y,
-            OP_SHL, (x, y) -> x << y,
-            OP_SHR, (x, y) -> x >>> y
-        ));
+        infixOps.put(OP_ADD, Integer::sum);
+        infixOps.put(OP_SUBTRACT, (x, y) -> x - y);
+        infixOps.put(OP_DIVIDE, (x, y) -> x / y);  // can throw!
+        infixOps.put(OP_MULTIPLY, (x, y) -> x * y);
+        infixOps.put(OP_MOD, (x, y) -> x % y);
+        infixOps.put(OP_MOD_2, (x, y) -> x % y);
+        infixOps.put(OP_AND, (x, y) -> x & y);
+        infixOps.put(OP_AND_2, (x, y) -> x & y);
+        infixOps.put(OP_OR, (x, y) -> x | y);
+        infixOps.put(OP_OR_2, (x, y) -> x | y);
+        infixOps.put(OP_XOR, (x, y) -> x ^ y);
+        infixOps.put(OP_XOR_2, (x, y) -> x ^ y);
+        infixOps.put(OP_SHL, (x, y) -> x << y);
+        infixOps.put(OP_SHL_2, (x, y) -> x << y);
+        infixOps.put(OP_SHR, (x, y) -> x >>> y);
+        infixOps.put(OP_SHR_2, (x, y) -> x >>> y);
         infixOps.put(OP_EQUAL, (x, y) -> ((x.equals(y)) ? 1 : 0));
+        infixOps.put(OP_LT, (x, y) -> (x < y) ? 1 : 0);
+        infixOps.put(OP_LTE, (x, y) -> (x <= y) ? 1 : 0);
+        infixOps.put(OP_GT, (x, y) -> (x > y) ? 1 : 0);
+        infixOps.put(OP_GTE, (x, y) -> (x >= y) ? 1 : 0);
     }
 
     public ExprInfix(int line, int column, int op) {

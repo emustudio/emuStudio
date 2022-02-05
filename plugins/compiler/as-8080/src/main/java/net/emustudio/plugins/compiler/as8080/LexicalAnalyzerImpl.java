@@ -131,12 +131,23 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[OP_DIVIDE] = Token.OPERATOR;
         tokenMap[OP_EQUAL] = Token.OPERATOR;
         tokenMap[OP_MOD] = Token.OPERATOR;
+        tokenMap[OP_MOD_2] = Token.OPERATOR;
         tokenMap[OP_SHR] = Token.OPERATOR;
+        tokenMap[OP_SHR_2] = Token.OPERATOR;
         tokenMap[OP_SHL] = Token.OPERATOR;
+        tokenMap[OP_SHL_2] = Token.OPERATOR;
         tokenMap[OP_NOT] = Token.OPERATOR;
+        tokenMap[OP_NOT_2] = Token.OPERATOR;
         tokenMap[OP_AND] = Token.OPERATOR;
+        tokenMap[OP_AND_2] = Token.OPERATOR;
         tokenMap[OP_OR] = Token.OPERATOR;
+        tokenMap[OP_OR_2] = Token.OPERATOR;
         tokenMap[OP_XOR] = Token.OPERATOR;
+        tokenMap[OP_XOR_2] = Token.OPERATOR;
+        tokenMap[OP_LT] = Token.OPERATOR;
+        tokenMap[OP_LTE] = Token.OPERATOR;
+        tokenMap[OP_GT] = Token.OPERATOR;
+        tokenMap[OP_GTE] = Token.OPERATOR;
 
         tokenMap[LIT_NUMBER] =Token.LITERAL;
         tokenMap[LIT_HEXNUMBER_1] =Token.LITERAL;
