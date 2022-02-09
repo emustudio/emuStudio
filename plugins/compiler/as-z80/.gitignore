@@ -1,1 +1,2 @@
-src/main/java/net/emustudio/plugins/compiler/asZ80/LexerImpl.java
+/src/main/antlr/gen/
+/src/main/gen/
