@@ -109,8 +109,8 @@ COND_M: M -> popMode;
 COND_P: P -> popMode;
 COND_PE: P E -> popMode;
 COND_PO: P O -> popMode;
-COND_WS : [ \t\f]+ -> skip;
-COND_UNRECOGNIZED: {true}? -> popMode, channel(HIDDEN); // TODO
+COND_WS: [ \t\f]+ -> skip;
+COND_UNRECOGNIZED: ({"cCnNzZmMpP".indexOf((char) _input.LA(1)) == -1}?) -> popMode;
 
 
 mode DEFAULT_MODE;

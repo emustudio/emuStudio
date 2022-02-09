@@ -1,7 +1,7 @@
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
-import net.emustudio.plugins.compiler.asZ80.As8080Parser.*;
-import net.emustudio.plugins.compiler.asZ80.As8080ParserBaseVisitor;
+import net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
+import net.emustudio.plugins.compiler.asZ80.AsZ80ParserBaseVisitor;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;

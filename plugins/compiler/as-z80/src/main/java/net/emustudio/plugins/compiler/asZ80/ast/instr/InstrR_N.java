@@ -4,23 +4,25 @@ import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
-public class InstrRegExpr extends Node {
-    public final int opcode; // MVI only
+public class InstrR_N extends Node {
+    // opcode=OPCODE_LD r=rRegister SEP_COMMA n=rExpression
+
+    public final int opcode;
     public final int reg;
 
-    public InstrRegExpr(int line, int column, int opcode, int reg) {
+    public InstrR_N(int line, int column, int opcode, int reg) {
         super(line, column);
         this.opcode = opcode;
         this.reg = reg;
         // child is expr
     }
 
-    public InstrRegExpr(Token opcode, Token reg) {
+    public InstrR_N(Token opcode, Token reg) {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), reg.getType());
     }
 
     public byte eval() {
-        int register = InstrReg.registers.get(reg);
+        int register = InstrR.registers.get(reg);
         return (byte) ((6 | (register << 3)) & 0xFF);
     }
 
@@ -36,7 +38,7 @@ public class InstrRegExpr extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new InstrRegExpr(line, column, opcode, reg);
+        return new InstrR_N(line, column, opcode, reg);
     }
 
     @Override
@@ -44,7 +46,7 @@ public class InstrRegExpr extends Node {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        InstrRegExpr that = (InstrRegExpr) o;
+        InstrR_N that = (InstrR_N) o;
 
         if (opcode != that.opcode) return false;
         return reg == that.reg;

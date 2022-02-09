@@ -189,7 +189,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrExpr node) {
+    public void visit(InstrN node) {
         node.setAddress(currentAddress);
         sizeBytes = node.getExprSizeBytes();
         visitChildren(node);
@@ -197,7 +197,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrRegExpr node) {
+    public void visit(InstrR_N node) {
         node.setAddress(currentAddress);
         sizeBytes = 1;
         visitChildren(node);
@@ -205,7 +205,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrRegPairExpr node) {
+    public void visit(InstrRP_NN node) {
         node.setAddress(currentAddress);
         sizeBytes = 2;
         visitChildren(node);
@@ -213,25 +213,25 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrNoArgs node) {
+    public void visit(Instr node) {
         node.setAddress(currentAddress);
         currentAddress++;
     }
 
     @Override
-    public void visit(InstrRegReg node) {
+    public void visit(InstrR_R node) {
         node.setAddress(currentAddress);
         currentAddress++;
     }
 
     @Override
-    public void visit(InstrReg node) {
+    public void visit(InstrR node) {
         node.setAddress(currentAddress);
         currentAddress++;
     }
 
     @Override
-    public void visit(InstrRegPair node) {
+    public void visit(InstrRP node) {
         node.setAddress(currentAddress);
         currentAddress++;
     }

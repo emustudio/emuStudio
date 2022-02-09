@@ -4,8 +4,8 @@ import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoLabel;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrNoArgs;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrRegExpr;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrR_N;
 import net.emustudio.plugins.compiler.asZ80.exceptions.FatalError;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,11 +31,11 @@ public class ExpandIncludesVisitorTest {
         visitor.visit(program);
 
         Node expected = new Program()
-            .addChild(new InstrNoArgs(0, 0, OPCODE_CMC))
+            .addChild(new Instr(0, 0, OPCODE_CMC))
             .addChild(new PseudoLabel(0, 0, "sample")
-                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
+                .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_A)
                     .addChild(new ExprNumber(0, 0, 0))))
-            .addChild(new InstrNoArgs(0, 0, OPCODE_RET));
+            .addChild(new Instr(0, 0, OPCODE_RET));
 
         assertTrees(expected, program);
     }
@@ -53,8 +53,8 @@ public class ExpandIncludesVisitorTest {
         visitor.visit(program);
 
         Node expected = new Program()
-            .addChild(new InstrNoArgs(0, 0, OPCODE_RRC))
-            .addChild(new InstrNoArgs(0, 0, OPCODE_RRC));
+            .addChild(new Instr(0, 0, OPCODE_RRC))
+            .addChild(new Instr(0, 0, OPCODE_RRC));
 
         assertTrees(expected, program);
     }

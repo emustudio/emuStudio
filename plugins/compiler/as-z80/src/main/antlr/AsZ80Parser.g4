@@ -19,74 +19,83 @@ rStatement:
   ;
 
 rInstruction:
-  r8bitInstruction                                                                    # instr8bit
-  | opcode=OPCODE_LD regpair=(REG_BC|REG_DE|REG_HL|REG_SP) SEP_COMMA expr=rExpression # instrRegPairExpr
-  | opcode=OPCODE_LD reg=rRegister SEP_COMMA expr=rExpression                         # instrRegExpr
-  | opcode=OPCODE_JR expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_JR cond=(COND_NZ|COND_Z|COND_NC|COND_C) SEP_COMMA expr=rExpression  # instrCondExpr
-  | opcode=OPCODE_LD SEP_LPAR expr=rExpression SEP_RPAR SEP_COMMA regpair=REG_HL      # instrRefExprRegPair
-  | opcode=OPCODE_LD regpair=REG_HL SEP_COMMA SEP_LPAR expr=rExpression SEP_RPAR      # instrRegPairRefExpr
-  | opcode=OPCODE_LD SEP_LPAR expr=rExpression SEP_RPAR SEP_COMMA reg=REG_A           # instrRefExprReg
-  | opcode=OPCODE_LD REG_A SEP_COMMA SEP_LPAR expr=rExpression SEP_RPAR               # instrRegRefExpr
-  | opcode=OPCODE_JP expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_JP cond=cCondition SEP_COMMA expr=rExpression                       # instrCondExpr
-  | opcode=OPCODE_CALL expr=rExpression                                               # instrExpr
-  | opcode=OPCODE_CALL cond=cCondition SEP_COMMA expr=rExpression                     # instrCondExpr
-  | opcode=OPCODE_ADD REG_A SEP_COMMA expr=rExpression                                # instrExpr
-  | opcode=OPCODE_ADC REG_A SEP_COMMA expr=rExpression                                # instrExpr
-  | opcode=OPCODE_OUT SEP_LPAR expr=rExpression SEP_RPAR SEP_COMMA REG_A              # instrRefExprReg
-  | opcode=OPCODE_SUB expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_IN REG_A SEP_COMMA SEP_LPAR expr=rExpression SEP_RPAR               # instrRegRefExpr
-  | opcode=OPCODE_SBC REG_A SEP_COMMA expr=rExpression                                # instrExpr
-  | opcode=OPCODE_AND expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_XOR expr=rExpression                                                # instrExpr
-  | opcode=OPCODE_OR expr=rExpression                                                 # instrExpr
-  | opcode=OPCODE_CP expr=rExpression                                                 # instrExpr
+  r8bitInstruction                                                              # instr8bit
+  | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA r=REG_A         # instrRef_NN_R
+  | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA r=REG_HL        # instrRef_NN_R
+  | opcode=OPCODE_LD r=rRegister SEP_COMMA n=rExpression                        # instrR_N
+  | opcode=OPCODE_LD r=REG_A SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR         # instrR_Ref_NN
+  | opcode=OPCODE_LD rp=rRegPair SEP_COMMA nn=rExpression                       # instrRP_NN
+  | opcode=OPCODE_LD rp=REG_HL SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR       # instrRP_Ref_NN
+  | opcode=OPCODE_JR c=(COND_NZ|COND_Z|COND_NC|COND_C) SEP_COMMA n=rExpression  # instrC_N
+  | opcode=OPCODE_JP c=cCondition SEP_COMMA nn=rExpression                      # instrC_NN
+  | opcode=OPCODE_CALL c=cCondition SEP_COMMA nn=rExpression                    # instrC_NN
+  | opcode=OPCODE_JR n=rExpression                                              # instrN
+  | opcode=OPCODE_JP nn=rExpression                                             # instrNN
+  | opcode=OPCODE_CALL nn=rExpression                                           # instrNN
+  | opcode=OPCODE_ADD REG_A SEP_COMMA n=rExpression                             # instrN
+  | opcode=OPCODE_ADC REG_A SEP_COMMA n=rExpression                             # instrN
+  | opcode=OPCODE_OUT SEP_LPAR n=rExpression SEP_RPAR SEP_COMMA REG_A           # instrN
+  | opcode=OPCODE_SUB n=rExpression                                             # instrN
+  | opcode=OPCODE_IN REG_A SEP_COMMA SEP_LPAR n=rExpression SEP_RPAR            # instrN
+  | opcode=OPCODE_SBC REG_A SEP_COMMA n=rExpression                             # instrN
+  | opcode=OPCODE_AND n=rExpression                                             # instrN
+  | opcode=OPCODE_XOR n=rExpression                                             # instrN
+  | opcode=OPCODE_OR n=rExpression                                              # instrN
+  | opcode=OPCODE_CP n=rExpression                                              # instrN
+
+
+//#  | opcode=OPCODE_RLC
+//#  | opcode=OPCODE_RRC
+//#  | opcode=OPCODE_RL
+//#  | opcode=OPCODE_RR
+//#  | opcode=OPCODE_SLA
+//#  | opcode=OPCODE_SRA
+//#  | opcode=OPCODE_SLL
+//#  | opcode=OPCODE_SRL
+
   ;
 
 r8bitInstruction:
-   opcode=OPCODE_NOP                                                                  # instrNoArgs
-  | opcode=OPCODE_LD SEP_LPAR regpair=(REG_BC|REG_DE) SEP_RPAR SEP_COMMA REG_A        # instrRefRegPairReg
-  | opcode=OPCODE_LD SEP_LPAR regpair=REG_HL SEP_RPAR SEP_COMMA reg=rRegister         # instrRefRegPairReg
-  | opcode=OPCODE_INC regpair=(REG_BC|REG_DE|REG_HL|REG_SP)                           # instrRegPair
-  | opcode=OPCODE_INC reg=rRegister                                                   # instrReg
-  | opcode=OPCODE_DEC reg=rRegister                                                   # instrReg
-  | opcode=OPCODE_RLCA                                                                # instrNoArgs
-  | opcode=OPCODE_EX src=REG_AF SEP_COMMA dst=REG_AFF                                 # instrRegPairRegPair
-  | opcode=OPCODE_EX src=REG_DE SEP_COMMA dst=REG_HL                                  # instrRegPairRegPair
-  | opcode=OPCODE_EX SEP_LPAR src=REG_SP SEP_RPAR SEP_COMMA dst=REG_HL                # instrRefRegPairRegPair
-  | opcode=OPCODE_ADD REG_HL SEP_COMMA regpair=(REG_BC|REG_DE|REG_HL|REG_SP)          # instrRegPairRegPair
-  | opcode=OPCODE_LD REG_A SEP_COMMA SEP_LPAR regpair=(REG_BC|REG_DE) SEP_RPAR        # instrRegRefRegPair
-  | opcode=OPCODE_DEC regpair=(REG_BC|REG_DE|REG_HL|REG_SP)                           # instrRegPair
-  | opcode=OPCODE_RRCA                                                                # instrNoArgs
-  | opcode=OPCODE_RLA                                                                 # instrNoArgs
-  | opcode=OPCODE_RRA                                                                 # instrNoArgs
-  | opcode=OPCODE_DAA                                                                 # instrNoArgs
-  | opcode=OPCODE_CPL                                                                 # instrNoArgs
-  | opcode=OPCODE_INC SEP_LPAR regpair=REG_HL SEP_RPAR                                # instrRefRegPair
-  | opcode=OPCODE_DEC SEP_LPAR regpair=REG_HL SEP_RPAR                                # instrRefRegPair
-  | opcode=OPCODE_SCF                                                                 # instrNoArgs
-  | opcode=OPCODE_CCF                                                                 # instrNoArgs
-  | opcode=OPCODE_LD dst=rRegister SEP_COMMA src=rRegister                            # instrRegReg
-  | opcode=OPCODE_HALT                                                                # instrNoArgs
-  | opcode=OPCODE_ADD REG_A SEP_COMMA reg=rRegister                                   # instrReg
-  | opcode=OPCODE_ADC REG_A SEP_COMMA reg=rRegister                                   # instrReg
-  | opcode=OPCODE_SUB reg=rRegister                                                   # instrReg
-  | opcode=OPCODE_SBC REG_A SEP_COMMA reg=rRegister                                   # instrReg
-  | opcode=OPCODE_AND reg=rRegister                                                   # instrReg
-  | opcode=OPCODE_XOR reg=rRegister                                                   # instrReg
-  | opcode=OPCODE_OR reg=rRegister                                                    # instrReg
-  | opcode=OPCODE_CP reg=rRegister                                                    # instrReg
-  | opcode=OPCODE_RET cond=cCondition                                                 # instrCond
-  | opcode=OPCODE_RET                                                                 # instrNoArgs
-  | opcode=OPCODE_POP regpair=(REG_BC|REG_DE|REG_HL|REG_AF)                           # instrRegPair
-  | opcode=OPCODE_PUSH regpair=(REG_BC|REG_DE|REG_HL|REG_AF)                          # instrRegPair
-  | opcode=OPCODE_RST expr=rExpression                                                # instr8bitExpr
-  | opcode=OPCODE_EXX                                                                 # instrNoArgs
-  | opcode=OPCODE_JP SEP_LPAR regpair=REG_HL SEP_RPAR                                 # instrRefRegPair
-  | opcode=OPCODE_DI                                                                  # instrNoArgs
-  | opcode=OPCODE_LD dst=REG_SP SEP_COMMA src=REG_HL                                  # instrRegPairRegPair
-  | opcode=OPCODE_EI                                                                  # instrNoArgs
+  opcode=OPCODE_LD SEP_LPAR rp=(REG_BC|REG_DE) SEP_RPAR SEP_COMMA REG_A     # instrRef_RP
+  | opcode=OPCODE_JP SEP_LPAR REG_HL SEP_RPAR                               # instrRef_RP
+  | opcode=OPCODE_LD REG_A SEP_COMMA SEP_LPAR rp=(REG_BC|REG_DE) SEP_RPAR   # instrA_Ref_RP
+  | opcode=OPCODE_EX SEP_LPAR src=REG_SP SEP_RPAR SEP_COMMA dst=REG_HL      # instrRef_RP_RP
+  | opcode=OPCODE_LD dst=rRegister SEP_COMMA src=rRegister                  # instrR_R
+  | opcode=OPCODE_LD dst=REG_SP SEP_COMMA src=REG_HL                        # instrRP_RP
+  | opcode=OPCODE_EX dst=REG_AF SEP_COMMA src=REG_AFF                       # instrRP_RP
+  | opcode=OPCODE_EX dst=REG_DE SEP_COMMA src=REG_HL                        # instrRP_RP
+  | opcode=OPCODE_INC rp=rRegPair                                           # instrRP
+  | opcode=OPCODE_DEC rp=rRegPair                                           # instrRP
+  | opcode=OPCODE_ADD REG_HL SEP_COMMA rp=rRegPair                          # instrRP
+  | opcode=OPCODE_POP rp2=rRegPair2                                         # instrRP2
+  | opcode=OPCODE_PUSH rp2=rRegPair2                                        # instrRP2
+  | opcode=OPCODE_INC r=rRegister                                           # instrR
+  | opcode=OPCODE_DEC r=rRegister                                           # instrR
+  | opcode=OPCODE_ADD REG_A SEP_COMMA r=rRegister                           # instrR
+  | opcode=OPCODE_ADC REG_A SEP_COMMA r=rRegister                           # instrR
+  | opcode=OPCODE_SUB r=rRegister                                           # instrR
+  | opcode=OPCODE_SBC REG_A SEP_COMMA r=rRegister                           # instrR
+  | opcode=OPCODE_AND r=rRegister                                           # instrR
+  | opcode=OPCODE_XOR r=rRegister                                           # instrR
+  | opcode=OPCODE_OR r=rRegister                                            # instrR
+  | opcode=OPCODE_CP r=rRegister                                            # instrR
+  | opcode=OPCODE_RET c=cCondition                                          # instrC
+  | opcode=OPCODE_RST n=rExpression                                         # instr8bitN
+  | opcode=OPCODE_NOP                                                       # instr
+  | opcode=OPCODE_RLCA                                                      # instr
+  | opcode=OPCODE_RRCA                                                      # instr
+  | opcode=OPCODE_RLA                                                       # instr
+  | opcode=OPCODE_RRA                                                       # instr
+  | opcode=OPCODE_DJNZ                                                      # instr
+  | opcode=OPCODE_DAA                                                       # instr
+  | opcode=OPCODE_CPL                                                       # instr
+  | opcode=OPCODE_SCF                                                       # instr
+  | opcode=OPCODE_CCF                                                       # instr
+  | opcode=OPCODE_HALT                                                      # instr
+  | opcode=OPCODE_RET                                                       # instr
+  | opcode=OPCODE_EXX                                                       # instr
+  | opcode=OPCODE_DI                                                        # instr
+  | opcode=OPCODE_EI                                                        # instr
   ;
 
 rRegister:
@@ -99,6 +108,21 @@ rRegister:
   | r=REG_L
   | SEP_LPAR r=REG_HL SEP_RPAR
   ;
+
+rRegPair:
+  REG_BC
+  | REG_DE
+  | REG_HL
+  | REG_SP
+  ;
+
+rRegPair2:
+  REG_BC
+  | REG_DE
+  | REG_HL
+  | REG_AF
+  ;
+
 
 cCondition:
   COND_C

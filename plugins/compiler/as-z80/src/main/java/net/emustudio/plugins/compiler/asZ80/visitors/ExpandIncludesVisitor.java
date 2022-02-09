@@ -38,9 +38,9 @@ public class ExpandIncludesVisitor extends NodeVisitor {
         }
 
         try {
-            As8080Lexer lexer = new As8080Lexer(CharStreams.fromFileName(node.filename));
+            AsZ80Lexer lexer = new AsZ80Lexer(CharStreams.fromFileName(node.filename));
             CommonTokenStream stream = new CommonTokenStream(lexer);
-            As8080Parser parser = new As8080Parser(stream);
+            AsZ80Parser parser = new AsZ80Parser(stream);
             stream.fill();
             ParseTree tree = parser.rStart();
             Program program = new Program(node.line, node.column, env);

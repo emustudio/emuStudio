@@ -48,7 +48,7 @@ public class GenerateCodeVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrExpr node) {
+    public void visit(InstrN node) {
         node.eval()
             .ifPresentOrElse(
                 hex::add,
@@ -59,36 +59,36 @@ public class GenerateCodeVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrNoArgs node) {
+    public void visit(Instr node) {
         hex.add(node.eval());
     }
 
     @Override
-    public void visit(InstrReg node) {
+    public void visit(InstrR node) {
         hex.add(node.eval());
     }
 
     @Override
-    public void visit(InstrRegExpr node) {
+    public void visit(InstrR_N node) {
         hex.add(node.eval());
         expectedBytes = 1;
         visitChildren(node);
     }
 
     @Override
-    public void visit(InstrRegPair node) {
+    public void visit(InstrRP node) {
         hex.add(node.eval());
     }
 
     @Override
-    public void visit(InstrRegPairExpr node) {
+    public void visit(InstrRP_NN node) {
         hex.add(node.eval());
         expectedBytes = 2;
         visitChildren(node);
     }
 
     @Override
-    public void visit(InstrRegReg node) {
+    public void visit(InstrR_R node) {
         hex.add(node.eval());
     }
 

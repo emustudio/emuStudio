@@ -9,7 +9,13 @@ import java.util.Map;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 
-public class InstrRegPair extends Node {
+public class InstrRP extends Node {
+    // opcode=OPCODE_INC rp=rRegPair
+    // opcode=OPCODE_DEC rp=rRegPair
+    // opcode=OPCODE_ADD REG_HL SEP_COMMA rp=rRegPair
+    // opcode=OPCODE_POP rp=(REG_BC|REG_DE|REG_HL|REG_AF)
+    // opcode=OPCODE_PUSH rp=(REG_BC|REG_DE|REG_HL|REG_AF)
+
     private final static Map<Integer, Integer> opcodes = new HashMap<>();
     public final static Map<Integer, Integer> regpairs = new HashMap<>();
 
@@ -17,28 +23,29 @@ public class InstrRegPair extends Node {
     public final int regPair;
 
     static {
-        opcodes.put(OPCODE_STAX, 2);
-        opcodes.put(OPCODE_LDAX, 0xA);
+        opcodes.put(OPCODE_INC, 3);
+        opcodes.put(OPCODE_DEC, 0xB);
         opcodes.put(OPCODE_PUSH, 0xC5);
         opcodes.put(OPCODE_POP, 0xC1);
-        opcodes.put(OPCODE_DAD, 9);
-        opcodes.put(OPCODE_INX, 3);
-        opcodes.put(OPCODE_DCX, 0xB);
+
+//        opcodes.put(OPCODE_STAX, 2);
+//        opcodes.put(OPCODE_LDAX, 0xA);
+//        opcodes.put(OPCODE_DAD, 9);
 
         regpairs.put(REG_B, 0);
         regpairs.put(REG_D, 1);
         regpairs.put(REG_H, 2);
-        regpairs.put(REG_PSW, 3);
+        regpairs.put(REG_AF, 3);
         regpairs.put(REG_SP, 3);
     }
 
-    public InstrRegPair(int line, int column, int opcode, int regPair) {
+    public InstrRP(int line, int column, int opcode, int regPair) {
         super(line, column);
         this.opcode = opcode;
         this.regPair = regPair;
     }
 
-    public InstrRegPair(Token opcode, Token regPair) {
+    public InstrRP(Token opcode, Token regPair) {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), regPair.getType());
     }
 
@@ -60,7 +67,7 @@ public class InstrRegPair extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new InstrRegPair(line, column, opcode, regPair);
+        return new InstrRP(line, column, opcode, regPair);
     }
 
     @Override
@@ -68,7 +75,7 @@ public class InstrRegPair extends Node {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        InstrRegPair that = (InstrRegPair) o;
+        InstrRP that = (InstrRP) o;
 
         if (opcode != that.opcode) return false;
         return regPair == that.regPair;

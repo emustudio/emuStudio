@@ -7,10 +7,10 @@ import net.emustudio.plugins.compiler.asZ80.ast.data.DataDW;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprString;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprUnary;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrNoArgs;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import org.junit.Test;
 
-import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.OPCODE_STC;
+import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.OPCODE_RET;
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.OP_SUBTRACT;
 import static net.emustudio.plugins.compiler.asZ80.Utils.assertTrees;
 import static net.emustudio.plugins.compiler.asZ80.Utils.parseProgram;
@@ -39,11 +39,11 @@ public class ParseDataTest {
 
     @Test
     public void testDBinstruction() {
-        Program program = parseProgram("db stc");
+        Program program = parseProgram("db ret");
         assertTrees(
             new Program()
                 .addChild(new DataDB(0, 0)
-                    .addChild(new InstrNoArgs(0, 0, OPCODE_STC))),
+                    .addChild(new Instr(0, 0, OPCODE_RET))),
             program
         );
     }

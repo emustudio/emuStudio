@@ -30,7 +30,7 @@ public class Utils {
         "e", REG_E,
         "h", REG_H,
         "l", REG_L,
-        "m", REG_M
+        "(HL)", REG_HL
     );
 
     public static Map<String, Integer> regPairsBD = Map.of(
@@ -43,11 +43,11 @@ public class Utils {
         "h", REG_H,
         "sp", REG_SP
     );
-    public static Map<String, Integer> regPairsBDHPSW = Map.of(
+    public static Map<String, Integer> regPairsBDHAF = Map.of(
         "b", REG_B,
         "d", REG_D,
         "h", REG_H,
-        "psw", REG_PSW
+        "af", REG_AF
     );
 
 

@@ -4,25 +4,27 @@ import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
-public class InstrRegReg extends Node {
-    public final int opcode; // MOV only
+public class InstrR_R extends Node {
+    // opcode=OPCODE_LD dst=rRegister SEP_COMMA src=rRegister
+
+    public final int opcode;
     public final int srcReg;
     public final int dstReg;
 
-    public InstrRegReg(int line, int column, int opcode, int dst, int src) {
+    public InstrR_R(int line, int column, int opcode, int dst, int src) {
         super(line, column);
         this.opcode = opcode;
         this.srcReg = src;
         this.dstReg = dst;
     }
 
-    public InstrRegReg(Token opcode, Token dst, Token src) {
+    public InstrR_R(Token opcode, Token dst, Token src) {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), dst.getType(), src.getType());
     }
 
     public byte eval() {
-        int srcRegister = InstrReg.registers.get(srcReg);
-        int dstRegister = InstrReg.registers.get(dstReg);
+        int srcRegister = InstrR.registers.get(srcReg);
+        int dstRegister = InstrR.registers.get(dstReg);
         return (byte)((0x40 | (dstRegister << 3) | (srcRegister)) & 0xFF); // TODO: mov M, M == HLT
     }
 
@@ -38,7 +40,7 @@ public class InstrRegReg extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new InstrRegReg(line, column, opcode, dstReg, srcReg);
+        return new InstrR_R(line, column, opcode, dstReg, srcReg);
     }
 
     @Override
@@ -46,7 +48,7 @@ public class InstrRegReg extends Node {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        InstrRegReg that = (InstrRegReg) o;
+        InstrR_R that = (InstrR_R) o;
 
         if (opcode != that.opcode) return false;
         if (srcReg != that.srcReg) return false;

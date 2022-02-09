@@ -73,31 +73,75 @@ public class NodeVisitor {
         visitChildren(node);
     }
 
-    public void visit(InstrExpr node) {
+    public void visit(Instr node) {
         visitChildren(node);
     }
 
-    public void visit(InstrNoArgs node) {
+    public void visit(InstrA_Ref_RP node) {
         visitChildren(node);
     }
 
-    public void visit(InstrReg node) {
+    public void visit(InstrC node) {
         visitChildren(node);
     }
 
-    public void visit(InstrRegExpr node) {
+    public void visit(InstrC_N node) {
         visitChildren(node);
     }
 
-    public void visit(InstrRegPair node) {
+    public void visit(InstrC_NN node) {
         visitChildren(node);
     }
 
-    public void visit(InstrRegPairExpr node) {
+    public void visit(InstrN node) {
         visitChildren(node);
     }
 
-    public void visit(InstrRegReg node) {
+    public void visit(InstrNN node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrR node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrR_N node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrR_R node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrR_Ref_NN node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrRef_NN_R node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrRef_RP node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrRef_RP_RP node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrRP node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrRP_NN node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrRP_Ref_NN node) {
+        visitChildren(node);
+    }
+
+    public void visit(InstrRP_RP node) {
         visitChildren(node);
     }
 

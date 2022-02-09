@@ -4,9 +4,9 @@ import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDB;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDS;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDW;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrExpr;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrRegExpr;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrRegPairExpr;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrN;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrR_N;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrRP_NN;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroArgument;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoOrg;
 
@@ -37,7 +37,7 @@ public class CheckExprSizesVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrExpr node) {
+    public void visit(InstrN node) {
         expectedBytes = node.getExprSizeBytes();
         if (expectedBytes == 1 && node.getChildrenCount() > 1) {
             error(expressionIsBiggerThanExpected(node, expectedBytes, node.getChildrenCount()));
@@ -46,7 +46,7 @@ public class CheckExprSizesVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrRegExpr node) {
+    public void visit(InstrR_N node) {
         expectedBytes = 1;
         if (node.getChildrenCount() > 1) {
             error(expressionIsBiggerThanExpected(node, expectedBytes, node.getChildrenCount()));
@@ -55,7 +55,7 @@ public class CheckExprSizesVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrRegPairExpr node) {
+    public void visit(InstrRP_NN node) {
         expectedBytes = 2;
         visitChildren(node);
     }

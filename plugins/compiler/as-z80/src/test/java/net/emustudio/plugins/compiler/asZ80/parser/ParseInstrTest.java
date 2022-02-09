@@ -102,8 +102,8 @@ public class ParseInstrTest {
         assertInstrRegPair("dad", OPCODE_DAD, regPairsBDHSP);
         assertInstrRegPair("inx", OPCODE_INX, regPairsBDHSP);
         assertInstrRegPair("dcx", OPCODE_DCX, regPairsBDHSP);
-        assertInstrRegPair("push", OPCODE_PUSH, regPairsBDHPSW);
-        assertInstrRegPair("pop", OPCODE_POP, regPairsBDHPSW);
+        assertInstrRegPair("push", OPCODE_PUSH, regPairsBDHAF);
+        assertInstrRegPair("pop", OPCODE_POP, regPairsBDHAF);
     }
 
     @Test
@@ -119,7 +119,7 @@ public class ParseInstrTest {
                     Program program = parseProgram(row);
                     assertTrees(
                         new Program()
-                            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, register.getValue())
+                            .addChild(new InstrR_N(0, 0, OPCODE_MVI, register.getValue())
                                 .addChild(expr)),
                         program
                     );
@@ -141,7 +141,7 @@ public class ParseInstrTest {
                     Program program = parseProgram(row);
                     assertTrees(
                         new Program()
-                            .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, regPair.getValue())
+                            .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, regPair.getValue())
                                 .addChild(expr)),
                         program
                     );
@@ -162,7 +162,7 @@ public class ParseInstrTest {
                                 Program program = parseProgram(row);
                                 assertTrees(
                                     new Program()
-                                        .addChild(new InstrRegReg(0, 0, OPCODE_MOV, register1.getValue(), register2.getValue())),
+                                        .addChild(new InstrR_R(0, 0, OPCODE_MOV, register1.getValue(), register2.getValue())),
                                     program
                                 );
                             }
@@ -176,7 +176,7 @@ public class ParseInstrTest {
     private void assertInstrNoArgs(String instr, int instrType) {
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation);
-            assertTrees(new Program().addChild(new InstrNoArgs(0, 0, instrType)), program);
+            assertTrees(new Program().addChild(new Instr(0, 0, instrType)), program);
         });
     }
 
@@ -187,7 +187,7 @@ public class ParseInstrTest {
                     String row = instrVariation + " " + registerVariation;
                     Program program = parseProgram(row);
                     assertTrees(
-                        new Program().addChild(new InstrReg(0, 0, instrType, register.getValue())),
+                        new Program().addChild(new InstrR(0, 0, instrType, register.getValue())),
                         program
                     );
                 });
@@ -202,7 +202,7 @@ public class ParseInstrTest {
 
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation + " $ + 5");
-            assertTrees(new Program().addChild(new InstrExpr(0, 0, instrType).addChild(expr)), program);
+            assertTrees(new Program().addChild(new InstrN(0, 0, instrType).addChild(expr)), program);
         });
     }
 
@@ -213,7 +213,7 @@ public class ParseInstrTest {
                     String row = instrVariation + " " + registerVariation;
                     Program program = parseProgram(row);
                     assertTrees(
-                        new Program().addChild(new InstrRegPair(0, 0, instrType, regPair.getValue())),
+                        new Program().addChild(new InstrRP(0, 0, instrType, regPair.getValue())),
                         program
                     );
                 });

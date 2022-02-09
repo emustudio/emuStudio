@@ -95,84 +95,74 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void testParseOpcodes() {
-        assertTokenTypesIgnoreCase("STC", OPCODE_STC, EOF);
-        assertTokenTypesIgnoreCase("CMC", OPCODE_CMC, EOF);
-        assertTokenTypesIgnoreCase("CMA", OPCODE_CMA, EOF);
-        assertTokenTypesIgnoreCase("DAA", OPCODE_DAA, EOF);
-        assertTokenTypesIgnoreCase("NOP", OPCODE_NOP, EOF);
-        assertTokenTypesIgnoreCase("RLC", OPCODE_RLC, EOF);
-        assertTokenTypesIgnoreCase("RRC", OPCODE_RRC, EOF);
-        assertTokenTypesIgnoreCase("RAL", OPCODE_RAL, EOF);
-        assertTokenTypesIgnoreCase("RAR", OPCODE_RAR, EOF);
-        assertTokenTypesIgnoreCase("XCHG", OPCODE_XCHG, EOF);
-        assertTokenTypesIgnoreCase("XTHL", OPCODE_XTHL, EOF);
-        assertTokenTypesIgnoreCase("SPHL", OPCODE_SPHL, EOF);
-        assertTokenTypesIgnoreCase("PCHL", OPCODE_PCHL, EOF);
-        assertTokenTypesIgnoreCase("RET", OPCODE_RET, EOF);
-        assertTokenTypesIgnoreCase("RC", OPCODE_RC, EOF);
-        assertTokenTypesIgnoreCase("RNC", OPCODE_RNC, EOF);
-        assertTokenTypesIgnoreCase("RZ", OPCODE_RZ, EOF);
-        assertTokenTypesIgnoreCase("RNZ", OPCODE_RNZ, EOF);
-        assertTokenTypesIgnoreCase("RM", OPCODE_RM, EOF);
-        assertTokenTypesIgnoreCase("RP", OPCODE_RP, EOF);
-        assertTokenTypesIgnoreCase("RPE", OPCODE_RPE, EOF);
-        assertTokenTypesIgnoreCase("RPO", OPCODE_RPO, EOF);
-        assertTokenTypesIgnoreCase("EI", OPCODE_EI, EOF);
-        assertTokenTypesIgnoreCase("DI", OPCODE_DI, EOF);
-        assertTokenTypesIgnoreCase("HLT", OPCODE_HLT, EOF);
-        assertTokenTypesIgnoreCase("INR", OPCODE_INR, EOF);
-        assertTokenTypesIgnoreCase("DCR", OPCODE_DCR, EOF);
-        assertTokenTypesIgnoreCase("ADD", OPCODE_ADD, EOF);
         assertTokenTypesIgnoreCase("ADC", OPCODE_ADC, EOF);
-        assertTokenTypesIgnoreCase("SUB", OPCODE_SUB, EOF);
-        assertTokenTypesIgnoreCase("SBB", OPCODE_SBB, EOF);
-        assertTokenTypesIgnoreCase("ANA", OPCODE_ANA, EOF);
-        assertTokenTypesIgnoreCase("XRA", OPCODE_XRA, EOF);
-        assertTokenTypesIgnoreCase("ORA", OPCODE_ORA, EOF);
-        assertTokenTypesIgnoreCase("CMP", OPCODE_CMP, EOF);
-        assertTokenTypesIgnoreCase("MOV", OPCODE_MOV, EOF);
-        assertTokenTypesIgnoreCase("STAX", OPCODE_STAX, EOF);
-        assertTokenTypesIgnoreCase("LDAX", OPCODE_LDAX, EOF);
-        assertTokenTypesIgnoreCase("PUSH", OPCODE_PUSH, EOF);
-        assertTokenTypesIgnoreCase("POP", OPCODE_POP, EOF);
-        assertTokenTypesIgnoreCase("DAD", OPCODE_DAD, EOF);
-        assertTokenTypesIgnoreCase("INX", OPCODE_INX, EOF);
-        assertTokenTypesIgnoreCase("DCX", OPCODE_DCX, EOF);
-        assertTokenTypesIgnoreCase("LXI", OPCODE_LXI, EOF);
-        assertTokenTypesIgnoreCase("MVI", OPCODE_MVI, EOF);
-        assertTokenTypesIgnoreCase("ADI", OPCODE_ADI, EOF);
-        assertTokenTypesIgnoreCase("ACI", OPCODE_ACI, EOF);
-        assertTokenTypesIgnoreCase("SUI", OPCODE_SUI, EOF);
-        assertTokenTypesIgnoreCase("SBI", OPCODE_SBI, EOF);
-        assertTokenTypesIgnoreCase("ANI", OPCODE_ANI, EOF);
-        assertTokenTypesIgnoreCase("XRI", OPCODE_XRI, EOF);
-        assertTokenTypesIgnoreCase("ORI", OPCODE_ORI, EOF);
-        assertTokenTypesIgnoreCase("CPI", OPCODE_CPI, EOF);
-        assertTokenTypesIgnoreCase("STA", OPCODE_STA, EOF);
-        assertTokenTypesIgnoreCase("LDA", OPCODE_LDA, EOF);
-        assertTokenTypesIgnoreCase("SHLD", OPCODE_SHLD, EOF);
-        assertTokenTypesIgnoreCase("LHLD", OPCODE_LHLD, EOF);
-        assertTokenTypesIgnoreCase("JMP", OPCODE_JMP, EOF);
-        assertTokenTypesIgnoreCase("JC", OPCODE_JC, EOF);
-        assertTokenTypesIgnoreCase("JNC", OPCODE_JNC, EOF);
-        assertTokenTypesIgnoreCase("JZ", OPCODE_JZ, EOF);
-        assertTokenTypesIgnoreCase("JNZ", OPCODE_JNZ, EOF);
-        assertTokenTypesIgnoreCase("JM", OPCODE_JM, EOF);
-        assertTokenTypesIgnoreCase("JP", OPCODE_JP, EOF);
-        assertTokenTypesIgnoreCase("JPE", OPCODE_JPE, EOF);
-        assertTokenTypesIgnoreCase("JPO", OPCODE_JPO, EOF);
+        assertTokenTypesIgnoreCase("ADD", OPCODE_ADD, EOF);
+        assertTokenTypesIgnoreCase("AND", OPCODE_AND, EOF);
+        assertTokenTypesIgnoreCase("BIT", OPCODE_BIT, EOF);
         assertTokenTypesIgnoreCase("CALL", OPCODE_CALL, EOF);
-        assertTokenTypesIgnoreCase("CC", OPCODE_CC, EOF);
-        assertTokenTypesIgnoreCase("CNC", OPCODE_CNC, EOF);
-        assertTokenTypesIgnoreCase("CZ", OPCODE_CZ, EOF);
-        assertTokenTypesIgnoreCase("CNZ", OPCODE_CNZ, EOF);
-        assertTokenTypesIgnoreCase("CM", OPCODE_CM, EOF);
+        assertTokenTypesIgnoreCase("CCF", OPCODE_CCF, EOF);
         assertTokenTypesIgnoreCase("CP", OPCODE_CP, EOF);
-        assertTokenTypesIgnoreCase("CPE", OPCODE_CPE, EOF);
-        assertTokenTypesIgnoreCase("CPO", OPCODE_CPO, EOF);
-        assertTokenTypesIgnoreCase("RST", OPCODE_RST, EOF);
+        assertTokenTypesIgnoreCase("CPD", OPCODE_CPD, EOF);
+        assertTokenTypesIgnoreCase("CPDR", OPCODE_CPDR, EOF);
+        assertTokenTypesIgnoreCase("CPI", OPCODE_CPI, EOF);
+        assertTokenTypesIgnoreCase("CPIR", OPCODE_CPIR, EOF);
+        assertTokenTypesIgnoreCase("CPL", OPCODE_CPL, EOF);
+        assertTokenTypesIgnoreCase("DAA", OPCODE_DAA, EOF);
+        assertTokenTypesIgnoreCase("DEC", OPCODE_DEC, EOF);
+        assertTokenTypesIgnoreCase("DI", OPCODE_DI, EOF);
+        assertTokenTypesIgnoreCase("DJNZ", OPCODE_DJNZ, EOF);
+        assertTokenTypesIgnoreCase("EI", OPCODE_EI, EOF);
+        assertTokenTypesIgnoreCase("EX", OPCODE_EX, EOF);
+        assertTokenTypesIgnoreCase("EXX", OPCODE_EXX, EOF);
+        assertTokenTypesIgnoreCase("HALT", OPCODE_HALT, EOF);
+        assertTokenTypesIgnoreCase("IM", OPCODE_IM, EOF);
         assertTokenTypesIgnoreCase("IN", OPCODE_IN, EOF);
+        assertTokenTypesIgnoreCase("INC", OPCODE_INC, EOF);
+        assertTokenTypesIgnoreCase("IND", OPCODE_IND, EOF);
+        assertTokenTypesIgnoreCase("INDR", OPCODE_INDR, EOF);
+        assertTokenTypesIgnoreCase("INI", OPCODE_INI, EOF);
+        assertTokenTypesIgnoreCase("INIR", OPCODE_INIR, EOF);
+        assertTokenTypesIgnoreCase("JP", OPCODE_JP, EOF);  // condition
+        assertTokenTypesIgnoreCase("JR", OPCODE_JR, EOF);  // condition
+        assertTokenTypesIgnoreCase("LD", OPCODE_LD, EOF);
+        assertTokenTypesIgnoreCase("LDD", OPCODE_LDD, EOF);
+        assertTokenTypesIgnoreCase("LDDR", OPCODE_LDDR, EOF);
+        assertTokenTypesIgnoreCase("LDI", OPCODE_LDI, EOF);
+        assertTokenTypesIgnoreCase("LDIR", OPCODE_LDIR, EOF);
+        assertTokenTypesIgnoreCase("NEG", OPCODE_NEG, EOF);
+        assertTokenTypesIgnoreCase("NOP", OPCODE_NOP, EOF);
+        assertTokenTypesIgnoreCase("OR", OPCODE_OR, EOF);
+        assertTokenTypesIgnoreCase("OTDR", OPCODE_OTDR, EOF);
+        assertTokenTypesIgnoreCase("OTIR", OPCODE_OTIR, EOF);
         assertTokenTypesIgnoreCase("OUT", OPCODE_OUT, EOF);
+        assertTokenTypesIgnoreCase("OUTD", OPCODE_OUTD, EOF);
+        assertTokenTypesIgnoreCase("OUTI", OPCODE_OUTI, EOF);
+        assertTokenTypesIgnoreCase("POP", OPCODE_POP, EOF);
+        assertTokenTypesIgnoreCase("PUSH", OPCODE_PUSH, EOF);
+        assertTokenTypesIgnoreCase("RES", OPCODE_RES, EOF);
+        assertTokenTypesIgnoreCase("RET", OPCODE_RET, EOF); // condition
+        assertTokenTypesIgnoreCase("RETI", OPCODE_RETI, EOF);
+        assertTokenTypesIgnoreCase("RETN", OPCODE_RETN, EOF);
+        assertTokenTypesIgnoreCase("RL", OPCODE_RL, EOF);
+        assertTokenTypesIgnoreCase("RLA", OPCODE_RLA, EOF);
+        assertTokenTypesIgnoreCase("RLC", OPCODE_RLC, EOF);
+        assertTokenTypesIgnoreCase("RLCA", OPCODE_RLCA, EOF);
+        assertTokenTypesIgnoreCase("RLD", OPCODE_RLD, EOF);
+        assertTokenTypesIgnoreCase("RR", OPCODE_RR, EOF);
+        assertTokenTypesIgnoreCase("RRA", OPCODE_RRA, EOF);
+        assertTokenTypesIgnoreCase("RRC", OPCODE_RRC, EOF);
+        assertTokenTypesIgnoreCase("RRCA", OPCODE_RRCA, EOF);
+        assertTokenTypesIgnoreCase("RRD", OPCODE_RRD, EOF);
+        assertTokenTypesIgnoreCase("RST", OPCODE_RST, EOF);
+        assertTokenTypesIgnoreCase("SBC", OPCODE_SBC, EOF);
+        assertTokenTypesIgnoreCase("SCF", OPCODE_SCF, EOF);
+        assertTokenTypesIgnoreCase("SET", OPCODE_SET, EOF);
+        assertTokenTypesIgnoreCase("SLA", OPCODE_SLA, EOF);
+        assertTokenTypesIgnoreCase("SRA", OPCODE_SRA, EOF);
+        assertTokenTypesIgnoreCase("SLL", OPCODE_SLL, EOF);
+        assertTokenTypesIgnoreCase("SRL", OPCODE_SRL, EOF);
+        assertTokenTypesIgnoreCase("SUB", OPCODE_SUB, EOF);
+        assertTokenTypesIgnoreCase("XOR", OPCODE_XOR, EOF);
     }
 
     @Test
@@ -200,8 +190,8 @@ public class LexicalAnalyzerImplTest {
         assertTokenTypesIgnoreCase("E", REG_E, EOF);
         assertTokenTypesIgnoreCase("H", REG_H, EOF);
         assertTokenTypesIgnoreCase("L", REG_L, EOF);
-        assertTokenTypesIgnoreCase("M", REG_M, EOF);
-        assertTokenTypesIgnoreCase("PSW", REG_PSW, EOF);
+        assertTokenTypesIgnoreCase("AF", REG_AF, EOF);
+        assertTokenTypesIgnoreCase("AFF", REG_AFF, EOF);
         assertTokenTypesIgnoreCase("SP", REG_SP, EOF);
     }
 
@@ -212,7 +202,9 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void testOperators1() {
-        assertTokenTypes("+-*/=", OP_ADD, OP_SUBTRACT, OP_MULTIPLY, OP_DIVIDE, OP_EQUAL, EOF);
+        assertTokenTypes("+-*/=<<>><><=>=^%|&",
+            OP_ADD, OP_SUBTRACT, OP_MULTIPLY, OP_DIVIDE, OP_EQUAL, OP_SHL_2, OP_SHR_2, OP_LT, OP_GT, OP_LTE, OP_GTE,
+            OP_XOR_2, OP_MOD_2, OP_OR_2, OP_AND_2, EOF);
     }
 
     @Test
