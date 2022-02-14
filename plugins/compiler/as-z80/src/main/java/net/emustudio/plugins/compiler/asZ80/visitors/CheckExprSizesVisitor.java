@@ -4,9 +4,6 @@ import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDB;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDS;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDW;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrN;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrR_N;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrRP_NN;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroArgument;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoOrg;
 

@@ -9,10 +9,7 @@ import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprCurrentAddress;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrN;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrR_N;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrRP_NN;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 import org.junit.Test;
 
@@ -458,13 +455,13 @@ public class EvaluateExprVisitorTest {
         Program program = new Program();
         program
             .addChild(new PseudoLabel(0, 0, "label")
-                .addChild(new Instr(0, 0, OPCODE_RET)));
+                .addChild(new Instr(0, 0, OPCODE_RET, x, y, z)));
 
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
         visitor.visit(program);
 
         assertTrees(
-            new Program().addChild(new Instr(0, 0, OPCODE_RET)),
+            new Program().addChild(new Instr(0, 0, OPCODE_RET, x, y, z)),
             program
         );
     }

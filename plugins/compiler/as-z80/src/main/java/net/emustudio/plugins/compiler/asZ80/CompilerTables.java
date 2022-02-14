@@ -10,12 +10,21 @@ public class CompilerTables {
 
     public final static Map<Integer, Integer> registers = new HashMap<>();
     public final static Map<Integer, Integer> regPairs = new HashMap<>();
+    public final static Map<Integer, Integer> regPairsII = new HashMap<>();
     public final static Map<Integer, Integer> regPairs2 = new HashMap<>();
     public final static Map<Integer, Integer> conditions = new HashMap<>();
     public final static Map<Integer, Integer> alu = new HashMap<>();
     public final static Map<Integer, Integer> rot = new HashMap<>();
-    public final static Map<String, Integer> im = new HashMap<>();
+    public final static Map<Integer, Integer> im = new HashMap<>();
     public final static Map<Integer, Pair<Integer, Integer>> block = new HashMap<>();
+    public final static Map<Integer, Integer> prefix = Map.of(
+        REG_IX, 0xDD,
+        REG_IXH, 0xDD,
+        REG_IXL, 0xDD,
+        REG_IY, 0xFD,
+        REG_IYH, 0xFD,
+        REG_IYL, 0xFD
+    );
 
     static {
         registers.put(REG_B, 0);
@@ -23,7 +32,11 @@ public class CompilerTables {
         registers.put(REG_D, 2);
         registers.put(REG_E, 3);
         registers.put(REG_H, 4);
+        registers.put(REG_IXH, 4);
+        registers.put(REG_IYH, 4);
         registers.put(REG_L, 5);
+        registers.put(REG_IXL, 5);
+        registers.put(REG_IYL, 5);
         registers.put(REG_HL, 6);
         registers.put(REG_A, 7);
 
@@ -31,6 +44,12 @@ public class CompilerTables {
         regPairs.put(REG_DE, 1);
         regPairs.put(REG_HL, 2);
         regPairs.put(REG_SP, 3);
+
+        regPairsII.put(REG_BC, 0);
+        regPairsII.put(REG_DE, 1);
+        regPairsII.put(REG_IX, 2);
+        regPairsII.put(REG_IY, 2);
+        regPairsII.put(REG_SP, 3);
 
         regPairs2.put(REG_BC, 0);
         regPairs2.put(REG_DE, 1);
@@ -64,10 +83,10 @@ public class CompilerTables {
         rot.put(OPCODE_SLL, 6);
         rot.put(OPCODE_SRL, 7);
 
-        im.put("0", 0);
-        im.put("0/1", 1);
-        im.put("1", 2);
-        im.put("2", 3);
+        im.put(IM_0, 0);
+        im.put(IM_01, 1);
+        im.put(IM_1, 2);
+        im.put(IM_2, 3);
 
         block.put(OPCODE_LDI, Pair.of(4, 0));
         block.put(OPCODE_LDD, Pair.of(5, 0));

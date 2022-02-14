@@ -43,7 +43,7 @@ public class ParseDataTest {
         assertTrees(
             new Program()
                 .addChild(new DataDB(0, 0)
-                    .addChild(new Instr(0, 0, OPCODE_RET))),
+                    .addChild(new Instr(0, 0, OPCODE_RET, x, y, z))),
             program
         );
     }

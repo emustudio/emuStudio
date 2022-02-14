@@ -176,7 +176,7 @@ public class ParseInstrTest {
     private void assertInstrNoArgs(String instr, int instrType) {
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation);
-            assertTrees(new Program().addChild(new Instr(0, 0, instrType)), program);
+            assertTrees(new Program().addChild(new Instr(0, 0, instrType, x, y, z)), program);
         });
     }
 

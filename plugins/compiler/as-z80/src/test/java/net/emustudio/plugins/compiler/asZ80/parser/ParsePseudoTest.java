@@ -5,7 +5,6 @@ import net.emustudio.plugins.compiler.asZ80.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrN;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 import net.emustudio.plugins.compiler.asZ80.exceptions.SyntaxErrorException;
@@ -62,8 +61,8 @@ public class ParsePseudoTest {
                 .addChild(new PseudoIf(0, 0)
                     .addChild(new PseudoIfExpression(0, 0)
                         .addChild(new ExprNumber(0, 0, 1)))
-                    .addChild(new Instr(0, 0, OPCODE_RRC))
-                    .addChild(new Instr(0, 0, OPCODE_RRC))),
+                    .addChild(new Instr(0, 0, OPCODE_RRC, x, y, z))
+                    .addChild(new Instr(0, 0, OPCODE_RRC, x, y, z))),
             program
         );
     }
@@ -130,7 +129,7 @@ public class ParsePseudoTest {
                     .addChild(new ExprId(0, 0, "param1")))
                 .addChild(new PseudoMacroParameter(0, 0)
                     .addChild(new ExprId(0, 0, "param2")))
-                .addChild(new Instr(0, 0, OPCODE_RRC))
+                .addChild(new Instr(0, 0, OPCODE_RRC, x, y, z))
                 .addChild(new PseudoLabel(0, 0, "heylabel")
                     .addChild(new InstrN(0, 0, OPCODE_ANI)
                         .addChild(new ExprNumber(0, 0, 0x7F)))));

@@ -5,7 +5,6 @@ import net.emustudio.plugins.compiler.asZ80.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrR_N;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 import org.junit.Test;
 

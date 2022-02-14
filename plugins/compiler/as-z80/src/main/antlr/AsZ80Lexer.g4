@@ -51,7 +51,7 @@ OPCODE_EI: E I;
 OPCODE_EX: E X;
 OPCODE_EXX: E X X;
 OPCODE_HALT: H A L T;
-OPCODE_IM: I M;
+OPCODE_IM: I M -> pushMode(IM_NUMBER);
 OPCODE_IN: I N;
 OPCODE_INC: I N C;
 OPCODE_IND: I N D;
@@ -112,6 +112,13 @@ COND_PO: P O -> popMode;
 COND_WS: [ \t\f]+ -> skip;
 COND_UNRECOGNIZED: ({"cCnNzZmMpP".indexOf((char) _input.LA(1)) == -1}?) -> popMode;
 
+mode IM_NUMBER;
+IM_01: '0/1' -> popMode;
+IM_0: '0' -> popMode;
+IM_1: '1' -> popMode;
+IM_2: '2' -> popMode;
+IM_WS: [ \t\f]+ -> skip;
+IM_UNRECOGNIZED: ({"012".indexOf((char) _input.LA(1)) == -1}?) -> popMode;
 
 mode DEFAULT_MODE;
 
