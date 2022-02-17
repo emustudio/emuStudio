@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.compiler.asZ80;
 
-import net.emustudio.plugins.compiler.asZ80.tree.OC_Reg;
 import org.junit.Assert;
 import org.junit.Test;
 

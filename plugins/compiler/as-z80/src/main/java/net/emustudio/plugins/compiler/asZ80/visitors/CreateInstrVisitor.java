@@ -26,8 +26,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
         int y = CompilerTables.rot.get(ctx.opcode.getType());
         int z = CompilerTables.registers.get(ctx.r.start.getType());
-        InstrXDCB instr = new InstrXDCB(ctx.opcode, prefix, y, z);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
+        Node instr = new InstrXDCB(ctx.opcode, prefix, y, z).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         return instr;
     }
 
@@ -43,8 +43,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_SLL d=rDisplacement                                           # instrXDCB
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
         int y = CompilerTables.rot.get(ctx.opcode.getType());
-        InstrXDCB instr = new InstrXDCB(ctx.opcode, prefix, y, 6);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
+        Node instr = new InstrXDCB(ctx.opcode, prefix, y, 6).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         return instr;
     }
 
@@ -54,9 +54,9 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         // | opcode=OPCODE_RES n=rExpression SEP_COMMA d=rDisplacement                   # instrXDCB_N
         // | opcode=OPCODE_SET n=rExpression SEP_COMMA d=rDisplacement                   # instrXDCB_N
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
-        InstrXDCB instr = new InstrXDCB(ctx.opcode, prefix, 0, 6);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
-        instr.addChild(CreateVisitors.expr.visit(ctx.n));
+        Node instr = new InstrXDCB(ctx.opcode, prefix, 0, 6).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
+        instr.addChild(CreateVisitors.expr.visit(ctx.n).setMaxValue(7));
         return super.visitInstrXDCB_N(ctx);
     }
 
@@ -66,9 +66,9 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_SET n=rExpression SEP_COMMA d=rDisplacement SEP_COMMA r=rRegister2  # instrXDCB_N_R
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
         int z = CompilerTables.registers.get(ctx.r.start.getType());
-        InstrXDCB instr = new InstrXDCB(ctx.opcode, prefix, 0, z);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
-        instr.addChild(CreateVisitors.expr.visit(ctx.n));
+        Node instr = new InstrXDCB(ctx.opcode, prefix, 0, z).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
+        instr.addChild(CreateVisitors.expr.visit(ctx.n).setMaxValue(7));
         return instr;
     }
 
@@ -78,7 +78,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_OUT SEP_LPAR REG_C SEP_RPAR SEP_COMMA r=rRegister2            # instrED_R2
         int y = CompilerTables.registers.get(ctx.r.start.getType());
         int z = (ctx.opcode.getType() == OPCODE_IN) ? 0 : 1;
-        return new InstrED(ctx.opcode, y, z);
+        return new InstrED(ctx.opcode, y, z).setSizeBytes(2);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_IN SEP_LPAR REG_C SEP_RPAR                                    # instrED_C
         //  | opcode=OPCODE_OUT SEP_LPAR REG_C SEP_RPAR SEP_COMMA n=LIT_NUMBER            # instrED_C
         int z = (ctx.opcode.getType() == OPCODE_IN) ? 0 : 1;
-        return new InstrED(ctx.opcode, 6, z);
+        return new InstrED(ctx.opcode, 6, z).setSizeBytes(2);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_ADC REG_HL SEP_COMMA rp=rRegPair                              # instrED_RP
         int q = (ctx.opcode.getType() == OPCODE_SBC) ? 0 : 1;
         int p = CompilerTables.regPairs.get(ctx.rp.start.getType());
-        return new InstrED(ctx.opcode, p, q, 2);
+        return new InstrED(ctx.opcode, p, q, 2).setSizeBytes(2);
     }
 
     @Override
@@ -103,8 +103,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA rp=rRegPair     # instrED_NN_RP
         int q = 0;
         int p = CompilerTables.regPairs.get(ctx.rp.start.getType());
-        InstrED instr = new InstrED(ctx.opcode, p, q, 3);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new InstrED(ctx.opcode, p, q, 3).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
@@ -113,8 +113,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_LD rp=rRegPair SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR     # instrED_RP_NN
         int q = 1;
         int p = CompilerTables.regPairs.get(ctx.rp.start.getType());
-        InstrED instr = new InstrED(ctx.opcode, p, q, 3);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new InstrED(ctx.opcode, p, q, 3).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
@@ -122,7 +122,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     public Node visitInstrED_IM(InstrED_IMContext ctx) {
         //  | opcode=OPCODE_IM im=(IM_0|IM_1|IM_2|IM_01)                                  # instrED_IM
         int y = CompilerTables.im.get(ctx.im.getType());
-        return new InstrED(ctx.opcode, y, 6);
+        return new InstrED(ctx.opcode, y, 6).setSizeBytes(2);
     }
 
     @Override
@@ -139,7 +139,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         } else if (ctx.src.getType() == REG_R) {
             y = 3;
         }
-        return new InstrED(ctx.opcode, y, 7);
+        return new InstrED(ctx.opcode, y, 7).setSizeBytes(2);
     }
 
     @Override
@@ -179,7 +179,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         }
 
         Pair<Integer, Integer> yz = CompilerTables.block.get(ctx.opcode.getType());
-        return new InstrED(ctx.opcode, yz.l, yz.r);
+        return new InstrED(ctx.opcode, yz.l, yz.r).setSizeBytes(2);
     }
 
     @Override
@@ -194,7 +194,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_SRL r=rRegister                                               # instrCB
         int y = CompilerTables.rot.get(ctx.opcode.getType());
         int z = CompilerTables.registers.get(ctx.r.r.getType());
-        return new InstrCB(ctx.opcode, y, z);
+        return new InstrCB(ctx.opcode, y, z).setSizeBytes(2);
     }
 
     @Override
@@ -204,8 +204,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_SET n=rExpression SEP_COMMA r=rRegister                       # instrCB_N_R
         int z = CompilerTables.registers.get(ctx.r.r.getType());
         // y needs to be computed from expr
-        InstrCB instr = new InstrCB(ctx.opcode, 0, z);
-        instr.addChild(CreateVisitors.expr.visit(ctx.n));
+        Node instr = new InstrCB(ctx.opcode, 0, z).setSizeBytes(2);
+        instr.addChild(CreateVisitors.expr.visit(ctx.n).setMaxValue(7));
         return instr;
     }
 
@@ -213,8 +213,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     public Node visitInstrXD_II_NN(InstrXD_II_NNContext ctx) {
         //  | opcode=OPCODE_LD ii=rII SEP_COMMA nn=rExpression                            # instrXD_II_NN
         int prefix = CompilerTables.prefix.get(ctx.ii.start.getType());
-        InstrXD instr = new InstrXD(ctx.opcode, prefix, 0, 0, 2, 1);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new InstrXD(ctx.opcode, prefix, 0, 0, 2, 1).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
@@ -223,15 +223,15 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_ADD ii=rII SEP_COMMA rp=(REG_BC|REG_DE|REG_IX|REG_IY|REG_SP)  # instrXD_II_RP
         int prefix = CompilerTables.prefix.get(ctx.ii.start.getType());
         int p = CompilerTables.regPairsII.get(ctx.rp.getType());
-        return new InstrXD(ctx.opcode, prefix, 0, 1, p, 1);
+        return new InstrXD(ctx.opcode, prefix, 0, 1, p, 1).setSizeBytes(2);
     }
 
     @Override
     public Node visitInstrXD_Ref_NN_II(InstrXD_Ref_NN_IIContext ctx) {
         //  | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA ii=rII          # instrXD_Ref_NN_II
         int prefix = CompilerTables.prefix.get(ctx.ii.start.getType());
-        InstrXD instr = new InstrXD(ctx.opcode, prefix, 0, 0, 2, 2);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new InstrXD(ctx.opcode, prefix, 0, 0, 2, 2).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
@@ -239,8 +239,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     public Node visitInstrXD_II_Ref_NN(InstrXD_II_Ref_NNContext ctx) {
         //  | opcode=OPCODE_LD ii=rII SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR          # instrXD_II_Ref_NN
         int prefix = CompilerTables.prefix.get(ctx.ii.start.getType());
-        InstrXD instr = new InstrXD(ctx.opcode, prefix, 0, 1, 2, 2);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new InstrXD(ctx.opcode, prefix, 0, 1, 2, 2).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
@@ -249,8 +249,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_LD ii=rII_HL SEP_COMMA n=rExpression                          # instrXD_IIHL_N
         int prefix = CompilerTables.prefix.get(ctx.ii.start.getType());
         int y = CompilerTables.registers.get(ctx.ii.start.getType());
-        InstrXD instr = new InstrXD(ctx.opcode, prefix, 0, y, 6);
-        instr.addChild(CreateVisitors.expr.visit(ctx.n));
+        Node instr = new InstrXD(ctx.opcode, prefix, 0, y, 6).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.n).setSizeBytes(1));
         return instr;
     }
 
@@ -258,9 +258,9 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     public Node visitInstrXD_Ref_II_N_N(InstrXD_Ref_II_N_NContext ctx) {
         //  | opcode=OPCODE_LD d=rDisplacement SEP_COMMA n=rExpression                    # instrXD_Ref_II_N_N
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
-        InstrXD instr = new InstrXD(ctx.opcode, prefix, 0, 6, 6);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
-        instr.addChild(CreateVisitors.expr.visit(ctx.n));
+        Node instr = new InstrXD(ctx.opcode, prefix, 0, 6, 6).setSizeBytes(4);
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
+        instr.addChild(CreateVisitors.expr.visit(ctx.n).setSizeBytes(1));
         return instr;
     }
 
@@ -270,7 +270,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int prefix = CompilerTables.prefix.get(ctx.ii.start.getType());
         int y = CompilerTables.registers.get(ctx.ii.start.getType());
         int z = CompilerTables.registers.get(ctx.r.start.getType());
-        return new InstrXD(ctx.opcode, prefix, 1, y, z);
+        return new InstrXD(ctx.opcode, prefix, 1, y, z).setSizeBytes(2);
     }
 
     @Override
@@ -279,7 +279,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int prefix = CompilerTables.prefix.get(ctx.ii.start.getType());
         int y = CompilerTables.registers.get(ctx.r.start.getType());
         int z = CompilerTables.registers.get(ctx.ii.start.getType());
-        return new InstrXD(ctx.opcode, prefix, 1, y, z);
+        return new InstrXD(ctx.opcode, prefix, 1, y, z).setSizeBytes(2);
     }
 
     @Override
@@ -287,8 +287,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_LD d=rDisplacement SEP_COMMA r=rRegister2                     # instrXD_Ref_II_N_R
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
         int z = CompilerTables.registers.get(ctx.r.start.getType());
-        InstrXD instr = new InstrXD(ctx.opcode, prefix, 1, 6, z);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
+        Node instr = new InstrXD(ctx.opcode, prefix, 1, 6, z).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         return instr;
     }
 
@@ -297,8 +297,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_LD r=rRegister2 SEP_COMMA d=rDisplacement                     # instrXD_R_Ref_II_N
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
         int y = CompilerTables.registers.get(ctx.r.start.getType());
-        InstrXD instr = new InstrXD(ctx.opcode, prefix, 1, y, 6);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
+        Node instr = new InstrXD(ctx.opcode, prefix, 1, y, 6).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         return instr;
     }
 
@@ -316,18 +316,18 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_CP d=rDisplacement                                            # instrXD_Ref_II_N
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
         if (ctx.opcode.getType() == OPCODE_INC) {
-            InstrXD instr = new InstrXD(ctx.opcode, prefix, 0, 6, 4);
-            instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
+            Node instr = new InstrXD(ctx.opcode, prefix, 0, 6, 4).setSizeBytes(3);
+            instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
             return instr;
         } else if (ctx.opcode.getType() == OPCODE_DEC) {
-            InstrXD instr = new InstrXD(ctx.opcode, prefix, 0, 6, 5);
-            instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
+            Node instr = new InstrXD(ctx.opcode, prefix, 0, 6, 5).setSizeBytes(3);
+            instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
             return instr;
         }
 
         int y = CompilerTables.alu.get(ctx.opcode.getType());
-        InstrXD instr = new InstrXD(ctx.opcode, prefix, 2, y, 6);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n));
+        Node instr = new InstrXD(ctx.opcode, prefix, 2, y, 6).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         return instr;
     }
 
@@ -347,12 +347,12 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int r = CompilerTables.registers.get(ctx.ii.start.getType());
 
         if (ctx.opcode.getType() == OPCODE_INC) {
-            return new InstrXD(ctx.opcode, prefix, 0, r, 4);
+            return new InstrXD(ctx.opcode, prefix, 0, r, 4).setSizeBytes(2);
         } else if (ctx.opcode.getType() == OPCODE_DEC) {
-            return new InstrXD(ctx.opcode, prefix, 0, r, 5);
+            return new InstrXD(ctx.opcode, prefix, 0, r, 5).setSizeBytes(2);
         }
         int y = CompilerTables.alu.get(ctx.opcode.getType());
-        return new InstrXD(ctx.opcode, prefix, 2, y, r);
+        return new InstrXD(ctx.opcode, prefix, 2, y, r).setSizeBytes(2);
     }
 
     @Override
@@ -379,7 +379,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
                 break;
         }
 
-        return new InstrXD(ctx.opcode, prefix, x, q, p, z);
+        return new InstrXD(ctx.opcode, prefix, x, q, p, z).setSizeBytes(2);
     }
 
     @Override
@@ -387,24 +387,24 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA r=REG_HL        # instrRef_NN_R // x=0, z=2, q=0, p=2
         //  | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA r=REG_A         # instrRef_NN_R // x=0, z=2, q=0, p=3
         int p = (ctx.r.getType() == REG_HL) ? 2 : 3;
-        Instr instr = new Instr(ctx.opcode, 0, 0, p, 2);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new Instr(ctx.opcode, 0, 0, p, 2).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
     @Override
     public Node visitInstrRP_Ref_NN(InstrRP_Ref_NNContext ctx) {
         //  | opcode=OPCODE_LD rp=REG_HL SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR       # instrRP_Ref_NN // x=0, z=2, q=1, p=2
-        Instr instr = new Instr(ctx.opcode, 0, 1, 2, 2);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new Instr(ctx.opcode, 0, 1, 2, 2).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
     @Override
     public Node visitInstrR_Ref_NN(InstrR_Ref_NNContext ctx) {
         //  | opcode=OPCODE_LD r=REG_A SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR         # instrR_Ref_NN  // x=0, z=2, q=1, p=3
-        Instr instr = new Instr(ctx.opcode, 0, 1, 3, 2);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new Instr(ctx.opcode, 0, 1, 3, 2).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
@@ -412,7 +412,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     public Node visitInstrA_Ref_RP(InstrA_Ref_RPContext ctx) {
         //  | opcode=OPCODE_LD REG_A SEP_COMMA SEP_LPAR rp=(REG_BC|REG_DE) SEP_RPAR       # instrA_Ref_RP // x=0, z=2, q=1, p=rp
         int p = CompilerTables.regPairs.get(ctx.rp.getType());
-        return new Instr(ctx.opcode, 0, 1, p, 2);
+        return new Instr(ctx.opcode, 0, 1, p, 2).setSizeBytes(1);
     }
 
     @Override
@@ -423,13 +423,13 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int x = (ctx.opcode.getType() == OPCODE_LD) ? 0 : 3;
         int z = (ctx.opcode.getType() == OPCODE_LD) ? 2 : 1;
         int q = (ctx.opcode.getType() == OPCODE_LD) ? 0 : 1;
-        return new Instr(ctx.opcode, x, q, p, z);
+        return new Instr(ctx.opcode, x, q, p, z).setSizeBytes(1);
     }
 
     @Override
     public Node visitInstrRef_RP_RP(InstrRef_RP_RPContext ctx) {
         //  | opcode=OPCODE_EX SEP_LPAR dst=REG_SP SEP_RPAR SEP_COMMA src=REG_HL          # instrRef_RP_RP // x=3, z=3, y=4
-        return new Instr(ctx.opcode, 3, 4, 3);
+        return new Instr(ctx.opcode, 3, 4, 3).setSizeBytes(1);
     }
 
     @Override
@@ -437,15 +437,15 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_LD dst=rRegister SEP_COMMA src=rRegister                      # instrR_R      // x=1, y=dst, z=src
         int y = CompilerTables.registers.get(ctx.dst.r.getType());
         int z = CompilerTables.registers.get(ctx.src.r.getType());
-        return new Instr(ctx.opcode, 1, y, z);
+        return new Instr(ctx.opcode, 1, y, z).setSizeBytes(1);
     }
 
     @Override
     public Node visitInstrR_N(InstrR_NContext ctx) {
         //  | opcode=OPCODE_LD r=rRegister SEP_COMMA n=rExpression                        # instrR_N      // x=0, z=6, y=r
         int y = CompilerTables.registers.get(ctx.r.r.getType());
-        Instr instr = new Instr(ctx.opcode, 0, y, 6);
-        instr.addChild(CreateVisitors.expr.visit(ctx.n));
+        Node instr = new Instr(ctx.opcode, 0, y, 6).setSizeBytes(2);
+        instr.addChild(CreateVisitors.expr.visit(ctx.n).setSizeBytes(1));
         return instr;
     }
 
@@ -453,8 +453,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     public Node visitInstrC_N(InstrC_NContext ctx) {
         //  | opcode=OPCODE_JR c=(COND_NZ|COND_Z|COND_NC|COND_C) SEP_COMMA n=rExpression  # instrC_N    // x=0, z=0, y=4..7
         int y = CompilerTables.conditions.get(ctx.c.getType());
-        Instr instr = new Instr(ctx.opcode, 0, y, 0);
-        instr.addChild(CreateVisitors.expr.visit(ctx.n));
+        Node instr = new Instr(ctx.opcode, 0, y, 0).setSizeBytes(2);
+        instr.addChild(CreateVisitors.expr.visit(ctx.n).setSizeBytes(1));
         return instr;
     }
 
@@ -462,7 +462,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     public Node visitInstrC(InstrCContext ctx) {
         //  | opcode=OPCODE_RET c=cCondition                                              # instrC        // x=3, z=0, y=cc
         int y = CompilerTables.conditions.get(ctx.c.start.getType());
-        return new Instr(ctx.opcode, 3, y, 0);
+        return new Instr(ctx.opcode, 3, y, 0).setSizeBytes(1);
     }
 
     @Override
@@ -471,8 +471,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_CALL c=cCondition SEP_COMMA nn=rExpression                    # instrC_NN     // x=3, z=4, y=cc
         int y = CompilerTables.conditions.get(ctx.c.start.getType());
         int z = (ctx.opcode.getType() == OPCODE_JP) ? 2 : 4;
-        Instr instr = new Instr(ctx.opcode, 3, y, z);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new Instr(ctx.opcode, 3, y, z).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
@@ -480,8 +480,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     public Node visitInstrRP_NN(InstrRP_NNContext ctx) {
         //  | opcode=OPCODE_LD rp=rRegPair SEP_COMMA nn=rExpression                       # instrRP_NN  // x=0, z=1, q=0, p=rp
         int p = CompilerTables.regPairs.get(ctx.rp.start.getType());
-        Instr instr = new Instr(ctx.opcode, 0, 0, p, 1);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new Instr(ctx.opcode, 0, 0, p, 1).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
@@ -493,7 +493,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int x = (ctx.opcode.getType() == OPCODE_EX && ctx.dst.getType() == REG_AF) ? 0 : 3;
         int z = (ctx.opcode.getType() == OPCODE_LD) ? 1 : ((ctx.dst.getType() == REG_AF) ? 0 : 3);
         int p = (ctx.opcode.getType() == OPCODE_LD) ? 3 : ((ctx.dst.getType() == REG_AF) ? 0 : 2);
-        return new Instr(ctx.opcode, x, 1, p, z);
+        return new Instr(ctx.opcode, x, 1, p, z).setSizeBytes(1);
     }
 
     @Override
@@ -502,8 +502,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_CALL nn=rExpression                                           # instrNN       // x=3, z=5, y=1
         int z = (ctx.opcode.getType() == OPCODE_JP) ? 3 : 5;
         int y = (ctx.opcode.getType() == OPCODE_JP) ? 0 : 1;
-        Instr instr = new Instr(ctx.opcode, 3, y, z);
-        instr.addChild(CreateVisitors.expr.visit(ctx.nn));
+        Node instr = new Instr(ctx.opcode, 3, y, z).setSizeBytes(3);
+        instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
     }
 
@@ -531,8 +531,9 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int x = (djnzOrJr) ? 0 : 3;
         int z = (djnzOrJr) ? 0 : ((opcode == OPCODE_OUT || opcode == OPCODE_IN) ? 3 : (rst ? 7 : 6));
         int y = djnzOrOut ? 2 : ((opcode == OPCODE_JR || opcode == OPCODE_IN) ? 3 : (rst ? 0 : CompilerTables.alu.get(opcode)));
-        Instr instr = new Instr(ctx.opcode, x, y, z);
-        instr.addChild(CreateVisitors.expr.visit(ctx.n));
+
+        Node instr = new Instr(ctx.opcode, x, y, z).setSizeBytes(rst ? 1 : 2);
+        instr.addChild(CreateVisitors.expr.visit(ctx.n).setSizeBytes(1));
         return instr;
     }
 
@@ -544,7 +545,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int q = (ctx.opcode.getType() == OPCODE_INC) ? 0 : 1;
         int p = CompilerTables.regPairs.get(ctx.rp.start.getType());
         int z = (ctx.opcode.getType() == OPCODE_ADD) ? 1 : 3;
-        return new Instr(ctx.opcode, 0, q, p, z);
+        return new Instr(ctx.opcode, 0, q, p, z).setSizeBytes(1);
     }
 
     @Override
@@ -553,7 +554,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_PUSH rp2=rRegPair2                                            # instrRP2      // x=3, z=5, q=0, p=rp2
         int p = CompilerTables.regPairs2.get(ctx.rp2.start.getType());
         int z = (ctx.opcode.getType() == OPCODE_POP) ? 1 : 5;
-        return new Instr(ctx.opcode, 3, 0, p, z);
+        return new Instr(ctx.opcode, 3, 0, p, z).setSizeBytes(1);
     }
 
     @Override
@@ -575,7 +576,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int x = incDec ? 0 : 2;
         int y = incDec ? reg : CompilerTables.alu.get(ctx.opcode.getType());
         int z = (opcode == OPCODE_INC) ? 4 : ((opcode == OPCODE_DEC) ? 5 : reg);
-        return new Instr(ctx.opcode, x, y, z);
+        return new Instr(ctx.opcode, x, y, z).setSizeBytes(1);
     }
 
     @Override
@@ -612,6 +613,6 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         xyz.put(OPCODE_EI, new int[] {3, 7, 3});
 
         int[] xyzValues = xyz.get(ctx.opcode.getType());
-        return new Instr(ctx.opcode, xyzValues[0], xyzValues[1], xyzValues[2]);
+        return new Instr(ctx.opcode, xyzValues[0], xyzValues[1], xyzValues[2]).setSizeBytes(1);
     }
 }

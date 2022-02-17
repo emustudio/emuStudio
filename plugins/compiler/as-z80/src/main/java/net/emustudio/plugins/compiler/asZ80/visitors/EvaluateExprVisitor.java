@@ -189,51 +189,43 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrN node) {
-        node.setAddress(currentAddress);
-        sizeBytes = node.getExprSizeBytes();
-        visitChildren(node);
-        currentAddress++; // opcode
-    }
-
-    @Override
-    public void visit(InstrR_N node) {
-        node.setAddress(currentAddress);
-        sizeBytes = 1;
-        visitChildren(node);
-        currentAddress++; // opcode
-    }
-
-    @Override
-    public void visit(InstrRP_NN node) {
-        node.setAddress(currentAddress);
-        sizeBytes = 2;
-        visitChildren(node);
-        currentAddress++; // opcode
-    }
-
-    @Override
     public void visit(Instr node) {
         node.setAddress(currentAddress);
-        currentAddress++;
+        sizeBytes = 0;
+        visitChildren(node);
+        node.getSizeBytes().ifPresent(s -> currentAddress += s);
     }
 
     @Override
-    public void visit(InstrR_R node) {
+    public void visit(InstrCB node) {
         node.setAddress(currentAddress);
-        currentAddress++;
+        sizeBytes = 0;
+        visitChildren(node);
+        node.getSizeBytes().ifPresent(s -> currentAddress += s);
     }
 
     @Override
-    public void visit(InstrR node) {
+    public void visit(InstrED node) {
         node.setAddress(currentAddress);
-        currentAddress++;
+        sizeBytes = 0;
+        visitChildren(node);
+        node.getSizeBytes().ifPresent(s -> currentAddress += s);
     }
 
     @Override
-    public void visit(InstrRP node) {
+    public void visit(InstrXD node) {
         node.setAddress(currentAddress);
-        currentAddress++;
+        sizeBytes = 0;
+        visitChildren(node);
+        node.getSizeBytes().ifPresent(s -> currentAddress += s);
+    }
+
+    @Override
+    public void visit(InstrXDCB node) {
+        node.setAddress(currentAddress);
+        sizeBytes = 0;
+        visitChildren(node);
+        node.getSizeBytes().ifPresent(s -> currentAddress += s);
     }
 
     @Override
@@ -323,10 +315,11 @@ public class EvaluateExprVisitor extends NodeVisitor {
             if (strLen > 1) {
                 result |= (node.string.charAt(1) << 8);
             }
-            node.addChild(new Evaluated(node.line, node.column, result));
+            node.addChild(new Evaluated(node.line, node.column, result).setSizeBytes(2));
         } else {
+            int maxValue = node.getMaxValue().map(v -> Math.min(v, 0xFF)).orElse(0xFF);
             for (int i = 0; i < strLen; i++) {
-                node.addChild(new Evaluated(node.line, node.column, node.string.charAt(i)));
+                node.addChild(new Evaluated(node.line, node.column, node.string.charAt(i)).setMaxValue(maxValue));
             }
         }
         node.exclude();
@@ -339,6 +332,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     private void evalExpr(Node node) {
         latestEval = node.eval(getCurrentAddress(), env);
+        latestEval.ifPresent(e -> node.getMaxValue().ifPresent(e::setMaxValue));
         latestEval.ifPresentOrElse(
             e -> node.remove().ifPresent(p -> p.addChild(e)),
             () -> needMorePassThings.add(node)

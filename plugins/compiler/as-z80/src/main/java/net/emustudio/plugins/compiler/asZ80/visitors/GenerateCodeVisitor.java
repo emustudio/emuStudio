@@ -48,48 +48,52 @@ public class GenerateCodeVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrN node) {
-        node.eval()
-            .ifPresentOrElse(
-                hex::add,
-                () -> error(valueOutOfBounds(node, 0, 7))
-            );
-        expectedBytes = node.getExprSizeBytes();
-        visitChildren(node);
-    }
-
-    @Override
     public void visit(Instr node) {
-        hex.add(node.eval());
+        node.eval().ifPresentOrElse(
+            hex::add,
+            () -> error(valueOutOfBounds(node, 0, 7))
+        );
+        int instrSize = node.getSizeBytes().orElse(1);
+        if (instrSize > 1) {
+            expectedBytes = 0;
+            visitChildren(node);
+        }
     }
 
     @Override
-    public void visit(InstrR node) {
-        hex.add(node.eval());
-    }
-
-    @Override
-    public void visit(InstrR_N node) {
-        hex.add(node.eval());
-        expectedBytes = 1;
+    public void visit(InstrCB node) {
+        for (byte b : node.eval()) {
+            hex.add(b);
+        }
+        expectedBytes = 0;
         visitChildren(node);
     }
 
     @Override
-    public void visit(InstrRP node) {
-        hex.add(node.eval());
-    }
-
-    @Override
-    public void visit(InstrRP_NN node) {
-        hex.add(node.eval());
-        expectedBytes = 2;
+    public void visit(InstrED node) {
+        for (byte b : node.eval()) {
+            hex.add(b);
+        }
+        expectedBytes = 0;
         visitChildren(node);
     }
 
     @Override
-    public void visit(InstrR_R node) {
-        hex.add(node.eval());
+    public void visit(InstrXD node) {
+        for (byte b : node.eval()) {
+            hex.add(b);
+        }
+        expectedBytes = 0;
+        visitChildren(node);
+    }
+
+    @Override
+    public void visit(InstrXDCB node) {
+        for (byte b : node.eval()) {
+            hex.add(b);
+        }
+        expectedBytes = 0;
+        visitChildren(node);
     }
 
     @Override
@@ -107,13 +111,28 @@ public class GenerateCodeVisitor extends NodeVisitor {
     @Override
     public void visit(Evaluated node) {
         if (expectedBytes == 1) {
-            hex.add((byte) (node.value & 0xFF));
+            addByte(node.value);
         } else if (expectedBytes == 2) {
-            byte byte0 = (byte) (node.value & 0xFF);
-            byte byte1 = (byte) (node.value >>> 8);
-
-            hex.add(byte0);
-            hex.add(byte1);
+            addWord(node.value);
+        } else {
+            node.getSizeBytes().ifPresent(size -> {
+                if (size == 1) {
+                    addByte(node.value);
+                } else if (size == 2) {
+                    addWord(node.value);
+                }
+            });
         }
+    }
+
+    private void addByte(int value) {
+        hex.add((byte) (value & 0xFF));
+    }
+
+    private void addWord(int value) {
+        byte byte0 = (byte) (value & 0xFF);
+        byte byte1 = (byte) (value >>> 8);
+        hex.add(byte0);
+        hex.add(byte1);
     }
 }

@@ -13,6 +13,8 @@ public abstract class Node {
     public final int column;
 
     private int address;
+    private Optional<Integer> maxValue;
+    private Optional<Integer> sizeBytes;
 
     public Node(int line, int column) {
         this.line = line;
@@ -44,10 +46,6 @@ public abstract class Node {
 
     public List<Node> getChildren() {
         return List.copyOf(children);
-    }
-
-    public int getChildrenCount() {
-        return children.size();
     }
 
     public <T extends Node> Optional<T> collectChild(Class<T> cl) {
@@ -138,5 +136,31 @@ public abstract class Node {
     public boolean equals(Object o) {
         if (this == o) return true;
         return !(o == null || getClass() != o.getClass());
+    }
+
+    public Optional<Integer> getMaxValue() {
+        return maxValue;
+    }
+    public Optional<Integer> getSizeBytes() {
+        return sizeBytes;
+    }
+
+    public Node setMaxValue(int maxValue) {
+        int wasBits = (int) Math.floor(Math.log10(Math.abs(maxValue)) / Math.log10(2)) + 1;
+        this.sizeBytes = Optional.of((int) Math.ceil(wasBits / 8.0));
+        this.maxValue = Optional.of(maxValue);
+        return this;
+    }
+
+    public Node setSizeBytes(int bytes) {
+        int value = 0;
+        for (int i = 0; i < bytes; i++) {
+            value <<= 8;
+            value |= 0xFF;
+        }
+
+        this.sizeBytes = Optional.of(bytes);
+        this.maxValue = Optional.of(value);
+        return this;
     }
 }

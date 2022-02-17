@@ -62,6 +62,13 @@ public class InstrED extends Node {
         this(opcode, (p << 1) | q, z);
     }
 
+    public byte[] eval() {
+        return new byte[] {
+            (byte)0xED,
+            (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF)
+        };
+    }
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

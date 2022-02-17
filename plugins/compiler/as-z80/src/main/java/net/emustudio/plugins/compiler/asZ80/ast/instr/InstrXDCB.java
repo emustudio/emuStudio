@@ -51,6 +51,14 @@ public class InstrXDCB extends Node {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), prefix, y, z);
     }
 
+    public byte[] eval() {
+        return new byte[] {
+            (byte)prefix,
+            (byte)0xCB,
+            (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF)
+        };
+    }
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

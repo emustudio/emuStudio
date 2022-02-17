@@ -4,10 +4,12 @@ import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDB;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDS;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDW;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.*;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoMacroArgument;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoOrg;
 
 import static net.emustudio.plugins.compiler.asZ80.CompileError.expressionIsBiggerThanExpected;
+import static net.emustudio.plugins.compiler.asZ80.CompileError.valueOutOfBounds;
 
 /**
  * Checks proper sizes of evaluated nodes
@@ -34,26 +36,32 @@ public class CheckExprSizesVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(InstrN node) {
-        expectedBytes = node.getExprSizeBytes();
-        if (expectedBytes == 1 && node.getChildrenCount() > 1) {
-            error(expressionIsBiggerThanExpected(node, expectedBytes, node.getChildrenCount()));
-        }
+    public void visit(Instr node) {
+        expectedBytes = 0;
         visitChildren(node);
     }
 
     @Override
-    public void visit(InstrR_N node) {
-        expectedBytes = 1;
-        if (node.getChildrenCount() > 1) {
-            error(expressionIsBiggerThanExpected(node, expectedBytes, node.getChildrenCount()));
-        }
+    public void visit(InstrCB node) {
+        expectedBytes = 0;
         visitChildren(node);
     }
 
     @Override
-    public void visit(InstrRP_NN node) {
-        expectedBytes = 2;
+    public void visit(InstrED node) {
+        expectedBytes = 0;
+        visitChildren(node);
+    }
+
+    @Override
+    public void visit(InstrXD node) {
+        expectedBytes = 0;
+        visitChildren(node);
+    }
+
+    @Override
+    public void visit(InstrXDCB node) {
+        expectedBytes = 0;
         visitChildren(node);
     }
 
@@ -70,15 +78,20 @@ public class CheckExprSizesVisitor extends NodeVisitor {
 
     @Override
     public void visit(Evaluated node) {
+        int value = node.value < 0 ? ((~node.value) * 2) : node.value;
         if (expectedBytes > 0) {
-            int value = node.value < 0 ? ((~node.value) * 2) : node.value;
-
             int wasBits = (int) Math.floor(Math.log10(Math.abs(value)) / Math.log10(2)) + 1;
             int wasBytes = (int) Math.ceil(wasBits / 8.0);
 
             if (wasBytes > expectedBytes) {
                 error(expressionIsBiggerThanExpected(node, expectedBytes, wasBytes));
             }
+        } else {
+            node.getMaxValue().ifPresent(maxValue -> {
+                if (value > maxValue) {
+                    error(valueOutOfBounds(node, 0, maxValue));
+                }
+            });
         }
     }
 }

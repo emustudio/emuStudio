@@ -31,6 +31,13 @@ public class InstrXD extends Node {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), prefix, x, (p << 1) | q, z);
     }
 
+    public byte[] eval() {
+        return new byte[] {
+            (byte)prefix,
+            (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF)
+        };
+    }
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

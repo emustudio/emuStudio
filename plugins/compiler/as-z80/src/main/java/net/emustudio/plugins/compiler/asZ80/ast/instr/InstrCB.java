@@ -44,6 +44,13 @@ public class InstrCB extends Node {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), y, z);
     }
 
+    public byte[] eval() {
+        return new byte[] {
+            (byte)0xCB,
+            (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF)
+        };
+    }
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
