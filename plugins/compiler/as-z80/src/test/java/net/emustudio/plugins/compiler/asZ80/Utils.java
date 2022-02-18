@@ -115,6 +115,18 @@ public class Utils {
         }
     }
 
+    public static void forRegister(Consumer<Pair<String, Integer>> f) {
+        for (Map.Entry<String, Integer> register : registers.entrySet()) {
+            f.accept(Pair.of(register.getKey(), register.getValue()));
+        }
+    }
+
+    public static void forRegPair(Consumer<Pair<String, Integer>> f) {
+        for (Map.Entry<String, Integer> regPair : regPairsBDHSP.entrySet()) {
+            f.accept(Pair.of(regPair.getKey(), regPair.getValue()));
+        }
+    }
+
     public static void assertTrees(Node expected, Node result) {
         assertEquals("Children size does not match", expected.getChildren().size(), result.getChildren().size());
         assertEquals("Nodes are different", expected.getClass(), result.getClass());
