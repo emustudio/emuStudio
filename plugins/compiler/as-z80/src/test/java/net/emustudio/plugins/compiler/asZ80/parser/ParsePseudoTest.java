@@ -61,8 +61,8 @@ public class ParsePseudoTest {
                 .addChild(new PseudoIf(0, 0)
                     .addChild(new PseudoIfExpression(0, 0)
                         .addChild(new ExprNumber(0, 0, 1)))
-                    .addChild(new Instr(0, 0, OPCODE_RRC, x, y, z))
-                    .addChild(new Instr(0, 0, OPCODE_RRC, x, y, z))),
+                    .addChild(new Instr(0, 0, OPCODE_RRCA, 0, 1, 7))
+                    .addChild(new Instr(0, 0, OPCODE_RRCA, 0, 1, 7))),
             program
         );
     }
@@ -129,9 +129,9 @@ public class ParsePseudoTest {
                     .addChild(new ExprId(0, 0, "param1")))
                 .addChild(new PseudoMacroParameter(0, 0)
                     .addChild(new ExprId(0, 0, "param2")))
-                .addChild(new Instr(0, 0, OPCODE_RRC, x, y, z))
+                .addChild(new Instr(0, 0, OPCODE_RRCA, 0, 1, 7))
                 .addChild(new PseudoLabel(0, 0, "heylabel")
-                    .addChild(new InstrN(0, 0, OPCODE_ANI)
+                    .addChild(new Instr(0, 0, OPCODE_AND, 3, 4, 6)
                         .addChild(new ExprNumber(0, 0, 0x7F)))));
 
         assertTrees(expected, program);

@@ -1,6 +1,5 @@
 package net.emustudio.plugins.compiler.asZ80.parser;
 
-import net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 import net.emustudio.plugins.compiler.asZ80.ParsingUtils;
 import net.emustudio.plugins.compiler.asZ80.Utils;
 import org.antlr.v4.runtime.Token;
@@ -9,6 +8,7 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 import static net.emustudio.plugins.compiler.asZ80.Utils.assertTokenTypes;
 import static net.emustudio.plugins.compiler.asZ80.Utils.getTokens;
 import static org.junit.Assert.assertEquals;

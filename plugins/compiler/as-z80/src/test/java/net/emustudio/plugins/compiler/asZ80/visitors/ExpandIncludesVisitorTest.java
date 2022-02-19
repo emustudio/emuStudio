@@ -30,11 +30,11 @@ public class ExpandIncludesVisitorTest {
         visitor.visit(program);
 
         Node expected = new Program()
-            .addChild(new Instr(0, 0, OPCODE_CMC, x, y, z))
+            .addChild(new Instr(0, 0, OPCODE_CCF, 0, 7, 7))
             .addChild(new PseudoLabel(0, 0, "sample")
-                .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_A)
+                .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
                     .addChild(new ExprNumber(0, 0, 0))))
-            .addChild(new Instr(0, 0, OPCODE_RET, x, y, z));
+            .addChild(new Instr(0, 0, OPCODE_RET, 3, 1, 1));
 
         assertTrees(expected, program);
     }
@@ -52,8 +52,8 @@ public class ExpandIncludesVisitorTest {
         visitor.visit(program);
 
         Node expected = new Program()
-            .addChild(new Instr(0, 0, OPCODE_RRC, x, y, z))
-            .addChild(new Instr(0, 0, OPCODE_RRC, x, y, z));
+            .addChild(new Instr(0, 0, OPCODE_RRCA, 0, 1, 7))
+            .addChild(new Instr(0, 0, OPCODE_RRCA, 0, 1, 7));
 
         assertTrees(expected, program);
     }

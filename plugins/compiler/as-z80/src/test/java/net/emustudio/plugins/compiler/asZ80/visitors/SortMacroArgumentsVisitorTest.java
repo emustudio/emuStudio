@@ -5,6 +5,7 @@ import net.emustudio.plugins.compiler.asZ80.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 import org.junit.Test;
 
@@ -32,7 +33,7 @@ public class SortMacroArgumentsVisitorTest {
                         .addChild(new ExprId(0, 0, "r")))
                     .addChild(new PseudoMacroParameter(0, 0)
                         .addChild(new ExprId(0, 0, "t")))
-                    .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_A)
+                    .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
                         .addChild(new ExprId(0, 0, "q")))
                     .addChild(new PseudoEqu(0, 0, "uu")
                         .addChild(new ExprInfix(0, 0, OP_ADD)
@@ -53,7 +54,7 @@ public class SortMacroArgumentsVisitorTest {
                     .addChild(new PseudoMacroArgument(0, 0)
                         .addChild(new ExprId(0, 0, "t"))
                         .addChild(new ExprNumber(0, 0, 3)))
-                    .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_A)
+                    .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
                         .addChild(new ExprId(0, 0, "q")))
                     .addChild(new PseudoEqu(0, 0, "uu")
                         .addChild(new ExprInfix(0, 0, OP_ADD)

@@ -181,14 +181,14 @@ public class EvaluateExprVisitorTest {
     public void testEvaluateIFwithForwardConst() {
         Program program = new Program();
         program
-            .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_A)
+            .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
                 .addChild(new ExprId(0, 0, "const")))
             .addChild(new PseudoIf(0, 0)
                 .addChild(new PseudoIfExpression(0, 0)
                     .addChild(new ExprInfix(0, 0, OP_EQUAL)
                         .addChild(new ExprCurrentAddress(0, 0))
                         .addChild(new ExprNumber(0, 0, 2))))
-                .addChild(new InstrN(0, 0, OPCODE_RST)
+                .addChild(new Instr(0, 0, OPCODE_RST, 3, 0, 7)
                     .addChild(new ExprNumber(0, 0, 0))))
             .addChild(new PseudoEqu(0, 0, "const")
                 .addChild(new ExprInfix(0, 0, OP_ADD)
@@ -200,9 +200,9 @@ public class EvaluateExprVisitorTest {
 
         assertTrees(
             new Program()
-                .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_A)
+                .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
                     .addChild(new Evaluated(0, 0, 6)))
-                .addChild(new InstrN(0, 0, OPCODE_RST)
+                .addChild(new Instr(0, 0, OPCODE_RST, 3, 0, 7)
                     .addChild(new Evaluated(0, 0, 0))),
             program
         );
@@ -219,7 +219,7 @@ public class EvaluateExprVisitorTest {
                     .addChild(new ExprInfix(0, 0, OP_EQUAL)
                         .addChild(new ExprCurrentAddress(0, 0))
                         .addChild(new ExprId(0, 0, "const"))))
-                .addChild(new InstrN(0, 0, OPCODE_RST)
+                .addChild(new Instr(0, 0, OPCODE_RST, 3, 0, 7)
                     .addChild(new ExprNumber(0, 0, 0))))
             .addChild(new PseudoEqu(0, 0, "const")
                 .addChild(new ExprInfix(0, 0, OP_ADD)
@@ -239,7 +239,7 @@ public class EvaluateExprVisitorTest {
             .addChild(new PseudoIf(0, 0)
                 .addChild(new PseudoIfExpression(0, 0)
                     .addChild(new ExprNumber(0, 0, 0)))
-                .addChild(new InstrN(0, 0, OPCODE_RST)
+                .addChild(new Instr(0, 0, OPCODE_RST, 3, 0, 7)
                     .addChild(new ExprNumber(0, 0, 0))));
 
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
@@ -252,11 +252,11 @@ public class EvaluateExprVisitorTest {
     public void testEvaluateSETforwardTwoTimes() {
         Program program = new Program();
         program
-            .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_A)
+            .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
                 .addChild(new ExprId(0, 0, "const")))
             .addChild(new PseudoSet(0, 0, "const")
                 .addChild(new ExprNumber(0, 0, 1)))
-            .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_B)
+            .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 6)
                 .addChild(new ExprId(0, 0, "const")))
             .addChild(new PseudoSet(0, 0, "const")
                 .addChild(new ExprNumber(0, 0, 2)));
@@ -266,11 +266,11 @@ public class EvaluateExprVisitorTest {
 
         assertTrees(
             new Program()
-                .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_A)
+                .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
                     .addChild(new Evaluated(0, 0, 1)))
                 .addChild(new PseudoSet(0, 0, "const")
                     .addChild(new Evaluated(0, 0, 1)))
-                .addChild(new InstrR_N(0, 0, OPCODE_MVI, REG_B)
+                .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 6)
                     .addChild(new Evaluated(0, 0, 1)))
                 .addChild(new PseudoSet(0, 0, "const")
                     .addChild(new Evaluated(0, 0, 2))),
@@ -372,7 +372,7 @@ public class EvaluateExprVisitorTest {
                 .addChild(new PseudoMacroArgument(0, 0)
                     .addChild(new ExprId(0, 0, "addr"))
                     .addChild(new ExprId(0, 0, "label")))
-                .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, REG_B)
+                .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
                     .addChild(new ExprId(0, 0, "addr"))));
 
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
@@ -384,7 +384,7 @@ public class EvaluateExprVisitorTest {
                     .addChild(new PseudoMacroArgument(0, 0)
                         .addChild(new ExprId(0, 0, "addr"))
                         .addChild(new Evaluated(0, 0, 0)))
-                    .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
                         .addChild(new Evaluated(0, 0, 0)))),
             program
         );
@@ -398,7 +398,7 @@ public class EvaluateExprVisitorTest {
                 .addChild(new PseudoMacroArgument(0, 0)
                     .addChild(new ExprId(0, 0, "label"))
                     .addChild(new ExprId(0, 0, "addr")))
-                .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, REG_B)
+                .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
                     .addChild(new ExprId(0, 0, "addr"))))
             .addChild(new PseudoLabel(0, 0, "label"));
 
@@ -416,15 +416,15 @@ public class EvaluateExprVisitorTest {
                 .addChild(new PseudoMacroArgument(0, 0)
                     .addChild(new ExprId(0, 0, "arg"))
                     .addChild(new ExprNumber(0, 0, 0)))
-                .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, REG_B)
+                .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
                     .addChild(new ExprId(0, 0, "arg")))
                 .addChild(new PseudoMacroCall(0, 0, "y")
                     .addChild(new PseudoMacroArgument(0, 0)
                         .addChild(new ExprId(0, 0, "arg"))
                         .addChild(new ExprNumber(0, 0, 1)))
-                    .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
                         .addChild(new ExprId(0, 0, "arg"))))
-                .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, REG_B)
+                .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
                     .addChild(new ExprId(0, 0, "arg"))));
 
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
@@ -436,15 +436,15 @@ public class EvaluateExprVisitorTest {
                     .addChild(new PseudoMacroArgument(0, 0)
                         .addChild(new ExprId(0, 0, "arg"))
                         .addChild(new Evaluated(0, 0, 0)))
-                    .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
                         .addChild(new Evaluated(0, 0, 0)))
                     .addChild(new PseudoMacroCall(0, 0, "y")
                         .addChild(new PseudoMacroArgument(0, 0)
                             .addChild(new ExprId(0, 0, "arg"))
                             .addChild(new Evaluated(0, 0, 1)))
-                        .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, REG_B)
+                        .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
                             .addChild(new Evaluated(0, 0, 1))))
-                    .addChild(new InstrRP_NN(0, 0, OPCODE_LXI, REG_B)
+                    .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
                         .addChild(new Evaluated(0, 0, 0)))),
             program
         );
@@ -455,13 +455,13 @@ public class EvaluateExprVisitorTest {
         Program program = new Program();
         program
             .addChild(new PseudoLabel(0, 0, "label")
-                .addChild(new Instr(0, 0, OPCODE_RET, x, y, z)));
+                .addChild(new Instr(0, 0, OPCODE_RET, 3, 1, 1)));
 
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
         visitor.visit(program);
 
         assertTrees(
-            new Program().addChild(new Instr(0, 0, OPCODE_RET, x, y, z)),
+            new Program().addChild(new Instr(0, 0, OPCODE_RET, 3, 1, 1)),
             program
         );
     }

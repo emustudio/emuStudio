@@ -13,8 +13,8 @@ public class CreatePseudoVisitor extends AsZ80ParserBaseVisitor<Node>  {
     @Override
     public Node visitPseudoOrg(PseudoOrgContext ctx) {
         Token start = ctx.getStart();
-        PseudoOrg pseudo = new PseudoOrg(start.getLine(), start.getCharPositionInLine());
-        pseudo.addChild(CreateVisitors.expr.visit(ctx.expr));
+        Node pseudo = new PseudoOrg(start.getLine(), start.getCharPositionInLine()).setSizeBytes(2);
+        pseudo.addChild(CreateVisitors.expr.visit(ctx.expr).setSizeBytes(2));
         return pseudo;
     }
 
