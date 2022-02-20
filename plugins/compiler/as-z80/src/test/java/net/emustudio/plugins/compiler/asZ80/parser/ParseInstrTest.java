@@ -9,6 +9,7 @@ import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrCB;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrED;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrXDCB;
 import org.junit.Test;
 
 import java.util.Random;
@@ -160,6 +161,43 @@ public class ParseInstrTest {
         assertInstrExpr("rst", OPCODE_RST, 3, 0, 7);
     }
 
+    @Test
+    public void testInstrXDCB() {
+        Random random = new Random();
+        forRegister(register -> {
+            int z = CompilerTables.registers.get(register.r);
+            forRot(rot -> {
+                int y = CompilerTables.rot.get(rot.r);
+                if (z != 6) {
+                    assertInstrXDCBExpr(rot.l + " (ix + ", "), " + register.l, rot.r, 0xDD, y, z);
+                    assertInstrXDCBExpr(rot.l + " (iy + ", "), " + register.l, rot.r, 0xFD, y, z);
+                }
+            });
+
+            int y = Math.abs(random.nextInt() % 8);
+            if (z != 6) {
+                assertInstrXDCBExprBit("res " + y + ", (ix + ", "), " + register.l, OPCODE_RES, 0xDD, y, z);
+                assertInstrXDCBExprBit("res " + y + ", (iy + ", "), " + register.l, OPCODE_RES, 0xFD, y, z);
+                assertInstrXDCBExprBit("set " + y + ", (ix + ", "), " + register.l, OPCODE_SET, 0xDD, y, z);
+                assertInstrXDCBExprBit("set " + y + ", (iy + ", "), " + register.l, OPCODE_SET, 0xFD, y, z);
+            }
+        });
+
+        forRot(rot -> {
+            int y = CompilerTables.rot.get(rot.r);
+            assertInstrXDCBExpr(rot.l + " (ix + ", ")", rot.r, 0xDD, y, 6);
+            assertInstrXDCBExpr(rot.l + " (iy + ", ")", rot.r, 0xFD, y, 6);
+        });
+
+        int y = Math.abs(random.nextInt() % 8);
+        assertInstrXDCBExprBit("bit " + y + ", (ix + ", ")", OPCODE_BIT, 0xDD, y, 6);
+        assertInstrXDCBExprBit("bit " + y + ", (iy + ", ")", OPCODE_BIT, 0xFD, y, 6);
+        assertInstrXDCBExprBit("res " + y + ", (ix + ", ")", OPCODE_RES, 0xDD, y, 6);
+        assertInstrXDCBExprBit("res " + y + ", (iy + ", ")", OPCODE_RES, 0xFD, y, 6);
+        assertInstrXDCBExprBit("set " + y + ", (ix + ", ")", OPCODE_SET, 0xDD, y, 6);
+        assertInstrXDCBExprBit("set " + y + ", (iy + ", ")", OPCODE_SET, 0xFD, y, 6);
+    }
+
 
     private void assertInstr(String instr, int instrType, int x, int y, int z) {
         forStringCaseVariations(instr, variation -> {
@@ -226,6 +264,37 @@ public class ParseInstrTest {
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation);
             assertTrees(new Program().addChild(new InstrCB(0, 0, instrType, 0, z).addChild(expr)), program);
+        });
+    }
+
+    private void assertInstrXDCBExpr(String instrPrefix, String instrPostfix, int instrType, int prefix, int y, int z) {
+        Node expr = new ExprInfix(0, 0, OP_ADD)
+            .addChild(new ExprCurrentAddress(0, 0))
+            .addChild(new ExprNumber(0, 0, 5));
+
+        forStringCaseVariations(instrPrefix, instrPrefixVariation -> {
+            forStringCaseVariations(instrPostfix, instrPostfixVariation -> {
+                Program program = parseProgram(instrPrefixVariation + " $ + 5" + instrPostfixVariation);
+                assertTrees(new Program().addChild(new InstrXDCB(0, 0, instrType, prefix, y, z).addChild(expr)), program);
+            });
+        });
+    }
+
+    private void assertInstrXDCBExprBit(String instrPrefix, String instrPostfix, int instrType, int prefix, int y, int z) {
+        Node expr = new ExprInfix(0, 0, OP_ADD)
+            .addChild(new ExprCurrentAddress(0, 0))
+            .addChild(new ExprNumber(0, 0, 5));
+
+        Node yExpr = new ExprNumber(0, 0, y);
+
+        forStringCaseVariations(instrPrefix, instrPrefixVariation -> {
+            forStringCaseVariations(instrPostfix, instrPostfixVariation -> {
+                Program program = parseProgram(instrPrefixVariation + " $ + 5" + instrPostfixVariation);
+                assertTrees(new Program()
+                    .addChild(new InstrXDCB(0, 0, instrType, prefix, 0, z)
+                        .addChild(expr)
+                        .addChild(yExpr)), program);
+            });
         });
     }
 }

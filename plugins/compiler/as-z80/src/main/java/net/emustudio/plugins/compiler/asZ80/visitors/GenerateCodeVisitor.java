@@ -89,11 +89,14 @@ public class GenerateCodeVisitor extends NodeVisitor {
 
     @Override
     public void visit(InstrXDCB node) {
-        for (byte b : node.eval()) {
-            hex.add(b);
+        byte[] eval = node.eval();
+        for (int i = 0; i < eval.length - 1; i++) {
+            // opcode goes after displacement
+            hex.add(eval[i]);
         }
         expectedBytes = 0;
         visitChildren(node);
+        hex.add(eval[eval.length - 1]); // opcode
     }
 
     @Override

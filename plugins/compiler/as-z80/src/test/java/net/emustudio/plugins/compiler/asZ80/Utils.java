@@ -47,6 +47,16 @@ public class Utils {
         "af", REG_AF
     );
 
+    public static Map<String, Integer> rot = Map.of(
+        "rlc", OPCODE_RLC,
+        "rrc", OPCODE_RRC,
+        "rl", OPCODE_RL,
+        "rr", OPCODE_RR,
+        "sla", OPCODE_SLA,
+        "sra", OPCODE_SRA,
+        "sll", OPCODE_SLL,
+        "srl", OPCODE_SRL
+    );
 
     public static List<Token> getTokens(String variation) {
         AsZ80Lexer lexer = new AsZ80Lexer(CharStreams.fromString(variation));
@@ -115,6 +125,12 @@ public class Utils {
     public static void forRegister(Consumer<Pair<String, Integer>> f) {
         for (Map.Entry<String, Integer> register : registers.entrySet()) {
             f.accept(Pair.of(register.getKey(), register.getValue()));
+        }
+    }
+
+    public static void forRot(Consumer<Pair<String, Integer>> f) {
+        for (Map.Entry<String, Integer> rot : rot.entrySet()) {
+            f.accept(Pair.of(rot.getKey(), rot.getValue()));
         }
     }
 

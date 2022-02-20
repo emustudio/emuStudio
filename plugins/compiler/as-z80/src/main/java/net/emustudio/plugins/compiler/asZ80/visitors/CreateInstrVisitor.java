@@ -57,7 +57,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         Node instr = new InstrXDCB(ctx.opcode, prefix, 0, 6).setSizeBytes(4);
         instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         instr.addChild(CreateVisitors.expr.visit(ctx.n).setMaxValue(7));
-        return super.visitInstrXDCB_N(ctx);
+        return instr;
     }
 
     @Override
