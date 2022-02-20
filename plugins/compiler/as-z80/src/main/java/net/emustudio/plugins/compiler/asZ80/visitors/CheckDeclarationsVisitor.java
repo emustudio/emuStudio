@@ -62,7 +62,7 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(PseudoSet node) {
+    public void visit(PseudoVar node) {
         currentDeclarationId = normalizeId(node.id);
         visitChildren(node);
         addVariable(node.id, node);

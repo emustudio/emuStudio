@@ -47,13 +47,13 @@ rInstruction:
   | opcode=OPCODE_OUT SEP_LPAR REG_C SEP_RPAR SEP_COMMA n=LIT_NUMBER            # instrED_C
   | opcode=OPCODE_SBC REG_HL SEP_COMMA rp=rRegPair                              # instrED_RP
   | opcode=OPCODE_ADC REG_HL SEP_COMMA rp=rRegPair                              # instrED_RP
-  | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA rp=rRegPair     # instrED_NN_RP
-  | opcode=OPCODE_LD rp=rRegPair SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR     # instrED_RP_NN
+  | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA rp=(REG_BC|REG_DE|REG_SP)  # instrED_NN_RP
+  | opcode=OPCODE_LD rp=(REG_BC|REG_DE|REG_SP) SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR  # instrED_RP_NN
   | opcode=OPCODE_IM im=(IM_0|IM_1|IM_2|IM_01)                                  # instrED_IM
-  | opcode=OPCODE_LD dst=REG_I src=REG_A                                        # instrED_RIA_RIA
-  | opcode=OPCODE_LD dst=REG_A src=REG_I                                        # instrED_RIA_RIA
-  | opcode=OPCODE_LD dst=REG_R src=REG_A                                        # instrED_RIA_RIA
-  | opcode=OPCODE_LD dst=REG_A src=REG_R                                        # instrED_RIA_RIA
+  | opcode=OPCODE_LD dst=REG_I SEP_COMMA src=REG_A                              # instrED_RIA_RIA
+  | opcode=OPCODE_LD dst=REG_A SEP_COMMA src=REG_I                              # instrED_RIA_RIA
+  | opcode=OPCODE_LD dst=REG_R SEP_COMMA src=REG_A                              # instrED_RIA_RIA
+  | opcode=OPCODE_LD dst=REG_A SEP_COMMA src=REG_R                              # instrED_RIA_RIA
   | opcode=OPCODE_NEG                                                           # instrED
   | opcode=OPCODE_RETN                                                          # instrED
   | opcode=OPCODE_RETI                                                          # instrED
@@ -141,6 +141,7 @@ rInstruction:
 
   | opcode=OPCODE_LD SEP_LPAR rp=(REG_BC|REG_DE) SEP_RPAR SEP_COMMA REG_A       # instrRef_RP   // x=0, z=2, q=0, p=rp
   | opcode=OPCODE_JP SEP_LPAR rp=REG_HL SEP_RPAR                                # instrRef_RP   // x=3, z=1, q=1, p=2
+  | opcode=OPCODE_JP rp=REG_HL                                                  # instrRef_RP   // x=3, z=1, q=1, p=2
 
   | opcode=OPCODE_EX SEP_LPAR dst=REG_SP SEP_RPAR SEP_COMMA src=REG_HL          # instrRef_RP_RP // x=3, z=3, y=4
 
@@ -277,7 +278,7 @@ rDisplacement: SEP_LPAR ii=rII '+' n=rExpression SEP_RPAR;
 rPseudoCode:
   PREP_ORG expr=rExpression                                                                # pseudoOrg
   | id=ID_IDENTIFIER PREP_EQU expr=rExpression                                             # pseudoEqu
-  | id=ID_IDENTIFIER PREP_SET expr=rExpression                                             # pseudoSet
+  | id=ID_IDENTIFIER PREP_VAR expr=rExpression                                             # pseudoVar
   | PREP_IF expr=rExpression EOL (rLine EOL)* EOL* PREP_ENDIF                              # pseudoIf
   | id=ID_IDENTIFIER PREP_MACRO params=rMacroParameters? EOL (rLine EOL)* EOL* PREP_ENDM   # pseudoMacroDef
   | id=ID_IDENTIFIER args=rMacroArguments?                                                 # pseudoMacroCall
@@ -308,16 +309,16 @@ rDWdata:
   ;
 
 rExpression:
- <assoc=right> unaryop=(OP_ADD|OP_SUBTRACT|OP_NOT|OP_NOT_2) expr=rExpression                     # exprUnary
+ SEP_LPAR expr=rExpression SEP_RPAR                                                              # exprParens
+ | <assoc=right> unaryop=(OP_ADD|OP_SUBTRACT|OP_NOT|OP_NOT_2) expr=rExpression                   # exprUnary
  | <assoc=left> expr1=rExpression op=(OP_MULTIPLY|OP_DIVIDE|OP_MOD|OP_MOD_2) expr2=rExpression   # exprInfix
  | <assoc=left> expr1=rExpression op=(OP_ADD|OP_SUBTRACT) expr2=rExpression                      # exprInfix
  | <assoc=left> expr1=rExpression op=(OP_SHL|OP_SHR|OP_SHR_2|OP_SHL_2) expr2=rExpression         # exprInfix
  | <assoc=right> expr1=rExpression op=(OP_GT|OP_GTE|OP_LT|OP_LTE) expr2=rExpression              # exprInfix
- | <assoc=left> expr1=rExpression op=(OP_AND|OP_AND_2) expr2=rExpression                         # exprInfix
- | <assoc=left> expr1=rExpression op=(OP_XOR|OP_XOR_2) expr2=rExpression                         # exprInfix
- | <assoc=left> expr1=rExpression op=(OP_OR|OP_OR_2) expr2=rExpression                           # exprInfix
  | <assoc=right> expr1=rExpression op=OP_EQUAL expr2=rExpression                                 # exprInfix
- | SEP_LPAR expr=rExpression SEP_RPAR                                                            # exprParens
+ | <assoc=left> expr1=rExpression op=OP_AND expr2=rExpression                                    # exprInfix
+ | <assoc=left> expr1=rExpression op=OP_XOR expr2=rExpression                                    # exprInfix
+ | <assoc=left> expr1=rExpression op=OP_OR expr2=rExpression                                     # exprInfix
  | num=LIT_NUMBER                                                                                # exprDec
  | num=LIT_HEXNUMBER_1                                                                           # exprHex1
  | num=LIT_HEXNUMBER_2                                                                           # exprHex2

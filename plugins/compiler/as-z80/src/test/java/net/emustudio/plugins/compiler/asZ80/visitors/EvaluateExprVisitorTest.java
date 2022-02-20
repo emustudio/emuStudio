@@ -254,11 +254,11 @@ public class EvaluateExprVisitorTest {
         program
             .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
                 .addChild(new ExprId(0, 0, "const")))
-            .addChild(new PseudoSet(0, 0, "const")
+            .addChild(new PseudoVar(0, 0, "const")
                 .addChild(new ExprNumber(0, 0, 1)))
             .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 6)
                 .addChild(new ExprId(0, 0, "const")))
-            .addChild(new PseudoSet(0, 0, "const")
+            .addChild(new PseudoVar(0, 0, "const")
                 .addChild(new ExprNumber(0, 0, 2)));
 
         EvaluateExprVisitor visitor = new EvaluateExprVisitor();
@@ -268,11 +268,11 @@ public class EvaluateExprVisitorTest {
             new Program()
                 .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
                     .addChild(new Evaluated(0, 0, 1)))
-                .addChild(new PseudoSet(0, 0, "const")
+                .addChild(new PseudoVar(0, 0, "const")
                     .addChild(new Evaluated(0, 0, 1)))
                 .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 6)
                     .addChild(new Evaluated(0, 0, 1)))
-                .addChild(new PseudoSet(0, 0, "const")
+                .addChild(new PseudoVar(0, 0, "const")
                     .addChild(new Evaluated(0, 0, 2))),
             program
         );
@@ -284,9 +284,9 @@ public class EvaluateExprVisitorTest {
         program
             .addChild(new DataDB(0, 0)
                 .addChild(new ExprId(0, 0, "id")))
-            .addChild(new PseudoSet(0, 0, "id")
+            .addChild(new PseudoVar(0, 0, "id")
                 .addChild(new ExprId(0, 0, "const")))
-            .addChild(new PseudoSet(0, 0, "id")
+            .addChild(new PseudoVar(0, 0, "id")
                 .addChild(new ExprNumber(0, 0, 2)))
             .addChild(new PseudoEqu(0, 0, "const")
                 .addChild(new ExprNumber(0, 0, 1)));
@@ -298,9 +298,9 @@ public class EvaluateExprVisitorTest {
             new Program()
                 .addChild(new DataDB(0, 0)
                     .addChild(new Evaluated(0, 0, 1)))
-                .addChild(new PseudoSet(0, 0, "id")
+                .addChild(new PseudoVar(0, 0, "id")
                     .addChild(new Evaluated(0, 0, 1)))
-                .addChild(new PseudoSet(0, 0, "id")
+                .addChild(new PseudoVar(0, 0, "id")
                     .addChild(new Evaluated(0, 0, 2))),
             program
         );
@@ -310,9 +310,9 @@ public class EvaluateExprVisitorTest {
     public void testTwoSETthenReference() {
         Program program = new Program();
         program
-            .addChild(new PseudoSet(0, 0, "id")
+            .addChild(new PseudoVar(0, 0, "id")
                 .addChild(new ExprId(0, 0, "const")))
-            .addChild(new PseudoSet(0, 0, "id")
+            .addChild(new PseudoVar(0, 0, "id")
                 .addChild(new ExprNumber(0, 0, 2)))
             .addChild(new PseudoEqu(0, 0, "const")
                 .addChild(new ExprNumber(0, 0, 1)))
@@ -324,9 +324,9 @@ public class EvaluateExprVisitorTest {
 
         assertTrees(
             new Program()
-                .addChild(new PseudoSet(0, 0, "id")
+                .addChild(new PseudoVar(0, 0, "id")
                     .addChild(new Evaluated(0, 0, 1)))
-                .addChild(new PseudoSet(0, 0, "id")
+                .addChild(new PseudoVar(0, 0, "id")
                     .addChild(new Evaluated(0, 0, 2)))
                 .addChild(new DataDB(0, 0)
                     .addChild(new Evaluated(0, 0, 2))),

@@ -97,7 +97,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
 
         tokenMap[PREP_ORG] = Token.PREPROCESSOR;
         tokenMap[PREP_EQU] = Token.PREPROCESSOR;
-        tokenMap[PREP_SET] = Token.PREPROCESSOR;
+        tokenMap[PREP_VAR] = Token.PREPROCESSOR;
         tokenMap[PREP_INCLUDE] = Token.PREPROCESSOR;
         tokenMap[PREP_IF] = Token.PREPROCESSOR;
         tokenMap[PREP_ENDIF] = Token.PREPROCESSOR;
@@ -148,11 +148,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[OP_NOT] = Token.OPERATOR;
         tokenMap[OP_NOT_2] = Token.OPERATOR;
         tokenMap[OP_AND] = Token.OPERATOR;
-        tokenMap[OP_AND_2] = Token.OPERATOR;
         tokenMap[OP_OR] = Token.OPERATOR;
-        tokenMap[OP_OR_2] = Token.OPERATOR;
         tokenMap[OP_XOR] = Token.OPERATOR;
-        tokenMap[OP_XOR_2] = Token.OPERATOR;
         tokenMap[OP_LT] = Token.OPERATOR;
         tokenMap[OP_LTE] = Token.OPERATOR;
         tokenMap[OP_GT] = Token.OPERATOR;

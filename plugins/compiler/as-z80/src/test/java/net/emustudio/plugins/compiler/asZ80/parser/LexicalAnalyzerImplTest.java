@@ -15,7 +15,7 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void testParseError1() {
-        assertTokenTypes("B &", REG_B, ERROR, EOF);
+        assertTokenTypes("B :", REG_B, ERROR, EOF);
     }
 
     @Test
@@ -166,10 +166,30 @@ public class LexicalAnalyzerImplTest {
     }
 
     @Test
+    public void parseIm() {
+        assertTokenTypesIgnoreCase("IM 0 0", OPCODE_IM, IM_0, LIT_NUMBER, EOF);
+        assertTokenTypesIgnoreCase("IM 0/1", OPCODE_IM, IM_01, EOF);
+        assertTokenTypesIgnoreCase("IM 3 0", OPCODE_IM, LIT_NUMBER, LIT_NUMBER, EOF);
+    }
+
+    @Test
+    public void parseRet() {
+        assertTokenTypesIgnoreCase("ret and", OPCODE_RET, OPCODE_AND, EOF);
+        assertTokenTypesIgnoreCase("ret nz", OPCODE_RET, COND_NZ, EOF);
+        assertTokenTypesIgnoreCase("ret c c", OPCODE_RET, COND_C, REG_C, EOF);
+    }
+
+    @Test
+    public void parseJp() {
+        assertTokenTypesIgnoreCase("jp c c", OPCODE_JP, COND_C, REG_C, EOF);
+        assertTokenTypesIgnoreCase("jp hl", OPCODE_JP, REG_HL, EOF);
+    }
+
+    @Test
     public void testParsePreprocessor() {
         assertTokenTypesIgnoreCase("ORG", PREP_ORG, EOF);
         assertTokenTypesIgnoreCase("EQU", PREP_EQU, EOF);
-        assertTokenTypesIgnoreCase("SET", PREP_SET, EOF);
+        assertTokenTypesIgnoreCase("VAR", PREP_VAR, EOF);
         assertTokenTypesIgnoreCase("INCLUDE", PREP_INCLUDE, EOF);
         assertTokenTypesIgnoreCase("IF", PREP_IF, EOF);
         assertTokenTypesIgnoreCase("ENDIF", PREP_ENDIF, EOF);
@@ -191,8 +211,16 @@ public class LexicalAnalyzerImplTest {
         assertTokenTypesIgnoreCase("H", REG_H, EOF);
         assertTokenTypesIgnoreCase("L", REG_L, EOF);
         assertTokenTypesIgnoreCase("AF", REG_AF, EOF);
-        assertTokenTypesIgnoreCase("AFF", REG_AFF, EOF);
+        assertTokenTypesIgnoreCase("AF'", REG_AFF, EOF);
         assertTokenTypesIgnoreCase("SP", REG_SP, EOF);
+        assertTokenTypesIgnoreCase("IX", REG_IX, EOF);
+        assertTokenTypesIgnoreCase("IY", REG_IY, EOF);
+        assertTokenTypesIgnoreCase("IXH", REG_IXH, EOF);
+        assertTokenTypesIgnoreCase("IXL", REG_IXL, EOF);
+        assertTokenTypesIgnoreCase("IYH", REG_IYH, EOF);
+        assertTokenTypesIgnoreCase("IYL", REG_IYL, EOF);
+        assertTokenTypesIgnoreCase("R", REG_R, EOF);
+        assertTokenTypesIgnoreCase("I", REG_I, EOF);
     }
 
     @Test
@@ -204,7 +232,7 @@ public class LexicalAnalyzerImplTest {
     public void testOperators1() {
         assertTokenTypes("+-*/=<<>><><=>=^%|&",
             OP_ADD, OP_SUBTRACT, OP_MULTIPLY, OP_DIVIDE, OP_EQUAL, OP_SHL_2, OP_SHR_2, OP_LT, OP_GT, OP_LTE, OP_GTE,
-            OP_XOR_2, OP_MOD_2, OP_OR_2, OP_AND_2, EOF);
+            OP_XOR, OP_MOD_2, OP_OR, OP_AND, EOF);
     }
 
     @Test
@@ -213,9 +241,6 @@ public class LexicalAnalyzerImplTest {
         assertTokenTypesIgnoreCase("SHR", OP_SHR, EOF);
         assertTokenTypesIgnoreCase("SHL", OP_SHL, EOF);
         assertTokenTypesIgnoreCase("NOT", OP_NOT, EOF);
-        assertTokenTypesIgnoreCase("AND", OP_AND, EOF);
-        assertTokenTypesIgnoreCase("OR", OP_OR, EOF);
-        assertTokenTypesIgnoreCase("XOR", OP_XOR, EOF);
     }
 
     @Test
@@ -233,6 +258,6 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void testCombineSpaceWithNoSpaceTokens() {
-        assertTokenTypes("abc=(XOR,MOD)", ID_IDENTIFIER, OP_EQUAL, SEP_LPAR, OP_XOR, SEP_COMMA, OP_MOD, SEP_RPAR, EOF);
+        assertTokenTypes("abc=(^,MOD)", ID_IDENTIFIER, OP_EQUAL, SEP_LPAR, OP_XOR, SEP_COMMA, OP_MOD, SEP_RPAR, EOF);
     }
 }

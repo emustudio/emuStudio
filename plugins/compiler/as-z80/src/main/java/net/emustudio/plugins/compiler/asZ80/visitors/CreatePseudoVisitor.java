@@ -26,8 +26,8 @@ public class CreatePseudoVisitor extends AsZ80ParserBaseVisitor<Node>  {
     }
 
     @Override
-    public Node visitPseudoSet(PseudoSetContext ctx) {
-        PseudoSet pseudo = new PseudoSet(ctx.id);
+    public Node visitPseudoVar(PseudoVarContext ctx) {
+        PseudoVar pseudo = new PseudoVar(ctx.id);
         pseudo.addChild(CreateVisitors.expr.visit(ctx.expr));
         return pseudo;
     }

@@ -95,14 +95,14 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_ADC REG_HL SEP_COMMA rp=rRegPair                              # instrED_RP
         int q = (ctx.opcode.getType() == OPCODE_SBC) ? 0 : 1;
         int p = CompilerTables.regPairs.get(ctx.rp.start.getType());
-        return new InstrED(ctx.opcode, p, q, 2).setSizeBytes(2);
+        return new InstrED(ctx.opcode, p,q, 2).setSizeBytes(2);
     }
 
     @Override
     public Node visitInstrED_NN_RP(InstrED_NN_RPContext ctx) {
         //  | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA rp=rRegPair     # instrED_NN_RP
         int q = 0;
-        int p = CompilerTables.regPairs.get(ctx.rp.start.getType());
+        int p = CompilerTables.regPairs.get(ctx.rp.getType());
         Node instr = new InstrED(ctx.opcode, p, q, 3).setSizeBytes(4);
         instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;
@@ -112,7 +112,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     public Node visitInstrED_RP_NN(InstrED_RP_NNContext ctx) {
         //  | opcode=OPCODE_LD rp=rRegPair SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR     # instrED_RP_NN
         int q = 1;
-        int p = CompilerTables.regPairs.get(ctx.rp.start.getType());
+        int p = CompilerTables.regPairs.get(ctx.rp.getType());
         Node instr = new InstrED(ctx.opcode, p, q, 3).setSizeBytes(4);
         instr.addChild(CreateVisitors.expr.visit(ctx.nn).setSizeBytes(2));
         return instr;

@@ -129,7 +129,7 @@ public class NodeVisitor {
         visitChildren(node);
     }
 
-    public void visit(PseudoSet node) {
+    public void visit(PseudoVar node) {
         visitChildren(node);
     }
 

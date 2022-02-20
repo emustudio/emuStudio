@@ -32,7 +32,7 @@ public class ParsePseudoTest {
     public void testVariable() {
         Program program = parseProgram("here set 0x55");
         assertTrees(new Program()
-                .addChild(new PseudoSet(0, 0, "here")
+                .addChild(new PseudoVar(0, 0, "here")
                     .addChild(new ExprNumber(0, 0, 0x55))),
             program
         );

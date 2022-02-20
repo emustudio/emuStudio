@@ -110,7 +110,7 @@ COND_P: P -> popMode;
 COND_PE: P E -> popMode;
 COND_PO: P O -> popMode;
 COND_WS: [ \t\f]+ -> skip;
-COND_UNRECOGNIZED: ({"cCnNzZmMpP".indexOf((char) _input.LA(1)) == -1}?) -> popMode;
+ERROR_COND: ({"cCnNzZmMpP".indexOf((char) _input.LA(1)) == -1}?) -> popMode,skip;
 
 mode IM_NUMBER;
 IM_01: '0/1' -> popMode;
@@ -118,14 +118,14 @@ IM_0: '0' -> popMode;
 IM_1: '1' -> popMode;
 IM_2: '2' -> popMode;
 IM_WS: [ \t\f]+ -> skip;
-IM_UNRECOGNIZED: ({"012".indexOf((char) _input.LA(1)) == -1}?) -> popMode;
+ERROR_IM: ({"012".indexOf((char) _input.LA(1)) == -1}?) -> popMode,skip;
 
 mode DEFAULT_MODE;
 
 // preprocessor
 PREP_ORG: O R G;
 PREP_EQU: E Q U;
-PREP_SET: S E T;
+PREP_VAR: V A R;
 PREP_IF: I F;
 PREP_ENDIF: E N D I F;
 PREP_INCLUDE: I N C L U D E;
@@ -164,9 +164,6 @@ OP_MOD: M O D;
 OP_SHR: S H R;
 OP_SHL: S H L;
 OP_NOT: N O T;
-OP_AND: A N D;
-OP_OR: O R;
-OP_XOR: X O R;
 
 // literals
 LIT_HEXNUMBER_1: '0' X [0-9a-fA-F]+;
@@ -204,9 +201,9 @@ OP_MOD_2: '%';
 OP_SHR_2: '>>';
 OP_SHL_2: '<<';
 OP_NOT_2: '~';
-OP_AND_2: '&';
-OP_OR_2: '|';
-OP_XOR_2: '^';
+OP_AND: '&';
+OP_OR: '|';
+OP_XOR: '^';
 
 WS : [ \t\f]+ -> skip;
 EOL: '\r'? '\n';

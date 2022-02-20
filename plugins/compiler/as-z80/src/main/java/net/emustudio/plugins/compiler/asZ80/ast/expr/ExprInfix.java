@@ -27,11 +27,8 @@ public class ExprInfix extends Node {
         infixOps.put(OP_MOD, (x, y) -> x % y);
         infixOps.put(OP_MOD_2, (x, y) -> x % y);
         infixOps.put(OP_AND, (x, y) -> x & y);
-        infixOps.put(OP_AND_2, (x, y) -> x & y);
         infixOps.put(OP_OR, (x, y) -> x | y);
-        infixOps.put(OP_OR_2, (x, y) -> x | y);
         infixOps.put(OP_XOR, (x, y) -> x ^ y);
-        infixOps.put(OP_XOR_2, (x, y) -> x ^ y);
         infixOps.put(OP_SHL, (x, y) -> x << y);
         infixOps.put(OP_SHL_2, (x, y) -> x << y);
         infixOps.put(OP_SHR, (x, y) -> x >>> y);

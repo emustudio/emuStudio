@@ -119,7 +119,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     @Override
-    public void visit(PseudoSet node) {
+    public void visit(PseudoVar node) {
         sizeBytes = 0; // expected number of bytes will be known on usage (DB, DW, DS, instruction with expr, ORG)
         String normalizedId = normalizeId(node.id);
         if (!doNotEvaluateVariables.contains(normalizedId)) {

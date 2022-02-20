@@ -6,16 +6,16 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
 
-public class PseudoSet extends Node {
+public class PseudoVar extends Node {
     public final String id;
 
-    public PseudoSet(int line, int column, String id) {
+    public PseudoVar(int line, int column, String id) {
         super(line, column);
         this.id = Objects.requireNonNull(id);
         // expr is the only child
     }
 
-    public PseudoSet(Token id) {
+    public PseudoVar(Token id) {
         this(id.getLine(), id.getCharPositionInLine(), id.getText());
     }
 
@@ -26,12 +26,12 @@ public class PseudoSet extends Node {
 
     @Override
     protected String toStringShallow() {
-        return "PseudoSet(" + id + ")";
+        return "PseudoVar(" + id + ")";
     }
 
     @Override
     protected Node mkCopy() {
-        return new PseudoSet(line, column, id);
+        return new PseudoVar(line, column, id);
     }
 
     @Override
@@ -39,7 +39,7 @@ public class PseudoSet extends Node {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        PseudoSet pseudoSet = (PseudoSet) o;
-        return Objects.equals(id, pseudoSet.id);
+        PseudoVar pseudoVar = (PseudoVar) o;
+        return Objects.equals(id, pseudoVar.id);
     }
 }

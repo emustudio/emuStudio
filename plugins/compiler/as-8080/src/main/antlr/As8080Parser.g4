@@ -117,7 +117,7 @@ rRegister:
 rPseudoCode:
   PREP_ORG expr=rExpression                                                                # pseudoOrg
   | id=ID_IDENTIFIER PREP_EQU expr=rExpression                                             # pseudoEqu
-  | id=ID_IDENTIFIER PREP_SET expr=rExpression                                             # pseudoSet
+  | id=ID_IDENTIFIER PREP_SET expr=rExpression                                             # pseudoVar
   | PREP_IF expr=rExpression EOL (rLine EOL)* EOL* PREP_ENDIF                              # pseudoIf
   | id=ID_IDENTIFIER PREP_MACRO params=rMacroParameters? EOL (rLine EOL)* EOL* PREP_ENDM   # pseudoMacroDef
   | id=ID_IDENTIFIER args=rMacroArguments?                                                 # pseudoMacroCall

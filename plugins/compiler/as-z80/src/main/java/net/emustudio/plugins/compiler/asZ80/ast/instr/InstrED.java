@@ -26,6 +26,8 @@ public class InstrED extends Node {
         xmap.put(OPCODE_RETN, 1);
         xmap.put(OPCODE_RETI, 1);
         xmap.put(OPCODE_IM, 1);
+        xmap.put(OPCODE_RRD, 1);
+        xmap.put(OPCODE_RLD, 1);
         xmap.put(OPCODE_LDI, 2);
         xmap.put(OPCODE_LDD, 2);
         xmap.put(OPCODE_LDIR, 2);
@@ -58,7 +60,7 @@ public class InstrED extends Node {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), y, z);
     }
 
-    public InstrED(Token opcode, int q, int p, int z) {
+    public InstrED(Token opcode, int p, int q, int z) {
         this(opcode, (p << 1) | q, z);
     }
 

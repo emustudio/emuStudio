@@ -33,20 +33,17 @@ public class Utils {
         "(HL)", REG_HL
     );
 
-    public static Map<String, Integer> regPairsBD = Map.of(
-        "b", REG_B,
-        "d", REG_D
-    );
-    public static Map<String, Integer> regPairsBDHSP = Map.of(
-        "b", REG_B,
-        "d", REG_D,
-        "h", REG_H,
+    public static Map<String, Integer> regPairs = Map.of(
+        "bc", REG_BC,
+        "de", REG_DE,
+        "hl", REG_HL,
         "sp", REG_SP
     );
-    public static Map<String, Integer> regPairsBDHAF = Map.of(
-        "b", REG_B,
-        "d", REG_D,
-        "h", REG_H,
+
+    public static Map<String, Integer> regPairs2 = Map.of(
+        "bc", REG_BC,
+        "de", REG_DE,
+        "hl", REG_HL,
         "af", REG_AF
     );
 
@@ -122,7 +119,7 @@ public class Utils {
     }
 
     public static void forRegPair(Consumer<Pair<String, Integer>> f) {
-        for (Map.Entry<String, Integer> regPair : regPairsBDHSP.entrySet()) {
+        for (Map.Entry<String, Integer> regPair : regPairs.entrySet()) {
             f.accept(Pair.of(regPair.getKey(), regPair.getValue()));
         }
     }

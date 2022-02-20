@@ -1,5 +1,6 @@
 package net.emustudio.plugins.compiler.asZ80.parser;
 
+import net.emustudio.plugins.compiler.asZ80.CompilerTables;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprCurrentAddress;
@@ -37,6 +38,7 @@ public class ParseInstrTest {
         assertInstr("ret", OPCODE_RET, 3, 1, 1);
         assertInstr("exx", OPCODE_EXX, 3, 3, 1);
         assertInstr("jp hl", OPCODE_JP, 3, 5, 1);
+        assertInstr("jp (hl)", OPCODE_JP, 3, 5, 1);
         assertInstr("ld sp, hl", OPCODE_LD, 3, 7, 1);
         assertInstr("ex (sp), hl", OPCODE_EX, 3, 4, 3);
         assertInstr("ex de, hl", OPCODE_EX, 3, 5, 3);
@@ -79,37 +81,41 @@ public class ParseInstrTest {
     public void testInstrReg() {
         Random random = new Random();
         forRegister(regValue -> {
-            assertInstr("inc " + regValue.l, OPCODE_INC, 0, regValue.r, 4);
-            assertInstr("dec " + regValue.l, OPCODE_DEC, 0, regValue.r, 5);
-            assertInstrExpr("ld " + regValue.l + ", ", OPCODE_LD, 0, regValue.r, 6);
-            assertInstr("add a, " + regValue.l, OPCODE_ADD, 2, 0, regValue.r);
-            assertInstr("adc a, " + regValue.l, OPCODE_ADC, 2, 1, regValue.r);
-            assertInstr("sub " + regValue.l, OPCODE_SUB, 2, 2, regValue.r);
-            assertInstr("sbc a, " + regValue.l, OPCODE_SBC, 2, 3, regValue.r);
-            assertInstr("and " + regValue.l, OPCODE_AND, 2, 4, regValue.r);
-            assertInstr("xor " + regValue.l, OPCODE_XOR, 2, 5, regValue.r);
-            assertInstr("or " + regValue.l, OPCODE_OR, 2, 6, regValue.r);
-            assertInstr("cp " + regValue.l, OPCODE_CP, 2, 7, regValue.r);
+            int r = CompilerTables.registers.get(regValue.r);
+            assertInstr("inc " + regValue.l, OPCODE_INC, 0, r, 4);
+            assertInstr("dec " + regValue.l, OPCODE_DEC, 0, r, 5);
+            assertInstrExpr("ld " + regValue.l + ", ", OPCODE_LD, 0, r, 6);
+            assertInstr("add a, " + regValue.l, OPCODE_ADD, 2, 0, r);
+            assertInstr("adc a, " + regValue.l, OPCODE_ADC, 2, 1, r);
+            assertInstr("sub " + regValue.l, OPCODE_SUB, 2, 2, r);
+            assertInstr("sbc a, " + regValue.l, OPCODE_SBC, 2, 3, r);
+            assertInstr("and " + regValue.l, OPCODE_AND, 2, 4, r);
+            assertInstr("xor " + regValue.l, OPCODE_XOR, 2, 5, r);
+            assertInstr("or " + regValue.l, OPCODE_OR, 2, 6, r);
+            assertInstr("cp " + regValue.l, OPCODE_CP, 2, 7, r);
 
-            assertInstrCBNoArgs("rlc " + regValue.l, OPCODE_RLC, 0, regValue.r);
-            assertInstrCBNoArgs("rrc " + regValue.l, OPCODE_RRC, 1, regValue.r);
-            assertInstrCBNoArgs("rl " + regValue.l, OPCODE_RL, 2, regValue.r);
-            assertInstrCBNoArgs("rr " + regValue.l, OPCODE_RR, 3, regValue.r);
-            assertInstrCBNoArgs("sla " + regValue.l, OPCODE_SLA, 4, regValue.r);
-            assertInstrCBNoArgs("sra " + regValue.l, OPCODE_SRA, 5, regValue.r);
-            assertInstrCBNoArgs("sll " + regValue.l, OPCODE_SLL, 6, regValue.r);
-            assertInstrCBNoArgs("srl " + regValue.l, OPCODE_SRL, 7, regValue.r);
+            assertInstrCBNoArgs("rlc " + regValue.l, OPCODE_RLC, 0, r);
+            assertInstrCBNoArgs("rrc " + regValue.l, OPCODE_RRC, 1, r);
+            assertInstrCBNoArgs("rl " + regValue.l, OPCODE_RL, 2, r);
+            assertInstrCBNoArgs("rr " + regValue.l, OPCODE_RR, 3, r);
+            assertInstrCBNoArgs("sla " + regValue.l, OPCODE_SLA, 4, r);
+            assertInstrCBNoArgs("sra " + regValue.l, OPCODE_SRA, 5, r);
+            assertInstrCBNoArgs("sll " + regValue.l, OPCODE_SLL, 6, r);
+            assertInstrCBNoArgs("srl " + regValue.l, OPCODE_SRL, 7, r);
 
-            int bit = random.nextInt() % 8;
-            assertInstrCBExprBit("bit " + bit + ", " + regValue.l, OPCODE_BIT, bit, regValue.r);
-            assertInstrCBExprBit("res " + bit + ", " + regValue.l, OPCODE_RES, bit, regValue.r);
-            assertInstrCBExprBit("set " + bit + ", " + regValue.l, OPCODE_SET, bit, regValue.r);
+            int bit = Math.abs(random.nextInt() % 8);
+            assertInstrCBExprBit("bit " + bit + ", " + regValue.l, OPCODE_BIT, bit, r);
+            assertInstrCBExprBit("res " + bit + ", " + regValue.l, OPCODE_RES, bit, r);
+            assertInstrCBExprBit("set " + bit + ", " + regValue.l, OPCODE_SET, bit, r);
 
-            assertInstrED("in " + regValue.l + ", (c)", OPCODE_IN, regValue.r, 0);
-            assertInstrED("out (c), " + regValue.l, OPCODE_OUT, regValue.r, 1);
+            if (r != 6) {
+                assertInstrED("in " + regValue.l + ", (c)", OPCODE_IN, r, 0);
+                assertInstrED("out (c), " + regValue.l, OPCODE_OUT, r, 1);
+            }
 
             forRegister(regValue2 -> {
-                assertInstr("ld " + regValue.l + ", " + regValue2.l, OPCODE_LD, 1, regValue.r, regValue2.r);
+                int r2 = CompilerTables.registers.get(regValue2.r);
+                assertInstr("ld " + regValue.l + ", " + regValue2.l, OPCODE_LD, 1, r, r2);
             });
         });
     }
@@ -117,14 +123,19 @@ public class ParseInstrTest {
     @Test
     public void testInstrRP() {
         forRegPair(regPair -> {
-            assertInstrExpr("ld " + regPair.l + ", ", OPCODE_LD, 0, regPair.r, 0, 1);
-            assertInstr("add hl, " + regPair.l, OPCODE_ADD, 0, (regPair.r << 1) | 1, 1);
-            assertInstr("inc " + regPair.l, OPCODE_INC, 0, regPair.r, 0, 3);
-            assertInstr("dec " + regPair.l, OPCODE_DEC, 0, regPair.r, 1, 3);
-            assertInstrED("sbc hl, " + regPair.l, OPCODE_SBC, regPair.r << 1, 2);
-            assertInstrED("adc hl, " + regPair.l, OPCODE_ADC, (regPair.r << 1) | 1, 2);
-            assertInstrEDExpr("ld (", "), " + regPair.l, OPCODE_LD, regPair.r << 1, 3);
-            assertInstrEDExpr("ld " + regPair.l + ", (", ")" + regPair.l, OPCODE_LD, (regPair.r << 1) | 1, 3);
+            int rp = CompilerTables.regPairs.get(regPair.r);
+
+            assertInstrExpr("ld " + regPair.l + ", ", OPCODE_LD, 0, rp, 0, 1);
+            assertInstr("add hl, " + regPair.l, OPCODE_ADD, 0, (rp << 1) | 1, 1);
+            assertInstr("inc " + regPair.l, OPCODE_INC, 0, rp, 0, 3);
+            assertInstr("dec " + regPair.l, OPCODE_DEC, 0, rp, 1, 3);
+            assertInstrED("sbc hl, " + regPair.l, OPCODE_SBC, rp << 1, 2);
+            assertInstrED("adc hl, " + regPair.l, OPCODE_ADC, (rp << 1) | 1, 2);
+            if (rp != 2) {
+                // HL
+                assertInstrEDExpr("ld (", "), " + regPair.l, OPCODE_LD, rp << 1, 3);
+                assertInstrEDExpr("ld " + regPair.l + ", (", ")", OPCODE_LD, (rp << 1) | 1, 3);
+            }
         });
     }
 
