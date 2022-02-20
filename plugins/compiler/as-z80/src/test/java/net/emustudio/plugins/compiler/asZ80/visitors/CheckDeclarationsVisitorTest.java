@@ -11,21 +11,21 @@ public class CheckDeclarationsVisitorTest {
 
     @Test
     public void testDeclarationsAreFound() {
-        Program program = parseProgram("label:\nconstant equ 1\nvariable set 1\nxxx macro\nendm");
+        Program program = parseProgram("label:\nconstant equ 1\nvariable var 1\nxxx macro\nendm");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
     }
 
     @Test
     public void testVariableTwoTimesPass() {
-        Program program = parseProgram("var set 1\nvar set 2");
+        Program program = parseProgram("variable var 1\nvariable var 2");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
     }
 
     @Test
     public void testConstantTwoTimesCannotBeDefined() {
-        Program program = parseProgram("var equ 1\nvar equ 2");
+        Program program = parseProgram("variable equ 1\nvariable equ 2");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
         assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
@@ -33,7 +33,7 @@ public class CheckDeclarationsVisitorTest {
 
     @Test
     public void testVarCannotBeDefinedIfAnotherDeclarationExists() {
-        Program program = parseProgram("var equ 1\nvar set 2");
+        Program program = parseProgram("variable equ 1\nvariable var 2");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
         assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
@@ -80,7 +80,7 @@ public class CheckDeclarationsVisitorTest {
 
     @Test
     public void testMacroParametersCollideWithVariable() {
-        Program program = parseProgram("variable set 1\nx macro variable\nendm");
+        Program program = parseProgram("variable var 1\nx macro variable\nendm");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
         assertTrue(program.env().hasError(ERROR_ALREADY_DECLARED));
@@ -128,7 +128,7 @@ public class CheckDeclarationsVisitorTest {
 
     @Test
     public void testIfExpressionReferencesOwnBlockDeclarations() {
-        Program program = parseProgram("if var + 1\nvar set -1\nendif");
+        Program program = parseProgram("if variable + 1\nvariable var -1\nendif");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
         assertTrue(program.env().hasError(ERROR_IF_EXPRESSION_REFERENCES_OWN_BLOCK));
@@ -136,7 +136,7 @@ public class CheckDeclarationsVisitorTest {
 
     @Test
     public void testNestedIfExpressionReferencesOwnBlockDeclarations() {
-        Program program = parseProgram("if var + 1\nif 0\nvar:\nendif\nendif");
+        Program program = parseProgram("if variable + 1\nif 0\nvariable:\nendif\nendif");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
         assertTrue(program.env().hasError(ERROR_IF_EXPRESSION_REFERENCES_OWN_BLOCK));
@@ -152,7 +152,7 @@ public class CheckDeclarationsVisitorTest {
 
     @Test
     public void testSelfReferencingNoneExistingVariableIsNotFine() {
-        Program program = parseProgram("self set self + 1");
+        Program program = parseProgram("self var self + 1");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
         assertTrue(program.env().hasError(ERROR_DECLARATION_REFERENCES_ITSELF));
@@ -160,7 +160,7 @@ public class CheckDeclarationsVisitorTest {
 
     @Test
     public void testSelfReferencingExistingVariableIsFine() {
-        Program program = parseProgram("self set 1\n self set self + 1");
+        Program program = parseProgram("self var 1\n self var self + 1");
         CheckDeclarationsVisitor visitor = new CheckDeclarationsVisitor();
         visitor.visit(program);
         assertTrue(program.env().hasNoErrors());

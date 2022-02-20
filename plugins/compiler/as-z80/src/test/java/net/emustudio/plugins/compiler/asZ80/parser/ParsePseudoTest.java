@@ -30,7 +30,7 @@ public class ParsePseudoTest {
 
     @Test
     public void testVariable() {
-        Program program = parseProgram("here set 0x55");
+        Program program = parseProgram("here var 0x55");
         assertTrees(new Program()
                 .addChild(new PseudoVar(0, 0, "here")
                     .addChild(new ExprNumber(0, 0, 0x55))),

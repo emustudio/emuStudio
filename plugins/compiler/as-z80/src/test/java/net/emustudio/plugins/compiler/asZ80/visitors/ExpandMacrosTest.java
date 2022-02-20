@@ -96,7 +96,7 @@ public class ExpandMacrosTest {
 
     @Test
     public void testMacroCallWithArguments() {
-        Program program = parseProgram("x 1,2,3\nx macro q,r,t\nendm");
+        Program program = parseProgram("x 1,2,3\nx macro u,v,w\nendm");
         ExpandMacrosVisitor macrosVisitor = new ExpandMacrosVisitor();
         macrosVisitor.visit(program);
 
@@ -110,11 +110,11 @@ public class ExpandMacrosTest {
                         .addChild(new ExprNumber(0, 0, 3)))
                     .addChild(new PseudoMacroDef(0, 0, "x")
                         .addChild(new PseudoMacroParameter(0, 0)
-                            .addChild(new ExprId(0, 0, "q")))
+                            .addChild(new ExprId(0, 0, "u")))
                         .addChild(new PseudoMacroParameter(0, 0)
-                            .addChild(new ExprId(0, 0, "r")))
+                            .addChild(new ExprId(0, 0, "v")))
                         .addChild(new PseudoMacroParameter(0, 0)
-                            .addChild(new ExprId(0, 0, "t"))))),
+                            .addChild(new ExprId(0, 0, "w"))))),
             program
         );
     }
