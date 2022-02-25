@@ -131,6 +131,7 @@ public class AssemblerZ80 extends AbstractCompiler {
                 new CheckDeclarationsVisitor(),
                 new EvaluateExprVisitor(),
                 new CheckExprSizesVisitor(),
+                new CollectExprsInOpcodeVisitor(),
                 new GenerateCodeVisitor(hex)
             };
 

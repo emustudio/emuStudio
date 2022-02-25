@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED;
+import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_VALUE_OUT_OF_BOUNDS;
 import static net.emustudio.plugins.compiler.asZ80.Utils.assertTrees;
 import static org.junit.Assert.assertTrue;
 
@@ -109,7 +110,7 @@ public class CheckExprSizesVisitorTest {
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
 
-        assertTrue(program.env().hasError(ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED));
+        assertTrue(program.env().hasError(ERROR_VALUE_OUT_OF_BOUNDS));
     }
 
     @Test
@@ -122,7 +123,7 @@ public class CheckExprSizesVisitorTest {
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
 
-        assertTrue(program.env().hasError(ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED));
+        assertTrue(program.env().hasError(ERROR_VALUE_OUT_OF_BOUNDS));
     }
 
     @Test
@@ -148,7 +149,7 @@ public class CheckExprSizesVisitorTest {
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
 
-        assertTrue(program.env().hasError(ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED));
+        assertTrue(program.env().hasError(ERROR_VALUE_OUT_OF_BOUNDS));
     }
 
     @Test
@@ -174,7 +175,7 @@ public class CheckExprSizesVisitorTest {
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
 
-        assertTrue(program.env().hasError(ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED));
+        assertTrue(program.env().hasError(ERROR_VALUE_OUT_OF_BOUNDS));
     }
 
     @Test

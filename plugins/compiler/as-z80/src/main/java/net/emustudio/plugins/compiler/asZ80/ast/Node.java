@@ -13,8 +13,8 @@ public abstract class Node {
     public final int column;
 
     private int address;
-    private Optional<Integer> maxValue;
-    private Optional<Integer> sizeBytes;
+    private Optional<Integer> maxValue = Optional.empty();
+    private Optional<Integer> sizeBytes = Optional.empty();
 
     public Node(int line, int column) {
         this.line = line;

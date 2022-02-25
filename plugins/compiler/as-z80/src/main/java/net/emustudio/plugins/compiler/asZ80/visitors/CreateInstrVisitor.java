@@ -55,8 +55,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         // | opcode=OPCODE_SET n=rExpression SEP_COMMA d=rDisplacement                   # instrXDCB_N
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
         Node instr = new InstrXDCB(ctx.opcode, prefix, 0, 6).setSizeBytes(4);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         instr.addChild(CreateVisitors.expr.visit(ctx.n).setMaxValue(7));
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         return instr;
     }
 
@@ -67,8 +67,8 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         int prefix = CompilerTables.prefix.get(ctx.d.ii.start.getType());
         int z = CompilerTables.registers.get(ctx.r.start.getType());
         Node instr = new InstrXDCB(ctx.opcode, prefix, 0, z).setSizeBytes(4);
-        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         instr.addChild(CreateVisitors.expr.visit(ctx.n).setMaxValue(7));
+        instr.addChild(CreateVisitors.expr.visit(ctx.d.n).setSizeBytes(1));
         return instr;
     }
 

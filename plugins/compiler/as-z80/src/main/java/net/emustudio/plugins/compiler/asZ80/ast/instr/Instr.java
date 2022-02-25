@@ -1,23 +1,14 @@
 package net.emustudio.plugins.compiler.asZ80.ast.instr;
 
-import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
-import java.util.Optional;
-import java.util.Set;
-
-import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.OPCODE_RST;
-
 public class Instr extends Node {
     public final int opcode;
     public final int x;
-    public final int y;
+    private int y;
     public final int z;
-    private final static Set<Integer> allowedRstValues = Set.of(
-        0, 0x8, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38
-    );
 
     public Instr(int line, int column, int opcode, int x, int y, int z) {
         super(line, column);
@@ -37,15 +28,13 @@ public class Instr extends Node {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), x, (p << 1) | q, z);
     }
 
-    public Optional<Byte> eval() {
-        Optional<Integer> actualY = Optional.of(y);
-        if (opcode == OPCODE_RST) {
-            actualY = collectChild(Evaluated.class)
-                .map(e -> e.value)
-                .filter(allowedRstValues::contains)
-                .map(v -> v / 8);
-        }
-        return actualY.map(yy -> (byte)(((x << 6) | (yy << 3) | (z & 7)) & 0xFF));
+    public void setY(int y) {
+        // for RST
+        this.y = y;
+    }
+
+    public byte eval() {
+        return (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF);
     }
 
     @Override

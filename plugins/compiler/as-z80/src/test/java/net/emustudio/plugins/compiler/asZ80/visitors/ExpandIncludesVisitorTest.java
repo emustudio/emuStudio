@@ -25,7 +25,7 @@ public class ExpandIncludesVisitorTest {
     @Test
     public void testExpandInclude() {
         String filename = ExpandIncludesVisitorTest.class.getResource("/sample.asm").getFile();
-        Program program = parseProgram("cmc\ninclude '" + filename + "'");
+        Program program = parseProgram("ccf\ninclude '" + filename + "'");
         ExpandIncludesVisitor visitor = new ExpandIncludesVisitor();
         visitor.visit(program);
 
@@ -42,7 +42,7 @@ public class ExpandIncludesVisitorTest {
     @Test
     public void testExpandIncludeTwoTimes() throws IOException {
         File file = folder.newFile("file-a.asm");
-        write(file, "rrc");
+        write(file, "rrca");
 
         Program program = parseProgram(
             "include '" + file.getPath() + "'\n" +

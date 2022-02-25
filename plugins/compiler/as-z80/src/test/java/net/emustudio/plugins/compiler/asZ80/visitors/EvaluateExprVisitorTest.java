@@ -182,6 +182,7 @@ public class EvaluateExprVisitorTest {
         Program program = new Program();
         program
             .addChild(new Instr(0, 0, OPCODE_LD, 0, 7, 6)
+                .setSizeBytes(2)
                 .addChild(new ExprId(0, 0, "const")))
             .addChild(new PseudoIf(0, 0)
                 .addChild(new PseudoIfExpression(0, 0)
@@ -189,6 +190,7 @@ public class EvaluateExprVisitorTest {
                         .addChild(new ExprCurrentAddress(0, 0))
                         .addChild(new ExprNumber(0, 0, 2))))
                 .addChild(new Instr(0, 0, OPCODE_RST, 3, 0, 7)
+                    .setSizeBytes(1)
                     .addChild(new ExprNumber(0, 0, 0))))
             .addChild(new PseudoEqu(0, 0, "const")
                 .addChild(new ExprInfix(0, 0, OP_ADD)

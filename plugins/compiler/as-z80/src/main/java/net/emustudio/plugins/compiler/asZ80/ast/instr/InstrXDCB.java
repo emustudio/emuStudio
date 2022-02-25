@@ -15,7 +15,7 @@ import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 public class InstrXDCB extends Node {
     public final int opcode;
     public final int x;
-    public final int y;
+    private int y;
     public final int z;
     public final int prefix;
 
@@ -43,12 +43,17 @@ public class InstrXDCB extends Node {
         this.y = y;
         this.z = z;
 
-        // 1. child is expr (II + d)
+        // 1. child is BIT number in case of (BIT, SET, RES)
+        //    otherwise it's (II + d)
         // 2. possibly another expr child
     }
 
     public InstrXDCB(Token opcode, int prefix, int y, int z) {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), prefix, y, z);
+    }
+
+    public void setY(int y) {
+        this.y = y;
     }
 
     public byte[] eval() {

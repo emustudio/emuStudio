@@ -12,7 +12,7 @@ import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 public class InstrCB extends Node {
     public final int opcode;
     public final int x;
-    public final int y;
+    private int y;
     public final int z;
 
     private static final Map<Integer, Integer> xmap = new HashMap<>();
@@ -42,6 +42,10 @@ public class InstrCB extends Node {
 
     public InstrCB(Token opcode, int y, int z) {
         this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), y, z);
+    }
+
+    public void setY(int bit) {
+        this.y = bit;
     }
 
     public byte[] eval() {
