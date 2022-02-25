@@ -58,6 +58,18 @@ public class Utils {
         "srl", OPCODE_SRL
     );
 
+    public static Map<String, Integer> prefixReg = Map.of(
+        "IX", REG_IX,
+        "IY", REG_IY
+    );
+
+    public static Map<String, Integer> prefixReg8 = Map.of(
+        "IXH", REG_IXH,
+        "IYH", REG_IYH,
+        "IXL", REG_IXL,
+        "IYL", REG_IYL
+    );
+
     public static List<Token> getTokens(String variation) {
         AsZ80Lexer lexer = new AsZ80Lexer(CharStreams.fromString(variation));
         CommonTokenStream stream = new CommonTokenStream(lexer);
@@ -123,19 +135,31 @@ public class Utils {
     }
 
     public static void forRegister(Consumer<Pair<String, Integer>> f) {
-        for (Map.Entry<String, Integer> register : registers.entrySet()) {
-            f.accept(Pair.of(register.getKey(), register.getValue()));
-        }
+        forX(f, registers);
     }
 
     public static void forRot(Consumer<Pair<String, Integer>> f) {
-        for (Map.Entry<String, Integer> rot : rot.entrySet()) {
-            f.accept(Pair.of(rot.getKey(), rot.getValue()));
-        }
+        forX(f, rot);
     }
 
     public static void forRegPair(Consumer<Pair<String, Integer>> f) {
-        for (Map.Entry<String, Integer> regPair : regPairs.entrySet()) {
+        forX(f, regPairs);
+    }
+
+    public static void forRegPair2(Consumer<Pair<String, Integer>> f) {
+        forX(f, regPairs2);
+    }
+
+    public static void forPrefixReg(Consumer<Pair<String, Integer>> f) {
+        forX(f, prefixReg);
+    }
+
+    public static void forPrefixReg8(Consumer<Pair<String, Integer>> f) {
+        forX(f, prefixReg8);
+    }
+
+    public static void forX(Consumer<Pair<String, Integer>> f, Map<String, Integer> x) {
+        for (Map.Entry<String, Integer> regPair : x.entrySet()) {
             f.accept(Pair.of(regPair.getKey(), regPair.getValue()));
         }
     }

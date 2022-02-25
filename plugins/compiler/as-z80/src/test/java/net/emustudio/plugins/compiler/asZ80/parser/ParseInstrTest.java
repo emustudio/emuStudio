@@ -6,10 +6,7 @@ import net.emustudio.plugins.compiler.asZ80.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprCurrentAddress;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrCB;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrED;
-import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrXDCB;
+import net.emustudio.plugins.compiler.asZ80.ast.instr.*;
 import org.junit.Test;
 
 import java.util.Random;
@@ -95,14 +92,14 @@ public class ParseInstrTest {
             assertInstr("or " + regValue.l, OPCODE_OR, 2, 6, r);
             assertInstr("cp " + regValue.l, OPCODE_CP, 2, 7, r);
 
-            assertInstrCBNoArgs("rlc " + regValue.l, OPCODE_RLC, 0, r);
-            assertInstrCBNoArgs("rrc " + regValue.l, OPCODE_RRC, 1, r);
-            assertInstrCBNoArgs("rl " + regValue.l, OPCODE_RL, 2, r);
-            assertInstrCBNoArgs("rr " + regValue.l, OPCODE_RR, 3, r);
-            assertInstrCBNoArgs("sla " + regValue.l, OPCODE_SLA, 4, r);
-            assertInstrCBNoArgs("sra " + regValue.l, OPCODE_SRA, 5, r);
-            assertInstrCBNoArgs("sll " + regValue.l, OPCODE_SLL, 6, r);
-            assertInstrCBNoArgs("srl " + regValue.l, OPCODE_SRL, 7, r);
+            assertInstrCB("rlc " + regValue.l, OPCODE_RLC, 0, r);
+            assertInstrCB("rrc " + regValue.l, OPCODE_RRC, 1, r);
+            assertInstrCB("rl " + regValue.l, OPCODE_RL, 2, r);
+            assertInstrCB("rr " + regValue.l, OPCODE_RR, 3, r);
+            assertInstrCB("sla " + regValue.l, OPCODE_SLA, 4, r);
+            assertInstrCB("sra " + regValue.l, OPCODE_SRA, 5, r);
+            assertInstrCB("sll " + regValue.l, OPCODE_SLL, 6, r);
+            assertInstrCB("srl " + regValue.l, OPCODE_SRL, 7, r);
 
             int bit = Math.abs(random.nextInt() % 8);
             assertInstrCBExprBit("bit " + bit + ", " + regValue.l, OPCODE_BIT, bit, r);
@@ -134,9 +131,18 @@ public class ParseInstrTest {
             assertInstrED("adc hl, " + regPair.l, OPCODE_ADC, (rp << 1) | 1, 2);
             if (rp != 2) {
                 // HL
-                assertInstrEDExpr("ld (", "), " + regPair.l, OPCODE_LD, rp << 1, 3);
-                assertInstrEDExpr("ld " + regPair.l + ", (", ")", OPCODE_LD, (rp << 1) | 1, 3);
+                assertInstrEDExpr("ld (", "), " + regPair.l, rp << 1);
+                assertInstrEDExpr("ld " + regPair.l + ", (", ")", (rp << 1) | 1);
             }
+        });
+    }
+
+    @Test
+    public void testInstrRP2() {
+        forRegPair2(regPair2 -> {
+            int rp = CompilerTables.regPairs2.get(regPair2.r);
+            assertInstr("pop " + regPair2.l, OPCODE_POP, 3, rp, 0, 1);
+            assertInstr("push " + regPair2.l, OPCODE_PUSH, 3, rp, 0, 5);
         });
     }
 
@@ -198,6 +204,70 @@ public class ParseInstrTest {
         assertInstrXDCBExprBit("set " + y + ", (iy + ", ")", OPCODE_SET, 0xFD, y, 6);
     }
 
+    @Test
+    public void testInstrXD() {
+        forPrefixReg(ii -> {
+            int prefix = CompilerTables.prefix.get(ii.r);
+            forRegPair(regPair -> {
+                int rp = CompilerTables.regPairs.get(regPair.r);
+                if (regPair.r == 2) {
+                    assertInstrXD("add " + ii.l + ", " + ii.l, OPCODE_ADD, prefix, 0, rp, 1, 1);
+                }
+            });
+
+            forRegister(register -> {
+                int r = CompilerTables.registers.get(register.r);
+                if (r != 6) {
+                    assertInstrXDExpr("ld (" + ii.l + " +", "), " + register.l, OPCODE_LD, prefix, 1, 6, r);
+                    assertInstrXDExpr("ld " + register.l + ", (" + ii.l + " +", ")", OPCODE_LD, prefix, 1, r, 6);
+                }
+            });
+
+            assertInstrXDExpr("ld " + ii.l + ", ", "", OPCODE_LD, prefix, 0, 4, 1);
+            assertInstrXDExpr("ld (", "), " + ii.l, OPCODE_LD, prefix, 0, 4, 2);
+            assertInstrXDExpr("inc (" + ii.l + "+", ")", OPCODE_INC, prefix, 0, 6, 4);
+            assertInstrXDExpr("dec (" + ii.l + "+", ")", OPCODE_DEC, prefix, 0, 6, 5);
+            assertInstrXD("inc " + ii.l, OPCODE_INC, prefix, 0, 4, 3);
+            assertInstrXDExpr("ld " + ii.l + ", (", ")", OPCODE_LD, prefix, 0, 5, 2);
+            assertInstrXD("dec " + ii.l, OPCODE_DEC, prefix, 0, 5, 3);
+            assertInstrXD("pop " + ii.l, OPCODE_POP, prefix, 3, 4, 1);
+            assertInstrXD("push " + ii.l, OPCODE_PUSH, prefix, 3, 4, 5);
+            assertInstrXD("ex (sp), " + ii.l, OPCODE_EX, prefix, 3, 4, 3);
+            assertInstrXD("jp (" + ii.l + ")", OPCODE_JP, prefix, 3, 5, 1);
+            assertInstrXD("ld sp, " + ii.l, OPCODE_LD, prefix, 3, 7, 1);
+            assertInstrXDExprExpr("ld (" + ii.l + "+", prefix);
+        });
+
+        forPrefixReg8(ii -> {
+            int prefix = CompilerTables.prefix.get(ii.r);
+            int r = CompilerTables.registers.get(ii.r);
+
+            assertInstrXD("inc " + ii.l, OPCODE_INC, prefix, 0, r, 4);
+            assertInstrXD("dec " + ii.l, OPCODE_DEC, prefix, 0, r, 5);
+            assertInstrXDExpr("ld " + ii.l + ", ", "", OPCODE_LD, prefix, 0, r, 6);
+
+            assertInstrXD("add a, " + ii.l, OPCODE_ADD, prefix, 2, 0, r);
+            assertInstrXD("adc a, " + ii.l, OPCODE_ADC, prefix, 2, 1, r);
+            assertInstrXD("sub " + ii.l, OPCODE_SUB, prefix, 2, 2, r);
+            assertInstrXD("sbc a, " + ii.l, OPCODE_SBC, prefix, 2, 3, r);
+            assertInstrXD("and " + ii.l, OPCODE_AND, prefix, 2, 4, r);
+            assertInstrXD("xor " + ii.l, OPCODE_XOR, prefix, 2, 5, r);
+            assertInstrXD("or " + ii.l, OPCODE_OR, prefix, 2, 6, r);
+            assertInstrXD("cp " + ii.l, OPCODE_CP, prefix, 2, 7, r);
+
+            forRegister(register -> {
+                int r2 = CompilerTables.registers.get(register.r);
+                String r2s = (register.r == REG_H) ? (prefix == 0xDD ? "ixh" : "iyh") : ((register.r == REG_L) ? (prefix == 0xDD ? "ixl" : "iyl") : register.l);
+
+                if (r2 != 6) {
+                    assertInstrXD("ld " + ii.l + ", " + r2s, OPCODE_LD, prefix, 1, r, r2);
+                    assertInstrXD("ld " + r2s + ", " + ii.l, OPCODE_LD, prefix, 1, r2, r);
+                }
+            });
+
+        });
+    }
+
 
     private void assertInstr(String instr, int instrType, int x, int y, int z) {
         forStringCaseVariations(instr, variation -> {
@@ -217,20 +287,18 @@ public class ParseInstrTest {
         });
     }
 
-    private void assertInstrEDExpr(String instrPrefix, String instrPostfix, int instrType, int y, int z) {
+    private void assertInstrEDExpr(String instrPrefix, String instrPostfix, int y) {
         Node expr = new ExprInfix(0, 0, OP_ADD)
             .addChild(new ExprCurrentAddress(0, 0))
             .addChild(new ExprNumber(0, 0, 5));
 
-        forStringCaseVariations(instrPrefix, prefixVariation -> {
-            forStringCaseVariations(instrPostfix, postfixVariation -> {
-                Program program = parseProgram(prefixVariation + " $ + 5" + postfixVariation);
-                assertTrees(new Program().addChild(new InstrED(0, 0, instrType, y, z).addChild(expr)), program);
-            });
-        });
+        forStringCaseVariations(instrPrefix, prefixVariation -> forStringCaseVariations(instrPostfix, postfixVariation -> {
+            Program program = parseProgram(prefixVariation + " $ + 5" + postfixVariation);
+            assertTrees(new Program().addChild(new InstrED(0, 0, OPCODE_LD, y, 3).addChild(expr)), program);
+        }));
     }
 
-    private void assertInstrCBNoArgs(String instr, int instrType, int y, int z) {
+    private void assertInstrCB(String instr, int instrType, int y, int z) {
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation);
             assertTrees(new Program().addChild(new InstrCB(0, 0, instrType, y, z)), program);
@@ -242,12 +310,10 @@ public class ParseInstrTest {
             .addChild(new ExprCurrentAddress(0, 0))
             .addChild(new ExprNumber(0, 0, 5));
 
-        forStringCaseVariations(instrPrefix, prefixVariation -> {
-            forStringCaseVariations(instrPostfix, postfixVariation -> {
-                Program program = parseProgram(prefixVariation + " $ + 5" + postfixVariation);
-                assertTrees(new Program().addChild(new Instr(0, 0, instrType, x, y, z).addChild(expr)), program);
-            });
-        });
+        forStringCaseVariations(instrPrefix, prefixVariation -> forStringCaseVariations(instrPostfix, postfixVariation -> {
+            Program program = parseProgram(prefixVariation + " $ + 5" + postfixVariation);
+            assertTrees(new Program().addChild(new Instr(0, 0, instrType, x, y, z).addChild(expr)), program);
+        }));
     }
 
     private void assertInstrExpr(String instr, int instrType, int x, int y, int z) {
@@ -272,12 +338,10 @@ public class ParseInstrTest {
             .addChild(new ExprCurrentAddress(0, 0))
             .addChild(new ExprNumber(0, 0, 5));
 
-        forStringCaseVariations(instrPrefix, instrPrefixVariation -> {
-            forStringCaseVariations(instrPostfix, instrPostfixVariation -> {
-                Program program = parseProgram(instrPrefixVariation + " $ + 5" + instrPostfixVariation);
-                assertTrees(new Program().addChild(new InstrXDCB(0, 0, instrType, prefix, y, z).addChild(expr)), program);
-            });
-        });
+        forStringCaseVariations(instrPrefix, instrPrefixVariation -> forStringCaseVariations(instrPostfix, instrPostfixVariation -> {
+            Program program = parseProgram(instrPrefixVariation + " $ + 5" + instrPostfixVariation);
+            assertTrees(new Program().addChild(new InstrXDCB(0, 0, instrType, prefix, y, z).addChild(expr)), program);
+        }));
     }
 
     private void assertInstrXDCBExprBit(String instrPrefix, String instrPostfix, int instrType, int prefix, int y, int z) {
@@ -287,14 +351,52 @@ public class ParseInstrTest {
 
         Node yExpr = new ExprNumber(0, 0, y);
 
-        forStringCaseVariations(instrPrefix, instrPrefixVariation -> {
-            forStringCaseVariations(instrPostfix, instrPostfixVariation -> {
-                Program program = parseProgram(instrPrefixVariation + " $ + 5" + instrPostfixVariation);
-                assertTrees(new Program()
-                    .addChild(new InstrXDCB(0, 0, instrType, prefix, 0, z)
-                        .addChild(expr)
-                        .addChild(yExpr)), program);
+        forStringCaseVariations(instrPrefix, instrPrefixVariation -> forStringCaseVariations(instrPostfix, instrPostfixVariation -> {
+            Program program = parseProgram(instrPrefixVariation + " $ + 5" + instrPostfixVariation);
+            assertTrees(new Program()
+                .addChild(new InstrXDCB(0, 0, instrType, prefix, 0, z)
+                    .addChild(expr)
+                    .addChild(yExpr)), program);
+        }));
+    }
+
+    private void assertInstrXD(String instr, int instrType, int prefix, int x, int y, int z) {
+        forStringCaseVariations(instr, variation -> {
+            Program program = parseProgram(variation);
+            assertTrees(new Program().addChild(new InstrXD(0, 0, instrType, prefix, x, y, z)), program);
+        });
+    }
+
+    private void assertInstrXD(String instr, int instrType, int prefix, int x, int p, int q, int z) {
+        assertInstrXD(instr, instrType, prefix, x, (p << 1) | q, z);
+    }
+
+    private void assertInstrXDExpr(String instrPrefix, String instrPostfix, int instrType, int prefix, int x, int y, int z) {
+        Node expr = new ExprInfix(0, 0, OP_ADD)
+            .addChild(new ExprCurrentAddress(0, 0))
+            .addChild(new ExprNumber(0, 0, 5));
+
+        forStringCaseVariations(instrPrefix, prefixVariation -> {
+            forStringCaseVariations(instrPostfix, postfixVariation -> {
+                Program program = parseProgram(prefixVariation + " $ + 5" + postfixVariation);
+                assertTrees(new Program().addChild(new InstrXD(0, 0, instrType, prefix, x, y, z).addChild(expr)), program);
             });
+        });
+    }
+
+    private void assertInstrXDExprExpr(String instrPrefix, int prefix) {
+        Node disp = new ExprInfix(0, 0, OP_ADD)
+            .addChild(new ExprCurrentAddress(0, 0))
+            .addChild(new ExprNumber(0, 0, 5));
+
+        Node expr = new ExprNumber(0, 0, 5);
+
+        forStringCaseVariations(instrPrefix, prefixVariation -> {
+                Program program = parseProgram(prefixVariation + " $ + 5), 5");
+                assertTrees(new Program()
+                    .addChild(new InstrXD(0, 0, OPCODE_LD, prefix, 0, 6, 6)
+                        .addChild(disp)
+                        .addChild(expr)), program);
         });
     }
 }

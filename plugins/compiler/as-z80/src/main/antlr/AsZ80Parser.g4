@@ -88,10 +88,10 @@ rInstruction:
   | opcode=OPCODE_RES n=rExpression SEP_COMMA r=rRegister                       # instrCB_N_R
   | opcode=OPCODE_SET n=rExpression SEP_COMMA r=rRegister                       # instrCB_N_R
 
+  | opcode=OPCODE_LD ii=rII SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR          # instrXD_II_Ref_NN // must be above plain nn
   | opcode=OPCODE_LD ii=rII SEP_COMMA nn=rExpression                            # instrXD_II_NN
   | opcode=OPCODE_ADD ii=rII SEP_COMMA rp=(REG_BC|REG_DE|REG_IX|REG_IY|REG_SP)  # instrXD_II_RP
   | opcode=OPCODE_LD SEP_LPAR nn=rExpression SEP_RPAR SEP_COMMA ii=rII          # instrXD_Ref_NN_II
-  | opcode=OPCODE_LD ii=rII SEP_COMMA SEP_LPAR nn=rExpression SEP_RPAR          # instrXD_II_Ref_NN
   | opcode=OPCODE_LD ii=rII_HL SEP_COMMA n=rExpression                          # instrXD_IIHL_N
   | opcode=OPCODE_LD d=rDisplacement SEP_COMMA n=rExpression                    # instrXD_Ref_II_N_N
 
