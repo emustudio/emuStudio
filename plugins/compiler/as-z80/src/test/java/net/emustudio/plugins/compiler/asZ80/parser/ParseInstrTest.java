@@ -355,8 +355,8 @@ public class ParseInstrTest {
             Program program = parseProgram(instrPrefixVariation + " $ + 5" + instrPostfixVariation);
             assertTrees(new Program()
                 .addChild(new InstrXDCB(0, 0, instrType, prefix, 0, z)
-                    .addChild(expr)
-                    .addChild(yExpr)), program);
+                    .addChild(yExpr)
+                    .addChild(expr)), program);
         }));
     }
 

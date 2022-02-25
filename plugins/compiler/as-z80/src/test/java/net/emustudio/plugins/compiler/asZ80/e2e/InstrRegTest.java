@@ -25,7 +25,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     @Test
     public void testINR() throws Exception {
         compile(
-            "inr A\n"
+            "inc A\n"
                 + "inc B\n"
                 + "inc C\n"
                 + "inc D\n"
@@ -43,7 +43,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     @Test
     public void testDCR() throws Exception {
         compile(
-            "dcr A\n"
+            "dec A\n"
                 + "dec B\n"
                 + "dec C\n"
                 + "dec D\n"
@@ -61,7 +61,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     @Test
     public void testADD() throws Exception {
         compile(
-            "add A\n"
+            "add A, A\n"
                 + "add A,B\n"
                 + "add A,C\n"
                 + "add A,D\n"
@@ -79,7 +79,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     @Test
     public void testADC() throws Exception {
         compile(
-            "adc A\n"
+            "adc A, A\n"
                 + "adc A,B\n"
                 + "adc A,C\n"
                 + "adc A,D\n"

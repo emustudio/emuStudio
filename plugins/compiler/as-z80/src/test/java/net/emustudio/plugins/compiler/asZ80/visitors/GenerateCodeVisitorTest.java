@@ -32,12 +32,15 @@ public class GenerateCodeVisitorTest {
                 .addChild(new Evaluated(0, 0, 5)))
             .addChild(new PseudoMacroCall(0, 0, "x")
                 .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
-                    .addChild(new Evaluated(0, 0, 0xFEAB)))
+                    .setSizeBytes(3)
+                    .addChild(new Evaluated(0, 0, 0xFEAB).setSizeBytes(2)))
                 .addChild(new PseudoMacroCall(0, 0, "y")
                     .addChild(new Instr(0, 0, OPCODE_LD, 0, 2, 1)
-                        .addChild(new Evaluated(0, 0, 1))))
+                        .setSizeBytes(3)
+                        .addChild(new Evaluated(0, 0, 1).setSizeBytes(2))))
                 .addChild(new Instr(0, 0, OPCODE_LD, 0, 4, 1)
-                    .addChild(new Evaluated(0, 0, 0x1234))));
+                    .setSizeBytes(3)
+                    .addChild(new Evaluated(0, 0, 0x1234).setSizeBytes(2))));
 
         IntelHEX hex = new IntelHEX();
         GenerateCodeVisitor visitor = new GenerateCodeVisitor(hex);
@@ -45,7 +48,7 @@ public class GenerateCodeVisitorTest {
         Map<Integer, Byte> code = hex.getCode();
 
         assertEquals((byte) 255, code.get(0).byteValue());
-        assertEquals((byte) 0xe7, code.get(1).byteValue());
+        assertEquals((byte) 0xc7, code.get(1).byteValue());
         assertEquals(1, code.get(2).byteValue()); // dw - lower byte
         assertEquals(0, code.get(3).byteValue()); // dw - upper byte
         assertEquals(0, code.get(4).byteValue());
@@ -53,13 +56,13 @@ public class GenerateCodeVisitorTest {
         assertEquals(0, code.get(6).byteValue());
         assertEquals(0, code.get(7).byteValue());
         assertEquals(0, code.get(8).byteValue());
-        assertEquals(1, code.get(9).byteValue()); // lxi b
+        assertEquals(1, code.get(9).byteValue()); // ld bc
         assertEquals((byte) 0xAB, code.get(10).byteValue());
         assertEquals((byte) 0xFE, code.get(11).byteValue());
-        assertEquals(0x11, code.get(12).byteValue()); // lxi d
+        assertEquals(0x11, code.get(12).byteValue()); // ld de
         assertEquals(1, code.get(13).byteValue());
         assertEquals(0, code.get(14).byteValue());
-        assertEquals(0x21, code.get(15).byteValue()); // lxi h
+        assertEquals(0x21, code.get(15).byteValue()); // ld hl
         assertEquals(0x34, code.get(16).byteValue());
         assertEquals(0x12, code.get(17).byteValue());
     }
@@ -70,8 +73,9 @@ public class GenerateCodeVisitorTest {
         program
             .addChild(new PseudoOrg(0, 0)
                 .addChild(new Evaluated(0, 0, 5)))
-            .addChild(new Instr(0, 0, OPCODE_CALL, 3, 0, 4))
-                .addChild(new Evaluated(0, 0, 0x400))
+            .addChild(new Instr(0, 0, OPCODE_CALL, 3, 0, 4)
+                .setSizeBytes(3)
+                .addChild(new Evaluated(0, 0, 0x400).setSizeBytes(2)))
             .addChild(new PseudoOrg(0, 0)
                 .addChild(new Evaluated(0, 0, 0)))
             .addChild(new Instr(0, 0, OPCODE_EX, 3, 5, 3));
@@ -93,7 +97,8 @@ public class GenerateCodeVisitorTest {
         program
             .addChild(new Instr(0, 0, OPCODE_NOP, 0, 0, 0))
             .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
-                .addChild(new Evaluated(0, 0, 0x1234)))
+                .setSizeBytes(3)
+                .addChild(new Evaluated(0, 0, 0x1234).setSizeBytes(2)))
             .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 2));
 //            .addChild(new InstrRP(0, 0, OPCODE_INX, REG_B))
 //            .addChild(new InstrR(0, 0, OPCODE_INR, REG_B))
@@ -394,7 +399,7 @@ public class GenerateCodeVisitorTest {
         Map<Integer, Byte> code = hex.getCode();
 
         assertEquals(0, code.get(0).byteValue()); // NOP
-        assertEquals(1, code.get(1).byteValue()); // LXI B,D16
+        assertEquals(1, code.get(1).byteValue()); // LD BC,D16
         assertEquals(0x34, code.get(2).byteValue());
         assertEquals(0x12, code.get(3).byteValue());
         assertEquals(2, code.get(4).byteValue()); // STAX B

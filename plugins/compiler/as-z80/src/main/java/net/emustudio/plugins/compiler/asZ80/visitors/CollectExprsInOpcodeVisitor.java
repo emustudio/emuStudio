@@ -1,13 +1,16 @@
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
+import net.emustudio.plugins.compiler.asZ80.CompileError;
 import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrCB;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrXDCB;
+import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoVar;
 
 import java.util.Set;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
+import static net.emustudio.plugins.compiler.asZ80.CompileError.valueOutOfBounds;
 
 public class CollectExprsInOpcodeVisitor extends NodeVisitor {
     private final static Set<Integer> allowedRstValues = Set.of(
@@ -25,7 +28,7 @@ public class CollectExprsInOpcodeVisitor extends NodeVisitor {
                 })
                 .filter(allowedRstValues::contains)
                 .map(v -> v / 8)
-                .ifPresent(node::setY);
+                .ifPresentOrElse(node::setY, () -> error(valueOutOfBounds(node, allowedRstValues)));
         }
     }
 
@@ -61,5 +64,11 @@ public class CollectExprsInOpcodeVisitor extends NodeVisitor {
                     })
                     .ifPresent(node::setY);
         }
+    }
+
+    @Override
+    public void visit(PseudoVar node) {
+        // remove useless VAR node before it gets evaluated in code generator...
+        node.remove();
     }
 }

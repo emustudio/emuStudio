@@ -69,7 +69,7 @@ public class DataTest extends AbstractCompilerTest {
     @Test
     public void testDBWithInstruction() throws Exception {
         compile(
-            "db inr A\n"
+            "db inc A\n"
         );
 
         assertProgram(

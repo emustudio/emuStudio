@@ -94,7 +94,7 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
 
     @Test(expected = Exception.class)
     public void testRSTtooBigArgument() throws Exception {
-        compile("rst 10");
+        compile("rst 14");
     }
 
 

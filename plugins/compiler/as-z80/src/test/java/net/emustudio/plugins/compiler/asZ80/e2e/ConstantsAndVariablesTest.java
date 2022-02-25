@@ -74,7 +74,7 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     @Test
     public void testVariableCanBeOverwritten() throws Exception {
         compile(
-            "here set 0\nhere set 1\ncp here"
+            "here var 0\nhere var 1\ncp here"
         );
         assertProgram(
             0xFE, 1
@@ -84,7 +84,7 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     @Test(expected = Exception.class)
     public void testCannotSetVariableBecauseIdentifierIsAlreadyDefined() throws Exception {
         compile(
-            "here equ 0\nhere set 1\n"
+            "here equ 0\nhere var 1\n"
         );
     }
 

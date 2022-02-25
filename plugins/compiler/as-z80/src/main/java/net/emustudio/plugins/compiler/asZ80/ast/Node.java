@@ -111,7 +111,12 @@ public abstract class Node {
     private String toString(int indent) {
         String spaces = new String(new char[indent]).replace("\0", " ");
         StringBuilder builder = new StringBuilder(spaces);
-        builder.append(address).append("> ").append(toStringShallow());
+        builder
+            .append(address)
+            .append("> ")
+            .append(toStringShallow())
+            .append(sizeBytes.map(s -> "(size=" + s + ")").orElse(""));
+
         for (Node child : children) {
             builder.append("\n").append(child.toString(indent + 2));
         }
@@ -126,6 +131,7 @@ public abstract class Node {
 
     public Node copy() {
         Node copied = mkCopy();
+        maxValue.ifPresent(copied::setMaxValue);
         for (Node child : children) {
             copied.addChild(child.copy());
         }
@@ -141,6 +147,7 @@ public abstract class Node {
     public Optional<Integer> getMaxValue() {
         return maxValue;
     }
+
     public Optional<Integer> getSizeBytes() {
         return sizeBytes;
     }

@@ -110,7 +110,7 @@ COND_P: P -> popMode;
 COND_PE: P E -> popMode;
 COND_PO: P O -> popMode;
 COND_WS: [ \t\f]+ -> skip;
-ERROR_COND: ({"cCnNzZmMpP".indexOf((char) _input.LA(1)) == -1}?) -> popMode,skip;
+ERROR_COND: () -> popMode,skip;
 
 mode IM_NUMBER;
 IM_01: '0/1' -> popMode;

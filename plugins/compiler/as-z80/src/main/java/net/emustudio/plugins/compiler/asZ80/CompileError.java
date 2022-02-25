@@ -3,7 +3,10 @@ package net.emustudio.plugins.compiler.asZ80;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class CompileError {
     public static final int ERROR_ALREADY_DECLARED = 1;
@@ -90,6 +93,20 @@ public class CompileError {
             node, ERROR_VALUE_OUT_OF_BOUNDS, "Value is out of bounds (min=" + min + ", max=" + max + ")"
         );
     }
+
+    public static CompileError valueOutOfBounds(Node node, Set<Integer> allowedValues) {
+        List<String> hexaValues = allowedValues
+            .stream()
+            .sorted()
+            .map(Integer::toHexString)
+            .map(x -> "0x" + x)
+            .collect(Collectors.toList());
+
+        return new CompileError(
+            node, ERROR_VALUE_OUT_OF_BOUNDS, "Value is out of bounds (allowed values=" + hexaValues + ")"
+        );
+    }
+
 
     @Override
     public String toString() {
