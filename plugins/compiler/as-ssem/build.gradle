@@ -93,9 +93,3 @@ copy {
   from('src/main/scripts')
   into "$buildDir/libs/scripts"
 }
-
-test {
-  testLogging {
-    events "passed", "skipped", "failed"
-  }
-}
