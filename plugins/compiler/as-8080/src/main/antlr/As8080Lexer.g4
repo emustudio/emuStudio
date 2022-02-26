@@ -112,7 +112,7 @@ OPCODE_HLT: H L T;
 // preprocessor
 PREP_ORG: O R G;
 PREP_EQU: E Q U;
-PREP_SET: S E T;
+PREP_SET: ((S E T) | (V A R));
 PREP_INCLUDE: I N C L U D E;
 PREP_IF: I F;
 PREP_ENDIF: E N D I F;

@@ -19,6 +19,8 @@
 
 import java.text.SimpleDateFormat
 
+apply from: 'test_report.gradle'
+
 ext.versions = [
   slf4j: '1.7.30'
 ]

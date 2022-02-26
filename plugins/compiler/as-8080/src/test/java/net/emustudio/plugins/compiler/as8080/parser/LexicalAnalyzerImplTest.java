@@ -15,7 +15,7 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void testParseError1() {
-        assertTokenTypes("B &", REG_B, ERROR, EOF);
+        assertTokenTypes("B !", REG_B, ERROR, EOF);
     }
 
     @Test
