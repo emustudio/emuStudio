@@ -23,7 +23,7 @@ public class ExpandMacrosVisitor extends NodeVisitor {
 
     @Override
     public void visit(Program node) {
-        visitChildren(node);
+        super.visit(node);
         for (Map.Entry<String, List<PseudoMacroCall>> entry : forwardMacroCalls.entrySet()) {
             error(notDefined(entry.getValue().get(0), "Macro '" + entry.getKey() + "'"));
         }

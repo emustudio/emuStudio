@@ -112,7 +112,7 @@ public abstract class Node {
         String spaces = new String(new char[indent]).replace("\0", " ");
         StringBuilder builder = new StringBuilder(spaces);
         builder
-            .append(address)
+            .append(Integer.toHexString(address))
             .append("> ")
             .append(toStringShallow())
             .append(sizeBytes.map(s -> "(size=" + s + ")").orElse(""));

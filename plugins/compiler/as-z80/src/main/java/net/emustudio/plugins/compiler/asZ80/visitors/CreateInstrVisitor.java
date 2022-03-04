@@ -452,7 +452,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
     @Override
     public Node visitInstrC_N(InstrC_NContext ctx) {
         //  | opcode=OPCODE_JR c=(COND_NZ|COND_Z|COND_NC|COND_C) SEP_COMMA n=rExpression  # instrC_N    // x=0, z=0, y=4..7
-        int y = CompilerTables.conditions.get(ctx.c.getType());
+        int y = CompilerTables.conditions.get(ctx.c.getType()) + 4;
         Node instr = new Instr(ctx.opcode, 0, y, 0).setSizeBytes(2);
         instr.addChild(CreateVisitors.expr.visit(ctx.n).setSizeBytes(1));
         return instr;
