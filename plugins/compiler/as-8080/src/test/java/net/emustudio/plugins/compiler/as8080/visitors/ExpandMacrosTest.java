@@ -15,7 +15,9 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 
+import static net.emustudio.plugins.compiler.as8080.CompileError.ERROR_NOT_DEFINED;
 import static net.emustudio.plugins.compiler.as8080.Utils.*;
+import static org.junit.Assert.assertTrue;
 
 public class ExpandMacrosTest {
     @Rule
@@ -117,5 +119,13 @@ public class ExpandMacrosTest {
                             .addChild(new ExprId(0, 0, "t"))))),
             program
         );
+    }
+
+    @Test
+    public void testUnknownMacro() {
+        Program program = parseProgram("x 1,2,3\n");
+        ExpandMacrosVisitor macrosVisitor = new ExpandMacrosVisitor();
+        macrosVisitor.visit(program);
+        assertTrue(program.env().hasError(ERROR_NOT_DEFINED));
     }
 }

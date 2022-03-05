@@ -219,13 +219,12 @@ public class EmulatorEngine implements CpuEngine {
             if (instr != null) {
                 return (int) instr.invokeExact(this);
             }
-            currentRunState = CPU.RunState.STATE_STOPPED_BAD_INSTR;
+            return 4;
         } finally {
             if (tmpListener != null) {
                 tmpListener.afterDispatch();
             }
         }
-        return 0;
     }
 
     int CB_DISPATCH() throws Throwable {
@@ -261,8 +260,7 @@ public class EmulatorEngine implements CpuEngine {
         if (instr != null) {
             return (int) instr.invokeExact(this);
         }
-        currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
-        return 0;
+        return 4;
     }
 
     int SPECIAL_CB_DISPATCH(MethodHandle[] table) throws Throwable {
@@ -277,8 +275,7 @@ public class EmulatorEngine implements CpuEngine {
         if (instr != null) {
             return (int) instr.invokeExact(this, operand);
         }
-        currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
-        return 0;
+        return 4;
     }
 
     void setInterrupt(DeviceContext<?> device, int mask) {
