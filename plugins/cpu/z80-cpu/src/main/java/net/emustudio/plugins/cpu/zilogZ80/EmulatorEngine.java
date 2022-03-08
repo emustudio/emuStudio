@@ -141,7 +141,7 @@ public class EmulatorEngine implements CpuEngine {
         boolean oldIFF = IFF[0];
         noWait = false;
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
-        lastOpcode = readByte (PC);
+        lastOpcode = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
         try {
             dispatch();
