@@ -33,7 +33,7 @@ import java.util.concurrent.locks.LockSupport;
 public class KeyboardFromFile implements Keyboard {
     private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardFromFile.class);
 
-    private final List<DeviceContext<Short>> devices = new CopyOnWriteArrayList<>();
+    private final List<DeviceContext<Byte>> devices = new CopyOnWriteArrayList<>();
     private final Path inputFile;
     private final int delayInMilliseconds;
 
@@ -43,12 +43,12 @@ public class KeyboardFromFile implements Keyboard {
     }
 
     @Override
-    public void connect(DeviceContext<Short> device) {
+    public void connect(DeviceContext<Byte> device) {
         Optional.ofNullable(device).ifPresent(devices::add);
     }
 
     @Override
-    public void disconnect(DeviceContext<Short> device) {
+    public void disconnect(DeviceContext<Byte> device) {
         Optional.ofNullable(device).ifPresent(devices::remove);
     }
 
@@ -58,7 +58,7 @@ public class KeyboardFromFile implements Keyboard {
         try (InputStream input = new FileInputStream(inputFile.toFile())) {
             int key;
             while ((key = input.read()) != -1) {
-                inputReceived((short) key);
+                inputReceived(key);
                 if (delayInMilliseconds > 0) {
                     LockSupport.parkNanos(delayInMilliseconds * 1000000L);
                 }
@@ -68,10 +68,10 @@ public class KeyboardFromFile implements Keyboard {
         }
     }
 
-    private void inputReceived(short input) {
-        for (DeviceContext<Short> device : devices) {
+    private void inputReceived(int input) {
+        for (DeviceContext<Byte> device : devices) {
             try {
-                device.writeData(input);
+                device.writeData((byte)input);
             } catch (IOException e) {
                 LOGGER.error("[device={}, input={}] Could not notify device about key pressed", device, input, e);
             }

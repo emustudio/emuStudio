@@ -83,8 +83,8 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
 
         // try to connect to a serial I/O board
         try {
-            DeviceContext<Short> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
-            if (device.getDataType() != Short.class) {
+            DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
+            if (device.getDataType() != Byte.class) {
                 throw new PluginInitializationException(
                     "Unexpected device data type. Expected Short but was: " + device.getDataType()
                 );

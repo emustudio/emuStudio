@@ -46,7 +46,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     int lastImageStart = 0;
     private Byte[][] mem = new Byte[1][0];
     private int banksCount;
-    private short bankSelect = 0;
+    private int bankSelect = 0;
     private int bankCommon = 0;
 
     void init(int size, int banks, int bankCommon) {
@@ -80,12 +80,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     }
 
     @Override
-    public short getSelectedBank() {
+    public int getSelectedBank() {
         return bankSelect;
     }
 
     @Override
-    public void selectBank(short bankSelect) {
+    public void selectBank(int bankSelect) {
         if (bankSelect < banksCount) {
             this.bankSelect = bankSelect;
         }
@@ -97,7 +97,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     }
 
     public void loadHex(Path hexFile, int bank) {
-        short currentBank = bankSelect;
+        int currentBank = bankSelect;
         try {
             bankSelect = (short) bank;
             lastImageStart = IntelHEX.loadIntoMemory(hexFile.toFile(), this, p -> p);

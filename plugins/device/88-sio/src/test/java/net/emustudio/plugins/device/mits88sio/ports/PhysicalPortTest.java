@@ -46,12 +46,12 @@ public class PhysicalPortTest {
     @Test
     public void testWriteCallsWriteFromDeviceOnTransmitter() {
         Transmitter transmitter = EasyMock.createMock(Transmitter.class);
-        transmitter.writeFromDevice(eq((short) 5));
+        transmitter.writeFromDevice(eq((byte) 5));
         expectLastCall().once();
         replay(transmitter);
 
         PhysicalPort port = new PhysicalPort(transmitter);
-        port.writeData((short) 5);
+        port.writeData((byte) 5);
 
         verify(transmitter);
     }

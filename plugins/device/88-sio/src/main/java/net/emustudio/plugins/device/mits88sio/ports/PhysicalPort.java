@@ -28,7 +28,7 @@ import java.util.Objects;
  * <p>
  * For example, a terminal would use this port for communication.
  */
-public class PhysicalPort implements DeviceContext<Short> {
+public class PhysicalPort implements DeviceContext<Byte> {
     private final Transmitter transmitter;
 
     public PhysicalPort(Transmitter transmitter) {
@@ -36,18 +36,18 @@ public class PhysicalPort implements DeviceContext<Short> {
     }
 
     @Override
-    public Short readData() {
+    public Byte readData() {
         return 0; // Attached device cannot read back what it already wrote
     }
 
     @Override
-    public void writeData(Short data) {
+    public void writeData(Byte data) {
         transmitter.writeFromDevice(data);
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
 }

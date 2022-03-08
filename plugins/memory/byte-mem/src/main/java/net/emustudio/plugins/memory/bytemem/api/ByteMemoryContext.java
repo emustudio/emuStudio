@@ -82,14 +82,14 @@ public interface ByteMemoryContext extends MemoryContext<Byte> {
      *
      * @return index of active (selected) memory bank
      */
-    short getSelectedBank();
+    int getSelectedBank();
 
     /**
      * Select (set as active) a memory bank.
      *
      * @param bankIndex index (number) of a bank which should be selected
      */
-    void selectBank(short bankIndex);
+    void selectBank(int bankIndex);
 
     /**
      * Return an address in the memory which represents a boundary from which

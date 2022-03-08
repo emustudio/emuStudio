@@ -41,7 +41,7 @@ import java.util.Objects;
  * Terminal can interpret ASCII codes from 0-127. Some have special purpose (0-31).
  */
 @PluginContext(id = "LSI ADM-3A Terminal")
-public class Display extends JPanel implements DeviceContext<Short>, TerminalSettings.ChangedObserver, Cursor.LineRoller, ActionListener {
+public class Display extends JPanel implements DeviceContext<Byte>, TerminalSettings.ChangedObserver, Cursor.LineRoller, ActionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(Display.class);
 
     private static final String HERE_IS_CONSTANT = Display.class.getAnnotation(PluginContext.class).id();
@@ -99,7 +99,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
      * @return 0
      */
     @Override
-    public Short readData() {
+    public Byte readData() {
         return 0;
     }
 
@@ -194,7 +194,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
      * This method is called from serial I/O card (by OUT instruction)
      */
     @Override
-    public void writeData(Short data) {
+    public void writeData(Byte data) {
         writeToOutput(data);
         /*
          * if it is special char, interpret it. else just add to "video memory"
@@ -240,8 +240,8 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     private void insertHereIs() {

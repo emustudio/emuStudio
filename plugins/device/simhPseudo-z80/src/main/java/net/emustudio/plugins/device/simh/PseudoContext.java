@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Calendar;
 
-class PseudoContext implements DeviceContext<Short> {
+class PseudoContext implements DeviceContext<Byte> {
     private final static Logger LOGGER = LoggerFactory.getLogger(PseudoContext.class);
 
     private ByteMemoryContext mem;
@@ -270,8 +270,8 @@ class PseudoContext implements DeviceContext<Short> {
     }
 
     @Override
-    public Short readData() {
-        short result = 0;
+    public Byte readData() {
+        int result = 0;
         switch (lastCommand) {
             case getHostFilenames:
                 LOGGER.trace("[command={},name=getHostFilenames] Unimplemented command!", lastCommand);
@@ -289,27 +289,27 @@ class PseudoContext implements DeviceContext<Short> {
                     switch (getClockZSDOSPos) {
                         case 0:
                             int year = (currentTime.get(Calendar.YEAR) - 1900);
-                            result = (short) toBCD(year > 99 ? year - 100 : year);
+                            result = toBCD(year > 99 ? year - 100 : year);
                             getClockZSDOSPos = 1;
                             break;
                         case 1:
-                            result = (short) toBCD(currentTime.get(Calendar.MONTH) + 1);
+                            result = toBCD(currentTime.get(Calendar.MONTH) + 1);
                             getClockZSDOSPos = 2;
                             break;
                         case 2:
-                            result = (short) toBCD(currentTime.get(Calendar.DAY_OF_MONTH));
+                            result = toBCD(currentTime.get(Calendar.DAY_OF_MONTH));
                             getClockZSDOSPos = 3;
                             break;
                         case 3:
-                            result = (short) toBCD(currentTime.get(Calendar.HOUR_OF_DAY));
+                            result = toBCD(currentTime.get(Calendar.HOUR_OF_DAY));
                             getClockZSDOSPos = 4;
                             break;
                         case 4:
-                            result = (short) toBCD(currentTime.get(Calendar.MINUTE));
+                            result = toBCD(currentTime.get(Calendar.MINUTE));
                             getClockZSDOSPos = 5;
                             break;
                         case 5:
-                            result = (short) toBCD(currentTime.get(Calendar.SECOND));
+                            result = toBCD(currentTime.get(Calendar.SECOND));
                             getClockZSDOSPos = lastCommand = 0;
                             break;
                     }
@@ -321,23 +321,23 @@ class PseudoContext implements DeviceContext<Short> {
                 if (currentTimeValid) {
                     switch (getClockCPM3Pos) {
                         case 0:
-                            result = (short) (daysCPM3SinceOrg & 0xff);
+                            result = daysCPM3SinceOrg & 0xff;
                             getClockCPM3Pos = 1;
                             break;
                         case 1:
-                            result = (short) ((daysCPM3SinceOrg >> 8) & 0xff);
+                            result = (daysCPM3SinceOrg >> 8) & 0xff;
                             getClockCPM3Pos = 2;
                             break;
                         case 2:
-                            result = (short) toBCD(currentTime.get(Calendar.HOUR_OF_DAY));
+                            result = toBCD(currentTime.get(Calendar.HOUR_OF_DAY));
                             getClockCPM3Pos = 3;
                             break;
                         case 3:
-                            result = (short) toBCD(currentTime.get(Calendar.MINUTE));
+                            result = toBCD(currentTime.get(Calendar.MINUTE));
                             getClockCPM3Pos = 4;
                             break;
                         case 4:
-                            result = (short) toBCD(currentTime.get(Calendar.SECOND));
+                            result = toBCD(currentTime.get(Calendar.SECOND));
                             getClockCPM3Pos = lastCommand = 0;
                             break;
                     }
@@ -357,62 +357,62 @@ class PseudoContext implements DeviceContext<Short> {
                 break;
             case getCommonCmd:
                 if (getCommonPos == 0) {
-                    result = (short) (mem.getCommonBoundary() & 0xff);
+                    result = mem.getCommonBoundary() & 0xff;
                     getCommonPos = 1;
                 } else {
-                    result = (short) ((mem.getCommonBoundary() >> 8) & 0xff);
+                    result = (mem.getCommonBoundary() >> 8) & 0xff;
                     getCommonPos = lastCommand = 0;
                 }
                 break;
             case hasBankedMemoryCmd:
-                result = (short) mem.getBanksCount();
+                result = mem.getBanksCount();
                 lastCommand = 0;
                 break;
             case readStopWatchCmd:
                 if (getStopWatchDeltaPos == 0) {
-                    result = (short) (stopWatchDelta & 0xff);
+                    result = stopWatchDelta & 0xff;
                     getStopWatchDeltaPos = 1;
                 } else {
-                    result = (short) ((stopWatchDelta >> 8) & 0xff);
+                    result = (stopWatchDelta >> 8) & 0xff;
                     getStopWatchDeltaPos = lastCommand = 0;
                 }
                 break;
             case getHostOSPathSeparator:
-                result = (short) File.separatorChar;
+                result = File.separatorChar;
                 break;
             default: /* undefined */
                 LOGGER.debug("[command={}] Unknown command!", lastCommand);
                 result = lastCommand = 0;
         }
-        return result;
+        return (byte)result;
     }
 
     @Override
-    public void writeData(Short data) {
+    public void writeData(Byte data) {
         long now;
         switch (lastCommand) {
             case setClockZSDOSCmd:
                 if (setClockZSDOSPos == 0) {
-                    setClockZSDOSAdr = data;
+                    setClockZSDOSAdr = data & 0xFF;
                     setClockZSDOSPos = 1;
                 } else {
-                    setClockZSDOSAdr |= (data << 8);
+                    setClockZSDOSAdr |= (data << 8) & 0xFF00;
                     setClockZSDOS();
                     setClockZSDOSPos = lastCommand = 0;
                 }
                 break;
             case setClockCPM3Cmd:
                 if (setClockCPM3Pos == 0) {
-                    setClockCPM3Adr = data;
+                    setClockCPM3Adr = data & 0xFF;
                     setClockCPM3Pos = 1;
                 } else {
-                    setClockCPM3Adr |= (data << 8);
+                    setClockCPM3Adr |= (data << 8) & 0xFF00;
                     setClockCPM3();
                     setClockCPM3Pos = lastCommand = 0;
                 }
                 break;
             case setBankSelectCmd:
-                mem.selectBank((short) (data & 0xff));
+                mem.selectBank(data & 0xff);
                 lastCommand = 0;
                 break;
             case setTimerDeltaCmd:
@@ -536,7 +536,7 @@ class PseudoContext implements DeviceContext<Short> {
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 }

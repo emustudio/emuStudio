@@ -57,14 +57,14 @@ public class TransmitterTest {
     @Test
     public void testWriteFromDeviceSetsInputDeviceReady() {
         Transmitter transmitter = new Transmitter();
-        transmitter.writeFromDevice((short) 5);
+        transmitter.writeFromDevice((byte) 5);
         assertEquals(1, transmitter.readStatus() & 0x01);
     }
 
     @Test
     public void testReadBufferResetInputDeviceReady() {
         Transmitter transmitter = new Transmitter();
-        transmitter.writeFromDevice((short) 5);
+        transmitter.writeFromDevice((byte) 5);
 
         assertEquals(5, transmitter.readBuffer());
         assertEquals(0, transmitter.readStatus() & 0x01);
@@ -73,9 +73,9 @@ public class TransmitterTest {
     @Test
     public void testBufferIsFIFO() {
         Transmitter transmitter = new Transmitter();
-        transmitter.writeFromDevice((short) 1);
-        transmitter.writeFromDevice((short) 2);
-        transmitter.writeFromDevice((short) 3);
+        transmitter.writeFromDevice((byte) 1);
+        transmitter.writeFromDevice((byte) 2);
+        transmitter.writeFromDevice((byte) 3);
 
         assertEquals(1, transmitter.readBuffer());
         assertEquals(2, transmitter.readBuffer());

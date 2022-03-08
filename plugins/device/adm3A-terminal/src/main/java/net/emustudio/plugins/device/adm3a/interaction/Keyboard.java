@@ -22,9 +22,9 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 
 public interface Keyboard {
 
-    void connect(DeviceContext<Short> observer);
+    void connect(DeviceContext<Byte> observer);
 
-    void disconnect(DeviceContext<Short> observer);
+    void disconnect(DeviceContext<Byte> observer);
 
     default void process() {
 
