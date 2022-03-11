@@ -51,6 +51,7 @@ public class RTokenMaker extends AbstractTokenMaker {
 
                 addToken(text, start, end, tokenMakerType, tokenStartOffset);
             } catch (Exception ignored) {
+                ignored.printStackTrace();
 
             }
         }

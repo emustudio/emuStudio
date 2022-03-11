@@ -42,7 +42,10 @@ public class CreatePseudoVisitor extends AsZ80ParserBaseVisitor<Node>  {
         ifExpr.addChild(expr);
         pseudo.addChild(ifExpr);
         for (RLineContext line : ctx.rLine()) {
-            pseudo.addChild(CreateVisitors.line.visitRLine(line));
+            Node lineNode = CreateVisitors.line.visitRLine(line);
+            if (lineNode != null) {
+                pseudo.addChild(lineNode);
+            }
         }
         return pseudo;
     }
@@ -60,7 +63,10 @@ public class CreatePseudoVisitor extends AsZ80ParserBaseVisitor<Node>  {
             }
         }
         for (RLineContext line : ctx.rLine()) {
-            pseudo.addChild(CreateVisitors.line.visitRLine(line));
+            Node lineNode = CreateVisitors.line.visitRLine(line);
+            if (lineNode != null) {
+                pseudo.addChild(lineNode);
+            }
         }
         return pseudo;
     }

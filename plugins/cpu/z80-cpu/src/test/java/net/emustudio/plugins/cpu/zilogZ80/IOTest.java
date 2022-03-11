@@ -273,7 +273,7 @@ public class IOTest extends InstructionsTest {
         );
     }
 
-    @Test
+    @Test  // TODO
     public void testOUTD() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()

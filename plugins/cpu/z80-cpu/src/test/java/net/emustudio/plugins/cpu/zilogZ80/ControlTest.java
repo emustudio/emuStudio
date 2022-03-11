@@ -216,7 +216,7 @@ public class ControlTest extends InstructionsTest {
     public void testInvalidInstruction() {
         cpuRunnerImpl.setProgram(0xED, 0x80);
         cpuRunnerImpl.reset();
-        cpuRunnerImpl.expectRunState(CPU.RunState.STATE_STOPPED_BAD_INSTR);
+        cpuRunnerImpl.expectRunState(CPU.RunState.STATE_STOPPED_BREAK); // Z80 ignores bad instructions
         cpuRunnerImpl.step();
     }
 

@@ -70,8 +70,8 @@ public class DriveTest {
         assertEquals(0, params.sectorOffset);
         assertEquals(0, params.track);
         assertNull(params.mountedFloppy);
-        assertEquals(0xE7, params.port1status);
-        assertEquals(0xC1, params.port2status);
+        assertEquals(0xE7, params.port1status & 0xFF);
+        assertEquals(0xC1, params.port2status & 0xFF);
     }
 
     @Test
@@ -120,8 +120,8 @@ public class DriveTest {
 
         DriveParameters params = drive.getDriveParameters();
 
-        assertEquals(0xA5, params.port1status);
-        assertEquals(0xC1, params.port2status);
+        assertEquals(0xA5, params.port1status & 0xFF);
+        assertEquals(0xC1, params.port2status & 0xFF);
         assertEquals(0, params.sector);
         assertEquals(0, params.sectorOffset);
         assertEquals(0, params.track);
@@ -142,8 +142,8 @@ public class DriveTest {
         assertEquals(0, params.sectorOffset);
         assertEquals(0, params.track);
         assertSame(testImageFile, params.mountedFloppy);
-        assertEquals(0xE7, params.port1status);
-        assertEquals(0xC1, params.port2status);
+        assertEquals(0xE7, params.port1status & 0xFF);
+        assertEquals(0xC1, params.port2status & 0xFF);
     }
 
     @Test

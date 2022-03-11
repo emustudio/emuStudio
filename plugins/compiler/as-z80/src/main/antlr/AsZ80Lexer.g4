@@ -1,7 +1,7 @@
 lexer grammar AsZ80Lexer;
 
-COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]* -> skip;
-COMMENT2: '/*' .*? '*/' -> skip;
+COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]*;
+COMMENT2: '/*' .*? '*/';
 
 fragment A: [aA];
 fragment B: [bB];

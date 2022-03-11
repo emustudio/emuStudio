@@ -83,14 +83,14 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void testParseComment1() {
-        assertTokenTypes("// comment fun1", EOF);
-        assertTokenTypes("# comment fun1", EOF);
-        assertTokenTypes("; comment fun1", EOF);
+        assertTokenTypes("// comment fun1", COMMENT, EOF);
+        assertTokenTypes("# comment fun1", COMMENT, EOF);
+        assertTokenTypes("; comment fun1", COMMENT, EOF);
     }
 
     @Test
     public void testParseComment2() {
-        assertTokenTypes("/*\n*\n* comment fun1\n\n*/", EOF);
+        assertTokenTypes("/*\n*\n* comment fun1\n\n*/", COMMENT2, EOF);
     }
 
     @Test

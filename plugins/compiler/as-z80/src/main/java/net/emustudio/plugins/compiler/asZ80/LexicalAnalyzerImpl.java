@@ -155,13 +155,13 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[OP_GT] = Token.OPERATOR;
         tokenMap[OP_GTE] = Token.OPERATOR;
 
-        tokenMap[LIT_NUMBER] =Token.LITERAL;
-        tokenMap[LIT_HEXNUMBER_1] =Token.LITERAL;
-        tokenMap[LIT_HEXNUMBER_2] =Token.LITERAL;
-        tokenMap[LIT_OCTNUMBER] =Token.LITERAL;
-        tokenMap[LIT_BINNUMBER] =Token.LITERAL;
-        tokenMap[LIT_STRING_1] =Token.LITERAL;
-        tokenMap[LIT_STRING_2] =Token.LITERAL;
+        tokenMap[LIT_NUMBER] = Token.LITERAL;
+        tokenMap[LIT_HEXNUMBER_1] = Token.LITERAL;
+        tokenMap[LIT_HEXNUMBER_2] = Token.LITERAL;
+        tokenMap[LIT_OCTNUMBER] = Token.LITERAL;
+        tokenMap[LIT_BINNUMBER] = Token.LITERAL;
+        tokenMap[LIT_STRING_1] = Token.LITERAL;
+        tokenMap[LIT_STRING_2] = Token.LITERAL;
 
         tokenMap[ID_IDENTIFIER] = Token.IDENTIFIER;
         tokenMap[ID_LABEL] = Token.IDENTIFIER;
@@ -206,6 +206,9 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     private int convertLexerTokenType(int tokenType) {
+        if (tokenType == EOF) {
+            return Token.EOF;
+        }
         return tokenMap[tokenType];
     }
 }
