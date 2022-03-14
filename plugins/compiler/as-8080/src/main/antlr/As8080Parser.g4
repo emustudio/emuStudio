@@ -5,12 +5,17 @@ options {
 }
 
 rStart:
- EOL* rLine? (EOL+ rLine)* EOL* EOF
+ (rLine EOL rLine)* EOF
+ | rLine EOF
  ;
 
 rLine:
-  label=ID_LABEL? EOL* statement=rStatement
-  | label=ID_LABEL;
+  label=ID_LABEL? (comment EOL)* statement=rStatement comment
+  | label=ID_LABEL comment
+  | comment
+  ;
+
+comment: COMMENT? | COMMENT2?;
 
 rStatement:
   instr=rInstruction

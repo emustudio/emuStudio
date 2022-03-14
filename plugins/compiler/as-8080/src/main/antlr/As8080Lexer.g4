@@ -1,7 +1,7 @@
 lexer grammar As8080Lexer;
 
-COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]* -> skip;
-COMMENT2: '/*' .*? '*/' -> skip;
+COMMENT: ('//' | '--' | ';' | '#' ) ~[\r\n]*;
+COMMENT2: '/*' .*? '*/';
 
 fragment A: [aA];
 fragment B: [bB];
@@ -184,5 +184,5 @@ OP_AND_2: '&';
 OP_OR_2: '|';
 OP_XOR_2: '^';
 
-WS : [ \t\f]+ -> skip;
+WS : [ \t\f]+ -> channel(HIDDEN);
 EOL: '\r'? '\n';

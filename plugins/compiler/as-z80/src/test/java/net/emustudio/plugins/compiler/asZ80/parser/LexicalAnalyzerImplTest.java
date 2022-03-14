@@ -172,12 +172,12 @@ public class LexicalAnalyzerImplTest {
     public void parseIm() {
         assertTokenTypesIgnoreCase("IM 0 0", OPCODE_IM, IM_WS, IM_0, WS, LIT_NUMBER, EOF);
         assertTokenTypesIgnoreCase("IM 0/1", OPCODE_IM, IM_WS, IM_01, EOF);
-        assertTokenTypesIgnoreCase("IM 3 0", OPCODE_IM, IM_WS, ERROR_IM, LIT_NUMBER, WS, LIT_NUMBER, EOF);
+        assertTokenTypesIgnoreCase("IM 3 0", OPCODE_IM, IM_WS, LIT_NUMBER, WS, LIT_NUMBER, EOF);
     }
 
     @Test
     public void parseRet() {
-        assertTokenTypesIgnoreCase("ret and", OPCODE_RET, COND_WS, ERROR_COND, OPCODE_AND, EOF);
+        assertTokenTypesIgnoreCase("ret and", OPCODE_RET, COND_WS, OPCODE_AND, EOF);
         assertTokenTypesIgnoreCase("ret nz", OPCODE_RET, COND_WS, COND_NZ, EOF);
         assertTokenTypesIgnoreCase("ret c c", OPCODE_RET, COND_WS, COND_C, WS, REG_C, EOF);
         assertTokenTypesIgnoreCase("ret pe", OPCODE_RET, COND_WS, COND_PE, EOF);
@@ -188,7 +188,15 @@ public class LexicalAnalyzerImplTest {
     @Test
     public void parseJp() {
         assertTokenTypesIgnoreCase("jp c c", OPCODE_JP, COND_WS, COND_C, WS, REG_C, EOF);
-        assertTokenTypesIgnoreCase("jp hl", OPCODE_JP, COND_WS, ERROR_COND, REG_HL, EOF);
+        assertTokenTypesIgnoreCase("jp hl", OPCODE_JP, COND_WS, REG_HL, EOF);
+    }
+
+    @Test
+    public void parseCall() {
+        assertTokenTypesIgnoreCase("call pe!", OPCODE_CALL, COND_WS, COND_PE, ERROR, EOF);
+        assertTokenTypesIgnoreCase("call pet", OPCODE_CALL, COND_WS, ID_IDENTIFIER, EOF);
+        assertTokenTypesIgnoreCase("call pe?", OPCODE_CALL, COND_WS, ID_IDENTIFIER, EOF);
+        assertTokenTypesIgnoreCase("call pe>", OPCODE_CALL, COND_WS, COND_PE, OP_GT, EOF);
     }
 
     @Test

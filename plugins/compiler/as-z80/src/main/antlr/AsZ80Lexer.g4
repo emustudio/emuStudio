@@ -110,7 +110,7 @@ COND_PE: P E ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".
 COND_PO: P O ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
 COND_P:  P   ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
 COND_WS: [ \t\f]+ -> channel(HIDDEN);
-ERROR_COND: () -> popMode,channel(HIDDEN);
+ERROR_COND: () -> popMode,skip;
 
 mode IM_NUMBER;
 IM_01: '0/1' -> popMode;
@@ -118,7 +118,7 @@ IM_0: '0' -> popMode;
 IM_1: '1' -> popMode;
 IM_2: '2' -> popMode;
 IM_WS: [ \t\f]+ -> channel(HIDDEN);
-ERROR_IM: ({"012".indexOf((char) _input.LA(1)) == -1}?) -> popMode,channel(HIDDEN);
+ERROR_IM: ({"012".indexOf((char) _input.LA(1)) == -1}?) -> popMode,skip;
 
 mode DEFAULT_MODE;
 
