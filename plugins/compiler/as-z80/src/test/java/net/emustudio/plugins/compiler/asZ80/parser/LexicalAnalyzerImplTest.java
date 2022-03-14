@@ -197,6 +197,26 @@ public class LexicalAnalyzerImplTest {
         assertTokenTypesIgnoreCase("call pet", OPCODE_CALL, COND_WS, ID_IDENTIFIER, EOF);
         assertTokenTypesIgnoreCase("call pe?", OPCODE_CALL, COND_WS, ID_IDENTIFIER, EOF);
         assertTokenTypesIgnoreCase("call pe>", OPCODE_CALL, COND_WS, COND_PE, OP_GT, EOF);
+        assertTokenTypesIgnoreCase("call pe#", OPCODE_CALL, COND_WS, COND_PE, COMMENT, EOF);
+        assertTokenTypesIgnoreCase("call pe\"", OPCODE_CALL, COND_WS, COND_PE, ERROR, EOF);
+        assertTokenTypesIgnoreCase("call pe'", OPCODE_CALL, COND_WS, COND_PE, ERROR, EOF);
+        assertTokenTypesIgnoreCase("call pe(", OPCODE_CALL, COND_WS, COND_PE, SEP_LPAR, EOF);
+        assertTokenTypesIgnoreCase("call pe)", OPCODE_CALL, COND_WS, COND_PE, SEP_RPAR, EOF);
+        assertTokenTypesIgnoreCase("call pe,", OPCODE_CALL, COND_WS, COND_PE, SEP_COMMA, EOF);
+        assertTokenTypesIgnoreCase("call pe.", OPCODE_CALL, COND_WS, COND_PE, ERROR, EOF);
+        assertTokenTypesIgnoreCase("call pe=", OPCODE_CALL, COND_WS, COND_PE, OP_EQUAL, EOF);
+        assertTokenTypesIgnoreCase("call pe<", OPCODE_CALL, COND_WS, COND_PE, OP_LT, EOF);
+        assertTokenTypesIgnoreCase("call pe&", OPCODE_CALL, COND_WS, COND_PE, OP_AND, EOF);
+        assertTokenTypesIgnoreCase("call pe+", OPCODE_CALL, COND_WS, COND_PE, OP_ADD, EOF);
+        assertTokenTypesIgnoreCase("call pe-", OPCODE_CALL, COND_WS, COND_PE, OP_SUBTRACT, EOF);
+        assertTokenTypesIgnoreCase("call pe/", OPCODE_CALL, COND_WS, COND_PE, OP_DIVIDE, EOF);
+        assertTokenTypesIgnoreCase("call pe;", OPCODE_CALL, COND_WS, COND_PE, COMMENT, EOF);
+        assertTokenTypesIgnoreCase("call pe/**/", OPCODE_CALL, COND_WS, COND_PE, COMMENT2, EOF);
+        assertTokenTypesIgnoreCase("call pe", OPCODE_CALL, COND_WS, COND_PE, EOF);
+        assertTokenTypesIgnoreCase("call pe\n", OPCODE_CALL, COND_WS, COND_PE, EOL, EOF);
+        assertTokenTypesIgnoreCase("call pe\f", OPCODE_CALL, COND_WS, COND_PE, WS, EOF);
+        assertTokenTypesIgnoreCase("call pe\r", OPCODE_CALL, COND_WS, COND_PE, EOF);
+        assertTokenTypesIgnoreCase("call pe0", OPCODE_CALL, COND_WS, ID_IDENTIFIER, EOF);
     }
 
     @Test
