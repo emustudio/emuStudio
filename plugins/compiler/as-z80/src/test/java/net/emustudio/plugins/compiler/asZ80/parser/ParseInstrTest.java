@@ -178,7 +178,6 @@ public class ParseInstrTest {
     @Test
     public void testCallLabelWithConditionPrefix() {
         Program program = parseProgram("peter: call peter");
-        System.out.println(program);
         assertTrees(new Program()
                 .addChild(new PseudoLabel(0, 0, "peter")
                     .addChild(new Instr(0, 0, OPCODE_CALL, 3, 1, 5)
