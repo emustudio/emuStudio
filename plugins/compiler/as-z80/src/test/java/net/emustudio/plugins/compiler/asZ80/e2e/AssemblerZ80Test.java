@@ -147,6 +147,24 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
     }
 
     @Test
+    public void testRET_PE() {
+        compile("ret pe");
+        assertProgram(0xE8);
+    }
+
+    @Test
+    public void testRET_PO() {
+        compile("ret po");
+        assertProgram(0xE0);
+    }
+
+    @Test
+    public void testRET_P() {
+        compile("ret p");
+        assertProgram(0xF0);
+    }
+
+    @Test
     public void testAllInstructions() {
         compile(
             "nop\n"
@@ -547,7 +565,7 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
             0x28, 0x20,
             0x30, 0x20,
             0x38, 0x20,
-            0x01, 0x34, 0x12,
+            0x01, 0x34, 0x12,  // 10
             0x11, 0x34, 0x12,
             0x21, 0x34, 0x12,
             0x31, 0x34, 0x12,
@@ -557,7 +575,7 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
             0x39,
             0x02,
             0x12,
-            0x0A,
+            0x0A, // 20
             0x1A,
             0x22, 0x34, 0x12,
             0x32, 0x34, 0x12,
@@ -565,7 +583,7 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
             0x3A, 0x34, 0x12,
             0x03,
             0x13,
-            0x23,
+            0x23, // 30
             0x33,
             0x0B,
             0x1B,
@@ -581,7 +599,7 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
             0x05,
             0x0D,
             0x15,
-            0x1D,
+            0x1D, // 40
             0x25,
             0x2D,
             0x3D,
@@ -591,7 +609,7 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
             0x1E, 0x20,
             0x26, 0x20,
             0x2E, 0x20,
-            0x07,
+            0x07, // 50
             0x0F,
             0x17,
             0x1F,
@@ -607,7 +625,7 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
             0x45,
             0x47,
             0x70,
-            0x71,
+            0x71, // 60
             0x72,
             0x73,
             0x74,
@@ -623,7 +641,7 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
             0x98,
             0x9E,
             0xA0,
-            0xA6,
+            0xA6, // 70
             0xA8,
             0xAE,
             0xB0,
@@ -634,12 +652,12 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
             0xC8,
             0xD0,
             0xD8,
-            0xE0,
+            0xE0, // 7b
             0xE8,
             0xF0,
             0xF8,
             0xC1,
-            0xD1,
+            0xD1, // 80
             0xE1,
             0xF1,
             0xC9,

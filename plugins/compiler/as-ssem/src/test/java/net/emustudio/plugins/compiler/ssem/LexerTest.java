@@ -20,6 +20,7 @@ package net.emustudio.plugins.compiler.ssem;
 
 import org.junit.Test;
 
+import static net.emustudio.plugins.compiler.ssem.SSEMLexer.*;
 import static net.emustudio.plugins.compiler.ssem.Utils.assertTokenTypes;
 import static net.emustudio.plugins.compiler.ssem.Utils.assertTokenTypesForCaseVariations;
 
@@ -27,53 +28,53 @@ public class LexerTest {
 
     @Test
     public void testParseError() {
-        assertTokenTypes("B I", SSEMLexer.ERROR, SSEMLexer.WS, SSEMLexer.ERROR, SSEMLexer.EOF);
-        assertTokenTypes("BINS ha", SSEMLexer.BNUM, SSEMLexer.BWS, SSEMLexer.BERROR, SSEMLexer.BERROR, SSEMLexer.EOF);
+        assertTokenTypes("B I", ERROR, WS, ERROR, EOF);
+        assertTokenTypes("BINS ha", BNUM, BWS, BERROR, BERROR, EOF);
     }
 
     @Test
     public void testParseReservedWords() {
-        assertTokenTypesForCaseVariations("jmp", SSEMLexer.JMP, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("jrp", SSEMLexer.JPR, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("jpr", SSEMLexer.JPR, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("jmr", SSEMLexer.JPR, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("ldn", SSEMLexer.LDN, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("sto", SSEMLexer.STO, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("sub", SSEMLexer.SUB, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("cmp", SSEMLexer.CMP, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("skn", SSEMLexer.CMP, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("stp", SSEMLexer.STP, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("hlt", SSEMLexer.STP, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("jmp", JMP, EOF);
+        assertTokenTypesForCaseVariations("jrp", JPR, EOF);
+        assertTokenTypesForCaseVariations("jpr", JPR, EOF);
+        assertTokenTypesForCaseVariations("jmr", JPR, EOF);
+        assertTokenTypesForCaseVariations("ldn", LDN, EOF);
+        assertTokenTypesForCaseVariations("sto", STO, EOF);
+        assertTokenTypesForCaseVariations("sub", SUB, EOF);
+        assertTokenTypesForCaseVariations("cmp", CMP, EOF);
+        assertTokenTypesForCaseVariations("skn", CMP, EOF);
+        assertTokenTypesForCaseVariations("stp", STP, EOF);
+        assertTokenTypesForCaseVariations("hlt", STP, EOF);
     }
 
     @Test
     public void testParsePreprocessor() {
-        assertTokenTypesForCaseVariations("start", SSEMLexer.START, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("num", SSEMLexer.NUM, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("bnum", SSEMLexer.BNUM, SSEMLexer.EOF);
-        assertTokenTypesForCaseVariations("bins", SSEMLexer.BNUM, SSEMLexer.EOF);
+        assertTokenTypesForCaseVariations("start", START, EOF);
+        assertTokenTypesForCaseVariations("num", NUM, EOF);
+        assertTokenTypesForCaseVariations("bnum", BNUM, EOF);
+        assertTokenTypesForCaseVariations("bins", BNUM, EOF);
     }
 
     @Test
     public void testParseWhitespaces() {
-        assertTokenTypes(" ", SSEMLexer.WS, SSEMLexer.EOF);
-        assertTokenTypes("\t", SSEMLexer.WS, SSEMLexer.EOF);
-        assertTokenTypes("\n", SSEMLexer.EOL, SSEMLexer.EOF);
-        assertTokenTypes("", SSEMLexer.EOF);
+        assertTokenTypes(" ", WS, EOF);
+        assertTokenTypes("\t", WS, EOF);
+        assertTokenTypes("\n", EOL, EOF);
+        assertTokenTypes("", EOF);
     }
 
     @Test
     public void testParseComments() {
-        assertTokenTypes("-- comment baybe", SSEMLexer.COMMENT, SSEMLexer.EOF);
-        assertTokenTypes("# comment baybe", SSEMLexer.COMMENT, SSEMLexer.EOF);
-        assertTokenTypes("// comment baybe", SSEMLexer.COMMENT, SSEMLexer.EOF);
-        assertTokenTypes("; comment baybe", SSEMLexer.COMMENT, SSEMLexer.EOF);
+        assertTokenTypes("-- comment baybe", COMMENT, EOF);
+        assertTokenTypes("# comment baybe", COMMENT, EOF);
+        assertTokenTypes("// comment baybe", COMMENT, EOF);
+        assertTokenTypes("; comment baybe", COMMENT, EOF);
     }
 
     @Test
     public void testLiterals() {
-        assertTokenTypes("10", SSEMLexer.NUMBER, SSEMLexer.EOF);
-        assertTokenTypes("0xAF", SSEMLexer.HEXNUMBER, SSEMLexer.EOF);
-        assertTokenTypes("BINS 1010", SSEMLexer.BNUM, SSEMLexer.BWS, SSEMLexer.BinaryNumber, SSEMLexer.EOF);
+        assertTokenTypes("10", NUMBER, EOF);
+        assertTokenTypes("0xAF", HEXNUMBER, EOF);
+        assertTokenTypes("BINS 1010", BNUM, BWS, BinaryNumber, EOF);
     }
 }

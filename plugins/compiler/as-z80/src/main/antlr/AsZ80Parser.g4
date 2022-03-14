@@ -9,10 +9,6 @@ rStart:
  | rLine EOF
  ;
 
-//rStart:
-// EOL* rLine? (EOL+ rLine)* EOL* EOF
-// ;
-
 rLine:
   label=ID_LABEL? (comment EOL)* statement=rStatement comment
   | label=ID_LABEL comment

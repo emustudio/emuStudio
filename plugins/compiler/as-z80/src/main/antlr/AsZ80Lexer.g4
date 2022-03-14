@@ -101,24 +101,24 @@ OPCODE_SUB: S U B;
 OPCODE_XOR: X O R;
 
 mode CONDITION;
-COND_C: C -> popMode;
-COND_NC: N C -> popMode;
-COND_Z: Z -> popMode;
-COND_NZ: N Z -> popMode;
-COND_M: M -> popMode;
-COND_P: P -> popMode;
-COND_PE: P E -> popMode;
-COND_PO: P O -> popMode;
-COND_WS: [ \t\f]+ -> skip;
-ERROR_COND: () -> popMode,skip;
+COND_C:  C   ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
+COND_NC: N C ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
+COND_Z:  Z   ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
+COND_NZ: N Z ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
+COND_M:  M   ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
+COND_PE: P E ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
+COND_PO: P O ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
+COND_P:  P   ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
+COND_WS: [ \t\f]+ -> channel(HIDDEN);
+ERROR_COND: () -> popMode,channel(HIDDEN);
 
 mode IM_NUMBER;
 IM_01: '0/1' -> popMode;
 IM_0: '0' -> popMode;
 IM_1: '1' -> popMode;
 IM_2: '2' -> popMode;
-IM_WS: [ \t\f]+ -> skip;
-ERROR_IM: ({"012".indexOf((char) _input.LA(1)) == -1}?) -> popMode,skip;
+IM_WS: [ \t\f]+ -> channel(HIDDEN);
+ERROR_IM: ({"012".indexOf((char) _input.LA(1)) == -1}?) -> popMode,channel(HIDDEN);
 
 mode DEFAULT_MODE;
 
@@ -205,5 +205,5 @@ OP_AND: '&';
 OP_OR: '|';
 OP_XOR: '^';
 
-WS : [ \t\f]+ -> skip;
+WS : [ \t\f]+ -> channel(HIDDEN);
 EOL: '\r'? '\n';

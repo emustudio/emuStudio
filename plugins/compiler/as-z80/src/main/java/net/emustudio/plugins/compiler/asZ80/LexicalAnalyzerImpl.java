@@ -18,6 +18,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[COMMENT] = Token.COMMENT;
         tokenMap[EOL] = Token.WHITESPACE;
         tokenMap[WS] = Token.WHITESPACE;
+        tokenMap[IM_WS] = Token.WHITESPACE;
+        tokenMap[COND_WS] = Token.WHITESPACE;
         tokenMap[OPCODE_ADC] = Token.RESERVED;
         tokenMap[OPCODE_ADD] = Token.RESERVED;
         tokenMap[OPCODE_BIT] = Token.RESERVED;
@@ -167,6 +169,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[ID_LABEL] = Token.IDENTIFIER;
 
         tokenMap[ERROR] = Token.ERROR;
+        tokenMap[ERROR_IM] = Token.ERROR;
+        tokenMap[ERROR_COND] = Token.ERROR;
     }
 
 

@@ -4,9 +4,11 @@ import net.emustudio.plugins.compiler.asZ80.CompilerTables;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprCurrentAddress;
+import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprNumber;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.*;
+import net.emustudio.plugins.compiler.asZ80.ast.pseudo.PseudoLabel;
 import org.junit.Test;
 
 import java.util.Random;
@@ -34,6 +36,9 @@ public class ParseInstrTest {
         assertInstr("ccf", OPCODE_CCF, 0, 7, 7);
         assertInstr("halt", OPCODE_HALT, 1, 6, 6);
         assertInstr("ret", OPCODE_RET, 3, 1, 1);
+        assertInstr("ret po", OPCODE_RET, 3, 4, 0);
+        assertInstr("ret pe", OPCODE_RET, 3, 5, 0);
+        assertInstr("ret p", OPCODE_RET, 3, 6, 0);
         assertInstr("exx", OPCODE_EXX, 3, 3, 1);
         assertInstr("jp hl", OPCODE_JP, 3, 5, 1);
         assertInstr("jp (hl)", OPCODE_JP, 3, 5, 1);
@@ -156,6 +161,9 @@ public class ParseInstrTest {
         assertInstrExpr("out (", "), a", OPCODE_OUT, 3, 2, 3);
         assertInstrExpr("in a, (", ")", OPCODE_IN, 3, 3, 3);
         assertInstrExpr("call ", OPCODE_CALL, 3, 0, 1, 5);
+        assertInstrExpr("call po,", OPCODE_CALL, 3, 4, 4);
+        assertInstrExpr("call pe,", OPCODE_CALL, 3, 5, 4);
+        assertInstrExpr("call p,", OPCODE_CALL, 3, 6, 4);
         assertInstrExpr("add a,", OPCODE_ADD, 3, 0, 6);
         assertInstrExpr("adc a,", OPCODE_ADC, 3, 1, 6);
         assertInstrExpr("sub", OPCODE_SUB, 3, 2, 6);
@@ -165,6 +173,18 @@ public class ParseInstrTest {
         assertInstrExpr("or", OPCODE_OR, 3, 6, 6);
         assertInstrExpr("cp", OPCODE_CP, 3, 7, 6);
         assertInstrExpr("rst", OPCODE_RST, 3, 0, 7);
+    }
+
+    @Test
+    public void testCallLabelWithConditionPrefix() {
+        Program program = parseProgram("peter: call peter");
+        System.out.println(program);
+        assertTrees(new Program()
+                .addChild(new PseudoLabel(0, 0, "peter")
+                    .addChild(new Instr(0, 0, OPCODE_CALL, 3, 1, 5)
+                        .addChild(new ExprId(0, 0, "peter")))),
+            program
+        );
     }
 
     @Test
@@ -392,11 +412,11 @@ public class ParseInstrTest {
         Node expr = new ExprNumber(0, 0, 5);
 
         forStringCaseVariations(instrPrefix, prefixVariation -> {
-                Program program = parseProgram(prefixVariation + " $ + 5), 5");
-                assertTrees(new Program()
-                    .addChild(new InstrXD(0, 0, OPCODE_LD, prefix, 0, 6, 6)
-                        .addChild(disp)
-                        .addChild(expr)), program);
+            Program program = parseProgram(prefixVariation + " $ + 5), 5");
+            assertTrees(new Program()
+                .addChild(new InstrXD(0, 0, OPCODE_LD, prefix, 0, 6, 6)
+                    .addChild(disp)
+                    .addChild(expr)), program);
         });
     }
 }

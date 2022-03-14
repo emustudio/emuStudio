@@ -15,19 +15,20 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void testParseError1() {
-        assertTokenTypes("B :", REG_B, ERROR, EOF);
+        assertTokenTypes("B :", REG_B, WS, ERROR, EOF);
     }
 
     @Test
     public void testParseError2() {
-        assertTokenTypes("0x 9o 22b", ERROR, ERROR, ERROR, EOF);
+        assertTokenTypes("0x 9o 22b", ERROR, WS, ERROR, WS, ERROR, EOF);
     }
 
     @Test
     public void testParseHex1() {
         assertTokenTypes(
             "0x1 0x0 -0x5f -0xFffF 0x1BC",
-            LIT_HEXNUMBER_1, LIT_HEXNUMBER_1, OP_SUBTRACT, LIT_HEXNUMBER_1, OP_SUBTRACT, LIT_HEXNUMBER_1, LIT_HEXNUMBER_1, EOF
+            LIT_HEXNUMBER_1, WS, LIT_HEXNUMBER_1, WS, OP_SUBTRACT, LIT_HEXNUMBER_1, WS, OP_SUBTRACT, LIT_HEXNUMBER_1,
+            WS, LIT_HEXNUMBER_1, EOF
         );
     }
 
@@ -35,8 +36,8 @@ public class LexicalAnalyzerImplTest {
     public void testParseHex2() {
         assertTokenTypes(
             "1h 0h -5Fh -FFFFh 1BCh 5h -5h",
-            LIT_HEXNUMBER_2, LIT_HEXNUMBER_2, OP_SUBTRACT, LIT_HEXNUMBER_2, OP_SUBTRACT, LIT_HEXNUMBER_2, LIT_HEXNUMBER_2,
-            LIT_HEXNUMBER_2, OP_SUBTRACT, LIT_HEXNUMBER_2, EOF
+            LIT_HEXNUMBER_2, WS, LIT_HEXNUMBER_2, WS, OP_SUBTRACT, LIT_HEXNUMBER_2, WS, OP_SUBTRACT, LIT_HEXNUMBER_2,
+            WS, LIT_HEXNUMBER_2, WS, LIT_HEXNUMBER_2, WS, OP_SUBTRACT, LIT_HEXNUMBER_2, EOF
         );
     }
 
@@ -44,14 +45,16 @@ public class LexicalAnalyzerImplTest {
     public void testParseDecimal() {
         assertTokenTypes(
             "0 1 -2 3 -4 5 66 999",
-            LIT_NUMBER, LIT_NUMBER, OP_SUBTRACT, LIT_NUMBER, LIT_NUMBER, OP_SUBTRACT, LIT_NUMBER, LIT_NUMBER, LIT_NUMBER,
-            LIT_NUMBER, EOF
+            LIT_NUMBER, WS, LIT_NUMBER, WS, OP_SUBTRACT, LIT_NUMBER, WS, LIT_NUMBER, WS, OP_SUBTRACT, LIT_NUMBER,
+            WS, LIT_NUMBER, WS, LIT_NUMBER, WS, LIT_NUMBER, EOF
         );
     }
 
     @Test
     public void testParseOctal() {
-        assertTokenTypes("-6o 7q 11q -345O", OP_SUBTRACT, LIT_OCTNUMBER, LIT_OCTNUMBER, LIT_OCTNUMBER, OP_SUBTRACT, LIT_OCTNUMBER, EOF);
+        assertTokenTypes("-6o 7q 11q -345O",
+            OP_SUBTRACT, LIT_OCTNUMBER, WS, LIT_OCTNUMBER, WS, LIT_OCTNUMBER, WS, OP_SUBTRACT, LIT_OCTNUMBER, EOF
+        );
     }
 
     @Test
@@ -61,13 +64,13 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void testParseString1() {
-        assertTokenTypes("'' 'sss'", LIT_STRING_1, LIT_STRING_1, EOF);
+        assertTokenTypes("'' 'sss'", LIT_STRING_1, WS, LIT_STRING_1, EOF);
         assertTokenTypes("'\nsss'", LIT_STRING_1, EOF);
     }
 
     @Test
     public void testParseString2() {
-        assertTokenTypes("\"\" \"sss\"", LIT_STRING_2, LIT_STRING_2, EOF);
+        assertTokenTypes("\"\" \"sss\"", LIT_STRING_2, WS, LIT_STRING_2, EOF);
         assertTokenTypes("\"\nsss\"", LIT_STRING_2, EOF);
     }
 
@@ -167,22 +170,25 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void parseIm() {
-        assertTokenTypesIgnoreCase("IM 0 0", OPCODE_IM, IM_0, LIT_NUMBER, EOF);
-        assertTokenTypesIgnoreCase("IM 0/1", OPCODE_IM, IM_01, EOF);
-        assertTokenTypesIgnoreCase("IM 3 0", OPCODE_IM, LIT_NUMBER, LIT_NUMBER, EOF);
+        assertTokenTypesIgnoreCase("IM 0 0", OPCODE_IM, IM_WS, IM_0, WS, LIT_NUMBER, EOF);
+        assertTokenTypesIgnoreCase("IM 0/1", OPCODE_IM, IM_WS, IM_01, EOF);
+        assertTokenTypesIgnoreCase("IM 3 0", OPCODE_IM, IM_WS, ERROR_IM, LIT_NUMBER, WS, LIT_NUMBER, EOF);
     }
 
     @Test
     public void parseRet() {
-        assertTokenTypesIgnoreCase("ret and", OPCODE_RET, OPCODE_AND, EOF);
-        assertTokenTypesIgnoreCase("ret nz", OPCODE_RET, COND_NZ, EOF);
-        assertTokenTypesIgnoreCase("ret c c", OPCODE_RET, COND_C, REG_C, EOF);
+        assertTokenTypesIgnoreCase("ret and", OPCODE_RET, COND_WS, ERROR_COND, OPCODE_AND, EOF);
+        assertTokenTypesIgnoreCase("ret nz", OPCODE_RET, COND_WS, COND_NZ, EOF);
+        assertTokenTypesIgnoreCase("ret c c", OPCODE_RET, COND_WS, COND_C, WS, REG_C, EOF);
+        assertTokenTypesIgnoreCase("ret pe", OPCODE_RET, COND_WS, COND_PE, EOF);
+        assertTokenTypesIgnoreCase("ret po", OPCODE_RET, COND_WS, COND_PO, EOF);
+        assertTokenTypesIgnoreCase("ret p", OPCODE_RET, COND_WS, COND_P, EOF);
     }
 
     @Test
     public void parseJp() {
-        assertTokenTypesIgnoreCase("jp c c", OPCODE_JP, COND_C, REG_C, EOF);
-        assertTokenTypesIgnoreCase("jp hl", OPCODE_JP, REG_HL, EOF);
+        assertTokenTypesIgnoreCase("jp c c", OPCODE_JP, COND_WS, COND_C, WS, REG_C, EOF);
+        assertTokenTypesIgnoreCase("jp hl", OPCODE_JP, COND_WS, ERROR_COND, REG_HL, EOF);
     }
 
     @Test
@@ -245,14 +251,14 @@ public class LexicalAnalyzerImplTest {
 
     @Test
     public void testIdentifier() {
-        assertTokenTypes("u @ ? _", ID_IDENTIFIER, ID_IDENTIFIER, ID_IDENTIFIER, ID_IDENTIFIER, EOF);
-        assertTokenTypes("a@ abc ZZ_ H005", ID_IDENTIFIER, ID_IDENTIFIER, ID_IDENTIFIER, ID_IDENTIFIER, EOF);
+        assertTokenTypes("u @ ? _", ID_IDENTIFIER, WS, ID_IDENTIFIER, WS, ID_IDENTIFIER, WS, ID_IDENTIFIER, EOF);
+        assertTokenTypes("a@ abc ZZ_ H005", ID_IDENTIFIER, WS, ID_IDENTIFIER, WS, ID_IDENTIFIER, WS, ID_IDENTIFIER, EOF);
     }
 
     @Test
     public void testLabel() {
-        assertTokenTypes("u: @: ?: _:", ID_LABEL, ID_LABEL, ID_LABEL, ID_LABEL, EOF);
-        assertTokenTypes("a@: abc: ZZ_: H005:", ID_LABEL, ID_LABEL, ID_LABEL, ID_LABEL, EOF);
+        assertTokenTypes("u: @: ?: _:", ID_LABEL, WS, ID_LABEL, WS, ID_LABEL, WS, ID_LABEL, EOF);
+        assertTokenTypes("a@: abc: ZZ_: H005:", ID_LABEL, WS, ID_LABEL, WS, ID_LABEL, WS, ID_LABEL, EOF);
         assertTokenTypes("a:", ID_LABEL, EOF);
     }
 

@@ -18,25 +18,25 @@ public class ParsingUtilsTest {
     @Test
     public void testParseLitString() {
         List<Token> tokens = getTokens("'te\"x\"t1' \"te'x't2\"");
-        Utils.assertTokenTypes(tokens, LIT_STRING_1, LIT_STRING_2, EOF);
+        Utils.assertTokenTypes(tokens, LIT_STRING_1, WS, LIT_STRING_2, EOF);
         Assert.assertEquals("te\"x\"t1", ParsingUtils.parseLitString(tokens.get(0)));
-        assertEquals("te'x't2", ParsingUtils.parseLitString(tokens.get(1)));
+        assertEquals("te'x't2", ParsingUtils.parseLitString(tokens.get(2)));
     }
 
     @Test
     public void testParseLitHex1() {
         List<Token> tokens = getTokens("0x22F 0XAA55");
-        assertTokenTypes(tokens, LIT_HEXNUMBER_1, LIT_HEXNUMBER_1, EOF);
+        assertTokenTypes(tokens, LIT_HEXNUMBER_1, WS, LIT_HEXNUMBER_1, EOF);
         assertEquals(0x22F, ParsingUtils.parseLitHex1(tokens.get(0)));
-        assertEquals(0xAA55, ParsingUtils.parseLitHex1(tokens.get(1)));
+        assertEquals(0xAA55, ParsingUtils.parseLitHex1(tokens.get(2)));
     }
 
     @Test
     public void testParseLitHex2() {
         List<Token> tokens = getTokens("022Fh AA55H");
-        assertTokenTypes(tokens, LIT_HEXNUMBER_2, LIT_HEXNUMBER_2, EOF);
+        assertTokenTypes(tokens, LIT_HEXNUMBER_2, WS, LIT_HEXNUMBER_2, EOF);
         assertEquals(0x22F, ParsingUtils.parseLitHex2(tokens.get(0)));
-        assertEquals(0xAA55, ParsingUtils.parseLitHex2(tokens.get(1)));
+        assertEquals(0xAA55, ParsingUtils.parseLitHex2(tokens.get(2)));
     }
 
     @Test
@@ -44,13 +44,12 @@ public class ParsingUtilsTest {
         List<Token> tokens = getTokens("22q 55O 77Q 001o");
         assertTokenTypes(
             tokens,
-            LIT_OCTNUMBER, LIT_OCTNUMBER, LIT_OCTNUMBER,
-            LIT_OCTNUMBER, EOF
+            LIT_OCTNUMBER, WS, LIT_OCTNUMBER, WS, LIT_OCTNUMBER, WS, LIT_OCTNUMBER, EOF
         );
         assertEquals(18, ParsingUtils.parseLitOct(tokens.get(0)));
-        assertEquals(45, ParsingUtils.parseLitOct(tokens.get(1)));
-        assertEquals(63, ParsingUtils.parseLitOct(tokens.get(2)));
-        assertEquals(1, ParsingUtils.parseLitOct(tokens.get(3)));
+        assertEquals(45, ParsingUtils.parseLitOct(tokens.get(2)));
+        assertEquals(63, ParsingUtils.parseLitOct(tokens.get(4)));
+        assertEquals(1, ParsingUtils.parseLitOct(tokens.get(6)));
     }
 
     @Test
@@ -58,11 +57,11 @@ public class ParsingUtilsTest {
         List<Token> tokens = getTokens("22 55 00");
         assertTokenTypes(
             tokens,
-            LIT_NUMBER, LIT_NUMBER, LIT_NUMBER, EOF
+            LIT_NUMBER, WS, LIT_NUMBER, WS, LIT_NUMBER, EOF
         );
         assertEquals(22, ParsingUtils.parseLitDec(tokens.get(0)));
-        assertEquals(55, ParsingUtils.parseLitDec(tokens.get(1)));
-        assertEquals(0, ParsingUtils.parseLitDec(tokens.get(2)));
+        assertEquals(55, ParsingUtils.parseLitDec(tokens.get(2)));
+        assertEquals(0, ParsingUtils.parseLitDec(tokens.get(4)));
     }
 
     @Test
@@ -70,10 +69,10 @@ public class ParsingUtilsTest {
         List<Token> tokens = getTokens("000b 0101101b 111b");
         assertTokenTypes(
             tokens,
-            LIT_BINNUMBER, LIT_BINNUMBER, LIT_BINNUMBER, EOF
+            LIT_BINNUMBER, WS, LIT_BINNUMBER, WS, LIT_BINNUMBER, EOF
         );
         assertEquals(0, ParsingUtils.parseLitBin(tokens.get(0)));
-        assertEquals(45, ParsingUtils.parseLitBin(tokens.get(1)));
-        assertEquals(7, ParsingUtils.parseLitBin(tokens.get(2)));
+        assertEquals(45, ParsingUtils.parseLitBin(tokens.get(2)));
+        assertEquals(7, ParsingUtils.parseLitBin(tokens.get(4)));
     }
 }
