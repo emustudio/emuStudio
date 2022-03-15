@@ -200,6 +200,9 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     private int convertLexerTokenType(int tokenType) {
+        if (tokenType == EOF) {
+            return Token.EOF;
+        }
         return tokenMap[tokenType];
     }
 }

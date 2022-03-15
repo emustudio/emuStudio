@@ -29,6 +29,7 @@ buildscript {
 plugins {
   id 'java'
   id 'net.emustudio.edigen-plugin' version '1.4.0'
+  id 'com.adarshr.test-logger' version '3.1.0'
 }
 
 repositories {

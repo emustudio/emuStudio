@@ -21,11 +21,12 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
+  id 'com.adarshr.test-logger' version '3.1.0'
 }
 
 repositories {
+  mavenLocal()
   mavenCentral()
-  jcenter()
 }
 
 dependencies {

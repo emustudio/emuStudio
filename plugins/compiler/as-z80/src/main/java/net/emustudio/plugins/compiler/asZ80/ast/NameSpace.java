@@ -2,6 +2,7 @@ package net.emustudio.plugins.compiler.asZ80.ast;
 
 import net.emustudio.plugins.compiler.asZ80.CompileError;
 
+import java.io.File;
 import java.util.*;
 
 public class NameSpace {
