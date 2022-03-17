@@ -401,13 +401,31 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(address, new Byte[]{(byte) (value & 0xFF), (byte) ((value >>> 8) & 0xFF)}, 2);
     }
 
-    private int flagSZHPC(int a, int b, int sum) {
-        int carryOut = (a > 0xFF - b) ? FLAG_C : 0;
+    private int flagSZHPC(int a, int b, int flagC, int sum) {
+        // source: https://stackoverflow.com/questions/8034566/overflow-and-carry-flags-on-z80
+        int carryOut;
+        if (flagC == FLAG_C) {
+            carryOut = (a >= 0xFF - b) ? FLAG_C : 0;
+        } else {
+            carryOut = (a > 0xFF - b) ? FLAG_C : 0;
+        }
+
         int carryIns = sum ^ a ^ b;
         int halfCarryOut = (carryIns >> 4) & 1;
         int overflowOut = (((carryIns >> 7) ^ carryOut) != 0) ? FLAG_PV : 0;
 
         return carryOut | (halfCarryOut << 4) | (overflowOut) | (sum == 0 ? FLAG_Z : 0) | (sum & 0x80);
+    }
+
+    private int flagSZHP(int a, int b, int sum) {
+        // source: https://stackoverflow.com/questions/8034566/overflow-and-carry-flags-on-z80
+        int carryOut = (a > 0xFF - b) ? FLAG_C : 0;
+
+        int carryIns = sum ^ a ^ b;
+        int halfCarryOut = (carryIns >> 4) & 1;
+        int overflowOut = (((carryIns >> 7) ^ carryOut) != 0) ? FLAG_PV : 0;
+
+        return (halfCarryOut << 4) | (overflowOut) | (sum == 0 ? FLAG_Z : 0) | (sum & 0x80);
     }
 
     private void bigOverflow(int i, int j, int result) {
@@ -551,7 +569,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_INC_R() {
         int reg = (lastOpcode >>> 3) & 0x07;
         int value = (getreg(reg) + 1) & 0xFF;
-        flags = EmulatorTables.INC_TABLE[value] | (flags & FLAG_C);
+        flags = flagSZHP(getreg(reg), 1, value);
         putreg(reg, value);
         return (reg == 6) ? 11 : 4;
     }
@@ -559,7 +577,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_DEC_R() {
         int reg = (lastOpcode >>> 3) & 0x07;
         int value = (getreg(reg) - 1) & 0xFF;
-        flags = EmulatorTables.DEC_TABLE[value] | (flags & FLAG_C);
+        flags = flagSZHP(getreg(reg), ((~1) + 1) & 0xFF, value) | FLAG_N;
         putreg(reg, value);
         return (reg == 6) ? 11 : 4;
     }
@@ -585,7 +603,7 @@ public class EmulatorEngine implements CpuEngine {
         int value = getreg(lastOpcode & 0x07);
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value) & 0xFF;
-        flags = flagSZHPC(oldA, value, regs[REG_A]);
+        flags = flagSZHPC(oldA, value, 0, regs[REG_A]);
         return (lastOpcode == 0x86) ? 7 : 4;
     }
 
@@ -593,7 +611,7 @@ public class EmulatorEngine implements CpuEngine {
         int value = getreg(lastOpcode & 0x07);
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value + (flags & FLAG_C)) & 0xFF;
-        flags = flagSZHPC(oldA, (value + (flags & FLAG_C)) & 0xFF, regs[REG_A]);
+        flags = flagSZHPC(oldA, value, (flags & FLAG_C), regs[REG_A]);
         return (lastOpcode == 0x8E) ? 7 : 4;
     }
 
@@ -601,7 +619,12 @@ public class EmulatorEngine implements CpuEngine {
         int value = ((~getreg(lastOpcode & 0x07)) + 1) & 0xFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value) & 0xFF;
-        flags = flagSZHPC(oldA, value, regs[REG_A]) | FLAG_N;
+        flags = flagSZHPC(oldA, value, 0, regs[REG_A]) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return (lastOpcode == 0x96) ? 7 : 4;
     }
 
@@ -609,7 +632,12 @@ public class EmulatorEngine implements CpuEngine {
         int value = ((~getreg(lastOpcode & 0x07)) + 1) & 0xFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value - (flags & FLAG_C)) & 0xFF;
-        flags = flagSZHPC(oldA, (value - (flags & FLAG_C)) & 0xFF, regs[REG_A]) | FLAG_N;
+        flags = flagSZHPC(oldA, value, ((flags & FLAG_C) == FLAG_C) ? 0 : FLAG_C, regs[REG_A]) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return (lastOpcode == 0x9E) ? 7 : 4;
     }
 
@@ -634,7 +662,12 @@ public class EmulatorEngine implements CpuEngine {
     int I_CP_R() {
         int value = ((~getreg(lastOpcode & 7)) + 1) & 0xFF;
         int result = (regs[REG_A] + value) & 0xFF;
-        flags = flagSZHPC(regs[REG_A], value, result) | FLAG_N;
+        flags = flagSZHPC(regs[REG_A], value, 0, result) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return (lastOpcode == 0xBE) ? 7 : 4;
     }
 
@@ -1373,7 +1406,7 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value) & 0xFF;
-        flags = flagSZHPC(oldA, value, regs[REG_A]);
+        flags = flagSZHPC(oldA, value, 0, regs[REG_A]);
         return 7;
     }
 
@@ -1382,7 +1415,7 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value + (flags & FLAG_C)) & 0xFF;
-        flags = flagSZHPC(oldA, (value + (flags & FLAG_C)) & 0xFF, regs[REG_A]);
+        flags = flagSZHPC(oldA, value, flags & FLAG_C, regs[REG_A]);
         return 7;
     }
 
@@ -1398,7 +1431,12 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value) & 0xFF;
-        flags = flagSZHPC(oldA, value, regs[REG_A]) | FLAG_N;
+        flags = flagSZHPC(oldA, value, 0, regs[REG_A]) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return 7;
     }
 
@@ -1414,7 +1452,12 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value - (flags & FLAG_C)) & 0xFF;
-        flags = flagSZHPC(oldA, (value - (flags & FLAG_C)) & 0xFF, regs[REG_A]) | FLAG_N;
+        flags = flagSZHPC(oldA, value, (flags & FLAG_C) == FLAG_C ? 0 : FLAG_C, regs[REG_A]) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return 7;
     }
 
@@ -1449,7 +1492,12 @@ public class EmulatorEngine implements CpuEngine {
         int value = ((~readByte(PC)) + 1) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
         int diff = (regs[REG_A] + value) & 0xFF;
-        flags = flagSZHPC(regs[REG_A], value, diff) | FLAG_N;
+        flags = flagSZHPC(regs[REG_A], value, 0, diff) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return 7;
     }
 
@@ -1836,13 +1884,13 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_INC_REF_II_N(int special) {
-        byte tmp = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int tmp1 = (special + tmp) & 0xFFFF;
-        int tmp2 = (memory.read(tmp1) + 1) & 0xFF;
-
-        memory.write(tmp1, (byte) tmp2);
-        flags = EmulatorTables.INC_TABLE[tmp2] | (flags & FLAG_C);
+        int address = (special + disp) & 0xFFFF;
+        int value = readByte(address);
+        int result = (value + 1) & 0xFF;
+        memory.write(address, (byte) result);
+        flags = flagSZHP(value, 1, result);
         return 23;
     }
 
@@ -1855,12 +1903,13 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_DEC_REF_II_N(int special) {
-        int tmp = readByte(PC);
+        int disp = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
-        int tmp1 = (special + (byte) tmp) & 0xFFFF;
-        int tmp2 = (memory.read(tmp1) - 1) & 0xFF;
-        memory.write(tmp1, (byte) tmp2);
-        flags = EmulatorTables.DEC_TABLE[tmp2] | (flags & FLAG_C);
+        int address = (special + (byte) disp) & 0xFFFF;
+        int value = readByte(address);
+        int result = (value - 1) & 0xFF;
+        memory.write(address, (byte) result);
+        flags = flagSZHP(value, ((~1) + 1) & 0xFF, result) | FLAG_N;
         return 23;
     }
 
@@ -1926,7 +1975,7 @@ public class EmulatorEngine implements CpuEngine {
         int value = readByte((special + offset) & 0xFFFF);
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value) & 0xFF;
-        flags = flagSZHPC(oldA, value, regs[REG_A]);
+        flags = flagSZHPC(oldA, value, 0, regs[REG_A]);
         return 19;
     }
 
@@ -1944,7 +1993,7 @@ public class EmulatorEngine implements CpuEngine {
         int value = readByte((special + offset) & 0xFFFF);
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value + (flags & FLAG_C)) & 0xFF;
-        flags = flagSZHPC(oldA, (value + (flags & FLAG_C)) & 0xFF, regs[REG_A]);
+        flags = flagSZHPC(oldA, value, flags & FLAG_C, regs[REG_A]);
         return 19;
     }
 
@@ -1962,7 +2011,12 @@ public class EmulatorEngine implements CpuEngine {
         int value = ((~readByte((special + offset) & 0xFFFF)) + 1) & 0xFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value) & 0xFF;
-        flags = flagSZHPC(oldA, value, regs[REG_A]) | FLAG_N;
+        flags = flagSZHPC(oldA, value, 0, regs[REG_A]) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return 19;
     }
 
@@ -1980,7 +2034,12 @@ public class EmulatorEngine implements CpuEngine {
         int value = ((~readByte((special + offset) & 0xFFFF)) + 1) & 0xFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value - (flags & FLAG_C)) & 0xFF;
-        flags = flagSZHPC(oldA, (value - (flags & FLAG_C)) & 0xFF, regs[REG_A]) | FLAG_N;
+        flags = flagSZHPC(oldA, value, ((flags & FLAG_C) == FLAG_C) ? 0 : FLAG_C, regs[REG_A]) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return 19;
     }
 
@@ -2050,7 +2109,12 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         int value = ((~readByte((special + offset) & 0xFFFF)) + 1) & 0xFF;
         int diff = (regs[REG_A] + value) & 0xFF;
-        flags = flagSZHPC(regs[REG_A], value, diff) | FLAG_N;
+        flags = flagSZHPC(regs[REG_A], value, 0, diff) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return 19;
     }
 
@@ -2369,9 +2433,9 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_INC(int value) {
-        int valueInc = (value + 1) & 0xFF;
-        flags = EmulatorTables.INC_TABLE[valueInc] | (flags & FLAG_C);
-        return valueInc;
+        int result = (value + 1) & 0xFF;
+        flags = flagSZHP(value, 1, result);
+        return result;
     }
 
     int I_DEC_IXH() {
@@ -2387,7 +2451,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_DEC_IIH(int special) {
         int reg = special >>> 8;
         int value = (reg - 1) & 0xFF;
-        flags = EmulatorTables.DEC_TABLE[value] | (flags & FLAG_C);
+        flags = flagSZHP(reg, ((~1) + 1) & 0xFF, value) | FLAG_N;
         return value;
     }
 
@@ -2404,7 +2468,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_DEC_IIL(int special) {
         int reg = special & 0xFF;
         int value = (reg - 1) & 0xFF;
-        flags = EmulatorTables.DEC_TABLE[value] | (flags & FLAG_C);
+        flags = flagSZHP(reg, ((~1) + 1) & 0xFF, value) | FLAG_N;
         return value;
     }
 
@@ -2531,7 +2595,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_ADD_A(int value) {
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value) & 0xFF;
-        flags = flagSZHPC(oldA, value, regs[REG_A]);
+        flags = flagSZHPC(oldA, value, 0, regs[REG_A]);
         return 8;
     }
 
@@ -2554,7 +2618,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_ADC_A(int value) {
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + value + (flags & FLAG_C)) & 0xFF;
-        flags = flagSZHPC(oldA, (value + (flags & FLAG_C)) & 0xFF, regs[REG_A]);
+        flags = flagSZHPC(oldA, value, flags & FLAG_C, regs[REG_A]);
         return 8;
     }
 
@@ -2578,7 +2642,12 @@ public class EmulatorEngine implements CpuEngine {
         int valueNeg = ((~value) + 1) & 0xFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + valueNeg) & 0xFF;
-        flags = flagSZHPC(oldA, valueNeg, regs[REG_A]) | FLAG_N;
+        flags = flagSZHPC(oldA, valueNeg, 0, regs[REG_A]) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return 8;
     }
 
@@ -2602,7 +2671,12 @@ public class EmulatorEngine implements CpuEngine {
         int valueNeg = ((~value) + 1) & 0xFF;
         int oldA = regs[REG_A];
         regs[REG_A] = (oldA + valueNeg - (flags & FLAG_C)) & 0xFF;
-        flags = flagSZHPC(oldA, (valueNeg - (flags & FLAG_C)) & 0xFF, regs[REG_A]) | FLAG_N;
+        flags = flagSZHPC(oldA, valueNeg, ((flags & FLAG_C) == FLAG_C) ? 0 : FLAG_C, regs[REG_A]) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return 8;
     }
 
@@ -2691,7 +2765,12 @@ public class EmulatorEngine implements CpuEngine {
     int I_CP(int value) {
         int valueNeg = ((~value) + 1) & 0xFF;
         int result = (regs[REG_A] + valueNeg) & 0xFF;
-        flags = flagSZHPC(regs[REG_A], valueNeg, result) | FLAG_N;
+        flags = flagSZHPC(regs[REG_A], valueNeg, 0, result) | FLAG_N;
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= 0xFE;
+        } else {
+            flags |= FLAG_C;
+        }
         return 8;
     }
 }

@@ -273,7 +273,7 @@ public class IOTest extends InstructionsTest {
         );
     }
 
-    @Test  // TODO
+    @Test
     public void testOUTD() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()
@@ -284,7 +284,7 @@ public class IOTest extends InstructionsTest {
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().zero()
-                .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
+                .subtractionIsSet()
                 .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
             );
 

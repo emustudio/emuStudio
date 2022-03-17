@@ -21,11 +21,44 @@ package net.emustudio.plugins.cpu.zilogZ80.suite;
 import net.emustudio.cpu.testsuite.FlagsCheck;
 import net.emustudio.cpu.testsuite.RunnerContext;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 
 public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckImpl<T>> {
+    private Function<RunnerContext<T>, Integer> first = context -> context.first.intValue();
+    private Function<RunnerContext<T>, Integer> second = context -> context.second.intValue();
+
+    public FlagsCheckImpl<T> setFirst(Function<RunnerContext<T>, Integer> first) {
+        this.first = Objects.requireNonNull(first);
+        return this;
+    }
+
+    public FlagsCheckImpl<T> setSecond(Function<RunnerContext<T>, Integer> second) {
+        this.second = Objects.requireNonNull(second);
+        return this;
+    }
+
+    public FlagsCheckImpl<T> setFirst8MSB() {
+        this.first = context -> context.first.intValue() >>> 8;
+        return this;
+    }
+
+    public FlagsCheckImpl<T> setFirst8LSB() {
+        this.first = context -> context.first.intValue() & 0xFF;
+        return this;
+    }
+
+    public FlagsCheckImpl<T> setSecond8MSB() {
+        this.second = context -> context.second.intValue() >>> 8;
+        return this;
+    }
+
+    public FlagsCheckImpl<T> setSecond8LSB() {
+        this.second = context -> context.second.intValue() & 0xFF;
+        return this;
+    }
 
     public FlagsCheckImpl<T> sign() {
         evaluators.add((context, result) -> {
@@ -82,27 +115,38 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     }
 
     public FlagsCheckImpl<T> overflow() {
-        return overflow(context -> context.first.intValue());
-    }
-
-    public FlagsCheckImpl<T> overflowOfFirst8MSB() {
-        return overflow(context -> context.first.intValue() >>> 8);
-    }
-
-    public FlagsCheckImpl<T> overflowOfFirst8LSB() {
-        return overflow(context -> context.first.intValue() & 0xFF);
-    }
-
-    public FlagsCheckImpl<T> overflow(Function<RunnerContext<T>, Integer> first) {
         evaluators.add((context, result) -> {
-            int firstInt = first.apply(context);
-            int sign = firstInt & 0x80;
-            int trueSecond = result - firstInt;
+            int firstInt = first.apply(context) & 0xFF;
+            int secondInt = second.apply(context) & 0xFF;
 
-            if (sign != (trueSecond & 0x80)) {
-                expectedNotFlags |= FLAG_PV;
-            } else if ((result & 0x80) != sign) {
+            int carryIns = ((firstInt ^ secondInt) ^ 0x80) & 0x80;
+            if (carryIns != 0) { // if addend signs are the same
+                // overflow if the sum sign differs from the sign of either of addends
+                carryIns = ((result ^ firstInt) & 0x80);
+            }
+            if (carryIns != 0) {
                 expectedFlags |= FLAG_PV;
+            } else {
+                expectedNotFlags |= FLAG_PV;
+            }
+        });
+        return this;
+    }
+
+    public FlagsCheckImpl<T> overflowSub() {
+        evaluators.add((context, result) -> {
+            int firstInt = first.apply(context) & 0xFF;
+            int secondInt = ((~(second.apply(context) & 0xFF)) + 1) & 0xFF;
+
+            int carryIns = ((firstInt ^ secondInt) ^ 0x80) & 0x80;
+            if (carryIns != 0) { // if addend signs are the same
+                // overflow if the sum sign differs from the sign of either of addends
+                carryIns = ((result ^ firstInt) & 0x80);
+            }
+            if (carryIns != 0) {
+                expectedFlags |= FLAG_PV;
+            } else {
+                expectedNotFlags |= FLAG_PV;
             }
         });
         return this;
@@ -120,18 +164,6 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
             }
         });
         return this;
-    }
-
-    public static boolean isParity(int value) {
-        int numberOfOnes = 0;
-
-        for (int i = 0; i < 8; i++) {
-            if ((value & 1) == 1) {
-                numberOfOnes++;
-            }
-            value = value >>> 1;
-        }
-        return numberOfOnes % 2 == 0;
     }
 
     public FlagsCheckImpl<T> parity() {
@@ -168,31 +200,28 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     }
 
     public FlagsCheckImpl<T> borrow() {
-        return borrow(context -> context.second.intValue());
-    }
-
-    public FlagsCheckImpl<T> borrow(Function<RunnerContext<T>, Integer> second) {
-        // doesn't work if sub is using carry=1 (SBC)
         evaluators.add((context, result) -> {
-            if ((context.first.intValue() & 0xFF) > (0xFF - (((~second.apply(context)) + 1) & 0xFF))) {
-                expectedFlags |= FLAG_C;
+            int inversedSecond = ((~second.apply(context)) + 1) & 0xFF;
+            int sum = (context.first.intValue() & 0xFF) + inversedSecond;
+
+            if ((sum & 0x100) == 0x100) {
+                expectedNotFlags |= FLAG_C;  // reversed flag C expectations on substraction
             } else {
-                expectedNotFlags |= FLAG_C;
+                expectedFlags |= FLAG_C;
             }
         });
         return this;
     }
 
     public FlagsCheckImpl<T> borrowWithCarry() {
-        return borrowWithCarry(context -> context.second.intValue());
-    }
-
-    public FlagsCheckImpl<T> borrowWithCarry(Function<RunnerContext<T>, Integer> second) {
         evaluators.add((context, result) -> {
-            if ((context.first.intValue() & 0xFF) > (0xFF - (((~second.apply(context)) + 1 - (context.flags & FLAG_C)) & 0xFF))) {
-                expectedFlags |= FLAG_C;
-            } else {
+            int inversedCarry = (context.flags & FLAG_C) == FLAG_C ? 0 : FLAG_C;
+            int inversedSecond = ((~second.apply(context)) + 1) & 0xFF;
+            int sum = (context.first.intValue() & 0xFF) + inversedSecond + inversedCarry;
+            if ((sum & 0x100) == 0x100) {
                 expectedNotFlags |= FLAG_C;
+            } else {
+                expectedFlags |= FLAG_C;
             }
         });
         return this;
@@ -225,51 +254,9 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
         return this;
     }
 
-    public static boolean isAuxCarry(int first, int sumWith) {
-        int mask = sumWith & first;
-        int xormask = sumWith ^ first;
-
-        int C0 = mask & 1;
-        int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
-        int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
-        int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
-
-        return (C3 != 0);
-    }
-
-    public FlagsCheckImpl<T> halfCarryOfFirst8MSB() {
-        return halfCarry(context -> context.first.intValue() >>> 8);
-    }
-
-    public FlagsCheckImpl<T> halfCarryOfFirst8LSB() {
-        return halfCarry(context -> context.first.intValue() & 0xFF);
-    }
-
     public FlagsCheckImpl<T> halfCarry() {
-        return halfCarry(context -> context.first.intValue());
-    }
-
-    public FlagsCheckImpl<T> halfCarry(Function<RunnerContext<T>, Integer> first) {
         evaluators.add((context, result) -> {
-            int firstInt = first.apply(context);
-            byte diff = (byte) ((result - firstInt) & 0xFF);
-
-            if (isAuxCarry(firstInt & 0xFF, diff)) {
-                expectedFlags |= FLAG_H;
-            } else {
-                expectedNotFlags |= FLAG_H;
-            }
-        });
-        return this;
-    }
-
-    public FlagsCheckImpl<T> halfBorrow() {
-        return halfBorrow(context -> context.second.intValue());
-    }
-
-    public FlagsCheckImpl<T> halfBorrow(Function<RunnerContext<T>, Integer> second) {
-        evaluators.add((context, result) -> {
-            int carryIns = result ^ (context.first.intValue() & 0xFF) ^ (((~second.apply(context)) + 1) & 0xFF);
+            int carryIns = result ^ (first.apply(context) & 0xFF) ^ (second.apply(context) & 0xFF);
             int halfCarryOut = (carryIns >> 4) & 1;
 
             if (halfCarryOut == 1) {
@@ -281,15 +268,12 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
         return this;
     }
 
-    public FlagsCheckImpl<T> halfBorrowWithCarry() {
-        return halfBorrowWithCarry(context -> context.second.intValue());
-    }
-
-    public FlagsCheckImpl<T> halfBorrowWithCarry(Function<RunnerContext<T>, Integer> second) {
+    public FlagsCheckImpl<T> halfBorrow() {
         evaluators.add((context, result) -> {
-            int b = (((~second.apply(context)) + 1 - (context.flags & FLAG_C)) & 0xFF);
-            int carryIns = result ^ (context.first.intValue() & 0xFF) ^ b;
-            int halfCarryOut = (carryIns >> 4) & 1;
+            int inversedSecond = ((~second.apply(context)) + 1) & 0xFF;
+
+            int carryIns = result ^ (first.apply(context) & 0xFF) ^ inversedSecond;
+            int halfCarryOut = (carryIns >>> 4) & 1;
 
             if (halfCarryOut == 1) {
                 expectedFlags |= FLAG_H;
@@ -342,5 +326,17 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     public FlagsCheckImpl<T> zeroIsSet() {
         evaluators.add((context, result) -> expectedFlags |= FLAG_Z);
         return this;
+    }
+
+    public static boolean isParity(int value) {
+        int numberOfOnes = 0;
+
+        for (int i = 0; i < 8; i++) {
+            if ((value & 1) == 1) {
+                numberOfOnes++;
+            }
+            value = value >>> 1;
+        }
+        return numberOfOnes % 2 == 0;
     }
 }

@@ -122,7 +122,7 @@ public class LogicTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().borrow().halfBorrow().overflow().subtractionIsSet(),
+            .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().borrow().halfBorrow().overflowSub().subtractionIsSet(),
                 context -> (context.first & 0xFF) + (((~context.second) + 1) & 0xFF))
             .keepCurrentInjectorsAfterRun();
 
@@ -145,8 +145,8 @@ public class LogicTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().borrow().halfBorrow().overflow().subtractionIsSet(),
-                context -> (context.first & 0xFF) - (byte)(context.second & 0xFF));
+            .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().borrow().halfBorrow().overflowSub().subtractionIsSet(),
+                context -> (context.first & 0xFF) - (byte) (context.second & 0xFF));
 
         Generator.forSome8bitBinary(
             test.runWithSecondOperand(0xFE)
@@ -365,7 +365,7 @@ public class LogicTest extends InstructionsTest {
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .first8LSBisRegister(REG_A)
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().borrow().halfBorrow().overflow().subtractionIsSet(),
+            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero().borrow().halfBorrow().overflowSub().subtractionIsSet(),
                 context -> (context.first & 0xFF) - (context.second & 0xFF)
             )
             .keepCurrentInjectorsAfterRun();
@@ -382,9 +382,11 @@ public class LogicTest extends InstructionsTest {
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> (-context.first) & 0xFF)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>()
-                    .switchFirstAndSecond().sign().zero().halfCarry().subtractionIsSet()
-                    .expectFlagOnlyWhen(FLAG_C, (context, result) -> context.second != 0)
-                // .expectFlagOnlyWhen(FLAG_PV, (context, result) -> (context.second & 0xFF) == 0x80)
+                .switchFirstAndSecond().sign().zero()
+                .borrow()
+                .halfBorrow()
+                .overflowSub()
+                .subtractionIsSet()
             )
             .keepCurrentInjectorsAfterRun();
 
@@ -897,10 +899,13 @@ public class LogicTest extends InstructionsTest {
             .first8LSBisRegister(REG_A)
             .firstIsIX()
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero()
-                    .borrow(context -> context.first >>> 8)
-                    .halfBorrow(context -> context.first >>> 8)
-                    .overflow()
+            .verifyFlags(new FlagsCheckImpl<Integer>()
+                    .setFirst8LSB()
+                    .setSecond(c -> c.first >>> 8)
+                    .sign().zero()
+                    .borrow()
+                    .halfBorrow()
+                    .overflowSub()
                     .subtractionIsSet(),
                 context -> (context.first & 0xFF) + (((~(context.first >>> 8)) + 1) & 0xFF));
 
@@ -915,10 +920,13 @@ public class LogicTest extends InstructionsTest {
             .first8LSBisRegister(REG_A)
             .firstIsIY()
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero()
-                    .borrow(context -> context.first >>> 8)
-                    .halfBorrow(context -> context.first >>> 8)
-                    .overflow()
+            .verifyFlags(new FlagsCheckImpl<Integer>()
+                    .setFirst8LSB()
+                    .setSecond(c -> c.first >>> 8)
+                    .sign().zero()
+                    .borrow()
+                    .halfBorrow()
+                    .overflowSub()
                     .subtractionIsSet(),
                 context -> (context.first & 0xFF) + (((~(context.first >>> 8)) + 1) & 0xFF));
 
@@ -933,10 +941,11 @@ public class LogicTest extends InstructionsTest {
             .first8LSBisRegister(REG_A)
             .secondIsIX()
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero()
+            .verifyFlags(new FlagsCheckImpl<Integer>()
+                    .sign().zero()
                     .borrow()
                     .halfBorrow()
-                    .overflow()
+                    .overflowSub()
                     .subtractionIsSet(),
                 context -> (context.first & 0xFF) + (((~(context.second & 0xFF)) + 1) & 0xFF));
 
@@ -951,10 +960,14 @@ public class LogicTest extends InstructionsTest {
             .first8LSBisRegister(REG_A)
             .secondIsIY()
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsCheckImpl<Integer>().sign().zero()
+            .verifyFlags(new FlagsCheckImpl<Integer>()
+                    .setFirst8LSB()
+                    .setSecond8LSB()
+                    .sign()
+                    .zero()
                     .borrow()
                     .halfBorrow()
-                    .overflow()
+                    .overflowSub()
                     .subtractionIsSet(),
                 context -> (context.first & 0xFF) + (((~(context.second & 0xFF)) + 1) & 0xFF));
 
@@ -984,7 +997,7 @@ public class LogicTest extends InstructionsTest {
                 ((context.getRegister(REG_B) << 8 | context.getRegister(REG_C)) - 1)
             )
             .verifyFlags(new FlagsCheckImpl<Integer>()
-                .sign().zero().subtractionIsSet().halfCarry()
+                .sign().zero().subtractionIsSet().halfBorrow()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) ->
                     ((context.getRegister(REG_B) << 8 | context.getRegister(REG_C)) - 1) != 0
                 ), context -> context.registers.get(REG_A) - (context.second & 0xFF));
