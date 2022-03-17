@@ -73,13 +73,14 @@ public class ExpandIncludesVisitor extends NodeVisitor {
             return includeFileName;
         }
 
+        String includeFileNameNormalized = includeFileName.replace("\\", File.separator);
         return inputFileName
             .map(f -> f.replace("\\", File.separator))
             .map(File::new)
             .map(File::getParentFile)
             .map(File::toPath)
-            .map(p -> p.resolve(includeFileName))
+            .map(p -> p.resolve(includeFileNameNormalized))
             .map(Path::toString)
-            .orElse(includeFileName);
+            .orElse(includeFileNameNormalized);
     }
 }
