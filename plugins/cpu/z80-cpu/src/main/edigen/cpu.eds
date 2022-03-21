@@ -122,7 +122,7 @@ instruction =
 
 ddInstruction =
   "ld ix, %X":      00 100 001 imm16              |  # x=0, p=2, q=0, z=1
-  "add ix, %s":     00 101 001                    |  # x=0, p=2, q=1, z=1
+  "add ix, %s":     00 rp_ix(2) 1 001             |  # x=0, p=rp_ix, q=1, z=1
   "ld (%X), ix":    00 100 010 ref16              |  # x=0, p=2, q=0, z=2
   "ld ix, (%X)":    00 101 010 ref16              |  # x=0, p=2, q=1, z=2
   "inc ix":         00 100 011                    |  # x=0, p=2, q=0, z=3
@@ -133,11 +133,14 @@ ddInstruction =
   "dec (ix+%X)":    00 110 101 disp               |  # x=0, y=6, z=5
   "ld %s, %X":      00 10 r_ixhl(1) 110 imm8      |  # x=0, y=r_ixhl, z=6
   "ld (ix+%X), %X": 00 110 110 disp(8) imm8       |  # x=0, y=6, z=6
-  "ld %s, %s":      01 10 r_ixhl(1) 10 r_ixhl2(1) |  # x=0, y=r_ixhl, z=r_ixhl2
-  "ld (ix+%X), %s": 01 110 r_no_hl(3) disp        |  # x=0, y=6, z=r_no_hl
-  "ld %s, (ix+%X)": 01 0 r_bcde(2) 110 disp       |  # x=0, y=0 r_bcde, z=6
-  "ld %s, (ix+%X)": 01 10 r_h_l(1) 110 disp       |  # x=0, y=10 r_h_l, z=6
-  "ld a, (ix+%X)":  01 111 110 disp               |  # x=0, y=7, z=6
+  "ld %s, %s":      01 10 r_ixhl(1) 0 r_bcde(2)   |  # x=1, y=r_ixhl, z=r_bcde
+  "ld %s, %s":      01 10 r_ixhl(1) 10 r_ixhl2(1) |  # x=1, y=r_ixhl, z=r_ixhl2
+  "ld %s, a":       01 10 r_ixhl(1) 111           |  # x=1, y=r_ixhl, z=a
+  "ld a, %s":       01 111 10 r_ixhl(1)           |  # x=1, y=7, z=r_ixhl
+  "ld (ix+%X), %s": 01 110 r_no_hl(3) disp        |  # x=1, y=6, z=r_no_hl
+  "ld %s, (ix+%X)": 01 0 r_bcde(2) 110 disp       |  # x=1, y=0 r_bcde, z=6
+  "ld %s, (ix+%X)": 01 10 r_h_l(1) 110 disp       |  # x=1, y=10 r_h_l, z=6
+  "ld a, (ix+%X)":  01 111 110 disp               |  # x=1, y=7, z=6
   "%s %s":          10 alu(3) 10 r_ixhl(1)        |  # x=2, y=alu, z=r_ixhl
   "%s (ix+%X)":     10 alu(3) 110 disp            |  # x=2, y=alu, z=6
   "pop ix":         11 100 001                    |  # x=3, p=2, q=0, z=1
@@ -151,7 +154,7 @@ ddInstruction =
 
 fdInstruction =
   "ld iy, %X":      00 100 001 imm16              |  # x=0, p=2, q=0, z=1
-  "add iy, %s":     00 101 001                    |  # x=0, p=2, q=1, z=1
+  "add iy, %s":     00 rp_iy(2) 1 001             |  # x=0, p=rp_iy, q=1, z=1
   "ld (%X), iy":    00 100 010 ref16              |  # x=0, p=2, q=0, z=2
   "ld iy, (%X)":    00 101 010 ref16              |  # x=0, p=2, q=1, z=2
   "inc iy":         00 100 011                    |  # x=0, p=2, q=0, z=3
@@ -162,11 +165,14 @@ fdInstruction =
   "dec (iy+%X)":    00 110 101 disp               |  # x=0, y=6, z=5
   "ld %s, %X":      00 10 r_iyhl(1) 110 imm8      |  # x=0, y=r_iyhl, z=6
   "ld (iy+%X), %X": 00 110 110 disp(8) imm8       |  # x=0, y=6, z=6
-  "ld %s, %s":      01 10 r_iyhl(1) 10 r_iyhl2(1) |  # x=0, y=r_iyhl, z=r_iyhl2
-  "ld (iy+%X), %s": 01 110 r_no_hl(3) disp        |  # x=0, y=6, z=r_no_hl
-  "ld %s, (iy+%X)": 01 0 r_bcde(2) 110 disp       |  # x=0, y=0 r_bcde, z=6
-  "ld %s, (iy+%X)": 01 10 r_h_l(1) 110 disp       |  # x=0, y=10 r_h_l, z=6
-  "ld a, (iy+%X)":  01 111 110 disp               |  # x=0, y=7, z=6
+  "ld %s, %s":      01 10 r_iyhl(1) 0 r_bcde(2)   |  # x=1, y=r_iyhl, z=r_bcde
+  "ld %s, %s":      01 10 r_iyhl(1) 10 r_iyhl2(1) |  # x=1, y=r_iyhl, z=r_iyhl2
+  "ld %s, a":       01 10 r_iyhl(1) 111           |  # x=1, y=r_iyhl, z=7
+  "ld a, %s":       01 111 10 r_iyhl(1)           |  # x=1, y=7, z=r_iyhl
+  "ld (iy+%X), %s": 01 110 r_no_hl(3) disp        |  # x=1, y=6, z=r_no_hl
+  "ld %s, (iy+%X)": 01 0 r_bcde(2) 110 disp       |  # x=1, y=0 r_bcde, z=6
+  "ld %s, (iy+%X)": 01 10 r_h_l(1) 110 disp       |  # x=1, y=10 r_h_l, z=6
+  "ld a, (iy+%X)":  01 111 110 disp               |  # x=1, y=7, z=6
   "%s %s":          10 alu(3) 10 r_iyhl(1)        |  # x=2, y=alu, z=r_iyhl
   "%s (iy+%X)":     10 alu(3) 110 disp            |  # x=2, y=alu, z=6
   "pop iy":         11 100 001                    |  # x=3, p=2, q=0, z=1
@@ -236,6 +242,18 @@ rp2 =
   "de": 01 |
   "hl": 10 |
   "af": 11 ;
+
+rp_ix =
+  "bc": 00 |
+  "de": 01 |
+  "ix": 10 |
+  "sp": 11 ;
+
+rp_iy =
+  "bc": 00 |
+  "de": 01 |
+  "iy": 10 |
+  "sp": 11 ;
 
 r =
   "b":    000 |
@@ -323,38 +341,42 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = fdcbInstruction bit disp r_h_l;
 "%s" = fdcbInstruction bit disp;
 
-"%s" = ddInstruction imm16;
-"%s" = ddInstruction ref16;
+"%s" = ddInstruction imm16(reverse_bytes);
+"%s" = ddInstruction ref16(reverse_bytes);
 "%s" = ddInstruction r_ixhl;
 "%s" = ddInstruction disp;
 "%s" = ddInstruction r_ixhl imm8;
 "%s" = ddInstruction disp imm8;
+"%s" = ddInstruction r_ixhl r_bcde;
 "%s" = ddInstruction r_ixhl r_ixhl2;
 "%s" = ddInstruction r_bcde disp;
 "%s" = ddInstruction r_h_l disp;
 "%s" = ddInstruction disp r_no_hl;
 "%s" = ddInstruction alu r_ixhl;
 "%s" = ddInstruction alu disp;
+"%s" = ddInstruction rp_ix;
 "%s" = ddInstruction;
 
-"%s" = fdInstruction imm16;
-"%s" = fdInstruction ref16;
-"%s" = fdInstruction r_ixhl;
+"%s" = fdInstruction imm16(reverse_bytes);
+"%s" = fdInstruction ref16(reverse_bytes);
+"%s" = fdInstruction r_iyhl;
 "%s" = fdInstruction disp;
-"%s" = fdInstruction r_ixhl imm8;
+"%s" = fdInstruction r_iyhl imm8;
 "%s" = fdInstruction disp imm8;
-"%s" = fdInstruction r_ixhl r_ixhl2;
+"%s" = fdInstruction r_iyhl r_bcde;
+"%s" = fdInstruction r_iyhl r_iyhl2;
 "%s" = fdInstruction disp r_no_hl;
 "%s" = fdInstruction r_bcde disp;
 "%s" = fdInstruction r_h_l disp;
-"%s" = fdInstruction alu r_ixhl;
+"%s" = fdInstruction alu r_iyhl;
 "%s" = fdInstruction alu disp;
+"%s" = fdInstruction rp_iy;
 "%s" = fdInstruction;
 
-"%s" = instruction rp imm16;
-"%s" = instruction rp ref16;
-"%s" = instruction ref16_2 rp;
-"%s" = instruction cc imm16;
+"%s" = instruction rp imm16(reverse_bytes);
+"%s" = instruction rp ref16(reverse_bytes);
+"%s" = instruction ref16_2(reverse_bytes) rp;
+"%s" = instruction cc imm16(reverse_bytes);
 "%s" = instruction cc_jr imm8;
 "%s" = instruction r_bcde r;
 "%s" = instruction r_h_l r;
@@ -367,8 +389,8 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = instruction r_h_l;
 "%s" = instruction imm8;
 "%s" = instruction ref8;
-"%s" = instruction imm16;
-"%s" = instruction ref16;
+"%s" = instruction imm16(reverse_bytes);
+"%s" = instruction ref16(reverse_bytes);
 "%s" = instruction rp;
 "%s" = instruction rp2;
 "%s" = instruction r;
@@ -376,4 +398,5 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = instruction cc;
 "%s" = instruction im;
 "%s" = instruction rst;
+"%s" = instruction any;
 "%s" = instruction;

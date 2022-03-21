@@ -146,7 +146,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
 
     @Override
     public Byte[] read(int from, int count) {
-        return Arrays.copyOfRange(mem[bank(from)], from, from + count); // from+count can be >= memory.length
+        Byte[] memBank = mem[bank(from)];
+        int to = Math.min(memBank.length, from + count);
+        return Arrays.copyOfRange(mem[bank(from)], from, to);
     }
 
     @Override

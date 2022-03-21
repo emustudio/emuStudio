@@ -39,7 +39,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements Ra
 
     @Override
     public Byte[] read(int from, int count) {
-        return Arrays.copyOfRange(memory, from, from + count); // from+count can be >= memory.length
+        int to = Math.min(memory.length, from + count);
+        return Arrays.copyOfRange(memory, from, to);
     }
 
     @Override
