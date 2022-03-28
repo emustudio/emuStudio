@@ -8,15 +8,15 @@ FRAMES    equ  8              ; Number of animation frames
 
 CLS       equ  1ah            ; ADM-3A escape sequence
 HOME      equ  1eh            ; ADM-3A escape sequence
-STATUS	equ  10h            ; Input status port
+STATUS    equ  10h            ; Input status port
 READY     equ  1              ; Character ready status mask
 
 
           mvi  a, CLS         ; Clear screen
           call putchar
 
-loop:     lxi  h, ANIM
-          mvi  b, FRAMES
+loop:     lxi  h, ANIM        ; Initialize frame pointer...
+          mvi  b, FRAMES      ; ...and count
 
 loop1:    mvi  a, HOME        ; Go to home
           call putchar
@@ -24,23 +24,24 @@ loop1:    mvi  a, HOME        ; Go to home
           mov  a, m           ; Print current frame
           call putchar
 
-          inx  h
-          dcr  b
-
           push psw
-          in   STATUS         ; Key pressed?
-          ani  READY
+          in   STATUS
+          ani  READY          ; Key pressed?
           jnz  exit           ; Yes
           pop  psw
 
+          inx  h
+          dcr  b
           jnz  loop1
 
           jmp  loop
-					
-exit:     hlt
 
 
-ANIM:     db   '|/-\|/-\'    ; 8 frames
+exit:     pop psw             ; Clear psw left on stack
+          hlt
+
+
+ANIM:     db   '|/-\|/-\'     ; 8 frames
 
 
 include	'include\putchar.inc'
