@@ -278,7 +278,7 @@ public class ControlTest extends InstructionsTest {
     public void testJR__e__AND__JR__cc() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .expandMemory(first -> cpuRunnerImpl.getPC() + first.intValue())
-            .verifyPC(context -> (2 + context.PC + context.first) & 0xFFFF)
+            .verifyPC(context -> (context.PC + context.first) & 0xFFFF)
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
@@ -334,9 +334,9 @@ public class ControlTest extends InstructionsTest {
             .expandMemory(first -> cpuRunnerImpl.getPC() + first.intValue())
             .verifyPC(context -> {
                 if (((context.second - 1) & 0xFF) == 0) {
-                    return context.PC + 2;
+                    return context.PC;
                 }
-                return (context.PC + 2 + context.first) & 0xFFFF;
+                return (context.PC + context.first) & 0xFFFF;
             })
             .verifyRegister(REG_B, context -> (context.second - 1) & 0xFF);
 

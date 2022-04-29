@@ -37,6 +37,11 @@ public class Instr extends Node {
         return (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF);
     }
 
+    public boolean hasRelativeAddress() {
+        // DJNZ, JR, JR cc
+        return (x == 0 && z == 0 && y >= 2 && y <= 7);
+    }
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

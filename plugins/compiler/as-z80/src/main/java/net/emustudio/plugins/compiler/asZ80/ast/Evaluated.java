@@ -4,15 +4,21 @@ import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 
 public class Evaluated extends Node {
     public final int value;
+    public final boolean isAddress;
 
-    public Evaluated(int line, int column, int value) {
+    public Evaluated(int line, int column, int value, boolean isAddress) {
         super(line, column);
         this.value = value;
+        this.isAddress = isAddress;
+    }
+
+    public Evaluated(int line, int column, int value) {
+        this(line, column, value, false);
     }
 
     @Override
     protected Node mkCopy() {
-        return new Evaluated(line, column, value);
+        return new Evaluated(line, column, value, isAddress);
     }
 
     @Override

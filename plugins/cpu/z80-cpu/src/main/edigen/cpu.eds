@@ -394,7 +394,6 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = instruction rp;
 "%s" = instruction rp2;
 "%s" = instruction r;
-"%s" = instruction r_no_hl;
 "%s" = instruction cc;
 "%s" = instruction im;
 "%s" = instruction rst;

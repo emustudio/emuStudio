@@ -135,10 +135,30 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
 
     public FlagsCheckImpl<T> overflowSub() {
         evaluators.add((context, result) -> {
-            int firstInt = first.apply(context) & 0xFF;
-            int secondInt = ((~(second.apply(context) & 0xFF)) + 1) & 0xFF;
+            int fst = first.apply(context) & 0xFF;
+            int snd = second.apply(context) & 0xFF;
 
-            int carryIns = ((firstInt ^ secondInt) ^ 0x80) & 0x80;
+            int sum = (fst - snd) & 0x1FF;
+            int flagC = (sum & 0x100) == 0x100 ? FLAG_C : 0;
+            int carryIns = (result & 0xFF) ^ fst ^ snd;
+            carryIns = (carryIns >>> 7) ^ flagC;
+            int flagP = (carryIns == 0) ? 0 : FLAG_PV;
+
+            if (flagP == FLAG_PV) {
+                expectedFlags |= FLAG_PV;
+            } else {
+                expectedNotFlags |= FLAG_PV;
+            }
+        });
+        return this;
+    }
+
+    public FlagsCheckImpl<T> overflowSubCarry() {
+        evaluators.add((context, result) -> {
+            int firstInt = first.apply(context) & 0xFF;
+            int inversedSecond = (~second.apply(context) & 0xFF);
+
+            int carryIns = ((firstInt ^ inversedSecond) ^ 0x80) & 0x80;
             if (carryIns != 0) { // if addend signs are the same
                 // overflow if the sum sign differs from the sign of either of addends
                 carryIns = ((result ^ firstInt) & 0x80);
@@ -201,13 +221,16 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
 
     public FlagsCheckImpl<T> borrow() {
         evaluators.add((context, result) -> {
-            int inversedSecond = ((~second.apply(context)) + 1) & 0xFF;
-            int sum = (context.first.intValue() & 0xFF) + inversedSecond;
+            int fst = first.apply(context) & 0xFF;
+            int snd = second.apply(context) & 0xFF;
 
-            if ((sum & 0x100) == 0x100) {
-                expectedNotFlags |= FLAG_C;  // reversed flag C expectations on substraction
-            } else {
+            int r = (fst - snd) & 0x1FF;
+            int flagC = (r & 0x100) == 0x100 ? FLAG_C : 0;
+
+            if (flagC != 0) {
                 expectedFlags |= FLAG_C;
+            } else {
+                expectedNotFlags |= FLAG_C;
             }
         });
         return this;
@@ -215,13 +238,15 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
 
     public FlagsCheckImpl<T> borrowWithCarry() {
         evaluators.add((context, result) -> {
-            int inversedCarry = (context.flags & FLAG_C) == FLAG_C ? 0 : FLAG_C;
-            int inversedSecond = ((~second.apply(context)) + 1) & 0xFF;
-            int sum = (context.first.intValue() & 0xFF) + inversedSecond + inversedCarry;
-            if ((sum & 0x100) == 0x100) {
-                expectedNotFlags |= FLAG_C;
-            } else {
+            int fst = first.apply(context) & 0xFF;
+            int snd = second.apply(context) & 0xFF;
+
+            int r = (fst - snd - (context.flags & FLAG_C)) & 0x1FF;
+            int flagC = (r & 0x100) == 0x100 ? FLAG_C : 0;
+            if (flagC != 0) {
                 expectedFlags |= FLAG_C;
+            } else {
+                expectedNotFlags |= FLAG_C;
             }
         });
         return this;
@@ -229,7 +254,7 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
 
     public FlagsCheckImpl<T> carryIsFirstOperandMSB() {
         evaluators.add((context, result) -> {
-            if ((context.first.intValue() & 0x80) == 0x80) {
+            if ((first.apply(context) & 0x80) == 0x80) {
                 expectedFlags |= FLAG_C;
             } else {
                 expectedNotFlags |= FLAG_C;
@@ -240,7 +265,7 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
 
     public FlagsCheckImpl<T> carryIsFirstOperandLSB() {
         evaluators.add((context, result) -> {
-            if ((context.first.intValue() & 1) == 1) {
+            if ((first.apply(context) & 1) == 1) {
                 expectedFlags |= FLAG_C;
             } else {
                 expectedNotFlags |= FLAG_C;
@@ -254,12 +279,21 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
         return this;
     }
 
+    public FlagsCheckImpl<T> carryIsPreserved() {
+        evaluators.add((context, result) -> {
+            if ((context.flags & FLAG_C) == FLAG_C) {
+                expectedFlags |= FLAG_C;
+            } else {
+                expectedNotFlags |= FLAG_C;
+            }
+        });
+        return this;
+    }
+
     public FlagsCheckImpl<T> halfCarry() {
         evaluators.add((context, result) -> {
             int carryIns = result ^ (first.apply(context) & 0xFF) ^ (second.apply(context) & 0xFF);
-            int halfCarryOut = (carryIns >> 4) & 1;
-
-            if (halfCarryOut == 1) {
+            if ((carryIns & FLAG_H) == FLAG_H) {
                 expectedFlags |= FLAG_H;
             } else {
                 expectedNotFlags |= FLAG_H;
@@ -269,27 +303,16 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     }
 
     public FlagsCheckImpl<T> halfBorrow() {
-        evaluators.add((context, result) -> {
-            int inversedSecond = ((~second.apply(context)) + 1) & 0xFF;
-
-            int carryIns = result ^ (first.apply(context) & 0xFF) ^ inversedSecond;
-            int halfCarryOut = (carryIns >>> 4) & 1;
-
-            if (halfCarryOut == 1) {
-                expectedFlags |= FLAG_H;
-            } else {
-                expectedNotFlags |= FLAG_H;
-            }
-        });
-        return this;
+        return halfCarry(); // it's really the same for sub
     }
 
     public FlagsCheckImpl<T> halfCarry11() {
         evaluators.add((context, result) -> {
-            int second = (result - context.first.intValue()) & 0xFFFF;
+            int fst = first.apply(context);
+            int snd = (result - fst) & 0xFFFF;
 
-            int mask = second & context.first.intValue();
-            int xormask = second ^ context.first.intValue();
+            int mask = snd & fst;
+            int xormask = snd ^ fst;
 
             int C0 = mask & 1;
             int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;

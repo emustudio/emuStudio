@@ -15,6 +15,8 @@ import static net.emustudio.plugins.compiler.asZ80.CompileError.valueMustBePosit
 public class GenerateCodeVisitor extends NodeVisitor {
     private final IntelHEX hex;
     private int expectedBytes;
+    private boolean isRelative; // if we should treat Evaluated value as "relative address"
+    private int currentAddress; // for computing relative address
 
     public GenerateCodeVisitor(IntelHEX hex) {
         this.hex = Objects.requireNonNull(hex);
@@ -48,12 +50,16 @@ public class GenerateCodeVisitor extends NodeVisitor {
 
     @Override
     public void visit(Instr node) {
+        isRelative = node.hasRelativeAddress();
+        currentAddress = node.getAddress();
+
         hex.add(node.eval());
         int instrSize = node.getSizeBytes().orElse(1);
         if (instrSize > 1) {
             expectedBytes = 0;
             visitChildren(node);
         }
+        isRelative = false;
     }
 
     @Override
@@ -109,16 +115,18 @@ public class GenerateCodeVisitor extends NodeVisitor {
 
     @Override
     public void visit(Evaluated node) {
+        final int value = (isRelative && node.isAddress) ? (node.value - currentAddress) : node.value;
+
         if (expectedBytes == 1) {
-            addByte(node.value);
+            addByte(value);
         } else if (expectedBytes == 2) {
-            addWord(node.value);
+            addWord(value);
         } else {
             node.getSizeBytes().ifPresent(size -> {
                 if (size == 1) {
-                    addByte(node.value);
+                    addByte(value);
                 } else if (size == 2) {
-                    addWord(node.value);
+                    addWord(value);
                 }
             });
         }

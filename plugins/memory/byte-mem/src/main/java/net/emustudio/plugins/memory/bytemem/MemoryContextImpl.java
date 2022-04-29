@@ -57,6 +57,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         this.bankCommon = bankCommon;
         this.banksCount = banks;
         mem = new Byte[banks][size];
+        clear();
     }
 
     @Override

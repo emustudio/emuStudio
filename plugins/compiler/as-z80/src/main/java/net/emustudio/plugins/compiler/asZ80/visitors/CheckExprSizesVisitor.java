@@ -37,7 +37,7 @@ public class CheckExprSizesVisitor extends NodeVisitor {
 
     @Override
     public void visit(Instr node) {
-        expectedBytes = 0;
+        expectedBytes = node.hasRelativeAddress() ? 1 : 0;
         visitChildren(node);
     }
 

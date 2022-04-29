@@ -382,10 +382,10 @@ public class LogicTest extends InstructionsTest {
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> (-context.first) & 0xFF)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>()
-                .switchFirstAndSecond().sign().zero()
-                .borrow()
+                .sign().zero()
+                .expectFlagOnlyWhen(FLAG_C, (c, result) -> c.first != 0)
+                .expectFlagOnlyWhen(FLAG_PV, (c, result) -> (c.first & 0xff) == 0x80)
                 .halfBorrow()
-                .overflowSub()
                 .subtractionIsSet()
             )
             .keepCurrentInjectorsAfterRun();
