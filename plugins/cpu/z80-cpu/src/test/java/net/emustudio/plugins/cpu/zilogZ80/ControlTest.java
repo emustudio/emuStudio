@@ -334,7 +334,7 @@ public class ControlTest extends InstructionsTest {
             .expandMemory(first -> cpuRunnerImpl.getPC() + first.intValue())
             .verifyPC(context -> {
                 if (((context.second - 1) & 0xFF) == 0) {
-                    return context.PC;
+                    return context.PC + 2;
                 }
                 return (context.PC + context.first) & 0xFFFF;
             })

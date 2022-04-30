@@ -675,8 +675,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_DJNZ() {
         byte tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        regs[REG_B]--;
-        regs[REG_B] &= 0xFF;
+        regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
         if (regs[REG_B] != 0) {
             PC = (PC - 2) + tmp;
             PC &= 0xFFFF;
