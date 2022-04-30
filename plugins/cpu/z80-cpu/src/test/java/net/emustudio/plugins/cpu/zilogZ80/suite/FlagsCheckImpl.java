@@ -351,6 +351,28 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
         return this;
     }
 
+    public FlagsCheckImpl<T> zeroIsPreserved() {
+        evaluators.add((context, result) -> {
+            if ((context.flags & FLAG_Z) == FLAG_Z) {
+                expectedFlags |= FLAG_Z;
+            } else {
+                expectedNotFlags |= FLAG_Z;
+            }
+        });
+        return this;
+    }
+
+    public FlagsCheckImpl<T> signIsPreserved() {
+        evaluators.add((context, result) -> {
+            if ((context.flags & FLAG_S) == FLAG_S) {
+                expectedFlags |= FLAG_S;
+            } else {
+                expectedNotFlags |= FLAG_S;
+            }
+        });
+        return this;
+    }
+
     public static boolean isParity(int value) {
         int numberOfOnes = 0;
 

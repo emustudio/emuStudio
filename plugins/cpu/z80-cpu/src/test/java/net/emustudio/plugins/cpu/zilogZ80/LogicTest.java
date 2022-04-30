@@ -122,7 +122,8 @@ public class LogicTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().borrow().halfBorrow().overflowSub().subtractionIsSet(),
+            .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().borrow().halfBorrow()
+                    .overflowSub().subtractionIsSet(),
                 context -> (context.first & 0xFF) + (((~context.second) + 1) & 0xFF))
             .keepCurrentInjectorsAfterRun();
 

@@ -480,6 +480,9 @@ public class TransferTest extends InstructionsTest {
             .verifyPair(REG_PAIR_HL, context -> (context.second + 1) & 0xFFFF)
             .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsPreserved()
+                .zeroIsPreserved()
+                .signIsPreserved()
                 .halfCarryIsReset().subtractionIsReset()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
             );
@@ -503,6 +506,9 @@ public class TransferTest extends InstructionsTest {
             .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
             .verifyR(context -> 2)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsPreserved()
+                .zeroIsPreserved()
+                .signIsPreserved()
                 .halfCarryIsReset().subtractionIsReset()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
             ).verifyPC(context -> {
