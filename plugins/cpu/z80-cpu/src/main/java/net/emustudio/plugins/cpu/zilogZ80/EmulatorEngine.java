@@ -411,16 +411,6 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    private void halfBorrow(int a, int b) {
-        int carryIns = ((a + b) & 0xFF) ^ a ^ b;
-        int halfCarryOut = (carryIns >> 4) & 1;
-        if (halfCarryOut != 0) {
-            flags |= FLAG_H;
-        } else {
-            flags &= (~FLAG_H);
-        }
-    }
-
     private void halfCarry11(int before, int sumWith) {
         int mask = sumWith & before;
         int xormask = sumWith ^ before;
