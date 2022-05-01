@@ -59,6 +59,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
             case BraincLexer.PRINT:
             case BraincLexer.LOAD:
             case BraincLexer.LOOP:
+            case BraincLexer.ENDL:
                 return Token.RESERVED;
             case BraincLexer.EOF:
                 return Token.EOF;
