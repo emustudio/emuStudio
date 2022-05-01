@@ -12,10 +12,6 @@ public class EmulatorTablesGeneration {
     public void generateTableSub() {
         StringBuilder table = new StringBuilder("public final static int[] TABLE_SUB = new int[] {\n        ");
 
-        //    public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_H = 0x10, FLAG_PV = 0x4, FLAG_N = 0x02, FLAG_C = 0x1;
-        // 0xA8 - preserve: sign, overflow
-        // 10101000
-
         for (int sum = 0; sum < 256; sum++) {
             int flagZ = (sum == 0 ? FLAG_Z : 0);
             int flags = flagZ | (sum & 0x80) | FLAG_N;
