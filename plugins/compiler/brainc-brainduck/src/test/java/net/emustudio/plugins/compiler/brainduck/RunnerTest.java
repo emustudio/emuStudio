@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.compiler.brainc;
+package net.emustudio.plugins.compiler.brainduck;
 
 import org.junit.Rule;
 import org.junit.Test;

@@ -1,2 +1,3 @@
 /src/main/antlr/gen/
 /src/main/gen/
+*.tokens

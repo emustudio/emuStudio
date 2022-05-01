@@ -16,39 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package net.emustudio.plugins.compiler.brainduck.tree;
 
-import org.apache.tools.ant.filters.ReplaceTokens
+import net.emustudio.emulib.runtime.io.IntelHEX;
 
-plugins {
-  id 'java'
-  id 'com.adarshr.test-logger' version '3.1.0'
+import java.util.ArrayList;
+import java.util.List;
+
+public class Program {
+    private final List<Instruction> instructions = new ArrayList<>();
+
+    public void add(Instruction instruction) {
+        if (instruction != null) {
+            instructions.add(instruction);
+        }
+    }
+
+    public void generateCode(IntelHEX hex) {
+        for (Instruction instruction : instructions) {
+            instruction.generateCode(hex);
+        }
+    }
 }
-
-dependencies {
-  implementation libs.emuLib
-  implementation libs.slf4JApi
-
-  testImplementation libs.junit
-  testImplementation libs.slf4JSimple
-  testImplementation libs.easyMock
-}
-
-jar {
-  archiveVersion = ''
-  manifest {
-    attributes manifestAttributes('')
-  }
-}
-
-processResources {
-  filesMatching("**/*.properties") {
-    filter ReplaceTokens, tokens: [
-      "project.version": project.version,
-      "today.year": new Date().format("yyyy")
-    ]
-  }
-}
-
-compileJava.options.encoding = 'UTF-8'
-compileTestJava.options.encoding = 'UTF-8'
-javadoc.options.encoding = 'UTF-8'

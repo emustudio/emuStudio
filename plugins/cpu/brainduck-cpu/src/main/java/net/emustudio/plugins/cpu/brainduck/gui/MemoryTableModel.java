@@ -18,16 +18,15 @@
  */
 package net.emustudio.plugins.cpu.brainduck.gui;
 
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
-
 import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 public class MemoryTableModel extends AbstractTableModel {
     private final Byte[] memory;
     private volatile int P;
 
-    MemoryTableModel(RawMemoryContext memory) {
-        this.memory = memory.getRawMemory();
+    MemoryTableModel(Byte[] memory) {
+        this.memory = Objects.requireNonNull(memory);
     }
 
     @Override

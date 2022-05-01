@@ -21,7 +21,7 @@ package net.emustudio.plugins.cpu.brainduck.gui;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.cpu.brainduck.CpuImpl;
 import net.emustudio.plugins.cpu.brainduck.EmulatorEngine;
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -87,10 +87,10 @@ public class StatusPanel extends JPanel {
 
     }
 
-    public StatusPanel(RawMemoryContext memory, CpuImpl cpu) {
-        this.memory = memory.getRawMemory();
+    public StatusPanel(ByteMemoryContext memory, CpuImpl cpu) {
+        this.memory = memory.getRawMemory()[0];
         this.cpu = cpu.getEngine();
-        this.tableModel = new MemoryTableModel(memory);
+        this.tableModel = new MemoryTableModel(this.memory);
 
         initComponents();
         tblMemory.setModel(tableModel);
@@ -261,7 +261,7 @@ public class StatusPanel extends JPanel {
                 "00", "01", "02", "03", "04"
             }
         ) {
-            Class[] types = new Class[]{
+            final Class[] types = new Class[]{
                 java.lang.Byte.class, java.lang.Byte.class, java.lang.Byte.class, java.lang.Byte.class, java.lang.Byte.class
             };
 

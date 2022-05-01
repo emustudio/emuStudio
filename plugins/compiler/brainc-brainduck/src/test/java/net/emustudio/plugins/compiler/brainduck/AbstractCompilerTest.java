@@ -16,16 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.compiler.brainc;
+package net.emustudio.plugins.compiler.brainduck;
 
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.emulib.plugins.compiler.CompilerListener;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.plugins.compiler.brainc.CompilerImpl;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
@@ -39,7 +40,7 @@ import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractCompilerTest {
     protected CompilerImpl compiler;
-    protected MemoryStub<Short> memoryStub;
+    protected MemoryStub<Byte> memoryStub;
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
@@ -47,7 +48,7 @@ public abstract class AbstractCompilerTest {
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
-        memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool pool = createNiceMock(ContextPool.class);
         expect(pool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();
@@ -58,6 +59,20 @@ public abstract class AbstractCompilerTest {
         replay(applicationApi);
 
         compiler = new CompilerImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        compiler.addCompilerListener(new CompilerListener() {
+            @Override
+            public void onStart() {
+            }
+
+            @Override
+            public void onMessage(CompilerMessage message) {
+                System.out.println(message);
+            }
+
+            @Override
+            public void onFinish() {
+            }
+        });
         compiler.initialize();
     }
 

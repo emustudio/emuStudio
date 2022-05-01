@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.compiler.brainc;
+package net.emustudio.plugins.compiler.brainduck;
 
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
@@ -28,8 +28,13 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.emulib.runtime.helpers.IntelHEX;
-import net.emustudio.plugins.compiler.brainc.tree.Program;
+import net.emustudio.emulib.runtime.io.IntelHEX;
+import net.emustudio.plugins.compiler.brainduck.tree.Program;
+import net.emustudio.plugins.compiler.brainduck.tree.ProgramParser;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.TokenStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,29 +42,17 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.*;
 
-@PluginRoot(
-    type = PLUGIN_TYPE.COMPILER,
-    title = "BrainDuck Compiler"
-)
+@PluginRoot(type = PLUGIN_TYPE.COMPILER, title = "BrainDuck Compiler")
 @SuppressWarnings("unused")
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
-    private final static List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-        new SourceFileExtension("b", "brainfuck language source (*.b)")
-    );
+    private final static List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(new SourceFileExtension("b", "brainfuck language source (*.b)"));
 
-    private final LexerImpl lexer;
-    private final ParserImpl parser;
-
-    private MemoryContext<Short> memory;
+    private MemoryContext<Byte> memory;
     private int programLocation;
 
     public CompilerImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-
-        // lexer has to be reset WITH a reader object before compile
-        lexer = new LexerImpl(null);
-        parser = new ParserImpl(lexer, this);
     }
 
     @SuppressWarnings("unchecked")
@@ -68,10 +61,8 @@ public class CompilerImpl extends AbstractCompiler {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
                 memory = pool.getMemoryContext(pluginID, MemoryContext.class);
-                if (memory.getDataType() != Short.class) {
-                    throw new InvalidContextException(
-                        "Unexpected memory cell type. Expected Short but was: " + memory.getDataType()
-                    );
+                if (memory.getDataType() != Byte.class) {
+                    throw new InvalidContextException("Unexpected memory cell type. Expected Byte but was: " + memory.getDataType());
                 }
             } catch (ContextNotFoundException | InvalidContextException e) {
                 LOGGER.warn("Memory is not available", e);
@@ -95,6 +86,12 @@ public class CompilerImpl extends AbstractCompiler {
     }
 
     @Override
+    public LexicalAnalyzer createLexer(String s) {
+        BraincLexer lexer = createLexer(CharStreams.fromString(s));
+        return new LexicalAnalyzerImpl(lexer);
+    }
+
+    @Override
     public boolean compile(String inputFileName, String outputFileName) {
         try {
             notifyCompileStart();
@@ -102,10 +99,10 @@ public class CompilerImpl extends AbstractCompiler {
 
             hex.generate(outputFileName);
             notifyInfo("Compile was successful. Output: " + outputFileName);
-            programLocation = hex.getProgramLocation();
+            programLocation = hex.findProgramLocation();
 
             if (memory != null) {
-                hex.loadIntoMemory(memory);
+                hex.loadIntoMemory(memory, b -> b);
                 notifyInfo("Compiled file was loaded into operating memory.");
             } else {
                 notifyWarning("Memory is not available.");
@@ -113,7 +110,8 @@ public class CompilerImpl extends AbstractCompiler {
             return true;
         } catch (Exception e) {
             LOGGER.trace("Compilation error", e);
-            notifyError("Compilation error: " + e.getMessage());
+            notifyError("Compilation error: " + e);
+            e.printStackTrace();
             return false;
         } finally {
             notifyCompileFinish();
@@ -141,47 +139,47 @@ public class CompilerImpl extends AbstractCompiler {
     }
 
     @Override
-    public LexicalAnalyzer getLexer(Reader in) {
-        return new LexerImpl(in);
-    }
-
-    @Override
     public List<SourceFileExtension> getSourceFileExtensions() {
         return SOURCE_FILE_EXTENSIONS;
     }
 
     private IntelHEX compileToHex(String inputFileName) throws Exception {
         Objects.requireNonNull(inputFileName);
-
         notifyInfo(getTitle() + ", version " + getVersion());
 
-        Object parsedProgram;
-        IntelHEX hex = new IntelHEX();
-
         try (Reader reader = new FileReader(inputFileName)) {
-            lexer.reset(reader, 0, 0, 0);
-            parser.reset();
-            parsedProgram = parser.parse().value;
+            org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
+            lexer.addErrorListener(new ParserErrorListener());
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
 
-            if (parsedProgram == null) {
-                notifyError("Unexpected end of file");
-                throw new Exception("Unexpected end of file");
-            }
-            if (parser.hasSyntaxErrors()) {
-                throw new Exception("Program has errors");
-            }
+            BraincParser parser = createParser(tokens);
+            parser.addErrorListener(new ParserErrorListener());
 
-            // do several passes for compiling
-            Program program = (Program) parsedProgram;
-            program.firstPass(0);
-            program.secondPass(hex);
+            ProgramParser programParser = new ProgramParser();
+            programParser.visit(parser.start());
+            Program program = programParser.getProgram();
+
+            IntelHEX hex = new IntelHEX();
+            program.generateCode(hex);
             return hex;
         }
     }
 
+    private BraincLexer createLexer(CharStream input) {
+        BraincLexer lexer = new BraincLexer(input);
+        lexer.removeErrorListeners();
+        return lexer;
+    }
+
+    private BraincParser createParser(TokenStream tokenStream) {
+        BraincParser parser = new BraincParser(tokenStream);
+        parser.removeErrorListeners();
+        return parser;
+    }
+
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.brainc.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.brainduck.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

@@ -33,7 +33,7 @@ repositories {
 dependencies {
   implementation libs.emuLib
   implementation libs.slf4JApi
-  memoryLib project(":plugins:memory:brainduck-mem")
+  memoryLib project(":plugins:memory:byte-mem")
 
   testImplementation libs.cpuTestSuite
   testImplementation libs.junit

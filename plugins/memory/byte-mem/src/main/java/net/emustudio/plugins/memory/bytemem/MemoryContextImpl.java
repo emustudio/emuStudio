@@ -213,6 +213,11 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         return romRanges.getRanges();
     }
 
+    @Override
+    public Byte[][] getRawMemory() {
+        return mem;
+    }
+
     private void removeROMRange(AddressRange rangeToRemove) {
         romRanges.remove(rangeToRemove.getStartAddress(), rangeToRemove.getStopAddress());
     }

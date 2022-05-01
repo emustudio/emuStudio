@@ -99,4 +99,13 @@ public interface ByteMemoryContext extends MemoryContext<Byte> {
      * @return common boundary address
      */
     int getCommonBoundary();
+
+    /**
+     * Returns raw memory represented by Java array.
+     * <p>
+     * Memory notifications must be handled manually if this array changes.
+     *
+     * @return raw memory
+     */
+    Byte[][] getRawMemory();
 }

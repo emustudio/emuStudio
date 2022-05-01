@@ -52,13 +52,12 @@ dependencies {
   providedRuntime project(":plugins:compiler:as-8080")
   providedRuntime project(":plugins:compiler:as-ssem")
   providedRuntime project(":plugins:compiler:as-z80")
-//  providedRuntime project(":plugins:compiler:brainc-brainduck")
+  providedRuntime project(":plugins:compiler:brainc-brainduck")
 //  providedRuntime project(":plugins:compiler:ramc-ram")
 //  providedRuntime project(":plugins:compiler:raspc-rasp")
 
 //  providedRuntime project(":plugins:memory:ram-mem")
  // providedRuntime project(":plugins:memory:rasp-mem")
-  providedRuntime project(":plugins:memory:brainduck-mem")
   providedRuntime project(":plugins:memory:ssem-mem")
   providedRuntime project(":plugins:memory:byte-mem")
 
@@ -179,7 +178,7 @@ distributions {
         from(output(":plugins:compiler:as-8080"))
         from(output(":plugins:compiler:as-z80"))
         from(output(":plugins:compiler:as-ssem"))
-    //    from(output(":plugins:compiler:brainc-brainduck"))
+        from(output(":plugins:compiler:brainc-brainduck"))
       //  from(output(":plugins:compiler:ramc-ram"))
         //from(output(":plugins:compiler:raspc-rasp"))
       }
@@ -188,7 +187,6 @@ distributions {
         include '*.jar'
 //        from(output(":plugins:memory:ram-mem"))
   //      from(output(":plugins:memory:rasp-mem"))
-        from(output(":plugins:memory:brainduck-mem"))
         from(output(":plugins:memory:ssem-mem"))
         from(output(":plugins:memory:byte-mem"))
       }
@@ -216,7 +214,7 @@ distributions {
 
       // Examples
       //["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"]
-      ["as-8080", "as-z80", "as-ssem"].collect { compiler ->
+      ["as-8080", "as-z80", "as-ssem", "brainc-brainduck"].collect { compiler ->
         from(examples(":plugins:compiler:$compiler")) {
           into "examples/$compiler"
         }
@@ -224,7 +222,7 @@ distributions {
 
       // Scripts
       // ["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"]
-      ["as-8080", "as-z80", "as-ssem"].collect { compiler ->
+      ["as-8080", "as-z80", "as-ssem", "brainc-brainduck"].collect { compiler ->
         from(scripts(":plugins:compiler:$compiler")) {
           into "bin"
         }

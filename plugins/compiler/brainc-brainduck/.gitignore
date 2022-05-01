@@ -1,1 +1,3 @@
-src/main/java/net/emustudio/plugins/compiler/brainc/LexerImpl.java
+/src/main/antlr/gen/
+/src/main/gen/
+*.tokens

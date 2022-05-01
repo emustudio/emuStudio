@@ -114,7 +114,6 @@ public class AssemblerZ80 extends AbstractCompiler {
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             AsZ80Parser parser = createParser(tokens);
-            parser.removeErrorListeners();
             parser.addErrorListener(new ParserErrorListener());
 
             Program program = new Program();

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.compiler.brainc;
+package net.emustudio.plugins.compiler.brainduck;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
@@ -71,12 +71,11 @@ public class InstructionTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testProgramAfterCommentDoesNotWork() throws Exception {
+    public void testProgramAfterCommentWorks() throws Exception {
         compile(
             "So this is the comment and program >>\n"
         );
-
-        assertProgram();
+        assertProgram(1, 1);
     }
 
     @SuppressWarnings("unchecked")

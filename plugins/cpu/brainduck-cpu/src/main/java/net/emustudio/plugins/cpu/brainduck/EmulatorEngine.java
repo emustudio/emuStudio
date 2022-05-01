@@ -20,7 +20,7 @@
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -37,8 +37,8 @@ public class EmulatorEngine {
     final static byte I_READ = 6; // ,
     final static byte I_LOOP_START = 7; // [
     final static byte I_LOOP_END = 8; // ]
-    final static byte I_COPY_AND_CLEAR = (byte)0xA1; // any copyloop, including clear
-    final static byte I_SCANLOOP = (byte)0xA2; // [<] or [>]
+    final static byte I_COPY_AND_CLEAR = (byte) 0xA1; // any copyloop, including clear
+    final static byte I_SCANLOOP = (byte) 0xA2; // [<] or [>]
 
     private final Byte[] rawMemory;
     private final BrainCPUContextImpl context;
@@ -47,8 +47,8 @@ public class EmulatorEngine {
 
     public volatile int IP, P; // registers of the CPU
 
-    EmulatorEngine(RawMemoryContext memory, BrainCPUContextImpl context, Profiler profiler) {
-        this.rawMemory = memory.getRawMemory();
+    EmulatorEngine(ByteMemoryContext memory, BrainCPUContextImpl context, Profiler profiler) {
+        this.rawMemory = Objects.requireNonNull(Objects.requireNonNull(memory.getRawMemory())[0]);
         this.context = Objects.requireNonNull(context);
         this.profiler = Objects.requireNonNull(profiler);
     }
@@ -144,8 +144,7 @@ public class EmulatorEngine {
                     } else if (copyLoop.specialOP == I_READ) {
                         rawMemory[P] = context.readFromDevice();
                     } else {
-                        rawMemory[P + copyLoop.relativePosition] = (byte)
-                            ((rawMemory[P] * copyLoop.factor + rawMemory[P + copyLoop.relativePosition]) & 0xFF);
+                        rawMemory[P + copyLoop.relativePosition] = (byte) ((rawMemory[P] * copyLoop.factor + rawMemory[P + copyLoop.relativePosition]) & 0xFF);
                     }
                 }
                 rawMemory[P] = 0;

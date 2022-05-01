@@ -2,47 +2,51 @@ name = "BrainDuck"
 
 [MEMORY]
 	schemaPoint = "100,180"
-	path = "brainduck-mem.jar"
-	name = "brainduck-mem"
-	id = "95e3a458-1d0f-40aa-9c38-f9efc5026738"
+	path = "byte-mem.jar"
+	settings = {}
+	name = "byte-mem"
+	id = "300555eb-2e6b-422f-a954-cfe1905f911a"
 	type = "MEMORY"
 
 [COMPILER]
 	schemaPoint = "100,60"
 	path = "brainc-brainduck.jar"
+	settings = {}
 	name = "brainc-brainduck"
 	id = "de251cec-e053-4e2c-a647-9b71eb0f1b70"
 	type = "COMPILER"
 
 [CPU]
-	schemaPoint = "260,180"
+	schemaPoint = "320,180"
 	path = "brainduck-cpu.jar"
+	settings = {}
 	name = "brainduck-cpu"
 	id = "6c5df0df-4497-4a9d-b9dd-9a3f901864c1"
 	type = "CPU"
 
 [[DEVICE]]
-	schemaPoint = "260,60"
+	schemaPoint = "320,60"
 	path = "brainduck-terminal.jar"
+	settings = {}
 	name = "brainduck-terminal"
 	id = "1d858668-d63d-4127-b881-226174a2b368"
 	type = "DEVICE"
 
 [[connections]]
 	bidirectional = true
-	from = "de251cec-e053-4e2c-a647-9b71eb0f1b70"
-	to = "95e3a458-1d0f-40aa-9c38-f9efc5026738"
-	points = []
-
-[[connections]]
-	bidirectional = true
-	from = "95e3a458-1d0f-40aa-9c38-f9efc5026738"
+	from = "1d858668-d63d-4127-b881-226174a2b368"
 	to = "6c5df0df-4497-4a9d-b9dd-9a3f901864c1"
 	points = []
 
 [[connections]]
 	bidirectional = true
-	from = "1d858668-d63d-4127-b881-226174a2b368"
+	from = "de251cec-e053-4e2c-a647-9b71eb0f1b70"
+	to = "300555eb-2e6b-422f-a954-cfe1905f911a"
+	points = []
+
+[[connections]]
+	bidirectional = true
+	from = "300555eb-2e6b-422f-a954-cfe1905f911a"
 	to = "6c5df0df-4497-4a9d-b9dd-9a3f901864c1"
 	points = []
 

@@ -19,7 +19,7 @@
 
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,8 +87,8 @@ public class Profiler {
         }
     }
 
-    Profiler(RawMemoryContext memory) {
-        this.memory = Objects.requireNonNull(memory.getRawMemory());
+    Profiler(ByteMemoryContext memory) {
+        this.memory = Objects.requireNonNull(memory.getRawMemory())[0];
 
         loopEndsCache = new Integer[this.memory.length];
         operationsCache = new CachedOperation[this.memory.length];
