@@ -41,10 +41,7 @@ import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-@PluginRoot(
-    type = PLUGIN_TYPE.DEVICE,
-    title = "BrainDuck terminal"
-)
+@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "BrainDuck terminal")
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
@@ -61,9 +58,7 @@ public class DeviceImpl extends AbstractDevice {
             applicationApi.getContextPool().register(pluginID, terminal, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register BrainTerminal context", e);
-            applicationApi.getDialogs().showError(
-                "Could not register BrainDuck terminal. Please see log file for more details.", getTitle()
-            );
+            applicationApi.getDialogs().showError("Could not register BrainDuck terminal. Please see log file for more details.", getTitle());
         }
     }
 
