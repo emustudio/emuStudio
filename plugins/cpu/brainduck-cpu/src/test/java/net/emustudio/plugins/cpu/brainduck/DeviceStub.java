@@ -27,36 +27,36 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @PluginContext
-public class DeviceStub implements DeviceContext<Short> {
-    private final List<Short> output = new CopyOnWriteArrayList<>();
-    private final Queue<Short> input = new ConcurrentLinkedQueue<>();
+public class DeviceStub implements DeviceContext<Byte> {
+    private final List<Byte> output = new CopyOnWriteArrayList<>();
+    private final Queue<Byte> input = new ConcurrentLinkedQueue<>();
 
     public void setInput(byte[] input) {
         for (byte value : input) {
-            this.input.add((short) value);
+            this.input.add(value);
         }
     }
 
     @Override
-    public Short readData() {
+    public Byte readData() {
         return input.poll();
     }
 
     @Override
-    public void writeData(Short data) {
+    public void writeData(Byte data) {
         output.add(data);
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     public boolean wasInputRead() {
         return input.isEmpty();
     }
 
-    public List<Short> getOutput() {
+    public List<Byte> getOutput() {
         return output;
     }
 }

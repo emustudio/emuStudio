@@ -28,11 +28,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class ContextImpl implements ExtendedContext {
-    private final static int NO_DATA = 0xFF;
+    private final static byte NO_DATA = (byte)0xFF;
     public final static int DEFAULT_FREQUENCY_KHZ = 20000;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
-    private final ConcurrentMap<Integer, DeviceContext<Short>> devices = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
 
     private volatile EmulatorEngine cpu;
     private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
@@ -43,7 +43,7 @@ public final class ContextImpl implements ExtendedContext {
 
     // device mapping = only one device can be attached to one port
     @Override
-    public boolean attachDevice(DeviceContext<Short> device, int port) {
+    public boolean attachDevice(DeviceContext<Byte> device, int port) {
         if (devices.containsKey(port)) {
             LOGGER.debug("[port={}, device={}] Could not attach device to given port. The port is already taken by: {}", port, device, devices.get(port));
             return false;
@@ -65,15 +65,15 @@ public final class ContextImpl implements ExtendedContext {
         devices.clear();
     }
 
-    void writeIO(int port, int val) throws IOException {
-        DeviceContext<Short> device = devices.get(port);
+    void writeIO(int port, byte val) throws IOException {
+        DeviceContext<Byte> device = devices.get(port);
         if (device != null) {
-            device.writeData((short) val);
+            device.writeData(val);
         }
     }
 
-    short readIO(int port) throws IOException {
-        DeviceContext<Short> device = devices.get(port);
+    byte readIO(int port) throws IOException {
+        DeviceContext<Byte> device = devices.get(port);
         if (device != null) {
             return device.readData();
         }

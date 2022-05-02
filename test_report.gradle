@@ -1,0 +1,72 @@
+// Credits go to: https://gist.github.com/lwasyl/f5b2b4ebe9e348ebbd8ee4cb995f8362#file-gradle_tests_report-gradle
+// https://medium.com/@wasyl/pretty-tests-summary-in-gradle-744804dd676c
+
+import groovy.time.TimeCategory
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+ext.testsResults = [] // Container for tests summaries
+
+allprojects { project ->
+    tasks.withType(Test) { testTask ->
+
+        testTask.testLogging { logging ->
+            events TestLogEvent.FAILED,
+                    TestLogEvent.SKIPPED,
+                    TestLogEvent.STANDARD_OUT,
+                    TestLogEvent.STANDARD_ERROR
+
+            exceptionFormat TestExceptionFormat.FULL
+            showExceptions true
+            showCauses true
+            showStackTraces true
+        }
+
+        ignoreFailures = false // true to always run all tests for all modules
+
+        afterSuite { desc, result ->
+
+            if (desc.parent) return // Only summarize results for whole modules
+
+            String summary = "${testTask.project.name}:${testTask.name} results: ${result.resultType} " +
+                    "(" +
+                    "${result.testCount} tests, " +
+                    "${result.successfulTestCount} successes, " +
+                    "${result.failedTestCount} failures, " +
+                    "${result.skippedTestCount} skipped" +
+                    ") " +
+                    "in ${TimeCategory.minus(new Date(result.endTime), new Date(result.startTime))}" +
+                    "\n" +
+                    "Report file: ${testTask.reports.html.entryPoint}"
+
+            // Add reports in `testsResults`, keep failed suites at the end
+            if (result.resultType == TestResult.ResultType.SUCCESS) {
+                rootProject.testsResults.add(0, summary)
+            } else {
+                rootProject.testsResults += summary
+            }
+        }
+    }
+}
+
+gradle.buildFinished {
+    def allResults = rootProject.ext.testsResults
+
+    if (!allResults.isEmpty()) {
+        printResults allResults
+    }
+}
+
+private static void printResults(allResults) {
+    def maxLength = allResults*.readLines().flatten().collect { it.length() }.max()
+
+    println "┌${"${"─" * maxLength}"}┐"
+
+    println allResults.collect {
+        it.readLines().collect {
+            "│" + it + " " * (maxLength - it.length()) + "│"
+        }.join("\n")
+    }.join("\n├${"${"─" * maxLength}"}┤\n")
+
+    println "└${"${"─" * maxLength}"}┘"
+}

@@ -24,6 +24,7 @@ import org.junit.Test;
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.FLAG_C;
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.FLAG_H;
 
+@Ignore
 public class FlagsTableGeneratorTest {
     private final static int MAX_INDENT = 25;
 

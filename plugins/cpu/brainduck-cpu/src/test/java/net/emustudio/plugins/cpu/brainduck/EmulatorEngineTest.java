@@ -41,14 +41,14 @@ public class EmulatorEngineTest {
         profiler = new Profiler(memory);
 
         context = createNiceMock(BrainCPUContextImpl.class);
-        context.writeToDevice(anyShort());
+        context.writeToDevice(anyByte());
         expectLastCall().anyTimes();
-        expect(context.readFromDevice()).andReturn((short) 0).anyTimes();
+        expect(context.readFromDevice()).andReturn((byte) 0).anyTimes();
     }
 
-    private void resetProgram(short... operations) {
+    private void resetProgram(byte... operations) {
         int i = 0;
-        for (short op : operations) {
+        for (byte op : operations) {
             memory.write(i++, op);
         }
         engine = new EmulatorEngine(memory, context, profiler);
@@ -79,7 +79,7 @@ public class EmulatorEngineTest {
     }
 
     @Test
-    public void testCopyLoopWeird() throws Exception {
+    public void testCopyLoopWeird() {
         resetProgram(
             I_LOOP_START,
             I_DECV,
@@ -125,10 +125,10 @@ public class EmulatorEngineTest {
         assertNotNull(operation);
         assertEquals(I_SCANLOOP, operation.operation);
 
-        memory.write(6, (short) 5);
-        memory.write(7, (short) 5);
-        memory.write(8, (short) 5);
-        memory.write(9, (short) 5);
+        memory.write(6, (byte) 5);
+        memory.write(7, (byte) 5);
+        memory.write(8, (byte) 5);
+        memory.write(9, (byte) 5);
         engine.P = 6;
 
         engine.step(true);
@@ -154,14 +154,14 @@ public class EmulatorEngineTest {
 
     private void runAndCheckCopyLoop(int start, int valueP, int[] resultValues, int[] relPositions) throws IOException {
         engine.P = start;
-        memory.write(engine.P, (short) valueP);
+        memory.write(engine.P, (byte) valueP);
 
         engine.step(true);
 
         for (int i = 0; i < resultValues.length; i++) {
             assertEquals("Expected res[" + i + "]=" + resultValues[i] + " at " + (start + relPositions[i]),
-                resultValues[i], (int) memory.read(start + relPositions[i]));
+                resultValues[i], memory.read(start + relPositions[i]) & 0xFF);
         }
-        assertEquals(0, (int) memory.read(engine.P));
+        assertEquals(0, memory.read(engine.P) & 0xFF);
     }
 }

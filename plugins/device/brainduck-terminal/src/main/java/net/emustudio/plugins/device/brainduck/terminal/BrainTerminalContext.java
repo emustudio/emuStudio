@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 @ThreadSafe
-class BrainTerminalContext implements DeviceContext<Short>, IOProvider {
+class BrainTerminalContext implements DeviceContext<Byte>, IOProvider {
     private volatile InputProvider inputProvider = InputProvider.DUMMY;
     private volatile OutputProvider outputProvider = OutputProvider.DUMMY;
 
@@ -41,25 +41,25 @@ class BrainTerminalContext implements DeviceContext<Short>, IOProvider {
     }
 
     @Override
-    public Short readData() {
+    public Byte readData() {
         InputProvider tmpInputProvider = inputProvider;
         if (tmpInputProvider != null) {
-            return (short) (tmpInputProvider.read() & 0xFF);
+            return tmpInputProvider.read();
         }
         return InputProvider.EOF;
     }
 
     @Override
-    public void writeData(Short data) {
+    public void writeData(Byte data) {
         OutputProvider tmpOutputProvider = outputProvider;
         if (tmpOutputProvider != null) {
-            tmpOutputProvider.write(data);
+            tmpOutputProvider.write(data & 0xFF);
         }
     }
 
     @Override
-    public Class<Short> getDataType() {
-        return Short.class;
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 
     @Override

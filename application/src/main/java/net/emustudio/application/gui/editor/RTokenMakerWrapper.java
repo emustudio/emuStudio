@@ -1,7 +1,9 @@
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import org.fife.ui.rsyntaxtextarea.*;
+import net.emustudio.emulib.plugins.compiler.Compiler;
+import org.fife.ui.rsyntaxtextarea.OccurrenceMarker;
+import org.fife.ui.rsyntaxtextarea.Token;
+import org.fife.ui.rsyntaxtextarea.TokenMaker;
 
 import javax.swing.*;
 import javax.swing.text.Segment;
@@ -9,8 +11,8 @@ import javax.swing.text.Segment;
 public class RTokenMakerWrapper implements TokenMaker {
     private static RTokenMaker WRAPPED;
 
-    public RTokenMakerWrapper(LexicalAnalyzer lexicalAnalyzer) {
-        WRAPPED = new RTokenMaker(lexicalAnalyzer);
+    public RTokenMakerWrapper(Compiler compiler) {
+        WRAPPED = new RTokenMaker(compiler);
     }
 
     @SuppressWarnings("unused")

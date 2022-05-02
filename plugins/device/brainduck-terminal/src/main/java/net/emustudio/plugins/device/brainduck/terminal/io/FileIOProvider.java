@@ -52,13 +52,13 @@ public class FileIOProvider implements InputProvider, OutputProvider {
     }
 
     @Override
-    public int read() {
+    public byte read() {
         try {
             int character = reader.read();
             if (character == -1) {
                 return EOF;
             }
-            return character;
+            return (byte)(character & 0xFF);
         } catch (IOException e) {
             LOGGER.error("Could not read from input file: " + INPUT_FILE_NAME, e);
             return EOF;

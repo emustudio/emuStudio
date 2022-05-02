@@ -28,8 +28,9 @@ import java.util.List;
  * <p>
  * Supports bank switching, ROM ranges, and loading HEX/BIN files.
  */
+@SuppressWarnings("unused")
 @PluginContext(id = "Byte memory")
-public interface ByteMemoryContext extends MemoryContext<Short> {
+public interface ByteMemoryContext extends MemoryContext<Byte> {
 
     /**
      * This interface represents a range of addresses in the memory.
@@ -81,14 +82,14 @@ public interface ByteMemoryContext extends MemoryContext<Short> {
      *
      * @return index of active (selected) memory bank
      */
-    short getSelectedBank();
+    int getSelectedBank();
 
     /**
      * Select (set as active) a memory bank.
      *
      * @param bankIndex index (number) of a bank which should be selected
      */
-    void selectBank(short bankIndex);
+    void selectBank(int bankIndex);
 
     /**
      * Return an address in the memory which represents a boundary from which
@@ -98,4 +99,13 @@ public interface ByteMemoryContext extends MemoryContext<Short> {
      * @return common boundary address
      */
     int getCommonBoundary();
+
+    /**
+     * Returns raw memory represented by Java array.
+     * <p>
+     * Memory notifications must be handled manually if this array changes.
+     *
+     * @return raw memory
+     */
+    Byte[][] getRawMemory();
 }

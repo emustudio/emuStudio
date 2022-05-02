@@ -31,15 +31,23 @@ public class MemoryTableModel extends AbstractTableModel {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
 
     final static int COLUMN_HEX_VALUE = 32;
-    final static int COLUMN_RAW_VALUE = 33;
+    final static int COLUMN_DEC_VALUE = 33;
+    final static int COLUMN_RAW_VALUE = 34;
 
     private final static int ROW_COUNT = 32;
-    private final static int COLUMN_COUNT = 2 + 32;
+    private final static int COLUMN_COUNT = 3 + 32;
 
     private final MemoryContext<Byte> memory;
 
     MemoryTableModel(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
+    }
+
+    public void dump() {
+        for (int i = 0; i < 32; i++) {
+            Byte[] v = memory.read(i * 4, 4);
+            System.out.printf("0x%02X, 0x%02X, 0x%02X, 0x%02X,\n", v[0], v[1], v[2], v[3]);
+        }
     }
 
     @Override
@@ -78,9 +86,11 @@ public class MemoryTableModel extends AbstractTableModel {
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case COLUMN_HEX_VALUE:
-                return "Value (hex)";
+                return "Hex";
+            case COLUMN_DEC_VALUE:
+                return "Dec";
             case COLUMN_RAW_VALUE:
-                return "Raw";
+                return "Char";
         }
         if (isBitLine(columnIndex)) {
             return "L";
@@ -106,12 +116,14 @@ public class MemoryTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         try {
-            Byte[] row = memory.readWord(rowIndex * 4);
+            Byte[] row = memory.read(rowIndex * 4, 4);
             int value = NumberUtils.readInt(row, NumberUtils.Strategy.REVERSE_BITS);
 
             switch (columnIndex) {
                 case COLUMN_HEX_VALUE:
                     return RadixUtils.formatDwordHexString(value).toUpperCase();
+                case COLUMN_DEC_VALUE:
+                    return String.valueOf(value);
                 case COLUMN_RAW_VALUE:
                     return "" + (char) ((value >>> 24) & 0xFF) + (char) ((value >>> 16) & 0xFF)
                         + (char) ((value >>> 8) & 0xFF) + (char) (value & 0xFF);
@@ -129,17 +141,19 @@ public class MemoryTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (isCellEditable(rowIndex, columnIndex)) {
             try {
-                Byte[] row = memory.readWord(rowIndex * 4);
+                Byte[] row = memory.read(rowIndex * 4, 4);
                 String str = String.valueOf(aValue);
 
                 if (columnIndex == COLUMN_HEX_VALUE) {
+                    writeHex(str, row);
+                } else if (columnIndex == COLUMN_DEC_VALUE) {
                     writeHex(str, row);
                 } else if (columnIndex == COLUMN_RAW_VALUE) {
                     writeChar((String) aValue, row);
                 } else if (columnIndex >= 0 && columnIndex < 33) {
                     writeBit(str, columnIndex, row);
                 }
-                memory.writeWord(rowIndex * 4, row);
+                memory.write(rowIndex * 4, row);
 
                 fireTableCellUpdated(rowIndex, columnIndex);
             } catch (Exception e) {
@@ -187,12 +201,13 @@ public class MemoryTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex >= 0 && columnIndex <= 33;
+        return columnIndex >= 0 && columnIndex <= 34;
     }
 
     void dataChangedAt(int address) {
+        int row = address / 4;
         for (int i = 0; i < COLUMN_COUNT; i++) {
-            fireTableCellUpdated(address, i);
+            fireTableCellUpdated(row, i);
         }
     }
 

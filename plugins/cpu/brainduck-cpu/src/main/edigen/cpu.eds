@@ -1,3 +1,5 @@
+root instruction;
+
 instruction = "halt": 00000000 |
                "> (P++)": 00000001 |
                "< (P--)": 00000010 |

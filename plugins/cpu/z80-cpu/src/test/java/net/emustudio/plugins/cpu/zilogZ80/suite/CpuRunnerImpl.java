@@ -19,9 +19,9 @@
 package net.emustudio.plugins.cpu.zilogZ80.suite;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
-import net.emustudio.plugins.cpu.zilogZ80.FakeDevice;
+import net.emustudio.plugins.cpu.zilogZ80.FakeByteDevice;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +30,9 @@ import java.util.Objects;
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 
 public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
-    private final List<FakeDevice> devices;
+    private final List<FakeByteDevice> devices;
 
-    public CpuRunnerImpl(CpuImpl cpu, ShortMemoryStub memoryStub, List<FakeDevice> devices) {
+    public CpuRunnerImpl(CpuImpl cpu, ByteMemoryStub memoryStub, List<FakeByteDevice> devices) {
         super(cpu, memoryStub);
         this.devices = List.copyOf(Objects.requireNonNull(devices));
     }
@@ -110,7 +110,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         return cpu.getEngine().IFF[index];
     }
 
-    public FakeDevice getDevice(int port) {
+    public FakeByteDevice getDevice(int port) {
         return devices.get(port);
     }
 

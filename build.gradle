@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2022  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,16 +19,19 @@
 
 import java.text.SimpleDateFormat
 
+apply from: 'test_report.gradle'
+
 ext.versions = [
   slf4j: '1.7.30'
 ]
 
 ext.libs = [
-  emuLib         : "net.emustudio:emulib:11.5.0",
-  cpuTestSuite   : "net.emustudio:cpu-testsuite_11.5:1.1.0",
+  emuLib         : "net.emustudio:emulib:11.7.0-SNAPSHOT",
+  cpuTestSuite   : "net.emustudio:cpu-testsuite_11.6:1.2.0-SNAPSHOT",
 
   javaCupRuntime : "com.github.vbmacher:java-cup-runtime:11b-20160615",
   jcipAnnotations: "net.jcip:jcip-annotations:1.0",
+  antlrRuntime   : "org.antlr:antlr4-runtime:4.9.2",
 
   slf4JApi       : "org.slf4j:slf4j-api:${versions.slf4j}",
   slf4JSimple    : "org.slf4j:slf4j-simple:${versions.slf4j}",
@@ -38,8 +41,8 @@ ext.libs = [
   args4j         : "args4j:args4j:2.33",
   tomlj          : "com.electronwill.night-config:toml:3.6.3",
 
-  editor         : "com.fifesoft:rsyntaxtextarea:3.1.2",
-  editorDialogs  : "com.fifesoft:rstaui:3.1.1",
+  editor         : "com.fifesoft:rsyntaxtextarea:3.1.6",
+  editorDialogs  : "com.fifesoft:rstaui:3.1.4",
 
   junit          : "junit:junit:4.13",
   easyMock       : "org.easymock:easymock:4.2",
@@ -91,7 +94,10 @@ allprojects {
 
 subprojects {
   repositories {
-    mavenCentral()
     mavenLocal()
+    mavenCentral()
+    maven {
+      url 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
   }
 }

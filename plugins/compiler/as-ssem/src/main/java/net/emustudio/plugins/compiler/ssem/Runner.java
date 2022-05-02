@@ -38,7 +38,7 @@ public class Runner {
                 printHelp();
                 return;
             } else if (arg.equals("--version") || arg.equals("-v")) {
-                System.out.println(new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
+                System.out.println(new SSEMCompiler(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
                 return;
             } else {
                 break;
@@ -59,7 +59,7 @@ public class Runner {
             outputFile += ".bin";
         }
 
-        CompilerImpl compiler = new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
+        SSEMCompiler compiler = new SSEMCompiler(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
         compiler.addCompilerListener(new CompilerListener() {
             @Override
             public void onStart() {

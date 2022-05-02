@@ -67,14 +67,14 @@ public class MemoryTableModel extends AbstractTableModel {
         if (pos >= memory.getSize()) {
             return ".";
         }
-        return String.format("%1$02X", memory.read(pos, currentBank));
+        return String.format("%1$02X", memory.readBank(pos, currentBank));
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
         try {
-            memory.write(pos, Short.decode(String.valueOf(aValue)), currentBank);
+            memory.writeBank(pos, Byte.decode(String.valueOf(aValue)), currentBank);
             fireTableCellUpdated(rowIndex, columnIndex);
         } catch (NumberFormatException e) {
             // ignored
@@ -99,7 +99,7 @@ public class MemoryTableModel extends AbstractTableModel {
         int offset = 0;
         int foundAddress = -1;
         for (int currentAddr = from; currentAddr < size && offset < sequence.length; currentAddr++) {
-            if ((memory.read(currentAddr, currentBank)).byteValue() == sequence[offset]) {
+            if (memory.readBank(currentAddr, currentBank) == sequence[offset]) {
                 if (offset == 0) {
                     foundAddress = currentAddr;
                 }

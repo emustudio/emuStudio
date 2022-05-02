@@ -37,8 +37,9 @@ public class MemoryTableModelTest {
         MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
 
         assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_HEX_VALUE));
+        assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_DEC_VALUE));
         assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_RAW_VALUE));
-        assertFalse(model.isCellEditable(0, 34));
+        assertFalse(model.isCellEditable(0, 35));
 
         for (int i = 0; i < 32; i++) {
             assertTrue(model.isCellEditable(0, i));
@@ -66,8 +67,8 @@ public class MemoryTableModelTest {
         Byte[] row = new Byte[]{1, 2, 3, 4};
         Byte[] modified = new Byte[]{1, 2, (byte) 0x83, 4}; // 16th bit set to 1, but original 3 wasnt'modified
 
-        expect(memoryContext.readWord(10 * 4)).andReturn(row);
-        memoryContext.writeWord(eq(10 * 4), aryEq(modified));
+        expect(memoryContext.read(10 * 4, 4)).andReturn(row);
+        memoryContext.write(eq(10 * 4), aryEq(modified));
         expectLastCall().once();
         replay(memoryContext);
 
@@ -84,13 +85,31 @@ public class MemoryTableModelTest {
         Byte[] row = new Byte[]{1, 2, 3, 4};
         Byte[] modified = new Byte[]{(byte) 0xFF, 0, 0, 0};
 
-        expect(memoryContext.readWord(10 * 4)).andReturn(row);
-        memoryContext.writeWord(eq(10 * 4), aryEq(modified));
+        expect(memoryContext.read(10 * 4, 4)).andReturn(row);
+        memoryContext.write(eq(10 * 4), aryEq(modified));
         expectLastCall().once();
         replay(memoryContext);
 
         MemoryTableModel model = new MemoryTableModel(memoryContext);
         model.setValueAt("0xFF", 10, MemoryTableModel.COLUMN_HEX_VALUE);
+
+        verify(memoryContext);
+    }
+
+    @Test
+    public void testSetDecValueCellsMemoryWrite() {
+        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
+
+        Byte[] row = new Byte[]{1, 2, 3, 4};
+        Byte[] modified = new Byte[]{(byte) 0xFF, 0, 0, 0};
+
+        expect(memoryContext.read(10 * 4, 4)).andReturn(row);
+        memoryContext.write(eq(10 * 4), aryEq(modified));
+        expectLastCall().once();
+        replay(memoryContext);
+
+        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        model.setValueAt("0xFF", 10, MemoryTableModel.COLUMN_DEC_VALUE);
 
         verify(memoryContext);
     }
@@ -102,8 +121,8 @@ public class MemoryTableModelTest {
         Byte[] row = new Byte[]{1, 2, 3, 4};
         Byte[] modified = new Byte[]{0x56, (byte) 0xf6, 0x16, (byte) 0x86};
 
-        expect(memoryContext.readWord(10 * 4)).andReturn(row);
-        memoryContext.writeWord(eq(10 * 4), aryEq(modified));
+        expect(memoryContext.read(10 * 4, 4)).andReturn(row);
+        memoryContext.write(eq(10 * 4), aryEq(modified));
         expectLastCall().once();
         replay(memoryContext);
 
@@ -135,7 +154,7 @@ public class MemoryTableModelTest {
         Byte[] row = new Byte[4];
         NumberUtils.writeInt(0x61686F6A, row, NumberUtils.Strategy.REVERSE_BITS);
 
-        expect(memoryContext.readWord(10 * 4)).andReturn(row).anyTimes();
+        expect(memoryContext.read(10 * 4, 4)).andReturn(row).anyTimes();
         replay(memoryContext);
 
         MemoryTableModel model = new MemoryTableModel(memoryContext);
@@ -149,7 +168,7 @@ public class MemoryTableModelTest {
     public void testGetValueAtInvalidIndexDoesNotThrow() {
         MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
-        expect(memoryContext.readWord(-4)).andThrow(new IndexOutOfBoundsException()).times(2);
+        expect(memoryContext.read(-4, 4)).andThrow(new IndexOutOfBoundsException()).times(2);
         replay(memoryContext);
 
         MemoryTableModel model = new MemoryTableModel(memoryContext);

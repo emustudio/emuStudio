@@ -1,1 +1,3 @@
-src/main/java/net/emustudio/plugins/compiler/as8080/LexerImpl.java
+/src/main/antlr/gen/
+/src/main/gen/
+*.tokens

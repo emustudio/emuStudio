@@ -25,14 +25,14 @@ import java.util.Objects;
 
 class BrainCPUContextImpl implements BrainCPUContext {
 
-    private DeviceContext<Short> device;
+    private DeviceContext<Byte> device;
 
     BrainCPUContextImpl() {
         device = null;
     }
 
     @Override
-    public void attachDevice(DeviceContext<Short> device) {
+    public void attachDevice(DeviceContext<Byte> device) {
         this.device = Objects.requireNonNull(device);
     }
 
@@ -46,8 +46,8 @@ class BrainCPUContextImpl implements BrainCPUContext {
      *
      * @param data value that will be written into the device
      */
-    public void writeToDevice(short data) throws IOException {
-        DeviceContext<Short> tmp = device;
+    public void writeToDevice(byte data) throws IOException {
+        DeviceContext<Byte> tmp = device;
         if (tmp == null) {
             return;
         }
@@ -62,12 +62,12 @@ class BrainCPUContextImpl implements BrainCPUContext {
      *
      * @return value from the device, or 0 if the device is null or there's anything
      */
-    public short readFromDevice() throws IOException {
-        DeviceContext<Short> tmp = device;
+    public byte readFromDevice() throws IOException {
+        DeviceContext<Byte> tmp = device;
         if (tmp == null) {
             return 0;
         }
-        Short value = tmp.readData();
+        Byte value = tmp.readData();
         return (value == null) ? 0 : value;
     }
 

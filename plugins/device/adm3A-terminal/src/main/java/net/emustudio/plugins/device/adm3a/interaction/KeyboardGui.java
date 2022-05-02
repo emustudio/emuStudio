@@ -105,7 +105,7 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
         CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_ENTER] = 13;
     }
 
-    private final List<DeviceContext<Short>> devices = new ArrayList<>();
+    private final List<DeviceContext<Byte>> devices = new ArrayList<>();
     private final LoadCursorPosition loadCursorPosition;
 
     public KeyboardGui(Cursor cursor) {
@@ -142,8 +142,8 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
             }
         }
         if (newKeyCode != 0) {
-            if (loadCursorPosition.notAccepted((short) newKeyCode)){
-                inputReceived((short) newKeyCode);
+            if (loadCursorPosition.notAccepted((byte)newKeyCode)){
+                inputReceived(newKeyCode);
             }
         }
     }
@@ -159,12 +159,12 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
     }
 
     @Override
-    public void connect(DeviceContext<Short> device) {
+    public void connect(DeviceContext<Byte> device) {
         devices.add(device);
     }
 
     @Override
-    public void disconnect(DeviceContext<Short> device) {
+    public void disconnect(DeviceContext<Byte> device) {
         devices.remove(device);
     }
 
@@ -173,10 +173,10 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
         devices.clear();
     }
 
-    private void inputReceived(short input) {
-        for (DeviceContext<Short> device : devices) {
+    private void inputReceived(int input) {
+        for (DeviceContext<Byte> device : devices) {
             try {
-                device.writeData(input);
+                device.writeData((byte)input);
             } catch (IOException e) {
                 LOGGER.error("[device={}, input={}] Could not notify device about key pressed", device, input, e);
             }

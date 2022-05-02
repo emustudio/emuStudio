@@ -1,3 +1,13 @@
+; The Winner of the 1998 SSEM Programming Competition!
+;
+; Written by: 	Yasuaki Watanabe of Japan.
+; Obtained from: 	The 1998 SSEM Programming Competition.
+; Description: 	"This is a three minutes timer program. If you want to eat instant noodles, use this program. Start
+;               the program after pour hot water into the cup. Open the cover and start to eat if the "Stop" indicator
+;               is illuminated. I promise you that the noodles taste good."
+; Parameter Lines: 	31: initial value for the timing interval counter. See values in code below.
+; Result Lines: 	(run-time display)
+
 00 BNUM 00000000000000000000000000000000
 01 BINS 10011011111000101111110000111111
 02 BINS 00111000100001100000000000000000

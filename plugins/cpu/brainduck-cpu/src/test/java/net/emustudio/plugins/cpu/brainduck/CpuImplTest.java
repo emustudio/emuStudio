@@ -23,7 +23,7 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.easymock.Capture;
 import org.junit.After;
 import org.junit.Before;
@@ -50,7 +50,7 @@ public class CpuImplTest {
         Capture<BrainCPUContextImpl> cpuContextCapture = Capture.newInstance();
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, RawMemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemoryContext(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
         contextPool.register(eq(0L), capture(cpuContextCapture), same(BrainCPUContext.class));
         expectLastCall().once();
@@ -146,7 +146,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
 
         assertEquals(3, output.size());
         assertEquals(4, output.get(0).byteValue());
@@ -216,7 +216,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
         assertEquals(2, output.size());
         assertEquals('8', output.get(0).byteValue());
         assertEquals('\n', output.get(1).byteValue());
@@ -239,7 +239,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
         assertEquals(2, output.size());
         assertEquals(64, output.get(0).byteValue());
         assertEquals('a', output.get(1).byteValue());
@@ -286,7 +286,7 @@ public class CpuImplTest {
         emulate(program, null, null);
 
         assertEquals(memory.getDataStart(), cpu.getEngine().P);
-        assertEquals(255, memory.read(memory.getDataStart()).shortValue());
+        assertEquals(255, memory.read(memory.getDataStart()) & 0xFF);
     }
 
     @Test(timeout = 3000)
@@ -356,7 +356,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
         assertEquals(3, output.size());
     }
 

@@ -19,33 +19,63 @@
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
+import net.emustudio.emulib.plugins.cpu.Decoder;
+import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.helpers.Bits;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.NumberUtils.Strategy;
+import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+
+import static net.emustudio.plugins.cpu.ssem.DecoderImpl.LINE;
 
 public class EmulatorEngine {
     private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
 
     public final static int INSTRUCTIONS_PER_SECOND = 700;
-    private final static int MEMORY_CELLS = 32 * 4;
+    final static int LINE_MASK = 0b11111000;
 
-    private final CPU cpu;
+    private final TimingEstimator estimator = new TimingEstimator();
+    private volatile long waitNanos = -1;
+
     private final MemoryContext<Byte> memory;
+    private final Decoder decoder;
+    private final Function<Integer, Boolean> isBreakpointSet;
 
     public final AtomicInteger Acc = new AtomicInteger();
     public final AtomicInteger CI = new AtomicInteger();
 
-    private volatile long averageInstructionNanos;
+    private static final Method[] DISPATCH_TABLE = new Method[8];
+    private final Bits emptyBits = new Bits(0, 0);
 
-    EmulatorEngine(MemoryContext<Byte> memory, CPU cpu) {
+    static {
+        try {
+            DISPATCH_TABLE[0] = EmulatorEngine.class.getDeclaredMethod("op_jmp", int.class);
+            DISPATCH_TABLE[1] = EmulatorEngine.class.getDeclaredMethod("op_sub", int.class);
+            DISPATCH_TABLE[2] = EmulatorEngine.class.getDeclaredMethod("op_ldn", int.class);
+            DISPATCH_TABLE[3] = EmulatorEngine.class.getDeclaredMethod("op_cmp", int.class);
+            DISPATCH_TABLE[4] = EmulatorEngine.class.getDeclaredMethod("op_jpr", int.class);
+            DISPATCH_TABLE[6] = EmulatorEngine.class.getDeclaredMethod("op_sto", int.class);
+            DISPATCH_TABLE[7] = EmulatorEngine.class.getDeclaredMethod("op_stp", int.class);
+        } catch (NoSuchMethodException e) {
+            LOGGER.error("Could not set up dispatch table. The emulator won't work correctly", e);
+        }
+    }
+
+    EmulatorEngine(MemoryContext<Byte> memory, Function<Integer, Boolean> isBreakpointSet) {
         this.memory = Objects.requireNonNull(memory);
-        this.cpu = Objects.requireNonNull(cpu);
+        this.isBreakpointSet = Objects.requireNonNull(isBreakpointSet);
+        this.decoder = new DecoderImpl(memory);
     }
 
     void reset(int startingPos) {
@@ -54,73 +84,91 @@ public class EmulatorEngine {
     }
 
     CPU.RunState step() {
-        Byte[] instruction = memory.readWord(CI.addAndGet(4));
+        try {
+            DecodedInstruction instruction = decoder.decode(CI.addAndGet(4));
+            int lineAddress = Optional.ofNullable(instruction.getBits(LINE)).orElse(emptyBits).reverseBits().bits * 4;
+            int opcode = instruction.getImage()[1] & 7;
 
-        byte line = (byte) (NumberUtils.reverseBits(instruction[0] & 0b11111000, 8));
-        int lineAddress = line * 4;
-        int opcode = instruction[1] & 7;
-
-        switch (opcode) {
-            case 0: // JMP
-                int oldCi = CI.get() - 4;
-                int newLineAddress = readLineAddress(lineAddress);
-                CI.set(newLineAddress);
-                if (newLineAddress == oldCi) {
-                    // endless loop detected;
-                    return CPU.RunState.STATE_STOPPED_BREAK;
-                }
-                break;
-            case 4: // JPR
-                CI.addAndGet(readLineAddress(lineAddress));
-                break;
-            case 2: // LDN
-                int tmp = readInt(lineAddress);
-                Acc.set((tmp != 0) ? -tmp : 0);
-                break;
-            case 6: // STO
-                writeInt(lineAddress, Acc.get());
-                break;
-            case 1: // SUB
-                Acc.addAndGet(-readInt(lineAddress));
-                break;
-            case 3: // CMP / SKN
-                if (Acc.get() < 0) {
-                    CI.addAndGet(4);
-                }
-                break;
-            case 7: // STP / HLT
-                return CPU.RunState.STATE_STOPPED_NORMAL;
-            default:
+            Method instr = DISPATCH_TABLE[opcode];
+            if (instr == null) {
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            return (CPU.RunState) instr.invoke(this, lineAddress);
+
+        } catch (InvalidInstructionException | InvocationTargetException | IllegalAccessException e) {
+            return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+        }
+    }
+
+    private CPU.RunState op_jmp(int lineAddress) {
+        int oldCi = CI.get() - 4;
+        int newLineAddress = readLineAddress(lineAddress);
+        CI.set(newLineAddress);
+        if (newLineAddress == oldCi) {
+            // endless loop detected;
+            return CPU.RunState.STATE_STOPPED_BREAK;
         }
         return CPU.RunState.STATE_RUNNING;
     }
 
+    private CPU.RunState op_jpr(int lineAddress) {
+        CI.addAndGet(readInt(lineAddress) * 4);
+        return CPU.RunState.STATE_RUNNING;
+    }
+
+    private CPU.RunState op_ldn(int lineAddress) {
+        Acc.set(-readInt(lineAddress));
+        return CPU.RunState.STATE_RUNNING;
+    }
+
+    private CPU.RunState op_sto(int lineAddress) {
+        writeInt(lineAddress, Acc.get());
+        return CPU.RunState.STATE_RUNNING;
+    }
+
+    private CPU.RunState op_sub(int lineAddress) {
+        Acc.addAndGet(-readInt(lineAddress));
+        return CPU.RunState.STATE_RUNNING;
+    }
+
+    private CPU.RunState op_cmp(int lineAddress) {
+        if (Acc.get() < 0) {
+            CI.addAndGet(4);
+        }
+        return CPU.RunState.STATE_RUNNING;
+    }
+
+    private CPU.RunState op_stp(int lineAddress) {
+        return CPU.RunState.STATE_STOPPED_NORMAL;
+    }
+
+
     private int readLineAddress(int lineAddress) {
-        return 4 * NumberUtils.reverseBits(memory.read(lineAddress) & 0b11111000, 8);
+        return 4 * NumberUtils.reverseBits(memory.read(lineAddress) & LINE_MASK, 8);
     }
 
     private int readInt(int line) {
-        Byte[] word = memory.readWord(line);
+        Byte[] word = memory.read(line, 4);
         return NumberUtils.readInt(word, Strategy.REVERSE_BITS);
     }
 
     private void writeInt(int lineAddress, int value) {
         Byte[] word = new Byte[4];
         NumberUtils.writeInt(value, word, Strategy.REVERSE_BITS);
-        memory.writeWord(lineAddress, word);
+        memory.write(lineAddress, word);
     }
 
     CPU.RunState run() {
-        if (averageInstructionNanos == 0) {
-            measureAverageInstructionNanos();
+        if (waitNanos < 0) {
+            waitNanos = estimator.estimateWaitNanos(INSTRUCTIONS_PER_SECOND);
+            LOGGER.debug("Estimated wait nanos: " + waitNanos);
         }
+
         CPU.RunState currentRunState = CPU.RunState.STATE_RUNNING;
 
-        long waitNanos = TimeUnit.SECONDS.toNanos(1) / averageInstructionNanos;
         while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_RUNNING) {
             try {
-                if (cpu.isBreakpointSet(CI.get())) {
+                if (isBreakpointSet.apply(CI.get())) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 }
                 currentRunState = step();
@@ -134,83 +182,8 @@ public class EmulatorEngine {
                 LOGGER.debug("Unexpected error", e);
                 return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
-            if (waitNanos > 0) {
-                try {
-                    sleepNanos(waitNanos);
-                } catch (InterruptedException ex) {
-                    // ignored; will be considered in the beginning of the loop
-                }
-            }
+            SleepUtils.preciseSleepNanos(waitNanos);
         }
         return currentRunState;
-    }
-
-    final static long SLEEP_PRECISION = TimeUnit.MILLISECONDS.toNanos(2);
-    final static long SPIN_YIELD_PRECISION = TimeUnit.MILLISECONDS.toNanos(2);
-
-    // On Windows, both Thread.sleep() and LockSupport.parkNanos() are veeery unprecise :(
-    // https://stackoverflow.com/questions/824110/accurate-sleep-for-java-on-windows
-    public static void sleepNanos(long nanoDuration) throws InterruptedException {
-        final long end = System.nanoTime() + nanoDuration;
-        long timeLeft = nanoDuration;
-        do {
-            if (timeLeft > SLEEP_PRECISION)
-                Thread.sleep(1);
-            else if (timeLeft > SPIN_YIELD_PRECISION)
-                Thread.yield();
-
-            timeLeft = end - System.nanoTime();
-        } while (timeLeft > 0);
-    }
-
-    private void fakeInstr() {
-        Acc.addAndGet(readInt(0));
-        if (Acc.get() > 0) Acc.addAndGet(1000);
-        else Acc.addAndGet(-1000);
-    }
-
-    private void fakeStep() {
-        Byte[] instruction = memory.readWord(CI.get());
-
-        int line = NumberUtils.reverseBits(instruction[0], 8);
-        int opcode = instruction[1] & 3;
-        CI.updateAndGet(ci -> (ci + 4) % MEMORY_CELLS);
-
-        switch (opcode) {
-            case 0:
-                fakeInstr();
-            case 1:
-                fakeInstr();
-            case 2:
-                fakeInstr();
-            case 3:
-                fakeInstr();
-            case 4:
-                fakeInstr();
-            case 6:
-                fakeInstr();
-            case 7:
-                fakeInstr();
-                break;
-        }
-
-        Acc.addAndGet(-memory.read(line % MEMORY_CELLS));
-    }
-
-
-    private void measureAverageInstructionNanos() {
-        int oldCI = CI.get();
-        int oldAcc = Acc.get();
-
-        long start = System.nanoTime();
-        for (int i = 0; i < 5 * INSTRUCTIONS_PER_SECOND; i++) {
-            fakeStep();
-        }
-        long elapsed = System.nanoTime() - start;
-
-        averageInstructionNanos = elapsed / (5 * INSTRUCTIONS_PER_SECOND);
-
-        CI.set(oldCI);
-        Acc.set(oldAcc);
     }
 }

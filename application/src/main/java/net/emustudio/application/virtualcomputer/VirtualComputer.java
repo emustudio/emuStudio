@@ -39,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static net.emustudio.application.internal.Reflection.doesImplement;
 
@@ -71,18 +72,18 @@ public class VirtualComputer implements PluginConnections {
         });
     }
 
-    public  ComputerConfig getComputerConfig() {
+    public ComputerConfig getComputerConfig() {
         return computerConfig;
     }
 
     public void initialize(ContextPoolImpl contextPool) throws PluginInitializationException {
         contextPool.setComputer(this);
-        List<PluginMeta> pluginsToInitialize = List.of(
+        List<PluginMeta> pluginsToInitialize = Stream.of(
             pluginsByType.getOrDefault(PLUGIN_TYPE.COMPILER, Collections.emptyList()),
             pluginsByType.getOrDefault(PLUGIN_TYPE.MEMORY, Collections.emptyList()),
             pluginsByType.getOrDefault(PLUGIN_TYPE.CPU, Collections.emptyList()),
             pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList())
-        ).stream().flatMap(Collection::stream).collect(Collectors.toList());
+        ).flatMap(Collection::stream).collect(Collectors.toList());
 
         pluginsToInitialize.forEach(meta -> Unchecked.run(meta.pluginInstance::initialize));
     }
@@ -140,12 +141,11 @@ public class VirtualComputer implements PluginConnections {
 
     private static Map<Long, PluginMeta> loadPlugins(ComputerConfig computerConfig, ApplicationApi applicationApi,
                                                      ApplicationConfig applicationConfig, ConfigFiles configFiles) throws IOException, InvalidPluginException {
-        List<PluginConfig> pluginConfigs = List.of(
-            computerConfig.getCompiler(),
-            computerConfig.getCPU(),
-            computerConfig.getMemory()
-        ).stream()
-            .map(opt -> opt.map(List::of).orElse(Collections.emptyList()))
+        List<PluginConfig> pluginConfigs = Stream.of(
+                computerConfig.getCompiler(),
+                computerConfig.getCPU(),
+                computerConfig.getMemory()
+            ).map(opt -> opt.map(List::of).orElse(Collections.emptyList()))
             .flatMap(List::stream)
             .collect(Collectors.toList());
         pluginConfigs.addAll(computerConfig.getDevices());
@@ -198,12 +198,12 @@ public class VirtualComputer implements PluginConnections {
     }
 
     private static Plugin createPluginInstance(long pluginID, Class<? extends Plugin> mainClass, ApplicationApi applicationApi,
-                                        PluginSettings pluginSettings) throws InvalidPluginException {
+                                               PluginSettings pluginSettings) throws InvalidPluginException {
         Objects.requireNonNull(mainClass);
         Objects.requireNonNull(applicationApi);
 
         // First parameter of constructor is plug-in ID
-        Class<?>[] constructorParams = { long.class, ApplicationApi.class, PluginSettings.class };
+        Class<?>[] constructorParams = {long.class, ApplicationApi.class, PluginSettings.class};
 
         try {
             Constructor<?> constructor = mainClass.getDeclaredConstructor(constructorParams);

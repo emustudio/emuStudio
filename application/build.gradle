@@ -39,6 +39,7 @@ dependencies {
   extraLibs libs.emuLib
 
   implementation libs.jcipAnnotations
+  implementation libs.antlrRuntime
 
   extraLibs libs.editor
   extraLibs libs.editorDialogs
@@ -52,19 +53,18 @@ dependencies {
   providedRuntime project(":plugins:compiler:as-ssem")
   providedRuntime project(":plugins:compiler:as-z80")
   providedRuntime project(":plugins:compiler:brainc-brainduck")
-  providedRuntime project(":plugins:compiler:ramc-ram")
-  providedRuntime project(":plugins:compiler:raspc-rasp")
+//  providedRuntime project(":plugins:compiler:ramc-ram")
+//  providedRuntime project(":plugins:compiler:raspc-rasp")
 
-  providedRuntime project(":plugins:memory:ram-mem")
-  providedRuntime project(":plugins:memory:rasp-mem")
-  providedRuntime project(":plugins:memory:brainduck-mem")
+//  providedRuntime project(":plugins:memory:ram-mem")
+ // providedRuntime project(":plugins:memory:rasp-mem")
   providedRuntime project(":plugins:memory:ssem-mem")
   providedRuntime project(":plugins:memory:byte-mem")
 
   providedRuntime project(":plugins:cpu:8080-cpu")
   providedRuntime project(":plugins:cpu:brainduck-cpu")
-  providedRuntime project(":plugins:cpu:ram-cpu")
-  providedRuntime project(":plugins:cpu:rasp-cpu")
+//  providedRuntime project(":plugins:cpu:ram-cpu")
+ // providedRuntime project(":plugins:cpu:rasp-cpu")
   providedRuntime project(":plugins:cpu:z80-cpu")
   providedRuntime project(":plugins:cpu:ssem-cpu")
 
@@ -179,15 +179,14 @@ distributions {
         from(output(":plugins:compiler:as-z80"))
         from(output(":plugins:compiler:as-ssem"))
         from(output(":plugins:compiler:brainc-brainduck"))
-        from(output(":plugins:compiler:ramc-ram"))
-        from(output(":plugins:compiler:raspc-rasp"))
+      //  from(output(":plugins:compiler:ramc-ram"))
+        //from(output(":plugins:compiler:raspc-rasp"))
       }
 
       into('memory') {
         include '*.jar'
-        from(output(":plugins:memory:ram-mem"))
-        from(output(":plugins:memory:rasp-mem"))
-        from(output(":plugins:memory:brainduck-mem"))
+//        from(output(":plugins:memory:ram-mem"))
+  //      from(output(":plugins:memory:rasp-mem"))
         from(output(":plugins:memory:ssem-mem"))
         from(output(":plugins:memory:byte-mem"))
       }
@@ -196,8 +195,8 @@ distributions {
         include '*.jar'
         from(output(":plugins:cpu:8080-cpu"))
         from(output(":plugins:cpu:brainduck-cpu"))
-        from(output(":plugins:cpu:ram-cpu"))
-        from(output(":plugins:cpu:rasp-cpu"))
+      //  from(output(":plugins:cpu:ram-cpu"))
+  //      from(output(":plugins:cpu:rasp-cpu"))
         from(output(":plugins:cpu:z80-cpu"))
         from(output(":plugins:cpu:ssem-cpu"))
       }
@@ -214,14 +213,16 @@ distributions {
       }
 
       // Examples
-      ["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"].collect { compiler ->
+      //["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"]
+      ["as-8080", "as-z80", "as-ssem", "brainc-brainduck"].collect { compiler ->
         from(examples(":plugins:compiler:$compiler")) {
           into "examples/$compiler"
         }
       }
 
       // Scripts
-      ["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"].collect { compiler ->
+      // ["as-8080", "as-z80", "as-ssem", "brainc-brainduck", "ramc-ram", "raspc-rasp"]
+      ["as-8080", "as-z80", "as-ssem", "brainc-brainduck"].collect { compiler ->
         from(scripts(":plugins:compiler:$compiler")) {
           into "bin"
         }

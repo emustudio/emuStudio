@@ -18,97 +18,63 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
-import net.emustudio.emulib.plugins.compiler.Token;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.StringReader;
-
-import static org.junit.Assert.assertEquals;
+import static net.emustudio.plugins.compiler.ssem.SSEMLexer.*;
+import static net.emustudio.plugins.compiler.ssem.Utils.assertTokenTypes;
+import static net.emustudio.plugins.compiler.ssem.Utils.assertTokenTypesForCaseVariations;
 
 public class LexerTest {
 
-    LexerImpl lexer(String tokens) {
-        return new LexerImpl(new StringReader(tokens));
+    @Test
+    public void testParseError() {
+        assertTokenTypes("B I", ERROR, WS, ERROR, EOF);
+        assertTokenTypes("BINS ha", BNUM, BWS, BERROR, BERROR, EOF);
     }
 
     @Test
-    public void testNumberUpperBoundary() throws Exception {
-        LexerImpl lexer = lexer("31");
-
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.LITERAL, token.getType());
-        assertEquals(31, token.value);
+    public void testParseReservedWords() {
+        assertTokenTypesForCaseVariations("jmp", JMP, EOF);
+        assertTokenTypesForCaseVariations("jrp", JPR, EOF);
+        assertTokenTypesForCaseVariations("jpr", JPR, EOF);
+        assertTokenTypesForCaseVariations("jmr", JPR, EOF);
+        assertTokenTypesForCaseVariations("ldn", LDN, EOF);
+        assertTokenTypesForCaseVariations("sto", STO, EOF);
+        assertTokenTypesForCaseVariations("sub", SUB, EOF);
+        assertTokenTypesForCaseVariations("cmp", CMP, EOF);
+        assertTokenTypesForCaseVariations("skn", CMP, EOF);
+        assertTokenTypesForCaseVariations("stp", STP, EOF);
+        assertTokenTypesForCaseVariations("hlt", STP, EOF);
     }
 
     @Test
-    public void testNumberLowerBoundary() throws Exception {
-        LexerImpl lexer = lexer("0");
-
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.LITERAL, token.getType());
-        assertEquals(0, token.value);
+    public void testParsePreprocessor() {
+        assertTokenTypesForCaseVariations("start", START, EOF);
+        assertTokenTypesForCaseVariations("num", NUM, EOF);
+        assertTokenTypesForCaseVariations("bnum", BNUM, EOF);
+        assertTokenTypesForCaseVariations("bins", BNUM, EOF);
     }
 
     @Test
-    public void testNumber() throws Exception {
-        LexerImpl lexer = lexer("22");
-
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.LITERAL, token.getType());
-        assertEquals(22, token.value);
-    }
-
-    private void checkInstruction(int id, LexerImpl lexer) throws IOException {
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.RESERVED, token.getType());
-    }
-
-    private void checkInstructionWithOperand(int id, LexerImpl lexer) throws IOException {
-        checkInstruction(id, lexer);
-
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.LITERAL, token.getType());
+    public void testParseWhitespaces() {
+        assertTokenTypes(" ", WS, EOF);
+        assertTokenTypes("\t", WS, EOF);
+        assertTokenTypes("\n", EOL, EOF);
+        assertTokenTypes("", EOF);
     }
 
     @Test
-    public void testInstructionsWithOperand() throws Exception {
-        checkInstructionWithOperand(TokenImpl.JMP, lexer("jmp 12"));
-        checkInstructionWithOperand(TokenImpl.JPR, lexer("jrp 12"));
-        checkInstructionWithOperand(TokenImpl.JPR, lexer("jpr 12"));
-        checkInstructionWithOperand(TokenImpl.JPR, lexer("jmr 12"));
-        checkInstructionWithOperand(TokenImpl.LDN, lexer("ldn 12"));
-        checkInstructionWithOperand(TokenImpl.STO, lexer("sto 12"));
-        checkInstructionWithOperand(TokenImpl.SUB, lexer("sub 12"));
+    public void testParseComments() {
+        assertTokenTypes("-- comment baybe", COMMENT, EOF);
+        assertTokenTypes("# comment baybe", COMMENT, EOF);
+        assertTokenTypes("// comment baybe", COMMENT, EOF);
+        assertTokenTypes("; comment baybe", COMMENT, EOF);
     }
 
     @Test
-    public void testInstructionsWithoutOperand() throws Exception {
-        checkInstruction(TokenImpl.CMP, lexer("cmp"));
-        checkInstruction(TokenImpl.CMP, lexer("skn"));
-        checkInstruction(TokenImpl.STP, lexer("stp"));
-    }
-
-    @Test
-    public void testInstructionInComment() throws Exception {
-        LexerImpl lexer = lexer("// cmp");
-        TokenImpl token = lexer.next_token();
-
-        assertEquals(Token.COMMENT, token.getType());
-
-        token = lexer.next_token();
-        assertEquals(Token.TEOF, token.getType());
-    }
-
-    @Test
-    public void testBinaryNumber() throws Exception {
-        LexerImpl lexer = lexer("BNUM 10011011111000101111110000111111\n");
-
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.PREPROCESSOR, token.getType());
-        assertEquals(LexerImpl.BIN, token.getLexerState());
-
-        token = lexer.next_token();
-        assertEquals(Token.LITERAL, token.getType());
+    public void testLiterals() {
+        assertTokenTypes("10", NUMBER, EOF);
+        assertTokenTypes("0xAF", HEXNUMBER, EOF);
+        assertTokenTypes("BINS 1010", BNUM, BWS, BinaryNumber, EOF);
     }
 }

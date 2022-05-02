@@ -18,7 +18,6 @@
  */
 package net.emustudio.application;
 
-import net.emustudio.application.api.ApplicationApiImpl;
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.configuration.ComputerConfig;
 import net.emustudio.application.configuration.ConfigFiles;
@@ -65,6 +64,7 @@ public class Runner {
 
             Path configFile = Path.of("emuStudio.toml");
             if (Files.notExists(configFile)) {
+                LOGGER.warn("No configuration file found; creating empty one");
                 Files.createFile(configFile);
             }
             ApplicationConfig applicationConfig = ApplicationConfig.fromFile(

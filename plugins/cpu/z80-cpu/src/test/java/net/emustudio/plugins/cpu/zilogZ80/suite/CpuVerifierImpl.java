@@ -19,9 +19,9 @@
 package net.emustudio.plugins.cpu.zilogZ80.suite;
 
 import net.emustudio.cpu.testsuite.CpuVerifier;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
-import net.emustudio.plugins.cpu.zilogZ80.FakeDevice;
+import net.emustudio.plugins.cpu.zilogZ80.FakeByteDevice;
 
 import java.util.List;
 import java.util.Objects;
@@ -31,9 +31,9 @@ import static org.junit.Assert.*;
 
 public class CpuVerifierImpl extends CpuVerifier {
     private final CpuImpl cpu;
-    private final List<FakeDevice> devices;
+    private final List<FakeByteDevice> devices;
 
-    public CpuVerifierImpl(CpuImpl cpu, ShortMemoryStub memoryStub, List<FakeDevice> devices) {
+    public CpuVerifierImpl(CpuImpl cpu, ByteMemoryStub memoryStub, List<FakeByteDevice> devices) {
         super(memoryStub);
         this.cpu = Objects.requireNonNull(cpu);
         this.devices = List.copyOf(Objects.requireNonNull(devices));
@@ -160,7 +160,7 @@ public class CpuVerifierImpl extends CpuVerifier {
         assertEquals(mode, cpu.getEngine().intMode);
     }
 
-    public String intToFlags(int flags) {
+    public static String intToFlags(int flags) {
         String flagsString = "";
         if ((flags & FLAG_S) == FLAG_S) {
             flagsString += "S";
@@ -174,6 +174,9 @@ public class CpuVerifierImpl extends CpuVerifier {
         if ((flags & FLAG_PV) == FLAG_PV) {
             flagsString += "P";
         }
+        if ((flags & FLAG_N) == FLAG_N) {
+            flagsString += "N";
+        }
         if ((flags & FLAG_C) == FLAG_C) {
             flagsString += "C";
         }
@@ -183,7 +186,7 @@ public class CpuVerifierImpl extends CpuVerifier {
     @Override
     public void checkFlags(int mask) {
         assertEquals(String.format("Expected flags=%s, but was %s",
-            intToFlags(mask), intToFlags(cpu.getEngine().flags)), (cpu.getEngine().flags & mask), mask);
+            intToFlags(mask), intToFlags(cpu.getEngine().flags)), mask, (cpu.getEngine().flags & mask));
     }
 
     @Override

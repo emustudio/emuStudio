@@ -19,14 +19,22 @@
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+}
+
 plugins {
   id 'java'
-  id 'net.emustudio.edigen-plugin' version '1.2.0'
+  id 'net.emustudio.edigen-plugin' version '1.5.0'
+  id 'com.adarshr.test-logger' version '3.1.0'
 }
 
 repositories {
+  mavenLocal()
   mavenCentral()
-  jcenter()
 }
 
 dependencies {
@@ -45,6 +53,7 @@ jar {
     attributes manifestAttributes('')
   }
 }
+
 
 edigen {
   decoderName = 'net.emustudio.plugins.cpu.ssem.DecoderImpl'

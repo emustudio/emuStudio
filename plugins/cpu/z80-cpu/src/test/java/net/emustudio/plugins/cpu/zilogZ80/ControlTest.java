@@ -216,7 +216,7 @@ public class ControlTest extends InstructionsTest {
     public void testInvalidInstruction() {
         cpuRunnerImpl.setProgram(0xED, 0x80);
         cpuRunnerImpl.reset();
-        cpuRunnerImpl.expectRunState(CPU.RunState.STATE_STOPPED_BAD_INSTR);
+        cpuRunnerImpl.expectRunState(CPU.RunState.STATE_STOPPED_BREAK); // Z80 ignores bad instructions
         cpuRunnerImpl.step();
     }
 
@@ -278,7 +278,7 @@ public class ControlTest extends InstructionsTest {
     public void testJR__e__AND__JR__cc() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .expandMemory(first -> cpuRunnerImpl.getPC() + first.intValue())
-            .verifyPC(context -> (2 + context.PC + context.first) & 0xFFFF)
+            .verifyPC(context -> (context.PC + context.first) & 0xFFFF)
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
@@ -336,7 +336,7 @@ public class ControlTest extends InstructionsTest {
                 if (((context.second - 1) & 0xFF) == 0) {
                     return context.PC + 2;
                 }
-                return (context.PC + 2 + context.first) & 0xFFFF;
+                return (context.PC + context.first) & 0xFFFF;
             })
             .verifyRegister(REG_B, context -> (context.second - 1) & 0xFF);
 

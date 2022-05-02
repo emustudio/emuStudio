@@ -13,13 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
@@ -34,7 +34,6 @@ public class REditor implements Editor {
 
     private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE, true);
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
-    private final ErrorStrip errorStrip;
 
     private final Dialogs dialogs;
     private final List<SourceFileExtension> sourceFileExtensions;
@@ -51,7 +50,7 @@ public class REditor implements Editor {
 
         UnicodeWriter.setWriteUtf8BOM(false);
 
-        textPane.setCodeFoldingEnabled(true);
+        textPane.setCodeFoldingEnabled(false);
         textPane.setEncoding(StandardCharsets.UTF_8.name());
         textPane.setAnimateBracketMatching(true);
         textPane.setAutoIndentEnabled(true);
@@ -95,11 +94,9 @@ public class REditor implements Editor {
         });
         setupSyntaxTheme();
 
-        errorStrip = new ErrorStrip(textPane);
-
         if (compiler != null) {
             sourceFileExtensions = compiler.getSourceFileExtensions();
-            RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler.getLexer(new StringReader(textPane.getText())));
+            RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler);
 
             AbstractTokenMakerFactory atmf = (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
             atmf.putMapping("text/emustudio", RTokenMakerWrapper.class.getName());
@@ -116,11 +113,6 @@ public class REditor implements Editor {
     }
 
     @Override
-    public JComponent getErrorStrip() {
-        return errorStrip;
-    }
-
-    @Override
     public void clearMarkedOccurences() {
         SearchEngine.find(textPane, new SearchContext());
     }
@@ -128,6 +120,20 @@ public class REditor implements Editor {
     @Override
     public void grabFocus() {
         textPane.grabFocus();
+    }
+
+    @Override
+    public void setPosition(int line, int column) {
+        if (line >= 0) {
+            try {
+                int position = textPane.getLineStartOffset(Math.max(0, line - 1));
+                if (column >= 0) {
+                    position += column;
+                }
+                textPane.setCaretPosition(position);
+            } catch (BadLocationException ignored) {
+            }
+        }
     }
 
     @Override
@@ -176,7 +182,7 @@ public class REditor implements Editor {
                 isnew = false;
                 return true;
             } catch (IOException e) {
-                LOGGER.error("Could not save file: " + savedPath.get().toString(), e);
+                LOGGER.error("Could not save file: " + savedPath.get(), e);
                 dialogs.showError("Cannot save current file. Please see log file for details.");
             }
         }

@@ -22,7 +22,7 @@ public interface InputProvider extends IOProvider {
     InputProvider DUMMY = new InputProvider() {
 
         @Override
-        public int read() {
+        public byte read() {
             return EOF;
         }
 
@@ -37,6 +37,6 @@ public interface InputProvider extends IOProvider {
         }
     };
 
-    int read();
+    byte read();
 
 }

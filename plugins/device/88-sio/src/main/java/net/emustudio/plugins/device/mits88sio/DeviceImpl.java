@@ -98,10 +98,10 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
 
         // get a device attached to this board
         try {
-            DeviceContext<Short> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
-            if (device.getDataType() != Short.class) {
+            DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
+            if (device.getDataType() != Byte.class) {
                 throw new PluginInitializationException(
-                    "Unexpected device data type. Expected Short but was: " + device.getDataType()
+                    "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
 

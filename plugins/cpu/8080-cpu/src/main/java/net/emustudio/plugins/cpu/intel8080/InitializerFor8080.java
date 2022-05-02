@@ -43,7 +43,7 @@ public class InitializerFor8080 extends DefaultInitializer<EmulatorEngine> {
     }
 
     @Override
-    protected EmulatorEngine createEmulatorEngine(MemoryContext<Short> memory) {
+    protected EmulatorEngine createEmulatorEngine(MemoryContext<Byte> memory) {
         return new EmulatorEngine(memory, context);
     }
 
@@ -54,7 +54,7 @@ public class InitializerFor8080 extends DefaultInitializer<EmulatorEngine> {
     }
 
     @Override
-    protected Disassembler createDisassembler(MemoryContext<Short> memory) {
+    protected Disassembler createDisassembler(MemoryContext<Byte> memory) {
         return new DisassemblerImpl(memory, new DecoderImpl(memory));
     }
 }

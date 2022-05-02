@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentMap;
 public class ContextImpl implements ExtendedContext {
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
 
-    private final ConcurrentMap<Integer, DeviceContext<Short>> devices = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
 
     private volatile EmulatorEngine cpu;
     private volatile int clockFrequency = 2000; // kHz
@@ -43,7 +43,7 @@ public class ContextImpl implements ExtendedContext {
 
     // device mapping = only one device can be attached to one port
     @Override
-    public boolean attachDevice(DeviceContext<Short> device, int port) {
+    public boolean attachDevice(DeviceContext<Byte> device, int port) {
         if (devices.containsKey(port)) {
             LOGGER.debug("[port={}, device={}] Could not attach device to given port. The port is already taken by: {}", port, device, devices.get(port));
             return false;
@@ -74,8 +74,8 @@ public class ContextImpl implements ExtendedContext {
      * @param data data to be written to the port. if parameter read is set to true, then data are ignored.
      * @return value from the port if read is true, otherwise 0
      */
-    public short fireIO(int port, boolean read, short data) throws IOException {
-        DeviceContext<Short> device = devices.get(port);
+    public byte fireIO(int port, boolean read, byte data) throws IOException {
+        DeviceContext<Byte> device = devices.get(port);
         if (device != null) {
             if (read) {
                 return device.readData();

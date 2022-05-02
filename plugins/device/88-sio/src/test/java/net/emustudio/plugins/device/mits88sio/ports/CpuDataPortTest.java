@@ -35,7 +35,7 @@ public class CpuDataPortTest {
     @Test
     public void testReadCallsReadBufferOnTransmitter() {
         Transmitter transmitter = EasyMock.createMock(Transmitter.class);
-        expect(transmitter.readBuffer()).andReturn((short) 5).once();
+        expect(transmitter.readBuffer()).andReturn((byte) 5).once();
         replay(transmitter);
 
         CpuDataPort cpuDataPort = new CpuDataPort(transmitter);
@@ -47,12 +47,12 @@ public class CpuDataPortTest {
     @Test
     public void testWriteCallsWriteToDeviceOnTransmitter() throws Exception {
         Transmitter transmitter = EasyMock.createMock(Transmitter.class);
-        transmitter.writeToDevice(eq((short) 5));
+        transmitter.writeToDevice(eq((byte) 5));
         expectLastCall().once();
         replay(transmitter);
 
         CpuDataPort cpuDataPort = new CpuDataPort(transmitter);
-        cpuDataPort.writeData((short) 5);
+        cpuDataPort.writeData((byte) 5);
 
         verify(transmitter);
     }
