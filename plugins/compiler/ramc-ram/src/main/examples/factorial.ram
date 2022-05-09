@@ -1,10 +1,10 @@
 ; Factorial N
 ;
-; input:  N
+; value:  N
 ; output: N!
 ;
 
-<input> 8
+<value> 8
 
   read 1
   load 1

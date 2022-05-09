@@ -11,7 +11,7 @@ mvi d,0       ; char with maximum ASCII code
 
 char_loop:
 call getchar
-cpi 10        ; end of input?
+cpi 10        ; end of value?
 jz char_end
 cpi 13    
 jz char_end

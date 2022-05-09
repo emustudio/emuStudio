@@ -16,37 +16,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.compiler.ramc;
+package net.emustudio.plugins.compiler.ram;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
+import net.emustudio.plugins.memory.ram.api.RAMLabel;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RAMValue;
 
 import java.util.*;
 
 public class MemoryStub extends AbstractMemoryContext<RAMInstruction> implements RAMMemoryContext {
     private final RAMInstruction[] memory = new RAMInstruction[1000];
-    private final Map<Integer, String> labels = new HashMap<>();
-    private final List<String> inputs = new ArrayList<>();
+    private final Map<Integer, RAMLabel> labels = new HashMap<>();
+    private final List<RAMValue> inputs = new ArrayList<>();
 
     @Override
-    public RAMInstruction read(int memoryPosition) {
-        return memory[memoryPosition];
+    public RAMInstruction read(int address) {
+        return memory[address];
     }
 
     @Override
-    public RAMInstruction[] readWord(int memoryPosition) {
-        throw new UnsupportedOperationException();
+    public RAMInstruction[] read(int address, int count) {
+        return Arrays.copyOfRange(memory, address, count);
     }
 
     @Override
-    public void write(int memoryPosition, RAMInstruction value) {
-        memory[memoryPosition] = value;
+    public void write(int address, RAMInstruction value) {
+        memory[address] = value;
     }
 
     @Override
-    public void writeWord(int memoryPosition, RAMInstruction[] value) {
-        throw new UnsupportedOperationException();
+    public void write(int address, RAMInstruction[] instructions, int count) {
+        System.arraycopy(instructions, 0, this.memory, address, count);
     }
 
     @Override
@@ -67,22 +69,25 @@ public class MemoryStub extends AbstractMemoryContext<RAMInstruction> implements
     }
 
     @Override
-    public void addLabel(int pos, String label) {
-        labels.put(pos, label);
+    public void setLabels(List<RAMLabel> labels) {
+        this.labels.clear();
+        for (RAMLabel label : labels) {
+            this.labels.put(label.getAddress(), label);
+        }
     }
 
     @Override
-    public String getLabel(int pos) {
-        return labels.get(pos);
+    public RAMLabel getLabel(int address) {
+        return labels.get(address);
     }
 
     @Override
-    public void addInputs(List<String> inputs) {
+    public void setInputs(List<RAMValue> inputs) {
         this.inputs.addAll(inputs);
     }
 
     @Override
-    public List<String> getInputs() {
+    public List<RAMValue> getInputs() {
         return inputs;
     }
 }

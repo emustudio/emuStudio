@@ -16,17 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package net.emustudio.plugins.compiler.brainduck.ast;
 
-package net.emustudio.plugins.cpu.ram.api;
+import net.emustudio.emulib.runtime.io.IntelHEX;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
+import java.util.ArrayList;
+import java.util.List;
 
-public interface RAMContext extends CPUContext {
+public class Program {
+    private final List<Instruction> instructions = new ArrayList<>();
 
-    AbstractTapeContext getStorage();
+    public void add(Instruction instruction) {
+        if (instruction != null) {
+            instructions.add(instruction);
+        }
+    }
 
-    AbstractTapeContext getInput();
-
-    AbstractTapeContext getOutput();
+    public void generateCode(IntelHEX hex) {
+        for (Instruction instruction : instructions) {
+            instruction.generateCode(hex);
+        }
+    }
 }

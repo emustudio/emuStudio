@@ -21,12 +21,16 @@ package net.emustudio.plugins.device.abstracttape.api;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 /**
  * Public API of the abstract tape.
  */
 @SuppressWarnings("unused")
 @PluginContext
-public interface AbstractTapeContext extends DeviceContext<String> {
+public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
 
     /**
      * Clear content of the tape.
@@ -39,14 +43,14 @@ public interface AbstractTapeContext extends DeviceContext<String> {
      * @param bounded true if the tape should be left-bounded,
      *                false if unbounded.
      */
-    void setBounded(boolean bounded);
+    void setLeftBounded(boolean bounded);
 
     /**
      * Determine if the tape is left-bounded.
      *
      * @return true - left-bounded, false - unbounded.
      */
-    boolean isBounded();
+    boolean isLeftBounded();
 
     /**
      * Move the tape one symbol to the left.
@@ -76,32 +80,34 @@ public interface AbstractTapeContext extends DeviceContext<String> {
     /**
      * Get symbol at the specified position.
      *
-     * @param pos position in the tape, starting from 0
-     * @return symbol at given position; if the position is out of bounds, then empty string is returned.
+     * @param position position in the tape, starting from 0
+     * @return symbol at given position; or Optional.empty() if the position is out of bounds
      */
-    String getSymbolAt(int pos);
+    Optional<TapeSymbol> getSymbolAt(int position);
 
     /**
      * Set symbol at the specified position.
-     * <p>
-     * If the position is < 0, then no symbol will be set.
-     * <p>
-     * If the position is > tape size, empty symbols will be added until the required tape size is ensured.
-     * Then, the symbol is added at the specified position.
-     * <p>
-     * This method should be used only when loading some initial content to the tape.
      *
-     * @param pos    position in the tape, starting from 0
-     * @param symbol symbol value
+     * If the position is < 0, then no symbol will be set.
+     *
+     * @param position position in the tape, starting from 0
+     * @param symbol   symbol value
      */
-    void setSymbolAt(int pos, String symbol);
+    void setSymbolAt(int position, TapeSymbol symbol);
+
+    /**
+     * Remove symbol at given position
+     *
+     * @param position symbol position in the tape
+     */
+    void removeSymbolAt(int position);
 
     /**
      * Sets whether the symbol at which the head is pointing should be "highlighted" in GUI.
      *
-     * @param visible true if yes; false otherwise.
+     * @param highlight true if yes; false otherwise.
      */
-    void setHighlightHeadPosition(boolean visible);
+    void setHighlightHeadPosition(boolean highlight);
 
     /**
      * Seths whether the tape should be cleared at emulation reset.
@@ -122,7 +128,7 @@ public interface AbstractTapeContext extends DeviceContext<String> {
      *
      * @return true if yes; false otherwise
      */
-    boolean showPositions();
+    boolean getShowPositions();
 
     /**
      * Set whether the symbol positions should be displayed in GUI.

@@ -70,11 +70,7 @@ public class KeyboardFromFile implements Keyboard {
 
     private void inputReceived(int input) {
         for (DeviceContext<Byte> device : devices) {
-            try {
-                device.writeData((byte)input);
-            } catch (IOException e) {
-                LOGGER.error("[device={}, input={}] Could not notify device about key pressed", device, input, e);
-            }
+            device.writeData((byte) input);
         }
     }
 

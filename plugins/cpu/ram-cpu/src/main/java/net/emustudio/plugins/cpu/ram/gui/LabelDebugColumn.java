@@ -52,6 +52,6 @@ public class LabelDebugColumn implements DebuggerColumn<String> {
 
     @Override
     public String getValue(int location) {
-        return memory.getLabel(location);
+        return memory.getLabel(location).getLabel();
     }
 }

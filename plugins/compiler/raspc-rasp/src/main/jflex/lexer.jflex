@@ -132,7 +132,7 @@ operator_constant = "="
 	return token(TokenImpl.ORG, Token.PREPROCESSOR);
 }
 
-"<input>" {
+"<value>" {
     return token(TokenImpl.TINPUT, Token.PREPROCESSOR);
 }
 

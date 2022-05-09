@@ -1,8 +1,8 @@
-; input: X0 - string X zero-ended, X in {1,2,3,....}*, on the input tape
+; value: X0 - string X zero-ended, X in {1,2,3,....}*, on the value tape
 ; output: 1  if N1(X) = N2(X) (i.e. if X contains equal number of "1" and "2")
 ;         0  otherwise
 
-<input> 1 2 3 3 2 1 1 33 21 1 2 1 2 112 2 1 2 11 2 1 2 21 2 1
+<value> 1 2 3 3 2 1 1 33 21 1 2 1 2 112 2 1 2 11 2 1 2 21 2 1
 
 load=0
 store 2

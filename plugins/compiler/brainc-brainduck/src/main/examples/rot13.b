@@ -20,7 +20,7 @@
 of course any function char f(char) can be made easily on the same principle
 
 My pathological program rot13.b is good for testing the response to deep
-brackets; the input "~mlk zyx" should produce the output "~zyx mlk".
+brackets; the value "~mlk zyx" should produce the output "~zyx mlk".
 
 Daniel B Cristofani (cristofdathevanetdotcom)
 http://www.hevanet.com/cristofd/brainfuck/

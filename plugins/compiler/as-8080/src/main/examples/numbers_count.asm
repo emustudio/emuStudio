@@ -5,16 +5,16 @@ dcx sp           ; stack initialization (0FFFFh)
 lxi h,text1
 call putstr      ; print text1
 
-lxi d,input      ; address for string input
+lxi d,value      ; address for string value
 call getline     ; read from keyboard
 
-lxi b,input
+lxi b,value
 mvi d,0          ; numbers counter
 
 char_loop:
 ldax b
 inx b
-cpi 10           ; end of input?
+cpi 10           ; end of value?
 jz char_end
 cpi 13
 jz char_end
@@ -41,6 +41,6 @@ include 'include\putstr.inc'
 include 'include\putchar.inc'
 include 'include\newline.inc'
 
-text1: db 'Count of numbers on input ...',10,13,'Enter text: ',0
+text1: db 'Count of numbers on value ...',10,13,'Enter text: ',0
 text2: db 10,13,'Count: ',0
-input: ds 30
+value: ds 30

@@ -35,12 +35,12 @@ import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.ram.gui.RAMDisassembler;
 import net.emustudio.plugins.cpu.ram.gui.RAMStatusPanel;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.MissingResourceException;
 import java.util.Optional;
@@ -54,7 +54,7 @@ import java.util.ResourceBundle;
 public class CpuImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
-    private final RAMContextImpl context;
+    private final RAMCpuContextImpl context;
 
     private EmulatorEngine engine;
     private RAMMemoryContext memory;
@@ -64,7 +64,7 @@ public class CpuImpl extends AbstractCPU {
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        context = new RAMContextImpl(applicationApi.getContextPool());
+        context = new RAMCpuContextImpl(applicationApi.getContextPool());
         try {
             applicationApi.getContextPool().register(pluginID, context, CPUContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
@@ -93,9 +93,9 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void initialize() throws PluginInitializationException {
         memory = applicationApi.getContextPool().getMemoryContext(pluginID, RAMMemoryContext.class);
-        engine = new EmulatorEngine(context, memory);
         disassembler = new RAMDisassembler(memory);
-        context.init(pluginID, engine);
+        context.init(pluginID);
+        engine = new EmulatorEngine(context.getInputTape(), context.getOutputTape(), context.getStorageTape(), memory);
     }
 
     @Override
@@ -109,7 +109,7 @@ public class CpuImpl extends AbstractCPU {
             }
             debugTableInitialized = true;
         }
-        return new RAMStatusPanel(this, context.getInput(), context.getOutput());
+        return new RAMStatusPanel(this, context.getInputTape(), context.getOutputTape());
     }
 
     @Override
@@ -122,12 +122,12 @@ public class CpuImpl extends AbstractCPU {
         return engine.IP;
     }
 
-    public String getR0() {
-        AbstractTapeContext storage = context.getStorage();
+    public TapeSymbol getR0() {
+        AbstractTapeContext storage = context.getStorageTape();
         if (storage == null) {
-            return "<empty>";
+            return TapeSymbol.EMPTY;
         }
-        return storage.getSymbolAt(0);
+        return storage.getSymbolAt(0).orElse(TapeSymbol.EMPTY);
     }
 
     @Override
@@ -154,18 +154,18 @@ public class CpuImpl extends AbstractCPU {
             } catch (IndexOutOfBoundsException ex) {
                 LOGGER.debug("Unexpected error", ex);
                 return RunState.STATE_STOPPED_ADDR_FALLOUT;
-            } catch (IOException ex) {
-                LOGGER.error("Unexpected error while reading/writing to the tape", ex);
-                return RunState.STATE_STOPPED_BAD_INSTR;
             } catch (Breakpoint breakpoint) {
                 return RunState.STATE_STOPPED_BREAK;
+            } catch (Exception ex) {
+                LOGGER.debug("Unexpected error while reading/writing to the tape", ex);
+                return RunState.STATE_STOPPED_BAD_INSTR;
             }
         }
         return RunState.STATE_STOPPED_NORMAL;
     }
 
     @Override
-    public RunState stepInternal() throws IOException {
+    public RunState stepInternal() {
         return engine.step();
     }
 

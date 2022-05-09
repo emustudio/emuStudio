@@ -1,8 +1,8 @@
-<input> 3 4 ignored world hello
+<value> 3 4 ignored world hello
 
 ; COPY(X,Y)
 ;
-; input:
+; value:
 ;   reg.1: X
 ;   reg.2: Y
 ;
@@ -11,7 +11,7 @@
 ;   reg.Y: (reg.Y)
 
 
-<input> sss
+<value> sss
 ; load X,Y
 read 1
 read 2

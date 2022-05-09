@@ -10,8 +10,8 @@ import org.junit.Test;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertNotEquals;
 
-public class DeviceImplTest {
-    private DeviceImpl device;
+public class AbstractTapeTest {
+    private AbstractTape device;
 
     @Before
     public void setup() {
@@ -21,7 +21,7 @@ public class DeviceImplTest {
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
-        this.device = new DeviceImpl(0, applicationApi, PluginSettings.UNAVAILABLE);
+        this.device = new AbstractTape(0, applicationApi, PluginSettings.UNAVAILABLE);
     }
 
     @After

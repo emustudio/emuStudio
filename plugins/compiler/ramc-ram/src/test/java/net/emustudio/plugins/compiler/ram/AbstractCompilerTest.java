@@ -16,8 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.compiler.ramc;
+package net.emustudio.plugins.compiler.ram;
 
+import net.emustudio.emulib.plugins.compiler.CompilerListener;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
@@ -36,7 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public abstract class AbstractCompilerTest {
-    protected CompilerImpl compiler;
+    protected CompilerRAM compiler;
     protected MemoryStub memoryStub;
 
     @Rule
@@ -54,8 +56,26 @@ public abstract class AbstractCompilerTest {
         expect(applicationApi.getContextPool()).andReturn(pool).anyTimes();
         replay(applicationApi);
 
-        compiler = new CompilerImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        compiler = new CompilerRAM(0L, applicationApi, PluginSettings.UNAVAILABLE);
         compiler.initialize();
+        compiler.addCompilerListener(new CompilerListener() {
+            @Override
+            public void onStart() {
+
+            }
+
+            @Override
+            public void onMessage(CompilerMessage compilerMessage) {
+                if (compilerMessage.getMessageType() != CompilerMessage.MessageType.TYPE_INFO) {
+                    System.out.println(compilerMessage);
+                }
+            }
+
+            @Override
+            public void onFinish() {
+
+            }
+        });
     }
 
     protected void compile(String content) throws Exception {

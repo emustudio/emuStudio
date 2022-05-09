@@ -1,12 +1,14 @@
 package net.emustudio.plugins.device.abstracttape.gui;
 
 import net.emustudio.plugins.device.abstracttape.AbstractTapeContextImpl;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
 import java.util.Objects;
 
 public class TapeModel extends AbstractListModel<String> {
-    private final AbstractTapeContextImpl tapeContext;
+    private final AbstractTapeContext tapeContext;
 
     public TapeModel(AbstractTapeContextImpl tapeContext) {
         this.tapeContext = Objects.requireNonNull(tapeContext);
@@ -15,16 +17,11 @@ public class TapeModel extends AbstractListModel<String> {
     @Override
     public String getElementAt(int index) {
         String element = "";
-
-        if (tapeContext.showPositions()) {
+        if (tapeContext.getShowPositions()) {
             element += String.format("%02d: ", index);
         }
-        String symbolAtIndex = tapeContext.getSymbolAt(index);
-        if (symbolAtIndex == null || symbolAtIndex.isEmpty()) {
-            element += "<empty>";
-        } else {
-            element += symbolAtIndex;
-        }
+        String symbolAtIndex = tapeContext.getSymbolAt(index).map(TapeSymbol::toString).orElse("<empty>");
+        element += symbolAtIndex;
 
         return element;
     }

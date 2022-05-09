@@ -21,7 +21,6 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
-  id 'net.emustudio.edigen-plugin' version '1.5.0'
   id 'com.adarshr.test-logger' version '3.1.0'
 }
 
@@ -34,7 +33,6 @@ dependencies {
   implementation libs.emuLib
   implementation libs.slf4JApi
 
-  compilerLib project(":plugins:compiler:ramc-ram")
   memoryLib project(":plugins:memory:ram-mem")
   deviceLib project(":plugins:device:abstract-tape")
 
@@ -55,7 +53,7 @@ processResources {
   filesMatching("**/*.properties") {
     filter ReplaceTokens, tokens: [
       "project.version": project.version,
-      "today.year": new Date().format("yyyy")
+      "today.year"     : new Date().format("yyyy")
     ]
   }
 }

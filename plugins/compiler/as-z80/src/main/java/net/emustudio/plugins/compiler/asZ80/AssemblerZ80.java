@@ -178,7 +178,7 @@ public class AssemblerZ80 extends AbstractCompiler {
         String outputFileName = Objects.requireNonNull(inputFileName);
         SourceFileExtension srcExtension = SOURCE_FILE_EXTENSIONS.get(0);
 
-        int i = inputFileName.lastIndexOf("." + srcExtension.getExtension());
+        int i = inputFileName.toLowerCase(Locale.ENGLISH).lastIndexOf("." + srcExtension.getExtension());
         if (i >= 0) {
             outputFileName = outputFileName.substring(0, i);
         }

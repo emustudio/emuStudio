@@ -16,34 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.compiler.ramc.tree;
 
-import java.io.Serializable;
+package net.emustudio.plugins.cpu.ram.api;
 
-public class Label implements Serializable {
-    private int address;
-    private String value;
-    private boolean evaluated = false;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
-    public Label(String text) {
-        this.value = text.toUpperCase();
-    }
+public interface RAMCpuContext extends CPUContext {
 
-    int pass1(int addr) {
-        this.address = addr;
-        this.evaluated = true;
-        return addr;
-    }
+    AbstractTapeContext getStorageTape();
 
-    public int getAddress() {
-        if (!evaluated) {
-            throw new IndexOutOfBoundsException();
-        }
-        return address;
-    }
+    AbstractTapeContext getInputTape();
 
-    public String getValue() {
-        return value;
-    }
-
+    AbstractTapeContext getOutputTape();
 }

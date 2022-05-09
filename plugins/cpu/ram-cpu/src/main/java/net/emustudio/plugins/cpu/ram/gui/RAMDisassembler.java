@@ -22,11 +22,12 @@ import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RAMValue;
 
 import java.util.Objects;
 
 public class RAMDisassembler implements Disassembler {
-    private RAMMemoryContext memory;
+    private final RAMMemoryContext memory;
 
     public RAMDisassembler(RAMMemoryContext memory) {
         this.memory = Objects.requireNonNull(memory);
@@ -41,7 +42,8 @@ public class RAMDisassembler implements Disassembler {
             mnemo = "unknown instruction";
             return new DisassembledInstruction(memLocation, mnemo, oper);
         }
-        mnemo = in.getCodeStr() + " " + in.getOperandStr();
+        mnemo = in.getOpcode().toString() + " " + in.getDirection().value() +
+            in.getOperand().map(RAMValue::getStringRepresentation).orElse("<empty>");
         return new DisassembledInstruction(memLocation, mnemo, oper);
     }
 

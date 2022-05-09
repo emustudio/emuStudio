@@ -26,13 +26,11 @@ import java.util.List;
 @PluginContext
 public interface RAMMemoryContext extends MemoryContext<RAMInstruction> {
 
-    void addLabel(int pos, String label);
+    void setLabels(List<RAMLabel> labels);
 
-    String getLabel(int pos);
+    RAMLabel getLabel(int address);
 
-    // from Compiler
-    void addInputs(List<String> inputs);
+    void setInputs(List<RAMValue> inputs);
 
-    // for CPU
-    List<String> getInputs();
+    List<RAMValue> getInputs();
 }

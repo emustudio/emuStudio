@@ -67,7 +67,9 @@ public abstract class AbstractCompilerTest {
 
             @Override
             public void onMessage(CompilerMessage message) {
-                System.out.println(message);
+                if (message.getMessageType() != CompilerMessage.MessageType.TYPE_INFO) {
+                    System.out.println(message);
+                }
             }
 
             @Override

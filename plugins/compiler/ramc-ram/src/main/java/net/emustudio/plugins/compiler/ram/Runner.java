@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.compiler.ramc;
+package net.emustudio.plugins.compiler.ram;
 
 
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
@@ -39,7 +39,7 @@ public class Runner {
                 printHelp();
                 return;
             } else if (arg.equals("--version") || arg.equals("-v")) {
-                System.out.println(new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
+                System.out.println(new CompilerRAM(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
                 return;
             } else {
                 break;
@@ -60,7 +60,7 @@ public class Runner {
             outputFile += ".hex";
         }
 
-        CompilerImpl compiler = new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
+        CompilerRAM compiler = new CompilerRAM(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
         compiler.addCompilerListener(new CompilerListener() {
 
             @Override

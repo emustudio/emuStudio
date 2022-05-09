@@ -1,6 +1,7 @@
 package net.emustudio.plugins.device.abstracttape.gui;
 
 import net.emustudio.plugins.device.abstracttape.AbstractTapeContextImpl;
+import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,8 +28,8 @@ public class TapeCellRenderer extends DefaultListCellRenderer {
                 setBackground(Color.WHITE);
             }
 
-            String s = tapeContext.getSymbolAt(index);
-            if (s == null || s.equals("")) {
+            String s = tapeContext.getSymbolAt(index).map(TapeSymbol::toString).orElse("");
+            if (s.equals("")) {
                 setForeground(Color.DARK_GRAY);
             } else {
                 setForeground(Color.BLACK);

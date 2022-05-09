@@ -1,6 +1,5 @@
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
-import net.emustudio.plugins.compiler.asZ80.CompileError;
 import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.Instr;
 import net.emustudio.plugins.compiler.asZ80.ast.instr.InstrCB;

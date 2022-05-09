@@ -21,9 +21,9 @@ package net.emustudio.plugins.cpu.ram.gui;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.cpu.ram.CpuImpl;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
-import java.awt.*;
 
 import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_BIG_BOLD;
 import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_PLAIN;
@@ -42,15 +42,16 @@ public class RAMStatusPanel extends JPanel {
 
             @Override
             public void internalStateChanged() {
-                String s = cpu.getR0();
-                if (s == null || s.equals("")) {
-                    s = "<empty>";
+                TapeSymbol r0 = cpu.getR0();
+                String repr = r0.toString();
+                if (repr.equals("")) {
+                    repr = "<empty>";
                 }
-                txtR0.setText(s);
+                txtR0.setText(repr);
                 txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
 
-                txtInput.setText(input.getSymbolAt(input.getHeadPosition()));
-                txtOutput.setText(output.getSymbolAt(0));
+                txtInput.setText(input.getSymbolAt(input.getHeadPosition()).toString());
+                txtOutput.setText(output.getSymbolAt(0).toString());
             }
         });
     }
@@ -206,14 +207,11 @@ public class RAMStatusPanel extends JPanel {
                     .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
     private JLabel lblStatus;
     private JTextField txtIP;
     private JTextField txtInput;
     private JTextField txtOutput;
     private JTextField txtR0;
-    // End of variables declaration//GEN-END:variables
 }

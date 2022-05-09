@@ -21,15 +21,16 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
-  id 'org.xbib.gradle.plugin.jflex' version "1.5.0"
-  id "com.github.andrescv.jcup" version "1.0"
+  id 'idea'
+  id 'antlr'
   id 'com.adarshr.test-logger' version '3.1.0'
 }
 
 dependencies {
+  antlr "org.antlr:antlr4:4.9.2"
+  implementation "org.antlr:antlr4-runtime:4.9.2"
   implementation libs.emuLib
   implementation project.rootProject.project(":plugins:memory:ram-mem")
-  implementation libs.javaCupRuntime
   implementation libs.slf4JApi
 
   testImplementation libs.junit
@@ -37,26 +38,35 @@ dependencies {
   testImplementation libs.slf4JSimple
 }
 
-sourceSets.main.java.srcDirs = [
-  "${buildDir}/generated-sources/jflex", "${buildDir}/generated-sources/cup", 'src/main/java'
-]
-
-jflex {
-  no_backup = true
+generateGrammarSource {
+  maxHeapSize = "128m"
+  arguments += ['-package', 'net.emustudio.plugins.compiler.ram', '-visitor', '-no-listener']
+  outputDirectory = file("${buildDir}/generated-src/antlr/main/net/emustudio/plugins/compiler/ram")
 }
+compileJava.dependsOn generateGrammarSource
 
-jcup {
-  input = file('src/main/cup/parser.cup')
-  destdir = file("${buildDir}/generated-sources/cup/net/emustudio/plugins/compiler/ramc")
-  parser = 'ParserImpl'
-  symbols = 'Symbols'
-  iface = true
+sourceSets {
+  generated {
+    java.srcDir "${buildDir}/generated-src/antlr/main"
+  }
+  main {
+    java.srcDirs = [
+      'src/main/java', "${buildDir}/generated-src/antlr/main"
+    ]
+  }
+}
+compileJava.source sourceSets.generated.java, sourceSets.main.java
+
+idea {
+  module {
+    sourceDirs += file("build/generated-src/antlr")
+  }
 }
 
 jar {
   archiveVersion = ''
   manifest {
-    attributes manifestAttributes('net.emustudio.plugins.compiler.ramc.Runner')
+    attributes manifestAttributes('net.emustudio.plugins.compiler.ram.Runner')
   }
 }
 

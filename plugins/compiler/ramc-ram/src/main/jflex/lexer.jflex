@@ -109,7 +109,7 @@ MultiSpaceString = \"[^\"]*\"
 <YYINITIAL> "="     { yybegin(STRING); return token(TokenImpl.DIRECT, Token.OPERATOR); }
 <YYINITIAL> "*"     { return token(TokenImpl.INDIRECT, Token.OPERATOR); }
 
-<YYINITIAL> "<input>" { yybegin(INPUT); return token(TokenImpl.INPUT, Token.PREPROCESSOR); }
+<YYINITIAL> "<value>" { yybegin(INPUT); return token(TokenImpl.INPUT, Token.PREPROCESSOR); }
 
 {WhiteSpace}   { }
 <YYINITIAL> {Eol} { return token(TokenImpl.EOL, Token.SEPARATOR,null); }

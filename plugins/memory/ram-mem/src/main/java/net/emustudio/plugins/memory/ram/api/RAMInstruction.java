@@ -18,31 +18,22 @@
  */
 package net.emustudio.plugins.memory.ram.api;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
-import net.emustudio.emulib.plugins.compiler.CompilerContext;
-
+import java.io.Serializable;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * This context will be registered by RAM compiler.
+ * RAM instruction.
+ * It is the type of the "memory cell".
  */
-@PluginContext
-public interface RAMInstruction extends CompilerContext {
-    int READ = 1;
-    int WRITE = 2;
-    int LOAD = 3;
-    int STORE = 4;
-    int ADD = 5;
-    int SUB = 6;
-    int MUL = 7;
-    int DIV = 8;
-    int JMP = 9;
-    int JZ = 10;
-    int JGTZ = 11;
-    int HALT = 12;
+public interface RAMInstruction extends Serializable {
+
+    enum Opcode {
+        READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT
+    }
 
     enum Direction {
-        REGISTER(""), DIRECT("="), INDIRECT("*");
+        CONSTANT("="), DIRECT(""), INDIRECT("*");
 
         private final String value;
 
@@ -56,11 +47,18 @@ public interface RAMInstruction extends CompilerContext {
     }
 
     /**
-     * Get machine code of the RAM instruction.
+     * Get address of this instruction
      *
-     * @return code of the instruction
+     * @return address
      */
-    int getCode();
+    int getAddress();
+
+    /**
+     * Get opcode of the RAM instruction.
+     *
+     * @return opcode of the instruction
+     */
+    Opcode getOpcode();
 
     /**
      * Get direction of the RAM instruction:
@@ -70,34 +68,17 @@ public interface RAMInstruction extends CompilerContext {
     Direction getDirection();
 
     /**
-     * Get operand of the RAM instruction.
+     * Get operand of this RAM instruction, if it has any.
+     * If the operand is a label, here will be the String representation of the label.
      *
-     * @return operand (number or address, or string). If the operand is direct,
-     * it returns a String. Otherwise Integer.
+     * @return instruction operand if the instruction has any.
      */
-    Object getOperand();
+    Optional<RAMValue> getOperand();
 
     /**
-     * Get a string representation of label operand (meaningful only for
-     * JMP/JZ instructions)
+     * Get the label if the operand is a label.
      *
      * @return label operand
      */
-    String getOperandLabel();
-
-    /**
-     * Get string representation of the RAM instruction (mnemonic code).
-     *
-     * @return string representation of the instruction
-     */
-    String getCodeStr();
-
-    /**
-     * Get string representation of the operand.
-     * <p>
-     * It includes labels, direction and integer operands.
-     *
-     * @return String representation of operand
-     */
-    String getOperandStr();
+    Optional<RAMLabel> getLabel();
 }

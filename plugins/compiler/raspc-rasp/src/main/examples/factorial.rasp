@@ -1,13 +1,13 @@
 org 5
 
-;Program reads an integer number from the input tape, calculates its factorial and prints the result onto the output tape.
+;Program reads an integer number from the value tape, calculates its factorial and prints the result onto the output tape.
 
 
 ;saves the constant 1 into R2 and R3 registers
 load =1
 store 2 
 store 3
-;reads a number from the input tape
+;reads a number from the value tape
 read 1
 ;if the number is greater than 0, jump to "ok", otherwise, jump to "finish"
 load 1

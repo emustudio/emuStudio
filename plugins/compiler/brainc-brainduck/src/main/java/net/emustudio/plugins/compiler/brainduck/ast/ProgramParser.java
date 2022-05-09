@@ -1,4 +1,4 @@
-package net.emustudio.plugins.compiler.brainduck.tree;
+package net.emustudio.plugins.compiler.brainduck.ast;
 
 import net.emustudio.plugins.compiler.brainduck.BraincParser;
 import net.emustudio.plugins.compiler.brainduck.BraincParserBaseVisitor;

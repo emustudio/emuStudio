@@ -21,37 +21,37 @@ package net.emustudio.plugins.cpu.ram;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.plugins.cpu.ram.api.RAMContext;
+import net.emustudio.plugins.cpu.ram.api.RAMCpuContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
 import java.util.Objects;
+import java.util.Optional;
 
-public class RAMContextImpl implements RAMContext {
-    private final AbstractTapeContext[] tapes;
+public class RAMCpuContextImpl implements RAMCpuContext {
+    private AbstractTapeContext inputTape;
+    private AbstractTapeContext outputTape;
+    private AbstractTapeContext storageTape;
     private final ContextPool contextPool;
 
-    public RAMContextImpl(ContextPool contextPool) {
+    public RAMCpuContextImpl(ContextPool contextPool) {
         this.contextPool = Objects.requireNonNull(contextPool);
-        tapes = new AbstractTapeContext[3];
     }
 
-    public void init(long pluginID, EmulatorEngine engine) throws PluginInitializationException {
-        tapes[0] = prepareTape(pluginID, "Storage", true, false, true, 0);
-        tapes[1] = prepareTape(pluginID, "Input tape", false, true, true, 1);
-        tapes[2] = prepareTape(pluginID, "Output tape", true, true, false, 2);
-
-        engine.loadInput(tapes[1]);
+    public void init(long pluginID) throws PluginInitializationException {
+        storageTape = setupTape(pluginID, "Storage", true, false, true, 0);
+        inputTape = setupTape(pluginID, "Input tape", false, true, true, 1);
+        outputTape = setupTape(pluginID, "Output tape", true, true, false, 2);
     }
 
-    private AbstractTapeContext prepareTape(long pluginID, String title, boolean clearAfterReset, boolean posVisible,
-                                            boolean editable, int index)
+    private AbstractTapeContext setupTape(long pluginID, String title, boolean clearAfterReset, boolean posVisible,
+                                          boolean editable, int index)
         throws PluginInitializationException {
 
         AbstractTapeContext tape = contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, index);
         if (tape == null) {
             throw new PluginInitializationException("Could not get tape: \"" + title + "\"");
         }
-        tape.setBounded(true);
+        tape.setLeftBounded(true);
         tape.setEditable(editable);
         tape.setHighlightHeadPosition(posVisible);
         tape.setClearAtReset(clearAfterReset);
@@ -61,23 +61,23 @@ public class RAMContextImpl implements RAMContext {
         return tape;
     }
 
-    public AbstractTapeContext getStorage() {
-        return tapes[0];
+    public AbstractTapeContext getStorageTape() {
+        return storageTape;
     }
 
-    public AbstractTapeContext getInput() {
-        return tapes[1];
+    public AbstractTapeContext getInputTape() {
+        return inputTape;
     }
 
-    public AbstractTapeContext getOutput() {
-        return tapes[2];
+    public AbstractTapeContext getOutputTape() {
+        return outputTape;
     }
 
 
     public void destroy() {
-        for (int i = 0; i < 3; i++) {
-            tapes[i] = null;
-        }
+        Optional.ofNullable(inputTape).ifPresent(AbstractTapeContext::clear);
+        Optional.ofNullable(storageTape).ifPresent(AbstractTapeContext::clear);
+        Optional.ofNullable(outputTape).ifPresent(AbstractTapeContext::clear);
     }
 
     @Override
