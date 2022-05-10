@@ -1232,7 +1232,7 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
 
-        flags |= FLAG_N | (regs[REG_B] == 0 ? FLAG_Z : 0);
+        flags = FLAG_N | (regs[REG_B] == 0 ? FLAG_Z : 0) | (flags & FLAG_C) | (flags & FLAG_S) | (flags & FLAG_PV) | (flags & FLAG_H);
         return 16;
     }
 
@@ -1266,7 +1266,7 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_L] = address & 0xFF;
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
 
-        flags |= FLAG_N | (regs[REG_B] == 0 ? FLAG_Z : 0);
+        flags = FLAG_N | (regs[REG_B] == 0 ? FLAG_Z : 0) | (flags & FLAG_C) | (flags & FLAG_S) | (flags & FLAG_PV) | (flags & FLAG_H);
         return 16;
     }
 
@@ -1299,7 +1299,7 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_L] = address & 0xFF;
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
 
-        flags |= FLAG_N | (regs[REG_B] == 0 ? FLAG_Z : 0);
+        flags = FLAG_N | (regs[REG_B] == 0 ? FLAG_Z : 0) | (flags & FLAG_C) | (flags & FLAG_S) | (flags & FLAG_PV) | (flags & FLAG_H);
         return 16;
     }
 
