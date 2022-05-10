@@ -320,14 +320,14 @@ public class EmulatorEngineTest extends AbstractEngineTest {
 
     @Test
     public void testJMP() {
-        setProgram(instr(RAMInstruction.Opcode.JMP, RAMInstruction.Direction.DIRECT, 100));
+        setProgram(instr(RAMInstruction.Opcode.JMP, label(100, "here")));
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(100, engine.IP);
     }
 
     @Test
     public void testJZ() {
-        setProgram(instr(RAMInstruction.Opcode.JZ, RAMInstruction.Direction.DIRECT, 0));
+        setProgram(instr(RAMInstruction.Opcode.JZ, label(0, "here")));
 
         expect(storage.getSymbolAt(0)).andReturn(Optional.empty()).times(2);
         replay(storage);
@@ -352,7 +352,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
 
     @Test
     public void testJGTZ() {
-        setProgram(instr(RAMInstruction.Opcode.JGTZ, RAMInstruction.Direction.DIRECT, 0));
+        setProgram(instr(RAMInstruction.Opcode.JGTZ, label(0, "here")));
 
         expect(storage.getSymbolAt(0)).andReturn(Optional.of(TapeSymbol.guess("2"))).times(2);
         replay(storage);

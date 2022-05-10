@@ -11,7 +11,7 @@
 ;   reg.Y: (reg.Y)
 
 
-<value> sss
+<input> sss
 ; load X,Y
 read 1
 read 2

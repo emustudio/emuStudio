@@ -10,7 +10,7 @@ rStart:
  ;
 
 rLine:
-  label=ID_LABEL? (comment EOL)* statement=rStatement comment
+  label=ID_LABEL? statement=rStatement comment
   | label=ID_LABEL comment
   | comment
   ;

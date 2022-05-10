@@ -2,6 +2,7 @@ package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
+import net.emustudio.plugins.memory.ram.api.RAMLabel;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RAMValue;
 import org.junit.Before;
@@ -83,5 +84,28 @@ public abstract class AbstractEngineTest {
         expect(instruction.getLabel()).andReturn(Optional.empty()).anyTimes();
         replay(instruction);
         return instruction;
+    }
+
+    public RAMInstruction instr(RAMInstruction.Opcode opcode, RAMLabel label) {
+        RAMInstruction instruction = createNiceMock(RAMInstruction.class);
+        expect(instruction.getOpcode()).andReturn(opcode).anyTimes();
+        expect(instruction.getDirection()).andReturn(RAMInstruction.Direction.DIRECT).anyTimes();
+        expect(instruction.getLabel()).andReturn(Optional.of(label)).anyTimes();
+        replay(instruction);
+        return instruction;
+    }
+
+    public RAMLabel label(int address, String label) {
+        return new RAMLabel() {
+            @Override
+            public int getAddress() {
+                return address;
+            }
+
+            @Override
+            public String getLabel() {
+                return label;
+            }
+        };
     }
 }

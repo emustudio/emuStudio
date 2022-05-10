@@ -17,6 +17,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
 
     static {
         tokenMap[COMMENT] = Token.COMMENT;
+        tokenMap[COMMENT2] = Token.COMMENT;
         tokenMap[EOL] = Token.WHITESPACE;
         tokenMap[WS] = Token.WHITESPACE;
         tokenMap[OPCODE_READ] = Token.RESERVED;
@@ -34,7 +35,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
 
         tokenMap[PREP_INPUT] = Token.PREPROCESSOR;
 
-        tokenMap[OP_DIRECT] = Token.OPERATOR;
+        tokenMap[OP_CONSTANT] = Token.OPERATOR;
         tokenMap[OP_INDIRECT] = Token.OPERATOR;
 
         tokenMap[LIT_NUMBER] = Token.LITERAL;

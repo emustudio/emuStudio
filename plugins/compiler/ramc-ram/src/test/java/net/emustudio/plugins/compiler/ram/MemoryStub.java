@@ -77,8 +77,8 @@ public class MemoryStub extends AbstractMemoryContext<RAMInstruction> implements
     }
 
     @Override
-    public RAMLabel getLabel(int address) {
-        return labels.get(address);
+    public Optional<RAMLabel> getLabel(int address) {
+        return Optional.ofNullable(labels.get(address));
     }
 
     @Override

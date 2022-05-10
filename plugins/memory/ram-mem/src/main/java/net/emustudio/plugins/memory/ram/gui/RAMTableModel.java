@@ -19,6 +19,7 @@
 package net.emustudio.plugins.memory.ram.gui;
 
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
+import net.emustudio.plugins.memory.ram.api.RAMLabel;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RAMValue;
 
@@ -48,11 +49,7 @@ class RAMTableModel extends AbstractTableModel {
             case 0:
                 return String.valueOf(rowIndex);
             case 1:
-                String label = memory.getLabel(rowIndex).getLabel();
-                if (label != null) {
-                    return label;
-                }
-                break;
+                return memory.getLabel(rowIndex).map(RAMLabel::getLabel).orElse("");
             case 2:
                 RAMInstruction i = memory.read(rowIndex);
                 return i.getOpcode() + " " + i.getOperand().map(RAMValue::getStringRepresentation).orElse("");

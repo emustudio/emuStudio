@@ -65,7 +65,7 @@ public class ProgramParser extends RAMParserBaseVisitor<Program> {
         RAMInstruction.Opcode opcode = tokenOpcodes.get(op.getType());
         RAMInstruction.Direction direction = RAMInstruction.Direction.DIRECT;
         if (ctx.d != null) {
-            if (ctx.d.getType() == OP_DIRECT) {
+            if (ctx.d.getType() == OP_CONSTANT) {
                 direction = RAMInstruction.Direction.CONSTANT;
             } else if (ctx.d.getType() == OP_INDIRECT) {
                 direction = RAMInstruction.Direction.INDIRECT;

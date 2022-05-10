@@ -101,9 +101,8 @@ public class EmulatorEngine {
                 break;
             case JMP:
                 instr
-                    .getOperand()
-                    .filter(o -> o.getType() == RAMValue.Type.NUMBER)
-                    .ifPresentOrElse(o -> IP = o.getNumberValue(), () -> {
+                    .getLabel()
+                    .ifPresentOrElse(o -> IP = o.getAddress(), () -> {
                         throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
                     });
                 break;
@@ -111,9 +110,8 @@ public class EmulatorEngine {
                 int r0 = getR0();
                 if (r0 == 0) {
                     instr
-                        .getOperand()
-                        .filter(o -> o.getType() == RAMValue.Type.NUMBER)
-                        .ifPresentOrElse(o -> IP = o.getNumberValue(), () -> {
+                        .getLabel()
+                        .ifPresentOrElse(o -> IP = o.getAddress(), () -> {
                             throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
                         });
                 }
@@ -123,9 +121,8 @@ public class EmulatorEngine {
                 int r0 = getR0();
                 if (r0 > 0) {
                     instr
-                        .getOperand()
-                        .filter(o -> o.getType() == RAMValue.Type.NUMBER)
-                        .ifPresentOrElse(o -> IP = o.getNumberValue(), () -> {
+                        .getLabel()
+                        .ifPresentOrElse(o -> IP = o.getAddress(), () -> {
                             throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
                         });
                 }

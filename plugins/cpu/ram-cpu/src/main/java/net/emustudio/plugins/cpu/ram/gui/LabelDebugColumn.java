@@ -19,6 +19,7 @@
 package net.emustudio.plugins.cpu.ram.gui;
 
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
+import net.emustudio.plugins.memory.ram.api.RAMLabel;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 
 import java.util.Objects;
@@ -52,6 +53,6 @@ public class LabelDebugColumn implements DebuggerColumn<String> {
 
     @Override
     public String getValue(int location) {
-        return memory.getLabel(location).getLabel();
+        return memory.getLabel(location).map(RAMLabel::getLabel).orElse("");
     }
 }

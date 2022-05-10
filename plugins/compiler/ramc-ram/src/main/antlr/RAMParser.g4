@@ -10,7 +10,7 @@ rStart:
  ;
 
 rLine:
-  label=ID_LABEL? (comment EOL)* statement=rStatement comment
+  label=ID_LABEL? statement=rStatement comment
   | label=ID_LABEL comment
   | comment
   ;
@@ -25,24 +25,24 @@ rStatement:
 rInstruction:
   op=OPCODE_READ n=rNumber
   | op=OPCODE_READ d=OP_INDIRECT n=rNumber
-  | op=OPCODE_WRITE d=OP_DIRECT v=rValue
+  | op=OPCODE_WRITE d=OP_CONSTANT v=rValue
   | op=OPCODE_WRITE d=OP_INDIRECT n=rNumber
   | op=OPCODE_WRITE n=rNumber
-  | op=OPCODE_LOAD d=OP_DIRECT v=rValue
+  | op=OPCODE_LOAD d=OP_CONSTANT v=rValue
   | op=OPCODE_LOAD d=OP_INDIRECT n=rNumber
   | op=OPCODE_LOAD n=rNumber
   | op=OPCODE_STORE n=rNumber
   | op=OPCODE_STORE d=OP_INDIRECT n=rNumber
-  | op=OPCODE_ADD d=OP_DIRECT v=rValue
+  | op=OPCODE_ADD d=OP_CONSTANT v=rValue
   | op=OPCODE_ADD d=OP_INDIRECT n=rNumber
   | op=OPCODE_ADD n=rNumber
-  | op=OPCODE_SUB d=OP_DIRECT v=rValue
+  | op=OPCODE_SUB d=OP_CONSTANT v=rValue
   | op=OPCODE_SUB d=OP_INDIRECT n=rNumber
   | op=OPCODE_SUB n=rNumber
-  | op=OPCODE_MUL d=OP_DIRECT v=rValue
+  | op=OPCODE_MUL d=OP_CONSTANT v=rValue
   | op=OPCODE_MUL d=OP_INDIRECT n=rNumber
   | op=OPCODE_MUL n=rNumber
-  | op=OPCODE_DIV d=OP_DIRECT v=rValue
+  | op=OPCODE_DIV d=OP_CONSTANT v=rValue
   | op=OPCODE_DIV d=OP_INDIRECT n=rNumber
   | op=OPCODE_DIV n=rNumber
   | op=OPCODE_JMP id=ID_IDENTIFIER
