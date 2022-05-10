@@ -9,7 +9,7 @@ call putstr  ; print text1
 ld de,input  ; address for string input
 call getline ; read from keyboard
 
-ld bc,value
+ld bc,input
 
 ld d,0      ; chars counter
 

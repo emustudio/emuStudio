@@ -2,7 +2,7 @@
 
 ; COPY(X,Y)
 ;
-; value:
+; input:
 ;   reg.1: X
 ;   reg.2: Y
 ;
