@@ -6,7 +6,7 @@ dcx sp       ; stack initialization (0FFFFh)
 
 lxi h,text1 
 call putstr  ; print text1
-lxi d,value  ; address for string value
+lxi d,input  ; address for string input
 call getline ; read from keyboard
 
 lxi b,value
@@ -16,7 +16,7 @@ mvi d,0      ; chars counter
 char_loop:
 ldax b 
 inx b        ; bc = bc+1
-cpi 10       ; end of value?
+cpi 10       ; end of input?
 jz char_end
 cpi 13
 jz char_end
@@ -53,4 +53,4 @@ include 'include\newline.inc'
 
 text1: db 'Reversed text ...',10,13,'Enter text: ',0
 text2: db 10,13,'Reversed: ',0
-value: ds 30
+input: ds 30

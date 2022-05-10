@@ -41,7 +41,7 @@ OPCODE_JZ: J Z;
 OP_CONSTANT: '=';
 OP_INDIRECT: '*';
 
-PREP_INPUT: ('<' I N P U T '>')| ('<' V A L U E '>');
+PREP_INPUT: '<' I N P U T '>';
 
 LIT_HEXNUMBER_1: '0' X [0-9a-fA-F]+;
 LIT_NUMBER: [0-9]+ D?;

@@ -15,7 +15,7 @@ All issues for the milestone are listed [here](https://github.com/emustudio/emuS
 ## main-module:
 - removed configuration editor popup in the schema editor
 - reimplemented source code editor using [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea)
-- reimplemented emulation automation (`--value` is not required anymore, introduced more command line options)
+- reimplemented emulation automation (`--input` is not required anymore, introduced more command line options)
 - introduced configuration file for the main module
 - be able to configure Look and Feel in the configuration
 - make debug table responsive
@@ -42,14 +42,14 @@ All issues for the milestone are listed [here](https://github.com/emustudio/emuS
 
 ## RASP:
 - rewritten raspc-rasp grammar and compiler
-- raspc-rasp: implemented `<value>` directive
+- raspc-rasp: implemented `<input>` directive
 
 ## SSEM:
 - fix: SSEM noodle-timer doesn't work
 
 ## adm3A-terminal:
 - fix: load cursor from software
-- fix: keyboard does not read value
+- fix: keyboard does not read input
 - fix: "here is" does not work (in GUI) - throws some hidden exception
 - fix: "always on top" doesn't work
 
@@ -105,7 +105,7 @@ All issues for the milestone are listed [here](https://github.com/emustudio/emuS
 - "previous instruction" just decrements program counter
 - fixed syntax highlighting
 - fixed: on breakpoint, instruction list was not pointing at current (next) instruction 
-- fixed: on 'pages backwards' button when the value window is cancelled, NullPointerException appeared in log
+- fixed: on 'pages backwards' button when the input window is cancelled, NullPointerException appeared in log
 - fixed: when file was not saved before compilation, on most compilers NullPointerException appeared in log
 - fixed: in source code editor, when open file is cancelled, compiler output window was cleared
 - find/replace dialog is now possible to be cancelled with ESC key

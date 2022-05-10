@@ -43,21 +43,21 @@
 ;JGTZ	- 17
 ;HALT	- 18
 
-;==============loading the RASP program from the value tape============================================
+;==============loading the RASP program from the input tape============================================
  
   LOAD =4
-  STORE 1  	;R1 contains the pointer for writing the next instruction or operand loaded from the value tape
-value:
-  READ  2   	;loads the value from the tape into R2
+  STORE 1  	;R1 contains the pointer for writing the next instruction or operand loaded from the input tape
+input:
+  READ  2   	;loads the input from the tape into R2
   LOAD  2
   SUB  =-1 
-  JZ   initialisation ;if the value is equal to -1, jump to initialisation
+  JZ   initialisation ;if the input is equal to -1, jump to initialisation
   LOAD 2
   STORE *1 	;otherwise, store it
   LOAD 1
   ADD =1		
   STORE 1		;increment the pointer
-  JMP value	;the next value
+  JMP input	;the next input
 
 ;=============== registers initialisation===============================================================
 initialisation:

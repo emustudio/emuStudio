@@ -6,7 +6,7 @@ dec sp       ; stack initialization (0FFFFh)
 
 ld hl,text1 
 call putstr  ; print text1
-ld de,value  ; address for string value
+ld de,input  ; address for string input
 call getline ; read from keyboard
 
 ld bc,value
@@ -16,7 +16,7 @@ ld d,0      ; chars counter
 char_loop:
 ld a, (bc) 
 inc bc        ; bc = bc+1
-cp 10       ; end of value?
+cp 10       ; end of input?
 jp z, char_end
 cp 13
 jp z, char_end
@@ -52,4 +52,4 @@ include "include\newline.inc"
 
 text1: db "Reversed text ...",10,13,"Enter text: ",0
 text2: db 10,13,"Reversed: ",0
-value: ds 30
+input: ds 30

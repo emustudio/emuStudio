@@ -38,9 +38,9 @@ org 3
 
 
   LOAD =1000		
-  STORE 1 		;in R1 there is the pointer for writing the next instruction or operand from the value tape
-value:
-  READ 2		;loads the value from the value tape into R2 register
+  STORE 1 		;in R1 there is the pointer for writing the next instruction or operand from the input tape
+input:
+  READ 2		;loads the value from the input tape into R2 register
   LOAD 2
   SUB =-1
   JZ initialisation	 ;if the value is equal to -1, jump to initialisation
@@ -53,7 +53,7 @@ value:
   LOAD 1
   ADD =1
   STORE 1		;increase the pointer
-  JMP value  	;the next value
+  JMP input  	;the next input
 
 initialisation:
   LOAD =1000	;R2=1000	 
