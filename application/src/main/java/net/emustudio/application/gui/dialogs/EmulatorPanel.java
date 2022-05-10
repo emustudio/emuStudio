@@ -58,6 +58,10 @@ public class EmulatorPanel extends JPanel {
                          EmulationController emulationController, MemoryContext<?> memoryContext) {
         this.memoryContext = memoryContext;
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
+        if (memoryContext != null) {
+            this.debugTableModel.setMemorySize(memoryContext.getSize());
+        }
+
         this.debugTable = new DebugTableImpl(debugTableModel);
 
         paneDebug.setViewportView(debugTable);

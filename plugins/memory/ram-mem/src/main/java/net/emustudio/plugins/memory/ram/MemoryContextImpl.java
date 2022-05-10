@@ -66,14 +66,22 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
 
     @Override
     public void write(int address, RAMInstruction value) {
+        boolean sizeChanged = !memory.containsKey(address);
         memory.put(address, value);
+        if (sizeChanged) {
+            notifyMemorySizeChanged();
+        }
         notifyMemoryChanged(address);
     }
 
     @Override
     public void write(int address, RAMInstruction[] values, int count) {
         for (int i = 0; i < count; i++) {
+            boolean sizeChanged = !memory.containsKey(address);
             memory.put(address + i, values[i]);
+            if (sizeChanged) {
+                notifyMemorySizeChanged();
+            }
             notifyMemoryChanged(address + i);
         }
     }
