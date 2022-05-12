@@ -42,7 +42,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(input, storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(input, storage);
     }
 
@@ -58,7 +58,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(input, storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(input, storage);
     }
 
@@ -70,7 +70,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(output);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(output);
     }
 
@@ -84,7 +84,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage, output);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage, output);
     }
 
@@ -99,7 +99,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage, output);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage, output);
     }
 
@@ -111,7 +111,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -124,7 +124,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -138,7 +138,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -153,7 +153,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -169,7 +169,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -201,7 +201,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(4, engine.IP);
+        assertEquals(4, engine.IP.get());
         verify(storage);
     }
 
@@ -237,7 +237,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(4, engine.IP);
+        assertEquals(4, engine.IP.get());
         verify(storage);
     }
 
@@ -279,7 +279,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(4, engine.IP);
+        assertEquals(4, engine.IP.get());
         verify(storage);
     }
 
@@ -290,7 +290,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BAD_INSTR, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -301,7 +301,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BAD_INSTR, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -314,7 +314,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -322,7 +322,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     public void testJMP() {
         setProgram(instr(RAMInstruction.Opcode.JMP, label(100, "here")));
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(100, engine.IP);
+        assertEquals(100, engine.IP.get());
     }
 
     @Test
@@ -334,7 +334,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(0, engine.IP);
+        assertEquals(0, engine.IP.get());
         verify(storage);
     }
 
@@ -346,7 +346,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -359,7 +359,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(0, engine.IP);
+        assertEquals(0, engine.IP.get());
         verify(storage);
     }
 
@@ -371,7 +371,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
         replay(storage);
 
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
         verify(storage);
     }
 
@@ -379,6 +379,6 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     public void testHALT() {
         setProgram(instr(RAMInstruction.Opcode.HALT, RAMInstruction.Direction.DIRECT));
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
-        assertEquals(1, engine.IP);
+        assertEquals(1, engine.IP.get());
     }
 }

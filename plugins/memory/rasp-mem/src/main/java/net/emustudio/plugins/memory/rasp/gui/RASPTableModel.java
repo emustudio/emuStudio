@@ -20,12 +20,11 @@
 
 package net.emustudio.plugins.memory.rasp.gui;
 
-import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
-import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.*;
 
 import javax.swing.table.AbstractTableModel;
+
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.*;
 
 /**
  * MODEL for the table with memory content.
@@ -62,8 +61,7 @@ public class RASPTableModel extends AbstractTableModel {
     }
 
     /**
-     * Get number of columns in memory table; it is 3: |"address" | "numeric
-     * value" |"cell value"|
+     * Get number of columns in memory table; it is 3: |"address"| "numeric value" |"cell value"|
      *
      * @return 3
      */
@@ -73,18 +71,13 @@ public class RASPTableModel extends AbstractTableModel {
     }
 
     /**
-     * Returns string contained in the addess column (column No. 0).
+     * Returns string contained in the address column (column No. 0).
      *
      * @param rowIndex the index of the row in the address column
-     * @return string contained in the addess column
+     * @return string contained in the address column
      */
     private String getAddressColumnText(int rowIndex) {
-        String label = memory.getLabel(rowIndex);
-        if (label != null) {
-            return rowIndex + " " + label.toLowerCase();
-        } else {
-            return String.valueOf(rowIndex);
-        }
+        return memory.getLabel(rowIndex).map(l -> rowIndex + " " + l.getLabel()).orElse(String.valueOf(rowIndex));
     }
 
     /**
@@ -94,13 +87,8 @@ public class RASPTableModel extends AbstractTableModel {
      * @return string contained in the numeric value column
      */
     private String getNumericValueColumnText(int rowIndex) {
-        MemoryItem item = memory.read(rowIndex);
-        if (item instanceof NumberMemoryItem) {
-            return ((NumberMemoryItem) item).toString();
-        } else if (item instanceof RASPInstruction) {
-            return String.valueOf(((RASPInstruction) item).getCode());
-        }
-        return "";
+        RASPMemoryCell item = memory.read(rowIndex);
+        return String.valueOf(item.getValue());
     }
 
 
@@ -111,56 +99,43 @@ public class RASPTableModel extends AbstractTableModel {
      * @return string contained in the mnemonic column
      */
     private String getMnemonicColumnValue(int rowIndex) {
-        //get item at given position
-        MemoryItem item = (MemoryItem) memory.read(rowIndex);
-        //item is a number
-        if (item instanceof NumberMemoryItem) {
-            //item is NOT the ACCUMULATOR
-            if (rowIndex != 0) {
-                MemoryItem previousItem = memory.read(rowIndex - 1); //get the item at the previous position
-                if (previousItem instanceof RASPInstruction) {
-                    RASPInstruction instruction = (RASPInstruction) previousItem;
-                    int code = instruction.getCode();
-                    //the previos instruction is a jump instruction, so this number is an address
-                    if (code == RASPInstruction.JMP || code == RASPInstruction.JZ || code == RASPInstruction.JGTZ) {
-                        return memory.addressToLabelString(((NumberMemoryItem) item).getValue());
-                    } else {
-                        return ((NumberMemoryItem) item).toString(); //previos item is NOT a jump instruction 
-                    }
-                } else {
-                    return ((NumberMemoryItem) item).toString(); //previous item is not an instruction, simply return the number
-                }
-
-            } else {
-                //item is the ACCUMULATOR
-                return ((NumberMemoryItem) item).toString();
-            }
-        } //item is an instruction, so return its mnemonics
-        else if (item instanceof RASPInstruction) {
-            return ((RASPInstruction) item).getCodeStr();
+        RASPMemoryCell item = memory.read(rowIndex);
+        if (item.isInstruction()) {
+            return Disassembler.disassemble(item.getValue()).orElse("unknown");
         }
-        return "";
+        if (rowIndex != 0) {
+            RASPMemoryCell previousItem = memory.read(rowIndex - 1);
+            if (previousItem.isInstruction()) {
+                switch (previousItem.getValue()) {
+                    case JMP:
+                    case JZ:
+                    case JGTZ:
+                        return memory
+                            .getLabel(item.getValue())
+                            .map(RASPLabel::getLabel)
+                            .orElse(String.valueOf(item.getValue()));
+                }
+            }
+        }
+        return String.valueOf(item.getValue());
     }
 
     /**
-     * Returns the string representation of cell in the memory table cell at
-     * given position.
+     * Returns the string representation of cell in the memory table cell at given position.
      *
-     * @param rowIndex
-     * @param columnIndex
+     * @param rowIndex    row index
+     * @param columnIndex column index
      * @return string representation of memory table cell at given position
      */
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        //column with addresses, optionally marked with label
-        if (columnIndex == 0) {
-            return getAddressColumnText(rowIndex);
-        } //column with numeric value of the memory cell
-        else if (columnIndex == 1) {
-            return getNumericValueColumnText(rowIndex);
-        } //column with mnemonic representation of the memory cell (mnemonic if it is an istruction, number if it is a number memory item)
-        else {
-            return getMnemonicColumnValue(rowIndex);
+        switch (columnIndex) {
+            case 0:
+                return getAddressColumnText(rowIndex);
+            case 1:
+                return getNumericValueColumnText(rowIndex);
+            default:
+                return getMnemonicColumnValue(rowIndex);
         }
     }
 
@@ -181,12 +156,28 @@ public class RASPTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
         try {
-            int numberValue = Integer.parseInt((String) value);
-            memory.write(rowIndex, new NumberMemoryItem(numberValue));
+            int numberValue = Integer.decode((String) value);
+            RASPMemoryCell original = memory.read(rowIndex);
+            boolean instruction = original.isInstruction();
+
+            memory.write(rowIndex, new RASPMemoryCell() {
+                @Override
+                public boolean isInstruction() {
+                    return instruction;
+                }
+
+                @Override
+                public int getAddress() {
+                    return rowIndex;
+                }
+
+                @Override
+                public int getValue() {
+                    return numberValue;
+                }
+            });
         } catch (NumberFormatException e) {
             //do nothing, invalid value was inserted
         }
-
     }
-
 }

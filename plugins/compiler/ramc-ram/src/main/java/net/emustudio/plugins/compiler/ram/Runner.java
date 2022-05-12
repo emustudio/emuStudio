@@ -57,7 +57,7 @@ public class Runner {
             } else {
                 outputFile = inputFile;
             }
-            outputFile += ".hex";
+            outputFile += ".bram";
         }
 
         CompilerRAM compiler = new CompilerRAM(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);

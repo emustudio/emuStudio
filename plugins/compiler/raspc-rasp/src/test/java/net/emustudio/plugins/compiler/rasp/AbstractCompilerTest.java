@@ -1,11 +1,11 @@
-package net.emustudio.plugins.compiler.raspc;
+package net.emustudio.plugins.compiler.rasp;
 
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 import org.junit.Before;
 import org.junit.Rule;
@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public abstract class AbstractCompilerTest {
-    protected CompilerImpl compiler;
+    protected CompilerRASP compiler;
     protected MemoryStub memoryStub;
 
     @Rule
@@ -38,7 +38,7 @@ public abstract class AbstractCompilerTest {
         expect(applicationApi.getContextPool()).andReturn(pool).anyTimes();
         replay(applicationApi);
 
-        compiler = new CompilerImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        compiler = new CompilerRASP(0L, applicationApi, PluginSettings.UNAVAILABLE);
         compiler.initialize();
     }
 
@@ -68,7 +68,7 @@ public abstract class AbstractCompilerTest {
         }
     }
 
-    protected void assertProgram(MemoryItem... program) {
+    protected void assertProgram(RASPMemoryCell... program) {
         for (int i = 0; i < program.length; i++) {
             assertEquals(
                 String.format("%d. expected=%s, but was=%s", i, program[i], memoryStub.read(i)),

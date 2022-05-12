@@ -1,8 +1,6 @@
-package net.emustudio.plugins.compiler.raspc;
+package net.emustudio.plugins.compiler.rasp;
 
-import net.emustudio.plugins.memory.rasp.InstructionImpl;
-import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
-import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
+import net.emustudio.plugins.compiler.rasp.ast.Program.RASPMemoryCellImpl;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotEquals;
@@ -21,15 +19,23 @@ public class CompilerTest extends AbstractCompilerTest {
         assertProgram(
             null,
             null,
-            new InstructionImpl(RASPInstruction.JMP),
-            new NumberMemoryItem(6),
-            new InstructionImpl(RASPInstruction.JMP),
-            new NumberMemoryItem(2),
-            new InstructionImpl(RASPInstruction.HALT),
-            new NumberMemoryItem(0)
+            new RASPMemoryCellImpl(true, 15, 2),
+            new RASPMemoryCellImpl(false, 6, 3),
+            new RASPMemoryCellImpl(true, 15, 4),
+            new RASPMemoryCellImpl(false, 2, 5),
+            new RASPMemoryCellImpl(true, 18, 6)
         );
     }
 
+    @Test(expected = Exception.class)
+    public void testNonExistingLabel() throws Exception {
+        compile("jmp hahaha");
+    }
+
+    @Test(expected = Exception.class)
+    public void testAlreadyDefinedLabel() throws Exception {
+        compile("label:\nlabel:");
+    }
 
     @Test
     public void testVersionIsKnown() {

@@ -22,15 +22,13 @@ package net.emustudio.plugins.cpu.rasp.gui;
 
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
-import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
+import net.emustudio.plugins.memory.rasp.api.RASPLabel;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 
 import java.util.Objects;
 
 public class RASPDisassembler implements Disassembler {
-
     private final RASPMemoryContext memory;
 
     public RASPDisassembler(RASPMemoryContext memory) {
@@ -38,55 +36,33 @@ public class RASPDisassembler implements Disassembler {
     }
 
     @Override
-    public DisassembledInstruction disassemble(int memoryPosition) {
+    public DisassembledInstruction disassemble(int address) {
+        RASPMemoryCell instruction = memory.read(address);
+        int opcode = instruction.getValue();
+        String mnemo = memory.disassemble(opcode).orElse("unknown");
 
-        //retrieve the instruction
-        MemoryItem item = memory.read(memoryPosition);
-        if (!(item instanceof RASPInstruction)) {
-            //what we retrieved is not a valid instruction, it can be either invalid, or it is a data memory item before the program start
-            return new DisassembledInstruction(memoryPosition, "unknown", "");
-        }
-        RASPInstruction instruction = (RASPInstruction) item;
-
-        int opCode = instruction.getCode();
-        //true if instruction is a jump instruction, false otherwise
-        boolean jumpInstruction = false;
-
-        if (opCode == RASPInstruction.JMP || opCode == RASPInstruction.JZ || opCode == RASPInstruction.JGTZ) {
-            jumpInstruction = true;
+        boolean isJump = (opcode == 15) || (opcode == 16) || (opcode == 17);
+        if (opcode != 18) {
+            int operand = memory.read(address + 1).getValue();
+            String operandStr = isJump ?
+                memory.getLabel(operand).map(RASPLabel::getLabel).orElse(String.valueOf(operand)) :
+                String.valueOf(operand);
+            mnemo += " " + operandStr;
         }
 
-        //retrieve its operand
-        item = memory.read(memoryPosition + 1);
-        if (!(item instanceof NumberMemoryItem)) {
-            return new DisassembledInstruction(memoryPosition, "unknown", "");
-        }
-        NumberMemoryItem operand = (NumberMemoryItem) item;
-
-        //prepare the mnemonic form
-        if (jumpInstruction) { //if we work with jump instr., mnemo should contain the label
-            String label = memory.addressToLabelString(operand.getValue());
-            String mnemo = instruction.getCodeStr() + " " + label;
-            return new DisassembledInstruction(memoryPosition, mnemo, "");
-        }
-        String mnemo = instruction.getCodeStr() + " " + operand.toString();
-        return new DisassembledInstruction(memoryPosition, mnemo, "");
+        return new DisassembledInstruction(address, mnemo, String.valueOf(opcode));
     }
 
     @Override
-    public int getNextInstructionPosition(int memoryPosition) throws IndexOutOfBoundsException {
-        if (memoryPosition >= memory.getSize()) {
-            return memoryPosition + 1;
+    public int getNextInstructionPosition(int address) throws IndexOutOfBoundsException {
+        if (address >= memory.getSize()) {
+            return address + 1;
         }
-        MemoryItem item = memory.read(memoryPosition);
-        if (item instanceof RASPInstruction) {
-            RASPInstruction instruction = (RASPInstruction) item;
-            if (instruction.getCode() == RASPInstruction.HALT) {
-                return memoryPosition + 1;
-            }
-            return memoryPosition + 2;
+        RASPMemoryCell item = memory.read(address);
+        if (!item.isInstruction() || item.getValue() == 18) {
+            return address + 1;
         }
-        return memoryPosition + 1;
+        return address + 2;
     }
 
 }

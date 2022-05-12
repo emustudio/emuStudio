@@ -18,8 +18,8 @@ rLine:
 comment: COMMENT? | COMMENT2?;
 
 rStatement:
-  instr=rInstruction
-  | value=rInput
+  rInstruction
+  | rInput
   ;
 
 rInstruction:

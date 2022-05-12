@@ -18,43 +18,42 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.emustudio.plugins.memory.rasp;
+package net.emustudio.plugins.cpu.rasp.api;
 
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
-import java.util.Objects;
+public interface RASPCpuContext extends CPUContext {
 
-/**
- * Value as a memory item, either value of register, or instruction operand.
- */
-public class NumberMemoryItem implements MemoryItem {
+    AbstractTapeContext getInputTape();
 
-    private final int value;
+    AbstractTapeContext getOutputTape();
 
-    public NumberMemoryItem(int value) {
-        this.value = value;
-    }
-
-    public int getValue() {
-        return value;
+    @Override
+    default boolean isInterruptSupported() {
+        return false;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        NumberMemoryItem that = (NumberMemoryItem) o;
-        return value == that.value;
+    default void signalInterrupt(DeviceContext device, int mask) {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(value);
+    default void clearInterrupt(DeviceContext device, int mask) {
     }
 
     @Override
-    public String toString() {
-        return String.valueOf(value);
+    default boolean isRawInterruptSupported() {
+        return false;
     }
 
+    @Override
+    default void signalRawInterrupt(DeviceContext device, byte[] data) {
+    }
+
+    @Override
+    default int getCPUFrequency() {
+        return 0;
+    }
 }

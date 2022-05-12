@@ -21,178 +21,163 @@
 package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
-import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.*;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.*;
 
-public class MemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {
+public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> implements RASPMemoryContext {
+    private final static class EmptyCell implements RASPMemoryCell {
+        private final int address;
 
-    private final List<MemoryItem> memory = new ArrayList<>();
-    private int programLocation;
+        private EmptyCell(int address) {
+            this.address = address;
+        }
+
+        @Override
+        public boolean isInstruction() {
+            return false;
+        }
+
+        @Override
+        public int getAddress() {
+            return address;
+        }
+
+        @Override
+        public int getValue() {
+            return 0;
+        }
+
+        static EmptyCell at(int address) {
+            return new EmptyCell(address);
+        }
+    }
+
+    private final Map<Integer, RASPMemoryCell> memory = new HashMap<>();
+    private final Map<Integer, RASPLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
 
-    private final Map<Integer, String> labels = new HashMap<>();
+    private int programLocation;
 
-    /**
-     * Reads memory item from given address.
-     *
-     * @param position the memory address
-     * @return the item at the given address
-     */
-    @Override
-    public MemoryItem read(int position) {
-        if (position >= 0 && position < getSize()) {
-            return memory.get(position);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Write a memory item to the given address.
-     *
-     * @param position the memory address
-     * @param item     the item to write
-     */
-    @Override
-    public void write(int position, MemoryItem item) {
-        if (position >= memory.size()) {
-            //padd with nulls to prevent IndexOutOfBoundsException
-            for (int i = memory.size(); i < position; i++) {
-                memory.add(i, new NumberMemoryItem(0));
-            }
-            memory.add(position, item);
-            notifyMemoryChanged(memory.size());
-            notifyMemorySizeChanged();
-        } else {
-            //if there is an instruction at "position", modify its opcode
-            MemoryItem currentValue = read(position);
-            if (currentValue instanceof RASPInstruction) {
-                int number = ((NumberMemoryItem) item).getValue();
-                memory.set(position, new InstructionImpl(number));
-            } //if there is not an instruction, i.e. its a NumberMemoryItem or null
-            else {
-                memory.set(position, item);
-            }
-        }
-        notifyMemoryChanged(position);
-    }
-
-    @Override
-    public MemoryItem[] readWord(int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void writeWord(int i, MemoryItem[] cts) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Class<MemoryItem> getDataType() {
-        return MemoryItem.class;
-    }
-
-    /**
-     * Clears memory as well as labels.
-     */
     @Override
     public void clear() {
-        inputs.clear();
         memory.clear();
         labels.clear();
+        inputs.clear();
         notifyMemoryChanged(-1);
         notifyMemorySizeChanged();
     }
 
+    public void clearInputs() {
+        inputs.clear();
+    }
+
     @Override
     public int getSize() {
-        return memory.size();
+        return memory.keySet().stream().max(Comparator.naturalOrder()).orElse(0);
     }
 
     @Override
-    public void addLabel(int pos, String label) {
-        labels.put(pos, label);
+    public RASPMemoryCell read(int address) {
+        RASPMemoryCell cell = memory.get(address);
+        return (cell == null) ? EmptyCell.at(address) : cell;
     }
 
     @Override
-    public String getLabel(int pos) {
-        return labels.get(pos);
+    public RASPMemoryCell[] read(int address, int count) {
+        List<RASPMemoryCell> copy = new ArrayList<>();
+        for (int i = address; i < address + count; i++) {
+            RASPMemoryCell cell = memory.get(i);
+            copy.add((cell == null) ? EmptyCell.at(address) : cell);
+        }
+        return copy.toArray(new RASPMemoryCell[0]);
     }
 
     @Override
-    public String addressToLabelString(int address) {
-        String label = getLabel(address);
-        if (label != null) {
-            int index = label.lastIndexOf(':');
-            label = label.substring(0, index);
-            return label.toLowerCase();
-        } else {
-            //if no label at the address, simply return the number
-            return String.valueOf(address);
+    public void write(int address, RASPMemoryCell value) {
+        boolean sizeChanged = !memory.containsKey(address);
+        memory.put(address, value);
+        if (sizeChanged) {
+            notifyMemorySizeChanged();
+        }
+        notifyMemoryChanged(address);
+    }
+
+    @Override
+    public void write(int address, RASPMemoryCell[] values, int count) {
+        for (int i = 0; i < count; i++) {
+            boolean sizeChanged = !memory.containsKey(address);
+            memory.put(address + i, values[i]);
+            if (sizeChanged) {
+                notifyMemorySizeChanged();
+            }
+            notifyMemoryChanged(address + i);
         }
     }
 
     @Override
-    public void addInputs(List<Integer> inputs) {
-        Objects.requireNonNull(inputs, "inputs cannot be null");
+    public Class<RASPMemoryCell> getDataType() {
+        return RASPMemoryCell.class;
+    }
+
+    @Override
+    public synchronized void setLabels(List<RASPLabel> labels) {
+        this.labels.clear();
+        for (RASPLabel label: labels) {
+            this.labels.put(label.getAddress(), label);
+        }
+    }
+
+    @Override
+    public Optional<RASPLabel> getLabel(int address) {
+        return Optional.ofNullable(labels.get(address));
+    }
+
+    @Override
+    public synchronized void setInputs(List<Integer> inputs) {
+        clearInputs();
         this.inputs.addAll(inputs);
     }
 
     @Override
     public List<Integer> getInputs() {
-        return inputs;
+        return Collections.unmodifiableList(inputs);
     }
 
-    /**
-     * Destroys the memory content.
-     */
-    public void destroy() {
-        memory.clear();
+    public void setProgramLocation(int location) {
+        this.programLocation = location;
     }
 
     public int getProgramLocation() {
         return programLocation;
     }
 
-    @Override
-    public void setProgramLocation(Integer programLocation) {
-        this.programLocation = Optional.ofNullable(programLocation).orElse(0);
-    }
 
-    public void loadFromFile(String filename) throws IOException, ClassNotFoundException {
+    @SuppressWarnings("unchecked")
+    public void deserialize(String filename) throws IOException, ClassNotFoundException {
         try {
-            FileInputStream fileInputStream = new FileInputStream(filename);
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-            try (ObjectInputStream objectInputStream = new ObjectInputStream(bufferedInputStream)) {
-                //clear labels and memory before loading
-                labels.clear();
-                memory.clear();
-                inputs.clear();
+            InputStream file = new FileInputStream(filename);
+            InputStream buffer = new BufferedInputStream(file);
+            ObjectInput input = new ObjectInputStream(buffer);
 
-                labels.putAll((Map<Integer, String>) objectInputStream.readObject());
-                programLocation = (Integer) objectInputStream.readObject();
-                inputs.addAll((List<Integer>) objectInputStream.readObject());
-                //load program from file
-                List<MemoryItem> program = (List<MemoryItem>) objectInputStream.readObject();
-                int position = programLocation;
-                //write all the program, beginning at programStart
-                for (MemoryItem item : program) {
-                    write(position++, item);
-                }
-            }
+            labels.clear();
+            inputs.clear();
+            memory.clear();
+
+            programLocation = (Integer) input.readObject();
+            labels.putAll((Map<Integer, RASPLabel>) input.readObject());
+            inputs.addAll((List<Integer>) input.readObject());
+            memory.putAll((Map<Integer, RASPMemoryCell>) input.readObject());
+
+            input.close();
         } finally {
-            /*any number can be put in this method, handling of the notification
-             is just updating the whole table
-             */
-            notifyMemoryChanged(0);
+            notifyMemoryChanged(-1);
             notifyMemorySizeChanged();
         }
+    }
+
+    public void destroy() {
+        clear();
     }
 }

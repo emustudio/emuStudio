@@ -1,7 +1,5 @@
-package net.emustudio.plugins.compiler.ram.visitors;
+package net.emustudio.plugins.compiler.ram;
 
-import net.emustudio.plugins.compiler.ram.RAMParser;
-import net.emustudio.plugins.compiler.ram.RAMParserBaseVisitor;
 import net.emustudio.plugins.compiler.ram.ast.Instruction;
 import net.emustudio.plugins.compiler.ram.ast.Label;
 import net.emustudio.plugins.compiler.ram.ast.Program;

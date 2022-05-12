@@ -22,47 +22,27 @@ package net.emustudio.plugins.memory.rasp.api;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.plugins.memory.rasp.gui.Disassembler;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Context of the RASP memory.
  */
 @PluginContext
-public interface RASPMemoryContext extends MemoryContext<MemoryItem> {
+@SuppressWarnings("unused")
+public interface RASPMemoryContext extends MemoryContext<RASPMemoryCell> {
 
-    /**
-     * Adds label to memory's set of labels.
-     *
-     * @param pos   adress which label refers to
-     * @param label the string reprezentation of the label
-     */
-    void addLabel(int pos, String label);
+    void setLabels(List<RASPLabel> labels);
 
-    /**
-     * Returns string reprezentation of the label at given address.
-     *
-     * @param pos the memory address
-     * @return string reprezentation of the label at given address
-     */
-    String getLabel(int pos);
+    Optional<RASPLabel> getLabel(int address);
 
-    void setProgramLocation(Integer programLocation);
+    void setInputs(List<Integer> inputs);
 
-    /**
-     * Returns string representation of the label at given address, but if there
-     * is no label for given address, just returns string representation of the
-     * address.
-     *
-     * @param address the address
-     * @return string representation of the label at given address, if there is
-     * any
-     */
-    String addressToLabelString(int address);
-
-    //from compiler
-    void addInputs(List<Integer> input);
-
-    // for CPU
     List<Integer> getInputs();
+
+    default Optional<String> disassemble(int opcode) {
+        return Disassembler.disassemble(opcode);
+    }
 }

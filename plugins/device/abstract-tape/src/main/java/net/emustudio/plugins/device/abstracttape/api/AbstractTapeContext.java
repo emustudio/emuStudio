@@ -21,12 +21,16 @@ package net.emustudio.plugins.device.abstracttape.api;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 /**
  * Public API of the abstract tape.
+ * <p>
+ * The tape head can move to the left, or to the right. If a tape is left-bounded, it cannot move to the left
+ * beyond the first symbol.
+ * <p>
+ * A CPU must setup the tape.
  */
 @SuppressWarnings("unused")
 @PluginContext
@@ -36,6 +40,23 @@ public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
      * Clear content of the tape.
      */
     void clear();
+
+    /**
+     * Accept only specific tape symbol types.
+     * <p>
+     * If the tape encounters symbol of unsupported type, it will throw on reading. Unsupported inputs provided by user
+     * will be disallowed.
+     *
+     * @param types accepted types
+     */
+    void setAcceptTypes(TapeSymbol.Type... types);
+
+    /**
+     * Gets accepted tape symbol types.
+     *
+     * @return accepted tape symbol types
+     */
+    Set<TapeSymbol.Type> getAcceptedTypes();
 
     /**
      * Set this tape to left-bounded or unbounded.
@@ -87,11 +108,12 @@ public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
 
     /**
      * Set symbol at the specified position.
-     *
+     * <p>
      * If the position is < 0, then no symbol will be set.
      *
      * @param position position in the tape, starting from 0
      * @param symbol   symbol value
+     * @throws IllegalArgumentException if the symbol type is not among accepted ones
      */
     void setSymbolAt(int position, TapeSymbol symbol);
 
@@ -158,4 +180,9 @@ public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
      */
     boolean isEmpty();
 
+    /**
+     * {@inheritDoc}
+     * @throws IllegalArgumentException if the symbol type is not among accepted ones
+     */
+    void writeData(TapeSymbol value);
 }

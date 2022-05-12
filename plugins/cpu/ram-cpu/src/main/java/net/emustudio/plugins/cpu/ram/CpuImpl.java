@@ -119,7 +119,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public int getInstructionLocation() {
-        return engine.IP;
+        return engine.IP.get();
     }
 
     public TapeSymbol getR0() {
@@ -144,7 +144,7 @@ public class CpuImpl extends AbstractCPU {
     public RunState call() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                if (isBreakpointSet(engine.IP)) {
+                if (isBreakpointSet(engine.IP.get())) {
                     throw new Breakpoint();
                 }
                 RunState tmpRunState = stepInternal();
@@ -157,7 +157,7 @@ public class CpuImpl extends AbstractCPU {
             } catch (Breakpoint breakpoint) {
                 return RunState.STATE_STOPPED_BREAK;
             } catch (Exception ex) {
-                LOGGER.debug("Unexpected error while reading/writing to the tape", ex);
+                LOGGER.debug("Unexpected error", ex);
                 return RunState.STATE_STOPPED_BAD_INSTR;
             }
         }

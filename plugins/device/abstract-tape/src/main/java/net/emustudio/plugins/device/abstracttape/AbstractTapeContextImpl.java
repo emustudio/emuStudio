@@ -33,19 +33,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * Tape used by abstract machines.
- * <p>
- * The tape position can move to the left, or to the right.
- * <p>
- * The CPU must assign all the details to this tape using the tape context.
- * <p>
- * By default, the tape is unbounded. However, it is possible to change.
- */
 public class AbstractTapeContextImpl implements AbstractTapeContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTapeContextImpl.class);
     private final AtomicReference<Writer> symbolLog = new AtomicReference<>();
     private final Map<Integer, TapeSymbol> content = new HashMap<>();
+    private final Set<TapeSymbol.Type> acceptedTypes = new HashSet<>(Set.of(
+        TapeSymbol.Type.NUMBER, TapeSymbol.Type.STRING
+    ));
+
     private final ReadWriteLock rwl = new ReentrantReadWriteLock();
 
     private final AbstractTape tape;
@@ -68,6 +63,24 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         leftBounded = false;
         editable = true;
         highlightCurrentPosition = true;
+    }
+
+    @Override
+    public void setAcceptTypes(TapeSymbol.Type... types) {
+        writeSynchronized(() -> {
+            acceptedTypes.clear();
+            acceptedTypes.addAll(Arrays.asList(types));
+        });
+    }
+
+    @Override
+    public Set<TapeSymbol.Type> getAcceptedTypes() {
+        rwl.readLock().lock();
+        try {
+            return Collections.unmodifiableSet(acceptedTypes);
+        } finally {
+            rwl.readLock().unlock();
+        }
     }
 
     @Override
@@ -139,11 +152,20 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         fireChange();
     }
 
+    /**
+     * Adds symbol to the beginning of this tape.
+     *
+     * @param symbol tape symbol
+     * @throws IllegalArgumentException if the symbol type is not among accepted ones
+     */
     public void addFirst(TapeSymbol symbol) {
         if (leftBounded) {
             return;
         }
         writeSynchronized(() -> {
+            if (!acceptedTypes.contains(symbol.type)) {
+                throw new IllegalArgumentException("Tape symbol type is not accepted");
+            }
             incrementContentPositions();
             content.put(0, symbol);
             logSymbol(0, symbol);
@@ -152,8 +174,18 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         fireChange();
     }
 
+    /**
+     * Adds symbol at the end of this tape.
+     * The "end" is computed as the highest position + 1.
+     *
+     * @param symbol tape symbol
+     * @throws IllegalArgumentException if the symbol type is not among accepted ones
+     */
     public void addLast(TapeSymbol symbol) {
         writeSynchronized(() -> {
+            if (!acceptedTypes.contains(symbol.type)) {
+                throw new IllegalArgumentException("Tape symbol type is not accepted");
+            }
             int index = position;
             if (!content.isEmpty()) {
                 index = Collections.max(content.keySet()) + 1;
@@ -201,6 +233,9 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
             return;
         }
         writeSynchronized(() -> {
+            if (!acceptedTypes.contains(symbol.type)) {
+                throw new IllegalArgumentException("Tape symbol type is not accepted");
+            }
             content.put(position, symbol);
             logSymbol(position, symbol);
         });

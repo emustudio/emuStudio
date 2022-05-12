@@ -91,13 +91,25 @@ public class TapeGui extends JDialog {
         btnAddFirst.addActionListener(e -> dialogs
             .readString("Symbol value:", "Add symbol (on top)")
             .map(TapeSymbol::guess)
-            .ifPresent(tapeContext::addFirst));
+            .ifPresent(s -> {
+                try {
+                    tapeContext.addFirst(s);
+                } catch (IllegalArgumentException ignored) {
+                    dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes());
+                }
+            }));
 
         btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png")));
         btnAddLast.addActionListener(e -> dialogs
             .readString("Symbol value:", "Add symbol (on bottom)")
             .map(TapeSymbol::guess)
-            .ifPresent(tapeContext::addLast));
+            .ifPresent(s -> {
+                try {
+                    tapeContext.addLast(s);
+                } catch (IllegalArgumentException ignored) {
+                    dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes());
+                }
+            }));
 
         btnEdit.addActionListener(e -> {
             int symbolIndex = lstTape.getSelectedIndex();

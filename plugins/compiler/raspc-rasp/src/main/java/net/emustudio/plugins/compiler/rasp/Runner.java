@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.compiler.raspc;
+package net.emustudio.plugins.compiler.rasp;
 
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
@@ -39,7 +39,7 @@ public class Runner {
                 printHelp();
                 return;
             } else if (arg.equals("--version") || arg.equals("-v")) {
-                System.out.println(new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
+                System.out.println(new CompilerRASP(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
                 return;
             } else {
                 break;
@@ -57,10 +57,10 @@ public class Runner {
             } else {
                 outputFile = inputFile;
             }
-            outputFile += ".hex";
+            outputFile += ".brasp";
         }
 
-        CompilerImpl compiler = new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
+        CompilerRASP compiler = new CompilerRASP(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
         compiler.addCompilerListener(new CompilerListener() {
 
             @Override

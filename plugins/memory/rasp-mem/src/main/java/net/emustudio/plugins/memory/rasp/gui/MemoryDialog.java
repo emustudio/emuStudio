@@ -137,7 +137,7 @@ public class MemoryDialog extends JDialog {
         ).ifPresent(path -> {
             recentOpenPath = path.toFile().getParentFile();
             try {
-                memory.loadFromFile(path.toString());
+                memory.deserialize(path.toString());
                 updateTable();
             } catch (IOException | ClassNotFoundException ex) {
                 LOGGER.error("Could not read file: {}", path, ex);

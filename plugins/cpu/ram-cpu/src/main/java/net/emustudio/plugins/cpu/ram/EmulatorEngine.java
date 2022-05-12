@@ -27,6 +27,7 @@ import net.emustudio.plugins.memory.ram.api.RAMValue;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
 public class EmulatorEngine {
@@ -35,7 +36,7 @@ public class EmulatorEngine {
     private final AbstractTapeContext storageTape;
 
     private final RAMMemoryContext memory;
-    public int IP;
+    public final AtomicInteger IP = new AtomicInteger();
 
     public EmulatorEngine(AbstractTapeContext inputTape, AbstractTapeContext outputTape,
                           AbstractTapeContext storageTape, RAMMemoryContext memory) {
@@ -49,12 +50,12 @@ public class EmulatorEngine {
         if (location < 0) {
             return false;
         }
-        IP = location;
+        IP.set(location);
         return true;
     }
 
     public void reset(int location) {
-        IP = location;
+        IP.set(location);
         int position = 0;
         inputTape.clear();
         for (RAMValue input : memory.getInputs()) {
@@ -65,7 +66,7 @@ public class EmulatorEngine {
     }
 
     public CPU.RunState step() {
-        RAMInstruction instr = memory.read(IP++);
+        RAMInstruction instr = memory.read(IP.getAndIncrement());
         if (instr == null) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
@@ -102,7 +103,7 @@ public class EmulatorEngine {
             case JMP:
                 instr
                     .getLabel()
-                    .ifPresentOrElse(o -> IP = o.getAddress(), () -> {
+                    .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
                         throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
                     });
                 break;
@@ -111,7 +112,7 @@ public class EmulatorEngine {
                 if (r0 == 0) {
                     instr
                         .getLabel()
-                        .ifPresentOrElse(o -> IP = o.getAddress(), () -> {
+                        .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
                             throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
                         });
                 }
@@ -122,7 +123,7 @@ public class EmulatorEngine {
                 if (r0 > 0) {
                     instr
                         .getLabel()
-                        .ifPresentOrElse(o -> IP = o.getAddress(), () -> {
+                        .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
                             throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
                         });
                 }
