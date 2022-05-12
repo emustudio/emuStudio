@@ -22,6 +22,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.interaction.debugger.*;
 
+import javax.swing.event.TableModelEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -45,6 +46,7 @@ public class DebugTableModelImpl extends DebugTableModel {
     public void setMaxRows(int maxRows) {
         if (ida != null) {
             ida.setInstructionsPerPage(maxRows);
+            fireTableChanged(new TableModelEvent(this));
         }
     }
 
@@ -173,11 +175,13 @@ public class DebugTableModelImpl extends DebugTableModel {
     @Override
     public void memoryChanged(int from, int to) {
         Optional.ofNullable(ida).ifPresent(i -> i.flushCache(from, to + 1));
+        fireTableDataChanged();
     }
 
     @Override
     public void setMemorySize(int memorySize) {
         Optional.ofNullable(ida).ifPresent(i -> i.setMemorySize(memorySize));
+        fireTableChanged(new TableModelEvent(this));
     }
 
     @Override

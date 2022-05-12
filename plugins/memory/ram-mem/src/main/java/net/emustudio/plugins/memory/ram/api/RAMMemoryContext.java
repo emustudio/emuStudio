@@ -22,17 +22,16 @@ import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 
 import java.util.List;
+import java.util.Optional;
 
 @PluginContext
 public interface RAMMemoryContext extends MemoryContext<RAMInstruction> {
 
-    void addLabel(int pos, String label);
+    void setLabels(List<RAMLabel> labels);
 
-    String getLabel(int pos);
+    Optional<RAMLabel> getLabel(int address);
 
-    // from Compiler
-    void addInputs(List<String> inputs);
+    void setInputs(List<RAMValue> inputs);
 
-    // for CPU
-    List<String> getInputs();
+    List<RAMValue> getInputs();
 }

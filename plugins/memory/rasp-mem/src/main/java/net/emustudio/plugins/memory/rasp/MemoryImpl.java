@@ -117,6 +117,11 @@ public class MemoryImpl extends AbstractMemory {
         return context.getProgramLocation();
     }
 
+    @Override
+    public void setProgramLocation(int programLocation) {
+        context.setProgramLocation(programLocation);
+    }
+
     private Optional<ResourceBundle> getResourceBundle() {
         try {
             return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.memory.rasp.version"));

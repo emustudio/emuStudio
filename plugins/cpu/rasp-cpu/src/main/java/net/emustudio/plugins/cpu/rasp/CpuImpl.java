@@ -34,25 +34,25 @@ import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
 import net.emustudio.plugins.cpu.rasp.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.rasp.gui.RASPCpuStatusPanel;
 import net.emustudio.plugins.cpu.rasp.gui.RASPDisassembler;
-import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
-import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.MissingResourceException;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
 @PluginRoot(
     type = PLUGIN_TYPE.CPU,
-    title = "Random Access Stored Program (RASP) machine"
+    title = "Random Access Stored Program (RASP)"
 )
 public class CpuImpl extends AbstractCPU {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
-    private final RASPCpuContext context;
+    private final RASPCpuContextImpl context = new RASPCpuContextImpl();
+    private final ContextPool contextPool;
 
     private EmulatorEngine engine;
     private RASPMemoryContext memory;
@@ -64,8 +64,7 @@ public class CpuImpl extends AbstractCPU {
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        ContextPool contextPool = applicationApi.getContextPool();
-        this.context = new RASPCpuContext(contextPool);
+        this.contextPool = applicationApi.getContextPool();
         try {
             contextPool.register(pluginID, context, CPUContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException ex) {
@@ -74,21 +73,18 @@ public class CpuImpl extends AbstractCPU {
                 "Could not register RASP CPU context. Please see log file for more details", getTitle()
             );
         }
-
     }
 
     @Override
     public void initialize() throws PluginInitializationException {
         memory = applicationApi.getContextPool().getMemoryContext(pluginID, RASPMemoryContext.class);
-        engine = new EmulatorEngine(context, memory, applicationApi.getDialogs());
         disassembler = new RASPDisassembler(memory);
-        context.init(pluginID);
-        engine.loadInputs();
+        context.init(pluginID, contextPool);
+        engine = new EmulatorEngine(memory, context.getInputTape(), context.getOutputTape());
     }
 
     @Override
     public JPanel getStatusPanel() {
-        //also initialize debug table
         if (!debugTableInitialized) {
             DebuggerTable debugTable = applicationApi.getDebuggerTable();
             if (debugTable != null) {
@@ -117,10 +113,10 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public RunState call() throws Exception {
+    public RunState call() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                if (isBreakpointSet(engine.IP)) {
+                if (isBreakpointSet(engine.IP.get())) {
                     throw new Breakpoint();
                 }
                 RunState tmpRunState = stepInternal();
@@ -134,18 +130,18 @@ public class CpuImpl extends AbstractCPU {
             } catch (IndexOutOfBoundsException ex) {
                 LOGGER.debug("Unexpected error", ex);
                 return RunState.STATE_STOPPED_ADDR_FALLOUT;
-            } catch (IOException ex) {
-                LOGGER.error("Unexpected error while reading/writing to the tape", ex);
-                return RunState.STATE_STOPPED_BAD_INSTR;
             } catch (Breakpoint breakpoint) {
                 return RunState.STATE_STOPPED_BREAK;
+            } catch (Exception ex) {
+                LOGGER.debug("Unexpected error", ex);
+                return RunState.STATE_STOPPED_BAD_INSTR;
             }
         }
         return RunState.STATE_STOPPED_NORMAL;
     }
 
     @Override
-    protected RunState stepInternal() throws Exception {
+    protected RunState stepInternal() {
         return engine.step();
     }
 
@@ -156,7 +152,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public int getInstructionLocation() {
-        return engine.IP;
+        return engine.IP.get();
     }
 
     @Override
@@ -185,14 +181,7 @@ public class CpuImpl extends AbstractCPU {
      * @return current value of the accumulator (memory cell at address [0])
      */
     public int getACC() {
-        MemoryItem memoryItem = memory.read(0);
-        if (memoryItem instanceof NumberMemoryItem) {
-            return ((NumberMemoryItem) memoryItem).getValue();
-        } else if (memoryItem instanceof RASPInstruction) {
-            return ((RASPInstruction) memoryItem).getCode();
-        } else {
-            return 0;
-        }
+        return memory.read(0).getValue();
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

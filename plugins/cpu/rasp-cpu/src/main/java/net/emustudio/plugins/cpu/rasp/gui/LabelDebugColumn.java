@@ -21,6 +21,7 @@
 package net.emustudio.plugins.cpu.rasp.gui;
 
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
+import net.emustudio.plugins.memory.rasp.api.RASPLabel;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 
 import java.util.Objects;
@@ -55,6 +56,6 @@ public class LabelDebugColumn implements DebuggerColumn<String> {
 
     @Override
     public String getValue(int position) {
-        return memory.getLabel(position);
+        return memory.getLabel(position).map(RASPLabel::getLabel).orElse("");
     }
 }

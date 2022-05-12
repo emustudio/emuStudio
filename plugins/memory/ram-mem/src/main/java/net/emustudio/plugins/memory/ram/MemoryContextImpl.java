@@ -20,18 +20,17 @@ package net.emustudio.plugins.memory.ram;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
+import net.emustudio.plugins.memory.ram.api.RAMLabel;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RAMValue;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> implements RAMMemoryContext {
-    private final List<RAMInstruction> memory = new ArrayList<>();
-    private final Map<Integer, String> labels = new HashMap<>();
-    private final List<String> inputs = new ArrayList<>(); // not for memory, but for CPU. Memory holds program so...
+    private final Map<Integer, RAMInstruction> memory = new HashMap<>();
+    private final Map<Integer, RAMLabel> labels = new HashMap<>();
+    private final List<RAMValue> inputs = new ArrayList<>();
 
     @Override
     public void clear() {
@@ -52,31 +51,39 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
     }
 
     @Override
-    public RAMInstruction read(int pos) {
-        return memory.get(pos);
+    public RAMInstruction read(int address) {
+        return memory.get(address);
     }
 
     @Override
-    public RAMInstruction[] readWord(int pos) {
-        return new RAMInstruction[]{memory.get(pos), null};
-    }
-
-    @Override
-    public void write(int pos, RAMInstruction instr) {
-        if (pos >= memory.size()) {
-            memory.add(pos, instr);
-            notifyMemoryChanged(memory.size());
-            notifyMemorySizeChanged();
-        } else {
-            memory.set(pos, instr);
+    public RAMInstruction[] read(int address, int count) {
+        List<RAMInstruction> copy = new ArrayList<>();
+        for (int i = address; i < address + count; i++) {
+            copy.add(memory.get(i));
         }
-        notifyMemoryChanged(pos);
+        return copy.toArray(new RAMInstruction[0]);
     }
 
-    // This method is not and won't be implemented.
     @Override
-    public void writeWord(int pos, RAMInstruction[] instr) {
-        throw new UnsupportedOperationException();
+    public void write(int address, RAMInstruction value) {
+        boolean sizeChanged = !memory.containsKey(address);
+        memory.put(address, value);
+        if (sizeChanged) {
+            notifyMemorySizeChanged();
+        }
+        notifyMemoryChanged(address);
+    }
+
+    @Override
+    public void write(int address, RAMInstruction[] values, int count) {
+        for (int i = 0; i < count; i++) {
+            boolean sizeChanged = !memory.containsKey(address);
+            memory.put(address + i, values[i]);
+            if (sizeChanged) {
+                notifyMemorySizeChanged();
+            }
+            notifyMemoryChanged(address + i);
+        }
     }
 
     @Override
@@ -85,36 +92,30 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
     }
 
     @Override
-    public void addLabel(int pos, String label) {
-        labels.put(pos, label);
+    public synchronized void setLabels(List<RAMLabel> labels) {
+        this.labels.clear();
+        for (RAMLabel label: labels) {
+            this.labels.put(label.getAddress(), label);
+        }
     }
 
     @Override
-    public String getLabel(int pos) {
-        return labels.get(pos);
-    }
-
-    public Map<String, Integer> getSwitchedLabels() {
-        Map<String, Integer> h = new HashMap<>();
-        for (Map.Entry<Integer, String> entry : labels.entrySet()) {
-            h.put(entry.getValue(), entry.getKey());
-        }
-        return h;
+    public Optional<RAMLabel> getLabel(int address) {
+        return Optional.ofNullable(labels.get(address));
     }
 
     @Override
-    public void addInputs(List<String> inputs) {
-        if (inputs == null) {
-            return;
-        }
+    public synchronized void setInputs(List<RAMValue> inputs) {
+        clearInputs();
         this.inputs.addAll(inputs);
     }
 
     @Override
-    public List<String> getInputs() {
-        return inputs;
+    public List<RAMValue> getInputs() {
+        return Collections.unmodifiableList(inputs);
     }
 
+    @SuppressWarnings("unchecked")
     public void deserialize(String filename) throws IOException, ClassNotFoundException {
         try {
             InputStream file = new FileInputStream(filename);
@@ -125,9 +126,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
             inputs.clear();
             memory.clear();
 
-            labels.putAll((Map<Integer, String>) input.readObject());
-            inputs.addAll((List<String>) input.readObject());
-            memory.addAll((List<RAMInstruction>) input.readObject());
+            labels.putAll((Map<Integer, RAMLabel>) input.readObject());
+            inputs.addAll((List<RAMValue>) input.readObject());
+            memory.putAll((Map<Integer, RAMInstruction>) input.readObject());
 
             input.close();
         } finally {
@@ -137,9 +138,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
     }
 
     public void destroy() {
-        memory.clear();
+        clear();
     }
-
-
-
 }

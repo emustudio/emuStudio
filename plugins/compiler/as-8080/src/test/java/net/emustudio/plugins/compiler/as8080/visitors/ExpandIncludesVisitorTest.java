@@ -32,9 +32,9 @@ public class ExpandIncludesVisitorTest {
 
         Node expected = new Program()
             .addChild(new InstrNoArgs(0, 0, OPCODE_CMC))
-            .addChild(new PseudoLabel(0, 0, "sample")
-                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                    .addChild(new ExprNumber(0, 0, 0))))
+            .addChild(new PseudoLabel(0, 0, "sample"))
+            .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
+                .addChild(new ExprNumber(0, 0, 0)))
             .addChild(new InstrNoArgs(0, 0, OPCODE_RET));
 
         assertTrees(expected, program);

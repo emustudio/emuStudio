@@ -19,235 +19,184 @@
 package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.plugins.cpu.ram.api.RAMContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.emustudio.plugins.memory.ram.api.RAMValue;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.DoubleBinaryOperator;
-import java.util.function.IntBinaryOperator;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 
 public class EmulatorEngine {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
+    private final AbstractTapeContext inputTape;
+    private final AbstractTapeContext outputTape;
+    private final AbstractTapeContext storageTape;
 
-    private enum ArithOp {ADD, SUB, MUL, DIV}
-
-    private final static Map<ArithOp, IntBinaryOperator> INT_ARITH_OPS = new HashMap<>();
-    private final static Map<ArithOp, DoubleBinaryOperator> DBL_ARITH_OPS = new HashMap<>();
-
-    private final RAMContext context;
     private final RAMMemoryContext memory;
-    public int IP;
+    public final AtomicInteger IP = new AtomicInteger();
 
-    static {
-        INT_ARITH_OPS.put(ArithOp.ADD, Integer::sum);
-        INT_ARITH_OPS.put(ArithOp.SUB, (a, b) -> a - b);
-        INT_ARITH_OPS.put(ArithOp.MUL, (a, b) -> a * b);
-        INT_ARITH_OPS.put(ArithOp.DIV, (a, b) -> a / b);
-
-        DBL_ARITH_OPS.put(ArithOp.ADD, Double::sum);
-        DBL_ARITH_OPS.put(ArithOp.SUB, (a, b) -> a - b);
-        DBL_ARITH_OPS.put(ArithOp.MUL, (a, b) -> a * b);
-        DBL_ARITH_OPS.put(ArithOp.DIV, (a, b) -> a / b);
-    }
-
-    public EmulatorEngine(RAMContext context, RAMMemoryContext memory) {
+    public EmulatorEngine(AbstractTapeContext inputTape, AbstractTapeContext outputTape,
+                          AbstractTapeContext storageTape, RAMMemoryContext memory) {
+        this.inputTape = Objects.requireNonNull(inputTape);
+        this.outputTape = Objects.requireNonNull(outputTape);
+        this.storageTape = Objects.requireNonNull(storageTape);
         this.memory = Objects.requireNonNull(memory);
-        this.context = Objects.requireNonNull(context);
     }
 
     public boolean setInstructionLocation(int location) {
         if (location < 0) {
             return false;
         }
-        IP = location;
+        IP.set(location);
         return true;
     }
 
     public void reset(int location) {
-        IP = location;
-        loadInput(context.getInput());
-        context.getStorage().clear();
-        context.getOutput().clear();
+        IP.set(location);
+        int position = 0;
+        inputTape.clear();
+        for (RAMValue input : memory.getInputs()) {
+            inputTape.setSymbolAt(position++, toSymbol(input));
+        }
+        storageTape.clear();
+        outputTape.clear();
     }
 
-    // called from RAMContext after Input tape attachement
-    public void loadInput(AbstractTapeContext tape) {
-        tape.clear();
-        List<String> data = memory.getInputs();
-        if (data == null) {
-            return;
-        }
-
-        int j = data.size();
-        for (int i = 0; i < j; i++) {
-            tape.setSymbolAt(i, data.get(i));
-        }
-    }
-
-    private int getIntegerOperand(RAMInstruction instruction) throws IOException {
-        Integer operand = (Integer) instruction.getOperand();
-        switch (instruction.getDirection()) {
-            case REGISTER:
-                return operand;
-            case INDIRECT:
-                try {
-                    operand = Integer.decode(context.getStorage().getSymbolAt(operand));
-                    if (operand < 0) {
-                        throw new IOException("[" + instruction + "] Indirect operand must be > 0");
-                    }
-                    return operand;
-                } catch (NumberFormatException e) {
-                    throw new IOException("[" + instruction + "] Could not parse number", e);
-                }
-        }
-        throw new IOException("[" + instruction + "] Instruction cannot have DIRECT operand!");
-    }
-
-    private String arithmetic(String sym0, String sym1, ArithOp op) throws IOException {
-        try {
-            return String.valueOf(
-                INT_ARITH_OPS.get(op).applyAsInt(Integer.decode(sym0), Integer.decode(sym1))
-            );
-        } catch (NumberFormatException e) {
-            try {
-                return String.valueOf(
-                    DBL_ARITH_OPS.get(op).applyAsDouble(Double.parseDouble(sym0), Double.parseDouble(sym1))
-                );
-            } catch (NumberFormatException x) {
-                throw new IOException("Could not parse numbers " + sym0 + " and/or " + sym1, e);
-            }
-        }
-    }
-
-    private Number decode(String num) {
-        if (num == null || num.isEmpty()) {
-            return 0;
-        }
-        try {
-            return Integer.decode(num);
-        } catch (NumberFormatException e) {
-            return Double.parseDouble(num);
-        }
-    }
-
-    public CPU.RunState step() throws IOException {
-        AbstractTapeContext storage = context.getStorage();
-
-        RAMInstruction in = memory.read(IP++);
-        if (in == null) {
+    public CPU.RunState step() {
+        RAMInstruction instr = memory.read(IP.getAndIncrement());
+        if (instr == null) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
 
-        int operand;
-        String sym0, sym1;
-
-        switch (in.getCode()) {
-            case RAMInstruction.READ:
-                operand = getIntegerOperand(in);
-                String input = context.getInput().readData();
-                context.getInput().moveRight();
-                storage.setSymbolAt(operand, input);
+        switch (instr.getOpcode()) {
+            case READ:
+                TapeSymbol input = inputTape.readData();
+                inputTape.moveRight();
+                getRegister(instr).ifPresent(r -> storageTape.setSymbolAt(r, input));
                 break;
-            case RAMInstruction.WRITE:
-                if (in.getDirection() == RAMInstruction.Direction.DIRECT) {
-                    context.getOutput().writeData(String.valueOf(in.getOperand()));
-                } else {
-                    operand = getIntegerOperand(in);
-                    context.getOutput().writeData(storage.getSymbolAt(operand));
-                }
-                context.getOutput().moveRight();
+            case WRITE:
+                getValue(instr).ifPresent(outputTape::writeData);
+                outputTape.moveRight();
                 break;
-            case RAMInstruction.LOAD:
-                if (in.getDirection() == RAMInstruction.Direction.DIRECT) {
-                    storage.setSymbolAt(0, String.valueOf(in.getOperand()));
-                } else {
-                    operand = getIntegerOperand(in);
-                    storage.setSymbolAt(0, storage.getSymbolAt(operand));
-                }
+            case LOAD:
+                getValue(instr).ifPresent(s -> storageTape.setSymbolAt(0, s));
                 break;
-            case RAMInstruction.STORE:
-                operand = getIntegerOperand(in);
-                storage.setSymbolAt(operand, storage.getSymbolAt(0));
+            case STORE:
+                getRegister(instr)
+                    .ifPresent(o -> storageTape.getSymbolAt(0).ifPresent(r -> storageTape.setSymbolAt(o, r)));
                 break;
-            case RAMInstruction.ADD:
-                sym0 = storage.getSymbolAt(0);
-
-                if (in.getDirection() == RAMInstruction.Direction.DIRECT) {
-                    sym1 = String.valueOf(in.getOperand());
-                } else {
-                    sym1 = storage.getSymbolAt(getIntegerOperand(in));
-                }
-                storage.setSymbolAt(0, arithmetic(sym0, sym1, ArithOp.ADD));
+            case ADD:
+                getValue(instr).ifPresent(op -> arithmetic(op, Integer::sum));
                 break;
-            case RAMInstruction.SUB:
-                sym0 = storage.getSymbolAt(0);
-
-                if (in.getDirection() == RAMInstruction.Direction.DIRECT) {
-                    sym1 = String.valueOf(in.getOperand());
-                } else {
-                    sym1 = storage.getSymbolAt(getIntegerOperand(in));
-                }
-                storage.setSymbolAt(0, arithmetic(sym0, sym1, ArithOp.SUB));
+            case SUB:
+                getValue(instr).ifPresent(op -> arithmetic(op, (a, b) -> a - b));
                 break;
-            case RAMInstruction.MUL:
-                sym0 = storage.getSymbolAt(0);
-
-                if (in.getDirection() == RAMInstruction.Direction.DIRECT) {
-                    sym1 = String.valueOf(in.getOperand());
-                } else {
-                    sym1 = storage.getSymbolAt(getIntegerOperand(in));
-                }
-                storage.setSymbolAt(0, arithmetic(sym0, sym1, ArithOp.MUL));
+            case MUL:
+                getValue(instr).ifPresent(op -> arithmetic(op, (a, b) -> a * b));
                 break;
-            case RAMInstruction.DIV:
-                sym0 = storage.getSymbolAt(0);
-
-                if (in.getDirection() == RAMInstruction.Direction.DIRECT) {
-                    sym1 = String.valueOf(in.getOperand());
-                } else {
-                    sym1 = storage.getSymbolAt(getIntegerOperand(in));
-                }
-                storage.setSymbolAt(0, arithmetic(sym0, sym1, ArithOp.DIV));
+            case DIV:
+                getValue(instr).ifPresent(op -> arithmetic(op, (a, b) -> a / b));
                 break;
-            case RAMInstruction.JMP:
-                IP = (Integer) in.getOperand();
+            case JMP:
+                instr
+                    .getLabel()
+                    .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
+                        throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
+                    });
                 break;
-            case RAMInstruction.JZ: {
-                String r0 = storage.getSymbolAt(0);
-                try {
-                    if (decode(r0).intValue() == 0) {
-                        IP = (Integer) in.getOperand();
-                    }
-                } catch (NumberFormatException e) {
-                    LOGGER.error("[pos={}, JZ {}] Cannot parse operand (expected integer)", IP, r0);
-                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+            case JZ: {
+                int r0 = getR0();
+                if (r0 == 0) {
+                    instr
+                        .getLabel()
+                        .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
+                            throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
+                        });
                 }
                 break;
             }
-            case RAMInstruction.JGTZ:
-                String r0 = storage.getSymbolAt(0);
-                try {
-                    if (decode(r0).intValue() > 0) {
-                        IP = (Integer) in.getOperand();
-                    }
-                } catch (NumberFormatException e) {
-                    LOGGER.error("[pos={}, JGTZ {}] Cannot parse operand (expected integer)", IP, r0);
-                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+            case JGTZ: {
+                int r0 = getR0();
+                if (r0 > 0) {
+                    instr
+                        .getLabel()
+                        .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
+                            throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
+                        });
                 }
                 break;
-            case RAMInstruction.HALT:
+            }
+            case HALT:
                 return CPU.RunState.STATE_STOPPED_NORMAL;
             default:
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
         return CPU.RunState.STATE_STOPPED_BREAK;
+    }
+
+    private int getR0() {
+        return storageTape
+            .getSymbolAt(0)
+            .filter(r0 -> r0 != TapeSymbol.EMPTY)
+            .map(r0 -> {
+                if (r0.type != TapeSymbol.Type.NUMBER) {
+                    throw new RuntimeException("Register 0 contains non-numeric value: " + r0);
+                }
+                return r0.number;
+            }).orElse(0);
+    }
+
+    private void arithmetic(TapeSymbol operand, BiFunction<Integer, Integer, Integer> operation) {
+        if (operand.type != TapeSymbol.Type.NUMBER) {
+            throw new RuntimeException("Operand is non-numeric: " + operand);
+        }
+        int r0 = getR0();
+        storageTape.setSymbolAt(0, new TapeSymbol(operation.apply(r0, operand.number)));
+    }
+
+    private Optional<TapeSymbol> getValue(RAMInstruction instruction) {
+        switch (instruction.getDirection()) {
+            case CONSTANT:
+                return instruction.getOperand().map(this::toSymbol);
+            case DIRECT:
+            case INDIRECT:
+                return getRegister(instruction).flatMap(storageTape::getSymbolAt);
+        }
+        throw new IllegalStateException("Unexpected direction: " + instruction.getDirection());
+    }
+
+    private Optional<Integer> getRegister(RAMInstruction instruction) {
+        switch (instruction.getDirection()) {
+            case DIRECT:
+                return instruction.getOperand().map(r -> {
+                    if (r.getType() != RAMValue.Type.NUMBER) {
+                        throw new RuntimeException("Instruction has non-numeric operand: " + instruction);
+                    }
+                    return r.getNumberValue();
+                });
+            case INDIRECT:
+                return instruction.getOperand().flatMap(r -> {
+                    if (r.getType() != RAMValue.Type.NUMBER) {
+                        throw new RuntimeException("Instruction has non-numeric operand: " + instruction);
+                    }
+                    return storageTape
+                        .getSymbolAt(r.getNumberValue())
+                        .map(rr -> {
+                            if (rr.type != TapeSymbol.Type.NUMBER) {
+                                throw new RuntimeException("Value of register " + rr + " is non-numeric");
+                            }
+                            return rr.number;
+                        });
+                });
+        }
+        throw new IllegalStateException("Unexpected direction: " + instruction.getDirection());
+    }
+
+    private TapeSymbol toSymbol(RAMValue value) {
+        return (value.getType() == RAMValue.Type.NUMBER) ?
+            new TapeSymbol(value.getNumberValue()) : new TapeSymbol(value.getStringValue());
     }
 }

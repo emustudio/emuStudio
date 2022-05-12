@@ -27,7 +27,6 @@ import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -142,7 +141,7 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
             }
         }
         if (newKeyCode != 0) {
-            if (loadCursorPosition.notAccepted((byte)newKeyCode)){
+            if (loadCursorPosition.notAccepted((byte) newKeyCode)) {
                 inputReceived(newKeyCode);
             }
         }
@@ -175,11 +174,7 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
 
     private void inputReceived(int input) {
         for (DeviceContext<Byte> device : devices) {
-            try {
-                device.writeData((byte)input);
-            } catch (IOException e) {
-                LOGGER.error("[device={}, input={}] Could not notify device about key pressed", device, input, e);
-            }
+            device.writeData((byte) input);
         }
     }
 

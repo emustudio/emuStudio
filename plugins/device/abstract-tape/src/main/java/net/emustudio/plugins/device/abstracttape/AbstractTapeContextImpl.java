@@ -19,6 +19,7 @@
 package net.emustudio.plugins.device.abstracttape;
 
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
+import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,61 +27,69 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * Tape used by abstract machines.
- * <p>
- * Tape options are:
- * - (R)ead
- * - (R)ead (W)rite
- * - (W)rite
- * - direction:
- * - only left
- * - only right
- * - both
- * <p>
- * The CPU must assign all the details to this tape using the tape context.
- * <p>
- * By default, the tape is unbounded. However, it is possible to change.
- */
 public class AbstractTapeContextImpl implements AbstractTapeContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTapeContextImpl.class);
-    private final List<String> tape; // tape is an array of strings
-    private int currentPosition; // actual tape position
-    private boolean bounded; // tape is bounded form the left?
-    private boolean editable; // if tape is editable by user
-    private TapeListener listener;
+    private final AtomicReference<Writer> symbolLog = new AtomicReference<>();
+    private final Map<Integer, TapeSymbol> content = new HashMap<>();
+    private final Set<TapeSymbol.Type> acceptedTypes = new HashSet<>(Set.of(
+        TapeSymbol.Type.NUMBER, TapeSymbol.Type.STRING
+    ));
+
+    private final ReadWriteLock rwl = new ReentrantReadWriteLock();
+
+    private final AbstractTape tape;
+
+    private int position = 0;
+    private boolean leftBounded;
+    private boolean editable;
     private boolean highlightCurrentPosition;
     private boolean clearAtReset = true;
-    private final DeviceImpl abst;
-    private Writer outw;
     private boolean displayRowNumbers = false;
+    private TapeListener listener;
 
     public interface TapeListener extends EventListener {
 
         void tapeChanged();
     }
 
-    AbstractTapeContextImpl(DeviceImpl abst) {
-        this.abst = abst;
-        listener = null;
-        tape = new ArrayList<>();
-        currentPosition = 0;
-        bounded = false;
+    AbstractTapeContextImpl(AbstractTape tape) {
+        this.tape = Objects.requireNonNull(tape);
+        leftBounded = false;
         editable = true;
         highlightCurrentPosition = true;
     }
 
     @Override
-    public void setTitle(String title) {
-        abst.setGUITitle(title);
+    public void setAcceptTypes(TapeSymbol.Type... types) {
+        writeSynchronized(() -> {
+            acceptedTypes.clear();
+            acceptedTypes.addAll(Arrays.asList(types));
+        });
     }
 
     @Override
-    public boolean showPositions() {
+    public Set<TapeSymbol.Type> getAcceptedTypes() {
+        rwl.readLock().lock();
+        try {
+            return Collections.unmodifiableSet(acceptedTypes);
+        } finally {
+            rwl.readLock().unlock();
+        }
+    }
+
+    @Override
+    public void setTitle(String title) {
+        tape.setGUITitle(title);
+    }
+
+    @Override
+    public boolean getShowPositions() {
         return displayRowNumbers;
     }
 
@@ -95,97 +104,107 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
      */
     @Override
     public void clear() {
-        tape.clear();
-        currentPosition = 0;
+        writeSynchronized(() -> {
+            content.clear();
+            position = 0;
+        });
         fireChange();
     }
 
     void reset() {
-        currentPosition = 0;
         if (clearAtReset) {
             clear();
+        } else {
+            writeSynchronized(() -> position = 0);
+            fireChange();
         }
-        fireChange();
     }
 
     @Override
-    public void setBounded(boolean bounded) {
-        this.bounded = bounded;
+    public void setLeftBounded(boolean bounded) {
+        this.leftBounded = bounded;
     }
 
     @Override
-    public boolean isBounded() {
-        return bounded;
+    public boolean isLeftBounded() {
+        return leftBounded;
     }
 
     @Override
     public boolean moveLeft() {
-        if (currentPosition > 0) {
-            currentPosition--;
-            fireChange();
-            return true;
-        } else if (!bounded) {
-            currentPosition = 0;
-            tape.add(0, "");
-            fireChange();
-            return true;
-        }
-        return false;
+        AtomicBoolean moved = new AtomicBoolean(false);
+        writeSynchronized(() -> {
+            if (position > 0) {
+                position--;
+                moved.set(true);
+            } else if (!leftBounded) {
+                position = 0;
+                moved.set(true);
+            }
+        });
+        fireChange();
+        return moved.get();
     }
 
     @Override
     public void moveRight() {
-        currentPosition++;
-        if (currentPosition >= tape.size()) {
-            tape.add("");
-        }
+        writeSynchronized(() -> position++);
         fireChange();
     }
 
-    public void addSymbolFirst(String symbol) {
-        if (bounded) {
+    /**
+     * Adds symbol to the beginning of this tape.
+     *
+     * @param symbol tape symbol
+     * @throws IllegalArgumentException if the symbol type is not among accepted ones
+     */
+    public void addFirst(TapeSymbol symbol) {
+        if (leftBounded) {
             return;
         }
-        if (symbol == null) {
-            symbol = "";
-        }
-        tape.add(0, symbol);
-        writeSymbol(0, symbol);
-        currentPosition++;
+        writeSynchronized(() -> {
+            if (!acceptedTypes.contains(symbol.type)) {
+                throw new IllegalArgumentException("Tape symbol type is not accepted");
+            }
+            incrementContentPositions();
+            content.put(0, symbol);
+            logSymbol(0, symbol);
+            position++;
+        });
         fireChange();
     }
 
-    public void addSymbolLast(String symbol) {
-        if (symbol == null) {
-            symbol = "";
-        }
-        tape.add(symbol);
-        writeSymbol(tape.size() - 1, symbol);
+    /**
+     * Adds symbol at the end of this tape.
+     * The "end" is computed as the highest position + 1.
+     *
+     * @param symbol tape symbol
+     * @throws IllegalArgumentException if the symbol type is not among accepted ones
+     */
+    public void addLast(TapeSymbol symbol) {
+        writeSynchronized(() -> {
+            if (!acceptedTypes.contains(symbol.type)) {
+                throw new IllegalArgumentException("Tape symbol type is not accepted");
+            }
+            int index = position;
+            if (!content.isEmpty()) {
+                index = Collections.max(content.keySet()) + 1;
+            }
+            content.put(index, symbol);
+            logSymbol(index, symbol);
+        });
         fireChange();
     }
 
-    public void removeSymbol(int pos) {
-        if (pos >= tape.size()) {
-            return;
-        }
-        tape.remove(pos);
-        writeSymbol(pos, "");
-
-        if (this.currentPosition >= pos) {
-            this.currentPosition--;
-        }
-        fireChange();
-    }
-
-    public void editSymbol(int pos, String symbol) {
-        if (pos >= tape.size()) {
-            return;
-        }
-        if (symbol == null) {
-            symbol = "";
-        }
-        tape.set(pos, symbol);
-        writeSymbol(pos, symbol);
+    @Override
+    public void removeSymbolAt(int position) {
+        writeSynchronized(() -> {
+            content.remove(position);
+            logSymbol(position, TapeSymbol.EMPTY);
+            if (this.position >= position) {
+                this.position = (position > 0) ? position - 1 : 0;
+            }
+        });
         fireChange();
     }
 
@@ -199,31 +218,33 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     }
 
     @Override
-    public String getSymbolAt(int pos) {
-        if (pos >= tape.size() || (pos < 0)) {
-            return "";
+    public Optional<TapeSymbol> getSymbolAt(int position) {
+        rwl.readLock().lock();
+        try {
+            return Optional.ofNullable(content.get(position));
+        } finally {
+            rwl.readLock().unlock();
         }
-        return tape.get(pos);
     }
 
     @Override
-    public void setSymbolAt(int pos, String symbol) {
-        if (pos >= tape.size()) {
-            while (pos > tape.size()) {
-                tape.add("");
-            }
-            tape.add(symbol);
-            writeSymbol(pos, symbol);
-        } else if (pos >= 0) {
-            tape.set(pos, symbol);
-            writeSymbol(pos, symbol);
+    public void setSymbolAt(int position, TapeSymbol symbol) {
+        if (position < 0) {
+            return;
         }
+        writeSynchronized(() -> {
+            if (!acceptedTypes.contains(symbol.type)) {
+                throw new IllegalArgumentException("Tape symbol type is not accepted");
+            }
+            content.put(position, symbol);
+            logSymbol(position, symbol);
+        });
         fireChange();
     }
 
     @Override
-    public void setHighlightHeadPosition(boolean visible) {
-        highlightCurrentPosition = visible;
+    public void setHighlightHeadPosition(boolean highlight) {
+        highlightCurrentPosition = highlight;
     }
 
     @Override
@@ -237,82 +258,85 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
 
     @Override
     public int getSize() {
-        return tape.size();
+        rwl.readLock().lock();
+        try {
+            return content.size();
+        } finally {
+            rwl.readLock().unlock();
+        }
     }
 
     @Override
     public int getHeadPosition() {
-        return currentPosition;
+        rwl.readLock().lock();
+        try {
+            return position;
+        } finally {
+            rwl.readLock().unlock();
+        }
     }
 
     @Override
     public boolean isEmpty() {
-        return tape.isEmpty();
-    }
-
-    @Override
-    public String readData() {
-        if (currentPosition >= tape.size() || (currentPosition < 0)) {
-            return "";
-        }
-        return tape.get(currentPosition);
-    }
-
-    @Override
-    public void writeData(String data) {
-        if (currentPosition >= tape.size()) {
-            tape.add(currentPosition, data);
-        } else {
-            tape.set(currentPosition, data);
-        }
-        writeSymbol(currentPosition, data);
-        fireChange();
-    }
-
-    @Override
-    public Class<String> getDataType() {
-        return String.class;
-    }
-
-    private void writeSymbol(int position, String symbol) {
-        if (outw != null) {
-            try {
-                outw.write(position + " ");
-                outw.write(symbol + "\n");
-                outw.flush();
-            } catch (IOException e) {
-                LOGGER.error("Could not write to the output file", e);
-            }
+        rwl.readLock().lock();
+        try {
+            return content.isEmpty();
+        } finally {
+            rwl.readLock().unlock();
         }
     }
 
-    private String createValidFileName(String str) {
-        return str.trim().toLowerCase().replaceAll("[*.#%&\\s+!~/?<>,|{}\\[\\]\\\\\"'`=]", "_");
+    @Override
+    public TapeSymbol readData() {
+        rwl.readLock().lock();
+        try {
+            return content.getOrDefault(position, TapeSymbol.EMPTY);
+        } finally {
+            rwl.readLock().unlock();
+        }
+    }
+
+    @Override
+    public void writeData(TapeSymbol symbol) {
+        setSymbolAt(position, symbol);
+    }
+
+    @Override
+    public Class<TapeSymbol> getDataType() {
+        return TapeSymbol.class;
     }
 
     /**
-     * Set verbose mode. If verbose mode is set, the output
-     * is redirected also to a file.
+     * Set if changed symbols should be logged in a file.
+     * <p>
+     * The log file name will be derived from a tape title: [tape-title].out
      *
-     * @param verbose set/reset/unset verbose mode
+     * @param logSymbols whether to log symbols in a file
      */
-    void setVerbose(boolean verbose) {
-        if (outw != null) {
-            try {
-                outw.close();
-            } catch (IOException e) {
-                LOGGER.error("Could not close output file", e);
+    void setLogSymbols(boolean logSymbols) {
+        // should be called in a synchronized context
+
+        if (!logSymbols) {
+            Writer w = symbolLog.getAndSet(null);
+            if (w != null) {
+                LOGGER.info("Stopping logging symbols changes");
+                try {
+                    w.close();
+                } catch (IOException e) {
+                    LOGGER.error("Could not close the symbol log", e);
+                }
             }
-            outw = null;
-        }
-        if (verbose) {
-            String fileName = createValidFileName(abst.getTitle().trim());
-            LOGGER.info("Being verbose. Writing to file:" + fileName + ".out");
-            File f = new File(fileName + ".out");
+        } else {
+            String fileName = createValidFileName(tape.getTitle().trim()) + ".out";
+            File file = new File(fileName + ".out");
+            LOGGER.info("Starting logging symbols changes to a file:" + fileName);
             try {
-                outw = new FileWriter(f);
+                Writer w = new FileWriter(file);
+                if (!symbolLog.compareAndSet(null, w)) {
+                    w.close();
+                }
             } catch (IOException e) {
-                LOGGER.error("Could not create FileWriter", e);
+                LOGGER.error("Could not create the symbol log file", e);
             }
         }
     }
@@ -321,9 +345,45 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         this.listener = listener;
     }
 
+    private void writeSynchronized(Runnable r) {
+        rwl.writeLock().lock();
+        try {
+            r.run();
+        } finally {
+            rwl.writeLock().unlock();
+        }
+    }
+
+
     private void fireChange() {
         if (listener != null) {
             listener.tapeChanged();
         }
+    }
+
+    private void logSymbol(int position, TapeSymbol symbol) {
+        Writer w = symbolLog.get();
+        if (w != null) {
+            try {
+                w.write(position + " " + symbol + "\n");
+                w.flush();
+            } catch (IOException e) {
+                LOGGER.error("Could not write a symbol to symbol log", e);
+            }
+        }
+    }
+
+    private String createValidFileName(String str) {
+        return str.trim().toLowerCase().replaceAll("[*.#%&\\s+!~/?<>,|{}\\[\\]\\\\\"'`=]", "_");
+    }
+
+    // should be called in a synchronized context
+    private void incrementContentPositions() {
+        Map<Integer, TapeSymbol> newContent = new HashMap<>();
+        for (int position : content.keySet()) {
+            newContent.put(position + 1, content.get(position));
+        }
+        content.clear();
+        content.putAll(newContent);
     }
 }

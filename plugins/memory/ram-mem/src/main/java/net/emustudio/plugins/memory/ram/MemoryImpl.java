@@ -31,10 +31,7 @@ import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-@PluginRoot(
-    type = PLUGIN_TYPE.MEMORY,
-    title = "RAM Program Tape"
-)
+@PluginRoot(type = PLUGIN_TYPE.MEMORY, title = "RAM Program Tape")
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
     private final MemoryContextImpl context;
