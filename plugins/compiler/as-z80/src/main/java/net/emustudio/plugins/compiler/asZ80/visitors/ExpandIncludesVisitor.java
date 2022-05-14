@@ -90,8 +90,11 @@ public class ExpandIncludesVisitor extends NodeVisitor {
             return includeFileName;
         }
 
-        String includeFileNameNormalized = includeFileName.replace("\\", File.separator);
+        String includeFileNameNormalized = includeFileName
+            .replace("/", File.separator)
+            .replace("\\", File.separator);
         return inputFileName
+            .map(f -> f.replace("/", File.separator))
             .map(f -> f.replace("\\", File.separator))
             .map(File::new)
             .map(File::getParentFile)

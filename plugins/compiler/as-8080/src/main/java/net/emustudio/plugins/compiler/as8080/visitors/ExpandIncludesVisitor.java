@@ -61,9 +61,8 @@ public class ExpandIncludesVisitor extends NodeVisitor {
             fatalError(infiniteLoopDetected(node, "include"));
         }
 
+        String absoluteFileName = findAbsoluteFileName(node.filename);
         try {
-            String absoluteFileName = findAbsoluteFileName(node.filename);
-
             As8080Lexer lexer = new As8080Lexer(CharStreams.fromFileName(absoluteFileName));
             CommonTokenStream stream = new CommonTokenStream(lexer);
             As8080Parser parser = new As8080Parser(stream);
@@ -81,7 +80,7 @@ public class ExpandIncludesVisitor extends NodeVisitor {
             node.addChildren(program.getChildren());
             node.exclude();
         } catch (IOException e) {
-            error(couldNotReadFile(node, node.filename, e));
+            error(couldNotReadFile(node, absoluteFileName, e));
         }
     }
 
@@ -91,8 +90,11 @@ public class ExpandIncludesVisitor extends NodeVisitor {
             return includeFileName;
         }
 
-        String includeFileNameNormalized = includeFileName.replace("\\", File.separator);
+        String includeFileNameNormalized = includeFileName
+            .replace("/", File.separator)
+            .replace("\\", File.separator);
         return inputFileName
+            .map(f -> f.replace("/", File.separator))
             .map(f -> f.replace("\\", File.separator))
             .map(File::new)
             .map(File::getParentFile)

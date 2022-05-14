@@ -118,6 +118,7 @@ public class Assembler8080 extends AbstractCompiler {
             parser.addErrorListener(new ParserErrorListener());
 
             Program program = new Program();
+            program.setFileName(inputFileName);
             new CreateProgramVisitor(program).visit(parser.rStart());
 
             IntelHEX hex = new IntelHEX();
