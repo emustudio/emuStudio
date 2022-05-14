@@ -126,6 +126,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[PREP_DW] = Token.PREPROCESSOR;
         tokenMap[PREP_DS] = Token.PREPROCESSOR;
         tokenMap[PREP_ADDR] = Token.PREPROCESSOR;
+        tokenMap[PREP_END] = Token.PREPROCESSOR;
 
         tokenMap[REG_A] = Token.REGISTER;
         tokenMap[REG_B] = Token.REGISTER;
