@@ -140,6 +140,7 @@ PREP_DB: D B;
 PREP_DW: D W;
 PREP_DS: D S;
 PREP_ADDR: '$';
+PREP_END: E N D;
 
 // registers
 REG_A: A;

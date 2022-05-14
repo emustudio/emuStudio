@@ -23,7 +23,7 @@ options {
 }
 
 rStart:
- (rLine EOL rLine)* EOF
+ (rLine EOL rLine)* (PREP_END comment (EOL comment)*)? EOF
  | rLine EOF
  ;
 
