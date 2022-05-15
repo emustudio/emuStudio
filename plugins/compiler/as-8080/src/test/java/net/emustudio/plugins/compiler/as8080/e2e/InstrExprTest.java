@@ -17,4 +17,10 @@ public class InstrExprTest extends AbstractCompilerTest {
             0xC3, 0x04, 0x00,  0xC7, 0x3E, 0x01
         );
     }
+
+    @Test
+    public void testCPI() throws Exception {
+        compile("cpi '9' + 1");
+        assertProgram(0xFE, '9' + 1);
+    }
 }

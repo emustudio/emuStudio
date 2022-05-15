@@ -44,4 +44,10 @@ public class InstrExprTest extends AbstractCompilerTest {
         compile("halt\ndjnz $+0x20"); // if it is complex expression, treat it like exact value
         assertProgram(0x76, 0x10, 0x21);
     }
+
+    @Test
+    public void testCP() {
+        compile("cp '9' + 1");
+        assertProgram(0xFE, '9' + 1);
+    }
 }
