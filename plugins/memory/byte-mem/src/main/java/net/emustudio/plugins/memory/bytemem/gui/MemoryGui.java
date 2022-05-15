@@ -117,7 +117,7 @@ public class MemoryGui extends JDialog {
         int address = tableModel.getRowCount() * tableModel.getColumnCount()
             * tableModel.getPage() + row * tableModel.getColumnCount() + column;
 
-        int data = Integer.parseInt(tableModel.getValueAt(row, column).toString(), 16);
+        int data = tableModel.getRawValueAt(row, column);
         txtAddress.setText(String.format("%04X", address));
         txtChar.setText(String.format("%c", (char) (data & 0xFF)));
         txtValueDec.setText(String.format("%02d", data));
@@ -128,7 +128,7 @@ public class MemoryGui extends JDialog {
 
 
     private void initComponents() {
-        JToolBar jToolBar1 = new JToolBar();
+        JToolBar toolBar = new JToolBar();
         JButton btnLoadImage = new JButton();
         JButton btnDump = new JButton();
         JButton btnGotoAddress = new JButton();
@@ -140,28 +140,17 @@ public class MemoryGui extends JDialog {
         JPanel jPanel3 = new JPanel();
         JLabel jLabel1 = new JLabel();
         JLabel jLabel2 = new JLabel();
-        spnPage = new JSpinner();
-        lblPageCount = new JLabel();
         JLabel jLabel3 = new JLabel();
         JLabel jLabel4 = new JLabel();
-        spnBank = new JSpinner();
-        lblBanksCount = new JLabel();
         JPanel jPanel4 = new JPanel();
         JLabel jLabel5 = new JLabel();
-        txtAddress = new JTextField();
         JLabel jLabel6 = new JLabel();
-        txtChar = new JTextField();
         JSeparator jSeparator4 = new JSeparator();
         JLabel jLabel7 = new JLabel();
-        txtValueDec = new JTextField();
         JLabel jLabel8 = new JLabel();
-        txtValueHex = new JTextField();
         JLabel jLabel9 = new JLabel();
-        txtValueOct = new JTextField();
         JLabel jLabel10 = new JLabel();
-        txtValueBin = new JTextField();
         JLabel jLabel11 = new JLabel();
-        paneMemory = new JScrollPane();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -169,8 +158,8 @@ public class MemoryGui extends JDialog {
         setTitle("Byte Operating Memory");
         setSize(new java.awt.Dimension(794, 629));
 
-        jToolBar1.setFloatable(false);
-        jToolBar1.setRollover(true);
+        toolBar.setFloatable(false);
+        toolBar.setRollover(true);
 
         btnLoadImage.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/document-open.png")));
         btnLoadImage.setToolTipText("Load image...");
@@ -179,7 +168,7 @@ public class MemoryGui extends JDialog {
         btnLoadImage.setHorizontalTextPosition(SwingConstants.CENTER);
         btnLoadImage.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnLoadImage.addActionListener(this::btnLoadImageActionPerformed);
-        jToolBar1.add(btnLoadImage);
+        toolBar.add(btnLoadImage);
 
         btnDump.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/document-save.png")));
         btnDump.setToolTipText("Dump (save) memory...");
@@ -188,8 +177,8 @@ public class MemoryGui extends JDialog {
         btnDump.setHorizontalTextPosition(SwingConstants.CENTER);
         btnDump.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnDump.addActionListener(this::btnDumpActionPerformed);
-        jToolBar1.add(btnDump);
-        jToolBar1.addSeparator();
+        toolBar.add(btnDump);
+        toolBar.addSeparator();
 
         btnGotoAddress.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/format-indent-more.png")));
         btnGotoAddress.setToolTipText("Go to address...");
@@ -198,7 +187,7 @@ public class MemoryGui extends JDialog {
         btnGotoAddress.setHorizontalTextPosition(SwingConstants.CENTER);
         btnGotoAddress.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnGotoAddress.addActionListener(this::btnGotoAddressActionPerformed);
-        jToolBar1.add(btnGotoAddress);
+        toolBar.add(btnGotoAddress);
 
         btnFind.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/edit-find.png")));
         btnFind.setToolTipText("Find sequence...");
@@ -207,8 +196,19 @@ public class MemoryGui extends JDialog {
         btnFind.setHorizontalTextPosition(SwingConstants.CENTER);
         btnFind.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnFind.addActionListener(this::btnFindActionPerformed);
-        jToolBar1.add(btnFind);
-        jToolBar1.addSeparator();
+        toolBar.add(btnFind);
+        toolBar.addSeparator();
+
+        btnAsciiMode.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/ascii-mode.png")));
+        btnAsciiMode.setToolTipText("Toggle ASCII mode...");
+        btnAsciiMode.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        btnAsciiMode.setFocusable(false);
+        btnAsciiMode.setHorizontalTextPosition(SwingConstants.CENTER);
+        btnAsciiMode.setVerticalTextPosition(SwingConstants.BOTTOM);
+        btnAsciiMode.setSelected(false);
+        btnAsciiMode.addActionListener(this::btnSymbolModeActionPerformed);
+        toolBar.add(btnAsciiMode);
+        toolBar.addSeparator();
 
         btnClean.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/edit-clear.png")));
         btnClean.setToolTipText("Erase memory");
@@ -217,8 +217,8 @@ public class MemoryGui extends JDialog {
         btnClean.setHorizontalTextPosition(SwingConstants.CENTER);
         btnClean.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnClean.addActionListener(this::btnCleanActionPerformed);
-        jToolBar1.add(btnClean);
-        jToolBar1.addSeparator();
+        toolBar.add(btnClean);
+        toolBar.addSeparator();
 
         btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/preferences-system.png")));
         btnSettings.setToolTipText("Settings...");
@@ -227,7 +227,7 @@ public class MemoryGui extends JDialog {
         btnSettings.setHorizontalTextPosition(SwingConstants.CENTER);
         btnSettings.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnSettings.addActionListener(this::btnSettingsActionPerformed);
-        jToolBar1.add(btnSettings);
+        toolBar.add(btnSettings);
 
         splitPane.setDividerLocation(390);
         splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -427,13 +427,13 @@ public class MemoryGui extends JDialog {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(jToolBar1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(toolBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(splitPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
-                    .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 598, Short.MAX_VALUE))
         );
@@ -441,7 +441,7 @@ public class MemoryGui extends JDialog {
         pack();
     }
 
-    private void btnLoadImageActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnLoadImageActionPerformed(ActionEvent evt) {
         dialogs.chooseFile(
             "Load memory image", "Load", Path.of(System.getProperty("user.dir")), false,
             new FileExtensionsFilter("Memory image", "hex", "bin")
@@ -467,12 +467,12 @@ public class MemoryGui extends JDialog {
         });
     }
 
-    private void btnCleanActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCleanActionPerformed(ActionEvent evt) {
         context.clear();
         tableModel.fireTableDataChanged();
     }
 
-    private void btnGotoAddressActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnGotoAddressActionPerformed(ActionEvent evt) {
         try {
             dialogs
                 .readInteger("Enter memory address:", "Go to address")
@@ -490,7 +490,7 @@ public class MemoryGui extends JDialog {
         }
     }
 
-    private void btnFindActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnFindActionPerformed(ActionEvent evt) {
         AtomicInteger foundAddress = new AtomicInteger(-1);
         FindSequenceDialog dialog = new FindSequenceDialog(
             dialogs, this, tableModel, getCurrentAddress(), foundAddress::set
@@ -504,11 +504,15 @@ public class MemoryGui extends JDialog {
         }
     }
 
-    private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnSymbolModeActionPerformed(ActionEvent evt) {
+        tableModel.setAsciiMode(btnAsciiMode.isSelected());
+    }
+
+    private void btnSettingsActionPerformed(ActionEvent evt) {
         new SettingsDialog(this, memory, context, table, settings, dialogs).setVisible(true);
     }
 
-    private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnDumpActionPerformed(ActionEvent evt) {
         Path currentDirectory = Path.of(System.getProperty("user.dir"));
         dialogs.chooseFile(
             "Dump memory content into a file", "Save", currentDirectory, true,
@@ -554,15 +558,16 @@ public class MemoryGui extends JDialog {
     }
 
 
-    private JLabel lblBanksCount;
-    private JLabel lblPageCount;
-    private JScrollPane paneMemory;
-    private JSpinner spnBank;
-    private JSpinner spnPage;
-    private JTextField txtAddress;
-    private JTextField txtChar;
-    private JTextField txtValueBin;
-    private JTextField txtValueDec;
-    private JTextField txtValueHex;
-    private JTextField txtValueOct;
+    private final JLabel lblBanksCount = new JLabel();
+    private final JLabel lblPageCount = new JLabel();
+    private final JScrollPane paneMemory = new JScrollPane();
+    private final JSpinner spnBank = new JSpinner();
+    private final JSpinner spnPage = new JSpinner();
+    private final JTextField txtAddress = new JTextField();
+    private final JTextField txtChar = new JTextField();
+    private final JTextField txtValueBin = new JTextField();
+    private final JTextField txtValueDec = new JTextField();
+    private final JTextField txtValueHex = new JTextField();
+    private final JTextField txtValueOct = new JTextField();
+    private final JToggleButton btnAsciiMode = new JToggleButton();
 }
