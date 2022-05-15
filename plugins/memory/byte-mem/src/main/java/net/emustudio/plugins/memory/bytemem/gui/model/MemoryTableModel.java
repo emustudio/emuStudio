@@ -31,6 +31,7 @@ public class MemoryTableModel extends AbstractTableModel {
     private final MemoryContextImpl memory;
     private int currentPage = 0;
     private int currentBank = 0;
+    private volatile boolean asciiMode;
 
     public MemoryTableModel(MemoryContextImpl memory) {
         this.memory = Objects.requireNonNull(memory);
@@ -52,29 +53,39 @@ public class MemoryTableModel extends AbstractTableModel {
     }
 
     boolean isROMAt(int rowIndex, int columnIndex) {
-        int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
-        return memory.isReadOnly(pos);
+        int address = toAddress(rowIndex, columnIndex);
+        return memory.isReadOnly(address);
     }
 
     boolean isAtBANK(int rowIndex, int columnIndex) {
-        int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
-        return pos < memory.getCommonBoundary();
+        int address = toAddress(rowIndex, columnIndex);
+        return address < memory.getCommonBoundary();
+    }
+
+    public void setAsciiMode(boolean asciiMode) {
+        this.asciiMode = asciiMode;
+        fireTableDataChanged();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
-        if (pos >= memory.getSize()) {
-            return ".";
+        int value = getRawValueAt(rowIndex, columnIndex);
+        return asciiMode ? (char)value : String.format("%02X", value);
+    }
+
+    public int getRawValueAt(int rowIndex, int columnIndex) {
+        int address = toAddress(rowIndex, columnIndex);
+        if (address >= memory.getSize()) {
+            return 0;
         }
-        return String.format("%1$02X", memory.readBank(pos, currentBank));
+        return memory.readBank(address, currentBank) & 0xFF;
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
+        int address = toAddress(rowIndex, columnIndex);
         try {
-            memory.writeBank(pos, Byte.decode(String.valueOf(aValue)), currentBank);
+            memory.writeBank(address, Byte.decode(String.valueOf(aValue)), currentBank);
             fireTableCellUpdated(rowIndex, columnIndex);
         } catch (NumberFormatException e) {
             // ignored
@@ -135,5 +146,9 @@ public class MemoryTableModel extends AbstractTableModel {
 
     public int getCurrentBank() {
         return currentBank;
+    }
+
+    public int toAddress(int row, int column) {
+        return ROW_COUNT * COLUMN_COUNT * currentPage + row * COLUMN_COUNT + column;
     }
 }

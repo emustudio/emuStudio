@@ -82,8 +82,8 @@ public class TableMemory extends JTable {
     }
 
     private class MemCellRenderer extends JLabel implements TableCellRenderer {
-        private JList<String> rowHeader;
-        private String[] adresses;
+        private final JList<String> rowHeader;
+        private final String[] addresses;
         private int currentPage;
         private final Color romColor = new Color(0xE8, 0x68, 0x50);
 
@@ -93,12 +93,12 @@ public class TableMemory extends JTable {
             setBorder(BorderFactory.createEmptyBorder());
 
             currentPage = tableModel.getPage();
-            adresses = new String[tableModel.getRowCount()];
-            for (int i = 0; i < adresses.length; i++) {
-                adresses[i] = RadixUtils.formatWordHexString(tableModel.getColumnCount() * i
+            addresses = new String[tableModel.getRowCount()];
+            for (int i = 0; i < addresses.length; i++) {
+                addresses[i] = RadixUtils.formatWordHexString(tableModel.getColumnCount() * i
                     + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage) + "h";
             }
-            rowHeader = new JList<>(adresses);
+            rowHeader = new JList<>(addresses);
             this.setFont(MONOSPACED_PLAIN);
 
             FontMetrics fm = rowHeader.getFontMetrics(rowHeader.getFont());
@@ -114,17 +114,17 @@ public class TableMemory extends JTable {
             paneMemory.setRowHeaderView(rowHeader);
         }
 
-        private void remakeAdresses() {
+        private void remakeAddresses() {
             if (currentPage == tableModel.getPage()) {
                 return;
             }
             currentPage = tableModel.getPage();
-            for (int i = 0; i < adresses.length; i++) {
-                adresses[i] = String.format("%1$04Xh",
+            for (int i = 0; i < addresses.length; i++) {
+                addresses[i] = String.format("%1$04Xh",
                     tableModel.getColumnCount() * i + tableModel.getColumnCount()
                         * tableModel.getRowCount() * currentPage);
             }
-            rowHeader.setListData(adresses);
+            rowHeader.setListData(addresses);
         }
 
         @Override
@@ -143,7 +143,7 @@ public class TableMemory extends JTable {
                 }
                 this.setForeground(Color.BLACK);
             }
-            remakeAdresses();
+            remakeAddresses();
             setText(value.toString());
             return this;
         }
@@ -162,11 +162,11 @@ public class TableMemory extends JTable {
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                                                     boolean isSelected, int rowIndex, int vColIndex) {
+                                                     boolean isSelected, int row, int column) {
             if (!isSelected) {
                 return null;
             }
-            textField.setText("0x" + value);
+            textField.setText("0x" + String.format("%02X", tableModel.getRawValueAt(row, column)));
             return textField;
         }
 
