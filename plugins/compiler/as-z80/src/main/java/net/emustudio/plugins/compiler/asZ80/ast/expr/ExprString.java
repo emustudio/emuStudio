@@ -18,11 +18,14 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.expr;
 
+import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
+import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.parseLitString;
 
@@ -48,6 +51,14 @@ public class ExprString extends Node {
         return new ExprString(line, column, string);
     }
 
+    @Override
+    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
+        if (string.length() == 1) {
+            return Optional.of(new Evaluated(line, column, string.charAt(0) & 0xFF));
+        }
+        return Optional.empty();
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
