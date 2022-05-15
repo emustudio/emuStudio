@@ -23,4 +23,12 @@ public class InstrExprTest extends AbstractCompilerTest {
         compile("cpi '9' + 1");
         assertProgram(0xFE, '9' + 1);
     }
+
+    @Test
+    public void testForwardCall() throws Exception {
+        compile("call sample\n" +
+            "label: db 'hello'\n" +
+            "sample: hlt");
+        assertProgram(0xCD, 0x08, 0x00, 'h', 'e', 'l', 'l', 'o', 0x76);
+    }
 }

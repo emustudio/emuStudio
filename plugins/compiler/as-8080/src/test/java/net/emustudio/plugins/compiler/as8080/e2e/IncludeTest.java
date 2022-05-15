@@ -31,9 +31,19 @@ public class IncludeTest extends AbstractCompilerTest {
             "call sample\n"
                 + "include '" + includeFile.getAbsolutePath() + "'\n"
         );
+        assertProgram(0xCD, 0x03, 0x00, 0x3E, 0, 0xC9);
+    }
 
+    @Test
+    public void testCallDataInclude() throws Exception {
+        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        compile(
+            "call sample\n" +
+                "label: db 'hello'\n" +
+                "include '" + includeFile.getAbsolutePath() + "'\n"
+        );
         assertProgram(
-            0xCD, 0x03, 0x00, 0x3E, 0, 0xC9
+            0xCD, 0x08, 0x00, 'h', 'e', 'l', 'l', 'o', 0x3E, 0, 0xC9
         );
     }
 
@@ -48,7 +58,7 @@ public class IncludeTest extends AbstractCompilerTest {
         );
 
         assertProgram(
-            0xCD, 06, 00, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9
+            0xCD, 6, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9
         );
     }
 

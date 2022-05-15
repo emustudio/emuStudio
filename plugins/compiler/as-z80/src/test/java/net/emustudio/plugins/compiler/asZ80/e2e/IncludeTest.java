@@ -38,6 +38,19 @@ public class IncludeTest extends AbstractCompilerTest {
     }
 
     @Test
+    public void testCallDataInclude() throws Exception {
+        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        compile(
+            "call sample\n" +
+                "label: db 'hello'\n" +
+                "include '" + includeFile.getAbsolutePath() + "'\n"
+        );
+        assertProgram(
+            0xCD, 0x08, 0x00, 'h', 'e', 'l', 'l', 'o', 0x3E, 0, 0xC9
+        );
+    }
+
+    @Test
     public void testDoubleIncludeAndForwardCall() throws Exception {
         File first = new File(getClass().getResource("/sample.asm").toURI());
         File second = new File(getClass().getResource("/sample2.asm").toURI());
