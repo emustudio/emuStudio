@@ -334,14 +334,17 @@ public class EvaluateExprVisitor extends NodeVisitor {
                 result |= (node.string.charAt(1) << 8);
             }
             node.addChild(new Evaluated(node.line, node.column, result).setSizeBytes(2));
+            currentAddress += sizeBytes;
         } else {
             int maxValue = node.getMaxValue().map(v -> Math.min(v, 0xFF)).orElse(0xFF);
             for (int i = 0; i < strLen; i++) {
                 node.addChild(new Evaluated(node.line, node.column, node.string.charAt(i)).setMaxValue(maxValue));
             }
+            if (sizeBytes != 0) {
+                currentAddress += strLen;
+            }
         }
         node.exclude();
-        currentAddress += sizeBytes;
     }
 
     private Optional<Integer> getCurrentAddress() {

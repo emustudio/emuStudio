@@ -342,13 +342,16 @@ public class EvaluateExprVisitor extends NodeVisitor {
                 result |= (node.string.charAt(1) << 8);
             }
             node.addChild(new Evaluated(node.line, node.column, result));
+            currentAddress += sizeBytes;
         } else {
             for (int i = 0; i < strLen; i++) {
                 node.addChild(new Evaluated(node.line, node.column, node.string.charAt(i)));
             }
+            if (sizeBytes != 0) {
+                currentAddress += strLen;
+            }
         }
         node.exclude();
-        currentAddress += sizeBytes;
     }
 
     private Optional<Integer> getCurrentAddress() {
