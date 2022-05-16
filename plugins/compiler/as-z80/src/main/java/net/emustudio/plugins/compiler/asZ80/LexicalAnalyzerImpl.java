@@ -39,6 +39,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[IM_WS] = Token.WHITESPACE;
         tokenMap[COND_WS] = Token.WHITESPACE;
         tokenMap[OPCODE_ADC] = Token.RESERVED;
+        tokenMap[OPCODE_AND] = Token.RESERVED;
         tokenMap[OPCODE_ADD] = Token.RESERVED;
         tokenMap[OPCODE_BIT] = Token.RESERVED;
         tokenMap[OPCODE_CALL] = Token.RESERVED;
