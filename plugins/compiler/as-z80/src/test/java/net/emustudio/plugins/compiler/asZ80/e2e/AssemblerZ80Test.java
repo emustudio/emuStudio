@@ -92,6 +92,12 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
         );
     }
 
+    @Test
+    public void testCP() {
+        compile("cp 'C'");
+        assertProgram(0xFE, 'C');
+    }
+
     @Test(expected = Exception.class)
     public void testRSTtooBigArgument() {
         compile("rst 14");

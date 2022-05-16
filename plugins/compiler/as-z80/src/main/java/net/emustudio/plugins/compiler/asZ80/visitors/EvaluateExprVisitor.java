@@ -340,7 +340,9 @@ public class EvaluateExprVisitor extends NodeVisitor {
             for (int i = 0; i < strLen; i++) {
                 node.addChild(new Evaluated(node.line, node.column, node.string.charAt(i)).setMaxValue(maxValue));
             }
-            currentAddress += strLen;
+            if (sizeBytes != 0) {
+                currentAddress += strLen;
+            }
         }
         node.exclude();
     }
