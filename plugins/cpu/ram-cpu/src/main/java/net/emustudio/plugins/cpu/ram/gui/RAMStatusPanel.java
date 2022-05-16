@@ -50,8 +50,9 @@ public class RAMStatusPanel extends JPanel {
                 txtR0.setText(repr);
                 txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
 
-                txtInput.setText(input.getSymbolAt(input.getHeadPosition()).toString());
-                txtOutput.setText(output.getSymbolAt(0).toString());
+                txtInput.setText(input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>"));
+                int outputPos = Math.max(0, output.getHeadPosition() - 1);
+                txtOutput.setText(output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>"));
             }
         });
     }
