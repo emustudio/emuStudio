@@ -26,8 +26,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
+import static net.emustudio.plugins.compiler.ssem.SSEMLexer.*;
+
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     private final SSEMLexer lexer;
+    public static final int[] tokenMap = new int[SSEMLexer.BERROR + 1];
+    static {
+        tokenMap[COMMENT] = Token.COMMENT;
+        tokenMap[EOL] = Token.WHITESPACE;
+        tokenMap[WS] = Token.WHITESPACE;
+        tokenMap[BWS] = Token.WHITESPACE;
+        tokenMap[JMP] = Token.RESERVED;
+        tokenMap[JPR] = Token.RESERVED;
+        tokenMap[LDN] = Token.RESERVED;
+        tokenMap[STO] = Token.RESERVED;
+        tokenMap[SUB] = Token.RESERVED;
+        tokenMap[CMP] = Token.RESERVED;
+        tokenMap[STP] = Token.RESERVED;
+        tokenMap[START] = Token.LABEL;
+        tokenMap[NUM] = Token.PREPROCESSOR;
+        tokenMap[BNUM] = Token.PREPROCESSOR;
+        tokenMap[NUMBER] = Token.LITERAL;
+        tokenMap[HEXNUMBER] = Token.LITERAL;
+        tokenMap[BinaryNumber] = Token.LITERAL;
+        tokenMap[ERROR] = Token.ERROR;
+        tokenMap[BERROR] = Token.ERROR;
+    }
 
     public LexicalAnalyzerImpl(SSEMLexer lexer) {
         this.lexer = Objects.requireNonNull(lexer);
@@ -65,33 +89,9 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     private int convertLexerTokenType(int tokenType) {
-        switch (tokenType) {
-            case SSEMLexer.COMMENT:
-                return Token.COMMENT;
-            case SSEMLexer.EOL:
-            case SSEMLexer.WS:
-            case SSEMLexer.BWS:
-                return Token.WHITESPACE;
-            case SSEMLexer.JMP:
-            case SSEMLexer.JPR:
-            case SSEMLexer.LDN:
-            case SSEMLexer.STO:
-            case SSEMLexer.SUB:
-            case SSEMLexer.CMP:
-            case SSEMLexer.STP:
-                return Token.RESERVED;
-            case SSEMLexer.START:
-                return Token.LABEL;
-            case SSEMLexer.NUM:
-            case SSEMLexer.BNUM:
-                return Token.PREPROCESSOR;
-            case SSEMLexer.NUMBER:
-            case SSEMLexer.HEXNUMBER:
-            case SSEMLexer.BinaryNumber:
-                return Token.LITERAL;
-            case SSEMLexer.EOF:
-                return Token.EOF;
+        if (tokenType == EOF) {
+            return Token.EOF;
         }
-        return Token.ERROR;
+        return tokenMap[tokenType];
     }
 }

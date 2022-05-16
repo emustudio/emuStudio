@@ -30,10 +30,11 @@ import static net.emustudio.plugins.compiler.asZ80.AsZ80Lexer.*;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     private final AsZ80Lexer lexer;
-    private static final int[] tokenMap = new int[AsZ80Lexer.EOL + 1];
+    public static final int[] tokenMap = new int[AsZ80Lexer.EOL + 1];
 
     static {
         tokenMap[COMMENT] = Token.COMMENT;
+        tokenMap[COMMENT2] = Token.COMMENT;
         tokenMap[EOL] = Token.WHITESPACE;
         tokenMap[WS] = Token.WHITESPACE;
         tokenMap[IM_WS] = Token.WHITESPACE;
@@ -114,6 +115,10 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[COND_P] = Token.RESERVED;
         tokenMap[COND_PE] = Token.RESERVED;
         tokenMap[COND_PO] = Token.RESERVED;
+        tokenMap[IM_01] = Token.RESERVED;
+        tokenMap[IM_0] = Token.RESERVED;
+        tokenMap[IM_1] = Token.RESERVED;
+        tokenMap[IM_2] = Token.RESERVED;
 
         tokenMap[PREP_ORG] = Token.PREPROCESSOR;
         tokenMap[PREP_EQU] = Token.PREPROCESSOR;

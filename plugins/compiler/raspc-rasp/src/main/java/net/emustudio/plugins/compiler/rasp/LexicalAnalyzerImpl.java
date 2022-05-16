@@ -31,7 +31,7 @@ import static org.antlr.v4.runtime.Recognizer.EOF;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     private final RASPLexer lexer;
-    private static final int[] tokenMap = new int[ERROR + 1];
+    public static final int[] tokenMap = new int[ERROR + 1];
 
     static {
         tokenMap[COMMENT] = Token.COMMENT;

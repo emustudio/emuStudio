@@ -30,10 +30,11 @@ import static net.emustudio.plugins.compiler.as8080.As8080Lexer.*;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     private final As8080Lexer lexer;
-    private static final int[] tokenMap = new int[As8080Lexer.EOL + 1];
+    public static final int[] tokenMap = new int[As8080Lexer.EOL + 1];
 
     static {
         tokenMap[COMMENT] = Token.COMMENT;
+        tokenMap[COMMENT2] = Token.COMMENT;
         tokenMap[EOL] = Token.WHITESPACE;
         tokenMap[WS] = Token.WHITESPACE;
         tokenMap[OPCODE_STC] = Token.RESERVED;

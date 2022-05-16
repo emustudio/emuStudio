@@ -26,8 +26,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
+import static net.emustudio.plugins.compiler.brainduck.BraincLexer.*;
+
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     private final BraincLexer lexer;
+    public static final int[] tokenMap = new int[COMMENT + 1];
+    static {
+        tokenMap[COMMENT] = Token.COMMENT;
+        tokenMap[WS] = Token.WHITESPACE;
+        tokenMap[DEC] = Token.RESERVED;
+        tokenMap[DECV] = Token.RESERVED;
+        tokenMap[INC] = Token.RESERVED;
+        tokenMap[INCV] = Token.RESERVED;
+        tokenMap[PRINT] = Token.RESERVED;
+        tokenMap[LOAD] = Token.RESERVED;
+        tokenMap[LOOP] = Token.RESERVED;
+        tokenMap[HALT] = Token.RESERVED;
+        tokenMap[ENDL] = Token.RESERVED;
+    }
 
     public LexicalAnalyzerImpl(BraincLexer lexer) {
         this.lexer = Objects.requireNonNull(lexer);
@@ -65,23 +81,9 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     private int convertLexerTokenType(int tokenType) {
-        switch (tokenType) {
-            case BraincLexer.COMMENT:
-                return Token.COMMENT;
-            case BraincLexer.WS:
-                return Token.WHITESPACE;
-            case BraincLexer.DEC:
-            case BraincLexer.DECV:
-            case BraincLexer.INC:
-            case BraincLexer.INCV:
-            case BraincLexer.PRINT:
-            case BraincLexer.LOAD:
-            case BraincLexer.LOOP:
-            case BraincLexer.ENDL:
-                return Token.RESERVED;
-            case BraincLexer.EOF:
-                return Token.EOF;
+        if (tokenType == EOF) {
+            return Token.EOF;
         }
-        return Token.ERROR;
+        return tokenMap[tokenType];
     }
 }
