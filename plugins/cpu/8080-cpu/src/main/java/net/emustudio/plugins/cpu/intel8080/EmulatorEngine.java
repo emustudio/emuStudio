@@ -645,7 +645,6 @@ public class EmulatorEngine implements CpuEngine {
 
     public int I_LDAX() {
         int address = getpair((lastOpcode >>> 4) & 0x03);
-        System.out.println(address);
         putreg(7, readByte(address));
         return 7;
     }

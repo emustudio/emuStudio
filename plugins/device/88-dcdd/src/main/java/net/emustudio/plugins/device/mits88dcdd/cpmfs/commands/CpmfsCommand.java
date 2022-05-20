@@ -36,22 +36,23 @@ public class CpmfsCommand implements Command {
     @Option(name = "--dirtrack", usage = "directory track number (default " + CpmFileSystem.DIRECTORY_TRACK + ")", metaVar = "X")
     int directoryTrack = CpmFileSystem.DIRECTORY_TRACK;
 
-    @Option(name = "--blockptrs2", usage = "use 2 bytes per block pointer (default "
-        + (CpmFileSystem.BLOCKS_ARE_TWO_BYTES ? "2 bytes" : "1 byte") + ")")
-    boolean blocksAreTwoBytes = CpmFileSystem.BLOCKS_ARE_TWO_BYTES;
+    @Option(name = "--blockcount", usage = "block count (default " + CpmFileSystem.BLOCKS_COUNT + ")", metaVar = "X")
+    int blockCount = CpmFileSystem.BLOCKS_COUNT;
 
-    @Argument(handler = SubCommandHandler.class, metaVar = "CPMFS command (cat, ls, volinfo)", required = true)
+
+    @Argument(handler = SubCommandHandler.class, metaVar = "CPMFS command (cat, ls, volinfo, download, upload)", required = true)
     @SubCommands({
         @SubCommand(name = "cat", impl = CatSubCommand.class),
         @SubCommand(name = "ls", impl = ListSubCommand.class),
         @SubCommand(name = "volinfo", impl = InfoSubCommand.class),
-        @SubCommand(name = "download", impl = DownloadSubCommand.class)
+        @SubCommand(name = "download", impl = DownloadSubCommand.class),
+        @SubCommand(name = "upload", impl = UploadSubCommand.class)
     })
     CpmfsSubCommand subcommand;
 
     @Override
     public void execute(DriveIO driveIO) throws IOException {
-        CpmFileSystem fileSystem = new CpmFileSystem(driveIO, directoryTrack, blockLength, blocksAreTwoBytes);
+        CpmFileSystem fileSystem = new CpmFileSystem(driveIO, directoryTrack, blockLength, blockCount);
         subcommand.execute(fileSystem);
     }
 

@@ -28,7 +28,7 @@ public class ListSubCommand implements CpmfsCommand.CpmfsSubCommand {
 
     @Override
     public void execute(CpmFileSystem fileSystem) throws IOException {
-        printFiles(fileSystem.listValidFiles());
+        printFiles(fileSystem.listExistingFiles());
     }
 
     private static void printFiles(Collection<CpmFile> files) {

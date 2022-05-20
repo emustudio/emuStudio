@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFileSystem.ENTRY_SIZE;
+
 @Immutable
 public class CpmFile {
     final String fileName;
@@ -34,7 +36,7 @@ public class CpmFile {
     final int extentNumber;
     final byte bc; // the number of bytes in the last used record
     final byte rc; // the number of 128 byte records of the last used logical extent.
-    final List<Byte> blockPointers;
+    final List<Byte> blockPointers; // allocation
 
     CpmFile(String fileName, String fileExt, int status, int extentNumber, byte bc, byte rc, List<Byte> blockPointers) {
         this.status = status;
@@ -64,9 +66,13 @@ public class CpmFile {
         entry.get(fileNameBytes);
         String fileName = new String(fileNameBytes);
 
-        int extent = entry.get() & 0xFF;
+        int extent = entry.get() & 0x1F; // only bits 0-4 are valid
         byte bc = entry.get();
-        extent = ((entry.get() & 0xFF) << 8) | extent;
+
+        // Bit 5-7 of Xl are 0, bit 0-4 store the lower bits of the extent number.
+        // Bit 6 and 7 of Xh are 0, bit 0-5 store the higher bits of the extent number.
+        // Entry number = ((32*S2)+EX) / (exm+1) where exm is the extent mask value from the Disc Parameter Block
+        extent = ((entry.get() & 0x3F) << 5) | extent;
         byte rc = entry.get();
 
         List<Byte> blockPointers = new ArrayList<>();
@@ -78,4 +84,36 @@ public class CpmFile {
         return new CpmFile(fileName.substring(0, 8), fileName.substring(8, 11), fileStatus, extent, bc, rc, blockPointers);
     }
 
+    ByteBuffer toEntry() {
+        ByteBuffer entry = ByteBuffer.allocate(ENTRY_SIZE);
+        entry.put((byte) status);
+
+        byte[] fileNameBytes = new byte[11];
+        int i;
+        for (i = 0; i < fileName.length(); i++) {
+            fileNameBytes[i] = (byte)(fileName.charAt(i) & 0xFF);
+        }
+        for (; i < 8; i++) {
+            fileNameBytes[i] = 0x20; // space
+        }
+        for (; i < fileExt.length(); i++) {
+            fileNameBytes[i] = (byte)(fileExt.charAt(i) & 0xFF);
+        }
+        for (; i < 11; i++) {
+            fileNameBytes[i] = 0x20; // space
+        }
+        entry.put(fileNameBytes);
+
+        //Bit 5-7 of Xl are 0, bit 0-4 store the lower bits of the extent number.
+        entry.put((byte) (extentNumber & 0x1F));
+        entry.put(bc);
+        // Bit 6 and 7 of Xh are 0, bit 0-5 store the higher bits of the extent number.
+        entry.put((byte) ((extentNumber >>> 5) & 0x3F));
+        entry.put(rc);
+
+        for (byte b : blockPointers) {
+            entry.put(b);
+        }
+        return entry.flip();
+    }
 }
