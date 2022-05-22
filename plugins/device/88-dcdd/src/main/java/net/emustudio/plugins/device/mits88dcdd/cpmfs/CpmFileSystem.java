@@ -27,7 +27,46 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.DriveIO.SECTOR_SKEW;
+
 /**
+ * Supports only Altair 8" floppy disks
+ *
+ * Raw Bytes/sector: 137
+ * Sectors/Track: 32, numbered 0-31
+ * Tracks/Diskette: 77, numbered 0-76
+ *
+ * Tracks 0-5 are formatted as "System Tracks" (regardless of how they are actually used). Sectors on these tracks are
+ * formmatted as follows:
+ *
+ *      Byte    Value
+ *       0      Track number and 80h
+ *      1-2     Number of bytes in boot file
+ *     3-130    Data
+ *      131     0FFh (Stop Byte)
+ *      132     Checksum of 3-130
+ *     133-136  Not used
+ *
+ * Tracks 6-76 (except track 70) are "Data Tracks." Sectors on these tracks are formatted as follows:
+ *
+ *  Byte    Value
+ *     0      Track number and 80h
+ *     1      Skewed sector = (Sector number * 17) MOD 32
+ *     2      File number in directory
+ *     3      Data byte count
+ *     4      Checksum of 2-3 & 5-134
+ *    5-6     Pointer to next data group
+ *   7-134    Data
+ *    135     0FFh (Stop Byte)
+ *    136     Not used
+ *
+ * Track 70 is the Altair Basic/DOS directory track. It is formatted the same as the Data Tracks, except that each Data
+ * field is divided into 8 16-byte directory entries. The last 5 of these 16 bytes are written as 0 by most versions of Altair
+ * Basic and DOS, but are used as a password by Multiuser Basic, where five 0's means "no password". Unfortunately, single-
+ * user Basic does not always clear these bytes. If these bytes are not all 0 For a given directory entry, then multiuser
+ * Basic will not be able to access the file. /P fixes this. The first directory entry that has FFh as its first byte is the
+ * end-of-directory marker. (This FFh is called "the directory stopper byte.")
+ *
  * CPM:
  * <p>
  * +------------------+------------------+------------------+---
@@ -60,6 +99,7 @@ public class CpmFileSystem {
     public final static int DIRECTORY_TRACK = 6; // or number of system tracks
     public final static int BLOCK_LENGTH = 1024; // 2048, 4096, 8192 and 16384
     public final static int BLOCKS_COUNT = 255; // number of blocks on disk
+    public final static int SYSTEM_TRACKS = 8;
 
     private final DriveIO driveIO;
     private final int directoryTrack;
@@ -272,8 +312,8 @@ public class CpmFileSystem {
         return block;
     }
 
-    private void writeBlock(int blockNumber, List<ByteBuffer> records) throws IOException {
-        if (records.size() * RECORD_BYTES > BLOCK_LENGTH) {
+    private void writeBlock(int blockNumber, List<ByteBuffer> sectors) throws IOException {
+        if (sectors.size() * RECORD_BYTES > BLOCK_LENGTH) {
             throw new IOException("Too many records per block");
         }
 
@@ -285,7 +325,25 @@ public class CpmFileSystem {
         final int track = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) / sectorsPerTrack;
 
         Position position = new Position(track, sector);
-        for (ByteBuffer record : records) {
+        for (ByteBuffer record : sectors) {
+            record.put((byte)(position.track | 0x80)); // Track Number, with MSB set (the sync bit)
+            record.put((byte)((position.sector * SECTOR_SKEW) % 32)); // sector number; or file data count...
+            record.limit(driveIO.rawSectorSize);
+
+            record.position(3);
+            byte[] data = new byte[RECORD_BYTES];
+            record.get(data);
+            // checksum is 8-bit sum of all data bytes
+            int checksum = 0;
+            for (byte b : data) {
+                checksum = (checksum + b) & 0xFF;
+            }
+
+            record.position(131);
+            record.put((byte)0xFF); // stop byte
+            record.put((byte)checksum);
+            record.flip();
+
             driveIO.writeSector(position, record);
             position.next(sectorsPerTrack);
         }
@@ -310,7 +368,8 @@ public class CpmFileSystem {
             }).filter(b -> b != 0)
             .collect(Collectors.toSet());
 
-        return Stream.iterate(1, b -> b + 1).filter(b -> !reservedBlocks.contains(b));
+        int firstBlock = SYSTEM_TRACKS * driveIO.sectorsPerTrack / (blockLength / RECORD_BYTES);
+        return Stream.iterate(firstBlock, b -> b + 1).filter(b -> !reservedBlocks.contains(b));
     }
 
     private Stream<Integer> findFreeExtents() throws IOException {
@@ -358,7 +417,7 @@ public class CpmFileSystem {
                     recordsInBlock = 0;
                 }
                 record = ByteBuffer.allocate(driveIO.rawSectorSize);
-                record.position(3);
+                record.position(3); // checksum!
 
                 block.add(record);
                 byteIndex = 0;
