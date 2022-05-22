@@ -30,12 +30,12 @@ public class DriveIO implements AutoCloseable {
     public final static int SECTORS_PER_TRACK = 32; // 26, 32
     public final static int SECTOR_SKEW = 17;
     //public final static int TRACKS_COUNT = 77;
-    private final static int RAW_CHECKSUM_LENGTH = 9;
+    public final static int RAW_CHECKSUM_LENGTH = 9;
 
     private final FileChannel channel;
 
     private final int[] skewTab;
-    private final int rawSectorSize;
+    final int rawSectorSize;
     final int sectorSize;
     final int sectorsPerTrack;
 
@@ -69,23 +69,22 @@ public class DriveIO implements AutoCloseable {
     public ByteBuffer readSector(Position position) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocateDirect(rawSectorSize);
 
-        channel.position(sectorsPerTrack * rawSectorSize * position.track + rawSectorSize * skewTab[position.sector]);
+        channel.position((long) sectorsPerTrack * rawSectorSize * position.track + (long) rawSectorSize * skewTab[position.sector]);
         if (channel.read(buffer) != rawSectorSize) {
             throw new IOException("Could not read whole sector! (" + position + ")");
         }
 
         buffer.flip();
-        return buffer.asReadOnlyBuffer();
+        return buffer;
     }
 
-//    public void writeSector(ByteBuffer buffer) throws IOException {
-//        channel.position(sectorsPerTrack * rawSectorSize * position.track + rawSectorSize * skewTab[position.sector]);
-//
-//        int expected = buffer.remaining();
-//        if (channel.write(buffer) != expected) {
-//            throw new IOException("Could not write whole sector! (" + position + ")");
-//        }
-//    }
+    public void writeSector(Position position, ByteBuffer buffer) throws IOException {
+        channel.position((long) sectorsPerTrack * rawSectorSize * position.track + (long) rawSectorSize * skewTab[position.sector]);
+        int expected = buffer.remaining();
+        if (channel.write(buffer) != expected) {
+            throw new IOException("Could not write whole sector! (" + position + ")");
+        }
+    }
 
     @Override
     public void close() throws Exception {

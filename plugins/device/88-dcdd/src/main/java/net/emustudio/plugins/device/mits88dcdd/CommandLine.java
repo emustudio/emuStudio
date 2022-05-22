@@ -81,12 +81,9 @@ public class CommandLine {
 
     private Runnable createCommand() {
         return () -> {
-            try {
-                DriveIO driveIO = new DriveIO(
-                    Path.of(imageFile), sectorSize, sectorsPerTrack, sectorSkew, StandardOpenOption.READ
-                );
+            try(DriveIO driveIO = new DriveIO(Path.of(imageFile), sectorSize, sectorsPerTrack, sectorSkew, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 command.execute(driveIO);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.error("Could not run disk command", e);
             }
         };
