@@ -121,7 +121,7 @@ public class Transmitter {
         }
     }
 
-    public void writeToDevice(byte data) {
+    public void writeToDevice(byte data) throws IOException {
         DeviceContext<Byte> tmpDevice = device;
         if (tmpDevice != null) {
             tmpDevice.writeData(data);

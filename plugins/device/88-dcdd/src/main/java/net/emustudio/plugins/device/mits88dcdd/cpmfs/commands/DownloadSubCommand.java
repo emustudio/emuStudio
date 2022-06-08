@@ -38,7 +38,7 @@ public class DownloadSubCommand implements CpmfsCommand.CpmfsSubCommand {
 
     @Override
     public void execute(CpmFileSystem fileSystem) throws IOException {
-        fileSystem.readContent(srcFileName).ifPresent(content -> {
+        fileSystem.readFile(srcFileName).ifPresent(content -> {
             String realDstFileName = dstFileName.equals(".") ? srcFileName : dstFileName;
             try (Writer writer = new FileWriter(realDstFileName)) {
                 writer.write(content);

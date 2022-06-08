@@ -25,6 +25,7 @@ import net.emustudio.plugins.memory.rasp.api.RASPLabel;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.easymock.EasyMock.*;
@@ -33,7 +34,7 @@ import static org.junit.Assert.assertEquals;
 public class EmulatorEngineTest {
 
     @Test
-    public void testJumpInstruction() {
+    public void testJumpInstruction() throws IOException {
         EmulatorEngine engine = setup(List.of(
             RASPCell.instruction(0, 15),
             RASPCell.operand(1, 4),

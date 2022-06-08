@@ -40,7 +40,7 @@ public class CpuDataPort implements DeviceContext<Byte> {
     }
 
     @Override
-    public void writeData(Byte data) {
+    public void writeData(Byte data) throws IOException {
         transmitter.writeToDevice(data);
     }
 

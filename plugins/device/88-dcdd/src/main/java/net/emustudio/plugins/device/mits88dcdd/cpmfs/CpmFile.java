@@ -21,35 +21,103 @@ package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 import net.jcip.annotations.Immutable;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFileSystem.ENTRY_SIZE;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZE;
 
+
+/**
+ * CP/M file entry.
+ *
+ * @see <a href="https://www.seasip.info/Cpm/format22.html">CP/M directory format</a>
+ */
 @Immutable
 public class CpmFile {
-    final String fileName;
-    final String fileExt;
-    final int status;
-    final int extentNumber;
-    final byte bc; // the number of bytes in the last used record
-    final byte rc; // the number of 128 byte records of the last used logical extent.
-    final List<Byte> blockPointers; // allocation
+    public final static int ENTRY_SIZE = 32;
+    public final static int RAW_BLOCK_POINTERS_COUNT = 16;
+    private final static String INVALID_CHARS_REGEX = "[<>.,;:=?*\\[\\]]";
 
-    CpmFile(String fileName, String fileExt, int status, int extentNumber, byte bc, byte rc, List<Byte> blockPointers) {
+    public final byte status;
+
+    public final String fileName;
+    public final String fileExt;
+    public final boolean readOnly;
+    public final boolean invisible;
+    public final boolean archived;
+
+    public final byte ex; // 0-4 bits
+    public final byte s2; // 0-5 bits
+    public final int entryNumber; // ((32*S2)+EX) / (exm+1)  ; the same as (s2 << 5 | ex) / (exm+1)
+
+    public final byte rc; // the number of 128 byte records of the last used logical extent.
+    public final byte bc; // the number of bytes in the last used record
+    public final int numberOfRecords; // number of records used in this extent (EX & exm) * 128 + RC
+    public final List<Byte> bp; // allocation
+
+    /**
+     * Constructs a CP/M file using raw extent number
+     *
+     * @param status       user number of file status
+     * @param fileName     file name
+     * @param readOnly     read only?
+     * @param invisible    invisible?
+     * @param archived     archived?
+     * @param extentNumber raw extent number - i.e. raw entry index across all directory blocks
+     * @param exm          extent mask
+     * @param bc           bytes count in this extent
+     * @param rc           records count in this extent
+     * @param bp           extents
+     */
+    CpmFile(byte status, String fileName, boolean readOnly, boolean invisible, boolean archived,
+            int extentNumber, byte exm, byte bc, byte rc, List<Byte> bp) {
+        if (fileName.matches(INVALID_CHARS_REGEX)) {
+            // https://linux.die.net/man/5/cpm
+            throw new IllegalArgumentException("File name contains invalid chars!");
+        }
+
+        this.bp = Collections.unmodifiableList(Objects.requireNonNull(bp));
+        int lastDot = fileName.lastIndexOf('.');
+        this.fileName = fileName.substring(0, (lastDot == -1) ? fileName.length() : lastDot).toUpperCase(Locale.ENGLISH);
+        this.fileExt = (lastDot == -1) ? "" : fileName.substring(lastDot + 1).toUpperCase(Locale.ENGLISH);
+
+        this.ex = (byte) (extentNumber & 0x1F);
+        this.s2 = (byte) ((extentNumber >> 5) & 0x3F);
+
         this.status = status;
-        this.extentNumber = extentNumber;
+        this.readOnly = readOnly;
+        this.invisible = invisible;
+        this.archived = archived;
+        this.entryNumber = ((32 * s2) + ex) / (exm + 1);
         this.bc = bc;
         this.rc = rc;
-        this.fileName = Objects.requireNonNull(fileName);
-        this.fileExt = Objects.requireNonNull(fileExt);
-        this.blockPointers = Collections.unmodifiableList(Objects.requireNonNull(blockPointers));
+        this.numberOfRecords = (ex & exm) * RECORD_SIZE + rc;
     }
 
-    @Override
-    public String toString() {
+    private CpmFile(byte status, String fileName, String fileExt, boolean readOnly, boolean invisible, boolean archived,
+                    byte ex, byte s2, byte exm, byte bc, byte rc, List<Byte> bp) {
+        if (fileName.matches(INVALID_CHARS_REGEX) || fileExt.matches(INVALID_CHARS_REGEX)) {
+            // https://linux.die.net/man/5/cpm
+            throw new IllegalArgumentException("File name contains invalid chars!");
+        }
+        this.bp = Collections.unmodifiableList(Objects.requireNonNull(bp));
+
+        this.status = status;
+        this.fileName = Objects.requireNonNull(fileName);
+        this.fileExt = Objects.requireNonNull(fileExt);
+        this.readOnly = readOnly;
+        this.invisible = invisible;
+        this.archived = archived;
+
+        this.ex = ex;
+        this.s2 = s2;
+        this.entryNumber = ((32 * s2) + ex) / (exm + 1);
+
+        this.bc = bc;
+        this.rc = rc;
+        this.numberOfRecords = (ex & exm) * RECORD_SIZE + rc;
+    }
+
+    public String getFileName() {
         String result = fileName.trim();
 
         String ext = fileExt.trim();
@@ -59,61 +127,88 @@ public class CpmFile {
         return result;
     }
 
-    static CpmFile fromEntry(ByteBuffer entry) {
-        int fileStatus = entry.get() & 0xFF;
+    static CpmFile fromEntry(ByteBuffer entry, byte exm) {
+        byte status = (byte) (entry.get() & 0xFF);
 
         byte[] fileNameBytes = new byte[11];
         entry.get(fileNameBytes);
-        String fileName = new String(fileNameBytes);
+        boolean readOnly = (fileNameBytes[8] & 0x80) == 0x80;
+        boolean invisible = (fileNameBytes[9] & 0x80) == 0x80;
+        boolean archived = (fileNameBytes[10] & 0x80) == 0x80;
 
-        int extent = entry.get() & 0x1F; // only bits 0-4 are valid
+        fileNameBytes[8] = (byte) (fileNameBytes[8] & 0x7F);
+        fileNameBytes[9] = (byte) (fileNameBytes[9] & 0x7F);
+        fileNameBytes[10] = (byte) (fileNameBytes[10] & 0x7F);
+        String fileNameExt = new String(fileNameBytes);
+        String fileName = fileNameExt.substring(0, 8);
+        String fileExt = fileNameExt.substring(8);
+
+        byte ex = (byte) (entry.get() & 0x1F); // only bits 0-4 are valid
         byte bc = entry.get();
-
-        // Bit 5-7 of Xl are 0, bit 0-4 store the lower bits of the extent number.
-        // Bit 6 and 7 of Xh are 0, bit 0-5 store the higher bits of the extent number.
-        // Entry number = ((32*S2)+EX) / (exm+1) where exm is the extent mask value from the Disc Parameter Block
-        extent = ((entry.get() & 0x3F) << 5) | extent;
+        byte s2 = (byte) (entry.get() & 0x3F); // only bits 0-5 are valid
         byte rc = entry.get();
 
-        List<Byte> blockPointers = new ArrayList<>();
+        List<Byte> extents = new ArrayList<>();
         for (int i = 0; i < 16; i++) {
             byte bp = entry.get();
-            blockPointers.add(bp);
+            extents.add(bp);
         }
 
-        return new CpmFile(fileName.substring(0, 8), fileName.substring(8, 11), fileStatus, extent, bc, rc, blockPointers);
+        return new CpmFile(status, fileName, fileExt, readOnly, invisible, archived, ex, s2, exm, bc, rc, extents);
     }
 
     ByteBuffer toEntry() {
         ByteBuffer entry = ByteBuffer.allocate(ENTRY_SIZE);
-        entry.put((byte) status);
+        entry.put(status);
 
         byte[] fileNameBytes = new byte[11];
         int i;
         for (i = 0; i < fileName.length(); i++) {
-            fileNameBytes[i] = (byte)(fileName.charAt(i) & 0xFF);
+            fileNameBytes[i] = (byte) (fileName.charAt(i) & 0x7F);
         }
         for (; i < 8; i++) {
             fileNameBytes[i] = 0x20; // space
         }
         for (; i < fileExt.length(); i++) {
-            fileNameBytes[i] = (byte)(fileExt.charAt(i) & 0xFF);
+            fileNameBytes[i] = (byte) (fileExt.charAt(i) & 0x7F);
         }
         for (; i < 11; i++) {
             fileNameBytes[i] = 0x20; // space
         }
+        if (readOnly) {
+            fileNameBytes[8] |= 0x80;
+        }
+        if (invisible) {
+            fileNameBytes[9] |= 0x80;
+        }
+        if (archived) {
+            fileNameBytes[10] |= 0x80;
+        }
         entry.put(fileNameBytes);
 
-        //Bit 5-7 of Xl are 0, bit 0-4 store the lower bits of the extent number.
-        entry.put((byte) (extentNumber & 0x1F));
+        entry.put(ex);
         entry.put(bc);
-        // Bit 6 and 7 of Xh are 0, bit 0-5 store the higher bits of the extent number.
-        entry.put((byte) ((extentNumber >>> 5) & 0x3F));
+        entry.put(s2);
         entry.put(rc);
 
-        for (byte b : blockPointers) {
-            entry.put(b);
+        for (byte bPointer : bp) {
+            entry.put(bPointer);
         }
-        return entry.flip();
+        entry.position(0);
+        entry.limit(ENTRY_SIZE);
+        return entry;
+    }
+
+    @Override
+    public String toString() {
+        return "  status=" + status + "\n" +
+            "filename='" + getFileName() + "'\n" +
+            "   flags=" + (readOnly ? "R" : "") + (invisible ? "I" : "") + (archived ? "A" : "") + "\n" +
+            "      ex=" + ex + "\n" +
+            "      s2=" + s2 + "\n" +
+            "   entry=" + entryNumber + "\n" +
+            "      rc=" + rc + "\n" +
+            "      bc=" + bc + "\n" +
+            "      bp=" + bp + "\n";
     }
 }

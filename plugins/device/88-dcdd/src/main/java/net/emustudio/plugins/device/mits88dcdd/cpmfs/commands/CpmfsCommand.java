@@ -30,15 +30,6 @@ import org.kohsuke.args4j.spi.SubCommands;
 import java.io.IOException;
 
 public class CpmfsCommand implements Command {
-    @Option(name = "--blocklen", usage = "block length in bytes (default " + CpmFileSystem.BLOCK_LENGTH + ")", metaVar = "X")
-    int blockLength = CpmFileSystem.BLOCK_LENGTH;
-
-    @Option(name = "--dirtrack", usage = "directory track number (default " + CpmFileSystem.DIRECTORY_TRACK + ")", metaVar = "X")
-    int directoryTrack = CpmFileSystem.DIRECTORY_TRACK;
-
-    @Option(name = "--blockcount", usage = "block count (default " + CpmFileSystem.BLOCKS_COUNT + ")", metaVar = "X")
-    int blockCount = CpmFileSystem.BLOCKS_COUNT;
-
 
     @Argument(handler = SubCommandHandler.class, metaVar = "CPMFS command (cat, ls, volinfo, download, upload)", required = true)
     @SubCommands({
@@ -52,7 +43,7 @@ public class CpmfsCommand implements Command {
 
     @Override
     public void execute(DriveIO driveIO) throws IOException {
-        CpmFileSystem fileSystem = new CpmFileSystem(driveIO, directoryTrack, blockLength, blockCount);
+        CpmFileSystem fileSystem = new CpmFileSystem(driveIO);
         subcommand.execute(fileSystem);
     }
 

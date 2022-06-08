@@ -22,6 +22,6 @@ public class UploadSubCommand implements CpmfsCommand.CpmfsSubCommand {
             reader.transferTo(content);
         }
         String realDstFileName = (dstFileName.equals(".")) ? srcFileName : dstFileName;
-        fileSystem.writeContent(realDstFileName, content.toString());
+        fileSystem.writeFile(realDstFileName, content.toString());
     }
 }

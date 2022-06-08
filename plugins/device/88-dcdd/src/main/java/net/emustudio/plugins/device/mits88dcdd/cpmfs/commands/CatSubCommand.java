@@ -29,6 +29,6 @@ public class CatSubCommand implements CpmfsCommand.CpmfsSubCommand {
 
     @Override
     public void execute(CpmFileSystem fileSystem) throws IOException {
-        fileSystem.readContent(fileName).ifPresent(System.out::println);
+        fileSystem.readFile(fileName).ifPresent(System.out::println);
     }
 }

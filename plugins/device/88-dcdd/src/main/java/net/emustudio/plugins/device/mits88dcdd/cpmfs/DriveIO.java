@@ -23,66 +23,138 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
+/**
+ * 88-DCDD
+ *
+ * Supported:
+ *  - Altair 8" floppy disks: 77 tracks, 32 sectors, 137 bytes sector size; skew: 6
+ *  - Altair Minidisk: 35 tracks, 16 sectors, 137 bytes sector size
+ *
+ * Raw sector size: 137 bytes
+ * Sectors/Track: 32, numbered 0-31
+ * Tracks/Diskette: 77, numbered 0-76
+ *
+ * Tracks 0-5 are formatted as "System Tracks" (regardless of how they are actually used). Sectors on these tracks are
+ * formmatted as follows:
+ *
+ *      Byte    Value
+ *       0      Track number + 80h
+ *      1-2     Sixteen bit address in memory of the end of the bootloader (0x100). This same value is set in all
+ *              sectors of tracks 0‐5.
+ *     3-130    Data (128 bytes)
+ *      131     0FFh (Stop Byte)
+ *      132     Checksum of 3-130 (sum of the 128 byte payload)
+ *     133-136  Not used
+ *
+ * Tracks 6-76 (except track 70) are "Data Tracks." Sectors on these tracks are formatted as follows:
+ *
+ *  Byte    Value
+ *     0      Track number + 80h
+ *     1      Skewed sector = (Sector number * 17) MOD 32
+ *     2      File number in directory (or not used)
+ *     3      Data byte count (or not used)
+ *     4      Checksum of 2-3 & 5-134
+ *    5-6     Pointer to next data group (or not used)
+ *   7-134    Data (128 bytes)
+ *    135     0FFh (Stop Byte)
+ *    136     00h (Stop byte)
+ *
+ * Track 70 is the Altair Basic/DOS directory track. It is formatted the same as the Data Tracks, except that each Data
+ * field is divided into 8 16-byte directory entries. The last 5 of these 16 bytes are written as 0 by most versions of Altair
+ * Basic and DOS, but are used as a password by Multiuser Basic, where five 0's means "no password". Unfortunately, single-
+ * user Basic does not always clear these bytes. If these bytes are not all 0 For a given directory entry, then multiuser
+ * Basic will not be able to access the file. /P fixes this. The first directory entry that has FFh as its first byte is the
+ * end-of-directory marker. (This FFh is called "the directory stopper byte.")
+ */
 public class DriveIO implements AutoCloseable {
-    public final static int SECTOR_SIZE = 128; //137;
-    public final static int SECTORS_PER_TRACK = 32; // 26, 32
-    public final static int SECTOR_SKEW = 17;
-    //public final static int TRACKS_COUNT = 77;
-    public final static int RAW_CHECKSUM_LENGTH = 9;
+    public final int RAW_SECTOR_SIZE = 137;
 
+    public final CpmFormat cpmFormat;
     private final FileChannel channel;
 
-    private final int[] skewTab;
-    final int rawSectorSize;
-    final int sectorSize;
-    final int sectorsPerTrack;
-
-
-    public DriveIO(Path imageFile, int sectorSize, int sectorsPerTrack, int sectorSkew, OpenOption... openOptions) throws IOException {
-        this.rawSectorSize = sectorSize + RAW_CHECKSUM_LENGTH;
-        this.sectorSize = sectorSize;
-        this.sectorsPerTrack = sectorsPerTrack;
-        this.skewTab = new int[sectorsPerTrack];
-
-        int currentSkew = 0;
-        for (int i = 0; i < sectorsPerTrack; i++) {
-            while (true) {
-                int k = 0;
-                while (k < i && skewTab[k] != currentSkew) {
-                    k++;
-                }
-                if (k < i) {
-                    currentSkew = (currentSkew + 1) % sectorsPerTrack;
-                } else {
-                    break;
-                }
-            }
-            skewTab[i] = currentSkew;
-            currentSkew = (currentSkew + sectorSkew) % sectorsPerTrack;
-        }
-
+    public DriveIO(Path imageFile, CpmFormat cpmFormat, OpenOption... openOptions) throws IOException {
+        this.cpmFormat = Objects.requireNonNull(cpmFormat);
         this.channel = FileChannel.open(Objects.requireNonNull(imageFile), openOptions);
     }
 
-    public ByteBuffer readSector(Position position) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(rawSectorSize);
-
-        channel.position((long) sectorsPerTrack * rawSectorSize * position.track + (long) rawSectorSize * skewTab[position.sector]);
-        if (channel.read(buffer) != rawSectorSize) {
+    /**
+     * Reads a CP/M "record".
+     *
+     * It is a raw sector stripped from prefix & suffix.
+     * It does not check validity.
+     *
+     * @param position logical position
+     * @return record data
+     * @throws IOException on reading error
+     */
+    public ByteBuffer readRecord(Position position) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(RAW_SECTOR_SIZE);
+        channel.position(cpmFormat.positionToOffset(position));
+        if (channel.read(buffer) != RAW_SECTOR_SIZE) {
             throw new IOException("Could not read whole sector! (" + position + ")");
         }
-
-        buffer.flip();
-        return buffer;
+        return cpmFormat.sectorOps.toRecord(buffer.flip());
     }
 
-    public void writeSector(Position position, ByteBuffer buffer) throws IOException {
-        channel.position((long) sectorsPerTrack * rawSectorSize * position.track + (long) rawSectorSize * skewTab[position.sector]);
-        int expected = buffer.remaining();
-        if (channel.write(buffer) != expected) {
+    /**
+     * Writes a CP/M "record"
+     *
+     * @param position logical position
+     * @param data     record data
+     * @throws IOException              on writing error
+     * @throws IllegalArgumentException if sector data does not have expected size (sector size)
+     */
+    public void writeRecord(Position position, ByteBuffer data) throws IOException {
+        if (data.remaining() != CpmFormat.RECORD_SIZE) {
+            throw new IllegalArgumentException("Cannot write record: unexpected data size = " + data.remaining());
+        }
+        ByteBuffer sector = cpmFormat.sectorOps.toSector(data, position);
+        channel.position(cpmFormat.positionToOffset(position));
+
+        int expected = sector.remaining();
+        if (channel.write(sector) != expected) {
             throw new IOException("Could not write whole sector! (" + position + ")");
+        }
+    }
+
+    /**
+     * Reads a block
+     *
+     * @param blockNumber block number
+     * @return list of records in a block
+     * @throws IOException on reading error
+     */
+    public List<ByteBuffer> readBlock(int blockNumber) throws IOException {
+        Position position = cpmFormat.blockToPosition(blockNumber);
+        List<ByteBuffer> block = new ArrayList<>();
+        for (int counter = 0; counter < cpmFormat.recordsPerBlock; counter++) {
+            block.add(readRecord(position));
+            position.next(cpmFormat.dpb.spt);
+        }
+        return block;
+    }
+
+    /**
+     * Writes a block
+     *
+     * @param blockNumber block number
+     * @param records list of records
+     * @throws IOException on writing error
+     */
+    public void writeBlock(int blockNumber, List<ByteBuffer> records) throws IOException {
+        if (records.size() > cpmFormat.recordsPerBlock) {
+            throw new IllegalArgumentException("Too many sectors per block");
+        }
+
+        Position position = cpmFormat.blockToPosition(blockNumber);
+        for (ByteBuffer record : records) {
+            ByteBuffer sector = cpmFormat.sectorOps.toSector(record, position);
+            writeRecord(position, sector);
+            position.next(cpmFormat.dpb.spt);
         }
     }
 
