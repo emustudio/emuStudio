@@ -36,6 +36,8 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZ
 @NotThreadSafe
 public class CpmFileSystem {
     private final static int STATUS_LABEL = 0x20;
+    private final static int MAX_USER_NUMBER = 0x0F;
+
     private final DriveIO driveIO;
     private final CpmFormat cpmFormat;
 
@@ -45,16 +47,17 @@ public class CpmFileSystem {
     }
 
     public Stream<CpmFile> listExistingFiles() {
-        return listValidFiles().filter(file -> file.entryNumber == 0);
+        return listValidFiles().filter(file -> file.ex == 0);
     }
 
     public boolean exists(String fileName) {
-        return listValidFiles()
+        return listExistingFiles()
             .anyMatch(file -> file.toString().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)));
     }
 
     public String getLabel() {
         return listValidFiles()
+            .filter(f -> (f.status & 0xFF) == STATUS_LABEL)
             .map(f -> f.fileName + f.fileExt)
             .findAny()
             .orElse("");
@@ -62,31 +65,28 @@ public class CpmFileSystem {
 
     public Optional<String> readFile(String fileName) throws IOException {
         List<CpmFile> entries = listValidFiles()
-            .filter(file -> file.toString().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)))
-            .sorted(Comparator.comparingInt(o -> o.entryNumber))
+            .filter(file -> file.getFileName().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)))
             .collect(Collectors.toList());
 
         if (entries.isEmpty()) {
+            System.out.println("File '" + fileName + "' not found!");
             return Optional.empty();
         }
 
         StringBuilder content = new StringBuilder();
-
-        int expectingExtentNumber = 0;
         for (CpmFile extent : entries) {
-            if (extent.entryNumber != expectingExtentNumber) {
-                throw new IllegalStateException(String.format(
-                    "[file=%s, extent=%d, expectingExtent=%d] ERROR: Expecting different extent number!%n",
-                    fileName, extent.entryNumber, expectingExtentNumber));
-            }
+            // extent numbering can be various...
+            int recordsLeft = extent.numberOfRecords;
 
-            int recordsLeft = extent.rc & 0xFF;
-            for (int i = 0; i < RAW_BLOCK_POINTERS_COUNT; i = i + (cpmFormat.blockPointerIsWord ? 2 : 1)) {
-                int nextBlock = extent.bp.get(i) & 0xFF;
+            for (int i = 0; i < RAW_BLOCK_POINTERS_COUNT; i++) {
+                int nextBlock = extent.al.get(i) & 0xFF;
                 if (cpmFormat.blockPointerIsWord) {
-                    nextBlock = (extent.bp.get(i + 1) << 8) | nextBlock;
+                    nextBlock = (extent.al.get(++i) << 8) | nextBlock;
                 }
                 if (nextBlock == 0) {
+                    continue;
+                }
+                if (recordsLeft <= 0) {
                     break;
                 }
 
@@ -99,7 +99,6 @@ public class CpmFileSystem {
 
                 recordsLeft -= recordsCount;
             }
-            expectingExtentNumber++;
         }
         return Optional.of(content.toString());
     }
@@ -151,19 +150,19 @@ public class CpmFileSystem {
             int rawExtentIndex = currentBlockFreeExtents.next(); // raw index in directory block
             List<ByteBuffer> lastBlock = blocksPerExtent.get(blocksPerExtent.size() - 1); // assume lastBlock.size() > 0
 
-            byte rc = (byte)lastBlock.size(); // assume > 0
+            byte rc = (byte) lastBlock.size(); // assume > 0
             ByteBuffer lastRecord = lastBlock.get(lastBlock.size() - 1);
-            byte bc = (byte)lastRecord.remaining();
+            byte bc = (byte) lastRecord.remaining();
 
             CpmFile file = new CpmFile(
-                (byte)0, fileName, false, false, false,
+                (byte) 0, fileName, false, false, false,
                 extentIndex++, cpmFormat.dpb.exm, bc, rc, bpPerExtent
             );
 
             // write extent to the directory block
             List<ByteBuffer> directoryBlock = driveIO.readBlock(currentDirectoryBlock.index);
             ByteBuffer directorySector = directoryBlock.get(rawExtentIndex / ENTRIES_PER_RECORD);
-            directorySector.position( (rawExtentIndex % ENTRIES_PER_RECORD) * ENTRY_SIZE);
+            directorySector.position((rawExtentIndex % ENTRIES_PER_RECORD) * ENTRY_SIZE);
             directorySector.put(file.toEntry());
             directorySector.position(0); // so reading is possible
             driveIO.writeBlock(currentDirectoryBlock.index, directoryBlock); // no caching, never mind..
@@ -228,10 +227,10 @@ public class CpmFileSystem {
                 List<Integer> extents = new ArrayList<>();
                 if (cpmFormat.blockPointerIsWord) {
                     for (int i = 0; i < RAW_BLOCK_POINTERS_COUNT; i += 2) {
-                        extents.add((f.bp.get(i + 1) << 8) | f.bp.get(i));
+                        extents.add((f.al.get(i + 1) << 8) | f.al.get(i));
                     }
                 } else {
-                    extents.addAll(f.bp.stream().mapToInt(Byte::intValue).boxed().collect(Collectors.toList()));
+                    extents.addAll(f.al.stream().mapToInt(Byte::intValue).boxed().collect(Collectors.toList()));
                 }
                 return extents.stream();
             }).filter(b -> b != 0)
@@ -244,7 +243,7 @@ public class CpmFileSystem {
 
     /**
      * Returns free extents per block
-     *
+     * <p>
      * The indexes returned are "entry indexes": they reset to 0 on new block
      *
      * @return free extents per directory block
@@ -252,15 +251,12 @@ public class CpmFileSystem {
     private Stream<I<Stream<Integer>>> findFreeExtents() {
         return readDirectoryBlocks().map(block -> {
             AtomicInteger entryIndex = new AtomicInteger();
-            Set<Integer> reservedExtents = block.v
+            return new I<>(block.index, block.v
                 .flatMap(CpmFileSystem::getEntries)
-                .map(e -> CpmFile.fromEntry(e, driveIO.cpmFormat.dpb.exm))
+                .map(e -> CpmFile.fromEntry(e, cpmFormat.dpb.exm))
                 .map(f -> new I<>(entryIndex.getAndIncrement(), f))
-                .filter(p -> p.v.status < STATUS_LABEL)
-                .map(p -> p.index)
-                .collect(Collectors.toSet());
-
-            return new I<>(block.index, Stream.iterate(0, e -> e + 1).filter(e -> !reservedExtents.contains(e)));
+                .filter(p -> (p.v.status & 0xFF) == 0xE5)
+                .map(p -> p.index));
         });
     }
 
@@ -278,7 +274,7 @@ public class CpmFileSystem {
             if (byteIndex == RECORD_SIZE) {
                 record.flip(); // prepare for reading
 
-                if (recordsInBlock == driveIO.cpmFormat.recordsPerBlock) {
+                if (recordsInBlock == cpmFormat.recordsPerBlock) {
                     block = new ArrayList<>();
                     blocks.add(block);
                     recordsInBlock = 0;
@@ -297,10 +293,11 @@ public class CpmFileSystem {
 
     /**
      * Read directory blocks, indexed by real block index
+     *
      * @return directory blocks (indexed)
      */
     private Stream<I<Stream<ByteBuffer>>> readDirectoryBlocks() {
-        return driveIO.cpmFormat.directoryBlocks
+        return cpmFormat.directoryBlocks
             .stream()
             .map(d -> {
                 try {
@@ -327,11 +324,12 @@ public class CpmFileSystem {
         return new String(b);
     }
 
-    private Stream<CpmFile> listValidFiles() {
+    public Stream<CpmFile> listValidFiles() {
         return readDirectoryBlocks()
             .flatMap(i -> i.v.flatMap(CpmFileSystem::getEntries))
-            .map(e -> CpmFile.fromEntry(e, driveIO.cpmFormat.dpb.exm))
-            .filter(file -> (file.status & 0xFF) < STATUS_LABEL);
+            .limit(cpmFormat.dpb.drm + 1)
+            .map(e -> CpmFile.fromEntry(e, cpmFormat.dpb.exm))
+            .filter(file -> (file.status & 0xFF) <= MAX_USER_NUMBER);
     }
 
     /**

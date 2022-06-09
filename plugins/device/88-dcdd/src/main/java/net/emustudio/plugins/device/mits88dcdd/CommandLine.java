@@ -41,8 +41,8 @@ public class CommandLine {
     @Option(name = "--image", usage = "use given disk image", metaVar = "fileName", required = true)
     String imageFile;
 
-    @Option(name = "--format", usage = "disk format (default 'altair_floppy')", metaVar = "X")
-    String format = "altair_floppy";
+    @Option(name = "--format", usage = "disk format (default 'altair_floppy_cpm2')", metaVar = "X")
+    String format = "altair_floppy_cpm2";
 
     @Option(name = "--help", help = true, usage = "output this message")
     private boolean help = false;

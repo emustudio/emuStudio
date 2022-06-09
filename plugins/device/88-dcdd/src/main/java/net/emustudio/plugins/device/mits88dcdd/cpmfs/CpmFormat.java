@@ -18,7 +18,7 @@ public class CpmFormat {
 
     public final int blockSize;
     public final List<Integer> directoryBlocks;
-    public final boolean blockPointerIsWord;
+    public final boolean blockPointerIsWord; // if block pointer is DW or DB
     public final int recordsPerBlock;
     public final int entriesPerBlock;
     public final int blockPointersCount;
@@ -44,14 +44,13 @@ public class CpmFormat {
         ByteBuffer toRecord(ByteBuffer sector);
     }
 
-    public CpmFormat(DiskParameterBlock dpb, int tracks, int sectorSize, int sectorSkew,
+    public CpmFormat(DiskParameterBlock dpb, int sectorSize, int sectorSkew,
                      boolean bcInterpretsAsUnused, DateStampFormat dateStampFormat, SectorOps sectorOps) {
         this.dpb = Objects.requireNonNull(dpb);
         this.sectorOps = Objects.requireNonNull(sectorOps);
 
         this.blockSize = RECORD_SIZE * (dpb.blm + 1);
 
-        // AL01 = AL1 AL0
         List<Integer> dblocks = new ArrayList<>();
         int tmpAl01 = dpb.al01;
         for (int i = 0; i < 16; i++) {
@@ -60,8 +59,6 @@ public class CpmFormat {
             }
             tmpAl01 = tmpAl01 >>> 1;
         }
-        System.out.println(dpb);
-        System.out.println("Directory blocks: " + dblocks);
 
         this.directoryBlocks = Collections.unmodifiableList(dblocks);
         this.blockPointerIsWord = dpb.dsm > 255; // if block index doesn't fit in one byte
@@ -72,8 +69,7 @@ public class CpmFormat {
         this.sectorSkew = sectorSkew;
         this.sectorSkewTable = computeSectorSkewTable(sectorSkew, dpb.spt);
 
-
-        this.tracks = tracks;
+        this.tracks = dpb.drm * blockSize / (dpb.spt * RECORD_SIZE);
         this.bcInterpretsAsUnused = bcInterpretsAsUnused;
         this.dateStampFormat = Objects.requireNonNull(dateStampFormat);
     }

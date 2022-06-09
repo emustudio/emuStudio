@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.cpmfs.commands;
 
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFile;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFileSystem;
 
 import java.io.IOException;
@@ -26,9 +27,9 @@ public class ListSubCommand implements CpmfsCommand.CpmfsSubCommand {
 
     @Override
     public void execute(CpmFileSystem fileSystem) throws IOException {
+        System.out.println(CpmFile.getLongHeader());
         fileSystem
             .listExistingFiles()
-            .forEach(f -> System.out.println(f.toString()));
-            //.forEach(f -> System.out.println(f.getFileName()));
+            .forEach(f -> System.out.println(f.toLongString()));
     }
 }
