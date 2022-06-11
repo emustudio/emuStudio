@@ -28,7 +28,8 @@ public class CpmFormat {
     public final int sectorSkew;
     public final int[] sectorSkewTable;
 
-    // if the "bc" in extent is interpreted as "unused" bytes instead of "used"
+    // https://manpages.debian.org/testing/cpmtools/cpm.5.en.html
+    // ISX records the number of unused instead of used bytes in Bc
     public final boolean bcInterpretsAsUnused;
     public final DateStampFormat dateStampFormat;
     public final SectorOps sectorOps;
@@ -39,8 +40,20 @@ public class CpmFormat {
 
     public interface SectorOps {
 
+        /**
+         * Converts record of max RECORD_SIZE bytes to raw sector.
+         * the record size might be less than RECORD_SIZE.
+         * @param record CP/M record
+         * @param position position
+         * @return raw sector with correct length
+         */
         ByteBuffer toSector(ByteBuffer record, Position position);
 
+        /**
+         * Converts sector of sectorSize to RECORD_SIZE record.
+         * @param sector sector
+         * @return record
+         */
         ByteBuffer toRecord(ByteBuffer sector);
     }
 

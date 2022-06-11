@@ -10,15 +10,18 @@ public class Formats {
     private final static CpmFormat.SectorOps mits88dcdd = new CpmFormat.SectorOps() {
         @Override
         public ByteBuffer toSector(ByteBuffer record, Position position) {
-            ByteBuffer sector = ByteBuffer.allocate(137);
+            record.limit(RECORD_SIZE);
+            record.position(0);
+
+            ByteBuffer sector = ByteBuffer.allocate(137); // sector length >= RECORD_SIZE
             sector.put((byte) (position.track | 0x80)); // Track Number, with MSB set (the sync bit)
             sector.put((byte) ((position.sector * 17) % 32)); // sector number; or used/unused size...?
             sector.put((byte) 0);
             sector.put(record);
 
-            record.position(0);
+            record.flip();
             int checksum = 0;
-            for (int i = 0; i < 128; i++) {
+            for (int i = 0; i < record.remaining(); i++) {
                 checksum = (checksum + record.get()) & 0xFF;
             }
             sector.put((byte) 0xFF); // stop byte
@@ -54,7 +57,7 @@ public class Formats {
 
     public final static CpmFormat ALTAIR_CPM_3 = new CpmFormat(
         new DiskParameterBlock(32, 4, 15, 0x07F9, 0x03FF, 0x0F, 6),
-         137, 17, false, CpmFormat.DateStampFormat.CPM3,
+        137, 17, false, CpmFormat.DateStampFormat.CPM3,
         mits88dcdd
     );
 

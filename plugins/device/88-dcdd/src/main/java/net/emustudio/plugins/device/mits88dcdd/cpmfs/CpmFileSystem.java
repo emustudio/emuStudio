@@ -36,6 +36,7 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZ
 @NotThreadSafe
 public class CpmFileSystem {
     private final static int STATUS_LABEL = 0x20;
+    private final static int STATUS_UNUSED = 0xE5;
     private final static int MAX_USER_NUMBER = 0x0F;
 
     private final DriveIO driveIO;
@@ -122,13 +123,22 @@ public class CpmFileSystem {
         }
 
         // write extents
-        Iterator<I<Stream<Integer>>> freeExtents = findFreeExtents().iterator();
-        if (!freeExtents.hasNext()) {
+        Iterator<I<Stream<I<Stream<Integer>>>>> freeExtentsBlocks = findFreeExtents().iterator();
+        if (!freeExtentsBlocks.hasNext()) {
             throw new IllegalStateException("No free space in directory");
         }
 
-        I<Stream<Integer>> currentDirectoryBlock = freeExtents.next();
-        Iterator<Integer> currentBlockFreeExtents = currentDirectoryBlock.v.iterator();
+        I<Stream<I<Stream<Integer>>>> freeExtentsBlock = freeExtentsBlocks.next();
+        Iterator<I<Stream<Integer>>> freeExtentsSectors = freeExtentsBlock.v.iterator();
+        while (!freeExtentsSectors.hasNext()) {
+            if (!freeExtentsBlocks.hasNext()) {
+                throw new IllegalStateException("No free space in directory");
+            }
+            freeExtentsBlock = freeExtentsBlocks.next();
+            freeExtentsSectors = freeExtentsBlock.v.iterator();
+        }
+        I<Stream<Integer>> freeExtentsSector = freeExtentsSectors.next();
+        Iterator<Integer> freeExtents = freeExtentsSector.v.iterator();
 
         int extentIndex = 0;
         for (int i = 0; i < bp.size(); i++) {
@@ -139,20 +149,26 @@ public class CpmFileSystem {
                 continue;
             }
 
-            while (!currentBlockFreeExtents.hasNext()) {
-                if (!freeExtents.hasNext()) {
-                    throw new IllegalStateException("No free space in directory");
+            while(!freeExtents.hasNext()) {
+                while (!freeExtentsSectors.hasNext()) {
+                    if (!freeExtentsBlocks.hasNext()) {
+                        throw new IllegalStateException("No free space in directory");
+                    }
+                    freeExtentsBlock = freeExtentsBlocks.next();
+                    freeExtentsSectors = freeExtentsBlock.v.iterator();
                 }
-                currentDirectoryBlock = freeExtents.next();
-                currentBlockFreeExtents = currentDirectoryBlock.v.iterator();
+                freeExtentsSector = freeExtentsSectors.next();
+                freeExtents = freeExtentsSector.v.iterator();
             }
 
-            int rawExtentIndex = currentBlockFreeExtents.next(); // raw index in directory block
-            List<ByteBuffer> lastBlock = blocksPerExtent.get(blocksPerExtent.size() - 1); // assume lastBlock.size() > 0
+            int freeExtentIndex = freeExtents.next(); // extent index in sector
+            List<ByteBuffer> lastBlock = blocksPerExtent.get(blocksPerExtent.size() - 1); // assuming lastBlock.size() > 0
 
-            byte rc = (byte) lastBlock.size(); // assume > 0
+            byte rc = (byte) lastBlock.size(); // assuming > 0
             ByteBuffer lastRecord = lastBlock.get(lastBlock.size() - 1);
-            byte bc = (byte) lastRecord.remaining();
+            byte bc = cpmFormat.bcInterpretsAsUnused ?
+                (byte) (RECORD_SIZE - lastRecord.remaining()) :
+                (byte) lastRecord.remaining();
 
             CpmFile file = new CpmFile(
                 (byte) 0, fileName, false, false, false,
@@ -160,12 +176,12 @@ public class CpmFileSystem {
             );
 
             // write extent to the directory block
-            List<ByteBuffer> directoryBlock = driveIO.readBlock(currentDirectoryBlock.index);
-            ByteBuffer directorySector = directoryBlock.get(rawExtentIndex / ENTRIES_PER_RECORD);
-            directorySector.position((rawExtentIndex % ENTRIES_PER_RECORD) * ENTRY_SIZE);
+            List<ByteBuffer> directoryBlock = driveIO.readBlock(freeExtentsBlock.index);
+            ByteBuffer directorySector = directoryBlock.get(freeExtentsSector.index * RECORD_SIZE);
+            directorySector.position(freeExtentIndex * ENTRY_SIZE);
             directorySector.put(file.toEntry());
             directorySector.position(0); // so reading is possible
-            driveIO.writeBlock(currentDirectoryBlock.index, directoryBlock); // no caching, never mind..
+            driveIO.writeBlock(freeExtentsBlock.index, directoryBlock); // no caching, never mind..
         }
     }
 
@@ -242,21 +258,25 @@ public class CpmFileSystem {
     }
 
     /**
-     * Returns free extents per block
+     * Returns free extents per block and sector.
      * <p>
-     * The indexes returned are "entry indexes": they reset to 0 on new block
+     * The indexes returned are "entry indexes": they reset to 0 on each new sector
      *
-     * @return free extents per directory block
+     * @return free extents per directory block and sector
      */
-    private Stream<I<Stream<Integer>>> findFreeExtents() {
+    private Stream<I<Stream<I<Stream<Integer>>>>> findFreeExtents() {
         return readDirectoryBlocks().map(block -> {
-            AtomicInteger entryIndex = new AtomicInteger();
+            AtomicInteger sectorIndex = new AtomicInteger();
             return new I<>(block.index, block.v
-                .flatMap(CpmFileSystem::getEntries)
-                .map(e -> CpmFile.fromEntry(e, cpmFormat.dpb.exm))
-                .map(f -> new I<>(entryIndex.getAndIncrement(), f))
-                .filter(p -> (p.v.status & 0xFF) == 0xE5)
-                .map(p -> p.index));
+                .map(this::getEntries)
+                .map(filesInSector -> {
+                    sectorIndex.set(0);
+                    AtomicInteger entryIndex = new AtomicInteger();
+                    return new I<>(sectorIndex.getAndIncrement(), filesInSector
+                        .map(f -> new I<>(entryIndex.getAndIncrement(), f))
+                        .filter(f -> (f.v.status & 0xFF) == STATUS_UNUSED)
+                        .map(f -> f.index));
+                }));
         });
     }
 
@@ -308,12 +328,12 @@ public class CpmFileSystem {
             });
     }
 
-    private static Stream<ByteBuffer> getEntries(ByteBuffer record) {
-        List<ByteBuffer> entries = new ArrayList<>();
+    private Stream<CpmFile> getEntries(ByteBuffer record) {
+        List<CpmFile> entries = new ArrayList<>();
         for (int i = 0; i < ENTRIES_PER_RECORD; i++) {
             byte[] entry = new byte[ENTRY_SIZE];
             record.get(entry);
-            entries.add(ByteBuffer.wrap(entry));
+            entries.add(CpmFile.fromEntry(ByteBuffer.wrap(entry), cpmFormat.dpb.exm));
         }
         return entries.stream();
     }
@@ -326,9 +346,8 @@ public class CpmFileSystem {
 
     public Stream<CpmFile> listValidFiles() {
         return readDirectoryBlocks()
-            .flatMap(i -> i.v.flatMap(CpmFileSystem::getEntries))
+            .flatMap(i -> i.v.flatMap(this::getEntries))
             .limit(cpmFormat.dpb.drm + 1)
-            .map(e -> CpmFile.fromEntry(e, cpmFormat.dpb.exm))
             .filter(file -> (file.status & 0xFF) <= MAX_USER_NUMBER);
     }
 

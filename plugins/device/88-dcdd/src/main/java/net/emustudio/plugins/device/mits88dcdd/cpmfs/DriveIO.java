@@ -109,9 +109,6 @@ public class DriveIO implements AutoCloseable {
      * @throws IllegalArgumentException if sector data does not have expected size (sector size)
      */
     public void writeRecord(Position position, ByteBuffer data) throws IOException {
-        if (data.remaining() != CpmFormat.RECORD_SIZE) {
-            throw new IllegalArgumentException("Cannot write record: unexpected data size = " + data.remaining());
-        }
         ByteBuffer sector = cpmFormat.sectorOps.toSector(data, position);
         channel.position(cpmFormat.positionToOffset(position));
 
@@ -152,8 +149,7 @@ public class DriveIO implements AutoCloseable {
 
         Position position = cpmFormat.blockToPosition(blockNumber);
         for (ByteBuffer record : records) {
-            ByteBuffer sector = cpmFormat.sectorOps.toSector(record, position);
-            writeRecord(position, sector);
+            writeRecord(position, record);
             position.next(cpmFormat.dpb.spt);
         }
     }
