@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.mits88dcdd.cpmfs;
+package net.emustudio.plugins.device.mits88dcdd.cpmfs.entry;
 
 import net.jcip.annotations.Immutable;
 
@@ -27,21 +27,32 @@ import java.util.stream.Collectors;
 /**
  * CP/M file entry.
  *
- * It tries to unify all CP/M versions used in all systems.
+ * Valid for all versions of CP/M.
  *
+ * <p>
+ * It tries to unify all CP/M versions used in all systems.
+ * <p>
  * Flags:
- *  F0: requires set wheel byte (Backgrounder II)
- *  F1: public file (P2DOS, ZSDOS), forground-only command (Backgrounder II)
- *  F2: date stamp (ZSDOS), background-only commands (Backgrounder II)
- *  F7: wheel protect (ZSDOS)
- *  E0: read-only
- *  E1: system file
- *  E2: archived
+ * F0: requires set wheel byte (Backgrounder II)
+ * F1: public file (P2DOS, ZSDOS), forground-only command (Backgrounder II)
+ * F2: date stamp (ZSDOS), background-only commands (Backgrounder II)
+ * F7: wheel protect (ZSDOS)
+ * E0: read-only
+ * E1: system file
+ * E2: archived
  *
  * @see <a href="https://www.seasip.info/Cpm/format22.html">CP/M directory format</a>
  */
 @Immutable
 public class CpmFile {
+    public static final int FLAG_WHEEL_REQUIRED = 0; // Backgrounder II
+    public static final int FLAG_PUBLIC_FILE = 1; // public_file=P2DOS,ZSDOS; foreground-only commands=Backgrounder II
+    public static final int FLAG_DATE_STAMP = 2; // date_stamp=ZSDOS; background-only commands=Backgrounder II
+    public static final int FLAG_WHEEL_PROTECT = 7; // ZSDOS
+    public static final int FLAG_READ_ONLY = 8;
+    public static final int FLAG_INVISIBLE = 9;
+    public static final int FLAG_ARCHIVED = 10;
+
     public final static int ENTRY_SIZE = 32;
     public final static int RAW_BLOCK_POINTERS_COUNT = 16;
     private final static String INVALID_CHARS_REGEX = "[<>.,;:=?*\\[\\]]";
@@ -63,9 +74,7 @@ public class CpmFile {
 
     public final String fileName;
     public final String fileExt;
-    public final boolean readOnly;
-    public final boolean invisible;
-    public final boolean archived;
+    public final int flags;
 
     public final byte ex; // 0-4 bits
     public final byte s2; // 0-5 bits
@@ -82,17 +91,14 @@ public class CpmFile {
      *
      * @param status       user number of file status
      * @param fileName     file name
-     * @param readOnly     read only?
-     * @param invisible    invisible?
-     * @param archived     archived?
+     * @param flags        flags
      * @param extentNumber raw extent number - i.e. raw entry index across all directory blocks
      * @param exm          extent mask
      * @param bc           bytes count in this extent
      * @param rc           records count in this extent
      * @param al           extents
      */
-    CpmFile(byte status, String fileName, boolean readOnly, boolean invisible, boolean archived,
-            int extentNumber, byte exm, byte bc, byte rc, List<Byte> al) {
+    public CpmFile(byte status, String fileName, int flags, int extentNumber, byte exm, byte bc, byte rc, List<Byte> al) {
         if (fileName.matches(INVALID_CHARS_REGEX)) {
             // https://linux.die.net/man/5/cpm
             throw new IllegalArgumentException("File name contains invalid chars!");
@@ -108,16 +114,14 @@ public class CpmFile {
         this.extentNumber = extentNumber;
 
         this.status = status;
-        this.readOnly = readOnly;
-        this.invisible = invisible;
-        this.archived = archived;
+        this.flags = flags;
         this.entryNumber = ((32 * s2) + ex) / (exm + 1);
         this.bc = bc;
         this.rc = rc;
         this.numberOfRecords = USE_EX_LSB ? ((ex & 1) << 8 + (rc & 0xFF)) : (rc & 0xFF);
     }
 
-    private CpmFile(byte status, String fileName, String fileExt, boolean readOnly, boolean invisible, boolean archived,
+    private CpmFile(byte status, String fileName, String fileExt, int flags,
                     byte ex, byte s2, byte exm, byte bc, byte rc, List<Byte> al) {
         if (fileName.matches(INVALID_CHARS_REGEX) || fileExt.matches(INVALID_CHARS_REGEX)) {
             // https://linux.die.net/man/5/cpm
@@ -128,9 +132,7 @@ public class CpmFile {
         this.status = status;
         this.fileName = Objects.requireNonNull(fileName);
         this.fileExt = Objects.requireNonNull(fileExt);
-        this.readOnly = readOnly;
-        this.invisible = invisible;
-        this.archived = archived;
+        this.flags = flags;
 
         this.ex = ex;
         this.s2 = s2;
@@ -153,18 +155,25 @@ public class CpmFile {
         return result;
     }
 
-    static CpmFile fromEntry(ByteBuffer entry, byte exm) {
-        byte status = (byte) (entry.get() & 0xFF);
+    public static CpmFile fromEntry(ByteBuffer entry, byte exm) {
+        byte status = entry.get();
 
         byte[] fileNameBytes = new byte[11];
         entry.get(fileNameBytes);
-        boolean readOnly = (fileNameBytes[8] & 0x80) == 0x80;
-        boolean invisible = (fileNameBytes[9] & 0x80) == 0x80;
-        boolean archived = (fileNameBytes[10] & 0x80) == 0x80;
 
-        fileNameBytes[8] = (byte) (fileNameBytes[8] & 0x7F);
-        fileNameBytes[9] = (byte) (fileNameBytes[9] & 0x7F);
-        fileNameBytes[10] = (byte) (fileNameBytes[10] & 0x7F);
+        int WR = (fileNameBytes[FLAG_WHEEL_REQUIRED] & 0x80) == 0x80 ? FLAG_WHEEL_REQUIRED : 0;
+        int PF = (fileNameBytes[FLAG_PUBLIC_FILE] & 0x80) == 0x80 ? FLAG_PUBLIC_FILE : 0;
+        int DS = (fileNameBytes[FLAG_DATE_STAMP] & 0x80) == 0x80 ? FLAG_DATE_STAMP : 0;
+        int WP = (fileNameBytes[FLAG_WHEEL_PROTECT] & 0x80) == 0x80 ? FLAG_WHEEL_PROTECT : 0;
+        int RO = (fileNameBytes[FLAG_READ_ONLY] & 0x80) == 0x80 ? FLAG_READ_ONLY : 0;
+        int IN = (fileNameBytes[FLAG_INVISIBLE] & 0x80) == 0x80 ? FLAG_INVISIBLE : 0;
+        int AR = (fileNameBytes[FLAG_ARCHIVED] & 0x80) == 0x80 ? FLAG_ARCHIVED : 0;
+
+        int flags = WR | PF | DS | WP | RO | IN | AR;
+
+        for (int i = 0; i < fileNameBytes.length; i++) {
+            fileNameBytes[i] = (byte) (fileNameBytes[i] & 0x7F);
+        }
         String fileNameExt = new String(fileNameBytes);
         String fileName = fileNameExt.substring(0, 8);
         String fileExt = fileNameExt.substring(8);
@@ -180,10 +189,10 @@ public class CpmFile {
             extents.add(bp);
         }
 
-        return new CpmFile(status, fileName, fileExt, readOnly, invisible, archived, ex, s2, exm, bc, rc, extents);
+        return new CpmFile(status, fileName, fileExt, flags, ex, s2, exm, bc, rc, extents);
     }
 
-    ByteBuffer toEntry() {
+    public ByteBuffer toEntry() {
         ByteBuffer entry = ByteBuffer.allocate(ENTRY_SIZE);
         entry.put(status);
 
@@ -201,14 +210,9 @@ public class CpmFile {
         for (; i < 11; i++) {
             fileNameBytes[i] = 0x20; // space
         }
-        if (readOnly) {
-            fileNameBytes[8] |= 0x80;
-        }
-        if (invisible) {
-            fileNameBytes[9] |= 0x80;
-        }
-        if (archived) {
-            fileNameBytes[10] |= 0x80;
+
+        for (i = 0; i < fileNameBytes.length; i++) {
+            fileNameBytes[i] |= ((flags & i) == 1 ? 0x80 : 0);
         }
         entry.put(fileNameBytes);
 
@@ -226,14 +230,24 @@ public class CpmFile {
     }
 
     public static String getLongHeader() {
-        return "St |File name    |Flags |Ex |S2 |Rc |Bc |Al\n" +
-            "-------------------------------------------";
+        return "St |File name    |Flags   |Ex |S2 |Rc |Bc |Al\n" +
+            "---------------------------------------------";
+    }
+
+    public String getFlagsString() {
+        return ((flags & (1 << FLAG_WHEEL_REQUIRED)) != 0 ? "W" : " ") +
+            ((flags & (1 << FLAG_PUBLIC_FILE)) != 0 ? "P" : " ") +
+            ((flags & (1 << FLAG_DATE_STAMP)) != 0 ? "D" : " ") +
+            ((flags & (1 << FLAG_WHEEL_PROTECT)) != 0 ? "w" : " ") +
+            ((flags & (1 << FLAG_READ_ONLY)) != 0 ? "R" : " ") +
+            ((flags & (1 << FLAG_INVISIBLE)) != 0 ? "I" : " ") +
+            ((flags & (1 << FLAG_ARCHIVED)) != 0 ? "A" : " ");
     }
 
     public String toLongString() {
         return String.format("%02x |", status & 0xFF) +
             String.format("%12s |", getFileName()) +
-            String.format("%3s   |", (readOnly ? "R" : " ") + (invisible ? "I" : " ") + (archived ? "A" : " ")) +
+            String.format("%7s |", getFlagsString()) +
             String.format("%02x |", ex & 0xFF) +
             String.format("%02x |", s2 & 0xFF) +
             String.format("%02x |", rc & 0xFF) +

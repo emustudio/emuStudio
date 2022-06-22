@@ -7,9 +7,10 @@ import java.util.Map;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZE;
 
 public class Formats {
-    private final static CpmFormat.SectorOps mits88dcdd = new CpmFormat.SectorOps() {
+    public final static DriveIO.SectorOps mits88dcdd = new DriveIO.SectorOps() {
         @Override
         public ByteBuffer toSector(ByteBuffer record, Position position) {
+            // https://retrocmp.de/hardware/altair-8800/altair-floppy.htm
             record.limit(RECORD_SIZE);
             record.position(0);
 
@@ -51,18 +52,16 @@ public class Formats {
     // However... what matters only is the track number
     public final static CpmFormat ALTAIR_CPM_2_2 = new CpmFormat(
         new DiskParameterBlock(32, 3, 7, 254, 255, 0xFF, 6),
-        137, 17, false, CpmFormat.DateStampFormat.NONE,
-        mits88dcdd
+        137, 17, false, CpmFormat.DateFormat.NOT_USED
     );
 
     public final static CpmFormat ALTAIR_CPM_3 = new CpmFormat(
         new DiskParameterBlock(32, 4, 15, 0x07F9, 0x03FF, 0x0F, 6),
-        137, 17, false, CpmFormat.DateStampFormat.CPM3,
-        mits88dcdd
+        137, 17, false, CpmFormat.DateFormat.NOT_USED
     );
 
     static {
-        FORMATS.put("altair_floppy_cpm2", ALTAIR_CPM_2_2);
-        FORMATS.put("altair_floppy_cpm3", ALTAIR_CPM_3);
+        FORMATS.put("altair_floppy_cpm2", ALTAIR_CPM_2_2); // simh
+        FORMATS.put("altair_floppy_cpm3", ALTAIR_CPM_3); // simh
     }
 }

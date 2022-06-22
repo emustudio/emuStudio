@@ -73,11 +73,32 @@ import java.util.Objects;
 public class DriveIO implements AutoCloseable {
     public final int RAW_SECTOR_SIZE = 137;
 
+    public interface SectorOps {
+
+        /**
+         * Converts record of max RECORD_SIZE bytes to raw sector.
+         * the record size might be less than RECORD_SIZE.
+         * @param record CP/M record
+         * @param position position
+         * @return raw sector with correct length
+         */
+        ByteBuffer toSector(ByteBuffer record, Position position);
+
+        /**
+         * Converts sector of sectorSize to RECORD_SIZE record.
+         * @param sector sector
+         * @return record
+         */
+        ByteBuffer toRecord(ByteBuffer sector);
+    }
+
     public final CpmFormat cpmFormat;
     private final FileChannel channel;
+    public final SectorOps sectorOps;
 
-    public DriveIO(Path imageFile, CpmFormat cpmFormat, OpenOption... openOptions) throws IOException {
+    public DriveIO(Path imageFile, CpmFormat cpmFormat, SectorOps sectorOps, OpenOption... openOptions) throws IOException {
         this.cpmFormat = Objects.requireNonNull(cpmFormat);
+        this.sectorOps = Objects.requireNonNull(sectorOps);
         this.channel = FileChannel.open(Objects.requireNonNull(imageFile), openOptions);
     }
 
@@ -97,7 +118,7 @@ public class DriveIO implements AutoCloseable {
         if (channel.read(buffer) != RAW_SECTOR_SIZE) {
             throw new IOException("Could not read whole sector! (" + position + ")");
         }
-        return cpmFormat.sectorOps.toRecord(buffer.flip());
+        return sectorOps.toRecord(buffer.flip());
     }
 
     /**
@@ -109,7 +130,7 @@ public class DriveIO implements AutoCloseable {
      * @throws IllegalArgumentException if sector data does not have expected size (sector size)
      */
     public void writeRecord(Position position, ByteBuffer data) throws IOException {
-        ByteBuffer sector = cpmFormat.sectorOps.toSector(data, position);
+        ByteBuffer sector = sectorOps.toSector(data, position);
         channel.position(cpmFormat.positionToOffset(position));
 
         int expected = sector.remaining();

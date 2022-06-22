@@ -18,6 +18,10 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile;
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmNativeDate;
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmPlusDiscLabel;
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmPlusPassword;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.io.IOException;
@@ -27,15 +31,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFile.ENTRY_SIZE;
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFile.RAW_BLOCK_POINTERS_COUNT;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_SIZE;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.RAW_BLOCK_POINTERS_COUNT;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.ENTRIES_PER_RECORD;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZE;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmNativeDate.STATUS_DATESTAMP;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmPlusDiscLabel.STATUS_LABEL;
 
 
 @NotThreadSafe
 public class CpmFileSystem {
-    private final static int STATUS_LABEL = 0x20;
     private final static int STATUS_UNUSED = 0xE5;
     private final static int MAX_USER_NUMBER = 0x0F;
 
@@ -57,11 +62,11 @@ public class CpmFileSystem {
     }
 
     public String getLabel() {
-        return listValidFiles()
-            .filter(f -> (f.status & 0xFF) == STATUS_LABEL)
-            .map(f -> f.fileName + f.fileExt)
-            .findAny()
-            .orElse("");
+        return readDirectoryBlocks()
+            .flatMap(i -> i.v.flatMap(this::getFileEntries))
+            .filter(file -> (file.status & 0xFF) == STATUS_LABEL)
+            .map(file -> CpmPlusDiscLabel.fromEntry(file.toEntry()).toString())
+            .findAny().orElse("");
     }
 
     public Optional<String> readFile(String fileName) throws IOException {
@@ -123,7 +128,7 @@ public class CpmFileSystem {
         }
 
         // write extents
-        Iterator<I<Stream<I<Stream<Integer>>>>> freeExtentsBlocks = findFreeExtents().iterator();
+        Iterator<I<Stream<I<Stream<Integer>>>>> freeExtentsBlocks = findFreeDataExtents().iterator();
         if (!freeExtentsBlocks.hasNext()) {
             throw new IllegalStateException("No free space in directory");
         }
@@ -149,7 +154,7 @@ public class CpmFileSystem {
                 continue;
             }
 
-            while(!freeExtents.hasNext()) {
+            while (!freeExtents.hasNext()) {
                 while (!freeExtentsSectors.hasNext()) {
                     if (!freeExtentsBlocks.hasNext()) {
                         throw new IllegalStateException("No free space in directory");
@@ -170,8 +175,9 @@ public class CpmFileSystem {
                 (byte) (RECORD_SIZE - lastRecord.remaining()) :
                 (byte) lastRecord.remaining();
 
+            // no flags setting supported yet
             CpmFile file = new CpmFile(
-                (byte) 0, fileName, false, false, false,
+                (byte) 0, fileName, 0,
                 extentIndex++, cpmFormat.dpb.exm, bc, rc, bpPerExtent
             );
 
@@ -185,7 +191,26 @@ public class CpmFileSystem {
         }
     }
 
+    public List<String> listDates() {
+        return readDirectoryBlocks()
+            .flatMap(i -> i.v.flatMap(this::getFileEntries))
+            .limit(cpmFormat.dpb.drm + 1)
+            .filter(file -> (file.status & 0xFF) == STATUS_DATESTAMP)
+            .map(file -> CpmNativeDate.fromEntry(file.toEntry()).toString())
+            .collect(Collectors.toList());
+    }
+
+    public List<String> listPasswords() {
+        return readDirectoryBlocks()
+            .flatMap(i -> i.v.flatMap(this::getFileEntries))
+            .limit(cpmFormat.dpb.drm + 1)
+            .filter(file -> (file.status & 0xFF) > 0x0F && (file.status & 0xFF) <= (0x0F + 15))
+            .map(file -> CpmPlusPassword.fromEntry(file.toEntry()).toString())
+            .collect(Collectors.toList());
+    }
+
     private List<List<Byte>> writeContent(List<List<ByteBuffer>> contentInBlocks) throws IOException {
+        // will not update timestamps
         Iterator<Integer> freeBlocks = findFreeBlocks().iterator();
 
         List<Byte> bpPerEntry = new ArrayList<>();
@@ -258,23 +283,30 @@ public class CpmFileSystem {
     }
 
     /**
-     * Returns free extents per block and sector.
+     * Returns free "data" extents per block and sector.
+     * <p>
+     * "Data" means that they can be used for files, label or password, but not for timestamp extents (both native
+     * and date-stamper).
+     *
      * <p>
      * The indexes returned are "entry indexes": they reset to 0 on each new sector
+     * Note: if a native timestamps are used, then every 4th entry represents a date-time entry of previous 3 entries.
      *
      * @return free extents per directory block and sector
      */
-    private Stream<I<Stream<I<Stream<Integer>>>>> findFreeExtents() {
+    private Stream<I<Stream<I<Stream<Integer>>>>> findFreeDataExtents() {
         return readDirectoryBlocks().map(block -> {
             AtomicInteger sectorIndex = new AtomicInteger();
             return new I<>(block.index, block.v
-                .map(this::getEntries)
+                .map(this::getFileEntries)
                 .map(filesInSector -> {
                     sectorIndex.set(0);
                     AtomicInteger entryIndex = new AtomicInteger();
                     return new I<>(sectorIndex.getAndIncrement(), filesInSector
                         .map(f -> new I<>(entryIndex.getAndIncrement(), f))
                         .filter(f -> (f.v.status & 0xFF) == STATUS_UNUSED)
+                        .filter(f -> cpmFormat.dateFormat != CpmFormat.DateFormat.NATIVE || ((f.index + 1) % 4 != 0))
+                        .filter(f -> cpmFormat.dateFormat != CpmFormat.DateFormat.DATE_STAMPER || (f.index != 0))
                         .map(f -> f.index));
                 }));
         });
@@ -328,7 +360,7 @@ public class CpmFileSystem {
             });
     }
 
-    private Stream<CpmFile> getEntries(ByteBuffer record) {
+    private Stream<CpmFile> getFileEntries(ByteBuffer record) {
         List<CpmFile> entries = new ArrayList<>();
         for (int i = 0; i < ENTRIES_PER_RECORD; i++) {
             byte[] entry = new byte[ENTRY_SIZE];
@@ -346,7 +378,7 @@ public class CpmFileSystem {
 
     public Stream<CpmFile> listValidFiles() {
         return readDirectoryBlocks()
-            .flatMap(i -> i.v.flatMap(this::getEntries))
+            .flatMap(i -> i.v.flatMap(this::getFileEntries))
             .limit(cpmFormat.dpb.drm + 1)
             .filter(file -> (file.status & 0xFF) <= MAX_USER_NUMBER);
     }

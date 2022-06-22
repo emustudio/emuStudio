@@ -1,15 +1,22 @@
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFile.RAW_BLOCK_POINTERS_COUNT;
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFile.ENTRY_SIZE;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_SIZE;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.RAW_BLOCK_POINTERS_COUNT;
 
 public class CpmFormat {
+
+    // https://www.seasip.info/Cpm/dosses.html
+
+    enum DateFormat {
+        NOT_USED,
+        NATIVE, // P2DOS  and CP/M Plus; every 4th entry
+        DATE_STAMPER // !!!TIME&.DAT; in 1st entry
+    }
 
     public static final int RECORD_SIZE = 128;
     public static final int ENTRIES_PER_RECORD = RECORD_SIZE / ENTRY_SIZE;
@@ -31,37 +38,11 @@ public class CpmFormat {
     // https://manpages.debian.org/testing/cpmtools/cpm.5.en.html
     // ISX records the number of unused instead of used bytes in Bc
     public final boolean bcInterpretsAsUnused;
-    public final DateStampFormat dateStampFormat;
-    public final SectorOps sectorOps;
-
-    public enum DateStampFormat {
-        Z80DOS, DOSPLUS, CPM3, NONE
-    }
-
-    public interface SectorOps {
-
-        /**
-         * Converts record of max RECORD_SIZE bytes to raw sector.
-         * the record size might be less than RECORD_SIZE.
-         * @param record CP/M record
-         * @param position position
-         * @return raw sector with correct length
-         */
-        ByteBuffer toSector(ByteBuffer record, Position position);
-
-        /**
-         * Converts sector of sectorSize to RECORD_SIZE record.
-         * @param sector sector
-         * @return record
-         */
-        ByteBuffer toRecord(ByteBuffer sector);
-    }
+    public final DateFormat dateFormat;
 
     public CpmFormat(DiskParameterBlock dpb, int sectorSize, int sectorSkew,
-                     boolean bcInterpretsAsUnused, DateStampFormat dateStampFormat, SectorOps sectorOps) {
+                     boolean bcInterpretsAsUnused, DateFormat dateFormat) {
         this.dpb = Objects.requireNonNull(dpb);
-        this.sectorOps = Objects.requireNonNull(sectorOps);
-
         this.blockSize = RECORD_SIZE * (dpb.blm + 1);
 
         List<Integer> dblocks = new ArrayList<>();
@@ -84,7 +65,7 @@ public class CpmFormat {
 
         this.tracks = dpb.drm * blockSize / (dpb.spt * RECORD_SIZE);
         this.bcInterpretsAsUnused = bcInterpretsAsUnused;
-        this.dateStampFormat = Objects.requireNonNull(dateStampFormat);
+        this.dateFormat = Objects.requireNonNull(dateFormat);
     }
 
     public long positionToOffset(Position position) {

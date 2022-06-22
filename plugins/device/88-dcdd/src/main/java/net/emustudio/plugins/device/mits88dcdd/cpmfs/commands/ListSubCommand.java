@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.cpmfs.commands;
 
-import net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFile;
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFileSystem;
 
 import java.io.IOException;

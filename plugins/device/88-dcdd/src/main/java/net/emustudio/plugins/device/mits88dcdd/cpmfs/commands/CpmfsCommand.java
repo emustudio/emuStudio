@@ -22,7 +22,6 @@ import net.emustudio.plugins.device.mits88dcdd.Command;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFileSystem;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.DriveIO;
 import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.SubCommand;
 import org.kohsuke.args4j.spi.SubCommandHandler;
 import org.kohsuke.args4j.spi.SubCommands;
@@ -31,11 +30,12 @@ import java.io.IOException;
 
 public class CpmfsCommand implements Command {
 
-    @Argument(handler = SubCommandHandler.class, metaVar = "CPMFS command (cat, ls, volinfo, download, upload)", required = true)
+    @Argument(handler = SubCommandHandler.class, metaVar = "CPMFS command (cat, ls, volinfo, dates, download, upload)", required = true)
     @SubCommands({
         @SubCommand(name = "cat", impl = CatSubCommand.class),
         @SubCommand(name = "ls", impl = ListSubCommand.class),
         @SubCommand(name = "volinfo", impl = InfoSubCommand.class),
+        @SubCommand(name = "dates", impl = DatesSubCommand.class),
         @SubCommand(name = "download", impl = DownloadSubCommand.class),
         @SubCommand(name = "upload", impl = UploadSubCommand.class)
     })

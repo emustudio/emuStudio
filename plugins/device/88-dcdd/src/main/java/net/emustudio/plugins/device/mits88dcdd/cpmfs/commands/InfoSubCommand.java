@@ -28,5 +28,7 @@ public class InfoSubCommand implements CpmfsCommand.CpmfsSubCommand {
     public void execute(CpmFileSystem fileSystem) throws IOException {
         System.out.println("Disc label: " + fileSystem.getLabel());
         System.out.println("Number of files: " + fileSystem.listExistingFiles().count());
+        System.out.println("File passwords:");
+        fileSystem.listPasswords().forEach(System.out::println);
     }
 }

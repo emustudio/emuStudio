@@ -33,6 +33,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.Formats.FORMATS;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.Formats.mits88dcdd;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
 
 public class CommandLine {
@@ -77,7 +78,7 @@ public class CommandLine {
     private Runnable createCommand() {
         return () -> {
             CpmFormat cpmFormat = FORMATS.get(format);
-            try(DriveIO driveIO = new DriveIO(Path.of(imageFile), cpmFormat, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+            try(DriveIO driveIO = new DriveIO(Path.of(imageFile), cpmFormat, mits88dcdd, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 command.execute(driveIO);
             } catch (Exception e) {
                 LOGGER.error("Could not run disk command", e);
