@@ -95,6 +95,7 @@ public class CpmFileSystem {
                 if (recordsLeft <= 0) {
                     break;
                 }
+                System.out.println(Integer.toHexString(nextBlock) + ": " + Long.toHexString(cpmFormat.positionToOffset(cpmFormat.blockToPosition(nextBlock))));
 
                 List<ByteBuffer> records = driveIO.readBlock(nextBlock);
                 int recordsCount = records.size();

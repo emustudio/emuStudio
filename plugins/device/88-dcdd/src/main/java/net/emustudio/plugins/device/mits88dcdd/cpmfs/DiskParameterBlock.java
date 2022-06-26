@@ -1,5 +1,9 @@
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
+import com.electronwill.nightconfig.core.Config;
+
+import java.util.OptionalInt;
+
 // https://www.idealine.info/sharpmz/succpminfo06.htm#bshblm
 public class DiskParameterBlock {
 
@@ -68,8 +72,13 @@ public class DiskParameterBlock {
      *
      * $80 00 = 10000000 00000000 i.e. the Directory is allocated BLOCK 00 only
      * $C0 00= 11000000 00000000 i.e. the Directory is allocated BLOCKS 00 & 01
+     *
+     * al0              al1
+     * b7b6b5b4b3b2b1b0 b7b6b5b4b3b2b1b0
+     *  1 1 1 1 0 0 0 0  0 0 0 0 0 0 0 0
      */
-    public final int al01;
+    public final int al0;
+    public final int al1;
 
     /**
      * No. of reserved tracks
@@ -80,7 +89,7 @@ public class DiskParameterBlock {
      */
     public final int ofs;
 
-    public DiskParameterBlock(int spt, int bsh, int blm, int dsm, int drm, int al01, int ofs) {
+    public DiskParameterBlock(int spt, int bsh, int blm, int dsm, int drm, int al0, int al1, int ofs) {
         if (bsh < 3 || bsh > 7) {
             throw new IllegalArgumentException("Invalid BSH");
         }
@@ -102,20 +111,37 @@ public class DiskParameterBlock {
         this.blm = blm;
         this.dsm = dsm;
         this.drm = drm;
-        this.al01 = al01;
+        this.al0 = al0;
+        this.al1 = al1;
         this.ofs = ofs;
     }
 
-    public static DiskParameterBlock fromBSH(int spt, int bsh, int dsm, int drm, int al01, int ofs) {
+    public static DiskParameterBlock fromBSH(int spt, int bsh, int dsm, int drm, int al0, int al1, int ofs) {
         return new DiskParameterBlock(
-            spt, bsh, (1 << bsh) - 1, dsm, drm, al01, ofs
+            spt, bsh, (1 << bsh) - 1, dsm, drm, al0, al1, ofs
         );
     }
 
-    public static DiskParameterBlock fromBLM(int spt, int blm, int dsm, int drm, int al01, int ofs) {
+    public static DiskParameterBlock fromBLM(int spt, int blm, int dsm, int drm, int al0, int al1, int ofs) {
         return new DiskParameterBlock(
-            spt, (int)(Math.log(blm + 1) / Math.log(2)), blm, dsm, drm, al01, ofs
+            spt, (int)(Math.log(blm + 1) / Math.log(2)), blm, dsm, drm, al0, al1, ofs
         );
+    }
+
+    public static DiskParameterBlock fromConfig(Config config) {
+        int spt = config.get("spt");
+        OptionalInt bsh = config.getOptionalInt("bsh");
+        OptionalInt blm = config.getOptionalInt("blm");
+        int dsm = config.get("dsm");
+        int drm = config.get("drm");
+        int al0 = config.getInt("al0") & 0xFF;
+        int al1 = config.getInt("al1") & 0xFF;
+        int ofs = config.get("ofs");
+
+        if (bsh.isPresent()) {
+            return fromBSH(spt, bsh.getAsInt(), dsm, drm, al0, al1, ofs);
+        }
+        return fromBLM(spt, blm.orElseThrow(), dsm, drm, al0, al1, ofs);
     }
 
     @Override
@@ -127,8 +153,8 @@ public class DiskParameterBlock {
             "  exm=" + exm + "\n" +
             "  dsm=" + dsm + "\n" +
             "  drm=" + drm + "\n" +
-            "  al0=" + (Integer.toBinaryString(al01 & 0xFF)) + "\n" +
-            "  al1=" + (Integer.toBinaryString(al01 >>> 8)) + "\n" +
+            "  al0=" + (Integer.toBinaryString(al0 & 0xFF)) + "\n" +
+            "  al1=" + (Integer.toBinaryString(al1 & 0xFF)) + "\n" +
             "  ofs=" + ofs + "\n";
     }
 }

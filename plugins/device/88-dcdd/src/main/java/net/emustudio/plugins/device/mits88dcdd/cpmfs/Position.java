@@ -18,9 +18,12 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
-class Position {
-    int track;
-    int sector;
+import net.jcip.annotations.NotThreadSafe;
+
+@NotThreadSafe
+public class Position {
+    public int track;
+    public int sector;
 
     Position(int track, int sector) {
         this.track = track;

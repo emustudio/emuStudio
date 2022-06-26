@@ -1,0 +1,89 @@
+[[format]]
+# Altair 8" diskettes; Pertec FD-400 flopy drive; single-sided; hard-sectored
+# CP/M 1.4; simh BIOS
+#
+# https://retrocmp.de/hardware/altair-8800/altair-floppy.htm
+# https://altairclone.com/downloads/roms/M%20Eberhard%20Improved%20ROMs/CDBL%20Manual.pdf
+# https://deramp.com/downloads/mfe_archive/010-S100%20Computers%20and%20Boards/00-MITS/40-Software/DSK%20Disk%20Images/Altair%20cpm%20Disk%20Images/Burcon%20(MITS)%20CPM.pdf
+#
+# Tested on:
+# cpm1.dsk    https://schorn.ch/cpm/zip/cpm1.zip
+id = 'cpm1-simh'
+sectorSize = 137
+sectorSkew = 6
+sectorOps = 'mits88dcdd'
+bcInterpretsAsUnused = false
+dateFormat = 'NOT_USED'
+
+[format.dpb]
+spt = 32
+bsh = 3
+# or blm = 7
+dsm = 242
+drm = 63
+al0 = 0xC0 # 11000000 00000000
+al1 = 0
+ofs = 2
+
+
+
+[[format]]
+# Altair 8" diskettes; Pertec FD-400 flopy drive; single-sided; hard-sectored
+# CP/M 2.2; simh BIOS
+#
+# https://retrocmp.de/hardware/altair-8800/altair-floppy.htm
+# https://altairclone.com/downloads/roms/M%20Eberhard%20Improved%20ROMs/CDBL%20Manual.pdf
+# https://deramp.com/downloads/mfe_archive/010-S100%20Computers%20and%20Boards/00-MITS/40-Software/DSK%20Disk%20Images/Altair%20cpm%20Disk%20Images/Burcon%20(MITS)%20CPM.pdf
+#
+# Tested on:
+# altcpm.dsk    http://cpmarchives.classiccmp.org/cpm/mirrors/www.schorn.ch/cpm/zip/altsw.zip
+#
+id = 'cpm2-simh'
+sectorSize = 137
+sectorSkew = 17
+sectorOps = 'mits88dcdd'
+bcInterpretsAsUnused = false
+dateFormat = 'NOT_USED'
+
+[format.dpb]
+spt = 32
+bsh = 3
+# or blm = 7
+dsm = 254
+drm = 255
+al0 = 0xFF
+al1 = 0
+ofs = 6
+
+[[format]]
+# Altair 8" diskettes; Pertec FD-400 flopy drive; single-sided; hard-sectored
+# CP/M 3; simh BIOS
+#
+# https://retrocmp.de/hardware/altair-8800/altair-floppy.htm
+# https://altairclone.com/downloads/roms/M%20Eberhard%20Improved%20ROMs/CDBL%20Manual.pdf
+# https://deramp.com/downloads/mfe_archive/010-S100%20Computers%20and%20Boards/00-MITS/40-Software/DSK%20Disk%20Images/Altair%20cpm%20Disk%20Images/Burcon%20(MITS)%20CPM.pdf
+#
+# Tested on:
+#
+# cpm3.dsk        https://schorn.ch/cpm/zip/cpm3.zip
+# z80dos.dsk      https://schorn.ch/cpm/zip/z80dos.zip
+# zsdos.dsk       https://schorn.ch/cpm/zip/zsdos.zip
+# superdos.dsk    https://schorn.ch/cpm/zip/superdos.zip
+# cpm1dev.dsk     https://schorn.ch/cpm/zip/cpm1.zip
+
+id = 'cpm3-simh'
+sectorSize = 137
+sectorSkew = 17
+sectorOps = 'mits88dcdd'
+bcInterpretsAsUnused = false
+dateFormat = 'NOT_USED'
+
+[format.dpb]
+spt = 32
+bsh = 4
+# or blm = 15
+dsm = 0x07F9
+drm = 0x03FF
+al0 = 0xF0
+al1 = 0
+ofs = 6

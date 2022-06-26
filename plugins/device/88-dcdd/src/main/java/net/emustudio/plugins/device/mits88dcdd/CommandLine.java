@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88dcdd;
 
+import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.DriveIO;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.commands.CpmfsCommand;
@@ -28,22 +29,29 @@ import org.kohsuke.args4j.spi.SubCommands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.Formats.FORMATS;
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.Formats.mits88dcdd;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
 
 public class CommandLine {
     private final static Logger LOGGER = LoggerFactory.getLogger(CommandLine.class);
 
-    @Option(name = "--image", usage = "use given disk image", metaVar = "fileName", required = true)
+    @Option(name = "--image", usage = "use given disk image", metaVar = "imageFile", required = true)
     String imageFile;
 
-    @Option(name = "--format", usage = "disk format (default 'altair_floppy_cpm2')", metaVar = "X")
-    String format = "altair_floppy_cpm2";
+    @Option(name = "--format", usage = "disk format ID", metaVar = "id")
+    String formatId;
+
+    @Option(name = "--formatFile", usage = "disk format file name", metaVar = "formatFile.toml")
+    String formatFile = new File(System.getProperty("user.dir"))
+        .toPath()
+        .resolve("examples")
+        .resolve("altair8800")
+        .resolve("cpm-formats.toml")
+        .toString();
 
     @Option(name = "--help", help = true, usage = "output this message")
     private boolean help = false;
@@ -77,8 +85,18 @@ public class CommandLine {
 
     private Runnable createCommand() {
         return () -> {
-            CpmFormat cpmFormat = FORMATS.get(format);
-            try(DriveIO driveIO = new DriveIO(Path.of(imageFile), cpmFormat, mits88dcdd, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+            CpmFormat cpmFormat;
+            try (FileConfig config = FileConfig.of(Path.of(formatFile))) {
+                config.load();
+                Optional<CpmFormat> format = CpmFormat.fromConfig(config).stream().filter(f -> f.id.equals(formatId)).findFirst();
+                if (format.isEmpty()) {
+                    LOGGER.error("Format with ID '" + formatId + "' does not exist");
+                    throw new RuntimeException("Format with ID '" + formatId + "' does not exist");
+                }
+                cpmFormat = format.get();
+                System.out.println(cpmFormat);
+            }
+            try (DriveIO driveIO = new DriveIO(Path.of(imageFile), cpmFormat, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 command.execute(driveIO);
             } catch (Exception e) {
                 LOGGER.error("Could not run disk command", e);

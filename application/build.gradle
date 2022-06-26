@@ -147,6 +147,10 @@ def scripts(String name) {
   return project(name).buildDir.getAbsolutePath() + "/libs/scripts"
 }
 
+def rawfiles(String name) {
+  return project(name).buildDir.getAbsolutePath() + "/libs/files"
+}
+
 distZip {
   archiveVersion = ''
 }
@@ -229,6 +233,7 @@ distributions {
         from(scripts(":plugins:device:$device")) {
           into "bin"
         }
+        from(rawfiles(":plugins:device:$device"))
       }
     }
   }

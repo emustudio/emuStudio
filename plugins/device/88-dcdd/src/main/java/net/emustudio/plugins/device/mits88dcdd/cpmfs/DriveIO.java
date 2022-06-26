@@ -18,6 +18,8 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.sectorops.SectorOps;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -28,77 +30,19 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 88-DCDD
+ * Drive raw I/O
  *
- * Supported:
- *  - Altair 8" floppy disks: 77 tracks, 32 sectors, 137 bytes sector size; skew: 6
- *  - Altair Minidisk: 35 tracks, 16 sectors, 137 bytes sector size
- *
- * Raw sector size: 137 bytes
- * Sectors/Track: 32, numbered 0-31
- * Tracks/Diskette: 77, numbered 0-76
- *
- * Tracks 0-5 are formatted as "System Tracks" (regardless of how they are actually used). Sectors on these tracks are
- * formmatted as follows:
- *
- *      Byte    Value
- *       0      Track number + 80h
- *      1-2     Sixteen bit address in memory of the end of the bootloader (0x100). This same value is set in all
- *              sectors of tracks 0‐5.
- *     3-130    Data (128 bytes)
- *      131     0FFh (Stop Byte)
- *      132     Checksum of 3-130 (sum of the 128 byte payload)
- *     133-136  Not used
- *
- * Tracks 6-76 (except track 70) are "Data Tracks." Sectors on these tracks are formatted as follows:
- *
- *  Byte    Value
- *     0      Track number + 80h
- *     1      Skewed sector = (Sector number * 17) MOD 32
- *     2      File number in directory (or not used)
- *     3      Data byte count (or not used)
- *     4      Checksum of 2-3 & 5-134
- *    5-6     Pointer to next data group (or not used)
- *   7-134    Data (128 bytes)
- *    135     0FFh (Stop Byte)
- *    136     00h (Stop byte)
- *
- * Track 70 is the Altair Basic/DOS directory track. It is formatted the same as the Data Tracks, except that each Data
- * field is divided into 8 16-byte directory entries. The last 5 of these 16 bytes are written as 0 by most versions of Altair
- * Basic and DOS, but are used as a password by Multiuser Basic, where five 0's means "no password". Unfortunately, single-
- * user Basic does not always clear these bytes. If these bytes are not all 0 For a given directory entry, then multiuser
- * Basic will not be able to access the file. /P fixes this. The first directory entry that has FFh as its first byte is the
- * end-of-directory marker. (This FFh is called "the directory stopper byte.")
+ * Performs raw disk operations
  */
 public class DriveIO implements AutoCloseable {
-    public final int RAW_SECTOR_SIZE = 137;
-
-    public interface SectorOps {
-
-        /**
-         * Converts record of max RECORD_SIZE bytes to raw sector.
-         * the record size might be less than RECORD_SIZE.
-         * @param record CP/M record
-         * @param position position
-         * @return raw sector with correct length
-         */
-        ByteBuffer toSector(ByteBuffer record, Position position);
-
-        /**
-         * Converts sector of sectorSize to RECORD_SIZE record.
-         * @param sector sector
-         * @return record
-         */
-        ByteBuffer toRecord(ByteBuffer sector);
-    }
-
     public final CpmFormat cpmFormat;
-    private final FileChannel channel;
     public final SectorOps sectorOps;
 
-    public DriveIO(Path imageFile, CpmFormat cpmFormat, SectorOps sectorOps, OpenOption... openOptions) throws IOException {
+    private final FileChannel channel;
+
+    public DriveIO(Path imageFile, CpmFormat cpmFormat, OpenOption... openOptions) throws IOException {
         this.cpmFormat = Objects.requireNonNull(cpmFormat);
-        this.sectorOps = Objects.requireNonNull(sectorOps);
+        this.sectorOps = cpmFormat.sectorOps;
         this.channel = FileChannel.open(Objects.requireNonNull(imageFile), openOptions);
     }
 
@@ -113,9 +57,10 @@ public class DriveIO implements AutoCloseable {
      * @throws IOException on reading error
      */
     public ByteBuffer readRecord(Position position) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(RAW_SECTOR_SIZE);
+        ByteBuffer buffer = ByteBuffer.allocateDirect(cpmFormat.sectorSize);
+        System.out.println("R: " + Long.toHexString(cpmFormat.positionToOffset(position)) + "; " + position);
         channel.position(cpmFormat.positionToOffset(position));
-        if (channel.read(buffer) != RAW_SECTOR_SIZE) {
+        if (channel.read(buffer) != cpmFormat.sectorSize) {
             throw new IOException("Could not read whole sector! (" + position + ")");
         }
         return sectorOps.toRecord(buffer.flip());
