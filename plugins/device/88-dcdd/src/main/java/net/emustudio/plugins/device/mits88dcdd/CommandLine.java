@@ -94,7 +94,6 @@ public class CommandLine {
                     throw new RuntimeException("Format with ID '" + formatId + "' does not exist");
                 }
                 cpmFormat = format.get();
-                System.out.println(cpmFormat);
             }
             try (DriveIO driveIO = new DriveIO(Path.of(imageFile), cpmFormat, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 command.execute(driveIO);

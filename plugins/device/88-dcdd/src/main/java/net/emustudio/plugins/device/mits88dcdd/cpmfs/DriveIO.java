@@ -58,7 +58,6 @@ public class DriveIO implements AutoCloseable {
      */
     public ByteBuffer readRecord(Position position) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocateDirect(cpmFormat.sectorSize);
-        System.out.println("R: " + Long.toHexString(cpmFormat.positionToOffset(position)) + "; " + position);
         channel.position(cpmFormat.positionToOffset(position));
         if (channel.read(buffer) != cpmFormat.sectorSize) {
             throw new IOException("Could not read whole sector! (" + position + ")");

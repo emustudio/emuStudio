@@ -80,7 +80,7 @@ public class CpmFormat {
     }
 
     public long positionToOffset(Position position) {
-        return (long) dpb.spt * sectorSize * position.track + (long) sectorSize * sectorSkewTable[position.sector];
+        return (long) dpb.driveSpt * sectorSize * position.track + (long) sectorSize * sectorSkewTable[position.sector];
     }
 
     // so far it is not allowed to write to system/boot tracks
@@ -92,9 +92,6 @@ public class CpmFormat {
         int linearSector = blockNumber * recordsPerBlock + dpb.spt * dpb.ofs;
         int sector = linearSector % dpb.spt;
         int track = linearSector / dpb.spt;
-        if (track >= tracks) {
-            throw new IllegalArgumentException("Too big track number: " + track);
-        }
         return new Position(track, sector);
     }
 
@@ -145,10 +142,14 @@ public class CpmFormat {
     @Override
     public String toString() {
         return "CP/M Format:\n" +
-            "skew table:" + Arrays.deepToString(new int[][]{sectorSkewTable}) + "\n" +
-            "block size: " + blockSize + "\n" +
-            "tracks: " + tracks + "\n" +
-            "records per block: " + recordsPerBlock + "\n" +
-            "directory blocks: " + directoryBlocks + "\n";
+            "  sector size: " + sectorSize + "\n" +
+            "  skew table:" + Arrays.deepToString(new int[][]{sectorSkewTable}) + "\n" +
+            "  block size: " + blockSize + "\n" +
+            "  block pointer is word: " + blockPointerIsWord + "\n" +
+            "  tracks: " + tracks + "\n" +
+            "  records per block: " + recordsPerBlock + "\n" +
+            "  entries per block: " + entriesPerBlock + "\n" +
+            "  directory blocks: " + directoryBlocks + "\n" +
+            "  date format: " + dateFormat;
     }
 }

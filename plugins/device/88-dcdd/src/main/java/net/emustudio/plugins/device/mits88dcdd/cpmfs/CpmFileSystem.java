@@ -45,7 +45,7 @@ public class CpmFileSystem {
     private final static int MAX_USER_NUMBER = 0x0F;
 
     private final DriveIO driveIO;
-    private final CpmFormat cpmFormat;
+    public final CpmFormat cpmFormat;
 
     public CpmFileSystem(DriveIO driveIO) {
         this.driveIO = Objects.requireNonNull(driveIO);
@@ -95,7 +95,6 @@ public class CpmFileSystem {
                 if (recordsLeft <= 0) {
                     break;
                 }
-                System.out.println(Integer.toHexString(nextBlock) + ": " + Long.toHexString(cpmFormat.positionToOffset(cpmFormat.blockToPosition(nextBlock))));
 
                 List<ByteBuffer> records = driveIO.readBlock(nextBlock);
                 int recordsCount = records.size();

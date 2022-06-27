@@ -42,4 +42,8 @@ public class Position {
     public String toString() {
         return "T=" + track + " S=" + sector;
     }
+
+    public String toString(CpmFormat format) {
+        return "T=" + track + " S=" + format.sectorSkewTable[sector];
+    }
 }

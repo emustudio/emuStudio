@@ -8,6 +8,11 @@ import java.util.OptionalInt;
 public class DiskParameterBlock {
 
     /**
+     * Number of physical sectors per track.
+     */
+    public final int driveSpt;
+
+    /**
      * No. of Logical (128-byte) Sectors per Logical Track
      *
      * This may be used to find the capacity of a disk - but the calculation must allow for the fact that in some
@@ -89,7 +94,7 @@ public class DiskParameterBlock {
      */
     public final int ofs;
 
-    public DiskParameterBlock(int spt, int bsh, int blm, int dsm, int drm, int al0, int al1, int ofs) {
+    public DiskParameterBlock(int driveSpt, int spt, int bsh, int blm, int dsm, int drm, int al0, int al1, int ofs) {
         if (bsh < 3 || bsh > 7) {
             throw new IllegalArgumentException("Invalid BSH");
         }
@@ -106,6 +111,7 @@ public class DiskParameterBlock {
             this.exm = (byte)((1 << (bsh - 4)) - 1);
         }
 
+        this.driveSpt = driveSpt;
         this.spt = spt;
         this.bsh = bsh;
         this.blm = blm;
@@ -116,19 +122,20 @@ public class DiskParameterBlock {
         this.ofs = ofs;
     }
 
-    public static DiskParameterBlock fromBSH(int spt, int bsh, int dsm, int drm, int al0, int al1, int ofs) {
+    public static DiskParameterBlock fromBSH(int driveSpt, int spt, int bsh, int dsm, int drm, int al0, int al1, int ofs) {
         return new DiskParameterBlock(
-            spt, bsh, (1 << bsh) - 1, dsm, drm, al0, al1, ofs
+            driveSpt, spt, bsh, (1 << bsh) - 1, dsm, drm, al0, al1, ofs
         );
     }
 
-    public static DiskParameterBlock fromBLM(int spt, int blm, int dsm, int drm, int al0, int al1, int ofs) {
+    public static DiskParameterBlock fromBLM(int driveSpt, int spt, int blm, int dsm, int drm, int al0, int al1, int ofs) {
         return new DiskParameterBlock(
-            spt, (int)(Math.log(blm + 1) / Math.log(2)), blm, dsm, drm, al0, al1, ofs
+            driveSpt, spt, (int)(Math.log(blm + 1) / Math.log(2)), blm, dsm, drm, al0, al1, ofs
         );
     }
 
     public static DiskParameterBlock fromConfig(Config config) {
+        int driveSpt = config.get("driveSpt");
         int spt = config.get("spt");
         OptionalInt bsh = config.getOptionalInt("bsh");
         OptionalInt blm = config.getOptionalInt("blm");
@@ -139,14 +146,15 @@ public class DiskParameterBlock {
         int ofs = config.get("ofs");
 
         if (bsh.isPresent()) {
-            return fromBSH(spt, bsh.getAsInt(), dsm, drm, al0, al1, ofs);
+            return fromBSH(driveSpt, spt, bsh.getAsInt(), dsm, drm, al0, al1, ofs);
         }
-        return fromBLM(spt, blm.orElseThrow(), dsm, drm, al0, al1, ofs);
+        return fromBLM(driveSpt, spt, blm.orElseThrow(), dsm, drm, al0, al1, ofs);
     }
 
     @Override
     public String toString() {
         return "DPB:\n" +
+            "  driveSpt=" + driveSpt + "\n" +
             "  spt=" + spt + "\n" +
             "  bsh=" + bsh + "\n" +
             "  blm=" + blm + "\n" +
