@@ -7,6 +7,6 @@ import java.io.IOException;
 public class DatesSubCommand implements CpmfsCommand.CpmfsSubCommand {
     @Override
     public void execute(CpmFileSystem fileSystem) throws IOException {
-        fileSystem.listDates().forEach(System.out::println);
+        fileSystem.listNativeDates().forEach(System.out::println);
     }
 }

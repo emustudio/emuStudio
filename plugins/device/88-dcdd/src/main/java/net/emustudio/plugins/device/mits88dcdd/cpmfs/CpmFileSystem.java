@@ -18,10 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
-import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile;
-import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmNativeDate;
-import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmPlusDiscLabel;
-import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmPlusPassword;
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.*;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.io.IOException;
@@ -31,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.DateFormat.*;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_SIZE;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.RAW_BLOCK_POINTERS_COUNT;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.ENTRIES_PER_RECORD;
@@ -187,16 +185,50 @@ public class CpmFileSystem {
             directorySector.position(freeExtentIndex * ENTRY_SIZE);
             directorySector.put(file.toEntry());
             directorySector.position(0); // so reading is possible
+
+            // TODO: write timestamps
             driveIO.writeBlock(freeExtentsBlock.index, directoryBlock); // no caching, never mind..
         }
     }
 
-    public List<String> listDates() {
+    /**
+     * Finds native datestamp entries
+     * A native datestamp is every 4th entry
+     * @return native datestamps
+     */
+    public List<String> listNativeDates() {
+        if (cpmFormat.dateFormat != NATIVE && cpmFormat.dateFormat != NATIVE2) {
+            return Collections.emptyList();
+        }
+
+        List<CpmFile> previousFiles = new ArrayList<>();
+
         return readDirectoryBlocks()
             .flatMap(i -> i.v.flatMap(this::getFileEntries))
             .limit(cpmFormat.dpb.drm + 1)
-            .filter(file -> (file.status & 0xFF) == STATUS_DATESTAMP)
-            .map(file -> CpmNativeDate.fromEntry(file.toEntry()).toString())
+            .flatMap(file -> {
+                if ((file.status & 0xFF) != STATUS_DATESTAMP) {
+                    previousFiles.add(file);
+                    return Stream.empty();
+                } else {
+                    CpmDatestamp[] dates;
+                    List<String> sb = new ArrayList<>();
+                    if (cpmFormat.dateFormat == NATIVE) {
+                        dates = CpmNativeDate.fromEntry(file.toEntry()).dates;
+                    } else {
+                        dates = CpmNativeDate2.fromEntry(file.toEntry()).dates;
+                    }
+                    for (int j = 0; j < dates.length; j++) {
+                        CpmFile prev = previousFiles.get(j);
+                        if ((prev.status & 0xFF) <= MAX_USER_NUMBER && prev.ex == 0) {
+                            sb.add(String.format("%12s : %s",prev.getFileName(), dates[j].toString()));
+                        }
+                    }
+                    previousFiles.clear();
+                    return sb.stream();
+                }
+            })
+            .filter(str -> !str.trim().isEmpty())
             .collect(Collectors.toList());
     }
 
@@ -305,8 +337,8 @@ public class CpmFileSystem {
                     return new I<>(sectorIndex.getAndIncrement(), filesInSector
                         .map(f -> new I<>(entryIndex.getAndIncrement(), f))
                         .filter(f -> (f.v.status & 0xFF) == STATUS_UNUSED)
-                        .filter(f -> cpmFormat.dateFormat != CpmFormat.DateFormat.NATIVE || ((f.index + 1) % 4 != 0))
-                        .filter(f -> cpmFormat.dateFormat != CpmFormat.DateFormat.DATE_STAMPER || (f.index != 0))
+                        .filter(f -> (cpmFormat.dateFormat != NATIVE && cpmFormat.dateFormat != NATIVE2) || ((f.index + 1) % 4 != 0))
+                        .filter(f -> cpmFormat.dateFormat != DATE_STAMPER || (f.index != 0))
                         .map(f -> f.index));
                 }));
         });
