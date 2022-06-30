@@ -15,7 +15,7 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_
 // To encode a password, add its characters to get the decode byte.
 //2 reserved bytes
 //8 password bytes
-public class CpmPlusPassword {
+public class CpmPlusPassword implements CpmEntry {
     public final byte status; // (user number plus 16)
     public final String fileName;
     public final String fileExt;

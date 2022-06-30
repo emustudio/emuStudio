@@ -10,30 +10,6 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.RAW_BLOCK_POINTERS_COUNT;
 
 public class CpmFormat {
-
-    // https://www.seasip.info/Cpm/dosses.html
-
-    enum DateFormat {
-        NOT_USED,
-
-        /**
-         * 21 00 C1 C1 M1 M1 M1 M1 A1 A1 A1 A1 C2 C2 M2 M2
-         * M2 M2 A2 A2 A2 A2 C3 C3 M3 M3 M3 M3 A3 A3 A3 A3
-         */
-        NATIVE, // P2DOS  and CP/M Plus; every 4th entry
-
-        /**
-         * 21 C1 C1 C1 C1 M1 M1 M1 M1 00 00 C2 C2 C2 C2 M2
-         * M2 M2 M2 00 00 C3 C3 C3 C3 M3 M3 M3 M3 00 00 00
-         */
-        NATIVE2, // ZSDOS and CP/M Plus; every 4th entry
-
-        /**
-         * CP/M 3, sometimes ZSDOS
-         */
-        DATE_STAMPER // !!!TIME&.DAT; in 1st entry
-    }
-
     public static final int RECORD_SIZE = 128;
     public static final int ENTRIES_PER_RECORD = RECORD_SIZE / ENTRY_SIZE;
 
@@ -91,7 +67,6 @@ public class CpmFormat {
         this.tracks = dpb.drm * blockSize / (dpb.spt * RECORD_SIZE);
         this.bcInterpretsAsUnused = bcInterpretsAsUnused;
         this.dateFormat = Objects.requireNonNull(dateFormat);
-
     }
 
     public long positionToOffset(Position position) {

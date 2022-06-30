@@ -85,8 +85,8 @@ public class SettingsDialog extends JDialog {
 
             drives.foreach((i, drive) -> {
                 try {
-                    settings.setInt(SettingsConstants.SECTORS_COUNT + i, drive.getSectorsCount());
-                    settings.setInt(SettingsConstants.SECTOR_LENGTH + i, drive.getSectorLength());
+                    settings.setInt(SettingsConstants.SECTORS_COUNT + i, drive.getSectorsPerTrack());
+                    settings.setInt(SettingsConstants.SECTOR_LENGTH + i, drive.getSectorSize());
 
                     Path imagePath = drive.getImagePath();
                     if (imagePath != null) {
@@ -106,8 +106,8 @@ public class SettingsDialog extends JDialog {
     }
 
     private void updateGUI(Drive drive) {
-        txtSectorLength.setText(String.valueOf(drive.getSectorLength()));
-        txtSectorsCount.setText(String.valueOf(drive.getSectorsCount()));
+        txtSectorLength.setText(String.valueOf(drive.getSectorSize()));
+        txtSectorsCount.setText(String.valueOf(drive.getSectorsPerTrack()));
 
         Path imagePath = drive.getImagePath();
         Optional.ofNullable(imagePath).ifPresentOrElse(path -> {
@@ -502,11 +502,11 @@ public class SettingsDialog extends JDialog {
 
             textField = txtSectorsCount;
             name = "Sectors count";
-            drive.setSectorsCount(radixUtils.parseRadix(txtSectorsCount.getText()));
+            drive.setSectorsPerTrack(radixUtils.parseRadix(txtSectorsCount.getText()));
 
             textField = txtSectorLength;
             name = "Sector length";
-            drive.setSectorLength(radixUtils.parseRadix(txtSectorLength.getText()));
+            drive.setSectorSize(radixUtils.parseRadix(txtSectorLength.getText()));
         } catch (NumberFormatException e) {
             dialogs.showError(name + ": Invalid number format", "Save settings");
             textField.grabFocus();
@@ -530,8 +530,8 @@ public class SettingsDialog extends JDialog {
     }
 
     private void btnDefaultParamsActionPerformed(java.awt.event.ActionEvent evt) {
-        txtSectorsCount.setText(String.valueOf(Drive.DEFAULT_SECTORS_COUNT));
-        txtSectorLength.setText(String.valueOf(Drive.DEFAULT_SECTOR_LENGTH));
+        txtSectorsCount.setText(String.valueOf(Drive.DEFAULT_SECTORS_PER_TRACK));
+        txtSectorLength.setText(String.valueOf(Drive.DEFAULT_SECTOR_SIZE));
     }
 
     private JButton btnMount;

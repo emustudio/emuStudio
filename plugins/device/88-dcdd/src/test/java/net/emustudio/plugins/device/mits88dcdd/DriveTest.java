@@ -112,8 +112,8 @@ public class DriveTest {
     @Test
     public void testDriveParametersAfterSelect() throws Exception {
         Drive drive = new Drive(0);
-        drive.setSectorsCount(SECTORS_COUNT);
-        drive.setSectorLength(SECTOR_SIZE);
+        drive.setSectorsPerTrack(SECTORS_COUNT);
+        drive.setSectorSize(SECTOR_SIZE);
 
         drive.mount(testImageFile);
         drive.select();
@@ -130,8 +130,8 @@ public class DriveTest {
     @Test
     public void testDriveParametersAfterSelectThenDeselect() throws Exception {
         Drive drive = new Drive(0);
-        drive.setSectorsCount(SECTORS_COUNT);
-        drive.setSectorLength(SECTOR_SIZE);
+        drive.setSectorsPerTrack(SECTORS_COUNT);
+        drive.setSectorSize(SECTOR_SIZE);
 
         drive.mount(testImageFile);
         drive.select();
@@ -161,8 +161,8 @@ public class DriveTest {
     @Test
     public void testReadAllData() throws Exception {
         Drive drive = new Drive(0);
-        drive.setSectorsCount(SECTORS_COUNT);
-        drive.setSectorLength(SECTOR_SIZE);
+        drive.setSectorsPerTrack(SECTORS_COUNT);
+        drive.setSectorSize(SECTOR_SIZE);
 
         drive.mount(testImageFile);
         drive.select();
@@ -196,8 +196,8 @@ public class DriveTest {
     @Test
     public void testWriteAllData() throws Exception {
         Drive drive = new Drive(0);
-        drive.setSectorsCount(SECTORS_COUNT);
-        drive.setSectorLength(SECTOR_SIZE);
+        drive.setSectorsPerTrack(SECTORS_COUNT);
+        drive.setSectorSize(SECTOR_SIZE);
 
         drive.mount(testImageFile);
         drive.select();

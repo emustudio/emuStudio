@@ -25,16 +25,14 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_
 //4 bytes label creation time stamp
 //4 bytes label modification time stamp
 @Immutable
-public class CpmPlusDiscLabel {
-    public final static int STATUS_LABEL = 0x20;
+public class CpmPlusDiscLabel implements CpmEntry {
+    public final static byte STATUS_LABEL = 0x20;
 
-    public final byte status; // 0x20
     public final String label;
     public final byte mode;
     public final byte passwordDecodeByte;
 
-    public CpmPlusDiscLabel(byte status, String label, byte mode, byte passwordDecodeByte) {
-        this.status = status;
+    public CpmPlusDiscLabel(String label, byte mode, byte passwordDecodeByte) {
         this.label = Objects.requireNonNull(label);
         this.mode = mode;
         this.passwordDecodeByte = passwordDecodeByte;
@@ -54,12 +52,12 @@ public class CpmPlusDiscLabel {
 
         byte mode = entry.get();
         byte passwordDecodeByte = entry.get();
-        return new CpmPlusDiscLabel(status, label, mode, passwordDecodeByte);
+        return new CpmPlusDiscLabel(label, mode, passwordDecodeByte);
     }
 
     public ByteBuffer toEntry() {
         ByteBuffer entry = ByteBuffer.allocate(ENTRY_SIZE);
-        entry.put(status);
+        entry.put(STATUS_LABEL);
 
         byte[] labelBytes = new byte[11];
         int i;

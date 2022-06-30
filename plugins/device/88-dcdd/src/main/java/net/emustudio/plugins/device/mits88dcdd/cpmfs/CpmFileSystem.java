@@ -23,17 +23,20 @@ import net.jcip.annotations.NotThreadSafe;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.Format;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.DateFormat.*;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.DateFormat.*;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_SIZE;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.RAW_BLOCK_POINTERS_COUNT;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.ENTRIES_PER_RECORD;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZE;
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmNativeDate.STATUS_DATESTAMP;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmNativeDate.*;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmPlusDiscLabel.STATUS_LABEL;
 
 
@@ -41,6 +44,8 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmPlusDiscLab
 public class CpmFileSystem {
     private final static int STATUS_UNUSED = 0xE5;
     private final static int MAX_USER_NUMBER = 0x0F;
+
+    private final static Format format = DateTimeFormatter.ofPattern("dd-MMM-yy HH.mma").toFormat();
 
     private final DriveIO driveIO;
     public final CpmFormat cpmFormat;
@@ -61,9 +66,9 @@ public class CpmFileSystem {
 
     public String getLabel() {
         return readDirectoryBlocks()
-            .flatMap(i -> i.v.flatMap(this::getFileEntries))
-            .filter(file -> (file.status & 0xFF) == STATUS_LABEL)
-            .map(file -> CpmPlusDiscLabel.fromEntry(file.toEntry()).toString())
+            .flatMap(i -> i.v.flatMap(this::getEntries))
+            .filter(entry -> (CpmEntry.getStatus(entry) & 0xFF) == STATUS_LABEL)
+            .map(entry -> CpmPlusDiscLabel.fromEntry(entry).toString())
             .findAny().orElse("");
     }
 
@@ -194,6 +199,7 @@ public class CpmFileSystem {
     /**
      * Finds native datestamp entries
      * A native datestamp is every 4th entry
+     *
      * @return native datestamps
      */
     public List<String> listNativeDates() {
@@ -204,24 +210,27 @@ public class CpmFileSystem {
         List<CpmFile> previousFiles = new ArrayList<>();
 
         return readDirectoryBlocks()
-            .flatMap(i -> i.v.flatMap(this::getFileEntries))
+            .flatMap(i -> i.v.flatMap(this::getEntries))
             .limit(cpmFormat.dpb.drm + 1)
-            .flatMap(file -> {
-                if ((file.status & 0xFF) != STATUS_DATESTAMP) {
-                    previousFiles.add(file);
+            .flatMap(entry -> {
+                int status = CpmEntry.getStatus(entry) & 0xFF;
+                if (status != STATUS_DATESTAMP) {
+                    // even for labels and passwords. Every extent has it's datestamp.
+                    previousFiles.add(CpmFile.fromEntry(entry, cpmFormat.dpb.exm));
                     return Stream.empty();
                 } else {
-                    CpmDatestamp[] dates;
+                    DateStamp[][] datestamps = CpmNativeDate.fromEntry(entry, cpmFormat.dateFormat).datestamps;
                     List<String> sb = new ArrayList<>();
-                    if (cpmFormat.dateFormat == NATIVE) {
-                        dates = CpmNativeDate.fromEntry(file.toEntry()).dates;
-                    } else {
-                        dates = CpmNativeDate2.fromEntry(file.toEntry()).dates;
-                    }
-                    for (int j = 0; j < dates.length; j++) {
+
+                    for (int j = 0; j < datestamps.length; j++) {
                         CpmFile prev = previousFiles.get(j);
                         if ((prev.status & 0xFF) <= MAX_USER_NUMBER && prev.ex == 0) {
-                            sb.add(String.format("%12s : %s",prev.getFileName(), dates[j].toString()));
+                            String dates =
+                                 dformat(datestamps[j][CREATE].dateTime) +
+                                    " | " + dformat(datestamps[j][MODIFY].dateTime) +
+                                    " | " + dformat(datestamps[j][ACCESS].dateTime);
+
+                            sb.add(String.format("%12s : %s", prev.getFileName(), dates));
                         }
                     }
                     previousFiles.clear();
@@ -232,12 +241,19 @@ public class CpmFileSystem {
             .collect(Collectors.toList());
     }
 
+    private String dformat(LocalDateTime time) {
+        return format.format(time).replace("AM", "a").replace("PM", "p");
+    }
+
     public List<String> listPasswords() {
         return readDirectoryBlocks()
-            .flatMap(i -> i.v.flatMap(this::getFileEntries))
+            .flatMap(i -> i.v.flatMap(this::getEntries))
             .limit(cpmFormat.dpb.drm + 1)
-            .filter(file -> (file.status & 0xFF) > 0x0F && (file.status & 0xFF) <= (0x0F + 15))
-            .map(file -> CpmPlusPassword.fromEntry(file.toEntry()).toString())
+            .filter(entry -> {
+                int status = CpmEntry.getStatus(entry) & 0xFF;
+                return status > 0x0F && status <= (0x0F + 15);
+            })
+            .map(entry -> CpmPlusPassword.fromEntry(entry).toString())
             .collect(Collectors.toList());
     }
 
@@ -330,15 +346,15 @@ public class CpmFileSystem {
         return readDirectoryBlocks().map(block -> {
             AtomicInteger sectorIndex = new AtomicInteger();
             return new I<>(block.index, block.v
-                .map(this::getFileEntries)
+                .map(this::getEntries)
                 .map(filesInSector -> {
                     sectorIndex.set(0);
                     AtomicInteger entryIndex = new AtomicInteger();
                     return new I<>(sectorIndex.getAndIncrement(), filesInSector
                         .map(f -> new I<>(entryIndex.getAndIncrement(), f))
-                        .filter(f -> (f.v.status & 0xFF) == STATUS_UNUSED)
                         .filter(f -> (cpmFormat.dateFormat != NATIVE && cpmFormat.dateFormat != NATIVE2) || ((f.index + 1) % 4 != 0))
                         .filter(f -> cpmFormat.dateFormat != DATE_STAMPER || (f.index != 0))
+                        .filter(f -> (CpmEntry.getStatus(f.v) & 0xFF) == STATUS_UNUSED)
                         .map(f -> f.index));
                 }));
         });
@@ -392,12 +408,12 @@ public class CpmFileSystem {
             });
     }
 
-    private Stream<CpmFile> getFileEntries(ByteBuffer record) {
-        List<CpmFile> entries = new ArrayList<>();
+    private Stream<ByteBuffer> getEntries(ByteBuffer record) {
+        List<ByteBuffer> entries = new ArrayList<>();
         for (int i = 0; i < ENTRIES_PER_RECORD; i++) {
             byte[] entry = new byte[ENTRY_SIZE];
             record.get(entry);
-            entries.add(CpmFile.fromEntry(ByteBuffer.wrap(entry), cpmFormat.dpb.exm));
+            entries.add(ByteBuffer.wrap(entry));
         }
         return entries.stream();
     }
@@ -410,9 +426,10 @@ public class CpmFileSystem {
 
     public Stream<CpmFile> listValidFiles() {
         return readDirectoryBlocks()
-            .flatMap(i -> i.v.flatMap(this::getFileEntries))
+            .flatMap(i -> i.v.flatMap(this::getEntries))
             .limit(cpmFormat.dpb.drm + 1)
-            .filter(file -> (file.status & 0xFF) <= MAX_USER_NUMBER);
+            .filter(entry -> (CpmEntry.getStatus(entry) & 0xFF) <= MAX_USER_NUMBER)
+            .map(entry -> CpmFile.fromEntry(entry, cpmFormat.dpb.exm));
     }
 
     /**

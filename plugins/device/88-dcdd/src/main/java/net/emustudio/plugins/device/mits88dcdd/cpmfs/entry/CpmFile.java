@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  * @see <a href="https://www.seasip.info/Cpm/format22.html">CP/M directory format</a>
  */
 @Immutable
-public class CpmFile {
+public class CpmFile implements CpmEntry {
     public static final int FLAG_WHEEL_REQUIRED = 0; // Backgrounder II
     public static final int FLAG_PUBLIC_FILE = 1; // public_file=P2DOS,ZSDOS; foreground-only commands=Backgrounder II
     public static final int FLAG_DATE_STAMP = 2; // date_stamp=ZSDOS; background-only commands=Backgrounder II
