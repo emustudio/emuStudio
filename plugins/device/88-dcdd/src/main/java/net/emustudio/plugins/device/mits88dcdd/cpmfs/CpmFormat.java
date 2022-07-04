@@ -132,6 +132,7 @@ public class CpmFormat {
     @Override
     public String toString() {
         return "CP/M Format:\n" +
+            "  ID: " + id + "\n" +
             "  sector size: " + sectorSize + "\n" +
             "  skew table:" + Arrays.deepToString(new int[][]{sectorSkewTable}) + "\n" +
             "  block size: " + blockSize + "\n" +

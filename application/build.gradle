@@ -44,6 +44,7 @@ dependencies {
   extraLibs libs.editor
   extraLibs libs.editorDialogs
   extraLibs libs.args4j
+  extraLibs libs.picocli
   extraLibs libs.tomlj
   extraLibs libs.logback
   extraLibs libs.slf4JApi

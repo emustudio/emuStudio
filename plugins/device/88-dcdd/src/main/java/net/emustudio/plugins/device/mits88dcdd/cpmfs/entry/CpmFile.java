@@ -193,8 +193,12 @@ public class CpmFile implements CpmEntry {
     }
 
     public ByteBuffer toEntry() {
+        return toEntry(status);
+    }
+
+    public ByteBuffer toEntry(byte newStatus) {
         ByteBuffer entry = ByteBuffer.allocate(ENTRY_SIZE);
-        entry.put(status);
+        entry.put(newStatus);
 
         byte[] fileNameBytes = new byte[11];
         int i;

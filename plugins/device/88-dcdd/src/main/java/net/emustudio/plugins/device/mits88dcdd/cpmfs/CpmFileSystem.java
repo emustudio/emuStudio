@@ -42,7 +42,7 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmPlusDiscLab
 
 @NotThreadSafe
 public class CpmFileSystem {
-    private final static int STATUS_UNUSED = 0xE5;
+    public final static int STATUS_UNUSED = 0xE5;
     private final static int MAX_USER_NUMBER = 0x0F;
 
     private final static Format format = DateTimeFormatter.ofPattern("dd-MMM-yy HH.mma").toFormat();
@@ -61,7 +61,7 @@ public class CpmFileSystem {
 
     public boolean exists(String fileName) {
         return listExistingFiles()
-            .anyMatch(file -> file.toString().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)));
+            .anyMatch(file -> file.getFileName().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)));
     }
 
     public String getLabel() {
@@ -72,14 +72,13 @@ public class CpmFileSystem {
             .findAny().orElse("");
     }
 
-    public Optional<String> readFile(String fileName) throws IOException {
+    public String readFile(String fileName) throws IOException {
         List<CpmFile> entries = listValidFiles()
             .filter(file -> file.getFileName().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)))
             .collect(Collectors.toList());
 
         if (entries.isEmpty()) {
-            System.out.println("File '" + fileName + "' not found!");
-            return Optional.empty();
+            throw new IllegalArgumentException("File '" + fileName + "' not found!");
         }
 
         StringBuilder content = new StringBuilder();
@@ -109,7 +108,7 @@ public class CpmFileSystem {
                 recordsLeft -= recordsCount;
             }
         }
-        return Optional.of(content.toString());
+        return content.toString();
     }
 
     public void writeFile(String fileName, String content) throws IOException {
@@ -197,6 +196,33 @@ public class CpmFileSystem {
     }
 
     /**
+     * Removes a file from disk. It erases just file extents (frees block allocation), but keeps
+     * data in blocks untouched.
+     */
+    public void removeFile(String fileName) {
+        readDirectoryBlocks()
+            .map(i -> new I<>(i.index, i.v.map(this::getEntries)))
+            .map(i -> new I<>(i.index, i.v.map(entries -> entries.map(e -> {
+                CpmFile f = CpmFile.fromEntry(e, cpmFormat.dpb.exm);
+                boolean nameMatch = f.getFileName().toUpperCase(Locale.ENGLISH).equals(fileName.toUpperCase(Locale.ENGLISH));
+                if ((f.status & 0xFF) != STATUS_UNUSED && nameMatch) {
+                    return f.toEntry((byte) STATUS_UNUSED);
+                } else {
+                    e.position(0);
+                }
+                return e;
+            }))))
+            .map(i -> new I<>(i.index, i.v.map(this::toRecord)))
+            .forEach(i -> {
+                try {
+                    driveIO.writeBlock(i.index, i.v.collect(Collectors.toList()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+    }
+
+    /**
      * Finds native datestamp entries
      * A native datestamp is every 4th entry
      *
@@ -226,7 +252,7 @@ public class CpmFileSystem {
                         CpmFile prev = previousFiles.get(j);
                         if ((prev.status & 0xFF) <= MAX_USER_NUMBER && prev.ex == 0) {
                             String dates =
-                                 dformat(datestamps[j][CREATE].dateTime) +
+                                dformat(datestamps[j][CREATE].dateTime) +
                                     " | " + dformat(datestamps[j][MODIFY].dateTime) +
                                     " | " + dformat(datestamps[j][ACCESS].dateTime);
 
@@ -416,6 +442,14 @@ public class CpmFileSystem {
             entries.add(ByteBuffer.wrap(entry));
         }
         return entries.stream();
+    }
+
+    private ByteBuffer toRecord(Stream<ByteBuffer> entries) {
+        ByteBuffer record = ByteBuffer.allocate(RECORD_SIZE);
+        entries.forEach(record::put);
+        record.position(0);
+        record.limit(RECORD_SIZE);
+        return record;
     }
 
     private static String getContent(ByteBuffer buffer, int extentBc) {

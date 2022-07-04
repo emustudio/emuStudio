@@ -22,16 +22,22 @@ import net.emustudio.plugins.device.mits88dcdd.cpmfs.sectorops.SectorOps;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFileSystem.STATUS_UNUSED;
+
 /**
  * Drive raw I/O
- *
+ * <p>
  * Performs raw disk operations
  */
 public class DriveIO implements AutoCloseable {
@@ -48,7 +54,7 @@ public class DriveIO implements AutoCloseable {
 
     /**
      * Reads a CP/M "record".
-     *
+     * <p>
      * It is a raw sector stripped from prefix & suffix.
      * It does not check validity.
      *
@@ -104,7 +110,7 @@ public class DriveIO implements AutoCloseable {
      * Writes a block
      *
      * @param blockNumber block number
-     * @param records list of records
+     * @param records     list of records
      * @throws IOException on writing error
      */
     public void writeBlock(int blockNumber, List<ByteBuffer> records) throws IOException {
@@ -122,5 +128,29 @@ public class DriveIO implements AutoCloseable {
     @Override
     public void close() throws Exception {
         channel.close();
+    }
+
+    /**
+     * Formats disk (creates new disk image file).
+     *
+     * @param imageFile disk image file name
+     * @param cpmFormat CP/M format
+     */
+    public static void format(Path imageFile, CpmFormat cpmFormat) throws IOException {
+        if (Files.exists(imageFile)) {
+            throw new IllegalArgumentException("File already exists");
+        }
+        int fileSize = cpmFormat.tracks * cpmFormat.sectorSize * cpmFormat.dpb.spt;
+        System.out.println("File size: " + fileSize);
+        System.out.println("Sector size: " + cpmFormat.sectorSize);
+        System.out.println("Sectors per track: " + cpmFormat.dpb.spt);
+        System.out.println("Tracks: " + cpmFormat.tracks);
+
+        try (FileChannel channel = FileChannel.open(imageFile, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+            MappedByteBuffer out = channel.map(READ_WRITE, 0, fileSize);
+            for (int i = 0; i < fileSize; i++) {
+                out.put((byte) STATUS_UNUSED);
+            }
+        }
     }
 }

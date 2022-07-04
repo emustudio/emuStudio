@@ -162,6 +162,6 @@ save () {
 APP_ARGS=`save "$@"`
 
 # Collect all arguments for the java command, following the shell quoting and substitution rules
-eval set -- $DEFAULT_JVM_OPTS $JAVA_OPTS $M88_DCDD_OPTS -classpath "\"$CLASSPATH\"" net.emustudio.plugins.device.mits88dcdd.Runner "$APP_ARGS"
+eval set -- $DEFAULT_JVM_OPTS $JAVA_OPTS $M88_DCDD_OPTS -classpath "\"$CLASSPATH\"" net.emustudio.plugins.device.mits88dcdd.cmdline.Runner "$APP_ARGS"
 
 exec "$JAVACMD" "$@"
