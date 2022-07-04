@@ -83,7 +83,7 @@ public class ContextImpl implements ExtendedContext {
                 device.writeData(data);
             }
         }
-        return 0;
+        return read ? (byte)0xFF : 0; // ha! from survey.mac in cpm2.dsk: "inactive port could return 0xFF or echo port#"
     }
 
     @Override

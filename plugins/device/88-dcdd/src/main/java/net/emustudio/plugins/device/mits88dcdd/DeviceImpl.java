@@ -156,12 +156,12 @@ public class DeviceImpl extends AbstractDevice {
         port3CPU = settings.getInt(SettingsConstants.PORT3_CPU, DEFAULT_CPU_PORT3);
 
         drives.foreach((i, drive) -> {
-            int sectorLength = settings.getInt(SettingsConstants.SECTOR_LENGTH + i, Drive.DEFAULT_SECTOR_LENGTH);
-            int sectorsCount = settings.getInt(SettingsConstants.SECTORS_COUNT + i, Drive.DEFAULT_SECTORS_COUNT);
+            int sectorLength = settings.getInt(SettingsConstants.SECTOR_LENGTH + i, Drive.DEFAULT_SECTOR_SIZE);
+            int sectorsCount = settings.getInt(SettingsConstants.SECTORS_COUNT + i, Drive.DEFAULT_SECTORS_PER_TRACK);
             String imagePath = settings.getString(SettingsConstants.IMAGE + i, null);
 
-            drive.setSectorLength(sectorLength);
-            drive.setSectorsCount(sectorsCount);
+            drive.setSectorSize(sectorLength);
+            drive.setSectorsPerTrack(sectorsCount);
             Optional.ofNullable(imagePath).ifPresent(path -> {
                 try {
                     drive.mount(Path.of(path));

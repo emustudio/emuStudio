@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.MissingResourceException;
 import java.util.Optional;
@@ -165,7 +166,7 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public RunState stepInternal() {
+    public RunState stepInternal() throws IOException {
         return engine.step();
     }
 

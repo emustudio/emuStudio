@@ -71,7 +71,7 @@ set CMD_LINE_ARGS=%*
 set CLASSPATH="%APP_HOME%\device\88-dcdd.jar;%APP_HOME%\lib\*"
 
 @rem Execute 88-dcdd
-"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %M88_DCDD_OPTS%  -classpath "%CLASSPATH%" net.emustudio.plugins.device.mits88dcdd.Runner %CMD_LINE_ARGS%
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %M88_DCDD_OPTS%  -classpath "%CLASSPATH%" net.emustudio.plugins.device.mits88dcdd.cmdline.Runner %CMD_LINE_ARGS%
 
 :end
 @rem End local scope for the variables with windows NT shell

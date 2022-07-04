@@ -19,20 +19,18 @@
 package net.emustudio.plugins.device.adm3a.interaction;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboard {
-    private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardGui.class);
 
     private static final int[] CONTROL_KEYCODES = new int[256];
     private static final int[] CONTROL_KEYCODES_ALWAYS_ACTIVE = new int[256];
@@ -142,7 +140,11 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
         }
         if (newKeyCode != 0) {
             if (loadCursorPosition.notAccepted((byte) newKeyCode)) {
-                inputReceived(newKeyCode);
+                try {
+                    inputReceived(newKeyCode);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }
@@ -172,7 +174,7 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
         devices.clear();
     }
 
-    private void inputReceived(int input) {
+    private void inputReceived(int input) throws IOException {
         for (DeviceContext<Byte> device : devices) {
             device.writeData((byte) input);
         }

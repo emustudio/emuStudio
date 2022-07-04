@@ -28,9 +28,9 @@ dependencies {
   implementation libs.emuLib
   implementation libs.jcipAnnotations
   implementation libs.slf4JApi
-  implementation libs.args4j
   implementation libs.picocli
   annotationProcessor libs.picocliAnnotation
+  implementation libs.tomlj
 
   cpuLib project(":plugins:cpu:8080-cpu")
 
@@ -42,7 +42,7 @@ dependencies {
 jar {
   archiveVersion = ''
   manifest {
-    attributes manifestAttributes('net.emustudio.plugins.device.mits88dcdd.Runner')
+    attributes manifestAttributes('net.emustudio.plugins.device.mits88dcdd.cmdline.Runner')
   }
 }
 
@@ -66,4 +66,8 @@ javadoc.options.encoding = 'UTF-8'
 copy {
   from('src/main/scripts')
   into "$buildDir/libs/scripts"
+}
+copy {
+  from('src/main/files')
+  into "$buildDir/libs/files"
 }

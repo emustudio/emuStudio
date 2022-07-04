@@ -18,189 +18,277 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.*;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.Format;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.DriveIO.SECTOR_SKEW;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.DateFormat.*;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.ENTRY_SIZE;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmFile.RAW_BLOCK_POINTERS_COUNT;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.ENTRIES_PER_RECORD;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZE;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmNativeDate.*;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.entry.CpmPlusDiscLabel.STATUS_LABEL;
 
-/**
- * Supports only Altair 8" floppy disks
- *
- * Raw Bytes/sector: 137
- * Sectors/Track: 32, numbered 0-31
- * Tracks/Diskette: 77, numbered 0-76
- *
- * Tracks 0-5 are formatted as "System Tracks" (regardless of how they are actually used). Sectors on these tracks are
- * formmatted as follows:
- *
- *      Byte    Value
- *       0      Track number and 80h
- *      1-2     Number of bytes in boot file
- *     3-130    Data
- *      131     0FFh (Stop Byte)
- *      132     Checksum of 3-130
- *     133-136  Not used
- *
- * Tracks 6-76 (except track 70) are "Data Tracks." Sectors on these tracks are formatted as follows:
- *
- *  Byte    Value
- *     0      Track number and 80h
- *     1      Skewed sector = (Sector number * 17) MOD 32
- *     2      File number in directory
- *     3      Data byte count
- *     4      Checksum of 2-3 & 5-134
- *    5-6     Pointer to next data group
- *   7-134    Data
- *    135     0FFh (Stop Byte)
- *    136     Not used
- *
- * Track 70 is the Altair Basic/DOS directory track. It is formatted the same as the Data Tracks, except that each Data
- * field is divided into 8 16-byte directory entries. The last 5 of these 16 bytes are written as 0 by most versions of Altair
- * Basic and DOS, but are used as a password by Multiuser Basic, where five 0's means "no password". Unfortunately, single-
- * user Basic does not always clear these bytes. If these bytes are not all 0 For a given directory entry, then multiuser
- * Basic will not be able to access the file. /P fixes this. The first directory entry that has FFh as its first byte is the
- * end-of-directory marker. (This FFh is called "the directory stopper byte.")
- *
- * CPM:
- * <p>
- * +------------------+------------------+------------------+---
- * |block0            |block1            |block2            |...
- * +---------------------------+---------------------------+---+
- * |track0                     |track1                     |...|
- * +-------+-------+---+-------+-------+-------+---+-------+---+
- * |sector0|sector1|...|sectorN|sector0|sector1|...|sectorN|...|
- * <p>
- * <p>
- * <p>
- * Each CP/M disk format is described by the following specific sizes:
- * - Sector size in bytes
- * - Number of tracks
- * - Number of sectors
- * - Block size
- * - Number of directory entries
- * - Logical sector skew
- * - Number of reserved system tracks
- * <p>
- * A block is the smallest allocatable storage unit. CP/M supports block sizes of 1024, 2048, 4096, 8192 and 16384 bytes.
- * Unfortunately, this format specification is not stored on the disk and there are lots of formats. Accessing a block
- * is performed by accessing its sectors, which are stored with the given software skew.
- */
+
 @NotThreadSafe
 public class CpmFileSystem {
-    public final static int ENTRY_SIZE = 32;
-    public final static int DIRECTORY_ENTRIES = 256;
-    private final static int RECORD_BYTES = 128;
-    public final static int DIRECTORY_TRACK = 6; // or number of system tracks
-    public final static int BLOCK_LENGTH = 1024; // 2048, 4096, 8192 and 16384
-    public final static int BLOCKS_COUNT = 255; // number of blocks on disk
-    public final static int SYSTEM_TRACKS = 8;
+    public final static int STATUS_UNUSED = 0xE5;
+    private final static int MAX_USER_NUMBER = 0x0F;
+
+    private final static Format format = DateTimeFormatter.ofPattern("dd-MMM-yy HH.mma").toFormat();
 
     private final DriveIO driveIO;
-    private final int directoryTrack;
-    private final int blockLength;
-    private final int blockCount;
+    public final CpmFormat cpmFormat;
 
-    public CpmFileSystem(DriveIO driveIO, int directoryTrack, int blockLength, int blockCount) {
+    public CpmFileSystem(DriveIO driveIO) {
         this.driveIO = Objects.requireNonNull(driveIO);
-        this.directoryTrack = directoryTrack;
-        this.blockLength = blockLength;
-        this.blockCount = blockCount;
+        this.cpmFormat = driveIO.cpmFormat;
     }
 
-    public List<CpmFile> listFiles() throws IOException {
-        List<ByteBuffer> directorySectors = readBlock(0);
-        List<ByteBuffer> entries = getEntries(directorySectors);
-        return getFilesFromEntries(entries);
+    public Stream<CpmFile> listExistingFiles() {
+        return listValidFiles().filter(file -> file.ex == 0);
     }
 
-
-    public List<CpmFile> listExistingFiles() throws IOException {
-        return listFiles().stream()
-            .filter(file -> file.status < 32)
-            .filter(file -> file.extentNumber == 0)
-            .collect(Collectors.toList());
+    public boolean exists(String fileName) {
+        return listExistingFiles()
+            .anyMatch(file -> file.getFileName().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)));
     }
 
-    public String getLabel() throws IOException {
-        for (CpmFile file : listFiles()) {
-            if (file.status == 32) {
-                return file.fileName + file.fileExt;
-            }
-        }
-        return "";
+    public String getLabel() {
+        return readDirectoryBlocks()
+            .flatMap(i -> i.v.flatMap(this::getEntries))
+            .filter(entry -> (CpmEntry.getStatus(entry) & 0xFF) == STATUS_LABEL)
+            .map(entry -> CpmPlusDiscLabel.fromEntry(entry).toString())
+            .findAny().orElse("");
     }
 
-    public Optional<String> readContent(String fileName) throws IOException {
-        List<CpmFile> foundExtents = listFiles().stream()
-            .filter(file -> file.status < 32)
-            .filter(file -> file.toString().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)))
+    public String readFile(String fileName) throws IOException {
+        List<CpmFile> entries = listValidFiles()
+            .filter(file -> file.getFileName().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)))
             .collect(Collectors.toList());
 
-        if (foundExtents.isEmpty()) {
-            return Optional.empty();
+        if (entries.isEmpty()) {
+            throw new IllegalArgumentException("File '" + fileName + "' not found!");
         }
 
-        boolean blocksAreTwoBytes = blockCount >= 256;
+        StringBuilder content = new StringBuilder();
+        for (CpmFile extent : entries) {
+            // extent numbering can be various...
+            int recordsLeft = extent.numberOfRecords;
 
-        int maxBlocksCount = 16;
-        if (blocksAreTwoBytes) {
-            maxBlocksCount /= 2;
-        }
-
-        StringBuilder result = new StringBuilder();
-
-        foundExtents.sort(Comparator.comparingInt(o -> o.extentNumber));
-        int expectingExtentNumber = 0;
-        for (CpmFile extent : foundExtents) {
-            if (extent.extentNumber != expectingExtentNumber) {
-                System.err.printf("[file=%s, extent=%d, expectingExtent=%d] ERROR: Expecting different extent number!%n",
-                    fileName, extent.extentNumber, expectingExtentNumber);
-                break;
-            }
-
-            int recordsLeft = extent.rc & 0xFF;
-            for (int i = 0; i < maxBlocksCount; i++) {
-                int nextBlock = extent.blockPointers.get(i) & 0xFF;
-                if (blocksAreTwoBytes) {
-                    i++;
-                    nextBlock = (nextBlock << 8) | (extent.blockPointers.get(i) & 0xFF);
+            for (int i = 0; i < RAW_BLOCK_POINTERS_COUNT; i++) {
+                int nextBlock = extent.al.get(i) & 0xFF;
+                if (cpmFormat.blockPointerIsWord) {
+                    nextBlock = (extent.al.get(++i) << 8) | nextBlock;
                 }
                 if (nextBlock == 0) {
+                    continue;
+                }
+                if (recordsLeft <= 0) {
                     break;
                 }
 
-                List<ByteBuffer> records = readBlock(nextBlock);
+                List<ByteBuffer> records = driveIO.readBlock(nextBlock);
                 int recordsCount = records.size();
 
                 records.stream()
                     .limit(recordsLeft)
-                    .forEach(b -> result.append(getContent(b, extent.bc & 0xFF)));
+                    .forEach(b -> content.append(getContent(b, extent.bc & 0xFF)));
 
                 recordsLeft -= recordsCount;
             }
-            expectingExtentNumber++;
         }
-        return Optional.of(result.toString());
+        return content.toString();
     }
 
-    public void writeContent(String fileName, String content) throws IOException {
+    public void writeFile(String fileName, String content) throws IOException {
         if (exists(fileName)) {
             throw new IOException("File cpm://" + fileName + " already exists. Overwrites are not supported");
         }
 
         // At first write content
-        boolean blocksAreTwoBytes = blockCount >= 256;
         List<List<ByteBuffer>> contentInBlocks = splitToBlocks(content);
+        List<List<Byte>> bp = writeContent(contentInBlocks);
+        if (contentInBlocks.size() != bp.size()) {
+            throw new IllegalStateException("Mismatch in number of used blocks");
+        }
+
+        // split blocks to extents
+        List<List<List<ByteBuffer>>> contentInExtents = splitToExtents(contentInBlocks);
+        if (contentInExtents.size() != bp.size()) {
+            throw new IllegalStateException("Mismatch in number of used extents");
+        }
+
+        // write extents
+        Iterator<I<Stream<I<Stream<Integer>>>>> freeExtentsBlocks = findFreeDataExtents().iterator();
+        if (!freeExtentsBlocks.hasNext()) {
+            throw new IllegalStateException("No free space in directory");
+        }
+
+        I<Stream<I<Stream<Integer>>>> freeExtentsBlock = freeExtentsBlocks.next();
+        Iterator<I<Stream<Integer>>> freeExtentsSectors = freeExtentsBlock.v.iterator();
+        while (!freeExtentsSectors.hasNext()) {
+            if (!freeExtentsBlocks.hasNext()) {
+                throw new IllegalStateException("No free space in directory");
+            }
+            freeExtentsBlock = freeExtentsBlocks.next();
+            freeExtentsSectors = freeExtentsBlock.v.iterator();
+        }
+        I<Stream<Integer>> freeExtentsSector = freeExtentsSectors.next();
+        Iterator<Integer> freeExtents = freeExtentsSector.v.iterator();
+
+        int extentIndex = 0;
+        for (int i = 0; i < bp.size(); i++) {
+            List<List<ByteBuffer>> blocksPerExtent = contentInExtents.get(i);
+            List<Byte> bpPerExtent = bp.get(i);
+            if (blocksPerExtent.isEmpty()) {
+                // do not waste extent
+                continue;
+            }
+
+            while (!freeExtents.hasNext()) {
+                while (!freeExtentsSectors.hasNext()) {
+                    if (!freeExtentsBlocks.hasNext()) {
+                        throw new IllegalStateException("No free space in directory");
+                    }
+                    freeExtentsBlock = freeExtentsBlocks.next();
+                    freeExtentsSectors = freeExtentsBlock.v.iterator();
+                }
+                freeExtentsSector = freeExtentsSectors.next();
+                freeExtents = freeExtentsSector.v.iterator();
+            }
+
+            int freeExtentIndex = freeExtents.next(); // extent index in sector
+            List<ByteBuffer> lastBlock = blocksPerExtent.get(blocksPerExtent.size() - 1); // assuming lastBlock.size() > 0
+
+            byte rc = (byte) lastBlock.size(); // assuming > 0
+            ByteBuffer lastRecord = lastBlock.get(lastBlock.size() - 1);
+            byte bc = cpmFormat.bcInterpretsAsUnused ?
+                (byte) (RECORD_SIZE - lastRecord.remaining()) :
+                (byte) lastRecord.remaining();
+
+            // no flags setting supported yet
+            CpmFile file = new CpmFile(
+                (byte) 0, fileName, 0,
+                extentIndex++, cpmFormat.dpb.exm, bc, rc, bpPerExtent
+            );
+
+            // write extent to the directory block
+            List<ByteBuffer> directoryBlock = driveIO.readBlock(freeExtentsBlock.index);
+            ByteBuffer directorySector = directoryBlock.get(freeExtentsSector.index * RECORD_SIZE);
+            directorySector.position(freeExtentIndex * ENTRY_SIZE);
+            directorySector.put(file.toEntry());
+            directorySector.position(0); // so reading is possible
+
+            // TODO: write timestamps
+            driveIO.writeBlock(freeExtentsBlock.index, directoryBlock); // no caching, never mind..
+        }
+    }
+
+    /**
+     * Removes a file from disk. It erases just file extents (frees block allocation), but keeps
+     * data in blocks untouched.
+     */
+    public void removeFile(String fileName) {
+        readDirectoryBlocks()
+            .map(i -> new I<>(i.index, i.v.map(this::getEntries)))
+            .map(i -> new I<>(i.index, i.v.map(entries -> entries.map(e -> {
+                CpmFile f = CpmFile.fromEntry(e, cpmFormat.dpb.exm);
+                boolean nameMatch = f.getFileName().toUpperCase(Locale.ENGLISH).equals(fileName.toUpperCase(Locale.ENGLISH));
+                if ((f.status & 0xFF) != STATUS_UNUSED && nameMatch) {
+                    return f.toEntry((byte) STATUS_UNUSED);
+                } else {
+                    e.position(0);
+                }
+                return e;
+            }))))
+            .map(i -> new I<>(i.index, i.v.map(this::toRecord)))
+            .forEach(i -> {
+                try {
+                    driveIO.writeBlock(i.index, i.v.collect(Collectors.toList()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+    }
+
+    /**
+     * Finds native datestamp entries
+     * A native datestamp is every 4th entry
+     *
+     * @return native datestamps
+     */
+    public List<String> listNativeDates() {
+        if (cpmFormat.dateFormat != NATIVE && cpmFormat.dateFormat != NATIVE2) {
+            return Collections.emptyList();
+        }
+
+        List<CpmFile> previousFiles = new ArrayList<>();
+
+        return readDirectoryBlocks()
+            .flatMap(i -> i.v.flatMap(this::getEntries))
+            .limit(cpmFormat.dpb.drm + 1)
+            .flatMap(entry -> {
+                int status = CpmEntry.getStatus(entry) & 0xFF;
+                if (status != STATUS_DATESTAMP) {
+                    // even for labels and passwords. Every extent has it's datestamp.
+                    previousFiles.add(CpmFile.fromEntry(entry, cpmFormat.dpb.exm));
+                    return Stream.empty();
+                } else {
+                    DateStamp[][] datestamps = CpmNativeDate.fromEntry(entry, cpmFormat.dateFormat).datestamps;
+                    List<String> sb = new ArrayList<>();
+
+                    for (int j = 0; j < datestamps.length; j++) {
+                        CpmFile prev = previousFiles.get(j);
+                        if ((prev.status & 0xFF) <= MAX_USER_NUMBER && prev.ex == 0) {
+                            String dates =
+                                dformat(datestamps[j][CREATE].dateTime) +
+                                    " | " + dformat(datestamps[j][MODIFY].dateTime) +
+                                    " | " + dformat(datestamps[j][ACCESS].dateTime);
+
+                            sb.add(String.format("%12s : %s", prev.getFileName(), dates));
+                        }
+                    }
+                    previousFiles.clear();
+                    return sb.stream();
+                }
+            })
+            .filter(str -> !str.trim().isEmpty())
+            .collect(Collectors.toList());
+    }
+
+    private String dformat(LocalDateTime time) {
+        return format.format(time).replace("AM", "a").replace("PM", "p");
+    }
+
+    public List<String> listPasswords() {
+        return readDirectoryBlocks()
+            .flatMap(i -> i.v.flatMap(this::getEntries))
+            .limit(cpmFormat.dpb.drm + 1)
+            .filter(entry -> {
+                int status = CpmEntry.getStatus(entry) & 0xFF;
+                return status > 0x0F && status <= (0x0F + 15);
+            })
+            .map(entry -> CpmPlusPassword.fromEntry(entry).toString())
+            .collect(Collectors.toList());
+    }
+
+    private List<List<Byte>> writeContent(List<List<ByteBuffer>> contentInBlocks) throws IOException {
+        // will not update timestamps
         Iterator<Integer> freeBlocks = findFreeBlocks().iterator();
 
-        List<Byte> blockPointersPerExtent = new ArrayList<>();
-        List<List<Byte>> blockPointers = new ArrayList<>(List.of(blockPointersPerExtent)); // needed for extents
+        List<Byte> bpPerEntry = new ArrayList<>();
+        List<List<Byte>> bp = new ArrayList<>(List.of(bpPerEntry));
         int bpIndex = 1;
 
         for (List<ByteBuffer> records : contentInBlocks) {
@@ -208,199 +296,100 @@ public class CpmFileSystem {
                 throw new IOException("Not enough free space!");
             }
             int blockNumber = freeBlocks.next();
-            writeBlock(blockNumber, records);
+            driveIO.writeBlock(blockNumber, records);
 
-            if (bpIndex == 16) {
-                blockPointersPerExtent = new ArrayList<>();
-                blockPointers.add(blockPointersPerExtent);
+            if (bpIndex == RAW_BLOCK_POINTERS_COUNT) {
+                bpPerEntry = new ArrayList<>();
+                bp.add(bpPerEntry);
                 bpIndex = 0;
             }
 
-            if (blocksAreTwoBytes) {
-                blockPointersPerExtent.add((byte)(blockNumber >>> 8));
-                blockPointersPerExtent.add((byte)(blockNumber & 0xFF));
+            if (cpmFormat.blockPointerIsWord) {
+                bpPerEntry.add((byte) (blockNumber & 0xFF));
+                bpPerEntry.add((byte) (blockNumber >>> 8));
             } else {
-                blockPointersPerExtent.add((byte)(blockNumber & 0xFF));
+                bpPerEntry.add((byte) (blockNumber & 0xFF));
             }
             bpIndex++;
         }
-        for (; bpIndex < 16; bpIndex++) {
-            blockPointersPerExtent.add((byte)0);
+        for (; bpIndex < RAW_BLOCK_POINTERS_COUNT; bpIndex++) {
+            bpPerEntry.add((byte) 0);
         }
+        return bp;
+    }
 
+    private <T> List<List<T>> splitToExtents(List<T> contentInBlocks) {
+        List<T> blocksPerExtent = new ArrayList<>();
+        List<List<T>> extents = new ArrayList<>(List.of(blocksPerExtent));
 
-        // Now write file extent(s)
-        Iterator<Integer> freeExtents = findFreeExtents().iterator();
-        List<ByteBuffer> directoryBlock = readBlock(0);
-
-        // create a file
-        int lastDot = fileName.lastIndexOf('.');
-
-        String fn = fileName.substring(0, (lastDot == -1) ? fileName.length() : lastDot).toUpperCase();
-        String fnExt = (lastDot == -1) ? "" : fileName.substring(lastDot + 1).toUpperCase();
-
-        List<ByteBuffer> lastBlock = contentInBlocks.get(contentInBlocks.size() - 1);
-        int recordsInLastBlock = lastBlock.size();
-        ByteBuffer dataOfLastRecord = lastBlock.get(lastBlock.size() - 1);
-        dataOfLastRecord.flip();
-        int dataSizeOfLastRecord = dataOfLastRecord.remaining() - 3;
-
-        int extentsRequired = Math.max(1, blockPointers.size() / 16);
-        int extentsPerSector = driveIO.sectorSize / ENTRY_SIZE;
-        for (int extent = 0; extent < extentsRequired; extent++) {
-            if (!freeExtents.hasNext()) {
-                throw new IOException("Not enough free extents!");
+        int bpIndex = 0;
+        for (T block : contentInBlocks) {
+            if (bpIndex == cpmFormat.blockPointersCount) {
+                blocksPerExtent = new ArrayList<>();
+                extents.add(blocksPerExtent);
+                bpIndex = 0;
             }
-            boolean isLastExtent = (extent == extentsRequired - 1);
-
-            int extentIndex = freeExtents.next();
-            List<Byte> bp = blockPointers.get(extent);
-
-            CpmFile file = new CpmFile(
-                fn, fnExt, 0, extent,
-                (byte) (isLastExtent ? dataSizeOfLastRecord : 0),
-                (byte) (isLastExtent ? recordsInLastBlock : 16),
-                bp
-            );
-
-            ByteBuffer directorySector = directoryBlock.get(extentIndex / extentsPerSector);
-            directorySector.position(3 + (extentIndex % extentsPerSector) * ENTRY_SIZE);
-            directorySector.put(file.toEntry());
-            directorySector.position(0); // so reading is possible
+            blocksPerExtent.add(block);
+            bpIndex++;
         }
-        writeBlock(0, directoryBlock);
+        return extents;
     }
 
-    public boolean exists(String fileName) throws IOException {
-        return listFiles().stream()
-            .filter(file -> file.status < 32)
-            .anyMatch(file -> file.toString().toUpperCase().equals(fileName.toUpperCase(Locale.ENGLISH)));
-    }
 
-    private String getContent(ByteBuffer buffer, int extentBc) {
-        buffer.position(3);
-        byte[] b = new byte[Math.min(extentBc == 0 ? RECORD_BYTES : extentBc, buffer.remaining())];
-        buffer.get(b);
-        StringBuilder result = new StringBuilder();
-        for (byte c : b) {
-            result.append((char) c);
-        }
-        return result.toString();
-    }
-
-    /**
-     * Reads a block
-     *
-     * @param blockNumber block number
-     * @return records
-     * @throws IOException unexpected
-     */
-    private List<ByteBuffer> readBlock(int blockNumber) throws IOException {
-        int sectorSize = driveIO.sectorSize;
-        int sectorsPerTrack = driveIO.sectorsPerTrack;
-
-        int sectorsPerBlock = blockLength / sectorSize;
-        final int sector = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) % sectorsPerTrack;
-        final int track = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) / sectorsPerTrack;
-
-        Position position = new Position(track, sector);
-        List<ByteBuffer> block = new ArrayList<>();
-        for (int counter = 0; counter < sectorsPerBlock; counter++) {
-            block.add(driveIO.readSector(position));
-            position.next(sectorsPerTrack);
-        }
-        return block;
-    }
-
-    private void writeBlock(int blockNumber, List<ByteBuffer> sectors) throws IOException {
-        if (sectors.size() * RECORD_BYTES > BLOCK_LENGTH) {
-            throw new IOException("Too many records per block");
-        }
-
-        int sectorSize = driveIO.sectorSize;
-        int sectorsPerTrack = driveIO.sectorsPerTrack;
-
-        int sectorsPerBlock = blockLength / sectorSize;
-        final int sector = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) % sectorsPerTrack;
-        final int track = (blockNumber * sectorsPerBlock + sectorsPerTrack * directoryTrack) / sectorsPerTrack;
-
-        Position position = new Position(track, sector);
-        for (ByteBuffer record : sectors) {
-            record.put((byte)(position.track | 0x80)); // Track Number, with MSB set (the sync bit)
-            record.put((byte)((position.sector * SECTOR_SKEW) % 32)); // sector number; or file data count...
-            record.limit(driveIO.rawSectorSize);
-
-            record.position(3);
-            byte[] data = new byte[RECORD_BYTES];
-            record.get(data);
-            // checksum is 8-bit sum of all data bytes
-            int checksum = 0;
-            for (byte b : data) {
-                checksum = (checksum + b) & 0xFF;
-            }
-
-            record.position(131);
-            record.put((byte)0xFF); // stop byte
-            record.put((byte)checksum);
-            record.flip();
-
-            driveIO.writeSector(position, record);
-            position.next(sectorsPerTrack);
-        }
-    }
-
-    private Stream<Integer> findFreeBlocks() throws IOException {
-        boolean blocksAreTwoBytes = blockCount >= 256;
-
-        Set<Integer> reservedBlocks = listFiles()
-            .stream()
-            .filter(file -> file.status < 32)
+    private Stream<Integer> findFreeBlocks() {
+        Set<Integer> reservedBlocks = listValidFiles()
             .flatMap(f -> {
-                List<Integer> bp = new ArrayList<>();
-                if (blocksAreTwoBytes) {
-                    for (int i = 0; i < 16; i += 2) {
-                        bp.add((f.blockPointers.get(i) << 8) | f.blockPointers.get(i + 1));
+                List<Integer> extents = new ArrayList<>();
+                if (cpmFormat.blockPointerIsWord) {
+                    for (int i = 0; i < RAW_BLOCK_POINTERS_COUNT; i += 2) {
+                        extents.add((f.al.get(i + 1) << 8) | f.al.get(i));
                     }
                 } else {
-                    bp.addAll(f.blockPointers.stream().mapToInt(Byte::intValue).boxed().collect(Collectors.toList()));
+                    extents.addAll(f.al.stream().mapToInt(Byte::intValue).boxed().collect(Collectors.toList()));
                 }
-                return bp.stream();
+                return extents.stream();
             }).filter(b -> b != 0)
             .collect(Collectors.toSet());
 
-        int firstBlock = SYSTEM_TRACKS * driveIO.sectorsPerTrack / (blockLength / RECORD_BYTES);
+        // first data block is located after directory blocks
+        int firstBlock = cpmFormat.directoryBlocks.stream().max(Comparator.naturalOrder()).orElse(0) + 1;
         return Stream.iterate(firstBlock, b -> b + 1).filter(b -> !reservedBlocks.contains(b));
     }
 
-    private Stream<Integer> findFreeExtents() throws IOException {
-
-        class P<T> {
-            final int index;
-            final T t;
-            P(int index, T t) {
-                this.index = index;
-                this.t = t;
-            }
-        }
-
-        AtomicInteger index = new AtomicInteger();
-        Set<Integer> reservedExtents = listFiles()
-            .stream()
-            .map(f -> new P<>(index.getAndIncrement(), f))
-            .filter(p -> p.t.status < 32)
-            .map(p -> p.index)
-            .collect(Collectors.toSet());
-
-        index.set(0);
-        return Stream.iterate(0, e -> e + 1).filter(e -> !reservedExtents.contains(e));
+    /**
+     * Returns free "data" extents per block and sector.
+     * <p>
+     * "Data" means that they can be used for files, label or password, but not for timestamp extents (both native
+     * and date-stamper).
+     *
+     * <p>
+     * The indexes returned are "entry indexes": they reset to 0 on each new sector
+     * Note: if a native timestamps are used, then every 4th entry represents a date-time entry of previous 3 entries.
+     *
+     * @return free extents per directory block and sector
+     */
+    private Stream<I<Stream<I<Stream<Integer>>>>> findFreeDataExtents() {
+        return readDirectoryBlocks().map(block -> {
+            AtomicInteger sectorIndex = new AtomicInteger();
+            return new I<>(block.index, block.v
+                .map(this::getEntries)
+                .map(filesInSector -> {
+                    sectorIndex.set(0);
+                    AtomicInteger entryIndex = new AtomicInteger();
+                    return new I<>(sectorIndex.getAndIncrement(), filesInSector
+                        .map(f -> new I<>(entryIndex.getAndIncrement(), f))
+                        .filter(f -> (cpmFormat.dateFormat != NATIVE && cpmFormat.dateFormat != NATIVE2) || ((f.index + 1) % 4 != 0))
+                        .filter(f -> cpmFormat.dateFormat != DATE_STAMPER || (f.index != 0))
+                        .filter(f -> (CpmEntry.getStatus(f.v) & 0xFF) == STATUS_UNUSED)
+                        .map(f -> f.index));
+                }));
+        });
     }
 
     private List<List<ByteBuffer>> splitToBlocks(String content) {
         ByteBuffer contentData = ByteBuffer.wrap(content.getBytes());
-        int recordsPerBlock = blockLength / RECORD_BYTES;
 
-        ByteBuffer record = ByteBuffer.allocate(driveIO.rawSectorSize);
-        record.position(3);
+        ByteBuffer record = ByteBuffer.allocate(RECORD_SIZE);
         List<ByteBuffer> block = new ArrayList<>(List.of(record));
         List<List<ByteBuffer>> blocks = new ArrayList<>();
         blocks.add(block);
@@ -408,17 +397,15 @@ public class CpmFileSystem {
         int byteIndex = 0;
         int recordsInBlock = 1;
         while (contentData.remaining() > 0) {
-            if (byteIndex == RECORD_BYTES) {
+            if (byteIndex == RECORD_SIZE) {
                 record.flip(); // prepare for reading
 
-                if (recordsInBlock == recordsPerBlock) {
+                if (recordsInBlock == cpmFormat.recordsPerBlock) {
                     block = new ArrayList<>();
                     blocks.add(block);
                     recordsInBlock = 0;
                 }
-                record = ByteBuffer.allocate(driveIO.rawSectorSize);
-                record.position(3); // checksum!
-
+                record = ByteBuffer.allocate(RECORD_SIZE);
                 block.add(record);
                 byteIndex = 0;
                 recordsInBlock++;
@@ -430,24 +417,67 @@ public class CpmFileSystem {
         return blocks;
     }
 
-    private static List<ByteBuffer> getEntries(List<ByteBuffer> directorySectors) {
-        List<ByteBuffer> entries = new ArrayList<>();
-
-        for (ByteBuffer sector : directorySectors) {
-            sector.position(3); // why needed??? part of checksum
-            int numberOfEntries = sector.remaining() / ENTRY_SIZE;
-
-            for (int i = 0; i < numberOfEntries; i++) {
-                byte[] entry = new byte[ENTRY_SIZE];
-                sector.get(entry);
-
-                entries.add(ByteBuffer.wrap(entry).asReadOnlyBuffer());
-            }
-        }
-        return entries;
+    /**
+     * Read directory blocks, indexed by real block index
+     *
+     * @return directory blocks (indexed)
+     */
+    private Stream<I<Stream<ByteBuffer>>> readDirectoryBlocks() {
+        return cpmFormat.directoryBlocks
+            .stream()
+            .map(d -> {
+                try {
+                    return new I<>(d, driveIO.readBlock(d).stream());
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            });
     }
 
-    private static List<CpmFile> getFilesFromEntries(List<ByteBuffer> entries) {
-        return entries.stream().map(CpmFile::fromEntry).collect(Collectors.toList());
+    private Stream<ByteBuffer> getEntries(ByteBuffer record) {
+        List<ByteBuffer> entries = new ArrayList<>();
+        for (int i = 0; i < ENTRIES_PER_RECORD; i++) {
+            byte[] entry = new byte[ENTRY_SIZE];
+            record.get(entry);
+            entries.add(ByteBuffer.wrap(entry));
+        }
+        return entries.stream();
+    }
+
+    private ByteBuffer toRecord(Stream<ByteBuffer> entries) {
+        ByteBuffer record = ByteBuffer.allocate(RECORD_SIZE);
+        entries.forEach(record::put);
+        record.position(0);
+        record.limit(RECORD_SIZE);
+        return record;
+    }
+
+    private static String getContent(ByteBuffer buffer, int extentBc) {
+        byte[] b = new byte[Math.min(extentBc == 0 ? RECORD_SIZE : extentBc, buffer.remaining())];
+        buffer.get(b);
+        return new String(b);
+    }
+
+    public Stream<CpmFile> listValidFiles() {
+        return readDirectoryBlocks()
+            .flatMap(i -> i.v.flatMap(this::getEntries))
+            .limit(cpmFormat.dpb.drm + 1)
+            .filter(entry -> (CpmEntry.getStatus(entry) & 0xFF) <= MAX_USER_NUMBER)
+            .map(entry -> CpmFile.fromEntry(entry, cpmFormat.dpb.exm));
+    }
+
+    /**
+     * Indexed value
+     *
+     * @param <T> value type
+     */
+    static class I<T> {
+        public final int index;
+        public final T v;
+
+        public I(int index, T v) {
+            this.index = index;
+            this.v = v;
+        }
     }
 }

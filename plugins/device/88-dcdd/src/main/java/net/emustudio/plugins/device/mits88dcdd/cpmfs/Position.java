@@ -18,9 +18,12 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
-class Position {
-    int track;
-    int sector;
+import net.jcip.annotations.NotThreadSafe;
+
+@NotThreadSafe
+public class Position {
+    public int track;
+    public int sector;
 
     Position(int track, int sector) {
         this.track = track;
@@ -38,5 +41,9 @@ class Position {
     @Override
     public String toString() {
         return "T=" + track + " S=" + sector;
+    }
+
+    public String toString(CpmFormat format) {
+        return "T=" + track + " S=" + format.sectorSkewTable[sector];
     }
 }

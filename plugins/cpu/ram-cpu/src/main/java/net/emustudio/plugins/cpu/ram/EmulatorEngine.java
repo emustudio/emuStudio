@@ -25,6 +25,7 @@ import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RAMValue;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,7 +66,7 @@ public class EmulatorEngine {
         outputTape.clear();
     }
 
-    public CPU.RunState step() {
+    public CPU.RunState step() throws IOException {
         RAMInstruction instr = memory.read(IP.getAndIncrement());
         if (instr == null) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;

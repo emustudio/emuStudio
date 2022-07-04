@@ -18,76 +18,139 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
+import net.emustudio.plugins.device.mits88dcdd.cpmfs.sectorops.SectorOps;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
+import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
+import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFileSystem.STATUS_UNUSED;
+
+/**
+ * Drive raw I/O
+ * <p>
+ * Performs raw disk operations
+ */
 public class DriveIO implements AutoCloseable {
-    public final static int SECTOR_SIZE = 128; //137;
-    public final static int SECTORS_PER_TRACK = 32; // 26, 32
-    public final static int SECTOR_SKEW = 17;
-    //public final static int TRACKS_COUNT = 77;
-    public final static int RAW_CHECKSUM_LENGTH = 9;
+    public final CpmFormat cpmFormat;
+    public final SectorOps sectorOps;
 
     private final FileChannel channel;
 
-    private final int[] skewTab;
-    final int rawSectorSize;
-    final int sectorSize;
-    final int sectorsPerTrack;
-
-
-    public DriveIO(Path imageFile, int sectorSize, int sectorsPerTrack, int sectorSkew, OpenOption... openOptions) throws IOException {
-        this.rawSectorSize = sectorSize + RAW_CHECKSUM_LENGTH;
-        this.sectorSize = sectorSize;
-        this.sectorsPerTrack = sectorsPerTrack;
-        this.skewTab = new int[sectorsPerTrack];
-
-        int currentSkew = 0;
-        for (int i = 0; i < sectorsPerTrack; i++) {
-            while (true) {
-                int k = 0;
-                while (k < i && skewTab[k] != currentSkew) {
-                    k++;
-                }
-                if (k < i) {
-                    currentSkew = (currentSkew + 1) % sectorsPerTrack;
-                } else {
-                    break;
-                }
-            }
-            skewTab[i] = currentSkew;
-            currentSkew = (currentSkew + sectorSkew) % sectorsPerTrack;
-        }
-
+    public DriveIO(Path imageFile, CpmFormat cpmFormat, OpenOption... openOptions) throws IOException {
+        this.cpmFormat = Objects.requireNonNull(cpmFormat);
+        this.sectorOps = cpmFormat.sectorOps;
         this.channel = FileChannel.open(Objects.requireNonNull(imageFile), openOptions);
     }
 
-    public ByteBuffer readSector(Position position) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(rawSectorSize);
-
-        channel.position((long) sectorsPerTrack * rawSectorSize * position.track + (long) rawSectorSize * skewTab[position.sector]);
-        if (channel.read(buffer) != rawSectorSize) {
+    /**
+     * Reads a CP/M "record".
+     * <p>
+     * It is a raw sector stripped from prefix & suffix.
+     * It does not check validity.
+     *
+     * @param position logical position
+     * @return record data
+     * @throws IOException on reading error
+     */
+    public ByteBuffer readRecord(Position position) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(cpmFormat.sectorSize);
+        channel.position(cpmFormat.positionToOffset(position));
+        if (channel.read(buffer) != cpmFormat.sectorSize) {
             throw new IOException("Could not read whole sector! (" + position + ")");
         }
-
-        buffer.flip();
-        return buffer;
+        return sectorOps.toRecord(buffer.flip());
     }
 
-    public void writeSector(Position position, ByteBuffer buffer) throws IOException {
-        channel.position((long) sectorsPerTrack * rawSectorSize * position.track + (long) rawSectorSize * skewTab[position.sector]);
-        int expected = buffer.remaining();
-        if (channel.write(buffer) != expected) {
+    /**
+     * Writes a CP/M "record"
+     *
+     * @param position logical position
+     * @param data     record data
+     * @throws IOException              on writing error
+     * @throws IllegalArgumentException if sector data does not have expected size (sector size)
+     */
+    public void writeRecord(Position position, ByteBuffer data) throws IOException {
+        ByteBuffer sector = sectorOps.toSector(data, position);
+        channel.position(cpmFormat.positionToOffset(position));
+
+        int expected = sector.remaining();
+        if (channel.write(sector) != expected) {
             throw new IOException("Could not write whole sector! (" + position + ")");
+        }
+    }
+
+    /**
+     * Reads a block
+     *
+     * @param blockNumber block number
+     * @return list of records in a block
+     * @throws IOException on reading error
+     */
+    public List<ByteBuffer> readBlock(int blockNumber) throws IOException {
+        Position position = cpmFormat.blockToPosition(blockNumber);
+        List<ByteBuffer> block = new ArrayList<>();
+        for (int counter = 0; counter < cpmFormat.recordsPerBlock; counter++) {
+            block.add(readRecord(position));
+            position.next(cpmFormat.dpb.spt);
+        }
+        return block;
+    }
+
+    /**
+     * Writes a block
+     *
+     * @param blockNumber block number
+     * @param records     list of records
+     * @throws IOException on writing error
+     */
+    public void writeBlock(int blockNumber, List<ByteBuffer> records) throws IOException {
+        if (records.size() > cpmFormat.recordsPerBlock) {
+            throw new IllegalArgumentException("Too many sectors per block");
+        }
+
+        Position position = cpmFormat.blockToPosition(blockNumber);
+        for (ByteBuffer record : records) {
+            writeRecord(position, record);
+            position.next(cpmFormat.dpb.spt);
         }
     }
 
     @Override
     public void close() throws Exception {
         channel.close();
+    }
+
+    /**
+     * Formats disk (creates new disk image file).
+     *
+     * @param imageFile disk image file name
+     * @param cpmFormat CP/M format
+     */
+    public static void format(Path imageFile, CpmFormat cpmFormat) throws IOException {
+        if (Files.exists(imageFile)) {
+            throw new IllegalArgumentException("File already exists");
+        }
+        int fileSize = cpmFormat.tracks * cpmFormat.sectorSize * cpmFormat.dpb.spt;
+        System.out.println("File size: " + fileSize);
+        System.out.println("Sector size: " + cpmFormat.sectorSize);
+        System.out.println("Sectors per track: " + cpmFormat.dpb.spt);
+        System.out.println("Tracks: " + cpmFormat.tracks);
+
+        try (FileChannel channel = FileChannel.open(imageFile, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+            MappedByteBuffer out = channel.map(READ_WRITE, 0, fileSize);
+            for (int i = 0; i < fileSize; i++) {
+                out.put((byte) STATUS_UNUSED);
+            }
+        }
     }
 }

@@ -24,6 +24,7 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -83,7 +84,7 @@ public class EmulatorEngine {
 
     @FunctionalInterface
     private interface Instruction {
-        CPU.RunState execute();
+        CPU.RunState execute() throws IOException;
     }
 
     public EmulatorEngine(RASPMemoryContext memory, AbstractTapeContext inputTape, AbstractTapeContext outputTape) {
@@ -102,7 +103,7 @@ public class EmulatorEngine {
         outputTape.clear();
     }
 
-    public CPU.RunState step() {
+    public CPU.RunState step() throws IOException {
         RASPMemoryCell item = memory.read(IP.getAndIncrement());
         if (!item.isInstruction()) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
@@ -123,7 +124,7 @@ public class EmulatorEngine {
         return true;
     }
 
-    private CPU.RunState read() {
+    private CPU.RunState read() throws IOException {
         int register = memory.read(IP.getAndIncrement()).getValue();
         int input = inputTape.readData().number;
 

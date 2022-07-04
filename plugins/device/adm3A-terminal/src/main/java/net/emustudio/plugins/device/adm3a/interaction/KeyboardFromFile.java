@@ -68,7 +68,7 @@ public class KeyboardFromFile implements Keyboard {
         }
     }
 
-    private void inputReceived(int input) {
+    private void inputReceived(int input) throws IOException {
         for (DeviceContext<Byte> device : devices) {
             device.writeData((byte) input);
         }

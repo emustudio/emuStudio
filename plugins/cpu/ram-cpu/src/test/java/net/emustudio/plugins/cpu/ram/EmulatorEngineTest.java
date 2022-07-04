@@ -24,6 +24,7 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
@@ -32,7 +33,7 @@ import static org.junit.Assert.assertEquals;
 public class EmulatorEngineTest extends AbstractEngineTest {
 
     @Test
-    public void testREAD_DIRECT() {
+    public void testREAD_DIRECT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.READ, RAMInstruction.Direction.DIRECT, 5));
 
         TapeSymbol symbol = new TapeSymbol("hello");
@@ -47,7 +48,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testREAD_INDIRECT() {
+    public void testREAD_INDIRECT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.READ, RAMInstruction.Direction.INDIRECT, 3));
 
         TapeSymbol symbol = new TapeSymbol("hello");
@@ -63,7 +64,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testWRITE_CONSTANT() {
+    public void testWRITE_CONSTANT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.WRITE, RAMInstruction.Direction.CONSTANT, "yoohoo"));
         output.writeData(eq(new TapeSymbol("yoohoo")));
         expectLastCall().once();
@@ -75,7 +76,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testWRITE_DIRECT() {
+    public void testWRITE_DIRECT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.WRITE, RAMInstruction.Direction.DIRECT, 3));
 
         expect(storage.getSymbolAt(3)).andReturn(Optional.of(new TapeSymbol("yoohoo"))).once();
@@ -89,7 +90,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testWRITE_INDIRECT() {
+    public void testWRITE_INDIRECT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.WRITE, RAMInstruction.Direction.INDIRECT, 3));
 
         expect(storage.getSymbolAt(3)).andReturn(Optional.of(new TapeSymbol(5))).once();
@@ -104,7 +105,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testLOAD_CONSTANT() {
+    public void testLOAD_CONSTANT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.LOAD, RAMInstruction.Direction.CONSTANT, "yoohoo"));
         storage.setSymbolAt(eq(0), eq(new TapeSymbol("yoohoo")));
         expectLastCall().once();
@@ -116,7 +117,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testLOAD_DIRECT() {
+    public void testLOAD_DIRECT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.LOAD, RAMInstruction.Direction.DIRECT, 3));
         expect(storage.getSymbolAt(3)).andReturn(Optional.of(new TapeSymbol("yoohoo"))).once();
         storage.setSymbolAt(eq(0), eq(new TapeSymbol("yoohoo")));
@@ -129,7 +130,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testLOAD_INDIRECT() {
+    public void testLOAD_INDIRECT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.LOAD, RAMInstruction.Direction.INDIRECT, 5));
         expect(storage.getSymbolAt(5)).andReturn(Optional.of(new TapeSymbol(3))).once();
         expect(storage.getSymbolAt(3)).andReturn(Optional.of(new TapeSymbol("yoohoo"))).once();
@@ -143,7 +144,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testSTORE_DIRECT() {
+    public void testSTORE_DIRECT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.STORE, RAMInstruction.Direction.DIRECT, 5));
 
         TapeSymbol symbol = new TapeSymbol("yoohoo");
@@ -158,7 +159,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testSTORE_INDIRECT() {
+    public void testSTORE_INDIRECT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.STORE, RAMInstruction.Direction.INDIRECT, 3));
 
         TapeSymbol symbol = new TapeSymbol("yoohoo");
@@ -174,7 +175,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testArith_CONSTANT() {
+    public void testArith_CONSTANT() throws IOException {
         setProgram(
             instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.CONSTANT, 5),
             instr(RAMInstruction.Opcode.SUB, RAMInstruction.Direction.CONSTANT, -1),
@@ -206,7 +207,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testADD_DIRECT() {
+    public void testADD_DIRECT() throws IOException {
         setProgram(
             instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.DIRECT, 3),
             instr(RAMInstruction.Opcode.SUB, RAMInstruction.Direction.DIRECT, 4),
@@ -242,7 +243,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testADD_INDIRECT() {
+    public void testADD_INDIRECT() throws IOException {
         setProgram(
             instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.INDIRECT, 3),
             instr(RAMInstruction.Opcode.SUB, RAMInstruction.Direction.INDIRECT, 4),
@@ -284,7 +285,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testADD_NON_NUMERIC_OPERAND() {
+    public void testADD_NON_NUMERIC_OPERAND() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.CONSTANT, "not allowed"));
         expect(storage.getSymbolAt(0)).andReturn(Optional.of(new TapeSymbol(-3))).once();
         replay(storage);
@@ -295,7 +296,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testADD_NON_NUMERIC_R0() {
+    public void testADD_NON_NUMERIC_R0() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.CONSTANT, 5));
         expect(storage.getSymbolAt(0)).andReturn(Optional.of(new TapeSymbol("haha"))).once();
         replay(storage);
@@ -306,7 +307,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testADD_EMPTY_R0() {
+    public void testADD_EMPTY_R0() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.CONSTANT, 5));
         expect(storage.getSymbolAt(0)).andReturn(Optional.of(TapeSymbol.EMPTY)).once();
         storage.setSymbolAt(eq(0), eq(new TapeSymbol(5)));
@@ -319,14 +320,14 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testJMP() {
+    public void testJMP() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.JMP, label(100, "here")));
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.step());
         assertEquals(100, engine.IP.get());
     }
 
     @Test
-    public void testJZ() {
+    public void testJZ() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.JZ, label(0, "here")));
 
         expect(storage.getSymbolAt(0)).andReturn(Optional.empty()).times(2);
@@ -339,7 +340,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testJNZ() {
+    public void testJNZ() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.JZ, RAMInstruction.Direction.DIRECT, 0));
 
         expect(storage.getSymbolAt(0)).andReturn(Optional.of(TapeSymbol.guess("2"))).once();
@@ -351,7 +352,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testJGTZ() {
+    public void testJGTZ() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.JGTZ, label(0, "here")));
 
         expect(storage.getSymbolAt(0)).andReturn(Optional.of(TapeSymbol.guess("2"))).times(2);
@@ -364,7 +365,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testNotJGTZ() {
+    public void testNotJGTZ() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.JGTZ, RAMInstruction.Direction.DIRECT, 0));
 
         expect(storage.getSymbolAt(0)).andReturn(Optional.of(TapeSymbol.EMPTY)).once();
@@ -376,7 +377,7 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     }
 
     @Test
-    public void testHALT() {
+    public void testHALT() throws IOException {
         setProgram(instr(RAMInstruction.Opcode.HALT, RAMInstruction.Direction.DIRECT));
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step());
         assertEquals(1, engine.IP.get());
