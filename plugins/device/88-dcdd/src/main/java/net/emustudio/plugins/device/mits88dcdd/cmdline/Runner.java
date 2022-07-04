@@ -43,7 +43,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
     mixinStandardHelpOptions = true,
     versionProvider = Runner.VersionProvider.class,
     description = "88-DCDD Altair floppy disk drive",
-    subcommands = { Cpmfs.class }
+    subcommands = {Cpmfs.class}
 )
 public class Runner implements Runnable {
 
@@ -54,15 +54,8 @@ public class Runner implements Runnable {
         .resolve("altair8800")
         .resolve("cpm-formats.toml");
 
-    @Option(names = {"-f", "--format"}, description = "disk format ID", required = true, paramLabel = "FORMAT")
-    private String formatId;
-
-    // TODO: exclusive
-    @Option(names = {"-l", "--list-formats"}, description = "lists available disk format IDs")
-    private boolean listFormats;
-
-    @Option(names = {"-i", "--image"}, description = "disk image file", paramLabel = "FILE", required = true)
-    Path imageFile;
+    @CommandLine.ArgGroup(multiplicity = "1")
+    public Exclusive exclusive;
 
     public CpmFileSystem cpmfs;
 
@@ -83,15 +76,20 @@ public class Runner implements Runnable {
 
     @Override
     public void run() {
-        if (listFormats) {
-            loadFormats().forEach(System.out::println);
-        }
-        CpmFormat cpmFormat = findFormat().orElseThrow();
-        try {
-            cpmfs = new CpmFileSystem(new DriveIO(imageFile, cpmFormat, READ, WRITE));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        Optional
+            .ofNullable(exclusive)
+            .ifPresent(e -> {
+                if (e.listFormats) {
+                    loadFormats().forEach(System.out::println);
+                    return;
+                }
+                CpmFormat cpmFormat = findFormat();
+                try {
+                    cpmfs = new CpmFileSystem(new DriveIO(exclusive.dependent.imageFile, cpmFormat, READ, WRITE));
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
     }
 
     public List<CpmFormat> loadFormats() {
@@ -101,8 +99,15 @@ public class Runner implements Runnable {
         }
     }
 
-    public Optional<CpmFormat> findFormat() {
-        return loadFormats().stream().filter(f -> f.id.equals(formatId)).findAny();
+    public CpmFormat findFormat() {
+        Optional<CpmFormat> format = loadFormats()
+            .stream()
+            .filter(f -> f.id.equals(exclusive.dependent.formatId))
+            .findAny();
+        if (format.isEmpty()) {
+            throw new IllegalArgumentException("Format ID is not defined!");
+        }
+        return format.get();
     }
 
     public static class VersionProvider implements IVersionProvider {
@@ -111,5 +116,21 @@ public class Runner implements Runnable {
         public String[] getVersion() {
             return new String[]{Resources.getVersion()};
         }
+    }
+
+    static class Exclusive {
+        @Option(names = {"-l", "--list-formats"}, description = "lists available disk format IDs")
+        private boolean listFormats;
+
+        @CommandLine.ArgGroup(exclusive = false, multiplicity = "1")
+        public Dependent dependent;
+    }
+
+    static class Dependent {
+        @Option(names = {"-f", "--format"}, description = "disk format ID", required = true, paramLabel = "FORMAT")
+        public String formatId;
+
+        @Option(names = {"-i", "--image"}, description = "disk image file", paramLabel = "FILE", required = true)
+        public Path imageFile;
     }
 }

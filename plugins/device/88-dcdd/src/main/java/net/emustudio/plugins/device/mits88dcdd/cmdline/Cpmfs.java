@@ -119,15 +119,15 @@ public class Cpmfs {
 
     @Command(header = "Format CP/M disk image", name = "format", description = "Formats (completely erase) CP/M disk image")
     public void format() throws IOException {
-        CpmFormat cpmFormat = runner.findFormat().orElseThrow();
-        DriveIO.format(runner.imageFile, cpmFormat);
+        CpmFormat cpmFormat = runner.findFormat();
+        DriveIO.format(runner.exclusive.dependent.imageFile, cpmFormat);
     }
 
 
     private CpmFileSystem cpmfs() {
-        CpmFormat cpmFormat = runner.findFormat().orElseThrow();
+        CpmFormat cpmFormat = runner.findFormat();
         try {
-            return new CpmFileSystem(new DriveIO(runner.imageFile, cpmFormat, READ, WRITE));
+            return new CpmFileSystem(new DriveIO(runner.exclusive.dependent.imageFile, cpmFormat, READ, WRITE));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

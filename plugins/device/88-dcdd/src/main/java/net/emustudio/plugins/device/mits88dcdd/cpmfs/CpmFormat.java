@@ -133,11 +133,13 @@ public class CpmFormat {
     public String toString() {
         return "CP/M Format:\n" +
             "  ID: " + id + "\n" +
+            "  tracks: " + tracks + "\n" +
+            "  sectors per track (cp/m): " + dpb.spt + "\n" +
+            "  sectors per track (drive): " + dpb.driveSpt + "\n" +
             "  sector size: " + sectorSize + "\n" +
-            "  skew table:" + Arrays.deepToString(new int[][]{sectorSkewTable}) + "\n" +
+            "  sector skew:" + sectorSkew + "\n" +
             "  block size: " + blockSize + "\n" +
             "  block pointer is word: " + blockPointerIsWord + "\n" +
-            "  tracks: " + tracks + "\n" +
             "  records per block: " + recordsPerBlock + "\n" +
             "  entries per block: " + entriesPerBlock + "\n" +
             "  directory blocks: " + directoryBlocks + "\n" +
