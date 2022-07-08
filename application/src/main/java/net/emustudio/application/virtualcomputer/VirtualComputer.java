@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 
 import static net.emustudio.application.internal.Reflection.doesImplement;
 
-public class VirtualComputer implements PluginConnections {
+public class VirtualComputer implements PluginConnections, AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(VirtualComputer.class);
 
     private static final Map<PLUGIN_TYPE, Class<? extends Plugin>> pluginInterfaces = Map.of(
@@ -97,6 +97,7 @@ public class VirtualComputer implements PluginConnections {
         getDevices().forEach(Device::reset);
     }
 
+    @Override
     public boolean isConnected(long pluginA, long pluginB) {
         String fst = pluginsById.get(pluginA).pluginConfig.getPluginId();
         String snd = pluginsById.get(pluginB).pluginConfig.getPluginId();
@@ -129,6 +130,7 @@ public class VirtualComputer implements PluginConnections {
         return meta.stream().map(m -> (Device) m.pluginInstance).collect(Collectors.toList());
     }
 
+    @Override
     public void close() {
         computerConfig.close();
     }

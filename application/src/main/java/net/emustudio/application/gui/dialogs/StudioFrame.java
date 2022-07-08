@@ -37,7 +37,9 @@ import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 public class StudioFrame extends JFrame {
     private final static String SOURCE_CODE_EDITOR = "Source code editor";
@@ -60,13 +62,7 @@ public class StudioFrame extends JFrame {
 
 
     public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
-                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, String fileName) {
-        this(computer, applicationConfig, dialogs, debugTableModel, memoryContext);
-        editor.openFile(fileName);
-    }
-
-    public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
-                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext) {
+                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, Optional<Path> fileName) {
         Objects.requireNonNull(computer);
 
         this.editor = computer.getCompiler()
@@ -107,9 +103,9 @@ public class StudioFrame extends JFrame {
                 resizeComponents();
             }
         });
+        fileName.ifPresent(editor::openFile);
         editor.grabFocus();
     }
-
 
     private void resizeComponents() {
         int height = getHeight();
@@ -123,7 +119,7 @@ public class StudioFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         getRootPane().registerKeyboardAction(
-            e ->editor.clearMarkedOccurences(),
+            e -> editor.clearMarkedOccurences(),
             KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 

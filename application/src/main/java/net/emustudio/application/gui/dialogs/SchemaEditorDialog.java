@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.gui.Components.addKeyListenerRecursively;
+import static net.emustudio.application.gui.GuiUtils.addKeyListenerRecursively;
 
 public class SchemaEditorDialog extends JDialog implements KeyListener {
     private final static Logger LOGGER = LoggerFactory.getLogger(SchemaEditorDialog.class);

@@ -6,6 +6,8 @@ import java.awt.*;
 
 public interface ExtendedDialogs extends Dialogs {
 
+    boolean isGui();
+
     default void setParent(Component component) {
 
     }

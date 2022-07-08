@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -54,7 +55,7 @@ public class Automation implements Runnable {
 
     private volatile CPU.RunState resultState;
 
-    public Automation(VirtualComputer computer, String inputFileName, ApplicationConfig applicationConfig,
+    public Automation(VirtualComputer computer, Path inputFile, ApplicationConfig applicationConfig,
                       Dialogs dialogs, int waitForFinishMillis, int programStart) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
@@ -62,9 +63,9 @@ public class Automation implements Runnable {
         this.waitForFinishMillis = waitForFinishMillis;
         this.programStart = programStart;
 
-        if (inputFileName != null) {
-            this.inputFile = new File(Objects.requireNonNull(inputFileName, "Input file must be defined"));
-            if (!inputFile.exists()) {
+        if (inputFile != null) {
+            this.inputFile = Objects.requireNonNull(inputFile, "Input file must be defined").toFile();
+            if (!this.inputFile.exists()) {
                 throw new AutomationException("Input file not found");
             }
         } else {

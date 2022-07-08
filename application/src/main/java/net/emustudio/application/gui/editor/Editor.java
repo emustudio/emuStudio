@@ -5,6 +5,7 @@ import org.fife.rsta.ui.search.SearchListener;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 
 public interface Editor extends SearchListener {
@@ -13,7 +14,7 @@ public interface Editor extends SearchListener {
 
     boolean openFile();
 
-    boolean openFile(String fileName);
+    boolean openFile(Path fileName);
 
     boolean saveFile();
 

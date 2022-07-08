@@ -207,13 +207,13 @@ public class REditor implements Editor {
         Optional<Path> openedFile = dialogs.chooseFile(
             "Open a file", "Open", currentDirectory.toPath(), false, filters
         );
-        return openedFile.map(path -> openFile(path.toString())).orElse(false);
+        return openedFile.map(this::openFile).orElse(false);
     }
 
     @Override
-    public boolean openFile(String fileName) {
+    public boolean openFile(Path fileName) {
         try {
-            textPane.load(FileLocation.create(fileName));
+            textPane.load(FileLocation.create(fileName.toString()));
             textPane.discardAllEdits();
             isnew = false;
             return true;

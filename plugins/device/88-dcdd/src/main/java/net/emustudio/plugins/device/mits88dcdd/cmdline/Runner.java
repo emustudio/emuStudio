@@ -65,11 +65,10 @@ public class Runner implements Runnable {
         cmdline.getCommandSpec().parser().collectErrors(true);
 
         CommandLine.ParseResult result = cmdline.parseArgs(args);
-
         try {
             cmdline.execute(args);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            result.errors().forEach(System.err::println);
             System.exit(1);
         }
     }

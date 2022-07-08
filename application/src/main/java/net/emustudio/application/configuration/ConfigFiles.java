@@ -42,13 +42,14 @@ public class ConfigFiles {
     );
     private final Path basePath;
 
-
-    public ConfigFiles() {
-        this.basePath = Path.of(System.getProperty("user.dir"));
-    }
+    public final static ConfigFiles DEFAULT = new ConfigFiles(Path.of(System.getProperty("user.dir")));
 
     public ConfigFiles(String basePath) {
-        this.basePath = Objects.requireNonNull(Path.of(basePath));
+        this(Path.of(basePath));
+    }
+
+    public ConfigFiles(Path basePath) {
+        this.basePath = Objects.requireNonNull(basePath);
     }
 
     public Optional<ComputerConfig> loadConfiguration(String computerName) throws IOException {
