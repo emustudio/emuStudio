@@ -43,8 +43,8 @@ dependencies {
 
   extraLibs libs.editor
   extraLibs libs.editorDialogs
-  extraLibs libs.args4j
   extraLibs libs.picocli
+  annotationProcessor libs.picocliAnnotation
   extraLibs libs.tomlj
   extraLibs libs.logback
   extraLibs libs.slf4JApi
@@ -86,7 +86,7 @@ dependencies {
 
 application {
   applicationName = 'emuStudio'
-  mainClassName = 'net.emustudio.application.Runner'
+  mainClassName = 'net.emustudio.application.cmdline.Runner'
   applicationDefaultJvmArgs = [
     '-Dawt.useSystemAAFontSettings=on', '-Dswing.aatext=true', '-Dsun.java2d.xrender=true', '-Dsun.java2d.d3d=false',
     '-Dsun.java2d.noddraw=true'
@@ -97,7 +97,9 @@ application {
 compileJava {
   sourceSets.main.compileClasspath += configurations.providedRuntime
   options.encoding = 'UTF-8'
+  options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
+
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
@@ -110,7 +112,7 @@ jar {
   archiveVersion = ''
   manifest {
     attributes(
-      'Main-Class': 'net.emustudio.application.Runner',
+      'Main-Class': 'net.emustudio.application.cmdline.Runner',
       "Implementation-Title": archivesBaseName,
       "Implementation-Version": project.version,
       'Build-Timestamp': new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),

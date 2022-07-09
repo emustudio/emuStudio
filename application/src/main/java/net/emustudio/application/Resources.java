@@ -16,26 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.gui.actions.emulator;
+package net.emustudio.application;
 
-import net.emustudio.application.emulation.EmulationController;
-
-import javax.swing.*;
-import java.awt.event.ActionEvent;
+import java.util.MissingResourceException;
 import java.util.Optional;
+import java.util.ResourceBundle;
 
-public class ResetAction extends AbstractAction {
+public class Resources {
 
-    private final EmulationController emulationController;
-
-    public ResetAction(EmulationController emulationController) {
-        super("Reset", new ImageIcon(ResetAction.class.getResource("/net/emustudio/application/gui/dialogs/reset.png")));
-
-        this.emulationController = emulationController;
+    public static Optional<ResourceBundle> getResourceBundle() {
+        try {
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.application.version"));
+        } catch (MissingResourceException e) {
+            return Optional.empty();
+        }
     }
 
-    @Override
-    public void actionPerformed(ActionEvent actionEvent) {
-        Optional.ofNullable(emulationController).ifPresent(EmulationController::reset);
+    public static String getVersion() {
+        return getResourceBundle()
+            .map(b -> b.getString("version"))
+            .orElse(Resources.class.getPackage().getImplementationVersion());
+    }
+
+    public static String getCopyright() {
+        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 }

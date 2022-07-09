@@ -1,8 +1,25 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2022  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package net.emustudio.application.gui.actions.opencomputer;
 
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.ConfigFiles;
 import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
@@ -14,19 +31,17 @@ import java.util.Optional;
 
 public class EditComputerAction extends AbstractAction {
     private final Dialogs dialogs;
-    private final ConfigFiles configFiles;
     private final ApplicationConfig applicationConfig;
     private final Runnable update;
     private final JDialog parent;
     private final JList<ComputerConfig> lstConfig;
 
-    public EditComputerAction(Dialogs dialogs, ConfigFiles configFiles, ApplicationConfig applicationConfig,
+    public EditComputerAction(Dialogs dialogs, ApplicationConfig applicationConfig,
                               Runnable update, JDialog parent, JList<ComputerConfig> lstConfig) {
         super(
             "Edit computer...", new ImageIcon(EditComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/computer.png"))
         );
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.configFiles = Objects.requireNonNull(configFiles);
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
         this.update = Objects.requireNonNull(update);
         this.parent = Objects.requireNonNull(parent);
@@ -39,7 +54,7 @@ public class EditComputerAction extends AbstractAction {
             .ofNullable(lstConfig.getSelectedValue())
             .ifPresentOrElse(computer -> {
                 Schema schema = new Schema(computer, applicationConfig);
-                new SchemaEditorDialog(parent, schema, configFiles, dialogs).setVisible(true);
+                new SchemaEditorDialog(parent, schema, dialogs).setVisible(true);
                 update.run();
             }, () -> dialogs.showError("A computer has to be selected!", "Edit computer"));
     }

@@ -21,18 +21,20 @@ package net.emustudio.application.configuration;
 
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.Objects;
 
+import static net.emustudio.application.configuration.ConfigFiles.loadConfigurations;
 import static org.junit.Assert.assertTrue;
 
 public class ConfigFilesTest {
 
     @Test
-    public void testInvalidConfigsAreIgnored() throws IOException {
+    public void testInvalidConfigsAreIgnored() throws IOException, URISyntaxException {
         ClassLoader classLoader = getClass().getClassLoader();
-        File configDir = new File(classLoader.getResource(".").getFile());
-        ConfigFiles configFiles = new ConfigFiles(configDir.getAbsolutePath());
-        assertTrue(configFiles.loadConfigurations().isEmpty());
+        Path configDir = Path.of(Objects.requireNonNull(classLoader.getResource(".")).toURI());
+        assertTrue(loadConfigurations(configDir).isEmpty());
     }
 }

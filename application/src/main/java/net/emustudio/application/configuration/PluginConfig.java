@@ -25,6 +25,8 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import static net.emustudio.application.configuration.ConfigFiles.getAbsolutePluginPath;
+
 public class PluginConfig {
     private final Config config;
 
@@ -49,8 +51,8 @@ public class PluginConfig {
         return config.get("path");
     }
 
-    public Path getPluginPath(ConfigFiles configFiles) {
-        return configFiles.getAbsolutePluginPath(getPluginFile(), getPluginType());
+    public Path getPluginPath() {
+        return getAbsolutePluginPath(getPluginFile(), getPluginType());
     }
 
     public SchemaPoint getSchemaPoint() throws NumberFormatException {

@@ -49,6 +49,10 @@ public class ComputerConfig implements ConfigSaver, Closeable {
         other.setConnections(getConnections());
     }
 
+    public Path getPath() {
+        return config.getNioPath();
+    }
+
     public String getName() {
         return config.get("name");
     }

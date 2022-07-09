@@ -20,7 +20,6 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.ConfigFiles;
 import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.opencomputer.*;
 import net.emustudio.application.gui.schema.Schema;
@@ -42,12 +41,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static net.emustudio.application.configuration.ConfigFiles.loadConfigurations;
+
 public class OpenComputerDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);
 
     private final ConfigurationsListModel configurationsModel;
     private final SchemaPreviewPanel preview;
-    private final ConfigFiles configFiles;
     private final ApplicationConfig applicationConfig;
     private final Dialogs dialogs;
 
@@ -60,19 +60,18 @@ public class OpenComputerDialog extends JDialog {
 
     private final JList<ComputerConfig> lstConfig = new JList<>();
 
-    public OpenComputerDialog(ConfigFiles configFiles, ApplicationConfig applicationConfig, Dialogs dialogs,
+    public OpenComputerDialog(ApplicationConfig applicationConfig, Dialogs dialogs,
                               Consumer<ComputerConfig> selectComputer) {
-        this.configFiles = Objects.requireNonNull(configFiles);
-        this.configurationsModel = new ConfigurationsListModel(configFiles);
+        this.configurationsModel = new ConfigurationsListModel();
         this.applicationConfig = Objects.requireNonNull(applicationConfig);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.preview = new SchemaPreviewPanel(null, dialogs);
 
-        addNewComputerAction = new AddNewComputerAction(dialogs, configFiles, applicationConfig, this::update, this);
-        deleteComputerAction = new DeleteComputerAction(dialogs, configFiles, this::update, lstConfig);
-        editComputerAction = new EditComputerAction(dialogs, configFiles, applicationConfig, this::update, this, lstConfig);
+        addNewComputerAction = new AddNewComputerAction(dialogs, applicationConfig, this::update, this);
+        deleteComputerAction = new DeleteComputerAction(dialogs, this::update, lstConfig);
+        editComputerAction = new EditComputerAction(dialogs, applicationConfig, this::update, this, lstConfig);
         openComputerAction = new OpenComputerAction(dialogs, this, lstConfig, selectComputer);
-        renameComputerAction = new RenameComputerAction(dialogs, configFiles, this::update, lstConfig);
+        renameComputerAction = new RenameComputerAction(dialogs, this::update, lstConfig);
         saveSchemaAction = new SaveSchemaAction(preview);
 
         setModal(true);
@@ -235,9 +234,9 @@ public class OpenComputerDialog extends JDialog {
     private class ConfigurationsListModel extends AbstractListModel<ComputerConfig> {
         private List<ComputerConfig> computerConfigs = Collections.emptyList();
 
-        ConfigurationsListModel(ConfigFiles configFiles) {
+        ConfigurationsListModel() {
             try {
-                computerConfigs = configFiles.loadConfigurations();
+                computerConfigs = loadConfigurations();
             } catch (IOException e) {
                 LOGGER.error("Could not load computer configurations", e);
                 dialogs.showError("Could not load computer configurations. Please consult log file for details.");
@@ -256,7 +255,7 @@ public class OpenComputerDialog extends JDialog {
 
         void update() {
             try {
-                computerConfigs = configFiles.loadConfigurations();
+                computerConfigs = loadConfigurations();
                 this.fireContentsChanged(this, -1, -1);
             } catch (IOException e) {
                 LOGGER.error("Could not load computer configurations", e);

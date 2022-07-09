@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 
 import static net.emustudio.application.internal.Reflection.doesImplement;
 
-public class VirtualComputer implements PluginConnections {
+public class VirtualComputer implements PluginConnections, AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(VirtualComputer.class);
 
     private static final Map<PLUGIN_TYPE, Class<? extends Plugin>> pluginInterfaces = Map.of(
@@ -97,6 +97,7 @@ public class VirtualComputer implements PluginConnections {
         getDevices().forEach(Device::reset);
     }
 
+    @Override
     public boolean isConnected(long pluginA, long pluginB) {
         String fst = pluginsById.get(pluginA).pluginConfig.getPluginId();
         String snd = pluginsById.get(pluginB).pluginConfig.getPluginId();
@@ -129,18 +130,19 @@ public class VirtualComputer implements PluginConnections {
         return meta.stream().map(m -> (Device) m.pluginInstance).collect(Collectors.toList());
     }
 
+    @Override
     public void close() {
         computerConfig.close();
     }
 
     public static VirtualComputer create(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                         ApplicationConfig applicationConfig, ConfigFiles configFiles) throws IOException, InvalidPluginException {
-        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, applicationConfig, configFiles);
+                                         ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
+        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, applicationConfig);
         return new VirtualComputer(computerConfig, plugins);
     }
 
     private static Map<Long, PluginMeta> loadPlugins(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                                     ApplicationConfig applicationConfig, ConfigFiles configFiles) throws IOException, InvalidPluginException {
+                                                     ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
         List<PluginConfig> pluginConfigs = Stream.of(
                 computerConfig.getCompiler(),
                 computerConfig.getCPU(),
@@ -151,7 +153,7 @@ public class VirtualComputer implements PluginConnections {
         pluginConfigs.addAll(computerConfig.getDevices());
 
         List<File> filesToLoad = pluginConfigs.stream()
-            .map(c -> c.getPluginPath(configFiles).toFile())
+            .map(c -> c.getPluginPath().toFile())
             .collect(Collectors.toList());
 
         LOGGER.debug("Loading plugin files: {}", filesToLoad);

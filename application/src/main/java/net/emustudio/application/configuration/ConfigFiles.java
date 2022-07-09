@@ -20,13 +20,16 @@ package net.emustudio.application.configuration;
 
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.runtime.CannotUpdateSettingException;
+import net.jcip.annotations.NotThreadSafe;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+@NotThreadSafe
 public class ConfigFiles {
     private final static String DIR_CONFIG = "config";
     private final static String DIR_CPU = "cpu";
@@ -40,46 +43,45 @@ public class ConfigFiles {
         PLUGIN_TYPE.MEMORY, DIR_MEMORY,
         PLUGIN_TYPE.DEVICE, DIR_DEVICE
     );
-    private final Path basePath;
+    private static final Path basePath = Path.of(System.getProperty("user.dir"));
 
-
-    public ConfigFiles() {
-        this.basePath = Path.of(System.getProperty("user.dir"));
-    }
-
-    public ConfigFiles(String basePath) {
-        this.basePath = Objects.requireNonNull(Path.of(basePath));
-    }
-
-    public Optional<ComputerConfig> loadConfiguration(String computerName) throws IOException {
+    public static Optional<ComputerConfig> loadConfiguration(String computerName) throws IOException {
         return loadConfigurations().stream().filter(config -> config.getName().equals(computerName)).findAny();
     }
 
-    public ComputerConfig loadConfiguration(Path computerPath) {
+    public static ComputerConfig loadConfiguration(Path computerPath) {
         return ComputerConfig.load(computerPath);
     }
 
-    public List<ComputerConfig> loadConfigurations() throws IOException {
+    public static List<String> listConfigurationNames() throws IOException {
+        return loadConfigurations().stream().map(ComputerConfig::getName).collect(Collectors.toList());
+    }
+
+    public static List<ComputerConfig> loadConfigurations() throws IOException {
+        return loadConfigurations(basePath);
+    }
+
+    public static List<ComputerConfig> loadConfigurations(Path basePath) throws IOException {
         if (!Files.exists(basePath.resolve(DIR_CONFIG))) {
             return Collections.emptyList();
         }
-        return Files.list(basePath.resolve(DIR_CONFIG))
-            .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
-            .map(p -> {
-                try {
-                    return Optional.of(ComputerConfig.load(p));
-                } catch (Exception e) {
-                    return Optional.<ComputerConfig>empty();
-                }
-            })
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .filter(c -> c.getName() != null)
-            .sorted(Comparator.comparing(ComputerConfig::getName))
-            .collect(Collectors.toList());
+        try (Stream<Path> configFiles = Files.list(basePath.resolve(DIR_CONFIG))) {
+            return configFiles
+                .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
+                .flatMap(p -> {
+                    try {
+                        return Stream.of(ComputerConfig.load(p));
+                    } catch (Exception e) {
+                        return Stream.empty();
+                    }
+                })
+                .filter(c -> c.getName() != null)
+                .sorted(Comparator.comparing(ComputerConfig::getName))
+                .collect(Collectors.toList());
+        }
     }
 
-    public Path getAbsolutePluginPath(String relativePluginPath, PLUGIN_TYPE pluginType) {
+    public static Path getAbsolutePluginPath(String relativePluginPath, PLUGIN_TYPE pluginType) {
         Path basicPath = Path.of(relativePluginPath);
         if (basicPath.isAbsolute()) {
             return basicPath;
@@ -89,7 +91,7 @@ public class ConfigFiles {
         }
     }
 
-    public List<String> listPluginFiles(PLUGIN_TYPE pluginType) throws IOException {
+    public static List<String> listPluginFiles(PLUGIN_TYPE pluginType) throws IOException {
         Path pluginBasePath = basePath.resolve(PLUGIN_SUBDIRS.get(pluginType));
         return Files.list(pluginBasePath)
             .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
@@ -98,17 +100,17 @@ public class ConfigFiles {
             .collect(Collectors.toList());
     }
 
-    public ComputerConfig createConfiguration(String computerName) throws IOException {
+    public static ComputerConfig createConfiguration(String computerName) throws IOException {
         Path configPath = basePath.resolve(DIR_CONFIG).resolve(encodeToFileName(computerName) + ".toml");
         return ComputerConfig.create(computerName, configPath);
     }
 
-    public void removeConfiguration(String computerName) throws IOException {
+    public static void removeConfiguration(String computerName) throws IOException {
         Path configPath = basePath.resolve(DIR_CONFIG).resolve(encodeToFileName(computerName) + ".toml");
         Files.deleteIfExists(configPath);
     }
 
-    public void renameConfiguration(ComputerConfig originalConfiguration, String newName) throws IOException, CannotUpdateSettingException {
+    public static void renameConfiguration(ComputerConfig originalConfiguration, String newName) throws IOException, CannotUpdateSettingException {
         ComputerConfig newConfig = createConfiguration(newName);
         originalConfiguration.copyTo(newConfig);
         newConfig.save();
@@ -117,7 +119,7 @@ public class ConfigFiles {
         removeConfiguration(originalConfiguration.getName());
     }
 
-    private String encodeToFileName(String name) {
+    private static String encodeToFileName(String name) {
         return name.replaceAll("\\W+", "");
     }
 }
