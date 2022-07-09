@@ -38,7 +38,6 @@ ext.libs = [
   slf4JNop       : "org.slf4j:slf4j-nop:${versions.slf4j}",
   logback        : "ch.qos.logback:logback-classic:1.2.3",
 
-  args4j         : "args4j:args4j:2.33",
   picocli        : "info.picocli:picocli:4.6.3",
   picocliAnnotation: "info.picocli:picocli-codegen:4.6.3",
 

@@ -43,7 +43,6 @@ dependencies {
 
   extraLibs libs.editor
   extraLibs libs.editorDialogs
-  extraLibs libs.args4j
   extraLibs libs.picocli
   annotationProcessor libs.picocliAnnotation
   extraLibs libs.tomlj
