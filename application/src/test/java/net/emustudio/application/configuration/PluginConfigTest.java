@@ -18,8 +18,7 @@ public class PluginConfigTest {
             "xx", PLUGIN_TYPE.CPU, "myName", System.getProperty("user.dir") + File.separator + "path.jar",
             P.of(0, 0), Config.inMemory()
         );
-        ConfigFiles configFiles = ConfigFiles.DEFAULT;
-        assertEquals(Path.of(System.getProperty("user.dir") + File.separator + "path.jar"), config.getPluginPath(configFiles));
+        assertEquals(Path.of(System.getProperty("user.dir") + File.separator + "path.jar"), config.getPluginPath());
     }
 
     @Test
@@ -27,7 +26,6 @@ public class PluginConfigTest {
         PluginConfig config = PluginConfig.create(
             "xx", PLUGIN_TYPE.CPU, "myName", "relativepath.jar", P.of(0, 0), Config.inMemory()
         );
-        ConfigFiles configFiles = ConfigFiles.DEFAULT;
-        assertEquals(Path.of(System.getProperty("user.dir"), "cpu", "relativepath.jar"), config.getPluginPath(configFiles));
+        assertEquals(Path.of(System.getProperty("user.dir"), "cpu", "relativepath.jar"), config.getPluginPath());
     }
 }

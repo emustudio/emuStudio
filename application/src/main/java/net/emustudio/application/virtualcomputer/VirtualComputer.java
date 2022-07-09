@@ -136,13 +136,13 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     }
 
     public static VirtualComputer create(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                         ApplicationConfig applicationConfig, ConfigFiles configFiles) throws IOException, InvalidPluginException {
-        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, applicationConfig, configFiles);
+                                         ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
+        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, applicationConfig);
         return new VirtualComputer(computerConfig, plugins);
     }
 
     private static Map<Long, PluginMeta> loadPlugins(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                                     ApplicationConfig applicationConfig, ConfigFiles configFiles) throws IOException, InvalidPluginException {
+                                                     ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
         List<PluginConfig> pluginConfigs = Stream.of(
                 computerConfig.getCompiler(),
                 computerConfig.getCPU(),
@@ -153,7 +153,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         pluginConfigs.addAll(computerConfig.getDevices());
 
         List<File> filesToLoad = pluginConfigs.stream()
-            .map(c -> c.getPluginPath(configFiles).toFile())
+            .map(c -> c.getPluginPath().toFile())
             .collect(Collectors.toList());
 
         LOGGER.debug("Loading plugin files: {}", filesToLoad);

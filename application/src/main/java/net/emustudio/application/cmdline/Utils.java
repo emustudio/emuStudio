@@ -21,7 +21,6 @@ package net.emustudio.application.cmdline;
 import net.emustudio.application.ApplicationApiImpl;
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.ConfigFiles;
 import net.emustudio.application.gui.ExtendedDialogs;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
@@ -52,7 +51,7 @@ public class Utils {
     private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
     public static final long EMUSTUDIO_ID = UUID.randomUUID().toString().hashCode();
 
-    public static ApplicationConfig loadApplicationConfig(boolean gui, boolean auto) throws IOException {
+    public static ApplicationConfig loadAppConfig(boolean gui, boolean auto) throws IOException {
         Path configFile = Path.of("emuStudio.toml");
         if (Files.notExists(configFile)) {
             LOGGER.warn("No configuration file found; creating empty one");
@@ -62,19 +61,16 @@ public class Utils {
         return ApplicationConfig.fromFile(configFile, !gui, auto);
     }
 
-    public static VirtualComputer loadVirtualComputer(
+    public static VirtualComputer loadComputer(
         ApplicationConfig appConfig,
         ComputerConfig computerConfig,
         ExtendedDialogs dialogs,
         ContextPoolImpl contextPool,
-        DebugTableModelImpl debugTableModel,
-        ConfigFiles configFiles
+        DebugTableModelImpl debugTableModel
     ) throws InvalidPluginException, IOException, PluginInitializationException {
         ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs);
 
-        VirtualComputer computer = VirtualComputer.create(
-            computerConfig, applicationApi, appConfig, configFiles
-        );
+        VirtualComputer computer = VirtualComputer.create(computerConfig, applicationApi, appConfig);
         computer.initialize(contextPool);
         computer.reset();
 
@@ -83,32 +79,15 @@ public class Utils {
         return computer;
     }
 
-    public static ComputerConfig loadComputerConfig(
-        String configName,
-        ApplicationConfig appConfig,
-        ExtendedDialogs dialogs,
-        ConfigFiles configFiles
-    ) throws IOException {
+    public static Optional<ComputerConfig> loadComputerConfigFromGui(
+        ApplicationConfig appConfig, ExtendedDialogs dialogs
+    ) {
         final AtomicReference<ComputerConfig> computerConfig = new AtomicReference<>();
-        if ((configName == null || configName.isEmpty()) && dialogs.isGui()) {
-            OpenComputerDialog dialog = new OpenComputerDialog(configFiles, appConfig, dialogs, computerConfig::set);
-            dialogs.setParent(dialog);
-            dialog.setVisible(true);
-            dialogs.setParent(null);
-        } else if (configName != null && !configName.isEmpty()) {
-            Optional<ComputerConfig> optionalConfig = configFiles.loadConfiguration(configName);
-            if (optionalConfig.isEmpty()) {
-                System.err.println("Configuration '" + configName + "' does not exist");
-                System.exit(1);
-            }
-            computerConfig.set(optionalConfig.get());
-        }
-
-        if (computerConfig.get() == null) {
-            System.err.println("Virtual computer must be selected!");
-            System.exit(1);
-        }
-        return computerConfig.get();
+        OpenComputerDialog dialog = new OpenComputerDialog(appConfig, dialogs, computerConfig::set);
+        dialogs.setParent(dialog);
+        dialog.setVisible(true);
+        dialogs.setParent(null);
+        return Optional.ofNullable(computerConfig.get());
     }
 
     public static LoadingDialog showSplashScreen() {

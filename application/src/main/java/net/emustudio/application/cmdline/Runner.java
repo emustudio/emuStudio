@@ -32,12 +32,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
 import static net.emustudio.application.cmdline.Utils.*;
+import static net.emustudio.application.configuration.ConfigFiles.listConfigurationNames;
 import static net.emustudio.application.gui.GuiUtils.setupLookAndFeel;
 
+@SuppressWarnings("unused")
 @CommandLine.Command(
     name = "emuStudio",
     mixinStandardHelpOptions = true,
@@ -48,17 +51,13 @@ import static net.emustudio.application.gui.GuiUtils.setupLookAndFeel;
 public class Runner implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
-    @CommandLine.Option(names = {"-c", "--config"},
-        description = "computer configuration name (file name without suffix)",
-        required = true,
-        paramLabel = "FILE"
-    )
-    public String config;
+    @CommandLine.ArgGroup()
+    public Exclusive exclusive;
 
     @CommandLine.Option(names = {"-l", "--list-configs"}, description = "list all existing computer configurations")
     private boolean listConfigs;
 
-    @CommandLine.Parameters(description = "input file name (source code)", paramLabel = "FILE")
+    @CommandLine.Option(names = {"-i", "--input-file"}, description = "input file name (source code)", paramLabel = "FILE")
     public Path inputFile;
 
     // if a command is being run, default behavior is: do nothing
@@ -83,24 +82,36 @@ public class Runner implements Runnable {
     @Override
     public void run() {
         if (listConfigs) {
-            // TODO
+            try {
+                listConfigurationNames().forEach(System.out::println);
+            } catch (IOException e) {
+                LOGGER.error("Could not list configuration names", e);
+                System.exit(1);
+            }
             System.exit(0);
         }
 
         if (!runsSomeCommand) {
-            try (ApplicationConfig appConfig = loadApplicationConfig(true, false)) {
+            try (ApplicationConfig appConfig = loadAppConfig(true, false)) {
                 setupLookAndFeel(appConfig);
                 ExtendedDialogs dialogs = new GuiDialogsImpl();
+                Optional<ComputerConfig> computerConfigOpt = (exclusive != null) ?
+                    exclusive.loadConfiguration() :
+                    loadComputerConfigFromGui(appConfig, dialogs);
+
+                if (computerConfigOpt.isEmpty()) {
+                    System.err.println("Virtual computer must be selected!");
+                    System.exit(1);
+                }
+
+                ComputerConfig computerConfig = computerConfigOpt.get();
+
                 LoadingDialog splash = showSplashScreen();
-
-                ComputerConfig computerConfig = loadComputerConfig(config, appConfig, dialogs, ConfigFiles.DEFAULT);
-
                 ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
                 DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
-                VirtualComputer computer = loadVirtualComputer(
-                    appConfig, computerConfig, dialogs, contextPool, debugTableModel, ConfigFiles.DEFAULT
+                VirtualComputer computer = loadComputer(
+                    appConfig, computerConfig, dialogs, contextPool, debugTableModel
                 );
-
                 splash.dispose();
 
                 showMainWindow(
@@ -110,6 +121,36 @@ public class Runner implements Runnable {
                 LOGGER.error("Unexpected error", e);
                 System.exit(1);
             }
+        }
+    }
+
+    public static class Exclusive {
+        @CommandLine.Option(names = {"-c", "--computer"},
+            description = "virtual computer name (see -l for options)",
+            paramLabel = "NAME"
+        )
+        public String configName;
+
+        @CommandLine.Option(
+            names = {"-cf", "--computer-file"},
+            description = "virtual computer configuration file",
+            paramLabel = "FILE"
+        )
+        public Path configFile;
+
+        public Optional<ComputerConfig> loadConfiguration() throws IOException {
+            if (configName != null) {
+                Optional<ComputerConfig> optConfig = ConfigFiles.loadConfiguration(configName);
+                if (optConfig.isPresent()) {
+                    return optConfig;
+                }
+                System.err.println("Non-existing virtual computer: " + configFile);
+                System.exit(1);
+            }
+            if (configFile != null) {
+                return Optional.of(ConfigFiles.loadConfiguration(configFile));
+            }
+            return Optional.empty();
         }
     }
 

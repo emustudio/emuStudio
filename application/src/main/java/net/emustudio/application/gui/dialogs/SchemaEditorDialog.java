@@ -18,7 +18,6 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.configuration.ConfigFiles;
 import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.ToolbarToggleButton;
 import net.emustudio.application.gui.schema.DrawingPanel;
@@ -42,6 +41,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.application.configuration.ConfigFiles.listPluginFiles;
 import static net.emustudio.application.gui.GuiUtils.addKeyListenerRecursively;
 
 public class SchemaEditorDialog extends JDialog implements KeyListener {
@@ -49,18 +49,15 @@ public class SchemaEditorDialog extends JDialog implements KeyListener {
     private final static PluginComboModel EMPTY_MODEL = new PluginComboModel(Collections.emptyList());
 
     private final Schema schema;
-    private final ConfigFiles configFiles;
-
     private final Dialogs dialogs;
 
     private DrawingPanel panel;
     private boolean buttonSelected = false;
 
-    public SchemaEditorDialog(JDialog parent, Schema schema, ConfigFiles configFiles, Dialogs dialogs) {
+    public SchemaEditorDialog(JDialog parent, Schema schema, Dialogs dialogs) {
         super(parent, true);
 
         this.schema = Objects.requireNonNull(schema);
-        this.configFiles = Objects.requireNonNull(configFiles);
         this.dialogs = Objects.requireNonNull(dialogs);
 
         initialize();
@@ -398,7 +395,7 @@ public class SchemaEditorDialog extends JDialog implements KeyListener {
 
     private void resetComboWithPluginFiles(PLUGIN_TYPE pluginType) {
         try {
-            List<String> pluginFiles = configFiles.listPluginFiles(pluginType);
+            List<String> pluginFiles = listPluginFiles(pluginType);
             cmbPlugin.setModel(new PluginComboModel(pluginFiles));
             selectFirstPlugin();
         } catch (IOException e) {

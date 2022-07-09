@@ -2,8 +2,6 @@ package net.emustudio.application.gui.actions.opencomputer;
 
 import net.emustudio.application.configuration.ComputerConfig;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -12,8 +10,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class OpenComputerAction extends AbstractAction {
-    private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerAction.class);
-
     private final Dialogs dialogs;
     private final JDialog parent;
     private final JList<ComputerConfig> lstConfig;

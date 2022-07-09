@@ -20,7 +20,6 @@ package net.emustudio.application.cmdline;
 
 import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.ConfigFiles;
 import net.emustudio.application.emulation.Automation;
 import net.emustudio.application.gui.ExtendedDialogs;
 import net.emustudio.application.gui.GuiDialogsImpl;
@@ -43,7 +42,7 @@ import static net.emustudio.application.gui.GuiUtils.setupLookAndFeel;
 @SuppressWarnings("unused")
 @CommandLine.Command(name = "automation", aliases = {"auto"}, description = "run emulation automation")
 public class AutomationCommand implements Runnable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AutomationCommand.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger("automation");
 
     @CommandLine.ParentCommand
     private Runner runner;
@@ -61,21 +60,30 @@ public class AutomationCommand implements Runnable {
     @Override
     public void run() {
         ExtendedDialogs dialogs = new NoGuiDialogsImpl();
-        try (ApplicationConfig appConfig = loadApplicationConfig(gui, true)) {
-            Optional<LoadingDialog> splash = Optional.empty();
-
+        try (ApplicationConfig appConfig = loadAppConfig(gui, true)) {
             if (gui) {
                 setupLookAndFeel(appConfig);
                 dialogs = new GuiDialogsImpl();
-                splash = Optional.of(showSplashScreen());
             }
 
-            ComputerConfig computerConfig = loadComputerConfig(runner.config, appConfig, dialogs, ConfigFiles.DEFAULT);
+            Optional<ComputerConfig> computerConfigOpt = (runner.exclusive != null) ?
+                runner.exclusive.loadConfiguration() :
+                (gui ? loadComputerConfigFromGui(appConfig, dialogs) : Optional.empty());
+
+            if (computerConfigOpt.isEmpty()) {
+                dialogs.showError("Virtual computer must be selected!");
+                LOGGER.error("Virtual computer must be selected!");
+                System.exit(1);
+            }
+
+            ComputerConfig computerConfig = computerConfigOpt.get();
+
+            Optional<LoadingDialog> splash = gui ? Optional.of(showSplashScreen()) : Optional.empty();
 
             ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
             DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
-            try(VirtualComputer computer = loadVirtualComputer(
-                appConfig, computerConfig, dialogs, contextPool, debugTableModel, ConfigFiles.DEFAULT
+            try(VirtualComputer computer = loadComputer(
+                appConfig, computerConfig, dialogs, contextPool, debugTableModel
             )) {
                 splash.ifPresent(Window::dispose);
                 new Automation(
