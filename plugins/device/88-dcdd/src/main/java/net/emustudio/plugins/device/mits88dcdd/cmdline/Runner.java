@@ -43,6 +43,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
     mixinStandardHelpOptions = true,
     versionProvider = Runner.VersionProvider.class,
     description = "88-DCDD Altair floppy disk drive",
+    scope = CommandLine.ScopeType.INHERIT,
     subcommands = {Cpmfs.class}
 )
 public class Runner implements Runnable {

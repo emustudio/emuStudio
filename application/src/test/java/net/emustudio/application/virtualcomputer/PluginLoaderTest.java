@@ -46,7 +46,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class PluginLoaderTest {
-    private static final String GOOD_PLUGIN_PATH = "plugin-valid.jar";
     private static final String BAD_PLUGIN_PATH = "plugin-invalid.jar";
     private static final String NOT_A_PLUGIN_PATH = "not-a-plugin.jar";
 
