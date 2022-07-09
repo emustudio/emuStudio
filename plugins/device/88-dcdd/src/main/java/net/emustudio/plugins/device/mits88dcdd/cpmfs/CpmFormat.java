@@ -36,9 +36,10 @@ public class CpmFormat {
 
     public CpmFormat(String id, DiskParameterBlock dpb, int sectorSize, int sectorSkew,
                      SectorOps sectorOps, boolean bcInterpretsAsUnused, DateFormat dateFormat) {
-        this.id = Objects.requireNonNull(id);
-        this.dpb = Objects.requireNonNull(dpb);
-        this.sectorOps = Objects.requireNonNull(sectorOps);
+        this.id = Objects.requireNonNull(id, "Unknown CP/M disk format ID");
+        this.dpb = Objects.requireNonNull(dpb, "Unknown CP/M disk parameter block");
+        this.sectorOps = Objects.requireNonNull(sectorOps, "Unknown disk sector ops");
+        this.dateFormat = Objects.requireNonNull(dateFormat, "Unknown date format");
         this.blockSize = RECORD_SIZE * (dpb.blm + 1);
 
         //al0              al1
@@ -66,7 +67,6 @@ public class CpmFormat {
 
         this.tracks = dpb.drm * blockSize / (dpb.spt * RECORD_SIZE);
         this.bcInterpretsAsUnused = bcInterpretsAsUnused;
-        this.dateFormat = Objects.requireNonNull(dateFormat);
     }
 
     public long positionToOffset(Position position) {

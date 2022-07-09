@@ -16,7 +16,7 @@ public interface SectorOps {
         }
 
         @Override
-        public ByteBuffer toRecord(ByteBuffer sector) {
+        public ByteBuffer toRecord(ByteBuffer sector, Position position) {
             return sector;
         }
     };
@@ -34,16 +34,21 @@ public interface SectorOps {
     /**
      * Converts sector of sectorSize to RECORD_SIZE record.
      *
-     * @param sector sector
+     * @param sector   sector
+     * @param position position
      * @return record
      */
-    ByteBuffer toRecord(ByteBuffer sector);
+    ByteBuffer toRecord(ByteBuffer sector, Position position);
 
 
     static SectorOps fromString(String name) {
         switch (name.toLowerCase(Locale.ENGLISH)) {
-            case "mits88dcdd":
-                return Mits88dcdd.INSTANCE;
+            case "altair-floppy-mits":
+                return Altair8mits.INSTANCE;
+            case "altair-floppy-deramp":
+                return Altair8deramp.INSTANCE;
+            case "altair-minidisk-deramp":
+                return AltairMinidiskDeramp.INSTANCE;
             default:
                 return DUMMY;
         }

@@ -49,7 +49,7 @@ public class DriveIO implements AutoCloseable {
     public DriveIO(Path imageFile, CpmFormat cpmFormat, OpenOption... openOptions) throws IOException {
         this.cpmFormat = Objects.requireNonNull(cpmFormat);
         this.sectorOps = cpmFormat.sectorOps;
-        this.channel = FileChannel.open(Objects.requireNonNull(imageFile), openOptions);
+        this.channel = FileChannel.open(Objects.requireNonNull(imageFile, "Image file is not set"), openOptions);
     }
 
     /**
@@ -68,7 +68,7 @@ public class DriveIO implements AutoCloseable {
         if (channel.read(buffer) != cpmFormat.sectorSize) {
             throw new IOException("Could not read whole sector! (" + position + ")");
         }
-        return sectorOps.toRecord(buffer.flip());
+        return sectorOps.toRecord(buffer.flip(), position);
     }
 
     /**

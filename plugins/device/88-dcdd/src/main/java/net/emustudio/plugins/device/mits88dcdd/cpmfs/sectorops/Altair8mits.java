@@ -49,9 +49,9 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZ
  * end-of-directory marker. (This FFh is called "the directory stopper byte.")
  */
 @NotThreadSafe
-public class Mits88dcdd implements SectorOps {
+public class Altair8mits implements SectorOps {
     public static final int SECTOR_SIZE = 137;
-    public static final SectorOps INSTANCE = new Mits88dcdd();
+    public static final SectorOps INSTANCE = new Altair8mits();
 
     @Override
     public ByteBuffer toSector(ByteBuffer record, Position position) {
@@ -80,7 +80,7 @@ public class Mits88dcdd implements SectorOps {
     }
 
     @Override
-    public ByteBuffer toRecord(ByteBuffer sector) {
+    public ByteBuffer toRecord(ByteBuffer sector, Position position) {
         sector.position(3);
         byte[] record = new byte[RECORD_SIZE];
         sector.get(record);
