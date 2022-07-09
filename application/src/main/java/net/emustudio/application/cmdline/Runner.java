@@ -46,15 +46,16 @@ import static net.emustudio.application.gui.GuiUtils.setupLookAndFeel;
     mixinStandardHelpOptions = true,
     versionProvider = Runner.VersionProvider.class,
     description = "Universal emulation platform and framework",
+    scope = CommandLine.ScopeType.INHERIT,
     subcommands = {AutomationCommand.class}
 )
 public class Runner implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
-    @CommandLine.ArgGroup()
+    @CommandLine.ArgGroup(heading = "Virtual computer%n")
     public Exclusive exclusive;
 
-    @CommandLine.Option(names = {"-l", "--list-configs"}, description = "list all existing computer configurations")
+    @CommandLine.Option(names = {"-l", "--list-computers"}, description = "list all existing virtual computers")
     private boolean listConfigs;
 
     @CommandLine.Option(names = {"-i", "--input-file"}, description = "input file name (source code)", paramLabel = "FILE")
