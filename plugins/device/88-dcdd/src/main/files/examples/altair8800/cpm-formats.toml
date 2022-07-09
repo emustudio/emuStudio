@@ -132,7 +132,15 @@ ofs = 6
 #
 id = 'cpm3-altair8-deramp'
 sectorSize = 137
-sectorSkew = 17
+#sectorSkew = 17
+
+# The skew is based on the track as:
+#	Tracks 0-5, secOut = secIn
+#	Tracks 6-76, secOut = (secIn * 17) MOD 32
+# The skew computation for tracks 6-76 is implemented as:
+#	secOut = secIn if secIn is even
+#	secOut = secIn XOR 10h if secIn is odd
+sectorSkewTable = [0, 17, 2, 19, 4, 21, 6, 23, 8, 25, 10, 27, 12, 29, 14, 31, 16, 1, 18, 3, 20, 5, 22, 7, 24, 9, 26, 11, 28, 13, 30, 15]
 sectorOps = 'altair-floppy-deramp'
 bcInterpretsAsUnused = false
 dateFormat = 'NATIVE2'
@@ -146,7 +154,7 @@ dsm = 149    # max block number (150 blocks of 2K bytes)
 drm = 63     # max directory entry number (64 entries)
 al0 = 0xC0
 al1 = 0
-ofs = 6
+ofs = 2
 
 #RESTRK	equ	2		;reserved tracks for boot image
 
@@ -160,7 +168,15 @@ ofs = 6
 #
 id = 'cpm3-minidisk-deramp'
 sectorSize = 137
-sectorSkew = 17
+#sectorSkew = 17
+
+# The skew is based on the track as:
+#	Tracks 0-5, secOut = secIn
+#	Tracks 6-76, secOut = (secIn * 17) MOD 32
+# The skew computation for tracks 6-76 is implemented as:
+#	secOut = secIn if secIn is even
+#	secOut = secIn XOR 10h if secIn is odd
+sectorSkewTable = [0, 17, 2, 19, 4, 21, 6, 23, 8, 25, 10, 27, 12, 29, 14, 31, 16, 1, 18, 3, 20, 5, 22, 7, 24, 9, 26, 11, 28, 13, 30, 15]
 sectorOps = 'altair-minidisk-deramp'
 bcInterpretsAsUnused = false
 dateFormat = 'NATIVE2'

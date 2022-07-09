@@ -1,6 +1,7 @@
 package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 
 import com.electronwill.nightconfig.core.Config;
+import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.sectorops.SectorOps;
 
 import java.util.*;
@@ -25,7 +26,7 @@ public class CpmFormat {
 
     public final int tracks;
     public final int sectorSize; // raw sector size
-    public final int sectorSkew;
+    public final Optional<Integer> sectorSkew;
     public final int[] sectorSkewTable;
     public final SectorOps sectorOps;
 
@@ -34,12 +35,31 @@ public class CpmFormat {
     public final boolean bcInterpretsAsUnused;
     public final DateFormat dateFormat;
 
-    public CpmFormat(String id, DiskParameterBlock dpb, int sectorSize, int sectorSkew,
-                     SectorOps sectorOps, boolean bcInterpretsAsUnused, DateFormat dateFormat) {
+    public CpmFormat(String id,
+                     DiskParameterBlock dpb,
+                     int sectorSize,
+                     Optional<Integer> sectorSkew,
+                     Optional<List<Integer>> sectorSkewTable,
+                     SectorOps sectorOps,
+                     boolean bcInterpretsAsUnused,
+                     DateFormat dateFormat) {
+        Objects.requireNonNull(sectorSkew, "sector skew must be defined");
+        Objects.requireNonNull(sectorSkewTable, "sector skew table must be defined");
+        if (sectorSkew.isPresent() && sectorSkewTable.isPresent()) {
+            throw new IllegalArgumentException("sector skew and skew table cannot be defined at the same time");
+        }
+
         this.id = Objects.requireNonNull(id, "Unknown CP/M disk format ID");
         this.dpb = Objects.requireNonNull(dpb, "Unknown CP/M disk parameter block");
         this.sectorOps = Objects.requireNonNull(sectorOps, "Unknown disk sector ops");
         this.dateFormat = Objects.requireNonNull(dateFormat, "Unknown date format");
+        this.sectorSkew = sectorSkew;
+        this.sectorSkewTable = sectorSkew
+            .map(integer -> computeSectorSkewTable(integer, dpb.spt))
+            .orElseGet(() -> sectorSkewTable
+                .map(NumberUtils::listToNativeInts)
+                .orElseGet(() -> computeSectorSkewTable(1, dpb.spt)));
+
         this.blockSize = RECORD_SIZE * (dpb.blm + 1);
 
         //al0              al1
@@ -62,8 +82,6 @@ public class CpmFormat {
         this.entriesPerBlock = blockSize / ENTRY_SIZE;
         this.blockPointersCount = RAW_BLOCK_POINTERS_COUNT / (blockPointerIsWord ? 2 : 1);
         this.sectorSize = sectorSize;
-        this.sectorSkew = sectorSkew;
-        this.sectorSkewTable = computeSectorSkewTable(sectorSkew, dpb.spt);
 
         this.tracks = dpb.drm * blockSize / (dpb.spt * RECORD_SIZE);
         this.bcInterpretsAsUnused = bcInterpretsAsUnused;
@@ -115,7 +133,8 @@ public class CpmFormat {
             .map(c -> {
                 String id = c.get("id");
                 int sectorSize = c.get("sectorSize");
-                int sectorSkew = c.get("sectorSkew");
+                Optional<Integer> sectorSkew = c.getOptional("sectorSkew");
+                Optional<List<Integer>> sectorSkewTable = c.getOptional("sectorSkewTable");
                 boolean bcInterpretsAsUnused = c.<Boolean>getOptional("bcInterpretsAsUnused").orElse(false);
                 DateFormat dateFormat = c.getEnum("dateFormat", DateFormat.class);
                 SectorOps sectorOps = c
@@ -125,7 +144,9 @@ public class CpmFormat {
 
                 DiskParameterBlock dpb = DiskParameterBlock.fromConfig(c.get("dpb"));
 
-                return new CpmFormat(id, dpb, sectorSize, sectorSkew, sectorOps, bcInterpretsAsUnused, dateFormat);
+                return new CpmFormat(
+                    id, dpb, sectorSize, sectorSkew, sectorSkewTable, sectorOps, bcInterpretsAsUnused, dateFormat
+                );
             }).collect(Collectors.toList());
     }
 
@@ -138,6 +159,7 @@ public class CpmFormat {
             "  sectors per track (drive): " + dpb.driveSpt + "\n" +
             "  sector size: " + sectorSize + "\n" +
             "  sector skew:" + sectorSkew + "\n" +
+            "  sector skew table:" + Arrays.toString(sectorSkewTable) + "\n" +
             "  block size: " + blockSize + "\n" +
             "  block pointer is word: " + blockPointerIsWord + "\n" +
             "  records per block: " + recordsPerBlock + "\n" +
