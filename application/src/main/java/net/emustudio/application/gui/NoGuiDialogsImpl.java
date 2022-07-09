@@ -133,9 +133,4 @@ public class NoGuiDialogsImpl implements ExtendedDialogs {
     public static String formatMessage(String title, String message) {
         return "[" + title + "] " + message;
     }
-
-    @Override
-    public boolean isGui() {
-        return false;
-    }
 }

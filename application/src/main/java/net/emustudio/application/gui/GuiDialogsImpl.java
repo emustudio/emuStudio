@@ -38,11 +38,6 @@ public class GuiDialogsImpl implements ExtendedDialogs {
     private Component parent;
 
     @Override
-    public boolean isGui() {
-        return true;
-    }
-
-    @Override
     public void setParent(Component parent) {
         this.parent = parent;
     }
