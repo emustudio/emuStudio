@@ -80,7 +80,7 @@ public class Runner implements Runnable {
             .ofNullable(exclusive)
             .ifPresent(e -> {
                 if (e.listFormats) {
-                    loadFormats().forEach(System.out::println);
+                    loadFormats().stream().map(f -> f.id).forEach(System.out::println);
                     return;
                 }
                 CpmFormat cpmFormat = findFormat();
@@ -105,7 +105,7 @@ public class Runner implements Runnable {
             .filter(f -> f.id.equals(exclusive.dependent.formatId))
             .findAny();
         if (format.isEmpty()) {
-            throw new IllegalArgumentException("Format ID is not defined!");
+            throw new IllegalArgumentException("Unknown CP/M disk format ID!");
         }
         return format.get();
     }

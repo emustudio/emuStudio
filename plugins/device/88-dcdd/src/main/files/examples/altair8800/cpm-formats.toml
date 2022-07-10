@@ -1,17 +1,11 @@
-[[format]]
-# Altair 8" diskettes; Pertec FD-400 flopy drive; single-sided; hard-sectored
-# CP/M 1.4; simh BIOS
+# Altair 8" floppy for SIMH CP/M 1.4
 #
-# https://retrocmp.de/hardware/altair-8800/altair-floppy.htm
-# https://altairclone.com/downloads/roms/M%20Eberhard%20Improved%20ROMs/CDBL%20Manual.pdf
-# https://deramp.com/downloads/mfe_archive/010-S100%20Computers%20and%20Boards/00-MITS/40-Software/DSK%20Disk%20Images/Altair%20cpm%20Disk%20Images/Burcon%20(MITS)%20CPM.pdf
-#
-# Tested on:
 # cpm1.dsk    https://schorn.ch/cpm/zip/cpm1.zip
+[[format]]
 id = 'cpm1-simh'
 sectorSize = 137
 sectorSkew = 6
-sectorOps = 'mits88dcdd'
+sectorOps = 'altair-floppy-mits'
 bcInterpretsAsUnused = false
 dateFormat = 'NOT_USED'
 
@@ -22,27 +16,18 @@ bsh = 3
 # or blm = 7
 dsm = 242
 drm = 63
-al0 = 0xC0 # 11000000 00000000
+al0 = 0xC0
 al1 = 0
 ofs = 2
 
-
-
-[[format]]
-# Altair 8" diskettes; Pertec FD-400 flopy drive; single-sided; hard-sectored
-# CP/M 2.2; simh BIOS
+# Altair 8" floppy disks for SIMH CP/M 2.2
 #
-# https://retrocmp.de/hardware/altair-8800/altair-floppy.htm
-# https://altairclone.com/downloads/roms/M%20Eberhard%20Improved%20ROMs/CDBL%20Manual.pdf
-# https://deramp.com/downloads/mfe_archive/010-S100%20Computers%20and%20Boards/00-MITS/40-Software/DSK%20Disk%20Images/Altair%20cpm%20Disk%20Images/Burcon%20(MITS)%20CPM.pdf
-#
-# Tested on:
 # altcpm.dsk    http://cpmarchives.classiccmp.org/cpm/mirrors/www.schorn.ch/cpm/zip/altsw.zip
-#
+[[format]]
 id = 'cpm2-simh'
 sectorSize = 137
 sectorSkew = 17
-sectorOps = 'mits88dcdd'
+sectorOps = 'altair-floppy-mits'
 bcInterpretsAsUnused = false
 dateFormat = 'NOT_USED'
 
@@ -57,26 +42,18 @@ al0 = 0xFF
 al1 = 0
 ofs = 6
 
-[[format]]
-# Altair 8" diskettes; Pertec FD-400 flopy drive; single-sided; hard-sectored
-# CP/M 3; simh BIOS
-#
-# https://retrocmp.de/hardware/altair-8800/altair-floppy.htm
-# https://altairclone.com/downloads/roms/M%20Eberhard%20Improved%20ROMs/CDBL%20Manual.pdf
-# https://deramp.com/downloads/mfe_archive/010-S100%20Computers%20and%20Boards/00-MITS/40-Software/DSK%20Disk%20Images/Altair%20cpm%20Disk%20Images/Burcon%20(MITS)%20CPM.pdf
-#
-# Tested on:
+# Altair 8" floppy for SIMH CP/M 3
 #
 # cpm3.dsk        https://schorn.ch/cpm/zip/cpm3.zip
 # z80dos.dsk      https://schorn.ch/cpm/zip/z80dos.zip
 # zsdos.dsk       https://schorn.ch/cpm/zip/zsdos.zip
 # superdos.dsk    https://schorn.ch/cpm/zip/superdos.zip
 # cpm1dev.dsk     https://schorn.ch/cpm/zip/cpm1.zip
-
+[[format]]
 id = 'cpm3-simh'
 sectorSize = 137
 sectorSkew = 17
-sectorOps = 'mits88dcdd'
+sectorOps = 'altair-floppy-mits'
 bcInterpretsAsUnused = false
 dateFormat = 'NOT_USED'
 
@@ -91,24 +68,15 @@ al0 = 0xF0
 al1 = 0
 ofs = 6
 
-[[format]]
-# Altair 8" diskettes; Pertec FD-400 flopy drive; single-sided; hard-sectored
-# CP/M 2.2; simh ZSDOS BIOS (https://www.seasip.info/Cpm/dosses.html)
-
-# Timestamps are supported by a loadable module, so either the CP/M 3 style or the DateStamper
-# style can be used.
+# Altair 8" floppy for SIMH CP/M 2.2 with ZSDOS BIOS (https://www.seasip.info/Cpm/dosses.html)
 #
-# Tested on:
 # zsdos.dsk       https://schorn.ch/cpm/zip/zsdos.zip
-
+[[format]]
 id = 'cpm2-zsdos-simh'
 sectorSize = 137
 sectorSkew = 17
-sectorOps = 'mits88dcdd'
+sectorOps = 'altair-floppy-mits'
 bcInterpretsAsUnused = false
-
-# 21 C1 C1 C1 C1 M1 M1 M1 M1 00 00 C2 C2 C2 C2 M2
-# M2 M2 M2 00 00 C3 C3 C3 C3 M3 M3 M3 M3 00 00 00
 dateFormat = 'NATIVE2'
 
 [format.dpb]
@@ -121,3 +89,32 @@ drm = 0x03FF
 al0 = 0xF0
 al1 = 0
 ofs = 6
+
+# Altair 8" floppy for DeRamp CP/M 3
+#
+# MITS Tapes.dsk           https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%202.2/Altair%20Cassette%20Disk/MITS%20Tapes.dsk
+# cpm3_v1.0_48K_disk1.dsk  https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%203.0/cpm3_v1.0_48K_disk1.dsk
+# cpm3_v1.0_56k_build.dsk  https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%203.0/cpm3_v1.0_56k_build.dsk
+# cpm3_v1.0_56K_disk1.dsk  https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%203.0/cpm3_v1.0_56K_disk1.dsk
+# cpm3_v1.0_56k_disk2.dsk  https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%203.0/cpm3_v1.0_56k_disk2.dsk
+# CPM22AT11-24K.DSK        https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%202.2/CPM%202.2AT%20(Altair%20and%20Tarbell%20FDCs%20together)/CPM22AT11-24K.DSK
+
+[[format]]
+id = 'cpm3-altair8-deramp'
+sectorSize = 137
+sectorSkew = 17
+sectorOps = 'altair-floppy-mits'
+bcInterpretsAsUnused = false
+dateFormat = 'NOT_USED'
+
+[format.dpb]
+driveSpt = 32
+spt = 32
+bsh = 4
+# or blm = 15
+dsm = 149    # max block number (150 blocks of 2K bytes)
+drm = 63     # max directory entry number (64 entries)
+al0 = 0xC0
+al1 = 0
+ofs = 2
+

@@ -47,9 +47,9 @@ public class DriveIO implements AutoCloseable {
     private final FileChannel channel;
 
     public DriveIO(Path imageFile, CpmFormat cpmFormat, OpenOption... openOptions) throws IOException {
-        this.cpmFormat = Objects.requireNonNull(cpmFormat);
+        this.cpmFormat = Objects.requireNonNull(cpmFormat, "CP/M format is required");
         this.sectorOps = cpmFormat.sectorOps;
-        this.channel = FileChannel.open(Objects.requireNonNull(imageFile), openOptions);
+        this.channel = FileChannel.open(Objects.requireNonNull(imageFile, "Image file is not set"), openOptions);
     }
 
     /**
@@ -68,7 +68,7 @@ public class DriveIO implements AutoCloseable {
         if (channel.read(buffer) != cpmFormat.sectorSize) {
             throw new IOException("Could not read whole sector! (" + position + ")");
         }
-        return sectorOps.toRecord(buffer.flip());
+        return sectorOps.toRecord(buffer.flip(), position);
     }
 
     /**
@@ -82,7 +82,6 @@ public class DriveIO implements AutoCloseable {
     public void writeRecord(Position position, ByteBuffer data) throws IOException {
         ByteBuffer sector = sectorOps.toSector(data, position);
         channel.position(cpmFormat.positionToOffset(position));
-
         int expected = sector.remaining();
         if (channel.write(sector) != expected) {
             throw new IOException("Could not write whole sector! (" + position + ")");
