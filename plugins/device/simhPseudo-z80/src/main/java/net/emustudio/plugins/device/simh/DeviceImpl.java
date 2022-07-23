@@ -56,6 +56,7 @@ public class DeviceImpl extends AbstractDevice {
         ByteMemoryContext mem = contextPool.getMemoryContext(pluginID, ByteMemoryContext.class);
 
         context.setMemory(mem);
+        context.setCpu(cpu);
 
         // attach IO port
         if (!cpu.attachDevice(context, 0xFE)) {
@@ -93,7 +94,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public String getDescription() {
-        return "Re-implementation of simh pseudo device, used in simh emulator. Version is SIMH003.";
+        return "Re-implementation of simh pseudo device, used in simh emulator. Version is SIMH004.";
     }
 
     @Override

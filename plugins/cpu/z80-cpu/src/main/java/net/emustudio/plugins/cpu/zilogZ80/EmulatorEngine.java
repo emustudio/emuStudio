@@ -34,6 +34,9 @@ import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static net.emustudio.plugins.cpu.zilogZ80.DispatchTables.*;
@@ -72,20 +75,10 @@ public class EmulatorEngine implements CpuEngine {
     public int PC = 0, SP = 0, IX = 0, IY = 0;
     public int I = 0, R = 0; // interrupt r., refresh r.
 
-    public byte intMode = 0; // interrupt mode (0,1,2)
-    // Interrupt flip-flops
     public final boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
-    // No-Extra wait for CPC Interrupt?
-    private boolean noWait = false;
-    // Flag to cause an interrupt to execute
-    private boolean isINT = false;
-    // Interrupt Vector
-    private int interruptVector = 0xff;
-    // Interrupt mask
-    private int interruptPending = 0;
-    // device that want to interrupt
-    private DeviceContext<?> interruptDevice;
+    public byte interruptMode = 0; // interrupt mode (0,1,2)
 
+    private final Queue<byte[]> pendingInterrupts = new ConcurrentLinkedQueue<>(); // must be thread-safe
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
     private long executedCycles = 0;
 
@@ -123,6 +116,10 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
+    public void requestInterrupt(byte[] data) {
+        pendingInterrupts.add(data);
+    }
+
     void reset(int startPos) {
         SP = IX = IY = 0;
         I = R = 0;
@@ -133,25 +130,19 @@ public class EmulatorEngine implements CpuEngine {
         IFF[0] = false;
         IFF[1] = false;
         PC = startPos;
-        interruptPending = 0;
-        isINT = noWait = false;
+        pendingInterrupts.clear();
         currentRunState = RunState.STATE_STOPPED_BREAK;
     }
 
     CPU.RunState step() throws Exception {
-        boolean oldIFF = IFF[0];
-        noWait = false;
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
         lastOpcode = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
         try {
             dispatch();
-        } catch (Exception e) {
-            throw e;
         } catch (Throwable e) {
             throw new Exception(e);
         }
-        isINT = (interruptPending != 0) && oldIFF && IFF[0];
         return currentRunState;
     }
 
@@ -206,11 +197,7 @@ public class EmulatorEngine implements CpuEngine {
         }
 
         try {
-            /* if interrupt is waiting, instruction won't be read from memory
-             * but from one or all of 3 bytes (b1,b2,b3) which represents either
-             * rst or call instruction incomed from external peripheral device
-             */
-            if (isINT) {
+            if (IFF[0] && !pendingInterrupts.isEmpty()) {
                 return doInterrupt();
             }
             incrementR();
@@ -279,55 +266,42 @@ public class EmulatorEngine implements CpuEngine {
         return 4;
     }
 
-    void setInterrupt(DeviceContext<?> device, int mask) {
-        this.interruptDevice = device;
-        this.interruptPending |= mask;
-    }
-
-    void clearInterrupt(DeviceContext<?> device, int mask) {
-        if (interruptDevice == device) {
-            this.interruptPending &= ~mask;
-        }
-    }
-
-    void setInterruptVector(byte[] vector) {
-        if ((vector == null) || (vector.length == 0)) {
-            return;
-        }
-        this.interruptVector = vector[0];
-    }
-
     private int doInterrupt() throws Throwable {
-        isINT = false;
+        byte[] dataBus = pendingInterrupts.poll();
         int cycles = 0;
 
-        if (!noWait) {
-            cycles += 14;
-        }
-//        if (interruptDevice != null) {
-        //          interruptDevice.setInterrupt(1);
-        //    }
         IFF[0] = IFF[1] = false;
-        switch (intMode) {
-            case 0:  // rst p (interruptVector)
+        switch (interruptMode) {
+            case 0:
                 cycles += 11;
                 RunState old_runstate = currentRunState;
-                lastOpcode = interruptVector & 0xFF;
-                dispatch(); // must ignore halt
-                if (currentRunState == RunState.STATE_STOPPED_NORMAL) {
-                    currentRunState = old_runstate;
+                if (dataBus != null && dataBus.length > 0) {
+                    lastOpcode = dataBus[0] & 0xFF; // TODO: if dataBus had more bytes, they're ignored (except call).
+                    if (lastOpcode == 0xCD) {  /* CALL */
+                        SP = (SP - 2) & 0xFFFF;
+                        writeWord(SP, (PC + 2) & 0xFFFF);
+                        PC = ((dataBus[2] & 0xFF) << 8) | (dataBus[1] & 0xFF);
+                        return cycles + 17;
+                    }
+
+                    dispatch(); // must ignore halt
+                    if (currentRunState == RunState.STATE_STOPPED_NORMAL) {
+                        currentRunState = old_runstate;
+                    }
                 }
                 break;
-            case 1: // rst 0xFF
+            case 1:
                 cycles += 12;
                 writeWord((SP - 2) & 0xFFFF, PC);
                 SP = (SP - 2) & 0xffff;
-                PC = 0xFF & 0x38;
+                PC = 0x38;
                 break;
             case 2:
                 cycles += 13;
-                writeWord((SP - 2) & 0xFFFF, PC);
-                PC = readWord((I << 8) | interruptVector);
+                if (dataBus != null && dataBus.length > 0) {
+                    writeWord((SP - 2) & 0xFFFF, PC);
+                    PC = readWord((I << 8) | dataBus[0]);
+                }
                 break;
         }
         return cycles;
@@ -924,7 +898,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_IM_0() {
-        intMode = 0;
+        interruptMode = 0;
         return 8;
     }
 
@@ -946,7 +920,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_IM_1() {
-        intMode = 1;
+        interruptMode = 1;
         return 8;
     }
 
@@ -957,7 +931,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_IM_2() {
-        intMode = 2;
+        interruptMode = 2;
         return 8;
     }
 

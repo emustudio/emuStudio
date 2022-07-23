@@ -23,8 +23,8 @@ LOAD  4	;recover the accumulator content
 SUB   100	;execute the SUB operation with already modified operand
 ;............................................................................
 
-STORE 4	;store the result into R4 register
-WRITE 4	;print the result
+STORE 4	;store the control into R4 register
+WRITE 4	;print the control
 HALT
 
 ;=============================================================================

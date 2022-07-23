@@ -21,7 +21,6 @@
 package net.emustudio.plugins.cpu.rasp.api;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
 public interface RASPCpuContext extends CPUContext {
@@ -29,31 +28,4 @@ public interface RASPCpuContext extends CPUContext {
     AbstractTapeContext getInputTape();
 
     AbstractTapeContext getOutputTape();
-
-    @Override
-    default boolean isInterruptSupported() {
-        return false;
-    }
-
-    @Override
-    default void signalInterrupt(DeviceContext device, int mask) {
-    }
-
-    @Override
-    default void clearInterrupt(DeviceContext device, int mask) {
-    }
-
-    @Override
-    default boolean isRawInterruptSupported() {
-        return false;
-    }
-
-    @Override
-    default void signalRawInterrupt(DeviceContext device, byte[] data) {
-    }
-
-    @Override
-    default int getCPUFrequency() {
-        return 0;
-    }
 }

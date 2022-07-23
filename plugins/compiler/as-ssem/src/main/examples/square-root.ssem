@@ -3,7 +3,7 @@
 -- The square root is the count of the number of subtractions which took place.
 --
 -- Written by:    Brent Hilpert (12 Dec 2000)
--- Description:   Calculate the square root of X. The result is rounded up to an integral value.
+-- Description:   Calculate the square root of X. The control is rounded up to an integral value.
 --
 -- Parameter Lines:	30: X
 -- Result Lines:	31: square root of X
