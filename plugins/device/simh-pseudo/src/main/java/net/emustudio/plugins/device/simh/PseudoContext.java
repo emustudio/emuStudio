@@ -114,23 +114,18 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
 
     @Override
     public Byte readData() {
-        System.out.println("SIMH: R , lastCommand=" + lastReadCommand);
         int lastCommandOrdinal = lastReadCommand.ordinal();
         if (!COMMANDS_MAP.containsKey(lastCommandOrdinal)) {
             System.out.printf("SIMH: Unknown command (%d) to SIMH pseudo device ignored.\n", lastCommandOrdinal);
             clearCommand();
         } else {
-            byte x = COMMANDS_MAP.get(lastReadCommand.ordinal()).read(this);
-            System.out.println("  R: " + Integer.toHexString(x));
-            return x;
+            return COMMANDS_MAP.get(lastReadCommand.ordinal()).read(this);
         }
         return 0;
     }
 
     @Override
     public void writeData(Byte data) {
-        System.out.println("SIMH: W " + data);
-
         int lastCommandOrdinal = lastWriteCommand.ordinal();
         if (!COMMANDS_MAP.containsKey(lastCommandOrdinal)) {
             lastReadCommand = Commands.fromInt(data);
@@ -138,11 +133,9 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
             if (!COMMANDS_MAP.containsKey(lastWriteCommand.ordinal())) {
                 System.out.printf("SIMH: Unknown command (%d) to SIMH pseudo device ignored.\n", data);
             } else {
-                System.out.println("  S; " + lastWriteCommand);
                 COMMANDS_MAP.get(lastWriteCommand.ordinal()).start(this);
             }
         } else {
-            System.out.println("  W; " + lastWriteCommand);
             COMMANDS_MAP.get(lastCommandOrdinal).write(data, this);
         }
     }
