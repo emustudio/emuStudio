@@ -99,6 +99,7 @@ public class CpuImpl extends AbstractCPU {
         initializer.initialize();
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
+        context.setEngine(engine);
         statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
     }
 

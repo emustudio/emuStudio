@@ -37,7 +37,6 @@ public class StartTimerInterrupts implements Command {
     @Override
     public void start(Control control) {
         reset();
-
         timerTask.set(executor.scheduleAtFixedRate(() -> {
             // will work only in interrupt mode 0
             int addr = SetTimerInterruptAdr.INS.timerInterruptHandler;

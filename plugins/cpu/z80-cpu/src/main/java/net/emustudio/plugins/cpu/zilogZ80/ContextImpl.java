@@ -33,11 +33,11 @@ public final class ContextImpl implements ExtendedContext {
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
     private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
 
-    private volatile EmulatorEngine cpu;
+    private volatile EmulatorEngine engine;
     private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
 
-    public void setCpu(EmulatorEngine cpu) {
-        this.cpu = cpu;
+    public void setEngine(EmulatorEngine engine) {
+        this.engine = engine;
     }
 
     // device mapping = only one device can be attached to one port
@@ -91,8 +91,8 @@ public final class ContextImpl implements ExtendedContext {
 
 
     @Override
-    public void signalInterrupt(DeviceContext device, byte[] data) {
-        cpu.requestInterrupt(data);
+    public void signalInterrupt(DeviceContext<?> device, byte[] data) {
+        engine.requestInterrupt(data);
     }
 
     @Override

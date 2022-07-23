@@ -20,7 +20,6 @@ package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
@@ -35,7 +34,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -117,7 +115,10 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     public void requestInterrupt(byte[] data) {
-        pendingInterrupts.add(data);
+        if (currentRunState == RunState.STATE_RUNNING) {
+            System.out.println("interrupt signalled!, " + Arrays.toString(data));
+            pendingInterrupts.add(data);
+        }
     }
 
     void reset(int startPos) {
@@ -271,6 +272,7 @@ public class EmulatorEngine implements CpuEngine {
         int cycles = 0;
 
         IFF[0] = IFF[1] = false;
+        System.out.println("z80: interrupt! im=" + interruptMode + ", dataBus=" + Arrays.toString(dataBus));
         switch (interruptMode) {
             case 0:
                 cycles += 11;
@@ -279,7 +281,7 @@ public class EmulatorEngine implements CpuEngine {
                     lastOpcode = dataBus[0] & 0xFF; // TODO: if dataBus had more bytes, they're ignored (except call).
                     if (lastOpcode == 0xCD) {  /* CALL */
                         SP = (SP - 2) & 0xFFFF;
-                        writeWord(SP, (PC + 2) & 0xFFFF);
+                        writeWord(SP, (PC - 1) & 0xFFFF);
                         PC = ((dataBus[2] & 0xFF) << 8) | (dataBus[1] & 0xFF);
                         return cycles + 17;
                     }
@@ -807,14 +809,14 @@ public class EmulatorEngine implements CpuEngine {
         return 4;
     }
 
-    int I_IN_R_REF_C() throws IOException {
+    int I_IN_R_REF_C() {
         int tmp = (lastOpcode >>> 3) & 0x7;
         putreg(tmp, context.readIO(regs[REG_C]));
         flags = (flags & FLAG_C) | TABLE_SZ[regs[tmp]] | EmulatorTables.PARITY_TABLE[regs[tmp]];
         return 12;
     }
 
-    int I_OUT_REF_C_R() throws IOException {
+    int I_OUT_REF_C_R() {
         int tmp = (lastOpcode >>> 3) & 0x7;
         context.writeIO(regs[REG_C], (byte) getreg(tmp));
         return 12;
@@ -961,13 +963,13 @@ public class EmulatorEngine implements CpuEngine {
         return 18;
     }
 
-    int I_IN_REF_C() throws IOException {
+    int I_IN_REF_C() {
         int tmp = (context.readIO(regs[REG_C]) & 0xFF);
         flags = TABLE_SZ[tmp] | EmulatorTables.PARITY_TABLE[tmp] | (flags & FLAG_C);
         return 12;
     }
 
-    int I_OUT_REF_C_0() throws IOException {
+    int I_OUT_REF_C_0() {
         context.writeIO(regs[REG_C], (byte) 0);
         return 12;
     }
@@ -1159,7 +1161,7 @@ public class EmulatorEngine implements CpuEngine {
         return 21;
     }
 
-    int I_INI() throws IOException {
+    int I_INI() {
         byte value = context.readIO(regs[REG_C]);
         int address = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(address, value);
@@ -1175,7 +1177,7 @@ public class EmulatorEngine implements CpuEngine {
         return 16;
     }
 
-    int I_INIR() throws IOException {
+    int I_INIR() {
         byte value = context.readIO(regs[REG_C]);
         int address = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(address, value);
@@ -1195,7 +1197,7 @@ public class EmulatorEngine implements CpuEngine {
         return 21;
     }
 
-    int I_IND() throws IOException {
+    int I_IND() {
         byte value = context.readIO(regs[REG_C]);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(hl, value);
@@ -1210,7 +1212,7 @@ public class EmulatorEngine implements CpuEngine {
         return 16;
     }
 
-    int I_INDR() throws IOException {
+    int I_INDR() {
         byte value = context.readIO(regs[REG_C]);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(hl, value);
@@ -1230,7 +1232,7 @@ public class EmulatorEngine implements CpuEngine {
         return 21;
     }
 
-    int I_OUTI() throws IOException {
+    int I_OUTI() {
         int address = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(address);
         context.writeIO(regs[REG_C], value);
@@ -1244,7 +1246,7 @@ public class EmulatorEngine implements CpuEngine {
         return 16;
     }
 
-    int I_OTIR() throws IOException {
+    int I_OTIR() {
         int address = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(address);
         context.writeIO(regs[REG_C], value);
@@ -1263,7 +1265,7 @@ public class EmulatorEngine implements CpuEngine {
         return 21;
     }
 
-    int I_OUTD() throws IOException {
+    int I_OUTD() {
         int address = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(address);
         context.writeIO(regs[REG_C], value);
@@ -1277,7 +1279,7 @@ public class EmulatorEngine implements CpuEngine {
         return 16;
     }
 
-    int I_OTDR() throws IOException {
+    int I_OTDR() {
         int address = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(address);
         context.writeIO(regs[REG_C], value);
@@ -1355,7 +1357,7 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    int I_OUT_REF_N_A() throws IOException {
+    int I_OUT_REF_N_A() {
         int tmp = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
         context.writeIO(tmp, (byte) regs[REG_A]);
@@ -1374,7 +1376,7 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    int I_IN_A_REF_N() throws IOException {
+    int I_IN_A_REF_N() {
         int tmp = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
         regs[REG_A] = (context.readIO(tmp) & 0xFF);
