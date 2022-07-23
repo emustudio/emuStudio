@@ -1,6 +1,6 @@
 org 5
 
-;Program reads an integer number from the input tape, calculates its factorial and prints the control onto the output tape.
+;Program reads an integer number from the input tape, calculates its factorial and prints the result onto the output tape.
 
 
 ;saves the constant 1 into R2 and R3 registers
@@ -24,7 +24,7 @@ store 3
 mul 2
 store 2
 jmp ok
-;print the control
+;print the result
 finish: 
 write 2
 halt

@@ -263,7 +263,7 @@ subConstInstr:
  
   LOAD 3		;load RASP accumulor value
   SUB 1		;substract the value in R1 (execute the SUB =i operation with RASP accumulator)
-  STORE 3		;store the control into RASP accumulator
+  STORE 3		;store the result into RASP accumulator
  
   LOAD 2
   ADD =1
@@ -280,7 +280,7 @@ subRegInstr:
   
   LOAD 3		;load RASP accumulator value
   SUB *1		;substract the value of the register whose address is in R1 (execute SUB i operation with the RASP accumulator)
-  STORE 3		;store the control into RASP accumulator
+  STORE 3		;store the result into RASP accumulator
 
   LOAD 2
   ADD =1

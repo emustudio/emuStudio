@@ -403,7 +403,7 @@ addConstInstr:
   STORE 600
   LOAD 2000	;load the RAM accumulator
   ADD 0		;execute ADD =i
-  STORE 2000	;write the control back to RAM accumulator
+  STORE 2000	;write the result back to RAM accumulator
 
   LOAD 2		
   ADD =1
@@ -461,7 +461,7 @@ subConstInstr:
   STORE 694
   LOAD 2000	;load the RAM accumulator
   SUB 0		;execute SUB =i
-  STORE 2000	;write the control back to RAM accumulator
+  STORE 2000	;write the result back to RAM accumulator
 
   LOAD 2		
   ADD =1
@@ -519,7 +519,7 @@ mulConstInstr:
   STORE 788
   LOAD 2000	;load the RAM accumulator 
   MUL 0		;execute MUL =i
-  STORE 2000	;write the control back to RAM accumulator
+  STORE 2000	;write the result back to RAM accumulator
 
   LOAD 2		
   ADD =1
@@ -577,7 +577,7 @@ divConstInstr:
   STORE 882
   LOAD 2000	;load the RAM accumulator 
   DIV 0		;execute DIV =i
-  STORE 2000	;write the control back to RAM accumulator
+  STORE 2000	;write the result back to RAM accumulator
 
   LOAD 2		
   ADD =1

@@ -1,5 +1,5 @@
 ; load a char from keyboard
-; control in reg. A
+; result in reg. A
 
 getchar:
     in a, (10H)
