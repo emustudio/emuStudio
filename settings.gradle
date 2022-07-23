@@ -47,7 +47,7 @@ include ':plugins:device:88-sio'
 include ':plugins:device:abstract-tape'
 include ':plugins:device:adm3A-terminal'
 include ':plugins:device:brainduck-terminal'
-include ':plugins:device:simhPseudo-z80'
+include ':plugins:device:simh-pseudo'
 include ':plugins:device:ssem-display'
 
 include ':plugins:memory:ram-mem'
