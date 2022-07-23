@@ -46,13 +46,9 @@ public class ReadStopWatch implements Command {
     }
 
     @Override
-    public void write(byte data, Control control) {
-
-    }
-
-    @Override
     public void start(Control control) {
         getStopWatchDeltaPos = 0;
         stopWatchDelta = System.currentTimeMillis() - stopWatchNow;
+        control.clearWriteCommand();
     }
 }

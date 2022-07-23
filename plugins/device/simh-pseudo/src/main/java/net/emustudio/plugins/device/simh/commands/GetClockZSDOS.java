@@ -84,15 +84,11 @@ public class GetClockZSDOS implements Command {
     }
 
     @Override
-    public void write(byte data, Control control) {
-
-    }
-
-    @Override
     public void start(Control control) {
         int delta = SetClockZSDOS.INS.ClockZSDOSDelta;
         currentTime = LocalDateTime.from(Instant.ofEpochSecond(Instant.now().getEpochSecond() + delta));
         currentTimeValid = true;
         getClockZSDOSPos = 0;
+        control.clearWriteCommand();
     }
 }

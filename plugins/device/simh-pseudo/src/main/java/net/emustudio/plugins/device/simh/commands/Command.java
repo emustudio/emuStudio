@@ -30,7 +30,9 @@ public interface Command {
     /**
      * Called on SIMH interface reset
      */
-    void reset();
+    default void reset() {
+
+    }
 
     /**
      * Read byte
@@ -38,7 +40,9 @@ public interface Command {
      * @param control control
      * @return data
      */
-    byte read(Control control);
+    default byte read(Control control) {
+        return 0;
+    }
 
     /**
      * Write data byte
@@ -46,14 +50,18 @@ public interface Command {
      * @param data    byte
      * @param control control
      */
-    void write(byte data, Control control);
+    default void write(byte data, Control control) {
+
+    }
 
     /**
      * On command start
      *
      * @param control control
      */
-    void start(Control control);
+    default void start(Control control) {
+
+    }
 
 
     interface Control {
@@ -62,6 +70,10 @@ public interface Command {
          * Clears last command
          */
         void clearCommand();
+
+        void clearReadCommand();
+
+        void clearWriteCommand();
 
         ByteMemoryContext getMemory();
 

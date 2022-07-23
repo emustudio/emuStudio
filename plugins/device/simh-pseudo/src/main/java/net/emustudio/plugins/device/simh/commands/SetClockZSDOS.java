@@ -39,11 +39,6 @@ public class SetClockZSDOS implements Command {
     }
 
     @Override
-    public byte read(Control control) {
-        return 0;
-    }
-
-    @Override
     public void write(byte data, Control control) {
         if (setClockZSDOSPos == 0) {
             setClockZSDOSAdr = data;
@@ -59,6 +54,7 @@ public class SetClockZSDOS implements Command {
     @Override
     public void start(Control control) {
         setClockZSDOSPos = 0;
+        control.clearReadCommand();
     }
 
     /* setClockZSDOSAdr points to 6 byte block in M: YY MM DD HH MM SS in BCD notation */

@@ -57,8 +57,8 @@ public enum Commands {
     readURLCmd,                 //  30 read the contents of an URL
     getCPUClockFrequency,       //  31 get the clock frequency of the CPU
     setCPUClockFrequency,       //  32 set the clock frequency of the CPU
-    genInterruptCmd;            //  33 generate interrupt
-
+    genInterruptCmd,            //  33 generate interrupt,
+    unknownCmd;
 
     public static Commands fromInt(int number) {
         for (Commands c : Commands.values()) {

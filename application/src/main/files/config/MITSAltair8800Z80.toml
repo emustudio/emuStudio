@@ -121,9 +121,9 @@ name = "MITS Altair8800 (Z80)"
 
 [[DEVICE]]
 	schemaPoint = "220,60"
-	path = "simhPseudo-z80.jar"
+	path = "simh-pseudo.jar"
 	settings = {}
-	name = "simhPseudo-z80"
+	name = "simh-pseudo"
 	id = "6c07bc70-db4f-4e7a-86f3-0ba0ce9bebf9"
 	type = "DEVICE"
 

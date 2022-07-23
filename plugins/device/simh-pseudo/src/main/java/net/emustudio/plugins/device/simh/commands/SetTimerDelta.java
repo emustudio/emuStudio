@@ -32,11 +32,6 @@ public class SetTimerDelta implements Command {
     }
 
     @Override
-    public byte read(Control control) {
-        return 0;
-    }
-
-    @Override
     public void write(byte data, Control control) {
         if (setTimerDeltaPos == 0) {
             timerDelta = data;
@@ -55,5 +50,6 @@ public class SetTimerDelta implements Command {
     @Override
     public void start(Control control) {
         reset();
+        control.clearReadCommand();
     }
 }

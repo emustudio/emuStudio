@@ -30,11 +30,6 @@ public class SetCPUClockFrequency implements Command {
     }
 
     @Override
-    public byte read(Control control) {
-        return 0;
-    }
-
-    @Override
     public void write(byte data, Control control) {
         if (setClockFrequencyPos == 0) {
             newClockFrequency = data;
@@ -49,5 +44,6 @@ public class SetCPUClockFrequency implements Command {
     @Override
     public void start(Control control) {
         setClockFrequencyPos = 0;
+        control.clearReadCommand();
     }
 }

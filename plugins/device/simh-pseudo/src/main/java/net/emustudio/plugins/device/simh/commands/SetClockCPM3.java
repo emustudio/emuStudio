@@ -40,11 +40,6 @@ public class SetClockCPM3 implements Command {
     }
 
     @Override
-    public byte read(Control control) {
-        return 0;
-    }
-
-    @Override
     public void write(byte data, Control control) {
         if (setClockCPM3Pos == 0) {
             setClockCPM3Adr = data;
@@ -60,6 +55,7 @@ public class SetClockCPM3 implements Command {
     @Override
     public void start(Control control) {
         setClockCPM3Pos = 0;
+        control.clearReadCommand();
     }
 
     /* setClockCPM3Adr points to 5 byte block in M:

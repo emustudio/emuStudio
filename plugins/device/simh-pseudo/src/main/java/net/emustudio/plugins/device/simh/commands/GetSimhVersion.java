@@ -41,12 +41,8 @@ public class GetSimhVersion implements Command {
     }
 
     @Override
-    public void write(byte data, Control control) {
-
-    }
-
-    @Override
     public void start(Control control) {
         versionPos = 0;
+        control.clearWriteCommand();
     }
 }

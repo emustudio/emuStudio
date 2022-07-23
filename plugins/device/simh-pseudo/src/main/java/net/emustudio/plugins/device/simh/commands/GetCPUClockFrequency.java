@@ -47,12 +47,8 @@ public class GetCPUClockFrequency implements Command {
     }
 
     @Override
-    public void write(byte data, Control control) {
-
-    }
-
-    @Override
     public void start(Control control) {
         getClockFrequencyPos = 0;
+        control.clearWriteCommand();
     }
 }

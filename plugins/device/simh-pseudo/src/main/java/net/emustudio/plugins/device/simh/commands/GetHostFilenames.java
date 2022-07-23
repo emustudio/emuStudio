@@ -84,11 +84,6 @@ public class GetHostFilenames implements Command {
     }
 
     @Override
-    public void write(byte data, Control control) {
-
-    }
-
-    @Override
     public void start(Control control) {
         if (nameListHead == null) {
             createCPMCommandLine(control.getMemory());
@@ -106,6 +101,7 @@ public class GetHostFilenames implements Command {
             currentName = nameListHead;
             currentNameIndex = 0;
         }
+        control.clearWriteCommand();
     }
 
     private void deleteNameList() {

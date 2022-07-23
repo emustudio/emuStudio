@@ -63,12 +63,24 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
     private ByteMemoryContext memory;
     private ExtendedContext cpu;
 
-    private Commands lastCommand = printTimeCmd; // most recent command processed on port 0xfeh
+    private Commands lastReadCommand = unknownCmd;
+    private Commands lastWriteCommand = unknownCmd;
 
 
     @Override
     public void clearCommand() {
-        lastCommand = printTimeCmd;
+        lastReadCommand = unknownCmd;
+        lastWriteCommand = unknownCmd;
+    }
+
+    @Override
+    public void clearReadCommand() {
+        lastReadCommand = unknownCmd;
+    }
+
+    @Override
+    public void clearWriteCommand() {
+        lastWriteCommand = unknownCmd;
     }
 
     @Override
@@ -102,27 +114,35 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
 
     @Override
     public Byte readData() {
-        int lastCommandOrdinal = lastCommand.ordinal();
+        System.out.println("SIMH: R , lastCommand=" + lastReadCommand);
+        int lastCommandOrdinal = lastReadCommand.ordinal();
         if (!COMMANDS_MAP.containsKey(lastCommandOrdinal)) {
             System.out.printf("SIMH: Unknown command (%d) to SIMH pseudo device ignored.\n", lastCommandOrdinal);
             clearCommand();
         } else {
-            return COMMANDS_MAP.get(lastCommand.ordinal()).read(this);
+            byte x = COMMANDS_MAP.get(lastReadCommand.ordinal()).read(this);
+            System.out.println("  R: " + Integer.toHexString(x));
+            return x;
         }
         return 0;
     }
 
     @Override
     public void writeData(Byte data) {
-        int lastCommandOrdinal = lastCommand.ordinal();
+        System.out.println("SIMH: W " + data);
+
+        int lastCommandOrdinal = lastWriteCommand.ordinal();
         if (!COMMANDS_MAP.containsKey(lastCommandOrdinal)) {
-            lastCommand = Commands.fromInt(data);
-            if (!COMMANDS_MAP.containsKey(lastCommand.ordinal())) {
+            lastReadCommand = Commands.fromInt(data);
+            lastWriteCommand = Commands.fromInt(data);
+            if (!COMMANDS_MAP.containsKey(lastWriteCommand.ordinal())) {
                 System.out.printf("SIMH: Unknown command (%d) to SIMH pseudo device ignored.\n", data);
             } else {
-                COMMANDS_MAP.get(lastCommand.ordinal()).start(this);
+                System.out.println("  S; " + lastWriteCommand);
+                COMMANDS_MAP.get(lastWriteCommand.ordinal()).start(this);
             }
         } else {
+            System.out.println("  W; " + lastWriteCommand);
             COMMANDS_MAP.get(lastCommandOrdinal).write(data, this);
         }
     }

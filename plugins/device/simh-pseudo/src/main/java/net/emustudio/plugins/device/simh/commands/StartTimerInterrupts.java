@@ -35,16 +35,6 @@ public class StartTimerInterrupts implements Command {
     }
 
     @Override
-    public byte read(Control control) {
-        return 0;
-    }
-
-    @Override
-    public void write(byte data, Control control) {
-
-    }
-
-    @Override
     public void start(Control control) {
         reset();
 
@@ -55,5 +45,6 @@ public class StartTimerInterrupts implements Command {
             byte b2 = (byte) (addr >>> 8);
             control.getCpu().signalInterrupt(control.getDevice(), new byte[]{(byte) 0xCD, b1, b2});
         }, SetTimerDelta.INS.timerDelta, SetTimerDelta.INS.timerDelta, TimeUnit.MILLISECONDS));
+        control.clearCommand();
     }
 }

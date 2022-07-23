@@ -32,21 +32,12 @@ public class StartTimer implements Command {
     }
 
     @Override
-    public byte read(Control control) {
-        return 0;
-    }
-
-    @Override
-    public void write(byte data, Control control) {
-
-    }
-
-    @Override
     public void start(Control control) {
         if (markTimeSP < TIMER_STACK_LIMIT) {
             markTime[markTimeSP++] = System.currentTimeMillis();
         } else {
             System.out.println("SIMH: Timer stack overflow");
         }
+        control.clearCommand();
     }
 }
