@@ -270,6 +270,7 @@ public class EmulatorEngine implements CpuEngine {
     private int doInterrupt() throws Throwable {
         byte[] dataBus = pendingInterrupts.poll();
         int cycles = 0;
+        PC = (PC - 1) & 0xFFFF; // return back PC
 
         IFF[0] = IFF[1] = false;
         System.out.println("z80: interrupt! im=" + interruptMode + ", dataBus=" + Arrays.toString(dataBus));
@@ -281,7 +282,7 @@ public class EmulatorEngine implements CpuEngine {
                     lastOpcode = dataBus[0] & 0xFF; // TODO: if dataBus had more bytes, they're ignored (except call).
                     if (lastOpcode == 0xCD) {  /* CALL */
                         SP = (SP - 2) & 0xFFFF;
-                        writeWord(SP, (PC - 1) & 0xFFFF);
+                        writeWord(SP, PC);
                         PC = ((dataBus[2] & 0xFF) << 8) | (dataBus[1] & 0xFF);
                         return cycles + 17;
                     }
@@ -301,7 +302,8 @@ public class EmulatorEngine implements CpuEngine {
             case 2:
                 cycles += 13;
                 if (dataBus != null && dataBus.length > 0) {
-                    writeWord((SP - 2) & 0xFFFF, PC);
+                    SP = (SP - 2) & 0xFFFF;
+                    writeWord(SP, PC);
                     PC = readWord((I << 8) | dataBus[0]);
                 }
                 break;
