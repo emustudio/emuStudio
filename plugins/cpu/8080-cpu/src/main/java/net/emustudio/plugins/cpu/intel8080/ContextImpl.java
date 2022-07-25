@@ -24,7 +24,6 @@ import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -74,7 +73,7 @@ public class ContextImpl implements ExtendedContext {
      * @param data data to be written to the port. if parameter read is set to true, then data are ignored.
      * @return value from the port if read is true, otherwise 0
      */
-    public byte fireIO(int port, boolean read, byte data) throws IOException {
+    public byte fireIO(int port, boolean read, byte data) {
         DeviceContext<Byte> device = devices.get(port);
         if (device != null) {
             if (read) {
@@ -83,12 +82,12 @@ public class ContextImpl implements ExtendedContext {
                 device.writeData(data);
             }
         }
-        return read ? (byte)0xFF : 0; // ha! from survey.mac in cpm2.dsk: "inactive port could return 0xFF or echo port#"
+        return read ? (byte) 0xFF : 0; // ha! from survey.mac in cpm2.dsk: "inactive port could return 0xFF or echo port#"
     }
 
     @Override
-    public boolean isRawInterruptSupported() {
-        return true;
+    public boolean isInterruptSupported() {
+        return false;
     }
 
     /**
@@ -99,31 +98,15 @@ public class ContextImpl implements ExtendedContext {
      * during the interrupt acknowledge cycle. Subsequent bytes are read in by a
      * normal memory read sequence.
      *
-     * @param device      the device which signals the interrupt
-     * @param instruction instruction signaled by this interrupt
+     * @param device the device which signals the interrupt
+     * @param data   instruction signaled by this interrupt
      */
     @Override
-    public void signalRawInterrupt(DeviceContext device, byte[] instruction) {
-        EmulatorEngine tmpCpu = cpu;
-        if (tmpCpu != null) {
-            short b1 = (instruction.length >= 1) ? instruction[0] : 0;
-            short b2 = (instruction.length >= 2) ? instruction[1] : 0;
-            short b3 = (instruction.length >= 3) ? instruction[2] : 0;
-            tmpCpu.interrupt(b1, b2, b3);
-        }
-    }
-
-    @Override
-    public boolean isInterruptSupported() {
-        return false;
-    }
-
-    @Override
-    public void signalInterrupt(DeviceContext device, int mask) {
-    }
-
-    @Override
-    public void clearInterrupt(DeviceContext device, int mask) {
+    public void signalInterrupt(DeviceContext device, byte[] data) {
+        short b1 = (data.length >= 1) ? data[0] : 0;
+        short b2 = (data.length >= 2) ? data[1] : 0;
+        short b3 = (data.length >= 3) ? data[2] : 0;
+        cpu.interrupt(b1, b2, b3);
     }
 
     @Override

@@ -1,8 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2016-2017  Michal Šipoš
- * Copyright (C) 2006-2022-2022  Peter Jakubčo
+ * Copyright (C) 2006-2022  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,15 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package net.emustudio.plugins.device.simh.commands;
 
-package net.emustudio.plugins.cpu.rasp.api;
+public class ResetPTR implements Command {
+    public final static ResetPTR INS = new ResetPTR();
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
-
-public interface RASPCpuContext extends CPUContext {
-
-    AbstractTapeContext getInputTape();
-
-    AbstractTapeContext getOutputTape();
+    @Override
+    public void start(Control control) {
+        //ptr_reset( & ptr_dev);
+        control.clearCommand();
+    }
 }

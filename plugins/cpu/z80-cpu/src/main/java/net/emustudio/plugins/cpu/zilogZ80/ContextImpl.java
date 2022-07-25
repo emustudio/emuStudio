@@ -23,7 +23,6 @@ import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -34,11 +33,11 @@ public final class ContextImpl implements ExtendedContext {
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
     private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
 
-    private volatile EmulatorEngine cpu;
+    private volatile EmulatorEngine engine;
     private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
 
-    public void setCpu(EmulatorEngine cpu) {
-        this.cpu = cpu;
+    public void setEngine(EmulatorEngine engine) {
+        this.engine = engine;
     }
 
     // device mapping = only one device can be attached to one port
@@ -65,14 +64,14 @@ public final class ContextImpl implements ExtendedContext {
         devices.clear();
     }
 
-    void writeIO(int port, byte val) throws IOException {
+    void writeIO(int port, byte val) {
         DeviceContext<Byte> device = devices.get(port);
         if (device != null) {
             device.writeData(val);
         }
     }
 
-    byte readIO(int port) throws IOException {
+    byte readIO(int port) {
         DeviceContext<Byte> device = devices.get(port);
         if (device != null) {
             return device.readData();
@@ -90,24 +89,10 @@ public final class ContextImpl implements ExtendedContext {
         clockFrequency = frequency;
     }
 
-    @Override
-    public boolean isRawInterruptSupported() {
-        return true;
-    }
 
     @Override
-    public void signalRawInterrupt(DeviceContext device, byte[] data) {
-        cpu.setInterruptVector(data);
-    }
-
-    @Override
-    public void signalInterrupt(DeviceContext device, int mask) {
-        cpu.setInterrupt(device, mask);
-    }
-
-    @Override
-    public void clearInterrupt(DeviceContext device, int mask) {
-        cpu.clearInterrupt(device, mask);
+    public void signalInterrupt(DeviceContext<?> device, byte[] data) {
+        engine.requestInterrupt(data);
     }
 
     @Override

@@ -157,7 +157,7 @@ public class CpuVerifierImpl extends CpuVerifier {
     }
 
     public void checkIntMode(int mode) {
-        assertEquals(mode, cpu.getEngine().intMode);
+        assertEquals(mode, cpu.getEngine().interruptMode);
     }
 
     public static String intToFlags(int flags) {

@@ -19,7 +19,6 @@
 package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.plugins.cpu.ram.api.RAMCpuContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
@@ -73,40 +72,9 @@ public class RAMCpuContextImpl implements RAMCpuContext {
         return outputTape;
     }
 
-
     public void destroy() {
         Optional.ofNullable(inputTape).ifPresent(AbstractTapeContext::clear);
         Optional.ofNullable(storageTape).ifPresent(AbstractTapeContext::clear);
         Optional.ofNullable(outputTape).ifPresent(AbstractTapeContext::clear);
-    }
-
-    @Override
-    public boolean isInterruptSupported() {
-        return false;
-    }
-
-    @Override
-    public void signalInterrupt(DeviceContext device, int mask) {
-
-    }
-
-    @Override
-    public void clearInterrupt(DeviceContext device, int mask) {
-
-    }
-
-    @Override
-    public boolean isRawInterruptSupported() {
-        return false;
-    }
-
-    @Override
-    public void signalRawInterrupt(DeviceContext device, byte[] data) {
-
-    }
-
-    @Override
-    public int getCPUFrequency() {
-        return 0;
     }
 }

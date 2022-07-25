@@ -16,17 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package net.emustudio.plugins.device.simh.commands;
 
-package net.emustudio.plugins.cpu.ram.api;
+public class SIMHSleep implements Command {
+    public final static SIMHSleep INS = new SIMHSleep();
+    private final static int SIMHSleepMillis = 1;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
+    @Override
+    public void start(Control control) {
+        // TODO:
+        // Do not sleep when timer interrupts are pending or are about to be created.
+        // Otherwise there is the possibility that such interrupts are skipped.
 
-public interface RAMCpuContext extends CPUContext {
-
-    AbstractTapeContext getStorageTape();
-
-    AbstractTapeContext getInputTape();
-
-    AbstractTapeContext getOutputTape();
+        // time to sleep and SIO not attached to a file.
+        try {
+            Thread.sleep(SIMHSleepMillis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        control.clearCommand();
+    }
 }

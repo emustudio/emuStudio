@@ -171,7 +171,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     }
 
     public void setIntMode(byte intMode) {
-        cpu.getEngine().intMode = intMode;
+        cpu.getEngine().interruptMode = intMode;
     }
 
     @Override

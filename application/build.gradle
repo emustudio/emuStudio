@@ -74,7 +74,7 @@ dependencies {
   providedRuntime project(":plugins:device:88-sio")
   providedRuntime project(":plugins:device:adm3A-terminal")
   providedRuntime project(":plugins:device:brainduck-terminal")
-  providedRuntime project(":plugins:device:simhPseudo-z80")
+  providedRuntime project(":plugins:device:simh-pseudo")
   providedRuntime project(":plugins:device:ssem-display")
 
   testImplementation libs.junit
@@ -215,7 +215,7 @@ distributions {
         from(output(":plugins:device:88-sio"))
         from(output(":plugins:device:adm3A-terminal"))
         from(output(":plugins:device:brainduck-terminal"))
-        from(output(":plugins:device:simhPseudo-z80"))
+        from(output(":plugins:device:simh-pseudo"))
         from(output(":plugins:device:ssem-display"))
       }
 

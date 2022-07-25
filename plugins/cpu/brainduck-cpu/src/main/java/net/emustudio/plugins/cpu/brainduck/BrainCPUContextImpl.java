@@ -20,7 +20,6 @@ package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
-import java.io.IOException;
 import java.util.Objects;
 
 class BrainCPUContextImpl implements BrainCPUContext {
@@ -46,7 +45,7 @@ class BrainCPUContextImpl implements BrainCPUContext {
      *
      * @param data value that will be written into the device
      */
-    public void writeToDevice(byte data) throws IOException {
+    public void writeToDevice(byte data) {
         DeviceContext<Byte> tmp = device;
         if (tmp == null) {
             return;
@@ -62,39 +61,12 @@ class BrainCPUContextImpl implements BrainCPUContext {
      *
      * @return value from the device, or 0 if the device is null or there's anything
      */
-    public byte readFromDevice() throws IOException {
+    public byte readFromDevice() {
         DeviceContext<Byte> tmp = device;
         if (tmp == null) {
             return 0;
         }
         Byte value = tmp.readData();
         return (value == null) ? 0 : value;
-    }
-
-    @Override
-    public boolean isInterruptSupported() {
-        return false;
-    }
-
-    @Override
-    public void clearInterrupt(DeviceContext device, int mask) {
-    }
-
-    @Override
-    public boolean isRawInterruptSupported() {
-        return false;
-    }
-
-    @Override
-    public void signalRawInterrupt(DeviceContext device, byte[] data) {
-    }
-
-    @Override
-    public void signalInterrupt(DeviceContext device, int mask) {
-    }
-
-    @Override
-    public int getCPUFrequency() {
-        return 0;
     }
 }
