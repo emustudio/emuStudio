@@ -27,7 +27,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88dcdd.drive.Drive;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveCollection;
 import net.emustudio.plugins.device.mits88dcdd.gui.DiskGui;
@@ -61,7 +61,7 @@ public class DeviceImpl extends AbstractDevice {
     private final DataPort dataPort;
     private final boolean guiNotSupported;
 
-    private ExtendedContext cpuContext;
+    private Context8080 cpuContext;
 
     private int port1CPU;
     private int port2CPU;
@@ -89,7 +89,7 @@ public class DeviceImpl extends AbstractDevice {
         readSettings();
         ContextPool contextPool = applicationApi.getContextPool();
         if (contextPool != null) {
-            cpuContext = contextPool.getCPUContext(pluginID, ExtendedContext.class);
+            cpuContext = contextPool.getCPUContext(pluginID, Context8080.class);
 
             // attach device to CPU
             port1CPU = attachPort(1, statusPort, port1CPU);

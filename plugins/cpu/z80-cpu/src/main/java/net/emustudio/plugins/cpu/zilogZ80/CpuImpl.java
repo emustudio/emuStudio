@@ -27,7 +27,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.intel8080.api.FrequencyUpdater;
 import net.emustudio.plugins.cpu.zilogZ80.gui.StatusPanel;
 import org.slf4j.Logger;
@@ -57,8 +57,8 @@ public class CpuImpl extends AbstractCPU {
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
 
-    private final ContextImpl context = new ContextImpl();
-    private final InitializerForZ80 initializer;
+    private final ContextZ80Impl context = new ContextZ80Impl();
+    private final InitializerZ80 initializer;
 
     private StatusPanel statusPanel;
     private Disassembler disassembler;
@@ -67,7 +67,7 @@ public class CpuImpl extends AbstractCPU {
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         try {
-            applicationApi.getContextPool().register(pluginID, context, ExtendedContext.class);
+            applicationApi.getContextPool().register(pluginID, context, Context8080.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register Z80 CPU context", e);
             applicationApi.getDialogs().showError(
@@ -75,7 +75,7 @@ public class CpuImpl extends AbstractCPU {
             );
         }
 
-        initializer = new InitializerForZ80(
+        initializer = new InitializerZ80(
             this, pluginID, applicationApi.getContextPool(), settings, context
         );
     }

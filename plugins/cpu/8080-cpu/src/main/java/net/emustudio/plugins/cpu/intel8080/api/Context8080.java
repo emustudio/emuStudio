@@ -26,7 +26,7 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
  * Extended CPU context for 8080 processor.
  */
 @PluginContext
-public interface ExtendedContext extends CPUContext {
+public interface Context8080 extends CPUContext {
 
     /**
      * Attach a device into the CPU.

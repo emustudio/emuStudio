@@ -24,7 +24,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,8 +40,8 @@ public class DeviceImplTest {
     @Before
     public void setup() throws PluginInitializationException {
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getCPUContext(0, ExtendedContext.class))
-            .andReturn(createNiceMock(ExtendedContext.class)).anyTimes();
+        expect(contextPool.getCPUContext(0, Context8080.class))
+            .andReturn(createNiceMock(Context8080.class)).anyTimes();
         expect(contextPool.getDeviceContext(0, DeviceContext.class))
             .andThrow(new ContextNotFoundException("")).anyTimes();
         replay(contextPool);

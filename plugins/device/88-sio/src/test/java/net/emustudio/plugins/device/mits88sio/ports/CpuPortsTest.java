@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88sio.ports;
 
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -32,7 +32,7 @@ public class CpuPortsTest {
     @Test
     public void testStatusPortsAreCorrectAfterReattaching() throws Exception {
         CpuStatusPort cpuStatusPort = mock(CpuStatusPort.class);
-        ExtendedContext cpu = mock(ExtendedContext.class);
+        Context8080 cpu = mock(Context8080.class);
 
         expect(cpu.attachDevice(cpuStatusPort, 1)).andReturn(true);
         expect(cpu.attachDevice(cpuStatusPort, 2)).andReturn(true);
@@ -58,7 +58,7 @@ public class CpuPortsTest {
     @Test
     public void testDataPortsAreCorrectAfterReattaching() throws CouldNotAttachException {
         CpuDataPort cpuDataPort = mock(CpuDataPort.class);
-        ExtendedContext cpu = mock(ExtendedContext.class);
+        Context8080 cpu = mock(Context8080.class);
 
         expect(cpu.attachDevice(cpuDataPort, 1)).andReturn(true);
         expect(cpu.attachDevice(cpuDataPort, 2)).andReturn(true);
@@ -82,7 +82,7 @@ public class CpuPortsTest {
 
     @Test
     public void testDestroyDetachesAllPorts() throws Exception {
-        ExtendedContext cpu = mock(ExtendedContext.class);
+        Context8080 cpu = mock(Context8080.class);
         expect(cpu.attachDevice(anyObject(), anyInt())).andReturn(true).anyTimes();
 
         cpu.detachDevice(1);

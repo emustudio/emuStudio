@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88sio.ports;
 
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,9 +29,9 @@ import java.util.stream.Collectors;
 public class CpuPorts {
     private final List<Integer> statusPorts = new ArrayList<>();
     private final List<Integer> dataPorts = new ArrayList<>();
-    private final ExtendedContext cpu;
+    private final Context8080 cpu;
 
-    public CpuPorts(ExtendedContext cpu) {
+    public CpuPorts(Context8080 cpu) {
         this.cpu = Objects.requireNonNull(cpu);
     }
 

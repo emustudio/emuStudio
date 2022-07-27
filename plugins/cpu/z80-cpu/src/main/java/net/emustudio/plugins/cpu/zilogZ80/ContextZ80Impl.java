@@ -19,18 +19,18 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public final class ContextImpl implements ExtendedContext {
+public final class ContextZ80Impl implements ContextZ80 {
     private final static byte NO_DATA = (byte)0xFF;
     public final static int DEFAULT_FREQUENCY_KHZ = 20000;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(ContextZ80Impl.class);
     private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
 
     private volatile EmulatorEngine engine;
@@ -92,11 +92,16 @@ public final class ContextImpl implements ExtendedContext {
 
     @Override
     public void signalInterrupt(DeviceContext<?> device, byte[] data) {
-        engine.requestInterrupt(data);
+        engine.requestMaskableInterrupt(data);
     }
 
     @Override
     public int getCPUFrequency() {
         return clockFrequency;
+    }
+
+    @Override
+    public void signalNonMaskableInterrupt() {
+        engine.requestNonMaskableInterrupt();
     }
 }
