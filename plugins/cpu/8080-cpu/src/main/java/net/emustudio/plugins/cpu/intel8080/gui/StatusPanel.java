@@ -23,7 +23,7 @@ import net.emustudio.emulib.plugins.cpu.CPU.RunState;
 import net.emustudio.plugins.cpu.intel8080.CpuImpl;
 import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 import net.emustudio.plugins.cpu.intel8080.InstructionPrinter;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -36,11 +36,11 @@ import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexStrin
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
     private final EmulatorEngine engine;
-    private final ExtendedContext context;
+    private final Context8080 context;
     private final AbstractTableModel flagModel;
     private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, ExtendedContext context, boolean dumpInstructions) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions) {
         this.cpu = cpu;
         this.context = context;
         this.engine = cpu.getEngine();

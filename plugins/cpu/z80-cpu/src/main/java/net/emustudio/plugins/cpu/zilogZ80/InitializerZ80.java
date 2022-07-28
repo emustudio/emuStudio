@@ -32,11 +32,11 @@ import net.emustudio.plugins.cpu.zilogZ80.gui.DisassemblerImpl;
 import java.io.PrintStream;
 import java.util.Objects;
 
-public class InitializerForZ80 extends DefaultInitializer<EmulatorEngine> {
-    private final ContextImpl context;
+public class InitializerZ80 extends DefaultInitializer<EmulatorEngine> {
+    private final ContextZ80Impl context;
 
-    public InitializerForZ80(Plugin plugin, long pluginId, ContextPool contextPool, PluginSettings settings,
-                             ContextImpl context) {
+    public InitializerZ80(Plugin plugin, long pluginId, ContextPool contextPool, PluginSettings settings,
+                          ContextZ80Impl context) {
         super(plugin, pluginId, contextPool, settings);
         this.context = Objects.requireNonNull(context);
     }

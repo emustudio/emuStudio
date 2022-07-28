@@ -133,7 +133,7 @@ public class GenerateCodeVisitor extends NodeVisitor {
 
     @Override
     public void visit(Evaluated node) {
-        final int value = (isRelative && node.isAddress) ? (node.value - currentAddress) : node.value;
+        final int value = (isRelative && node.isAddress) ? (node.value - currentAddress - 2) : node.value;
 
         if (expectedBytes == 1) {
             addByte(value);

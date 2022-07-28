@@ -29,14 +29,14 @@ public class InstrExprTest extends AbstractCompilerTest {
         );
 
         assertProgram(
-            0x3E, 0x01, 0x28, 0x03, 0xC7, 0x76
+            0x3E, 0x01, 0x28, 0x01, 0xC7, 0x76
         );
     }
 
     @Test
     public void testRelativeJumpCurrentAddress() {
         compile("halt\njr $"); // infinite loop
-        assertProgram(0x76, 0x18, 0);
+        assertProgram(0x76, 0x18, (byte)-2);
     }
 
     @Test

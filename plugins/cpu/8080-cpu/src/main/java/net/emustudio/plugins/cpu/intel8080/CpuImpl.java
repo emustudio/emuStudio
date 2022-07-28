@@ -27,7 +27,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.intel8080.api.FrequencyUpdater;
 import net.emustudio.plugins.cpu.intel8080.gui.StatusPanel;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public class CpuImpl extends AbstractCPU {
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicReference<Future<?>> frequencyUpdaterFuture = new AtomicReference<>();
 
-    private final ContextImpl context = new ContextImpl();
+    private final Context8080Impl context = new Context8080Impl();
     private final InitializerFor8080 initializer;
 
     private EmulatorEngine engine;
@@ -65,7 +65,7 @@ public class CpuImpl extends AbstractCPU {
         super(pluginID, applicationApi, settings);
 
         try {
-            applicationApi.getContextPool().register(pluginID, context, ExtendedContext.class);
+            applicationApi.getContextPool().register(pluginID, context, Context8080.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register CPU context", e);
             applicationApi.getDialogs().showError(

@@ -24,7 +24,7 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.*;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88sio.ports.*;
 import net.emustudio.plugins.device.mits88sio.gui.SettingsDialog;
 import net.emustudio.plugins.device.mits88sio.gui.SioGui;
@@ -91,7 +91,7 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        ExtendedContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, ExtendedContext.class);
+        Context8080 cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
 
         cpuPorts = new CpuPorts(cpu);
         sioSettings.addChangedObserver(this);

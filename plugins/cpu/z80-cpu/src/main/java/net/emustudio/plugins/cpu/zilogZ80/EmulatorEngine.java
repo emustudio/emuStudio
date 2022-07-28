@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.emustudio.plugins.cpu.zilogZ80.DispatchTables.*;
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorTables.*;
@@ -58,7 +59,7 @@ public class EmulatorEngine implements CpuEngine {
         0, FLAG_Z, 0, FLAG_C, 0, FLAG_PV, 0, FLAG_S
     };
 
-    private final ContextImpl context;
+    private final ContextZ80Impl context;
     private final MemoryContext<Byte> memory;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
@@ -74,15 +75,18 @@ public class EmulatorEngine implements CpuEngine {
     public int I = 0, R = 0; // interrupt r., refresh r.
 
     public final boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
-    public byte interruptMode = 0; // interrupt mode (0,1,2)
+    public byte interruptMode = 0;
 
-    private final Queue<byte[]> pendingInterrupts = new ConcurrentLinkedQueue<>(); // must be thread-safe
+    private final Queue<byte[]> pendingInterrupts = new ConcurrentLinkedQueue<>(); // must be thread-safe; can cause stack overflow
+
+    // non-maskable interrupts are always executed
+    private final AtomicBoolean pendingNonMaskableInterrupt = new AtomicBoolean();
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
 
-    public EmulatorEngine(MemoryContext<Byte> memory, ContextImpl context) {
+    public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
     }
@@ -114,11 +118,14 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    public void requestInterrupt(byte[] data) {
+    public void requestMaskableInterrupt(byte[] data) {
         if (currentRunState == RunState.STATE_RUNNING) {
-            System.out.println("interrupt signalled!, " + Arrays.toString(data));
             pendingInterrupts.add(data);
         }
+    }
+
+    public void requestNonMaskableInterrupt() {
+        pendingNonMaskableInterrupt.set(true);
     }
 
     void reset(int startPos) {
@@ -128,8 +135,10 @@ public class EmulatorEngine implements CpuEngine {
         Arrays.fill(regs2, 0);
         flags = 0;
         flags2 = 0;
+        interruptMode = 0;
         IFF[0] = false;
         IFF[1] = false;
+        pendingNonMaskableInterrupt.set(false);
         PC = startPos;
         pendingInterrupts.clear();
         currentRunState = RunState.STATE_STOPPED_BREAK;
@@ -137,8 +146,6 @@ public class EmulatorEngine implements CpuEngine {
 
     CPU.RunState step() throws Exception {
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
-        lastOpcode = readByte(PC);
-        PC = (PC + 1) & 0xFFFF;
         try {
             dispatch();
         } catch (Throwable e) {
@@ -161,8 +168,6 @@ public class EmulatorEngine implements CpuEngine {
             cycles_executed = 0;
             while ((cycles_executed < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
-                    lastOpcode = readByte(PC);
-                    PC = (PC + 1) & 0xFFFF;
                     cycles = dispatch();
                     cycles_executed += cycles;
                     executedCycles += cycles;
@@ -198,17 +203,16 @@ public class EmulatorEngine implements CpuEngine {
         }
 
         try {
+            if (pendingNonMaskableInterrupt.getAndSet(false)) {
+                writeWord((SP - 2) & 0xFFFF, PC);
+                SP = (SP - 2) & 0xffff;
+                PC = 0x66;
+                return 12;
+            }
             if (IFF[0] && !pendingInterrupts.isEmpty()) {
                 return doInterrupt();
             }
-            incrementR();
-
-            /* Dispatch Instruction */
-            MethodHandle instr = DISPATCH_TABLE[lastOpcode];
-            if (instr != null) {
-                return (int) instr.invokeExact(this);
-            }
-            return 4;
+            return DISPATCH(DISPATCH_TABLE);
         } finally {
             if (tmpListener != null) {
                 tmpListener.afterDispatch();
@@ -270,7 +274,6 @@ public class EmulatorEngine implements CpuEngine {
     private int doInterrupt() throws Throwable {
         byte[] dataBus = pendingInterrupts.poll();
         int cycles = 0;
-        PC = (PC - 1) & 0xFFFF; // return back PC
 
         IFF[0] = IFF[1] = false;
         System.out.println("z80: interrupt! im=" + interruptMode + ", dataBus=" + Arrays.toString(dataBus));
@@ -645,8 +648,7 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
         if (regs[REG_B] != 0) {
-            PC = (PC - 2) + tmp;
-            PC &= 0xFFFF;
+            PC = (PC + tmp) & 0xFFFF;
             return 13;
         }
         return 8;
@@ -1323,8 +1325,7 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
 
         if (getCC1((lastOpcode >>> 3) & 3)) {
-            PC = (PC - 2) + (byte) tmp;
-            PC &= 0xFFFF;
+            PC = (PC + (byte) tmp) & 0xFFFF;
             return 12;
         }
         return 7;
@@ -1332,10 +1333,7 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_JR_N() {
         int tmp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-
-        PC = (PC - 2) + (byte) tmp;
-        PC &= 0xFFFF;
+        PC = (PC + 1 + (byte) tmp) & 0xFFFF;
         return 12;
     }
 
@@ -1528,7 +1526,11 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_HALT() {
-        currentRunState = RunState.STATE_STOPPED_NORMAL;
+        if (IFF[0]) {
+            PC = (PC - 1) & 0xFFFF; // endless loop if interrupts are enabled
+        } else {
+            currentRunState = RunState.STATE_STOPPED_NORMAL;
+        }
         return 4;
     }
 

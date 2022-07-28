@@ -19,7 +19,7 @@
 package net.emustudio.plugins.device.simh;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.simh.commands.*;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
@@ -61,7 +61,7 @@ import static net.emustudio.plugins.device.simh.Commands.*;
  */
 class PseudoContext implements DeviceContext<Byte>, Command.Control {
     private ByteMemoryContext memory;
-    private ExtendedContext cpu;
+    private Context8080 cpu;
 
     private Commands lastReadCommand = unknownCmd;
     private Commands lastWriteCommand = unknownCmd;
@@ -89,7 +89,7 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
     }
 
     @Override
-    public ExtendedContext getCpu() {
+    public Context8080 getCpu() {
         return cpu;
     }
 
@@ -102,7 +102,7 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
         this.memory = mem;
     }
 
-    void setCpu(ExtendedContext cpu) {
+    void setCpu(Context8080 cpu) {
         this.cpu = cpu;
     }
 

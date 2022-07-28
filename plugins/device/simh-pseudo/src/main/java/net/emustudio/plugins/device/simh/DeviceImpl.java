@@ -25,7 +25,7 @@ import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import javax.swing.*;
@@ -52,7 +52,7 @@ public class DeviceImpl extends AbstractDevice {
     public void initialize() throws PluginInitializationException {
         ContextPool contextPool = applicationApi.getContextPool();
 
-        ExtendedContext cpu = contextPool.getCPUContext(pluginID, ExtendedContext.class);
+        Context8080 cpu = contextPool.getCPUContext(pluginID, Context8080.class);
         ByteMemoryContext mem = contextPool.getMemoryContext(pluginID, ByteMemoryContext.class);
 
         context.setMemory(mem);

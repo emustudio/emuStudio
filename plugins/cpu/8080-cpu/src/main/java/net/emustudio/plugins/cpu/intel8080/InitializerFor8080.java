@@ -33,11 +33,11 @@ import java.io.PrintStream;
 import java.util.Objects;
 
 public class InitializerFor8080 extends DefaultInitializer<EmulatorEngine> {
-    private final ContextImpl context;
+    private final Context8080Impl context;
 
 
     public InitializerFor8080(Plugin plugin, long pluginId, ContextPool contextPool, PluginSettings settings,
-                              ContextImpl context) {
+                              Context8080Impl context) {
         super(plugin, pluginId, contextPool, settings);
         this.context = Objects.requireNonNull(context);
     }

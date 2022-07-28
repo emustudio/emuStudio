@@ -25,7 +25,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.suite.CpuRunnerImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.CpuVerifierImpl;
 import org.easymock.Capture;
@@ -57,10 +57,10 @@ public class InstructionsTest {
     public void setUp() throws Exception {
         ByteMemoryStub memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
-        Capture<ExtendedContext> cpuContext = Capture.newInstance();
+        Capture<Context8080> cpuContext = Capture.newInstance();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();
-        contextPool.register(anyLong(), capture(cpuContext), same(ExtendedContext.class));
+        contextPool.register(anyLong(), capture(cpuContext), same(Context8080.class));
         expectLastCall().anyTimes();
         replay(contextPool);
 

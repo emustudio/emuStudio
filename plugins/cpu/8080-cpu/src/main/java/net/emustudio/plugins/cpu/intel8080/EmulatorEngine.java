@@ -61,14 +61,14 @@ public class EmulatorEngine implements CpuEngine {
     private int lastOpcode;
 
     private final MemoryContext<Byte> memory;
-    private final ContextImpl context;
+    private final Context8080Impl context;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
 
-    public EmulatorEngine(MemoryContext<Byte> memory, ContextImpl context) {
+    public EmulatorEngine(MemoryContext<Byte> memory, Context8080Impl context) {
         this.memory = memory;
         this.context = context;
     }

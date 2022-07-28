@@ -19,7 +19,7 @@
 package net.emustudio.plugins.cpu.intel8080;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
-public class ContextImpl implements ExtendedContext {
-    private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
+public class Context8080Impl implements Context8080 {
+    private final static Logger LOGGER = LoggerFactory.getLogger(Context8080Impl.class);
 
     private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
 

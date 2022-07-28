@@ -19,7 +19,7 @@
 package net.emustudio.plugins.cpu.zilogZ80.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
 import net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine;
 import net.emustudio.plugins.cpu.zilogZ80.InstructionPrinter;
@@ -33,13 +33,13 @@ import static net.emustudio.plugins.cpu.zilogZ80.gui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
-    private final ExtendedContext context;
+    private final Context8080 context;
     private final FlagsModel flagModel1;
     private final FlagsModel flagModel2;
 
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, ExtendedContext context, boolean dumpInstructions) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions) {
         this.cpu = cpu;
         this.context = context;
         this.flagModel1 = new FlagsModel(0, cpu.getEngine());
