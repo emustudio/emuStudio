@@ -648,8 +648,7 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
         if (regs[REG_B] != 0) {
-            PC = (PC - 2) + tmp;
-            PC &= 0xFFFF;
+            PC = (PC + tmp) & 0xFFFF;
             return 13;
         }
         return 8;
@@ -1326,8 +1325,7 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
 
         if (getCC1((lastOpcode >>> 3) & 3)) {
-            PC = (PC - 2) + (byte) tmp;
-            PC &= 0xFFFF;
+            PC = (PC + (byte) tmp) & 0xFFFF;
             return 12;
         }
         return 7;
@@ -1335,10 +1333,7 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_JR_N() {
         int tmp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-
-        PC = (PC - 2) + (byte) tmp;
-        PC &= 0xFFFF;
+        PC = (PC + 1 + (byte) tmp) & 0xFFFF;
         return 12;
     }
 

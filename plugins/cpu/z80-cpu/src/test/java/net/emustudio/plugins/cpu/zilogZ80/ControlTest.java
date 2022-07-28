@@ -277,16 +277,16 @@ public class ControlTest extends InstructionsTest {
     @Test
     public void testJR__e__AND__JR__cc() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-            .expandMemory(first -> cpuRunnerImpl.getPC() + first.intValue())
-            .verifyPC(context -> (context.PC + context.first) & 0xFFFF)
+            .expandMemory(first -> cpuRunnerImpl.getPC() + first.intValue() & 0xFF)
+            .verifyPC(context -> (context.PC + context.first + 2) & 0xFFFF)
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-            test.runWithFirstOperand(0x18),
-            test.runWithFirstOperand(0x20),
-            test.setFlags(FLAG_Z).runWithFirstOperand(0x28),
-            test.runWithFirstOperand(0x30),
-            test.setFlags(FLAG_C).runWithFirstOperand(0x38)
+            test.runWithFirstOperand(0x18), // jr *
+            test.runWithFirstOperand(0x20), // jr nz, *
+            test.setFlags(FLAG_Z).runWithFirstOperand(0x28),  // jr z, *
+            test.runWithFirstOperand(0x30), // jr nc, *
+            test.setFlags(FLAG_C).runWithFirstOperand(0x38) // jr c, *
         );
     }
 
@@ -336,7 +336,7 @@ public class ControlTest extends InstructionsTest {
                 if (((context.second - 1) & 0xFF) == 0) {
                     return context.PC + 2;
                 }
-                return (context.PC + context.first) & 0xFFFF;
+                return (context.PC + context.first + 2) & 0xFFFF;
             })
             .verifyRegister(REG_B, context -> (context.second - 1) & 0xFF);
 
