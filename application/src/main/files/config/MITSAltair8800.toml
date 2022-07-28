@@ -103,16 +103,20 @@ name = "MITS Altair8800"
 	type = "DEVICE"
 
 	[DEVICE.settings]
-		statusPortNumber1 = 16
-		statusPortNumber0 = 3
-		statusPortNumber3 = 22
-		statusPortNumber2 = 20
-		dataPortNumber2 = 21
-		dataPortNumber3 = 23
+		statusPortNumber0 = 0
+		statusPortNumber1 = 1
+		statusPortNumber2 = 3
+		statusPortNumber3 = 5
+		statusPortNumber4 = 16
+		statusPortNumber5 = 20
+		statusPortNumber6 = 22
+		statusPortNumber7 = 24
 		dataPortNumber0 = 2
-		dataPortNumber1 = 17
-		dataPortNumber4 = 25
-		statusPortNumber4 = 24
+		dataPortNumber1 = 4
+		dataPortNumber2 = 17
+		dataPortNumber3 = 21
+		dataPortNumber4 = 23
+		dataPortNumber5 = 25
 
 [[DEVICE]]
 	schemaPoint = "340,60"
@@ -128,11 +132,6 @@ name = "MITS Altair8800"
 		alwaysOnTop = true
 		inputReadDelay = 0
 		halfDuplex = false
-
-#       halfDuplex = false
-#       alwaysOnTop = false
-#       inputReadDelay = 0
-#       antiAliasing = true
 
 [[connections]]
 	bidirectional = true

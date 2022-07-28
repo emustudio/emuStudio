@@ -40,10 +40,12 @@ name = "MITS Altair8800 (Z80)"
 	id = "b86d4bc2-632c-46e3-bba1-c088c9177983"
 	type = "CPU"
 
-#       halfDuplex = false
-#       alwaysOnTop = false
-#       inputReadDelay = 0
-#       antiAliasing = true
+# Uncomment the following for specific settings (and remove settings = {} above)
+#    [CPU.settings]
+#        printCode = true
+#        printCodeUseCache = true
+#        printCodeFileName = syserr   # Or custom path to a file
+
 [[DEVICE]]
 	schemaPoint = "340,140"
 	path = "88-dcdd.jar"
@@ -97,16 +99,20 @@ name = "MITS Altair8800 (Z80)"
 	type = "DEVICE"
 
 	[DEVICE.settings]
-		statusPortNumber1 = 16
-		statusPortNumber0 = 3
-		statusPortNumber3 = 22
-		statusPortNumber2 = 20
-		dataPortNumber2 = 21
-		dataPortNumber3 = 23
+		statusPortNumber0 = 0
+		statusPortNumber1 = 1
+		statusPortNumber2 = 3
+		statusPortNumber3 = 5
+		statusPortNumber4 = 16
+		statusPortNumber5 = 20
+		statusPortNumber6 = 22
+		statusPortNumber7 = 24
 		dataPortNumber0 = 2
-		dataPortNumber1 = 17
-		dataPortNumber4 = 25
-		statusPortNumber4 = 24
+		dataPortNumber1 = 4
+		dataPortNumber2 = 17
+		dataPortNumber3 = 21
+		dataPortNumber4 = 23
+		dataPortNumber5 = 25
 
 [[DEVICE]]
 	schemaPoint = "480,220"
@@ -116,6 +122,10 @@ name = "MITS Altair8800 (Z80)"
 	type = "DEVICE"
 
 	[DEVICE.settings]
+		antiAliasing = true
+		alwaysOnTop = true
+		inputReadDelay = 0
+		halfDuplex = false
 		outputFileName = "adm3A-terminal.out"
 		inputFileName = "adm3A-terminal.in"
 
