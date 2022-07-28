@@ -444,16 +444,16 @@ public class DisassemblerTest {
         assertEquals(
             "nop" +
                 "ex af, af'" +
-                "djnz 20" +
-                "jr 20" +
-                "jr nz, 20" +
-                "jr z, 20" +
-                "jr nc, 20" +
-                "jr c, 20" +
-                "ld bc, 1234" +
-                "ld de, 1234" +
-                "ld hl, 1234" +
-                "ld sp, 1234" +
+                "djnz 20h" +
+                "jr 20h" +
+                "jr nz, 20h" +
+                "jr z, 20h" +
+                "jr nc, 20h" +
+                "jr c, 20h" +
+                "ld bc, 1234h" +
+                "ld de, 1234h" +
+                "ld hl, 1234h" +
+                "ld sp, 1234h" +
                 "add hl, bc" +
                 "add hl, de" +
                 "add hl, hl" +
@@ -462,10 +462,10 @@ public class DisassemblerTest {
                 "ld (de), a" +
                 "ld a, (bc)" +
                 "ld a, (de)" +
-                "ld (1234), hl" +
-                "ld (1234), a" +
-                "ld hl, (1234)" +
-                "ld a, (1234)" +
+                "ld (1234h), hl" +
+                "ld (1234h), a" +
+                "ld hl, (1234h)" +
+                "ld a, (1234h)" +
                 "inc bc" +
                 "inc de" +
                 "inc hl" +
@@ -488,12 +488,12 @@ public class DisassemblerTest {
                 "dec h" +
                 "dec l" +
                 "dec a" +
-                "ld b, 20" +
-                "ld c, 20" +
-                "ld d, 20" +
-                "ld e, 20" +
-                "ld h, 20" +
-                "ld l, 20" +
+                "ld b, 20h" +
+                "ld c, 20h" +
+                "ld d, 20h" +
+                "ld e, 20h" +
+                "ld h, 20h" +
+                "ld l, 20h" +
                 "rlca" +
                 "rrca" +
                 "rla" +
@@ -550,50 +550,50 @@ public class DisassemblerTest {
                 "jp (hl)" +
                 "jp (hl)" +
                 "ld sp, hl" +
-                "jp nz, 1234" +
-                "jp z, 1234" +
-                "jp nc, 1234" +
-                "jp c, 1234" +
-                "jp po, 1234" +
-                "jp pe, 1234" +
-                "jp p, 1234" +
-                "jp m, 1234" +
-                "jp 1234" +
-                "out (20), a" +
-                "in a, (20)" +
+                "jp nz, 1234h" +
+                "jp z, 1234h" +
+                "jp nc, 1234h" +
+                "jp c, 1234h" +
+                "jp po, 1234h" +
+                "jp pe, 1234h" +
+                "jp p, 1234h" +
+                "jp m, 1234h" +
+                "jp 1234h" +
+                "out (20h), a" +
+                "in a, (20h)" +
                 "ex (sp), hl" +
                 "ex de, hl" +
                 "di" +
                 "ei" +
-                "call nz, 1234" +
-                "call z, 1234" +
-                "call nc, 1234" +
-                "call c, 1234" +
-                "call po, 1234" +
-                "call pe, 1234" +
-                "call p, 1234" +
-                "call m, 1234" +
+                "call nz, 1234h" +
+                "call z, 1234h" +
+                "call nc, 1234h" +
+                "call c, 1234h" +
+                "call po, 1234h" +
+                "call pe, 1234h" +
+                "call p, 1234h" +
+                "call m, 1234h" +
                 "push bc" +
                 "push de" +
                 "push hl" +
                 "push af" +
-                "call 1234" +
-                "add a, 20" +
-                "adc a, 20" +
-                "sub 20" +
-                "sbc a, 20" +
-                "and 20" +
-                "xor 20" +
-                "or 20" +
-                "cp 20" +
-                "rst 00" +
-                "rst 08" +
-                "rst 10" +
-                "rst 18" +
-                "rst 20" +
-                "rst 28" +
-                "rst 30" +
-                "rst 38" +
+                "call 1234h" +
+                "add a, 20h" +
+                "adc a, 20h" +
+                "sub 20h" +
+                "sbc a, 20h" +
+                "and 20h" +
+                "xor 20h" +
+                "or 20h" +
+                "cp 20h" +
+                "rst 00h" +
+                "rst 08h" +
+                "rst 10h" +
+                "rst 18h" +
+                "rst 20h" +
+                "rst 28h" +
+                "rst 30h" +
+                "rst 38h" +
                 "rlc b" +
                 "rlc (hl)" +
                 "rrc c" +
@@ -628,14 +628,14 @@ public class DisassemblerTest {
                 "adc hl, de" +
                 "adc hl, hl" +
                 "adc hl, sp" +
-                "ld (1234), bc" +
-                "ld (1234), de" +
-                "ld (1234), hl" +
-                "ld (1234), sp" +
-                "ld bc, (1234)" +
-                "ld de, (1234)" +
-                "ld hl, (1234)" +
-                "ld sp, (1234)" +
+                "ld (1234h), bc" +
+                "ld (1234h), de" +
+                "ld (1234h), hl" +
+                "ld (1234h), sp" +
+                "ld bc, (1234h)" +
+                "ld de, (1234h)" +
+                "ld hl, (1234h)" +
+                "ld sp, (1234h)" +
                 "neg" +
                 "retn" +
                 "reti" +
@@ -665,50 +665,50 @@ public class DisassemblerTest {
                 "outd" +
                 "otir" +
                 "otdr" +
-                "rlc (ix+20), b" +
-                "rlc (iy+20), b" +
-                "rlc (ix+20)" +
-                "rlc (iy+20)" +
-                "rrc (ix+20), c" +
-                "rrc (iy+20), c" +
-                "rrc (ix+20)" +
-                "rrc (iy+20)" +
-                "rl (ix+20), d" +
-                "rl (iy+20), d" +
-                "rl (ix+20)" +
-                "rl (iy+20)" +
-                "rr (ix+20), e" +
-                "rr (iy+20), e" +
-                "rr (ix+20)" +
-                "rr (iy+20)" +
-                "sla (ix+20), h" +
-                "sla (iy+20), h" +
-                "sla (ix+20)" +
-                "sla (iy+20)" +
-                "sra (ix+20), l" +
-                "sra (iy+20), l" +
-                "sra (ix+20)" +
-                "sra (iy+20)" +
-                "sll (ix+20), b" +
-                "sll (iy+20), b" +
-                "sll (ix+20)" +
-                "sll (iy+20)" +
-                "srl (ix+20), c" +
-                "srl (iy+20), c" +
-                "srl (ix+20)" +
-                "srl (iy+20)" +
-                "bit 3, (ix+20)" +
-                "bit 3, (iy+20)" +
-                "res 5, (ix+20), b" +
-                "res 5, (iy+20), b" +
-                "res 5, (ix+20)" +
-                "res 5, (iy+20)" +
-                "set 6, (ix+20), c" +
-                "set 6, (iy+20), c" +
-                "set 6, (ix+20)" +
-                "set 6, (iy+20)" +
-                "ld ix, 1234" +
-                "ld iy, 1234" +
+                "rlc (ix+20h), b" +
+                "rlc (iy+20h), b" +
+                "rlc (ix+20h)" +
+                "rlc (iy+20h)" +
+                "rrc (ix+20h), c" +
+                "rrc (iy+20h), c" +
+                "rrc (ix+20h)" +
+                "rrc (iy+20h)" +
+                "rl (ix+20h), d" +
+                "rl (iy+20h), d" +
+                "rl (ix+20h)" +
+                "rl (iy+20h)" +
+                "rr (ix+20h), e" +
+                "rr (iy+20h), e" +
+                "rr (ix+20h)" +
+                "rr (iy+20h)" +
+                "sla (ix+20h), h" +
+                "sla (iy+20h), h" +
+                "sla (ix+20h)" +
+                "sla (iy+20h)" +
+                "sra (ix+20h), l" +
+                "sra (iy+20h), l" +
+                "sra (ix+20h)" +
+                "sra (iy+20h)" +
+                "sll (ix+20h), b" +
+                "sll (iy+20h), b" +
+                "sll (ix+20h)" +
+                "sll (iy+20h)" +
+                "srl (ix+20h), c" +
+                "srl (iy+20h), c" +
+                "srl (ix+20h)" +
+                "srl (iy+20h)" +
+                "bit 3, (ix+20h)" +
+                "bit 3, (iy+20h)" +
+                "res 5, (ix+20h), b" +
+                "res 5, (iy+20h), b" +
+                "res 5, (ix+20h)" +
+                "res 5, (iy+20h)" +
+                "set 6, (ix+20h), c" +
+                "set 6, (iy+20h), c" +
+                "set 6, (ix+20h)" +
+                "set 6, (iy+20h)" +
+                "ld ix, 1234h" +
+                "ld iy, 1234h" +
                 "add ix, bc" +
                 "add iy, bc" +
                 "add ix, de" +
@@ -717,10 +717,10 @@ public class DisassemblerTest {
                 "add iy, iy" +
                 "add ix, sp" +
                 "add iy, sp" +
-                "ld (1234), ix" +
-                "ld (1234), iy" +
-                "ld ix, (1234)" +
-                "ld iy, (1234)" +
+                "ld (1234h), ix" +
+                "ld (1234h), iy" +
+                "ld ix, (1234h)" +
+                "ld iy, (1234h)" +
                 "inc ix" +
                 "inc iy" +
                 "dec ix" +
@@ -729,20 +729,20 @@ public class DisassemblerTest {
                 "inc iyh" +
                 "inc ixl" +
                 "inc iyl" +
-                "inc (ix+20)" +
-                "inc (iy+20)" +
+                "inc (ix+20h)" +
+                "inc (iy+20h)" +
                 "dec ixh" +
                 "dec iyh" +
                 "dec ixl" +
                 "dec iyl" +
-                "dec (ix+20)" +
-                "dec (iy+20)" +
-                "ld ixh, 20" +
-                "ld ixl, 20" +
-                "ld iyh, 20" +
-                "ld iyl, 20" +
-                "ld (ix+20), 20" +
-                "ld (iy+20), 20" +
+                "dec (ix+20h)" +
+                "dec (iy+20h)" +
+                "ld ixh, 20h" +
+                "ld ixl, 20h" +
+                "ld iyh, 20h" +
+                "ld iyl, 20h" +
+                "ld (ix+20h), 20h" +
+                "ld (iy+20h), 20h" +
                 "ld ixh, b" +
                 "ld ixh, ixh" +
                 "ld ixh, ixl" +
@@ -755,70 +755,70 @@ public class DisassemblerTest {
                 "ld iyl, e" +
                 "ld iyl, iyh" +
                 "ld iyl, iyl" +
-                "ld (ix+20), d" +
-                "ld (ix+20), h" +
-                "ld (ix+20), l" +
-                "ld (iy+20), e" +
-                "ld (iy+20), h" +
-                "ld (iy+20), l" +
+                "ld (ix+20h), d" +
+                "ld (ix+20h), h" +
+                "ld (ix+20h), l" +
+                "ld (iy+20h), e" +
+                "ld (iy+20h), h" +
+                "ld (iy+20h), l" +
                 "ld a, ixh" +
                 "ld a, iyh" +
                 "ld a, ixl" +
                 "ld a, iyl" +
-                "ld a, (ix+20)" +
-                "ld a, (iy+20)" +
-                "ld h, (ix+20)" +
-                "ld l, (ix+20)" +
-                "ld h, (iy+20)" +
-                "ld l, (iy+20)" +
+                "ld a, (ix+20h)" +
+                "ld a, (iy+20h)" +
+                "ld h, (ix+20h)" +
+                "ld l, (ix+20h)" +
+                "ld h, (iy+20h)" +
+                "ld l, (iy+20h)" +
                 "add a, ixh" +
                 "add a, ixl" +
-                "add a, (ix+20)" +
+                "add a, (ix+20h)" +
                 "add a, iyh" +
                 "add a, iyl" +
-                "add a, (iy+20)" +
+                "add a, (iy+20h)" +
                 "adc a, ixh" +
                 "adc a, ixl" +
-                "adc a, (ix+20)" +
+                "adc a, (ix+20h)" +
                 "adc a, iyh" +
                 "adc a, iyl" +
-                "adc a, (iy+20)" +
+                "adc a, (iy+20h)" +
                 "sub ixh" +
                 "sub ixl" +
-                "sub (ix+20)" +
+                "sub (ix+20h)" +
                 "sub iyh" +
                 "sub iyl" +
-                "sub (iy+20)" +
+                "sub (iy+20h)" +
                 "sbc a, ixh" +
                 "sbc a, ixl" +
-                "sbc a, (ix+20)" +
+                "sbc a, (ix+20h)" +
                 "sbc a, iyh" +
                 "sbc a, iyl" +
-                "sbc a, (iy+20)" +
+                "sbc a, (iy+20h)" +
                 "and ixh" +
                 "and ixl" +
-                "and (ix+20)" +
+                "and (ix+20h)" +
                 "and iyh" +
                 "and iyl" +
-                "and (iy+20)" +
+                "and (iy+20h)" +
                 "xor ixh" +
                 "xor ixl" +
-                "xor (ix+20)" +
+                "xor (ix+20h)" +
                 "xor iyh" +
                 "xor iyl" +
-                "xor (iy+20)" +
+                "xor (iy+20h)" +
                 "or ixh" +
                 "or ixl" +
-                "or (ix+20)" +
+                "or (ix+20h)" +
                 "or iyh" +
                 "or iyl" +
-                "or (iy+20)" +
+                "or (iy+20h)" +
                 "cp ixh" +
                 "cp ixl" +
-                "cp (ix+20)" +
+                "cp (ix+20h)" +
                 "cp iyh" +
                 "cp iyl" +
-                "cp (iy+20)" +
+                "cp (iy+20h)" +
                 "pop ix" +
                 "pop iy" +
                 "jp (ix)" +
