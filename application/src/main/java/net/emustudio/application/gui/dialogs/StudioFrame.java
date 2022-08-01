@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.configuration.ApplicationConfig;
+import net.emustudio.application.settings.ApplicationConfig;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.actions.AboutAction;
 import net.emustudio.application.gui.actions.CompilerSettingsAction;

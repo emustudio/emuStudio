@@ -18,67 +18,69 @@
  */
 package net.emustudio.plugins.device.mits88sio;
 
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import org.junit.Test;
 
+import static org.easymock.EasyMock.mock;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class TransmitterTest {
+public class UARTTest {
 
     @Test
     public void testGetDeviceIdReturnsNotNullIfDeviceIsNotAttached() {
-        assertNotNull(new Transmitter().getDeviceId());
+        assertNotNull(new UART(mock(Context8080.class)).getDeviceId());
     }
 
     @Test
     public void testSetNullDeviceDoesNotThrow() {
-        new Transmitter().setDevice(null);
+        new UART(mock(Context8080.class)).setDevice(null);
     }
 
     @Test
     public void testInitialStatusIs0x02() {
-        assertEquals(2, new Transmitter().readStatus());
+        assertEquals(2, new UART(mock(Context8080.class)).readStatus());
     }
 
     @Test
     public void testResetOnEmptyBufferSetStatusTo0x02() {
-        Transmitter transmitter = new Transmitter();
-        transmitter.reset(false);
-        assertEquals(0x02, transmitter.readStatus());
+        UART UART = new UART(mock(Context8080.class));
+        UART.reset(false);
+        assertEquals(0x02, UART.readStatus());
     }
 
     @Test
     public void testWriteToStatus0x03OnEmptyBufferSetStatusTo0x02() {
-        Transmitter transmitter = new Transmitter();
-        transmitter.writeToStatus((short) 0x03);
-        assertEquals(0x02, transmitter.readStatus());
+        UART UART = new UART(mock(Context8080.class));
+        UART.setStatus((byte) 0x03);
+        assertEquals(0x02, UART.readStatus());
     }
 
     @Test
     public void testWriteFromDeviceSetsInputDeviceReady() {
-        Transmitter transmitter = new Transmitter();
-        transmitter.writeFromDevice((byte) 5);
-        assertEquals(1, transmitter.readStatus() & 0x01);
+        UART UART = new UART(mock(Context8080.class));
+        UART.receiveFromDevice((byte) 5);
+        assertEquals(1, UART.readStatus() & 0x01);
     }
 
     @Test
     public void testReadBufferResetInputDeviceReady() {
-        Transmitter transmitter = new Transmitter();
-        transmitter.writeFromDevice((byte) 5);
+        UART UART = new UART(mock(Context8080.class));
+        UART.receiveFromDevice((byte) 5);
 
-        assertEquals(5, transmitter.readBuffer());
-        assertEquals(0, transmitter.readStatus() & 0x01);
+        assertEquals(5, UART.readBuffer());
+        assertEquals(0, UART.readStatus() & 0x01);
     }
 
     @Test
     public void testBufferIsFIFO() {
-        Transmitter transmitter = new Transmitter();
-        transmitter.writeFromDevice((byte) 1);
-        transmitter.writeFromDevice((byte) 2);
-        transmitter.writeFromDevice((byte) 3);
+        UART UART = new UART(mock(Context8080.class));
+        UART.receiveFromDevice((byte) 1);
+        UART.receiveFromDevice((byte) 2);
+        UART.receiveFromDevice((byte) 3);
 
-        assertEquals(1, transmitter.readBuffer());
-        assertEquals(2, transmitter.readBuffer());
-        assertEquals(3, transmitter.readBuffer());
+        assertEquals(1, UART.readBuffer());
+        assertEquals(2, UART.readBuffer());
+        assertEquals(3, UART.readBuffer());
     }
 }

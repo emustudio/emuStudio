@@ -19,9 +19,9 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.Resources;
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.ConfigFiles;
+import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.application.settings.ConfigFiles;
 import net.emustudio.application.gui.ExtendedDialogs;
 import net.emustudio.application.gui.GuiDialogsImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
@@ -37,7 +37,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import static net.emustudio.application.cmdline.Utils.*;
-import static net.emustudio.application.configuration.ConfigFiles.listConfigurationNames;
+import static net.emustudio.application.settings.ConfigFiles.listConfigurationNames;
 import static net.emustudio.application.gui.GuiUtils.setupLookAndFeel;
 
 @SuppressWarnings("unused")
@@ -93,7 +93,8 @@ public class Runner implements Runnable {
         }
 
         if (!runsSomeCommand) {
-            try (ApplicationConfig appConfig = loadAppConfig(true, false)) {
+            try {
+                ApplicationConfig appConfig = loadAppConfig(true, false);
                 setupLookAndFeel(appConfig);
                 ExtendedDialogs dialogs = new GuiDialogsImpl();
                 Optional<ComputerConfig> computerConfigOpt = (exclusive != null) ?

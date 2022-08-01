@@ -25,7 +25,7 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.ssem.gui.MemoryGui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

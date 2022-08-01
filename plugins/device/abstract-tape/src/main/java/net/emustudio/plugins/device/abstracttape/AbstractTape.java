@@ -24,7 +24,7 @@ import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.gui.SettingsDialog;
 import net.emustudio.plugins.device.abstracttape.gui.TapeGui;

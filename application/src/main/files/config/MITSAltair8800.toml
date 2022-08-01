@@ -103,20 +103,16 @@ name = "MITS Altair8800"
 	type = "DEVICE"
 
 	[DEVICE.settings]
-		statusPortNumber0 = 0
-		statusPortNumber1 = 1
-		statusPortNumber2 = 3
-		statusPortNumber3 = 5
-		statusPortNumber4 = 16
-		statusPortNumber5 = 20
-		statusPortNumber6 = 22
-		statusPortNumber7 = 24
-		dataPortNumber0 = 2
-		dataPortNumber1 = 4
-		dataPortNumber2 = 17
-		dataPortNumber3 = 21
-		dataPortNumber4 = 23
-		dataPortNumber5 = 25
+		[DEVICE.settings.sio]
+			statusPorts = "0x10, 0x14, 0x16, 0x18"
+			dataPorts = "0x11, 0x15, 0x17, 0x19"
+			clearInputBit8 = false
+			clearOutputBit8 = false
+			inputToUpperCase = false
+			mapDeleteChar = "UNCHANGED"
+			mapBackspaceChar = "UNCHANGED"
+			inputInterruptVector = 0
+			outputInterruptVector = 0
 
 [[DEVICE]]
 	schemaPoint = "340,60"

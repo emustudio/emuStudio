@@ -24,6 +24,7 @@ import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ram.ast.Program;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import org.antlr.v4.runtime.CharStream;

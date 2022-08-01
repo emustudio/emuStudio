@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
+import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.opencomputer.*;
 import net.emustudio.application.gui.schema.Schema;
@@ -41,7 +41,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static net.emustudio.application.configuration.ConfigFiles.loadConfigurations;
+import static net.emustudio.application.settings.ConfigFiles.loadConfigurations;
 
 public class OpenComputerDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);

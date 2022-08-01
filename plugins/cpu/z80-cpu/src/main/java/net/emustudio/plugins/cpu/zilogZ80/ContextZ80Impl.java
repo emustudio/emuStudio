@@ -91,7 +91,7 @@ public final class ContextZ80Impl implements ContextZ80 {
 
 
     @Override
-    public void signalInterrupt(DeviceContext<?> device, byte[] data) {
+    public void signalInterrupt(byte[] data) {
         engine.requestMaskableInterrupt(data);
     }
 

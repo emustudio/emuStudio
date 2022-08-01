@@ -19,8 +19,7 @@
 package net.emustudio.application.gui;
 
 import net.emustudio.application.Constants;
-import net.emustudio.application.cmdline.Runner;
-import net.emustudio.application.configuration.ApplicationConfig;
+import net.emustudio.application.settings.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

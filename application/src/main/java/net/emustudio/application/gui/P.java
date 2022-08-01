@@ -19,7 +19,7 @@
 
 package net.emustudio.application.gui;
 
-import net.emustudio.application.configuration.SchemaPoint;
+import net.emustudio.application.settings.SchemaPoint;
 
 import java.awt.*;
 

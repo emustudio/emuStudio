@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.emulation;
 
-import net.emustudio.application.configuration.ApplicationConfig;
+import net.emustudio.application.settings.ApplicationConfig;
 import net.emustudio.application.gui.dialogs.AutoDialog;
 import net.emustudio.application.internal.Unchecked;
 import net.emustudio.application.virtualcomputer.VirtualComputer;

@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.configuration.*;
+import net.emustudio.application.settings.*;
 import net.emustudio.application.internal.Unchecked;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
@@ -28,7 +28,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +38,6 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static net.emustudio.application.internal.Reflection.doesImplement;
@@ -52,6 +51,11 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         PLUGIN_TYPE.MEMORY, Memory.class,
         PLUGIN_TYPE.DEVICE, Device.class
     );
+    // The first parameter of constructor is plug-in ID
+    private static final Class<?>[] PLUGIN_CONSTRUCTOR_PARAMS = {
+        long.class, ApplicationApi.class, PluginSettings.class
+    };
+
 
     private final ComputerConfig computerConfig;
 
@@ -161,10 +165,10 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         PluginLoader pluginLoader = new PluginLoader();
         List<Class<Plugin>> pluginClasses = pluginLoader.loadPlugins(filesToLoad);
 
-        return constructPlugins(computerConfig, pluginClasses, pluginConfigs, applicationApi, applicationConfig);
+        return constructPlugins(pluginClasses, pluginConfigs, applicationApi, applicationConfig);
     }
 
-    private static Map<Long, PluginMeta> constructPlugins(ComputerConfig computerConfig, List<Class<Plugin>> pluginClasses,
+    private static Map<Long, PluginMeta> constructPlugins(List<Class<Plugin>> pluginClasses,
                                                           List<PluginConfig> pluginConfigs, ApplicationApi applicationApi,
                                                           ApplicationConfig applicationConfig)
         throws InvalidPluginException {
@@ -172,29 +176,27 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         Map<Long, PluginMeta> plugins = new HashMap<>();
         AtomicLong pluginIdCounter = new AtomicLong();
 
-        IntStream
-            .range(0, Math.min(pluginClasses.size(), pluginConfigs.size()))
-            .forEach(i -> {
-                Class<Plugin> pluginClass = pluginClasses.get(i);
-                PluginConfig pluginConfig = pluginConfigs.get(i);
-                PluginSettings pluginSettings = new PluginSettingsImpl(
-                    pluginConfig.getPluginSettings(), computerConfig, applicationConfig
+        for (int i = 0; i < Math.min(pluginClasses.size(), pluginConfigs.size()); i++) {
+            Class<Plugin> pluginClass = pluginClasses.get(i);
+            PluginConfig pluginConfig = pluginConfigs.get(i);
+            PluginSettings pluginSettings = new PluginSettingsImpl(
+                pluginConfig.getPluginSettings(), applicationConfig
+            );
+
+            if (!doesImplement(pluginClass, pluginInterfaces.get(pluginConfig.getPluginType()))) {
+                throw new InvalidPluginException(
+                    "Plugin" + pluginConfig.getPluginName() + " does not implement interface " + pluginClass.getName()
                 );
+            }
 
-                if (!doesImplement(pluginClass, pluginInterfaces.get(pluginConfig.getPluginType()))) {
-                    Unchecked.sneakyThrow(new InvalidPluginException(
-                        "Plugin" + pluginConfig.getPluginName() + " does not implement interface " + pluginClass.getName()
-                    ));
-                }
+            long pluginId = pluginIdCounter.getAndIncrement();
+            Plugin pluginInstance = Unchecked.call(
+                () -> createPluginInstance(pluginId, pluginClass, applicationApi, pluginSettings)
+            );
 
-                long pluginId = pluginIdCounter.getAndIncrement();
-                Plugin pluginInstance = Unchecked.call(
-                    () -> createPluginInstance(pluginId, pluginClass, applicationApi, pluginSettings)
-                );
-
-                PluginMeta pluginMeta = new PluginMeta(pluginSettings, pluginInstance, pluginConfig);
-                plugins.put(pluginId, pluginMeta);
-            });
+            PluginMeta pluginMeta = new PluginMeta(pluginSettings, pluginInstance, pluginConfig);
+            plugins.put(pluginId, pluginMeta);
+        }
 
         return plugins;
     }
@@ -204,18 +206,10 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         Objects.requireNonNull(mainClass);
         Objects.requireNonNull(applicationApi);
 
-        // First parameter of constructor is plug-in ID
-        Class<?>[] constructorParams = {long.class, ApplicationApi.class, PluginSettings.class};
 
         try {
-            Constructor<?> constructor = mainClass.getDeclaredConstructor(constructorParams);
-            if (constructor != null) {
-                return (Plugin) constructor.newInstance(pluginID, applicationApi, pluginSettings);
-            } else {
-                throw new InvalidPluginException("Could not find constructor with parameters: " + Arrays.deepToString(constructorParams));
-            }
-        } catch (InvalidPluginException e) {
-            throw e;
+            Constructor<?> constructor = mainClass.getDeclaredConstructor(PLUGIN_CONSTRUCTOR_PARAMS);
+            return (Plugin) constructor.newInstance(pluginID, applicationApi, pluginSettings);
         } catch (Exception | NoClassDefFoundError e) {
             throw new InvalidPluginException("Plug-in main class does not have proper constructor", e);
         }

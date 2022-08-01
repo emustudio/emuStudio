@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.emustudio.application.configuration;
+package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.gui.P;

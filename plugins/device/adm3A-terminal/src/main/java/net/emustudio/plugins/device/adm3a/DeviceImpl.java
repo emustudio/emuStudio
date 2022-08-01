@@ -24,6 +24,7 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.adm3a.gui.ConfigDialog;
 import net.emustudio.plugins.device.adm3a.gui.TerminalWindow;
 import net.emustudio.plugins.device.adm3a.interaction.*;
@@ -83,7 +84,9 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
 
         // try to connect to a serial I/O board
         try {
-            DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
+            DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(
+                pluginID, DeviceContext.class, terminalSettings.getDeviceIndex()
+            );
             if (device.getDataType() != Byte.class) {
                 throw new PluginInitializationException(
                     "Unexpected device data type. Expected Short but was: " + device.getDataType()

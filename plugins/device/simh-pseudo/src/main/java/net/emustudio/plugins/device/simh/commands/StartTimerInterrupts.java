@@ -42,7 +42,7 @@ public class StartTimerInterrupts implements Command {
             int addr = SetTimerInterruptAdr.INS.timerInterruptHandler;
             byte b1 = (byte) (addr & 0xFF);
             byte b2 = (byte) (addr >>> 8);
-            control.getCpu().signalInterrupt(control.getDevice(), new byte[]{(byte) 0xCD, b1, b2});
+            control.getCpu().signalInterrupt(new byte[]{(byte) 0xCD, b1, b2});
         }, SetTimerDelta.INS.timerDelta, SetTimerDelta.INS.timerDelta, TimeUnit.MILLISECONDS));
         control.clearCommand();
     }

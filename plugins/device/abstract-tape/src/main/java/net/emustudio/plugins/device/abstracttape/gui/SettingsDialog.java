@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.device.abstracttape.gui;
 
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

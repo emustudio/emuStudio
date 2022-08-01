@@ -17,10 +17,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.emustudio.plugins.device.mits88sio.ports;
+package net.emustudio.application.settings;
 
-public class CouldNotAttachException extends Exception {
-    public CouldNotAttachException(String message) {
-        super(message);
+import org.junit.Test;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.Objects;
+
+import static net.emustudio.application.settings.ConfigFiles.loadConfigurations;
+import static org.junit.Assert.assertTrue;
+
+public class ConfigFilesTest {
+
+    @Test
+    public void testInvalidConfigsAreIgnored() throws IOException, URISyntaxException {
+        ClassLoader classLoader = getClass().getClassLoader();
+        Path configDir = Path.of(Objects.requireNonNull(classLoader.getResource(".")).toURI());
+        assertTrue(loadConfigurations(configDir).isEmpty());
     }
 }

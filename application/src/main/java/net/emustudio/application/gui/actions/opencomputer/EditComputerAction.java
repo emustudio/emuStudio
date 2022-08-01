@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.actions.opencomputer;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
+import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.emulib.runtime.interaction.Dialogs;

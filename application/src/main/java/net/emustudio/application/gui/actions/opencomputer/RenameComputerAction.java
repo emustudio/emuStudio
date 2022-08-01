@@ -18,9 +18,9 @@
  */
 package net.emustudio.application.gui.actions.opencomputer;
 
-import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.configuration.ConfigFiles.renameConfiguration;
+import static net.emustudio.application.settings.ConfigFiles.renameConfiguration;
 
 public class RenameComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(RenameComputerAction.class);

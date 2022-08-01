@@ -23,6 +23,7 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.memory.AbstractMemory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import net.emustudio.plugins.memory.ram.gui.MemoryDialog;
 

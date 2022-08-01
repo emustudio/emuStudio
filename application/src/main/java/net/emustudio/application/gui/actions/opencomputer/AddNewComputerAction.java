@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.actions.opencomputer;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
+import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.internal.Unchecked;
@@ -33,8 +33,8 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.configuration.ConfigFiles.createConfiguration;
-import static net.emustudio.application.configuration.ConfigFiles.loadConfiguration;
+import static net.emustudio.application.settings.ConfigFiles.createConfiguration;
+import static net.emustudio.application.settings.ConfigFiles.loadConfiguration;
 
 public class AddNewComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(AddNewComputerAction.class);

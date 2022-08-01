@@ -26,7 +26,7 @@ import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;

@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.PluginConfig;
+import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;

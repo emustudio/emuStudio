@@ -16,12 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.configuration;
+package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,7 +33,7 @@ import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
-public class ComputerConfig implements ConfigSaver, Closeable {
+public class ComputerConfig implements Closeable {
     private final FileConfig config;
 
     public ComputerConfig(FileConfig config) {
@@ -128,15 +127,6 @@ public class ComputerConfig implements ConfigSaver, Closeable {
     }
 
     @Override
-    public void save() throws CannotUpdateSettingException {
-        try {
-            config.save();
-        } catch (Exception e) {
-            throw new CannotUpdateSettingException("Could not save configuration", e);
-        }
-    }
-
-    @Override
     public void close() {
         config.close();
     }
@@ -147,7 +137,7 @@ public class ComputerConfig implements ConfigSaver, Closeable {
     }
 
     public static ComputerConfig load(Path configurationFile) {
-        FileConfig config = FileConfig.of(configurationFile);
+        FileConfig config = FileConfig.builder(configurationFile).concurrent().autosave().build();
         config.load();
 
         return new ComputerConfig(config);
@@ -158,9 +148,8 @@ public class ComputerConfig implements ConfigSaver, Closeable {
             throw new IllegalArgumentException("Configuration already exists");
         }
         Files.createFile(configurationFile);
-        FileConfig config = FileConfig.of(configurationFile);
+        FileConfig config = FileConfig.builder(configurationFile).concurrent().autosave().build();
         config.set("name", computerName);
-        config.save();
 
         return new ComputerConfig(config);
     }

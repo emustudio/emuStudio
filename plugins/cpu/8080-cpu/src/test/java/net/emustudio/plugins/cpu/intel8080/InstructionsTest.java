@@ -24,7 +24,7 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.cpu.intel8080.suite.CpuRunnerImpl;
 import net.emustudio.plugins.cpu.intel8080.suite.CpuVerifierImpl;

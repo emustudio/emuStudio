@@ -19,8 +19,8 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.ApplicationApiImpl;
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
+import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.ExtendedDialogs;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;

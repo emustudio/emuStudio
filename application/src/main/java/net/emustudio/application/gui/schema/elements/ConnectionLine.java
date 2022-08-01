@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.schema.elements;
 
-import net.emustudio.application.configuration.PluginConnection;
-import net.emustudio.application.configuration.SchemaPoint;
+import net.emustudio.application.settings.PluginConnection;
+import net.emustudio.application.settings.SchemaPoint;
 import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.Schema;
 

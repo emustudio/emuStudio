@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.configuration;
+package net.emustudio.plugins.device.mits88sio.settings;
 
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
+@FunctionalInterface
+public interface SettingsObserver {
 
-interface ConfigSaver {
-
-    void save() throws CannotUpdateSettingException;
+    void settingsChanged();
 }

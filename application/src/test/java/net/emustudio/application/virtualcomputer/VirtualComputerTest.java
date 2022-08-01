@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.PluginConfig;
+import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer.PluginMeta;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -27,7 +27,7 @@ import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Test;
 
 import java.util.HashMap;
