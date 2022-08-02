@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.emulation;
 
-import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.gui.dialogs.AutoDialog;
 import net.emustudio.application.internal.Unchecked;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
@@ -48,17 +48,17 @@ public class Automation implements Runnable {
     private final File inputFile;
 
     private final VirtualComputer computer;
-    private final ApplicationConfig applicationConfig;
+    private final AppSettings appSettings;
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
     private final int programStart;
 
     private volatile CPU.RunState resultState;
 
-    public Automation(VirtualComputer computer, Path inputFile, ApplicationConfig applicationConfig,
+    public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
                       Dialogs dialogs, int waitForFinishMillis, int programStart) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
-        this.applicationConfig = Objects.requireNonNull(applicationConfig);
+        this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.waitForFinishMillis = waitForFinishMillis;
         this.programStart = programStart;
@@ -72,7 +72,7 @@ public class Automation implements Runnable {
             this.inputFile = null;
         }
 
-        if (!applicationConfig.noGUI) {
+        if (!appSettings.noGUI) {
             progressGUI = new AutoDialog(computer);
         }
     }
@@ -144,7 +144,7 @@ public class Automation implements Runnable {
 
         // Show all devices if GUI is supported
         for (Device device : computer.getDevices()) {
-            if (!applicationConfig.noGUI) {
+            if (!appSettings.noGUI) {
                 device.showGUI(null);
             }
         }

@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.cmdline;
 
-import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.emulation.Automation;
 import net.emustudio.application.gui.ExtendedDialogs;
@@ -61,7 +61,7 @@ public class AutomationCommand implements Runnable {
     public void run() {
         ExtendedDialogs dialogs = new NoGuiDialogsImpl();
         try {
-            ApplicationConfig appConfig = loadAppConfig(gui, true);
+            AppSettings appConfig = loadAppSettings(gui, true);
             if (gui) {
                 setupLookAndFeel(appConfig);
                 dialogs = new GuiDialogsImpl();

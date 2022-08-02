@@ -28,12 +28,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class PluginSettingsImpl implements PluginSettings  {
-    private final Config config;
-    private final ApplicationConfig application;
+public class PluginSettingsImpl extends BasicSettingsImpl implements PluginSettings  {
+    private final AppSettings application;
 
-    public PluginSettingsImpl(Config pluginConfig, ApplicationConfig application) {
-        this.config = Objects.requireNonNull(pluginConfig);
+    public PluginSettingsImpl(Config pluginConfig, AppSettings application, Runnable save) {
+        super(pluginConfig, save);
         this.application = Objects.requireNonNull(application);
     }
 
@@ -42,13 +41,13 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.contains(key.substring(EMUSTUDIO_PREFIX.length()));
         }
-        return config.contains(key);
+        return super.contains(key);
     }
 
     @Override
     public void remove(String key) {
         checkDoesNotStartWithEmuStudioPrefix(key);
-        config.remove(key);
+        super.remove(key);
     }
 
     @Override
@@ -56,7 +55,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getString(key.substring(EMUSTUDIO_PREFIX.length()));
         }
-        return config.getOptional(key);
+        return super.getString(key);
     }
 
     @Override
@@ -64,7 +63,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getString(key.substring(EMUSTUDIO_PREFIX.length())).orElse(defaultValue);
         }
-        return config.<String>getOptional(key).orElse(defaultValue);
+        return super.getString(key, defaultValue);
     }
 
     @Override
@@ -72,7 +71,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getBoolean(key.substring(EMUSTUDIO_PREFIX.length()));
         }
-        return config.getOptional(key);
+        return super.getBoolean(key);
     }
 
     @Override
@@ -80,7 +79,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getBoolean(key.substring(EMUSTUDIO_PREFIX.length())).orElse(defaultValue);
         }
-        return config.<Boolean>getOptional(key).orElse(defaultValue);
+        return super.getBoolean(key, defaultValue);
     }
 
     @Override
@@ -88,7 +87,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getInt(key.substring(EMUSTUDIO_PREFIX.length()));
         }
-        return config.getOptional(key);
+        return super.getInt(key);
     }
 
     @Override
@@ -96,7 +95,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getInt(key.substring(EMUSTUDIO_PREFIX.length())).orElse(defaultValue);
         }
-        return config.getOptionalInt(key).orElse(defaultValue);
+        return super.getInt(key, defaultValue);
     }
 
     @Override
@@ -104,7 +103,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getLong(key.substring(EMUSTUDIO_PREFIX.length()));
         }
-        return config.getOptional(key);
+        return super.getLong(key);
     }
 
     @Override
@@ -112,7 +111,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getLong(key.substring(EMUSTUDIO_PREFIX.length())).orElse(defaultValue);
         }
-        return config.getOptionalLong(key).orElse(defaultValue);
+        return super.getLong(key, defaultValue);
     }
 
     @Override
@@ -120,7 +119,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getDouble(key.substring(EMUSTUDIO_PREFIX.length()));
         }
-        return config.getOptional(key);
+        return super.getDouble(key);
     }
 
     @Override
@@ -128,7 +127,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getDouble(key.substring(EMUSTUDIO_PREFIX.length())).orElse(defaultValue);
         }
-        return config.<Double>getOptional(key).orElse(defaultValue);
+        return super.getDouble(key, defaultValue);
     }
 
     @Override
@@ -136,7 +135,7 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getArray(key.substring(EMUSTUDIO_PREFIX.length()));
         }
-        return config.<List<String>>getOptional(key).orElse(Collections.emptyList());
+        return super.getArray(key, Collections.emptyList());
     }
 
     @Override
@@ -144,55 +143,55 @@ public class PluginSettingsImpl implements PluginSettings  {
         if (key.startsWith(EMUSTUDIO_PREFIX)) {
             return application.getArray(key.substring(EMUSTUDIO_PREFIX.length()));
         }
-        return config.<List<String>>getOptional(key).orElse(defaultValue);
+        return super.getArray(key, defaultValue);
     }
 
     @Override
     public void setString(String key, String value) {
         checkDoesNotStartWithEmuStudioPrefix(key);
-        config.set(key, value);
+        super.setString(key, value);
     }
 
     @Override
     public void setBoolean(String key, boolean value) {
         checkDoesNotStartWithEmuStudioPrefix(key);
-        config.set(key, value);
+        super.setBoolean(key, value);
     }
 
     @Override
     public void setInt(String key, int value) {
         checkDoesNotStartWithEmuStudioPrefix(key);
-        config.set(key, value);
+        super.setInt(key, value);
     }
 
     @Override
     public void setLong(String key, long value) {
         checkDoesNotStartWithEmuStudioPrefix(key);
-        config.set(key, value);
+        super.setLong(key, value);
     }
 
     @Override
     public void setDouble(String key, double value) {
         checkDoesNotStartWithEmuStudioPrefix(key);
-        config.set(key, value);
+        super.setDouble(key, value);
     }
 
     @Override
     public void setArray(String key, List<String> value) {
         checkDoesNotStartWithEmuStudioPrefix(key);
-        config.set(key, value);
+        super.setArray(key, value);
     }
 
     @Override
     public Optional<BasicSettings> getSubSettings(String key) {
-        return config.<Config>getOptional(key).map(BasicSettingsImpl::new);
+        checkDoesNotStartWithEmuStudioPrefix(key);
+        return super.getSubSettings(key);
     }
 
     @Override
     public BasicSettings setSubSettings(String key) throws CannotUpdateSettingException {
-        Config newConfig = config.createSubConfig();
-        config.set(key, newConfig);
-        return new BasicSettingsImpl(newConfig);
+        checkDoesNotStartWithEmuStudioPrefix(key);
+        return super.setSubSettings(key);
     }
 
     private void checkDoesNotStartWithEmuStudioPrefix(String key) {

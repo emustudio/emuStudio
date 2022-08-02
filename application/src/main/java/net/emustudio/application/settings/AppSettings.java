@@ -28,7 +28,7 @@ import static net.emustudio.emulib.runtime.settings.PluginSettings.*;
 
 
 @SuppressWarnings("unused")
-public class ApplicationConfig extends BasicSettingsImpl {
+public class AppSettings extends BasicSettingsImpl {
     public final static String KEY_NOGUI = EMUSTUDIO_NO_GUI.substring(EMUSTUDIO_PREFIX.length());
     public final static String KEY_AUTO = EMUSTUDIO_AUTO.substring(EMUSTUDIO_PREFIX.length());
     public final static String KEY_USE_SCHEMA_GRID = "useSchemaGrid";
@@ -40,8 +40,8 @@ public class ApplicationConfig extends BasicSettingsImpl {
     public transient final boolean emuStudioAuto;
     public transient final boolean noGUI;
 
-    public ApplicationConfig(Config config, boolean nogui, boolean auto) {
-        super(config);
+    public AppSettings(Config config, boolean nogui, boolean auto) {
+        super(config, System.out::println);
         this.emuStudioAuto = auto;
         this.noGUI = nogui;
     }
@@ -81,9 +81,9 @@ public class ApplicationConfig extends BasicSettingsImpl {
         return super.getBoolean(key);
     }
 
-    public static ApplicationConfig fromFile(Path file, boolean nogui, boolean auto) {
-        FileConfig config = FileConfig.of(file);
+    public static AppSettings fromFile(Path file, boolean nogui, boolean auto) {
+        FileConfig config = FileConfig.builder(file).autosave().concurrent().sync().build();
         config.load();
-        return new ApplicationConfig(config, nogui, auto);
+        return new AppSettings(config, nogui, auto);
     }
 }

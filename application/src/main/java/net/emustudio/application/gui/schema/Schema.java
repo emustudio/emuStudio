@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.gui.schema;
 
-import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.PluginConnection;
@@ -40,11 +40,11 @@ public class Schema {
     private final List<DeviceElement> deviceElements = new ArrayList<>();
     private final List<ConnectionLine> lines = new ArrayList<>();
     private final ComputerConfig config;
-    private final ApplicationConfig applicationConfig;
+    private final AppSettings appSettings;
 
-    public Schema(ComputerConfig config, ApplicationConfig applicationConfig) throws NumberFormatException {
+    public Schema(ComputerConfig config, AppSettings appSettings) throws NumberFormatException {
         this.config = Objects.requireNonNull(config);
-        this.applicationConfig = Objects.requireNonNull(applicationConfig);
+        this.appSettings = Objects.requireNonNull(appSettings);
 
         load();
     }
@@ -54,19 +54,19 @@ public class Schema {
     }
 
     public boolean useSchemaGrid() {
-        return applicationConfig.useSchemaGrid();
+        return appSettings.useSchemaGrid();
     }
 
     public void setUseSchemaGrid(boolean useSchemaGrid) {
-        applicationConfig.setUseSchemaGrid(useSchemaGrid);
+        appSettings.setUseSchemaGrid(useSchemaGrid);
     }
 
     public int getSchemaGridGap() {
-        return applicationConfig.getSchemaGridGap();
+        return appSettings.getSchemaGridGap();
     }
 
     public void setSchemaGridGap(int gridGap) {
-        applicationConfig.setSchemaGridGap(gridGap);
+        appSettings.setSchemaGridGap(gridGap);
     }
 
     public void setCompilerElement(Point clickPoint, String pluginFile) {

@@ -89,7 +89,9 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList())
         ).flatMap(Collection::stream).collect(Collectors.toList());
 
-        pluginsToInitialize.forEach(meta -> Unchecked.run(meta.pluginInstance::initialize));
+        for (PluginMeta pluginMeta : pluginsToInitialize) {
+            pluginMeta.pluginInstance.initialize();
+        }
     }
 
     public void reset() {
@@ -140,13 +142,16 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     }
 
     public static VirtualComputer create(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                         ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
-        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, applicationConfig);
+                                         AppSettings appSettings) throws IOException, InvalidPluginException {
+        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, appSettings);
         return new VirtualComputer(computerConfig, plugins);
     }
 
-    private static Map<Long, PluginMeta> loadPlugins(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                                     ApplicationConfig applicationConfig) throws IOException, InvalidPluginException {
+    private static Map<Long, PluginMeta> loadPlugins(
+        ComputerConfig computerConfig,
+        ApplicationApi applicationApi,
+        AppSettings appSettings
+    ) throws IOException, InvalidPluginException {
         List<PluginConfig> pluginConfigs = Stream.of(
                 computerConfig.getCompiler(),
                 computerConfig.getCPU(),
@@ -165,13 +170,16 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         PluginLoader pluginLoader = new PluginLoader();
         List<Class<Plugin>> pluginClasses = pluginLoader.loadPlugins(filesToLoad);
 
-        return constructPlugins(pluginClasses, pluginConfigs, applicationApi, applicationConfig);
+        return constructPlugins(pluginClasses, pluginConfigs, applicationApi, appSettings, computerConfig.getConfig()::save);
     }
 
-    private static Map<Long, PluginMeta> constructPlugins(List<Class<Plugin>> pluginClasses,
-                                                          List<PluginConfig> pluginConfigs, ApplicationApi applicationApi,
-                                                          ApplicationConfig applicationConfig)
-        throws InvalidPluginException {
+    private static Map<Long, PluginMeta> constructPlugins(
+        List<Class<Plugin>> pluginClasses,
+        List<PluginConfig> pluginConfigs,
+        ApplicationApi applicationApi,
+        AppSettings appSettings,
+        Runnable save
+    ) throws InvalidPluginException {
 
         Map<Long, PluginMeta> plugins = new HashMap<>();
         AtomicLong pluginIdCounter = new AtomicLong();
@@ -180,7 +188,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
             Class<Plugin> pluginClass = pluginClasses.get(i);
             PluginConfig pluginConfig = pluginConfigs.get(i);
             PluginSettings pluginSettings = new PluginSettingsImpl(
-                pluginConfig.getPluginSettings(), applicationConfig
+                pluginConfig.getPluginSettings(), appSettings, save
             );
 
             if (!doesImplement(pluginClass, pluginInterfaces.get(pluginConfig.getPluginType()))) {

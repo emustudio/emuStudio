@@ -79,8 +79,6 @@ public class PluginConfig {
         return config;
     }
 
-
-
     public static PluginConfig create(String id, PLUGIN_TYPE pluginType, String pluginName, String pluginFile,
                                       P schemaLocation, Config pluginSettings) {
         Config config = Config.inMemory();

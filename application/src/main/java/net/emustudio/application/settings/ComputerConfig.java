@@ -40,6 +40,10 @@ public class ComputerConfig implements Closeable {
         this.config = Objects.requireNonNull(config);
     }
 
+    public FileConfig getConfig() {
+        return config;
+    }
+
     public void copyTo(ComputerConfig other) {
         getCompiler().ifPresent(other::setCompiler);
         getCPU().ifPresent(other::setCPU);
@@ -69,7 +73,9 @@ public class ComputerConfig implements Closeable {
         if (compiler == null) {
             config.remove(PLUGIN_TYPE.COMPILER.name());
         } else {
-            config.set(PLUGIN_TYPE.COMPILER.name(), compiler.getConfig());
+            Config sub = config.createSubConfig(); // to inherit autosave
+            sub.addAll(compiler.getConfig());
+            config.set(PLUGIN_TYPE.COMPILER.name(), sub);
         }
     }
 
@@ -82,7 +88,9 @@ public class ComputerConfig implements Closeable {
         if (cpu == null) {
             config.remove(PLUGIN_TYPE.CPU.name());
         } else {
-            config.set(PLUGIN_TYPE.CPU.name(),cpu.getConfig());
+            Config sub = config.createSubConfig();
+            sub.addAll(cpu.getConfig());
+            config.set(PLUGIN_TYPE.CPU.name(), sub);
         }
     }
 
@@ -95,7 +103,9 @@ public class ComputerConfig implements Closeable {
         if (memory == null) {
             config.remove(PLUGIN_TYPE.MEMORY.name());
         } else {
-            config.set(PLUGIN_TYPE.MEMORY.name(), memory.getConfig());
+            Config sub = config.createSubConfig();
+            sub.addAll(memory.getConfig());
+            config.set(PLUGIN_TYPE.MEMORY.name(), sub);
         }
     }
 
@@ -109,7 +119,11 @@ public class ComputerConfig implements Closeable {
     }
 
     public void setDevices(List<PluginConfig> devices) {
-        List<Config> devicesConfig = devices.stream().map(PluginConfig::getConfig).collect(toList());
+        List<Config> devicesConfig = devices.stream().map(d -> {
+            Config sub = config.createSubConfig();
+            sub.addAll(d.getConfig());
+            return sub;
+        }).collect(toList());
         config.set(PLUGIN_TYPE.DEVICE.name(), devicesConfig);
     }
 
@@ -122,7 +136,11 @@ public class ComputerConfig implements Closeable {
     }
 
     public void setConnections(List<PluginConnection> connections) {
-        List<Config> configs = connections.stream().map(PluginConnection::getConfig).collect(toList());
+        List<Config> configs = connections.stream().map(c -> {
+            Config sub = config.createSubConfig();
+            sub.addAll(c.getConfig());
+            return sub;
+        }).collect(toList());
         config.set("connections", configs);
     }
 
@@ -137,7 +155,7 @@ public class ComputerConfig implements Closeable {
     }
 
     public static ComputerConfig load(Path configurationFile) {
-        FileConfig config = FileConfig.builder(configurationFile).concurrent().autosave().build();
+        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
         config.load();
 
         return new ComputerConfig(config);
@@ -148,7 +166,7 @@ public class ComputerConfig implements Closeable {
             throw new IllegalArgumentException("Configuration already exists");
         }
         Files.createFile(configurationFile);
-        FileConfig config = FileConfig.builder(configurationFile).concurrent().autosave().build();
+        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
         config.set("name", computerName);
 
         return new ComputerConfig(config);

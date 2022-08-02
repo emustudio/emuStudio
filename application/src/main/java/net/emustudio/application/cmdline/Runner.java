@@ -19,7 +19,7 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.Resources;
-import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.ConfigFiles;
 import net.emustudio.application.gui.ExtendedDialogs;
@@ -94,7 +94,7 @@ public class Runner implements Runnable {
 
         if (!runsSomeCommand) {
             try {
-                ApplicationConfig appConfig = loadAppConfig(true, false);
+                AppSettings appConfig = loadAppSettings(true, false);
                 setupLookAndFeel(appConfig);
                 ExtendedDialogs dialogs = new GuiDialogsImpl();
                 Optional<ComputerConfig> computerConfigOpt = (exclusive != null) ?

@@ -211,17 +211,19 @@ public class SettingsDialog extends JDialog {
                         .addComponent(chkClearOutputBit8)
                         .addComponent(chkInputToUpperCase)
                         .addGroup(layoutGeneral.createSequentialGroup()
-                            .addComponent(lblMapDeleteChar)
-                            .addComponent(cmbMapDeleteChar))
-                        .addGroup(layoutGeneral.createSequentialGroup()
-                            .addComponent(lblMapBackspaceChar)
-                            .addComponent(cmbMapBackspaceChar))
-                        .addGroup(layoutGeneral.createSequentialGroup()
-                            .addComponent(lblInputInterruptVector)
-                            .addComponent(txtInputInterruptVector))
-                        .addGroup(layoutGeneral.createSequentialGroup()
-                            .addComponent(lblOutputInterruptVector)
-                            .addComponent(txtOutputInterruptVector)))));
+                            .addGroup(layoutGeneral.createParallelGroup(Alignment.LEADING)
+                                .addComponent(lblMapDeleteChar)
+                                .addComponent(lblMapBackspaceChar)
+                                .addComponent(lblInputInterruptVector)
+                                .addComponent(lblOutputInterruptVector))
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(layoutGeneral.createParallelGroup(Alignment.LEADING)
+                                .addComponent(cmbMapDeleteChar)
+                                .addComponent(cmbMapBackspaceChar)
+                                .addComponent(txtInputInterruptVector)
+                                .addComponent(txtOutputInterruptVector))
+                            .addContainerGap()))));
+
         layoutGeneral.setVerticalGroup(
             layoutDataPorts.createParallelGroup(Alignment.LEADING)
                 .addGroup(layoutGeneral.createSequentialGroup()
@@ -246,7 +248,8 @@ public class SettingsDialog extends JDialog {
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addGroup(layoutGeneral.createParallelGroup(Alignment.LEADING)
                         .addComponent(lblOutputInterruptVector)
-                        .addComponent(txtOutputInterruptVector))));
+                        .addComponent(txtOutputInterruptVector))
+                    .addContainerGap()));
 
 
         lblCaution.setText("<html>Attach 88-SIO ports to one or more CPU ports." +
@@ -334,6 +337,14 @@ public class SettingsDialog extends JDialog {
             outputInterruptVector = radixUtils.parseRadix(txtOutputInterruptVector.getText().trim());
         } catch (NumberFormatException e) {
             dialogs.showError("Could not parse interrupt vector", "88-SIO Settings");
+            return;
+        }
+        if (inputInterruptVector < 0 || inputInterruptVector > 7) {
+            dialogs.showError("Allowed range of input interrupt vector is 0-7");
+            return;
+        }
+        if (outputInterruptVector < 0 || outputInterruptVector > 7) {
+            dialogs.showError("Allowed range of output interrupt vector is 0-7");
             return;
         }
 

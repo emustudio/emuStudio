@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.gui.actions.opencomputer;
 
-import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
@@ -31,18 +31,18 @@ import java.util.Optional;
 
 public class EditComputerAction extends AbstractAction {
     private final Dialogs dialogs;
-    private final ApplicationConfig applicationConfig;
+    private final AppSettings appSettings;
     private final Runnable update;
     private final JDialog parent;
     private final JList<ComputerConfig> lstConfig;
 
-    public EditComputerAction(Dialogs dialogs, ApplicationConfig applicationConfig,
+    public EditComputerAction(Dialogs dialogs, AppSettings appSettings,
                               Runnable update, JDialog parent, JList<ComputerConfig> lstConfig) {
         super(
             "Edit computer...", new ImageIcon(EditComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/computer.png"))
         );
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.applicationConfig = Objects.requireNonNull(applicationConfig);
+        this.appSettings = Objects.requireNonNull(appSettings);
         this.update = Objects.requireNonNull(update);
         this.parent = Objects.requireNonNull(parent);
         this.lstConfig = Objects.requireNonNull(lstConfig);
@@ -53,7 +53,7 @@ public class EditComputerAction extends AbstractAction {
         Optional
             .ofNullable(lstConfig.getSelectedValue())
             .ifPresentOrElse(computer -> {
-                Schema schema = new Schema(computer, applicationConfig);
+                Schema schema = new Schema(computer, appSettings);
                 new SchemaEditorDialog(parent, schema, dialogs).setVisible(true);
                 update.run();
             }, () -> dialogs.showError("A computer has to be selected!", "Edit computer"));

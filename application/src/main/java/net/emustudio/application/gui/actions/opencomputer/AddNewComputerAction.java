@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.gui.actions.opencomputer;
 
-import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
@@ -40,16 +40,16 @@ public class AddNewComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(AddNewComputerAction.class);
 
     private final Dialogs dialogs;
-    private final ApplicationConfig applicationConfig;
+    private final AppSettings appSettings;
     private final Runnable update;
     private final JDialog parent;
 
-    public AddNewComputerAction(Dialogs dialogs, ApplicationConfig applicationConfig, Runnable update, JDialog parent) {
+    public AddNewComputerAction(Dialogs dialogs, AppSettings appSettings, Runnable update, JDialog parent) {
         super(
             "Create new computer...", new ImageIcon(AddNewComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-add.png"))
         );
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.applicationConfig = Objects.requireNonNull(applicationConfig);
+        this.appSettings = Objects.requireNonNull(appSettings);
         this.update = Objects.requireNonNull(update);
         this.parent = Objects.requireNonNull(parent);
     }
@@ -67,7 +67,7 @@ public class AddNewComputerAction extends AbstractAction {
                             c -> dialogs.showError("Computer '" + name + "' already exists, choose another name."),
                             () -> {
                                 ComputerConfig newComputer = Unchecked.call(() -> createConfiguration(name));
-                                Schema schema = new Schema(newComputer, applicationConfig);
+                                Schema schema = new Schema(newComputer, appSettings);
                                 SchemaEditorDialog di = new SchemaEditorDialog(parent, schema, dialogs);
                                 di.setVisible(true);
                                 update.run();

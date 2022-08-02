@@ -19,18 +19,14 @@
 package net.emustudio.plugins.device.mits88sio.settings;
 
 import net.emustudio.emulib.runtime.settings.BasicSettings;
-import net.jcip.annotations.ThreadSafe;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 /**
  * Settings of one SIO unit
  */
-@ThreadSafe
 public class SioUnitSettings {
     private final static String KEY_STATUS_PORTS = "statusPorts";
     private final static String KEY_DATA_PORTS = "dataPorts";
@@ -44,6 +40,17 @@ public class SioUnitSettings {
 
     private final BasicSettings settings;
     private final List<SettingsObserver> observers = new CopyOnWriteArrayList<>();
+
+    // for performance
+    private volatile boolean isClearInputBit8;
+    private volatile boolean isClearOutputBit8;
+    private volatile boolean inputToUpperCase;
+    private volatile MAP_CHAR mapDeleteChar;
+    private volatile MAP_CHAR mapBackspaceChar;
+    private volatile int inputInterruptVector;
+    private volatile int outputInterruptVector;
+    private volatile List<Integer> statusPorts;
+    private volatile List<Integer> dataPorts;
 
     public enum MAP_CHAR {
         BACKSPACE,
@@ -65,75 +72,74 @@ public class SioUnitSettings {
     }
 
     public boolean isClearInputBit8() {
-        return settings.getBoolean(KEY_CLEAR_INPUT_BIT8, false);
+        return isClearInputBit8;
     }
 
     public void setClearInputBit8(boolean value) {
+        this.isClearInputBit8 = value;
         settings.setBoolean(KEY_CLEAR_INPUT_BIT8, value);
         notifySettingsChanged();
     }
 
     public boolean isClearOutputBit8() {
-        return settings.getBoolean(KEY_CLEAR_OUTPUT_BIT8, false);
+        return isClearOutputBit8;
     }
 
     public void setClearOutputBit8(boolean value) {
+        this.isClearOutputBit8 = value;
         settings.setBoolean(KEY_CLEAR_OUTPUT_BIT8, value);
         notifySettingsChanged();
     }
 
     public boolean isInputToUpperCase() {
-        return settings.getBoolean(KEY_INPUT_TO_UPPER_CASE, false);
+        return inputToUpperCase;
     }
 
     public void setInputToUpperCase(boolean value) {
+        this.inputToUpperCase = value;
         settings.setBoolean(KEY_INPUT_TO_UPPER_CASE, value);
         notifySettingsChanged();
     }
 
     public MAP_CHAR getMapDeleteChar() {
-        return MAP_CHAR.valueOf(settings.getString(KEY_MAP_DELETE_CHAR, MAP_CHAR.UNCHANGED.name()));
+        return mapDeleteChar;
     }
 
     public void setMapDeleteChar(MAP_CHAR value) {
+        this.mapDeleteChar = value;
         settings.setString(KEY_MAP_DELETE_CHAR, value.name());
         notifySettingsChanged();
     }
 
     public MAP_CHAR getMapBackspaceChar() {
-        return MAP_CHAR.valueOf(settings.getString(KEY_MAP_BACKSPACE_CHAR, MAP_CHAR.UNCHANGED.name()));
+        return mapBackspaceChar;
     }
 
     public void setMapBackspaceChar(MAP_CHAR value) {
+        this.mapBackspaceChar = value;
         settings.setString(KEY_MAP_BACKSPACE_CHAR, value.name());
         notifySettingsChanged();
     }
 
     public List<Integer> getStatusPorts() {
-        return Arrays.stream(settings.getString(KEY_STATUS_PORTS, "").split(","))
-            .map(String::trim)
-            .filter(p -> !p.isEmpty())
-            .map(Integer::decode)
-            .collect(Collectors.toList());
+        return statusPorts;
     }
 
     public void setStatusPorts(List<Integer> value) {
+        this.statusPorts = value;
         settings.setString(KEY_STATUS_PORTS, value.stream()
             .map(i -> "0x" + Integer.toHexString(i))
-            .reduce((s, s2) -> s + ", " + s2)
+            .reduce((s, s2) -> s + "," + s2)
             .orElse(""));
         notifySettingsChanged();
     }
 
     public List<Integer> getDataPorts() {
-        return Arrays.stream(settings.getString(KEY_DATA_PORTS, "").split(","))
-            .map(String::trim)
-            .filter(p -> !p.isEmpty())
-            .map(Integer::decode)
-            .collect(Collectors.toList());
+        return dataPorts;
     }
 
     public void setDataPorts(List<Integer> value) {
+        this.dataPorts = value;
         settings.setString(KEY_DATA_PORTS, value.stream()
             .map(i -> "0x" + Integer.toHexString(i))
             .reduce((s, s2) -> s + "," + s2)
@@ -142,19 +148,21 @@ public class SioUnitSettings {
     }
 
     public int getInputInterruptVector() {
-        return settings.getInt(KEY_INPUT_INTERRUPT_VECTOR, 0);
+        return inputInterruptVector;
     }
 
     public void setInputInterruptVector(int vector) {
+        this.inputInterruptVector = vector;
         settings.setInt(KEY_INPUT_INTERRUPT_VECTOR, vector);
         notifySettingsChanged();
     }
 
     public int getOutputInterruptVector() {
-        return settings.getInt(KEY_OUTPUT_INTERRUPT_VECTOR, 0);
+        return outputInterruptVector;
     }
 
     public void setOutputInterruptVector(int vector) {
+        this.outputInterruptVector = vector;
         settings.setInt(KEY_OUTPUT_INTERRUPT_VECTOR, vector);
         notifySettingsChanged();
     }

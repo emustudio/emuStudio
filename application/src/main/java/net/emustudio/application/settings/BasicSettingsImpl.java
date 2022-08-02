@@ -10,10 +10,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class BasicSettingsImpl implements BasicSettings {
-    protected final Config config;
+    private final Config config;
+    private final Runnable save;
 
-    public BasicSettingsImpl(Config config) {
+    public BasicSettingsImpl(Config config, Runnable save) {
         this.config = Objects.requireNonNull(config);
+        this.save = Objects.requireNonNull(save);
     }
 
     @Override
@@ -24,6 +26,7 @@ public class BasicSettingsImpl implements BasicSettings {
     @Override
     public void remove(String key) throws CannotUpdateSettingException {
         config.remove(key);
+        save.run();
     }
 
     @Override
@@ -89,42 +92,49 @@ public class BasicSettingsImpl implements BasicSettings {
     @Override
     public void setString(String key, String value) {
         config.set(key, value);
+        save.run();
     }
 
     @Override
     public void setBoolean(String key, boolean value) throws CannotUpdateSettingException {
         config.set(key, value);
+        save.run();
     }
 
     @Override
     public void setInt(String key, int value) throws CannotUpdateSettingException {
         config.set(key, value);
+        save.run();
     }
 
     @Override
     public void setLong(String key, long value) throws CannotUpdateSettingException {
         config.set(key, value);
+        save.run();
     }
 
     @Override
     public void setDouble(String key, double value) throws CannotUpdateSettingException {
         config.set(key, value);
+        save.run();
     }
 
     @Override
     public void setArray(String key, List<String> value) throws CannotUpdateSettingException {
         config.set(key, value);
+        save.run();
     }
 
     @Override
     public Optional<BasicSettings> getSubSettings(String key) {
-        return config.<Config>getOptional(key).map(BasicSettingsImpl::new);
+        return config.<Config>getOptional(key).map(c -> new BasicSettingsImpl(c, save));
     }
 
     @Override
     public BasicSettings setSubSettings(String key) throws CannotUpdateSettingException {
         Config newConfig = config.createSubConfig();
         config.set(key, newConfig);
-        return new BasicSettingsImpl(newConfig);
+        save.run();
+        return new BasicSettingsImpl(newConfig, save);
     }
 }

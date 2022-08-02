@@ -28,10 +28,7 @@ public class SioDeviceSettings {
 
     public SioDeviceSettings(PluginSettings settings) {
         this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        this.sioUnit = settings
-            .getSubSettings("sio")
-            .map(SioUnitSettings::new)
-            .orElse(new SioUnitSettings(settings.setSubSettings("sio")));
+        this.sioUnit = new SioUnitSettings(settings);
     }
 
     public boolean isGuiSupported() {

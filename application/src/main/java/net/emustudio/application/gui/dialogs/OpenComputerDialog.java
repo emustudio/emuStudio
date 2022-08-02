@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.settings.ApplicationConfig;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.opencomputer.*;
@@ -48,7 +48,7 @@ public class OpenComputerDialog extends JDialog {
 
     private final ConfigurationsListModel configurationsModel;
     private final SchemaPreviewPanel preview;
-    private final ApplicationConfig applicationConfig;
+    private final AppSettings appSettings;
     private final Dialogs dialogs;
 
     private final AddNewComputerAction addNewComputerAction;
@@ -60,16 +60,16 @@ public class OpenComputerDialog extends JDialog {
 
     private final JList<ComputerConfig> lstConfig = new JList<>();
 
-    public OpenComputerDialog(ApplicationConfig applicationConfig, Dialogs dialogs,
+    public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs,
                               Consumer<ComputerConfig> selectComputer) {
         this.configurationsModel = new ConfigurationsListModel();
-        this.applicationConfig = Objects.requireNonNull(applicationConfig);
+        this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.preview = new SchemaPreviewPanel(null, dialogs);
 
-        addNewComputerAction = new AddNewComputerAction(dialogs, applicationConfig, this::update, this);
+        addNewComputerAction = new AddNewComputerAction(dialogs, appSettings, this::update, this);
         deleteComputerAction = new DeleteComputerAction(dialogs, this::update, lstConfig);
-        editComputerAction = new EditComputerAction(dialogs, applicationConfig, this::update, this, lstConfig);
+        editComputerAction = new EditComputerAction(dialogs, appSettings, this::update, this, lstConfig);
         openComputerAction = new OpenComputerAction(dialogs, this, lstConfig, selectComputer);
         renameComputerAction = new RenameComputerAction(dialogs, this::update, lstConfig);
         saveSchemaAction = new SaveSchemaAction(preview);
@@ -220,7 +220,7 @@ public class OpenComputerDialog extends JDialog {
         Optional
             .ofNullable(lstConfig.getSelectedValue())
             .ifPresentOrElse(computer -> {
-                Schema schema = new Schema(computer, applicationConfig);
+                Schema schema = new Schema(computer, appSettings);
                 preview.setSchema(schema);
             }, () -> preview.setSchema(null));
         preview.repaint();
