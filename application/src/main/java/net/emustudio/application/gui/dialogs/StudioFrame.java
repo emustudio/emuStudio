@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.configuration.ApplicationConfig;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.actions.AboutAction;
 import net.emustudio.application.gui.actions.CompilerSettingsAction;
@@ -61,7 +61,7 @@ public class StudioFrame extends JFrame {
     private final JTabbedPane tabbedPane = new JTabbedPane();
 
 
-    public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
+    public StudioFrame(VirtualComputer computer, AppSettings appSettings, Dialogs dialogs,
                        DebugTableModel debugTableModel, MemoryContext<?> memoryContext, Optional<Path> fileName) {
         Objects.requireNonNull(computer);
 
@@ -85,7 +85,7 @@ public class StudioFrame extends JFrame {
         this.findPreviousAction = new FindPreviousAction(editor, dialogs, editorPanel.getFindAction());
         this.exitAction = new ExitAction(editorPanel::confirmSave, emulationController, computer, this::formWindowClosing);
 
-        this.viewComputerAction = new ViewComputerAction(this, computer, dialogs, applicationConfig);
+        this.viewComputerAction = new ViewComputerAction(this, computer, dialogs, appSettings);
         this.compilerSettingsAction = new CompilerSettingsAction(this, computer);
         this.aboutAction = new AboutAction(this);
 

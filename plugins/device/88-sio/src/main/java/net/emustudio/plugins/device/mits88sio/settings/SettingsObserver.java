@@ -16,25 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package net.emustudio.plugins.device.mits88sio.settings;
 
-package net.emustudio.application.configuration;
+@FunctionalInterface
+public interface SettingsObserver {
 
-import org.junit.Test;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.Objects;
-
-import static net.emustudio.application.configuration.ConfigFiles.loadConfigurations;
-import static org.junit.Assert.assertTrue;
-
-public class ConfigFilesTest {
-
-    @Test
-    public void testInvalidConfigsAreIgnored() throws IOException, URISyntaxException {
-        ClassLoader classLoader = getClass().getClassLoader();
-        Path configDir = Path.of(Objects.requireNonNull(classLoader.getResource(".")).toURI());
-        assertTrue(loadConfigurations(configDir).isEmpty());
-    }
+    void settingsChanged();
 }

@@ -18,8 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.gui;
 
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
@@ -84,22 +83,18 @@ public class SettingsDialog extends JDialog {
             settings.setInt(SettingsConstants.PORT3_CPU, radixUtils.parseRadix(txtPort3.getText()));
 
             drives.foreach((i, drive) -> {
-                try {
-                    settings.setInt(SettingsConstants.SECTORS_COUNT + i, drive.getSectorsPerTrack());
-                    settings.setInt(SettingsConstants.SECTOR_LENGTH + i, drive.getSectorSize());
+                settings.setInt(SettingsConstants.SECTORS_COUNT + i, drive.getSectorsPerTrack());
+                settings.setInt(SettingsConstants.SECTOR_LENGTH + i, drive.getSectorSize());
 
-                    Path imagePath = drive.getImagePath();
-                    if (imagePath != null) {
-                        settings.setString(SettingsConstants.IMAGE + i, imagePath.toAbsolutePath().toString());
-                    } else {
-                        settings.remove(SettingsConstants.IMAGE + i);
-                    }
-                } catch (CannotUpdateSettingException e) {
-                    throw new RuntimeException(e);
+                Path imagePath = drive.getImagePath();
+                if (imagePath != null) {
+                    settings.setString(SettingsConstants.IMAGE + i, imagePath.toAbsolutePath().toString());
+                } else {
+                    settings.remove(SettingsConstants.IMAGE + i);
                 }
                 return null;
             });
-        } catch (CannotUpdateSettingException | RuntimeException e) {
+        } catch (RuntimeException e) {
             LOGGER.error("Could not write " + DIALOG_TITLE + " settings", e);
             dialogs.showError("Could not write settings. Please see log for more details.", DIALOG_TITLE);
         }
@@ -212,7 +207,7 @@ public class SettingsDialog extends JDialog {
 
         jPanel3.setBorder(BorderFactory.createTitledBorder(
             null, "Drive parameters", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-           DIALOG_PLAIN
+            DIALOG_PLAIN
         ));
 
         jLabel10.setText("Sectors count:");

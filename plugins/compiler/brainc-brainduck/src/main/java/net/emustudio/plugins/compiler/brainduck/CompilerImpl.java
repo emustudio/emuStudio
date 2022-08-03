@@ -27,7 +27,7 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.brainduck.ast.Program;
 import net.emustudio.plugins.compiler.brainduck.ast.ProgramParser;

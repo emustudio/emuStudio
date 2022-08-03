@@ -16,42 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-package net.emustudio.application.configuration;
+package net.emustudio.plugins.device.mits88sio;
 
 import org.junit.Test;
 
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
-public class SchemaPointTest {
+public class DeviceChannelTest {
 
     @Test
-    public void testParse() {
-        assertEquals(SchemaPoint.parse("10,56"), SchemaPoint.of(10,56));
+    public void testReadReturnsZero() {
+        assertEquals(0, (byte) new UART.DeviceChannel().readData());
     }
 
     @Test
-    public void testParseWithSpaces() {
-        assertEquals(SchemaPoint.parse("   30   , 5   "), SchemaPoint.of(30,5));
-    }
+    public void testWriteCallsReceiveFromDevice() {
+        UART uart = mock(UART.class);
+        uart.receiveFromDevice(eq((byte) 10));
+        expectLastCall().once();
+        replay(uart);
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void testParseMissingY() {
-        SchemaPoint.parse("10,");
-    }
+        UART.DeviceChannel channel = new UART.DeviceChannel();
+        channel.setUART(uart);
+        channel.writeData((byte) 10);
 
-    @Test(expected = NumberFormatException.class)
-    public void testMissingX() {
-        SchemaPoint.parse(",30");
-    }
-
-    @Test(expected = NumberFormatException.class)
-    public void parseEmpty() {
-        SchemaPoint.parse("");
-    }
-
-    @Test(expected = NumberFormatException.class)
-    public void parseNonsense() {
-        SchemaPoint.parse("non,sense");
+        verify(uart);
     }
 }

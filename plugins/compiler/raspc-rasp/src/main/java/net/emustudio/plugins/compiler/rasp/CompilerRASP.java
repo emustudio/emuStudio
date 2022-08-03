@@ -27,7 +27,7 @@ import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.rasp.ast.Program;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;

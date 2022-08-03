@@ -16,10 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.configuration;
+package net.emustudio.application.settings;
 
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.io.IOException;
@@ -93,11 +92,13 @@ public class ConfigFiles {
 
     public static List<String> listPluginFiles(PLUGIN_TYPE pluginType) throws IOException {
         Path pluginBasePath = basePath.resolve(PLUGIN_SUBDIRS.get(pluginType));
-        return Files.list(pluginBasePath)
-            .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
-            .map(p -> p.getFileName().toString())
-            .sorted()
-            .collect(Collectors.toList());
+        try (Stream<Path> paths = Files.list(pluginBasePath)) {
+            return paths
+                .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
+                .map(p -> p.getFileName().toString())
+                .sorted()
+                .collect(Collectors.toList());
+        }
     }
 
     public static ComputerConfig createConfiguration(String computerName) throws IOException {
@@ -110,13 +111,12 @@ public class ConfigFiles {
         Files.deleteIfExists(configPath);
     }
 
-    public static void renameConfiguration(ComputerConfig originalConfiguration, String newName) throws IOException, CannotUpdateSettingException {
-        ComputerConfig newConfig = createConfiguration(newName);
-        originalConfiguration.copyTo(newConfig);
-        newConfig.save();
-
-        originalConfiguration.close();
-        removeConfiguration(originalConfiguration.getName());
+    public static void renameConfiguration(ComputerConfig originalConfiguration, String newName) throws IOException {
+        try (ComputerConfig newConfig = createConfiguration(newName)) {
+            originalConfiguration.copyTo(newConfig);
+            originalConfiguration.close();
+            removeConfiguration(originalConfiguration.getName());
+        }
     }
 
     private static String encodeToFileName(String name) {

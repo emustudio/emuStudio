@@ -18,13 +18,12 @@
  */
 package net.emustudio.application.gui.schema;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.PluginConfig;
-import net.emustudio.application.configuration.PluginConnection;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.application.settings.PluginConfig;
+import net.emustudio.application.settings.PluginConnection;
 import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.elements.*;
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 
 import java.awt.*;
 import java.util.List;
@@ -34,7 +33,6 @@ import java.util.stream.Collectors;
 public class Schema {
     public final static int MIN_LEFT_MARGIN = 5;
     public final static int MIN_TOP_MARGIN = 5;
-    private final static int DEFAULT_GRID_GAP = 20;
 
     private CompilerElement compilerElement;
     private CpuElement cpuElement;
@@ -42,11 +40,11 @@ public class Schema {
     private final List<DeviceElement> deviceElements = new ArrayList<>();
     private final List<ConnectionLine> lines = new ArrayList<>();
     private final ComputerConfig config;
-    private final ApplicationConfig applicationConfig;
+    private final AppSettings appSettings;
 
-    public Schema(ComputerConfig config, ApplicationConfig applicationConfig) throws NumberFormatException {
+    public Schema(ComputerConfig config, AppSettings appSettings) throws NumberFormatException {
         this.config = Objects.requireNonNull(config);
-        this.applicationConfig = Objects.requireNonNull(applicationConfig);
+        this.appSettings = Objects.requireNonNull(appSettings);
 
         load();
     }
@@ -56,19 +54,19 @@ public class Schema {
     }
 
     public boolean useSchemaGrid() {
-        return applicationConfig.useSchemaGrid().orElse(true);
+        return appSettings.useSchemaGrid();
     }
 
     public void setUseSchemaGrid(boolean useSchemaGrid) {
-        applicationConfig.setUseSchemaGrid(useSchemaGrid);
+        appSettings.setUseSchemaGrid(useSchemaGrid);
     }
 
     public int getSchemaGridGap() {
-        return applicationConfig.getSchemaGridGap().orElse(DEFAULT_GRID_GAP);
+        return appSettings.getSchemaGridGap();
     }
 
     public void setSchemaGridGap(int gridGap) {
-        applicationConfig.setSchemaGridGap(gridGap);
+        appSettings.setSchemaGridGap(gridGap);
     }
 
     public void setCompilerElement(Point clickPoint, String pluginFile) {
@@ -204,11 +202,7 @@ public class Schema {
         Point p2 = new Point(x + width, y + height);
 
         for (Element elem : getAllElements()) {
-            if (elem.crossesArea(p1, p2)) {
-                elem.setSelected(true);
-            } else {
-                elem.setSelected(false);
-            }
+            elem.setSelected(elem.crossesArea(p1, p2));
         }
         lines.forEach(line -> line.setSelected(line.isAreaCrossing(p1, p2)));
     }
@@ -381,7 +375,7 @@ public class Schema {
         return true;
     }
 
-    public void save() throws CannotUpdateSettingException {
+    public void save() {
         List<PluginConnection> connections = lines.stream()
             .map(ConnectionLine::toPluginConnection)
             .collect(Collectors.toList());
@@ -400,8 +394,6 @@ public class Schema {
 
         List<PluginConfig> devices = deviceElements.stream().map(Element::save).collect(Collectors.toList());
         config.setDevices(devices);
-
-        config.save();
     }
 
     /**

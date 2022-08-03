@@ -16,12 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.configuration;
+package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,11 +33,15 @@ import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
-public class ComputerConfig implements ConfigSaver, Closeable {
+public class ComputerConfig implements Closeable {
     private final FileConfig config;
 
     public ComputerConfig(FileConfig config) {
         this.config = Objects.requireNonNull(config);
+    }
+
+    public FileConfig getConfig() {
+        return config;
     }
 
     public void copyTo(ComputerConfig other) {
@@ -70,7 +73,9 @@ public class ComputerConfig implements ConfigSaver, Closeable {
         if (compiler == null) {
             config.remove(PLUGIN_TYPE.COMPILER.name());
         } else {
-            config.set(PLUGIN_TYPE.COMPILER.name(), compiler.getConfig());
+            Config sub = config.createSubConfig(); // to inherit autosave
+            sub.addAll(compiler.getConfig());
+            config.set(PLUGIN_TYPE.COMPILER.name(), sub);
         }
     }
 
@@ -83,7 +88,9 @@ public class ComputerConfig implements ConfigSaver, Closeable {
         if (cpu == null) {
             config.remove(PLUGIN_TYPE.CPU.name());
         } else {
-            config.set(PLUGIN_TYPE.CPU.name(),cpu.getConfig());
+            Config sub = config.createSubConfig();
+            sub.addAll(cpu.getConfig());
+            config.set(PLUGIN_TYPE.CPU.name(), sub);
         }
     }
 
@@ -96,7 +103,9 @@ public class ComputerConfig implements ConfigSaver, Closeable {
         if (memory == null) {
             config.remove(PLUGIN_TYPE.MEMORY.name());
         } else {
-            config.set(PLUGIN_TYPE.MEMORY.name(), memory.getConfig());
+            Config sub = config.createSubConfig();
+            sub.addAll(memory.getConfig());
+            config.set(PLUGIN_TYPE.MEMORY.name(), sub);
         }
     }
 
@@ -110,7 +119,11 @@ public class ComputerConfig implements ConfigSaver, Closeable {
     }
 
     public void setDevices(List<PluginConfig> devices) {
-        List<Config> devicesConfig = devices.stream().map(PluginConfig::getConfig).collect(toList());
+        List<Config> devicesConfig = devices.stream().map(d -> {
+            Config sub = config.createSubConfig();
+            sub.addAll(d.getConfig());
+            return sub;
+        }).collect(toList());
         config.set(PLUGIN_TYPE.DEVICE.name(), devicesConfig);
     }
 
@@ -123,17 +136,12 @@ public class ComputerConfig implements ConfigSaver, Closeable {
     }
 
     public void setConnections(List<PluginConnection> connections) {
-        List<Config> configs = connections.stream().map(PluginConnection::getConfig).collect(toList());
+        List<Config> configs = connections.stream().map(c -> {
+            Config sub = config.createSubConfig();
+            sub.addAll(c.getConfig());
+            return sub;
+        }).collect(toList());
         config.set("connections", configs);
-    }
-
-    @Override
-    public void save() throws CannotUpdateSettingException {
-        try {
-            config.save();
-        } catch (Exception e) {
-            throw new CannotUpdateSettingException("Could not save configuration", e);
-        }
     }
 
     @Override
@@ -147,7 +155,7 @@ public class ComputerConfig implements ConfigSaver, Closeable {
     }
 
     public static ComputerConfig load(Path configurationFile) {
-        FileConfig config = FileConfig.of(configurationFile);
+        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
         config.load();
 
         return new ComputerConfig(config);
@@ -158,9 +166,8 @@ public class ComputerConfig implements ConfigSaver, Closeable {
             throw new IllegalArgumentException("Configuration already exists");
         }
         Files.createFile(configurationFile);
-        FileConfig config = FileConfig.of(configurationFile);
+        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
         config.set("name", computerName);
-        config.save();
 
         return new ComputerConfig(config);
     }

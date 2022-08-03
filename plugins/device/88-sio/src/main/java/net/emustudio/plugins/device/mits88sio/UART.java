@@ -20,19 +20,23 @@ package net.emustudio.plugins.device.mits88sio;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ * Universal Asynchronous Receiver Transmitter (UART)
+ *
+ * <p>
  * Status port IN:
  * <p>
  * 7 - 0 - device ready; 1 - not ready
@@ -45,25 +49,36 @@ import java.util.concurrent.locks.ReentrantLock;
  * 0 - 1 - data from input device is ready to be read
  */
 @ThreadSafe
-public class Transmitter {
-    private final static Logger LOGGER = LoggerFactory.getLogger(Transmitter.class);
+public class UART {
+    private final static Logger LOGGER = LoggerFactory.getLogger(UART.class);
+    private final static int SEND_DATA_READY = 2;
+    private final static int RECEIVE_DATA_READY = 1;
 
-    private final Queue<Byte> buffer = new ConcurrentLinkedQueue<>();
+    private final Queue<Byte> bufferFromDevice = new ConcurrentLinkedQueue<>();
     private final Lock bufferAndStatusLock = new ReentrantLock();
 
     private volatile DeviceContext<Byte> device;
-    private volatile byte status = 0x2;
+    private byte statusRegister = SEND_DATA_READY;
     private volatile boolean inputInterruptEnabled;
     private volatile boolean outputInterruptEnabled;
+    private final Context8080 cpu;
 
     private final List<Observer> observers = new ArrayList<>();
 
-    void setDevice(DeviceContext<Byte> device) {
-        this.device = device;
-        LOGGER.info("[device={}] Device was attached to 88-SIO", getDeviceId());
+    public UART(Context8080 cpu) {
+        this.cpu = Objects.requireNonNull(cpu);
     }
 
-    String getDeviceId() {
+    public void setDevice(DeviceContext<Byte> device) {
+        this.device = device;
+        if (device == null) {
+            LOGGER.info("[88-SIO] Device disconnected");
+        } else {
+            LOGGER.info("[88-SIO, device={}] Device was attached", getDeviceId());
+        }
+    }
+
+    public String getDeviceId() {
         DeviceContext<Byte> tmpDevice = device;
         if (tmpDevice == null) {
             return "unknown";
@@ -72,56 +87,67 @@ public class Transmitter {
         return (pluginContext != null) ? pluginContext.id() : tmpDevice.toString();
     }
 
-    void reset(boolean noGUI) {
-        if (!noGUI) {
-            buffer.clear();
-            writeToStatus((short) 0); // disable interrupts
+    void reset(boolean guiSupported) {
+        if (guiSupported) {
+            bufferFromDevice.clear();
         }
+        setStatus((byte) 0); // disable interrupts
     }
 
-    public void writeToStatus(short value) {
-        int newStatus = status;
-
+    public void setStatus(byte value) {
         bufferAndStatusLock.lock();
+        int newStatus = statusRegister;
+        boolean isEmpty = true;
         try {
             inputInterruptEnabled = (value & 1) == 1;
             outputInterruptEnabled = (value & 2) == 2;
 
-            if (buffer.isEmpty()) {
-                this.status = 2;
+            isEmpty = bufferFromDevice.isEmpty();
+            if (isEmpty) {
+                this.statusRegister = SEND_DATA_READY;
             } else {
-                this.status = 3;
+                this.statusRegister = SEND_DATA_READY | RECEIVE_DATA_READY;
             }
-            newStatus = this.status;
+            newStatus = this.statusRegister;
         } finally {
             bufferAndStatusLock.unlock();
+            if (!isEmpty && inputInterruptEnabled && cpu.isInterruptSupported()) {
+                cpu.signalInterrupt(new byte[] { (byte)0xFF });  // RST 7 (in Z80 RST 0x38)
+            }
+            if (outputInterruptEnabled && cpu.isInterruptSupported()) {
+                cpu.signalInterrupt(new byte[] { (byte)0xFF });  // RST 7 (in Z80 RST 0x38)
+            }
+
             notifyStatusChanged(newStatus);
         }
     }
 
-    public void writeFromDevice(byte data) {
+    public void receiveFromDevice(byte data) {
         boolean wasEmpty = false;
-        int newStatus = status;
+        int newStatus = statusRegister;
 
         bufferAndStatusLock.lock();
         try {
-            if (buffer.isEmpty()) {
+            if (bufferFromDevice.isEmpty()) {
                 wasEmpty = true;
             }
-            buffer.add(data);
-            status = (byte) (status | 1);
-            newStatus = status;
+            bufferFromDevice.add(data);
+            statusRegister = (byte) (statusRegister | 1);
+            newStatus = statusRegister;
         } finally {
             bufferAndStatusLock.unlock();
 
             if (wasEmpty) {
+                if (inputInterruptEnabled && cpu.isInterruptSupported()) {
+                    cpu.signalInterrupt(new byte[] { (byte)0xFF });  // RST 7 (in Z80 RST 0x38)
+                }
                 notifyNewData(data);
             }
             notifyStatusChanged(newStatus);
         }
     }
 
-    public void writeToDevice(byte data) {
+    public void sendToDevice(byte data) {
         DeviceContext<Byte> tmpDevice = device;
         if (tmpDevice != null) {
             tmpDevice.writeData(data);
@@ -131,18 +157,18 @@ public class Transmitter {
     public byte readBuffer() {
         int newData = 0;
         boolean isNotEmpty = false;
-        int newStatus = status; // what to do..
+        int newStatus = statusRegister; // what to do..
 
         bufferAndStatusLock.lock();
         try {
-            Byte result = buffer.poll();
+            Byte result = bufferFromDevice.poll();
 
-            isNotEmpty = !buffer.isEmpty();
-            status = (byte) (isNotEmpty ? (status | 1) : (status & 0xFE));
-            newStatus = status;
+            isNotEmpty = !bufferFromDevice.isEmpty();
+            statusRegister = (byte) (isNotEmpty ? (statusRegister | RECEIVE_DATA_READY) : (statusRegister & 0xFE));
+            newStatus = statusRegister;
 
             if (isNotEmpty) {
-                newData = buffer.peek();
+                newData = bufferFromDevice.peek();
             }
 
             return result == null ? 0 : result;
@@ -159,7 +185,7 @@ public class Transmitter {
     }
 
     public byte readStatus() {
-        return status;
+        return statusRegister;
     }
 
 
@@ -185,5 +211,30 @@ public class Transmitter {
         void dataAvailable(int data);
 
         void noData();
+    }
+
+    public static class DeviceChannel implements DeviceContext<Byte> {
+        private UART uart;
+
+        public void setUART(UART uart) {
+            this.uart = uart;
+        }
+
+        @Override
+        public Byte readData() {
+            return 0; // Attached device cannot read back what it already wrote
+        }
+
+        @Override
+        public void writeData(Byte data) {
+            if (uart != null) {
+                uart.receiveFromDevice(data);
+            }
+        }
+
+        @Override
+        public Class<Byte> getDataType() {
+            return Byte.class;
+        }
     }
 }

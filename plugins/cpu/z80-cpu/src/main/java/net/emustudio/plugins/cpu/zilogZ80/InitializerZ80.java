@@ -23,7 +23,7 @@ import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.DefaultInitializer;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
 import net.emustudio.plugins.cpu.zilogZ80.gui.DecoderImpl;

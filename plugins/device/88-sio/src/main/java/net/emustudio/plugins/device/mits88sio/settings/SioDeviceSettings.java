@@ -16,11 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package net.emustudio.plugins.device.mits88sio.settings;
 
-package net.emustudio.plugins.device.mits88sio.ports;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.jcip.annotations.ThreadSafe;
 
-public class CouldNotAttachException extends Exception {
-    public CouldNotAttachException(String message) {
-        super(message);
+@ThreadSafe
+public class SioDeviceSettings {
+    private final boolean guiSupported;
+    private final SioUnitSettings sioUnit;
+
+    public SioDeviceSettings(PluginSettings settings) {
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.sioUnit = new SioUnitSettings(settings);
+    }
+
+    public boolean isGuiSupported() {
+        return guiSupported;
+    }
+
+    public SioUnitSettings getSioUnit() {
+        return sioUnit;
     }
 }

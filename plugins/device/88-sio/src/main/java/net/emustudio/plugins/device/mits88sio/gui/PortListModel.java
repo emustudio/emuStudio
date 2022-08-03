@@ -42,13 +42,13 @@ public class PortListModel extends AbstractListModel<String> {
         fireContentsChanged(this, 0, this.ports.size() - 1);
     }
 
-    public Collection<Integer> getAll() {
-        return Collections.unmodifiableCollection(ports);
+    public List<Integer> getAll() {
+        return Collections.unmodifiableList(ports);
     }
 
     public void clear() {
         ports.clear();
-        fireContentsChanged(this, 0, ports.size() - 1);
+        fireContentsChanged(this, 0, - 1);
     }
 
     public void removeAt(int index) {

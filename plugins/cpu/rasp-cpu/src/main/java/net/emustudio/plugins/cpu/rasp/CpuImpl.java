@@ -31,6 +31,7 @@ import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.rasp.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.rasp.gui.RASPCpuStatusPanel;
 import net.emustudio.plugins.cpu.rasp.gui.RASPDisassembler;

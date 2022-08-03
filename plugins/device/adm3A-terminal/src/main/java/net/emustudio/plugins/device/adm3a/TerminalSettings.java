@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.device.adm3a;
 
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +41,7 @@ public class TerminalSettings {
     private final static String INPUT_FILE_NAME = "inputFileName";
     private final static String OUTPUT_FILE_NAME = "outputFileName";
     private final static String INPUT_READ_DELAY = "inputReadDelay";
+    private final static String DEVICE_INDEX = "deviceIndex";
 
     private final Dialogs dialogs;
     private final PluginSettings settings;
@@ -52,6 +53,7 @@ public class TerminalSettings {
     private volatile Path inputPath = Path.of(DEFAULT_INPUT_FILE_NAME);
     private volatile Path outputPath = Path.of(DEFAULT_OUTPUT_FILE_NAME);
     private int inputReadDelay = 0;
+    private int deviceIndex = 0;
 
     private final List<ChangedObserver> observers = new ArrayList<>();
 
@@ -133,6 +135,14 @@ public class TerminalSettings {
         notifyObserversAndIgnoreError();
     }
 
+    public int getDeviceIndex() {
+        return deviceIndex;
+    }
+
+    public void setDeviceIndex(int deviceIndex) {
+        this.deviceIndex = deviceIndex;
+    }
+
     public void write() {
         try {
             settings.setInt(INPUT_READ_DELAY, inputReadDelay);
@@ -141,6 +151,7 @@ public class TerminalSettings {
             settings.setBoolean(ANTI_ALIASING, antiAliasing);
             settings.setString(OUTPUT_FILE_NAME, outputPath.toString());
             settings.setString(INPUT_FILE_NAME, inputPath.toString());
+            settings.setInt(DEVICE_INDEX, deviceIndex);
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not update settings", e);
             dialogs.showError("Could not save settings. Please see log file for details.", "ADM 3A");
@@ -155,6 +166,7 @@ public class TerminalSettings {
         antiAliasing = settings.getBoolean(ANTI_ALIASING, true);
         inputPath = Path.of(settings.getString(INPUT_FILE_NAME, DEFAULT_INPUT_FILE_NAME));
         outputPath = Path.of(settings.getString(OUTPUT_FILE_NAME, DEFAULT_OUTPUT_FILE_NAME));
+        deviceIndex = settings.getInt(DEVICE_INDEX, 0);
         try {
             inputReadDelay = settings.getInt(INPUT_READ_DELAY, 0);
         } catch (NumberFormatException e) {

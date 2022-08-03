@@ -24,8 +24,8 @@ import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.DrawingPanel.Tool;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.configuration.ConfigFiles.listPluginFiles;
+import static net.emustudio.application.settings.ConfigFiles.listPluginFiles;
 import static net.emustudio.application.gui.GuiUtils.addKeyListenerRecursively;
 
 public class SchemaEditorDialog extends JDialog implements KeyListener {

@@ -19,8 +19,7 @@
 package net.emustudio.application.gui;
 
 import net.emustudio.application.Constants;
-import net.emustudio.application.cmdline.Runner;
-import net.emustudio.application.configuration.ApplicationConfig;
+import net.emustudio.application.settings.AppSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +46,7 @@ public class GuiUtils {
         }
     }
 
-    public static void setupLookAndFeel(ApplicationConfig config) {
+    public static void setupLookAndFeel(AppSettings config) {
         String lookAndFeel = config.getLookAndFeel().orElse("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
 
         try {

@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.PluginConfig;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
@@ -40,7 +40,7 @@ public class ViewComputerDialog extends JDialog {
     private final VirtualComputer computer;
     private final SchemaPreviewPanel panelSchema;
 
-    public ViewComputerDialog(JFrame parent, VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs) {
+    public ViewComputerDialog(JFrame parent, VirtualComputer computer, AppSettings appSettings, Dialogs dialogs) {
         super(parent, true);
         this.computer = Objects.requireNonNull(computer);
 
@@ -69,7 +69,7 @@ public class ViewComputerDialog extends JDialog {
             }
         });
 
-        panelSchema = new SchemaPreviewPanel(new Schema(computer.getComputerConfig(), applicationConfig), dialogs);
+        panelSchema = new SchemaPreviewPanel(new Schema(computer.getComputerConfig(), appSettings), dialogs);
         scrollPane.setViewportView(panelSchema);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);

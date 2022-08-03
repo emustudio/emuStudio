@@ -23,11 +23,15 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
+import net.emustudio.emulib.runtime.ContextNotFoundException;
+import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.device.mits88sio.ports.*;
 import net.emustudio.plugins.device.mits88sio.gui.SettingsDialog;
 import net.emustudio.plugins.device.mits88sio.gui.SioGui;
+import net.emustudio.plugins.device.mits88sio.settings.SioDeviceSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,29 +45,26 @@ import java.util.ResourceBundle;
     title = "MITS 88-SIO serial board"
 )
 @SuppressWarnings("unused")
-public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObserver {
+public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
-    private final Transmitter transmitter = new Transmitter();
-    private final CpuStatusPort cpuStatusPort = new CpuStatusPort(transmitter);
-    private final CpuDataPort cpuDataPort = new CpuDataPort(transmitter);
-    private final SIOSettings sioSettings;
-
+    private final SioDeviceSettings sioSettings;
+    private final UART.DeviceChannel deviceChannel;
+    private SioUnit sioUnit;
+    private UART uart;
     private SioGui gui;
-    private CpuPorts cpuPorts;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.sioSettings = new SIOSettings(settings);
-
-        PhysicalPort physicalPort = new PhysicalPort(transmitter);
+        this.sioSettings = new SioDeviceSettings(settings);
+        this.deviceChannel = new UART.DeviceChannel();
         try {
-            applicationApi.getContextPool().register(pluginID, physicalPort, DeviceContext.class);
+            applicationApi.getContextPool().register(pluginID, deviceChannel, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register 88-SIO device context", e);
             applicationApi.getDialogs().showError(
-                "Could not register MITS 88-SIO physical port. Please see log file for details.", super.getTitle()
+                "Could not register 88-SIO device channel. Please see log file for details.", super.getTitle()
             );
         }
     }
@@ -80,21 +81,21 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
 
     @Override
     public String getDescription() {
-        return "Custom implementation of MITS 88-SIO serial board.";
+        return "MITS 88-SIO serial board; capable of connecting single device. Supports attaching to multiple CPU ports.";
     }
 
     @Override
     public void reset() {
-        transmitter.reset(sioSettings.isGuiNotSupported());
+        sioUnit.reset(sioSettings.isGuiSupported());
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
         Context8080 cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
-
-        cpuPorts = new CpuPorts(cpu);
-        sioSettings.addChangedObserver(this);
+        this.sioUnit = new SioUnit(sioSettings.getSioUnit(), cpu);
+        this.uart = sioUnit.getUART();
+        deviceChannel.setUART(uart);
 
         // get a device attached to this board
         try {
@@ -104,19 +105,19 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
                     "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
-
-            transmitter.setDevice(device);
+            uart.setDevice(device);
         } catch (ContextNotFoundException e) {
             LOGGER.warn("No device is connected into the 88-SIO.");
         }
-        sioSettings.read();
+        sioUnit.attach();
+        sioSettings.getSioUnit().addObserver(() -> sioUnit.attach());
     }
 
     @Override
     public void showGUI(JFrame parent) {
-        if (!sioSettings.isGuiNotSupported()) {
+        if (sioSettings.isGuiSupported()) {
             if (gui == null) {
-                gui = new SioGui(parent, transmitter.getDeviceId(), transmitter, cpuPorts);
+                gui = new SioGui(parent, uart);
             }
             gui.setVisible(true);
         }
@@ -124,36 +125,24 @@ public class DeviceImpl extends AbstractDevice implements SIOSettings.ChangedObs
 
     @Override
     public void destroy() {
-        cpuPorts.destroy();
-        transmitter.setDevice(null);
+        uart.setDevice(null);
         if (gui != null) {
             gui.dispose();
             gui = null;
         }
-        sioSettings.removeChangedObserver(this);
+        sioSettings.getSioUnit().clearObservers();
     }
 
     @Override
     public void showSettings(JFrame parent) {
-        if (!sioSettings.isGuiNotSupported()) {
-            new SettingsDialog(parent, sioSettings, applicationApi.getDialogs()).setVisible(true);
+        if (sioSettings.isGuiSupported()) {
+            new SettingsDialog(parent, sioSettings.getSioUnit(), applicationApi.getDialogs()).setVisible(true);
         }
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        return !sioSettings.isGuiNotSupported();
-    }
-
-    @Override
-    public void settingsChanged() {
-        try {
-            cpuPorts.reattachStatusPort(sioSettings.getStatusPorts(), cpuStatusPort);
-            cpuPorts.reattachDataPort(sioSettings.getDataPorts(), cpuDataPort);
-        } catch (CouldNotAttachException e) {
-            LOGGER.error(e.getMessage(), e);
-            applicationApi.getDialogs().showError(e.getMessage(), "MITS 88-SIO");
-        }
+        return sioSettings.isGuiSupported();
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

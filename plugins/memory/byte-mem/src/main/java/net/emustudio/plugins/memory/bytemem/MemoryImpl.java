@@ -24,6 +24,7 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.memory.AbstractMemory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.MemoryGui;
 import org.slf4j.Logger;
@@ -171,7 +172,7 @@ public class MemoryImpl extends AbstractMemory {
      * after start of the emulator. These settings correspond to tab0 in frmSettings.
      */
     public void saveCoreSettings(int banksCount, int commonBoundary, List<String> imageFullNames,
-                                 List<Integer> imageAddresses, List<Integer> imageBanks) throws CannotUpdateSettingException {
+                                 List<Integer> imageAddresses, List<Integer> imageBanks) {
 
         settings.setInt("banksCount", banksCount);
         settings.setInt("commonBoundary", commonBoundary);
@@ -192,7 +193,7 @@ public class MemoryImpl extends AbstractMemory {
      * settings correspond to tab1 in frmSettings. ROM ranges are taken
      * directly from memory context.
      */
-    public void saveROMRanges() throws CannotUpdateSettingException {
+    public void saveROMRanges() {
         for (int i = 0; settings.contains("ROMfrom" + i) ; i++) {
             settings.remove("ROMfrom" + i);
             settings.remove("ROMto" + i);

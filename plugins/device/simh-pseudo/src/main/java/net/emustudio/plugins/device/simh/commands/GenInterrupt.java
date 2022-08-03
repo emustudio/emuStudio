@@ -31,7 +31,7 @@ public class GenInterrupt implements Command {
             genInterruptPos = 1;
             System.out.println("genInterruptVec=" + genInterruptVec + " genInterruptPos=" + genInterruptPos);
         } else {
-            control.getCpu().signalInterrupt(control.getDevice(), new byte[]{data});
+            control.getCpu().signalInterrupt(new byte[]{data});
             genInterruptPos = 0;
             control.clearCommand();
             System.out.printf(

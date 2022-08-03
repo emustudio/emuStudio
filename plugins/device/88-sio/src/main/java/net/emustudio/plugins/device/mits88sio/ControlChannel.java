@@ -16,11 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.configuration;
+package net.emustudio.plugins.device.mits88sio;
 
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
+import net.emustudio.emulib.plugins.device.DeviceContext;
 
-interface ConfigSaver {
+import java.util.Objects;
 
-    void save() throws CannotUpdateSettingException;
+public class ControlChannel implements DeviceContext<Byte> {
+    private final UART uart;
+
+    public ControlChannel(UART uart) {
+        this.uart = Objects.requireNonNull(uart);
+    }
+
+    @Override
+    public Byte readData() {
+        return uart.readStatus();
+    }
+
+    @Override
+    public void writeData(Byte data) {
+        uart.setStatus(data);
+    }
+
+    @Override
+    public Class<Byte> getDataType() {
+        return Byte.class;
+    }
 }

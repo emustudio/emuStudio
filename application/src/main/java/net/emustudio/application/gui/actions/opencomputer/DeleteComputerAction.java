@@ -18,7 +18,7 @@
  */
 package net.emustudio.application.gui.actions.opencomputer;
 
-import net.emustudio.application.configuration.ComputerConfig;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.configuration.ConfigFiles.removeConfiguration;
+import static net.emustudio.application.settings.ConfigFiles.removeConfiguration;
 
 public class DeleteComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DeleteComputerAction.class);

@@ -20,7 +20,7 @@ package net.emustudio.plugins.compiler.ram;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ram.ast.Instruction;
 import net.emustudio.plugins.compiler.ram.ast.Label;
 import net.emustudio.plugins.compiler.ram.ast.Value;

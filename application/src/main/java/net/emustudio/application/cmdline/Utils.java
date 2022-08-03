@@ -19,8 +19,8 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.ApplicationApiImpl;
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.ExtendedDialogs;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
@@ -51,18 +51,18 @@ public class Utils {
     private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
     public static final long EMUSTUDIO_ID = UUID.randomUUID().toString().hashCode();
 
-    public static ApplicationConfig loadAppConfig(boolean gui, boolean auto) throws IOException {
+    public static AppSettings loadAppSettings(boolean gui, boolean auto) throws IOException {
         Path configFile = Path.of("emuStudio.toml");
         if (Files.notExists(configFile)) {
             LOGGER.warn("No configuration file found; creating empty one");
             Files.createFile(configFile);
         }
 
-        return ApplicationConfig.fromFile(configFile, !gui, auto);
+        return AppSettings.fromFile(configFile, !gui, auto);
     }
 
     public static VirtualComputer loadComputer(
-        ApplicationConfig appConfig,
+        AppSettings appConfig,
         ComputerConfig computerConfig,
         ExtendedDialogs dialogs,
         ContextPoolImpl contextPool,
@@ -80,10 +80,10 @@ public class Utils {
     }
 
     public static Optional<ComputerConfig> loadComputerConfigFromGui(
-        ApplicationConfig appConfig, ExtendedDialogs dialogs
+            AppSettings appSettings, ExtendedDialogs dialogs
     ) {
         final AtomicReference<ComputerConfig> computerConfig = new AtomicReference<>();
-        OpenComputerDialog dialog = new OpenComputerDialog(appConfig, dialogs, computerConfig::set);
+        OpenComputerDialog dialog = new OpenComputerDialog(appSettings, dialogs, computerConfig::set);
         dialogs.setParent(dialog);
         dialog.setVisible(true);
         dialogs.setParent(null);
@@ -97,7 +97,7 @@ public class Utils {
     }
 
     @SuppressWarnings("unchecked")
-    public static void showMainWindow(VirtualComputer computer, ApplicationConfig applicationConfig, ExtendedDialogs dialogs,
+    public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, ExtendedDialogs dialogs,
                                       DebugTableModel debugTableModel, ContextPool contextPool, Optional<Path> inputFile) {
         MemoryContext<?> memoryContext = null;
         try {
@@ -107,7 +107,7 @@ public class Utils {
         }
 
         StudioFrame mainWindow = new StudioFrame(
-            computer, applicationConfig, dialogs, debugTableModel, memoryContext, inputFile
+            computer, appSettings, dialogs, debugTableModel, memoryContext, inputFile
         );
 
         dialogs.setParent(mainWindow);

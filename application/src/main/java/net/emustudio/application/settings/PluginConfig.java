@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.configuration;
+package net.emustudio.application.settings;
 
 import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.gui.P;
@@ -25,7 +25,7 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import static net.emustudio.application.configuration.ConfigFiles.getAbsolutePluginPath;
+import static net.emustudio.application.settings.ConfigFiles.getAbsolutePluginPath;
 
 public class PluginConfig {
     private final Config config;
@@ -70,7 +70,7 @@ public class PluginConfig {
 
     public Config getPluginSettings() {
         if (!config.contains("settings")) {
-            config.set("settings", Config.inMemory());
+            config.set("settings", config.createSubConfig());
         }
         return config.get("settings");
     }
@@ -78,8 +78,6 @@ public class PluginConfig {
     public Config getConfig() {
         return config;
     }
-
-
 
     public static PluginConfig create(String id, PLUGIN_TYPE pluginType, String pluginName, String pluginFile,
                                       P schemaLocation, Config pluginSettings) {

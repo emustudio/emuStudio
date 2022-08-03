@@ -98,11 +98,10 @@ public class Context8080Impl implements Context8080 {
      * during the interrupt acknowledge cycle. Subsequent bytes are read in by a
      * normal memory read sequence.
      *
-     * @param device the device which signals the interrupt
      * @param data   instruction signaled by this interrupt
      */
     @Override
-    public void signalInterrupt(DeviceContext device, byte[] data) {
+    public void signalInterrupt(byte[] data) {
         short b1 = (data.length >= 1) ? data[0] : 0;
         short b2 = (data.length >= 2) ? data[1] : 0;
         short b3 = (data.length >= 3) ? data[2] : 0;

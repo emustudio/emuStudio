@@ -20,7 +20,7 @@ package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
