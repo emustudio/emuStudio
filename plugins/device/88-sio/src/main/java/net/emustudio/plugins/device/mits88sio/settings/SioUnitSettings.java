@@ -20,6 +20,7 @@ package net.emustudio.plugins.device.mits88sio.settings;
 
 import net.emustudio.emulib.runtime.settings.BasicSettings;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -49,8 +50,8 @@ public class SioUnitSettings {
     private volatile MAP_CHAR mapBackspaceChar;
     private volatile int inputInterruptVector;
     private volatile int outputInterruptVector;
-    private volatile List<Integer> statusPorts;
-    private volatile List<Integer> dataPorts;
+    private volatile List<Integer> statusPorts = Collections.emptyList();
+    private volatile List<Integer> dataPorts = Collections.emptyList();
 
     public enum MAP_CHAR {
         BACKSPACE,
