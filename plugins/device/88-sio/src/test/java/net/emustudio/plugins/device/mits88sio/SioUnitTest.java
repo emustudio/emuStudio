@@ -26,7 +26,7 @@ import java.util.List;
 
 import static org.easymock.EasyMock.*;
 
-public class SuiUnitTest {
+public class SioUnitTest {
 
     @Test
     public void testCpuPortsAreReattached() {
@@ -36,10 +36,10 @@ public class SuiUnitTest {
         replay(s);
 
         Context8080 cpu = mock(Context8080.class);
-        expect(cpu.attachDevice(anyObject(SioUnit.ControlChannel.class), eq(1))).andReturn(true).times(2);
-        expect(cpu.attachDevice(anyObject(SioUnit.ControlChannel.class), eq(2))).andReturn(true).times(2);
-        expect(cpu.attachDevice(anyObject(SioUnit.DataChannel.class), eq(4))).andReturn(true).times(2);
-        expect(cpu.attachDevice(anyObject(SioUnit.DataChannel.class), eq(5))).andReturn(true).times(2);
+        expect(cpu.attachDevice(anyObject(ControlChannel.class), eq(1))).andReturn(true).times(2);
+        expect(cpu.attachDevice(anyObject(ControlChannel.class), eq(2))).andReturn(true).times(2);
+        expect(cpu.attachDevice(anyObject(DataChannel.class), eq(4))).andReturn(true).times(2);
+        expect(cpu.attachDevice(anyObject(DataChannel.class), eq(5))).andReturn(true).times(2);
 
         cpu.detachDevice(1);
         expectLastCall().times(2); // reattach + close()

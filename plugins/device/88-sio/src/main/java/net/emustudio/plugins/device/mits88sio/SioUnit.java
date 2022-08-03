@@ -18,10 +18,8 @@
  */
 package net.emustudio.plugins.device.mits88sio;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
-import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings.MAP_CHAR;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,13 +34,10 @@ import java.util.Objects;
  * A device is connected with SIO unit using special port.
  */
 public class SioUnit implements AutoCloseable {
-    private final static byte DELETE_CHAR = 0x7F;
-    private final static byte BACKSPACE_CHAR = 0x08;
-
     private final SioUnitSettings settings;
     private final UART uart;
-    private final ControlChannel controlChannel = new ControlChannel();
-    private final DataChannel dataChannel = new DataChannel();
+    private final ControlChannel controlChannel;
+    private final DataChannel dataChannel;
     private final Context8080 cpu;
 
     private final List<Integer> attachedStatusPorts = new ArrayList<>();
@@ -52,6 +47,8 @@ public class SioUnit implements AutoCloseable {
         this.settings = Objects.requireNonNull(settings);
         this.cpu = Objects.requireNonNull(cpu);
         this.uart = new UART(cpu);
+        this.controlChannel = new ControlChannel(uart);
+        this.dataChannel = new DataChannel(settings, uart);
     }
 
     void reset(boolean guiSupported) {
@@ -82,55 +79,5 @@ public class SioUnit implements AutoCloseable {
     @Override
     public void close() {
         detach();
-    }
-
-    class ControlChannel implements DeviceContext<Byte> {
-
-        @Override
-        public Byte readData() {
-            return uart.readStatus();
-        }
-
-        @Override
-        public void writeData(Byte data) {
-            uart.setStatus(data);
-        }
-
-        @Override
-        public Class<Byte> getDataType() {
-            return Byte.class;
-        }
-    }
-
-    class DataChannel implements DeviceContext<Byte> {
-
-        @Override
-        public Byte readData() {
-            byte data = uart.readBuffer();
-            data = settings.isClearOutputBit8() ? (byte) (data & 0x7F) : data;
-            return mapCharacter(data);
-        }
-
-        @Override
-        public void writeData(Byte data) {
-            data = settings.isInputToUpperCase() ? (byte) Character.toUpperCase((char) (data & 0xFF)) : data;
-            data = settings.isClearInputBit8() ? (byte) (data & 0x7F) : data;
-            uart.sendToDevice(mapCharacter(data));
-        }
-
-        @Override
-        public Class<Byte> getDataType() {
-            return Byte.class;
-        }
-
-        private byte mapCharacter(byte data) {
-            if (data == DELETE_CHAR) {
-                data = settings.getMapDeleteChar() == MAP_CHAR.BACKSPACE ? BACKSPACE_CHAR : DELETE_CHAR;
-            }
-            if (data == BACKSPACE_CHAR) {
-                data = settings.getMapBackspaceChar() == MAP_CHAR.DELETE ? DELETE_CHAR : BACKSPACE_CHAR;
-            }
-            return data;
-        }
     }
 }
