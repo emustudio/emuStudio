@@ -18,12 +18,14 @@
  */
 package net.emustudio.plugins.device.mits88sio.settings;
 
+import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.settings.BasicSettings;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 /**
  * Settings of one SIO unit
@@ -50,8 +52,8 @@ public class SioUnitSettings {
     private volatile MAP_CHAR mapBackspaceChar;
     private volatile int inputInterruptVector;
     private volatile int outputInterruptVector;
-    private volatile List<Integer> statusPorts = Collections.emptyList();
-    private volatile List<Integer> dataPorts = Collections.emptyList();
+    private volatile List<Integer> statusPorts;
+    private volatile List<Integer> dataPorts;
 
     public enum MAP_CHAR {
         BACKSPACE,
@@ -62,6 +64,26 @@ public class SioUnitSettings {
 
     public SioUnitSettings(BasicSettings settings) {
         this.settings = Objects.requireNonNull(settings);
+        this.isClearInputBit8 = settings.getBoolean(KEY_CLEAR_INPUT_BIT8, false);
+        this.isClearOutputBit8 = settings.getBoolean(KEY_CLEAR_OUTPUT_BIT8, false);
+        this.inputToUpperCase = settings.getBoolean(KEY_INPUT_TO_UPPER_CASE, false);
+        this.mapDeleteChar = settings.getString(KEY_MAP_DELETE_CHAR).map(MAP_CHAR::valueOf).orElse(MAP_CHAR.UNCHANGED);
+        this.mapBackspaceChar = settings.getString(KEY_MAP_BACKSPACE_CHAR).map(MAP_CHAR::valueOf).orElse(MAP_CHAR.UNCHANGED);
+
+        RadixUtils r = RadixUtils.getInstance();
+        this.statusPorts = Arrays
+            .stream(settings.getString(KEY_STATUS_PORTS, "").split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .map(r::parseRadix)
+            .collect(Collectors.toList());
+
+        this.dataPorts = Arrays
+            .stream(settings.getString(KEY_DATA_PORTS, "").split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .map(r::parseRadix)
+            .collect(Collectors.toList());
     }
 
     public void addObserver(SettingsObserver observer) {

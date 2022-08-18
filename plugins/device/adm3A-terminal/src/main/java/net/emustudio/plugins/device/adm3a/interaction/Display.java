@@ -190,6 +190,16 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
         repaint();
     }
 
+    @Override
+    public void clearLine(int x, int y) {
+        synchronized (videoMemory) {
+            for (int i = columns * y + x; i < (columns * y + columns); i++) {
+                videoMemory[i] = ' ';
+            }
+        }
+        repaint();
+    }
+
     /**
      * This method is called from serial I/O card (by OUT instruction)
      */
@@ -219,6 +229,8 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
                 break;
             case 0x0D: // CARRIAGE RETURN
                 cursor.carriageReturn();
+
+                cursor.moveDown(this); // TODO
                 break;
             case 0x0E: // SO
             case 0x0F: // SI

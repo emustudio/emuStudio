@@ -20,6 +20,7 @@ package net.emustudio.plugins.device.simh.commands;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import static net.emustudio.emulib.runtime.helpers.NumberUtils.bin2bcd;
 
@@ -86,7 +87,7 @@ public class GetClockZSDOS implements Command {
     @Override
     public void start(Control control) {
         int delta = SetClockZSDOS.INS.ClockZSDOSDelta;
-        currentTime = LocalDateTime.from(Instant.ofEpochSecond(Instant.now().getEpochSecond() + delta));
+        currentTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Instant.now().getEpochSecond() + delta), ZoneOffset.UTC);
         currentTimeValid = true;
         getClockZSDOSPos = 0;
         control.clearWriteCommand();

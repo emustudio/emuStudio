@@ -115,6 +115,11 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     }
 
     @Override
+    public boolean isGuiSupported() {
+        return terminalSettings.isGuiSupported();
+    }
+
+    @Override
     public void reset() {
         display.clearScreen();
     }

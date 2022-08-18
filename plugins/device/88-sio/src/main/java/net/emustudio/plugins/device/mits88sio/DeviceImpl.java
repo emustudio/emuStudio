@@ -31,7 +31,7 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88sio.gui.SettingsDialog;
 import net.emustudio.plugins.device.mits88sio.gui.SioGui;
-import net.emustudio.plugins.device.mits88sio.settings.SioDeviceSettings;
+import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,17 +48,19 @@ import java.util.ResourceBundle;
 public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
-    private final SioDeviceSettings sioSettings;
+    private final SioUnitSettings sioSettings;
     private final UART.DeviceChannel deviceChannel;
     private SioUnit sioUnit;
     private UART uart;
+    private final boolean guiSupported;
     private SioGui gui;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.sioSettings = new SioDeviceSettings(settings);
+        this.sioSettings = new SioUnitSettings(settings);
         this.deviceChannel = new UART.DeviceChannel();
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
             applicationApi.getContextPool().register(pluginID, deviceChannel, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
@@ -86,14 +88,14 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void reset() {
-        sioUnit.reset(sioSettings.isGuiSupported());
+        sioUnit.reset(guiSupported);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
         Context8080 cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
-        this.sioUnit = new SioUnit(sioSettings.getSioUnit(), cpu);
+        this.sioUnit = new SioUnit(sioSettings, cpu);
         this.uart = sioUnit.getUART();
         deviceChannel.setUART(uart);
 
@@ -110,17 +112,22 @@ public class DeviceImpl extends AbstractDevice {
             LOGGER.warn("No device is connected into the 88-SIO.");
         }
         sioUnit.attach();
-        sioSettings.getSioUnit().addObserver(() -> sioUnit.attach());
+        sioSettings.addObserver(() -> sioUnit.attach());
     }
 
     @Override
     public void showGUI(JFrame parent) {
-        if (sioSettings.isGuiSupported()) {
+        if (guiSupported) {
             if (gui == null) {
                 gui = new SioGui(parent, uart);
             }
             gui.setVisible(true);
         }
+    }
+
+    @Override
+    public boolean isGuiSupported() {
+        return guiSupported;
     }
 
     @Override
@@ -130,19 +137,19 @@ public class DeviceImpl extends AbstractDevice {
             gui.dispose();
             gui = null;
         }
-        sioSettings.getSioUnit().clearObservers();
+        sioSettings.clearObservers();
     }
 
     @Override
     public void showSettings(JFrame parent) {
-        if (sioSettings.isGuiSupported()) {
-            new SettingsDialog(parent, sioSettings.getSioUnit(), applicationApi.getDialogs()).setVisible(true);
+        if (guiSupported) {
+            new SettingsDialog(parent, sioSettings, applicationApi.getDialogs()).setVisible(true);
         }
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        return sioSettings.isGuiSupported();
+        return guiSupported;
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

@@ -23,6 +23,7 @@ import net.emustudio.cpu.testsuite.RunnerContext;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
 import net.emustudio.plugins.cpu.zilogZ80.suite.FlagsCheckImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -35,7 +36,13 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testAND_R() {
-        ByteTestBuilder test = getLogicTestBuilder(context -> context.first & context.second);
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
+            .firstIsRegister(REG_A)
+            .verifyRegister(REG_A, context -> context.first & context.second)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>()
+                .carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero())
+            .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinaryWhichEqual(
             test.run(0xA7)
@@ -54,7 +61,13 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testAND_N() {
-        ByteTestBuilder test = getLogicTestBuilder(context -> context.first & context.second);
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
+            .firstIsRegister(REG_A)
+            .verifyRegister(REG_A, context -> context.first & context.second)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>()
+                .carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero())
+            .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinary(
             test.runWithSecondOperand(0xE6)
@@ -154,7 +167,9 @@ public class LogicTest extends InstructionsTest {
         );
     }
 
+    // TODO
     @Test
+    @Ignore
     public void testDAA() {
         Function<RunnerContext<Byte>, Integer> daaFunc = context -> FlagsTableGeneratorTest.daa(
             ((context.flags & FLAG_C) == FLAG_C),
@@ -329,7 +344,12 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testAND_REF_II_N() {
-        IntegerTestBuilder test = prepareLogicIXYtest(context -> (context.first & 0xFF) & (context.second & 0xFF))
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
+            .first8LSBisRegister(REG_A)
+            .verifyRegister(REG_A, context -> (context.first & 0xFF) & (context.second & 0xFF))
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .sign().zero().parity().carryIsReset().halfCarryIsSet().subtractionIsReset())
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
@@ -664,7 +684,20 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testSRL_REF_II_N() {
-        IntegerTestBuilder test = prepareIIRotationLSBTest(context -> ((context.second & 0xFF) >>> 1) & 0x7F)
+        //unsigned res = value;
+        //	unsigned c = (res & 0x01) ? CF : 0;
+        //	res = (res >> 1) & 0xff;
+        //	F = SZP[res] | c;
+        //	return res;
+
+        //B = srl(rm_reg(m_ea)); wm(m_ea, B);
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
+            .verifyByte(context -> get8MSBplus8LSB(context.first), context -> ((context.second & 0xFF) >>> 1) & 0xFF)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .switchFirstAndSecond().carryIsFirstOperandLSB().sign().zero().halfCarryIsReset().parity()
+                .subtractionIsReset())
+            .setFlags(0xFF)
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
@@ -676,11 +709,11 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testSLL_R() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-            .setFlags(FLAG_H | FLAG_N)
+            .setFlags(0xFF)
             .keepCurrentInjectorsAfterRun()
             .clearOtherVerifiersAfterRun();
 
-        Function<RunnerContext<Byte>, Integer> operator = context -> (context.first << 1) & 0xFF | context.first & 1;
+        Function<RunnerContext<Byte>, Integer> operator = context -> (context.first << 1) & 0xFF | 1;
         FlagsCheckImpl<Byte> flags = new FlagsCheckImpl<Byte>()
             .carryIsFirstOperandMSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
 
@@ -699,7 +732,15 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testSLL_REF_II_N() {
-        IntegerTestBuilder test = prepareIIRotationMSBTest(context -> ((context.second << 1) & 0xFF) | context.second & 1)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
+            .verifyByte(
+                context -> get8MSBplus8LSB(context.first),
+                context -> ((context.second << 1) | 1) & 0xFF)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .switchFirstAndSecond().carryIsFirstOperandMSB().sign().zero().halfCarryIsReset().parity()
+                .subtractionIsReset())
+            .setFlags(0xFF)
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
@@ -744,7 +785,8 @@ public class LogicTest extends InstructionsTest {
             .first8LSBisRegister(REG_A)
             .firstIsIX()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) & (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xDD, 0xA4)
@@ -757,7 +799,8 @@ public class LogicTest extends InstructionsTest {
             .first8MSBisRegister(REG_A)
             .firstIsIX()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) & (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xDD, 0xA5)
@@ -770,7 +813,8 @@ public class LogicTest extends InstructionsTest {
             .first8LSBisRegister(REG_A)
             .firstIsIY()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) & (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xFD, 0xA4)
@@ -783,7 +827,8 @@ public class LogicTest extends InstructionsTest {
             .first8MSBisRegister(REG_A)
             .firstIsIY()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) & (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xFD, 0xA5)
@@ -793,10 +838,12 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testXOR_IXH() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .first8LSBisRegister(REG_A)
             .firstIsIX()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) ^ (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsReset().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xDD, 0xAC)
@@ -806,10 +853,12 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testXOR_IXL() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .first8MSBisRegister(REG_A)
             .firstIsIX()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) ^ (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsReset().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xDD, 0xAD)
@@ -819,10 +868,12 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testXOR_IYH() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .first8LSBisRegister(REG_A)
             .firstIsIY()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) ^ (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsReset().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xFD, 0xAC)
@@ -832,10 +883,12 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testXOR_IYL() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .first8MSBisRegister(REG_A)
             .firstIsIY()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) ^ (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsReset().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xFD, 0xAD)
@@ -845,10 +898,12 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testOR_IXH() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .first8LSBisRegister(REG_A)
             .firstIsIX()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) | (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsReset().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xDD, 0xB4)
@@ -858,10 +913,12 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testOR_IXL() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .first8MSBisRegister(REG_A)
             .firstIsIX()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) | (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsReset().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xDD, 0xB5)
@@ -871,10 +928,12 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testOR_IYH() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .first8LSBisRegister(REG_A)
             .firstIsIY()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) | (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsReset().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xFD, 0xB4)
@@ -884,10 +943,12 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testOR_IYL() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .first8MSBisRegister(REG_A)
             .firstIsIY()
             .verifyRegister(REG_A, context -> (context.first & 0xFF) | (context.first >>> 8))
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
+                .carryIsReset().subtractionIsReset().halfCarryIsReset().parity().sign().zero());
 
         Generator.forSome16bitUnary(
             test.run(0xFD, 0xB5)
@@ -979,10 +1040,11 @@ public class LogicTest extends InstructionsTest {
 
     private ByteTestBuilder getLogicTestBuilder(Function<RunnerContext<Byte>, Integer> operator) {
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, operator)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>()
-                .carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero())
+                .carryIsReset().subtractionIsReset().halfCarryIsReset().parity().sign().zero())
             .keepCurrentInjectorsAfterRun();
     }
 
@@ -1010,7 +1072,7 @@ public class LogicTest extends InstructionsTest {
             .first8LSBisRegister(REG_A)
             .verifyRegister(REG_A, operation)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                .sign().zero().carryIsReset().halfCarryIsSet().parity().subtractionIsReset());
+                .sign().zero().parity().carryIsReset().halfCarryIsReset().subtractionIsReset());
     }
 
     private IntegerTestBuilder prepareIIRotationMSBTest(Function<RunnerContext<Integer>, Integer> operator) {

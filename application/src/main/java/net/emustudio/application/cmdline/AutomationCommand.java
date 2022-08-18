@@ -51,7 +51,7 @@ public class AutomationCommand implements Runnable {
     private int waitForFinishMillis = Automation.DONT_WAIT;
 
     @CommandLine.Option(names = "--gui", negatable = true, description = "show/don't show GUI during automation")
-    private boolean gui;
+    private boolean gui = true;
 
     @CommandLine.Option(names = {"-s", "--start-address"}, description = "program start address", paramLabel = "ADDRESS")
     private String programStart = "0";

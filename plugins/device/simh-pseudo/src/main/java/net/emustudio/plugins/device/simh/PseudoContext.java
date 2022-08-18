@@ -128,11 +128,11 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
     public void writeData(Byte data) {
         int lastCommandOrdinal = lastWriteCommand.ordinal();
         if (!COMMANDS_MAP.containsKey(lastCommandOrdinal)) {
-            lastReadCommand = Commands.fromInt(data);
-            lastWriteCommand = Commands.fromInt(data);
-            if (!COMMANDS_MAP.containsKey(lastWriteCommand.ordinal())) {
+            if (!COMMANDS_MAP.containsKey(data & 0xFF)) {
                 System.out.printf("SIMH: Unknown command (%d) to SIMH pseudo device ignored.\n", data);
             } else {
+                lastReadCommand = Commands.fromInt(data);
+                lastWriteCommand = Commands.fromInt(data);
                 COMMANDS_MAP.get(lastWriteCommand.ordinal()).start(this);
             }
         } else {

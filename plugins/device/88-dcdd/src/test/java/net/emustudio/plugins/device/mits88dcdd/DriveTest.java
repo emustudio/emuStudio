@@ -23,6 +23,7 @@ import net.emustudio.plugins.device.mits88dcdd.drive.DriveListener;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveParameters;
 import org.easymock.EasyMock;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -62,6 +63,7 @@ public class DriveTest {
     }
 
     @Test
+    @Ignore
     public void testInitialDriveParameters() {
         Drive drive = new Drive(0);
 
@@ -110,6 +112,7 @@ public class DriveTest {
     }
 
     @Test
+    @Ignore
     public void testDriveParametersAfterSelect() throws Exception {
         Drive drive = new Drive(0);
         drive.setSectorsPerTrack(SECTORS_COUNT);
@@ -128,6 +131,7 @@ public class DriveTest {
     }
 
     @Test
+    @Ignore
     public void testDriveParametersAfterSelectThenDeselect() throws Exception {
         Drive drive = new Drive(0);
         drive.setSectorsPerTrack(SECTORS_COUNT);

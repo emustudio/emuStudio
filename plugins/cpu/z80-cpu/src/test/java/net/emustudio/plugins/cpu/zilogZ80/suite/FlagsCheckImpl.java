@@ -174,13 +174,27 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
 
     public FlagsCheckImpl<T> overflow16bit() {
         evaluators.add((context, result) -> {
-            int sign = context.first.intValue() & 0x8000;
-            int trueSecond = result - context.first.intValue();
-
-            if (sign != (trueSecond & 0x8000)) {
-                expectedNotFlags |= FLAG_PV;
-            } else if ((result & 0x8000) != sign) {
+            int fst = context.first.intValue();
+            int snd = context.second.intValue();
+            int ov = (((snd ^ fst ^ 0x8000) & (snd ^ result) & 0x8000) >>> 13);
+            if (ov != 0) {
                 expectedFlags |= FLAG_PV;
+            } else {
+                expectedNotFlags |= FLAG_PV;
+            }
+        });
+        return this;
+    }
+
+    public FlagsCheckImpl<T> borrow16bit() {
+        evaluators.add((context, result) -> {
+            int fst = context.first.intValue();
+            int snd = context.second.intValue();
+            int ov = (((snd ^ fst) & (snd ^ result) & 0x8000) >>> 13);
+            if (ov != 0) {
+                expectedFlags |= FLAG_PV;
+            } else {
+                expectedNotFlags |= FLAG_PV;
             }
         });
         return this;
@@ -189,6 +203,17 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     public FlagsCheckImpl<T> parity() {
         evaluators.add((context, result) -> {
             if (isParity(result & 0xFF)) {
+                expectedFlags |= FLAG_PV;
+            } else {
+                expectedNotFlags |= FLAG_PV;
+            }
+        });
+        return this;
+    }
+
+    public FlagsCheckImpl<T> parityIsPreserved() {
+        evaluators.add((context, result) -> {
+            if ((context.flags & FLAG_PV) == FLAG_PV) {
                 expectedFlags |= FLAG_PV;
             } else {
                 expectedNotFlags |= FLAG_PV;
@@ -309,25 +334,10 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     public FlagsCheckImpl<T> halfCarry11() {
         evaluators.add((context, result) -> {
             int fst = first.apply(context);
-            int snd = (result - fst) & 0xFFFF;
+            int snd = second.apply(context);
+            int hc = ((result ^ fst ^ snd) >>> 8) & FLAG_H;
 
-            int mask = snd & fst;
-            int xormask = snd ^ fst;
-
-            int C0 = mask & 1;
-            int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
-            int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
-            int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
-            int C4 = ((mask >>> 4) ^ (C3 & (xormask >>> 4))) & 1;
-            int C5 = ((mask >>> 5) ^ (C4 & (xormask >>> 5))) & 1;
-            int C6 = ((mask >>> 6) ^ (C5 & (xormask >>> 6))) & 1;
-            int C7 = ((mask >>> 7) ^ (C6 & (xormask >>> 7))) & 1;
-            int C8 = ((mask >>> 8) ^ (C7 & (xormask >>> 8))) & 1;
-            int C9 = ((mask >>> 9) ^ (C8 & (xormask >>> 9))) & 1;
-            int C10 = ((mask >>> 10) ^ (C9 & (xormask >>> 10))) & 1;
-            int C11 = ((mask >>> 11) ^ (C10 & (xormask >>> 11))) & 1;
-
-            if (C11 != 0) {
+            if (hc != 0) {
                 expectedFlags |= FLAG_H;
             } else {
                 expectedNotFlags |= FLAG_H;

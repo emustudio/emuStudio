@@ -46,14 +46,14 @@ import java.util.ResourceBundle;
 public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
-    private final boolean guiNotSupported;
+    private final boolean guiSupported;
     private final BrainTerminalContext terminal = new BrainTerminalContext();
     private boolean guiIOset = false;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
             applicationApi.getContextPool().register(pluginID, terminal, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
@@ -87,7 +87,7 @@ public class DeviceImpl extends AbstractDevice {
         try {
             cpu.attachDevice(terminal);
 
-            if (guiNotSupported) {
+            if (!guiSupported) {
                 LOGGER.debug("Creating file-based keyboard: {}", FileIOProvider.INPUT_FILE_NAME);
                 FileIOProvider fileIOProvider = new FileIOProvider();
                 keyboard = fileIOProvider;
@@ -126,7 +126,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showGUI(JFrame parent) {
-        if (!guiNotSupported) {
+        if (guiSupported) {
             if (!guiIOset) {
                 LOGGER.debug("Creating GUI-based keyboard");
                 Keyboard keyboard = new Keyboard();
@@ -138,6 +138,11 @@ public class DeviceImpl extends AbstractDevice {
 
             terminal.showGUI();
         }
+    }
+
+    @Override
+    public boolean isGuiSupported() {
+        return guiSupported;
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

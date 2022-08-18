@@ -89,7 +89,7 @@ public class GetClockCPM3 implements Command {
     @Override
     public void start(Control control) {
         int delta = SetClockCPM3.INS.ClockCPM3Delta;
-        currentTime = LocalDateTime.from(Instant.ofEpochSecond(Instant.now().getEpochSecond() + delta));
+        currentTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Instant.now().getEpochSecond() + delta), ZoneOffset.UTC);
         currentTimeValid = true;
         daysCPM3SinceOrg = (int)((currentTime.toEpochSecond(ZoneOffset.UTC) - CPM3_ORIGIN) / SECONDS_PER_DAY);
         getClockCPM3Pos = 0;

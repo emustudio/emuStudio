@@ -46,7 +46,7 @@ public class AbstractTape extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTape.class);
 
     private final AbstractTapeContextImpl context;
-    private final boolean guiNotSupported;
+    private final boolean guiSupported;
     private final boolean automaticEmulation;
 
     private String guiTitle = super.getTitle();
@@ -56,7 +56,7 @@ public class AbstractTape extends AbstractDevice {
         super(pluginID, applicationApi, settings);
 
         this.context = new AbstractTapeContextImpl(this);
-        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
 
         try {
@@ -96,13 +96,18 @@ public class AbstractTape extends AbstractDevice {
 
     @Override
     public void showGUI(JFrame parent) {
-        if (!guiNotSupported) {
+        if (guiSupported) {
             if (gui == null) {
                 boolean alwaysOnTop = settings.getBoolean("alwaysOnTop", false);
                 gui = new TapeGui(parent, getTitle(), context, alwaysOnTop, applicationApi.getDialogs());
             }
             gui.setVisible(true);
         }
+    }
+
+    @Override
+    public boolean isGuiSupported() {
+        return guiSupported;
     }
 
     @Override
@@ -136,14 +141,14 @@ public class AbstractTape extends AbstractDevice {
 
     @Override
     public void showSettings(JFrame parent) {
-        if (!guiNotSupported) {
+        if (guiSupported) {
             new SettingsDialog(parent, settings, applicationApi.getDialogs(), gui, guiTitle).setVisible(true);
         }
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        return !guiNotSupported;
+        return guiSupported;
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

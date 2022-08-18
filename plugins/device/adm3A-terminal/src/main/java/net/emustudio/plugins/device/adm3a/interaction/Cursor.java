@@ -34,6 +34,8 @@ public class Cursor {
     interface LineRoller {
 
         void rollLine();
+
+        void clearLine(int x, int y);
     }
 
     public Cursor(int columns, int rows) {
@@ -117,6 +119,7 @@ public class Cursor {
             } else {
                 newPoint.y++;
             }
+            lineRoller.clearLine(newPoint.x, newPoint.y);
             return newPoint;
         });
     }

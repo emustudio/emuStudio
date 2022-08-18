@@ -73,6 +73,8 @@ public class Drive {
     private final List<DriveListener> listeners = new CopyOnWriteArrayList<>();
     private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1);
 
+    private boolean sectorTrue = true; // SR0 alternation
+
 
     /*
        7   6   5   4   3   2   1   0
@@ -89,6 +91,15 @@ public class Drive {
      R - When 0, indicates that read circuit has new byte to read
      */
     private byte port1status = DEAD_DRIVE;
+    /*
+    +---+---+---+---+---+---+---+---+
+    | X | X |  Sector Number    | T |
+    +---+---+---+---+---+---+---+---+
+
+    X = Not used
+    Sector number = binary of the sector number currently under the head, 0-31.
+    T = Sector True, is a 0 when the sector is positioned to read or write.
+     */
     private byte port2status = SECTOR0;
 
     public Drive(int driveIndex) {
@@ -262,9 +273,12 @@ public class Drive {
     public void nextSectorIfHeadIsLoaded() {
         inWriteLock(() -> {
             if (((~port1status) & (~MASK_HEAD_LOAD)) != 0) { /* head loaded? */
-                sector = (byte) ((sector + 1) % sectorsPerTrack);
-                sectorOffset = sectorSize;
-                port2status = (byte) ((sector << 1) & 0x3E | 0xC0);
+                if (sectorTrue) {
+                    sector = (byte) ((sector + 1) % sectorsPerTrack);
+                    sectorOffset = sectorSize;
+                }
+                port2status = (byte) (((sector << 1) & 0x3E) | 0xC0 | (sectorTrue ? 1 : 0));
+                sectorTrue = !sectorTrue;
             }
         });
         notifyParamsChanged();

@@ -74,7 +74,12 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showGUI(JFrame parent) {
-        applicationApi.getDialogs().showInfo("GUI is not supported");
+        applicationApi.getDialogs().showInfo("SIMH-pseudo GUI is not supported");
+    }
+
+    @Override
+    public boolean isGuiSupported() {
+        return false;
     }
 
     @Override
