@@ -168,8 +168,14 @@ public class CpuVerifierImpl extends CpuVerifier {
         if ((flags & FLAG_Z) == FLAG_Z) {
             flagsString += "Z";
         }
+        if ((flags & FLAG_Y) == FLAG_Y) {
+            flagsString += "Y";
+        }
         if ((flags & FLAG_H) == FLAG_H) {
             flagsString += "H";
+        }
+        if ((flags & FLAG_X) == FLAG_X) {
+            flagsString += "X";
         }
         if ((flags & FLAG_PV) == FLAG_PV) {
             flagsString += "P";

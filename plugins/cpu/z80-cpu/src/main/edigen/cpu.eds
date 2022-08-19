@@ -133,6 +133,14 @@ instruction =
   "otir":         0xED 10 110 011                  |  # x=2, y=6, z=3
   "otdr":         0xED 10 111 011                  |  # x=2, y=7, z=3
 
+  "nop":          0xED 00 any6(6)                  |
+  "nop":          0xED 11 any6(6)                  |
+  "nop":          0xED 10 0 any5(5)                |
+  "nop":          0xED 10 1 001 any2(2)            |
+  "nop":          0xED 10 1 011 any2(2)            |
+  "nop":          0xED 10 1 101 any2(2)            |
+  "nop":          0xED 10 1 111 any2(2)            |
+
   0xFD fdInstruction                               |
 
   "%s %Xh":       11 alu(3) 110 imm8               |  # x=3, y=alu, z=6
@@ -165,10 +173,20 @@ ddInstruction =
   "jp (ix)":          11 101 001                    |  # x=3, p=2, q=1, z=1
   "ld sp, ix":        11 111 001                    |  # x=3, p=3, q=1, z=1
 
-  0xCB disp(8) ddcbInstruction                    |
+  "nop":              00 000 any3(3)                |
+  "nop":              00 001 1 any2(2)              |
+  "nop":              00 010 any3(3)                |
+  "nop":              00 011 1 any2(2)              |
+  "nop":              00 100000                     |
+  "nop":              01 0000 any2(2)               |
+  "nop":              10 0000 any2(2)               |
+  "nop":              11 01 any4(4)                 |
+  "nop":              11 100000                     |
 
-  "ex (sp), ix":    11 100 011                    |  # x=3, y=4, z=3
-  "push ix":        11 100 101                    ;  # x=3, p=2, q=0, z=5
+  0xCB disp(8) ddcbInstruction                      |
+
+  "ex (sp), ix":    11 100 011                      |  # x=3, y=4, z=3
+  "push ix":        11 100 101                      ;  # x=3, p=2, q=0, z=5
 
 fdInstruction =
   "ld iy, %Xh":       00 100 001 imm16              |  # x=0, p=2, q=0, z=1
@@ -197,10 +215,20 @@ fdInstruction =
   "jp (iy)":          11 101 001                    |  # x=3, p=2, q=1, z=1
   "ld sp, iy":        11 111 001                    |  # x=3, p=3, q=1, z=1
 
-  0xCB disp(8) fdcbInstruction                    |
+  "nop":              00 000 any3(3)                |
+  "nop":              00 001 1 any2(2)              |
+  "nop":              00 010 any3(3)                |
+  "nop":              00 011 1 any2(2)              |
+  "nop":              00 100000                     |
+  "nop":              01 0000 any2(2)               |
+  "nop":              10 0000 any2(2)               |
+  "nop":              11 01 any4(4)                 |
+  "nop":              11 100000                     |
 
-  "ex (sp), iy":    11 100 011                    |  # x=3, y=4, z=3
-  "push iy":        11 100 101                    ;  # x=3, p=2, q=0, z=5
+  0xCB disp(8) fdcbInstruction                      |
+
+  "ex (sp), iy":    11 100 011                      |  # x=3, y=4, z=3
+  "push iy":        11 100 101                      ;  # x=3, p=2, q=0, z=5
 
 ddcbInstruction =
   "%s (ix+%Xh), %s":      00 rot(3) 0 r_bcde(2)   |  # x=0, y=rot, z=0 r_bcde
@@ -373,6 +401,8 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = ddInstruction alu r_ixhl;
 "%s" = ddInstruction alu disp;
 "%s" = ddInstruction rp_ix;
+"%s" = ddInstruction any4;
+"%s" = ddInstruction any3;
 "%s" = ddInstruction;
 
 "%s" = fdInstruction imm16(reverse_bytes);
@@ -389,6 +419,8 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = fdInstruction alu r_iyhl;
 "%s" = fdInstruction alu disp;
 "%s" = fdInstruction rp_iy;
+"%s" = fdInstruction any4;
+"%s" = fdInstruction any3;
 "%s" = fdInstruction;
 
 "%s" = instruction rp imm16(reverse_bytes);
@@ -416,4 +448,7 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = instruction im;
 "%s" = instruction rst;
 "%s" = instruction any;
+"%s" = instruction any6;
+"%s" = instruction any5;
 "%s" = instruction;
+
