@@ -19,6 +19,7 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
+import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
@@ -831,5 +832,14 @@ public class DisassemblerTest {
                 "push iy",
             result
         );
+    }
+
+    @Test
+    public void testDecoder() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[] {
+            0xED, 0xB0
+        });
+        DecodedInstruction instr = decoder.decode(0);
+        assertEquals(2, instr.getLength());
     }
 }

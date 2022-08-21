@@ -1038,6 +1038,7 @@ public class EmulatorEngine implements CpuEngine {
             memptr = (PC - 1) & 0xFFFF;
         }
 
+        //..*0*00.
         I_LDD();
         if ((regs[REG_B] == 0) && (regs[REG_C] == 0)) {
             return 16;
@@ -1090,12 +1091,20 @@ public class EmulatorEngine implements CpuEngine {
         }
         PC = (PC - 2) & 0xFFFF;
 
+        //Flag effects are the same as LDI except that P/V will always be reset, because BC by definition reaches
+        // 0 before this instruction ends (normally - unless something overwrites LDIR opcode while BC>0).
+
         // https://github.com/hoglet67/Z80Decoder/wiki/Undocumented-Flags#interrupted-block-instructions
         //YF = PC.13
         //XF = PC.11
 
-        flags &= (~FLAG_Y);
-        flags &= (~FLAG_X);
+        // 0010 1100 = 2C
+        // 1101 0011 = D3
+        flags &= 0xD3;  // reset P/V, X, Y
+
+        //flag_f5 = (reg_pc >> 13) & 1;
+        //      flag_f3 = (reg_pc >> 11) & 1;
+        // 00101000 00000000  PC
         flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
 
         return 21;
