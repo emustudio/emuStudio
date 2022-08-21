@@ -211,12 +211,20 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
          */
         switch (data) {
             case 5: // HERE IS
-                insertHereIs();
+               // insertHereIs();
+                break;
+            case 6:
+                // print COMMA
+                cursor.printComma(this);
                 break;
             case 7: // BELL
                 return;
             case 8: // BACKSPACE
                 cursor.moveBackwards();
+                drawChar((char) (32));
+                break;
+            case 9:
+                cursor.moveForwards();
                 break;
             case 0x0A: // line feed
                 cursor.moveDown(this);
@@ -224,24 +232,35 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
             case 0x0B: // VT
                 cursor.moveUp();
                 break;
-            case 0x0C: // FF
-                cursor.moveForwards();
+            case 0x0C: // delete
+                drawChar((char)32);
                 break;
             case 0x0D: // CARRIAGE RETURN
                 cursor.carriageReturn();
-
                 cursor.moveDown(this); // TODO
                 break;
+            case 23:
+                cursor.moveForwardsTab();
+                break;
+          //  case 0x0C: // FF
+             //   cursor.moveForwards();
+            //    break;
+
             case 0x0E: // SO
             case 0x0F: // SI
                 return;
             case 0x1A: // clear screen
-                clearScreen();
+                //clearScreen();
+                cursor.moveDown(this);
                 return;
             case 0x1B: // initiates load cursor operation
             case 0x1E: // homes cursor
-                cursor.home();
+             //   cursor.home();
                 break;
+            case 127:
+                drawChar('\u00a9');
+                cursor.moveForwardsRolling(this);
+                return;
         }
 
         if (loadCursorPosition.notAccepted(data) && data >= 32) {
