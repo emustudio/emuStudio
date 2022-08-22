@@ -524,43 +524,6 @@ public class TransferTest extends InstructionsTest {
     }
 
     @Test
-    public void testXX() {
-        int flags = 0;
-        int PC = Integer.parseInt("0010100000000000", 2);
-        //                                    0010100000000000
-        //                                      100000
-        //                                        1000
-
-        //YF = PC.13
-        //XF = PC.11
-
-        // FLAG_X = 8             1000
-        // FLAG_Y = 0x20 = 32   100000
-        System.out.println((PC >>> 8));
-        System.out.println((PC >>> 8));
-
-        flags = ((PC >>> 8) & FLAG_X) | ((PC >>> 8) & FLAG_Y);
-
-        System.out.println(Integer.toBinaryString(flags));
-    }
-
-    @Test
-    public void testYYY() {
-        //        int result = regs[REG_A] + io;
-        //        flags |= ((result & 2) << 4); // xf = [io + a].1
-        //        flags |= ((result & 4) << 2); // yf = [io + a].3
-        int result = Integer.parseInt("1010", 2);
-        int flags = ((result & 2) << 2);
-        System.out.println(Integer.toBinaryString(flags));
-        flags = ((result & 8) << 2);
-        System.out.println(Integer.toBinaryString(flags));
-
-        System.out.println("X = " + Integer.toBinaryString(FLAG_X));
-        System.out.println("Y = " + Integer.toBinaryString(FLAG_Y));
-
-    }
-
-    @Test
     public void testLDD() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsAddressAndSecondIsMemoryByte()

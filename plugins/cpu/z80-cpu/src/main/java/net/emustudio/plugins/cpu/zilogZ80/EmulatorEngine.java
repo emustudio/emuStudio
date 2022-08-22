@@ -954,6 +954,10 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        flags &= 0xD3;  // reset P/V, X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+
         return 21;
     }
 
@@ -1006,6 +1010,8 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+        flags &= 0xD3;  // reset P/V, X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
         return 21;
     }
 
@@ -1038,7 +1044,6 @@ public class EmulatorEngine implements CpuEngine {
             memptr = (PC - 1) & 0xFFFF;
         }
 
-        //..*0*00.
         I_LDD();
         if ((regs[REG_B] == 0) && (regs[REG_C] == 0)) {
             return 16;
@@ -1048,9 +1053,7 @@ public class EmulatorEngine implements CpuEngine {
         // https://github.com/hoglet67/Z80Decoder/wiki/Undocumented-Flags#interrupted-block-instructions
         //YF = PC.13
         //XF = PC.11
-
-        flags &= (~FLAG_Y);
-        flags &= (~FLAG_X);
+        flags &= 0xD3;  // reset P/V, X, Y
         flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
 
         return 21;
@@ -1084,9 +1087,24 @@ public class EmulatorEngine implements CpuEngine {
         if (bc != 1) {
             memptr = (PC - 1) & 0xFFFF;
         }
+//
+//        System.out.printf("---\nBEFORE: BC=%04X DE=%04X HL=%04X A=%02X F=%s\n",
+//            ((regs[REG_B] << 8) | regs[REG_C]),
+//            ((regs[REG_D] << 8) | regs[REG_E]),
+//            ((regs[REG_H] << 8) | regs[REG_L]),
+//            regs[REG_A],
+//            intToFlags(flags)
+//        );
 
         I_LDI();
         if ((regs[REG_B] == 0) && (regs[REG_C] == 0)) {
+//            System.out.printf("BC=%04X DE=%04X HL=%04X A=%02X F=%s\n---\n",
+//                ((regs[REG_B] << 8) | regs[REG_C]),
+//                ((regs[REG_D] << 8) | regs[REG_E]),
+//                ((regs[REG_H] << 8) | regs[REG_L]),
+//                regs[REG_A],
+//                intToFlags(flags)
+//            );
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
@@ -1100,14 +1118,52 @@ public class EmulatorEngine implements CpuEngine {
 
         // 0010 1100 = 2C
         // 1101 0011 = D3
-        flags &= 0xD3;  // reset P/V, X, Y
+        // 1101 0111 = D7
+//        flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) | ((PC >>> 8) & (FLAG_X | FLAG_Y));
+//        System.out.printf("BC=%04X DE=%04X HL=%04X A=%02X F=%s\n",
+//            ((regs[REG_B] << 8) | regs[REG_C]),
+//            ((regs[REG_D] << 8) | regs[REG_E]),
+//            ((regs[REG_H] << 8) | regs[REG_L]),
+//            regs[REG_A],
+//            intToFlags(flags)
+//        );
 
         //flag_f5 = (reg_pc >> 13) & 1;
         //      flag_f3 = (reg_pc >> 11) & 1;
         // 00101000 00000000  PC
+        flags &= 0xD3;  // reset P/V, X, Y
         flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
 
         return 21;
+    }
+
+    public static String intToFlags(int flags) {
+        String flagsString = "";
+        if ((flags & FLAG_S) == FLAG_S) {
+            flagsString += "S";
+        }
+        if ((flags & FLAG_Z) == FLAG_Z) {
+            flagsString += "Z";
+        }
+        if ((flags & FLAG_Y) == FLAG_Y) {
+            flagsString += "Y";
+        }
+        if ((flags & FLAG_H) == FLAG_H) {
+            flagsString += "H";
+        }
+        if ((flags & FLAG_X) == FLAG_X) {
+            flagsString += "X";
+        }
+        if ((flags & FLAG_PV) == FLAG_PV) {
+            flagsString += "P";
+        }
+        if ((flags & FLAG_N) == FLAG_N) {
+            flagsString += "N";
+        }
+        if ((flags & FLAG_C) == FLAG_C) {
+            flagsString += "C";
+        }
+        return flagsString;
     }
 
     int I_INI() {
@@ -1145,6 +1201,20 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        flags &= 0xD7;  // reset X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= (~FLAG_H);
+            if ((value & 0x80) != 0) {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] - 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0 ? FLAG_H : 0);
+            } else {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] + 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0x0F ? FLAG_H : 0);
+            }
+        }
+
         return 21;
     }
 
@@ -1182,6 +1252,19 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        flags &= 0xD7;  // reset X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= (~FLAG_H);
+            if ((value & 0x80) != 0) {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] - 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0 ? FLAG_H : 0);
+            } else {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] + 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0x0F ? FLAG_H : 0);
+            }
+        }
         return 21;
     }
 
@@ -1217,6 +1300,19 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        flags &= 0xD7;  // reset X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= (~FLAG_H);
+            if ((value & 0x80) != 0) {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] - 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0 ? FLAG_H : 0);
+            } else {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] + 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0x0F ? FLAG_H : 0);
+            }
+        }
         return 21;
     }
 
@@ -1252,6 +1348,19 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        flags &= 0xD7;  // reset X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= (~FLAG_H);
+            if ((value & 0x80) != 0) {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] - 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0 ? FLAG_H : 0);
+            } else {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] + 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0x0F ? FLAG_H : 0);
+            }
+        }
         return 21;
     }
 
