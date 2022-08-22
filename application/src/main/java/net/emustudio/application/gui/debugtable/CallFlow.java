@@ -55,12 +55,7 @@ class CallFlow {
                 if (prev != null && prev != nextPosition) {
                     // If the current instruction points to a different address than before
                     // and the previous instruction chain does not end in the new position, remove the whole chain
-
-                    while (originalPrev < nextPosition) {
-                        prev = flowGraph.get(originalPrev);
-                        flowGraph.remove(originalPrev);
-                        originalPrev = prev;
-                    }
+                    flowGraph.subMap(originalPrev, true, prev, true).clear();
                 }
             }
             flowGraph.put(currentLocation, nextPosition);
