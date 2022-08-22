@@ -46,11 +46,21 @@ class CallFlow {
             }
             Integer prev = flowGraph.get(currentLocation);
             if (prev != null) {
-                Integer prevPrev = flowGraph.get(prev);
-                if (prevPrev != null && prevPrev != nextPosition) {
-                    // If current instruction points on different address than before
-                    // and the previous one existed in flowGraph, remove it
-                    flowGraph.remove(prev);
+                // jump over previous instruction chain until we get to the last one
+
+                int originalPrev = prev;
+                while (prev != null && prev < nextPosition) {
+                    prev = flowGraph.get(prev);
+                }
+                if (prev != null && prev != nextPosition) {
+                    // If the current instruction points to a different address than before
+                    // and the previous instruction chain does not end in the new position, remove the whole chain
+
+                    while (originalPrev < nextPosition) {
+                        prev = flowGraph.get(originalPrev);
+                        flowGraph.remove(originalPrev);
+                        originalPrev = prev;
+                    }
                 }
             }
             flowGraph.put(currentLocation, nextPosition);
