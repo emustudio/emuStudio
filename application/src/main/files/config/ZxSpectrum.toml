@@ -127,14 +127,6 @@ halfDuplex = false
 outputFileName = "adm3A-terminal.out"
 inputFileName = "adm3A-terminal.in"
 
-[[DEVICE]]
-schemaPoint = "220,60"
-path = "simh-pseudo.jar"
-settings = {}
-name = "simh-pseudo"
-id = "6c07bc70-db4f-4e7a-86f3-0ba0ce9bebf9"
-type = "DEVICE"
-
 [[connections]]
 bidirectional = true
 from = "9233e0c2-b53c-41e7-9eca-bbb264fcd9da"

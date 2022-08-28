@@ -12,12 +12,6 @@ import java.util.List;
 public class Keyboard implements KeyListener {
     private final List<DeviceContext<Byte>> devices = new ArrayList<>();
 
-    @ThreadSafe
-    public interface KeyboardListener {
-
-        void readEnded();
-    }
-
     public void connect(DeviceContext<Byte> device) {
         devices.add(device);
     }

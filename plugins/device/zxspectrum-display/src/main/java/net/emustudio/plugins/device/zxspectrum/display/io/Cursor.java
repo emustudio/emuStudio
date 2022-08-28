@@ -20,38 +20,12 @@ public class Cursor {
         this.tabs = columns / 4;
     }
 
-    public int getColumns() {
-        return columns;
-    }
-
-    public int getRows() {
-        return rows;
-    }
-
     public void home() {
         cursorPoint.set(new Point());
     }
 
     public void set(int x, int y) {
         cursorPoint.set(new Point(x, y));
-    }
-
-    public void printComma(LineRoller lineRoller) {
-        setCursorPoint(oldPoint -> {
-            Point newPoint = new Point(oldPoint);
-
-            if (newPoint.x < 16) {
-                newPoint.x = 16;
-            } else {
-                newPoint.x = 0;
-                newPoint.y++;
-                if (newPoint.y > (rows - 1)) {
-                    lineRoller.rollLine();
-                    newPoint.y = (rows - 1);
-                }
-            }
-            return newPoint;
-        });
     }
 
     public void moveForwardsRolling(LineRoller lineRoller) {
@@ -139,7 +113,7 @@ public class Cursor {
         });
     }
 
-    Point getCursorPoint() {
+    public Point getCursorPoint() {
         return cursorPoint.get();
     }
 

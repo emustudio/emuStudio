@@ -15,7 +15,7 @@ import java.util.Arrays;
 @ThreadSafe
 public class Display extends JPanel implements LineRoller, ActionListener {
     private final static int DEFAULT_COLUMNS = 120;
-    static final Color FOREGROUND = new Color(0, 255, 0);
+    static final Color FOREGROUND = new Color(255, 255, 255);
     static final Color BACKGROUND = Color.BLACK;
     private final Font terminalFont = new Font("Monospaced", Font.PLAIN, 14);
 
@@ -30,7 +30,7 @@ public class Display extends JPanel implements LineRoller, ActionListener {
     private volatile Dimension size;
 
     public Display() {
-        this.rows = 80;
+        this.rows = 24;
         this.columns = DEFAULT_COLUMNS;
         this.videoMemory = new char[rows * columns];
         this.cursor = new Cursor(columns, rows);
@@ -167,7 +167,7 @@ public class Display extends JPanel implements LineRoller, ActionListener {
             graphics.setXORMode(Display.BACKGROUND);
             graphics.setColor(Display.FOREGROUND);
 
-            Rectangle2D fontRectangle = terminalFont.getMaxCharBounds(graphics.getFontMetrics().getFontRenderContext());
+            Rectangle2D fontRectangle = terminalFont.getStringBounds("W", getDefaultFrc());
             int lineHeight = graphics.getFontMetrics().getHeight();
 
             int x = 2 + (int)(paintPoint.x * fontRectangle.getWidth());
@@ -193,7 +193,7 @@ public class Display extends JPanel implements LineRoller, ActionListener {
         int maxWidth = columns * charWidth;
         int maxHeight = rows * charHeight;
 
-        return new DisplayParameters(maxWidth, maxHeight);
+        return new DisplayParameters(maxWidth, maxHeight, charWidth);
     }
 
     private static FontRenderContext DEFAULT_FRC;
