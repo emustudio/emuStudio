@@ -27,7 +27,7 @@ public class StartTimer implements Command {
     public long[] markTime = new long[TIMER_STACK_LIMIT];  // timer stack
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         markTimeSP = 0;
     }
 

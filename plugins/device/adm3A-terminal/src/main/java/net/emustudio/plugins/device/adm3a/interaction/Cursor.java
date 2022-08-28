@@ -28,21 +28,17 @@ import java.util.function.Function;
 public class Cursor {
     private final int columns;
     private final int rows;
-    private final int tabs;
 
     private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
 
     interface LineRoller {
 
         void rollLine();
-
-        void clearLine(int x, int y);
     }
 
     public Cursor(int columns, int rows) {
         this.columns = columns;
         this.rows = rows;
-        this.tabs = columns / 4;
     }
 
     int getColumns() {
@@ -59,24 +55,6 @@ public class Cursor {
 
     void set(int x, int y) {
         cursorPoint.set(new Point(x, y));
-    }
-
-    void printComma(LineRoller lineRoller) {
-        setCursorPoint(oldPoint -> {
-            Point newPoint = new Point(oldPoint);
-
-            if (newPoint.x < 16) {
-                newPoint.x = 16;
-            } else {
-                newPoint.x = 0;
-                newPoint.y++;
-                if (newPoint.y > (rows - 1)) {
-                    lineRoller.rollLine();
-                    newPoint.y = (rows - 1);
-                }
-            }
-            return newPoint;
-        });
     }
 
     void moveForwardsRolling(LineRoller lineRoller) {
@@ -103,17 +81,6 @@ public class Cursor {
 
             if (newPoint.x < (columns - 1)) {
                 newPoint.x++;
-            }
-            return newPoint;
-        });
-    }
-
-    void moveForwardsTab() {
-        setCursorPoint(oldPoint -> {
-            Point newPoint = new Point(oldPoint);
-
-            if (newPoint.x < (columns - 1)) {
-                newPoint.x = ((newPoint.x + 4) / 4) * 4;
             }
             return newPoint;
         });
@@ -150,7 +117,6 @@ public class Cursor {
             } else {
                 newPoint.y++;
             }
-            lineRoller.clearLine(newPoint.x, newPoint.y);
             return newPoint;
         });
     }

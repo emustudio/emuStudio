@@ -49,6 +49,7 @@ include ':plugins:device:adm3A-terminal'
 include ':plugins:device:brainduck-terminal'
 include ':plugins:device:simh-pseudo'
 include ':plugins:device:ssem-display'
+include ':plugins:device:zxspectrum-display'
 
 include ':plugins:memory:ram-mem'
 include ':plugins:memory:rasp-mem'

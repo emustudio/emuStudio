@@ -35,7 +35,7 @@ public class GetClockZSDOS implements Command {
     private int getClockZSDOSPos = 0; // determines state for sending clock information
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         currentTimeValid = false;
         getClockZSDOSPos = 0;
     }

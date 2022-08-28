@@ -23,7 +23,6 @@ import net.emustudio.cpu.testsuite.RunnerContext;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
 import net.emustudio.plugins.cpu.zilogZ80.suite.FlagsCheckImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -167,34 +166,65 @@ public class LogicTest extends InstructionsTest {
         );
     }
 
-    // TODO
     @Test
-    @Ignore
     public void testDAA() {
-        Function<RunnerContext<Byte>, Integer> daaFunc = context -> FlagsTableGeneratorTest.daa(
-            ((context.flags & FLAG_C) == FLAG_C),
-            ((context.flags & FLAG_H) == FLAG_H),
-            (byte) (((int) context.first) & 0xFF)
-        );
-
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
-            .verifyRegister(REG_A, context -> daaFunc.apply(context) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().parity()
-                .expectFlagOnlyWhen(FLAG_H, (context, result) ->
-                    FlagsTableGeneratorTest.daa_hf(
-                        (context.flags & FLAG_N) == FLAG_N,
-                        (context.flags & FLAG_H) == FLAG_H,
-                        (byte) (((int) context.first) & 0xFF)
-                    ) == FLAG_H
-                )
-                .expectFlagOnlyWhen(FLAG_C, ((context, result) ->
-                    (daaFunc.apply(context) >>> 8) == FLAG_C))
-            );
+            .secondIsFlags()
+            .keepCurrentInjectorsAfterRun();
 
-        Generator.forAll8bitUnary(
-            test.run(0x27)
-        );
+        int[][] params = new int[][]{
+            new int[]{0xAA, 0x7D, 0x10, 0x11},
+            new int[]{0xAA, 0x7E, 0x44, 0x7},
+            new int[]{0xAA, 0x7F, 0x44, 0x7},
+            new int[]{0xAD, 0x7E, 0x47, 0x7},
+            new int[]{0xAD, 0x7F, 0x47, 0x7},
+            new int[]{0xAC, 0x6C, 0x12, 0x15},
+            new int[]{0xA6, 0x7E, 0x40, 0x3},
+            new int[]{0xA6, 0x7F, 0x40, 0x3},
+            new int[]{0xA1, 0x6C, 0x1, 0x1},
+            new int[]{0xA1, 0x6D, 0x1, 0x1},
+            new int[]{0xB8, 0x6F, 0x58, 0xB},
+            new int[]{0xB8, 0x7C, 0x1E, 0xD},
+            new int[]{0xB8, 0x7D, 0x1E, 0xD},
+            new int[]{0xB8, 0x7E, 0x52, 0x3},
+            new int[]{0x95, 0xE4, 0x95, 0x84},
+            new int[]{0x95, 0xE5, 0xF5, 0xA5},
+            new int[]{0x95, 0xE6, 0x95, 0x86},
+            new int[]{0x95, 0xE7, 0x35, 0x27},
+            new int[]{0x28, 0xE9, 0x88, 0x8D},
+            new int[]{0x28, 0xEA, 0x28, 0x2E},
+            new int[]{0x28, 0xEB, 0xC8, 0x8B},
+            new int[]{0x28, 0xF8, 0x2E, 0x2C},
+            new int[]{0x53, 0xF8, 0x59, 0xC},
+            new int[]{0x53, 0xF9, 0xB9, 0xA9},
+            new int[]{0x53, 0xFA, 0x4D, 0x1E},
+            new int[]{0x53, 0xFB, 0xED, 0xBF},
+            new int[]{0xEF, 0xEF, 0x89, 0x8B},
+            new int[]{0xEF, 0xFC, 0x55, 0x15},
+            new int[]{0xEF, 0xFD, 0x55, 0x15},
+            new int[]{0xEF, 0xFE, 0x89, 0x8B},
+            new int[]{0x20, 0xFD, 0x86, 0x81},
+            new int[]{0x20, 0xFE, 0x1A, 0x1A},
+            new int[]{0x20, 0xFF, 0xBA, 0xBB},
+            new int[]{0x1C, 0xEF, 0xB6, 0xA3},
+            new int[]{0x1C, 0xFC, 0x22, 0x34},
+            new int[]{0x1C, 0xFD, 0x82, 0x95},
+            new int[]{0x16, 0xFF, 0xB0, 0xA3},
+            new int[]{0x11, 0xEC, 0x11, 0x4},
+            new int[]{0x11, 0xED, 0x71, 0x25},
+            new int[]{0x11, 0xEE, 0x11, 0x6},
+            new int[]{0x55, 0xEC, 0x55, 0x4},
+            new int[]{0x55, 0xED, 0xB5, 0xA1},
+            new int[]{0x55, 0xEE, 0x55, 0x6},
+        };
+
+        for (int[] p : params) {
+            test.verifyRegister(REG_A, c -> p[2])
+                .verifyFlags(new FlagsCheckImpl<Byte>().exact(p[3]), c -> c.flags)
+                .run(0x27)
+                .accept((byte) p[0], (byte) p[1]);
+        }
     }
 
     @Test
@@ -249,9 +279,14 @@ public class LogicTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .setFlags(FLAG_N | FLAG_H)
-            .verifyRegister(REG_A, context -> ((context.first >> 1) & 0x7F) | ((context.first & 1) << 7))
+            .verifyRegister(REG_A, context -> (((context.first & 0xFF) >>> 1) | (context.first << 7)) & 0xFF)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>()
-                .carryIsFirstOperandLSB().halfCarryIsReset().subtractionIsReset());
+                .signIsPreserved()
+                .zeroIsPreserved()
+                .parityIsPreserved()
+                .carryIsFirstOperandLSB()
+                .halfCarryIsReset()
+                .subtractionIsReset());
 
         Generator.forSome8bitUnary(
             test.run(0x0F)
@@ -684,13 +719,6 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testSRL_REF_II_N() {
-        //unsigned res = value;
-        //	unsigned c = (res & 0x01) ? CF : 0;
-        //	res = (res >> 1) & 0xff;
-        //	F = SZP[res] | c;
-        //	return res;
-
-        //B = srl(rm_reg(m_ea)); wm(m_ea, B);
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .verifyByte(context -> get8MSBplus8LSB(context.first), context -> ((context.second & 0xFF) >>> 1) & 0xFF)

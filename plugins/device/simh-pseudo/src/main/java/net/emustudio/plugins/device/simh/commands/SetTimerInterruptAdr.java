@@ -25,7 +25,7 @@ public class SetTimerInterruptAdr implements Command {
     public int timerInterruptHandler = 0x0fc00; // default address of interrupt handling routine
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         setTimerInterruptAdrPos = 0;
     }
 
@@ -43,7 +43,7 @@ public class SetTimerInterruptAdr implements Command {
 
     @Override
     public void start(Control control) {
-        reset();
+        reset(control);
         control.clearReadCommand();
     }
 }

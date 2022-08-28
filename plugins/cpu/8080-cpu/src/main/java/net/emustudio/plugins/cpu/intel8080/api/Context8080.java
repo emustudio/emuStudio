@@ -44,5 +44,10 @@ public interface Context8080 extends CPUContext {
      */
     void detachDevice(int port);
 
+    /**
+     * Set CPU frequency in kHZ
+     *
+     * @param freq new frequency in kHZ
+     */
     void setCPUFrequency(int freq);
 }

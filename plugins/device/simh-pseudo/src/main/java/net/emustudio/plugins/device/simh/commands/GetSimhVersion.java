@@ -26,7 +26,7 @@ public class GetSimhVersion implements Command {
     private int versionPos = 0; // determines state for sending device identifier
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         versionPos = 0;
     }
 

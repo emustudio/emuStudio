@@ -60,6 +60,14 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
         return this;
     }
 
+    public FlagsCheckImpl<T> exact(int flags) {
+        evaluators.add((context, result) -> {
+            expectedFlags = flags;
+            expectedNotFlags = flags ^ 0xFF;
+        });
+        return this;
+    }
+
     public FlagsCheckImpl<T> sign() {
         evaluators.add((context, result) -> {
             if ((result & 0x80) == 0x80) {

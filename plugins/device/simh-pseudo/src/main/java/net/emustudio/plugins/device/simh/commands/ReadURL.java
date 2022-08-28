@@ -34,7 +34,7 @@ public class ReadURL implements Command {
     private boolean isInReadPhase;
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         urlPointer = 0;
         isInReadPhase = false;
     }
@@ -82,7 +82,7 @@ public class ReadURL implements Command {
 
     @Override
     public void start(Control control) {
-        reset();
+        reset(control);
     }
 
 

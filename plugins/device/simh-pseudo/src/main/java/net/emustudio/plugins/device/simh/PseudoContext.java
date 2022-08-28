@@ -108,7 +108,7 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
 
     void reset() {
         clearCommand();
-        COMMANDS_MAP.values().forEach(Command::reset);
+        COMMANDS_MAP.values().forEach(c -> c.reset(this));
     }
 
 

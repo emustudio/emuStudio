@@ -33,7 +33,7 @@ public class SetClockZSDOS implements Command {
     public int ClockZSDOSDelta = 0; // delta between real clock and Altair clock
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         ClockZSDOSDelta = 0;
         setClockZSDOSPos = 0;
     }

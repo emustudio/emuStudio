@@ -27,7 +27,7 @@ public class ReadStopWatch implements Command {
 
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         getStopWatchDeltaPos = 0;
     }
 

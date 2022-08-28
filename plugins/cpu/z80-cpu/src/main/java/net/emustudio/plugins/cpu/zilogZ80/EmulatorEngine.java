@@ -45,6 +45,7 @@ import static net.emustudio.plugins.cpu.zilogZ80.EmulatorTables.*;
  * Main implementation class for CPU emulation CPU works in a separate thread
  * (parallel with other hardware)
  */
+// TODO: set frequency runtime
 @SuppressWarnings("unused")
 public class EmulatorEngine implements CpuEngine {
     private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
@@ -74,6 +75,7 @@ public class EmulatorEngine implements CpuEngine {
     public int PC = 0, SP = 0, IX = 0, IY = 0;
     public int I = 0, R = 0; // interrupt r., refresh r.
     public int memptr = 0; // internal register, https://gist.github.com/drhelius/8497817
+    public int Q = 0; // internal register,
 
     public final boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
     public byte interruptMode = 0;
@@ -90,6 +92,7 @@ public class EmulatorEngine implements CpuEngine {
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
+        LOGGER.info("Sleep precision: " + SleepUtils.SLEEP_PRECISION + " nanoseconds.");
     }
 
     @Override
@@ -130,7 +133,9 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void reset(int startPos) {
-        SP = IX = IY = 0;
+        IX = IY = 0;
+        SP = 0xFFFF;
+        flags = 0xFF;
         I = R = 0;
         memptr = 0;
         Arrays.fill(regs, 0);
@@ -159,10 +164,14 @@ public class EmulatorEngine implements CpuEngine {
     public CPU.RunState run(CPU cpu) {
         long startTime, endTime;
         int cycles_executed;
-        int checkTimeSlice = 100;
+        // In Z80, 1 t-state = 250 ns = 0.25 microseconds = 0.00025 milliseconds
+        // in 10 milliseconds = 10 / 0.00025 = 40000 t-states are executed uncontrollably
+        // in 1 millisecond = 1 / 0.00025 = 4000 t-states :(
+
+        int checkTimeSlice = (int)Math.ceil(SleepUtils.SLEEP_PRECISION / 1000000.0); // milliseconds
         int cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         int cycles;
-        long slice = checkTimeSlice * 1000000;
+        long slice = checkTimeSlice * 1000000L; // nanoseconds
 
         currentRunState = CPU.RunState.STATE_RUNNING;
         while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
@@ -176,16 +185,14 @@ public class EmulatorEngine implements CpuEngine {
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }
+                    context.triggerRunCallbacks();
                 } catch (Breakpoint e) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 } catch (IndexOutOfBoundsException e) {
-                    LOGGER.debug("Unexpected error", e);
-                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                } catch (IOException e) {
                     LOGGER.error("Unexpected error", e);
-                    return RunState.STATE_STOPPED_BAD_INSTR;
+                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
                 } catch (Throwable e) {
-                    LOGGER.debug("Unexpected error", e);
+                    LOGGER.error("Unexpected error", e);
                     return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 }
             }
@@ -278,7 +285,7 @@ public class EmulatorEngine implements CpuEngine {
         int cycles = 0;
 
         IFF[0] = IFF[1] = false;
-        System.out.println("z80: interrupt! im=" + interruptMode + ", dataBus=" + Arrays.toString(dataBus));
+        //System.out.println("z80: interrupt! im=" + interruptMode + ", dataBus=" + Arrays.toString(dataBus));
         switch (interruptMode) {
             case 0:
                 cycles += 11;
@@ -310,8 +317,13 @@ public class EmulatorEngine implements CpuEngine {
                 cycles += 13;
                 if (dataBus != null && dataBus.length > 0) {
                     SP = (SP - 2) & 0xFFFF;
-                    writeWord(SP, PC);
-                    PC = readWord((I << 8) | dataBus[0]);
+                    if (memory.read(PC) == 0x76) {
+                        // jump over HALT
+                        writeWord(SP, (PC + 1) & 0xFFFF);
+                    } else {
+                        writeWord(SP, PC);
+                    }
+                    PC = readWord(((I << 8) | (dataBus[0] & 0xFF)) & 0xFFFF);
                     memptr = PC;
                 }
                 break;
@@ -445,6 +457,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_R_N() {
+        Q = 0;
         int reg = (lastOpcode >>> 3) & 0x07;
         putreg(reg, memory.read(PC));
         PC = (PC + 1) & 0xFFFF;
@@ -476,6 +489,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RET_CC() {
+        Q = 0;
         int cc = (lastOpcode >>> 3) & 7;
         if ((flags & CONDITION[cc]) == CONDITION_VALUES[cc]) {
             PC = readWord(SP);
@@ -655,12 +669,13 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_RRCA() {
         flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV)) | (regs[REG_A] & FLAG_C);
-        regs[REG_A] = (regs[REG_A] >>> 1) | (regs[REG_A] << 7);
+        regs[REG_A] = ((regs[REG_A] >>> 1) | (regs[REG_A] << 7)) & 0xFF;
         flags |= (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 4;
     }
 
     int I_DJNZ() {
+        Q = 0;
         byte addr = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
@@ -730,18 +745,23 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SCF() {
-        flags = (flags & (FLAG_S | FLAG_Z | FLAG_Y | FLAG_X | FLAG_PV)) | FLAG_C | (regs[REG_A] & (FLAG_Y | FLAG_X));
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_Y | FLAG_X | FLAG_PV)) | FLAG_C;
         return 4;
     }
 
     int I_CCF() {
         /* Zilog:    YF = A.5 | (YFi ^ YQi); XF = A.3 | (XFi ^ XQi) */
-        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV | FLAG_C)) |
-            ((((flags ^ memptr)) | regs[REG_A]) & (FLAG_X | FLAG_Y) | ((flags & FLAG_C) << 4));
+        int c = flags & FLAG_C;
+        int h = flags & FLAG_H;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV))
+            | (h ^ FLAG_H) // (c << FLAG_H)
+            | (regs[REG_A] & (FLAG_X | FLAG_Y))
+            | (c ^ FLAG_C);
         return 4;
     }
 
     int I_RET() {
+        Q = 0;
         PC = readWord(SP);
         memptr = PC;
         SP = (SP + 2) & 0xFFFF;
@@ -872,6 +892,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RETN() {
+        Q = 0;
         IFF[0] = IFF[1];
         PC = readWord(SP);
         SP = (SP + 2) & 0xffff;
@@ -889,6 +910,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RETI() {
+        Q = 0;
         IFF[0] = IFF[1];
         PC = readWord(SP);
         memptr = PC;
@@ -924,22 +946,25 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RRD() {
+        int regA = regs[REG_A] & 0x0F;
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         memptr = (hl + 1) & 0xFFFF;
-        byte n = memory.read(hl);
-        memory.write(hl, (byte)((n >>> 4) | (regs[REG_A] << 4)));
-        regs[REG_A] = (regs[REG_A] & 0xF0) | (n & 0x0F);
-        flags = (flags & FLAG_C) | TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
+        int value = memory.read(hl);
+        regs[REG_A] = ((regs[REG_A] & 0xF0) | (value & 0x0F));
+        value = ((value >>> 4) & 0x0F) | (regA << 4);
+        memory.write(hl, (byte) (value & 0xff));
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 18;
     }
 
     int I_RLD() {
         int hl = (regs[REG_H] << 8) | regs[REG_L];
+        int value = memory.read(hl);
         memptr = (hl + 1) & 0xFFFF;
-        byte value = memory.read(hl);
-
-        memory.write(hl, (byte)((value << 4) | (regs[REG_A] & 0xF)));
-        regs[REG_A] = ((regs[REG_A] & 0xF0) | (value >>> 4)) & 0xFF;
+        int tmp1 = (value >>> 4) & 0x0F;
+        value = ((value << 4) & 0xF0) | (regs[REG_A] & 0x0F);
+        regs[REG_A] = ((regs[REG_A] & 0xF0) | tmp1);
+        memory.write((regs[REG_H] << 8) | regs[REG_L], (byte) (value & 0xff));
         flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 18;
     }
@@ -1125,7 +1150,7 @@ public class EmulatorEngine implements CpuEngine {
         // https://github.com/hoglet67/Z80Decoder/wiki/Undocumented-Flags#interrupted-block-instructions
         //YF = PC.13
         //XF = PC.11
-        flags &= 0xD3;  // reset P/V, X, Y
+        flags &= 0xD7;  // reset P/V, X, Y
         flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
 
         return 21;
@@ -1156,36 +1181,67 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_LDIR() {
         int hl = (regs[REG_H] << 8) | regs[REG_L];
-        byte t = memory.read(hl++);
-
         int de = (regs[REG_D] << 8) | regs[REG_E];
-        memory.write(de++, t);
+        int bc = (regs[REG_B] << 8) | regs[REG_C];
+
+        int t = memory.read(hl);
+        memory.write(de, (byte) t);
+
+        hl = (hl + 1) & 0xFFFF;
+        de = (de + 1) & 0xFFFF;
+        bc = (bc - 1) & 0xFFFF;
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
-        regs[REG_L] = (hl & 0xFF);
+        regs[REG_L] = hl & 0xFF;
         regs[REG_D] = (de >>> 8) & 0xFF;
-        regs[REG_E] = (de & 0xFF);
-
-        t += regs[REG_A];
-
-        int bc = ((regs[REG_B] << 8) | regs[REG_C]) - 1;
+        regs[REG_E] = de & 0xFF;
         regs[REG_B] = (bc >>> 8) & 0xFF;
-        regs[REG_C] = (bc & 0xFF);
+        regs[REG_C] = bc & 0xFF;
 
-        if (bc != 0) {
-            PC = (PC - 2) & 0xFFFF;
-            flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) |
-                ((PC >>> 8) & (FLAG_Y | FLAG_X)) |
-                FLAG_PV;
-            memptr = PC + 1;
-            return 21;
+        int flagP = (bc != 0) ? FLAG_PV : 0;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) | flagP;
+        if (bc == 0) {
+            t += regs[REG_A];
+            flags |= ((t & 2) << 4) // YF = (A + [HLi]).1
+                | (t & FLAG_X);
+            return 16;
         }
-
-        flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) |
-            ((t & 2) << 4) | /* YF = (A + [HLi]).1	 */
-            (t & FLAG_X);
+        PC = (PC - 2) & 0xFFFF;
+        flags |= ((PC >>> 8) & (FLAG_Y | FLAG_X));
 
         return 21;
+//
+//        int hl = (regs[REG_H] << 8) | regs[REG_L];
+//        byte t = memory.read(hl++);
+//
+//        int de = (regs[REG_D] << 8) | regs[REG_E];
+//        memory.write(de++, t);
+//
+//        regs[REG_H] = (hl >>> 8) & 0xFF;
+//        regs[REG_L] = (hl & 0xFF);
+//        regs[REG_D] = (de >>> 8) & 0xFF;
+//        regs[REG_E] = (de & 0xFF);
+//
+//        t += regs[REG_A];
+//
+//        int bc = ((regs[REG_B] << 8) | regs[REG_C]) - 1;
+//        regs[REG_B] = (bc >>> 8) & 0xFF;
+//        regs[REG_C] = (bc & 0xFF);
+//
+//        if (bc != 0) {
+//            PC = (PC - 2) & 0xFFFF;
+//            flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) |
+//                ((PC >>> 8) & (FLAG_Y | FLAG_X)) |
+//                FLAG_PV;
+//            memptr = PC + 1;
+//            return 21;
+//        }
+//
+//        flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) |
+//            ((t & 2) << 4) | /* YF = (A + [HLi]).1	 */
+//            (t & FLAG_X);
+//
+//        return 21;
     }
 
     public static String intToFlags(int flags) {
@@ -1436,6 +1492,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_JR_CC_N() {
+        Q = 0;
         int addr = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         memptr = PC;
@@ -1573,6 +1630,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_R_R() {
+        Q = 0;
         int tmp = (lastOpcode >>> 3) & 0x07;
         int tmp1 = lastOpcode & 0x07;
         putreg(tmp, getreg(tmp1));
@@ -1914,6 +1972,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_REF_II_N_N(int special) {
+        Q = 0;
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         byte number = memory.read(PC);

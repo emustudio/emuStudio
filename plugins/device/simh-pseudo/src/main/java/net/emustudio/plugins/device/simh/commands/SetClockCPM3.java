@@ -34,7 +34,7 @@ public class SetClockCPM3 implements Command {
     private int setClockCPM3Adr = 0; // address in M of 5 byte parameter block for setting time
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         ClockCPM3Delta = 0;
         setClockCPM3Pos = 0;
     }

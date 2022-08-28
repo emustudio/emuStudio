@@ -18,32 +18,53 @@
  */
 package net.emustudio.plugins.device.simh.commands;
 
-import java.util.concurrent.*;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StartTimerInterrupts implements Command {
     public final static StartTimerInterrupts INS = new StartTimerInterrupts();
-    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-    public final AtomicReference<ScheduledFuture<?>> timerTask = new AtomicReference<>();
+    public final AtomicReference<TimerInterruptCallback> callback = new AtomicReference<>();
 
     @Override
-    public void reset() {
-        ScheduledFuture<?> oldTask = timerTask.get();
-        if (oldTask != null) {
-            oldTask.cancel(true);
+    public void reset(Control control) {
+        TimerInterruptCallback old = callback.getAndSet(null);
+        if (old != null) {
+            control.getCpu().unregisterRunCallback(old);
         }
     }
 
     @Override
     public void start(Control control) {
-        reset();
-        timerTask.set(executor.scheduleAtFixedRate(() -> {
-            // will work only in interrupt mode 0
-            int addr = SetTimerInterruptAdr.INS.timerInterruptHandler;
-            byte b1 = (byte) (addr & 0xFF);
-            byte b2 = (byte) (addr >>> 8);
-            control.getCpu().signalInterrupt(new byte[]{(byte) 0xCD, b1, b2});
-        }, SetTimerDelta.INS.timerDelta, SetTimerDelta.INS.timerDelta, TimeUnit.MILLISECONDS));
+        reset(control);
+        TimerInterruptCallback cb = new TimerInterruptCallback(control.getCpu());
+        callback.set(cb);
+        control.getCpu().registerRunCallback(cb);
         control.clearCommand();
+    }
+
+    private static class TimerInterruptCallback implements Runnable {
+        private volatile long startTime = System.nanoTime();
+        private final Context8080 cpu;
+
+        private TimerInterruptCallback(Context8080 cpu) {
+            this.cpu = Objects.requireNonNull(cpu);
+        }
+
+        @Override
+        public void run() {
+            long endTime = System.nanoTime();
+            long elapsed = endTime - startTime;
+
+            if (elapsed >= (SetTimerDelta.INS.timerDelta * 1000000L)) {
+                startTime = endTime;
+                // will work only in interrupt mode 0
+                int addr = SetTimerInterruptAdr.INS.timerInterruptHandler;
+                byte b1 = (byte) (addr & 0xFF);
+                byte b2 = (byte) (addr >>> 8);
+                cpu.signalInterrupt(new byte[]{(byte) 0xCD, b1, b2});
+            }
+        }
     }
 }

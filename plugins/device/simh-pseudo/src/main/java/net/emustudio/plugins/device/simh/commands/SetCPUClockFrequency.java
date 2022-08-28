@@ -25,17 +25,17 @@ public class SetCPUClockFrequency implements Command {
     private int setClockFrequencyPos = 0; // determines state for sending the clock frequency
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         setClockFrequencyPos = 0;
     }
 
     @Override
     public void write(byte data, Control control) {
         if (setClockFrequencyPos == 0) {
-            newClockFrequency = data;
+            newClockFrequency = data & 0xFF;
             setClockFrequencyPos = 1;
         } else {
-            control.getCpu().setCPUFrequency((data << 8) | newClockFrequency);
+            control.getCpu().setCPUFrequency(((data << 8) & 0xFF00) | newClockFrequency);
             setClockFrequencyPos = 0;
             control.clearCommand();
         }

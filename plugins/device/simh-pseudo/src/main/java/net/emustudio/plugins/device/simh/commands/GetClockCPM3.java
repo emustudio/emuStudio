@@ -42,7 +42,7 @@ public class GetClockCPM3 implements Command {
     private int daysCPM3SinceOrg = 0; // days since 1 Jan 1978
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         getClockCPM3Pos = 0;
         currentTimeValid = false;
     }

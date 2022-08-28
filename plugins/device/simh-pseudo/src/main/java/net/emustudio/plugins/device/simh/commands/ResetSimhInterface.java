@@ -25,7 +25,7 @@ public class ResetSimhInterface implements Command {
     public void start(Control control) {
         StartTimer.INS.markTimeSP = 0;
         control.clearCommand();
-        GetHostFilenames.INS.reset();
+        GetHostFilenames.INS.reset(control);
         control.clearCommand();
     }
 }

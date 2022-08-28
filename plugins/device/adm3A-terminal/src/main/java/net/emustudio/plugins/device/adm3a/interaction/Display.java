@@ -62,7 +62,6 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
     private final LoadCursorPosition loadCursorPosition;
     private final Timer cursorTimer = new Timer(800, this);
 
-    private volatile DisplayParameters displayParameters;
     private volatile Dimension size;
 
     private FileWriter outputWriter = null;
@@ -83,7 +82,7 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
         setDoubleBuffered(true);
         setOpaque(true);
         setFont(terminalFont);
-        this.displayParameters = measure();
+        DisplayParameters displayParameters = measure();
         this.size = new Dimension(displayParameters.maxWidth, displayParameters.maxHeight);
 
         if (!settings.isGuiSupported()) {
@@ -123,14 +122,12 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
     public void setBounds(int x, int y, int width, int height) {
         super.setBounds(x, y, width, height);
         this.size = getSize();
-        this.displayParameters = measure();
     }
 
     @Override
     public void setBounds(Rectangle r) {
         super.setBounds(r);
         this.size = getSize();
-        this.displayParameters = measure();
     }
 
     @Override
@@ -190,16 +187,6 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
         repaint();
     }
 
-    @Override
-    public void clearLine(int x, int y) {
-        synchronized (videoMemory) {
-            for (int i = columns * y + x; i < (columns * y + columns); i++) {
-                videoMemory[i] = ' ';
-            }
-        }
-        repaint();
-    }
-
     /**
      * This method is called from serial I/O card (by OUT instruction)
      */
@@ -211,20 +198,12 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
          */
         switch (data) {
             case 5: // HERE IS
-               // insertHereIs();
-                break;
-            case 6:
-                // print COMMA
-                cursor.printComma(this);
+                insertHereIs();
                 break;
             case 7: // BELL
                 return;
             case 8: // BACKSPACE
                 cursor.moveBackwards();
-                drawChar((char) (32));
-                break;
-            case 9:
-                cursor.moveForwards();
                 break;
             case 0x0A: // line feed
                 cursor.moveDown(this);
@@ -232,35 +211,22 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
             case 0x0B: // VT
                 cursor.moveUp();
                 break;
-            case 0x0C: // delete
-                drawChar((char)32);
+            case 0x0C: // FF
+                cursor.moveForwards();
                 break;
             case 0x0D: // CARRIAGE RETURN
                 cursor.carriageReturn();
-                cursor.moveDown(this); // TODO
                 break;
-            case 23:
-                cursor.moveForwardsTab();
-                break;
-          //  case 0x0C: // FF
-             //   cursor.moveForwards();
-            //    break;
-
             case 0x0E: // SO
             case 0x0F: // SI
                 return;
             case 0x1A: // clear screen
-                //clearScreen();
-                cursor.moveDown(this);
+                clearScreen();
                 return;
             case 0x1B: // initiates load cursor operation
             case 0x1E: // homes cursor
-             //   cursor.home();
+                cursor.home();
                 break;
-            case 127:
-                drawChar('\u00a9');
-                cursor.moveForwardsRolling(this);
-                return;
         }
 
         if (loadCursorPosition.notAccepted(data) && data >= 32) {
@@ -346,10 +312,10 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
             Rectangle2D fontRectangle = terminalFont.getMaxCharBounds(graphics.getFontMetrics().getFontRenderContext());
             int lineHeight = graphics.getFontMetrics().getHeight();
 
-            int x = 2 + (int)(paintPoint.x * fontRectangle.getWidth());
+            int x = 2 + (int) (paintPoint.x * fontRectangle.getWidth());
             int y = 3 + (paintPoint.y * lineHeight);
 
-            graphics.fillRect(x, y, (int)fontRectangle.getWidth(), (int)fontRectangle.getHeight());
+            graphics.fillRect(x, y, (int) fontRectangle.getWidth(), (int) fontRectangle.getHeight());
             graphics.setPaintMode();
 
             cursorShouldBePainted = true;
