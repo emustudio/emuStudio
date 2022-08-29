@@ -155,7 +155,7 @@ public class UART {
     }
 
     public byte readBuffer() {
-        int newData = 0;
+        byte newData = 0;
         boolean isNotEmpty = false;
         int newStatus = statusRegister; // what to do..
 
@@ -197,7 +197,7 @@ public class UART {
         observers.forEach(o -> o.statusChanged(status));
     }
 
-    private void notifyNewData(int data) {
+    private void notifyNewData(byte data) {
         observers.forEach(o -> o.dataAvailable(data));
     }
 
@@ -208,7 +208,7 @@ public class UART {
     public interface Observer {
         void statusChanged(int status);
 
-        void dataAvailable(int data);
+        void dataAvailable(byte data);
 
         void noData();
     }

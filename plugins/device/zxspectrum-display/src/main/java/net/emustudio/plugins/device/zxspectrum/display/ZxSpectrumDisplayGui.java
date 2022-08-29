@@ -59,25 +59,24 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
 
     @Override
     public void write(int character) {
-        if (ignoreNext && (ignoreCount++) < 2) {
+        if (ignoreNext && (--ignoreCount) > 0) {
             return;
         }
-        ignoreCount = 0;
         ignoreNext = false;
 
         writeStarted();
         Cursor cursor = canvas.getTextCanvasCursor();
 
-        if (sposx) {
-            posX = character;
-            sposx = false;
-            sposy = true;
-            return;
-        }
         if (sposy) {
             posY = character;
             sposy = false;
-            cursor.set(posX, posY);
+            sposx = true;
+            return;
+        }
+        if (sposx) {
+            posX = character;
+            sposx = false;
+          //  cursor.set(posX, posY);
             return;
         }
 
@@ -124,12 +123,15 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
             case 0x13: // BRIGHT CONTROL
             case 0x14: // INVERSE CONTROL
             case 0x15: // OVER CONTROL
+                ignoreCount = 1;
                 ignoreNext = true;
                 break;
             case 0x16: // AT CONTROL
-                sposx = true;
+                sposy = true;
                 break;
             case 0x17: // 23
+                ignoreCount = 1;
+                ignoreNext = true;
                 cursor.moveForwardsTab();
                 break;
 
@@ -158,9 +160,12 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
             case 0xDE:
                 canvas.writeAtCursor('*');
                 return;
+            case 0xFB:
+                canvas.clearScreen();
+                return;
         }
 
-        if (character >= 32) {
+        if (character >= 32 && character <= 0x7F) {
             canvas.writeAtCursor((char) character);
             cursor.moveForwardsRolling(canvas);
         }

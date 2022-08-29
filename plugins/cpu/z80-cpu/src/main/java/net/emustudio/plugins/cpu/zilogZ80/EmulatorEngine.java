@@ -629,7 +629,8 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         int result = sum & 0xFF;
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | (result & (FLAG_X | FLAG_Y));
+        // F5 and F3 flags are set from the subtrahend instead of from the result.
+        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | (value & (FLAG_X | FLAG_Y));
         return (lastOpcode == 0xBE) ? 7 : 4;
     }
 
@@ -640,7 +641,8 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         int result = sum & 0xFF;
-        flags = (TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA])) | (result & (FLAG_X | FLAG_Y));
+        // F5 and F3 flags are set from the subtrahend instead of from the result.
+        flags = (TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA])) | (value & (FLAG_X | FLAG_Y));
         return 7;
     }
 
@@ -2036,7 +2038,7 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA + value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2058,7 +2060,7 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2081,7 +2083,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (oldA - value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
 
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA];
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2104,7 +2106,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
 
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA];
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2123,7 +2125,7 @@ public class EmulatorEngine implements CpuEngine {
         memptr = address;
         int value = memory.read(address);
         regs[REG_A] = (regs[REG_A] & value) & 0xFF;
-        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | FLAG_H;
+        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | FLAG_H | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2142,7 +2144,7 @@ public class EmulatorEngine implements CpuEngine {
         memptr = address;
         byte value = memory.read(address);
         regs[REG_A] = ((regs[REG_A] ^ value) & 0xff);
-        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]];
+        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2161,7 +2163,7 @@ public class EmulatorEngine implements CpuEngine {
         memptr = address;
         byte value = memory.read(address);
         regs[REG_A] = ((regs[REG_A] | value) & 0xff);
-        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]];
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2182,7 +2184,7 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         int result = sum & 0xFF;
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | (value & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2850,7 +2852,7 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         int result = sum & 0xFF;
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | (sum & (FLAG_X | FLAG_Y));
+        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | (value & (FLAG_X | FLAG_Y));
         return 8;
     }
 }
