@@ -444,7 +444,7 @@ public class MemoryGui extends JDialog {
     private void btnLoadImageActionPerformed(ActionEvent evt) {
         dialogs.chooseFile(
             "Load memory image", "Load", Path.of(System.getProperty("user.dir")), false,
-            new FileExtensionsFilter("Memory image", "hex", "bin")
+            new FileExtensionsFilter("Memory image", "hex", "bin", "com", "out")
         ).ifPresent(path -> {
             try {
                 final int bank = (context.getBanksCount() > 1)
