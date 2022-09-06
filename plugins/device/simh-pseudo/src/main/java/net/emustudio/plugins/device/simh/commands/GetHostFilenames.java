@@ -57,7 +57,7 @@ public class GetHostFilenames implements Command {
     }
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         deleteNameList();
         nameListHead = null;
     }

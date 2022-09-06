@@ -46,7 +46,7 @@ name = "MITS Altair8800"
 #    [CPU.settings]
 #        printCode = true
 #        printCodeUseCache = true
-#        printCodeFileName = syserr   # Or custom path to a file
+#        printCodeFileName = "filename"   # (optional)
 
 
 [[DEVICE]]

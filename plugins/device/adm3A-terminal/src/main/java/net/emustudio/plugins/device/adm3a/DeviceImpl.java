@@ -89,7 +89,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
             );
             if (device.getDataType() != Byte.class) {
                 throw new PluginInitializationException(
-                    "Unexpected device data type. Expected Short but was: " + device.getDataType()
+                    "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
             keyboard.connect(device);
@@ -112,6 +112,11 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
             }
             terminalGUI.setVisible(true);
         }
+    }
+
+    @Override
+    public boolean isGuiSupported() {
+        return terminalSettings.isGuiSupported();
     }
 
     @Override

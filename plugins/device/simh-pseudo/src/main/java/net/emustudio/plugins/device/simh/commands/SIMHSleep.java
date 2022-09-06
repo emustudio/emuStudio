@@ -18,21 +18,20 @@
  */
 package net.emustudio.plugins.device.simh.commands;
 
+import net.emustudio.emulib.runtime.helpers.SleepUtils;
+
 public class SIMHSleep implements Command {
     public final static SIMHSleep INS = new SIMHSleep();
-    private final static int SIMHSleepMillis = 1;
+    private final static int SIMHSleepNanos = 1000000;
 
     @Override
     public void start(Control control) {
-        // TODO:
         // Do not sleep when timer interrupts are pending or are about to be created.
         // Otherwise there is the possibility that such interrupts are skipped.
 
         // time to sleep and SIO not attached to a file.
-        try {
-            Thread.sleep(SIMHSleepMillis);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        if (StartTimerInterrupts.INS.callback.get() == null) {
+            SleepUtils.preciseSleepNanos(SIMHSleepNanos);
         }
         control.clearCommand();
     }

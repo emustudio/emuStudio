@@ -114,8 +114,11 @@ public class Context8080Impl implements Context8080 {
     }
 
     @Override
-    public void setCPUFrequency(int freq) {
-        this.clockFrequency = freq;
+    public void setCPUFrequency(int frequency) {
+        if (frequency <= 0) {
+            throw new IllegalArgumentException("Invalid CPU frequency (expected > 0): " + frequency);
+        }
+        this.clockFrequency = frequency;
     }
 
 }

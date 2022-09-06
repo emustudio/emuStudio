@@ -20,12 +20,16 @@ package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+@ThreadSafe
 public final class ContextZ80Impl implements ContextZ80 {
     private final static byte NO_DATA = (byte)0xFF;
     public final static int DEFAULT_FREQUENCY_KHZ = 20000;
@@ -35,6 +39,7 @@ public final class ContextZ80Impl implements ContextZ80 {
 
     private volatile EmulatorEngine engine;
     private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
+    private final List<Runnable> runCallbacks = new CopyOnWriteArrayList<>();
 
     public void setEngine(EmulatorEngine engine) {
         this.engine = engine;
@@ -79,6 +84,12 @@ public final class ContextZ80Impl implements ContextZ80 {
         return NO_DATA;
     }
 
+    public void triggerRunCallbacks() {
+        for (Runnable runnable : runCallbacks) {
+            runnable.run();
+        }
+    }
+
     @Override
     public boolean isInterruptSupported() {
         return true;
@@ -86,6 +97,9 @@ public final class ContextZ80Impl implements ContextZ80 {
 
     @Override
     public void setCPUFrequency(int frequency) {
+        if (frequency <= 0) {
+            throw new IllegalArgumentException("Invalid CPU frequency (expected > 0): " + frequency);
+        }
         clockFrequency = frequency;
     }
 
@@ -103,5 +117,20 @@ public final class ContextZ80Impl implements ContextZ80 {
     @Override
     public void signalNonMaskableInterrupt() {
         engine.requestNonMaskableInterrupt();
+    }
+
+    @Override
+    public boolean isRunCallbackSupported() {
+        return true;
+    }
+
+    @Override
+    public void registerRunCallback(Runnable runnable) {
+        runCallbacks.add(runnable);
+    }
+
+    @Override
+    public void unregisterRunCallback(Runnable runnable) {
+        runCallbacks.remove(runnable);
     }
 }

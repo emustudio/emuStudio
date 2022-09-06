@@ -19,12 +19,15 @@
 package net.emustudio.plugins.memory.bytemem.gui.model;
 
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
 import java.util.Optional;
 
 public class MemoryTableModel extends AbstractTableModel {
+    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
     private static final int ROW_COUNT = 16;
     private static final int COLUMN_COUNT = 16;
 
@@ -70,7 +73,7 @@ public class MemoryTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         int value = getRawValueAt(rowIndex, columnIndex);
-        return asciiMode ? (char)value : String.format("%02X", value);
+        return asciiMode ? (char) value : String.format("%02X", value);
     }
 
     public int getRawValueAt(int rowIndex, int columnIndex) {
@@ -82,13 +85,15 @@ public class MemoryTableModel extends AbstractTableModel {
     }
 
     @Override
-    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+    public void setValueAt(Object value, int rowIndex, int columnIndex) {
         int address = toAddress(rowIndex, columnIndex);
         try {
-            memory.writeBank(address, Byte.decode(String.valueOf(aValue)), currentBank);
+            memory.writeBank(address, (byte) (Integer.decode(String.valueOf(value)) & 0xFF), currentBank);
             fireTableCellUpdated(rowIndex, columnIndex);
         } catch (NumberFormatException e) {
-            // ignored
+            LOGGER.error(
+                "Could not set memory cell at address 0x" + Integer.toHexString(address) + " to value " + value, e
+            );
         }
     }
 

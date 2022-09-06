@@ -44,6 +44,20 @@ class CallFlow {
             if (nextPosition - currentLocation > longestInstructionSize) {
                 longestInstructionSize = nextPosition - currentLocation;
             }
+            Integer prev = flowGraph.get(currentLocation);
+            if (prev != null) {
+                // jump over previous instruction chain until we get to the last one
+
+                int originalPrev = prev;
+                while (prev != null && prev < nextPosition) {
+                    prev = flowGraph.get(prev);
+                }
+                if (prev != null && prev != nextPosition) {
+                    // If the current instruction points to a different address than before
+                    // and the previous instruction chain does not end in the new position, remove the whole chain
+                    flowGraph.subMap(originalPrev, true, prev, true).clear();
+                }
+            }
             flowGraph.put(currentLocation, nextPosition);
         } catch (RuntimeException ex) {
             LOGGER.warn("Could not update call-flow cache", ex);

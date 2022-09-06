@@ -41,9 +41,9 @@ public class SioGui extends JDialog {
             }
 
             @Override
-            public void dataAvailable(int data) {
-                txtData.setText(String.format("0x%X", data));
-                txtDataDisplay.setText(String.valueOf((byte)(data & 0xFF)));
+            public void dataAvailable(byte data) {
+                txtData.setText(String.format("0x%X", data & 0xFF));
+                txtDataDisplay.setText(String.valueOf(data));
             }
 
             @Override

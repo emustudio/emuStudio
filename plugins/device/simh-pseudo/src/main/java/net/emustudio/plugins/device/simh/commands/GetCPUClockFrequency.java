@@ -27,7 +27,7 @@ public class GetCPUClockFrequency implements Command {
     private final AtomicInteger cpuFreq = new AtomicInteger();
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         getClockFrequencyPos = 0;
     }
 

@@ -59,7 +59,7 @@ public class DeviceImpl extends AbstractDevice {
     private final StatusPort statusPort;
     private final ControlPort controlPort;
     private final DataPort dataPort;
-    private final boolean guiNotSupported;
+    private final boolean guiSupported;
 
     private Context8080 cpuContext;
 
@@ -73,7 +73,7 @@ public class DeviceImpl extends AbstractDevice {
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
 
         port1CPU = DEFAULT_CPU_PORT1;
         port2CPU = DEFAULT_CPU_PORT2;
@@ -101,12 +101,17 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showGUI(JFrame parent) {
-        if (!guiNotSupported) {
+        if (guiSupported) {
             if (gui == null) {
                 gui = new DiskGui(parent, drives);
             }
             gui.setVisible(true);
         }
+    }
+
+    @Override
+    public boolean isGuiSupported() {
+        return guiSupported;
     }
 
     @Override
@@ -140,14 +145,14 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showSettings(JFrame parent) {
-        if (!guiNotSupported) {
+        if (guiSupported) {
             new SettingsDialog(parent, settings, drives, applicationApi.getDialogs()).setVisible(true);
         }
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        return !guiNotSupported;
+        return guiSupported;
     }
 
     private void readSettings() {

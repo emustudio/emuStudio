@@ -45,7 +45,7 @@ public class TerminalSettings {
 
     private final Dialogs dialogs;
     private final PluginSettings settings;
-    private final boolean guiNotSupported;
+    private final boolean guiSupported;
 
     private boolean halfDuplex = false;
     private boolean antiAliasing = true;
@@ -65,7 +65,7 @@ public class TerminalSettings {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.settings = Objects.requireNonNull(settings);
 
-        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         readSettings();
     }
 
@@ -78,7 +78,7 @@ public class TerminalSettings {
     }
 
     public boolean isGuiSupported() {
-        return !guiNotSupported;
+        return guiSupported;
     }
 
     public int getInputReadDelay() {

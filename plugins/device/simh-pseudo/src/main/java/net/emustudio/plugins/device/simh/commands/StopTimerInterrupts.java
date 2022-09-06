@@ -23,7 +23,7 @@ public class StopTimerInterrupts implements Command {
 
     @Override
     public void start(Control control) {
-        StartTimerInterrupts.INS.reset();
+        StartTimerInterrupts.INS.reset(control);
         control.clearCommand();
     }
 }

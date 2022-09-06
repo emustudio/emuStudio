@@ -237,10 +237,16 @@ public class ArithmeticTest extends InstructionsTest {
     @Test
     public void testADD_HL_RP() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .firstIsPair(REG_PAIR_HL)
             .verifyPair(REG_PAIR_HL, context -> context.first + context.second)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                .sign16bit().zero16bit().carry15().halfCarry11().subtractionIsReset()
+                .signIsPreserved()
+                .zeroIsPreserved()
+                .parityIsPreserved()
+                .carry15()
+                .halfCarry11()
+                .subtractionIsReset()
             )
             .keepCurrentInjectorsAfterRun();
 
@@ -380,11 +386,12 @@ public class ArithmeticTest extends InstructionsTest {
     @Test
     public void testADD_IX_RP() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .firstIsIX()
             .verifyIX(context -> context.first + context.second)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                .sign16bit().zero16bit().halfCarry11().carry15().subtractionIsReset()
-            )
+                .signIsPreserved().zeroIsPreserved().parityIsPreserved()
+                .halfCarry11().carry15().subtractionIsReset())
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryWhichEqual(
@@ -401,11 +408,12 @@ public class ArithmeticTest extends InstructionsTest {
     @Test
     public void testADD_IY_RP() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .firstIsIY()
             .verifyIY(context -> context.first + context.second)
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                .sign16bit().zero16bit().halfCarry11().carry15().subtractionIsReset()
-            )
+                .signIsPreserved().zeroIsPreserved().parityIsPreserved()
+                .halfCarry11().carry15().subtractionIsReset())
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryWhichEqual(
@@ -422,10 +430,12 @@ public class ArithmeticTest extends InstructionsTest {
     @Test
     public void testADC_HL_RP() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .firstIsPair(REG_PAIR_HL)
             .verifyPair(REG_PAIR_HL, context -> context.first + context.second + (context.flags & FLAG_C))
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                .sign16bit().zero16bit().overflow16bit().carry15().halfCarry11().subtractionIsReset())
+                .overflow16bit().sign16bit().zero16bit()
+                .carry15().halfCarry11().subtractionIsReset())
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryWhichEqual(
@@ -442,11 +452,12 @@ public class ArithmeticTest extends InstructionsTest {
     @Test
     public void testSBC_HL_RP() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .setFlags(0xFF)
             .firstIsPair(REG_PAIR_HL)
             .verifyPair(REG_PAIR_HL, context ->
-                (context.first + ((-context.second - (context.flags & FLAG_C)) & 0xFFFF)))
+                (context.first - context.second - (context.flags & FLAG_C)))
             .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                .sign16bit().zero16bit().overflow16bit().carry15().halfCarry11().subtractionIsSet())
+                .sign16bit().zero16bit().borrow16bit().carry15().halfCarry11().subtractionIsSet())
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryWhichEqual(

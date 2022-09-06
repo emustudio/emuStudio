@@ -55,7 +55,6 @@ public class DataChannel implements DeviceContext<Byte> {
     }
 
     private byte mapCharacter(byte data) {
-        System.out.println(data);
         if (data == DELETE_CHAR) {
             data = settings.getMapDeleteChar() == SioUnitSettings.MAP_CHAR.BACKSPACE ? BACKSPACE_CHAR : DELETE_CHAR;
         }

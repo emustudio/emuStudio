@@ -521,7 +521,6 @@ public class TransferTest extends InstructionsTest {
         Generator.forSome16bitBinary(2, 2,
             test.run(0xED, 0xB0)
         );
-
     }
 
     @Test

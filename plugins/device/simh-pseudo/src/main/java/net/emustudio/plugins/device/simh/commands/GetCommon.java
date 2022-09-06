@@ -24,7 +24,7 @@ public class GetCommon implements Command {
     private int getCommonPos = 0; // determines state for sending the 'common' register
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         getCommonPos = 0;
     }
 

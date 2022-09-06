@@ -46,7 +46,7 @@ public class ControlTest extends InstructionsTest {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsMemoryAddressWord(0)
             .verifyPC(context -> context.first)
-            .verifyPair(REG_SP, context -> 0)
+            .verifyPair(REG_SP, context -> 0xFFFF)
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitUnary(3,
@@ -67,7 +67,7 @@ public class ControlTest extends InstructionsTest {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsMemoryAddressWord(0)
             .verifyPC(context -> context.PC + 3)
-            .verifyPair(REG_SP, context -> 0)
+            .verifyPair(REG_SP, context -> 0xFFFF)
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitUnary(3,
@@ -240,7 +240,7 @@ public class ControlTest extends InstructionsTest {
         cpuVerifierImpl.checkRegister(REG_L, 0);
         cpuVerifierImpl.checkRegisterPair(REG_PAIR_BC, 0);
         cpuVerifierImpl.checkRegisterPair(REG_PAIR_HL, 0);
-        cpuVerifierImpl.checkRegisterPair(REG_SP, 0);
+        cpuVerifierImpl.checkRegisterPair(REG_SP, 0xFFFF);
         cpuVerifierImpl.checkPC(1);
     }
 

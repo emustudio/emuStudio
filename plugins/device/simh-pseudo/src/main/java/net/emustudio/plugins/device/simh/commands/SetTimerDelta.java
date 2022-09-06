@@ -27,17 +27,17 @@ public class SetTimerDelta implements Command {
     public int timerDelta = DEFAULT_TIMER_DELTA;  // interrupt every 100 ms
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         setTimerDeltaPos = 0;
     }
 
     @Override
     public void write(byte data, Control control) {
         if (setTimerDeltaPos == 0) {
-            timerDelta = data;
+            timerDelta = data & 0xFF;
             setTimerDeltaPos = 1;
         } else {
-            timerDelta |= (data << 8);
+            timerDelta = (timerDelta | (data << 8)) & 0xFFFF;
             setTimerDeltaPos = 0;
             control.clearCommand();
             if (timerDelta == 0) {
@@ -49,7 +49,7 @@ public class SetTimerDelta implements Command {
 
     @Override
     public void start(Control control) {
-        reset();
+        reset(control);
         control.clearReadCommand();
     }
 }

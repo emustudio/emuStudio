@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class PaginatingDisassembler {
     public final static int INSTR_PER_PAGE = 2 * 10 + 1;
 
-    private final CallFlow callFlow;
+    private final CallFlow callFlow; // call flow won't contain all locations, it grows only if row == middle
     private final NavigableMap<Integer, Page> bytesPerPageCache = new ConcurrentSkipListMap<>();
 
     private int memorySize;
@@ -187,12 +187,18 @@ public class PaginatingDisassembler {
         lastKnownCurrentLocation = currentLocation;
 
         int newCurrentLocation = findCurrentLocationInPage(currentLocation, tmpCurrentPage);
+        boolean updateCalled = false;
         if (newCurrentLocation != currentLocation || tmpCurrentPage.middleLocation == -1) {
             tmpCurrentPage.setMiddleLocation(newCurrentLocation);
             callFlow.updateCache(currentLocation);
+            updateCalled = true;
         }
 
         if (row == currentInstrRow) {
+            if (!updateCalled) {
+                // update cache always on current instruction
+                callFlow.updateCache(currentLocation);
+            }
             return newCurrentLocation;
         }
 
@@ -276,7 +282,7 @@ public class PaginatingDisassembler {
 
     private int findDecreasing(int currentLocation, Page tmpPage, int currentPageIndex) {
         // currentLocation is above current page. So we will traverse back by maxBytesPerPage to the last known
-        // location in some adjacent page (the nearer the better).
+        // location in some adjacent page (the nearer, the better).
 
         while (tmpPage.index < 0 && tmpPage.middleLocation < 0) {
             Integer nextPageIndex = bytesPerPageCache.ceilingKey(tmpPage.index + 1);

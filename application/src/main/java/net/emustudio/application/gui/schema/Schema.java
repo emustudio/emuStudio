@@ -476,9 +476,11 @@ public class Schema {
             Element from = elements.get(c.getFromPluginId());
             Element to = elements.get(c.getToPluginId());
 
-            List<P> points = c.getSchemaPoints().stream().map(P::of).collect(Collectors.toList());
-            ConnectionLine line = new ConnectionLine(from, to, points, c.isBidirectional());
-            lines.add(line);
+            if (from != null && to != null) {
+                List<P> points = c.getSchemaPoints().stream().map(P::of).collect(Collectors.toList());
+                ConnectionLine line = new ConnectionLine(from, to, points, c.isBidirectional());
+                lines.add(line);
+            }
         });
     }
 

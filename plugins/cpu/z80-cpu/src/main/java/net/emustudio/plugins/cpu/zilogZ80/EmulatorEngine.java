@@ -45,12 +45,13 @@ import static net.emustudio.plugins.cpu.zilogZ80.EmulatorTables.*;
  * Main implementation class for CPU emulation CPU works in a separate thread
  * (parallel with other hardware)
  */
+// TODO: set frequency runtime
 @SuppressWarnings("unused")
 public class EmulatorEngine implements CpuEngine {
     private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
 
     public static final int REG_A = 7, REG_B = 0, REG_C = 1, REG_D = 2, REG_E = 3, REG_H = 4, REG_L = 5;
-    public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_H = 0x10, FLAG_PV = 0x4, FLAG_N = 0x02, FLAG_C = 0x1;
+    public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_Y = 0x20, FLAG_H = 0x10, FLAG_X = 0x8, FLAG_PV = 0x4, FLAG_N = 0x02, FLAG_C = 0x1;
 
     private final static int[] CONDITION = new int[]{
         FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_PV, FLAG_PV, FLAG_S, FLAG_S
@@ -73,6 +74,8 @@ public class EmulatorEngine implements CpuEngine {
     // special registers
     public int PC = 0, SP = 0, IX = 0, IY = 0;
     public int I = 0, R = 0; // interrupt r., refresh r.
+    public int memptr = 0; // internal register, https://gist.github.com/drhelius/8497817
+    public int Q = 0; // internal register,
 
     public final boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
     public byte interruptMode = 0;
@@ -89,6 +92,7 @@ public class EmulatorEngine implements CpuEngine {
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
+        LOGGER.info("Sleep precision: " + SleepUtils.SLEEP_PRECISION + " nanoseconds.");
     }
 
     @Override
@@ -129,8 +133,11 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void reset(int startPos) {
-        SP = IX = IY = 0;
+        IX = IY = 0;
+        SP = 0xFFFF;
+        flags = 0xFF;
         I = R = 0;
+        memptr = 0;
         Arrays.fill(regs, 0);
         Arrays.fill(regs2, 0);
         flags = 0;
@@ -157,10 +164,14 @@ public class EmulatorEngine implements CpuEngine {
     public CPU.RunState run(CPU cpu) {
         long startTime, endTime;
         int cycles_executed;
-        int checkTimeSlice = 100;
+        // In Z80, 1 t-state = 250 ns = 0.25 microseconds = 0.00025 milliseconds
+        // in 10 milliseconds = 10 / 0.00025 = 40000 t-states are executed uncontrollably
+        // in 1 millisecond = 1 / 0.00025 = 4000 t-states :(
+
+        int checkTimeSlice = (int) Math.ceil(SleepUtils.SLEEP_PRECISION / 1000000.0); // milliseconds
         int cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         int cycles;
-        long slice = checkTimeSlice * 1000000;
+        long slice = checkTimeSlice * 1000000L; // nanoseconds
 
         currentRunState = CPU.RunState.STATE_RUNNING;
         while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
@@ -174,16 +185,14 @@ public class EmulatorEngine implements CpuEngine {
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }
+                    context.triggerRunCallbacks();
                 } catch (Breakpoint e) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 } catch (IndexOutOfBoundsException e) {
-                    LOGGER.debug("Unexpected error", e);
-                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                } catch (IOException e) {
                     LOGGER.error("Unexpected error", e);
-                    return RunState.STATE_STOPPED_BAD_INSTR;
+                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
                 } catch (Throwable e) {
-                    LOGGER.debug("Unexpected error", e);
+                    LOGGER.error("Unexpected error", e);
                     return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 }
             }
@@ -245,7 +254,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private int DISPATCH(MethodHandle[] table) throws Throwable {
-        lastOpcode = readByte(PC);
+        lastOpcode = memory.read(PC) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
         incrementR();
 
@@ -260,7 +269,7 @@ public class EmulatorEngine implements CpuEngine {
         byte operand = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
 
-        lastOpcode = readByte(PC);
+        lastOpcode = memory.read(PC) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
         incrementR();
 
@@ -276,7 +285,7 @@ public class EmulatorEngine implements CpuEngine {
         int cycles = 0;
 
         IFF[0] = IFF[1] = false;
-        System.out.println("z80: interrupt! im=" + interruptMode + ", dataBus=" + Arrays.toString(dataBus));
+        //System.out.println("z80: interrupt! im=" + interruptMode + ", dataBus=" + Arrays.toString(dataBus));
         switch (interruptMode) {
             case 0:
                 cycles += 11;
@@ -287,6 +296,7 @@ public class EmulatorEngine implements CpuEngine {
                         SP = (SP - 2) & 0xFFFF;
                         writeWord(SP, PC);
                         PC = ((dataBus[2] & 0xFF) << 8) | (dataBus[1] & 0xFF);
+                        memptr = PC;
                         return cycles + 17;
                     }
 
@@ -301,13 +311,20 @@ public class EmulatorEngine implements CpuEngine {
                 writeWord((SP - 2) & 0xFFFF, PC);
                 SP = (SP - 2) & 0xffff;
                 PC = 0x38;
+                memptr = PC;
                 break;
             case 2:
                 cycles += 13;
                 if (dataBus != null && dataBus.length > 0) {
                     SP = (SP - 2) & 0xFFFF;
-                    writeWord(SP, PC);
-                    PC = readWord((I << 8) | dataBus[0]);
+                    if (memory.read(PC) == 0x76) {
+                        // jump over HALT
+                        writeWord(SP, (PC + 1) & 0xFFFF);
+                    } else {
+                        writeWord(SP, PC);
+                    }
+                    PC = readWord(((I << 8) | (dataBus[0] & 0xFF)) & 0xFFFF);
+                    memptr = PC;
                 }
                 break;
         }
@@ -316,7 +333,7 @@ public class EmulatorEngine implements CpuEngine {
 
     private int getreg(int reg) {
         if (reg == 6) {
-            return readByte((regs[REG_H] << 8) | regs[REG_L]);
+            return memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF;
         }
         return regs[reg];
     }
@@ -370,10 +387,6 @@ public class EmulatorEngine implements CpuEngine {
         return false;
     }
 
-    private int readByte(int address) {
-        return memory.read(address) & 0xFF;
-    }
-
     private int readWord(int address) {
         Byte[] read = memory.read(address, 2);
         return ((read[1] << 8) | (read[0] & 0xFF)) & 0xFFFF;
@@ -381,67 +394,6 @@ public class EmulatorEngine implements CpuEngine {
 
     private void writeWord(int address, int value) {
         memory.write(address, new Byte[]{(byte) (value & 0xFF), (byte) ((value >>> 8) & 0xFF)}, 2);
-    }
-
-    private void bigOverflow(int i, int j, int result) {
-        int sign = i & 0x8000;
-        if (sign != (j & 0x8000)) {
-            flags &= (~FLAG_PV);
-        } else if ((result & 0x8000) != sign) {
-            flags |= FLAG_PV;
-        }
-    }
-
-    private void halfCarry11(int before, int sumWith) {
-        int mask = sumWith & before;
-        int xormask = sumWith ^ before;
-
-        int C0 = mask & 1;
-        int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
-        int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
-        int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
-        int C4 = ((mask >>> 4) ^ (C3 & (xormask >>> 4))) & 1;
-        int C5 = ((mask >>> 5) ^ (C4 & (xormask >>> 5))) & 1;
-        int C6 = ((mask >>> 6) ^ (C5 & (xormask >>> 6))) & 1;
-        int C7 = ((mask >>> 7) ^ (C6 & (xormask >>> 7))) & 1;
-        int C8 = ((mask >>> 8) ^ (C7 & (xormask >>> 8))) & 1;
-        int C9 = ((mask >>> 9) ^ (C8 & (xormask >>> 9))) & 1;
-        int C10 = ((mask >>> 10) ^ (C9 & (xormask >>> 10))) & 1;
-        int C11 = ((mask >>> 11) ^ (C10 & (xormask >>> 11))) & 1;
-
-        if (C11 != 0) {
-            flags |= FLAG_H;
-        } else {
-            flags &= (~FLAG_H);
-        }
-    }
-
-    private void carry15(int before, int sumWith) {
-        int mask = sumWith & before;
-        int xormask = sumWith ^ before;
-
-        int C0 = mask & 1;
-        int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
-        int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
-        int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
-        int C4 = ((mask >>> 4) ^ (C3 & (xormask >>> 4))) & 1;
-        int C5 = ((mask >>> 5) ^ (C4 & (xormask >>> 5))) & 1;
-        int C6 = ((mask >>> 6) ^ (C5 & (xormask >>> 6))) & 1;
-        int C7 = ((mask >>> 7) ^ (C6 & (xormask >>> 7))) & 1;
-        int C8 = ((mask >>> 8) ^ (C7 & (xormask >>> 8))) & 1;
-        int C9 = ((mask >>> 9) ^ (C8 & (xormask >>> 9))) & 1;
-        int C10 = ((mask >>> 10) ^ (C9 & (xormask >>> 10))) & 1;
-        int C11 = ((mask >>> 11) ^ (C10 & (xormask >>> 11))) & 1;
-        int C12 = ((mask >>> 12) ^ (C11 & (xormask >>> 12))) & 1;
-        int C13 = ((mask >>> 13) ^ (C12 & (xormask >>> 13))) & 1;
-        int C14 = ((mask >>> 14) ^ (C13 & (xormask >>> 14))) & 1;
-        int C15 = ((mask >>> 15) ^ (C14 & (xormask >>> 15))) & 1;
-
-        if (C15 != 0) {
-            flags |= FLAG_C;
-        } else {
-            flags &= (~FLAG_C);
-        }
     }
 
     private void incrementR() {
@@ -455,6 +407,8 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_LD_REF_BC_A() {
         memory.write(getpair(0, false), (byte) regs[REG_A]);
+        memptr = (regs[REG_A] << 8) | 1;
+        //	Note for *BM1: MEMPTR_low = (rp + 1) & #FF,  MEMPTR_hi = 0
         return 7;
     }
 
@@ -465,16 +419,18 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_ADD_HL_RP() {
-        int tmp = getpair((lastOpcode >>> 4) & 0x03, true);
-        int tmp1 = getpair(2, true);
-        carry15(tmp, tmp1);
-        halfCarry11(tmp, tmp1);
-        flags &= (~(FLAG_N | FLAG_S | FLAG_Z));
-        tmp += tmp1;
+        int rp = getpair((lastOpcode >>> 4) & 0x03, true);
+        int hl = (regs[REG_H] << 8) | regs[REG_L];
+        memptr = (hl + 1) & 0xFFFF;
 
-        flags |= ((tmp & 0x8000) == 0x8000) ? FLAG_S : 0;
-        flags |= (tmp == 0) ? FLAG_Z : 0;
-        putpair(2, tmp & 0xFFFF, true);
+        int res = hl + rp;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV)) |
+            (((hl ^ res ^ rp) >>> 8) & FLAG_H) |
+            ((res >>> 16) & FLAG_C) | ((res >>> 8) & (FLAG_Y | FLAG_X));
+
+        regs[REG_H] = (res >>> 8) & 0xFF;
+        regs[REG_L] = res & 0xFF;
+
         return 11;
     }
 
@@ -501,6 +457,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_R_N() {
+        Q = 0;
         int reg = (lastOpcode >>> 3) & 0x07;
         putreg(reg, memory.read(PC));
         PC = (PC + 1) & 0xFFFF;
@@ -516,7 +473,7 @@ public class EmulatorEngine implements CpuEngine {
         int regValue = getreg(reg);
         int sum = (regValue + 1) & 0x1FF;
         int sumByte = sum & 0xFF;
-        flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ regValue]) | (flags & FLAG_C);
+        flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ regValue]) | (flags & FLAG_C) | (sumByte & (FLAG_X | FLAG_Y));
         putreg(reg, sumByte);
         return (reg == 6) ? 11 : 4;
     }
@@ -526,12 +483,13 @@ public class EmulatorEngine implements CpuEngine {
         int regValue = getreg(reg);
         int sum = (regValue - 1) & 0x1FF;
         int sumByte = sum & 0xFF;
-        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ regValue]) | (flags & FLAG_C);
+        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ regValue]) | (flags & FLAG_C) | (sumByte & (FLAG_X | FLAG_Y));
         putreg(reg, sumByte);
         return (reg == 6) ? 11 : 4;
     }
 
     int I_RET_CC() {
+        Q = 0;
         int cc = (lastOpcode >>> 3) & 7;
         if ((flags & CONDITION[cc]) == CONDITION_VALUES[cc]) {
             PC = readWord(SP);
@@ -545,6 +503,7 @@ public class EmulatorEngine implements CpuEngine {
         SP = (SP - 2) & 0xffff;
         writeWord(SP, PC);
         PC = lastOpcode & 0x38;
+        memptr = PC;
         return 11;
     }
 
@@ -553,8 +512,18 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA + value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return (lastOpcode == 0x86) ? 7 : 4;
+    }
+
+    int I_ADD_A_N() {
+        int value = memory.read(PC) & 0xFF;
+        PC = (PC + 1) & 0xFFFF;
+        int oldA = regs[REG_A];
+        int sum = (oldA + value) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (regs[REG_A] & (FLAG_X | FLAG_Y));
+        return 7;
     }
 
     int I_ADC_A_R() {
@@ -562,8 +531,18 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return (lastOpcode == 0x8E) ? 7 : 4;
+    }
+
+    int I_ADC_A_N() {
+        int value = memory.read(PC) & 0xFF;
+        PC = (PC + 1) & 0xFFFF;
+        int oldA = regs[REG_A];
+        int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (regs[REG_A] & (FLAG_X | FLAG_Y));
+        return 7;
     }
 
     int I_SUB_R() {
@@ -573,7 +552,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (oldA - value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
 
-        flags = TABLE_SUB[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SUB[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return (lastOpcode == 0x96) ? 7 : 4;
     }
 
@@ -584,26 +563,65 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
 
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA];
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return (lastOpcode == 0x9E) ? 7 : 4;
+    }
+
+    int I_SBC_A_N() {
+        int value = memory.read(PC) & 0xFF;
+        PC = (PC + 1) & 0xFFFF;
+
+        int oldA = regs[REG_A];
+        int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | (regs[REG_A] & (FLAG_X | FLAG_Y));
+        return 7;
     }
 
     int I_AND_R() {
         regs[REG_A] = (regs[REG_A] & getreg(lastOpcode & 7)) & 0xFF;
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        flags = TABLE_SZ[regs[REG_A]] | FLAG_H | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return (lastOpcode == 0xA6) ? 7 : 4;
+    }
+
+    int I_AND_N() {
+        int tmp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+
+        regs[REG_A] = (regs[REG_A] & tmp) & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | FLAG_H | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
+        return 7;
     }
 
     int I_XOR_R() {
         regs[REG_A] = ((regs[REG_A] ^ getreg(lastOpcode & 7)) & 0xff);
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return (lastOpcode == 0xAE) ? 7 : 4;
+    }
+
+    int I_XOR_N() {
+        int tmp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+
+        regs[REG_A] = ((regs[REG_A] ^ tmp) & 0xFF);
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
+        return 7;
     }
 
     int I_OR_R() {
         regs[REG_A] = (regs[REG_A] | getreg(lastOpcode & 7)) & 0xFF;
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return (lastOpcode == 0xB6) ? 7 : 4;
+    }
+
+    int I_OR_N() {
+        int tmp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+
+        regs[REG_A] = (regs[REG_A] | tmp) & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
+        return 7;
     }
 
     int I_CP_R() {
@@ -611,14 +629,26 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         int result = sum & 0xFF;
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]);
+        // F5 and F3 flags are set from the subtrahend instead of from the result.
+        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | (value & (FLAG_X | FLAG_Y));
         return (lastOpcode == 0xBE) ? 7 : 4;
     }
 
+    int I_CP_N() {
+        int value = memory.read(PC) & 0xFF;
+        PC = (PC + 1) & 0xFFFF;
+
+        int oldA = regs[REG_A];
+        int sum = (oldA - value) & 0x1FF;
+        int result = sum & 0xFF;
+        // F5 and F3 flags are set from the subtrahend instead of from the result.
+        flags = (TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA])) | (value & (FLAG_X | FLAG_Y));
+        return 7;
+    }
+
     int I_RLCA() {
-        int tmp = regs[REG_A] >>> 7;
-        regs[REG_A] = ((((regs[REG_A] << 1) & 0xFF) | tmp) & 0xff);
-        flags = ((flags & 0xEC) | tmp);
+        regs[REG_A] = ((regs[REG_A] << 1) | (regs[REG_A] >>> 7)) & 0xFF;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV)) | (regs[REG_A] & (FLAG_X | FLAG_Y | FLAG_C));
         return 4;
     }
 
@@ -633,22 +663,27 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_A_REF_BC() {
-        regs[REG_A] = readByte(getpair(0, false));
+        int bc = regs[REG_B] << 8 | regs[REG_C];
+        regs[REG_A] = memory.read(bc) & 0xFF;
+        memptr = bc;
         return 7;
     }
 
     int I_RRCA() {
-        flags = ((flags & 0xEC) | (regs[REG_A] & 1));
-        regs[REG_A] = EmulatorTables.RRCA_TABLE[regs[REG_A]];
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV)) | (regs[REG_A] & FLAG_C);
+        regs[REG_A] = ((regs[REG_A] >>> 1) | (regs[REG_A] << 7)) & 0xFF;
+        flags |= (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 4;
     }
 
     int I_DJNZ() {
-        byte tmp = memory.read(PC);
+        Q = 0;
+        byte addr = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
         if (regs[REG_B] != 0) {
-            PC = (PC + tmp) & 0xFFFF;
+            PC = (PC + addr) & 0xFFFF;
+            memptr = PC;
             return 13;
         }
         return 8;
@@ -656,96 +691,85 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_LD_REF_DE_A() {
         memory.write(getpair(1, false), (byte) regs[REG_A]);
+        memptr = (regs[REG_A] << 8) | 2;
+        //	Note for *BM1: MEMPTR_low = (rp + 1) & #FF,  MEMPTR_hi = 0
         return 7;
     }
 
     int I_RLA() {
-        int tmp = regs[REG_A] >>> 7;
-        regs[REG_A] = (((regs[REG_A] << 1) | (flags & FLAG_C)) & 0xff);
-        flags = ((flags & 0xEC) | tmp);
+        int res = ((regs[REG_A] << 1) | (flags & FLAG_C)) & 0xFF;
+        int flagC = ((regs[REG_A] & 0x80) == 0x80) ? FLAG_C : 0;
+        regs[REG_A] = res;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV)) | flagC | (res & (FLAG_X | FLAG_Y));
         return 4;
     }
 
     int I_LD_A_REF_DE() {
-        regs[REG_A] = readByte(getpair(1, false));
+        int de = regs[REG_D] << 8 | regs[REG_E];
+        regs[REG_A] = memory.read(de) & 0xFF;
+        memptr = de;
         return 7;
     }
 
     int I_RRA() {
-        int tmp = (flags & FLAG_C) << 7;
-        flags = ((flags & 0xEC) | (regs[REG_A] & 1));
-        regs[REG_A] = ((regs[REG_A] >>> 1 | tmp) & 0xff);
+        int res = ((regs[REG_A] >>> 1) | (flags << 7)) & 0xFF;
+        int flagC = regs[REG_A] & FLAG_C;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV)) | flagC | (res & (FLAG_X | FLAG_Y));
+        regs[REG_A] = res;
         return 4;
     }
 
     int I_DAA() {
-        int temp = regs[REG_A];
-        boolean acFlag = (flags & FLAG_H) == FLAG_H;
-        boolean cFlag = (flags & FLAG_C) == FLAG_C;
-        boolean nFlag = (flags & FLAG_N) == FLAG_N;
+        // The following algorithm is from comp.sys.sinclair's FAQ.
+        int c, d;
 
-        if (!acFlag && !cFlag) {
-            regs[REG_A] = EmulatorTables.DAA_NOT_C_NOT_H_TABLE[temp] & 0xFF;
-            flags = (EmulatorTables.DAA_NOT_C_NOT_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-            if (nFlag) {
-                flags |= EmulatorTables.DAA_N_NOT_H_FOR_H_TABLE[temp];
-            } else {
-                flags |= EmulatorTables.DAA_NOT_N_NOT_H_FOR_H_TABLE[temp];
-            }
-        } else if (acFlag && !cFlag) {
-            regs[REG_A] = EmulatorTables.DAA_NOT_C_H_TABLE[temp] & 0xFF;
-            flags = (EmulatorTables.DAA_NOT_C_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-            if (nFlag) {
-                flags |= EmulatorTables.DAA_N_H_FOR_H_TABLE[temp];
-            } else {
-                flags |= EmulatorTables.DAA_NOT_N_H_FOR_H_TABLE[temp];
-            }
-        } else if (!acFlag) { // cFlag = true
-            regs[REG_A] = EmulatorTables.DAA_C_NOT_H_TABLE[temp] & 0xFF;
-            flags = (EmulatorTables.DAA_C_NOT_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-            if (nFlag) {
-                flags |= EmulatorTables.DAA_N_NOT_H_FOR_H_TABLE[temp];
-            } else {
-                flags |= EmulatorTables.DAA_NOT_N_NOT_H_FOR_H_TABLE[temp];
-            }
-        } else { // acFlag = cFlag = true
-            regs[REG_A] = EmulatorTables.DAA_C_H_TABLE[temp] & 0xFF;
-            flags = (EmulatorTables.DAA_C_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-            if (nFlag) {
-                flags |= EmulatorTables.DAA_N_H_FOR_H_TABLE[temp];
-            } else {
-                flags |= EmulatorTables.DAA_NOT_N_H_FOR_H_TABLE[temp];
-            }
+        int a = regs[REG_A];
+        if (a > 0x99 || ((flags & FLAG_C) != 0)) {
+            c = FLAG_C;
+            d = 0x60;
+        } else {
+            c = d = 0;
         }
-        flags |= EmulatorTables.PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]];
+
+        if ((a & 0x0f) > 0x09 || ((flags & FLAG_H) != 0)) {
+            d += 0x06;
+        }
+
+        regs[REG_A] = ((flags & FLAG_N) != 0 ? regs[REG_A] - d : regs[REG_A] + d) & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]]
+            | PARITY_TABLE[regs[REG_A]]
+            | (regs[REG_A] & (FLAG_X | FLAG_Y))
+            | ((regs[REG_A] ^ a) & FLAG_H)
+            | (flags & FLAG_N)
+            | c;
         return 4;
     }
 
     int I_CPL() {
-        regs[REG_A] = ((~regs[REG_A]) & 0xFF);
-        flags |= FLAG_N | FLAG_H;
+        regs[REG_A] = (~regs[REG_A]) & 0xFF;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV | FLAG_C))
+            | FLAG_H | FLAG_N
+            | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 4;
     }
 
     int I_SCF() {
-        flags |= FLAG_N | FLAG_C;
-        flags &= ~FLAG_H;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV)) | (regs[REG_A] & (FLAG_X | FLAG_Y)) | FLAG_C;
         return 4;
     }
 
     int I_CCF() {
-        int tmp = flags & FLAG_C;
-        if (tmp == 0) {
-            flags |= FLAG_C;
-        } else {
-            flags &= ~FLAG_C;
-        }
-        flags &= ~FLAG_N;
+        int c = flags & FLAG_C;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV)) | (c << 4)
+            | (regs[REG_A] & (FLAG_X | FLAG_Y))
+            | (c ^ FLAG_C);
         return 4;
     }
 
     int I_RET() {
+        Q = 0;
         PC = readWord(SP);
+        memptr = PC;
         SP = (SP + 2) & 0xFFFF;
         return 10;
     }
@@ -780,6 +804,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(x, (byte) regs[REG_H]);
         regs[REG_L] = tmp & 0xFF;
         regs[REG_H] = tmp1 & 0xFF;
+        memptr = (regs[REG_H] << 8) | regs[REG_L];
         return 19;
     }
 
@@ -809,94 +834,73 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_EI() {
+        // https://www.smspower.org/forums/2511-LDILDIRLDDLDDRCRCInZEXALL
+        // TODO:  interrupts are not actually allowed until after the *next* instruction after EI. This is used to prevent interrupts from occuring between an EI/RETI pair used at the end of interrupt handlers.
         IFF[0] = IFF[1] = true;
         return 4;
     }
 
     int I_IN_R_REF_C() {
-        int tmp = (lastOpcode >>> 3) & 0x7;
-        putreg(tmp, context.readIO(regs[REG_C]));
-        flags = (flags & FLAG_C) | TABLE_SZ[regs[tmp]] | EmulatorTables.PARITY_TABLE[regs[tmp]];
+        int reg = (lastOpcode >>> 3) & 0x7;
+        putreg(reg, context.readIO(regs[REG_C]));
+        if (reg == REG_A) {
+            memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
+        }
+        flags = (flags & FLAG_C) | TABLE_SZ[regs[reg]] | EmulatorTables.PARITY_TABLE[regs[reg]];
         return 12;
     }
 
     int I_OUT_REF_C_R() {
-        int tmp = (lastOpcode >>> 3) & 0x7;
-        context.writeIO(regs[REG_C], (byte) getreg(tmp));
+        int reg = (lastOpcode >>> 3) & 0x7;
+        if (reg == REG_A) {
+            memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
+        }
+        context.writeIO(regs[REG_C], (byte) getreg(reg));
         return 12;
     }
 
     int I_SBC_HL_RP() {
-        int tmp = -getpair((lastOpcode >>> 4) & 0x03, true);
-        int tmp1 = getpair(2, true);
-        if ((flags & FLAG_C) == FLAG_C) {
-            tmp--;
-        }
+        int rp = getpair((lastOpcode >>> 4) & 0x03, true);
+        int hl = ((regs[REG_H] << 8) | regs[REG_L]) & 0xFFFF;
+        memptr = (hl + 1) & 0xFFFF;
+        int res = hl - rp - (flags & FLAG_C);
 
-        int sum = (tmp1 + tmp) & 0xFFFF;
-        tmp &= 0xFFFF;
+        flags = (((hl ^ res ^ rp) >>> 8) & FLAG_H) | FLAG_N |
+            ((res >>> 16) & FLAG_C) |
+            ((res >>> 8) & (FLAG_S | FLAG_Y | FLAG_X)) |
+            (((res & 0xFFFF) != 0) ? 0 : FLAG_Z) |
+            (((rp ^ hl) & (hl ^ res) & 0x8000) >>> 13);
 
-        if ((sum & 0x8000) != 0) {
-            flags |= FLAG_S;
-        } else {
-            flags &= (~FLAG_S);
-        }
-        if (sum == 0) {
-            flags |= FLAG_Z;
-        } else {
-            flags &= (~FLAG_Z);
-        }
-        flags |= FLAG_N;
-
-        carry15(tmp1, tmp);
-        halfCarry11(tmp1, tmp);
-        bigOverflow(tmp1, tmp, sum);
-        putpair(2, sum, true);
-
+        regs[REG_H] = (res >>> 8) & 0xFF;
+        regs[REG_L] = res & 0xFF;
         return 15;
     }
 
     int I_ADC_HL_RP() {
-        int tmp = getpair((lastOpcode >>> 4) & 0x03, true);
-        int tmp1 = getpair(2, true);
-        if ((flags & FLAG_C) == FLAG_C) {
-            tmp++;
-        }
-        int sum = tmp + tmp1;
-        tmp1 &= 0xFFFF;
-        sum &= 0xFFFF;
+        int rp = getpair((lastOpcode >>> 4) & 0x03, true);
+        int hl = (regs[REG_H] << 8 | regs[REG_L]) & 0xFFFF;
+        memptr = (hl + 1) & 0xFFFF;
+        int res = hl + rp + (flags & FLAG_C);
 
-        if ((sum & 0x8000) != 0) {
-            flags |= FLAG_S;
-        } else {
-            flags &= (~FLAG_S);
-        }
-        if (sum == 0) {
-            flags |= FLAG_Z;
-        } else {
-            flags &= (~FLAG_Z);
-        }
-        flags &= (~FLAG_N);
-        carry15(tmp, tmp1);
-        halfCarry11(tmp, tmp1);
-        bigOverflow(tmp, tmp1, sum);
-        putpair(2, sum, false);
+        flags = (((hl ^ res ^ rp) >>> 8) & FLAG_H) |
+            ((res >>> 16) & FLAG_C) |
+            ((res >>> 8) & (FLAG_S | FLAG_Y | FLAG_X)) |
+            (((res & 0xFFFF) != 0) ? 0 : FLAG_Z) |
+            (((rp ^ hl ^ 0x8000) & (rp ^ res) & 0x8000) >>> 13);
 
+        regs[REG_H] = (res >>> 8) & 0xFF;
+        regs[REG_L] = (res & 0xFF);
         return 11;
     }
 
     int I_NEG() {
-        int prevValue = regs[REG_A];
-        regs[REG_A] = (((~prevValue) & 0xFF) + 1) & 0xFF;
-        int zero = (regs[REG_A] == 0) ? FLAG_Z : 0;
-        int carry = (prevValue == 0) ? 0 : FLAG_C;
-        int carryIns = regs[REG_A] ^ prevValue;
-        int overflow = (prevValue == 0x80) ? FLAG_PV : 0;
-        flags = overflow | (regs[REG_A] & 0x80) | zero | (carryIns & 0x10) | FLAG_N | carry;
-        return 8;
+        int v = regs[REG_A];
+        regs[REG_A] = 0;
+        return I_SUB(v);
     }
 
     int I_RETN() {
+        Q = 0;
         IFF[0] = IFF[1];
         PC = readWord(SP);
         SP = (SP + 2) & 0xffff;
@@ -914,8 +918,10 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RETI() {
+        Q = 0;
         IFF[0] = IFF[1];
         PC = readWord(SP);
+        memptr = PC;
         SP = (SP + 2) & 0xffff;
         return 14;
     }
@@ -930,46 +936,50 @@ public class EmulatorEngine implements CpuEngine {
         return 8;
     }
 
-    int I_LD_A_I() {
-        regs[REG_A] = I & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
-        return 9;
-    }
-
     int I_IM_2() {
         interruptMode = 2;
         return 8;
     }
 
+    int I_LD_A_I() {
+        regs[REG_A] = I & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C) | (regs[REG_A] & (FLAG_X | FLAG_Y));
+        return 9;
+    }
+
     int I_LD_A_R() {
         regs[REG_A] = R & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
+        flags = TABLE_SZ[regs[REG_A]] | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 9;
     }
 
     int I_RRD() {
-        int tmp = regs[REG_A] & 0x0F;
-        int tmp1 = memory.read((regs[REG_H] << 8) | regs[REG_L]);
-        regs[REG_A] = ((regs[REG_A] & 0xF0) | (tmp1 & 0x0F));
-        tmp1 = ((tmp1 >>> 4) & 0x0F) | (tmp << 4);
-        memory.write(((regs[REG_H] << 8) | regs[REG_L]), (byte) (tmp1 & 0xff));
-        flags = TABLE_SZ[regs[REG_A]] | EmulatorTables.PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C);
+        int regA = regs[REG_A] & 0x0F;
+        int hl = (regs[REG_H] << 8) | regs[REG_L];
+        memptr = (hl + 1) & 0xFFFF;
+        int value = memory.read(hl);
+        regs[REG_A] = ((regs[REG_A] & 0xF0) | (value & 0x0F));
+        value = ((value >>> 4) & 0x0F) | (regA << 4);
+        memory.write(hl, (byte) (value & 0xff));
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 18;
     }
 
     int I_RLD() {
-        int tmp = memory.read((regs[REG_H] << 8) | regs[REG_L]);
-        int tmp1 = (tmp >>> 4) & 0x0F;
-        tmp = ((tmp << 4) & 0xF0) | (regs[REG_A] & 0x0F);
+        int hl = (regs[REG_H] << 8) | regs[REG_L];
+        int value = memory.read(hl);
+        memptr = (hl + 1) & 0xFFFF;
+        int tmp1 = (value >>> 4) & 0x0F;
+        value = ((value << 4) & 0xF0) | (regs[REG_A] & 0x0F);
         regs[REG_A] = ((regs[REG_A] & 0xF0) | tmp1);
-        memory.write((regs[REG_H] << 8) | regs[REG_L], (byte) (tmp & 0xff));
-        flags = TABLE_SZ[regs[REG_A]] | EmulatorTables.PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C);
+        memory.write((regs[REG_H] << 8) | regs[REG_L], (byte) (value & 0xff));
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 18;
     }
 
     int I_IN_REF_C() {
         int tmp = (context.readIO(regs[REG_C]) & 0xFF);
-        flags = TABLE_SZ[tmp] | EmulatorTables.PARITY_TABLE[tmp] | (flags & FLAG_C);
+        flags = TABLE_SZ[tmp] | PARITY_TABLE[tmp] | (flags & FLAG_C);
         return 12;
     }
 
@@ -979,105 +989,132 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_CPI() {
-        int hl = (regs[REG_H] << 8) | regs[REG_L];
-        int bc = (regs[REG_B] << 8) | regs[REG_C];
+        int a, n, z, f, hl, bc;
+        a = regs[REG_A];
+        hl = (regs[REG_H] << 8) | regs[REG_L];
+        bc = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
 
-        int value = readByte(hl);
+        n = memory.read(hl) & 0xFF;
+        z = a - n;
+
         hl = (hl + 1) & 0xFFFF;
-        bc = (bc - 1) & 0xFFFF;
-
-        int sum = (regs[REG_A] - value) & 0xFF;
-        int flagH = (sum ^ regs[REG_A] ^ value) & FLAG_H;
-        int flagP = (bc != 0) ? FLAG_PV : 0;
-        flags = TABLE_SUB[sum] | flagH | flagP | (flags & FLAG_C);
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
         regs[REG_B] = (bc >>> 8) & 0xFF;
         regs[REG_C] = bc & 0xFF;
+
+        f = (a ^ n ^ z) & FLAG_H;
+
+        n = z - (f >> 4);
+        f |= (n << 4) & FLAG_Y;
+        f |= n & FLAG_X;
+
+        f |= TABLE_SZ[z & 0xFF];
+        f |= (bc != 0) ? FLAG_PV : 0;
+        flags = f | FLAG_N | (flags & FLAG_C);
         return 16;
     }
 
     int I_CPIR() {
-        int hl = (regs[REG_H] << 8) | regs[REG_L];
         int bc = (regs[REG_B] << 8) | regs[REG_C];
+        int hl = (regs[REG_H] << 8) | regs[REG_L];
 
-        int value = readByte(hl);
+        int n = memory.read(hl) & 0xFF;
+        int z = regs[REG_A] - n;
+
         hl = (hl + 1) & 0xFFFF;
-        bc = (bc - 1) & 0xFFFF;
-
-        int sum = (regs[REG_A] - value) & 0xFF;
-        int flagH = (sum ^ regs[REG_A] ^ value) & FLAG_H;
-        int flagP = (bc != 0) ? FLAG_PV : 0;
-        flags = TABLE_SUB[sum] | flagH | flagP | (flags & FLAG_C);
+        int cycles;
+        if ((--bc) != 0 && (z != 0)) {
+            cycles = 21;
+            PC = (PC - 2) & 0xFFFF;
+        } else {
+            cycles = 16;
+        }
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
         regs[REG_B] = (bc >>> 8) & 0xFF;
         regs[REG_C] = bc & 0xFF;
 
-        if ((bc == 0) || (regs[REG_A] == value)) {
-            return 16;
-        }
-        PC = (PC - 2) & 0xFFFF;
-        return 21;
+        int f = (regs[REG_A] ^ n ^ z) & FLAG_H;
+        n = z - (f >>> 4);
+        f |= ((n << 4) & FLAG_Y);
+        f |= (n & FLAG_X);
+        f |= TABLE_SZ[z & 0xFF];
+        f |= (bc != 0) ? FLAG_PV : 0;
+
+        flags = f | FLAG_N | (flags & FLAG_C);
+        return cycles;
     }
 
     int I_CPD() {
+        int a = regs[REG_A];
         int hl = (regs[REG_H] << 8) | regs[REG_L];
-        int bc = (regs[REG_B] << 8) | regs[REG_C];
+        int bc = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
 
-        int value = readByte(hl);
+        int n = memory.read(hl) & 0xFF;
         hl = (hl - 1) & 0xFFFF;
-        bc = (bc - 1) & 0xFFFF;
-
-        int sum = (regs[REG_A] - value) & 0xFF;
-        int flagH = (sum ^ regs[REG_A] ^ value) & FLAG_H;
-        int flagP = (bc != 0) ? FLAG_PV : 0;
-        flags = TABLE_SUB[sum] | flagH | flagP | (flags & FLAG_C);
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
         regs[REG_B] = (bc >>> 8) & 0xFF;
         regs[REG_C] = bc & 0xFF;
+
+        int z = a - n;
+        int f = (a ^ n ^ z) & FLAG_H;
+
+        n = z - (f >> 4);
+        f |= (n << 4) & FLAG_Y;
+        f |= n & FLAG_X;
+
+        f |= TABLE_SZ[z & 0xFF];
+        f |= (bc != 0) ? FLAG_PV : 0;
+        flags = f | FLAG_N | (flags & FLAG_C);
         return 16;
     }
 
     int I_CPDR() {
-        int hl = (regs[REG_H] << 8) | regs[REG_L];
+        int a = regs[REG_A];
         int bc = (regs[REG_B] << 8) | regs[REG_C];
+        int hl = (regs[REG_H] << 8) | regs[REG_L];
 
-        int value = readByte(hl);
+        int n = memory.read(hl) & 0xFF;
+        int z = a - n;
+
         hl = (hl - 1) & 0xFFFF;
-        bc = (bc - 1) & 0xFFFF;
-
-        int sum = (regs[REG_A] - value) & 0xFF;
-        int flagH = (sum ^ regs[REG_A] ^ value) & FLAG_H;
-        int flagP = (bc != 0) ? FLAG_PV : 0;
-        flags = TABLE_SUB[sum] | flagH | flagP | (flags & FLAG_C);
+        int cycles;
+        if ((--bc) != 0 && (z != 0)) {
+            cycles = 21;
+            PC = (PC - 2) & 0xFFFF;
+        } else {
+            cycles = 16;
+        }
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
         regs[REG_B] = (bc >>> 8) & 0xFF;
         regs[REG_C] = bc & 0xFF;
 
-        if ((bc == 0) || (regs[REG_A] == value)) {
-            return 16;
-        }
-        PC = (PC - 2) & 0xFFFF;
-        return 21;
+        int f = (a ^ n ^ z) & FLAG_H;
+        n = z - (f >>> 4);
+        f |= ((n << 4) & FLAG_Y);
+        f |= (n & FLAG_X);
+        f |= TABLE_SZ[z & 0xFF];
+        f |= (bc != 0) ? FLAG_PV : 0;
+
+        flags = f | FLAG_N | (flags & FLAG_C);
+        return cycles;
     }
 
     int I_LDD() {
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         int de = (regs[REG_D] << 8) | regs[REG_E];
-        int bc = (regs[REG_B] << 8) | regs[REG_C];
 
-        memory.write(de, memory.read(hl));
+        byte io = memory.read(hl--);
+        memory.write(de--, io);
 
-        hl = (hl - 1) & 0xFFFF;
-        de = (de - 1) & 0xFFFF;
-        bc = (bc - 1) & 0xFFFF;
+        int bc = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
@@ -1085,46 +1122,43 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_E] = de & 0xFF;
         regs[REG_B] = (bc >>> 8) & 0xFF;
         regs[REG_C] = bc & 0xFF;
-        flags = ((flags & FLAG_S) | (flags & FLAG_Z) | (flags & FLAG_C)) & (~FLAG_PV);
-        if (bc != 0) {
-            flags |= FLAG_PV;
-        }
+
+        int result = regs[REG_A] + io;
+
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) |
+            ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
         return 16;
     }
 
     int I_LDDR() {
-        int tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-        int tmp2 = (regs[REG_D] << 8) | regs[REG_E];
-        memory.write(tmp2, memory.read(tmp1));
-        tmp1 = (tmp1 - 1) & 0xFFFF;
-        tmp2 = (tmp2 - 1) & 0xFFFF;
-        int tmp = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
-        regs[REG_H] = ((tmp1 >>> 8) & 0xff);
-        regs[REG_L] = (tmp1 & 0xFF);
-        regs[REG_B] = ((tmp >>> 8) & 0xff);
-        regs[REG_C] = (tmp & 0xFF);
-        regs[REG_D] = ((tmp2 >>> 8) & 0xff);
-        regs[REG_E] = (tmp2 & 0xFF);
-        flags &= 0xE9;
-        if (tmp != 0) {
-            flags |= FLAG_PV;
-        } else {
+        int bc = (regs[REG_B] << 8) | regs[REG_C];
+        if (bc != 1) {
+            memptr = (PC - 1) & 0xFFFF;
+        }
+
+        I_LDD();
+        if ((regs[REG_B] == 0) && (regs[REG_C] == 0)) {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        // https://github.com/hoglet67/Z80Decoder/wiki/Undocumented-Flags#interrupted-block-instructions
+        //YF = PC.13
+        //XF = PC.11
+        flags &= 0xD7;  // reset P/V, X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+
         return 21;
     }
 
     int I_LDI() {
-        int hl = getpair(2, false);
-        int de = getpair(1, false);
-        int bc = getpair(0, false);
+        int hl = (regs[REG_H] << 8) | regs[REG_L];
+        int de = (regs[REG_D] << 8) | regs[REG_E];
 
-        memory.write(de, memory.read(hl));
+        byte io = memory.read(hl++);
+        memory.write(de++, io);
 
-        hl = (hl + 1) & 0xFFFF;
-        de = (de + 1) & 0xFFFF;
-        bc = (bc - 1) & 0xFFFF;
+        int bc = ((((regs[REG_B] << 8) | regs[REG_C]) & 0xFFFF) - 1) & 0xFFFF;
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
@@ -1133,21 +1167,41 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_B] = (bc >>> 8) & 0xFF;
         regs[REG_C] = bc & 0xFF;
 
-        int flagP = (bc != 0) ? FLAG_PV : 0;
-        flags = (flags & FLAG_S) | (flags & FLAG_Z) | (flags & FLAG_C) | flagP;
+        int result = regs[REG_A] + (io & 0xFF);
+
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) |
+            ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
         return 16;
     }
 
     int I_LDIR() {
-        int hl = (regs[REG_H] << 8) | regs[REG_L];
-        int de = (regs[REG_D] << 8) | regs[REG_E];
+        int f = flags & (FLAG_S | FLAG_Z | FLAG_C);
         int bc = (regs[REG_B] << 8) | regs[REG_C];
+        int de = (regs[REG_D] << 8) | regs[REG_E];
+        int hl = (regs[REG_H] << 8) | regs[REG_L];
 
-        memory.write(de, memory.read(hl));
+        if (bc != 1) {
+            memptr = (PC + 1) & 0xFFFF;
+        }
+
+        int n = memory.read(hl) & 0xFF;
+        memory.write(de, (byte) n);
 
         hl = (hl + 1) & 0xFFFF;
         de = (de + 1) & 0xFFFF;
-        bc = (bc - 1) & 0xFFFF;
+
+        int cycles;
+        if ((--bc) != 0) {
+            cycles = 21;
+            f |= FLAG_PV;
+            f |= ((PC >>> 8) & (FLAG_Y | FLAG_X));
+            PC = (PC - 2) & 0xFFFF;
+        } else {
+            cycles = 16;
+            n += regs[REG_A];
+            f |= n & FLAG_X;
+            f |= ((n << 4) & FLAG_Y);
+        }
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
@@ -1156,19 +1210,44 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_B] = (bc >>> 8) & 0xFF;
         regs[REG_C] = bc & 0xFF;
 
-        int flagP = (bc != 0) ? FLAG_PV : 0;
-        flags = (flags & FLAG_S) | (flags & FLAG_Z) | (flags & FLAG_C) | flagP;
-        if (bc == 0) {
-            return 16;
+        flags = f;
+        return cycles;
+    }
+
+    public static String intToFlags(int flags) {
+        String flagsString = "";
+        if ((flags & FLAG_S) == FLAG_S) {
+            flagsString += "S";
         }
-        PC = (PC - 2) & 0xFFFF;
-        return 21;
+        if ((flags & FLAG_Z) == FLAG_Z) {
+            flagsString += "Z";
+        }
+        if ((flags & FLAG_Y) == FLAG_Y) {
+            flagsString += "Y";
+        }
+        if ((flags & FLAG_H) == FLAG_H) {
+            flagsString += "H";
+        }
+        if ((flags & FLAG_X) == FLAG_X) {
+            flagsString += "X";
+        }
+        if ((flags & FLAG_PV) == FLAG_PV) {
+            flagsString += "P";
+        }
+        if ((flags & FLAG_N) == FLAG_N) {
+            flagsString += "N";
+        }
+        if ((flags & FLAG_C) == FLAG_C) {
+            flagsString += "C";
+        }
+        return flagsString;
     }
 
     int I_INI() {
         byte value = context.readIO(regs[REG_C]);
         int address = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(address, value);
+        memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
 
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
         address++;
@@ -1185,6 +1264,7 @@ public class EmulatorEngine implements CpuEngine {
         byte value = context.readIO(regs[REG_C]);
         int address = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(address, value);
+        memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
 
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
         address++;
@@ -1198,6 +1278,20 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        flags &= 0xD7;  // reset X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= (~FLAG_H);
+            if ((value & 0x80) != 0) {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] - 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0 ? FLAG_H : 0);
+            } else {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] + 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0x0F ? FLAG_H : 0);
+            }
+        }
+
         return 21;
     }
 
@@ -1205,6 +1299,7 @@ public class EmulatorEngine implements CpuEngine {
         byte value = context.readIO(regs[REG_C]);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(hl, value);
+        memptr = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
 
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
         hl = (hl - 1) & 0xFFFF;
@@ -1220,6 +1315,7 @@ public class EmulatorEngine implements CpuEngine {
         byte value = context.readIO(regs[REG_C]);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(hl, value);
+        memptr = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
 
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
         hl = (hl - 1) & 0xFFFF;
@@ -1233,6 +1329,19 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        flags &= 0xD7;  // reset X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= (~FLAG_H);
+            if ((value & 0x80) != 0) {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] - 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0 ? FLAG_H : 0);
+            } else {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] + 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0x0F ? FLAG_H : 0);
+            }
+        }
         return 21;
     }
 
@@ -1245,6 +1354,7 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_H] = (address >>> 8) & 0xFF;
         regs[REG_L] = address & 0xFF;
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+        memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
 
         flags = FLAG_N | (regs[REG_B] == 0 ? FLAG_Z : 0) | (flags & FLAG_C) | (flags & FLAG_S) | (flags & FLAG_PV) | (flags & FLAG_H);
         return 16;
@@ -1259,6 +1369,7 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_H] = (address >>> 8) & 0xFF;
         regs[REG_L] = address & 0xFF;
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+        memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
 
         flags |= FLAG_Z | FLAG_N; // FLAG_Z is set b/c it is expected that OTIR will be repeated until B=0
 
@@ -1266,6 +1377,19 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        flags &= 0xD7;  // reset X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= (~FLAG_H);
+            if ((value & 0x80) != 0) {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] - 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0 ? FLAG_H : 0);
+            } else {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] + 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0x0F ? FLAG_H : 0);
+            }
+        }
         return 21;
     }
 
@@ -1278,6 +1402,7 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_H] = (address >>> 8) & 0xFF;
         regs[REG_L] = address & 0xFF;
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+        memptr = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
 
         flags = FLAG_N | (regs[REG_B] == 0 ? FLAG_Z : 0) | (flags & FLAG_C) | (flags & FLAG_S) | (flags & FLAG_PV) | (flags & FLAG_H);
         return 16;
@@ -1292,6 +1417,7 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_H] = (address >>> 8) & 0xFF;
         regs[REG_L] = address & 0xFF;
         regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+        memptr = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
 
         flags |= FLAG_Z | FLAG_N;
 
@@ -1299,137 +1425,90 @@ public class EmulatorEngine implements CpuEngine {
             return 16;
         }
         PC = (PC - 2) & 0xFFFF;
+
+        flags &= 0xD7;  // reset X, Y
+        flags |= ((PC >>> 8) & (FLAG_X | FLAG_Y));
+        if ((flags & FLAG_C) == FLAG_C) {
+            flags &= (~FLAG_H);
+            if ((value & 0x80) != 0) {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] - 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0 ? FLAG_H : 0);
+            } else {
+                flags |= (flags & FLAG_PV) ^ PARITY_TABLE[(regs[REG_B] + 1) & 0x7] ^ FLAG_PV;
+                flags |= ((regs[REG_B] & 0x0F) == 0x0F ? FLAG_H : 0);
+            }
+        }
         return 21;
     }
 
     int I_LD_REF_NN_RP() {
-        int tmp = readWord(PC);
+        int addr = readWord(PC);
+        memptr = (addr + 1) & 0xFFFF;
         PC = (PC + 2) & 0xFFFF;
 
         int tmp1 = getpair((lastOpcode >>> 4) & 3, true);
-        writeWord(tmp, tmp1);
+        writeWord(addr, tmp1);
         return 20;
     }
 
     int I_LD_RP_REF_NN() {
-        int tmp = readWord(PC);
+        int addr = readWord(PC);
+        memptr = (addr + 1) & 0xFFFF;
         PC = (PC + 2) & 0xFFFF;
 
-        int tmp1 = readWord(tmp);
+        int tmp1 = readWord(addr);
         putpair((lastOpcode >>> 4) & 3, tmp1, true);
         return 20;
     }
 
     int I_JR_CC_N() {
-        int tmp = memory.read(PC);
+        Q = 0;
+        int addr = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
+        memptr = PC;
 
         if (getCC1((lastOpcode >>> 3) & 3)) {
-            PC = (PC + (byte) tmp) & 0xFFFF;
+            PC = (PC + (byte) addr) & 0xFFFF;
+            memptr = PC;
             return 12;
         }
         return 7;
     }
 
     int I_JR_N() {
-        int tmp = memory.read(PC);
-        PC = (PC + 1 + (byte) tmp) & 0xFFFF;
+        int addr = memory.read(PC);
+        PC = (PC + 1 + (byte) addr) & 0xFFFF;
+        memptr = PC;
         return 12;
     }
 
-    int I_ADD_A_N() {
-        int value = readByte(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int oldA = regs[REG_A];
-        int sum = (oldA + value) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
-        return 7;
-    }
-
-    int I_ADC_A_N() {
-        int value = readByte(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int oldA = regs[REG_A];
-        int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
-        return 7;
-    }
-
     int I_OUT_REF_N_A() {
-        int tmp = readByte(PC);
+        int port = memory.read(PC) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
-        context.writeIO(tmp, (byte) regs[REG_A]);
+        memptr = (regs[REG_A] << 8) | ((port + 1) & 0xFF);
+        //	Note for *BM1: MEMPTR_low = (port + 1) & #FF,  MEMPTR_hi = 0
+        context.writeIO(port, (byte) regs[REG_A]);
+        return 11;
+    }
+
+    int I_IN_A_REF_N() {
+        int port = memory.read(PC) & 0xFF;
+        PC = (PC + 1) & 0xFFFF;
+        //_memPtr = (A << 8) + _memory.ReadByte(PC) + _memory.ReadByte(PC + 1) * 256 + 1;
+        memptr = ((regs[REG_A] << 8) + port + 1) & 0xFFFF;
+        regs[REG_A] = (context.readIO(port) & 0xFF);
         return 11;
     }
 
     int I_SUB_N() {
-        int value = readByte(PC);
+        int value = memory.read(PC) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
 
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
 
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA];
-        return 7;
-    }
-
-    int I_IN_A_REF_N() {
-        int tmp = readByte(PC);
-        PC = (PC + 1) & 0xFFFF;
-        regs[REG_A] = (context.readIO(tmp) & 0xFF);
-        return 11;
-    }
-
-    int I_SBC_A_N() {
-        int value = readByte(PC);
-        PC = (PC + 1) & 0xFFFF;
-
-        int oldA = regs[REG_A];
-        int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA];
-        return 7;
-    }
-
-    int I_AND_N() {
-        int tmp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-
-        regs[REG_A] = (regs[REG_A] & tmp) & 0xFF;
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
-        return 7;
-    }
-
-    int I_XOR_N() {
-        int tmp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-
-        regs[REG_A] = ((regs[REG_A] ^ tmp) & 0xFF);
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
-        return 7;
-    }
-
-    int I_OR_N() {
-        int tmp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-
-        regs[REG_A] = (regs[REG_A] | tmp) & 0xFF;
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
-        return 7;
-    }
-
-    int I_CP_N() {
-        int value = readByte(PC);
-        PC = (PC + 1) & 0xFFFF;
-
-        int oldA = regs[REG_A];
-        int sum = (oldA - value) & 0x1FF;
-        int result = sum & 0xFF;
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 7;
     }
 
@@ -1442,25 +1521,28 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_JP_CC_NN() {
-        int tmp = readWord(PC);
+        int addr = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
 
         int tmp1 = (lastOpcode >>> 3) & 7;
         if ((flags & CONDITION[tmp1]) == CONDITION_VALUES[tmp1]) {
-            PC = tmp;
+            PC = addr;
         }
+        memptr = PC;
         return 10;
     }
 
     int I_CALL_CC_NN() {
-        int tmp = readWord(PC);
+        int addr = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
+        memptr = PC;
 
         int tmp1 = (lastOpcode >>> 3) & 7;
         if ((flags & CONDITION[tmp1]) == CONDITION_VALUES[tmp1]) {
             SP = (SP - 2) & 0xffff;
             writeWord(SP, PC);
-            PC = tmp;
+            PC = addr;
+            memptr = PC;
             return 17;
         }
         return 10;
@@ -1476,45 +1558,49 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_HL_REF_NN() {
-        int tmp = readWord(PC);
+        int addr = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
 
-        int tmp1 = readWord(tmp);
+        int tmp1 = readWord(addr);
         putpair(2, tmp1, false);
         return 16;
     }
 
     int I_LD_REF_NN_A() {
-        int tmp = readWord(PC);
+        int addr = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
-
-        memory.write(tmp, (byte) regs[REG_A]);
+        memptr = (regs[REG_A] << 8) | ((addr + 1) & 0xFF);
+        //	Note for *BM1: MEMPTR_low = (addr + 1) & #FF,  MEMPTR_hi = 0
+        memory.write(addr, (byte) regs[REG_A]);
         return 13;
     }
 
     int I_LD_A_REF_NN() {
-        int tmp = readWord(PC);
+        int addr = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
-
-        regs[REG_A] = (memory.read(tmp) & 0xff);
+        memptr = (addr + 1) & 0xFFFF;
+        regs[REG_A] = (memory.read(addr) & 0xff);
         return 13;
     }
 
     int I_JP_NN() {
         PC = readWord(PC);
+        memptr = PC;
         return 10;
     }
 
     int I_CALL_NN() {
-        int tmp = readWord(PC);
+        int addr = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         SP = (SP - 2) & 0xffff;
         writeWord(SP, PC);
-        PC = tmp;
+        PC = addr;
+        memptr = PC;
         return 17;
     }
 
     int I_LD_R_R() {
+        Q = 0;
         int tmp = (lastOpcode >>> 3) & 0x07;
         int tmp1 = lastOpcode & 0x07;
         putreg(tmp, getreg(tmp1));
@@ -1535,16 +1621,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RLC_R() {
-        int tmp = lastOpcode & 7;
-        int tmp1 = getreg(tmp) & 0xFF;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
 
-        int tmp2 = (tmp1 >>> 7) & 1;
-        tmp1 = (((tmp1 << 1) & 0xFF) | tmp2) & 0xFF;
-        putreg(tmp, tmp1);
+        int flagC = ((regValue & 0x80) != 0) ? FLAG_C : 0;
+        regValue = ((regValue << 1) | (regValue >>> 7)) & 0xFF;
+        putreg(reg, regValue);
+        flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | (regValue & (FLAG_X | FLAG_Y));
 
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
-
-        if (tmp == 6) {
+        if (reg == 6) {
             return 15;
         } else {
             return 8;
@@ -1552,16 +1637,14 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RRC_R() {
-        int tmp = lastOpcode & 7;
-        int tmp1 = getreg(tmp) & 0xFF;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
+        int flagC = regValue & FLAG_C;
+        regValue = ((regValue >>> 1) | (regValue << 7)) & 0xFF;
+        putreg(reg, regValue);
+        flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | (regValue & (FLAG_X | FLAG_Y));
 
-        int tmp2 = tmp1 & 1;
-        tmp1 = (((tmp1 >>> 1) & 0x7F) | (tmp2 << 7)) & 0xFF;
-        putreg(tmp, tmp1);
-
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
-
-        if (tmp == 6) {
+        if (reg == 6) {
             return 15;
         } else {
             return 8;
@@ -1569,16 +1652,14 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RL_R() {
-        int tmp = lastOpcode & 7;
-        int tmp1 = getreg(tmp) & 0xFF;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
+        int flagC = ((regValue & 0x80) == 0x80) ? FLAG_C : 0;
+        regValue = ((regValue << 1) | (flags & FLAG_C)) & 0xFF;
+        putreg(reg, regValue);
+        flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | (regValue & (FLAG_X | FLAG_Y));
 
-        int tmp2 = (tmp1 >>> 7) & 1;
-        tmp1 = ((((tmp1 << 1) & 0xFF) | flags & FLAG_C) & 0xFF);
-        putreg(tmp, tmp1);
-
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
-
-        if (tmp == 6) {
+        if (reg == 6) {
             return 15;
         } else {
             return 8;
@@ -1586,16 +1667,14 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RR_R() {
-        int tmp = lastOpcode & 7;
-        int tmp1 = getreg(tmp) & 0xFF;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
+        int flagC = regValue & FLAG_C;
+        regValue = ((regValue >>> 1) | (flags << 7)) & 0xFF;
+        putreg(reg, regValue);
+        flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | (regValue & (FLAG_X | FLAG_Y));
 
-        int tmp2 = tmp1 & 1;
-        tmp1 = ((((tmp1 >> 1) & 0x7F) | (flags & FLAG_C) << 7) & 0xFF);
-        putreg(tmp, tmp1);
-
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
-
-        if (tmp == 6) {
+        if (reg == 6) {
             return 15;
         } else {
             return 8;
@@ -1603,16 +1682,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SLA_R() {
-        int tmp = lastOpcode & 7;
-        int tmp1 = getreg(tmp) & 0xFF;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
 
-        int tmp2 = (tmp1 >>> 7) & 1;
-        tmp1 = (tmp1 << 1) & 0xFE;
-        putreg(tmp, tmp1);
+        int flagC = ((regValue & 0x80) == 0x80) ? FLAG_C : 0;
+        regValue = (regValue << 1) & 0xFF;
+        putreg(reg, regValue);
+        flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | (regValue & (FLAG_X | FLAG_Y));
 
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
-
-        if (tmp == 6) {
+        if (reg == 6) {
             return 15;
         } else {
             return 8;
@@ -1620,16 +1698,14 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SRA_R() {
-        int tmp = lastOpcode & 7;
-        int tmp1 = getreg(tmp) & 0xFF;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
+        int flagC = regValue & FLAG_C;
+        regValue = ((regValue >>> 1) | (regValue & 0x80)) & 0xFF;
+        putreg(reg, regValue);
+        flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | (regValue & (FLAG_X | FLAG_Y));
 
-        int tmp2 = tmp1 & 1;
-        tmp1 = (tmp1 >> 1) & 0xFF | (tmp1 & 0x80);
-        putreg(tmp, tmp1);
-
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
-
-        if (tmp == 6) {
+        if (reg == 6) {
             return 15;
         } else {
             return 8;
@@ -1637,16 +1713,14 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SLL_R() {
-        int tmp = lastOpcode & 7;
-        int tmp1 = getreg(tmp) & 0xFF;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
+        int flagC = ((regValue & 0x80) != 0) ? FLAG_C : 0;
+        regValue = ((regValue << 1) | 0x01) & 0xFF;
+        putreg(reg, regValue);
+        flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | (regValue & (FLAG_X | FLAG_Y));
 
-        int tmp2 = (tmp1 >>> 7) & 1;
-        tmp1 = (tmp1 << 1) & 0xFF | tmp1 & 1;
-        putreg(tmp, tmp1);
-
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
-
-        if (tmp == 6) {
+        if (reg == 6) {
             return 15;
         } else {
             return 8;
@@ -1654,16 +1728,14 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SRL_R() {
-        int tmp = lastOpcode & 7;
-        int tmp1 = getreg(tmp) & 0xFF;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
+        int flagC = regValue & FLAG_C;
+        regValue = (regValue >>> 1) & 0xFF;
+        putreg(reg, regValue);
+        flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | (regValue & (FLAG_X | FLAG_Y));
 
-        int tmp2 = tmp1 & 1;
-        tmp1 = (tmp1 >>> 1) & 0x7F;
-        putreg(tmp, tmp1);
-
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
-
-        if (tmp == 6) {
+        if (reg == 6) {
             return 15;
         } else {
             return 8;
@@ -1672,14 +1744,20 @@ public class EmulatorEngine implements CpuEngine {
 
 
     int I_BIT_N_R() {
-        int tmp = (lastOpcode >>> 3) & 7;
-        int tmp2 = lastOpcode & 7;
-        int tmp1 = getreg(tmp2) & 0xFF;
-        flags = ((flags & FLAG_C) | FLAG_H | (((tmp1 & (1 << tmp)) == 0) ? (FLAG_Z | FLAG_PV) : 0));
-        if (tmp == 7) {
-            flags |= (((tmp1 & (1 << tmp)) == 0x80) ? FLAG_S : 0);
-        }
-        if (tmp2 == 6) {
+        int bit = (lastOpcode >>> 3) & 7;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
+        int result = (1 << bit) & regValue;
+
+        flags = ((result != 0) ? (result & FLAG_S) : (FLAG_Z | FLAG_PV))
+            | (regValue & (FLAG_X | FLAG_Y))
+            | FLAG_H
+            | (flags & FLAG_C);
+
+        if (reg == 6) {
+            flags &= (~FLAG_X);
+            flags &= (~FLAG_Y);
+            flags |= ((memptr >>> 8) & FLAG_X) | ((memptr >>> 8) & FLAG_Y);
             return 12;
         } else {
             return 8;
@@ -1687,12 +1765,12 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RES_N_R() {
-        int tmp = (lastOpcode >>> 3) & 7;
-        int tmp2 = lastOpcode & 7;
-        int tmp1 = getreg(tmp2) & 0xFF;
-        tmp1 = (tmp1 & (~(1 << tmp)));
-        putreg(tmp2, tmp1);
-        if (tmp2 == 6) {
+        int bit = (lastOpcode >>> 3) & 7;
+        int reg = lastOpcode & 7;
+        int regValue = getreg(reg) & 0xFF;
+        regValue = (regValue & (~(1 << bit)));
+        putreg(reg, regValue);
+        if (reg == 6) {
             return 15;
         } else {
             return 8;
@@ -1713,39 +1791,37 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_ADD_IX_RP() {
+        memptr = (IX + 1) & 0xFFFF;
         IX = I_ADD_II_RP(IX);
         return 15;
     }
 
     int I_ADD_IY_RP() {
+        memptr = (IY + 1) & 0xFFFF;
         IY = I_ADD_II_RP(IY);
         return 15;
     }
 
     int I_ADD_II_RP(int special) {
-        int tmp = special;
-        int pair;
-        int reg = (lastOpcode >>> 4) & 0x03;
-        switch (reg) {
+        int dstRp;
+        int rp = (lastOpcode >>> 4) & 0x03;
+        switch (rp) {
             case 3:
-                pair = SP;
+                dstRp = SP;
                 break;
             case 2:
-                pair = special;
+                dstRp = special;
                 break;
             default:
-                int index = reg * 2;
-                pair = regs[index] << 8 | regs[index + 1];
+                int index = rp * 2;
+                dstRp = regs[index] << 8 | regs[index + 1];
         }
 
-        carry15(tmp, pair);
-        halfCarry11(tmp, pair);
-        flags &= (~(FLAG_N | FLAG_S | FLAG_Z));
-
-        tmp += pair;
-        flags |= ((tmp & 0x8000) == 0x8000) ? FLAG_S : 0;
-        flags |= (tmp == 0) ? FLAG_Z : 0;
-        return tmp & 0xFFFF;
+        int res = special + dstRp;
+        flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV)) |
+            (((dstRp ^ res ^ special) >>> 8) & FLAG_H) |
+            ((res >>> 16) & FLAG_C) | ((res >>> 8) & (FLAG_Y | FLAG_X));
+        return res & 0xFFFF;
     }
 
     int I_LD_IX_NN() {
@@ -1823,11 +1899,12 @@ public class EmulatorEngine implements CpuEngine {
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         int address = (special + disp) & 0xFFFF;
-        int value = readByte(address);
+        int value = memory.read(address) & 0xFF;
+        memptr = address;
 
         int sum = (value + 1) & 0x1FF;
         int sumByte = sum & 0xFF;
-        flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C);
+        flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | (sum & (FLAG_X | FLAG_Y));
 
         memory.write(address, (byte) sumByte);
         return 23;
@@ -1842,15 +1919,16 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_DEC_REF_II_N(int special) {
-        int disp = readByte(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int address = (special + (byte) disp) & 0xFFFF;
-        int value = readByte(address);
+        int address = (special + disp) & 0xFFFF;
+        int value = memory.read(address) & 0xFF;
+        memptr = address;
 
         int sum = (value - 1) & 0x1FF;
         int sumByte = sum & 0xFF;
 
-        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C);
+        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | (sum & (FLAG_X | FLAG_Y));
         memory.write(address, (byte) sumByte);
         return 23;
     }
@@ -1864,11 +1942,14 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_REF_II_N_N(int special) {
-        byte offset = memory.read(PC);
+        Q = 0;
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         byte number = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        memory.write((special + offset) & 0xFFFF, number);
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        memory.write(address, number);
         return 19;
     }
 
@@ -1881,10 +1962,12 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_R_REF_II_N(int special) {
-        byte offset = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         int tmp1 = (lastOpcode >>> 3) & 7;
-        putreg(tmp1, memory.read((special + offset) & 0xFFFF));
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        putreg(tmp1, memory.read(address));
         return 19;
     }
 
@@ -1897,9 +1980,11 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_REF_II_N_R(int special) {
-        byte offset = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        memory.write((special + offset) & 0xFFFF, (byte) getreg(lastOpcode & 7));
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        memory.write(address, (byte) getreg(lastOpcode & 7));
         return 19;
     }
 
@@ -1912,14 +1997,16 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_ADD_A_REF_II_N(int special) {
-        byte offset = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = readByte((special + offset) & 0xFFFF);
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
 
         int oldA = regs[REG_A];
         int sum = (oldA + value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -1932,14 +2019,16 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_ADC_A_REF_II_N(int special) {
-        byte offset = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = readByte((special + offset) & 0xFFFF);
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
 
         int oldA = regs[REG_A];
         int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -1952,15 +2041,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SUB_REF_II_N(int special) {
-        byte offset = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = readByte((special + offset) & 0xFFFF);
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
 
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
 
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA];
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -1973,15 +2064,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SBC_A_REF_II_N(int special) {
-        byte offset = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = readByte((special + offset) & 0xFFFF);
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
 
         int oldA = regs[REG_A];
         int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
 
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA];
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -1994,12 +2087,13 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_AND_REF_II_N(int special) {
-        byte tmp = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-
-        int tmp1 = memory.read((special + tmp) & 0xFFFF);
-        regs[REG_A] = (regs[REG_A] & tmp1) & 0xFF;
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address);
+        regs[REG_A] = (regs[REG_A] & value) & 0xFF;
+        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | FLAG_H | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2012,12 +2106,13 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_XOR_REF_II_N(int special) {
-        byte tmp = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-
-        int tmp1 = memory.read((special + tmp) & 0xFFFF);
-        regs[REG_A] = ((regs[REG_A] ^ tmp1) & 0xff);
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        byte value = memory.read(address);
+        regs[REG_A] = ((regs[REG_A] ^ value) & 0xff);
+        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2030,11 +2125,13 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_OR_REF_II_N(int special) {
-        byte tmp = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int tmp1 = memory.read((special + tmp) & 0xFFFF);
-        regs[REG_A] = ((regs[REG_A] | tmp1) & 0xff);
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        byte value = memory.read(address);
+        regs[REG_A] = ((regs[REG_A] | value) & 0xff);
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2047,14 +2144,15 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_CP_REF_II_N(int special) {
-        byte offset = memory.read(PC);
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        int value = readByte((special + offset) & 0xFFFF);
-
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         int result = sum & 0xFF;
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | (value & (FLAG_X | FLAG_Y));
         return 19;
     }
 
@@ -2074,6 +2172,7 @@ public class EmulatorEngine implements CpuEngine {
         int tmp = readWord(SP);
         int tmp1 = IX;
         IX = tmp;
+        memptr = IX;
         writeWord(SP, tmp1);
         return 23;
     }
@@ -2082,6 +2181,7 @@ public class EmulatorEngine implements CpuEngine {
         int tmp = readWord(SP);
         int tmp1 = IY;
         IY = tmp;
+        memptr = IY;
         writeWord(SP, tmp1);
         return 23;
     }
@@ -2127,16 +2227,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RLC_REF_II_N_R(byte operand, int special) {
-        int address = (special + operand) & 0xFFFF;
-        int value = readByte(address);
-        int bit7 = (value >>> 7) & 1;
+        int addr = (special + operand) & 0xFFFF;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
 
-        value = (((value << 1) | bit7) & 0xFF);
-        memory.write(address, (byte) value);
-        flags = TABLE_SZ[value] | EmulatorTables.PARITY_TABLE[value] | bit7;
+        int c = ((addrValue & 0x80) != 0) ? FLAG_C : 0;
+        int res = ((addrValue << 1) | (addrValue >>> 7)) & 0xFF;
+        memory.write(addr, (byte) res);
+        flags = TABLE_SZ[res] | PARITY_TABLE[res] | c | (res & (FLAG_X | FLAG_Y));
 
         // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = value & 0xFF;
+        regs[lastOpcode & 7] = res & 0xFF;
         return 23;
     }
 
@@ -2149,17 +2250,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RRC_REF_II_N_R(byte operand, int special) {
-        int tmp = (special + operand) & 0xffff;
-        int tmp1 = memory.read(tmp);
+        int addr = (special + operand) & 0xffff;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
 
-        int tmp2 = tmp1 & 1;
-        tmp1 = (((tmp1 >>> 1) & 0x7F) | (tmp2 << 7)) & 0xFF;
-
-        memory.write(tmp, (byte) (tmp1 & 0xFF));
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
+        int c = addrValue & 1;
+        int res = (((addrValue >>> 1) & 0x7F) | (c << 7)) & 0xFF;
+        memory.write(addr, (byte) (res & 0xFF));
+        flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | (res & (FLAG_X | FLAG_Y));
 
         // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = tmp1 & 0xFF;
+        regs[lastOpcode & 7] = res & 0xFF;
         return 23;
     }
 
@@ -2172,16 +2273,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RL_REF_II_N_R(byte operand, int special) {
-        int tmp = (special + operand) & 0xffff;
-        int tmp1 = memory.read(tmp);
+        int addr = (special + operand) & 0xffff;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
 
-        int tmp2 = (tmp1 >>> 7) & 1;
-        tmp1 = ((((tmp1 << 1) & 0xFF) | flags & FLAG_C) & 0xFF);
-        memory.write(tmp, (byte) (tmp1 & 0xFF));
+        int c = (addrValue >>> 7) & 1;
+        int res = ((((addrValue << 1) & 0xFF) | flags & FLAG_C) & 0xFF);
+        memory.write(addr, (byte) (res & 0xFF));
 
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
+        flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | (res & (FLAG_X | FLAG_Y));
         // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = tmp1 & 0xFF;
+        regs[lastOpcode & 7] = res & 0xFF;
         return 23;
     }
 
@@ -2194,16 +2296,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RR_REF_II_N_R(byte operand, int special) {
-        int address = (special + operand) & 0xffff;
-        int value = readByte(address);
+        int addr = (special + operand) & 0xFFFF;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
 
-        int bit0 = value & 1;
-        value = ((((value >> 1) & 0xFF) | (flags & FLAG_C) << 7) & 0xFF);
-        memory.write(address, (byte) (value & 0xFF));
+        int c = addrValue & 1;
+        int res = ((((addrValue >> 1) & 0xFF) | (flags & FLAG_C) << 7) & 0xFF);
+        memory.write(addr, (byte) (res & 0xFF));
 
-        flags = TABLE_SZ[value] | EmulatorTables.PARITY_TABLE[value] | bit0;
+        flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | (res & (FLAG_X | FLAG_Y));
         // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = value & 0xFF;
+        regs[lastOpcode & 7] = res & 0xFF;
         return 23;
     }
 
@@ -2216,16 +2319,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SLA_REF_II_N_R(byte operand, int special) {
-        int tmp = (special + operand) & 0xFFFF;
-        int tmp1 = memory.read(tmp);
+        int addr = (special + operand) & 0xFFFF;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
 
-        int tmp2 = (tmp1 >>> 7) & 1;
-        tmp1 = (tmp1 << 1) & 0xFE;
-        memory.write(tmp, (byte) tmp1);
+        int c = (addrValue >>> 7) & 1;
+        int res = (addrValue << 1) & 0xFE;
+        memory.write(addr, (byte) res);
+        flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | (res & (FLAG_X | FLAG_Y));
 
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
         // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = tmp1 & 0xFF;
+        regs[lastOpcode & 7] = res & 0xFF;
         return 23;
     }
 
@@ -2238,16 +2342,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SRA_REF_II_N_R(byte operand, int special) {
-        int tmp = (special + operand) & 0xffff;
-        int tmp1 = memory.read(tmp);
+        int addr = (special + operand) & 0xFFFF;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
 
-        int tmp2 = tmp1 & 1;
-        tmp1 = (tmp1 >> 1) & 0xFF | (tmp1 & 0x80);
-        memory.write(tmp, (byte) tmp1);
+        int c = addrValue & 1;
+        int res = (addrValue >> 1) & 0xFF | (addrValue & 0x80);
+        memory.write(addr, (byte) res);
 
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
+        flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | (res & (FLAG_X | FLAG_Y));
         // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = tmp1 & 0xFF;
+        regs[lastOpcode & 7] = res & 0xFF;
         return 23;
     }
 
@@ -2260,16 +2365,18 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SLL_REF_II_N_R(byte operand, int special) {
-        int tmp = (special + operand) & 0xffff;
-        int tmp1 = memory.read(tmp);
+        int addr = (special + operand) & 0xFFFF;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
 
-        int tmp2 = (tmp1 >>> 7) & 1;
-        tmp1 = (tmp1 << 1) & 0xFF | tmp1 & 1;
-        memory.write(tmp, (byte) tmp1);
+        int c = ((addrValue & 0x80) != 0) ? FLAG_C : 0;
+        int res = ((addrValue << 1) | 0x01) & 0xFF;
 
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
+        memory.write(addr, (byte) res);
+        flags = TABLE_SZ[res] | PARITY_TABLE[res] | c | (res & (FLAG_X | FLAG_Y));
+
         // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = tmp1 & 0xFF;
+        regs[lastOpcode & 7] = res;
         return 23;
     }
 
@@ -2282,16 +2389,17 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SRL_REF_II_N_R(byte operand, int special) {
-        int tmp = (special + operand) & 0xffff;
-        int tmp1 = memory.read(tmp);
+        int addr = (special + operand) & 0xFFFF;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
 
-        int tmp2 = tmp1 & 1;
-        tmp1 = (tmp1 >>> 1) & 0x7F;
-        memory.write(tmp, (byte) tmp1);
+        int c = ((addrValue & 0x01) != 0) ? FLAG_C : 0;
+        int res = (addrValue >>> 1) & 0xFF;
+        memory.write(addr, (byte) res);
 
-        flags = TABLE_SZ[tmp1] | EmulatorTables.PARITY_TABLE[tmp1] | tmp2;
-        // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = tmp1 & 0xFF;
+        flags = TABLE_SZ[res] | PARITY_TABLE[res] | c | (res & (FLAG_X | FLAG_Y));
+        // regs[6] is unused, so it's ok to set it
+        regs[lastOpcode & 7] = res;
         return 23;
     }
 
@@ -2304,11 +2412,18 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_BIT_N_REF_II_N(byte operand, int special) {
-        int bitNumber = (lastOpcode >>> 3) & 7;
-        int tmp1 = memory.read((special + operand) & 0xFFFF);
-        flags = ((flags & FLAG_C) | FLAG_H | (((tmp1 & (1 << bitNumber)) == 0) ? (FLAG_Z | FLAG_PV) : 0));
-        if (bitNumber == 7) {
-            flags |= (((tmp1 & (1 << 7)) == 0x80) ? FLAG_S : 0);
+        int bit = (lastOpcode >>> 3) & 7;
+        int address = (special + operand) & 0xFFFF;
+        memptr = address;
+        byte addrValue = memory.read(address);
+        int result = (1 << bit) & addrValue;
+
+        flags = ((flags & FLAG_C)
+            | FLAG_H
+            | ((result == 0) ? (FLAG_Z | FLAG_PV) : 0))
+            | (special & (FLAG_X | FLAG_Y));
+        if (bit == 7) {
+            flags |= ((result == 0x80) ? FLAG_S : 0);
         }
         return 20;
     }
@@ -2322,13 +2437,14 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_RES_N_REF_II_N_R(byte operand, int special) {
-        int tmp2 = (lastOpcode >>> 3) & 7;
-        int tmp3 = (special + operand) & 0xffff;
-        int tmp1 = memory.read(tmp3);
-        tmp1 = (tmp1 & (~(1 << tmp2)));
-        memory.write(tmp3, (byte) (tmp1 & 0xff));
+        int bitNumber = (lastOpcode >>> 3) & 7;
+        int addr = (special + operand) & 0xFFFF;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
+        int res = (addrValue & (~(1 << bitNumber)));
+        memory.write(addr, (byte) (res & 0xff));
         // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = tmp1 & 0xFF;
+        regs[lastOpcode & 7] = res & 0xFF;
         return 23;
     }
 
@@ -2341,14 +2457,16 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_SET_N_REF_II_N_R(byte operand, int special) {
-        int tmp2 = (lastOpcode >>> 3) & 7;
-        int tmp3 = (special + operand) & 0xffff;
-        int tmp1 = memory.read(tmp3);
-        tmp1 = (tmp1 | (1 << tmp2));
-        memory.write(tmp3, (byte) (tmp1 & 0xff));
+        int bitNumber = (lastOpcode >>> 3) & 7;
+        int addr = (special + operand) & 0xFFFF;
+        memptr = addr;
+        int addrValue = memory.read(addr) & 0xFF;
+
+        int res = (addrValue | (1 << bitNumber)) & 0xFF;
+        memory.write(addr, (byte) res);
 
         // regs[6] is unused, so it's ok
-        regs[lastOpcode & 7] = tmp1 & 0xFF;
+        regs[lastOpcode & 7] = res;
         return 23;
     }
 
@@ -2375,7 +2493,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_INC(int value) {
         int sum = (value + 1) & 0x1FF;
         int sumByte = sum & 0xFF;
-        flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C);
+        flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | (sum & (FLAG_X | FLAG_Y));
         return sumByte;
     }
 
@@ -2393,7 +2511,7 @@ public class EmulatorEngine implements CpuEngine {
         int reg = special >>> 8;
         int sum = (reg - 1) & 0x1FF;
         int sumByte = sum & 0xFF;
-        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ reg]) | (flags & FLAG_C);
+        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ reg]) | (flags & FLAG_C) | (sum & (FLAG_X | FLAG_Y));
         return sumByte;
     }
 
@@ -2411,30 +2529,30 @@ public class EmulatorEngine implements CpuEngine {
         int reg = special & 0xFF;
         int sum = (reg - 1) & 0x1FF;
         int sumByte = sum & 0xFF;
-        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ reg]) | (flags & FLAG_C);
+        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ reg]) | (flags & FLAG_C) | (sum & (FLAG_X | FLAG_Y));
         return sumByte;
     }
 
     int I_LD_IXH_N() {
-        IX = ((readByte(PC) << 8) | (IX & 0xFF)) & 0xFFFF;
+        IX = (((memory.read(PC) & 0xFF) << 8) | (IX & 0xFF)) & 0xFFFF;
         PC = (PC + 1) & 0xFFFF;
         return 11;
     }
 
     int I_LD_IYH_N() {
-        IY = ((readByte(PC) << 8) | (IY & 0xFF)) & 0xFFFF;
+        IY = (((memory.read(PC) & 0xFF) << 8) | (IY & 0xFF)) & 0xFFFF;
         PC = (PC + 1) & 0xFFFF;
         return 11;
     }
 
     int I_LD_IXL_N() {
-        IX = ((IX & 0xFF00) | (readByte(PC) & 0xFF)) & 0xFFFF;
+        IX = ((IX & 0xFF00) | (memory.read(PC) & 0xFF)) & 0xFFFF;
         PC = (PC + 1) & 0xFFFF;
         return 11;
     }
 
     int I_LD_IYL_N() {
-        IY = ((IY & 0xFF00) | (readByte(PC) & 0xFF)) & 0xFFFF;
+        IY = ((IY & 0xFF00) | (memory.read(PC) & 0xFF)) & 0xFFFF;
         PC = (PC + 1) & 0xFFFF;
         return 11;
     }
@@ -2539,7 +2657,7 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA + value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (sum & (FLAG_X | FLAG_Y));
         return 8;
     }
 
@@ -2563,7 +2681,7 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | (sum & (FLAG_X | FLAG_Y));
         return 8;
     }
 
@@ -2588,7 +2706,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (oldA - value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
 
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA];
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | (sum & (FLAG_X | FLAG_Y));
         return 8;
     }
 
@@ -2612,7 +2730,7 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA];
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | (sum & (FLAG_X | FLAG_Y));
         return 8;
     }
 
@@ -2634,7 +2752,7 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_AND(int value) {
         regs[REG_A] = (regs[REG_A] & value) & 0xFF;
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | FLAG_H | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 8;
     }
 
@@ -2655,8 +2773,8 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_XOR(int value) {
-        regs[REG_A] = ((regs[REG_A] ^ value) & 0xFF);
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        regs[REG_A] = (regs[REG_A] ^ value) & 0xFF;
+        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 8;
     }
 
@@ -2678,7 +2796,7 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_OR(int value) {
         regs[REG_A] = (regs[REG_A] | value) & 0xFF;
-        flags = EmulatorTables.AND_OR_XOR_TABLE[regs[REG_A]];
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (regs[REG_A] & (FLAG_X | FLAG_Y));
         return 8;
     }
 
@@ -2702,7 +2820,7 @@ public class EmulatorEngine implements CpuEngine {
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         int result = sum & 0xFF;
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]);
+        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | (value & (FLAG_X | FLAG_Y));
         return 8;
     }
 }

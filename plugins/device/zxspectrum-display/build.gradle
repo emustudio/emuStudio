@@ -16,26 +16,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.mits88sio.settings;
 
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.jcip.annotations.ThreadSafe;
+import org.apache.tools.ant.filters.ReplaceTokens
 
-@ThreadSafe
-public class SioDeviceSettings {
-    private final boolean guiSupported;
-    private final SioUnitSettings sioUnit;
-
-    public SioDeviceSettings(PluginSettings settings) {
-        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        this.sioUnit = new SioUnitSettings(settings);
-    }
-
-    public boolean isGuiSupported() {
-        return guiSupported;
-    }
-
-    public SioUnitSettings getSioUnit() {
-        return sioUnit;
-    }
+plugins {
+  id 'java'
+  id 'com.adarshr.test-logger' version '3.1.0'
 }
+
+dependencies {
+  implementation libs.emuLib
+  implementation libs.slf4JApi
+  implementation libs.jcipAnnotations
+
+  testImplementation libs.junit
+  testImplementation libs.slf4JSimple
+  testImplementation libs.easyMock
+}
+
+jar {
+  archiveVersion = ''
+  manifest {
+    attributes manifestAttributes('')
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+      "project.version": project.version,
+      "today.year": new Date().format("yyyy")
+    ]
+  }
+}
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'

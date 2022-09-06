@@ -27,7 +27,7 @@ public interface Command {
     /**
      * Called on SIMH interface reset
      */
-    default void reset() {
+    default void reset(Control control) {
 
     }
 

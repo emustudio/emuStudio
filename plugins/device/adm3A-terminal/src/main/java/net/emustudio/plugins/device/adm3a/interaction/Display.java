@@ -62,7 +62,6 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
     private final LoadCursorPosition loadCursorPosition;
     private final Timer cursorTimer = new Timer(800, this);
 
-    private volatile DisplayParameters displayParameters;
     private volatile Dimension size;
 
     private FileWriter outputWriter = null;
@@ -83,7 +82,7 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
         setDoubleBuffered(true);
         setOpaque(true);
         setFont(terminalFont);
-        this.displayParameters = measure();
+        DisplayParameters displayParameters = measure();
         this.size = new Dimension(displayParameters.maxWidth, displayParameters.maxHeight);
 
         if (!settings.isGuiSupported()) {
@@ -123,14 +122,12 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
     public void setBounds(int x, int y, int width, int height) {
         super.setBounds(x, y, width, height);
         this.size = getSize();
-        this.displayParameters = measure();
     }
 
     @Override
     public void setBounds(Rectangle r) {
         super.setBounds(r);
         this.size = getSize();
-        this.displayParameters = measure();
     }
 
     @Override
@@ -315,10 +312,10 @@ public class Display extends JPanel implements DeviceContext<Byte>, TerminalSett
             Rectangle2D fontRectangle = terminalFont.getMaxCharBounds(graphics.getFontMetrics().getFontRenderContext());
             int lineHeight = graphics.getFontMetrics().getHeight();
 
-            int x = 2 + (int)(paintPoint.x * fontRectangle.getWidth());
+            int x = 2 + (int) (paintPoint.x * fontRectangle.getWidth());
             int y = 3 + (paintPoint.y * lineHeight);
 
-            graphics.fillRect(x, y, (int)fontRectangle.getWidth(), (int)fontRectangle.getHeight());
+            graphics.fillRect(x, y, (int) fontRectangle.getWidth(), (int) fontRectangle.getHeight());
             graphics.setPaintMode();
 
             cursorShouldBePainted = true;

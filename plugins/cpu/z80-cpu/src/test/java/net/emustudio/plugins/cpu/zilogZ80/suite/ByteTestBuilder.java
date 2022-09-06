@@ -61,6 +61,11 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         return this;
     }
 
+    public ByteTestBuilder secondIsFlags() {
+        runner.injectSecond((tmpRunner, argument) -> cpuRunner.setFlags(argument.intValue()));
+        return this;
+    }
+
     public ByteTestBuilder firstIsDeviceAndSecondIsPort() {
         runner.injectTwoOperands((tmpRunner, first, second) ->
             cpuRunner.getDevice(second.intValue() & 0xFF).setValue(first));

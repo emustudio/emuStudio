@@ -23,7 +23,7 @@ public class AttachPTP implements Command {
     private int lastCPMStatus = 0; // result of last attachCPM command
 
     @Override
-    public void reset() {
+    public void reset(Control control) {
         lastCPMStatus = 0;
     }
 
