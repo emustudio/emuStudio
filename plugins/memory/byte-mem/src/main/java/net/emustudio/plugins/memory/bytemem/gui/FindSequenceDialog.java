@@ -141,8 +141,7 @@ public class FindSequenceDialog extends JDialog {
                             .addGap(0, 0, Short.MAX_VALUE)
                             .addComponent(btnFind, GroupLayout.PREFERRED_SIZE, 92, GroupLayout.PREFERRED_SIZE))
                         .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap())
-        );
+                    .addContainerGap()));
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()

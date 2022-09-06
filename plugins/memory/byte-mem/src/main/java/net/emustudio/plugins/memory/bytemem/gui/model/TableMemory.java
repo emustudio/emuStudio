@@ -28,7 +28,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.Objects;
 
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.MONOSPACED_PLAIN;
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.MEMORY_CELLS_FONT;
 
 public class TableMemory extends JTable {
     private final MemoryTableModel tableModel;
@@ -39,11 +39,11 @@ public class TableMemory extends JTable {
         this.tableModel = Objects.requireNonNull(tableModel);
 
         super.setModel(this.tableModel);
-        super.setFont(MONOSPACED_PLAIN);
+        super.setFont(MEMORY_CELLS_FONT);
         super.setCellSelectionEnabled(true);
         super.setFocusCycleRoot(true);
         super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        super.getTableHeader().setFont(MONOSPACED_PLAIN);
+        super.getTableHeader().setFont(MEMORY_CELLS_FONT);
         super.setDefaultRenderer(Object.class, new MemCellRenderer());
         setOpaque(true);
 
@@ -67,7 +67,7 @@ public class TableMemory extends JTable {
             setHorizontalAlignment(CENTER);
             setForeground(header.getForeground());
             setBackground(header.getBackground());
-            setFont(MONOSPACED_PLAIN);
+            setFont(MEMORY_CELLS_FONT);
             setOpaque(true);
             setDoubleBuffered(true);
             this.setPreferredSize(new Dimension(4 * 18, header.getPreferredSize().height + 3));
@@ -99,7 +99,7 @@ public class TableMemory extends JTable {
                     + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage) + "h";
             }
             rowHeader = new JList<>(addresses);
-            this.setFont(MONOSPACED_PLAIN);
+            this.setFont(MEMORY_CELLS_FONT);
 
             FontMetrics fm = rowHeader.getFontMetrics(rowHeader.getFont());
             int char_width = 17;

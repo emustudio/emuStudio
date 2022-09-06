@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.nio.file.Path;
@@ -36,6 +37,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
 
 public class MemoryGui extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryGui.class);
@@ -156,7 +158,7 @@ public class MemoryGui extends JDialog {
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         setTitle("Byte Operating Memory");
-        setSize(new java.awt.Dimension(794, 629));
+        setSize(new Dimension(794, 629));
 
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
@@ -443,27 +445,34 @@ public class MemoryGui extends JDialog {
 
     private void btnLoadImageActionPerformed(ActionEvent evt) {
         dialogs.chooseFile(
-            "Load memory image", "Load", Path.of(System.getProperty("user.dir")), false,
-            new FileExtensionsFilter("Memory image", "hex", "bin", "com", "out")
+            "Load memory image", "Load", Path.of(System.getProperty("user.dir")), false, IMAGE_EXTENSION_FILTER
         ).ifPresent(path -> {
-            try {
-                final int bank = (context.getBanksCount() > 1)
-                    ? dialogs.readInteger("Enter memory bank index:", "Load image", 0).orElse(0)
-                    : 0;
+            boolean isHex = path.toString().toLowerCase().endsWith(".hex");
+            boolean hasBanks = context.getBanksCount() > 1;
 
-                if (path.toString().toLowerCase().endsWith(".hex")) {
-                    context.loadHex(path, bank);
-                } else {
-                    dialogs
-                        .readInteger("Enter image location address:", "Load image")
-                        .ifPresent(address -> context.loadBin(path, address, bank));
-                }
+            int bank = 0;
+            int address = 0;
+            boolean ok = true;
 
-                table.revalidate();
-                table.repaint();
-            } catch (NumberFormatException e) {
-                dialogs.showError("Invalid number format", "Load image");
+            if (!isHex || hasBanks) {
+                SelectBankAddressDialog dialog = new SelectBankAddressDialog(
+                    this, hasBanks, !isHex, dialogs
+                );
+                dialog.setVisible(true);
+                ok = dialog.isOk();
+                bank = dialog.getBank();
+                address = dialog.getAddress();
             }
+
+            if (isHex && ok) {
+                context.loadHex(path, bank);
+            }
+            if (!isHex && ok) {
+                context.loadBin(path, address, bank);
+            }
+
+            table.revalidate();
+            table.repaint();
         });
     }
 

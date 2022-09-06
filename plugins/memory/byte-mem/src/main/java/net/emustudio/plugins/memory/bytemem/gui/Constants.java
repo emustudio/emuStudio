@@ -18,9 +18,15 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui;
 
+import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+
 import java.awt.*;
 
+
 public class Constants {
-    public static Font MONOSPACED_PLAIN = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-    public static Font MONOSPACED_BOLD = new Font(Font.MONOSPACED, Font.BOLD, 12);
+    public final static Font MEMORY_CELLS_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+
+    public final static FileExtensionsFilter IMAGE_EXTENSION_FILTER = new FileExtensionsFilter(
+        "Memory image", "hex", "bin", "com", "out"
+    );
 }

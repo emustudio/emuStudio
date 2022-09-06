@@ -18,11 +18,10 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.RangeTree;
@@ -37,6 +36,8 @@ import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
 
 public class SettingsDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
@@ -77,7 +78,7 @@ public class SettingsDialog extends JDialog {
             dialogs.showError("Invalid number format while loading settings: ", "Load settings");
         }
     }
-    
+
     private void initComponents() {
         JPanel jPanel1 = new JPanel();
         JScrollPane jScrollPane1 = new JScrollPane();
@@ -387,28 +388,27 @@ public class SettingsDialog extends JDialog {
 
     private void btnAddImageActionPerformed(java.awt.event.ActionEvent evt) {
         dialogs.chooseFile(
-            "Add memory image", "Add", Path.of(System.getProperty("user.dir")), false,
-            new FileExtensionsFilter("Memory images", "hex", "bin")
+            "Add memory image", "Add", Path.of(System.getProperty("user.dir")), false, IMAGE_EXTENSION_FILTER
         ).ifPresent(path -> {
-            try {
+            boolean isHex = path.toString().toLowerCase().endsWith(".hex");
+            boolean hasBanks = context.getBanksCount() > 1;
 
-                boolean isHex = path.toString().toLowerCase().endsWith(".hex");
-                Optional<Integer> imageAddress = Optional.empty();
-                if (!isHex) {
-                    imageAddress = dialogs.readInteger("Enter image address:", "Add image", 0);
-                }
+            int bank = 0;
+            int address = 0;
+            boolean ok = true;
 
-                final int bank = (context.getBanksCount() > 1)
-                    ? dialogs.readInteger("Enter memory bank index:", "Add memory image", 0).orElse(0)
-                    : 0;
+            if (!isHex || hasBanks) {
+                SelectBankAddressDialog dialog = new SelectBankAddressDialog(
+                    this, hasBanks, !isHex, dialogs
+                );
+                dialog.setVisible(true);
+                ok = dialog.isOk();
+                bank = dialog.getBank();
+                address = dialog.getAddress();
+            }
 
-                if (!isHex) {
-                    imageAddress.ifPresent(address -> imagesModel.addImage(path, address, bank));
-                } else {
-                    imagesModel.addImage(path, 0, bank);
-                }
-            } catch (NumberFormatException e) {
-                dialogs.showError("Invalid number format", "Add image");
+            if (ok) {
+                imagesModel.addImage(path, address, bank);
             }
         });
     }
