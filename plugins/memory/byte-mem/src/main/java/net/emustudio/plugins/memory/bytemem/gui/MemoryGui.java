@@ -99,16 +99,10 @@ public class MemoryGui extends JDialog {
             int column = e.getColumn();
             updateMemVal(row, column);
         });
-        table.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                super.mousePressed(e);
-                int row = table.getSelectedRow();
-                int col = table.getSelectedColumn();
-                updateMemVal(row, col);
-            }
-        });
+        MouseHandler mouseHandler = new MouseHandler(
+            tableModel, () -> updateMemVal(table.getSelectedRow(), table.getSelectedColumn()));
+        table.addMouseListener(mouseHandler);
+        table.addMouseWheelListener(mouseHandler);
         table.addKeyListener(new KeyboardHandler(table, spnPage.getModel(), this));
     }
 
