@@ -44,7 +44,7 @@ name = "MITS Altair8800 (Z80)"
 #    [CPU.settings]
 #        printCode = true
 #        printCodeUseCache = true
-#        printCodeFileName = "syserr"   # Or custom path to a file
+#        printCodeFileName = "filename"   # (optional)
 
 [[DEVICE]]
 	schemaPoint = "340,140"
