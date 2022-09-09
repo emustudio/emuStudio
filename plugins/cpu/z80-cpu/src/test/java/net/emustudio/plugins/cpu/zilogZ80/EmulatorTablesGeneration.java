@@ -102,4 +102,60 @@ public class EmulatorTablesGeneration {
         System.out.println(table);
     }
 
+    @Test
+    public void generateTableXY() {
+        StringBuilder table = new StringBuilder("public final static int[] TABLE_XY = new int[] {\n        ");
+
+        int i = 0;
+        for (int sum = 0; sum <= 0xFF; sum++) {
+            int flagXY = sum & (FLAG_X | FLAG_Y);
+            table.append("0x")
+                .append(Integer.toHexString(flagXY))
+                .append(", ");
+            if (i++ == 15) {
+                table.append("\n        ");
+                i = 0;
+            }
+        }
+        table.append("};\n");
+        System.out.println(table);
+    }
+
+    @Test
+    public void generateRrcaTable() {
+        StringBuilder table = new StringBuilder("public final static int[] TABLE_RRCA = new int[] {\n        ");
+
+        int i = 0;
+        for (int value = 0; value <= 0xFF; value++) {
+            int rrca = ((value >>> 1) | (value << 7)) & 0xFF;
+            table.append("0x")
+                .append(Integer.toHexString(rrca))
+                .append(", ");
+            if (i++ == 15) {
+                table.append("\n        ");
+                i = 0;
+            }
+        }
+        table.append("};\n");
+        System.out.println(table);
+    }
+
+    @Test
+    public void generateRlcaTable() {
+        StringBuilder table = new StringBuilder("public final static int[] TABLE_RLCA = new int[] {\n        ");
+
+        int i = 0;
+        for (int value = 0; value <= 0xFF; value++) {
+            int rrca = ((value << 1) | (value >>> 7)) & 0xFF;
+            table.append("0x")
+                .append(Integer.toHexString(rrca))
+                .append(", ");
+            if (i++ == 15) {
+                table.append("\n        ");
+                i = 0;
+            }
+        }
+        table.append("};\n");
+        System.out.println(table);
+    }
 }
