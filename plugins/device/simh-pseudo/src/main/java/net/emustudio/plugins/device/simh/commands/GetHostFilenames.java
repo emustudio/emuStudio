@@ -21,14 +21,17 @@ package net.emustudio.plugins.device.simh.commands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.Name;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
+import java.nio.file.Paths;
+import java.util.Arrays;
 
 import static net.emustudio.plugins.device.simh.CpmUtils.cpmCommandLine;
-import static net.emustudio.plugins.device.simh.CpmUtils.createCPMCommandLine;
+import static net.emustudio.plugins.device.simh.CpmUtils.readCPMCommandLine;
 
 public class GetHostFilenames implements Command {
     public final static GetHostFilenames INS = new GetHostFilenames();
@@ -37,14 +40,13 @@ public class GetHostFilenames implements Command {
 
     // support for wild card file expansion
     public final static char hostPathSeparator = File.separatorChar;
-    private final static char hostPathSeparatorAlt = File.separatorChar;
+    public final static String hostPathSeparatorStr = String.valueOf(hostPathSeparator);
 
     private NameNode nameListHead;
     private NameNode currentName;
     private int currentNameIndex = 0;
     private int lastPathSeparatorIndex = 0;
     private int firstPathCharacterIndex = 0;
-
 
     static class NameNode {
         char[] name;
@@ -59,7 +61,6 @@ public class GetHostFilenames implements Command {
     @Override
     public void reset(Control control) {
         deleteNameList();
-        nameListHead = null;
     }
 
     @Override
@@ -69,15 +70,16 @@ public class GetHostFilenames implements Command {
             if (currentName == null) {
                 deleteNameList();
                 control.clearCommand();
-            } else if (firstPathCharacterIndex <= lastPathSeparatorIndex)
+            } else if (firstPathCharacterIndex <= lastPathSeparatorIndex) {
                 result = (byte) cpmCommandLine[firstPathCharacterIndex++];
-            else {
-                result = (byte) currentName.name[currentNameIndex];
-                if (result == 0) {
+            } else {
+                if (currentNameIndex == currentName.name.length) {
                     currentName = currentName.next;
                     firstPathCharacterIndex = currentNameIndex = 0;
-                } else
-                    currentNameIndex++;
+                    return 0;
+                }
+                result = (byte) currentName.name[currentNameIndex];
+                currentNameIndex++;
             }
         }
         return result;
@@ -86,13 +88,12 @@ public class GetHostFilenames implements Command {
     @Override
     public void start(Control control) {
         if (nameListHead == null) {
-            createCPMCommandLine(control.getMemory());
+            readCPMCommandLine(control.getMemory());
             lastPathSeparatorIndex = 0;
-            while (cpmCommandLine[lastPathSeparatorIndex] != 0)
+            while (cpmCommandLine[lastPathSeparatorIndex] != 0) {
                 lastPathSeparatorIndex++;
-            while ((lastPathSeparatorIndex >= 0) &&
-                (cpmCommandLine[lastPathSeparatorIndex] != hostPathSeparator) &&
-                (cpmCommandLine[lastPathSeparatorIndex] != hostPathSeparatorAlt)) {
+            }
+            while ((lastPathSeparatorIndex >= 0) && (cpmCommandLine[lastPathSeparatorIndex] != hostPathSeparator)) {
                 lastPathSeparatorIndex--;
             }
             firstPathCharacterIndex = 0;
@@ -105,14 +106,38 @@ public class GetHostFilenames implements Command {
     }
 
     private void deleteNameList() {
-        while (nameListHead != null) {
-            nameListHead = nameListHead.next;
-        }
+        nameListHead = null;
         currentName = null;
         currentNameIndex = 0;
     }
 
     private void fillupNameList() {
+        String cmdLine = cpmCmdLineToString();
+        if (cmdLine.endsWith(hostPathSeparatorStr)) {
+            nameListHead = new NameNode(new char[]{}, nameListHead); // simulating exact simh behavior
+        } else {
+            String[] parts = cmdLine.split(hostPathSeparatorStr); // all path parts must be moved to basePath
+
+            StringBuilder basePathPostfixBuilder = new StringBuilder();
+            for (int i = 0; i < parts.length - 1; i++) {
+                basePathPostfixBuilder.append(parts[i]).append(hostPathSeparator);
+            }
+            Path basePath = Paths.get(System.getProperty("user.dir"));
+            basePath = basePath.resolve(basePathPostfixBuilder.toString());
+            String pattern = parts[parts.length - 1];
+
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(basePath, pattern)) {
+                dirStream.forEach(p -> {
+                    nameListHead = new NameNode(p.getFileName().toString().toCharArray(), nameListHead);
+                });
+            } catch (IOException e) {
+                LOGGER.error("SIMH: Could not list host files", e);
+                deleteNameList();
+            }
+        }
+    }
+
+    private String cpmCmdLineToString() {
         StringBuilder pb = new StringBuilder();
         for (char c : cpmCommandLine) {
             if (c != 0) {
@@ -121,12 +146,6 @@ public class GetHostFilenames implements Command {
                 break;
             }
         }
-        String path = pb.toString();
-        try (Stream<Path> paths = Files.list(Path.of(path))) {
-            paths.forEach(p -> nameListHead = new NameNode(p.getFileName().toString().toCharArray(), nameListHead));
-        } catch (IOException e) {
-            LOGGER.error("SIMH: Could not list host files", e);
-            deleteNameList();
-        }
+        return pb.toString();
     }
 }

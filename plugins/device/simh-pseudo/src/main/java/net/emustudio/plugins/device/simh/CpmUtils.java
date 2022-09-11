@@ -24,7 +24,7 @@ public class CpmUtils {
     private final static int CPM_COMMAND_LINE_LENGTH = 128;
     public static final char[] cpmCommandLine = new char[CPM_COMMAND_LINE_LENGTH];
 
-    public static void createCPMCommandLine(MemoryContext<Byte> memory) {
+    public static void readCPMCommandLine(MemoryContext<Byte> memory) {
         int i;
         int len = memory.read(0x80) & 0x7F; // 0x80 contains length of command line, discard first char
         for (i = 0; i < len - 1; i++) {
