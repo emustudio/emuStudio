@@ -19,7 +19,6 @@
 package net.emustudio.plugins.device.adm3a.gui;
 
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.device.adm3a.interaction.Display;
 import net.emustudio.plugins.device.adm3a.TerminalSettings;
 
 import javax.swing.*;
@@ -31,11 +30,10 @@ import java.util.Objects;
 
 public class ConfigDialog extends JDialog {
     private final TerminalSettings settings;
-    private final Display display;
     private final TerminalWindow window;
     private final Dialogs dialogs;
 
-    public ConfigDialog(JFrame parent, TerminalSettings settings, TerminalWindow window, Display lblTerminal, Dialogs dialogs) {
+    public ConfigDialog(JFrame parent, TerminalSettings settings, TerminalWindow window, Dialogs dialogs) {
         super(parent, true);
 
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -43,7 +41,6 @@ public class ConfigDialog extends JDialog {
         initComponents();
 
         this.settings = settings;
-        this.display = lblTerminal;
         this.window = window;
 
         readSettings();
@@ -278,27 +275,26 @@ public class ConfigDialog extends JDialog {
         );
 
         pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
-    private void btnClearScreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearScreenActionPerformed
-        display.clearScreen();
-    }//GEN-LAST:event_btnClearScreenActionPerformed
+    private void btnClearScreenActionPerformed(java.awt.event.ActionEvent evt) {
+        window.clearScreen();
+    }
 
-    private void btnRollLineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRollLineActionPerformed
-        display.rollLine();
-    }//GEN-LAST:event_btnRollLineActionPerformed
+    private void btnRollLineActionPerformed(java.awt.event.ActionEvent evt) {
+        window.rollLine();
+    }
 
-    private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
+    private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {
         window.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
         try {
             updateSettings(chkSaveSettings.isSelected());
             dispose();
         } catch (IOException e) {
-            dialogs.showError("Input or output file names (or both) do not exist. Please make sure they do.", "ADM 3A");
+            dialogs.showError("Input or output file names (or both) do not exist. Please make sure they do.", "ADM-3A Terminal");
         }
-    }//GEN-LAST:event_btnOKActionPerformed
+    }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
     private JCheckBox chkAlwaysOnTop;
     private JCheckBox chkAntiAliasing;
     private JCheckBox chkHalfDuplex;
@@ -306,5 +302,4 @@ public class ConfigDialog extends JDialog {
     private JSpinner spnInputDelay;
     private JTextField txtInputFileName;
     private JTextField txtOutputFileName;
-    // End of variables declaration//GEN-END:variables
 }

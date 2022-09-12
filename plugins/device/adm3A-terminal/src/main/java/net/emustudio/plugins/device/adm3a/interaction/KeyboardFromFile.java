@@ -18,64 +18,38 @@
  */
 package net.emustudio.plugins.device.adm3a.interaction;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.device.adm3a.api.Keyboard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.FileInputStream;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
 
-public class KeyboardFromFile implements Keyboard {
+public class KeyboardFromFile extends Keyboard {
     private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardFromFile.class);
 
-    private final List<DeviceContext<Byte>> devices = new CopyOnWriteArrayList<>();
+    private final long delayNanos;
     private final Path inputFile;
-    private final int delayInMilliseconds;
 
     public KeyboardFromFile(Path inputFile, int delayInMilliseconds) {
+        this.delayNanos = delayInMilliseconds * 1000000L;
         this.inputFile = Objects.requireNonNull(inputFile);
-        this.delayInMilliseconds = delayInMilliseconds;
-    }
-
-    @Override
-    public void connect(DeviceContext<Byte> device) {
-        Optional.ofNullable(device).ifPresent(devices::add);
-    }
-
-    @Override
-    public void disconnect(DeviceContext<Byte> device) {
-        Optional.ofNullable(device).ifPresent(devices::remove);
     }
 
     @Override
     public void process() {
-        LOGGER.info("Processing input file: '" + inputFile + "'; delay of chars read (ms): " + delayInMilliseconds);
-        try (InputStream input = new FileInputStream(inputFile.toFile())) {
+        try (FileInputStream in = new FileInputStream(inputFile.toFile())) {
             int key;
-            while ((key = input.read()) != -1) {
-                inputReceived(key);
-                if (delayInMilliseconds > 0) {
-                    LockSupport.parkNanos(delayInMilliseconds * 1000000L);
+            while ((key = in.read()) != -1) {
+                notifyOnKey((byte) key);
+                if (delayNanos > 0) {
+                    LockSupport.parkNanos(delayNanos);
                 }
             }
         } catch (Exception e) {
             LOGGER.error("Could not process input file", e);
         }
-    }
-
-    private void inputReceived(int input) throws IOException {
-        for (DeviceContext<Byte> device : devices) {
-            device.writeData((byte) input);
-        }
-    }
-
-    @Override
-    public void destroy() {
-        devices.clear();
     }
 }
