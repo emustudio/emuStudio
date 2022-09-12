@@ -132,7 +132,7 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
                 System.out.printf("SIMH: Unknown command (%d) to SIMH pseudo device ignored.\n", data);
             } else {
                 lastReadCommand = Commands.fromInt(data);
-                lastWriteCommand = Commands.fromInt(data);
+                lastWriteCommand = lastReadCommand;
                 COMMANDS_MAP.get(lastWriteCommand.ordinal()).start(this);
             }
         } else {

@@ -25,7 +25,10 @@ import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.*;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.plugins.device.adm3a.api.ContextAdm3A;
+import net.emustudio.plugins.device.adm3a.api.Keyboard;
 import net.emustudio.plugins.device.adm3a.gui.ConfigDialog;
+import net.emustudio.plugins.device.adm3a.gui.GuiUtils;
 import net.emustudio.plugins.device.adm3a.gui.TerminalWindow;
 import net.emustudio.plugins.device.adm3a.interaction.*;
 import org.slf4j.Logger;
@@ -40,26 +43,36 @@ import java.util.ResourceBundle;
     type = PLUGIN_TYPE.DEVICE,
     title = "LSI ADM-3A terminal"
 )
-@SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
     private static final int COLUMNS_COUNT = 80;
     private static final int ROWS_COUNT = 24;
 
-    private final Display display;
-    private final Cursor cursor = new Cursor(COLUMNS_COUNT, ROWS_COUNT);
     private final TerminalSettings terminalSettings;
+    private final ContextAdm3A terminalContext;
+    private final Keyboard keyboard;
+
+    private boolean guiIOset = false;
+    private final Display display;
 
     private TerminalWindow terminalGUI;
-    private Keyboard keyboard;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
         terminalSettings = new TerminalSettings(settings, applicationApi.getDialogs());
-        display = new Display(cursor, terminalSettings);
+        Cursor cursor = new Cursor(COLUMNS_COUNT, ROWS_COUNT);
+        this.display = new Display(cursor, terminalSettings);
+        if (terminalSettings.isGuiSupported()) {
+            LOGGER.debug("Creating GUI-based keyboard");
+            this.keyboard = new KeyboardGui(cursor);
+        } else {
+            LOGGER.debug("Creating file-based keyboard ({})", terminalSettings.getInputPath());
+            this.keyboard = new KeyboardFromFile(terminalSettings.getInputPath(), terminalSettings.getInputReadDelay());
+        }
+        this.terminalContext = new ContextAdm3A(this.keyboard, terminalSettings);
 
         try {
-            applicationApi.getContextPool().register(pluginID, display, DeviceContext.class);
+            applicationApi.getContextPool().register(pluginID, terminalContext, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register ADM-3A terminal", e);
             applicationApi.getDialogs().showError(
@@ -71,19 +84,8 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        if (terminalSettings.isGuiSupported()) {
-            LOGGER.debug("Creating GUI-based keyboard");
-            keyboard = new KeyboardGui(cursor);
-        } else {
-            LOGGER.debug("Creating file-based keyboard ({})", terminalSettings.getInputPath());
-            keyboard = new KeyboardFromFile(terminalSettings.getInputPath(), terminalSettings.getInputReadDelay());
-        }
-        if (terminalSettings.isHalfDuplex()) {
-            keyboard.connect(display);
-        }
-
-        // try to connect to a serial I/O board
         try {
+            // get serial I/O board
             DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(
                 pluginID, DeviceContext.class, terminalSettings.getDeviceIndex()
             );
@@ -92,7 +94,8 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
                     "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
-            keyboard.connect(device);
+            terminalContext.setExternalDevice(device);
+            terminalContext.setDisplay(display);
         } catch (ContextNotFoundException e) {
             LOGGER.warn("The terminal is not connected to any I/O device.");
         }
@@ -103,13 +106,14 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
 
     @Override
     public void showGUI(JFrame parent) {
-        if (terminalSettings.isGuiSupported()) {
-            if (terminalGUI == null) {
-                terminalGUI = new TerminalWindow(parent, display);
-                terminalGUI.setAlwaysOnTop(terminalSettings.isAlwaysOnTop());
-                ((KeyboardGui)keyboard).addListenerRecursively(terminalGUI);
-                display.startCursor();
-            }
+        if (guiIOset) {
+            terminalGUI.setVisible(true);
+        } else if (terminalSettings.isGuiSupported()) {
+            terminalGUI = new TerminalWindow(parent, display);
+            terminalGUI.setAlwaysOnTop(terminalSettings.isAlwaysOnTop());
+            GuiUtils.addListenerRecursively(terminalGUI, (KeyboardGui) keyboard);
+            terminalGUI.startPainting();
+            guiIOset = true;
             terminalGUI.setVisible(true);
         }
     }
@@ -121,9 +125,10 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
 
     @Override
     public void reset() {
-        display.clearScreen();
+        if (terminalGUI != null) {
+            terminalGUI.clearScreen();
+        }
     }
-
 
     @Override
     public String getVersion() {
@@ -143,16 +148,18 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     @Override
     public void destroy() {
         terminalSettings.removeChangedObserver(this);
+        if (keyboard != null) {
+            keyboard.close();
+        }
         if (terminalGUI != null) {
             terminalGUI.destroy();
         }
-        display.destroy();
     }
 
     @Override
     public void showSettings(JFrame parent) {
         if (isShowSettingsSupported()) {
-            new ConfigDialog(parent, terminalSettings, terminalGUI, display, applicationApi.getDialogs()).setVisible(true);
+            new ConfigDialog(parent, terminalSettings, terminalGUI, applicationApi.getDialogs()).setVisible(true);
         }
     }
 
@@ -163,11 +170,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
 
     @Override
     public void settingsChanged() {
-        if (terminalSettings.isHalfDuplex()) {
-            keyboard.connect(display);
-        } else {
-            keyboard.disconnect(display);
-        }
         if (terminalGUI != null) {
             terminalGUI.setAlwaysOnTop(terminalSettings.isAlwaysOnTop());
         }
@@ -178,12 +180,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
             return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.adm3a.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
-        }
-    }
-
-    private void destroyKeyboard() {
-        if (keyboard != null) {
-            keyboard.destroy();
         }
     }
 }

@@ -18,19 +18,16 @@
  */
 package net.emustudio.plugins.device.adm3a.interaction;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.device.adm3a.api.Keyboard;
+import net.emustudio.plugins.device.adm3a.gui.GuiUtils;
 
-import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.event.KeyListener;
 import java.util.Objects;
 
-public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboard {
+public class KeyboardGui extends Keyboard implements ContainerListener, KeyListener {
 
     private static final int[] CONTROL_KEYCODES = new int[256];
     private static final int[] CONTROL_KEYCODES_ALWAYS_ACTIVE = new int[256];
@@ -102,23 +99,15 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
         CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_ENTER] = 13;
     }
 
-    private final List<DeviceContext<Byte>> devices = new ArrayList<>();
     private final LoadCursorPosition loadCursorPosition;
 
     public KeyboardGui(Cursor cursor) {
         this.loadCursorPosition = new LoadCursorPosition(Objects.requireNonNull(cursor));
     }
 
-    public void addListenerRecursively(Component c) {
-        c.addKeyListener(this);
-        if (c instanceof Container) {
-            Container cont = (Container) c;
-            cont.addContainerListener(this);
-            Component[] children = cont.getComponents();
-            for (Component aChildren : children) {
-                addListenerRecursively(aChildren);
-            }
-        }
+    @Override
+    public void keyTyped(KeyEvent e) {
+
     }
 
     @Override
@@ -132,7 +121,7 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
             newKeyCode = CONTROL_KEYCODES_ALWAYS_ACTIVE[originalKeyCode];
             if (newKeyCode == 0) {
                 int tmpKeyChar = evt.getKeyChar();
-                if (tmpKeyChar > 254) {
+                if (tmpKeyChar >= 0xFF) {
                     return;
                 }
                 newKeyCode = tmpKeyChar;
@@ -140,55 +129,28 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
         }
         if (newKeyCode != 0) {
             if (loadCursorPosition.notAccepted((byte) newKeyCode)) {
-                try {
-                    inputReceived(newKeyCode);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                notifyOnKey((byte) newKeyCode);
             }
         }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 
     @Override
     public void componentAdded(ContainerEvent e) {
-        addListenerRecursively(e.getChild());
+        GuiUtils.addListenerRecursively(e.getChild(), this);
     }
 
     @Override
     public void componentRemoved(ContainerEvent e) {
-        removeListenerRecursively(e.getChild());
+        GuiUtils.removeListenerRecursively(e.getChild(), this);
     }
 
     @Override
-    public void connect(DeviceContext<Byte> device) {
-        devices.add(device);
-    }
+    public void process() {
 
-    @Override
-    public void disconnect(DeviceContext<Byte> device) {
-        devices.remove(device);
-    }
-
-    @Override
-    public void destroy() {
-        devices.clear();
-    }
-
-    private void inputReceived(int input) throws IOException {
-        for (DeviceContext<Byte> device : devices) {
-            device.writeData((byte) input);
-        }
-    }
-
-    private void removeListenerRecursively(Component c) {
-        c.removeKeyListener(this);
-        if (c instanceof Container) {
-            Container cont = (Container) c;
-            cont.removeContainerListener(this);
-            Component[] children = cont.getComponents();
-            for (Component aChildren : children) {
-                removeListenerRecursively(aChildren);
-            }
-        }
     }
 }

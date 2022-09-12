@@ -45,7 +45,7 @@ import static net.emustudio.plugins.cpu.zilogZ80.EmulatorTables.*;
  * (parallel with other hardware)
  */
 // TODO: set frequency runtime
-@SuppressWarnings("unused")
+//@SuppressWarnings("unused")
 public class EmulatorEngine implements CpuEngine {
     private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
 
@@ -85,7 +85,7 @@ public class EmulatorEngine implements CpuEngine {
     private final AtomicBoolean pendingNonMaskableInterrupt = new AtomicBoolean();
 
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
-    private long executedCycles = 0;
+    private volatile long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
 
@@ -109,10 +109,6 @@ public class EmulatorEngine implements CpuEngine {
 
     public void addFrequencyChangedListener(FrequencyChangedListener listener) {
         frequencyChangedListeners.add(listener);
-    }
-
-    public void removeFrequencyChangedListener(FrequencyChangedListener listener) {
-        frequencyChangedListeners.remove(listener);
     }
 
     @Override

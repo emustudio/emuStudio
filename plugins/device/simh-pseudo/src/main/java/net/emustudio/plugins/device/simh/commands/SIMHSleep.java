@@ -27,7 +27,7 @@ public class SIMHSleep implements Command {
     @Override
     public void start(Control control) {
         // Do not sleep when timer interrupts are pending or are about to be created.
-        // Otherwise there is the possibility that such interrupts are skipped.
+        // Otherwise, there is the possibility that such interrupts are skipped.
 
         // time to sleep and SIO not attached to a file.
         if (StartTimerInterrupts.INS.callback.get() == null) {

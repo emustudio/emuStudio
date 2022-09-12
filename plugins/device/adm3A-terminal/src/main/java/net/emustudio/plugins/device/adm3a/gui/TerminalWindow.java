@@ -26,18 +26,36 @@ import java.util.Objects;
 
 public class TerminalWindow extends JDialog {
     private final Display display;
+    private final DisplayCanvas canvas;
 
     public TerminalWindow(JFrame parent, Display display) {
         super(parent);
         this.display = Objects.requireNonNull(display);
+        this.canvas = new DisplayCanvas(display);
 
         initComponents();
         setVisible(false);
         setLocationRelativeTo(parent);
     }
 
+    public void startPainting() {
+        this.canvas.start();
+    }
+
+    public void clearScreen() {
+        display.clearScreen();
+        canvas.repaint();
+    }
+
     public void destroy() {
+        this.canvas.close();
+        this.display.close();
         this.dispose();
+    }
+
+    public void rollLine() {
+        display.rollLine();
+        canvas.repaint();
     }
 
     private void initComponents() {
@@ -48,7 +66,7 @@ public class TerminalWindow extends JDialog {
         setTitle("Terminal ADM-3A");
         setResizable(false);
 
-        display.setBounds(70, 120, 730, 500);
+        canvas.setBounds(70, 120, 730, 500);
 
         lblBack.setLocation(0, 0);
         lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
@@ -63,7 +81,7 @@ public class TerminalWindow extends JDialog {
         pane.setBackground(Color.BLACK);
         pane.setLayout(null);
 
-        pane.add(display);
+        pane.add(canvas);
         pane.add(lblBack);
         pane.setPreferredSize(new Dimension(backgroundImage.getIconWidth(), backgroundImage.getIconHeight()));
 
