@@ -18,20 +18,25 @@
  */
 package net.emustudio.plugins.device.simh.commands;
 
+import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StartTimerInterrupts implements Command {
     public final static StartTimerInterrupts INS = new StartTimerInterrupts();
+    private static final int TRY_AFTER_CYCLES = 50000;
     public final AtomicReference<TimerInterruptCallback> callback = new AtomicReference<>();
+    private Optional<TimedEventsProcessor> tep;
 
     @Override
     public void reset(Control control) {
+        this.tep = control.getCpu().getTimedEventsProcessor();
         TimerInterruptCallback old = callback.getAndSet(null);
         if (old != null) {
-            control.getCpu().unregisterRunCallback(old);
+            tep.ifPresent(t -> t.remove(TRY_AFTER_CYCLES, old));
         }
     }
 
@@ -40,7 +45,7 @@ public class StartTimerInterrupts implements Command {
         reset(control);
         TimerInterruptCallback cb = new TimerInterruptCallback(control.getCpu());
         callback.set(cb);
-        control.getCpu().registerRunCallback(cb);
+        tep.ifPresent(t -> t.schedule(TRY_AFTER_CYCLES, cb));
         control.clearCommand();
     }
 
