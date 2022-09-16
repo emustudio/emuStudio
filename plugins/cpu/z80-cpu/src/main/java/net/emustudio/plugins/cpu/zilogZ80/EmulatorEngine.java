@@ -20,6 +20,7 @@ package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
+import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
@@ -45,7 +46,6 @@ import static net.emustudio.plugins.cpu.zilogZ80.EmulatorTables.*;
  * (parallel with other hardware)
  */
 // TODO: set frequency runtime
-//@SuppressWarnings("unused")
 public class EmulatorEngine implements CpuEngine {
     private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
 
@@ -62,6 +62,7 @@ public class EmulatorEngine implements CpuEngine {
     };
 
     private final ContextZ80Impl context;
+    private final TimedEventsProcessor tep;
     private final MemoryContext<Byte> memory;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
@@ -92,6 +93,7 @@ public class EmulatorEngine implements CpuEngine {
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
+        this.tep = context.getTimedEventsProcessorNow();
         LOGGER.info("Sleep precision: " + SleepUtils.SLEEP_PRECISION + " nanoseconds.");
     }
 
@@ -178,10 +180,10 @@ public class EmulatorEngine implements CpuEngine {
                     cycles = dispatch();
                     cycles_executed += cycles;
                     executedCycles += cycles;
+                    tep.advanceClock(cycles);
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }
-                    context.triggerRunCallbacks();
                 } catch (Breakpoint e) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 } catch (IndexOutOfBoundsException e) {
