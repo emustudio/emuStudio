@@ -25,6 +25,7 @@ import java.awt.*;
 import java.util.Objects;
 
 public class TerminalWindow extends JDialog {
+    private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";
     private final Display display;
     private final DisplayCanvas canvas;
 
@@ -60,16 +61,16 @@ public class TerminalWindow extends JDialog {
 
     private void initComponents() {
         JLabel lblBack = new JLabel();
-        ImageIcon backgroundImage = new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/adm3a/gui/display.png"));
+        ImageIcon backgroundImage = new ImageIcon(getClass().getResource(BACKGROUND_IMAGE));
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Terminal ADM-3A");
+        setTitle("LSI ADM-3A");
         setResizable(false);
 
-        canvas.setBounds(70, 120, 730, 500);
+        canvas.setBounds(100, 170, 830, 530);
 
         lblBack.setLocation(0, 0);
-        lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 16));
         lblBack.setIcon(backgroundImage);
         lblBack.setFocusable(false);
         lblBack.setOpaque(true);
