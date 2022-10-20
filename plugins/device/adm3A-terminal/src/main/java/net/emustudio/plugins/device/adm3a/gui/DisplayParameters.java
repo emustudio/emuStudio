@@ -24,9 +24,13 @@ import net.jcip.annotations.Immutable;
 class DisplayParameters {
     final int maxWidth;
     final int maxHeight;
+    final int charWidth;
+    final int charHeight;
 
-    DisplayParameters(int maxWidth, int maxHeight) {
+    DisplayParameters(int maxWidth, int maxHeight, int charWidth, int charHeight) {
         this.maxWidth = maxWidth;
         this.maxHeight = maxHeight;
+        this.charWidth = charWidth;
+        this.charHeight = charHeight;
     }
 }

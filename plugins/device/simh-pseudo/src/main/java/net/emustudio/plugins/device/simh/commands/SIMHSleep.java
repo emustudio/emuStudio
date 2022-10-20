@@ -18,11 +18,11 @@
  */
 package net.emustudio.plugins.device.simh.commands;
 
-import net.emustudio.emulib.runtime.helpers.SleepUtils;
+import java.util.concurrent.TimeUnit;
 
 public class SIMHSleep implements Command {
     public final static SIMHSleep INS = new SIMHSleep();
-    private final static int SIMHSleepNanos = 1000000;
+    private final static long SIMHSleepMillis = TimeUnit.NANOSECONDS.toMillis(1000000);
 
     @Override
     public void start(Control control) {
@@ -31,7 +31,11 @@ public class SIMHSleep implements Command {
 
         // time to sleep and SIO not attached to a file.
         if (StartTimerInterrupts.INS.callback.get() == null) {
-            SleepUtils.preciseSleepNanos(SIMHSleepNanos);
+            try {
+                Thread.sleep(SIMHSleepMillis);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
         control.clearCommand();
     }
