@@ -131,7 +131,7 @@ public class UART {
             if (bufferFromDevice.isEmpty()) {
                 wasEmpty = true;
             }
-            bufferFromDevice.add(data);
+            bufferFromDevice.add(data); // TODO: here
             statusRegister = (byte) (statusRegister | 1);
             newStatus = statusRegister;
         } finally {

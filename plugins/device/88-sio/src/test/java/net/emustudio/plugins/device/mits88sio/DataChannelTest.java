@@ -29,7 +29,7 @@ public class DataChannelTest {
     @Test
     public void testInputBit8Cleared() {
         SioUnitSettings settings = niceMock(SioUnitSettings.class);
-        expect(settings.isClearInputBit8()).andReturn(true).anyTimes();
+        expect(settings.isClearOutputBit8()).andReturn(true).anyTimes();
         expect(settings.getMapBackspaceChar()).andReturn(SioUnitSettings.MAP_CHAR.UNCHANGED).anyTimes();
         expect(settings.getMapDeleteChar()).andReturn(SioUnitSettings.MAP_CHAR.UNCHANGED).anyTimes();
         replay(settings);
@@ -48,7 +48,7 @@ public class DataChannelTest {
     @Test
     public void testOutputBit8Cleared() {
         SioUnitSettings settings = niceMock(SioUnitSettings.class);
-        expect(settings.isClearOutputBit8()).andReturn(true).anyTimes();
+        expect(settings.isClearInputBit8()).andReturn(true).anyTimes();
         expect(settings.getMapBackspaceChar()).andReturn(SioUnitSettings.MAP_CHAR.UNCHANGED).anyTimes();
         expect(settings.getMapDeleteChar()).andReturn(SioUnitSettings.MAP_CHAR.UNCHANGED).anyTimes();
         replay(settings);
@@ -72,12 +72,11 @@ public class DataChannelTest {
         replay(settings);
 
         UART uart = mock(UART.class);
-        uart.sendToDevice(eq((byte) 'A'));
-        expectLastCall().once();
+        expect(uart.readBuffer()).andReturn((byte) 'a').once();
         replay(uart);
 
         DataChannel channel = new DataChannel(settings, uart);
-        channel.writeData((byte) 'a');
+        assertEquals('A', channel.readData() & 0xFF);
 
         verify(uart);
     }
