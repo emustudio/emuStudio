@@ -8,10 +8,10 @@ LOAD 100
 DIV 101
 STORE 100
 WRITE 100
-JMP end
+JMP exit
 zero:
   WRITE =0
-end:
+exit:
   HALT
 
 Program code:
