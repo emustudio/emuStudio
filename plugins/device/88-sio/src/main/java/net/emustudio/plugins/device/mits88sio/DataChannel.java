@@ -38,14 +38,14 @@ public class DataChannel implements DeviceContext<Byte> {
     @Override
     public Byte readData() {
         byte data = uart.readBuffer();
-        data = settings.isClearOutputBit8() ? (byte) (data & 0x7F) : data;
+        data = settings.isInputToUpperCase() ? (byte) Character.toUpperCase((char) (data & 0xFF)) : data;
+        data = settings.isClearInputBit8() ? (byte) (data & 0x7F) : data;
         return mapCharacter(data);
     }
 
     @Override
     public void writeData(Byte data) {
-        data = settings.isInputToUpperCase() ? (byte) Character.toUpperCase((char) (data & 0xFF)) : data;
-        data = settings.isClearInputBit8() ? (byte) (data & 0x7F) : data;
+        data = settings.isClearOutputBit8() ? (byte) (data & 0x7F) : data;
         uart.sendToDevice(mapCharacter(data));
     }
 

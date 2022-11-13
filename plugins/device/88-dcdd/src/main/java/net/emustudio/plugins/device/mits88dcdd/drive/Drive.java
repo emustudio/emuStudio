@@ -46,7 +46,7 @@ public class Drive {
     private static final Logger LOGGER = LoggerFactory.getLogger(Drive.class);
 
     public final static byte DEFAULT_SECTORS_PER_TRACK = 32;
-    public final static byte DEFAULT_SECTOR_SIZE = (byte)137;
+    public final static int DEFAULT_SECTOR_SIZE = 137;
 
     public static final byte DEAD_DRIVE = (byte)0b11100111;
     private static final byte ALIVE_DRIVE = (byte)0b11100101;
@@ -109,7 +109,8 @@ public class Drive {
 
     public void setSectorsPerTrack(int sectorsPerTrack) {
         if (sectorsPerTrack <= 0) {
-            throw new IllegalArgumentException("[drive=" + driveIndex + "] Sectors count must be > 0");
+            LOGGER.error("[drive=" + driveIndex + "] Sectors count must be > 0");
+            return;
         }
         inWriteLock(() -> this.sectorsPerTrack = sectorsPerTrack);
         reset();
@@ -117,7 +118,8 @@ public class Drive {
 
     public void setSectorSize(int sectorSize) {
         if (sectorSize <= 0) {
-            throw new IllegalArgumentException("[drive=" + driveIndex + "] Sector length must be > 0");
+            LOGGER.error("[drive=" + driveIndex + "] Sector length must be > 0");
+            return;
         }
         inWriteLock(() -> this.sectorSize = sectorSize);
         reset();
