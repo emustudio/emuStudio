@@ -39,6 +39,8 @@ import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+import static net.emustudio.plugins.device.adm3a.gui.DisplayFont.fromTerminalFont;
+
 @PluginRoot(
     type = PLUGIN_TYPE.DEVICE,
     title = "LSI ADM-3A terminal"
@@ -109,7 +111,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         if (guiIOset) {
             terminalGUI.setVisible(true);
         } else if (terminalSettings.isGuiSupported()) {
-            terminalGUI = new TerminalWindow(parent, display);
+            terminalGUI = new TerminalWindow(parent, display, fromTerminalFont(terminalSettings.getFont()));
             terminalGUI.setAlwaysOnTop(terminalSettings.isAlwaysOnTop());
             GuiUtils.addListenerRecursively(terminalGUI, (KeyboardGui) keyboard);
             terminalGUI.startPainting();

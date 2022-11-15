@@ -29,10 +29,10 @@ public class TerminalWindow extends JDialog {
     private final Display display;
     private final DisplayCanvas canvas;
 
-    public TerminalWindow(JFrame parent, Display display) {
+    public TerminalWindow(JFrame parent, Display display, DisplayFont font) {
         super(parent);
         this.display = Objects.requireNonNull(display);
-        this.canvas = new DisplayCanvas(display);
+        this.canvas = new DisplayCanvas(font, display);
 
         initComponents();
         setVisible(false);
@@ -57,6 +57,10 @@ public class TerminalWindow extends JDialog {
     public void rollLine() {
         display.rollLine();
         canvas.repaint();
+    }
+
+    public void setDisplayFont(DisplayFont displayFont) {
+        canvas.setDisplayFont(displayFont);
     }
 
     private void initComponents() {

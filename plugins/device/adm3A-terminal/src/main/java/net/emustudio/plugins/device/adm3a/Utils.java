@@ -18,11 +18,21 @@
  */
 package net.emustudio.plugins.device.adm3a;
 
+import net.emustudio.plugins.device.adm3a.gui.DisplayFont;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.*;
 import java.awt.font.FontRenderContext;
+import java.awt.font.TextAttribute;
 import java.awt.geom.AffineTransform;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class Utils {
+    private final static Logger LOGGER = LoggerFactory.getLogger(Utils.class);
     private static FontRenderContext DEFAULT_FRC;
 
     public static FontRenderContext getDefaultFrc() {
@@ -40,5 +50,22 @@ public class Utils {
             DEFAULT_FRC = new FontRenderContext(tx, false, false);
         }
         return DEFAULT_FRC;
+    }
+
+    public static Font loadFont(DisplayFont displayFont) {
+        Map<TextAttribute, Object> attrs = new HashMap<>();
+        attrs.put(TextAttribute.KERNING, TextAttribute.KERNING_ON);
+
+        try (InputStream fin = Utils.class.getResourceAsStream(displayFont.path)) {
+            Font font = Font
+                .createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(fin))
+                .deriveFont(Font.PLAIN, displayFont.fontSize)
+                .deriveFont(attrs);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
+            return font;
+        } catch (Exception e) {
+            LOGGER.error("Could not load custom font, using default monospaced font", e);
+            return new Font(Font.MONOSPACED, Font.PLAIN, 12);
+        }
     }
 }
