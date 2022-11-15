@@ -48,8 +48,12 @@ public class ConfigFiles {
         return loadConfigurations().stream().filter(config -> config.getName().equals(computerName)).findAny();
     }
 
-    public static ComputerConfig loadConfiguration(Path computerPath) {
-        return ComputerConfig.load(computerPath);
+    public static Optional<ComputerConfig> loadConfiguration(int computerIndex) throws IOException {
+        return Optional.ofNullable(loadConfigurations().get(computerIndex));
+    }
+
+    public static Optional<ComputerConfig> loadConfiguration(Path computerPath) {
+        return Optional.of(ComputerConfig.load(computerPath));
     }
 
     public static List<String> listConfigurationNames() throws IOException {

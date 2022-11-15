@@ -35,6 +35,7 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.emustudio.application.cmdline.Utils.*;
 import static net.emustudio.application.settings.ConfigFiles.listConfigurationNames;
@@ -84,7 +85,9 @@ public class Runner implements Runnable {
     public void run() {
         if (listConfigs) {
             try {
-                listConfigurationNames().forEach(System.out::println);
+                AtomicInteger index = new AtomicInteger();
+                System.out.println("Index\tComputer name");
+                listConfigurationNames().forEach(name -> System.out.println(index.getAndIncrement() + "\t" + name));
             } catch (IOException e) {
                 LOGGER.error("Could not list configuration names", e);
                 System.exit(1);
@@ -140,6 +143,13 @@ public class Runner implements Runnable {
         )
         public Path configFile;
 
+        @CommandLine.Option(
+            names = {"-cn", "--computer-index"},
+            description = "virtual computer index (see -l for options)",
+            paramLabel = "INDEX"
+        )
+        public Integer configIndex;
+
         public Optional<ComputerConfig> loadConfiguration() throws IOException {
             if (configName != null) {
                 Optional<ComputerConfig> optConfig = ConfigFiles.loadConfiguration(configName);
@@ -150,7 +160,10 @@ public class Runner implements Runnable {
                 System.exit(1);
             }
             if (configFile != null) {
-                return Optional.of(ConfigFiles.loadConfiguration(configFile));
+                return ConfigFiles.loadConfiguration(configFile);
+            }
+            if (configIndex != null) {
+                return ConfigFiles.loadConfiguration(configIndex);
             }
             return Optional.empty();
         }
