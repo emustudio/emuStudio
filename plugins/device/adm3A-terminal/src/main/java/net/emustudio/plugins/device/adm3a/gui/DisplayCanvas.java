@@ -99,7 +99,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         graphics.setColor(BACKGROUND);
                         graphics.fillRect(0, 0, dimension.width, dimension.height);
 
-                        int lineHeight = graphics.getFontMetrics().getHeight() + 5;
+                        int lineHeight = graphics.getFontMetrics().getHeight() + displayFont.yLineHeightMultiplierOffset;
                         graphics.setColor(FOREGROUND);
                         graphics.setRenderingHint(KEY_RENDERING, VALUE_RENDER_QUALITY);
                         graphics.setRenderingHint(KEY_FRACTIONALMETRICS, VALUE_FRACTIONALMETRICS_ON);
