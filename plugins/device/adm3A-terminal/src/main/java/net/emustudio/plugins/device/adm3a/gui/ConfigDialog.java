@@ -81,9 +81,6 @@ public class ConfigDialog extends JDialog {
         JLabel lblInputDelay = new JLabel("Input delay:");
         JLabel lblMs = new JLabel("ms");
         JPanel panelTerminal = new JPanel();
-        JPanel panelControl = new JPanel();
-        JButton btnClearScreen = new JButton("Clear screen");
-        JButton btnRollLine = new JButton("Roll line");
         JButton btnOK = new JButton("OK");
         JLabel lblFont = new JLabel("Font");
 
@@ -105,8 +102,6 @@ public class ConfigDialog extends JDialog {
         spnInputDelay.setModel(new SpinnerNumberModel(0, 0, null, 100));
         chkSaveSettings.setSelected(true);
 
-        btnClearScreen.addActionListener(this::btnClearScreenActionPerformed);
-        btnRollLine.addActionListener(this::btnRollLineActionPerformed);
         btnOK.addActionListener(this::btnOKActionPerformed);
         btnOK.setDefaultCapable(true);
 
@@ -197,35 +192,6 @@ public class ConfigDialog extends JDialog {
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        panelControl.setBorder(BorderFactory.createTitledBorder(
-            null, "Control", 0, 0,
-            lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
-        ));
-
-        GroupLayout layoutControl = new GroupLayout(panelControl);
-        panelControl.setLayout(layoutControl);
-        layoutControl.setHorizontalGroup(
-            layoutControl.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layoutControl.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layoutControl.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layoutControl.createSequentialGroup()
-                            .addGroup(layoutControl.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                .addComponent(btnClearScreen, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnRollLine, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGap(0, 0, Short.MAX_VALUE)))
-                    .addContainerGap())
-        );
-        layoutControl.setVerticalGroup(
-            layoutControl.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, layoutControl.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(btnClearScreen)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnRollLine)
-                    .addContainerGap())
-        );
-
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -237,9 +203,7 @@ public class ConfigDialog extends JDialog {
                             .addComponent(panelRedirectIO, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addContainerGap())
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(panelTerminal, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(panelControl, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(panelTerminal, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addContainerGap())
                         .addGroup(layout.createSequentialGroup()
                             .addComponent(chkSaveSettings))))
@@ -254,9 +218,7 @@ public class ConfigDialog extends JDialog {
                     .addGap(18, 18, 18)
                     .addComponent(panelRedirectIO, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                        .addComponent(panelTerminal, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(panelControl, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                    .addComponent(panelTerminal, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(chkSaveSettings)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -265,14 +227,6 @@ public class ConfigDialog extends JDialog {
         );
 
         pack();
-    }
-
-    private void btnClearScreenActionPerformed(java.awt.event.ActionEvent evt) {
-        window.clearScreen();
-    }
-
-    private void btnRollLineActionPerformed(java.awt.event.ActionEvent evt) {
-        window.rollLine();
     }
 
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {
