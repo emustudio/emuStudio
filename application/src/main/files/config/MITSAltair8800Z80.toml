@@ -123,6 +123,8 @@ name = "MITS Altair8800 (Z80)"
 		halfDuplex = false
 		outputFileName = "adm3A-terminal.out"
 		inputFileName = "adm3A-terminal.in"
+        font = "original"
+
 
 [[DEVICE]]
 	schemaPoint = "220,60"

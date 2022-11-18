@@ -33,8 +33,8 @@ import java.util.Objects;
 public class TerminalSettings {
     private final static Logger LOGGER = LoggerFactory.getLogger(TerminalSettings.class);
 
-    private final static String DEFAULT_INPUT_FILE_NAME = "adm3A-terminal.in";
-    private final static String DEFAULT_OUTPUT_FILE_NAME = "adm3A-terminal.out";
+    public final static String DEFAULT_INPUT_FILE_NAME = "adm3A-terminal.in";
+    public final static String DEFAULT_OUTPUT_FILE_NAME = "adm3A-terminal.out";
     private final static String ANTI_ALIASING = "antiAliasing";
     private final static String HALF_DUPLEX = "halfDuplex";
     private final static String ALWAYS_ON_TOP = "alwaysOnTop";
@@ -42,6 +42,18 @@ public class TerminalSettings {
     private final static String OUTPUT_FILE_NAME = "outputFileName";
     private final static String INPUT_READ_DELAY = "inputReadDelay";
     private final static String DEVICE_INDEX = "deviceIndex";
+    private final static String FONT = "font";
+
+    public enum TerminalFont {
+        ORIGINAL("original"),
+        MODERN("modern");
+
+        public final String name;
+
+        TerminalFont(String name) {
+            this.name = Objects.requireNonNull(name);
+        }
+    }
 
     private final Dialogs dialogs;
     private final PluginSettings settings;
@@ -54,6 +66,7 @@ public class TerminalSettings {
     private volatile Path outputPath = Path.of(DEFAULT_OUTPUT_FILE_NAME);
     private int inputReadDelay = 0;
     private int deviceIndex = 0;
+    private TerminalFont font = TerminalFont.ORIGINAL;
 
     private final List<ChangedObserver> observers = new ArrayList<>();
 
@@ -143,6 +156,14 @@ public class TerminalSettings {
         this.deviceIndex = deviceIndex;
     }
 
+    public TerminalFont getFont() {
+        return font;
+    }
+
+    public void setFont(TerminalFont font) {
+        this.font = Objects.requireNonNull(font);
+    }
+
     public void write() {
         try {
             settings.setInt(INPUT_READ_DELAY, inputReadDelay);
@@ -152,6 +173,7 @@ public class TerminalSettings {
             settings.setString(OUTPUT_FILE_NAME, outputPath.toString());
             settings.setString(INPUT_FILE_NAME, inputPath.toString());
             settings.setInt(DEVICE_INDEX, deviceIndex);
+            settings.setString(FONT, font.name);
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not update settings", e);
             dialogs.showError("Could not save settings. Please see log file for details.", "ADM 3A");
@@ -175,6 +197,7 @@ public class TerminalSettings {
                 "Could not read '" + INPUT_READ_DELAY + "' setting. Using default value ({})", inputReadDelay, e
             );
         }
+        font = TerminalFont.valueOf(settings.getString(FONT, TerminalFont.ORIGINAL.name).toUpperCase());
         notifyObserversAndIgnoreError();
     }
 

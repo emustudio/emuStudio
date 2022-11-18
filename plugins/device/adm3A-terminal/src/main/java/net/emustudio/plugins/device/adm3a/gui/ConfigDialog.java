@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import static net.emustudio.plugins.device.adm3a.TerminalSettings.DEFAULT_INPUT_FILE_NAME;
+import static net.emustudio.plugins.device.adm3a.TerminalSettings.DEFAULT_OUTPUT_FILE_NAME;
+
 public class ConfigDialog extends JDialog {
     private final TerminalSettings settings;
     private final TerminalWindow window;
@@ -37,11 +40,10 @@ public class ConfigDialog extends JDialog {
         super(parent, true);
 
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.settings = Objects.requireNonNull(settings);
+        this.window = window;
 
         initComponents();
-
-        this.settings = settings;
-        this.window = window;
 
         readSettings();
         setLocationRelativeTo(parent);
@@ -63,134 +65,125 @@ public class ConfigDialog extends JDialog {
         settings.setInputPath(Path.of(txtInputFileName.getText()));
         settings.setOutputPath(Path.of(txtOutputFileName.getText()));
         settings.setInputReadDelay((Integer) spnInputDelay.getValue());
+        settings.setFont(TerminalSettings.TerminalFont.valueOf(cmbFont.getSelectedItem().toString().toUpperCase()));
         if (save) {
             settings.write();
         }
     }
 
     private void initComponents() {
-        JPanel panelSimulation = new JPanel();
-        JLabel jLabel1 = new JLabel();
-        txtInputFileName = new JTextField();
-        JButton btnInputBrowse = new JButton();
-        JLabel jLabel2 = new JLabel();
-        txtOutputFileName = new JTextField();
-        JButton btnOutputBrowse = new JButton();
-        JLabel jLabel3 = new JLabel();
-        JLabel jLabel4 = new JLabel();
-        spnInputDelay = new JSpinner();
-        JLabel jLabel5 = new JLabel();
-        JPanel jPanel1 = new JPanel();
-        chkHalfDuplex = new JCheckBox();
-        chkAlwaysOnTop = new JCheckBox();
-        chkAntiAliasing = new JCheckBox();
-        JPanel jPanel2 = new JPanel();
-        chkSaveSettings = new JCheckBox();
-        JButton btnClearScreen = new JButton();
-        JButton btnRollLine = new JButton();
-        JButton btnOK = new JButton();
+        JPanel panelRedirectIO = new JPanel();
+        JLabel lblInputFileName = new JLabel("Input file name:");
+        JButton btnInputBrowse = new JButton("Browse...");
+        JLabel lblOutputFileName = new JLabel("Output file name:");
+        JButton btnOutputBrowse = new JButton("Browse...");
+        JLabel lblNote = new JLabel("Note: I/O redirection will be used only if No GUI mode is enabled.");
+        JLabel lblInputDelay = new JLabel("Input delay:");
+        JLabel lblMs = new JLabel("ms");
+        JPanel panelTerminal = new JPanel();
+        JButton btnOK = new JButton("OK");
+        JLabel lblFont = new JLabel("Font");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         setTitle("Configuration of the terminal");
 
-        panelSimulation.setBorder(BorderFactory.createTitledBorder(
+        panelRedirectIO.setBorder(BorderFactory.createTitledBorder(
             null, "Redirect I/O", 0, 0,
-            jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | Font.BOLD)
+            lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
         ));
 
-        jLabel1.setText("Input file name:");
-        txtInputFileName.setText("terminal-ADM3A.in");
-        btnInputBrowse.setText("Browse...");
-
-        jLabel2.setText("Output file name:");
-        txtOutputFileName.setText("terminal-ADM3A.out");
-        btnOutputBrowse.setText("Browse...");
-
-        jLabel3.setText("Note: I/O redirection will be used only if No GUI mode is enabled.");
-        jLabel4.setText("Input delay:");
+        cmbFont.setModel(new DefaultComboBoxModel<>(new String[]{"Original", "Modern"}));
+        cmbFont.setRenderer(new DisplayFontJComboRenderer());
+        cmbFont.setPrototypeDisplayValue("Original original");
+        cmbFont.setSelectedIndex(settings.getFont().ordinal());
 
         spnInputDelay.setModel(new SpinnerNumberModel(0, 0, null, 100));
+        chkSaveSettings.setSelected(true);
 
-        jLabel5.setText("ms");
+        btnOK.addActionListener(this::btnOKActionPerformed);
+        btnOK.setDefaultCapable(true);
 
-        GroupLayout panelSimulationLayout = new GroupLayout(panelSimulation);
-        panelSimulation.setLayout(panelSimulationLayout);
-        panelSimulationLayout.setHorizontalGroup(
-            panelSimulationLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelSimulationLayout.createSequentialGroup()
+        GroupLayout layoutRedirectIO = new GroupLayout(panelRedirectIO);
+        panelRedirectIO.setLayout(layoutRedirectIO);
+        layoutRedirectIO.setHorizontalGroup(
+            layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layoutRedirectIO.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(panelSimulationLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel3)
-                        .addGroup(panelSimulationLayout.createSequentialGroup()
-                            .addGroup(panelSimulationLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(panelSimulationLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel1, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel2, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addComponent(jLabel4))
+                    .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(lblNote)
+                        .addGroup(layoutRedirectIO.createSequentialGroup()
+                            .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                    .addComponent(lblInputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(lblOutputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addComponent(lblInputDelay))
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addGroup(panelSimulationLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(panelSimulationLayout.createSequentialGroup()
+                            .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(layoutRedirectIO.createSequentialGroup()
                                     .addComponent(txtOutputFileName, GroupLayout.PREFERRED_SIZE, 241, Short.MAX_VALUE)
                                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(btnOutputBrowse))
-                                .addGroup(GroupLayout.Alignment.TRAILING, panelSimulationLayout.createSequentialGroup()
+                                .addGroup(GroupLayout.Alignment.TRAILING, layoutRedirectIO.createSequentialGroup()
                                     .addComponent(txtInputFileName, GroupLayout.PREFERRED_SIZE, 241, Short.MAX_VALUE)
                                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(btnInputBrowse))
-                                .addGroup(panelSimulationLayout.createSequentialGroup()
+                                .addGroup(layoutRedirectIO.createSequentialGroup()
                                     .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, 73, GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(jLabel5)))))
+                                    .addComponent(lblMs)))))
                     .addContainerGap())
         );
-        panelSimulationLayout.setVerticalGroup(
-            panelSimulationLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, panelSimulationLayout.createSequentialGroup()
-                    .addGroup(panelSimulationLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel1)
+        layoutRedirectIO.setVerticalGroup(
+            layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(GroupLayout.Alignment.TRAILING, layoutRedirectIO.createSequentialGroup()
+                    .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblInputFileName)
                         .addComponent(txtInputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addComponent(btnInputBrowse))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelSimulationLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel2)
+                    .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblOutputFileName)
                         .addComponent(txtOutputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addComponent(btnOutputBrowse))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelSimulationLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel4)
+                    .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblInputDelay)
                         .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel5))
+                        .addComponent(lblMs))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
-                    .addComponent(jLabel3))
+                    .addComponent(lblNote))
         );
 
-        jPanel1.setBorder(BorderFactory.createTitledBorder(
+        panelTerminal.setBorder(BorderFactory.createTitledBorder(
             null, "Terminal", 0, 0,
-            jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | Font.BOLD)
+            lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
         ));
 
-        chkHalfDuplex.setText("Half duplex mode");
-        chkAlwaysOnTop.setText("Display always on top");
-        chkAntiAliasing.setText("Use anti-aliasing");
-
-        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
+        GroupLayout layoutTerminal = new GroupLayout(panelTerminal);
+        panelTerminal.setLayout(layoutTerminal);
+        layoutTerminal.setHorizontalGroup(
+            layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layoutTerminal.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addGroup(layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layoutTerminal.createSequentialGroup()
+                            .addComponent(lblFont)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(cmbFont))
                         .addComponent(chkHalfDuplex)
                         .addComponent(chkAlwaysOnTop)
                         .addComponent(chkAntiAliasing))
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
+        layoutTerminal.setVerticalGroup(
+            layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layoutTerminal.createSequentialGroup()
+                    .addGroup(layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(lblFont)
+                        .addComponent(cmbFont))
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(chkHalfDuplex)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(chkAlwaysOnTop)
@@ -198,47 +191,6 @@ public class ConfigDialog extends JDialog {
                     .addComponent(chkAntiAliasing)
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        chkSaveSettings.setSelected(true);
-        chkSaveSettings.setText("Save settings");
-
-        btnClearScreen.setText("Clear screen");
-        btnClearScreen.addActionListener(this::btnClearScreenActionPerformed);
-
-        btnRollLine.setText("Roll down");
-        btnRollLine.addActionListener(this::btnRollLineActionPerformed);
-
-        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                            .addGap(0, 0, Short.MAX_VALUE)
-                            .addComponent(chkSaveSettings))
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                            .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                .addComponent(btnClearScreen, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnRollLine, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGap(0, 0, Short.MAX_VALUE)))
-                    .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(btnClearScreen)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnRollLine)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(chkSaveSettings)
-                    .addContainerGap())
-        );
-
-        btnOK.setText("OK");
-        btnOK.addActionListener(this::btnOKActionPerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -248,13 +200,13 @@ public class ConfigDialog extends JDialog {
                     .addContainerGap()
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(panelSimulation, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(panelRedirectIO, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addContainerGap())
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addContainerGap())))
+                            .addComponent(panelTerminal, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addContainerGap())
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(chkSaveSettings))))
                 .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnOK, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
@@ -264,11 +216,11 @@ public class ConfigDialog extends JDialog {
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addGap(18, 18, 18)
-                    .addComponent(panelSimulation, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(panelRedirectIO, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                        .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                    .addComponent(panelTerminal, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(chkSaveSettings)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnOK)
                     .addContainerGap())
@@ -277,16 +229,12 @@ public class ConfigDialog extends JDialog {
         pack();
     }
 
-    private void btnClearScreenActionPerformed(java.awt.event.ActionEvent evt) {
-        window.clearScreen();
-    }
-
-    private void btnRollLineActionPerformed(java.awt.event.ActionEvent evt) {
-        window.rollLine();
-    }
-
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {
-        window.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
+        if (window != null) {
+            window.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
+            window.setDisplayFont(DisplayFont.fromTerminalFont(
+                TerminalSettings.TerminalFont.valueOf(cmbFont.getSelectedItem().toString().toUpperCase())));
+        }
         try {
             updateSettings(chkSaveSettings.isSelected());
             dispose();
@@ -295,11 +243,12 @@ public class ConfigDialog extends JDialog {
         }
     }
 
-    private JCheckBox chkAlwaysOnTop;
-    private JCheckBox chkAntiAliasing;
-    private JCheckBox chkHalfDuplex;
-    private JCheckBox chkSaveSettings;
-    private JSpinner spnInputDelay;
-    private JTextField txtInputFileName;
-    private JTextField txtOutputFileName;
+    private final JCheckBox chkAlwaysOnTop = new JCheckBox("Display always on top");
+    private final JCheckBox chkAntiAliasing = new JCheckBox("Use anti-aliasing");
+    private final JCheckBox chkHalfDuplex = new JCheckBox("Half duplex mode");
+    private final JCheckBox chkSaveSettings = new JCheckBox("Save settings");
+    private final JSpinner spnInputDelay = new JSpinner();
+    private final JTextField txtInputFileName = new JTextField(DEFAULT_INPUT_FILE_NAME);
+    private final JTextField txtOutputFileName = new JTextField(DEFAULT_OUTPUT_FILE_NAME);
+    private final JComboBox<String> cmbFont = new JComboBox<>();
 }

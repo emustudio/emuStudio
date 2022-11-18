@@ -127,6 +127,7 @@ name = "MITS Altair8800"
 		alwaysOnTop = true
 		inputReadDelay = 0
 		halfDuplex = false
+        font = "original"
 
 [[connections]]
 	bidirectional = true
