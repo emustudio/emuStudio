@@ -325,6 +325,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
         // hopefully this covers all cases.
 
         int strLen = node.string.length();
+        Optional<Node> parent = node.getParent();
         if (sizeBytes == 2) {
             if (strLen > sizeBytes) {
                 error(expressionIsBiggerThanExpected(node, sizeBytes, strLen));
@@ -333,18 +334,20 @@ public class EvaluateExprVisitor extends NodeVisitor {
             if (strLen > 1) {
                 result |= (node.string.charAt(1) << 8);
             }
-            node.addChild(new Evaluated(node.line, node.column, result).setSizeBytes(2));
+            Node evaluated = new Evaluated(node.line, node.column, result).setSizeBytes(2);
+            parent.ifPresent(p -> p.addChild(evaluated));
             currentAddress += sizeBytes;
         } else {
             int maxValue = node.getMaxValue().map(v -> Math.min(v, 0xFF)).orElse(0xFF);
             for (int i = 0; i < strLen; i++) {
-                node.addChild(new Evaluated(node.line, node.column, node.string.charAt(i)).setMaxValue(maxValue));
+                Node evaluated = new Evaluated(node.line, node.column, node.string.charAt(i)).setMaxValue(maxValue);
+                parent.ifPresent(p -> p.addChild(evaluated));
             }
             if (sizeBytes != 0) {
                 currentAddress += strLen;
             }
         }
-        node.exclude();
+        node.remove();
     }
 
     private Optional<Integer> getCurrentAddress() {

@@ -189,4 +189,12 @@ public class DataTest extends AbstractCompilerTest {
             0, 0, 0x78, 0, 0, 0xFE, 0x43, 0xCA, 0x02, 0x00, 0x77
         );
     }
+
+    @Test
+    public void testDbOrdering() throws Exception {
+        compile("db 186, \"Hello\", 186, 10, 13");
+        assertProgram(
+            186, 'H', 'e', 'l', 'l', 'o', 186, 10, 13
+        );
+    }
 }
