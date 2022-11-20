@@ -48,11 +48,11 @@ public class LoadCursorPosition {
      * @param data received char
      * @return true if in bounds
      */
-    private boolean checkBounds(Byte data) {
+    private boolean checkBounds(byte data) {
         return data >= ' ' && data <= 'o';
     }
 
-    boolean notAccepted(Byte data) {
+    boolean notAccepted(byte data) {
         if (expect == ESCAPE && data == ASCII_ESC) {
             expect = ASSIGN;
             return false;

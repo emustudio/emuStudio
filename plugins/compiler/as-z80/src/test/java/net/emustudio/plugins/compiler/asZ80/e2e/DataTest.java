@@ -23,7 +23,7 @@ import org.junit.Test;
 public class DataTest extends AbstractCompilerTest {
 
     @Test
-    public void testDBwithNegativeValueWorks() throws Exception {
+    public void testDBwithNegativeValueWorks() {
         compile(
             "db -1"
         );
@@ -33,14 +33,14 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testDBwithNegativeValueHigherLowerThanMinus127doesNotWork() throws Exception {
+    public void testDBwithNegativeValueHigherLowerThanMinus127doesNotWork() {
         compile(
             "db -1299"
         );
     }
 
     @Test
-    public void testDBallocatesOneByte() throws Exception {
+    public void testDBallocatesOneByte() {
         compile(
             "db 10\nld a,b\n"
         );
@@ -50,14 +50,14 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testDBbiggerThan255DoesNotWork() throws Exception {
+    public void testDBbiggerThan255DoesNotWork() {
         compile(
             "db 256\n"
         );
     }
 
     @Test
-    public void testDBseveralBytesWork() throws Exception {
+    public void testDBseveralBytesWork() {
         compile(
             "db 255,1,2\n"
         );
@@ -67,7 +67,7 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testDBWithInstruction() throws Exception {
+    public void testDBWithInstruction() {
         compile(
             "db inc A\n"
         );
@@ -78,7 +78,7 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testDBliteral() throws Exception {
+    public void testDBliteral() {
         compile(
             "db 'if'\n"
         );
@@ -89,7 +89,7 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testDBshortLiteral() throws Exception {
+    public void testDBshortLiteral() {
         compile(
             "db 'i'\n"
         );
@@ -100,7 +100,7 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testDWwithNegativeValueWorks() throws Exception {
+    public void testDWwithNegativeValueWorks() {
         compile(
             "dw -1"
         );
@@ -110,14 +110,14 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testDWwithNegativeValueHigherLowerThanMinus3768doesNotWork() throws Exception {
+    public void testDWwithNegativeValueHigherLowerThanMinus3768doesNotWork() {
         compile(
             "dw -32769"
         );
     }
 
     @Test
-    public void testDWallocatesTwoBytesInLittleEndian() throws Exception {
+    public void testDWallocatesTwoBytesInLittleEndian() {
         compile(
             "dw 10\nld a,b\n"
         );
@@ -127,7 +127,7 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testDWseveralValuesWork() throws Exception {
+    public void testDWseveralValuesWork() {
         compile(
             "dw 10,4\nld a,b\n"
         );
@@ -137,14 +137,14 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testDWmoreThanFFFFdoesNotWork() throws Exception {
+    public void testDWmoreThanFFFFdoesNotWork() {
         compile(
             "dw 10000h\nld a,b\n"
         );
     }
 
     @Test(expected = Exception.class)
-    public void testDW_ValueTooBig() throws Exception {
+    public void testDW_ValueTooBig() {
         compile(
             "org 0FFFFh\n"
                 + "rrca\n"
@@ -154,14 +154,14 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testDSwithNegativeValueDoesNotWork() throws Exception {
+    public void testDSwithNegativeValueDoesNotWork() {
         compile(
             "ds -1"
         );
     }
 
     @Test
-    public void testDSbreaksPreviousMemoryContent() throws Exception {
+    public void testDSbreaksPreviousMemoryContent() {
         memoryStub.write(0, (byte) 0x10);
         memoryStub.write(1, (byte) 0x11);
 
@@ -175,7 +175,7 @@ public class DataTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testJumpBackwardWithDSamong() throws Exception {
+    public void testJumpBackwardWithDSamong() {
         compile(
             "ds 2\n" +
                 "now: ld a,b\n" +
@@ -187,6 +187,14 @@ public class DataTest extends AbstractCompilerTest {
 
         assertProgram(
             0, 0, 0x78, 0, 0, 0xFE, 0x43, 0xCA, 0x02, 0x00, 0x77
+        );
+    }
+
+    @Test
+    public void testDbOrdering() {
+        compile("db 186, \"Hello\", 186, 10, 13");
+        assertProgram(
+            186, 'H', 'e', 'l', 'l', 'o', 186, 10, 13
         );
     }
 }

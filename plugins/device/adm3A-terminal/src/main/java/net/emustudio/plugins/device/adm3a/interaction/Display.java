@@ -104,10 +104,13 @@ public class Display implements OutputProvider, Cursor.LineRoller {
     @Override
     public void write(byte data) {
         writeToOutput(data);
+
+        int d = data & 0xFF;
+
         /*
          * if it is special char, interpret it. else just add to "video memory"
          */
-        switch (data) {
+        switch (d) {
             case 5: // HERE IS
                 insertHereIs();
                 break;
@@ -140,8 +143,8 @@ public class Display implements OutputProvider, Cursor.LineRoller {
                 break;
         }
 
-        if (loadCursorPosition.notAccepted(data) && data >= 32) {
-            drawChar((char) (data & 0xFF));
+        if (loadCursorPosition.notAccepted(data) && d >= 32) {
+            drawChar((char) d);
             cursor.moveForwardsRolling(this);
         }
     }
@@ -154,6 +157,7 @@ public class Display implements OutputProvider, Cursor.LineRoller {
     }
 
     private void drawChar(char c) {
+        System.out.println(c + " - " + (int)c);
         Point cursorPoint = cursor.getCursorPoint();
         synchronized (videoMemory) {
             videoMemory[cursorPoint.y * columns + cursorPoint.x] = c;
@@ -174,10 +178,10 @@ public class Display implements OutputProvider, Cursor.LineRoller {
         }
     }
 
-    private void writeToOutput(short val) {
+    private void writeToOutput(byte data) {
         if (outputWriter != null) {
             try {
-                outputWriter.write((char) val);
+                outputWriter.write((char) data);
                 outputWriter.flush();
             } catch (IOException e) {
                 LOGGER.error("Could not write to file: " + settings.getOutputPath(), e);
