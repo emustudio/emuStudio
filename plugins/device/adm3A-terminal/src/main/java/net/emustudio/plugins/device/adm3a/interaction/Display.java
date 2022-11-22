@@ -157,7 +157,6 @@ public class Display implements OutputProvider, Cursor.LineRoller {
     }
 
     private void drawChar(char c) {
-        System.out.println(c + " - " + (int)c);
         Point cursorPoint = cursor.getCursorPoint();
         synchronized (videoMemory) {
             videoMemory[cursorPoint.y * columns + cursorPoint.x] = c;
