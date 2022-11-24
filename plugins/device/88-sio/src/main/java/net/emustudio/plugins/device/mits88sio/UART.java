@@ -21,14 +21,12 @@ package net.emustudio.plugins.device.mits88sio;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -54,6 +52,17 @@ public class UART {
     private final static int SEND_DATA_READY = 2;
     private final static int RECEIVE_DATA_READY = 1;
 
+    private final static Map<Integer, Byte> RST_MAP = Map.of(
+        0, (byte) 0xC7,
+        1, (byte) 0xCF,
+        2, (byte) 0xD7,
+        3, (byte) 0xDF,
+        4, (byte) 0xE7,
+        5, (byte) 0xEF,
+        6, (byte) 0xF7,
+        7, (byte) 0xFF
+    );
+
     private final Queue<Byte> bufferFromDevice = new ConcurrentLinkedQueue<>();
     private final Lock bufferAndStatusLock = new ReentrantLock();
 
@@ -62,11 +71,13 @@ public class UART {
     private volatile boolean inputInterruptEnabled;
     private volatile boolean outputInterruptEnabled;
     private final Context8080 cpu;
+    private final SioUnitSettings settings;
 
     private final List<Observer> observers = new ArrayList<>();
 
-    public UART(Context8080 cpu) {
+    public UART(Context8080 cpu, SioUnitSettings settings) {
         this.cpu = Objects.requireNonNull(cpu);
+        this.settings = Objects.requireNonNull(settings);
     }
 
     public void setDevice(DeviceContext<Byte> device) {
@@ -112,10 +123,10 @@ public class UART {
         } finally {
             bufferAndStatusLock.unlock();
             if (!isEmpty && inputInterruptEnabled && cpu.isInterruptSupported()) {
-                cpu.signalInterrupt(new byte[] { (byte)0xFF });  // RST 7 (in Z80 RST 0x38)
+                cpu.signalInterrupt(new byte[]{RST_MAP.get(settings.getInputInterruptVector())});
             }
             if (outputInterruptEnabled && cpu.isInterruptSupported()) {
-                cpu.signalInterrupt(new byte[] { (byte)0xFF });  // RST 7 (in Z80 RST 0x38)
+                cpu.signalInterrupt(new byte[]{RST_MAP.get(settings.getOutputInterruptVector())});
             }
 
             notifyStatusChanged(newStatus);
@@ -139,7 +150,7 @@ public class UART {
 
             if (wasEmpty) {
                 if (inputInterruptEnabled && cpu.isInterruptSupported()) {
-                    cpu.signalInterrupt(new byte[] { (byte)0xFF });  // RST 7 (in Z80 RST 0x38)
+                    cpu.signalInterrupt(new byte[]{RST_MAP.get(settings.getInputInterruptVector())});
                 }
                 notifyNewData(data);
             }
@@ -151,6 +162,9 @@ public class UART {
         DeviceContext<Byte> tmpDevice = device;
         if (tmpDevice != null) {
             tmpDevice.writeData(data);
+            if (outputInterruptEnabled && cpu.isInterruptSupported()) {
+                cpu.signalInterrupt(new byte[]{RST_MAP.get(settings.getOutputInterruptVector())});
+            }
         }
     }
 

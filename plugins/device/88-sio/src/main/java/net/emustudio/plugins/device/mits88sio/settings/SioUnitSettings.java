@@ -20,6 +20,8 @@ package net.emustudio.plugins.device.mits88sio.settings;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.settings.BasicSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +33,8 @@ import java.util.stream.Collectors;
  * Settings of one SIO unit
  */
 public class SioUnitSettings {
+    private final static Logger LOGGER = LoggerFactory.getLogger(SioUnitSettings.class);
+
     private final static String KEY_STATUS_PORTS = "statusPorts";
     private final static String KEY_DATA_PORTS = "dataPorts";
     private final static String KEY_CLEAR_INPUT_BIT8 = "clearInputBit8";
@@ -69,6 +73,17 @@ public class SioUnitSettings {
         this.inputToUpperCase = settings.getBoolean(KEY_INPUT_TO_UPPER_CASE, false);
         this.mapDeleteChar = settings.getString(KEY_MAP_DELETE_CHAR).map(MAP_CHAR::valueOf).orElse(MAP_CHAR.UNCHANGED);
         this.mapBackspaceChar = settings.getString(KEY_MAP_BACKSPACE_CHAR).map(MAP_CHAR::valueOf).orElse(MAP_CHAR.UNCHANGED);
+        this.inputInterruptVector = settings.getInt(KEY_INPUT_INTERRUPT_VECTOR).orElse(7);
+        this.outputInterruptVector = settings.getInt(KEY_OUTPUT_INTERRUPT_VECTOR).orElse(7);
+
+        if (inputInterruptVector < 0 || inputInterruptVector > 7) {
+            LOGGER.error("Invalid inputInterruptVector setting value: " + inputInterruptVector + "; setting to default (7)");
+            this.inputInterruptVector = 7;
+        }
+        if (outputInterruptVector < 0 || outputInterruptVector > 7) {
+            LOGGER.error("Invalid outputInterruptVector setting value: " + outputInterruptVector + "; setting to default (7)");
+            this.outputInterruptVector = 7;
+        }
 
         RadixUtils r = RadixUtils.getInstance();
         this.statusPorts = Arrays
@@ -175,6 +190,9 @@ public class SioUnitSettings {
     }
 
     public void setInputInterruptVector(int vector) {
+        if (vector < 0 || vector > 7) {
+            throw new IllegalArgumentException("Allowed value for interrupt vector is 0-7");
+        }
         this.inputInterruptVector = vector;
         settings.setInt(KEY_INPUT_INTERRUPT_VECTOR, vector);
         notifySettingsChanged();
@@ -185,6 +203,9 @@ public class SioUnitSettings {
     }
 
     public void setOutputInterruptVector(int vector) {
+        if (vector < 0 || vector > 7) {
+            throw new IllegalArgumentException("Allowed value for interrupt vector is 0-7");
+        }
         this.outputInterruptVector = vector;
         settings.setInt(KEY_OUTPUT_INTERRUPT_VECTOR, vector);
         notifySettingsChanged();

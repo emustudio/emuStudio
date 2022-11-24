@@ -224,7 +224,7 @@ public class Drive {
             if (((~port1status) & (~MASK_HEAD_LOAD)) != 0) {
                 return port2status;
             } else {
-                return (byte)0;
+                return (byte)0xFF; // When head is not loaded, real hardware returns 0xFF
             }
         });
     }

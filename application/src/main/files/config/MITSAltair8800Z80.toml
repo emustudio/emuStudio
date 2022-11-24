@@ -106,8 +106,8 @@ name = "MITS Altair8800 (Z80)"
 		inputToUpperCase = false
 		mapDeleteChar = "UNCHANGED"
 		mapBackspaceChar = "UNCHANGED"
-		inputInterruptVector = 0
-		outputInterruptVector = 0
+		inputInterruptVector = 7
+		outputInterruptVector = 7
 
 [[DEVICE]]
 	schemaPoint = "480,220"

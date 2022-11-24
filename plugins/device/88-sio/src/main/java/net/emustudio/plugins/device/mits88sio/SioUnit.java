@@ -46,7 +46,7 @@ public class SioUnit implements AutoCloseable {
     public SioUnit(SioUnitSettings settings, Context8080 cpu) {
         this.settings = Objects.requireNonNull(settings);
         this.cpu = Objects.requireNonNull(cpu);
-        this.uart = new UART(cpu);
+        this.uart = new UART(cpu, settings);
         this.controlChannel = new ControlChannel(uart);
         this.dataChannel = new DataChannel(settings, uart);
     }
