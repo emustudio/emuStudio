@@ -96,6 +96,7 @@ public class CpuImpl extends AbstractCPU {
     public void initialize() throws PluginInitializationException {
         initializer.initialize();
         engine = initializer.getEngine();
+        context.setCpu(engine);
         disassembler = initializer.getDisassembler();
         statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
     }

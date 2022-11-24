@@ -87,7 +87,7 @@ public class Context8080Impl implements Context8080 {
 
     @Override
     public boolean isInterruptSupported() {
-        return false;
+        return true;
     }
 
     /**

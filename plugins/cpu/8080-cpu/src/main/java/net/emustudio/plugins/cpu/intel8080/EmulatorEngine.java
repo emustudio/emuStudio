@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static net.emustudio.plugins.cpu.intel8080.DispatchTables.DISPATCH_TABLE;
@@ -52,6 +53,16 @@ public class EmulatorEngine implements CpuEngine {
     private short b1 = 0; // the raw interrupt instruction
     private short b2 = 0;
     private short b3 = 0;
+    private final static Map<Integer, Integer> RST_MAP = Map.of(
+        0xC7, 0,
+        0xCF, 0x8,
+        0xD7, 0x10,
+        0xDF, 0x18,
+        0xE7, 0x20,
+        0xEF, 0x28,
+        0xF7, 0x30,
+        0xFF, 0x38
+    );
 
     public int PC = 0; // program counter
     public int SP = 0; // stack pointer
@@ -171,12 +182,14 @@ public class EmulatorEngine implements CpuEngine {
          */
         if (isINT) {
             if (INTE) {
-                if ((b1 & 0xC7) == 0xC7) {                      /* RST */
+                isINT = false;
+                Integer maybeAddress = RST_MAP.get(b1 & 0xFF);
+                if (maybeAddress != null) { // RST
                     SP = (SP - 2) & 0xFFFF;
                     writeWord(SP, PC);
-                    PC = b1 & 0x38;
+                    PC = maybeAddress;
                     return 11;
-                } else if (b1 == 0xCD) {                        /* CALL */
+                } else if (b1 == 0xCD) {  // CALL
                     SP = (SP - 2) & 0xFFFF;
                     writeWord(SP, (PC + 2) & 0xFFFF);
                     PC = ((b3 & 0xFF) << 8) | (b2 & 0xFF);
