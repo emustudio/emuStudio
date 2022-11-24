@@ -185,15 +185,15 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_OTDR                                                          # instrED
         switch (ctx.opcode.getType()) {
             case OPCODE_NEG:
-                return new InstrED(ctx.opcode, 0, 4);
+                return new InstrED(ctx.opcode, 0, 4).setSizeBytes(2);
             case OPCODE_RETN:
-                return new InstrED(ctx.opcode, 0, 5);
+                return new InstrED(ctx.opcode, 0, 5).setSizeBytes(2);
             case OPCODE_RETI:
-                return new InstrED(ctx.opcode, 1, 5);
+                return new InstrED(ctx.opcode, 1, 5).setSizeBytes(2);
             case OPCODE_RRD:
-                return new InstrED(ctx.opcode, 4, 7);
+                return new InstrED(ctx.opcode, 4, 7).setSizeBytes(2);
             case OPCODE_RLD:
-                return new InstrED(ctx.opcode, 5, 7);
+                return new InstrED(ctx.opcode, 5, 7).setSizeBytes(2);
         }
 
         Pair<Integer, Integer> yz = CompilerTables.block.get(ctx.opcode.getType());
