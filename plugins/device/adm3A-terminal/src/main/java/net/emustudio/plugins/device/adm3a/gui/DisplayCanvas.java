@@ -13,7 +13,7 @@ import static java.awt.RenderingHints.*;
 import static net.emustudio.plugins.device.adm3a.Utils.loadFont;
 
 public class DisplayCanvas extends Canvas implements AutoCloseable {
-    private static final Color FOREGROUND = new Color(0, 255, 0);
+    private static final Color FOREGROUND = new Color(255, 255, 255);
     private static final Color BACKGROUND = Color.BLACK;
 
     private volatile DisplayFont displayFont;
