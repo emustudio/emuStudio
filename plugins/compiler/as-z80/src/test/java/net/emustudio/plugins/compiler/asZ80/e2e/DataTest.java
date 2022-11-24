@@ -197,4 +197,10 @@ public class DataTest extends AbstractCompilerTest {
             186, 'H', 'e', 'l', 'l', 'o', 186, 10, 13
         );
     }
+
+    @Test
+    public void testDbLabelAddressAfterOrg() {
+        compile("ld hl, hello\norg 0x5\nreti\nhello: db \"Hello\", 10, 13, 0");
+        assertProgram(0x21, 7, 0, 0, 0, 0xED, 0x4D, 'H', 'e', 'l', 'l', 'o', 10, 13, 0);
+    }
 }
