@@ -285,7 +285,6 @@ public class EmulatorEngine implements CpuEngine {
         int cycles = 0;
 
         IFF[0] = IFF[1] = false;
-        //System.out.println("z80: interrupt! im=" + interruptMode + ", dataBus=" + Arrays.toString(dataBus));
         switch (interruptMode) {
             case 0:
                 cycles += 11;
