@@ -18,6 +18,8 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.drive;
 
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.device.mits88dcdd.DiskSettings;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,13 +32,12 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 
 /**
  * Performs disk operations on single drive.
@@ -44,9 +45,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ThreadSafe
 public class Drive {
     private static final Logger LOGGER = LoggerFactory.getLogger(Drive.class);
-
-    public final static byte DEFAULT_SECTORS_PER_TRACK = 32;
-    public final static int DEFAULT_SECTOR_SIZE = 137;
 
     public static final byte DEAD_DRIVE = (byte)0b11100111;
     private static final byte ALIVE_DRIVE = (byte)0b11100101;
@@ -57,14 +55,26 @@ public class Drive {
     private static final byte MASK_HEAD_LOAD = (byte)0b11111011;
     private static final byte MASK_DATA_AVAILABLE = 0b01111111;
 
+    private final static Map<Integer, Byte> RST_MAP = Map.of(
+        0, (byte) 0xC7,
+        1, (byte) 0xCF,
+        2, (byte) 0xD7,
+        3, (byte) 0xDF,
+        4, (byte) 0xE7,
+        5, (byte) 0xEF,
+        6, (byte) 0xF7,
+        7, (byte) 0xFF
+    );
+
     private final int driveIndex;
+    private final Context8080 cpu;
+    private final Supplier<Integer> interruptVector;
 
     private final ReadWriteLock positionLock = new ReentrantReadWriteLock();
     private int track;
     private int sector;
     private int sectorOffset;
-    private int sectorsPerTrack = DEFAULT_SECTORS_PER_TRACK;
-    private int sectorSize = DEFAULT_SECTOR_SIZE;
+    private DiskSettings.DriveSettings driveSettings = DiskSettings.DriveSettings.DEFAULT;
 
     private Path mountedFloppy = null;
     private SeekableByteChannel imageChannel;
@@ -74,7 +84,7 @@ public class Drive {
     private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1);
 
     private boolean sectorTrue = true; // SR0 alternation
-
+    private boolean signalInterrupts = false;
 
     /*
        7   6   5   4   3   2   1   0
@@ -102,35 +112,16 @@ public class Drive {
      */
     private byte port2status = SECTOR0;
 
-    public Drive(int driveIndex) {
+    public Drive(int driveIndex, Context8080 cpu, Supplier<Integer> interruptVector) {
         this.driveIndex = driveIndex;
+        this.cpu = Objects.requireNonNull(cpu);
+        this.interruptVector = Objects.requireNonNull(interruptVector);
         reset();
     }
 
-    public void setSectorsPerTrack(int sectorsPerTrack) {
-        if (sectorsPerTrack <= 0) {
-            LOGGER.error("[drive=" + driveIndex + "] Sectors count must be > 0");
-            return;
-        }
-        inWriteLock(() -> this.sectorsPerTrack = sectorsPerTrack);
+    public void setDriveSettings(DiskSettings.DriveSettings driveSettings) {
+        this.driveSettings = Objects.requireNonNull(driveSettings);
         reset();
-    }
-
-    public void setSectorSize(int sectorSize) {
-        if (sectorSize <= 0) {
-            LOGGER.error("[drive=" + driveIndex + "] Sector length must be > 0");
-            return;
-        }
-        inWriteLock(() -> this.sectorSize = sectorSize);
-        reset();
-    }
-
-    public int getSectorsPerTrack() {
-        return inReadLock(() -> sectorsPerTrack);
-    }
-
-    public int getSectorSize() {
-        return inReadLock(() -> sectorSize);
     }
 
     public void addDriveListener(DriveListener listener) {
@@ -163,7 +154,7 @@ public class Drive {
             port1status = ALIVE_DRIVE;
             port2status = SECTOR0;
             sector = 0;
-            sectorOffset = sectorSize;
+            sectorOffset = driveSettings.sectorSize;
             if (track == 0) {
                 port1status &= MASK_TRACK0;
             }
@@ -211,10 +202,6 @@ public class Drive {
         }
     }
 
-    public Path getImagePath() {
-        return mountedFloppy;
-    }
-
     public byte getPort1status() {
         return inReadLock(() -> port1status);
     }
@@ -231,23 +218,26 @@ public class Drive {
 
     public void writeToPort2(short val) {
         inWriteLock(() -> {
-            if ((val & 0x01) != 0) { /* Step head in */
+            if ((val & 0x01) != 0) {
+                // Step head in
                 track++;
                 sector = 0;
-                sectorOffset = sectorSize;
+                sectorOffset = driveSettings.sectorSize;
                 port2status = SECTOR0;
             }
-            if ((val & 0x02) != 0) { /* Step head out */
+            if ((val & 0x02) != 0) {
+                // Step head out
                 track--;
                 if (track < 0) {
                     track = 0;
                     port1status &= 0xBF; // head is on track 0
                 }
                 sector = 0;
-                sectorOffset = sectorSize;
+                sectorOffset = driveSettings.sectorSize;
                 port2status = SECTOR0;
             }
-            if ((val & 0x04) != 0) { /* Head load */
+            if ((val & 0x04) != 0) {
+                // Head load
                 port1status &= MASK_HEAD_LOAD;
                 port1status &= MASK_DATA_AVAILABLE;
                 port2status = (byte) ((sector << 1) & 0x3E | 0xC0);
@@ -255,18 +245,27 @@ public class Drive {
                     port2status |= 1; // SR0 = false
                 }
             }
-            if ((val & 0x08) != 0) { /* Head Unload */
-                port1status |= (~MASK_HEAD_LOAD); /* turn off 'head loaded' */
-                port1status |= (~MASK_DATA_AVAILABLE); /* turn off 'read data avail */
+            if ((val & 0x08) != 0) {
+                // Head Unload
+                port1status |= (~MASK_HEAD_LOAD); // turn off 'head loaded'
+                port1status |= (~MASK_DATA_AVAILABLE); // turn off 'read data avail'
                 sector = 0;
-                sectorOffset = sectorSize;
+                sectorOffset = driveSettings.sectorSize;
                 port2status = SECTOR0;
             }
-            /* Interrupts & head current are ignored */
-            if ((val & 0x80) != 0) { /* write sequence start */
+            if ((val & 0x10) != 0) {
+                // interrupts enable
+                signalInterrupts = true;
+            }
+            if ((val & 0x20) != 0) {
+                // interrupts disable
+                signalInterrupts = false;
+            }
+            if ((val & 0x80) != 0) {
+                // write sequence start
                 sectorOffset = 0;
                 port2status &= 0xFE; // SR0 = true
-                port1status &= 0xFE; /* enter new write data on */
+                port1status &= 0xFE; // enter new write data on
             }
         });
         notifyParamsChanged();
@@ -274,10 +273,13 @@ public class Drive {
 
     public void nextSectorIfHeadIsLoaded() {
         inWriteLock(() -> {
-            if (((~port1status) & (~MASK_HEAD_LOAD)) != 0) { /* head loaded? */
+            if (((~port1status) & (~MASK_HEAD_LOAD)) != 0) { // head loaded?
                 if (sectorTrue) {
-                    sector = (byte) ((sector + 1) % sectorsPerTrack);
-                    sectorOffset = sectorSize;
+                    sector = (byte) ((sector + 1) % driveSettings.sectorsPerTrack);
+                    sectorOffset = driveSettings.sectorSize;
+                    if (signalInterrupts) {
+                        signalInterrupt();
+                    }
                 }
                 port2status = (byte) (((sector << 1) & 0x3E) | 0xC0 | (sectorTrue ? 1 : 0));
                 sectorTrue = !sectorTrue;
@@ -292,20 +294,20 @@ public class Drive {
             byteBuffer.put((byte) (data & 0xFF));
             byteBuffer.flip();
 
-            if (sectorOffset == sectorSize) {
-                port1status |= 1; /* ENWD off */
+            if (sectorOffset == driveSettings.sectorSize) {
+                port1status |= 1; // ENWD off
                 port2status &= 0xFE; // SR0 = TRUE
                 return;
             }
 
-            int pos = sectorsPerTrack * sectorSize * track + sectorSize * sector + sectorOffset;
+            int pos = driveSettings.sectorsPerTrack * driveSettings.sectorSize * track + driveSettings.sectorSize * sector + sectorOffset;
             try {
                 imageChannel.position(pos);
                 imageChannel.write(byteBuffer);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             } finally {
-                sectorOffset = (sectorOffset == sectorSize) ? sectorSize : (sectorOffset + 1);
+                sectorOffset = (sectorOffset == driveSettings.sectorSize) ? driveSettings.sectorSize : (sectorOffset + 1);
                 port2status |= 1;
             }
         });
@@ -318,8 +320,8 @@ public class Drive {
         }
         byte result = inWriteLock(() -> {
             try {
-                int offset = (sectorOffset == sectorSize) ? 0 : sectorOffset;
-                imageChannel.position((long) sectorsPerTrack * sectorSize * track + (long) sectorSize * sector + offset);
+                int offset = (sectorOffset == driveSettings.sectorSize) ? 0 : sectorOffset;
+                imageChannel.position((long) driveSettings.sectorsPerTrack * driveSettings.sectorSize * track + (long) driveSettings.sectorSize * sector + offset);
                 byteBuffer.clear();
                 int bytesRead = imageChannel.read(byteBuffer);
                 if (bytesRead != byteBuffer.capacity()) {
@@ -330,8 +332,8 @@ public class Drive {
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             } finally {
-                sectorOffset = (sectorOffset == sectorSize) ? 1 : (sectorOffset + 1);
-                if (sectorOffset == sectorSize) {
+                sectorOffset = (sectorOffset == driveSettings.sectorSize) ? 1 : (sectorOffset + 1);
+                if (sectorOffset == driveSettings.sectorSize) {
                     port2status &= 0xFE;
                 } else {
                     port2status |= 1;
@@ -351,16 +353,17 @@ public class Drive {
     }
 
     public int getOffset() {
-        return inReadLock(() -> sectorOffset == sectorSize ? 0 : sectorOffset);
+        return inReadLock(() -> sectorOffset == driveSettings.sectorSize ? 0 : sectorOffset);
     }
 
     private void reset() {
         inWriteLock(() -> {
             track = 0;
             sector = 0;
-            sectorOffset = sectorSize;
+            sectorOffset = driveSettings.sectorSize;
             port1status = DEAD_DRIVE;
             port2status = SECTOR0;
+            signalInterrupts = false;
         });
     }
 
@@ -375,6 +378,12 @@ public class Drive {
         DriveParameters parameters = getDriveParameters();
         for (DriveListener listener : listeners) {
             listener.driveParamsChanged(parameters);
+        }
+    }
+
+    private void signalInterrupt() {
+        if (cpu.isInterruptSupported()) {
+            cpu.signalInterrupt(new byte[]{RST_MAP.get(interruptVector.get())});
         }
     }
 

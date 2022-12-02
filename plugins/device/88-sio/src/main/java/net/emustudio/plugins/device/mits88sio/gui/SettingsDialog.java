@@ -20,7 +20,7 @@ package net.emustudio.plugins.device.mits88sio.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
+import net.emustudio.plugins.device.mits88sio.SioUnitSettings;
 
 import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;

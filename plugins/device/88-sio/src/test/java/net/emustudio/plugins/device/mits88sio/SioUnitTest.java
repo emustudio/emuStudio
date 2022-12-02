@@ -19,7 +19,6 @@
 package net.emustudio.plugins.device.mits88sio;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
 import org.junit.Test;
 
 import java.util.List;

@@ -59,16 +59,16 @@ name = "MITS Altair8800"
 	[DEVICE.settings]
 	    # imageN = "..."  # Load file into drive N at startup
 
-		sectorLength8 = 137
-		sectorLength9 = 137
-		sectorLength6 = 137
-		sectorLength7 = 137
-		sectorLength4 = 137
-		sectorLength5 = 137
-		sectorLength2 = 137
-		sectorLength3 = 137
-		sectorLength0 = 137
-		sectorLength1 = 137
+		sectorSize8 = 137
+		sectorSize9 = 137
+		sectorSize6 = 137
+		sectorSize7 = 137
+		sectorSize4 = 137
+		sectorSize5 = 137
+		sectorSize2 = 137
+		sectorSize3 = 137
+		sectorSize0 = 137
+		sectorSize1 = 137
 		port2CPU = 9
 		sectorsPerTrack15 = 32
 		sectorsPerTrack14 = 32
@@ -88,12 +88,12 @@ name = "MITS Altair8800"
 		sectorsPerTrack8 = 32
 		port1CPU = 8
 		port3CPU = 10
-		sectorLength15 = 137
-		sectorLength13 = 137
-		sectorLength14 = 137
-		sectorLength11 = 137
-		sectorLength12 = 137
-		sectorLength10 = 137
+		sectorSize15 = 137
+		sectorSize13 = 137
+		sectorSize14 = 137
+		sectorSize11 = 137
+		sectorSize12 = 137
+		sectorSize10 = 137
 
 [[DEVICE]]
 	schemaPoint = "340,180"

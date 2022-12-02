@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.mits88sio.settings;
+package net.emustudio.plugins.device.mits88sio;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.settings.BasicSettings;
@@ -64,6 +64,12 @@ public class SioUnitSettings {
         DELETE,
         UNDERSCORE,
         UNCHANGED
+    }
+
+    @FunctionalInterface
+    public interface SettingsObserver {
+
+        void settingsChanged();
     }
 
     public SioUnitSettings(BasicSettings settings) {

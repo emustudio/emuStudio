@@ -31,7 +31,6 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88sio.gui.SettingsDialog;
 import net.emustudio.plugins.device.mits88sio.gui.SioGui;
-import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
