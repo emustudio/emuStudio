@@ -21,6 +21,7 @@ public class DiskSettings {
     private static final String KEY_SECTORS_PER_TRACK = "sectorsPerTrack";
     private static final String KEY_SECTOR_SIZE = "sectorSize";
     private static final String KEY_IMAGE = "image";
+    private static final String KEY_IMAGE_MOUNTED = "imageMounted";
     private static final String KEY_INTERRUPT_VECTOR = "interruptVector";
 
     private final BasicSettings settings;
@@ -41,17 +42,18 @@ public class DiskSettings {
     @Immutable
     public static class DriveSettings {
         public final static DriveSettings DEFAULT = new DriveSettings(
-            DEFAULT_SECTOR_SIZE, DEFAULT_SECTORS_PER_TRACK, null
-        );
+            DEFAULT_SECTOR_SIZE, DEFAULT_SECTORS_PER_TRACK, null, false);
 
         public final int sectorSize;
         public final int sectorsPerTrack;
         public final String imagePath;
+        public final boolean mounted;
 
-        public DriveSettings(int sectorSize, int sectorsPerTrack, String imagePath) {
+        public DriveSettings(int sectorSize, int sectorsPerTrack, String imagePath, boolean mounted) {
             this.sectorSize = sectorSize;
             this.sectorsPerTrack = sectorsPerTrack;
             this.imagePath = imagePath;
+            this.mounted = mounted;
         }
     }
 
@@ -67,8 +69,8 @@ public class DiskSettings {
             driveSettings[i] = new DriveSettings(
                 settings.getInt(KEY_SECTOR_SIZE + i, DEFAULT_SECTOR_SIZE),
                 settings.getInt(KEY_SECTORS_PER_TRACK + i, DEFAULT_SECTORS_PER_TRACK),
-                settings.getString(KEY_IMAGE + i, null)
-            );
+                settings.getString(KEY_IMAGE + i, null),
+                settings.getBoolean(KEY_IMAGE_MOUNTED + i, false));
         }
     }
 
@@ -97,6 +99,7 @@ public class DiskSettings {
         } else {
             settings.setString(KEY_IMAGE + drive, driveSettings.imagePath);
         }
+        settings.setBoolean(KEY_IMAGE_MOUNTED + drive, driveSettings.mounted);
         notifySettingsChanged();
     }
 

@@ -23,35 +23,58 @@ import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import net.emustudio.plugins.device.mits88dcdd.DiskSettings;
-import net.emustudio.plugins.device.mits88dcdd.drive.Drive;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import java.awt.event.*;
-import java.io.FileNotFoundException;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import static net.emustudio.plugins.device.mits88dcdd.DiskSettings.*;
-import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_PLAIN;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
 
 public class SettingsDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
+    private final static Font DRIVE_BUTTON_FONT = new Font("Monospaced", Font.PLAIN, 14);
+    private final static ImageIcon OFF_ICON = new ImageIcon(SettingsDialog.class.getResource("/net/emustudio/plugins/device/mits88dcdd/gui/off.png"));
+    private final static ImageIcon ON_ICON = new ImageIcon(SettingsDialog.class.getResource("/net/emustudio/plugins/device/mits88dcdd/gui/on.png"));
 
     private final Dialogs dialogs;
     private final DiskSettings settings;
     private final DriveCollection drives;
 
-    private final List<String> sectorsPerTrack = new ArrayList<>();
-    private final List<String> sectorSizes = new ArrayList<>();
-    private final List<String> images = new ArrayList<>();
+    private final List<DriveSettingsUI> driveSettingsUI = new ArrayList<>();
+    private final List<JToggleButton> driveButtons = new ArrayList<>();
+    private int currentDriveIndex = 0;
+
+    static class DriveSettingsUI {
+        String sectorsPerTrack;
+        String sectorSize;
+        String image;
+        boolean mounted;
+
+        static DriveSettingsUI fromDriveSettings(DiskSettings.DriveSettings driveSettings) {
+            DriveSettingsUI dsui = new DriveSettingsUI();
+            dsui.sectorsPerTrack = String.valueOf(driveSettings.sectorsPerTrack);
+            dsui.sectorSize = String.valueOf(driveSettings.sectorSize);
+            dsui.image = Optional.ofNullable(driveSettings.imagePath).orElse("");
+            dsui.mounted = driveSettings.mounted;
+            return dsui;
+        }
+    }
 
     public SettingsDialog(JFrame parent, DiskSettings settings, DriveCollection drives, Dialogs dialogs) {
         super(parent, true);
@@ -65,7 +88,24 @@ public class SettingsDialog extends JDialog {
         initComponents();
         setLocationRelativeTo(parent);
 
-        cmbDrive.setSelectedIndex(0);
+        driveButtons.add(btnA);
+        driveButtons.add(btnB);
+        driveButtons.add(btnC);
+        driveButtons.add(btnD);
+        driveButtons.add(btnE);
+        driveButtons.add(btnF);
+        driveButtons.add(btnG);
+        driveButtons.add(btnH);
+        driveButtons.add(btnI);
+        driveButtons.add(btnJ);
+        driveButtons.add(btnK);
+        driveButtons.add(btnL);
+        driveButtons.add(btnM);
+        driveButtons.add(btnN);
+        driveButtons.add(btnO);
+        driveButtons.add(btnP);
+
+        btnA.setSelected(true);
         updateGUI(0);
     }
 
@@ -73,318 +113,369 @@ public class SettingsDialog extends JDialog {
         txtPort1.setText(String.format("0x%02X", settings.getPort1CPU()));
         txtPort2.setText(String.format("0x%02X", settings.getPort2CPU()));
         txtPort3.setText(String.format("0x%02X", settings.getPort3CPU()));
+        spnInterruptVector.setValue(settings.getInterruptVector());
 
-        sectorsPerTrack.clear();
-        sectorSizes.clear();
-        images.clear();
+        driveSettingsUI.clear();
         drives.foreach((i, drive) -> {
             DiskSettings.DriveSettings driveSettings = settings.getDriveSettings(i);
-            sectorsPerTrack.add(String.valueOf(driveSettings.sectorsPerTrack));
-            sectorSizes.add(String.valueOf(driveSettings.sectorSize));
-            images.add(Optional.ofNullable(driveSettings.imagePath).orElse(""));
+            DriveSettingsUI dsui = DriveSettingsUI.fromDriveSettings(driveSettings);
+            dsui.mounted = drive.isMounted();
+            driveSettingsUI.add(dsui);
             return null;
         });
     }
 
-    private void saveSettings(int parsedPort1, int parsedPort2, int parsedPort3) {
-        RadixUtils radixUtils = RadixUtils.getInstance();
+    private void saveSettings() throws PluginInitializationException, RuntimeException {
+        int parsedPort1 = parseInt(txtPort1, "Port1", txtPort1::getText);
+        int parsedPort2 = parseInt(txtPort2, "Port2", txtPort2::getText);
+        int parsedPort3 = parseInt(txtPort3, "Port3", txtPort3::getText);
+        int interruptVector = ((Number) spnInterruptVector.getValue()).intValue();
 
-        try {
-            List<Integer> parsedSectorsPerTracks = new ArrayList<>();
-            List<Integer> parsedSectorSizes = new ArrayList<>();
+        List<Integer> parsedSectorsPerTracks = new ArrayList<>();
+        List<Integer> parsedSectorSizes = new ArrayList<>();
 
-            drives.foreach((i, drive) -> {
-                parsedSectorsPerTracks.add(radixUtils.parseRadix(sectorsPerTrack.get(i)));
-                parsedSectorSizes.add(radixUtils.parseRadix(sectorSizes.get(i)));
-                return null;
-            });
+        drives.foreach((i, drive) -> {
+            DriveSettingsUI dsui = driveSettingsUI.get(i);
+            JToggleButton driveButton = driveButtons.get(i);
+            parsedSectorsPerTracks.add(parseInt(driveButton, txtSectorsPerTrack, "Sectors per track", () -> dsui.sectorsPerTrack));
+            parsedSectorSizes.add(parseInt(driveButton, txtSectorSize, "Sector size", () -> dsui.sectorSize));
+            return null;
+        });
 
-            settings.setPort1CPU(parsedPort1);
-            settings.setPort2CPU(parsedPort2);
-            settings.setPort3CPU(parsedPort3);
+        settings.setPort1CPU(parsedPort1);
+        settings.setPort2CPU(parsedPort2);
+        settings.setPort3CPU(parsedPort3);
+        settings.setInterruptVector(interruptVector);
 
-            drives.foreach((i, drive) -> {
-                String nullablePath = images.get(i);
-                if (nullablePath.equals("")) {
-                    nullablePath = null;
-                }
-                DiskSettings.DriveSettings driveSettings = new DiskSettings.DriveSettings(
-                    parsedSectorSizes.get(i), parsedSectorsPerTracks.get(i), nullablePath
-                );
-                settings.setDriveSettings(i, driveSettings);
-                drive.setDriveSettings(driveSettings);
-                return null;
-            });
-            drives.reattach();
-        } catch (RuntimeException e) {
-            LOGGER.error("Could not write " + DIALOG_TITLE + " settings", e);
-            dialogs.showError("Could not save settings. Please see log for more details.", DIALOG_TITLE);
-        } catch (PluginInitializationException e) {
-            LOGGER.error(DIALOG_TITLE + ": Could not re-attach CPU ports", e);
-            dialogs.showError("Could not re-attach CPU ports. Please see log for more details.", DIALOG_TITLE);
-        }
+        drives.foreach((i, drive) -> {
+            DriveSettingsUI dsui = driveSettingsUI.get(i);
+            String nullablePath = dsui.image;
+            if (nullablePath != null && nullablePath.equals("")) {
+                nullablePath = null;
+            }
+            DiskSettings.DriveSettings driveSettings = new DiskSettings.DriveSettings(
+                parsedSectorSizes.get(i), parsedSectorsPerTracks.get(i), nullablePath, dsui.mounted);
+            settings.setDriveSettings(i, driveSettings);
+            drive.setDriveSettings(driveSettings);
+            return null;
+        });
+        drives.reattach();
     }
 
     private void updateGUI(int index) {
-        txtSectorSize.setText(sectorSizes.get(index));
-        txtSectorsPerTrack.setText(sectorsPerTrack.get(index));
+        this.currentDriveIndex = index;
+        DriveSettingsUI dsui = driveSettingsUI.get(index);
+        txtSectorSize.setText(dsui.sectorSize);
+        txtSectorsPerTrack.setText(dsui.sectorsPerTrack);
 
         Optional
-            .of(images.get(index))
+            .ofNullable(dsui.image)
             .filter(p -> !p.equals(""))
             .map(Path::of)
             .ifPresentOrElse(path -> {
                 txtImageFile.setText(path.toAbsolutePath().toString());
-                btnUnmount.setEnabled(true);
+                btnMountUnmount.setSelected(dsui.mounted);
+                if (dsui.mounted) {
+                    btnMountUnmount.setText("Unmount");
+                } else {
+                    btnMountUnmount.setText("Mount");
+                }
+                driveButtons.get(index).setIcon(ON_ICON);
             }, () -> {
                 txtImageFile.setText("");
-                btnUnmount.setEnabled(false);
+                btnMountUnmount.setSelected(false);
+                btnMountUnmount.setText("Mount");
+                driveButtons.get(index).setIcon(OFF_ICON);
             });
     }
 
+    private int parseInt(JComponent component, String name, Supplier<String> text) {
+        RadixUtils radixUtils = RadixUtils.getInstance();
+        try {
+            return radixUtils.parseRadix(text.get());
+        } catch (NumberFormatException e) {
+            dialogs.showError(name + ": Invalid number format", "Save settings");
+            component.grabFocus();
+            throw e;
+        } catch (IllegalArgumentException e) {
+            dialogs.showError(name + " must be greater than 0", "Save settings");
+            component.grabFocus();
+            throw e;
+        }
+    }
+
+    private int parseInt(JToggleButton driveButton, JComponent component, String name, Supplier<String> text) {
+        try {
+            return parseInt(component, name, text);
+        } catch (RuntimeException e) {
+            driveButton.setSelected(true);
+            throw e;
+        }
+    }
+
     private void initComponents() {
-        JTabbedPane jTabbedPane1 = new JTabbedPane();
-        JPanel panelImages = new JPanel();
-        JLabel jLabel1 = new JLabel("Image file name:");
-        JButton btnBrowse = new JButton("Browse...");
-        JPanel panelImage = new JPanel();
-        JLabel jLabel2 = new JLabel("Disk drive:");
-        JPanel jPanel3 = new JPanel();
-        JLabel jLabel10 = new JLabel("Sectors per track:");
-        JLabel jLabel11 = new JLabel("Sector size:");
-        JButton btnDefaultParams = new JButton("Change to Default");
-        JPanel panelPorts = new JPanel();
-        JPanel jPanel2 = new JPanel();
-        JLabel jLabel3 = new JLabel("Settings in this tab will be reflected after the restart of emuStudio.");
-        JLabel jLabel4 = new JLabel("Port 1:");
-        JLabel jLabel5 = new JLabel("Port 2:");
-        JLabel jLabel6 = new JLabel("Port 3:");
-        JLabel jLabel7 = new JLabel("(IN: flags, OUT: select/unselect drive)");
-        JLabel jLabel8 = new JLabel("(IN: current sector, OUT: set flags)");
-        JLabel jLabel9 = new JLabel("(IN: read data, OUT: write data)");
-        JButton btnDefault = new JButton("Change to Default");
-        JButton btnSave = new JButton("Save");
+        ButtonGroup buttonGroup1 = new ButtonGroup();
+        JPanel panelDrive = new JPanel();
+        JLabel lblDrive = new JLabel("Drive:");
+        JLabel lblImage = new JLabel("Image:");
+        JPanel panelImageParameters = new JPanel();
+        JLabel lblSpt = new JLabel("Sectors per track:");
+        JLabel lblSectorSize = new JLabel("Sector size:");
+        JLabel lblBytes = new JLabel("bytes");
+        JPanel panelCpu = new JPanel();
+        JLabel lblPort1 = new JLabel("Port 1:");
+        JLabel lblPort2 = new JLabel("Port 2:");
+        JLabel lblPort3 = new JLabel("Port 3:");
+        JLabel lblInterruptVector = new JLabel("Interrupt vector:");
+        JLabel lblPort1In = new JLabel("(IN: Get flags");
+        JLabel lblPort2In = new JLabel("(IN: Current sector");
+        JLabel lblPort3In = new JLabel("(IN: Read data");
+        JLabel lblNote = new JLabel("Set CPU ports and interrupt vector used by this device.");
+        JLabel lblPort1Out = new JLabel("OUT: Select/unselect drive)");
+        JLabel lblPort2Out = new JLabel("OUT: Set flags)");
+        JLabel lblPort3Out = new JLabel("OUT: Write data)");
+        JLabel lblRange = new JLabel("(range 0-7)");
 
+        setTitle("88-DCDD Settings");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        rootPane.registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        setTitle(DIALOG_TITLE + " Settings");
+        Font bold = getFont().deriveFont(Font.BOLD);
 
-        jTabbedPane1.setFont(jTabbedPane1.getFont());
+        panelDrive.setBorder(BorderFactory.createTitledBorder(null, "Drive settings", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, bold));
 
-        cmbDrive.setModel(new DefaultComboBoxModel<>(new String[]{"Drive 0 (A)", "Drive 1 (B)", "Drive 2 (C)", "Drive 3 (D)", "Drive 4 (E)", "Drive 5 (F)", "Drive 6 (G)", "Drive 7 (H)", "Drive 8 (I)", "Drive 9 (J)", "Drive 10 (K)", "Drive 11 (L)", "Drive 12 (M)", "Drive 13 (N)", "Drive 14 (O)", "Drive 15 (P)"}));
-        cmbDrive.addItemListener(this::cmbDriveItemStateChanged);
+        setupDriveButton(buttonGroup1, btnA, 0);
+        setupDriveButton(buttonGroup1, btnB, 1);
+        setupDriveButton(buttonGroup1, btnC, 2);
+        setupDriveButton(buttonGroup1, btnD, 3);
+        setupDriveButton(buttonGroup1, btnE, 4);
+        setupDriveButton(buttonGroup1, btnF, 5);
+        setupDriveButton(buttonGroup1, btnG, 6);
+        setupDriveButton(buttonGroup1, btnH, 7);
+        setupDriveButton(buttonGroup1, btnI, 8);
+        setupDriveButton(buttonGroup1, btnJ, 9);
+        setupDriveButton(buttonGroup1, btnK, 10);
+        setupDriveButton(buttonGroup1, btnL, 11);
+        setupDriveButton(buttonGroup1, btnM, 12);
+        setupDriveButton(buttonGroup1, btnN, 13);
+        setupDriveButton(buttonGroup1, btnO, 14);
+        setupDriveButton(buttonGroup1, btnP, 15);
 
-        txtImageFile.addInputMethodListener(new InputMethodListener() {
-            public void inputMethodTextChanged(InputMethodEvent evt) {
-                txtImageFileInputMethodTextChanged();
-            }
+        panelImageParameters.setBorder(BorderFactory.createTitledBorder("Parameters"));
 
-            public void caretPositionChanged(InputMethodEvent evt) {
-            }
-        });
-
-        btnBrowse.addActionListener(this::btnBrowseActionPerformed);
-
-        panelImage.setBorder(BorderFactory.createTitledBorder(
-            null, "Image operations", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            DIALOG_PLAIN
-        ));
-
-        btnMount.addActionListener(this::btnMountActionPerformed);
-        btnUnmount.addActionListener(this::btnUnmountActionPerformed);
-
-        GroupLayout panelImageLayout = new GroupLayout(panelImage);
-        panelImage.setLayout(panelImageLayout);
-        panelImageLayout.setHorizontalGroup(
-            panelImageLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelImageLayout.createSequentialGroup()
+        GroupLayout panelImageParametersLayout = new GroupLayout(panelImageParameters);
+        panelImageParameters.setLayout(panelImageParametersLayout);
+        panelImageParametersLayout.setHorizontalGroup(
+            panelImageParametersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelImageParametersLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(btnMount)
+                    .addGroup(panelImageParametersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(lblSpt)
+                        .addComponent(lblSectorSize))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnUnmount)
-                    .addContainerGap(23, Short.MAX_VALUE))
-        );
-        panelImageLayout.setVerticalGroup(
-            panelImageLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelImageLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelImageLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(btnMount)
-                        .addComponent(btnUnmount))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jPanel3.setBorder(BorderFactory.createTitledBorder(
-            null, "Drive parameters", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            DIALOG_PLAIN
-        ));
-
-        btnDefaultParams.addActionListener(this::btnDefaultParamsActionPerformed);
-
-        GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(btnDefaultParams)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                            .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel10)
-                                .addComponent(jLabel11))
+                    .addGroup(panelImageParametersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelImageParametersLayout.createSequentialGroup()
+                            .addComponent(txtSectorsPerTrack, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                            .addGap(0, 0, Short.MAX_VALUE))
+                        .addGroup(panelImageParametersLayout.createSequentialGroup()
+                            .addComponent(txtSectorSize, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                .addComponent(txtSectorsPerTrack)
-                                .addComponent(txtSectorSize, GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE))))
-                    .addContainerGap(58, Short.MAX_VALUE))
+                            .addComponent(lblBytes)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnDriveDefault)))
+                    .addContainerGap())
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
+        panelImageParametersLayout.setVerticalGroup(
+            panelImageParametersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelImageParametersLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel10)
+                    .addGroup(panelImageParametersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblSpt)
                         .addComponent(txtSectorsPerTrack, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel11)
-                        .addComponent(txtSectorSize, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addGap(18, 18, 18)
-                    .addComponent(btnDefaultParams)
+                    .addGroup(panelImageParametersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblSectorSize)
+                        .addComponent(txtSectorSize, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(lblBytes)
+                        .addComponent(btnDriveDefault))
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        GroupLayout panelImagesLayout = new GroupLayout(panelImages);
-        panelImages.setLayout(panelImagesLayout);
-        panelImagesLayout.setHorizontalGroup(
-            panelImagesLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelImagesLayout.createSequentialGroup()
+        GroupLayout panelDriveLayout = new GroupLayout(panelDrive);
+        panelDrive.setLayout(panelDriveLayout);
+        panelDriveLayout.setHorizontalGroup(
+            panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelDriveLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(panelImagesLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(txtImageFile)
-                        .addGroup(GroupLayout.Alignment.TRAILING, panelImagesLayout.createSequentialGroup()
-                            .addGap(0, 0, Short.MAX_VALUE)
-                            .addComponent(btnBrowse))
-                        .addGroup(panelImagesLayout.createSequentialGroup()
-                            .addGroup(panelImagesLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel1)
-                                .addComponent(cmbDrive, GroupLayout.PREFERRED_SIZE, 277, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jLabel2))
-                            .addGap(0, 0, Short.MAX_VALUE))
-                        .addGroup(panelImagesLayout.createSequentialGroup()
-                            .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(panelImage, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addContainerGap())
-        );
-        panelImagesLayout.setVerticalGroup(
-            panelImagesLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelImagesLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jLabel2)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(cmbDrive, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(jLabel1)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(txtImageFile, GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnBrowse)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelImagesLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelImagesLayout.createSequentialGroup()
-                            .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addGap(0, 0, Short.MAX_VALUE))
-                        .addComponent(panelImage, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap())
-        );
-
-        jTabbedPane1.addTab("Disk Images", panelImages);
-
-        jPanel2.setBorder(BorderFactory.createTitledBorder("Note"));
-
-        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jLabel3)
-                    .addContainerGap(90, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jLabel3)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        btnDefault.addActionListener(this::btnDefaultActionPerformed);
-
-        GroupLayout panelPortsLayout = new GroupLayout(panelPorts);
-        panelPorts.setLayout(panelPortsLayout);
-        panelPortsLayout.setHorizontalGroup(
-            panelPortsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelPortsLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(panelPortsLayout.createSequentialGroup()
-                            .addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(panelPortsLayout.createSequentialGroup()
-                                    .addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                        .addGroup(panelPortsLayout.createSequentialGroup()
-                                            .addComponent(jLabel4)
-                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(txtPort1))
-                                        .addGroup(panelPortsLayout.createSequentialGroup()
-                                            .addComponent(jLabel5)
-                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(txtPort2, GroupLayout.PREFERRED_SIZE, 78, GroupLayout.PREFERRED_SIZE))
-                                        .addGroup(panelPortsLayout.createSequentialGroup()
-                                            .addComponent(jLabel6)
-                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(txtPort3, GroupLayout.PREFERRED_SIZE, 78, GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(GroupLayout.Alignment.TRAILING, panelDriveLayout.createSequentialGroup()
+                            .addComponent(lblImage)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(panelDriveLayout.createSequentialGroup()
+                                    .addComponent(btnBrowse)
                                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel9)
-                                            .addComponent(jLabel8, GroupLayout.Alignment.TRAILING))
-                                        .addComponent(jLabel7, GroupLayout.Alignment.TRAILING)))
-                                .addComponent(btnDefault))
+                                    .addComponent(btnMountUnmount)
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(btnUnmountAll))
+                                .addComponent(panelImageParameters, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(txtImageFile, GroupLayout.Alignment.TRAILING)))
+                        .addGroup(panelDriveLayout.createSequentialGroup()
+                            .addComponent(lblDrive)
+                            .addGap(22, 22, 22)
+                            .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addComponent(btnI, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnA, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addComponent(btnJ, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnB, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addComponent(btnK, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnC, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addComponent(btnL, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnD, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addComponent(btnM, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnE, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addComponent(btnF, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnN, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addComponent(btnO, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnG, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addComponent(btnP, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnH, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addContainerGap()));
+        panelDriveLayout.setVerticalGroup(
+            panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelDriveLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblDrive)
+                        .addComponent(btnA)
+                        .addComponent(btnB)
+                        .addComponent(btnC)
+                        .addComponent(btnD)
+                        .addComponent(btnE)
+                        .addComponent(btnF)
+                        .addComponent(btnG)
+                        .addComponent(btnH))
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnI)
+                        .addComponent(btnJ)
+                        .addComponent(btnK)
+                        .addComponent(btnL)
+                        .addComponent(btnM)
+                        .addComponent(btnN)
+                        .addComponent(btnO)
+                        .addComponent(btnP))
+                    .addGap(18, 18, 18)
+                    .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblImage)
+                        .addComponent(txtImageFile, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnMountUnmount)
+                        .addComponent(btnBrowse)
+                        .addComponent(btnUnmountAll))
+                    .addGap(18, 18, 18)
+                    .addComponent(panelImageParameters, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        panelCpu.setBorder(BorderFactory.createTitledBorder(null, "Connection with CPU", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, bold));
+
+        lblPort1.setFont(lblPort1.getFont().deriveFont(Font.BOLD));
+        lblPort2.setFont(lblPort2.getFont().deriveFont(Font.BOLD));
+        lblPort3.setFont(lblPort3.getFont().deriveFont(Font.BOLD));
+
+        GroupLayout panelCpuLayout = new GroupLayout(panelCpu);
+        panelCpu.setLayout(panelCpuLayout);
+        panelCpuLayout.setHorizontalGroup(
+            panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelCpuLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(btnCpuDefault, GroupLayout.Alignment.TRAILING)
+                        .addGroup(panelCpuLayout.createSequentialGroup()
+                            .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(lblNote)
+                                .addGroup(panelCpuLayout.createSequentialGroup()
+                                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                                        .addComponent(lblPort3)
+                                        .addComponent(lblPort2))
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(panelCpuLayout.createSequentialGroup()
+                                            .addComponent(txtPort2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(lblPort2In))
+                                        .addGroup(panelCpuLayout.createSequentialGroup()
+                                            .addComponent(txtPort3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(lblPort3In)))
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(lblPort3Out)
+                                        .addComponent(lblPort1Out)
+                                        .addComponent(lblPort2Out)))
+                                .addGroup(panelCpuLayout.createSequentialGroup()
+                                    .addComponent(lblPort1)
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(txtPort1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(lblPort1In))
+                                .addGroup(panelCpuLayout.createSequentialGroup()
+                                    .addComponent(lblInterruptVector)
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(spnInterruptVector, GroupLayout.PREFERRED_SIZE, 50, 50)
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(lblRange)))
                             .addGap(0, 0, Short.MAX_VALUE)))
                     .addContainerGap())
         );
-        panelPortsLayout.setVerticalGroup(
-            panelPortsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelPortsLayout.createSequentialGroup()
+        panelCpuLayout.setVerticalGroup(
+            panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(GroupLayout.Alignment.TRAILING, panelCpuLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblNote)
                     .addGap(18, 18, 18)
-                    .addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel4)
+                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblInterruptVector)
+                        .addComponent(spnInterruptVector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(lblRange))
+                    .addGap(18, 18, 18)
+                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblPort1)
                         .addComponent(txtPort1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel7))
+                        .addComponent(lblPort1In)
+                        .addComponent(lblPort1Out))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel5)
+                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblPort2)
                         .addComponent(txtPort2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel8))
+                        .addComponent(lblPort2In)
+                        .addComponent(lblPort2Out))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel6)
+                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblPort3)
                         .addComponent(txtPort3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel9))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 103, Short.MAX_VALUE)
-                    .addComponent(btnDefault)
+                        .addComponent(lblPort3In)
+                        .addComponent(lblPort3Out))
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnCpuDefault)
                     .addContainerGap())
         );
-
-        jTabbedPane1.addTab("CPU Ports", panelPorts);
-        btnSave.addActionListener(this::btnOKActionPerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -393,129 +484,150 @@ public class SettingsDialog extends JDialog {
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jTabbedPane1)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(btnSave, GroupLayout.PREFERRED_SIZE, 109, GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(panelDrive, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(panelCpu, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnSave)
                     .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
-                    .addComponent(jTabbedPane1)
+                    .addContainerGap()
+                    .addComponent(panelDrive, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(btnSave))
-                    .addContainerGap())
+                    .addComponent(panelCpu, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(btnSave)
+                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        btnMountUnmount.addItemListener(e -> {
+            DriveSettingsUI dsui = driveSettingsUI.get(currentDriveIndex);
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                try {
+                    drives.get(currentDriveIndex).mount(Path.of(txtImageFile.getText()));
+                    dsui.image = txtImageFile.getText();
+                    dsui.mounted = true;
+                } catch (IOException ex) {
+                    LOGGER.error("88-DCDD: Could not mount image: " + txtImageFile.getText(), ex);
+                    dialogs.showError("Could not mount image: " + ex.getMessage(), "Mount image");
+                    txtImageFile.grabFocus();
+                }
+            } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+                dsui.image = null;
+                dsui.mounted = false;
+                drives.get(currentDriveIndex).umount();
+            }
+            updateGUI(currentDriveIndex);
+        });
+
+        btnUnmountAll.addActionListener(e -> drives.foreach((i, drive) -> {
+            DriveSettingsUI dsui = driveSettingsUI.get(i);
+            dsui.image = null;
+            dsui.mounted = false;
+            drive.umount();
+            updateGUI(i);
+            return null;
+        }));
+
+        btnBrowse.addActionListener(e -> {
+            Path currentDirectory = Optional
+                .of(driveSettingsUI.get(currentDriveIndex).image)
+                .filter(p -> !p.isEmpty())
+                .map(Path::of)
+                .orElse(Path.of(System.getProperty("user.dir")));
+
+            dialogs.chooseFile(
+                "Open disk image", "Open", currentDirectory, false,
+                new FileExtensionsFilter("Disk images", "dsk", "bin")
+            ).ifPresent(path -> txtImageFile.setText(path.toString()));
+        });
+
+        rootPane.setDefaultButton(btnSave);
+        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
+        btnSave.addActionListener(e -> {
+            try {
+                saveSettings();
+                dispose();
+            } catch (PluginInitializationException ex) {
+                LOGGER.error(DIALOG_TITLE + ": Could not re-attach CPU ports", ex);
+                dialogs.showError("Could not re-attach CPU ports. Please see log for more details.", DIALOG_TITLE);
+            } catch (RuntimeException ignored) {
+                // already handled
+            }
+        });
+
+        btnDriveDefault.addActionListener(e -> {
+            txtSectorsPerTrack.setText(String.valueOf(DiskSettings.DEFAULT_SECTORS_PER_TRACK));
+            txtSectorSize.setText(String.valueOf(DiskSettings.DEFAULT_SECTOR_SIZE));
+        });
+
+        btnCpuDefault.addActionListener(e -> {
+            txtPort1.setText(String.format("0x%02X", DEFAULT_CPU_PORT1));
+            txtPort2.setText(String.format("0x%02X", DEFAULT_CPU_PORT2));
+            txtPort3.setText(String.format("0x%02X", DEFAULT_CPU_PORT3));
+        });
+
+        setupTextField(txtImageFile, (dsui, value) -> dsui.image = value);
+        setupTextField(txtSectorsPerTrack, (dsui, value) -> dsui.sectorsPerTrack = value);
+        setupTextField(txtSectorSize, (dsui, value) -> dsui.sectorSize = value);
 
         pack();
     }
 
-    private void cmbDriveItemStateChanged(ItemEvent evt) {
-        updateGUI(cmbDrive.getSelectedIndex());
+    private void setupDriveButton(ButtonGroup group, JToggleButton button, int index) {
+        group.add(button);
+        button.setFont(DRIVE_BUTTON_FONT);
+        button.setIcon(OFF_ICON);
+        button.addActionListener(e -> updateGUI(index));
     }
 
-    private void txtImageFileInputMethodTextChanged() {
-        btnMount.setEnabled(!txtImageFile.getText().equals(""));
+    private void setupTextField(JTextField textField, BiConsumer<DriveSettingsUI, String> property) {
+        textField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                property.accept(driveSettingsUI.get(currentDriveIndex), textField.getText());
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                property.accept(driveSettingsUI.get(currentDriveIndex), textField.getText());
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                property.accept(driveSettingsUI.get(currentDriveIndex), textField.getText());
+            }
+        });
     }
 
-    private void btnUnmountActionPerformed(ActionEvent evt) {
-        int index = cmbDrive.getSelectedIndex();
-        Drive drive = drives.get(index);
-        drive.umount();
-        updateGUI(index);
-    }
 
-    private void btnMountActionPerformed(ActionEvent evt) {
-        int index = cmbDrive.getSelectedIndex();
-        Drive drive = drives.get(index);
-        try {
-            images.set(index, txtImageFile.getText());
-            drive.mount(Path.of(txtImageFile.getText()));
-        } catch (FileNotFoundException e) {
-            dialogs.showError("Could not mount file. File is either not found, is directory, or is not readable.", "Mount image");
-            txtImageFile.grabFocus();
-        } catch (Exception ex) {
-            LOGGER.error("Could not mount file: " + txtImageFile.getText(), ex);
-            dialogs.showError("Could not mount file. Please see log file for details", "Mount image");
-            txtImageFile.grabFocus();
-        }
-        updateGUI(index);
-    }
-
-    private void btnBrowseActionPerformed(ActionEvent evt) {
-        Path currentDirectory = Optional
-            .of(images.get(cmbDrive.getSelectedIndex()))
-            .filter(p -> !p.isEmpty())
-            .map(Path::of)
-            .orElse(Path.of(System.getProperty("user.dir")));
-
-        dialogs.chooseFile(
-            "Open disk image", "Open", currentDirectory, false,
-            new FileExtensionsFilter("Disk images", "dsk", "bin")
-        ).ifPresent(path -> txtImageFile.setText(path.toString()));
-    }
-
-    private void btnOKActionPerformed(ActionEvent evt) {
-        RadixUtils radixUtils = RadixUtils.getInstance();
-        JTextField textField = null;
-        String name = "";
-
-        int index = cmbDrive.getSelectedIndex();
-        int parsedPort1;
-        int parsedPort2;
-        int parsedPort3;
-
-        try {
-            textField = txtPort1;
-            name = "Port1";
-            parsedPort1 = radixUtils.parseRadix(txtPort1.getText());
-            textField = txtPort2;
-            name = "Port2";
-            parsedPort2 = radixUtils.parseRadix(txtPort2.getText());
-            textField = txtPort3;
-            name = "Port3";
-            parsedPort3 = radixUtils.parseRadix(txtPort3.getText());
-
-            textField = txtSectorsPerTrack;
-            name = "Sectors per track";
-            radixUtils.parseRadix(txtSectorsPerTrack.getText());
-
-            textField = txtSectorSize;
-            name = "Sector size";
-            radixUtils.parseRadix(txtSectorSize.getText());
-
-            sectorsPerTrack.set(index, txtSectorsPerTrack.getText());
-            sectorSizes.set(index, txtSectorSize.getText());
-            images.set(index, txtImageFile.getText());
-        } catch (NumberFormatException e) {
-            dialogs.showError(name + ": Invalid number format", "Save settings");
-            textField.grabFocus();
-            return;
-        } catch (IllegalArgumentException e) {
-            dialogs.showError(name + " must be greater than 0", "Save settings");
-            textField.grabFocus();
-            return;
-        }
-
-        saveSettings(parsedPort1, parsedPort2, parsedPort3);
-        dispose();
-    }
-
-    private void btnDefaultActionPerformed(ActionEvent evt) {
-        txtPort1.setText(String.format("0x%02X", DEFAULT_CPU_PORT1));
-        txtPort2.setText(String.format("0x%02X", DEFAULT_CPU_PORT2));
-        txtPort3.setText(String.format("0x%02X", DEFAULT_CPU_PORT3));
-    }
-
-    private void btnDefaultParamsActionPerformed(ActionEvent evt) {
-        txtSectorsPerTrack.setText(String.valueOf(DiskSettings.DEFAULT_SECTORS_PER_TRACK));
-        txtSectorSize.setText(String.valueOf(DiskSettings.DEFAULT_SECTOR_SIZE));
-    }
-
-    private final JButton btnMount = new JButton("Mount");
-    private final JButton btnUnmount = new JButton("Umount");
-    private final JComboBox<String> cmbDrive = new JComboBox<>();
+    private final JToggleButton btnA = new JToggleButton("A");
+    private final JToggleButton btnB = new JToggleButton("B");
+    private final JToggleButton btnC = new JToggleButton("C");
+    private final JToggleButton btnD = new JToggleButton("D");
+    private final JToggleButton btnE = new JToggleButton("E");
+    private final JToggleButton btnF = new JToggleButton("F");
+    private final JToggleButton btnG = new JToggleButton("G");
+    private final JToggleButton btnH = new JToggleButton("H");
+    private final JToggleButton btnI = new JToggleButton("I");
+    private final JToggleButton btnJ = new JToggleButton("J");
+    private final JToggleButton btnK = new JToggleButton("K");
+    private final JToggleButton btnL = new JToggleButton("L");
+    private final JToggleButton btnM = new JToggleButton("M");
+    private final JToggleButton btnN = new JToggleButton("N");
+    private final JToggleButton btnO = new JToggleButton("O");
+    private final JToggleButton btnP = new JToggleButton("P");
+    private final JToggleButton btnMountUnmount = new JToggleButton("Mount");
+    private final JButton btnUnmountAll = new JButton("Unmount all");
+    private final JButton btnSave = new JButton("Save");
+    private final JButton btnBrowse = new JButton("Browse...");
+    private final JSpinner spnInterruptVector = new JSpinner(new SpinnerNumberModel(0, 0, 7, 1));
+    private final JButton btnCpuDefault = new JButton("Set default");
+    private final JButton btnDriveDefault = new JButton("Set default");
     private final JTextField txtImageFile = new JTextField();
     private final JTextField txtPort1 = new JTextField(String.format("0x%02X", DEFAULT_CPU_PORT1));
     private final JTextField txtPort2 = new JTextField(String.format("0x%02X", DEFAULT_CPU_PORT2));

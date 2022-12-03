@@ -113,7 +113,7 @@ public class DriveTest {
     @Test
     public void testDriveParametersAfterSelect() throws Exception {
         Drive drive = new Drive(0, mock(Context8080.class), () -> 0);
-        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null));
+        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null, false));
 
         drive.mount(testImageFile);
         drive.select();
@@ -130,7 +130,7 @@ public class DriveTest {
     @Test
     public void testDriveParametersAfterSelectThenDeselect() throws Exception {
         Drive drive = new Drive(0, mock(Context8080.class), () -> 0);
-        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null));
+        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null, false));
 
         drive.mount(testImageFile);
         drive.select();
@@ -160,7 +160,7 @@ public class DriveTest {
     @Test
     public void testReadAllData() throws Exception {
         Drive drive = new Drive(0, mock(Context8080.class), () -> 0);
-        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null));
+        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null, false));
 
         drive.mount(testImageFile);
         drive.select();
@@ -194,7 +194,7 @@ public class DriveTest {
     @Test
     public void testWriteAllData() throws Exception {
         Drive drive = new Drive(0, mock(Context8080.class), () -> 0);
-        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null));
+        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null, false));
 
         drive.mount(testImageFile);
         drive.select();

@@ -95,9 +95,9 @@ public class DiskGui extends JDialog {
     public void select(int driveIndex, boolean selected) {
         if (driveIndex >= 0 && driveIndex < driveButtons.length) {
             if (selected) {
-                driveButtons[driveIndex].turnOn();
+                driveButtons[driveIndex].setSelected();
             } else {
-                driveButtons[driveIndex].turnOff();
+                driveButtons[driveIndex].setUnselected();
             }
         }
     }

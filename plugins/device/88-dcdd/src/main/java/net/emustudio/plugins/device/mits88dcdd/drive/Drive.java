@@ -76,7 +76,7 @@ public class Drive {
     private int sectorOffset;
     private DiskSettings.DriveSettings driveSettings = DiskSettings.DriveSettings.DEFAULT;
 
-    private Path mountedFloppy = null;
+    private Path mountedImage = null;
     private SeekableByteChannel imageChannel;
     private boolean selected = false;
 
@@ -130,7 +130,7 @@ public class Drive {
 
     public DriveParameters getDriveParameters() {
         return inReadLock(
-            () -> new DriveParameters(port1status, port2status, track, sector, getOffset(), mountedFloppy)
+            () -> new DriveParameters(port1status, port2status, track, sector, getOffset(), mountedImage)
         );
     }
 
@@ -139,7 +139,7 @@ public class Drive {
     }
 
     public void select() {
-        if (mountedFloppy == null) {
+        if (mountedImage == null) {
             LOGGER.warn("[drive={}] Could not select drive; image is not mounted", driveIndex);
         } else {
             selectInternal();
@@ -180,7 +180,7 @@ public class Drive {
         }
 
         umount();
-        this.mountedFloppy = imagePath;
+        this.mountedImage = imagePath;
         Set<OpenOption> optionSet = new HashSet<>();
         optionSet.add(StandardOpenOption.READ);
         optionSet.add(StandardOpenOption.WRITE);
@@ -188,11 +188,15 @@ public class Drive {
         imageChannel = Files.newByteChannel(imagePath, optionSet);
     }
 
+    public boolean isMounted() {
+        return mountedImage != null;
+    }
+
     public void umount() {
         if (inReadLock(() -> selected)) {
             deselect();
         }
-        mountedFloppy = null;
+        mountedImage = null;
         try {
             if (imageChannel != null) {
                 imageChannel.close();
@@ -315,7 +319,7 @@ public class Drive {
     }
 
     public byte readData() {
-        if (mountedFloppy == null) {
+        if (mountedImage == null) {
             return 0;
         }
         byte result = inWriteLock(() -> {
