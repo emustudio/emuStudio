@@ -31,7 +31,7 @@ public class ControlChannel implements DeviceContext<Byte> {
 
     @Override
     public Byte readData() {
-        return uart.readStatus();
+        return uart.getStatus();
     }
 
     @Override

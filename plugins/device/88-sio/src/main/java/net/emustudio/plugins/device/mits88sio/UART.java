@@ -197,10 +197,17 @@ public class UART {
         }
     }
 
-    public byte readStatus() {
+    public byte getStatus() {
         return statusRegister;
     }
 
+    public boolean isInputInterruptEnabled() {
+        return inputInterruptEnabled;
+    }
+
+    public boolean isOutputInterruptEnabled() {
+        return outputInterruptEnabled;
+    }
 
     public void addObserver(Observer observer) {
         observers.add(observer);

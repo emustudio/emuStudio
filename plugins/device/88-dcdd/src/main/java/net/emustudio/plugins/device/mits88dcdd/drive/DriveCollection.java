@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
@@ -49,9 +48,6 @@ public class DriveCollection implements Iterable<Drive> {
     private Optional<Integer> attachedCpuPort3 = Optional.empty();
 
     private volatile int currentDrive;
-    private final AtomicReference<DeviceContext<Byte>> lastAttachedPort1 = new AtomicReference<>();
-    private final AtomicReference<DeviceContext<Byte>> lastAttachedPort2 = new AtomicReference<>();
-    private final AtomicReference<DeviceContext<Byte>> lastAttachedPort3 = new AtomicReference<>();
 
     public DriveCollection(Context8080 cpu, DiskSettings settings, Dialogs dialogs) {
         this.cpu = Objects.requireNonNull(cpu);
@@ -59,7 +55,7 @@ public class DriveCollection implements Iterable<Drive> {
         this.dialogs = Objects.requireNonNull(dialogs);
 
         for (int i = 0; i < DRIVES_COUNT; i++) {
-            drives.add(new Drive(i, cpu, settings::getInterruptVector));
+            drives.add(new Drive(i, cpu, settings::getInterruptVector, settings.getInterruptsSupported()));
         }
 
         this.currentDrive = DRIVES_COUNT;
@@ -101,15 +97,6 @@ public class DriveCollection implements Iterable<Drive> {
         }
     }
 
-    public void reattach() throws PluginInitializationException {
-        DeviceContext<Byte> port1 = lastAttachedPort1.get();
-        DeviceContext<Byte> port2 = lastAttachedPort2.get();
-        DeviceContext<Byte> port3 = lastAttachedPort3.get();
-        if (port1 != null && port2 != null && port3 != null) {
-            attach(port1, port2, port3);
-        }
-    }
-
     public void attach(DeviceContext<Byte> port1, DeviceContext<Byte> port2, DeviceContext<Byte> port3) throws PluginInitializationException {
         detach();
         int port1cpu = settings.getPort1CPU();
@@ -122,7 +109,6 @@ public class DriveCollection implements Iterable<Drive> {
             );
         }
         attachedCpuPort1 = Optional.of(port1cpu);
-        lastAttachedPort1.set(port1);
 
         if (!cpu.attachDevice(port2, port2cpu)) {
             throw new PluginInitializationException(
@@ -130,7 +116,6 @@ public class DriveCollection implements Iterable<Drive> {
             );
         }
         attachedCpuPort2 = Optional.of(port2cpu);
-        lastAttachedPort2.set(port2);
 
         if (!cpu.attachDevice(port3, port3cpu)) {
             throw new PluginInitializationException(
@@ -138,7 +123,6 @@ public class DriveCollection implements Iterable<Drive> {
             );
         }
         attachedCpuPort3 = Optional.of(port3cpu);
-        lastAttachedPort3.set(port3);
     }
 
     public void detach() {
@@ -151,6 +135,7 @@ public class DriveCollection implements Iterable<Drive> {
         foreach((i, drive) -> {
             DiskSettings.DriveSettings driveSettings = settings.getDriveSettings(i);
             drive.setDriveSettings(driveSettings);
+            drive.setInterruptsSupported(settings.getInterruptsSupported());
 
             Optional
                 .ofNullable(driveSettings.imagePath)

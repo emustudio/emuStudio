@@ -75,6 +75,7 @@ public class DeviceImpl extends AbstractDevice {
                 throw new RuntimeException(e);
             }
         });
+        drives.reset();
     }
 
     @Override

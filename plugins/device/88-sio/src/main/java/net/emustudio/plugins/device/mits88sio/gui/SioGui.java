@@ -31,7 +31,7 @@ public class SioGui extends JDialog {
         initComponents();
         setLocationRelativeTo(parent);
 
-        txtStatus.setText(String.format("0x%x", uart.readStatus()));
+        txtStatus.setText(String.format("0x%x", uart.getStatus()));
 
         lblAttachedDevice.setText(uart.getDeviceId());
         uart.addObserver(new UART.Observer() {
@@ -55,30 +55,24 @@ public class SioGui extends JDialog {
     }
 
     private void initComponents() {
-
-        JPanel jPanel1 = new JPanel();
-        lblAttachedDevice = new JLabel();
-        JPanel jPanel2 = new JPanel();
+        JPanel panelDevice = new JPanel();
+        JPanel panelPorts = new JPanel();
         JLabel lblStatus = new JLabel("Status:");
         JLabel lblData = new JLabel("Data:");
         JLabel lblDataDisplay = new JLabel("Data char:");
-        txtData = new JTextField();
-        txtDataDisplay = new JTextField();
-        txtStatus = new JTextField();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         setTitle("MITS 88-SIO Status");
 
-        jPanel1.setBorder(BorderFactory.createTitledBorder("Attached device"));
+        panelDevice.setBorder(BorderFactory.createTitledBorder("Attached device"));
 
         lblAttachedDevice.setFont(lblAttachedDevice.getFont().deriveFont(14.0f));
         lblAttachedDevice.setHorizontalAlignment(SwingConstants.CENTER);
-        lblAttachedDevice.setText("None");
 
-        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
+        GroupLayout jPanel1Layout = new GroupLayout(panelDevice);
+        panelDevice.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
@@ -94,15 +88,14 @@ public class SioGui extends JDialog {
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel2.setBorder(BorderFactory.createTitledBorder("88-SIO Ports (for reading)"));
+        panelPorts.setBorder(BorderFactory.createTitledBorder("88-SIO Ports (for reading)"));
 
         txtDataDisplay.setEditable(false);
         txtStatus.setEditable(false);
         txtData.setEditable(false);
-        txtData.setText("N/A");
 
-        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
+        GroupLayout jPanel2Layout = new GroupLayout(panelPorts);
+        panelPorts.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel2Layout.createSequentialGroup()
@@ -143,27 +136,27 @@ public class SioGui extends JDialog {
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(panelDevice, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(panelPorts, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
                     .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(panelDevice, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(panelPorts, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
     }
 
-    private JLabel lblAttachedDevice;
-    private JTextField txtData;
-    private JTextField txtDataDisplay;
-    private JTextField txtStatus;
+    private final JLabel lblAttachedDevice = new JLabel("None");
+    private final JTextField txtData = new JTextField("N/A");
+    private final JTextField txtDataDisplay = new JTextField();
+    private final JTextField txtStatus = new JTextField();
 }

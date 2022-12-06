@@ -12,6 +12,7 @@ public class DiskSettings {
     public final static int DEFAULT_CPU_PORT2 = 0x9;
     public final static int DEFAULT_CPU_PORT3 = 0xA;
     public final static int DEFAULT_INTERRUPT_VECTOR = 7;
+    public final static boolean DEFAULT_INTERRUPTS_SUPPORTED = true;
     public final static int DEFAULT_SECTORS_PER_TRACK = 32;
     public final static int DEFAULT_SECTOR_SIZE = 137;
 
@@ -23,6 +24,7 @@ public class DiskSettings {
     private static final String KEY_IMAGE = "image";
     private static final String KEY_IMAGE_MOUNTED = "imageMounted";
     private static final String KEY_INTERRUPT_VECTOR = "interruptVector";
+    private static final String KEY_INTERRUPTS_SUPPORTED = "interruptsSupported";
 
     private final BasicSettings settings;
     private final List<SettingsObserver> observers = new CopyOnWriteArrayList<>();
@@ -31,6 +33,7 @@ public class DiskSettings {
     private volatile int port2CPU;
     private volatile int port3CPU;
     private volatile int interruptVector;
+    private volatile boolean interruptsSupported;
     private final DriveSettings[] driveSettings = new DriveSettings[16];
 
     @FunctionalInterface
@@ -64,6 +67,7 @@ public class DiskSettings {
         this.port2CPU = settings.getInt(KEY_PORT2_CPU, DEFAULT_CPU_PORT2);
         this.port3CPU = settings.getInt(KEY_PORT3_CPU, DEFAULT_CPU_PORT3);
         this.interruptVector = settings.getInt(KEY_INTERRUPT_VECTOR, DEFAULT_INTERRUPT_VECTOR);
+        this.interruptsSupported = settings.getBoolean(KEY_INTERRUPTS_SUPPORTED, DEFAULT_INTERRUPTS_SUPPORTED);
 
         for (int i = 0; i < driveSettings.length; i++) {
             driveSettings[i] = new DriveSettings(
@@ -152,6 +156,16 @@ public class DiskSettings {
         }
         this.interruptVector = interruptVector;
         settings.setInt(KEY_INTERRUPT_VECTOR, interruptVector);
+        notifySettingsChanged();
+    }
+
+    public boolean getInterruptsSupported() {
+        return interruptsSupported;
+    }
+
+    public void setInterruptsSupported(boolean value) {
+        this.interruptsSupported = value;
+        settings.setBoolean(KEY_INTERRUPTS_SUPPORTED, value);
         notifySettingsChanged();
     }
 

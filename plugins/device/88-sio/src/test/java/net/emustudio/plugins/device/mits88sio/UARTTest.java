@@ -48,28 +48,28 @@ public class UARTTest {
 
     @Test
     public void testInitialStatusIs0x02() {
-        assertEquals(2, new UART(context, settings).readStatus());
+        assertEquals(2, new UART(context, settings).getStatus());
     }
 
     @Test
     public void testResetOnEmptyBufferSetStatusTo0x02() {
         UART uart = new UART(context, settings);
         uart.reset(false);
-        assertEquals(0x02, uart.readStatus());
+        assertEquals(0x02, uart.getStatus());
     }
 
     @Test
     public void testWriteToStatus0x03OnEmptyBufferSetStatusTo0x02() {
         UART uart = new UART(context, settings);
         uart.setStatus((byte) 0x03);
-        assertEquals(0x02, uart.readStatus());
+        assertEquals(0x02, uart.getStatus());
     }
 
     @Test
     public void testWriteFromDeviceSetsInputDeviceReady() {
         UART uart = new UART(context, settings);
         uart.receiveFromDevice((byte) 5);
-        assertEquals(1, uart.readStatus() & 0x01);
+        assertEquals(1, uart.getStatus() & 0x01);
     }
 
     @Test
@@ -78,7 +78,7 @@ public class UARTTest {
         uart.receiveFromDevice((byte) 5);
 
         assertEquals(5, uart.readBuffer());
-        assertEquals(0, uart.readStatus() & 0x01);
+        assertEquals(0, uart.getStatus() & 0x01);
     }
 
     @Test

@@ -46,13 +46,13 @@ import java.util.function.Supplier;
 public class Drive {
     private static final Logger LOGGER = LoggerFactory.getLogger(Drive.class);
 
-    public static final byte DEAD_DRIVE = (byte)0b11100111;
-    private static final byte ALIVE_DRIVE = (byte)0b11100101;
-    private static final byte MASK_TRACK0 = (byte)0b10111111;
+    public static final byte DEAD_DRIVE = (byte) 0b11100111;
+    private static final byte ALIVE_DRIVE = (byte) 0b11100101;
+    private static final byte MASK_TRACK0 = (byte) 0b10111111;
 
-    public static final byte SECTOR0 = (byte)0b11000001;
+    public static final byte SECTOR0 = (byte) 0b11000001;
 
-    private static final byte MASK_HEAD_LOAD = (byte)0b11111011;
+    private static final byte MASK_HEAD_LOAD = (byte) 0b11111011;
     private static final byte MASK_DATA_AVAILABLE = 0b01111111;
 
     private final static Map<Integer, Byte> RST_MAP = Map.of(
@@ -69,6 +69,7 @@ public class Drive {
     private final int driveIndex;
     private final Context8080 cpu;
     private final Supplier<Integer> interruptVector;
+    private volatile boolean interruptsSupported;
 
     private final ReadWriteLock positionLock = new ReentrantReadWriteLock();
     private int track;
@@ -96,7 +97,7 @@ public class Drive {
      M - When 0, head movement is allowed
      H - When 0, indicates head is loaded for read/write
      X - not used (will be 0)
-     I - When 0, indicates interrupts enabled (not used this emulator)
+     I - When 0, indicates interrupts enabled
      Z - When 0, indicates head is on track 0
      R - When 0, indicates that read circuit has new byte to read
      */
@@ -112,10 +113,11 @@ public class Drive {
      */
     private byte port2status = SECTOR0;
 
-    public Drive(int driveIndex, Context8080 cpu, Supplier<Integer> interruptVector) {
+    public Drive(int driveIndex, Context8080 cpu, Supplier<Integer> interruptVector, boolean interruptsSupported) {
         this.driveIndex = driveIndex;
         this.cpu = Objects.requireNonNull(cpu);
         this.interruptVector = Objects.requireNonNull(interruptVector);
+        this.interruptsSupported = interruptsSupported;
         reset();
     }
 
@@ -132,6 +134,10 @@ public class Drive {
         return inReadLock(
             () -> new DriveParameters(port1status, port2status, track, sector, getOffset(), mountedImage)
         );
+    }
+
+    public void setInterruptsSupported(boolean interruptsSupported) {
+        this.interruptsSupported = interruptsSupported;
     }
 
     public boolean isSelected() {
@@ -215,7 +221,7 @@ public class Drive {
             if (((~port1status) & (~MASK_HEAD_LOAD)) != 0) {
                 return port2status;
             } else {
-                return (byte)0xFF; // When head is not loaded, real hardware returns 0xFF
+                return (byte) 0xFF; // When head is not loaded, real hardware returns 0xFF
             }
         });
     }
@@ -386,7 +392,7 @@ public class Drive {
     }
 
     private void signalInterrupt() {
-        if (cpu.isInterruptSupported()) {
+        if (interruptsSupported && cpu.isInterruptSupported()) {
             cpu.signalInterrupt(new byte[]{RST_MAP.get(interruptVector.get())});
         }
     }

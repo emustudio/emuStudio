@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
@@ -114,6 +113,7 @@ public class SettingsDialog extends JDialog {
         txtPort2.setText(String.format("0x%02X", settings.getPort2CPU()));
         txtPort3.setText(String.format("0x%02X", settings.getPort3CPU()));
         spnInterruptVector.setValue(settings.getInterruptVector());
+        chkInterruptsSupported.setSelected(settings.getInterruptsSupported());
 
         driveSettingsUI.clear();
         drives.foreach((i, drive) -> {
@@ -146,6 +146,7 @@ public class SettingsDialog extends JDialog {
         settings.setPort2CPU(parsedPort2);
         settings.setPort3CPU(parsedPort3);
         settings.setInterruptVector(interruptVector);
+        settings.setInterruptsSupported(chkInterruptsSupported.isSelected());
 
         drives.foreach((i, drive) -> {
             DriveSettingsUI dsui = driveSettingsUI.get(i);
@@ -156,10 +157,8 @@ public class SettingsDialog extends JDialog {
             DiskSettings.DriveSettings driveSettings = new DiskSettings.DriveSettings(
                 parsedSectorSizes.get(i), parsedSectorsPerTracks.get(i), nullablePath, dsui.mounted);
             settings.setDriveSettings(i, driveSettings);
-            drive.setDriveSettings(driveSettings);
             return null;
         });
-        drives.reattach();
     }
 
     private void updateGUI(int index) {
@@ -215,10 +214,11 @@ public class SettingsDialog extends JDialog {
 
     private void initComponents() {
         ButtonGroup buttonGroup1 = new ButtonGroup();
+        JTabbedPane tabbedPane = new JTabbedPane();
         JPanel panelDrive = new JPanel();
+        JPanel panelImageParameters = new JPanel();
         JLabel lblDrive = new JLabel("Drive:");
         JLabel lblImage = new JLabel("Image:");
-        JPanel panelImageParameters = new JPanel();
         JLabel lblSpt = new JLabel("Sectors per track:");
         JLabel lblSectorSize = new JLabel("Sector size:");
         JLabel lblBytes = new JLabel("bytes");
@@ -240,10 +240,6 @@ public class SettingsDialog extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         rootPane.registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        Font bold = getFont().deriveFont(Font.BOLD);
-
-        panelDrive.setBorder(BorderFactory.createTitledBorder(null, "Drive settings", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, bold));
-
         setupDriveButton(buttonGroup1, btnA, 0);
         setupDriveButton(buttonGroup1, btnB, 1);
         setupDriveButton(buttonGroup1, btnC, 2);
@@ -261,8 +257,10 @@ public class SettingsDialog extends JDialog {
         setupDriveButton(buttonGroup1, btnO, 14);
         setupDriveButton(buttonGroup1, btnP, 15);
 
-        panelImageParameters.setBorder(BorderFactory.createTitledBorder("Parameters"));
+        tabbedPane.addTab("Drive settings", panelDrive);
+        tabbedPane.addTab("Connection with CPU", panelCpu);
 
+        panelImageParameters.setBorder(BorderFactory.createTitledBorder("Parameters"));
         GroupLayout panelImageParametersLayout = new GroupLayout(panelImageParameters);
         panelImageParameters.setLayout(panelImageParametersLayout);
         panelImageParametersLayout.setHorizontalGroup(
@@ -298,7 +296,7 @@ public class SettingsDialog extends JDialog {
                         .addComponent(txtSectorSize, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addComponent(lblBytes)
                         .addComponent(btnDriveDefault))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addContainerGap(9, Short.MAX_VALUE))
         );
 
         GroupLayout panelDriveLayout = new GroupLayout(panelDrive);
@@ -318,8 +316,7 @@ public class SettingsDialog extends JDialog {
                                     .addComponent(btnMountUnmount)
                                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(btnUnmountAll))
-                                .addComponent(panelImageParameters, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(txtImageFile, GroupLayout.Alignment.TRAILING)))
+                                .addComponent(txtImageFile)))
                         .addGroup(panelDriveLayout.createSequentialGroup()
                             .addComponent(lblDrive)
                             .addGap(22, 22, 22)
@@ -353,8 +350,10 @@ public class SettingsDialog extends JDialog {
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                             .addGroup(panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                                 .addComponent(btnP, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnH, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                    .addContainerGap()));
+                                .addComponent(btnH, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(panelImageParameters, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addContainerGap())
+        );
         panelDriveLayout.setVerticalGroup(
             panelDriveLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(panelDriveLayout.createSequentialGroup()
@@ -389,15 +388,8 @@ public class SettingsDialog extends JDialog {
                         .addComponent(btnBrowse)
                         .addComponent(btnUnmountAll))
                     .addGap(18, 18, 18)
-                    .addComponent(panelImageParameters, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(panelImageParameters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        panelCpu.setBorder(BorderFactory.createTitledBorder(null, "Connection with CPU", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, bold));
-
-        lblPort1.setFont(lblPort1.getFont().deriveFont(Font.BOLD));
-        lblPort2.setFont(lblPort2.getFont().deriveFont(Font.BOLD));
-        lblPort3.setFont(lblPort3.getFont().deriveFont(Font.BOLD));
 
         GroupLayout panelCpuLayout = new GroupLayout(panelCpu);
         panelCpu.setLayout(panelCpuLayout);
@@ -438,10 +430,11 @@ public class SettingsDialog extends JDialog {
                                 .addGroup(panelCpuLayout.createSequentialGroup()
                                     .addComponent(lblInterruptVector)
                                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(spnInterruptVector, GroupLayout.PREFERRED_SIZE, 50, 50)
+                                    .addComponent(spnInterruptVector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(lblRange)))
-                            .addGap(0, 0, Short.MAX_VALUE)))
+                                    .addComponent(lblRange))
+                                .addComponent(chkInterruptsSupported))
+                            .addGap(0, 164, Short.MAX_VALUE)))
                     .addContainerGap())
         );
         panelCpuLayout.setVerticalGroup(
@@ -449,11 +442,6 @@ public class SettingsDialog extends JDialog {
                 .addGroup(GroupLayout.Alignment.TRAILING, panelCpuLayout.createSequentialGroup()
                     .addContainerGap()
                     .addComponent(lblNote)
-                    .addGap(18, 18, 18)
-                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblInterruptVector)
-                        .addComponent(spnInterruptVector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(lblRange))
                     .addGap(18, 18, 18)
                     .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(lblPort1)
@@ -472,7 +460,14 @@ public class SettingsDialog extends JDialog {
                         .addComponent(txtPort3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addComponent(lblPort3In)
                         .addComponent(lblPort3Out))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGap(32, 32, 32)
+                    .addComponent(chkInterruptsSupported)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblInterruptVector)
+                        .addComponent(spnInterruptVector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(lblRange))
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
                     .addComponent(btnCpuDefault)
                     .addContainerGap())
         );
@@ -481,12 +476,7 @@ public class SettingsDialog extends JDialog {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(panelDrive, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(panelCpu, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(tabbedPane)
                 .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnSave)
@@ -495,13 +485,10 @@ public class SettingsDialog extends JDialog {
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(panelDrive, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(panelCpu, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(tabbedPane, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnSave)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addContainerGap())
         );
 
         btnMountUnmount.addItemListener(e -> {
@@ -625,6 +612,7 @@ public class SettingsDialog extends JDialog {
     private final JButton btnUnmountAll = new JButton("Unmount all");
     private final JButton btnSave = new JButton("Save");
     private final JButton btnBrowse = new JButton("Browse...");
+    private final JCheckBox chkInterruptsSupported = new JCheckBox("Interrupts supported");
     private final JSpinner spnInterruptVector = new JSpinner(new SpinnerNumberModel(0, 0, 7, 1));
     private final JButton btnCpuDefault = new JButton("Set default");
     private final JButton btnDriveDefault = new JButton("Set default");
@@ -634,4 +622,5 @@ public class SettingsDialog extends JDialog {
     private final JTextField txtPort3 = new JTextField(String.format("0x%02X", DEFAULT_CPU_PORT3));
     private final JTextField txtSectorSize = new JTextField(String.valueOf(DiskSettings.DEFAULT_SECTOR_SIZE));
     private final JTextField txtSectorsPerTrack = new JTextField(String.valueOf(DiskSettings.DEFAULT_SECTORS_PER_TRACK));
+
 }
