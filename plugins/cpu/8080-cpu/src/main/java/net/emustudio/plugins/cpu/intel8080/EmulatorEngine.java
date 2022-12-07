@@ -176,13 +176,12 @@ public class EmulatorEngine implements CpuEngine {
             tmpListener.beforeDispatch();
         }
 
-        /* if interrupt is waiting, instruction won't be read from memory
-         * but from one or all of 3 bytes (b1,b2,b3) which represents either
-         * rst or call instruction incomed from external peripheral device
+        /* if the interrupt is waiting, the instruction is represented by bytes (b1,b2,b3) which represents either
+         * rst or a call instruction from an external peripheral device
          */
         if (isINT) {
+            isINT = false;
             if (INTE) {
-                isINT = false;
                 Integer maybeAddress = RST_MAP.get(b1 & 0xFF);
                 if (maybeAddress != null) { // RST
                     SP = (SP - 2) & 0xFFFF;
@@ -196,7 +195,6 @@ public class EmulatorEngine implements CpuEngine {
                     return 17;
                 }
             }
-            isINT = false;
         }
 
         try {

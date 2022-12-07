@@ -28,7 +28,7 @@ public class ControlChannelTest {
     @Test
     public void testReadReturnsStatus() {
         UART uart = mock(UART.class);
-        expect(uart.readStatus()).andReturn((byte) 2).once();
+        expect(uart.getStatus()).andReturn((byte) 2).once();
         replay(uart);
 
         ControlChannel channel = new ControlChannel(uart);

@@ -31,7 +31,6 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88sio.gui.SettingsDialog;
 import net.emustudio.plugins.device.mits88sio.gui.SioGui;
-import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +41,7 @@ import java.util.ResourceBundle;
 
 @PluginRoot(
     type = PLUGIN_TYPE.DEVICE,
-    title = "MITS 88-SIO serial board"
+    title = "MITS 88-SIO"
 )
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {

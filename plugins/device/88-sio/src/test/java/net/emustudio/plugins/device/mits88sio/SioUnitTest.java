@@ -19,7 +19,6 @@
 package net.emustudio.plugins.device.mits88sio;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
 import org.junit.Test;
 
 import java.util.List;
@@ -33,6 +32,11 @@ public class SioUnitTest {
         SioUnitSettings s = mock(SioUnitSettings.class);
         expect(s.getStatusPorts()).andReturn(List.of(1,2)).anyTimes();
         expect(s.getDataPorts()).andReturn(List.of(4,5)).anyTimes();
+        expect(s.getInterruptsSupported()).andReturn(true).anyTimes();
+        expect(s.getInputInterruptVector()).andReturn(7).anyTimes();
+        expect(s.getOutputInterruptVector()).andReturn(7).anyTimes();
+        s.addObserver(anyObject());
+        expectLastCall().once();
         replay(s);
 
         Context8080 cpu = mock(Context8080.class);

@@ -19,7 +19,6 @@
 package net.emustudio.plugins.device.mits88sio;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
 
 import java.util.Objects;
 

@@ -21,13 +21,15 @@ package net.emustudio.plugins.device.mits88sio;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -49,8 +51,11 @@ import java.util.concurrent.locks.ReentrantLock;
 @ThreadSafe
 public class UART {
     private final static Logger LOGGER = LoggerFactory.getLogger(UART.class);
-    private final static int SEND_DATA_READY = 2;
-    private final static int RECEIVE_DATA_READY = 1;
+    private final static int OUTPUT_DEVICE_READY = 0x80;
+    private final static int DATA_AVAILABLE = 0x20;
+    private final static int DATA_OVERFLOW = 0x10;
+    private final static int XMITTER_BUFFER_EMPTY = 0x2; // ready to receive data from device
+    private final static int INPUT_DEVICE_READY = 0x1; // ready to send data to CPU
 
     private final static Map<Integer, Byte> RST_MAP = Map.of(
         0, (byte) 0xC7,
@@ -63,21 +68,31 @@ public class UART {
         7, (byte) 0xFF
     );
 
-    private final Queue<Byte> bufferFromDevice = new ConcurrentLinkedQueue<>();
+    private final AtomicReference<Byte> bufferFromDevice = new AtomicReference<>();
     private final Lock bufferAndStatusLock = new ReentrantLock();
 
     private volatile DeviceContext<Byte> device;
-    private byte statusRegister = SEND_DATA_READY;
+    private byte statusRegister = XMITTER_BUFFER_EMPTY;
+    private volatile boolean interruptsSupported;
     private volatile boolean inputInterruptEnabled;
     private volatile boolean outputInterruptEnabled;
+    private volatile byte[] inputRstInterrupt;
+    private volatile byte[] outputRstInterrupt;
     private final Context8080 cpu;
-    private final SioUnitSettings settings;
 
     private final List<Observer> observers = new ArrayList<>();
 
     public UART(Context8080 cpu, SioUnitSettings settings) {
         this.cpu = Objects.requireNonNull(cpu);
-        this.settings = Objects.requireNonNull(settings);
+        this.interruptsSupported = settings.getInterruptsSupported();
+        this.inputRstInterrupt = new byte[] {RST_MAP.get(settings.getInputInterruptVector())};
+        this.outputRstInterrupt = new byte[] {RST_MAP.get(settings.getOutputInterruptVector())};
+
+        settings.addObserver(() -> {
+            this.interruptsSupported = settings.getInterruptsSupported();
+            this.inputRstInterrupt = new byte[] {RST_MAP.get(settings.getInputInterruptVector())};
+            this.outputRstInterrupt = new byte[] {RST_MAP.get(settings.getOutputInterruptVector())};
+        });
     }
 
     public void setDevice(DeviceContext<Byte> device) {
@@ -100,61 +115,38 @@ public class UART {
 
     void reset(boolean guiSupported) {
         if (guiSupported) {
-            bufferFromDevice.clear();
+            bufferFromDevice.set(null);
         }
         setStatus((byte) 0); // disable interrupts
+        statusRegister = XMITTER_BUFFER_EMPTY;
     }
 
-    public void setStatus(byte value) {
-        bufferAndStatusLock.lock();
-        int newStatus = statusRegister;
-        boolean isEmpty = true;
-        try {
-            inputInterruptEnabled = (value & 1) == 1;
-            outputInterruptEnabled = (value & 2) == 2;
-
-            isEmpty = bufferFromDevice.isEmpty();
-            if (isEmpty) {
-                this.statusRegister = SEND_DATA_READY;
-            } else {
-                this.statusRegister = SEND_DATA_READY | RECEIVE_DATA_READY;
-            }
-            newStatus = this.statusRegister;
-        } finally {
-            bufferAndStatusLock.unlock();
-            if (!isEmpty && inputInterruptEnabled && cpu.isInterruptSupported()) {
-                cpu.signalInterrupt(new byte[]{RST_MAP.get(settings.getInputInterruptVector())});
-            }
-            if (outputInterruptEnabled && cpu.isInterruptSupported()) {
-                cpu.signalInterrupt(new byte[]{RST_MAP.get(settings.getOutputInterruptVector())});
-            }
-
-            notifyStatusChanged(newStatus);
-        }
+    public void setStatus(byte status) {
+        inputInterruptEnabled = (status & 1) == 1;
+        outputInterruptEnabled = (status & 2) == 2;
     }
 
     public void receiveFromDevice(byte data) {
-        boolean wasEmpty = false;
-        int newStatus = statusRegister;
-
         bufferAndStatusLock.lock();
+        int status = statusRegister;
+
         try {
-            if (bufferFromDevice.isEmpty()) {
-                wasEmpty = true;
+            if (bufferFromDevice.get() != null) {
+                status |= DATA_OVERFLOW;
+            } else {
+                status = (byte) (status & (~DATA_OVERFLOW));
             }
-            bufferFromDevice.add(data);
-            statusRegister = (byte) (statusRegister | 1);
-            newStatus = statusRegister;
+            status = (byte) (status | DATA_AVAILABLE | INPUT_DEVICE_READY);
+            bufferFromDevice.set(data);
+            statusRegister = (byte) status;
         } finally {
             bufferAndStatusLock.unlock();
 
-            if (wasEmpty) {
-                if (inputInterruptEnabled && cpu.isInterruptSupported()) {
-                    cpu.signalInterrupt(new byte[]{RST_MAP.get(settings.getInputInterruptVector())});
-                }
-                notifyNewData(data);
+            if (interruptsSupported && inputInterruptEnabled && cpu.isInterruptSupported()) {
+                cpu.signalInterrupt(inputRstInterrupt);
             }
-            notifyStatusChanged(newStatus);
+            notifyNewData(data);
+            notifyStatusChanged(status);
         }
     }
 
@@ -162,46 +154,35 @@ public class UART {
         DeviceContext<Byte> tmpDevice = device;
         if (tmpDevice != null) {
             tmpDevice.writeData(data);
-            if (outputInterruptEnabled && cpu.isInterruptSupported()) {
-                cpu.signalInterrupt(new byte[]{RST_MAP.get(settings.getOutputInterruptVector())});
+            if (interruptsSupported && outputInterruptEnabled && cpu.isInterruptSupported()) {
+                cpu.signalInterrupt(outputRstInterrupt);
             }
         }
     }
 
     public byte readBuffer() {
-        byte newData = 0;
-        boolean isNotEmpty = false;
-        int newStatus = statusRegister; // what to do..
-
+        Byte bufferData;
+        int status = 0;
         bufferAndStatusLock.lock();
         try {
-            Byte result = bufferFromDevice.poll();
-
-            isNotEmpty = !bufferFromDevice.isEmpty();
-            statusRegister = (byte) (isNotEmpty ? (statusRegister | RECEIVE_DATA_READY) : (statusRegister & 0xFE));
-            newStatus = statusRegister;
-
-            if (isNotEmpty) {
-                newData = bufferFromDevice.peek();
+            bufferData = bufferFromDevice.get();
+            bufferFromDevice.set(null);
+            if (bufferData == null) {
+                return 0;
             }
-
-            return result == null ? 0 : result;
+            statusRegister = XMITTER_BUFFER_EMPTY;
+            status = statusRegister;
+            return bufferData;
         } finally {
             bufferAndStatusLock.unlock();
-
-            if (isNotEmpty) {
-                notifyNewData(newData);
-            } else {
-                notifyNoData();
-            }
-            notifyStatusChanged(newStatus);
+            notifyNoData();
+            notifyStatusChanged(status);
         }
     }
 
-    public byte readStatus() {
+    public byte getStatus() {
         return statusRegister;
     }
-
 
     public void addObserver(Observer observer) {
         observers.add(observer);

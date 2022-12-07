@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.mits88sio.settings;
+package net.emustudio.plugins.device.mits88sio;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.settings.BasicSettings;
@@ -42,6 +42,7 @@ public class SioUnitSettings {
     private final static String KEY_INPUT_TO_UPPER_CASE = "inputToUpperCase";
     private final static String KEY_MAP_DELETE_CHAR = "mapDeleteChar";
     private final static String KEY_MAP_BACKSPACE_CHAR = "mapBackspaceChar";
+    private final static String KEY_INTERRUPTS_SUPPORTED = "interruptsSupported";
     private final static String KEY_INPUT_INTERRUPT_VECTOR = "inputInterruptVector";
     private final static String KEY_OUTPUT_INTERRUPT_VECTOR = "outputInterruptVector";
 
@@ -54,6 +55,7 @@ public class SioUnitSettings {
     private volatile boolean inputToUpperCase;
     private volatile MAP_CHAR mapDeleteChar;
     private volatile MAP_CHAR mapBackspaceChar;
+    private boolean interruptsSupported;
     private volatile int inputInterruptVector;
     private volatile int outputInterruptVector;
     private volatile List<Integer> statusPorts;
@@ -66,6 +68,12 @@ public class SioUnitSettings {
         UNCHANGED
     }
 
+    @FunctionalInterface
+    public interface SettingsObserver {
+
+        void settingsChanged();
+    }
+
     public SioUnitSettings(BasicSettings settings) {
         this.settings = Objects.requireNonNull(settings);
         this.isClearInputBit8 = settings.getBoolean(KEY_CLEAR_INPUT_BIT8, false);
@@ -73,6 +81,7 @@ public class SioUnitSettings {
         this.inputToUpperCase = settings.getBoolean(KEY_INPUT_TO_UPPER_CASE, false);
         this.mapDeleteChar = settings.getString(KEY_MAP_DELETE_CHAR).map(MAP_CHAR::valueOf).orElse(MAP_CHAR.UNCHANGED);
         this.mapBackspaceChar = settings.getString(KEY_MAP_BACKSPACE_CHAR).map(MAP_CHAR::valueOf).orElse(MAP_CHAR.UNCHANGED);
+        this.interruptsSupported = settings.getBoolean(KEY_INTERRUPTS_SUPPORTED).orElse(true);
         this.inputInterruptVector = settings.getInt(KEY_INPUT_INTERRUPT_VECTOR).orElse(7);
         this.outputInterruptVector = settings.getInt(KEY_OUTPUT_INTERRUPT_VECTOR).orElse(7);
 
@@ -182,6 +191,16 @@ public class SioUnitSettings {
             .map(i -> "0x" + Integer.toHexString(i))
             .reduce((s, s2) -> s + "," + s2)
             .orElse(""));
+        notifySettingsChanged();
+    }
+
+    public boolean getInterruptsSupported() {
+        return interruptsSupported;
+    }
+
+    public void setInterruptsSupported(boolean interruptsSupported) {
+        this.interruptsSupported = interruptsSupported;
+        settings.setBoolean(KEY_INTERRUPTS_SUPPORTED, interruptsSupported);
         notifySettingsChanged();
     }
 

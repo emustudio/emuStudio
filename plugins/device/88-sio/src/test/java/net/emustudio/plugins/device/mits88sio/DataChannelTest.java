@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.device.mits88sio;
 
-import net.emustudio.plugins.device.mits88sio.settings.SioUnitSettings;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;

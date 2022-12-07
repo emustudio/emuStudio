@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88dcdd;
 
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88dcdd.drive.Drive;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveListener;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveParameters;
@@ -36,7 +37,7 @@ import static org.junit.Assert.*;
 
 public class DriveTest {
     private final static short SECTOR_SIZE = 2;
-    private final static short SECTORS_COUNT = 2;
+    private final static short SECTORS_PER_TRACK = 2;
     private final static short TRACKS_COUNT = 2;
 
     @Rule
@@ -47,7 +48,7 @@ public class DriveTest {
     public void prepareTestImage() throws Exception {
         testImageFile = folder.newFile().toPath();
         try (RandomAccessFile raf = new RandomAccessFile(testImageFile.toFile(), "rw")) {
-            for (int i = 0; i < SECTOR_SIZE * SECTORS_COUNT * TRACKS_COUNT; i++) {
+            for (int i = 0; i < SECTOR_SIZE * SECTORS_PER_TRACK * TRACKS_COUNT; i++) {
                 raf.write(i);
             }
         }
@@ -55,7 +56,7 @@ public class DriveTest {
 
     private void assertImageContent(int dataStart) throws Exception {
         try (RandomAccessFile raf = new RandomAccessFile(testImageFile.toFile(), "r")) {
-            for (int i = 0; i < SECTOR_SIZE * SECTORS_COUNT * TRACKS_COUNT; i++) {
+            for (int i = 0; i < SECTOR_SIZE * SECTORS_PER_TRACK * TRACKS_COUNT; i++) {
                 assertEquals(dataStart++, raf.read());
             }
         }
@@ -63,7 +64,7 @@ public class DriveTest {
 
     @Test
     public void testInitialDriveParameters() {
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
 
         DriveParameters params = drive.getDriveParameters();
         assertEquals(0, params.sector);
@@ -76,22 +77,22 @@ public class DriveTest {
 
     @Test
     public void testMountValidImage() throws IOException {
-        new Drive(0).mount(testImageFile);
+        new Drive(0, mock(Context8080.class), () -> 0, true).mount(testImageFile);
     }
 
     @Test(expected = NullPointerException.class)
     public void testMountImageNullArgument() throws IOException {
-        new Drive(0).mount(null);
+        new Drive(0, mock(Context8080.class), () -> 0, true).mount(null);
     }
 
     @Test
     public void testUnmountWithoutMountHasNoEffect() {
-        new Drive(0).umount();
+        new Drive(0, mock(Context8080.class), () -> 0, true).umount();
     }
 
     @Test
     public void testUnmountSelectedDriveDeselects() throws IOException {
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
         drive.mount(testImageFile);
         drive.select();
 
@@ -101,7 +102,7 @@ public class DriveTest {
 
     @Test
     public void testUmountClearsMountImageInDriveParams() throws IOException {
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
         drive.mount(testImageFile);
         drive.umount();
 
@@ -111,9 +112,8 @@ public class DriveTest {
 
     @Test
     public void testDriveParametersAfterSelect() throws Exception {
-        Drive drive = new Drive(0);
-        drive.setSectorsPerTrack(SECTORS_COUNT);
-        drive.setSectorSize(SECTOR_SIZE);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
+        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null, false));
 
         drive.mount(testImageFile);
         drive.select();
@@ -129,9 +129,8 @@ public class DriveTest {
 
     @Test
     public void testDriveParametersAfterSelectThenDeselect() throws Exception {
-        Drive drive = new Drive(0);
-        drive.setSectorsPerTrack(SECTORS_COUNT);
-        drive.setSectorSize(SECTOR_SIZE);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
+        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null, false));
 
         drive.mount(testImageFile);
         drive.select();
@@ -148,21 +147,20 @@ public class DriveTest {
 
     @Test
     public void testSelectWithoutMount() {
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
         drive.select();
         assertFalse(drive.isSelected());
     }
 
     @Test
     public void testDeselectWithoutSelectHasNoEffect() {
-        new Drive(0).deselect();
+        new Drive(0, mock(Context8080.class), () -> 0, true).deselect();
     }
 
     @Test
     public void testReadAllData() throws Exception {
-        Drive drive = new Drive(0);
-        drive.setSectorsPerTrack(SECTORS_COUNT);
-        drive.setSectorSize(SECTOR_SIZE);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
+        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null, false));
 
         drive.mount(testImageFile);
         drive.select();
@@ -175,7 +173,7 @@ public class DriveTest {
 
             // head load
             drive.writeToPort2((short) 0x04);
-            for (int sector = 0; sector < SECTORS_COUNT; sector++) {
+            for (int sector = 0; sector < SECTORS_PER_TRACK; sector++) {
                 assertEquals(sector, drive.getSector());
 
                 for (int offset = 0; offset < SECTOR_SIZE; offset++) {
@@ -195,9 +193,8 @@ public class DriveTest {
 
     @Test
     public void testWriteAllData() throws Exception {
-        Drive drive = new Drive(0);
-        drive.setSectorsPerTrack(SECTORS_COUNT);
-        drive.setSectorSize(SECTOR_SIZE);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
+        drive.setDriveSettings(new DiskSettings.DriveSettings(SECTOR_SIZE, SECTORS_PER_TRACK, null, false));
 
         drive.mount(testImageFile);
         drive.select();
@@ -212,7 +209,7 @@ public class DriveTest {
             drive.writeToPort2((short) 0x04);
             assertEquals(0, drive.getPort1status() & 0x04); // head loaded
 
-            for (int sector = 0; sector < SECTORS_COUNT; sector++) {
+            for (int sector = 0; sector < SECTORS_PER_TRACK; sector++) {
                 assertEquals(sector, drive.getSector());
 
                 // write enable
@@ -246,7 +243,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
 
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
         drive.addDriveListener(listener);
         drive.mount(testImageFile);
         drive.select();
@@ -263,7 +260,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
 
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
         drive.mount(testImageFile);
         drive.select();
         drive.addDriveListener(listener);
@@ -279,7 +276,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
 
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
         drive.mount(testImageFile);
         drive.select();
         drive.addDriveListener(listener);
@@ -295,7 +292,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
 
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
         drive.mount(testImageFile);
         drive.select();
         drive.writeToPort2((short) 0x04);
@@ -312,7 +309,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
 
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
         drive.mount(testImageFile);
         drive.select();
         drive.writeToPort2((short) 0x04);
@@ -330,7 +327,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
 
-        Drive drive = new Drive(0);
+        Drive drive = new Drive(0, mock(Context8080.class), () -> 0, true);
         drive.mount(testImageFile);
         drive.select();
         drive.addDriveListener(listener);
