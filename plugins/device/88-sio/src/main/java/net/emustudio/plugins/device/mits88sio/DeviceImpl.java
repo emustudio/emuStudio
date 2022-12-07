@@ -41,7 +41,7 @@ import java.util.ResourceBundle;
 
 @PluginRoot(
     type = PLUGIN_TYPE.DEVICE,
-    title = "MITS 88-SIO serial board"
+    title = "MITS 88-SIO"
 )
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {

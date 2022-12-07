@@ -74,4 +74,9 @@ public class ContextAdm3A implements DeviceContext<Byte>, AutoCloseable {
             writeData(key);
         }
     }
+
+    @Override
+    public String toString() {
+        return "LSI ADM-3A terminal";
+    }
 }

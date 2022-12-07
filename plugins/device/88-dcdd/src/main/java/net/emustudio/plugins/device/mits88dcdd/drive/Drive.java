@@ -68,7 +68,7 @@ public class Drive {
 
     private final int driveIndex;
     private final Context8080 cpu;
-    private final Supplier<Integer> interruptVector;
+    private final byte[] rstInterrupt;
     private volatile boolean interruptsSupported;
 
     private final ReadWriteLock positionLock = new ReentrantReadWriteLock();
@@ -116,7 +116,7 @@ public class Drive {
     public Drive(int driveIndex, Context8080 cpu, Supplier<Integer> interruptVector, boolean interruptsSupported) {
         this.driveIndex = driveIndex;
         this.cpu = Objects.requireNonNull(cpu);
-        this.interruptVector = Objects.requireNonNull(interruptVector);
+        this.rstInterrupt = new byte[]{RST_MAP.get(interruptVector.get())};
         this.interruptsSupported = interruptsSupported;
         reset();
     }
@@ -393,7 +393,7 @@ public class Drive {
 
     private void signalInterrupt() {
         if (interruptsSupported && cpu.isInterruptSupported()) {
-            cpu.signalInterrupt(new byte[]{RST_MAP.get(interruptVector.get())});
+            cpu.signalInterrupt(rstInterrupt);
         }
     }
 
