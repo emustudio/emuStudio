@@ -522,7 +522,7 @@ public class SettingsDialog extends JDialog {
 
         btnBrowse.addActionListener(e -> {
             Path currentDirectory = Optional
-                .of(driveSettingsUI.get(currentDriveIndex).image)
+                .ofNullable(driveSettingsUI.get(currentDriveIndex).image)
                 .filter(p -> !p.isEmpty())
                 .map(Path::of)
                 .orElse(Path.of(System.getProperty("user.dir")));
