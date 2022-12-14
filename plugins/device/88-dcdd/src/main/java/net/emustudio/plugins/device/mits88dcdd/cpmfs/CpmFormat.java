@@ -136,7 +136,7 @@ public class CpmFormat {
                 Optional<Integer> sectorSkew = c.getOptional("sectorSkew");
                 Optional<List<Integer>> sectorSkewTable = c.getOptional("sectorSkewTable");
                 boolean bcInterpretsAsUnused = c.<Boolean>getOptional("bcInterpretsAsUnused").orElse(false);
-                DateFormat dateFormat = c.getEnum("dateFormat", DateFormat.class);
+                DateFormat dateFormat = c.getEnumOrElse("dateFormat", DateFormat.class, () -> DateFormat.NOT_USED);
                 SectorOps sectorOps = c
                     .<String>getOptional("sectorOps")
                     .map(SectorOps::fromString)
