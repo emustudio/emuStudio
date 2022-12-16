@@ -23,13 +23,14 @@ import javax.swing.*;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.MONOSPACED_PLAIN;
 
 public class DriveButton extends JToggleButton {
-    private final static ImageIcon ICON_OFF = new ImageIcon(DriveButton.class.getResource("/net/emustudio/plugins/device/mits88dcdd/gui/unselected.gif"));
-    private final static ImageIcon ICON_ON = new ImageIcon(DriveButton.class.getResource("/net/emustudio/plugins/device/mits88dcdd/gui/selected.gif"));
+    private final static ImageIcon ICON_OFF = new ImageIcon(DriveButton.class.getResource("/net/emustudio/plugins/device/mits88dcdd/gui/unselected.png"));
+    private final static ImageIcon ICON_ON = new ImageIcon(DriveButton.class.getResource("/net/emustudio/plugins/device/mits88dcdd/gui/selected.png"));
 
     public DriveButton(String text, Runnable action) {
         super(text, ICON_OFF);
         setToolTipText("Disk is unselected");
         setFont(MONOSPACED_PLAIN);
+        setFocusPainted(false);
         addActionListener(actionEvent -> action.run());
     }
 

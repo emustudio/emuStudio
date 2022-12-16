@@ -271,16 +271,13 @@ public class SettingsDialog extends JDialog {
                         .addComponent(lblSpt)
                         .addComponent(lblSectorSize))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelImageParametersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelImageParametersLayout.createSequentialGroup()
-                            .addComponent(txtSectorsPerTrack, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addGap(0, 0, Short.MAX_VALUE))
-                        .addGroup(panelImageParametersLayout.createSequentialGroup()
-                            .addComponent(txtSectorSize, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(lblBytes)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(btnDriveDefault)))
+                    .addGroup(panelImageParametersLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                        .addComponent(txtSectorSize)
+                        .addComponent(txtSectorsPerTrack))
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(lblBytes)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnDriveDefault)
                     .addContainerGap())
         );
         panelImageParametersLayout.setVerticalGroup(
@@ -388,7 +385,7 @@ public class SettingsDialog extends JDialog {
                         .addComponent(btnBrowse)
                         .addComponent(btnUnmountAll))
                     .addGap(18, 18, 18)
-                    .addComponent(panelImageParameters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(panelImageParameters, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         GroupLayout panelCpuLayout = new GroupLayout(panelCpu);
@@ -569,6 +566,7 @@ public class SettingsDialog extends JDialog {
         group.add(button);
         button.setFont(DRIVE_BUTTON_FONT);
         button.setIcon(OFF_ICON);
+        button.setFocusPainted(false);
         button.addActionListener(e -> updateGUI(index));
     }
 

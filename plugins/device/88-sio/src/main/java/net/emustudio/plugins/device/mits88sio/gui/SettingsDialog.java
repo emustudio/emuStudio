@@ -22,6 +22,7 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.device.mits88sio.SioUnitSettings;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
@@ -316,6 +317,7 @@ public class SettingsDialog extends JDialog {
         btnDataRemove.addActionListener(e -> removePort("data", lstDataPorts, dataPortsModel));
         btnDataDefaults.addActionListener(e -> setDefaultDataPorts());
 
+        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
         btnSave.addActionListener(this::btnSaveActionPerformed);
 
         pack();
