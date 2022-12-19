@@ -106,14 +106,14 @@ public class DiskGui extends JDialog {
         ButtonGroup buttonGroup1 = new ButtonGroup();
         JPanel panelDiskSelection = new JPanel();
         JPanel panelFlags = new JPanel();
-        JLabel jLabel1 = new JLabel("Port 1:");
-        JLabel jLabel2 = new JLabel("Port 2:");
-        JPanel jPanel3 = new JPanel();
+        JLabel lblPort1Label = new JLabel("Port 1:");
+        JLabel lblPort2Label = new JLabel("Port 2:");
+        JPanel panelImage = new JPanel();
         JScrollPane jScrollPane1 = new JScrollPane();
-        JPanel jPanel4 = new JPanel();
-        JLabel jLabel3 = new JLabel("Track:");
-        JLabel jLabel4 = new JLabel("Sector:");
-        JLabel jLabel5 = new JLabel("Offset:");
+        JPanel panelPosition = new JPanel();
+        JLabel lblTrackLabel = new JLabel("Track:");
+        JLabel lblSectorLabel = new JLabel("Sector:");
+        JLabel lblOffsetLabel = new JLabel("Offset:");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         rootPane.registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -123,7 +123,7 @@ public class DiskGui extends JDialog {
 
         panelDiskSelection.setBorder(BorderFactory.createTitledBorder(null, "Disk selection",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | Font.BOLD)
+            lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
         ));
 
         for (DriveButton button : driveButtons) {
@@ -169,43 +169,43 @@ public class DiskGui extends JDialog {
 
         panelFlags.setBorder(BorderFactory.createTitledBorder(
             null, "Flags and settings", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | Font.BOLD)
+            lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
         ));
 
-        GroupLayout jPanel2Layout = new GroupLayout(panelFlags);
-        panelFlags.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
+        GroupLayout panelFlagsLayout = new GroupLayout(panelFlags);
+        panelFlags.setLayout(panelFlagsLayout);
+        panelFlagsLayout.setHorizontalGroup(
+            panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelFlagsLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                            .addComponent(jLabel2)
+                    .addGroup(panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelFlagsLayout.createSequentialGroup()
+                            .addComponent(lblPort2Label)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(lblPort2Status))
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                            .addComponent(jLabel1)
+                        .addGroup(panelFlagsLayout.createSequentialGroup()
+                            .addComponent(lblPort1Label)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(lblPort1Status)))
                     .addContainerGap(119, Short.MAX_VALUE))
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
+        panelFlagsLayout.setVerticalGroup(
+            panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelFlagsLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel1)
+                    .addGroup(panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblPort1Label)
                         .addComponent(lblPort1Status))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel2)
+                    .addGroup(panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblPort2Label)
                         .addComponent(lblPort2Status))
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel3.setBorder(BorderFactory.createTitledBorder(
+        panelImage.setBorder(BorderFactory.createTitledBorder(
             null, "Mounted image", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | Font.BOLD)
+            lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
         ));
 
         txtMountedImage.setEditable(false);
@@ -216,59 +216,59 @@ public class DiskGui extends JDialog {
         txtMountedImage.setRows(5);
         jScrollPane1.setViewportView(txtMountedImage);
 
-        GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
+        GroupLayout panelImageLayout = new GroupLayout(panelImage);
+        panelImage.setLayout(panelImageLayout);
+        panelImageLayout.setHorizontalGroup(
+            panelImageLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelImageLayout.createSequentialGroup()
                     .addContainerGap()
                     .addComponent(jScrollPane1)
                     .addContainerGap())
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
+        panelImageLayout.setVerticalGroup(
+            panelImageLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelImageLayout.createSequentialGroup()
                     .addContainerGap()
                     .addComponent(jScrollPane1)
                     .addContainerGap())
         );
 
-        jPanel4.setBorder(BorderFactory.createTitledBorder(
+        panelPosition.setBorder(BorderFactory.createTitledBorder(
             null, "Position", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | Font.BOLD)
+            lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
         ));
 
-        GroupLayout jPanel4Layout = new GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel4Layout.createSequentialGroup()
+        GroupLayout panelPositionLayout = new GroupLayout(panelPosition);
+        panelPosition.setLayout(panelPositionLayout);
+        panelPositionLayout.setHorizontalGroup(
+            panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelPositionLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel4)
-                        .addComponent(jLabel3)
-                        .addComponent(jLabel5))
+                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(lblSectorLabel)
+                        .addComponent(lblTrackLabel)
+                        .addComponent(lblOffsetLabel))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addComponent(lblOffset)
-                        .addComponent(lblTrack)
-                        .addComponent(lblSector))
+                        .addComponent(this.lblTrack)
+                        .addComponent(this.lblSector))
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel4Layout.createSequentialGroup()
+        panelPositionLayout.setVerticalGroup(
+            panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(panelPositionLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel3)
-                        .addComponent(lblTrack))
+                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblTrackLabel)
+                        .addComponent(this.lblTrack))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel4)
-                        .addComponent(lblSector))
+                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblSectorLabel)
+                        .addComponent(this.lblSector))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel5)
+                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(lblOffsetLabel)
                         .addComponent(lblOffset))
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -281,11 +281,11 @@ public class DiskGui extends JDialog {
                     .addContainerGap()
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addComponent(panelDiskSelection, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(panelImage, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createSequentialGroup()
                             .addComponent(panelFlags, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(jPanel4, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(panelPosition, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -295,10 +295,10 @@ public class DiskGui extends JDialog {
                     .addComponent(panelDiskSelection, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jPanel4, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(panelPosition, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(panelFlags, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(panelImage, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
