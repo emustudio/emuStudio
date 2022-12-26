@@ -36,7 +36,7 @@ public class AttachPTP implements Command {
 
     @Override
     public void start(Control control) {
-       // attachCPM( & ptp_unit);
+        // attachCPM( & ptp_unit);
         control.clearWriteCommand();
     }
 }

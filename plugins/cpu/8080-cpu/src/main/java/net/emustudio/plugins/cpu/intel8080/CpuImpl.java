@@ -44,8 +44,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.CPU,
-    title = "Intel 8080 CPU"
+        type = PLUGIN_TYPE.CPU,
+        title = "Intel 8080 CPU"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
@@ -69,11 +69,11 @@ public class CpuImpl extends AbstractCPU {
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register CPU context", e);
             applicationApi.getDialogs().showError(
-                "Could not register CPU Context. Please see log file for details.", super.getTitle()
+                    "Could not register CPU Context. Please see log file for details.", super.getTitle()
             );
         }
         initializer = new InitializerFor8080(
-            this, pluginID, applicationApi.getContextPool(), settings, context
+                this, pluginID, applicationApi.getContextPool(), settings, context
         );
     }
 

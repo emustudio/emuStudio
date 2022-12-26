@@ -215,7 +215,7 @@ public class EmulationControllerTest {
         replay(dev1, dev2);
 
         EmulationController controller = new EmulationController(
-            cpuStub, null, Arrays.asList(dev1, dev2)
+                cpuStub, null, Arrays.asList(dev1, dev2)
         );
 
         awaitFor(controller::reset, 1);

@@ -41,7 +41,7 @@ public class InstrRegReg extends Node {
     public byte eval() {
         int srcRegister = InstrReg.registers.get(srcReg);
         int dstRegister = InstrReg.registers.get(dstReg);
-        return (byte)((0x40 | (dstRegister << 3) | (srcRegister)) & 0xFF); // TODO: mov M, M == HLT
+        return (byte) ((0x40 | (dstRegister << 3) | (srcRegister)) & 0xFF); // TODO: mov M, M == HLT
     }
 
     @Override
@@ -51,7 +51,7 @@ public class InstrRegReg extends Node {
 
     @Override
     protected String toStringShallow() {
-        return "InstrRegReg(" + opcode + ","+ dstReg +","+ srcReg +")";
+        return "InstrRegReg(" + opcode + "," + dstReg + "," + srcReg + ")";
     }
 
     @Override

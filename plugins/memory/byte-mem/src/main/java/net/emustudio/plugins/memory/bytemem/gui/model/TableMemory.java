@@ -84,8 +84,8 @@ public class TableMemory extends JTable {
     private class MemCellRenderer extends JLabel implements TableCellRenderer {
         private final JList<String> rowHeader;
         private final String[] addresses;
-        private int currentPage;
         private final Color romColor = new Color(0xE8, 0x68, 0x50);
+        private int currentPage;
 
         MemCellRenderer() {
             setOpaque(true);
@@ -96,7 +96,7 @@ public class TableMemory extends JTable {
             addresses = new String[tableModel.getRowCount()];
             for (int i = 0; i < addresses.length; i++) {
                 addresses[i] = RadixUtils.formatWordHexString(tableModel.getColumnCount() * i
-                    + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage) + "h";
+                        + tableModel.getColumnCount() * tableModel.getRowCount() * currentPage) + "h";
             }
             rowHeader = new JList<>(addresses);
             this.setFont(MEMORY_CELLS_FONT);
@@ -121,8 +121,8 @@ public class TableMemory extends JTable {
             currentPage = tableModel.getPage();
             for (int i = 0; i < addresses.length; i++) {
                 addresses[i] = String.format("%1$04Xh",
-                    tableModel.getColumnCount() * i + tableModel.getColumnCount()
-                        * tableModel.getRowCount() * currentPage);
+                        tableModel.getColumnCount() * i + tableModel.getColumnCount()
+                                * tableModel.getRowCount() * currentPage);
             }
             rowHeader.setListData(addresses);
         }

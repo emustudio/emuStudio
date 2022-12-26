@@ -36,23 +36,23 @@ public class EmulatorEngineTest {
     @Test
     public void testJumpInstruction() throws IOException {
         EmulatorEngine engine = setup(List.of(
-            RASPCell.instruction(0, 15),
-            RASPCell.operand(1, 4),
-            RASPCell.instruction(2, 15),
-            RASPCell.operand(3, 0),
-            RASPCell.instruction(4, 18)
+                RASPCell.instruction(0, 15),
+                RASPCell.operand(1, 4),
+                RASPCell.instruction(2, 15),
+                RASPCell.operand(3, 0),
+                RASPCell.instruction(4, 18)
         ), List.of(
-            new RASPLabel() {
-                @Override
-                public int getAddress() {
-                    return 4;
-                }
+                new RASPLabel() {
+                    @Override
+                    public int getAddress() {
+                        return 4;
+                    }
 
-                @Override
-                public String getLabel() {
-                    return "HERE";
+                    @Override
+                    public String getLabel() {
+                        return "HERE";
+                    }
                 }
-            }
         ));
 
         engine.reset(0);

@@ -20,10 +20,11 @@ package net.emustudio.plugins.device.simh;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.device.simh.commands.*;
+import net.emustudio.plugins.device.simh.commands.Command;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
-import static net.emustudio.plugins.device.simh.Commands.*;
+import static net.emustudio.plugins.device.simh.Commands.COMMANDS_MAP;
+import static net.emustudio.plugins.device.simh.Commands.unknownCmd;
 
 /**
  * SIMH PseudoContext
@@ -88,22 +89,22 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
         return memory;
     }
 
+    void setMemory(ByteMemoryContext mem) {
+        this.memory = mem;
+    }
+
     @Override
     public Context8080 getCpu() {
         return cpu;
     }
 
+    void setCpu(Context8080 cpu) {
+        this.cpu = cpu;
+    }
+
     @Override
     public DeviceContext<Byte> getDevice() {
         return this;
-    }
-
-    void setMemory(ByteMemoryContext mem) {
-        this.memory = mem;
-    }
-
-    void setCpu(Context8080 cpu) {
-        this.cpu = cpu;
     }
 
     void reset() {

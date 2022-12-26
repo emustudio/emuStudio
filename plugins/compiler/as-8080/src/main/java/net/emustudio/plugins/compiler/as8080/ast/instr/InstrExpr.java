@@ -28,7 +28,6 @@ import java.util.*;
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 
 public class InstrExpr extends Node {
-    public final int opcode;
     private final static Set<Integer> twoBytes = new HashSet<>();
     private final static Map<Integer, Integer> opcodes = new HashMap<>();
 
@@ -79,6 +78,8 @@ public class InstrExpr extends Node {
         opcodes.put(OPCODE_RST, 0xC7);
     }
 
+    public final int opcode;
+
     public InstrExpr(int line, int column, int opcode) {
         super(line, column);
         this.opcode = opcode;
@@ -102,8 +103,8 @@ public class InstrExpr extends Node {
         byte result = (byte) (opcodes.get(opcode) & 0xFF);
         if (opcode == OPCODE_RST) {
             return collectChild(Evaluated.class)
-                .filter(e -> e.value >= 0 && e.value <= 7)
-                .map(e -> (byte) (result | (e.value << 3)));
+                    .filter(e -> e.value >= 0 && e.value <= 7)
+                    .map(e -> (byte) (result | (e.value << 3)));
         }
 
         return Optional.of(result);

@@ -38,8 +38,8 @@ import javax.swing.*;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.DEVICE,
-    title = "MITS 88-DCDD"
+        type = PLUGIN_TYPE.DEVICE,
+        title = "MITS 88-DCDD"
 )
 public class DeviceImpl extends AbstractDevice {
     private final DiskSettings settings;

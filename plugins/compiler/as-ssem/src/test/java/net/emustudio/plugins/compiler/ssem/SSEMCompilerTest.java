@@ -23,8 +23,8 @@ import net.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,11 +39,10 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 
 public class SSEMCompilerTest {
-    private SSEMCompiler compiler;
-    private MemoryStub<Byte> memoryStub;
-
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
+    private SSEMCompiler compiler;
+    private MemoryStub<Byte> memoryStub;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -75,12 +74,12 @@ public class SSEMCompilerTest {
         Byte[] value = memoryStub.read(0, bytes.length);
 
         assertArrayEquals(
-            String.format(
-                "Expected=%x, but was=%x",
-                NumberUtils.readInt(bytes, NumberUtils.Strategy.BIG_ENDIAN),
-                NumberUtils.readInt(value, NumberUtils.Strategy.BIG_ENDIAN)
-            ),
-            NumberUtils.nativeIntsToNativeBytes(bytes), NumberUtils.numbersToNativeBytes(value)
+                String.format(
+                        "Expected=%x, but was=%x",
+                        NumberUtils.readInt(bytes, NumberUtils.Strategy.BIG_ENDIAN),
+                        NumberUtils.readInt(value, NumberUtils.Strategy.BIG_ENDIAN)
+                ),
+                NumberUtils.nativeIntsToNativeBytes(bytes), NumberUtils.numbersToNativeBytes(value)
         );
     }
 
@@ -103,18 +102,18 @@ public class SSEMCompilerTest {
     @Test
     public void testLDN() throws Exception {
         compile("00 LDN 29");
-        assertProgram(0xB8,0x2,0,0);
+        assertProgram(0xB8, 0x2, 0, 0);
     }
 
     @Test
     public void testSUB() throws Exception {
         compile("00 SUB 30");
-        assertProgram(0x78,0x1,0,0);
+        assertProgram(0x78, 0x1, 0, 0);
     }
 
     @Test
     public void testSTP() throws Exception {
         compile("00 STP");
-        assertProgram(0,0x7,0,0);
+        assertProgram(0, 0x7, 0, 0);
     }
 }

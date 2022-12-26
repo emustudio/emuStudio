@@ -29,7 +29,6 @@ import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 
 public class InstrNoArgs extends Node {
     private final static Map<Integer, Integer> opcodes = new HashMap<>();
-    public final int opcode;
 
     static {
         opcodes.put(OPCODE_STC, 0x37);
@@ -58,6 +57,8 @@ public class InstrNoArgs extends Node {
         opcodes.put(OPCODE_DI, 0xF3);
         opcodes.put(OPCODE_HLT, 0x76);
     }
+
+    public final int opcode;
 
     public InstrNoArgs(int line, int column, int opcode) {
         super(line, column);

@@ -34,9 +34,8 @@ import java.util.function.BiFunction;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
 
 public class DriveCollection implements Iterable<Drive> {
-    private final static Logger LOGGER = LoggerFactory.getLogger(DriveCollection.class);
-
     public final static int DRIVES_COUNT = 16;
+    private final static Logger LOGGER = LoggerFactory.getLogger(DriveCollection.class);
     private final List<Drive> drives = new ArrayList<>();
 
     private final Context8080 cpu;
@@ -67,7 +66,7 @@ public class DriveCollection implements Iterable<Drive> {
 
     public Optional<Drive> getCurrentDrive() {
         return (currentDrive >= DRIVES_COUNT || currentDrive < 0) ?
-            Optional.empty() : Optional.of(drives.get(currentDrive));
+                Optional.empty() : Optional.of(drives.get(currentDrive));
     }
 
     public void setCurrentDrive(int index) {
@@ -105,21 +104,21 @@ public class DriveCollection implements Iterable<Drive> {
 
         if (!cpu.attachDevice(port1, port1cpu)) {
             throw new PluginInitializationException(
-                ": " + DIALOG_TITLE + " (port 1) can not be attached to default CPU port " + port1cpu
+                    ": " + DIALOG_TITLE + " (port 1) can not be attached to default CPU port " + port1cpu
             );
         }
         attachedCpuPort1 = Optional.of(port1cpu);
 
         if (!cpu.attachDevice(port2, port2cpu)) {
             throw new PluginInitializationException(
-                ": " + DIALOG_TITLE + " (port 2) can not be attached to default CPU port " + port2cpu
+                    ": " + DIALOG_TITLE + " (port 2) can not be attached to default CPU port " + port2cpu
             );
         }
         attachedCpuPort2 = Optional.of(port2cpu);
 
         if (!cpu.attachDevice(port3, port3cpu)) {
             throw new PluginInitializationException(
-                ": " + DIALOG_TITLE + " (port 3) can not be attached to default CPU port " + port3cpu
+                    ": " + DIALOG_TITLE + " (port 3) can not be attached to default CPU port " + port3cpu
             );
         }
         attachedCpuPort3 = Optional.of(port3cpu);
@@ -138,19 +137,19 @@ public class DriveCollection implements Iterable<Drive> {
             drive.setInterruptsSupported(settings.getInterruptsSupported());
 
             Optional
-                .ofNullable(driveSettings.imagePath)
-                .map(Path::of)
-                .ifPresent(path -> {
-                    try {
-                        drive.mount(path);
-                    } catch (IOException ex) {
-                        LOGGER.error("Could not mount image file {}", path, ex);
-                        dialogs.showError(
-                            "Could not mount image file: " + path + ". Please see log file for more details.",
-                            "MITS 88-DCDD"
-                        );
-                    }
-                });
+                    .ofNullable(driveSettings.imagePath)
+                    .map(Path::of)
+                    .ifPresent(path -> {
+                        try {
+                            drive.mount(path);
+                        } catch (IOException ex) {
+                            LOGGER.error("Could not mount image file {}", path, ex);
+                            dialogs.showError(
+                                    "Could not mount image file: " + path + ". Please see log file for more details.",
+                                    "MITS 88-DCDD"
+                            );
+                        }
+                    });
             return null;
         });
     }

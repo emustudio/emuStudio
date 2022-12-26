@@ -22,7 +22,10 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.memory.AbstractMemory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
+import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import net.emustudio.plugins.memory.ram.gui.MemoryDialog;
@@ -36,8 +39,8 @@ import java.util.ResourceBundle;
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
     private final MemoryContextImpl context;
-    private MemoryDialog gui;
     private final boolean guiNotSupported;
+    private MemoryDialog gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -74,13 +77,13 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     @Override
-    public int getSize() {
-        return context.getSize();
+    public void setProgramLocation(int location) {
+        // Program start is always 0
     }
 
     @Override
-    public void setProgramLocation(int location) {
-        // Program start is always 0
+    public int getSize() {
+        return context.getSize();
     }
 
     @Override

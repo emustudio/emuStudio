@@ -46,37 +46,12 @@ public class DiskSettings {
 
     private final BasicSettings settings;
     private final List<SettingsObserver> observers = new CopyOnWriteArrayList<>();
-
+    private final DriveSettings[] driveSettings = new DriveSettings[16];
     private volatile int port1CPU;
     private volatile int port2CPU;
     private volatile int port3CPU;
     private volatile int interruptVector;
     private volatile boolean interruptsSupported;
-    private final DriveSettings[] driveSettings = new DriveSettings[16];
-
-    @FunctionalInterface
-    public interface SettingsObserver {
-
-        void settingsChanged();
-    }
-
-    @Immutable
-    public static class DriveSettings {
-        public final static DriveSettings DEFAULT = new DriveSettings(
-            DEFAULT_SECTOR_SIZE, DEFAULT_SECTORS_PER_TRACK, null, false);
-
-        public final int sectorSize;
-        public final int sectorsPerTrack;
-        public final String imagePath;
-        public final boolean mounted;
-
-        public DriveSettings(int sectorSize, int sectorsPerTrack, String imagePath, boolean mounted) {
-            this.sectorSize = sectorSize;
-            this.sectorsPerTrack = sectorsPerTrack;
-            this.imagePath = imagePath;
-            this.mounted = mounted;
-        }
-    }
 
     public DiskSettings(BasicSettings settings) {
         this.settings = Objects.requireNonNull(settings);
@@ -89,10 +64,10 @@ public class DiskSettings {
 
         for (int i = 0; i < driveSettings.length; i++) {
             driveSettings[i] = new DriveSettings(
-                settings.getInt(KEY_SECTOR_SIZE + i, DEFAULT_SECTOR_SIZE),
-                settings.getInt(KEY_SECTORS_PER_TRACK + i, DEFAULT_SECTORS_PER_TRACK),
-                settings.getString(KEY_IMAGE + i, null),
-                settings.getBoolean(KEY_IMAGE_MOUNTED + i, false));
+                    settings.getInt(KEY_SECTOR_SIZE + i, DEFAULT_SECTOR_SIZE),
+                    settings.getInt(KEY_SECTORS_PER_TRACK + i, DEFAULT_SECTORS_PER_TRACK),
+                    settings.getString(KEY_IMAGE + i, null),
+                    settings.getBoolean(KEY_IMAGE_MOUNTED + i, false));
         }
     }
 
@@ -189,5 +164,29 @@ public class DiskSettings {
 
     private void notifySettingsChanged() {
         observers.forEach(SettingsObserver::settingsChanged);
+    }
+
+    @FunctionalInterface
+    public interface SettingsObserver {
+
+        void settingsChanged();
+    }
+
+    @Immutable
+    public static class DriveSettings {
+        public final static DriveSettings DEFAULT = new DriveSettings(
+                DEFAULT_SECTOR_SIZE, DEFAULT_SECTORS_PER_TRACK, null, false);
+
+        public final int sectorSize;
+        public final int sectorsPerTrack;
+        public final String imagePath;
+        public final boolean mounted;
+
+        public DriveSettings(int sectorSize, int sectorsPerTrack, String imagePath, boolean mounted) {
+            this.sectorSize = sectorSize;
+            this.sectorsPerTrack = sectorsPerTrack;
+            this.imagePath = imagePath;
+            this.mounted = mounted;
+        }
     }
 }

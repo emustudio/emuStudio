@@ -65,8 +65,8 @@ public class Label implements RAMLabel {
     @Override
     public String toString() {
         return "{" +
-            "label='" + label + '\'' +
-            ", address=" + address +
-            '}';
+                "label='" + label + '\'' +
+                ", address=" + address +
+                '}';
     }
 }

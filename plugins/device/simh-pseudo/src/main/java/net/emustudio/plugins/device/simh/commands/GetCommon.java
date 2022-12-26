@@ -32,10 +32,10 @@ public class GetCommon implements Command {
     public byte read(Control control) {
         byte result;
         if (getCommonPos == 0) {
-            result = (byte)(control.getMemory().getCommonBoundary() & 0xff);
+            result = (byte) (control.getMemory().getCommonBoundary() & 0xff);
             getCommonPos = 1;
         } else {
-            result = (byte)((control.getMemory().getCommonBoundary() >> 8) & 0xff);
+            result = (byte) ((control.getMemory().getCommonBoundary() >> 8) & 0xff);
             getCommonPos = 0;
             control.clearCommand();
         }

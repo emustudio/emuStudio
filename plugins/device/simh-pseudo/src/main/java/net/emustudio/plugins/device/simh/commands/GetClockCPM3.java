@@ -28,8 +28,8 @@ public class GetClockCPM3 implements Command {
     public static final GetClockCPM3 INS = new GetClockCPM3();
 
     public final static long CPM3_ORIGIN = LocalDateTime
-        .of(1977, 12, 31, 0, 0, 0)
-        .toEpochSecond(ZoneOffset.UTC);
+            .of(1977, 12, 31, 0, 0, 0)
+            .toEpochSecond(ZoneOffset.UTC);
     public final static int SECONDS_PER_MINUTE = 60;
     public final static int SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE;
     public final static int SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
@@ -91,7 +91,7 @@ public class GetClockCPM3 implements Command {
         int delta = SetClockCPM3.INS.ClockCPM3Delta;
         currentTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Instant.now().getEpochSecond() + delta), ZoneOffset.UTC);
         currentTimeValid = true;
-        daysCPM3SinceOrg = (int)((currentTime.toEpochSecond(ZoneOffset.UTC) - CPM3_ORIGIN) / SECONDS_PER_DAY);
+        daysCPM3SinceOrg = (int) ((currentTime.toEpochSecond(ZoneOffset.UTC) - CPM3_ORIGIN) / SECONDS_PER_DAY);
         getClockCPM3Pos = 0;
         control.clearWriteCommand();
     }

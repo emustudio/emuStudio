@@ -21,7 +21,8 @@ package net.emustudio.application.gui.schema.mode;
 import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.DrawingModel;
 import net.emustudio.application.gui.schema.DrawingPanel;
-import net.emustudio.application.gui.schema.elements.*;
+import net.emustudio.application.gui.schema.elements.ConnectionLine;
+import net.emustudio.application.gui.schema.elements.Element;
 import net.emustudio.application.gui.schema.mode.ModeSelector.SelectMode;
 
 import java.awt.*;
@@ -165,7 +166,7 @@ class ModelingMode extends AbstractMode {
                 boolean alreadyConnected = schema.isConnected(drawingModel.tmpElem1, drawingModel.tmpElem2);
                 if (!alreadyConnected && (drawingModel.tmpElem1 != drawingModel.tmpElem2)) {
                     schema.addConnectionLine(
-                        drawingModel.tmpElem1, drawingModel.tmpElem2, drawingModel.tmpPoints, drawingModel.bidirectional
+                            drawingModel.tmpElem1, drawingModel.tmpElem2, drawingModel.tmpPoints, drawingModel.bidirectional
                     );
                 }
                 drawingModel.tmpElem1 = null;
@@ -187,7 +188,7 @@ class ModelingMode extends AbstractMode {
             if (schema.getCrossingElement(clickPoint) == null) {
                 // if user didn't clicked on an element, but on drawing area means that there a new line point
                 // should be created.
-                drawingModel.selectedPoint =  P.of(clickPoint);
+                drawingModel.selectedPoint = P.of(clickPoint);
             }
         }
         return SelectMode.MODELING;

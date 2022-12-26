@@ -40,15 +40,15 @@ import java.util.ResourceBundle;
 
 @SuppressWarnings("unused")
 @PluginRoot(
-    type = PLUGIN_TYPE.MEMORY,
-    title = "RASP Memory"
+        type = PLUGIN_TYPE.MEMORY,
+        title = "RASP Memory"
 )
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl context;
-    private MemoryDialog gui;
     private final boolean guiNotSupported;
+    private MemoryDialog gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -62,7 +62,7 @@ public class MemoryImpl extends AbstractMemory {
             } catch (InvalidContextException | ContextAlreadyRegisteredException ex) {
                 LOGGER.error("Could not register RASP memory context", ex);
                 applicationApi.getDialogs().showError(
-                    "Could not register RASP memory context. Please see log file for details.", super.getTitle()
+                        "Could not register RASP memory context. Please see log file for details.", super.getTitle()
                 );
             }
         });

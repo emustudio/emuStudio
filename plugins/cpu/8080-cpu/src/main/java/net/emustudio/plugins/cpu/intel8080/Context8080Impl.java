@@ -98,7 +98,7 @@ public class Context8080Impl implements Context8080 {
      * during the interrupt acknowledge cycle. Subsequent bytes are read in by a
      * normal memory read sequence.
      *
-     * @param data   instruction signaled by this interrupt
+     * @param data instruction signaled by this interrupt
      */
     @Override
     public void signalInterrupt(byte[] data) {

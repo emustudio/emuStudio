@@ -23,12 +23,12 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 public class FakeByteDevice implements DeviceContext<Byte> {
     private byte value;
 
-    public void setValue(byte value) {
-        this.value = value;
-    }
-
     public byte getValue() {
         return value;
+    }
+
+    public void setValue(byte value) {
+        this.value = value;
     }
 
     @Override

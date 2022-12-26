@@ -27,6 +27,6 @@ public class Constants {
     public final static Font MEMORY_CELLS_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
 
     public final static FileExtensionsFilter IMAGE_EXTENSION_FILTER = new FileExtensionsFilter(
-        "Memory image", "hex", "bin", "com", "out"
+            "Memory image", "hex", "bin", "com", "out"
     );
 }

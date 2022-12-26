@@ -23,7 +23,7 @@ public class GetBankSelect implements Command {
 
     @Override
     public byte read(Control control) {
-        byte result = (byte)control.getMemory().getSelectedBank();
+        byte result = (byte) control.getMemory().getSelectedBank();
         control.clearCommand();
         return result;
     }

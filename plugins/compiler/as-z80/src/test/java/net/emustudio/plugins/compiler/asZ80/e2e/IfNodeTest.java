@@ -25,22 +25,22 @@ public class IfNodeTest extends AbstractCompilerTest {
     @Test
     public void testIfNodeIsProcessed() throws Exception {
         compile(
-            "if 1\n"
-                + "  rrca\n"
-                + "endif"
+                "if 1\n"
+                        + "  rrca\n"
+                        + "endif"
         );
 
         assertProgram(
-            0x0F
+                0x0F
         );
     }
 
     @Test
     public void testIfNodeIsNotProcessed() throws Exception {
         compile(
-            "if 0\n"
-                + "  rrca\n"
-                + "endif"
+                "if 0\n"
+                        + "  rrca\n"
+                        + "endif"
         );
 
         assertProgram();
@@ -49,37 +49,37 @@ public class IfNodeTest extends AbstractCompilerTest {
     @Test
     public void testIfNoteIsProcessedForNegativeExpression() throws Exception {
         compile(
-            "if -1\n"
-                + "  rrca\n"
-                + "endif"
+                "if -1\n"
+                        + "  rrca\n"
+                        + "endif"
         );
 
         assertProgram(
-            0x0F
+                0x0F
         );
     }
 
     @Test
     public void testIfCanEvaluateBackwardReferenceInExpression() throws Exception {
         compile(
-            "present equ 1\n"
-                + "if present\n"
-                + "  rrca\n"
-                + "endif\n"
+                "present equ 1\n"
+                        + "if present\n"
+                        + "  rrca\n"
+                        + "endif\n"
         );
 
         assertProgram(
-            0x0F
+                0x0F
         );
     }
 
     @Test(expected = Exception.class)
     public void testIfCannotRedefineIdentifierInside() throws Exception {
         compile(
-            "text: db 6\n"
-                + "if 554\n"
-                + "  text: db 5\n"
-                + "endif"
+                "text: db 6\n"
+                        + "if 554\n"
+                        + "  text: db 5\n"
+                        + "endif"
         );
     }
 }

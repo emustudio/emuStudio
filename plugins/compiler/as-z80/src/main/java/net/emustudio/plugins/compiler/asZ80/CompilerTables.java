@@ -36,12 +36,12 @@ public class CompilerTables {
     public final static Map<Integer, Integer> im = new HashMap<>();
     public final static Map<Integer, Pair<Integer, Integer>> block = new HashMap<>();
     public final static Map<Integer, Integer> prefix = Map.of(
-        REG_IX, 0xDD,
-        REG_IXH, 0xDD,
-        REG_IXL, 0xDD,
-        REG_IY, 0xFD,
-        REG_IYH, 0xFD,
-        REG_IYL, 0xFD
+            REG_IX, 0xDD,
+            REG_IXH, 0xDD,
+            REG_IXL, 0xDD,
+            REG_IY, 0xFD,
+            REG_IYH, 0xFD,
+            REG_IYL, 0xFD
     );
 
     static {

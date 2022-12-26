@@ -16,7 +16,7 @@ The application is implemented using Java and Swing for GUI.
 
 # Installation
 
-The simplest way how to install main module is to use whole distribution. For that case, please follow 
+The simplest way how to install main module is to use whole distribution. For that case, please follow
 the instructions at [project's web page](http://net.emustudio.sourceforge.net/downloads.html).
 
 The hacker ways follows. At first, compile the project:

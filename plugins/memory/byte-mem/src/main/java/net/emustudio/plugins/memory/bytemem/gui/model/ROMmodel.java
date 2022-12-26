@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui.model;
 
-import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext.AddressRange;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext.AddressRange;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;

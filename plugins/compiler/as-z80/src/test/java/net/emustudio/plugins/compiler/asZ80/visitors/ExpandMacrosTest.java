@@ -48,9 +48,9 @@ public class ExpandMacrosTest {
         macrosVisitor.visit(program);
 
         assertTrees(new Program()
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                    .addChild(new PseudoMacroDef(0, 0, "x"))),
-            program
+                        .addChild(new PseudoMacroCall(0, 0, "x")
+                                .addChild(new PseudoMacroDef(0, 0, "x"))),
+                program
         );
     }
 
@@ -61,9 +61,9 @@ public class ExpandMacrosTest {
         macrosVisitor.visit(program);
 
         assertTrees(new Program()
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                    .addChild(new PseudoMacroDef(0, 0, "x"))),
-            program
+                        .addChild(new PseudoMacroCall(0, 0, "x")
+                                .addChild(new PseudoMacroDef(0, 0, "x"))),
+                program
         );
     }
 
@@ -74,11 +74,11 @@ public class ExpandMacrosTest {
         macrosVisitor.visit(program);
 
         assertTrees(new Program()
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                    .addChild(new PseudoMacroDef(0, 0, "x")))
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                    .addChild(new PseudoMacroDef(0, 0, "x"))),
-            program
+                        .addChild(new PseudoMacroCall(0, 0, "x")
+                                .addChild(new PseudoMacroDef(0, 0, "x")))
+                        .addChild(new PseudoMacroCall(0, 0, "x")
+                                .addChild(new PseudoMacroDef(0, 0, "x"))),
+                program
         );
     }
 
@@ -94,9 +94,9 @@ public class ExpandMacrosTest {
         macrosVisitor.visit(program);
 
         assertTrees(new Program()
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                    .addChild(new PseudoMacroDef(0, 0, "x"))),
-            program
+                        .addChild(new PseudoMacroCall(0, 0, "x")
+                                .addChild(new PseudoMacroDef(0, 0, "x"))),
+                program
         );
     }
 
@@ -121,21 +121,21 @@ public class ExpandMacrosTest {
         macrosVisitor.visit(program);
 
         assertTrees(new Program()
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                    .addChild(new PseudoMacroArgument(0, 0)
-                        .addChild(new ExprNumber(0, 0, 1)))
-                    .addChild(new PseudoMacroArgument(0, 0)
-                        .addChild(new ExprNumber(0, 0, 2)))
-                    .addChild(new PseudoMacroArgument(0, 0)
-                        .addChild(new ExprNumber(0, 0, 3)))
-                    .addChild(new PseudoMacroDef(0, 0, "x")
-                        .addChild(new PseudoMacroParameter(0, 0)
-                            .addChild(new ExprId(0, 0, "u")))
-                        .addChild(new PseudoMacroParameter(0, 0)
-                            .addChild(new ExprId(0, 0, "v")))
-                        .addChild(new PseudoMacroParameter(0, 0)
-                            .addChild(new ExprId(0, 0, "w"))))),
-            program
+                        .addChild(new PseudoMacroCall(0, 0, "x")
+                                .addChild(new PseudoMacroArgument(0, 0)
+                                        .addChild(new ExprNumber(0, 0, 1)))
+                                .addChild(new PseudoMacroArgument(0, 0)
+                                        .addChild(new ExprNumber(0, 0, 2)))
+                                .addChild(new PseudoMacroArgument(0, 0)
+                                        .addChild(new ExprNumber(0, 0, 3)))
+                                .addChild(new PseudoMacroDef(0, 0, "x")
+                                        .addChild(new PseudoMacroParameter(0, 0)
+                                                .addChild(new ExprId(0, 0, "u")))
+                                        .addChild(new PseudoMacroParameter(0, 0)
+                                                .addChild(new ExprId(0, 0, "v")))
+                                        .addChild(new PseudoMacroParameter(0, 0)
+                                                .addChild(new ExprId(0, 0, "w"))))),
+                program
         );
     }
 

@@ -14,19 +14,17 @@ import java.util.Arrays;
 
 @ThreadSafe
 public class Display extends JPanel implements LineRoller, ActionListener {
-    private final static int DEFAULT_COLUMNS = 120;
     static final Color FOREGROUND = new Color(255, 255, 255);
     static final Color BACKGROUND = Color.BLACK;
+    private final static int DEFAULT_COLUMNS = 120;
+    private static FontRenderContext DEFAULT_FRC;
     private final Font terminalFont = new Font("Monospaced", Font.PLAIN, 14);
-
     private final char[] videoMemory;
     private final int columns;
     private final int rows;
-
     private final Cursor cursor;
-    private volatile boolean cursorShouldBePainted;
     private final Timer cursorTimer = new Timer(800, this);
-
+    private volatile boolean cursorShouldBePainted;
     private volatile Dimension size;
 
     public Display() {
@@ -42,6 +40,23 @@ public class Display extends JPanel implements LineRoller, ActionListener {
         this.setDoubleBuffered(true);
         DisplayParameters displayParameters = measure();
         this.size = new Dimension(displayParameters.maxWidth, displayParameters.maxHeight);
+    }
+
+    public static FontRenderContext getDefaultFrc() {
+        if (DEFAULT_FRC == null) {
+            AffineTransform tx;
+            if (GraphicsEnvironment.isHeadless()) {
+                tx = new AffineTransform();
+            } else {
+                tx = GraphicsEnvironment
+                        .getLocalGraphicsEnvironment()
+                        .getDefaultScreenDevice()
+                        .getDefaultConfiguration()
+                        .getDefaultTransform();
+            }
+            DEFAULT_FRC = new FontRenderContext(tx, false, false);
+        }
+        return DEFAULT_FRC;
     }
 
     public synchronized void start() {
@@ -73,7 +88,6 @@ public class Display extends JPanel implements LineRoller, ActionListener {
     public Dimension getMinimumSize() {
         return this.size;
     }
-
 
     public final void clearScreen() {
         fillWithSpaces();
@@ -170,10 +184,10 @@ public class Display extends JPanel implements LineRoller, ActionListener {
             Rectangle2D fontRectangle = terminalFont.getStringBounds("W", getDefaultFrc());
             int lineHeight = graphics.getFontMetrics().getHeight();
 
-            int x = 2 + (int)(paintPoint.x * fontRectangle.getWidth());
+            int x = 2 + (int) (paintPoint.x * fontRectangle.getWidth());
             int y = 3 + (paintPoint.y * lineHeight);
 
-            graphics.fillRect(x, y, (int)fontRectangle.getWidth(), (int)fontRectangle.getHeight());
+            graphics.fillRect(x, y, (int) fontRectangle.getWidth(), (int) fontRectangle.getHeight());
             graphics.setPaintMode();
 
             cursorShouldBePainted = true;
@@ -194,24 +208,5 @@ public class Display extends JPanel implements LineRoller, ActionListener {
         int maxHeight = rows * charHeight;
 
         return new DisplayParameters(maxWidth, maxHeight, charWidth);
-    }
-
-    private static FontRenderContext DEFAULT_FRC;
-
-    public static FontRenderContext getDefaultFrc() {
-        if (DEFAULT_FRC == null) {
-            AffineTransform tx;
-            if (GraphicsEnvironment.isHeadless()) {
-                tx = new AffineTransform();
-            } else {
-                tx = GraphicsEnvironment
-                    .getLocalGraphicsEnvironment()
-                    .getDefaultScreenDevice()
-                    .getDefaultConfiguration()
-                    .getDefaultTransform();
-            }
-            DEFAULT_FRC = new FontRenderContext(tx, false, false);
-        }
-        return DEFAULT_FRC;
     }
 }

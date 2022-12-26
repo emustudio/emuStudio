@@ -46,6 +46,12 @@ public class AppSettings extends BasicSettingsImpl {
         this.noGUI = nogui;
     }
 
+    public static AppSettings fromFile(Path file, boolean nogui, boolean auto) {
+        FileConfig config = FileConfig.builder(file).autosave().concurrent().sync().build();
+        config.load();
+        return new AppSettings(config, nogui, auto);
+    }
+
     @Override
     public boolean contains(String key) {
         return KEY_NOGUI.equals(key) || KEY_AUTO.equals(key) || super.contains(key);
@@ -79,11 +85,5 @@ public class AppSettings extends BasicSettingsImpl {
             return Optional.of(noGUI);
         }
         return super.getBoolean(key);
-    }
-
-    public static AppSettings fromFile(Path file, boolean nogui, boolean auto) {
-        FileConfig config = FileConfig.builder(file).autosave().concurrent().sync().build();
-        config.load();
-        return new AppSettings(config, nogui, auto);
     }
 }

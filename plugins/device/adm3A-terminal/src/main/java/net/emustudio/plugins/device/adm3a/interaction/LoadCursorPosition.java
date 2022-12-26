@@ -28,16 +28,9 @@ public class LoadCursorPosition {
     private static final int ASCII_ESC = 0x1B;
     // Offset in ASCII for X and Y coordinate
     private static final int ASCII_COORDINATE_OFFSET = 32;
-
-    enum ExpectedSequence {
-        ESCAPE, ASSIGN, X, Y
-    }
-
     private final Cursor cursor;
-
     private volatile ExpectedSequence expect = ESCAPE;
     private int cursorY;
-
     public LoadCursorPosition(Cursor cursor) {
         this.cursor = Objects.requireNonNull(cursor);
     }
@@ -81,5 +74,9 @@ public class LoadCursorPosition {
         }
 
         return true;
+    }
+
+    enum ExpectedSequence {
+        ESCAPE, ASSIGN, X, Y
     }
 }

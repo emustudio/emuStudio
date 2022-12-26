@@ -39,7 +39,7 @@ public class LoadingDialog extends JDialog {
 
         lblLoading.setFont(lblLoading.getFont().deriveFont(lblLoading.getFont().getStyle() | java.awt.Font.BOLD));
         lblLoading.setIcon(new ImageIcon(getClass()
-            .getResource("/net/emustudio/application/gui/dialogs/loading.gif")));
+                .getResource("/net/emustudio/application/gui/dialogs/loading.gif")));
         lblLoading.setText("Loading computer, please wait...");
 
         lblWarning.setText("If you see some errors, please see the log file.");
@@ -47,17 +47,17 @@ public class LoadingDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createSequentialGroup().addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(lblWarning, GroupLayout.PREFERRED_SIZE, 338,
-                        GroupLayout.PREFERRED_SIZE).addComponent(lblLoading))
-                .addContainerGap());
+                layout.createSequentialGroup().addContainerGap()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(lblWarning, GroupLayout.PREFERRED_SIZE, 338,
+                                        GroupLayout.PREFERRED_SIZE).addComponent(lblLoading))
+                        .addContainerGap());
         layout.setVerticalGroup(
-            layout.createSequentialGroup().addContainerGap()
-                .addComponent(lblLoading).addPreferredGap(LayoutStyle
-                .ComponentPlacement.UNRELATED).addComponent(lblWarning)
-                .addContainerGap(lblWarning.getPreferredSize().height,
-                    lblWarning.getPreferredSize().height).addContainerGap());
+                layout.createSequentialGroup().addContainerGap()
+                        .addComponent(lblLoading).addPreferredGap(LayoutStyle
+                                .ComponentPlacement.UNRELATED).addComponent(lblWarning)
+                        .addContainerGap(lblWarning.getPreferredSize().height,
+                                lblWarning.getPreferredSize().height).addContainerGap());
 
         pack();
     }

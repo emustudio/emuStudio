@@ -97,6 +97,6 @@ public class CpmPlusDiscLabel implements CpmEntry {
     @Override
     public String toString() {
         return "'" + label + "'; mode=" + Integer.toHexString(mode) + "; passwordByte=" +
-            Integer.toHexString(passwordDecodeByte);
+                Integer.toHexString(passwordDecodeByte);
     }
 }

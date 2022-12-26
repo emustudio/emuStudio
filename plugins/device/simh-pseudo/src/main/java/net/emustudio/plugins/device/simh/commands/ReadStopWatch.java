@@ -20,11 +20,9 @@ package net.emustudio.plugins.device.simh.commands;
 
 public class ReadStopWatch implements Command {
     public final static ReadStopWatch INS = new ReadStopWatch();
-
+    public long stopWatchNow = 0; // stores starting time of stop watch
     private int getStopWatchDeltaPos = 0; // determines the state for receiving stopWatchDelta
     private long stopWatchDelta = 0; // stores elapsed time of stop watch
-    public long stopWatchNow = 0; // stores starting time of stop watch
-
 
     @Override
     public void reset(Control control) {

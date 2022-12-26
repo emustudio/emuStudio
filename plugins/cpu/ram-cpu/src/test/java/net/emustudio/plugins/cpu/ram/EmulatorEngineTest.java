@@ -177,10 +177,10 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     @Test
     public void testArith_CONSTANT() throws IOException {
         setProgram(
-            instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.CONSTANT, 5),
-            instr(RAMInstruction.Opcode.SUB, RAMInstruction.Direction.CONSTANT, -1),
-            instr(RAMInstruction.Opcode.MUL, RAMInstruction.Direction.CONSTANT, 2),
-            instr(RAMInstruction.Opcode.DIV, RAMInstruction.Direction.CONSTANT, 3)
+                instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.CONSTANT, 5),
+                instr(RAMInstruction.Opcode.SUB, RAMInstruction.Direction.CONSTANT, -1),
+                instr(RAMInstruction.Opcode.MUL, RAMInstruction.Direction.CONSTANT, 2),
+                instr(RAMInstruction.Opcode.DIV, RAMInstruction.Direction.CONSTANT, 3)
         );
         expect(storage.getSymbolAt(0)).andReturn(Optional.of(new TapeSymbol(-3))).once();
         expect(storage.getSymbolAt(0)).andReturn(Optional.of(new TapeSymbol(2))).once();
@@ -209,10 +209,10 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     @Test
     public void testADD_DIRECT() throws IOException {
         setProgram(
-            instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.DIRECT, 3),
-            instr(RAMInstruction.Opcode.SUB, RAMInstruction.Direction.DIRECT, 4),
-            instr(RAMInstruction.Opcode.MUL, RAMInstruction.Direction.DIRECT, 5),
-            instr(RAMInstruction.Opcode.DIV, RAMInstruction.Direction.DIRECT, 6)
+                instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.DIRECT, 3),
+                instr(RAMInstruction.Opcode.SUB, RAMInstruction.Direction.DIRECT, 4),
+                instr(RAMInstruction.Opcode.MUL, RAMInstruction.Direction.DIRECT, 5),
+                instr(RAMInstruction.Opcode.DIV, RAMInstruction.Direction.DIRECT, 6)
         );
         expect(storage.getSymbolAt(3)).andReturn(Optional.of(new TapeSymbol(5))).once();
         expect(storage.getSymbolAt(4)).andReturn(Optional.of(new TapeSymbol(-1))).once();
@@ -245,10 +245,10 @@ public class EmulatorEngineTest extends AbstractEngineTest {
     @Test
     public void testADD_INDIRECT() throws IOException {
         setProgram(
-            instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.INDIRECT, 3),
-            instr(RAMInstruction.Opcode.SUB, RAMInstruction.Direction.INDIRECT, 4),
-            instr(RAMInstruction.Opcode.MUL, RAMInstruction.Direction.INDIRECT, 5),
-            instr(RAMInstruction.Opcode.DIV, RAMInstruction.Direction.INDIRECT, 6)
+                instr(RAMInstruction.Opcode.ADD, RAMInstruction.Direction.INDIRECT, 3),
+                instr(RAMInstruction.Opcode.SUB, RAMInstruction.Direction.INDIRECT, 4),
+                instr(RAMInstruction.Opcode.MUL, RAMInstruction.Direction.INDIRECT, 5),
+                instr(RAMInstruction.Opcode.DIV, RAMInstruction.Direction.INDIRECT, 6)
         );
 
         expect(storage.getSymbolAt(3)).andReturn(Optional.of(new TapeSymbol(8))).once();

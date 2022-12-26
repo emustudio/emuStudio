@@ -31,15 +31,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Cursor {
     private final int howOften;
     private final TimeUnit timeUnit;
-
+    private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
+    private final ScheduledExecutorService repaintScheduler = Executors.newSingleThreadScheduledExecutor();
     private volatile Display canvas;
-
     private volatile int charWidth;
     private volatile int charHeight;
-
-    private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
-
-    private final ScheduledExecutorService repaintScheduler = Executors.newSingleThreadScheduledExecutor();
 
     Cursor(int howOften, TimeUnit timeUnit) {
         this.howOften = howOften;

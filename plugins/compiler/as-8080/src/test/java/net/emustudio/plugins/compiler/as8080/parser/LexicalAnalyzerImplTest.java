@@ -44,35 +44,35 @@ public class LexicalAnalyzerImplTest {
     @Test
     public void testParseHex1() {
         assertTokenTypes(
-            "0x1 0x0 -0x5f -0xFffF 0x1BC",
-            LIT_HEXNUMBER_1, WS, LIT_HEXNUMBER_1, WS, OP_SUBTRACT, LIT_HEXNUMBER_1, WS, OP_SUBTRACT, LIT_HEXNUMBER_1,
-            WS, LIT_HEXNUMBER_1, EOF
+                "0x1 0x0 -0x5f -0xFffF 0x1BC",
+                LIT_HEXNUMBER_1, WS, LIT_HEXNUMBER_1, WS, OP_SUBTRACT, LIT_HEXNUMBER_1, WS, OP_SUBTRACT, LIT_HEXNUMBER_1,
+                WS, LIT_HEXNUMBER_1, EOF
         );
     }
 
     @Test
     public void testParseHex2() {
         assertTokenTypes(
-            "1h 0h -5Fh -FFFFh 1BCh 5h -5h",
-            LIT_HEXNUMBER_2, WS, LIT_HEXNUMBER_2, WS, OP_SUBTRACT, LIT_HEXNUMBER_2, WS, OP_SUBTRACT, LIT_HEXNUMBER_2,
-            WS, LIT_HEXNUMBER_2, WS, LIT_HEXNUMBER_2, WS, OP_SUBTRACT, LIT_HEXNUMBER_2, EOF
+                "1h 0h -5Fh -FFFFh 1BCh 5h -5h",
+                LIT_HEXNUMBER_2, WS, LIT_HEXNUMBER_2, WS, OP_SUBTRACT, LIT_HEXNUMBER_2, WS, OP_SUBTRACT, LIT_HEXNUMBER_2,
+                WS, LIT_HEXNUMBER_2, WS, LIT_HEXNUMBER_2, WS, OP_SUBTRACT, LIT_HEXNUMBER_2, EOF
         );
     }
 
     @Test
     public void testParseDecimal() {
         assertTokenTypes(
-            "0 1 -2 3 -4 5 66 999",
-            LIT_NUMBER, WS, LIT_NUMBER, WS, OP_SUBTRACT, LIT_NUMBER, WS, LIT_NUMBER, WS, OP_SUBTRACT, LIT_NUMBER,
-            WS, LIT_NUMBER, WS, LIT_NUMBER, WS, LIT_NUMBER, EOF
+                "0 1 -2 3 -4 5 66 999",
+                LIT_NUMBER, WS, LIT_NUMBER, WS, OP_SUBTRACT, LIT_NUMBER, WS, LIT_NUMBER, WS, OP_SUBTRACT, LIT_NUMBER,
+                WS, LIT_NUMBER, WS, LIT_NUMBER, WS, LIT_NUMBER, EOF
         );
     }
 
     @Test
     public void testParseOctal() {
         assertTokenTypes(
-            "-6o 7q 11q -345O",
-            OP_SUBTRACT, LIT_OCTNUMBER, WS, LIT_OCTNUMBER, WS, LIT_OCTNUMBER, WS, OP_SUBTRACT, LIT_OCTNUMBER, EOF);
+                "-6o 7q 11q -345O",
+                OP_SUBTRACT, LIT_OCTNUMBER, WS, LIT_OCTNUMBER, WS, LIT_OCTNUMBER, WS, OP_SUBTRACT, LIT_OCTNUMBER, EOF);
     }
 
     @Test

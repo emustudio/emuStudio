@@ -20,8 +20,8 @@ package net.emustudio.plugins.device.adm3a;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

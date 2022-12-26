@@ -50,9 +50,9 @@ public class InstrXD extends Node {
     }
 
     public byte[] eval() {
-        return new byte[] {
-            (byte)prefix,
-            (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF)
+        return new byte[]{
+                (byte) prefix,
+                (byte) (((x << 6) | (y << 3) | (z & 7)) & 0xFF)
         };
     }
 

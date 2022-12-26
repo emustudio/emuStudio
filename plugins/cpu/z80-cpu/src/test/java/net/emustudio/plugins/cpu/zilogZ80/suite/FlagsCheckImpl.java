@@ -30,6 +30,18 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     private Function<RunnerContext<T>, Integer> first = context -> context.first.intValue();
     private Function<RunnerContext<T>, Integer> second = context -> context.second.intValue();
 
+    public static boolean isParity(int value) {
+        int numberOfOnes = 0;
+
+        for (int i = 0; i < 8; i++) {
+            if ((value & 1) == 1) {
+                numberOfOnes++;
+            }
+            value = value >>> 1;
+        }
+        return numberOfOnes % 2 == 0;
+    }
+
     public FlagsCheckImpl<T> setFirst(Function<RunnerContext<T>, Integer> first) {
         this.first = Objects.requireNonNull(first);
         return this;
@@ -389,17 +401,5 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
             }
         });
         return this;
-    }
-
-    public static boolean isParity(int value) {
-        int numberOfOnes = 0;
-
-        for (int i = 0; i < 8; i++) {
-            if ((value & 1) == 1) {
-                numberOfOnes++;
-            }
-            value = value >>> 1;
-        }
-        return numberOfOnes % 2 == 0;
     }
 }

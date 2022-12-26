@@ -121,6 +121,6 @@ public class CpmPlusPassword implements CpmEntry {
     @Override
     public String toString() {
         return "'" + getFileName() + "'; mode=" + Integer.toHexString(mode) + "; passwordByte=" +
-            Integer.toHexString(passwordDecodeByte) + "; password='" + passwordString + "'";
+                Integer.toHexString(passwordDecodeByte) + "; password='" + passwordString + "'";
     }
 }

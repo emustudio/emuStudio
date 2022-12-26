@@ -51,7 +51,7 @@ public class CompilerChecks {
     public static void checkOperandOutOfBounds(Position pos, int tokenType, long operand) {
         if (tokenType != SSEMLexer.BNUM && tokenType != SSEMLexer.NUM && (operand < 0 || operand > 31)) {
             throw new CompileException(
-                pos.line, pos.column, "Operand must be between <0, 31>; it was " + operand
+                    pos.line, pos.column, "Operand must be between <0, 31>; it was " + operand
             );
         }
     }
@@ -61,7 +61,7 @@ public class CompilerChecks {
             return parser.apply(token);
         } catch (NumberFormatException e) {
             throw new CompileException(
-                token.getLine(), token.getCharPositionInLine(), "Could not parse number: " + token.getText()
+                    token.getLine(), token.getCharPositionInLine(), "Could not parse number: " + token.getText()
             );
         }
     }

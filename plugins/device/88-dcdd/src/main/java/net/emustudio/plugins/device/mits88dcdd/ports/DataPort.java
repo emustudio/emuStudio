@@ -41,7 +41,7 @@ public class DataPort implements DeviceContext<Byte> {
 
     @Override
     public Byte readData() {
-        return disk.getCurrentDrive().map(Drive::readData).orElse((byte)0);
+        return disk.getCurrentDrive().map(Drive::readData).orElse((byte) 0);
     }
 
     @Override

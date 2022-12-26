@@ -26,7 +26,7 @@ import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-public class CreatePseudoVisitor extends AsZ80ParserBaseVisitor<Node>  {
+public class CreatePseudoVisitor extends AsZ80ParserBaseVisitor<Node> {
 
     @Override
     public Node visitPseudoOrg(PseudoOrgContext ctx) {

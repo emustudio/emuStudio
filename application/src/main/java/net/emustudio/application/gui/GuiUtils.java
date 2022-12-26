@@ -40,7 +40,7 @@ public class GuiUtils {
     public static void addKeyListenerRecursively(Component c, KeyListener keyListener) {
         c.addKeyListener(keyListener);
         if (c instanceof Container) {
-            for (Component child : ((Container)c).getComponents()) {
+            for (Component child : ((Container) c).getComponents()) {
                 addKeyListenerRecursively(child, keyListener);
             }
         }

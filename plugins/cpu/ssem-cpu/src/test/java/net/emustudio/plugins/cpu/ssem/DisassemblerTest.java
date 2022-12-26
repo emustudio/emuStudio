@@ -19,19 +19,10 @@
 package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.plugins.cpu.DecodedInstruction;
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
-import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
-import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.helpers.Bits;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import org.junit.Test;
 
-import static net.emustudio.plugins.cpu.ssem.DecoderImpl.LINE;
-import static org.easymock.EasyMock.*;
-import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 
 public class DisassemblerTest {
@@ -42,7 +33,7 @@ public class DisassemblerTest {
     @Test
     public void testLDN() {
         memory.setMemory(new short[]{
-            0x9B, 0xE2, 0xFC, 0x3F
+                0x9B, 0xE2, 0xFC, 0x3F
         });
 
         DisassembledInstruction instr = disassembler.disassemble(0);
@@ -53,8 +44,8 @@ public class DisassemblerTest {
     @Test
     public void testSTO() {
         memory.setMemory(new short[]{
-            0,0,0,0,
-            0x68, 0x06, 0x00, 0x00
+                0, 0, 0, 0,
+                0x68, 0x06, 0x00, 0x00
         });
 
         DisassembledInstruction instr = disassembler.disassemble(4);

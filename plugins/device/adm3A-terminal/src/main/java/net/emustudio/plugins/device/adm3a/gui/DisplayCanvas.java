@@ -33,12 +33,10 @@ import static net.emustudio.plugins.device.adm3a.Utils.loadFont;
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     private static final Color FOREGROUND = new Color(255, 255, 255);
     private static final Color BACKGROUND = Color.BLACK;
-
-    private volatile DisplayFont displayFont;
     private final Timer repaintTimer;
     private final Display display;
-
     private final AtomicBoolean painting = new AtomicBoolean(false);
+    private volatile DisplayFont displayFont;
     private volatile Dimension size = new Dimension(0, 0);
 
     public DisplayCanvas(DisplayFont displayFont, Display display) {
@@ -128,11 +126,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         graphics.setRenderingHint(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
                         for (int y = 0; y < display.rows; y++) {
                             graphics.drawChars(
-                                display.videoMemory,
-                                y * display.columns,
-                                display.columns,
-                                1,
-                                (y + 1) * lineHeight);
+                                    display.videoMemory,
+                                    y * display.columns,
+                                    display.columns,
+                                    1,
+                                    (y + 1) * lineHeight);
                         }
                         paintCursor(graphics, lineHeight);
                         graphics.dispose();
@@ -152,7 +150,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             Rectangle2D fontRectangle = getFont().getMaxCharBounds(graphics.getFontMetrics().getFontRenderContext());
 
             int x = displayFont.xCursorOffset
-                + (int) (cursorPoint.x * (fontRectangle.getWidth() + displayFont.xCursorMultiplierOffset));
+                    + (int) (cursorPoint.x * (fontRectangle.getWidth() + displayFont.xCursorMultiplierOffset));
             int y = displayFont.yCursorOffset + (cursorPoint.y * lineHeight);
 
             graphics.fillRect(x, y, (int) fontRectangle.getWidth(), (int) fontRectangle.getHeight() + displayFont.yCursorExtend);

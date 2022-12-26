@@ -34,8 +34,8 @@ public class Resources {
 
     public static String getVersion() {
         return getResourceBundle()
-            .map(b -> b.getString("version"))
-            .orElse(Resources.class.getPackage().getImplementationVersion());
+                .map(b -> b.getString("version"))
+                .orElse(Resources.class.getPackage().getImplementationVersion());
     }
 
     public static String getCopyright() {

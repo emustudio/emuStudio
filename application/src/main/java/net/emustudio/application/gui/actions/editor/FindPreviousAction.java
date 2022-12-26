@@ -26,7 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-public class FindPreviousAction extends AbstractAction  {
+public class FindPreviousAction extends AbstractAction {
 
     private final Editor editor;
     private final Dialogs dialogs;

@@ -29,15 +29,15 @@ public class Instruction {
 
     public Instruction(int tokenType) {
         Map<Integer, Integer> tokenCodes = Map.of(
-            BraincParser.HALT, 0,
-            BraincParser.INC, 1,
-            BraincParser.DEC, 2,
-            BraincParser.INCV, 3,
-            BraincParser.DECV, 4,
-            BraincParser.PRINT, 5,
-            BraincParser.LOAD, 6,
-            BraincParser.LOOP, 7,
-            BraincParser.ENDL, 8
+                BraincParser.HALT, 0,
+                BraincParser.INC, 1,
+                BraincParser.DEC, 2,
+                BraincParser.INCV, 3,
+                BraincParser.DECV, 4,
+                BraincParser.PRINT, 5,
+                BraincParser.LOAD, 6,
+                BraincParser.LOOP, 7,
+                BraincParser.ENDL, 8
         );
         this.instructionCode = tokenCodes.get(tokenType);
     }

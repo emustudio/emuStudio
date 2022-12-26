@@ -43,13 +43,13 @@ import java.io.Reader;
 import java.util.*;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.COMPILER,
-    title = "RASP Machine Assembler"
+        type = PLUGIN_TYPE.COMPILER,
+        title = "RASP Machine Assembler"
 )
 public class CompilerRASP extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerRASP.class);
     private static final List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-        new SourceFileExtension("rasp", "RASP source file")
+            new SourceFileExtension("rasp", "RASP source file")
     );
 
     private RASPMemoryContext memory;

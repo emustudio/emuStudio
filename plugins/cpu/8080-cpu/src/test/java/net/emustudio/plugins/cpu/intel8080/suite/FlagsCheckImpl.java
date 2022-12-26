@@ -23,6 +23,18 @@ import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 
 public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckImpl<T>> {
 
+    public static boolean isAuxCarry(int first, int sumWith) {
+        int mask = sumWith & first;
+        int xormask = sumWith ^ first;
+
+        int C0 = mask & 1;
+        int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
+        int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
+        int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
+
+        return (C3 != 0);
+    }
+
     public FlagsCheckImpl<T> sign() {
         evaluators.add((context, result) -> {
             if (result.byteValue() < 0) {
@@ -113,18 +125,6 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
     public FlagsCheckImpl<T> carryIsReset() {
         evaluators.add((context, result) -> expectedNotFlags |= EmulatorEngine.FLAG_C);
         return this;
-    }
-
-    public static boolean isAuxCarry(int first, int sumWith) {
-        int mask = sumWith & first;
-        int xormask = sumWith ^ first;
-
-        int C0 = mask & 1;
-        int C1 = ((mask >>> 1) ^ (C0 & (xormask >>> 1))) & 1;
-        int C2 = ((mask >>> 2) ^ (C1 & (xormask >>> 2))) & 1;
-        int C3 = ((mask >>> 3) ^ (C2 & (xormask >>> 3))) & 1;
-
-        return (C3 != 0);
     }
 
     public FlagsCheckImpl<T> auxCarry() {

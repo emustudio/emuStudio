@@ -30,8 +30,8 @@ public class SioUnitTest {
     @Test
     public void testCpuPortsAreReattached() {
         SioUnitSettings s = mock(SioUnitSettings.class);
-        expect(s.getStatusPorts()).andReturn(List.of(1,2)).anyTimes();
-        expect(s.getDataPorts()).andReturn(List.of(4,5)).anyTimes();
+        expect(s.getStatusPorts()).andReturn(List.of(1, 2)).anyTimes();
+        expect(s.getDataPorts()).andReturn(List.of(4, 5)).anyTimes();
         expect(s.getInterruptsSupported()).andReturn(true).anyTimes();
         expect(s.getInputInterruptVector()).andReturn(7).anyTimes();
         expect(s.getOutputInterruptVector()).andReturn(7).anyTimes();
@@ -55,7 +55,7 @@ public class SioUnitTest {
         expectLastCall().times(2);
         replay(cpu);
 
-        try(SioUnit sio = new SioUnit(s, cpu)) {
+        try (SioUnit sio = new SioUnit(s, cpu)) {
             sio.attach();
             sio.attach();
         }

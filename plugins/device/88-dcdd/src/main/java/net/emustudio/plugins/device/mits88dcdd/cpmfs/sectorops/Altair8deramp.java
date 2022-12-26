@@ -26,28 +26,28 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZ
 
 /**
  * https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%203.0/BIOS.ASM
- *
+ * <p>
  * Altair 8" floppy disk (from deramp.com)
- *
+ * <p>
  * Tracks 0-5 are formatted as "System Tracks" (regardless of how they are actually used). Sectors on these tracks are
  * formatted as follows:
- *
- *    Byte   Value
- *       0   0
- *       1   1
- *   2-130   Data (128 bytes)
- *     131   0FFh (Stop Byte)
- *     132   Checksum of 2-130 (sum of the 128 byte payload)
+ * <p>
+ * Byte   Value
+ * 0   0
+ * 1   1
+ * 2-130   Data (128 bytes)
+ * 131   0FFh (Stop Byte)
+ * 132   Checksum of 2-130 (sum of the 128 byte payload)
  * 133-136   Not used
- *
+ * <p>
  * Tracks 6-76 (except track 70) are "Data Tracks." Sectors on these tracks are formatted as follows:
- *
- *  Byte   Value
- *     0   Logical sector number (not skewed)
- *   1-5   0
+ * <p>
+ * Byte   Value
+ * 0   Logical sector number (not skewed)
+ * 1-5   0
  * 6-134   Data (128 bytes)
- *   135   0FFh (Stop Byte)
- *   136   Checksum of 6-134 (sum of the 128 byte payload)
+ * 135   0FFh (Stop Byte)
+ * 136   Checksum of 6-134 (sum of the 128 byte payload)
  */
 public class Altair8deramp implements SectorOps {
     public static final int SECTOR_SIZE = 137;

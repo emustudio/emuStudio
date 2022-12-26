@@ -42,38 +42,38 @@ public class InstructionTest extends AbstractCompilerTest {
     @Test
     public void testCompile() throws Exception {
         compile(
-            ";><+-.,[]"
+                ";><+-.,[]"
         );
 
         assertProgram(
-            0, 1, 2, 3, 4, 5, 6, 7, 8
+                0, 1, 2, 3, 4, 5, 6, 7, 8
         );
     }
 
     @Test
     public void testCompileProgramWithComments() throws Exception {
         compile(
-            "Code:   Pseudo code:\n" +
-                ">>      Move the pointer to cell2\n" +
-                "[-]     Set cell2 to 0 \n" +
-                "<<      Move the pointer back to cell0\n" +
-                "[       While cell0 is not 0\n" +
-                "  -       Subtract 1 from cell0\n" +
-                "  >>      Move the pointer to cell2\n" +
-                "  +       Add 1 to cell2\n" +
-                "  <<      Move the pointer back to cell0\n" +
-                "]       End while"
+                "Code:   Pseudo code:\n" +
+                        ">>      Move the pointer to cell2\n" +
+                        "[-]     Set cell2 to 0 \n" +
+                        "<<      Move the pointer back to cell0\n" +
+                        "[       While cell0 is not 0\n" +
+                        "  -       Subtract 1 from cell0\n" +
+                        "  >>      Move the pointer to cell2\n" +
+                        "  +       Add 1 to cell2\n" +
+                        "  <<      Move the pointer back to cell0\n" +
+                        "]       End while"
         );
 
         assertProgram(
-            1, 1, 7, 4, 8, 2, 2, 7, 4, 1, 1, 3, 2, 2, 8
+                1, 1, 7, 4, 8, 2, 2, 7, 4, 1, 1, 3, 2, 2, 8
         );
     }
 
     @Test
     public void testProgramAfterCommentWorks() throws Exception {
         compile(
-            "So this is the comment and program >>\n"
+                "So this is the comment and program >>\n"
         );
         assertProgram(1, 1);
     }
@@ -94,7 +94,7 @@ public class InstructionTest extends AbstractCompilerTest {
         new CompilerImpl(0L, applicationApi, PluginSettings.UNAVAILABLE).compile("nonexistant");
 
         assertProgram(
-            1, 1
+                1, 1
         );
     }
 }

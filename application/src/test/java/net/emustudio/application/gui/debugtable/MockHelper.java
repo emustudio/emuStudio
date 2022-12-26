@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static net.emustudio.application.gui.debugtable.PaginatingDisassembler.*;
+import static net.emustudio.application.gui.debugtable.PaginatingDisassembler.INSTR_PER_PAGE;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -125,16 +125,16 @@ class MockHelper {
 
         if (maxKnownPage == 0) {
             when(callFlow.getLocations(pageMin, pageCurr))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
             when(callFlow.getLocations(pageCurr, pageMax))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
         }
 
         while (maxKnownPage != 0) {
             when(callFlow.getLocations(pageMin, pageCurr))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
             when(callFlow.getLocations(pageCurr, pageMax))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
 
             int nextPageMin = pageMax;
             int nextPageCurr = pageCurr + instructionsSize * (INSTR_PER_PAGE - 1);
@@ -151,14 +151,14 @@ class MockHelper {
             }
 
             when(callFlow.getLocations(nextPageMin, nextPageCurr))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageMin));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageMin));
             if (nextPageCurr > pageCurr) {
                 expectTraverse(pageCurr, nextPageCurr, instructionsSize);
             } else if (nextPageCurr < pageCurr) {
                 expectTraverse(nextPageCurr, pageCurr, instructionsSize);
             }
             when(callFlow.getLocations(nextPageCurr, nextPageCurr + instructionsSize * INSTR_PER_HALF_PAGE))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageCurr));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageCurr));
 
             pageMin = nextPageMin;
             pageCurr = nextPageCurr;

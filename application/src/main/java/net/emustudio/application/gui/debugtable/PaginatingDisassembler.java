@@ -50,14 +50,14 @@ public class PaginatingDisassembler {
         bytesPerPageCache.put(0, currentPage);
     }
 
+    int getInstructionsPerPage() {
+        return instructionsPerPage;
+    }
+
     void setInstructionsPerPage(int value) {
         instructionsPerPage = value;
         currentInstrRow = instructionsPerPage / 2;
         instrPerHalfPage = instructionsPerPage / 2;
-    }
-
-    int getInstructionsPerPage() {
-        return instructionsPerPage;
     }
 
     int getCurrentInstructionRow() {
@@ -366,9 +366,9 @@ public class PaginatingDisassembler {
             // we do not have enough instructions. This might be caused by the "half" which is not big enough,
             // or by the fact that we just don't know how much instructions back is known.
             callFlow.traverseBackForInstructionCount(
-                realFrom,
-                INSTR_PER_PAGE - loadedHalfSize + 1,
-                loc -> halfPage.add(0, loc)
+                    realFrom,
+                    INSTR_PER_PAGE - loadedHalfSize + 1,
+                    loc -> halfPage.add(0, loc)
             );
             loadedHalfSize = halfPage.size();
         }
@@ -432,12 +432,12 @@ public class PaginatingDisassembler {
         @Override
         public String toString() {
             return "Page{" +
-                "index=" + index +
-                ", minLocation=" + minLocation +
-                ", maxLocation=" + maxLocation +
-                ", middleLocation=" + middleLocation +
-                ", lastPage=" + lastPage +
-                '}';
+                    "index=" + index +
+                    ", minLocation=" + minLocation +
+                    ", maxLocation=" + maxLocation +
+                    ", middleLocation=" + middleLocation +
+                    ", lastPage=" + lastPage +
+                    '}';
         }
     }
 }

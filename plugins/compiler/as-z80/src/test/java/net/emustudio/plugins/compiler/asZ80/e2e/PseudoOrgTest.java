@@ -38,100 +38,100 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     @Test
     public void testORGwithInclude() throws Exception {
         compile(
-            "org 3\n"
-                + "call sample\n"
-                + "include '" + sampleFile + "'\n"
+                "org 3\n"
+                        + "call sample\n"
+                        + "include '" + sampleFile + "'\n"
         );
 
         assertProgram(
-            0, 0, 0, 0xCD, 6, 0, 0x3E, 0, 0xC9
+                0, 0, 0, 0xCD, 6, 0, 0x3E, 0, 0xC9
         );
     }
 
     @Test
     public void testORGwithDoubleInclude() throws Exception {
         compile(
-            "org 3\n"
-                + "call sample\n"
-                + "include '" + sample2File + "'\n"
-                + "include '" + sampleFile + "'\n"
+                "org 3\n"
+                        + "call sample\n"
+                        + "include '" + sample2File + "'\n"
+                        + "include '" + sampleFile + "'\n"
         );
 
         assertProgram(
-            0, 0, 0, 0xCD, 0x09, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9
+                0, 0, 0, 0xCD, 0x09, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9
         );
     }
 
     @Test
     public void testORGwithDoubleIncludeAndJMPafter() throws Exception {
         compile(
-            "org 3\n"
-                + "jp next\n"
-                + "include '" + sampleFile + "'\n"
-                + "include '" + sample2File + "'\n"
-                + "next:\n"
-                + "ld a, b\n"
+                "org 3\n"
+                        + "jp next\n"
+                        + "include '" + sampleFile + "'\n"
+                        + "include '" + sample2File + "'\n"
+                        + "next:\n"
+                        + "ld a, b\n"
         );
 
         assertProgram(
-            0, 0, 0, 0xC3, 0x0C, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9, 0x78
+                0, 0, 0, 0xC3, 0x0C, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9, 0x78
         );
     }
 
     @Test
     public void testORGwithDB() throws Exception {
         compile(
-            "org 3\n"
-                + "ld HL, text\n"
-                + "text:\n"
-                + "db 'ahoj'"
+                "org 3\n"
+                        + "ld HL, text\n"
+                        + "text:\n"
+                        + "db 'ahoj'"
         );
 
         assertProgram(
-            0, 0, 0, 0x21, 0x06, 0, 'a', 'h', 'o', 'j'
+                0, 0, 0, 0x21, 0x06, 0, 'a', 'h', 'o', 'j'
         );
     }
 
     @Test
     public void testORG() throws Exception {
         compile(
-            "org 2\n" +
-                "now: ld a,b\n" +
-                "ds 2\n" +
-                "cp 'C'\n" +
-                "jp z, now\n" +
-                "ler: ld (HL), a"
+                "org 2\n" +
+                        "now: ld a,b\n" +
+                        "ds 2\n" +
+                        "cp 'C'\n" +
+                        "jp z, now\n" +
+                        "ler: ld (HL), a"
         );
 
         assertProgram(
-            0, 0, 0x78, 0, 0, 0xFE, 0x43, 0xCA, 0x02, 0x00, 0x77
+                0, 0, 0x78, 0, 0, 0xFE, 0x43, 0xCA, 0x02, 0x00, 0x77
         );
     }
 
     @Test
     public void testORGwithJumpBackwards() throws Exception {
         compile(
-            "sample:\n"
-                + "org 2\n"
-                + "jp sample"
+                "sample:\n"
+                        + "org 2\n"
+                        + "jp sample"
         );
 
         assertProgram(
-            0, 0, 0xC3, 0, 0
+                0, 0, 0xC3, 0, 0
         );
     }
 
     @Test
     public void testORGwithJumpForwards() throws Exception {
         compile(
-            "jp sample\n"
-                + "org 5\n"
-                + "sample:\n"
-                + "ld a, b"
+                "jp sample\n"
+                        + "org 5\n"
+                        + "sample:\n"
+                        + "ld a, b"
         );
 
         assertProgram(
-            0xC3, 0x05, 0, 0, 0, 0x78
+                0xC3, 0x05, 0, 0, 0, 0x78
         );
     }
 
@@ -141,28 +141,28 @@ public class PseudoOrgTest extends AbstractCompilerTest {
         memoryStub.write(1, (byte) 0x11);
 
         compile(
-            "org 2\n" + "now: ld a,b\n"
+                "org 2\n" + "now: ld a,b\n"
         );
 
         assertProgram(
-            0x10, 0x11, 0x78
+                0x10, 0x11, 0x78
         );
     }
 
     @Test
     public void testORGthenDSdoNotOverlap() throws Exception {
         compile(
-            "org 2\nds 2\nld a,b"
+                "org 2\nds 2\nld a,b"
         );
         assertProgram(
-            0, 0, 0, 0, 0x78
+                0, 0, 0, 0, 0x78
         );
     }
 
     @Test(expected = Exception.class)
     public void testORGisAmbiguous() throws Exception {
         compile(
-            "org text\nld a, 4\ntext: db 4\n"
+                "org text\nld a, 4\ntext: db 4\n"
         );
     }
 }

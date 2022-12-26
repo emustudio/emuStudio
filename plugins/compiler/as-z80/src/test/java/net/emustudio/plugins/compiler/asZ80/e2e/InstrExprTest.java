@@ -7,36 +7,36 @@ public class InstrExprTest extends AbstractCompilerTest {
     @Test
     public void testJump() {
         compile(
-            "JP EXAMPLE\n" +
-                "RST 00H\n" +
-                "EXAMPLE:\n" +
-                "ld A,01H"
+                "JP EXAMPLE\n" +
+                        "RST 00H\n" +
+                        "EXAMPLE:\n" +
+                        "ld A,01H"
         );
 
         assertProgram(
-            0xC3, 0x04, 0x00, 0xC7, 0x3E, 0x01
+                0xC3, 0x04, 0x00, 0xC7, 0x3E, 0x01
         );
     }
 
     @Test
     public void testRelativeJumpLabel() {
         compile(
-            "ld A,01H\n" +
-                "jr z, EXAMPLE\n" +
-                "RST 00H\n" +
-                "EXAMPLE:\n" +
-                "halt"
+                "ld A,01H\n" +
+                        "jr z, EXAMPLE\n" +
+                        "RST 00H\n" +
+                        "EXAMPLE:\n" +
+                        "halt"
         );
 
         assertProgram(
-            0x3E, 0x01, 0x28, 0x01, 0xC7, 0x76
+                0x3E, 0x01, 0x28, 0x01, 0xC7, 0x76
         );
     }
 
     @Test
     public void testRelativeJumpCurrentAddress() {
         compile("halt\njr $"); // infinite loop
-        assertProgram(0x76, 0x18, (byte)-2);
+        assertProgram(0x76, 0x18, (byte) -2);
     }
 
     @Test
@@ -54,8 +54,8 @@ public class InstrExprTest extends AbstractCompilerTest {
     @Test
     public void testForwardCall() {
         compile("call sample\n" +
-            "label: db 'hello'\n" +
-            "sample: halt");
+                "label: db 'hello'\n" +
+                "sample: halt");
         assertProgram(0xCD, 0x08, 0x00, 'h', 'e', 'l', 'l', 'o', 0x76);
     }
 }

@@ -31,13 +31,8 @@ import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
  * DD or FD prefix, CB, displacement byte, opcode
  */
 public class InstrXDCB extends Node {
-    public final int opcode;
-    public final int x;
-    private int y;
-    public final int z;
-    public final int prefix;
-
     private static final Map<Integer, Integer> xmap = new HashMap<>();
+
     static {
         xmap.put(OPCODE_RLC, 0);
         xmap.put(OPCODE_RRC, 0);
@@ -51,6 +46,12 @@ public class InstrXDCB extends Node {
         xmap.put(OPCODE_RES, 2);
         xmap.put(OPCODE_SET, 3);
     }
+
+    public final int opcode;
+    public final int x;
+    public final int z;
+    public final int prefix;
+    private int y;
 
     public InstrXDCB(int line, int column, int opcode, int prefix, int y, int z) {
         super(line, column);
@@ -75,10 +76,10 @@ public class InstrXDCB extends Node {
     }
 
     public byte[] eval() {
-        return new byte[] {
-            (byte)prefix,
-            (byte)0xCB,
-            (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF)
+        return new byte[]{
+                (byte) prefix,
+                (byte) 0xCB,
+                (byte) (((x << 6) | (y << 3) | (z & 7)) & 0xFF)
         };
     }
 

@@ -97,8 +97,8 @@ public class EmulatorPanel extends JPanel {
         statusWindow.setLayout(statusWindowLayout);
 
         computer.getCPU()
-            .flatMap(cpu -> Optional.ofNullable(cpu.getStatusPanel()))
-            .ifPresent(this::setStatusPanel);
+                .flatMap(cpu -> Optional.ofNullable(cpu.getStatusPanel()))
+                .ifPresent(this::setStatusPanel);
 
         this.stepBackAction = new StepBackAction(computer, debugTableModel, this::refreshDebugTable);
         this.resetAction = new ResetAction(emulationController);
@@ -128,15 +128,15 @@ public class EmulatorPanel extends JPanel {
 
         debuggerPanel.setLayout(debuggerPanelLayout);
         debuggerPanelLayout.setHorizontalGroup(
-            debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(toolDebug)
-                .addComponent(paneDebug)
-                .addComponent(panelPages));
+                debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(toolDebug)
+                        .addComponent(paneDebug)
+                        .addComponent(panelPages));
         debuggerPanelLayout.setVerticalGroup(
-            debuggerPanelLayout.createSequentialGroup()
-                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addComponent(paneDebug, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(panelPages, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE));
+                debuggerPanelLayout.createSequentialGroup()
+                        .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(paneDebug, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(panelPages, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE));
 
         this.showDeviceSettingsAction = new ShowDeviceSettingsAction(parent, computer, dialogs, lstDevices::getSelectedIndex);
         this.showDeviceGuiAction = new ShowDeviceGuiAction(parent, computer, dialogs, lstDevices::getSelectedIndex);
@@ -181,22 +181,22 @@ public class EmulatorPanel extends JPanel {
         GroupLayout peripheralPanelLayout = new GroupLayout(peripheralPanel);
         peripheralPanel.setLayout(peripheralPanelLayout);
         peripheralPanelLayout.setHorizontalGroup(
-            peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(paneDevices)
-                .addGroup(GroupLayout.Alignment.TRAILING,
-                    peripheralPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(btnShowSettings)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnShowGUI)
-                        .addContainerGap()));
+                peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(paneDevices)
+                        .addGroup(GroupLayout.Alignment.TRAILING,
+                                peripheralPanelLayout.createSequentialGroup()
+                                        .addContainerGap()
+                                        .addComponent(btnShowSettings)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(btnShowGUI)
+                                        .addContainerGap()));
         peripheralPanelLayout.setVerticalGroup(
-            peripheralPanelLayout.createSequentialGroup()
-                .addComponent(paneDevices)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnShowSettings)
-                    .addComponent(btnShowGUI)));
+                peripheralPanelLayout.createSequentialGroup()
+                        .addComponent(paneDevices)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(btnShowSettings)
+                                .addComponent(btnShowGUI)));
 
         splitPerDebug.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         splitPerDebug.setDividerLocation(500);
@@ -217,13 +217,13 @@ public class EmulatorPanel extends JPanel {
         GroupLayout panelEmulatorLayout = new GroupLayout(this);
         setLayout(panelEmulatorLayout);
         panelEmulatorLayout.setHorizontalGroup(
-            panelEmulatorLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(splitLeftRight));
+                panelEmulatorLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(splitLeftRight));
         panelEmulatorLayout.setVerticalGroup(
-            panelEmulatorLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(splitLeftRight, 0, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
-                .addContainerGap());
+                panelEmulatorLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(splitLeftRight, 0, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
+                        .addContainerGap());
 
         this.memoryListener = new Memory.MemoryListener() {
             @Override
@@ -284,11 +284,11 @@ public class EmulatorPanel extends JPanel {
 
     private void setStatusPanel(JPanel statusPanel) {
         statusWindowLayout.setHorizontalGroup(
-            statusWindowLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(statusPanel));
+                statusWindowLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(statusPanel));
         statusWindowLayout.setVerticalGroup(
-            statusWindowLayout.createSequentialGroup()
-                .addComponent(statusPanel));
+                statusWindowLayout.createSequentialGroup()
+                        .addComponent(statusPanel));
     }
 
     private void setupDebugToolbar() {
@@ -299,7 +299,7 @@ public class EmulatorPanel extends JPanel {
         toolDebug.add(new ToolbarButton(resetAction, "Reset emulation"));
         toolDebug.addSeparator();
         toolDebug.add(new ToolbarButton(jumpToBeginningAction, "Jump to beginning"));
-        toolDebug.add(new ToolbarButton(stepBackAction,"Step back"));
+        toolDebug.add(new ToolbarButton(stepBackAction, "Step back"));
         toolDebug.add(new ToolbarButton(stopAction, "Stop emulation"));
         toolDebug.add(new ToolbarButton(pauseAction, "Pause emulation"));
         toolDebug.add(new ToolbarButton(runAction, "Run emulation"));

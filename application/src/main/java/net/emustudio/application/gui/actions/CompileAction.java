@@ -44,9 +44,9 @@ public class CompileAction extends AbstractAction {
     public CompileAction(VirtualComputer computer, Dialogs dialogs, Editor editor, Supplier<CPU.RunState> runState,
                          JTextArea compilerOutput, Runnable updateTitle) {
         super("Compile",
-            new ImageIcon(Objects.requireNonNull(
-                CompileAction.class.getResource("/net/emustudio/application/gui/dialogs/compile.png")
-            ))
+                new ImageIcon(Objects.requireNonNull(
+                        CompileAction.class.getResource("/net/emustudio/application/gui/dialogs/compile.png")
+                ))
         );
 
         this.computer = Objects.requireNonNull(computer);

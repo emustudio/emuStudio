@@ -40,8 +40,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.DEVICE,
-    title = "MITS 88-SIO"
+        type = PLUGIN_TYPE.DEVICE,
+        title = "MITS 88-SIO"
 )
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {
@@ -49,9 +49,9 @@ public class DeviceImpl extends AbstractDevice {
 
     private final SioUnitSettings sioSettings;
     private final UART.DeviceChannel deviceChannel;
+    private final boolean guiSupported;
     private SioUnit sioUnit;
     private UART uart;
-    private final boolean guiSupported;
     private SioGui gui;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -65,7 +65,7 @@ public class DeviceImpl extends AbstractDevice {
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register 88-SIO device context", e);
             applicationApi.getDialogs().showError(
-                "Could not register 88-SIO device channel. Please see log file for details.", super.getTitle()
+                    "Could not register 88-SIO device channel. Please see log file for details.", super.getTitle()
             );
         }
     }
@@ -103,7 +103,7 @@ public class DeviceImpl extends AbstractDevice {
             DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
             if (device.getDataType() != Byte.class) {
                 throw new PluginInitializationException(
-                    "Unexpected device data type. Expected Byte but was: " + device.getDataType()
+                        "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
             uart.setDevice(device);

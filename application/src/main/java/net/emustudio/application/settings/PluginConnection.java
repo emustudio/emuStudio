@@ -32,6 +32,16 @@ public class PluginConnection {
         this.config = Objects.requireNonNull(config);
     }
 
+    public static PluginConnection create(String fromPluginId, String toPluginId, boolean bidirectional, List<SchemaPoint> schemaPoints) {
+        Config config = Config.inMemory();
+        config.set("from", Objects.requireNonNull(fromPluginId));
+        config.set("to", Objects.requireNonNull(toPluginId));
+        config.set("bidirectional", bidirectional);
+        config.set("points", schemaPoints.stream().map(SchemaPoint::toString).collect(Collectors.toList()));
+
+        return new PluginConnection(config);
+    }
+
     public String getFromPluginId() {
         return config.get("from");
     }
@@ -51,15 +61,5 @@ public class PluginConnection {
 
     public Config getConfig() {
         return config;
-    }
-
-    public static PluginConnection create(String fromPluginId, String toPluginId, boolean bidirectional, List<SchemaPoint> schemaPoints) {
-        Config config = Config.inMemory();
-        config.set("from", Objects.requireNonNull(fromPluginId));
-        config.set("to", Objects.requireNonNull(toPluginId));
-        config.set("bidirectional", bidirectional);
-        config.set("points", schemaPoints.stream().map(SchemaPoint::toString).collect(Collectors.toList()));
-
-        return new PluginConnection(config);
     }
 }

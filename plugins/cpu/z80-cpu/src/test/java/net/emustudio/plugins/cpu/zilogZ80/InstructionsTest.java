@@ -23,8 +23,8 @@ import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.suite.CpuRunnerImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.CpuVerifierImpl;
@@ -40,17 +40,15 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertTrue;
 
 public class InstructionsTest {
-    private static final long PLUGIN_ID = 0L;
-
     static final int REG_PAIR_BC = 0;
     static final int REG_PAIR_DE = 1;
     static final int REG_PAIR_HL = 2;
     static final int REG_SP = 3;
-
-    private CpuImpl cpu;
+    private static final long PLUGIN_ID = 0L;
+    private final List<FakeByteDevice> devices = new ArrayList<>();
     CpuRunnerImpl cpuRunnerImpl;
     CpuVerifierImpl cpuVerifierImpl;
-    private final List<FakeByteDevice> devices = new ArrayList<>();
+    private CpuImpl cpu;
 
     @SuppressWarnings("unchecked")
     @Before

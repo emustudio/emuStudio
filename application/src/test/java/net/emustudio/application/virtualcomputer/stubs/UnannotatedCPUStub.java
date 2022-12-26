@@ -27,7 +27,8 @@ import javax.swing.*;
 
 public class UnannotatedCPUStub implements CPU {
 
-    public UnannotatedCPUStub(long pluginID, ApplicationApi applicationApi, PluginSettings pluginSettings) {}
+    public UnannotatedCPUStub(long pluginID, ApplicationApi applicationApi, PluginSettings pluginSettings) {
+    }
 
     @Override
     public void addCPUListener(CPUListener listener) {

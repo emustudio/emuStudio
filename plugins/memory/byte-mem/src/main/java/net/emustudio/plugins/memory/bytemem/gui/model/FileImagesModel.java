@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui.model;
 
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +60,7 @@ public class FileImagesModel extends AbstractTableModel {
             } catch (NumberFormatException e) {
                 LOGGER.error("Invalid number format of setting 'imageAddress" + i + "'", e);
                 dialogs.showError(
-                    "Invalid number format of setting 'imageAddress" + i + "'. Please see log file for more details"
+                        "Invalid number format of setting 'imageAddress" + i + "'. Please see log file for more details"
                 );
             }
         }
@@ -79,10 +79,14 @@ public class FileImagesModel extends AbstractTableModel {
     @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
-            case 0: return "File name";
-            case 1: return "Address";
-            case 2: return "Bank";
-            default: return "";
+            case 0:
+                return "File name";
+            case 1:
+                return "Address";
+            case 2:
+                return "Bank";
+            default:
+                return "";
         }
     }
 
@@ -103,9 +107,12 @@ public class FileImagesModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         switch (columnIndex) {
-            case 0: return imageShortFileNames.get(rowIndex);
-            case 1: return String.format("0x%04X", imageAddresses.get(rowIndex));
-            case 2: return imageBanks.get(rowIndex);
+            case 0:
+                return imageShortFileNames.get(rowIndex);
+            case 1:
+                return String.format("0x%04X", imageAddresses.get(rowIndex));
+            case 2:
+                return imageBanks.get(rowIndex);
         }
         return null;
     }

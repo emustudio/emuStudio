@@ -19,14 +19,14 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.ApplicationApiImpl;
-import net.emustudio.application.settings.AppSettings;
-import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.ExtendedDialogs;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.gui.dialogs.OpenComputerDialog;
 import net.emustudio.application.gui.dialogs.StudioFrame;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.InvalidPluginException;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
@@ -48,8 +48,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Utils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
     public static final long EMUSTUDIO_ID = UUID.randomUUID().toString().hashCode();
+    private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
     public static AppSettings loadAppSettings(boolean gui, boolean auto) throws IOException {
         Path configFile = Path.of("emuStudio.toml");
@@ -62,11 +62,11 @@ public class Utils {
     }
 
     public static VirtualComputer loadComputer(
-        AppSettings appConfig,
-        ComputerConfig computerConfig,
-        ExtendedDialogs dialogs,
-        ContextPoolImpl contextPool,
-        DebugTableModelImpl debugTableModel
+            AppSettings appConfig,
+            ComputerConfig computerConfig,
+            ExtendedDialogs dialogs,
+            ContextPoolImpl contextPool,
+            DebugTableModelImpl debugTableModel
     ) throws InvalidPluginException, IOException, PluginInitializationException {
         ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs);
 
@@ -107,7 +107,7 @@ public class Utils {
         }
 
         StudioFrame mainWindow = new StudioFrame(
-            computer, appSettings, dialogs, debugTableModel, memoryContext, inputFile
+                computer, appSettings, dialogs, debugTableModel, memoryContext, inputFile
         );
 
         dialogs.setParent(mainWindow);

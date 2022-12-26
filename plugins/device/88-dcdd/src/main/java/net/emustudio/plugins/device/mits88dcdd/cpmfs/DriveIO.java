@@ -53,6 +53,30 @@ public class DriveIO implements AutoCloseable {
     }
 
     /**
+     * Formats disk (creates new disk image file).
+     *
+     * @param imageFile disk image file name
+     * @param cpmFormat CP/M format
+     */
+    public static void format(Path imageFile, CpmFormat cpmFormat) throws IOException {
+        if (Files.exists(imageFile)) {
+            throw new IllegalArgumentException("File already exists");
+        }
+        int fileSize = cpmFormat.tracks * cpmFormat.sectorSize * cpmFormat.dpb.spt;
+        System.out.println("File size: " + fileSize);
+        System.out.println("Sector size: " + cpmFormat.sectorSize);
+        System.out.println("Sectors per track: " + cpmFormat.dpb.spt);
+        System.out.println("Tracks: " + cpmFormat.tracks);
+
+        try (FileChannel channel = FileChannel.open(imageFile, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+            MappedByteBuffer out = channel.map(READ_WRITE, 0, fileSize);
+            for (int i = 0; i < fileSize; i++) {
+                out.put((byte) STATUS_UNUSED);
+            }
+        }
+    }
+
+    /**
      * Reads a CP/M "record".
      * <p>
      * It is a raw sector stripped from prefix & suffix.
@@ -127,29 +151,5 @@ public class DriveIO implements AutoCloseable {
     @Override
     public void close() throws Exception {
         channel.close();
-    }
-
-    /**
-     * Formats disk (creates new disk image file).
-     *
-     * @param imageFile disk image file name
-     * @param cpmFormat CP/M format
-     */
-    public static void format(Path imageFile, CpmFormat cpmFormat) throws IOException {
-        if (Files.exists(imageFile)) {
-            throw new IllegalArgumentException("File already exists");
-        }
-        int fileSize = cpmFormat.tracks * cpmFormat.sectorSize * cpmFormat.dpb.spt;
-        System.out.println("File size: " + fileSize);
-        System.out.println("Sector size: " + cpmFormat.sectorSize);
-        System.out.println("Sectors per track: " + cpmFormat.dpb.spt);
-        System.out.println("Tracks: " + cpmFormat.tracks);
-
-        try (FileChannel channel = FileChannel.open(imageFile, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
-            MappedByteBuffer out = channel.map(READ_WRITE, 0, fileSize);
-            for (int i = 0; i < fileSize; i++) {
-                out.put((byte) STATUS_UNUSED);
-            }
-        }
     }
 }

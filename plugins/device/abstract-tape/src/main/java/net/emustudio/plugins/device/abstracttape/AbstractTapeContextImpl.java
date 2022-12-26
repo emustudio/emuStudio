@@ -38,7 +38,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     private final AtomicReference<Writer> symbolLog = new AtomicReference<>();
     private final Map<Integer, TapeSymbol> content = new HashMap<>();
     private final Set<TapeSymbol.Type> acceptedTypes = new HashSet<>(Set.of(
-        TapeSymbol.Type.NUMBER, TapeSymbol.Type.STRING
+            TapeSymbol.Type.NUMBER, TapeSymbol.Type.STRING
     ));
 
     private final ReadWriteLock rwl = new ReentrantReadWriteLock();
@@ -52,11 +52,6 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     private boolean clearAtReset = true;
     private boolean displayRowNumbers = false;
     private TapeListener listener;
-
-    public interface TapeListener extends EventListener {
-
-        void tapeChanged();
-    }
 
     AbstractTapeContextImpl(AbstractTape tape) {
         this.tape = Objects.requireNonNull(tape);
@@ -121,13 +116,13 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     }
 
     @Override
-    public void setLeftBounded(boolean bounded) {
-        this.leftBounded = bounded;
+    public boolean isLeftBounded() {
+        return leftBounded;
     }
 
     @Override
-    public boolean isLeftBounded() {
-        return leftBounded;
+    public void setLeftBounded(boolean bounded) {
+        this.leftBounded = bounded;
     }
 
     @Override
@@ -208,13 +203,13 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         fireChange();
     }
 
+    public boolean getEditable() {
+        return editable;
+    }
+
     @Override
     public void setEditable(boolean editable) {
         this.editable = editable;
-    }
-
-    public boolean getEditable() {
-        return editable;
     }
 
     @Override
@@ -354,7 +349,6 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         }
     }
 
-
     private void fireChange() {
         if (listener != null) {
             listener.tapeChanged();
@@ -385,5 +379,10 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         }
         content.clear();
         content.putAll(newContent);
+    }
+
+    public interface TapeListener extends EventListener {
+
+        void tapeChanged();
     }
 }

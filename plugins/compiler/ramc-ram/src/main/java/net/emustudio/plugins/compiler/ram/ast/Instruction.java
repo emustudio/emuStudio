@@ -113,11 +113,11 @@ public class Instruction implements RAMInstruction {
     @Override
     public String toString() {
         return "Instruction{" +
-            "address=" + address +
-            ", opcode=" + opcode +
-            ", direction=" + direction +
-            ", operand=" + operand +
-            ", label=" + label +
-            '}';
+                "address=" + address +
+                ", opcode=" + opcode +
+                ", direction=" + direction +
+                ", operand=" + operand +
+                ", label=" + label +
+                '}';
     }
 }

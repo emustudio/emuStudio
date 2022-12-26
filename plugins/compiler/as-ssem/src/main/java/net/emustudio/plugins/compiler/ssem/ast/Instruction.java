@@ -31,15 +31,15 @@ import static net.emustudio.plugins.compiler.ssem.CompilerChecks.checkUnknownIns
 @Immutable
 public class Instruction {
     private final static Map<Integer, Byte> OPCODES = Map.of(
-        SSEMParser.JMP, (byte)0, // 000
-        SSEMParser.JPR, (byte)4, // 100
-        SSEMParser.LDN, (byte)2, // 010
-        SSEMParser.STO, (byte)6, // 110
-        SSEMParser.SUB, (byte)1, // 001
-        SSEMParser.CMP, (byte)3, // 011
-        SSEMParser.STP, (byte)7, // 111,
-        SSEMParser.NUM, (byte)0,
-        SSEMParser.BNUM, (byte)0
+            SSEMParser.JMP, (byte) 0, // 000
+            SSEMParser.JPR, (byte) 4, // 100
+            SSEMParser.LDN, (byte) 2, // 010
+            SSEMParser.STO, (byte) 6, // 110
+            SSEMParser.SUB, (byte) 1, // 001
+            SSEMParser.CMP, (byte) 3, // 011
+            SSEMParser.STP, (byte) 7, // 111,
+            SSEMParser.NUM, (byte) 0,
+            SSEMParser.BNUM, (byte) 0
     );
 
     public final int tokenType;

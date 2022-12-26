@@ -42,10 +42,10 @@ public class Utils {
                 tx = new AffineTransform();
             } else {
                 tx = GraphicsEnvironment
-                    .getLocalGraphicsEnvironment()
-                    .getDefaultScreenDevice()
-                    .getDefaultConfiguration()
-                    .getDefaultTransform();
+                        .getLocalGraphicsEnvironment()
+                        .getDefaultScreenDevice()
+                        .getDefaultConfiguration()
+                        .getDefaultTransform();
             }
             DEFAULT_FRC = new FontRenderContext(tx, false, false);
         }
@@ -58,9 +58,9 @@ public class Utils {
 
         try (InputStream fin = Utils.class.getResourceAsStream(displayFont.path)) {
             Font font = Font
-                .createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(fin))
-                .deriveFont(Font.PLAIN, displayFont.fontSize)
-                .deriveFont(attrs);
+                    .createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(fin))
+                    .deriveFont(Font.PLAIN, displayFont.fontSize)
+                    .deriveFont(attrs);
             GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
             return font;
         } catch (Exception e) {

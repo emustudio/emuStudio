@@ -124,11 +124,6 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         return cpu.getEngine().SP;
     }
 
-    @Override
-    public void setFlags(int mask) {
-        cpu.getEngine().flags |= mask;
-    }
-
     public void setFlags2(int mask) {
         cpu.getEngine().flags2 |= mask;
     }
@@ -144,6 +139,11 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     @Override
     public int getFlags() {
         return cpu.getEngine().flags;
+    }
+
+    @Override
+    public void setFlags(int mask) {
+        cpu.getEngine().flags |= mask;
     }
 
     public void setIX(int ix) {

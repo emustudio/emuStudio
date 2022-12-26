@@ -61,19 +61,6 @@ public class SioUnitSettings {
     private volatile List<Integer> statusPorts;
     private volatile List<Integer> dataPorts;
 
-    public enum MAP_CHAR {
-        BACKSPACE,
-        DELETE,
-        UNDERSCORE,
-        UNCHANGED
-    }
-
-    @FunctionalInterface
-    public interface SettingsObserver {
-
-        void settingsChanged();
-    }
-
     public SioUnitSettings(BasicSettings settings) {
         this.settings = Objects.requireNonNull(settings);
         this.isClearInputBit8 = settings.getBoolean(KEY_CLEAR_INPUT_BIT8, false);
@@ -96,18 +83,18 @@ public class SioUnitSettings {
 
         RadixUtils r = RadixUtils.getInstance();
         this.statusPorts = Arrays
-            .stream(settings.getString(KEY_STATUS_PORTS, "").split(","))
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .map(r::parseRadix)
-            .collect(Collectors.toList());
+                .stream(settings.getString(KEY_STATUS_PORTS, "").split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(r::parseRadix)
+                .collect(Collectors.toList());
 
         this.dataPorts = Arrays
-            .stream(settings.getString(KEY_DATA_PORTS, "").split(","))
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .map(r::parseRadix)
-            .collect(Collectors.toList());
+                .stream(settings.getString(KEY_DATA_PORTS, "").split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(r::parseRadix)
+                .collect(Collectors.toList());
     }
 
     public void addObserver(SettingsObserver observer) {
@@ -175,9 +162,9 @@ public class SioUnitSettings {
     public void setStatusPorts(List<Integer> value) {
         this.statusPorts = value;
         settings.setString(KEY_STATUS_PORTS, value.stream()
-            .map(i -> "0x" + Integer.toHexString(i))
-            .reduce((s, s2) -> s + "," + s2)
-            .orElse(""));
+                .map(i -> "0x" + Integer.toHexString(i))
+                .reduce((s, s2) -> s + "," + s2)
+                .orElse(""));
         notifySettingsChanged();
     }
 
@@ -188,9 +175,9 @@ public class SioUnitSettings {
     public void setDataPorts(List<Integer> value) {
         this.dataPorts = value;
         settings.setString(KEY_DATA_PORTS, value.stream()
-            .map(i -> "0x" + Integer.toHexString(i))
-            .reduce((s, s2) -> s + "," + s2)
-            .orElse(""));
+                .map(i -> "0x" + Integer.toHexString(i))
+                .reduce((s, s2) -> s + "," + s2)
+                .orElse(""));
         notifySettingsChanged();
     }
 
@@ -240,5 +227,18 @@ public class SioUnitSettings {
 
     private void notifySettingsChanged() {
         observers.forEach(SettingsObserver::settingsChanged);
+    }
+
+    public enum MAP_CHAR {
+        BACKSPACE,
+        DELETE,
+        UNDERSCORE,
+        UNCHANGED
+    }
+
+    @FunctionalInterface
+    public interface SettingsObserver {
+
+        void settingsChanged();
     }
 }

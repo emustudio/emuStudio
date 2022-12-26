@@ -25,8 +25,8 @@ import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.asZ80.AssemblerZ80;
 import org.junit.Before;
 import org.junit.Rule;
@@ -41,11 +41,10 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractCompilerTest {
-    protected AssemblerZ80 compiler;
-    protected MemoryStub<Byte> memoryStub;
-
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
+    protected AssemblerZ80 compiler;
+    protected MemoryStub<Byte> memoryStub;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -97,14 +96,14 @@ public abstract class AbstractCompilerTest {
     protected void assertProgram(int... bytes) {
         for (int i = 0; i < bytes.length; i++) {
             assertEquals(
-                String.format("[addr=%x] expected=%x, but was=%x", i, bytes[i], memoryStub.read(i)),
-                (byte)bytes[i], memoryStub.read(i).byteValue()
+                    String.format("[addr=%x] expected=%x, but was=%x", i, bytes[i], memoryStub.read(i)),
+                    (byte) bytes[i], memoryStub.read(i).byteValue()
             );
         }
         for (int i = bytes.length; i < memoryStub.getSize(); i++) {
             assertEquals(
-                String.format("[addr=%x] expected=%x, but was=%x", i, 0, memoryStub.read(i)),
-                0, memoryStub.read(i).byteValue()
+                    String.format("[addr=%x] expected=%x, but was=%x", i, 0, memoryStub.read(i)),
+                    0, memoryStub.read(i).byteValue()
             );
         }
     }

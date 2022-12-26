@@ -30,7 +30,6 @@ import static net.emustudio.plugins.compiler.rasp.RASPParser.*;
 import static org.antlr.v4.runtime.Recognizer.EOF;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
-    private final RASPLexer lexer;
     public static final int[] tokenMap = new int[ERROR + 1];
 
     static {
@@ -67,6 +66,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
 
         tokenMap[ERROR] = Token.ERROR;
     }
+
+    private final RASPLexer lexer;
 
 
     public LexicalAnalyzerImpl(RASPLexer lexer) {

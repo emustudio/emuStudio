@@ -113,7 +113,7 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_ADC REG_HL SEP_COMMA rp=rRegPair                              # instrED_RP
         int q = (ctx.opcode.getType() == OPCODE_SBC) ? 0 : 1;
         int p = CompilerTables.regPairs.get(ctx.rp.start.getType());
-        return new InstrED(ctx.opcode, p,q, 2).setSizeBytes(2);
+        return new InstrED(ctx.opcode, p, q, 2).setSizeBytes(2);
     }
 
     @Override
@@ -615,20 +615,20 @@ public class CreateInstrVisitor extends AsZ80ParserBaseVisitor<Node> {
         //  | opcode=OPCODE_EI                                                            # instr         // x=3, z=3, y=7
 
         Map<Integer, int[]> xyz = new HashMap<>();
-        xyz.put(OPCODE_NOP, new int[] {0, 0, 0});
-        xyz.put(OPCODE_RLCA, new int[] {0, 0, 7});
-        xyz.put(OPCODE_RRCA, new int[] {0, 1, 7});
-        xyz.put(OPCODE_RLA, new int[] {0, 2, 7});
-        xyz.put(OPCODE_RRA, new int[] {0, 3, 7});
-        xyz.put(OPCODE_DAA, new int[] {0, 4, 7});
-        xyz.put(OPCODE_CPL, new int[] {0, 5, 7});
-        xyz.put(OPCODE_SCF, new int[] {0, 6, 7});
-        xyz.put(OPCODE_CCF, new int[] {0, 7, 7});
-        xyz.put(OPCODE_HALT, new int[] {1, 6, 6});
-        xyz.put(OPCODE_RET, new int[] {3, 1, 1});
-        xyz.put(OPCODE_EXX, new int[] {3, 3, 1});
-        xyz.put(OPCODE_DI, new int[] {3, 6, 3});
-        xyz.put(OPCODE_EI, new int[] {3, 7, 3});
+        xyz.put(OPCODE_NOP, new int[]{0, 0, 0});
+        xyz.put(OPCODE_RLCA, new int[]{0, 0, 7});
+        xyz.put(OPCODE_RRCA, new int[]{0, 1, 7});
+        xyz.put(OPCODE_RLA, new int[]{0, 2, 7});
+        xyz.put(OPCODE_RRA, new int[]{0, 3, 7});
+        xyz.put(OPCODE_DAA, new int[]{0, 4, 7});
+        xyz.put(OPCODE_CPL, new int[]{0, 5, 7});
+        xyz.put(OPCODE_SCF, new int[]{0, 6, 7});
+        xyz.put(OPCODE_CCF, new int[]{0, 7, 7});
+        xyz.put(OPCODE_HALT, new int[]{1, 6, 6});
+        xyz.put(OPCODE_RET, new int[]{3, 1, 1});
+        xyz.put(OPCODE_EXX, new int[]{3, 3, 1});
+        xyz.put(OPCODE_DI, new int[]{3, 6, 3});
+        xyz.put(OPCODE_EI, new int[]{3, 7, 3});
 
         int[] xyzValues = xyz.get(ctx.opcode.getType());
         return new Instr(ctx.opcode, xyzValues[0], xyzValues[1], xyzValues[2]).setSizeBytes(1);

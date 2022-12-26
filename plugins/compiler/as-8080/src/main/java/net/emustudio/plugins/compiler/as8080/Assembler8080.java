@@ -30,7 +30,6 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 import net.emustudio.plugins.compiler.as8080.visitors.*;
@@ -47,15 +46,15 @@ import java.io.Reader;
 import java.util.*;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.COMPILER,
-    title = "Intel 8080 Assembler"
+        type = PLUGIN_TYPE.COMPILER,
+        title = "Intel 8080 Assembler"
 )
 @SuppressWarnings("unused")
 public class Assembler8080 extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(Assembler8080.class);
     private final static List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-        new SourceFileExtension("asm", "Assembler source file"),
-        new SourceFileExtension("inc", "Include file")
+            new SourceFileExtension("asm", "Assembler source file"),
+            new SourceFileExtension("inc", "Include file")
     );
 
     private MemoryContext<Byte> memory;
@@ -73,7 +72,7 @@ public class Assembler8080 extends AbstractCompiler {
                 memory = pool.getMemoryContext(pluginID, MemoryContext.class);
                 if (memory.getDataType() != Byte.class) {
                     throw new InvalidContextException(
-                        "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                            "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
                     );
                 }
             } catch (InvalidContextException | ContextNotFoundException e) {
@@ -123,16 +122,16 @@ public class Assembler8080 extends AbstractCompiler {
 
             IntelHEX hex = new IntelHEX();
             NodeVisitor[] visitors = new NodeVisitor[]{
-                new ExpandIncludesVisitor(),
-                new CheckDeclarationsVisitor(),
-                new ExpandMacrosVisitor(),
-                new SortMacroArgumentsVisitor(),
-                // macro expansion could bring re-definition of declarations, but we cannot check declarations again
-                // until the macro is properly integrated (b/c we could see multiple macro defs on multiple calls)
-                new CheckDeclarationsVisitor(),
-                new EvaluateExprVisitor(),
-                new CheckExprSizesVisitor(),
-                new GenerateCodeVisitor(hex)
+                    new ExpandIncludesVisitor(),
+                    new CheckDeclarationsVisitor(),
+                    new ExpandMacrosVisitor(),
+                    new SortMacroArgumentsVisitor(),
+                    // macro expansion could bring re-definition of declarations, but we cannot check declarations again
+                    // until the macro is properly integrated (b/c we could see multiple macro defs on multiple calls)
+                    new CheckDeclarationsVisitor(),
+                    new EvaluateExprVisitor(),
+                    new CheckExprSizesVisitor(),
+                    new GenerateCodeVisitor(hex)
             };
 
             for (NodeVisitor visitor : visitors) {
@@ -145,8 +144,8 @@ public class Assembler8080 extends AbstractCompiler {
                 programLocation = hex.findProgramLocation();
 
                 notifyInfo(String.format(
-                    "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                    outputFileName, RadixUtils.formatWordHexString(programLocation)
+                        "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
+                        outputFileName, RadixUtils.formatWordHexString(programLocation)
                 ));
 
                 if (memory != null) {

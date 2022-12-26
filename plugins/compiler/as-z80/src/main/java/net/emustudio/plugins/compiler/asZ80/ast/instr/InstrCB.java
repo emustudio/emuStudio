@@ -28,12 +28,8 @@ import java.util.Map;
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 
 public class InstrCB extends Node {
-    public final int opcode;
-    public final int x;
-    private int y;
-    public final int z;
-
     private static final Map<Integer, Integer> xmap = new HashMap<>();
+
     static {
         xmap.put(OPCODE_RLC, 0);
         xmap.put(OPCODE_RRC, 0);
@@ -47,6 +43,11 @@ public class InstrCB extends Node {
         xmap.put(OPCODE_RES, 2);
         xmap.put(OPCODE_SET, 3);
     }
+
+    public final int opcode;
+    public final int x;
+    public final int z;
+    private int y;
 
     public InstrCB(int line, int column, int opcode, int y, int z) {
         super(line, column);
@@ -67,9 +68,9 @@ public class InstrCB extends Node {
     }
 
     public byte[] eval() {
-        return new byte[] {
-            (byte)0xCB,
-            (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF)
+        return new byte[]{
+                (byte) 0xCB,
+                (byte) (((x << 6) | (y << 3) | (z & 7)) & 0xFF)
         };
     }
 

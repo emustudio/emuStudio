@@ -75,7 +75,7 @@ public class GuiDialogsImpl implements ExtendedDialogs {
     @Override
     public Optional<Integer> readInteger(String message, String title, int initial) {
         Object inputValue = JOptionPane.showInputDialog(
-            parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
+                parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
         );
         return Optional.ofNullable(inputValue).map(String::valueOf).map(radixUtils::parseRadix);
     }
@@ -93,7 +93,7 @@ public class GuiDialogsImpl implements ExtendedDialogs {
     @Override
     public Optional<String> readString(String message, String title, String initial) {
         Object inputValue = JOptionPane.showInputDialog(
-            parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
+                parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
         );
         return Optional.ofNullable(inputValue).map(String::valueOf);
     }
@@ -111,7 +111,7 @@ public class GuiDialogsImpl implements ExtendedDialogs {
     @Override
     public Optional<Double> readDouble(String message, String title, double initial) {
         Object inputValue = JOptionPane.showInputDialog(
-            parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
+                parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
         );
         return Optional.ofNullable(inputValue).map(String::valueOf).map(Double::parseDouble);
     }
@@ -124,7 +124,7 @@ public class GuiDialogsImpl implements ExtendedDialogs {
     @Override
     public DialogAnswer ask(String message, String title) {
         int answer = JOptionPane.showConfirmDialog(
-            parent, message, title, JOptionPane.YES_NO_CANCEL_OPTION
+                parent, message, title, JOptionPane.YES_NO_CANCEL_OPTION
         );
 
         switch (answer) {
@@ -161,12 +161,12 @@ public class GuiDialogsImpl implements ExtendedDialogs {
         FileNameExtensionFilter firstFilter = null;
         for (FileExtensionsFilter filter : filters) {
             String formattedExtensions = filter.getExtensions().stream()
-                .map(e -> "*." + e)
-                .collect(Collectors.joining(", ", " (", ")"));
+                    .map(e -> "*." + e)
+                    .collect(Collectors.joining(", ", " (", ")"));
 
             FileNameExtensionFilter extensionFilter = new FileNameExtensionFilter(
-                filter.getDescription() + formattedExtensions,
-                filter.getExtensions().toArray(new String[0])
+                    filter.getDescription() + formattedExtensions,
+                    filter.getExtensions().toArray(new String[0])
             );
             if (firstFilter == null) {
                 firstFilter = extensionFilter;
@@ -184,7 +184,7 @@ public class GuiDialogsImpl implements ExtendedDialogs {
             List<String> allExtensions = new ArrayList<>();
             FileFilter selectedFilter = fileChooser.getFileFilter();
             if (selectedFilter instanceof FileNameExtensionFilter) {
-                allExtensions.addAll(List.of(((FileNameExtensionFilter)selectedFilter).getExtensions()));
+                allExtensions.addAll(List.of(((FileNameExtensionFilter) selectedFilter).getExtensions()));
             }
 
             File selectedFile = fileChooser.getSelectedFile();
@@ -209,7 +209,7 @@ public class GuiDialogsImpl implements ExtendedDialogs {
     public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
                                      boolean appendMissingExtension, List<FileExtensionsFilter> filters) {
         return chooseFile(
-            title, approveButtonText, baseDirectory, appendMissingExtension, filters.toArray(FileExtensionsFilter[]::new)
+                title, approveButtonText, baseDirectory, appendMissingExtension, filters.toArray(FileExtensionsFilter[]::new)
         );
     }
 }

@@ -34,8 +34,6 @@ import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 
 public class ExprInfix extends Node {
     private final static Map<Integer, BiFunction<Integer, Integer, Integer>> infixOps = new HashMap<>();
-    private final BiFunction<Integer, Integer, Integer> operation;
-    public final int operationCode;
 
     static {
         infixOps.put(OP_ADD, Integer::sum);
@@ -60,6 +58,9 @@ public class ExprInfix extends Node {
         infixOps.put(OP_GT, (x, y) -> (x > y) ? 1 : 0);
         infixOps.put(OP_GTE, (x, y) -> (x >= y) ? 1 : 0);
     }
+
+    public final int operationCode;
+    private final BiFunction<Integer, Integer, Integer> operation;
 
     public ExprInfix(int line, int column, int op) {
         super(line, column);

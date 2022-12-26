@@ -18,9 +18,9 @@
  */
 package net.emustudio.plugins.device.adm3a;
 
+import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,10 +31,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class TerminalSettings {
-    private final static Logger LOGGER = LoggerFactory.getLogger(TerminalSettings.class);
-
     public final static String DEFAULT_INPUT_FILE_NAME = "adm3A-terminal.in";
     public final static String DEFAULT_OUTPUT_FILE_NAME = "adm3A-terminal.out";
+    private final static Logger LOGGER = LoggerFactory.getLogger(TerminalSettings.class);
     private final static String ANTI_ALIASING = "antiAliasing";
     private final static String HALF_DUPLEX = "halfDuplex";
     private final static String ALWAYS_ON_TOP = "alwaysOnTop";
@@ -43,22 +42,10 @@ public class TerminalSettings {
     private final static String INPUT_READ_DELAY = "inputReadDelay";
     private final static String DEVICE_INDEX = "deviceIndex";
     private final static String FONT = "font";
-
-    public enum TerminalFont {
-        ORIGINAL("original"),
-        MODERN("modern");
-
-        public final String name;
-
-        TerminalFont(String name) {
-            this.name = Objects.requireNonNull(name);
-        }
-    }
-
     private final Dialogs dialogs;
     private final PluginSettings settings;
     private final boolean guiSupported;
-
+    private final List<ChangedObserver> observers = new ArrayList<>();
     private boolean halfDuplex = false;
     private boolean antiAliasing = true;
     private boolean alwaysOnTop = false;
@@ -67,12 +54,6 @@ public class TerminalSettings {
     private int inputReadDelay = 0;
     private int deviceIndex = 0;
     private TerminalFont font = TerminalFont.ORIGINAL;
-
-    private final List<ChangedObserver> observers = new ArrayList<>();
-
-    public interface ChangedObserver {
-        void settingsChanged() throws IOException;
-    }
 
     TerminalSettings(PluginSettings settings, Dialogs dialogs) {
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -194,7 +175,7 @@ public class TerminalSettings {
         } catch (NumberFormatException e) {
             inputReadDelay = 0;
             LOGGER.error(
-                "Could not read '" + INPUT_READ_DELAY + "' setting. Using default value ({})", inputReadDelay, e
+                    "Could not read '" + INPUT_READ_DELAY + "' setting. Using default value ({})", inputReadDelay, e
             );
         }
         font = TerminalFont.valueOf(settings.getString(FONT, TerminalFont.ORIGINAL.name).toUpperCase());
@@ -215,5 +196,20 @@ public class TerminalSettings {
                 LOGGER.error("Observer is not happy about the new settings", e);
             }
         }
+    }
+
+    public enum TerminalFont {
+        ORIGINAL("original"),
+        MODERN("modern");
+
+        public final String name;
+
+        TerminalFont(String name) {
+            this.name = Objects.requireNonNull(name);
+        }
+    }
+
+    public interface ChangedObserver {
+        void settingsChanged() throws IOException;
     }
 }

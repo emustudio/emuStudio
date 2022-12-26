@@ -35,9 +35,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FindSequenceAction extends AbstractAction {
-    private final static Logger LOGGER = LoggerFactory.getLogger(FindSequenceAction.class);
     public final static String ERROR_NUMBER_FORMAT = "Cannot parse sequence of bytes. Bytes (in correct radix format) must be separated with spaces.";
-
+    private final static Logger LOGGER = LoggerFactory.getLogger(FindSequenceAction.class);
     private final Dialogs dialogs;
     private final Runnable dispose;
     private final MemoryTableModel tableModel;

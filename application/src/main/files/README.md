@@ -3,13 +3,14 @@
 [emuStudio](https://www.emustudio.net/) is a desktop application used for computers emulation and writing programs
 for emulated computers. It extensible; it encourages developers to write their own computer emulators.
 
-Main goal of emuStudio is support learning about older but important computers, or abstract machines, while
-having fun. Nowadays the ability to write programs for old computers is probably not quite interesting for the market,
-but I guess emulation has always be more about fun, trying to keeping alive something which was outstanding
-in it's peak, and preserve memories.
+The main goal of emuStudio is to support learning about older but important computers, or abstract machines, while
+having fun. Nowadays, the ability to write programs for old computers is probably not quite interesting for the market,
+but I guess emulation has always been more about fun, trying to keep alive something which was outstanding
+in its peak, and preserve memories.
 
 emuStudio is very appropriate for using at schools, e.g. when students are doing first steps in assembler, or when they
-are taught about computers history. For example, emuStudio is used at [Technical University of Košice](http://www.fei.tuke.sk/en)
+are taught about computers history. For example, emuStudio is used
+at [Technical University of Košice](http://www.fei.tuke.sk/en)
 since 2007.
 
 ## Available emulators
@@ -20,10 +21,9 @@ since 2007.
 
 * [Random Access Machine (RAM)](https://www.emustudio.net/docuser/ram/index/)
 
-* [Random Access Stored Program (RASP)](https://www.emustudio.net/docuser/rasp/index/) 
+* [Random Access Stored Program (RASP)](https://www.emustudio.net/docuser/rasp/index/)
 
 * [BrainDuck (brainfuck interpreter)](https://www.emustudio.net/docuser/brainduck/index/)
-
 
 # License
 

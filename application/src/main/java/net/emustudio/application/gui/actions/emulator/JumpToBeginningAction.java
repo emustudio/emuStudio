@@ -30,8 +30,8 @@ public class JumpToBeginningAction extends AbstractAction {
 
     public JumpToBeginningAction(VirtualComputer computer, Runnable refreshDebugTable) {
         super(
-            "Jump to beginning",
-            new ImageIcon(JumpToBeginningAction.class.getResource("/net/emustudio/application/gui/dialogs/go-first.png"))
+                "Jump to beginning",
+                new ImageIcon(JumpToBeginningAction.class.getResource("/net/emustudio/application/gui/dialogs/go-first.png"))
         );
 
         this.computer = Objects.requireNonNull(computer);

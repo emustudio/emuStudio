@@ -20,9 +20,8 @@ package net.emustudio.plugins.device.simh.commands;
 
 public class SetTimerInterruptAdr implements Command {
     public static final SetTimerInterruptAdr INS = new SetTimerInterruptAdr();
-
-    private int setTimerInterruptAdrPos = 0; // determines state for receiving timerInterruptHandler
     public int timerInterruptHandler = 0x0fc00; // default address of interrupt handling routine
+    private int setTimerInterruptAdrPos = 0; // determines state for receiving timerInterruptHandler
 
     @Override
     public void reset(Control control) {

@@ -44,8 +44,8 @@ public class RunTimedAction extends AbstractAction {
         Optional.ofNullable(emulationController).ifPresent(c -> {
             try {
                 dialogs
-                    .readInteger("Enter time slice in milliseconds:", "Timed emulation", 500)
-                    .ifPresent(sliceMillis -> c.step(sliceMillis, TimeUnit.MILLISECONDS));
+                        .readInteger("Enter time slice in milliseconds:", "Timed emulation", 500)
+                        .ifPresent(sliceMillis -> c.step(sliceMillis, TimeUnit.MILLISECONDS));
             } catch (NumberFormatException e) {
                 dialogs.showError("Invalid number format", "Timed emulation");
             }

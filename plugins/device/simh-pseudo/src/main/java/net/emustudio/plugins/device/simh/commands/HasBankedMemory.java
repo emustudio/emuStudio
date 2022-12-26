@@ -23,7 +23,7 @@ public class HasBankedMemory implements Command {
 
     @Override
     public byte read(Control control) {
-        byte result = (byte)control.getMemory().getBanksCount();
+        byte result = (byte) control.getMemory().getBanksCount();
         control.clearCommand();
         return result;
     }

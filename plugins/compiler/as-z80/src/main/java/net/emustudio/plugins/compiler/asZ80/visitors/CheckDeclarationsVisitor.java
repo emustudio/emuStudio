@@ -18,9 +18,9 @@
  */
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
-import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
+import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 
 import java.util.*;
 
@@ -33,10 +33,10 @@ import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.normalizeId;
  * - ID of constant and macro cannot reference itself in the declaration
  * - ID of variable cannot reference itself in the declaration only if it wasn't already declared
  * - macro parameters should not conflict with:
- *   - declarations in and out of the macro scope
- *   - previously declared parameters in current or parent macros if the current one is nested
+ * - declarations in and out of the macro scope
+ * - previously declared parameters in current or parent macros if the current one is nested
  * - if expressions should not reference declarations inside that if (including all nested ifs)
- *
+ * <p>
  * - cyclic references will be checked in evaluator since it requires > 1 passes
  */
 public class CheckDeclarationsVisitor extends NodeVisitor {
@@ -49,13 +49,10 @@ public class CheckDeclarationsVisitor extends NodeVisitor {
 
     // for checking marco param names in nested macros
     private final List<Set<String>> macroParamsInScope = new ArrayList<>();
-
-    // for easier removal of current macro params from macroParamsInScope when the macro definition ends
-    private Set<String> currentMacroParams;
-
     // if expr references
     private final Set<String> currentIfReferences = new HashSet<>();
-
+    // for easier removal of current macro params from macroParamsInScope when the macro definition ends
+    private Set<String> currentMacroParams;
     private boolean insideMacroParameter = false;
     private int insideIfLevel = 0; // if nesting level, to know how long to keep currentIfReferences
     private boolean insideIfExpr = false;

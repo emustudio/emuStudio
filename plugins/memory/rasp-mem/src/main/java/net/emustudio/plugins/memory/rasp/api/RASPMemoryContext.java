@@ -38,9 +38,9 @@ public interface RASPMemoryContext extends MemoryContext<RASPMemoryCell> {
 
     Optional<RASPLabel> getLabel(int address);
 
-    void setInputs(List<Integer> inputs);
-
     List<Integer> getInputs();
+
+    void setInputs(List<Integer> inputs);
 
     default Optional<String> disassemble(int opcode) {
         return Disassembler.disassemble(opcode);

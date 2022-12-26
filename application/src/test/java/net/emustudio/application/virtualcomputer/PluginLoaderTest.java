@@ -115,7 +115,7 @@ public class PluginLoaderTest {
     }
 
     private File createJar(String className, String... dependsOn) throws IOException, URISyntaxException {
-        File file = temporaryFolder.newFile(className.replaceAll("/",".").concat(".jar"));
+        File file = temporaryFolder.newFile(className.replaceAll("/", ".").concat(".jar"));
         JarCreator jarCreator = new JarCreator();
 
         file.getParentFile().mkdirs();
@@ -139,7 +139,7 @@ public class PluginLoaderTest {
 
         Constructor<Plugin> constructor = cl.getDeclaredConstructor(long.class, ApplicationApi.class, PluginSettings.class);
         cl.getDeclaredMethod("hi").invoke(constructor.newInstance(
-            0L, createNiceMock(ApplicationApi.class), createNiceMock(PluginSettings.class)
+                0L, createNiceMock(ApplicationApi.class), createNiceMock(PluginSettings.class)
         ));
     }
 }

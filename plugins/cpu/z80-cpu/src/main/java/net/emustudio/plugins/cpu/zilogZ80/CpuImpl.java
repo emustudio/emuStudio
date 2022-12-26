@@ -44,8 +44,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.CPU,
-    title = "Zilog Z80 CPU"
+        type = PLUGIN_TYPE.CPU,
+        title = "Zilog Z80 CPU"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
@@ -71,12 +71,12 @@ public class CpuImpl extends AbstractCPU {
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register Z80 CPU context", e);
             applicationApi.getDialogs().showError(
-                "Could not register Z80 CPU context. Please see log file for more details.", getTitle()
+                    "Could not register Z80 CPU context. Please see log file for more details.", getTitle()
             );
         }
 
         initializer = new InitializerZ80(
-            this, pluginID, applicationApi.getContextPool(), settings, context
+                this, pluginID, applicationApi.getContextPool(), settings, context
         );
     }
 

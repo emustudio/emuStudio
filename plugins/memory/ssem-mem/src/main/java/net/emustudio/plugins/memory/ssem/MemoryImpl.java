@@ -36,16 +36,16 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.MEMORY,
-    title = "SSEM memory (Williams-Kilburn Tube)"
+        type = PLUGIN_TYPE.MEMORY,
+        title = "SSEM memory (Williams-Kilburn Tube)"
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl memContext = new MemoryContextImpl();
-    private MemoryGui memoryGUI;
     private final boolean guiNotSupported;
+    private MemoryGui memoryGUI;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -56,7 +56,7 @@ public class MemoryImpl extends AbstractMemory {
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register SSEM memory context", e);
             applicationApi.getDialogs().showError(
-                "Could not register SSEM memory. Please see log file for more details.", getTitle()
+                    "Could not register SSEM memory. Please see log file for more details.", getTitle()
             );
         }
     }

@@ -20,7 +20,6 @@ package net.emustudio.application.gui.editor;
 
 import org.fife.rsta.ui.search.SearchListener;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
@@ -54,7 +53,8 @@ public interface Editor extends SearchListener {
 
     /**
      * Set caret position.
-     * @param line line (if -1 does nothing)
+     *
+     * @param line   line (if -1 does nothing)
      * @param column column (if -1 only sets the line)
      */
     void setPosition(int line, int column);

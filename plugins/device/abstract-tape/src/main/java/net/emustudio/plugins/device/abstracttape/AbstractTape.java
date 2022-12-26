@@ -38,8 +38,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.DEVICE,
-    title = "Abstract tape"
+        type = PLUGIN_TYPE.DEVICE,
+        title = "Abstract tape"
 )
 @SuppressWarnings("unused")
 public class AbstractTape extends AbstractDevice {
@@ -64,7 +64,7 @@ public class AbstractTape extends AbstractDevice {
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register Abstract tape context", e);
             applicationApi.getDialogs().showError(
-                "Could not register abstract tape context. Please see log file for details.", super.getTitle()
+                    "Could not register abstract tape context. Please see log file for details.", super.getTitle()
             );
         }
     }

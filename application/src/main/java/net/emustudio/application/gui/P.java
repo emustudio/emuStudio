@@ -32,6 +32,22 @@ public class P {
         this.y = y;
     }
 
+    public static P of(double x, double y) {
+        return new P(x, y);
+    }
+
+    public static P of(int x, int y) {
+        return new P(x, y);
+    }
+
+    public static P of(SchemaPoint schemaPoint) {
+        return new P(schemaPoint.x, schemaPoint.y);
+    }
+
+    public static P of(Point point) {
+        return new P(point.getX(), point.getY());
+    }
+
     public int ix() {
         return (int) x;
     }
@@ -61,24 +77,7 @@ public class P {
         return ((x >= leftTop.x) && (x <= rightBottom.x) && (y >= leftTop.y) && (y <= rightBottom.y));
     }
 
-
     public SchemaPoint toSchemaPoint() {
         return SchemaPoint.of(ix(), iy());
-    }
-
-    public static P of(double x, double y) {
-        return new P(x, y);
-    }
-
-    public static P of(int x, int y) {
-        return new P(x, y);
-    }
-
-    public static P of(SchemaPoint schemaPoint) {
-        return new P(schemaPoint.x, schemaPoint.y);
-    }
-
-    public static P of(Point point) {
-        return new P(point.getX(), point.getY());
     }
 }

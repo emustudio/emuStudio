@@ -18,16 +18,24 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
 
     private final Display canvas;
     private final Keyboard keyboard;
+    boolean ignoreNext = false;
+    int ignoreCount = 0;
+    boolean sposx = false;
+    boolean sposy = false;
+    int posX = 0;
+    int posY = 0;
+    private JLabel lblStatusIcon;
+    private JScrollPane scrollPane;
 
     private ZxSpectrumDisplayGui(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
         super(parent);
         this.dialogs = Objects.requireNonNull(dialogs);
 
         URL blueIconURL = getClass().getResource(
-            "/net/emustudio/plugins/device/zxspectrum/display/16_circle_blue.png"
+                "/net/emustudio/plugins/device/zxspectrum/display/16_circle_blue.png"
         );
         URL redIconURL = getClass().getResource(
-            "/net/emustudio/plugins/device/zxspectrum/display/16_circle_red.png"
+                "/net/emustudio/plugins/device/zxspectrum/display/16_circle_red.png"
         );
 
         blueIcon = new ImageIcon(Objects.requireNonNull(blueIconURL));
@@ -44,18 +52,16 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
         canvas.start();
     }
 
+    static ZxSpectrumDisplayGui create(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
+        ZxSpectrumDisplayGui dialog = new ZxSpectrumDisplayGui(parent, keyboard, dialogs);
+        GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
+        return dialog;
+    }
+
     @Override
     public void reset() {
         canvas.clearScreen();
     }
-
-    boolean ignoreNext = false;
-    int ignoreCount = 0;
-
-    boolean sposx = false;
-    boolean sposy = false;
-    int posX = 0;
-    int posY = 0;
 
     @Override
     public void write(int character) {
@@ -76,7 +82,7 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
         if (sposx) {
             posX = character;
             sposx = false;
-          //  cursor.set(posX, posY);
+            //  cursor.set(posX, posY);
             return;
         }
 
@@ -184,13 +190,6 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
         dispose();
     }
 
-
-    static ZxSpectrumDisplayGui create(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
-        ZxSpectrumDisplayGui dialog = new ZxSpectrumDisplayGui(parent, keyboard, dialogs);
-        GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
-        return dialog;
-    }
-
     private void writeStarted() {
         lblStatusIcon.setIcon(redIcon);
         lblStatusIcon.repaint();
@@ -223,18 +222,18 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
         GroupLayout panelStatusLayout = new GroupLayout(panelStatus);
         panelStatus.setLayout(panelStatusLayout);
         panelStatusLayout.setHorizontalGroup(
-            panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelStatusLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(lblStatusIcon, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnASCII)
-                    .addContainerGap(1000, Short.MAX_VALUE))
+                panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelStatusLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(lblStatusIcon, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnASCII)
+                                .addContainerGap(1000, Short.MAX_VALUE))
         );
         panelStatusLayout.setVerticalGroup(
-            panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(lblStatusIcon, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btnASCII, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
+                panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(lblStatusIcon, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnASCII, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
         );
 
         scrollPane.setBackground(new java.awt.Color(255, 255, 255));
@@ -242,16 +241,16 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(panelStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(scrollPane)
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(panelStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(scrollPane)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(panelStatus, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(panelStatus, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
@@ -259,22 +258,19 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
 
     private void btnASCIIActionPerformed(java.awt.event.ActionEvent evt) {
         dialogs
-            .readString("Enter ASCII codes separated with spaces:", "Add ASCII codes")
-            .ifPresent(asciiCodes -> {
-                StringTokenizer tokenizer = new StringTokenizer(asciiCodes);
+                .readString("Enter ASCII codes separated with spaces:", "Add ASCII codes")
+                .ifPresent(asciiCodes -> {
+                    StringTokenizer tokenizer = new StringTokenizer(asciiCodes);
 
-                RadixUtils radixUtils = RadixUtils.getInstance();
-                try {
-                    while (tokenizer.hasMoreTokens()) {
-                        int ascii = radixUtils.parseRadix(tokenizer.nextToken());
-                        keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char) ascii));
+                    RadixUtils radixUtils = RadixUtils.getInstance();
+                    try {
+                        while (tokenizer.hasMoreTokens()) {
+                            int ascii = radixUtils.parseRadix(tokenizer.nextToken());
+                            keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char) ascii));
+                        }
+                    } catch (NumberFormatException ex) {
+                        dialogs.showError("Invalid number format in the input: " + ex.getMessage(), "Add ASCII codes");
                     }
-                } catch (NumberFormatException ex) {
-                    dialogs.showError("Invalid number format in the input: " + ex.getMessage(), "Add ASCII codes");
-                }
-            });
+                });
     }
-
-    private JLabel lblStatusIcon;
-    private JScrollPane scrollPane;
 }

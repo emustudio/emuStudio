@@ -29,8 +29,8 @@ import java.util.Objects;
 import static net.emustudio.plugins.compiler.brainduck.BraincLexer.*;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
-    private final BraincLexer lexer;
     public static final int[] tokenMap = new int[COMMENT + 1];
+
     static {
         tokenMap[COMMENT] = Token.COMMENT;
         tokenMap[WS] = Token.WHITESPACE;
@@ -44,6 +44,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[HALT] = Token.RESERVED;
         tokenMap[ENDL] = Token.RESERVED;
     }
+
+    private final BraincLexer lexer;
 
     public LexicalAnalyzerImpl(BraincLexer lexer) {
         this.lexer = Objects.requireNonNull(lexer);

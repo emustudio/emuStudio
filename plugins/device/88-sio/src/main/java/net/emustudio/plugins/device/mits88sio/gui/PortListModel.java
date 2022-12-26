@@ -48,7 +48,7 @@ public class PortListModel extends AbstractListModel<String> {
 
     public void clear() {
         ports.clear();
-        fireContentsChanged(this, 0, - 1);
+        fireContentsChanged(this, 0, -1);
     }
 
     public void removeAt(int index) {

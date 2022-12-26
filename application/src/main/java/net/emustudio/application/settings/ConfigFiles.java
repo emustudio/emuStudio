@@ -37,10 +37,10 @@ public class ConfigFiles {
     private final static String DIR_DEVICE = "device";
 
     private final static Map<PLUGIN_TYPE, String> PLUGIN_SUBDIRS = Map.of(
-        PLUGIN_TYPE.COMPILER, DIR_COMPILER,
-        PLUGIN_TYPE.CPU, DIR_CPU,
-        PLUGIN_TYPE.MEMORY, DIR_MEMORY,
-        PLUGIN_TYPE.DEVICE, DIR_DEVICE
+            PLUGIN_TYPE.COMPILER, DIR_COMPILER,
+            PLUGIN_TYPE.CPU, DIR_CPU,
+            PLUGIN_TYPE.MEMORY, DIR_MEMORY,
+            PLUGIN_TYPE.DEVICE, DIR_DEVICE
     );
     private static final Path basePath = Path.of(System.getProperty("user.dir"));
 
@@ -70,17 +70,17 @@ public class ConfigFiles {
         }
         try (Stream<Path> configFiles = Files.list(basePath.resolve(DIR_CONFIG))) {
             return configFiles
-                .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
-                .flatMap(p -> {
-                    try {
-                        return Stream.of(ComputerConfig.load(p));
-                    } catch (Exception e) {
-                        return Stream.empty();
-                    }
-                })
-                .filter(c -> c.getName() != null)
-                .sorted(Comparator.comparing(ComputerConfig::getName))
-                .collect(Collectors.toList());
+                    .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
+                    .flatMap(p -> {
+                        try {
+                            return Stream.of(ComputerConfig.load(p));
+                        } catch (Exception e) {
+                            return Stream.empty();
+                        }
+                    })
+                    .filter(c -> c.getName() != null)
+                    .sorted(Comparator.comparing(ComputerConfig::getName))
+                    .collect(Collectors.toList());
         }
     }
 
@@ -98,10 +98,10 @@ public class ConfigFiles {
         Path pluginBasePath = basePath.resolve(PLUGIN_SUBDIRS.get(pluginType));
         try (Stream<Path> paths = Files.list(pluginBasePath)) {
             return paths
-                .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
-                .map(p -> p.getFileName().toString())
-                .sorted()
-                .collect(Collectors.toList());
+                    .filter(p -> !Files.isDirectory(p) && Files.isReadable(p))
+                    .map(p -> p.getFileName().toString())
+                    .sorted()
+                    .collect(Collectors.toList());
         }
     }
 

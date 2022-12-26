@@ -35,8 +35,8 @@ public class BreakpointAction extends AbstractAction {
 
     public BreakpointAction(JFrame parent, VirtualComputer computer, Dialogs dialogs, Runnable refreshDebugTable) {
         super(
-            "Set/unset breakpoint...",
-            new ImageIcon(ResetAction.class.getResource("/net/emustudio/application/gui/dialogs/breakpoints.png"))
+                "Set/unset breakpoint...",
+                new ImageIcon(ResetAction.class.getResource("/net/emustudio/application/gui/dialogs/breakpoints.png"))
         );
 
         this.parent = Objects.requireNonNull(parent);

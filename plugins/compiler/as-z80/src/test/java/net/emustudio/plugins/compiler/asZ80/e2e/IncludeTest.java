@@ -28,12 +28,12 @@ public class IncludeTest extends AbstractCompilerTest {
     public void testIncludeAndForwardCall() throws Exception {
         File includeFile = new File(getClass().getResource("/sample.asm").toURI());
         compile(
-            "call sample\n"
-                + "include '" + includeFile.getAbsolutePath() + "'\n"
+                "call sample\n"
+                        + "include '" + includeFile.getAbsolutePath() + "'\n"
         );
 
         assertProgram(
-            0xCD, 0x03, 0x00, 0x3E, 0, 0xC9
+                0xCD, 0x03, 0x00, 0x3E, 0, 0xC9
         );
     }
 
@@ -41,12 +41,12 @@ public class IncludeTest extends AbstractCompilerTest {
     public void testCallDataInclude() throws Exception {
         File includeFile = new File(getClass().getResource("/sample.asm").toURI());
         compile(
-            "call sample\n" +
-                "label: db 'hello'\n" +
-                "include '" + includeFile.getAbsolutePath() + "'\n"
+                "call sample\n" +
+                        "label: db 'hello'\n" +
+                        "include '" + includeFile.getAbsolutePath() + "'\n"
         );
         assertProgram(
-            0xCD, 0x08, 0x00, 'h', 'e', 'l', 'l', 'o', 0x3E, 0, 0xC9
+                0xCD, 0x08, 0x00, 'h', 'e', 'l', 'l', 'o', 0x3E, 0, 0xC9
         );
     }
 
@@ -55,13 +55,13 @@ public class IncludeTest extends AbstractCompilerTest {
         File first = new File(getClass().getResource("/sample.asm").toURI());
         File second = new File(getClass().getResource("/sample2.asm").toURI());
         compile(
-            "call sample2\n"
-                + "include '" + first.getAbsolutePath() + "'\n"
-                + "include '" + second.getAbsolutePath() + "'\n"
+                "call sample2\n"
+                        + "include '" + first.getAbsolutePath() + "'\n"
+                        + "include '" + second.getAbsolutePath() + "'\n"
         );
 
         assertProgram(
-            0xCD, 06, 00, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9
+                0xCD, 06, 00, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9
         );
     }
 
@@ -69,12 +69,12 @@ public class IncludeTest extends AbstractCompilerTest {
     public void testIncludeAndBackwardCall() throws Exception {
         File includeFile = new File(getClass().getResource("/sample.asm").toURI());
         compile(
-            "include '" + includeFile.getAbsolutePath() + "'\n"
-                + "call sample\n"
+                "include '" + includeFile.getAbsolutePath() + "'\n"
+                        + "call sample\n"
         );
 
         assertProgram(
-            0x3E, 0, 0xC9, 0xCD, 0, 0
+                0x3E, 0, 0xC9, 0xCD, 0, 0
         );
     }
 
@@ -83,13 +83,13 @@ public class IncludeTest extends AbstractCompilerTest {
         File first = new File(getClass().getResource("/sample.asm").toURI());
         File second = new File(getClass().getResource("/sample2.asm").toURI());
         compile(
-            "include '" + first.getAbsolutePath() + "'\n"
-                + "include '" + second.getAbsolutePath() + "'\n"
-                + "call sample\n"
+                "include '" + first.getAbsolutePath() + "'\n"
+                        + "include '" + second.getAbsolutePath() + "'\n"
+                        + "call sample\n"
         );
 
         assertProgram(
-            0x3E, 0, 0xC9, 0x3E, 0, 0xC9, 0xCD, 0, 0
+                0x3E, 0, 0xC9, 0x3E, 0, 0xC9, 0xCD, 0, 0
         );
     }
 
@@ -97,14 +97,14 @@ public class IncludeTest extends AbstractCompilerTest {
     public void testIncludeAndJMPafter() throws Exception {
         File includeFile = new File(getClass().getResource("/sample.asm").toURI());
         compile(
-            "jp next\n"
-                + "include '" + includeFile.getAbsolutePath() + "'\n"
-                + "next:\n"
-                + "ld a, b\n"
+                "jp next\n"
+                        + "include '" + includeFile.getAbsolutePath() + "'\n"
+                        + "next:\n"
+                        + "ld a, b\n"
         );
 
         assertProgram(
-            0xC3, 0x06, 0, 0x3E, 0, 0xC9, 0x78
+                0xC3, 0x06, 0, 0x3E, 0, 0xC9, 0x78
         );
     }
 
@@ -113,15 +113,15 @@ public class IncludeTest extends AbstractCompilerTest {
         File first = new File(getClass().getResource("/sample.asm").toURI());
         File second = new File(getClass().getResource("/sample2.asm").toURI());
         compile(
-            "jp next\n"
-                + "include '" + first.getAbsolutePath() + "'\n"
-                + "include '" + second.getAbsolutePath() + "'\n"
-                + "next:\n"
-                + "ld a, b\n"
+                "jp next\n"
+                        + "include '" + first.getAbsolutePath() + "'\n"
+                        + "include '" + second.getAbsolutePath() + "'\n"
+                        + "next:\n"
+                        + "ld a, b\n"
         );
 
         assertProgram(
-            0xC3, 0x09, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9, 0x78
+                0xC3, 0x09, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9, 0x78
         );
     }
 

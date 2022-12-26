@@ -28,12 +28,8 @@ import java.util.Map;
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 
 public class InstrED extends Node {
-    public final int opcode;
-    public final int x;
-    public final int y;
-    public final int z;
-
     private static final Map<Integer, Integer> xmap = new HashMap<>();
+
     static {
         xmap.put(OPCODE_IN, 1);
         xmap.put(OPCODE_OUT, 1);
@@ -64,6 +60,11 @@ public class InstrED extends Node {
         xmap.put(OPCODE_OTDR, 2);
     }
 
+    public final int opcode;
+    public final int x;
+    public final int y;
+    public final int z;
+
     public InstrED(int line, int column, int opcode, int y, int z) {
         super(line, column);
         this.opcode = opcode;
@@ -83,9 +84,9 @@ public class InstrED extends Node {
     }
 
     public byte[] eval() {
-        return new byte[] {
-            (byte)0xED,
-            (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF)
+        return new byte[]{
+                (byte) 0xED,
+                (byte) (((x << 6) | (y << 3) | (z & 7)) & 0xFF)
         };
     }
 

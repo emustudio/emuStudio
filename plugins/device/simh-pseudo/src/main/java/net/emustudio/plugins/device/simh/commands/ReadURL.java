@@ -47,11 +47,11 @@ public class ReadURL implements Command {
                 if (resultPointer < resultLength)
                     result = 1;
                 else {
-                    Arrays.fill(urlResult, (char)0);
+                    Arrays.fill(urlResult, (char) 0);
                     control.clearCommand();
                 }
             } else if (resultPointer < resultLength) {
-                result = (byte)urlResult[resultPointer++];
+                result = (byte) urlResult[resultPointer++];
             }
             showAvailability = !showAvailability;
         } else {
@@ -88,7 +88,7 @@ public class ReadURL implements Command {
 
     private void setURLContent() {
         String str = "URL is not supported on this platform. START URL \"" +
-            String.valueOf(urlStore, 0, urlPointer) + "\" URL END.";
+                String.valueOf(urlStore, 0, urlPointer) + "\" URL END.";
         resultLength = Math.min(URL_MAX_LENGTH, str.length());
         System.arraycopy(str.toCharArray(), 0, urlResult, 0, resultLength);
     }

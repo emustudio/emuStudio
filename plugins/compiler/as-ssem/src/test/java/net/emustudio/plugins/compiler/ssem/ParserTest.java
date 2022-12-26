@@ -67,64 +67,64 @@ public class ParserTest {
     @Test
     public void testParseInstructions() {
         Program program = parseProgram(
-            "01 LDN 0x1F\n" +
-                "-- 01 ldn 30\n" +
-                "; 01 LDN 30\n" +
-                "# 01 ldn 30\n" +
-                "04 SUB 30 --comment1\n" +
-                "05 STO 31 # comment2\n" +
-                "06 STP ; comment3\n" +
-                "07 CMP\n" +
-                "08 NUM 4\n" +
-                "09 BNUM 100\n\n\n"
+                "01 LDN 0x1F\n" +
+                        "-- 01 ldn 30\n" +
+                        "; 01 LDN 30\n" +
+                        "# 01 ldn 30\n" +
+                        "04 SUB 30 --comment1\n" +
+                        "05 STO 31 # comment2\n" +
+                        "06 STP ; comment3\n" +
+                        "07 CMP\n" +
+                        "08 NUM 4\n" +
+                        "09 BNUM 100\n\n\n"
         );
         assertInstructions(
-            program,
-            new Utils.ParsedInstruction(1, SSEMParser.LDN, 0x1F),
-            new Utils.ParsedInstruction(4, SSEMParser.SUB, 30),
-            new Utils.ParsedInstruction(5, SSEMParser.STO, 31),
-            new Utils.ParsedInstruction(6, SSEMParser.STP, 0),
-            new Utils.ParsedInstruction(7, SSEMParser.CMP, 0),
-            new Utils.ParsedInstruction(8, SSEMParser.NUM, 4),
-            new Utils.ParsedInstruction(9, SSEMParser.BNUM, 4)
+                program,
+                new Utils.ParsedInstruction(1, SSEMParser.LDN, 0x1F),
+                new Utils.ParsedInstruction(4, SSEMParser.SUB, 30),
+                new Utils.ParsedInstruction(5, SSEMParser.STO, 31),
+                new Utils.ParsedInstruction(6, SSEMParser.STP, 0),
+                new Utils.ParsedInstruction(7, SSEMParser.CMP, 0),
+                new Utils.ParsedInstruction(8, SSEMParser.NUM, 4),
+                new Utils.ParsedInstruction(9, SSEMParser.BNUM, 4)
         );
     }
 
     @Test
     public void testParseAllInstructions() {
         Program program = parseProgram(
-            "01 jmp 0x1F\n" +
-                "02 jrp 0x1F\n" +
-                "03 jpr 0x1F\n" +
-                "04 jmr 0x1F\n" +
-                "05 ldn 0x1F\n" +
-                "06 sto 0x1F\n" +
-                "07 sub 0x1F\n" +
-                "08 cmp\n" +
-                "09 skn\n" +
-                "10 stp\n" +
-                "11 hlt\n"
+                "01 jmp 0x1F\n" +
+                        "02 jrp 0x1F\n" +
+                        "03 jpr 0x1F\n" +
+                        "04 jmr 0x1F\n" +
+                        "05 ldn 0x1F\n" +
+                        "06 sto 0x1F\n" +
+                        "07 sub 0x1F\n" +
+                        "08 cmp\n" +
+                        "09 skn\n" +
+                        "10 stp\n" +
+                        "11 hlt\n"
         );
         assertInstructions(
-            program,
-            new Utils.ParsedInstruction(1, SSEMParser.JMP, 0x1F),
-            new Utils.ParsedInstruction(2, SSEMParser.JPR, 0x1F),
-            new Utils.ParsedInstruction(3, SSEMParser.JPR, 0x1F),
-            new Utils.ParsedInstruction(4, SSEMParser.JPR, 0x1F),
-            new Utils.ParsedInstruction(5, SSEMParser.LDN, 0x1F),
-            new Utils.ParsedInstruction(6, SSEMParser.STO, 0x1F),
-            new Utils.ParsedInstruction(7, SSEMParser.SUB, 0x1F),
-            new Utils.ParsedInstruction(8, SSEMParser.CMP, 0),
-            new Utils.ParsedInstruction(9, SSEMParser.CMP, 0),
-            new Utils.ParsedInstruction(10, SSEMParser.STP, 0),
-            new Utils.ParsedInstruction(11, SSEMParser.STP, 0)
+                program,
+                new Utils.ParsedInstruction(1, SSEMParser.JMP, 0x1F),
+                new Utils.ParsedInstruction(2, SSEMParser.JPR, 0x1F),
+                new Utils.ParsedInstruction(3, SSEMParser.JPR, 0x1F),
+                new Utils.ParsedInstruction(4, SSEMParser.JPR, 0x1F),
+                new Utils.ParsedInstruction(5, SSEMParser.LDN, 0x1F),
+                new Utils.ParsedInstruction(6, SSEMParser.STO, 0x1F),
+                new Utils.ParsedInstruction(7, SSEMParser.SUB, 0x1F),
+                new Utils.ParsedInstruction(8, SSEMParser.CMP, 0),
+                new Utils.ParsedInstruction(9, SSEMParser.CMP, 0),
+                new Utils.ParsedInstruction(10, SSEMParser.STP, 0),
+                new Utils.ParsedInstruction(11, SSEMParser.STP, 0)
         );
     }
 
     @Test
     public void testParseNegativeNumber() {
         Program program = parseProgram(
-            "01 NUM -3"
+                "01 NUM -3"
         );
         assertInstructions(program, new Utils.ParsedInstruction(1, SSEMLexer.NUM, -3));
     }
@@ -132,9 +132,9 @@ public class ParserTest {
     @Test
     public void testStartingPointIsAccepted() {
         Program program = parseProgram(
-            "02 start\n" +
-                "01 LDN 21\n" +
-                "02 STP"
+                "02 start\n" +
+                        "01 LDN 21\n" +
+                        "02 STP"
         );
         assertEquals(2, program.getStartLine());
     }

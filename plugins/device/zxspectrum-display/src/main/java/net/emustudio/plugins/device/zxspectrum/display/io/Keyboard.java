@@ -24,7 +24,7 @@ public class Keyboard implements KeyListener {
     public void keyPressed(KeyEvent e) {
         int keycode = e.getKeyCode();
         if (!((keycode == KeyEvent.VK_SHIFT || keycode == KeyEvent.VK_CONTROL ||
-            keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META))) {
+                keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META))) {
             keycode = (e.getKeyChar() & 0xFF);
         }
         inputReceived((byte) keycode);

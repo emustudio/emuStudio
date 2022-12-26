@@ -24,10 +24,9 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 
 public class FileIOProvider implements InputProvider, OutputProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileIOProvider.class);
     public static final File OUTPUT_FILE_NAME = new File("brainduck-terminal.out");
     public static final File INPUT_FILE_NAME = new File("brainduck-terminal.in");
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileIOProvider.class);
     private final Reader reader;
     private final FileWriter writer;
 
@@ -58,7 +57,7 @@ public class FileIOProvider implements InputProvider, OutputProvider {
             if (character == -1) {
                 return EOF;
             }
-            return (byte)(character & 0xFF);
+            return (byte) (character & 0xFF);
         } catch (IOException e) {
             LOGGER.error("Could not read from input file: " + INPUT_FILE_NAME, e);
             return EOF;

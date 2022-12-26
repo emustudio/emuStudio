@@ -34,6 +34,19 @@ public class PluginConfig {
         this.config = Objects.requireNonNull(config);
     }
 
+    public static PluginConfig create(String id, PLUGIN_TYPE pluginType, String pluginName, String pluginFile,
+                                      P schemaLocation, Config pluginSettings) {
+        Config config = Config.inMemory();
+        config.set("id", id);
+        config.set("type", pluginType.toString());
+        config.set("name", pluginName);
+        config.set("path", pluginFile);
+        config.set("schemaPoint", schemaLocation.toSchemaPoint().toString());
+        config.set("settings", pluginSettings);
+
+        return new PluginConfig(config);
+    }
+
     public String getPluginId() {
         return config.get("id");
     }
@@ -77,18 +90,5 @@ public class PluginConfig {
 
     public Config getConfig() {
         return config;
-    }
-
-    public static PluginConfig create(String id, PLUGIN_TYPE pluginType, String pluginName, String pluginFile,
-                                      P schemaLocation, Config pluginSettings) {
-        Config config = Config.inMemory();
-        config.set("id", id);
-        config.set("type", pluginType.toString());
-        config.set("name", pluginName);
-        config.set("path", pluginFile);
-        config.set("schemaPoint", schemaLocation.toSchemaPoint().toString());
-        config.set("settings", pluginSettings);
-
-        return new PluginConfig(config);
     }
 }

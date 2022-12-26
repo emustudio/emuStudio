@@ -33,13 +33,13 @@ import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 
 public class ExprUnary extends Node {
     private final static Map<Integer, Function<Integer, Integer>> unaryOps = Map.of(
-        OP_ADD, x -> x,
-        OP_SUBTRACT, x -> -x,
-        OP_NOT, x -> ~x,
-        OP_NOT_2, x -> ~x
+            OP_ADD, x -> x,
+            OP_SUBTRACT, x -> -x,
+            OP_NOT, x -> ~x,
+            OP_NOT_2, x -> ~x
     );
-    private final Function<Integer, Integer> operation;
     public final int operationCode;
+    private final Function<Integer, Integer> operation;
 
     public ExprUnary(int line, int column, int op) {
         super(line, column);
@@ -60,8 +60,8 @@ public class ExprUnary extends Node {
     @Override
     public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
         return getChild(0)
-            .eval(currentAddress, env)
-            .map(childEval -> new Evaluated(line, column, operation.apply(childEval.value)));
+                .eval(currentAddress, env)
+                .map(childEval -> new Evaluated(line, column, operation.apply(childEval.value)));
     }
 
     @Override

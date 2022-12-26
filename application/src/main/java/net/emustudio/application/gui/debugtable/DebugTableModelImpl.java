@@ -190,11 +190,11 @@ public class DebugTableModelImpl extends DebugTableModel {
             Disassembler dis = cpu.getDisassembler();
             if (cpu.isBreakpointSupported()) {
                 setDebuggerColumns(Arrays.asList(
-                    new BreakpointColumn(cpu), new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+                        new BreakpointColumn(cpu), new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
                 ));
             } else {
                 setDebuggerColumns(Arrays.asList(
-                    new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+                        new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
                 ));
             }
         });

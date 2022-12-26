@@ -26,7 +26,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;
-import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertNotEquals;
 
 public class MemoryImplTest {

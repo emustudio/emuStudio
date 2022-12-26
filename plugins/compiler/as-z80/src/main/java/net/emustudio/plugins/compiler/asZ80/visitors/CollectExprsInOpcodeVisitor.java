@@ -31,21 +31,21 @@ import static net.emustudio.plugins.compiler.asZ80.CompileError.valueOutOfBounds
 
 public class CollectExprsInOpcodeVisitor extends NodeVisitor {
     private final static Set<Integer> allowedRstValues = Set.of(
-        0, 0x8, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38
+            0, 0x8, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38
     );
 
     @Override
     public void visit(Instr node) {
         if (node.opcode == OPCODE_RST) {
             node
-                .collectChild(Evaluated.class)
-                .map(e -> {
-                    e.remove();
-                    return e.value;
-                })
-                .filter(allowedRstValues::contains)
-                .map(v -> v / 8)
-                .ifPresentOrElse(node::setY, () -> error(valueOutOfBounds(node, allowedRstValues)));
+                    .collectChild(Evaluated.class)
+                    .map(e -> {
+                        e.remove();
+                        return e.value;
+                    })
+                    .filter(allowedRstValues::contains)
+                    .map(v -> v / 8)
+                    .ifPresentOrElse(node::setY, () -> error(valueOutOfBounds(node, allowedRstValues)));
         }
     }
 
@@ -57,12 +57,12 @@ public class CollectExprsInOpcodeVisitor extends NodeVisitor {
             case OPCODE_RES:
             case OPCODE_BIT:
                 node
-                    .collectChild(Evaluated.class)
-                    .map(e -> {
-                        e.remove();
-                        return e.value;
-                    })
-                    .ifPresent(node::setY);
+                        .collectChild(Evaluated.class)
+                        .map(e -> {
+                            e.remove();
+                            return e.value;
+                        })
+                        .ifPresent(node::setY);
         }
     }
 
@@ -74,12 +74,12 @@ public class CollectExprsInOpcodeVisitor extends NodeVisitor {
             case OPCODE_RES:
             case OPCODE_BIT:
                 node
-                    .collectChild(Evaluated.class)
-                    .map(e -> {
-                        e.remove();
-                        return e.value;
-                    })
-                    .ifPresent(node::setY);
+                        .collectChild(Evaluated.class)
+                        .map(e -> {
+                            e.remove();
+                            return e.value;
+                        })
+                        .ifPresent(node::setY);
         }
     }
 

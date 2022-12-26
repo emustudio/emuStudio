@@ -89,27 +89,27 @@ public class TapeGui extends JDialog {
 
         btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png")));
         btnAddFirst.addActionListener(e -> dialogs
-            .readString("Symbol value:", "Add symbol (on top)")
-            .map(TapeSymbol::guess)
-            .ifPresent(s -> {
-                try {
-                    tapeContext.addFirst(s);
-                } catch (IllegalArgumentException ignored) {
-                    dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes());
-                }
-            }));
+                .readString("Symbol value:", "Add symbol (on top)")
+                .map(TapeSymbol::guess)
+                .ifPresent(s -> {
+                    try {
+                        tapeContext.addFirst(s);
+                    } catch (IllegalArgumentException ignored) {
+                        dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes());
+                    }
+                }));
 
         btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png")));
         btnAddLast.addActionListener(e -> dialogs
-            .readString("Symbol value:", "Add symbol (on bottom)")
-            .map(TapeSymbol::guess)
-            .ifPresent(s -> {
-                try {
-                    tapeContext.addLast(s);
-                } catch (IllegalArgumentException ignored) {
-                    dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes());
-                }
-            }));
+                .readString("Symbol value:", "Add symbol (on bottom)")
+                .map(TapeSymbol::guess)
+                .ifPresent(s -> {
+                    try {
+                        tapeContext.addLast(s);
+                    } catch (IllegalArgumentException ignored) {
+                        dialogs.showError("Unexpected symbol type. Supported types: " + tapeContext.getAcceptedTypes());
+                    }
+                }));
 
         btnEdit.addActionListener(e -> {
             int symbolIndex = lstTape.getSelectedIndex();
@@ -117,9 +117,9 @@ public class TapeGui extends JDialog {
                 dialogs.showError("A symbol must be selected");
             } else {
                 dialogs
-                    .readString("Enter symbol value:", "Edit symbol", tapeContext.getSymbolAt(symbolIndex).toString())
-                    .map(TapeSymbol::guess)
-                    .ifPresent(symbol -> tapeContext.setSymbolAt(symbolIndex, symbol));
+                        .readString("Enter symbol value:", "Edit symbol", tapeContext.getSymbolAt(symbolIndex).toString())
+                        .map(TapeSymbol::guess)
+                        .ifPresent(symbol -> tapeContext.setSymbolAt(symbolIndex, symbol));
             }
         });
         btnRemove.addActionListener(e -> {
@@ -135,31 +135,31 @@ public class TapeGui extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                    .addComponent(btnEdit, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnClear, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnRemove, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnAddLast, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnAddFirst, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(scrollTape, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
-                ).addContainerGap());
+                layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                                .addComponent(btnEdit, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnClear, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnRemove, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnAddLast, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnAddFirst, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(scrollTape, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
+                        ).addContainerGap());
         layout.setVerticalGroup(
-            layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(btnAddFirst)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollTape, GroupLayout.PREFERRED_SIZE, 200, Short.MAX_VALUE)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnAddLast)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnRemove)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnEdit)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnClear)
-                .addContainerGap());
+                layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(btnAddFirst)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(scrollTape, GroupLayout.PREFERRED_SIZE, 200, Short.MAX_VALUE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnAddLast)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnRemove)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnEdit)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnClear)
+                        .addContainerGap());
         pack();
     }
 }

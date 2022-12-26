@@ -26,11 +26,11 @@ import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.OpcodeColumn;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.ssem.gui.CpuPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +42,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.CPU,
-    title = "SSEM CPU"
+        type = PLUGIN_TYPE.CPU,
+        title = "SSEM CPU"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
@@ -65,7 +65,7 @@ public class CpuImpl extends AbstractCPU {
         memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
         if (memory.getDataType() != Byte.class) {
             throw new PluginInitializationException(
-                "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                    "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
             );
         }
         Decoder decoder = new DecoderImpl(memory);
@@ -99,8 +99,8 @@ public class CpuImpl extends AbstractCPU {
         DebuggerTable debugTable = applicationApi.getDebuggerTable();
         if (debugTable != null) {
             debugTable.setDebuggerColumns(Arrays.asList(
-                new BreakpointColumn(this), new LineColumn(), new MnemoColumn(disassembler),
-                new OpcodeColumn(disassembler)
+                    new BreakpointColumn(this), new LineColumn(), new MnemoColumn(disassembler),
+                    new OpcodeColumn(disassembler)
             ));
         }
 

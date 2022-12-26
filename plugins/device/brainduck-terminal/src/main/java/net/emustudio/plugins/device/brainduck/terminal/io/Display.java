@@ -35,11 +35,10 @@ public class Display extends JPanel {
     private final ConcurrentMap<Integer, int[]> memory = new ConcurrentHashMap<>();
 
     private final net.emustudio.plugins.device.brainduck.terminal.io.Cursor cursor;
+    private final Font textFont = new Font("Monospaced", Font.PLAIN, 14);
     private volatile boolean needMeasure;
     private volatile int charWidth;
     private volatile int charHeight;
-
-    private final Font textFont = new Font("Monospaced", Font.PLAIN, 14);
 
     public Display() {
         this.cursor = new net.emustudio.plugins.device.brainduck.terminal.io.Cursor(1, TimeUnit.SECONDS);

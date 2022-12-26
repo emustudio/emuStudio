@@ -31,7 +31,7 @@ public class GetClockZSDOS implements Command {
     private LocalDateTime currentTime;
 
     // ZSDOS clock definitions
-   // private int ClockZSDOSDelta = 0; // delta between real clock and Altair clock
+    // private int ClockZSDOSDelta = 0; // delta between real clock and Altair clock
     private int getClockZSDOSPos = 0; // determines state for sending clock information
 
     @Override

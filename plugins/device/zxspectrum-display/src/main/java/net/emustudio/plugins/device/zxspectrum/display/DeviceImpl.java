@@ -49,7 +49,7 @@ public class DeviceImpl extends AbstractDevice {
             DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
             if (device.getDataType() != Byte.class) {
                 throw new PluginInitializationException(
-                    "Unexpected device data type. Expected Byte but was: " + device.getDataType()
+                        "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
             keyboard.connect(device);

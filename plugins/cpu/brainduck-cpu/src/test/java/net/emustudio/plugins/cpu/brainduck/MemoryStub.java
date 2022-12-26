@@ -63,12 +63,12 @@ public class MemoryStub implements ByteMemoryContext {
     }
 
     @Override
-    public void setReadWrite(AddressRange range) {
+    public void setReadOnly(AddressRange range) {
 
     }
 
     @Override
-    public void setReadOnly(AddressRange range) {
+    public void setReadWrite(AddressRange range) {
 
     }
 

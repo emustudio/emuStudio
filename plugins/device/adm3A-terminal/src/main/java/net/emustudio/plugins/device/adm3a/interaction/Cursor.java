@@ -31,11 +31,6 @@ public class Cursor {
 
     private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
 
-    interface LineRoller {
-
-        void rollLine();
-    }
-
     public Cursor(int columns, int rows) {
         this.columns = columns;
         this.rows = rows;
@@ -121,7 +116,6 @@ public class Cursor {
         });
     }
 
-
     void carriageReturn() {
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
@@ -140,5 +134,10 @@ public class Cursor {
         do {
             newPoint = changer.apply(oldPoint);
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
+    }
+
+    interface LineRoller {
+
+        void rollLine();
     }
 }

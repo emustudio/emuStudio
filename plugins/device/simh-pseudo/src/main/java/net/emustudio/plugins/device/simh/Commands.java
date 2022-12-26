@@ -20,7 +20,8 @@ package net.emustudio.plugins.device.simh;
 
 import net.emustudio.plugins.device.simh.commands.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 //  do not change order or remove commands, add only at the end
 public enum Commands {
@@ -60,15 +61,6 @@ public enum Commands {
     genInterruptCmd,            //  33 generate interrupt,
     unknownCmd;
 
-    public static Commands fromInt(int number) {
-        for (Commands c : Commands.values()) {
-            if (c.ordinal() == number) {
-                return c;
-            }
-        }
-        throw new IllegalArgumentException("Unknown command");
-    }
-
     public final static Map<Integer, Command> COMMANDS_MAP = new HashMap<>();
 
     static {
@@ -106,5 +98,14 @@ public enum Commands {
         COMMANDS_MAP.put(getCPUClockFrequency.ordinal(), GetCPUClockFrequency.INS);
         COMMANDS_MAP.put(setCPUClockFrequency.ordinal(), SetCPUClockFrequency.INS);
         COMMANDS_MAP.put(genInterruptCmd.ordinal(), GenInterrupt.INS);
+    }
+
+    public static Commands fromInt(int number) {
+        for (Commands c : Commands.values()) {
+            if (c.ordinal() == number) {
+                return c;
+            }
+        }
+        throw new IllegalArgumentException("Unknown command");
     }
 }

@@ -18,10 +18,10 @@
  */
 package net.emustudio.application.gui.schema.elements;
 
-import net.emustudio.application.settings.PluginConnection;
-import net.emustudio.application.settings.SchemaPoint;
 import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.Schema;
+import net.emustudio.application.settings.PluginConnection;
+import net.emustudio.application.settings.SchemaPoint;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -43,30 +43,26 @@ public class ConnectionLine {
     private final static BasicStroke thickLine = new BasicStroke(2);
 
     private final Color lineColor = new Color(0x333333);
-
-    private Element elementFrom;
-    private Element elementTo;
     private final List<P> points;
     private final boolean bidirectional;
-
+    private final int[] xx1 = new int[4];
+    private final int[] yy1 = new int[4];
+    private final int[] xx2 = new int[4];
+    private final int[] yy2 = new int[4];
+    private Element elementFrom;
+    private Element elementTo;
     /**
      * Starting arrow point for elementFrom. The x and y values are relative to the element middle-point.
      */
     private P arrow1;
     private P arrow1LeftEnd;
     private P arrow1RightEnd;
-    private final int[] xx1 = new int[4];
-    private final int[] yy1 = new int[4];
-
     /**
      * Starting arrow point for elementTo. The x and y values are relative to the element middle-point.
      */
     private P arrow2;
     private P arrow2LeftEnd;
     private P arrow2RightEnd;
-    private final int[] xx2 = new int[4];
-    private final int[] yy2 = new int[4];
-
     private boolean selected = false;
 
 
@@ -92,6 +88,201 @@ public class ConnectionLine {
         p_y = ((l1s.x * l1e.y - l1s.y * l1e.x) * (l2s.y - l2e.y) - (l1s.y - l1e.y) * (l2s.x * l2e.y - l2s.y * l2e.x)) / div;
 
         return P.of(p_x, p_y);
+    }
+
+    /**
+     * Determine if given point crosses given area.
+     *
+     * @param selectionStart Left-top point of the area
+     * @param selectionEnd   Bottom-right point of the area
+     * @param point          The point
+     * @return true if the area covers the point, false otherwise
+     */
+    public static boolean isAreaCrossingPoint(Point selectionStart, Point selectionEnd, Point point) {
+        return P.of(point).isInRectangle(selectionStart, selectionEnd);
+    }
+
+    private static double dot(P v0, P v1) {
+        return (v0.x * v1.x) + (v0.y * v1.y);
+    }
+
+    private static boolean inTriangle(P point, P pa, P pb, P pc) {
+        // Compute vectors
+        P v0 = pc.minus(pa);
+        P v1 = pb.minus(pa);
+        P v2 = point.minus(pa);
+
+        // Compute dot products
+        double dot00 = dot(v0, v0);
+        double dot01 = dot(v0, v1);
+        double dot02 = dot(v0, v2);
+        double dot11 = dot(v1, v1);
+        double dot12 = dot(v1, v2);
+
+        // Compute barycentric coordinates
+        double invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+        double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+        double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+        // Check if point is in triangle
+        return (u >= 0) && (v >= 0) && (u + v < 1);
+    }
+
+    /**
+     * Determine whether a line segment P1P2 crosses a triangle ABC.
+     *
+     * @param lineStart start point of the line segment
+     * @param lineEnd   end point of the line segment
+     * @param pa        first point of the triangle
+     * @param pb        second point of the triangle
+     * @param pc        third point of the triangle
+     * @return true if the line segment crosses the triangle; false otherwise
+     */
+    private static boolean inTriangle(P lineStart, P lineEnd, P pa, P pb, P pc) {
+        double a = lineEnd.y - lineStart.y;
+        double b = lineStart.x - lineEnd.x;
+        double c = -a * lineStart.x - b * lineStart.y; // general line equation
+
+        double result = a * pa.x + b * pa.y + c;
+        int sign = Integer.signum((int) result);
+
+        result = a * pb.x + b * pb.y + c;
+        boolean is = isCrossing(sign, result);
+        if (!is) {
+            result = a * pc.x + b * pc.y + c;
+            is = isCrossing(sign, result);
+        }
+
+        if (is) {
+            // now we know that line is crossing the triangle.
+            // we must check if the line segment crosses the triangle
+
+            // A point is always left-top, B is always right, C is always under A
+            return (Math.min(lineStart.y, lineEnd.y) <= pc.y) && (Math.max(lineStart.y, lineEnd.y) >= pa.y)
+                    && (Math.min(lineStart.x, lineEnd.x) <= pb.x) && (Math.max(lineStart.x, lineEnd.x) >= pa.x);
+        } else {
+            // last check if the line segment lies inside the triangle and does not cross it
+            return inTriangle(lineStart, pa, pb, pc) && inTriangle(lineEnd, pa, pb, pc);
+        }
+
+    }
+
+    private static boolean isCrossing(int sign, double result) {
+        if ((result > 0) && (sign != 1)) {
+            return true;
+        } else if ((result == 0) && (sign != 0)) {
+            return true;
+        } else return (result < 0) && (sign != -1);
+    }
+
+    private static boolean checkValidIntersection(P v0, P v1, P v2, P v3, P lineStart, P lineEnd, P intersection) {
+        if (intersection != null) {
+            if ((intersection.x < v0.x) || (intersection.x > v2.x)
+                    || (intersection.y < v0.y) || (intersection.y > v2.y)) {
+                intersection = null;
+            } else if (intersection.x < Math.min(lineStart.x, lineEnd.x)
+                    || (intersection.x > Math.max(lineStart.x, lineEnd.x))
+                    || (intersection.y < Math.min(lineStart.y, lineEnd.y))
+                    || (intersection.y > Math.max(lineStart.y, lineEnd.y))) {
+                intersection = null;
+            }
+        }
+        if (intersection == null) {
+            // possible crossing (or overlay) can be on triangle (v0, v2, v3)
+            if (inTriangle(lineStart, lineEnd, v0, v2, v3)) {
+                return true;
+            }
+            // possible crossing (or overlay) can be on triangle (v0, v1, v2)
+            return inTriangle(lineStart, lineEnd, v0, v1, v2);
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Determines whether a selection area crosses or overlays a line segment.
+     * <p>
+     * If at least one intersection is found, then true is returned.
+     *
+     * @param lineStart      Start point of the line segment
+     * @param lineEnd        End point of the line segment
+     * @param selectionStart the selection start point
+     * @param selectionEnd   the selection end point
+     * @return true if the line segment is crossing the selection area; false otherwise
+     */
+    public static boolean isAreaCrossing(Point lineStart, Point lineEnd, Point selectionStart, Point selectionEnd) {
+        P v1 = P.of(selectionEnd.x, selectionStart.y);
+        P v3 = P.of(selectionStart.x, selectionEnd.y);
+
+        P pselectionStart = P.of(selectionStart);
+        P pselectionEnd = P.of(selectionEnd);
+        P plineEnd = P.of(lineEnd);
+        P plineStart = P.of(lineStart);
+
+        P intersection = intersection(pselectionStart, pselectionEnd, plineStart, plineEnd);
+        return checkValidIntersection(pselectionStart, v1, pselectionEnd, v3, plineStart, plineEnd, intersection);
+    }
+
+    /**
+     * This method draws a "sketch" line - in the process when user tries
+     * to draw a connection line. It is based on fixed first element ee1, where
+     * the line begins, and it continues through the points defined in the
+     * ppoints list. The last point is defined by the point ee2.
+     *
+     * @param g       graphics object, where to draw the sketch line.
+     * @param ee1     first element
+     * @param ee2     last point
+     * @param ppoints list of middle-points
+     */
+    public static void drawSketch(Graphics2D g, Element ee1, Point ee2, List<P> ppoints) {
+        Stroke ss = g.getStroke();
+        g.setStroke(thickLine);
+        g.setColor(Color.GRAY);
+        int x1 = ee1.getX();
+        int y1 = ee1.getY();
+        int x2, y2;
+
+        for (P p : ppoints) {
+            x2 = p.ix();
+            y2 = p.iy();
+
+            if (x2 < Schema.MIN_LEFT_MARGIN) {
+                x2 = Schema.MIN_LEFT_MARGIN;
+            }
+            if (y2 < Schema.MIN_TOP_MARGIN) {
+                y2 = Schema.MIN_TOP_MARGIN;
+            }
+
+            g.drawLine(x1, y1, x2, y2);
+            g.fillOval(x2 - 3, y2 - 3, 6, 6);
+            x1 = x2;
+            y1 = y2;
+        }
+        if (ee2 != null) {
+            x2 = (int) ee2.getX();
+            y2 = (int) ee2.getY();
+            g.drawLine(x1, y1, x2, y2);
+        }
+        g.setStroke(ss);
+    }
+
+    /**
+     * Draws a small red circle around given point
+     *
+     * @param point the center of the circle
+     * @param g     Graphics2D object
+     */
+    public static void highlightPoint(P point, Graphics2D g) {
+        int xx = point.ix();
+        int yy = point.iy();
+        g.setColor(Color.WHITE);
+        g.setStroke(thickLine);
+        g.fillOval(xx - SELECTION_TOLERANCE - 2, yy - SELECTION_TOLERANCE - 2, (SELECTION_TOLERANCE + 2) * 2, (SELECTION_TOLERANCE + 2) * 2);
+        // TODO:     if (selected)
+        //               g.setColor(Color.BLUE);
+        g.setColor(Color.BLACK);
+        g.drawOval(xx - SELECTION_TOLERANCE, yy - SELECTION_TOLERANCE, SELECTION_TOLERANCE * 2, SELECTION_TOLERANCE * 2);
+
     }
 
     private void computeArrows() {
@@ -295,137 +486,12 @@ public class ConnectionLine {
     }
 
     /**
-     * Determine if given point crosses given area.
+     * Get the selection status.
      *
-     * @param selectionStart Left-top point of the area
-     * @param selectionEnd   Bottom-right point of the area
-     * @param point          The point
-     * @return true if the area covers the point, false otherwise
+     * @return true if the line is selected, false otherwise.
      */
-    public static boolean isAreaCrossingPoint(Point selectionStart, Point selectionEnd, Point point) {
-        return P.of(point).isInRectangle(selectionStart, selectionEnd);
-    }
-
-    private static double dot(P v0, P v1) {
-        return (v0.x * v1.x) + (v0.y * v1.y);
-    }
-
-    private static boolean inTriangle(P point, P pa, P pb, P pc) {
-        // Compute vectors
-        P v0 = pc.minus(pa);
-        P v1 = pb.minus(pa);
-        P v2 = point.minus(pa);
-
-        // Compute dot products
-        double dot00 = dot(v0, v0);
-        double dot01 = dot(v0, v1);
-        double dot02 = dot(v0, v2);
-        double dot11 = dot(v1, v1);
-        double dot12 = dot(v1, v2);
-
-        // Compute barycentric coordinates
-        double invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-        double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-        double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-        // Check if point is in triangle
-        return (u >= 0) && (v >= 0) && (u + v < 1);
-    }
-
-
-    /**
-     * Determine whether a line segment P1P2 crosses a triangle ABC.
-     *
-     * @param lineStart start point of the line segment
-     * @param lineEnd   end point of the line segment
-     * @param pa        first point of the triangle
-     * @param pb        second point of the triangle
-     * @param pc        third point of the triangle
-     * @return true if the line segment crosses the triangle; false otherwise
-     */
-    private static boolean inTriangle(P lineStart, P lineEnd, P pa, P pb, P pc) {
-        double a = lineEnd.y - lineStart.y;
-        double b = lineStart.x - lineEnd.x;
-        double c = -a * lineStart.x - b * lineStart.y; // general line equation
-
-        double result = a * pa.x + b * pa.y + c;
-        int sign = Integer.signum((int) result);
-
-        result = a * pb.x + b * pb.y + c;
-        boolean is = isCrossing(sign, result);
-        if (!is) {
-            result = a * pc.x + b * pc.y + c;
-            is = isCrossing(sign, result);
-        }
-
-        if (is) {
-            // now we know that line is crossing the triangle.
-            // we must check if the line segment crosses the triangle
-
-            // A point is always left-top, B is always right, C is always under A
-            return (Math.min(lineStart.y, lineEnd.y) <= pc.y) && (Math.max(lineStart.y, lineEnd.y) >= pa.y)
-                && (Math.min(lineStart.x, lineEnd.x) <= pb.x) && (Math.max(lineStart.x, lineEnd.x) >= pa.x);
-        } else {
-            // last check if the line segment lies inside the triangle and does not cross it
-            return inTriangle(lineStart, pa, pb, pc) && inTriangle(lineEnd, pa, pb, pc);
-        }
-
-    }
-
-    private static boolean isCrossing(int sign, double result) {
-        if ((result > 0) && (sign != 1)) {
-            return true;
-        } else if ((result == 0) && (sign != 0)) {
-            return true;
-        } else return (result < 0) && (sign != -1);
-    }
-
-    private static boolean checkValidIntersection(P v0, P v1, P v2, P v3, P lineStart, P lineEnd, P intersection) {
-        if (intersection != null) {
-            if ((intersection.x < v0.x) || (intersection.x > v2.x)
-                || (intersection.y < v0.y) || (intersection.y > v2.y)) {
-                intersection = null;
-            } else if (intersection.x < Math.min(lineStart.x, lineEnd.x)
-                || (intersection.x > Math.max(lineStart.x, lineEnd.x))
-                || (intersection.y < Math.min(lineStart.y, lineEnd.y))
-                || (intersection.y > Math.max(lineStart.y, lineEnd.y))) {
-                intersection = null;
-            }
-        }
-        if (intersection == null) {
-            // possible crossing (or overlay) can be on triangle (v0, v2, v3)
-            if (inTriangle(lineStart, lineEnd, v0, v2, v3)) {
-                return true;
-            }
-            // possible crossing (or overlay) can be on triangle (v0, v1, v2)
-            return inTriangle(lineStart, lineEnd, v0, v1, v2);
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Determines whether a selection area crosses or overlays a line segment.
-     * <p>
-     * If at least one intersection is found, then true is returned.
-     *
-     * @param lineStart      Start point of the line segment
-     * @param lineEnd        End point of the line segment
-     * @param selectionStart the selection start point
-     * @param selectionEnd   the selection end point
-     * @return true if the line segment is crossing the selection area; false otherwise
-     */
-    public static boolean isAreaCrossing(Point lineStart, Point lineEnd, Point selectionStart, Point selectionEnd) {
-        P v1 = P.of(selectionEnd.x, selectionStart.y);
-        P v3 = P.of(selectionStart.x, selectionEnd.y);
-
-        P pselectionStart = P.of(selectionStart);
-        P pselectionEnd = P.of(selectionEnd);
-        P plineEnd = P.of(lineEnd);
-        P plineStart = P.of(lineStart);
-
-        P intersection = intersection(pselectionStart, pselectionEnd, plineStart, plineEnd);
-        return checkValidIntersection(pselectionStart, v1, pselectionEnd, v3, plineStart, plineEnd, intersection);
+    public boolean isSelected() {
+        return selected;
     }
 
     /**
@@ -435,15 +501,6 @@ public class ConnectionLine {
      */
     public void setSelected(boolean selected) {
         this.selected = selected;
-    }
-
-    /**
-     * Get the selection status.
-     *
-     * @return true if the line is selected, false otherwise.
-     */
-    public boolean isSelected() {
-        return selected;
     }
 
     /**
@@ -551,68 +608,6 @@ public class ConnectionLine {
     }
 
     /**
-     * This method draws a "sketch" line - in the process when user tries
-     * to draw a connection line. It is based on fixed first element ee1, where
-     * the line begins, and it continues through the points defined in the
-     * ppoints list. The last point is defined by the point ee2.
-     *
-     * @param g       graphics object, where to draw the sketch line.
-     * @param ee1     first element
-     * @param ee2     last point
-     * @param ppoints list of middle-points
-     */
-    public static void drawSketch(Graphics2D g, Element ee1, Point ee2, List<P> ppoints) {
-        Stroke ss = g.getStroke();
-        g.setStroke(thickLine);
-        g.setColor(Color.GRAY);
-        int x1 = ee1.getX();
-        int y1 = ee1.getY();
-        int x2, y2;
-
-        for (P p : ppoints) {
-            x2 = p.ix();
-            y2 = p.iy();
-
-            if (x2 < Schema.MIN_LEFT_MARGIN) {
-                x2 = Schema.MIN_LEFT_MARGIN;
-            }
-            if (y2 < Schema.MIN_TOP_MARGIN) {
-                y2 = Schema.MIN_TOP_MARGIN;
-            }
-
-            g.drawLine(x1, y1, x2, y2);
-            g.fillOval(x2 - 3, y2 - 3, 6, 6);
-            x1 = x2;
-            y1 = y2;
-        }
-        if (ee2 != null) {
-            x2 = (int) ee2.getX();
-            y2 = (int) ee2.getY();
-            g.drawLine(x1, y1, x2, y2);
-        }
-        g.setStroke(ss);
-    }
-
-    /**
-     * Draws a small red circle around given point
-     *
-     * @param point the center of the circle
-     * @param g     Graphics2D object
-     */
-    public static void highlightPoint(P point, Graphics2D g) {
-        int xx = point.ix();
-        int yy = point.iy();
-        g.setColor(Color.WHITE);
-        g.setStroke(thickLine);
-        g.fillOval(xx - SELECTION_TOLERANCE - 2, yy - SELECTION_TOLERANCE - 2, (SELECTION_TOLERANCE + 2) * 2, (SELECTION_TOLERANCE + 2) * 2);
-        // TODO:     if (selected)
-        //               g.setColor(Color.BLUE);
-        g.setColor(Color.BLACK);
-        g.drawOval(xx - SELECTION_TOLERANCE, yy - SELECTION_TOLERANCE, SELECTION_TOLERANCE * 2, SELECTION_TOLERANCE * 2);
-
-    }
-
-    /**
      * Adds a middle-point to this line.
      *
      * @param before index of the point before that a new point will be added
@@ -650,7 +645,7 @@ public class ConnectionLine {
     public P findPoint(Point clickPoint) {
         for (P point : points) {
             if ((point.x >= (clickPoint.x - SELECTION_TOLERANCE)) && (point.x <= (clickPoint.x + SELECTION_TOLERANCE))
-                && (point.y >= (clickPoint.y - SELECTION_TOLERANCE)) && (point.y <= (clickPoint.y + SELECTION_TOLERANCE))) {
+                    && (point.y >= (clickPoint.y - SELECTION_TOLERANCE)) && (point.y <= (clickPoint.y + SELECTION_TOLERANCE))) {
                 return point;
             }
         }
@@ -721,7 +716,7 @@ public class ConnectionLine {
      * If yes, return index of a nearest cross point. If new point is
      * going to be added, it should be added to replace returned point index.
      *
-     * @param clickPoint     point that is checked
+     * @param clickPoint point that is checked
      * @return 0 - if line doesn't contain any point, but point[x,y] is crossing the
      * line; or if point[x,y] crosses the line near the beginning of it
      * <p>
@@ -772,10 +767,10 @@ public class ConnectionLine {
              */
             double crossproduct = vector2.y * vector1.x - vector2.x * vector1.y;
             if ((Math.abs(crossproduct) * len <= SELECTION_TOLERANCE)
-                && (Math.min(X1.x - SELECTION_TOLERANCE, X2.x - SELECTION_TOLERANCE) <= clickPoint.x)
-                && (clickPoint.x <= Math.max(X1.x + SELECTION_TOLERANCE, X2.x + SELECTION_TOLERANCE))
-                && (Math.min(X1.y - SELECTION_TOLERANCE, X2.y - SELECTION_TOLERANCE) <= clickPoint.y)
-                && (clickPoint.y <= Math.max(X1.y + SELECTION_TOLERANCE, X2.y + SELECTION_TOLERANCE))) {
+                    && (Math.min(X1.x - SELECTION_TOLERANCE, X2.x - SELECTION_TOLERANCE) <= clickPoint.x)
+                    && (clickPoint.x <= Math.max(X1.x + SELECTION_TOLERANCE, X2.x + SELECTION_TOLERANCE))
+                    && (Math.min(X1.y - SELECTION_TOLERANCE, X2.y - SELECTION_TOLERANCE) <= clickPoint.y)
+                    && (clickPoint.y <= Math.max(X1.y + SELECTION_TOLERANCE, X2.y + SELECTION_TOLERANCE))) {
                 return i;
             }
             X1 = X2;
@@ -786,10 +781,10 @@ public class ConnectionLine {
         Point2D.Double vector2 = new Point2D.Double((clickPoint.x - X1.x) / len, (clickPoint.y - X1.y) / len);
         double crossProduct = vector2.y * vector1.x - vector2.x * vector1.y;
         if ((Math.abs(crossProduct) * len <= SELECTION_TOLERANCE)
-            && (Math.min(X1.x - SELECTION_TOLERANCE, X2.x - SELECTION_TOLERANCE) <= clickPoint.x)
-            && (clickPoint.x <= Math.max(X1.x + SELECTION_TOLERANCE, X2.x + SELECTION_TOLERANCE))
-            && (Math.min(X1.y - SELECTION_TOLERANCE, X2.y - SELECTION_TOLERANCE) <= clickPoint.y)
-            && (clickPoint.y <= Math.max(X1.y + SELECTION_TOLERANCE, X2.y + SELECTION_TOLERANCE))) {
+                && (Math.min(X1.x - SELECTION_TOLERANCE, X2.x - SELECTION_TOLERANCE) <= clickPoint.x)
+                && (clickPoint.x <= Math.max(X1.x + SELECTION_TOLERANCE, X2.x + SELECTION_TOLERANCE))
+                && (Math.min(X1.y - SELECTION_TOLERANCE, X2.y - SELECTION_TOLERANCE) <= clickPoint.y)
+                && (clickPoint.y <= Math.max(X1.y + SELECTION_TOLERANCE, X2.y + SELECTION_TOLERANCE))) {
             return pointsSize; // as new point index
         }
         return -1;
@@ -799,10 +794,10 @@ public class ConnectionLine {
         List<SchemaPoint> schemaPoints = points.stream().map(P::toSchemaPoint).collect(Collectors.toList());
 
         return PluginConnection.create(
-            elementFrom.getPluginId(),
-            elementTo.getPluginId(),
-            bidirectional,
-            schemaPoints
+                elementFrom.getPluginId(),
+                elementTo.getPluginId(),
+                bidirectional,
+                schemaPoints
         );
     }
 }
