@@ -23,11 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 
 public class Disassembler {
-    private final static Map<Integer, String> instructions = new HashMap<>();
-
     public final static int JMP = 15;
     public final static int JZ = 16;
     public final static int JGTZ = 17;
+    private final static Map<Integer, String> instructions = new HashMap<>();
 
     static {
         instructions.put(1, "READ");

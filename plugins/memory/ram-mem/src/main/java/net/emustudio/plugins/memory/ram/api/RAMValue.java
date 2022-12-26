@@ -27,13 +27,6 @@ import java.io.Serializable;
 public interface RAMValue extends Serializable {
 
     /**
-     * Value type
-     */
-    enum Type {
-        NUMBER, STRING, ID
-    }
-
-    /**
      * Whether this value is an integer number
      *
      * @return true if the value is a number
@@ -62,4 +55,11 @@ public interface RAMValue extends Serializable {
      * @return string representation of this value
      */
     String getStringRepresentation();
+
+    /**
+     * Value type
+     */
+    enum Type {
+        NUMBER, STRING, ID
+    }
 }

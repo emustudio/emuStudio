@@ -25,9 +25,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.createNiceMock;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertNotEquals;
 
 public class CpuImplTest {

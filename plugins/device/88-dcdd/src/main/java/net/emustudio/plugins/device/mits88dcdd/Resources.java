@@ -22,7 +22,7 @@ import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-public class Resources{
+public class Resources {
 
     public static Optional<ResourceBundle> getResourceBundle() {
         try {

@@ -35,6 +35,7 @@ public class BreakpointDialog extends JDialog {
 
     private int address = -1; // if adr == -1 then it means cancel
     private boolean set = false;
+    private JTextField txtAddress;
 
     public BreakpointDialog(JFrame parent, Dialogs dialogs) {
         super(parent, true);
@@ -76,18 +77,18 @@ public class BreakpointDialog extends JDialog {
         getContentPane().setLayout(layout);
 
         layout.setHorizontalGroup(layout.createSequentialGroup().addContainerGap()
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(lblSetUnset).addComponent(txtAddress)
-                .addGroup(GroupLayout.Alignment.CENTER, layout.createSequentialGroup()
-                    .addComponent(btnUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnSet))).addContainerGap());
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(lblSetUnset).addComponent(txtAddress)
+                        .addGroup(GroupLayout.Alignment.CENTER, layout.createSequentialGroup()
+                                .addComponent(btnUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnSet))).addContainerGap());
         layout.setVerticalGroup(layout.createSequentialGroup().addContainerGap().addComponent(lblSetUnset)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(btnUnset).addComponent(btnSet)).addContainerGap());
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+                        GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnUnset).addComponent(btnSet)).addContainerGap());
 
 
         pack();
@@ -117,6 +118,4 @@ public class BreakpointDialog extends JDialog {
             dispose();
         }
     }
-
-    private JTextField txtAddress;
 }

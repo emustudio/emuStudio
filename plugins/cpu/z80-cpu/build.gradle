@@ -58,8 +58,8 @@ edigen {
 processResources {
   filesMatching("**/*.properties") {
     filter ReplaceTokens, tokens: [
-      "project.version": project.version,
-      "today.year": new Date().format("yyyy")
+            "project.version": project.version,
+            "today.year"     : new Date().format("yyyy")
     ]
   }
 }

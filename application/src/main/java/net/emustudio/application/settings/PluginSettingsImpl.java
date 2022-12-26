@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class PluginSettingsImpl extends BasicSettingsImpl implements PluginSettings  {
+public class PluginSettingsImpl extends BasicSettingsImpl implements PluginSettings {
     private final AppSettings application;
 
     public PluginSettingsImpl(Config pluginConfig, AppSettings application, Runnable save) {

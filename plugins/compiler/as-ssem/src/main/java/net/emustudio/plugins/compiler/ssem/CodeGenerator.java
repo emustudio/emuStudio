@@ -44,7 +44,7 @@ public class CodeGenerator {
     }
 
     private void writeInstruction(int opcode, long operand) {
-        int instruction = NumberUtils.reverseBits((int)operand & 0x1F, 32) | ((opcode & 0x07) << 16);
+        int instruction = NumberUtils.reverseBits((int) operand & 0x1F, 32) | ((opcode & 0x07) << 16);
         code.putInt(instruction);
     }
 }

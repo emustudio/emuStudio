@@ -28,9 +28,9 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
 import net.emustudio.plugins.compiler.ssem.ast.ProgramParser;
 import org.antlr.v4.runtime.*;
@@ -46,14 +46,14 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.COMPILER,
-    title = "SSEM Assembler"
+        type = PLUGIN_TYPE.COMPILER,
+        title = "SSEM Assembler"
 )
 @SuppressWarnings("unused")
 public class SSEMCompiler extends AbstractCompiler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SSEMCompiler.class);
     private static final List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-        new SourceFileExtension("ssem", "SSEM source file")
+            new SourceFileExtension("ssem", "SSEM source file")
     );
     private MemoryContext<Byte> memory;
     private int programLocation;
@@ -70,7 +70,7 @@ public class SSEMCompiler extends AbstractCompiler {
                 memory = pool.getMemoryContext(pluginID, MemoryContext.class);
                 if (memory.getDataType() != Byte.class) {
                     throw new InvalidContextException(
-                        "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                            "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
                     );
                 }
             } catch (InvalidContextException | ContextNotFoundException e) {
@@ -107,8 +107,8 @@ public class SSEMCompiler extends AbstractCompiler {
             programLocation = program.getStartLine() * 4;
 
             notifyInfo(String.format(
-                "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                outputFileName, RadixUtils.formatWordHexString(programLocation)
+                    "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
+                    outputFileName, RadixUtils.formatWordHexString(programLocation)
             ));
         } catch (CompileException e) {
             notifyError(e.line, e.column, e.getMessage());

@@ -37,44 +37,39 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static net.emustudio.plugins.cpu.intel8080.DispatchTables.DISPATCH_TABLE;
 
 public class EmulatorEngine implements CpuEngine {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
-
     public static final int REG_A = 7, REG_B = 0, REG_C = 1, REG_D = 2, REG_E = 3, REG_H = 4, REG_L = 5;
     public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_AC = 0x10, FLAG_P = 0x4, FLAG_C = 0x1;
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
     private final static int[] CONDITION = new int[]{
-        FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_P, FLAG_P, FLAG_S, FLAG_S
+            FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_P, FLAG_P, FLAG_S, FLAG_S
     };
     private final static int[] CONDITION_VALUES = new int[]{
-        0, FLAG_Z, 0, FLAG_C, 0, FLAG_P, 0, FLAG_S
+            0, FLAG_Z, 0, FLAG_C, 0, FLAG_P, 0, FLAG_S
     };
-
-    public boolean INTE = false; // enabling / disabling of interrupts
-    private boolean isINT = false;
-    private short b1 = 0; // the raw interrupt instruction
-    private short b2 = 0;
-    private short b3 = 0;
     private final static Map<Integer, Integer> RST_MAP = Map.of(
-        0xC7, 0,
-        0xCF, 0x8,
-        0xD7, 0x10,
-        0xDF, 0x18,
-        0xE7, 0x20,
-        0xEF, 0x28,
-        0xF7, 0x30,
-        0xFF, 0x38
+            0xC7, 0,
+            0xCF, 0x8,
+            0xD7, 0x10,
+            0xDF, 0x18,
+            0xE7, 0x20,
+            0xEF, 0x28,
+            0xF7, 0x30,
+            0xFF, 0x38
     );
-
+    private final MemoryContext<Byte> memory;
+    private final Context8080Impl context;
+    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
+    public boolean INTE = false; // enabling / disabling of interrupts
     public int PC = 0; // program counter
     public int SP = 0; // stack pointer
     public int[] regs = new int[8];
     public short flags = 2; // registers
     public volatile CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_NORMAL;
+    private boolean isINT = false;
+    private short b1 = 0; // the raw interrupt instruction
+    private short b2 = 0;
+    private short b3 = 0;
     private int lastOpcode;
-
-    private final MemoryContext<Byte> memory;
-    private final Context8080Impl context;
-    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
-
     private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;

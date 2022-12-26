@@ -39,6 +39,20 @@ public interface SectorOps {
         }
     };
 
+    static SectorOps fromString(String name) {
+        switch (name.toLowerCase(Locale.ENGLISH)) {
+            case "altair-floppy-mits":
+                return Altair8mits.INSTANCE;
+            case "altair-floppy-deramp":
+                return Altair8deramp.INSTANCE;
+            case "altair-minidisk-deramp":
+                return AltairMinidiskDeramp.INSTANCE;
+            default:
+                return DUMMY;
+        }
+
+    }
+
     /**
      * Converts record of max RECORD_SIZE bytes to raw sector.
      * the record size might be less than RECORD_SIZE.
@@ -57,19 +71,4 @@ public interface SectorOps {
      * @return record
      */
     ByteBuffer toRecord(ByteBuffer sector, Position position);
-
-
-    static SectorOps fromString(String name) {
-        switch (name.toLowerCase(Locale.ENGLISH)) {
-            case "altair-floppy-mits":
-                return Altair8mits.INSTANCE;
-            case "altair-floppy-deramp":
-                return Altair8deramp.INSTANCE;
-            case "altair-minidisk-deramp":
-                return AltairMinidiskDeramp.INSTANCE;
-            default:
-                return DUMMY;
-        }
-
-    }
 }

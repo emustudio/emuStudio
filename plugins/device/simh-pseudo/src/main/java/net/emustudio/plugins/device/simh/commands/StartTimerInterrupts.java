@@ -50,8 +50,8 @@ public class StartTimerInterrupts implements Command {
     }
 
     private static class TimerInterruptCallback implements Runnable {
-        private volatile long startTime = System.nanoTime();
         private final Context8080 cpu;
+        private volatile long startTime = System.nanoTime();
 
         private TimerInterruptCallback(Context8080 cpu) {
             this.cpu = Objects.requireNonNull(cpu);

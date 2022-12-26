@@ -33,32 +33,31 @@ import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.MONOSPACED_PLAIN;
 
 public class DiskGui extends JDialog {
-    private final DriveButton[] driveButtons = new DriveButton[]{
-        new DriveButton("A", () -> updateDriveInfo(0)),
-        new DriveButton("B", () -> updateDriveInfo(1)),
-        new DriveButton("C", () -> updateDriveInfo(2)),
-        new DriveButton("D", () -> updateDriveInfo(3)),
-        new DriveButton("E", () -> updateDriveInfo(4)),
-        new DriveButton("F", () -> updateDriveInfo(5)),
-        new DriveButton("G", () -> updateDriveInfo(6)),
-        new DriveButton("H", () -> updateDriveInfo(7)),
-        new DriveButton("I", () -> updateDriveInfo(8)),
-        new DriveButton("J", () -> updateDriveInfo(9)),
-        new DriveButton("K", () -> updateDriveInfo(10)),
-        new DriveButton("L", () -> updateDriveInfo(11)),
-        new DriveButton("M", () -> updateDriveInfo(12)),
-        new DriveButton("N", () -> updateDriveInfo(13)),
-        new DriveButton("O", () -> updateDriveInfo(14)),
-        new DriveButton("P", () -> updateDriveInfo(15)),
-    };
     private final DriveCollection drives;
-
     private final JLabel lblOffset = createMonospacedLabel("0");
     private final JLabel lblSector = createMonospacedLabel("0");
     private final JLabel lblTrack = createMonospacedLabel("0");
     private final JLabel lblPort1Status = createMonospacedLabel(DriveParameters.port1StatusString(Drive.DEAD_DRIVE));
     private final JLabel lblPort2Status = createMonospacedLabel(DriveParameters.port2StatusString(Drive.SECTOR0));
     private final JTextArea txtMountedImage = new JTextArea();
+    private final DriveButton[] driveButtons = new DriveButton[]{
+            new DriveButton("A", () -> updateDriveInfo(0)),
+            new DriveButton("B", () -> updateDriveInfo(1)),
+            new DriveButton("C", () -> updateDriveInfo(2)),
+            new DriveButton("D", () -> updateDriveInfo(3)),
+            new DriveButton("E", () -> updateDriveInfo(4)),
+            new DriveButton("F", () -> updateDriveInfo(5)),
+            new DriveButton("G", () -> updateDriveInfo(6)),
+            new DriveButton("H", () -> updateDriveInfo(7)),
+            new DriveButton("I", () -> updateDriveInfo(8)),
+            new DriveButton("J", () -> updateDriveInfo(9)),
+            new DriveButton("K", () -> updateDriveInfo(10)),
+            new DriveButton("L", () -> updateDriveInfo(11)),
+            new DriveButton("M", () -> updateDriveInfo(12)),
+            new DriveButton("N", () -> updateDriveInfo(13)),
+            new DriveButton("O", () -> updateDriveInfo(14)),
+            new DriveButton("P", () -> updateDriveInfo(15)),
+    };
 
     public DiskGui(JFrame parent, DriveCollection drives) {
         super(parent);
@@ -71,6 +70,12 @@ public class DiskGui extends JDialog {
             drive.addDriveListener(new GUIDriveListener(i));
             return null;
         });
+    }
+
+    private static JLabel createMonospacedLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(MONOSPACED_PLAIN);
+        return label;
     }
 
     private void updateDriveInfo(int index) {
@@ -122,8 +127,8 @@ public class DiskGui extends JDialog {
         setResizable(false);
 
         panelDiskSelection.setBorder(BorderFactory.createTitledBorder(null, "Disk selection",
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
+                TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
         ));
 
         for (DriveButton button : driveButtons) {
@@ -137,10 +142,10 @@ public class DiskGui extends JDialog {
         GroupLayout.ParallelGroup upperParallelGroup = diskSelectionLayout.createParallelGroup(GroupLayout.Alignment.BASELINE);
         for (int i = 0; i < 8; i++) {
             upperSequentialGroup
-                .addGroup(diskSelectionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(driveButtons[i])
-                    .addComponent(driveButtons[i + 8])
-                ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED);
+                    .addGroup(diskSelectionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                            .addComponent(driveButtons[i])
+                            .addComponent(driveButtons[i + 8])
+                    ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED);
             upperParallelGroup.addComponent(driveButtons[i]);
         }
 
@@ -152,60 +157,60 @@ public class DiskGui extends JDialog {
         }
 
         diskSelectionLayout.setHorizontalGroup(
-            diskSelectionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(diskSelectionLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(upperSequentialGroup)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                diskSelectionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(diskSelectionLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(upperSequentialGroup)
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         diskSelectionLayout.setVerticalGroup(
-            diskSelectionLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(upperParallelGroup)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(lowerParallelGroup)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                diskSelectionLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(upperParallelGroup)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(lowerParallelGroup)
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         panelFlags.setBorder(BorderFactory.createTitledBorder(
-            null, "Flags and settings", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
+                null, "Flags and settings", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
         ));
 
         GroupLayout panelFlagsLayout = new GroupLayout(panelFlags);
         panelFlags.setLayout(panelFlagsLayout);
         panelFlagsLayout.setHorizontalGroup(
-            panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelFlagsLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(panelFlagsLayout.createSequentialGroup()
-                            .addComponent(lblPort2Label)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(lblPort2Status))
-                        .addGroup(panelFlagsLayout.createSequentialGroup()
-                            .addComponent(lblPort1Label)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(lblPort1Status)))
-                    .addContainerGap(119, Short.MAX_VALUE))
+                                .addContainerGap()
+                                .addGroup(panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(panelFlagsLayout.createSequentialGroup()
+                                                .addComponent(lblPort2Label)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(lblPort2Status))
+                                        .addGroup(panelFlagsLayout.createSequentialGroup()
+                                                .addComponent(lblPort1Label)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(lblPort1Status)))
+                                .addContainerGap(119, Short.MAX_VALUE))
         );
         panelFlagsLayout.setVerticalGroup(
-            panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelFlagsLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblPort1Label)
-                        .addComponent(lblPort1Status))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblPort2Label)
-                        .addComponent(lblPort2Status))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelFlagsLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblPort1Label)
+                                        .addComponent(lblPort1Status))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelFlagsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblPort2Label)
+                                        .addComponent(lblPort2Status))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         panelImage.setBorder(BorderFactory.createTitledBorder(
-            null, "Mounted image", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
+                null, "Mounted image", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
         ));
 
         txtMountedImage.setEditable(false);
@@ -219,96 +224,90 @@ public class DiskGui extends JDialog {
         GroupLayout panelImageLayout = new GroupLayout(panelImage);
         panelImage.setLayout(panelImageLayout);
         panelImageLayout.setHorizontalGroup(
-            panelImageLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelImageLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jScrollPane1)
-                    .addContainerGap())
+                panelImageLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelImageLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jScrollPane1)
+                                .addContainerGap())
         );
         panelImageLayout.setVerticalGroup(
-            panelImageLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelImageLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jScrollPane1)
-                    .addContainerGap())
+                panelImageLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelImageLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jScrollPane1)
+                                .addContainerGap())
         );
 
         panelPosition.setBorder(BorderFactory.createTitledBorder(
-            null, "Position", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
+                null, "Position", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                lblPort1Label.getFont().deriveFont(lblPort1Label.getFont().getStyle() | Font.BOLD)
         ));
 
         GroupLayout panelPositionLayout = new GroupLayout(panelPosition);
         panelPosition.setLayout(panelPositionLayout);
         panelPositionLayout.setHorizontalGroup(
-            panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelPositionLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(lblSectorLabel)
-                        .addComponent(lblTrackLabel)
-                        .addComponent(lblOffsetLabel))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(lblOffset)
-                        .addComponent(this.lblTrack)
-                        .addComponent(this.lblSector))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelPositionLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(lblSectorLabel)
+                                        .addComponent(lblTrackLabel)
+                                        .addComponent(lblOffsetLabel))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(lblOffset)
+                                        .addComponent(this.lblTrack)
+                                        .addComponent(this.lblSector))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         panelPositionLayout.setVerticalGroup(
-            panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelPositionLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblTrackLabel)
-                        .addComponent(this.lblTrack))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblSectorLabel)
-                        .addComponent(this.lblSector))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(lblOffsetLabel)
-                        .addComponent(lblOffset))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelPositionLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblTrackLabel)
+                                        .addComponent(this.lblTrack))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblSectorLabel)
+                                        .addComponent(this.lblSector))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelPositionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(lblOffsetLabel)
+                                        .addComponent(lblOffset))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(panelDiskSelection, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(panelImage, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(panelFlags, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(panelPosition, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addContainerGap())
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(panelDiskSelection, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(panelImage, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(panelFlags, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(panelPosition, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(panelDiskSelection, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(panelPosition, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(panelFlags, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(panelImage, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(panelDiskSelection, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(panelPosition, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(panelFlags, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(panelImage, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
-    }
-
-    private static JLabel createMonospacedLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setFont(MONOSPACED_PLAIN);
-        return label;
     }
 
     private class GUIDriveListener implements DriveListener {

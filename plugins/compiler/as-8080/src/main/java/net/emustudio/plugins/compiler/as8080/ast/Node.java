@@ -25,11 +25,10 @@ import java.util.List;
 import java.util.Optional;
 
 public abstract class Node {
-    protected Node parent;
-    protected final List<Node> children = new ArrayList<>();
     public final int line;
     public final int column;
-
+    protected final List<Node> children = new ArrayList<>();
+    protected Node parent;
     private int address;
 
     public Node(int line, int column) {

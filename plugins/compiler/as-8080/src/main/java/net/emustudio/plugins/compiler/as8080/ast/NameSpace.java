@@ -57,7 +57,7 @@ public class NameSpace {
     @Override
     public String toString() {
         return "NameSpace{" +
-            "errors=" + errors +
-            '}';
+                "errors=" + errors +
+                '}';
     }
 }

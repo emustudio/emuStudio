@@ -25,11 +25,10 @@ import java.util.List;
 import java.util.Optional;
 
 public abstract class Node {
-    protected Node parent;
-    protected final List<Node> children = new ArrayList<>();
     public final int line;
     public final int column;
-
+    protected final List<Node> children = new ArrayList<>();
+    protected Node parent;
     private int address;
     private Optional<Integer> maxValue = Optional.empty();
     private Optional<Integer> sizeBytes = Optional.empty();
@@ -130,10 +129,10 @@ public abstract class Node {
         String spaces = new String(new char[indent]).replace("\0", " ");
         StringBuilder builder = new StringBuilder(spaces);
         builder
-            .append(Integer.toHexString(address))
-            .append("> ")
-            .append(toStringShallow())
-            .append(sizeBytes.map(s -> "(size=" + s + ")").orElse(""));
+                .append(Integer.toHexString(address))
+                .append("> ")
+                .append(toStringShallow())
+                .append(sizeBytes.map(s -> "(size=" + s + ")").orElse(""));
 
         for (Node child : children) {
             builder.append("\n").append(child.toString(indent + 2));
@@ -166,15 +165,15 @@ public abstract class Node {
         return maxValue;
     }
 
-    public Optional<Integer> getSizeBytes() {
-        return sizeBytes;
-    }
-
     public Node setMaxValue(int maxValue) {
         int wasBits = (int) Math.floor(Math.log10(Math.abs(maxValue)) / Math.log10(2)) + 1;
         this.sizeBytes = Optional.of((int) Math.ceil(wasBits / 8.0));
         this.maxValue = Optional.of(maxValue);
         return this;
+    }
+
+    public Optional<Integer> getSizeBytes() {
+        return sizeBytes;
     }
 
     public Node setSizeBytes(int bytes) {

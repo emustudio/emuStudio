@@ -19,13 +19,13 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.Resources;
-import net.emustudio.application.settings.AppSettings;
-import net.emustudio.application.settings.ComputerConfig;
-import net.emustudio.application.settings.ConfigFiles;
 import net.emustudio.application.gui.ExtendedDialogs;
 import net.emustudio.application.gui.GuiDialogsImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.application.settings.ConfigFiles;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import org.slf4j.Logger;
@@ -38,32 +38,28 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.emustudio.application.cmdline.Utils.*;
-import static net.emustudio.application.settings.ConfigFiles.listConfigurationNames;
 import static net.emustudio.application.gui.GuiUtils.setupLookAndFeel;
+import static net.emustudio.application.settings.ConfigFiles.listConfigurationNames;
 
 @SuppressWarnings("unused")
 @CommandLine.Command(
-    name = "emuStudio",
-    mixinStandardHelpOptions = true,
-    versionProvider = Runner.VersionProvider.class,
-    description = "Universal emulation platform and framework",
-    scope = CommandLine.ScopeType.INHERIT,
-    subcommands = {AutomationCommand.class}
+        name = "emuStudio",
+        mixinStandardHelpOptions = true,
+        versionProvider = Runner.VersionProvider.class,
+        description = "Universal emulation platform and framework",
+        scope = CommandLine.ScopeType.INHERIT,
+        subcommands = {AutomationCommand.class}
 )
 public class Runner implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
-
-    @CommandLine.ArgGroup(heading = "Virtual computer%n")
-    public Exclusive exclusive;
-
-    @CommandLine.Option(names = {"-l", "--list-computers"}, description = "list all existing virtual computers")
-    private boolean listConfigs;
-
-    @CommandLine.Option(names = {"-i", "--input-file"}, description = "input file name (source code)", paramLabel = "FILE")
-    public Path inputFile;
-
     // if a command is being run, default behavior is: do nothing
     private static boolean runsSomeCommand;
+    @CommandLine.ArgGroup(heading = "Virtual computer%n")
+    public Exclusive exclusive;
+    @CommandLine.Option(names = {"-i", "--input-file"}, description = "input file name (source code)", paramLabel = "FILE")
+    public Path inputFile;
+    @CommandLine.Option(names = {"-l", "--list-computers"}, description = "list all existing virtual computers")
+    private boolean listConfigs;
 
     public static void main(String[] args) {
         CommandLine cmdline = new CommandLine(new Runner());
@@ -101,8 +97,8 @@ public class Runner implements Runnable {
                 setupLookAndFeel(appConfig);
                 ExtendedDialogs dialogs = new GuiDialogsImpl();
                 Optional<ComputerConfig> computerConfigOpt = (exclusive != null) ?
-                    exclusive.loadConfiguration() :
-                    loadComputerConfigFromGui(appConfig, dialogs);
+                        exclusive.loadConfiguration() :
+                        loadComputerConfigFromGui(appConfig, dialogs);
 
                 if (computerConfigOpt.isEmpty()) {
                     System.err.println("Virtual computer must be selected!");
@@ -115,12 +111,12 @@ public class Runner implements Runnable {
                 ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
                 DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
                 VirtualComputer computer = loadComputer(
-                    appConfig, computerConfig, dialogs, contextPool, debugTableModel
+                        appConfig, computerConfig, dialogs, contextPool, debugTableModel
                 );
                 splash.dispose();
 
                 showMainWindow(
-                    computer, appConfig, dialogs, debugTableModel, contextPool, Optional.ofNullable(inputFile)
+                        computer, appConfig, dialogs, debugTableModel, contextPool, Optional.ofNullable(inputFile)
                 );
             } catch (Exception e) {
                 LOGGER.error("Unexpected error", e);
@@ -131,22 +127,22 @@ public class Runner implements Runnable {
 
     public static class Exclusive {
         @CommandLine.Option(names = {"-c", "--computer"},
-            description = "virtual computer name (see -l for options)",
-            paramLabel = "NAME"
+                description = "virtual computer name (see -l for options)",
+                paramLabel = "NAME"
         )
         public String configName;
 
         @CommandLine.Option(
-            names = {"-cf", "--computer-file"},
-            description = "virtual computer configuration file",
-            paramLabel = "FILE"
+                names = {"-cf", "--computer-file"},
+                description = "virtual computer configuration file",
+                paramLabel = "FILE"
         )
         public Path configFile;
 
         @CommandLine.Option(
-            names = {"-cn", "--computer-index"},
-            description = "virtual computer index (see -l for options)",
-            paramLabel = "INDEX"
+                names = {"-cn", "--computer-index"},
+                description = "virtual computer index (see -l for options)",
+                paramLabel = "INDEX"
         )
         public Integer configIndex;
 

@@ -36,7 +36,7 @@ public class OpenComputerAction extends AbstractAction {
     public OpenComputerAction(Dialogs dialogs, JDialog parent, JList<ComputerConfig> lstConfig,
                               Consumer<ComputerConfig> selectComputer) {
         super(
-            "Create new computer...", new ImageIcon(OpenComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-add.png"))
+                "Create new computer...", new ImageIcon(OpenComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-add.png"))
         );
         this.dialogs = Objects.requireNonNull(dialogs);
         this.parent = Objects.requireNonNull(parent);
@@ -47,10 +47,10 @@ public class OpenComputerAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         Optional
-            .ofNullable(lstConfig.getSelectedValue())
-            .ifPresentOrElse(computer -> {
-                selectComputer.accept(computer);
-                parent.dispose();
-            }, () -> dialogs.showError("A computer has to be selected!", "Open computer"));
+                .ofNullable(lstConfig.getSelectedValue())
+                .ifPresentOrElse(computer -> {
+                    selectComputer.accept(computer);
+                    parent.dispose();
+                }, () -> dialogs.showError("A computer has to be selected!", "Open computer"));
     }
 }

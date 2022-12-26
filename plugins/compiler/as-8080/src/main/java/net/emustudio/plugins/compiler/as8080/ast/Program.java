@@ -40,14 +40,13 @@ public class Program extends Node {
         this(new NameSpace());
     }
 
-    public void setFileName(String filename) {
-        this.filename = filename;
-    }
-
     public Optional<String> getFileName() {
         return Optional.ofNullable(filename);
     }
 
+    public void setFileName(String filename) {
+        this.filename = filename;
+    }
 
     public NameSpace env() {
         return env;

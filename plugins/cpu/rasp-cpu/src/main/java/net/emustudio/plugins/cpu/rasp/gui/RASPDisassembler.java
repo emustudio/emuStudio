@@ -45,8 +45,8 @@ public class RASPDisassembler implements Disassembler {
         if (opcode != 18) {
             int operand = memory.read(address + 1).getValue();
             String operandStr = isJump ?
-                memory.getLabel(operand).map(RASPLabel::getLabel).orElse(String.valueOf(operand)) :
-                String.valueOf(operand);
+                    memory.getLabel(operand).map(RASPLabel::getLabel).orElse(String.valueOf(operand)) :
+                    String.valueOf(operand);
             mnemo += " " + operandStr;
         }
 

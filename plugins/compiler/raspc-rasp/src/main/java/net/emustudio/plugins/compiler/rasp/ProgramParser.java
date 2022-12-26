@@ -96,7 +96,7 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
         int operand = parseNumber(ctx.n.n);
 
         Instruction instruction = new Instruction(
-            op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, Optional.of(operand)
+                op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, Optional.of(operand)
         );
         currentAddress++;  // operand
         program.add(instruction);
@@ -110,7 +110,7 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
         int operand = parseNumber(ctx.n.n);
 
         Instruction instruction = new Instruction(
-            op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, Optional.of(operand)
+                op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, Optional.of(operand)
         );
         currentAddress++;  // operand
         program.add(instruction);
@@ -124,7 +124,7 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
         String id = ctx.id.getText();
 
         Instruction instruction = new Instruction(
-            op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, id
+                op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, id
         );
         currentAddress++;  // operand
         program.add(instruction);
@@ -134,7 +134,7 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
     @Override
     public Program visitInstrNoOperand(InstrNoOperandContext ctx) {
         Instruction instruction = new Instruction(
-            ctx.op.getLine(), ctx.op.getCharPositionInLine(), 18, currentAddress++, Optional.empty()
+                ctx.op.getLine(), ctx.op.getCharPositionInLine(), 18, currentAddress++, Optional.empty()
         );
         program.add(instruction);
         return program;

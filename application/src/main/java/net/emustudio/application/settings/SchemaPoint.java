@@ -32,24 +32,6 @@ public class SchemaPoint {
         this.y = y;
     }
 
-    @Override
-    public String toString() {
-        return x + "," + y;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SchemaPoint that = (SchemaPoint) o;
-        return x == that.x &&  y == that.y;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(x, y);
-    }
-
     public static SchemaPoint parse(String value) {
         String[] xy = value.split(",");
         int x = Integer.decode(xy[0].trim());
@@ -60,5 +42,23 @@ public class SchemaPoint {
 
     public static SchemaPoint of(int x, int y) {
         return new SchemaPoint(x, y);
+    }
+
+    @Override
+    public String toString() {
+        return x + "," + y;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SchemaPoint that = (SchemaPoint) o;
+        return x == that.x && y == that.y;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
     }
 }

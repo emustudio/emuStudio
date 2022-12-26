@@ -81,12 +81,12 @@ public class MemoryStub extends AbstractMemoryContext<RASPMemoryCell> implements
     }
 
     @Override
-    public void setInputs(List<Integer> inputs) {
-        this.inputs.addAll(inputs);
+    public List<Integer> getInputs() {
+        return inputs;
     }
 
     @Override
-    public List<Integer> getInputs() {
-        return inputs;
+    public void setInputs(List<Integer> inputs) {
+        this.inputs.addAll(inputs);
     }
 }

@@ -37,6 +37,10 @@ class BrainTerminalGui extends JDialog implements OutputProvider, Keyboard.Keybo
 
     private final Display canvas;
     private final Keyboard keyboard;
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnASCII;
+    private javax.swing.JLabel lblStatusIcon;
+    private javax.swing.JScrollPane scrollPane;
 
     private BrainTerminalGui(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
         super(parent);
@@ -65,6 +69,13 @@ class BrainTerminalGui extends JDialog implements OutputProvider, Keyboard.Keybo
         canvas = new Display();
         scrollPane.setViewportView(canvas);
         canvas.start();
+    }
+
+    static BrainTerminalGui create(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
+        BrainTerminalGui dialog = new BrainTerminalGui(parent, keyboard, dialogs);
+        GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
+        dialog.keyboard.addListener(dialog);
+        return dialog;
     }
 
     @Override
@@ -129,14 +140,6 @@ class BrainTerminalGui extends JDialog implements OutputProvider, Keyboard.Keybo
         dispose();
     }
 
-
-    static BrainTerminalGui create(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
-        BrainTerminalGui dialog = new BrainTerminalGui(parent, keyboard, dialogs);
-        GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
-        dialog.keyboard.addListener(dialog);
-        return dialog;
-    }
-
     private void writeStarted() {
         lblStatusIcon.setIcon(redIcon);
         lblStatusIcon.repaint();
@@ -171,18 +174,18 @@ class BrainTerminalGui extends JDialog implements OutputProvider, Keyboard.Keybo
         javax.swing.GroupLayout panelStatusLayout = new javax.swing.GroupLayout(panelStatus);
         panelStatus.setLayout(panelStatusLayout);
         panelStatusLayout.setHorizontalGroup(
-            panelStatusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(panelStatusLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(lblStatusIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnASCII)
-                    .addContainerGap(664, Short.MAX_VALUE))
+                panelStatusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(panelStatusLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(lblStatusIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnASCII)
+                                .addContainerGap(664, Short.MAX_VALUE))
         );
         panelStatusLayout.setVerticalGroup(
-            panelStatusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(lblStatusIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btnASCII, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
+                panelStatusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(lblStatusIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnASCII, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
         );
 
         scrollPane.setBackground(new java.awt.Color(255, 255, 255));
@@ -190,16 +193,16 @@ class BrainTerminalGui extends JDialog implements OutputProvider, Keyboard.Keybo
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(panelStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(scrollPane)
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(panelStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(scrollPane)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(panelStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(panelStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
@@ -207,26 +210,21 @@ class BrainTerminalGui extends JDialog implements OutputProvider, Keyboard.Keybo
 
     private void btnASCIIActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnASCIIActionPerformed
         dialogs
-            .readString("Enter ASCII codes separated with spaces:", "Add ASCII codes")
-            .ifPresent(asciiCodes -> {
-                StringTokenizer tokenizer = new StringTokenizer(asciiCodes);
+                .readString("Enter ASCII codes separated with spaces:", "Add ASCII codes")
+                .ifPresent(asciiCodes -> {
+                    StringTokenizer tokenizer = new StringTokenizer(asciiCodes);
 
-                RadixUtils radixUtils = RadixUtils.getInstance();
-                try {
-                    while (tokenizer.hasMoreTokens()) {
-                        int ascii = radixUtils.parseRadix(tokenizer.nextToken());
-                        keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char) ascii));
+                    RadixUtils radixUtils = RadixUtils.getInstance();
+                    try {
+                        while (tokenizer.hasMoreTokens()) {
+                            int ascii = radixUtils.parseRadix(tokenizer.nextToken());
+                            keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char) ascii));
+                        }
+                    } catch (NumberFormatException ex) {
+                        dialogs.showError("Invalid number format in the input: " + ex.getMessage(), "Add ASCII codes");
                     }
-                } catch (NumberFormatException ex) {
-                    dialogs.showError("Invalid number format in the input: " + ex.getMessage(), "Add ASCII codes");
-                }
-            });
+                });
     }//GEN-LAST:event_btnASCIIActionPerformed
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnASCII;
-    private javax.swing.JLabel lblStatusIcon;
-    private javax.swing.JScrollPane scrollPane;
     // End of variables declaration//GEN-END:variables
 
 }

@@ -47,44 +47,35 @@ import static net.emustudio.plugins.cpu.zilogZ80.EmulatorTables.*;
  */
 // TODO: set frequency runtime
 public class EmulatorEngine implements CpuEngine {
-    private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
-
     public static final int REG_A = 7, REG_B = 0, REG_C = 1, REG_D = 2, REG_E = 3, REG_H = 4, REG_L = 5;
     public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_Y = 0x20, FLAG_H = 0x10, FLAG_X = 0x8, FLAG_PV = 0x4, FLAG_N = 0x02, FLAG_C = 0x1;
-
     public static final int FLAG_SZP = FLAG_S | FLAG_Z | FLAG_PV;
-
+    private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
     private final static int[] CONDITION = new int[]{
-        FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_PV, FLAG_PV, FLAG_S, FLAG_S
+            FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_PV, FLAG_PV, FLAG_S, FLAG_S
     };
     private final static int[] CONDITION_VALUES = new int[]{
-        0, FLAG_Z, 0, FLAG_C, 0, FLAG_PV, 0, FLAG_S
+            0, FLAG_Z, 0, FLAG_C, 0, FLAG_PV, 0, FLAG_S
     };
-
+    public final int[] regs = new int[8];
+    public final int[] regs2 = new int[8];
+    public final boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
     private final ContextZ80Impl context;
     private final TimedEventsProcessor tep;
     private final MemoryContext<Byte> memory;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
-
-    private int lastOpcode;
-
-    public final int[] regs = new int[8];
-    public final int[] regs2 = new int[8];
+    private final Queue<byte[]> pendingInterrupts = new ConcurrentLinkedQueue<>(); // must be thread-safe; can cause stack overflow
+    // non-maskable interrupts are always executed
+    private final AtomicBoolean pendingNonMaskableInterrupt = new AtomicBoolean();
     public int flags = 2;
     public int flags2 = 2;
-
     // special registers
     public int PC = 0, SP = 0, IX = 0, IY = 0;
     public int I = 0, R = 0; // interrupt r., refresh r.
     public int memptr = 0; // internal register, https://gist.github.com/drhelius/8497817
-
-    public final boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
-    private boolean interruptSkip; // when EI enabled, skip next instruction interrupt
     public byte interruptMode = 0;
-    private final Queue<byte[]> pendingInterrupts = new ConcurrentLinkedQueue<>(); // must be thread-safe; can cause stack overflow
-    // non-maskable interrupts are always executed
-    private final AtomicBoolean pendingNonMaskableInterrupt = new AtomicBoolean();
-
+    private int lastOpcode;
+    private boolean interruptSkip; // when EI enabled, skip next instruction interrupt
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
     private volatile long executedCycles = 0;
 
@@ -95,6 +86,35 @@ public class EmulatorEngine implements CpuEngine {
         this.context = Objects.requireNonNull(context);
         this.tep = context.getTimedEventsProcessorNow();
         LOGGER.info("Sleep precision: " + SleepUtils.SLEEP_PRECISION + " nanoseconds.");
+    }
+
+    public static String intToFlags(int flags) {
+        String flagsString = "";
+        if ((flags & FLAG_S) == FLAG_S) {
+            flagsString += "S";
+        }
+        if ((flags & FLAG_Z) == FLAG_Z) {
+            flagsString += "Z";
+        }
+        if ((flags & FLAG_Y) == FLAG_Y) {
+            flagsString += "Y";
+        }
+        if ((flags & FLAG_H) == FLAG_H) {
+            flagsString += "H";
+        }
+        if ((flags & FLAG_X) == FLAG_X) {
+            flagsString += "X";
+        }
+        if ((flags & FLAG_PV) == FLAG_PV) {
+            flagsString += "P";
+        }
+        if ((flags & FLAG_N) == FLAG_N) {
+            flagsString += "N";
+        }
+        if ((flags & FLAG_C) == FLAG_C) {
+            flagsString += "C";
+        }
+        return flagsString;
     }
 
     @Override
@@ -399,7 +419,6 @@ public class EmulatorEngine implements CpuEngine {
         R = (R & 0x80) | (((R & 0x7F) + 1) & 0x7F);
     }
 
-
     int I_NOP() {
         return 4;
     }
@@ -424,8 +443,8 @@ public class EmulatorEngine implements CpuEngine {
 
         int res = hl + rp;
         flags = (flags & FLAG_SZP) |
-            (((hl ^ res ^ rp) >>> 8) & FLAG_H) |
-            ((res >>> 16) & FLAG_C) | TABLE_XY[(res >>> 8) & 0xFF];
+                (((hl ^ res ^ rp) >>> 8) & FLAG_H) |
+                ((res >>> 16) & FLAG_C) | TABLE_XY[(res >>> 8) & 0xFF];
 
         regs[REG_H] = (res >>> 8) & 0xFF;
         regs[REG_L] = res & 0xFF;
@@ -733,19 +752,19 @@ public class EmulatorEngine implements CpuEngine {
 
         regs[REG_A] = ((flags & FLAG_N) != 0 ? regs[REG_A] - d : regs[REG_A] + d) & 0xFF;
         flags = TABLE_SZ[regs[REG_A]]
-            | PARITY_TABLE[regs[REG_A]]
-            | TABLE_XY[regs[REG_A]]
-            | ((regs[REG_A] ^ a) & FLAG_H)
-            | (flags & FLAG_N)
-            | c;
+                | PARITY_TABLE[regs[REG_A]]
+                | TABLE_XY[regs[REG_A]]
+                | ((regs[REG_A] ^ a) & FLAG_H)
+                | (flags & FLAG_N)
+                | c;
         return 4;
     }
 
     int I_CPL() {
         regs[REG_A] = (~regs[REG_A]) & 0xFF;
         flags = (flags & (FLAG_S | FLAG_Z | FLAG_PV | FLAG_C))
-            | FLAG_H | FLAG_N
-            | TABLE_XY[regs[REG_A]];
+                | FLAG_H | FLAG_N
+                | TABLE_XY[regs[REG_A]];
         return 4;
     }
 
@@ -757,8 +776,8 @@ public class EmulatorEngine implements CpuEngine {
     int I_CCF() {
         int c = flags & FLAG_C;
         flags = (flags & FLAG_SZP) | (c << 4)
-            | TABLE_XY[regs[REG_A]]
-            | (c ^ FLAG_C);
+                | TABLE_XY[regs[REG_A]]
+                | (c ^ FLAG_C);
         return 4;
     }
 
@@ -872,10 +891,10 @@ public class EmulatorEngine implements CpuEngine {
         int res = hl - rp - (flags & FLAG_C);
 
         flags = (((hl ^ res ^ rp) >>> 8) & FLAG_H) | FLAG_N |
-            ((res >>> 16) & FLAG_C) |
-            ((res >>> 8) & (FLAG_S | FLAG_Y | FLAG_X)) |
-            (((res & 0xFFFF) != 0) ? 0 : FLAG_Z) |
-            (((rp ^ hl) & (hl ^ res) & 0x8000) >>> 13);
+                ((res >>> 16) & FLAG_C) |
+                ((res >>> 8) & (FLAG_S | FLAG_Y | FLAG_X)) |
+                (((res & 0xFFFF) != 0) ? 0 : FLAG_Z) |
+                (((rp ^ hl) & (hl ^ res) & 0x8000) >>> 13);
 
         regs[REG_H] = (res >>> 8) & 0xFF;
         regs[REG_L] = res & 0xFF;
@@ -889,10 +908,10 @@ public class EmulatorEngine implements CpuEngine {
         int res = hl + rp + (flags & FLAG_C);
 
         flags = (((hl ^ res ^ rp) >>> 8) & FLAG_H) |
-            ((res >>> 16) & FLAG_C) |
-            ((res >>> 8) & (FLAG_S | FLAG_Y | FLAG_X)) |
-            (((res & 0xFFFF) != 0) ? 0 : FLAG_Z) |
-            (((rp ^ hl ^ 0x8000) & (rp ^ res) & 0x8000) >>> 13);
+                ((res >>> 16) & FLAG_C) |
+                ((res >>> 8) & (FLAG_S | FLAG_Y | FLAG_X)) |
+                (((res & 0xFFFF) != 0) ? 0 : FLAG_Z) |
+                (((rp ^ hl ^ 0x8000) & (rp ^ res) & 0x8000) >>> 13);
 
         regs[REG_H] = (res >>> 8) & 0xFF;
         regs[REG_L] = (res & 0xFF);
@@ -1130,7 +1149,7 @@ public class EmulatorEngine implements CpuEngine {
         int result = regs[REG_A] + io;
 
         flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) |
-            ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
+                ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
         return 16;
     }
 
@@ -1186,7 +1205,7 @@ public class EmulatorEngine implements CpuEngine {
         int result = regs[REG_A] + (io & 0xFF);
 
         flags = (flags & (FLAG_S | FLAG_Z | FLAG_C)) |
-            ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
+                ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
         return 16;
     }
 
@@ -1221,35 +1240,6 @@ public class EmulatorEngine implements CpuEngine {
         value += regs[REG_A];
         flags |= (value & FLAG_X) | ((value & 0x02) != 0 ? FLAG_Y : 0);
         return 16;
-    }
-
-    public static String intToFlags(int flags) {
-        String flagsString = "";
-        if ((flags & FLAG_S) == FLAG_S) {
-            flagsString += "S";
-        }
-        if ((flags & FLAG_Z) == FLAG_Z) {
-            flagsString += "Z";
-        }
-        if ((flags & FLAG_Y) == FLAG_Y) {
-            flagsString += "Y";
-        }
-        if ((flags & FLAG_H) == FLAG_H) {
-            flagsString += "H";
-        }
-        if ((flags & FLAG_X) == FLAG_X) {
-            flagsString += "X";
-        }
-        if ((flags & FLAG_PV) == FLAG_PV) {
-            flagsString += "P";
-        }
-        if ((flags & FLAG_N) == FLAG_N) {
-            flagsString += "N";
-        }
-        if ((flags & FLAG_C) == FLAG_C) {
-            flagsString += "C";
-        }
-        return flagsString;
     }
 
     int I_INI() {
@@ -1756,9 +1746,9 @@ public class EmulatorEngine implements CpuEngine {
         int result = (1 << bit) & regValue;
 
         flags = ((result != 0) ? (result & FLAG_S) : (FLAG_Z | FLAG_PV))
-            | TABLE_XY[regValue]
-            | FLAG_H
-            | (flags & FLAG_C);
+                | TABLE_XY[regValue]
+                | FLAG_H
+                | (flags & FLAG_C);
 
         if (reg == 6) {
             flags &= (~FLAG_X);
@@ -1825,8 +1815,8 @@ public class EmulatorEngine implements CpuEngine {
 
         int res = special + dstRp;
         flags = (flags & FLAG_SZP) |
-            (((dstRp ^ res ^ special) >>> 8) & FLAG_H) |
-            ((res >>> 16) & FLAG_C) | TABLE_XY[(res >>> 8) & 0xFF];
+                (((dstRp ^ res ^ special) >>> 8) & FLAG_H) |
+                ((res >>> 16) & FLAG_C) | TABLE_XY[(res >>> 8) & 0xFF];
         return res & 0xFFFF;
     }
 
@@ -2424,9 +2414,9 @@ public class EmulatorEngine implements CpuEngine {
         int result = (1 << bit) & addrValue;
 
         flags = ((flags & FLAG_C)
-            | FLAG_H
-            | ((result == 0) ? (FLAG_Z | FLAG_PV) : 0))
-            | TABLE_XY[special & 0xFF];
+                | FLAG_H
+                | ((result == 0) ? (FLAG_Z | FLAG_PV) : 0))
+                | TABLE_XY[special & 0xFF];
         if (bit == 7) {
             flags |= ((result == 0x80) ? FLAG_S : 0);
         }

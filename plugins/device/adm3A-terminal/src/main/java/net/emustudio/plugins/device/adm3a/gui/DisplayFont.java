@@ -25,13 +25,13 @@ import java.util.Objects;
 public class DisplayFont {
 
     public static final DisplayFont FONT_ORIGINAL = new DisplayFont(
-        "/net/emustudio/plugins/device/adm3a/gui/adm-3a.ttf",
-        2, 0.3, 3, 5, 15, 5
+            "/net/emustudio/plugins/device/adm3a/gui/adm-3a.ttf",
+            2, 0.3, 3, 5, 15, 5
     );
 
     public static final DisplayFont FONT_MODERN = new DisplayFont(
-        "/net/emustudio/plugins/device/adm3a/gui/terminal.ttf",
-        2, 0, 3, 0, 15, 0
+            "/net/emustudio/plugins/device/adm3a/gui/terminal.ttf",
+            2, 0, 3, 0, 15, 0
     );
 
     public final String path;

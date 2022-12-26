@@ -26,7 +26,10 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
+import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
@@ -47,8 +50,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.CPU,
-    title = "Random Access Stored Program (RASP)"
+        type = PLUGIN_TYPE.CPU,
+        title = "Random Access Stored Program (RASP)"
 )
 public class CpuImpl extends AbstractCPU {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
@@ -72,7 +75,7 @@ public class CpuImpl extends AbstractCPU {
         } catch (InvalidContextException | ContextAlreadyRegisteredException ex) {
             LOGGER.error("Could not register RASP CPU context", ex);
             applicationApi.getDialogs().showError(
-                "Could not register RASP CPU context. Please see log file for more details", getTitle()
+                    "Could not register RASP CPU context. Please see log file for more details", getTitle()
             );
         }
     }

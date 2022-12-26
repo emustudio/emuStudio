@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.actions;
 
-import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.gui.dialogs.ViewComputerDialog;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 

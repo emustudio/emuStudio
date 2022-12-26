@@ -46,7 +46,7 @@ public class ComputerConfigTest {
         Path configFile = temporaryFolder.newFile("computer.toml").toPath();
         Files.deleteIfExists(configFile);
         config = ComputerConfig.create(
-            "some nice computer!! baby@#$%^&*()./<>?\"'", configFile
+                "some nice computer!! baby@#$%^&*()./<>?\"'", configFile
         );
     }
 
@@ -69,7 +69,7 @@ public class ComputerConfigTest {
     @Test
     public void testChangePluginConfig() {
         PluginConfig cpu = PluginConfig.create(
-            "someId", PLUGIN_TYPE.CPU, "cpu baby", "emptyfile.jar", P.of(10, 10), Config.inMemory()
+                "someId", PLUGIN_TYPE.CPU, "cpu baby", "emptyfile.jar", P.of(10, 10), Config.inMemory()
         );
         config.setCPU(cpu);
 
@@ -79,7 +79,7 @@ public class ComputerConfigTest {
         assertEquals(cpu.getPluginFile(), "emptyfile.jar");
         assertEquals(cpu.getSchemaPoint(), SchemaPoint.of(10, 10));
 
-        SchemaPoint newSchemaPoint = SchemaPoint.of(20,30);
+        SchemaPoint newSchemaPoint = SchemaPoint.of(20, 30);
         cpu.setSchemaPoint(newSchemaPoint);
         assertEquals(cpu.getSchemaPoint(), newSchemaPoint);
     }

@@ -52,45 +52,26 @@ import java.util.Objects;
 
 public class DrawingPanel extends JPanel implements MouseListener, MouseMotionListener {
     private final static float[] DASH = {10.0f};
-    private final static float[] DOT = {1.0f};
-
     public final static BasicStroke DASHED_LINE = new BasicStroke(
-        1.0f,
-        BasicStroke.CAP_BUTT,
-        BasicStroke.JOIN_MITER,
-        10.0f,
-        DASH,
-        0.0f);
+            1.0f,
+            BasicStroke.CAP_BUTT,
+            BasicStroke.JOIN_MITER,
+            10.0f,
+            DASH,
+            0.0f);
+    private final static float[] DOT = {1.0f};
     private final static BasicStroke DOTTED_LINE = new BasicStroke(
-        1.0f,
-        BasicStroke.CAP_BUTT,
-        BasicStroke.JOIN_MITER,
-        1.0f,
-        DOT,
-        0.0f);
-
-    public enum Tool {
-        TOOL_COMPILER,
-        TOOL_CPU,
-        TOOL_MEMORY,
-        TOOL_DEVICE,
-        TOOL_CONNECTION,
-        TOOL_DELETE,
-        TOOL_NOTHING
-    }
-
+            1.0f,
+            BasicStroke.CAP_BUTT,
+            BasicStroke.JOIN_MITER,
+            1.0f,
+            DOT,
+            0.0f);
     private final Color gridColor = new Color(0xDDDDDD);
     private final List<ToolListener> toolListeners = new ArrayList<>();
-
     private final ModeSelector mode;
     private final DrawingModel drawingModel = new DrawingModel();
     private final Schema schema;
-
-    public interface ToolListener {
-
-        void toolWasUsed();
-    }
-
     public DrawingPanel(Schema schema) {
         this.schema = Objects.requireNonNull(schema);
 
@@ -253,5 +234,20 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
             this.setPreferredSize(convexHull);
             this.revalidate();
         }
+    }
+
+    public enum Tool {
+        TOOL_COMPILER,
+        TOOL_CPU,
+        TOOL_MEMORY,
+        TOOL_DEVICE,
+        TOOL_CONNECTION,
+        TOOL_DELETE,
+        TOOL_NOTHING
+    }
+
+    public interface ToolListener {
+
+        void toolWasUsed();
     }
 }

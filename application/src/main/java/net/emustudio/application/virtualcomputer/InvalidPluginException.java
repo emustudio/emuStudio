@@ -21,7 +21,6 @@ package net.emustudio.application.virtualcomputer;
 /**
  * This class represents an exception that can be raised during PluginLoader.loadPlugin method if a main plugin class
  * does not meet requirements for plugin classes.
- *
  */
 public class InvalidPluginException extends Exception {
 

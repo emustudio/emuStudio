@@ -29,7 +29,6 @@ import java.util.Objects;
 import static net.emustudio.plugins.compiler.as8080.As8080Lexer.*;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
-    private final As8080Lexer lexer;
     public static final int[] tokenMap = new int[As8080Lexer.EOL + 1];
 
     static {
@@ -169,19 +168,21 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[OP_GT] = Token.OPERATOR;
         tokenMap[OP_GTE] = Token.OPERATOR;
 
-        tokenMap[LIT_NUMBER] =Token.LITERAL;
-        tokenMap[LIT_HEXNUMBER_1] =Token.LITERAL;
-        tokenMap[LIT_HEXNUMBER_2] =Token.LITERAL;
-        tokenMap[LIT_OCTNUMBER] =Token.LITERAL;
-        tokenMap[LIT_BINNUMBER] =Token.LITERAL;
-        tokenMap[LIT_STRING_1] =Token.LITERAL;
-        tokenMap[LIT_STRING_2] =Token.LITERAL;
+        tokenMap[LIT_NUMBER] = Token.LITERAL;
+        tokenMap[LIT_HEXNUMBER_1] = Token.LITERAL;
+        tokenMap[LIT_HEXNUMBER_2] = Token.LITERAL;
+        tokenMap[LIT_OCTNUMBER] = Token.LITERAL;
+        tokenMap[LIT_BINNUMBER] = Token.LITERAL;
+        tokenMap[LIT_STRING_1] = Token.LITERAL;
+        tokenMap[LIT_STRING_2] = Token.LITERAL;
 
         tokenMap[ID_IDENTIFIER] = Token.IDENTIFIER;
         tokenMap[ID_LABEL] = Token.IDENTIFIER;
 
         tokenMap[ERROR] = Token.ERROR;
     }
+
+    private final As8080Lexer lexer;
 
 
     public LexicalAnalyzerImpl(As8080Lexer lexer) {

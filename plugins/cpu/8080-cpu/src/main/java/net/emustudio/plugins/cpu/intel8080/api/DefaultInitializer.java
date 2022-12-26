@@ -27,7 +27,9 @@ import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
@@ -60,7 +62,7 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
             MemoryContext<Byte> memory = contextPool.getMemoryContext(pluginId, MemoryContext.class);
             if (memory.getDataType() != Byte.class) {
                 throw new InvalidContextException(
-                    "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                        "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
                 );
             }
 

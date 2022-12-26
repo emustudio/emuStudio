@@ -68,7 +68,7 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
 
     public ByteTestBuilder firstIsDeviceAndSecondIsPort() {
         runner.injectTwoOperands((tmpRunner, first, second) ->
-            cpuRunner.getDevice(second.intValue() & 0xFF).setValue(first));
+                cpuRunner.getDevice(second.intValue() & 0xFF).setValue(first));
         return this;
     }
 
@@ -79,8 +79,8 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
 
     public ByteTestBuilder setPair(int registerPair, int value) {
         runner.injectFirst(
-            (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 1),
-            (tmpRunner, argument) -> cpuRunner.setRegisterPair(registerPair, value)
+                (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 1),
+                (tmpRunner, argument) -> cpuRunner.setRegisterPair(registerPair, value)
         );
         return this;
     }

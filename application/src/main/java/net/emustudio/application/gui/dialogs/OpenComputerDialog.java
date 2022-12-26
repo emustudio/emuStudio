@@ -18,12 +18,12 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.settings.AppSettings;
-import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.opencomputer.*;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,16 +136,16 @@ public class OpenComputerDialog extends JDialog {
         GroupLayout panelConfigLayout = new GroupLayout(panelConfig);
         panelConfig.setLayout(panelConfigLayout);
         panelConfigLayout.setHorizontalGroup(
-            panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(toolConfig, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
-                .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(toolConfig, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                        .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
         );
         panelConfigLayout.setVerticalGroup(
-            panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelConfigLayout.createSequentialGroup()
-                    .addComponent(toolConfig, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE))
+                panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelConfigLayout.createSequentialGroup()
+                                .addComponent(toolConfig, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE))
         );
 
         splitConfig.setLeftComponent(panelConfig);
@@ -155,13 +155,13 @@ public class OpenComputerDialog extends JDialog {
         GroupLayout panelPreviewLayout = new GroupLayout(panelPreview);
         panelPreview.setLayout(panelPreviewLayout);
         panelPreviewLayout.setHorizontalGroup(
-            panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
+                panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
         );
         panelPreviewLayout.setVerticalGroup(
-            panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelPreviewLayout.createSequentialGroup()
-                    .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE))
+                panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelPreviewLayout.createSequentialGroup()
+                                .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE))
         );
 
         splitConfig.setRightComponent(panelPreview);
@@ -178,33 +178,33 @@ public class OpenComputerDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 797, Short.MAX_VALUE)
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(jLabel1)
-                            .addGap(0, 0, Short.MAX_VALUE))
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                            .addGap(0, 0, Short.MAX_VALUE)
-                            .addComponent(btnClose)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(btnOpen)))
-                    .addContainerGap())
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 797, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(jLabel1)
+                                                .addGap(0, 0, Short.MAX_VALUE))
+                                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                .addComponent(btnClose)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(btnOpen)))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jLabel1)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(btnOpen)
-                        .addComponent(btnClose))
-                    .addContainerGap())
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(btnOpen)
+                                        .addComponent(btnClose))
+                                .addContainerGap())
         );
 
         pack();
@@ -218,11 +218,11 @@ public class OpenComputerDialog extends JDialog {
 
     private void lstConfigValueChanged(ListSelectionEvent evt) {
         Optional
-            .ofNullable(lstConfig.getSelectedValue())
-            .ifPresentOrElse(computer -> {
-                Schema schema = new Schema(computer, appSettings);
-                preview.setSchema(schema);
-            }, () -> preview.setSchema(null));
+                .ofNullable(lstConfig.getSelectedValue())
+                .ifPresentOrElse(computer -> {
+                    Schema schema = new Schema(computer, appSettings);
+                    preview.setSchema(schema);
+                }, () -> preview.setSchema(null));
         preview.repaint();
     }
 

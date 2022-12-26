@@ -197,10 +197,10 @@ public class ParseInstrTest {
     public void testCallLabelWithConditionPrefix() {
         Program program = parseProgram("peter: call peter");
         assertTrees(new Program()
-                .addChild(new PseudoLabel(0, 0, "peter")
-                    .addChild(new Instr(0, 0, OPCODE_CALL, 3, 1, 5)
-                        .addChild(new ExprId(0, 0, "peter")))),
-            program
+                        .addChild(new PseudoLabel(0, 0, "peter")
+                                .addChild(new Instr(0, 0, OPCODE_CALL, 3, 1, 5)
+                                        .addChild(new ExprId(0, 0, "peter")))),
+                program
         );
     }
 
@@ -326,8 +326,8 @@ public class ParseInstrTest {
 
     private void assertInstrEDExpr(String instrPrefix, String instrPostfix, int y) {
         Node expr = new ExprInfix(0, 0, OP_ADD)
-            .addChild(new ExprCurrentAddress(0, 0))
-            .addChild(new ExprNumber(0, 0, 5));
+                .addChild(new ExprCurrentAddress(0, 0))
+                .addChild(new ExprNumber(0, 0, 5));
 
         forStringCaseVariations(instrPrefix, prefixVariation -> forStringCaseVariations(instrPostfix, postfixVariation -> {
             Program program = parseProgram(prefixVariation + " $ + 5" + postfixVariation);
@@ -344,8 +344,8 @@ public class ParseInstrTest {
 
     private void assertInstrExpr(String instrPrefix, String instrPostfix, int instrType, int x, int y, int z) {
         Node expr = new ExprInfix(0, 0, OP_ADD)
-            .addChild(new ExprCurrentAddress(0, 0))
-            .addChild(new ExprNumber(0, 0, 5));
+                .addChild(new ExprCurrentAddress(0, 0))
+                .addChild(new ExprNumber(0, 0, 5));
 
         forStringCaseVariations(instrPrefix, prefixVariation -> forStringCaseVariations(instrPostfix, postfixVariation -> {
             Program program = parseProgram(prefixVariation + " $ + 5" + postfixVariation);
@@ -372,8 +372,8 @@ public class ParseInstrTest {
 
     private void assertInstrXDCBExpr(String instrPrefix, String instrPostfix, int instrType, int prefix, int y, int z) {
         Node expr = new ExprInfix(0, 0, OP_ADD)
-            .addChild(new ExprCurrentAddress(0, 0))
-            .addChild(new ExprNumber(0, 0, 5));
+                .addChild(new ExprCurrentAddress(0, 0))
+                .addChild(new ExprNumber(0, 0, 5));
 
         forStringCaseVariations(instrPrefix, instrPrefixVariation -> forStringCaseVariations(instrPostfix, instrPostfixVariation -> {
             Program program = parseProgram(instrPrefixVariation + " $ + 5" + instrPostfixVariation);
@@ -383,17 +383,17 @@ public class ParseInstrTest {
 
     private void assertInstrXDCBExprBit(String instrPrefix, String instrPostfix, int instrType, int prefix, int y, int z) {
         Node expr = new ExprInfix(0, 0, OP_ADD)
-            .addChild(new ExprCurrentAddress(0, 0))
-            .addChild(new ExprNumber(0, 0, 5));
+                .addChild(new ExprCurrentAddress(0, 0))
+                .addChild(new ExprNumber(0, 0, 5));
 
         Node yExpr = new ExprNumber(0, 0, y);
 
         forStringCaseVariations(instrPrefix, instrPrefixVariation -> forStringCaseVariations(instrPostfix, instrPostfixVariation -> {
             Program program = parseProgram(instrPrefixVariation + " $ + 5" + instrPostfixVariation);
             assertTrees(new Program()
-                .addChild(new InstrXDCB(0, 0, instrType, prefix, 0, z)
-                    .addChild(yExpr)
-                    .addChild(expr)), program);
+                    .addChild(new InstrXDCB(0, 0, instrType, prefix, 0, z)
+                            .addChild(yExpr)
+                            .addChild(expr)), program);
         }));
     }
 
@@ -410,8 +410,8 @@ public class ParseInstrTest {
 
     private void assertInstrXDExpr(String instrPrefix, String instrPostfix, int instrType, int prefix, int x, int y, int z) {
         Node expr = new ExprInfix(0, 0, OP_ADD)
-            .addChild(new ExprCurrentAddress(0, 0))
-            .addChild(new ExprNumber(0, 0, 5));
+                .addChild(new ExprCurrentAddress(0, 0))
+                .addChild(new ExprNumber(0, 0, 5));
 
         forStringCaseVariations(instrPrefix, prefixVariation -> {
             forStringCaseVariations(instrPostfix, postfixVariation -> {
@@ -423,17 +423,17 @@ public class ParseInstrTest {
 
     private void assertInstrXDExprExpr(String instrPrefix, int prefix) {
         Node disp = new ExprInfix(0, 0, OP_ADD)
-            .addChild(new ExprCurrentAddress(0, 0))
-            .addChild(new ExprNumber(0, 0, 5));
+                .addChild(new ExprCurrentAddress(0, 0))
+                .addChild(new ExprNumber(0, 0, 5));
 
         Node expr = new ExprNumber(0, 0, 5);
 
         forStringCaseVariations(instrPrefix, prefixVariation -> {
             Program program = parseProgram(prefixVariation + " $ + 5), 5");
             assertTrees(new Program()
-                .addChild(new InstrXD(0, 0, OPCODE_LD, prefix, 0, 6, 6)
-                    .addChild(disp)
-                    .addChild(expr)), program);
+                    .addChild(new InstrXD(0, 0, OPCODE_LD, prefix, 0, 6, 6)
+                            .addChild(disp)
+                            .addChild(expr)), program);
         });
     }
 }

@@ -27,12 +27,12 @@ public class SchemaPointTest {
 
     @Test
     public void testParse() {
-        assertEquals(SchemaPoint.parse("10,56"), SchemaPoint.of(10,56));
+        assertEquals(SchemaPoint.parse("10,56"), SchemaPoint.of(10, 56));
     }
 
     @Test
     public void testParseWithSpaces() {
-        assertEquals(SchemaPoint.parse("   30   , 5   "), SchemaPoint.of(30,5));
+        assertEquals(SchemaPoint.parse("   30   , 5   "), SchemaPoint.of(30, 5));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

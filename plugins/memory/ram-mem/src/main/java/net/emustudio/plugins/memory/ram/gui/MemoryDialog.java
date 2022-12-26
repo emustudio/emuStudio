@@ -41,6 +41,7 @@ public class MemoryDialog extends JDialog {
     private final MemoryContextImpl memory;
     private final RAMTableModel tableModel;
     private File lastOpenedFile;
+    private JTable tableProgram;
 
     public MemoryDialog(JFrame parent, MemoryContextImpl memory, Dialogs dialogs) {
         super(parent, false);
@@ -124,6 +125,4 @@ public class MemoryDialog extends JDialog {
     private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {
         memory.clear();
     }
-
-    private JTable tableProgram;
 }

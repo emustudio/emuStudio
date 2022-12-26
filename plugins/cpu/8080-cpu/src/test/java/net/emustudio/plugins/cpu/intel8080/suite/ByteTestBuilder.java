@@ -42,8 +42,8 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
 
     public ByteTestBuilder setPair(int registerPair, int value) {
         runner.injectFirst(
-            (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 1),
-            (tmpRunner, argument) -> cpuRunner.setRegisterPair(registerPair, value)
+                (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 1),
+                (tmpRunner, argument) -> cpuRunner.setRegisterPair(registerPair, value)
         );
         return this;
     }

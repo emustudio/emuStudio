@@ -47,6 +47,11 @@ public final class PluginComboModel implements ComboBoxModel<String> {
     }
 
     @Override
+    public String getSelectedItem() {
+        return selectedName;
+    }
+
+    @Override
     public void setSelectedItem(Object item) {
         if (item == null) {
             selectedName = null;
@@ -56,11 +61,6 @@ public final class PluginComboModel implements ComboBoxModel<String> {
             selectedName = namesByIndex.get(index);
             selectedFileName = fileNamesByIndex.get(index);
         }
-    }
-
-    @Override
-    public String getSelectedItem() {
-        return Optional.ofNullable(selectedName).orElse(null);
     }
 
     @Override

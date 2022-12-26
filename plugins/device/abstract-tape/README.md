@@ -7,5 +7,7 @@ The official documentation can be found [here][doc].
 
 
 [RAM]: https://en.wikipedia.org/wiki/Random-access_machine
+
 [RASP]: https://en.wikipedia.org/wiki/Random-access_stored-program_machine
+
 [doc]: https://www.emustudio.net/docuser/ram/index/#ABSTRRACT_TAPE

@@ -21,7 +21,6 @@ package net.emustudio.plugins.device.mits88sio;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;

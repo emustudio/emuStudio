@@ -65,13 +65,13 @@ public class EmulatorEngineTest {
     @Test
     public void testCopyLoop() throws Exception {
         resetProgram(
-            I_LOOP_START,
-            I_INC, I_INCV, I_INCV,
-            I_INC, I_INCV, I_DECV,
-            I_INC, I_INC, I_DECV, I_DECV,
-            I_DEC, I_DEC, I_DEC, I_DEC,
-            I_DECV,
-            I_LOOP_END
+                I_LOOP_START,
+                I_INC, I_INCV, I_INCV,
+                I_INC, I_INCV, I_DECV,
+                I_INC, I_INC, I_DECV, I_DECV,
+                I_DEC, I_DEC, I_DEC, I_DEC,
+                I_DECV,
+                I_LOOP_END
         ); // [>++>+->>++<<<<-]
         checkProfilerCopyLoop(17, new int[]{2, 0, -2}, new int[]{1, 2, 4});
 
@@ -81,10 +81,10 @@ public class EmulatorEngineTest {
     @Test
     public void testCopyLoopWeird() {
         resetProgram(
-            I_LOOP_START,
-            I_DECV,
-            I_DEC, I_INC, I_DECV,
-            I_LOOP_END
+                I_LOOP_START,
+                I_DECV,
+                I_DEC, I_INC, I_DECV,
+                I_LOOP_END
         ); // [-<>-]
 
         engine.reset(0);
@@ -94,14 +94,14 @@ public class EmulatorEngineTest {
     @Test
     public void testCopyLoopWithPrints() throws Exception {
         resetProgram(
-            I_LOOP_START,
-            I_DECV,
-            I_INC, I_INCV,
-            I_PRINT,
-            I_INC, I_INCV, I_INCV,
-            I_PRINT,
-            I_DEC, I_DEC,
-            I_LOOP_END
+                I_LOOP_START,
+                I_DECV,
+                I_INC, I_INCV,
+                I_PRINT,
+                I_INC, I_INCV, I_INCV,
+                I_PRINT,
+                I_DEC, I_DEC,
+                I_LOOP_END
         ); // [->+.>++.<<]
 
         checkProfilerCopyLoop(12, new int[]{1, 0, 2, 0}, new int[]{1, 0, 2, 0});
@@ -112,11 +112,11 @@ public class EmulatorEngineTest {
     @Test
     public void testScanloop() throws Exception {
         resetProgram(
-            I_LOOP_START,
-            I_DEC,
-            I_INC,
-            I_INC,
-            I_LOOP_END
+                I_LOOP_START,
+                I_DEC,
+                I_INC,
+                I_INC,
+                I_LOOP_END
         ); // [<>>]
 
         engine.reset(0);
@@ -160,7 +160,7 @@ public class EmulatorEngineTest {
 
         for (int i = 0; i < resultValues.length; i++) {
             assertEquals("Expected res[" + i + "]=" + resultValues[i] + " at " + (start + relPositions[i]),
-                resultValues[i], memory.read(start + relPositions[i]) & 0xFF);
+                    resultValues[i], memory.read(start + relPositions[i]) & 0xFF);
         }
         assertEquals(0, memory.read(engine.P) & 0xFF);
     }

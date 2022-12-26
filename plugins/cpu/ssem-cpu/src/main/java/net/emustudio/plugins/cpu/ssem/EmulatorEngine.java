@@ -40,23 +40,10 @@ import java.util.function.Function;
 import static net.emustudio.plugins.cpu.ssem.DecoderImpl.LINE;
 
 public class EmulatorEngine {
-    private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
-
     public final static int INSTRUCTIONS_PER_SECOND = 700;
     final static int LINE_MASK = 0b11111000;
-
-    private final TimingEstimator estimator = new TimingEstimator();
-    private volatile long waitNanos = -1;
-
-    private final MemoryContext<Byte> memory;
-    private final Decoder decoder;
-    private final Function<Integer, Boolean> isBreakpointSet;
-
-    public final AtomicInteger Acc = new AtomicInteger();
-    public final AtomicInteger CI = new AtomicInteger();
-
+    private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
     private static final Method[] DISPATCH_TABLE = new Method[8];
-    private final Bits emptyBits = new Bits(0, 0);
 
     static {
         try {
@@ -71,6 +58,15 @@ public class EmulatorEngine {
             LOGGER.error("Could not set up dispatch table. The emulator won't work correctly", e);
         }
     }
+
+    public final AtomicInteger Acc = new AtomicInteger();
+    public final AtomicInteger CI = new AtomicInteger();
+    private final TimingEstimator estimator = new TimingEstimator();
+    private final MemoryContext<Byte> memory;
+    private final Decoder decoder;
+    private final Function<Integer, Boolean> isBreakpointSet;
+    private final Bits emptyBits = new Bits(0, 0);
+    private volatile long waitNanos = -1;
 
     EmulatorEngine(MemoryContext<Byte> memory, Function<Integer, Boolean> isBreakpointSet) {
         this.memory = Objects.requireNonNull(memory);

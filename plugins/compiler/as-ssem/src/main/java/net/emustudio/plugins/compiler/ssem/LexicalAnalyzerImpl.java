@@ -29,8 +29,8 @@ import java.util.Objects;
 import static net.emustudio.plugins.compiler.ssem.SSEMLexer.*;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
-    private final SSEMLexer lexer;
     public static final int[] tokenMap = new int[SSEMLexer.BERROR + 1];
+
     static {
         tokenMap[COMMENT] = Token.COMMENT;
         tokenMap[EOL] = Token.WHITESPACE;
@@ -52,6 +52,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[ERROR] = Token.ERROR;
         tokenMap[BERROR] = Token.ERROR;
     }
+
+    private final SSEMLexer lexer;
 
     public LexicalAnalyzerImpl(SSEMLexer lexer) {
         this.lexer = Objects.requireNonNull(lexer);

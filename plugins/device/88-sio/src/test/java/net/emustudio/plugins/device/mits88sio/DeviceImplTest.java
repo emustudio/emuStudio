@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;
-import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertNotEquals;
 
 public class DeviceImplTest {
@@ -41,9 +40,9 @@ public class DeviceImplTest {
     public void setup() throws PluginInitializationException {
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getCPUContext(0, Context8080.class))
-            .andReturn(createNiceMock(Context8080.class)).anyTimes();
+                .andReturn(createNiceMock(Context8080.class)).anyTimes();
         expect(contextPool.getDeviceContext(0, DeviceContext.class))
-            .andThrow(new ContextNotFoundException("")).anyTimes();
+                .andThrow(new ContextNotFoundException("")).anyTimes();
         replay(contextPool);
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();

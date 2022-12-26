@@ -51,11 +51,11 @@ public class Program {
     public void assignLabels() {
         for (Instruction instruction : instructions) {
             instruction
-                .getOperand()
-                .filter(v -> v.getType() == RAMValue.Type.ID)
-                .map(RAMValue::getStringValue)
-                .flatMap(this::getLabel)
-                .ifPresent(instruction::setLabel);
+                    .getOperand()
+                    .filter(v -> v.getType() == RAMValue.Type.ID)
+                    .map(RAMValue::getStringValue)
+                    .flatMap(this::getLabel)
+                    .ifPresent(instruction::setLabel);
         }
     }
 

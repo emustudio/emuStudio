@@ -29,7 +29,6 @@ import java.util.Objects;
  * This is the dialog form that displays when the emuStudio automatization
  * is running.
  */
-@SuppressWarnings("serial")
 public class AutoDialog extends JDialog {
     private final VirtualComputer computer;
 
@@ -60,23 +59,23 @@ public class AutoDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(lblAction, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblPerforming)
-                    .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(btnStop))
-                ).addContainerGap());
+                layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(lblAction, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(lblPerforming)
+                                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(btnStop))
+                        ).addContainerGap());
         layout.setVerticalGroup(
-            layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblPerforming)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblAction)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnStop)
-                .addContainerGap());
+                layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(lblPerforming)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblAction)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnStop)
+                        .addContainerGap());
 
         pack();
     }

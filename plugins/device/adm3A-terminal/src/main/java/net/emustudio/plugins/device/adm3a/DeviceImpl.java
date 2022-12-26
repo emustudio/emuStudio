@@ -23,14 +23,20 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
+import net.emustudio.emulib.runtime.ContextNotFoundException;
+import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.adm3a.api.ContextAdm3A;
 import net.emustudio.plugins.device.adm3a.api.Keyboard;
 import net.emustudio.plugins.device.adm3a.gui.ConfigDialog;
 import net.emustudio.plugins.device.adm3a.gui.GuiUtils;
 import net.emustudio.plugins.device.adm3a.gui.TerminalWindow;
-import net.emustudio.plugins.device.adm3a.interaction.*;
+import net.emustudio.plugins.device.adm3a.interaction.Cursor;
+import net.emustudio.plugins.device.adm3a.interaction.Display;
+import net.emustudio.plugins.device.adm3a.interaction.KeyboardFromFile;
+import net.emustudio.plugins.device.adm3a.interaction.KeyboardGui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,8 +48,8 @@ import java.util.ResourceBundle;
 import static net.emustudio.plugins.device.adm3a.gui.DisplayFont.fromTerminalFont;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.DEVICE,
-    title = "LSI ADM-3A terminal"
+        type = PLUGIN_TYPE.DEVICE,
+        title = "LSI ADM-3A terminal"
 )
 public class DeviceImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
@@ -53,10 +59,8 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     private final TerminalSettings terminalSettings;
     private final ContextAdm3A terminalContext;
     private final Keyboard keyboard;
-
-    private boolean guiIOset = false;
     private final Display display;
-
+    private boolean guiIOset = false;
     private TerminalWindow terminalGUI;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -78,7 +82,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register ADM-3A terminal", e);
             applicationApi.getDialogs().showError(
-                "Could not register ADM-3A terminal. Please see log file for more details", getTitle()
+                    "Could not register ADM-3A terminal. Please see log file for more details", getTitle()
             );
         }
     }
@@ -89,11 +93,11 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         try {
             // get serial I/O board
             DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(
-                pluginID, DeviceContext.class, terminalSettings.getDeviceIndex()
+                    pluginID, DeviceContext.class, terminalSettings.getDeviceIndex()
             );
             if (device.getDataType() != Byte.class) {
                 throw new PluginInitializationException(
-                    "Unexpected device data type. Expected Byte but was: " + device.getDataType()
+                        "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
             terminalContext.setExternalDevice(device);

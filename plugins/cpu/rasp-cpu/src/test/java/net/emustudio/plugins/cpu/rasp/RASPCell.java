@@ -31,6 +31,14 @@ public class RASPCell implements RASPMemoryCell {
         this.value = value;
     }
 
+    public static RASPCell instruction(int address, int opcode) {
+        return new RASPCell(true, address, opcode);
+    }
+
+    public static RASPCell operand(int address, int value) {
+        return new RASPCell(false, address, value);
+    }
+
     @Override
     public boolean isInstruction() {
         return isInstruction;
@@ -44,13 +52,5 @@ public class RASPCell implements RASPMemoryCell {
     @Override
     public int getValue() {
         return value;
-    }
-
-    public static RASPCell instruction(int address, int opcode) {
-        return new RASPCell(true, address, opcode);
-    }
-
-    public static RASPCell operand(int address, int value) {
-        return new RASPCell(false, address, value);
     }
 }

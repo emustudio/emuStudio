@@ -60,8 +60,8 @@ public class MemoryContextImplTest {
             }
         });
 
-        memory.write(0, (RAMInstruction)createNiceMock(RAMInstruction.class));
-        memory.write(0, (RAMInstruction)createNiceMock(RAMInstruction.class));
+        memory.write(0, (RAMInstruction) createNiceMock(RAMInstruction.class));
+        memory.write(0, (RAMInstruction) createNiceMock(RAMInstruction.class));
 
         assertEquals(1, memorySizeChanges.get());
         assertEquals(2, memoryChanges.get());
@@ -84,7 +84,7 @@ public class MemoryContextImplTest {
             }
         });
 
-        memory.write(0, new RAMInstruction[] { createNiceMock(RAMInstruction.class), createNiceMock(RAMInstruction.class)}, 2);
+        memory.write(0, new RAMInstruction[]{createNiceMock(RAMInstruction.class), createNiceMock(RAMInstruction.class)}, 2);
 
         assertEquals(1, memorySizeChanges.get());
         assertEquals(2, memoryChanges.get());

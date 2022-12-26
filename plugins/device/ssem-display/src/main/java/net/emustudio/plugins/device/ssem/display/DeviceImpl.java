@@ -32,8 +32,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.DEVICE,
-    title = "SSEM CRT display"
+        type = PLUGIN_TYPE.DEVICE,
+        title = "SSEM CRT display"
 )
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {
@@ -53,7 +53,7 @@ public class DeviceImpl extends AbstractDevice {
         memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
         if (memory.getDataType() != Byte.class) {
             throw new PluginInitializationException(
-                "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                    "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
             );
         }
     }

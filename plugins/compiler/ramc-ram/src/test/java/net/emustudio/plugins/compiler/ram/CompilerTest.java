@@ -55,8 +55,8 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("READ 5\nREAD *6");
 
         assertProgram(
-            new Instruction(0, 0, READ, RAMInstruction.Direction.DIRECT, 0, Optional.of(new Value(5))),
-            new Instruction(0, 0, READ, RAMInstruction.Direction.INDIRECT, 1, Optional.of(new Value(6)))
+                new Instruction(0, 0, READ, RAMInstruction.Direction.DIRECT, 0, Optional.of(new Value(5))),
+                new Instruction(0, 0, READ, RAMInstruction.Direction.INDIRECT, 1, Optional.of(new Value(6)))
         );
     }
 
@@ -65,9 +65,9 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("WRITE =3\nWRITE 4\nWRITE *8");
 
         assertProgram(
-            new Instruction(0, 0, WRITE, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value(3))),
-            new Instruction(0, 0, WRITE, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(4))),
-            new Instruction(0, 0, WRITE, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(8)))
+                new Instruction(0, 0, WRITE, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value(3))),
+                new Instruction(0, 0, WRITE, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(4))),
+                new Instruction(0, 0, WRITE, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(8)))
         );
     }
 
@@ -76,9 +76,9 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("LOAD ='hello'\nLOAD 7\nLOAD *11");
 
         assertProgram(
-            new Instruction(0, 0, LOAD, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("hello", false))),
-            new Instruction(0, 0, LOAD, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(7))),
-            new Instruction(0, 0, LOAD, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(11)))
+                new Instruction(0, 0, LOAD, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("hello", false))),
+                new Instruction(0, 0, LOAD, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(7))),
+                new Instruction(0, 0, LOAD, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(11)))
         );
     }
 
@@ -87,8 +87,8 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("STORE 111111112\nSTORE *55\n");
 
         assertProgram(
-            new Instruction(0, 0, STORE, RAMInstruction.Direction.DIRECT, 0, Optional.of(new Value(111111112))),
-            new Instruction(0, 0, STORE, RAMInstruction.Direction.INDIRECT, 1, Optional.of(new Value(55)))
+                new Instruction(0, 0, STORE, RAMInstruction.Direction.DIRECT, 0, Optional.of(new Value(111111112))),
+                new Instruction(0, 0, STORE, RAMInstruction.Direction.INDIRECT, 1, Optional.of(new Value(55)))
         );
     }
 
@@ -97,9 +97,9 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("ADD =\"omg omg\"\nADD 99\nADD *1");
 
         assertProgram(
-            new Instruction(0, 0, ADD, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("omg omg", false))),
-            new Instruction(0, 0, ADD, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(99))),
-            new Instruction(0, 0, ADD, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(1)))
+                new Instruction(0, 0, ADD, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("omg omg", false))),
+                new Instruction(0, 0, ADD, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(99))),
+                new Instruction(0, 0, ADD, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(1)))
         );
     }
 
@@ -108,9 +108,9 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("SUB =\"omg omg\"\nSUB 229\nSUB *2453");
 
         assertProgram(
-            new Instruction(0, 0, SUB, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("omg omg", false))),
-            new Instruction(0, 0, SUB, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(229))),
-            new Instruction(0, 0, SUB, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(2453)))
+                new Instruction(0, 0, SUB, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("omg omg", false))),
+                new Instruction(0, 0, SUB, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(229))),
+                new Instruction(0, 0, SUB, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(2453)))
         );
     }
 
@@ -119,9 +119,9 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("MUL =\"omg omg\"\nMUL 229\nMUL *2453");
 
         assertProgram(
-            new Instruction(0, 0, MUL, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("omg omg", false))),
-            new Instruction(0, 0, MUL, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(229))),
-            new Instruction(0, 0, MUL, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(2453)))
+                new Instruction(0, 0, MUL, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("omg omg", false))),
+                new Instruction(0, 0, MUL, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(229))),
+                new Instruction(0, 0, MUL, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(2453)))
         );
     }
 
@@ -130,9 +130,9 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("DIV =\"omg omg\"\nDIV 229\nDIV *2453");
 
         assertProgram(
-            new Instruction(0, 0, DIV, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("omg omg", false))),
-            new Instruction(0, 0, DIV, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(229))),
-            new Instruction(0, 0, DIV, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(2453)))
+                new Instruction(0, 0, DIV, RAMInstruction.Direction.CONSTANT, 0, Optional.of(new Value("omg omg", false))),
+                new Instruction(0, 0, DIV, RAMInstruction.Direction.DIRECT, 1, Optional.of(new Value(229))),
+                new Instruction(0, 0, DIV, RAMInstruction.Direction.INDIRECT, 2, Optional.of(new Value(2453)))
         );
     }
 
@@ -141,9 +141,9 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("here: JMP here");
 
         assertProgram(new Instruction(
-            JMP, RAMInstruction.Direction.DIRECT, 0,
-            Optional.of(new Value("here", true)),
-            new Label(0, 0, "here", 0)
+                JMP, RAMInstruction.Direction.DIRECT, 0,
+                Optional.of(new Value("here", true)),
+                new Label(0, 0, "here", 0)
         ));
         assertEquals(Optional.of(0), memoryStub.read(0).getLabel().map(RAMLabel::getAddress));
     }
@@ -153,11 +153,11 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("JMP here\nhere:HALT");
 
         assertProgram(
-            new Instruction(
-                JMP, RAMInstruction.Direction.DIRECT, 0,
-                Optional.of(new Value("here", true)),
-                new Label(0, 0, "here", 1)),
-            new Instruction(0, 0, HALT, RAMInstruction.Direction.DIRECT, 1, Optional.empty())
+                new Instruction(
+                        JMP, RAMInstruction.Direction.DIRECT, 0,
+                        Optional.of(new Value("here", true)),
+                        new Label(0, 0, "here", 1)),
+                new Instruction(0, 0, HALT, RAMInstruction.Direction.DIRECT, 1, Optional.empty())
         );
         assertEquals(Optional.of(1), memoryStub.read(0).getLabel().map(RAMLabel::getAddress));
     }
@@ -167,11 +167,11 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("JZ here\nhere:HALT");
 
         assertProgram(
-            new Instruction(
-                JZ, RAMInstruction.Direction.DIRECT, 0,
-                Optional.of(new Value("here", true)),
-                new Label(0, 0, "here", 1)),
-            new Instruction(0, 0, HALT, RAMInstruction.Direction.DIRECT, 1, Optional.empty())
+                new Instruction(
+                        JZ, RAMInstruction.Direction.DIRECT, 0,
+                        Optional.of(new Value("here", true)),
+                        new Label(0, 0, "here", 1)),
+                new Instruction(0, 0, HALT, RAMInstruction.Direction.DIRECT, 1, Optional.empty())
         );
         assertEquals(Optional.of(1), memoryStub.read(0).getLabel().map(RAMLabel::getAddress));
     }
@@ -181,11 +181,11 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("JGTZ here\nhere:HALT");
 
         assertProgram(
-            new Instruction(
-                JGTZ, RAMInstruction.Direction.DIRECT, 0,
-                Optional.of(new Value("here", true)),
-                new Label(0, 0, "here", 1)),
-            new Instruction(0, 0, HALT, RAMInstruction.Direction.DIRECT, 1, Optional.empty())
+                new Instruction(
+                        JGTZ, RAMInstruction.Direction.DIRECT, 0,
+                        Optional.of(new Value("here", true)),
+                        new Label(0, 0, "here", 1)),
+                new Instruction(0, 0, HALT, RAMInstruction.Direction.DIRECT, 1, Optional.empty())
         );
         assertEquals(Optional.of(1), memoryStub.read(0).getLabel().map(RAMLabel::getAddress));
     }
@@ -195,7 +195,7 @@ public class CompilerTest extends AbstractCompilerTest {
         compile("halt");
 
         assertProgram(
-            new Instruction(0, 0, HALT, RAMInstruction.Direction.DIRECT, 0, Optional.empty())
+                new Instruction(0, 0, HALT, RAMInstruction.Direction.DIRECT, 0, Optional.empty())
         );
     }
 

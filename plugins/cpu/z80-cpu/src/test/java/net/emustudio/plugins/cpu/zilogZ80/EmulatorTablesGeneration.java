@@ -34,8 +34,8 @@ public class EmulatorTablesGeneration {
             int flagZ = (sum == 0 ? FLAG_Z : 0);
             int flags = flagZ | (sum & 0x80) | FLAG_N;
             table.append("0x")
-                .append(Integer.toHexString(flags))
-                .append(", ");
+                    .append(Integer.toHexString(flags))
+                    .append(", ");
         }
         table.append("};\n");
         System.out.println(table);
@@ -52,8 +52,8 @@ public class EmulatorTablesGeneration {
             int flagP = (carryIns == 0) ? 0 : FLAG_PV;
             int flags = flagC | flagH | flagP;
             table.append("0x")
-                .append(Integer.toHexString(flags))
-                .append(", ");
+                    .append(Integer.toHexString(flags))
+                    .append(", ");
         }
         table.append("};\n");
         System.out.println(table);
@@ -68,8 +68,8 @@ public class EmulatorTablesGeneration {
             int flagZ = (sum == 0 ? FLAG_Z : 0);
             int flags = flagZ | (sum & 0x80);
             table.append("0x")
-                .append(Integer.toHexString(flags))
-                .append(", ");
+                    .append(Integer.toHexString(flags))
+                    .append(", ");
             if (i++ == 15) {
                 table.append("\n        ");
                 i = 0;
@@ -91,8 +91,8 @@ public class EmulatorTablesGeneration {
             int flagP = (carryIns == 0) ? 0 : FLAG_PV;
             int flags = flagH | flagP;
             table.append("0x")
-                .append(Integer.toHexString(flags))
-                .append(", ");
+                    .append(Integer.toHexString(flags))
+                    .append(", ");
             if (i++ == 15) {
                 table.append("\n        ");
                 i = 0;
@@ -110,8 +110,8 @@ public class EmulatorTablesGeneration {
         for (int sum = 0; sum <= 0xFF; sum++) {
             int flagXY = sum & (FLAG_X | FLAG_Y);
             table.append("0x")
-                .append(Integer.toHexString(flagXY))
-                .append(", ");
+                    .append(Integer.toHexString(flagXY))
+                    .append(", ");
             if (i++ == 15) {
                 table.append("\n        ");
                 i = 0;
@@ -129,8 +129,8 @@ public class EmulatorTablesGeneration {
         for (int value = 0; value <= 0xFF; value++) {
             int rrca = ((value >>> 1) | (value << 7)) & 0xFF;
             table.append("0x")
-                .append(Integer.toHexString(rrca))
-                .append(", ");
+                    .append(Integer.toHexString(rrca))
+                    .append(", ");
             if (i++ == 15) {
                 table.append("\n        ");
                 i = 0;
@@ -148,8 +148,8 @@ public class EmulatorTablesGeneration {
         for (int value = 0; value <= 0xFF; value++) {
             int rrca = ((value << 1) | (value >>> 7)) & 0xFF;
             table.append("0x")
-                .append(Integer.toHexString(rrca))
-                .append(", ");
+                    .append(Integer.toHexString(rrca))
+                    .append(", ");
             if (i++ == 15) {
                 table.append("\n        ");
                 i = 0;

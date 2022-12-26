@@ -110,21 +110,10 @@ public class CpmNativeDate implements CpmEntry {
 
         this.format = Objects.requireNonNull(format);
         this.datestamps = new DateStamp[][]{
-            Objects.requireNonNull(file1),
-            Objects.requireNonNull(file2),
-            Objects.requireNonNull(file3)
+                Objects.requireNonNull(file1),
+                Objects.requireNonNull(file2),
+                Objects.requireNonNull(file3)
         };
-    }
-
-    public ByteBuffer toEntry() {
-        switch (format) {
-            case NATIVE:
-                return toEntryNative();
-            case NATIVE2:
-                return toEntryNative2();
-            default:
-                throw new IllegalStateException("This entry can be just NATIVE or NATIVE2");
-        }
     }
 
     public static CpmNativeDate fromEntry(ByteBuffer entry, DateFormat format) {
@@ -166,8 +155,8 @@ public class CpmNativeDate implements CpmEntry {
 
     private static DateStamp[] parseNativeFile(ByteBuffer entry) {
         DateStamp create = new DateStamp(
-            (entry.get() | (entry.get() << 8)) & 0xFF,
-            0, 0
+                (entry.get() | (entry.get() << 8)) & 0xFF,
+                0, 0
         );
         DateStamp modify = parseDateStamp(entry);
         DateStamp access = parseDateStamp(entry);
@@ -184,10 +173,21 @@ public class CpmNativeDate implements CpmEntry {
 
     private static DateStamp parseDateStamp(ByteBuffer entry) {
         return new DateStamp(
-            (entry.get() | (entry.get() << 8)) & 0xFF,
-            bcd2bin(entry.get() & 0xFF),
-            bcd2bin(entry.get() & 0xFF)
+                (entry.get() | (entry.get() << 8)) & 0xFF,
+                bcd2bin(entry.get() & 0xFF),
+                bcd2bin(entry.get() & 0xFF)
         );
+    }
+
+    public ByteBuffer toEntry() {
+        switch (format) {
+            case NATIVE:
+                return toEntryNative();
+            case NATIVE2:
+                return toEntryNative2();
+            default:
+                throw new IllegalStateException("This entry can be just NATIVE or NATIVE2");
+        }
     }
 
     private ByteBuffer toEntryNative() {

@@ -26,8 +26,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
 public class DispatchTables {
-    private final static Logger LOGGER = LoggerFactory.getLogger(DispatchTables.class);
-
     public final static MethodHandle[] DISPATCH_TABLE = new MethodHandle[256];
     public final static MethodHandle[] DISPATCH_TABLE_ED = new MethodHandle[256];
     public final static MethodHandle[] DISPATCH_TABLE_CB = new MethodHandle[256];
@@ -35,6 +33,7 @@ public class DispatchTables {
     public final static MethodHandle[] DISPATCH_TABLE_DD_CB = new MethodHandle[256];
     public final static MethodHandle[] DISPATCH_TABLE_FD = new MethodHandle[256];
     public final static MethodHandle[] DISPATCH_TABLE_FD_CB = new MethodHandle[256];
+    private final static Logger LOGGER = LoggerFactory.getLogger(DispatchTables.class);
 
     static {
         MethodHandles.Lookup lookup = MethodHandles.lookup();

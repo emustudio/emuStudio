@@ -35,7 +35,14 @@ public class ConfigDialog extends JDialog {
     private final TerminalSettings settings;
     private final TerminalWindow window;
     private final Dialogs dialogs;
-
+    private final JCheckBox chkAlwaysOnTop = new JCheckBox("Display always on top");
+    private final JCheckBox chkAntiAliasing = new JCheckBox("Use anti-aliasing");
+    private final JCheckBox chkHalfDuplex = new JCheckBox("Half duplex mode");
+    private final JCheckBox chkSaveSettings = new JCheckBox("Save settings");
+    private final JSpinner spnInputDelay = new JSpinner();
+    private final JTextField txtInputFileName = new JTextField(DEFAULT_INPUT_FILE_NAME);
+    private final JTextField txtOutputFileName = new JTextField(DEFAULT_OUTPUT_FILE_NAME);
+    private final JComboBox<String> cmbFont = new JComboBox<>();
     public ConfigDialog(JFrame parent, TerminalSettings settings, TerminalWindow window, Dialogs dialogs) {
         super(parent, true);
 
@@ -90,8 +97,8 @@ public class ConfigDialog extends JDialog {
         setTitle("Configuration of the terminal");
 
         panelRedirectIO.setBorder(BorderFactory.createTitledBorder(
-            null, "Redirect I/O", 0, 0,
-            lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
+                null, "Redirect I/O", 0, 0,
+                lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
         ));
 
         cmbFont.setModel(new DefaultComboBoxModel<>(new String[]{"Original", "Modern"}));
@@ -108,122 +115,122 @@ public class ConfigDialog extends JDialog {
         GroupLayout layoutRedirectIO = new GroupLayout(panelRedirectIO);
         panelRedirectIO.setLayout(layoutRedirectIO);
         layoutRedirectIO.setHorizontalGroup(
-            layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layoutRedirectIO.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(lblNote)
+                layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layoutRedirectIO.createSequentialGroup()
-                            .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addContainerGap()
                                 .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                    .addComponent(lblInputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(lblOutputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addComponent(lblInputDelay))
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(layoutRedirectIO.createSequentialGroup()
-                                    .addComponent(txtOutputFileName, GroupLayout.PREFERRED_SIZE, 241, Short.MAX_VALUE)
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(btnOutputBrowse))
-                                .addGroup(GroupLayout.Alignment.TRAILING, layoutRedirectIO.createSequentialGroup()
-                                    .addComponent(txtInputFileName, GroupLayout.PREFERRED_SIZE, 241, Short.MAX_VALUE)
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(btnInputBrowse))
-                                .addGroup(layoutRedirectIO.createSequentialGroup()
-                                    .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, 73, GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(lblMs)))))
-                    .addContainerGap())
+                                        .addComponent(lblNote)
+                                        .addGroup(layoutRedirectIO.createSequentialGroup()
+                                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                                .addComponent(lblInputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(lblOutputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+                                                        .addComponent(lblInputDelay))
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addGroup(layoutRedirectIO.createSequentialGroup()
+                                                                .addComponent(txtOutputFileName, GroupLayout.PREFERRED_SIZE, 241, Short.MAX_VALUE)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(btnOutputBrowse))
+                                                        .addGroup(GroupLayout.Alignment.TRAILING, layoutRedirectIO.createSequentialGroup()
+                                                                .addComponent(txtInputFileName, GroupLayout.PREFERRED_SIZE, 241, Short.MAX_VALUE)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(btnInputBrowse))
+                                                        .addGroup(layoutRedirectIO.createSequentialGroup()
+                                                                .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, 73, GroupLayout.PREFERRED_SIZE)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(lblMs)))))
+                                .addContainerGap())
         );
         layoutRedirectIO.setVerticalGroup(
-            layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, layoutRedirectIO.createSequentialGroup()
-                    .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblInputFileName)
-                        .addComponent(txtInputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(btnInputBrowse))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblOutputFileName)
-                        .addComponent(txtOutputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(btnOutputBrowse))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblInputDelay)
-                        .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(lblMs))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
-                    .addComponent(lblNote))
+                layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(GroupLayout.Alignment.TRAILING, layoutRedirectIO.createSequentialGroup()
+                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblInputFileName)
+                                        .addComponent(txtInputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(btnInputBrowse))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblOutputFileName)
+                                        .addComponent(txtOutputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(btnOutputBrowse))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblInputDelay)
+                                        .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(lblMs))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
+                                .addComponent(lblNote))
         );
 
         panelTerminal.setBorder(BorderFactory.createTitledBorder(
-            null, "Terminal", 0, 0,
-            lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
+                null, "Terminal", 0, 0,
+                lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
         ));
 
         GroupLayout layoutTerminal = new GroupLayout(panelTerminal);
         panelTerminal.setLayout(layoutTerminal);
         layoutTerminal.setHorizontalGroup(
-            layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layoutTerminal.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
+                layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layoutTerminal.createSequentialGroup()
-                            .addComponent(lblFont)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(cmbFont))
-                        .addComponent(chkHalfDuplex)
-                        .addComponent(chkAlwaysOnTop)
-                        .addComponent(chkAntiAliasing))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap()
+                                .addGroup(layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(layoutTerminal.createSequentialGroup()
+                                                .addComponent(lblFont)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(cmbFont))
+                                        .addComponent(chkHalfDuplex)
+                                        .addComponent(chkAlwaysOnTop)
+                                        .addComponent(chkAntiAliasing))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layoutTerminal.setVerticalGroup(
-            layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layoutTerminal.createSequentialGroup()
-                    .addGroup(layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(lblFont)
-                        .addComponent(cmbFont))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(chkHalfDuplex)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(chkAlwaysOnTop)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(chkAntiAliasing)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layoutTerminal.createSequentialGroup()
+                                .addGroup(layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(lblFont)
+                                        .addComponent(cmbFont))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkHalfDuplex)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkAlwaysOnTop)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkAntiAliasing)
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(panelRedirectIO, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addContainerGap())
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(panelTerminal, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addContainerGap())
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(chkSaveSettings))))
-                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnOK, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap())
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(panelRedirectIO, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addContainerGap())
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(panelTerminal, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addContainerGap())
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(chkSaveSettings))))
+                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnOK, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addGap(18, 18, 18)
-                    .addComponent(panelRedirectIO, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(panelTerminal, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(chkSaveSettings)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnOK)
-                    .addContainerGap())
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addGap(18, 18, 18)
+                                .addComponent(panelRedirectIO, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(panelTerminal, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkSaveSettings)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnOK)
+                                .addContainerGap())
         );
 
         pack();
@@ -233,7 +240,7 @@ public class ConfigDialog extends JDialog {
         if (window != null) {
             window.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
             window.setDisplayFont(DisplayFont.fromTerminalFont(
-                TerminalSettings.TerminalFont.valueOf(cmbFont.getSelectedItem().toString().toUpperCase())));
+                    TerminalSettings.TerminalFont.valueOf(cmbFont.getSelectedItem().toString().toUpperCase())));
         }
         try {
             updateSettings(chkSaveSettings.isSelected());
@@ -242,13 +249,4 @@ public class ConfigDialog extends JDialog {
             dialogs.showError("Input or output file names (or both) do not exist. Please make sure they do.", "ADM-3A Terminal");
         }
     }
-
-    private final JCheckBox chkAlwaysOnTop = new JCheckBox("Display always on top");
-    private final JCheckBox chkAntiAliasing = new JCheckBox("Use anti-aliasing");
-    private final JCheckBox chkHalfDuplex = new JCheckBox("Half duplex mode");
-    private final JCheckBox chkSaveSettings = new JCheckBox("Save settings");
-    private final JSpinner spnInputDelay = new JSpinner();
-    private final JTextField txtInputFileName = new JTextField(DEFAULT_INPUT_FILE_NAME);
-    private final JTextField txtOutputFileName = new JTextField(DEFAULT_OUTPUT_FILE_NAME);
-    private final JComboBox<String> cmbFont = new JComboBox<>();
 }

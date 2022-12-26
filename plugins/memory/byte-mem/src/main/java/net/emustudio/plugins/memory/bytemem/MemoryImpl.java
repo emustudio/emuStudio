@@ -23,7 +23,10 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.memory.AbstractMemory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.*;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
+import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.MemoryGui;
@@ -38,16 +41,16 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.MEMORY,
-    title = "Byte-cell based operating memory"
+        type = PLUGIN_TYPE.MEMORY,
+        title = "Byte-cell based operating memory"
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl context;
-    private MemoryGui gui;
     private final boolean guiNotSupported;
+    private MemoryGui gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -61,7 +64,7 @@ public class MemoryImpl extends AbstractMemory {
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register memory context", e);
             applicationApi.getDialogs().showError(
-                "Could not register memory. Please see log file for more details", getTitle()
+                    "Could not register memory. Please see log file for more details", getTitle()
             );
         }
     }
@@ -177,7 +180,7 @@ public class MemoryImpl extends AbstractMemory {
         settings.setInt("banksCount", banksCount);
         settings.setInt("commonBoundary", commonBoundary);
 
-        for (int i = 0; settings.contains( "imageName" + i); i++) {
+        for (int i = 0; settings.contains("imageName" + i); i++) {
             settings.remove("imageName" + i);
             settings.remove("imageAddress" + i);
         }
@@ -194,7 +197,7 @@ public class MemoryImpl extends AbstractMemory {
      * directly from memory context.
      */
     public void saveROMRanges() {
-        for (int i = 0; settings.contains("ROMfrom" + i) ; i++) {
+        for (int i = 0; settings.contains("ROMfrom" + i); i++) {
             settings.remove("ROMfrom" + i);
             settings.remove("ROMto" + i);
         }

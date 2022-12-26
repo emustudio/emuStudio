@@ -20,14 +20,13 @@ package net.emustudio.plugins.memory.bytemem;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;
-import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertNotEquals;
 
 public class MemoryImplTest {

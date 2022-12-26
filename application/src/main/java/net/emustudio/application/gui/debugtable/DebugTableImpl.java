@@ -28,7 +28,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.Objects;
 
-public class DebugTableImpl extends JTable  {
+public class DebugTableImpl extends JTable {
     private final DebugTableModel tableModel;
     private final BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
     private final TextCellRenderer textRenderer;

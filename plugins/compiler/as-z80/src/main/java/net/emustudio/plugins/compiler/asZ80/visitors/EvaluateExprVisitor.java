@@ -31,7 +31,8 @@ import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static net.emustudio.plugins.compiler.asZ80.CompileError.*;
+import static net.emustudio.plugins.compiler.asZ80.CompileError.ambiguousExpression;
+import static net.emustudio.plugins.compiler.asZ80.CompileError.expressionIsBiggerThanExpected;
 import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.normalizeId;
 
 /**
@@ -49,16 +50,14 @@ import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.normalizeId;
  * - no PseudoLabel
  */
 public class EvaluateExprVisitor extends NodeVisitor {
+    private final Set<String> doNotEvaluateVariables = new HashSet<>();
+    private final Set<String> forwardReferences = new HashSet<>();
+    private final Map<String, List<String>> macroArguments = new HashMap<>();
     private int currentAddress = 0;
     private int sizeBytes = 0;
     private boolean doNotEvaluateCurrentAddress = false;
-    private final Set<String> doNotEvaluateVariables = new HashSet<>();
-    private final Set<String> forwardReferences = new HashSet<>();
-
     private Optional<Evaluated> latestEval;
     private Set<Node> needMorePassThings = new HashSet<>();
-
-    private final Map<String, List<String>> macroArguments = new HashMap<>();
     private String currentMacroId;
 
     @Override
@@ -121,8 +120,8 @@ public class EvaluateExprVisitor extends NodeVisitor {
         sizeBytes = 0;
         visitChildren(node);
         latestEval.ifPresentOrElse(
-            e -> currentAddress += e.value,
-            () -> doNotEvaluateCurrentAddress = true
+                e -> currentAddress += e.value,
+                () -> doNotEvaluateCurrentAddress = true
         );
     }
 
@@ -160,11 +159,11 @@ public class EvaluateExprVisitor extends NodeVisitor {
         Optional<Evaluated> eval = node.eval(getCurrentAddress(), env);
         env.put(normalizeId(node.label), eval);
         eval.ifPresentOrElse(
-            e -> {
-                // we don't need to re-evaluate label
-                node.exclude();
-            },
-            () -> needMorePassThings.add(node)
+                e -> {
+                    // we don't need to re-evaluate label
+                    node.exclude();
+                },
+                () -> needMorePassThings.add(node)
         );
         visitChildren(node);
     }
@@ -175,8 +174,8 @@ public class EvaluateExprVisitor extends NodeVisitor {
         sizeBytes = 0;
         visitChildren(node);
         latestEval.ifPresentOrElse(
-            e -> currentAddress = e.value,
-            () -> doNotEvaluateCurrentAddress = true
+                e -> currentAddress = e.value,
+                () -> doNotEvaluateCurrentAddress = true
         );
     }
 
@@ -184,11 +183,11 @@ public class EvaluateExprVisitor extends NodeVisitor {
     public void visit(PseudoIf node) {
         sizeBytes = 0;
         Optional<Evaluated> expr = node
-            .collectChild(PseudoIfExpression.class)
-            .flatMap(p -> {
-                visitChildren(p);
-                return p.collectChild(Evaluated.class);
-            });
+                .collectChild(PseudoIfExpression.class)
+                .flatMap(p -> {
+                    visitChildren(p);
+                    return p.collectChild(Evaluated.class);
+                });
 
         boolean includeBlock = expr.filter(p -> p.value != 0).isPresent();
         boolean excludeBlock = expr.filter(p -> p.value == 0).isPresent();
@@ -278,11 +277,11 @@ public class EvaluateExprVisitor extends NodeVisitor {
         visitChildren(node, 1); // expected two children: ExprId and Expr*
 
         node.collectChild(ExprId.class)
-            .ifPresent(exprId -> {
-                String macroParameter = normalizeId(exprId.id);
-                macroArguments.get(currentMacroId).add(macroParameter);
-                env.put(macroParameter, latestEval);
-            });
+                .ifPresent(exprId -> {
+                    String macroParameter = normalizeId(exprId.id);
+                    macroArguments.get(currentMacroId).add(macroParameter);
+                    env.put(macroParameter, latestEval);
+                });
     }
 
     @Override
@@ -358,8 +357,8 @@ public class EvaluateExprVisitor extends NodeVisitor {
         latestEval = node.eval(getCurrentAddress(), env);
         latestEval.ifPresent(e -> node.getMaxValue().ifPresent(e::setMaxValue));
         latestEval.ifPresentOrElse(
-            e -> node.remove().ifPresent(p -> p.addChild(e)),
-            () -> needMorePassThings.add(node)
+                e -> node.remove().ifPresent(p -> p.addChild(e)),
+                () -> needMorePassThings.add(node)
         );
         currentAddress += sizeBytes;
     }

@@ -28,10 +28,8 @@ import java.util.Map;
 import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 
 public class InstrReg extends Node {
-    private final static Map<Integer, Integer> opcodes = new HashMap<>();
     public final static Map<Integer, Integer> registers = new HashMap<>();
-    public final int opcode;
-    public final int reg;
+    private final static Map<Integer, Integer> opcodes = new HashMap<>();
 
     static {
         opcodes.put(OPCODE_INR, 4);
@@ -54,6 +52,9 @@ public class InstrReg extends Node {
         registers.put(REG_L, 5);
         registers.put(REG_M, 6);
     }
+
+    public final int opcode;
+    public final int reg;
 
     public InstrReg(int line, int column, int opcode, int reg) {
         super(line, column);

@@ -40,6 +40,24 @@ public class ComputerConfig implements Closeable {
         this.config = Objects.requireNonNull(config);
     }
 
+    public static ComputerConfig load(Path configurationFile) {
+        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
+        config.load();
+
+        return new ComputerConfig(config);
+    }
+
+    public static ComputerConfig create(String computerName, Path configurationFile) throws IOException {
+        if (Files.exists(configurationFile)) {
+            throw new IllegalArgumentException("Configuration already exists");
+        }
+        Files.createFile(configurationFile);
+        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
+        config.set("name", computerName);
+
+        return new ComputerConfig(config);
+    }
+
     public FileConfig getConfig() {
         return config;
     }
@@ -131,8 +149,8 @@ public class ComputerConfig implements Closeable {
         Optional<List<Config>> rawConnections = config.getOptional("connections");
 
         return rawConnections
-            .map(connections -> connections.stream().map(PluginConnection::new).collect(toList()))
-            .orElse(Collections.emptyList());
+                .map(connections -> connections.stream().map(PluginConnection::new).collect(toList()))
+                .orElse(Collections.emptyList());
     }
 
     public void setConnections(List<PluginConnection> connections) {
@@ -152,23 +170,5 @@ public class ComputerConfig implements Closeable {
     @Override
     public String toString() {
         return getName();
-    }
-
-    public static ComputerConfig load(Path configurationFile) {
-        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
-        config.load();
-
-        return new ComputerConfig(config);
-    }
-
-    public static ComputerConfig create(String computerName, Path configurationFile) throws IOException {
-        if (Files.exists(configurationFile)) {
-            throw new IllegalArgumentException("Configuration already exists");
-        }
-        Files.createFile(configurationFile);
-        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
-        config.set("name", computerName);
-
-        return new ComputerConfig(config);
     }
 }

@@ -44,46 +44,39 @@ import java.util.function.Supplier;
  */
 @ThreadSafe
 public class Drive {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Drive.class);
-
     public static final byte DEAD_DRIVE = (byte) 0b11100111;
+    public static final byte SECTOR0 = (byte) 0b11000001;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Drive.class);
     private static final byte ALIVE_DRIVE = (byte) 0b11100101;
     private static final byte MASK_TRACK0 = (byte) 0b10111111;
-
-    public static final byte SECTOR0 = (byte) 0b11000001;
-
     private static final byte MASK_HEAD_LOAD = (byte) 0b11111011;
     private static final byte MASK_DATA_AVAILABLE = 0b01111111;
 
     private final static Map<Integer, Byte> RST_MAP = Map.of(
-        0, (byte) 0xC7,
-        1, (byte) 0xCF,
-        2, (byte) 0xD7,
-        3, (byte) 0xDF,
-        4, (byte) 0xE7,
-        5, (byte) 0xEF,
-        6, (byte) 0xF7,
-        7, (byte) 0xFF
+            0, (byte) 0xC7,
+            1, (byte) 0xCF,
+            2, (byte) 0xD7,
+            3, (byte) 0xDF,
+            4, (byte) 0xE7,
+            5, (byte) 0xEF,
+            6, (byte) 0xF7,
+            7, (byte) 0xFF
     );
 
     private final int driveIndex;
     private final Context8080 cpu;
     private final byte[] rstInterrupt;
-    private volatile boolean interruptsSupported;
-
     private final ReadWriteLock positionLock = new ReentrantReadWriteLock();
+    private final List<DriveListener> listeners = new CopyOnWriteArrayList<>();
+    private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1);
+    private volatile boolean interruptsSupported;
     private int track;
     private int sector;
     private int sectorOffset;
     private DiskSettings.DriveSettings driveSettings = DiskSettings.DriveSettings.DEFAULT;
-
     private Path mountedImage = null;
     private SeekableByteChannel imageChannel;
     private boolean selected = false;
-
-    private final List<DriveListener> listeners = new CopyOnWriteArrayList<>();
-    private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1);
-
     private boolean sectorTrue = true; // SR0 alternation
     private boolean signalInterrupts = false;
 
@@ -132,7 +125,7 @@ public class Drive {
 
     public DriveParameters getDriveParameters() {
         return inReadLock(
-            () -> new DriveParameters(port1status, port2status, track, sector, getOffset(), mountedImage)
+                () -> new DriveParameters(port1status, port2status, track, sector, getOffset(), mountedImage)
         );
     }
 

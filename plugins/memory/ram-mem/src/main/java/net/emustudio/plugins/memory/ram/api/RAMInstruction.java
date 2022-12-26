@@ -28,24 +28,6 @@ import java.util.Optional;
  */
 public interface RAMInstruction extends Serializable {
 
-    enum Opcode {
-        READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT
-    }
-
-    enum Direction {
-        CONSTANT("="), DIRECT(""), INDIRECT("*");
-
-        private final String value;
-
-        Direction(String value) {
-            this.value = Objects.requireNonNull(value);
-        }
-
-        public String value() {
-            return value;
-        }
-    }
-
     /**
      * Get address of this instruction
      *
@@ -81,4 +63,22 @@ public interface RAMInstruction extends Serializable {
      * @return label operand
      */
     Optional<RAMLabel> getLabel();
+
+    enum Opcode {
+        READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT
+    }
+
+    enum Direction {
+        CONSTANT("="), DIRECT(""), INDIRECT("*");
+
+        private final String value;
+
+        Direction(String value) {
+            this.value = Objects.requireNonNull(value);
+        }
+
+        public String value() {
+            return value;
+        }
+    }
 }

@@ -26,19 +26,7 @@ import java.awt.event.KeyEvent;
 
 public class MemoryGui extends JDialog {
     private final MemoryTableModel tableModel;
-
-    private class MemoryListenerImpl implements Memory.MemoryListener {
-
-        @Override
-        public void memoryChanged(int memoryPosition) {
-            tableModel.dataChangedAt(memoryPosition);
-        }
-
-        @Override
-        public void memorySizeChanged() {
-            tableModel.fireTableDataChanged();
-        }
-    }
+    private JScrollPane scrollPane;
 
     public MemoryGui(JFrame parent, MemoryContext<Byte> memory) {
         super(parent);
@@ -84,16 +72,16 @@ public class MemoryGui extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 965, Short.MAX_VALUE)
-                .addComponent(toolBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 965, Short.MAX_VALUE)
+                        .addComponent(toolBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addComponent(toolBar, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE))
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(toolBar, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE))
         );
 
         pack();
@@ -103,5 +91,16 @@ public class MemoryGui extends JDialog {
         tableModel.clear();
     }
 
-    private JScrollPane scrollPane;
+    private class MemoryListenerImpl implements Memory.MemoryListener {
+
+        @Override
+        public void memoryChanged(int memoryPosition) {
+            tableModel.dataChangedAt(memoryPosition);
+        }
+
+        @Override
+        public void memorySizeChanged() {
+            tableModel.fireTableDataChanged();
+        }
+    }
 }

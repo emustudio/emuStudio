@@ -27,38 +27,38 @@ import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZ
 
 /**
  * MITS 88-DCDD sector ops.
- *
+ * <p>
  * Sector has 137 bytes, and the record (128 bytes) was placed inside, possibly with some offset.
  * The rest of bytes (prefix and suffix of the record) had often a special meaning. However all this
  * prefixing/postfixing was performed in software; it depends on specific CP/M implementation.
- *
- *
- *
+ * <p>
+ * <p>
+ * <p>
  * Tracks 0-5 are formatted as "System Tracks" (regardless of how they are actually used). Sectors on these tracks are
  * formatted as follows:
- *
- *      Byte    Value
- *       0      Track number + 80h
- *      1-2     Sixteen bit address in memory of the end of the bootloader (0x100). This same value is set in all
- *              sectors of tracks 0‐5.
- *     3-130    Data (128 bytes)
- *      131     0FFh (Stop Byte)
- *      132     Checksum of 3-130 (sum of the 128 byte payload)
- *     133-136  Not used
- *
+ * <p>
+ * Byte    Value
+ * 0      Track number + 80h
+ * 1-2     Sixteen bit address in memory of the end of the bootloader (0x100). This same value is set in all
+ * sectors of tracks 0‐5.
+ * 3-130    Data (128 bytes)
+ * 131     0FFh (Stop Byte)
+ * 132     Checksum of 3-130 (sum of the 128 byte payload)
+ * 133-136  Not used
+ * <p>
  * Tracks 6-76 (except track 70) are "Data Tracks." Sectors on these tracks are formatted as follows:
- *
- *  Byte    Value
- *     0      Track number + 80h
- *     1      Skewed sector = (Sector number * 17) MOD 32
- *     2      File number in directory (or not used)
- *     3      Data byte count (or not used)
- *     4      Checksum of 2-3 & 5-134
- *    5-6     Pointer to next data group (or not used)
- *   7-134    Data (128 bytes)
- *    135     0FFh (Stop Byte)
- *    136     00h (Stop byte)
- *
+ * <p>
+ * Byte    Value
+ * 0      Track number + 80h
+ * 1      Skewed sector = (Sector number * 17) MOD 32
+ * 2      File number in directory (or not used)
+ * 3      Data byte count (or not used)
+ * 4      Checksum of 2-3 & 5-134
+ * 5-6     Pointer to next data group (or not used)
+ * 7-134    Data (128 bytes)
+ * 135     0FFh (Stop Byte)
+ * 136     00h (Stop byte)
+ * <p>
  * Track 70 is the Altair Basic/DOS directory track. It is formatted the same as the Data Tracks, except that each Data
  * field is divided into 8 16-byte directory entries. The last 5 of these 16 bytes are written as 0 by most versions of Altair
  * Basic and DOS, but are used as a password by Multiuser Basic, where five 0's means "no password". Unfortunately, single-

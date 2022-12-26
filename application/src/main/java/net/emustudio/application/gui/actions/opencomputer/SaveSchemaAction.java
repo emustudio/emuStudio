@@ -29,8 +29,8 @@ public class SaveSchemaAction extends AbstractAction {
 
     public SaveSchemaAction(SchemaPreviewPanel preview) {
         super(
-            "Save schema image...",
-            new ImageIcon(SaveSchemaAction.class.getResource("/net/emustudio/application/gui/dialogs/document-save.png"))
+                "Save schema image...",
+                new ImageIcon(SaveSchemaAction.class.getResource("/net/emustudio/application/gui/dialogs/document-save.png"))
         );
         this.preview = Objects.requireNonNull(preview);
     }

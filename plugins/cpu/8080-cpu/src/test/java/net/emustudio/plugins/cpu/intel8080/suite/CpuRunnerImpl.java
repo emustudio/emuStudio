@@ -68,7 +68,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         if (registerPair < 3) {
             setRegisterPair(registerPair, value);
         } else if (registerPair == 3) {
-            cpu.getEngine().regs[REG_A] = (byte)((value >>> 8) & 0xFF);
+            cpu.getEngine().regs[REG_A] = (byte) ((value >>> 8) & 0xFF);
             cpu.getEngine().flags = (short) (value & 0xD7 | 2);
         } else {
             throw new IllegalArgumentException("Expected value between <0,3> !");
@@ -86,13 +86,13 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     }
 
     @Override
-    public void setFlags(int mask) {
-        cpu.getEngine().flags |= mask;
+    public int getFlags() {
+        return cpu.getEngine().flags;
     }
 
     @Override
-    public int getFlags() {
-        return cpu.getEngine().flags;
+    public void setFlags(int mask) {
+        cpu.getEngine().flags |= mask;
     }
 
     @Override

@@ -58,19 +58,20 @@ public class UART {
     private final static int INPUT_DEVICE_READY = 0x1; // ready to send data to CPU
 
     private final static Map<Integer, Byte> RST_MAP = Map.of(
-        0, (byte) 0xC7,
-        1, (byte) 0xCF,
-        2, (byte) 0xD7,
-        3, (byte) 0xDF,
-        4, (byte) 0xE7,
-        5, (byte) 0xEF,
-        6, (byte) 0xF7,
-        7, (byte) 0xFF
+            0, (byte) 0xC7,
+            1, (byte) 0xCF,
+            2, (byte) 0xD7,
+            3, (byte) 0xDF,
+            4, (byte) 0xE7,
+            5, (byte) 0xEF,
+            6, (byte) 0xF7,
+            7, (byte) 0xFF
     );
 
     private final AtomicReference<Byte> bufferFromDevice = new AtomicReference<>();
     private final Lock bufferAndStatusLock = new ReentrantLock();
-
+    private final Context8080 cpu;
+    private final List<Observer> observers = new ArrayList<>();
     private volatile DeviceContext<Byte> device;
     private byte statusRegister = XMITTER_BUFFER_EMPTY;
     private volatile boolean interruptsSupported;
@@ -78,20 +79,17 @@ public class UART {
     private volatile boolean outputInterruptEnabled;
     private volatile byte[] inputRstInterrupt;
     private volatile byte[] outputRstInterrupt;
-    private final Context8080 cpu;
-
-    private final List<Observer> observers = new ArrayList<>();
 
     public UART(Context8080 cpu, SioUnitSettings settings) {
         this.cpu = Objects.requireNonNull(cpu);
         this.interruptsSupported = settings.getInterruptsSupported();
-        this.inputRstInterrupt = new byte[] {RST_MAP.get(settings.getInputInterruptVector())};
-        this.outputRstInterrupt = new byte[] {RST_MAP.get(settings.getOutputInterruptVector())};
+        this.inputRstInterrupt = new byte[]{RST_MAP.get(settings.getInputInterruptVector())};
+        this.outputRstInterrupt = new byte[]{RST_MAP.get(settings.getOutputInterruptVector())};
 
         settings.addObserver(() -> {
             this.interruptsSupported = settings.getInterruptsSupported();
-            this.inputRstInterrupt = new byte[] {RST_MAP.get(settings.getInputInterruptVector())};
-            this.outputRstInterrupt = new byte[] {RST_MAP.get(settings.getOutputInterruptVector())};
+            this.inputRstInterrupt = new byte[]{RST_MAP.get(settings.getInputInterruptVector())};
+            this.outputRstInterrupt = new byte[]{RST_MAP.get(settings.getOutputInterruptVector())};
         });
     }
 
@@ -119,11 +117,6 @@ public class UART {
         }
         setStatus((byte) 0); // disable interrupts
         statusRegister = XMITTER_BUFFER_EMPTY;
-    }
-
-    public void setStatus(byte status) {
-        inputInterruptEnabled = (status & 1) == 1;
-        outputInterruptEnabled = (status & 2) == 2;
     }
 
     public void receiveFromDevice(byte data) {
@@ -182,6 +175,11 @@ public class UART {
 
     public byte getStatus() {
         return statusRegister;
+    }
+
+    public void setStatus(byte status) {
+        inputInterruptEnabled = (status & 1) == 1;
+        outputInterruptEnabled = (status & 2) == 2;
     }
 
     public void addObserver(Observer observer) {

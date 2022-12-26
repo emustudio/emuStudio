@@ -31,15 +31,13 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public final class ContextZ80Impl implements ContextZ80 {
-    private final static byte NO_DATA = (byte)0xFF;
     public final static int DEFAULT_FREQUENCY_KHZ = 20000;
-
+    private final static byte NO_DATA = (byte) 0xFF;
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextZ80Impl.class);
     private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
-
+    private final TimedEventsProcessor tep = new TimedEventsProcessor();
     private volatile EmulatorEngine engine;
     private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
-    private final TimedEventsProcessor tep = new TimedEventsProcessor();
 
     public void setEngine(EmulatorEngine engine) {
         this.engine = engine;
@@ -90,15 +88,6 @@ public final class ContextZ80Impl implements ContextZ80 {
     }
 
     @Override
-    public void setCPUFrequency(int frequency) {
-        if (frequency <= 0) {
-            throw new IllegalArgumentException("Invalid CPU frequency (expected > 0): " + frequency);
-        }
-        clockFrequency = frequency;
-    }
-
-
-    @Override
     public void signalInterrupt(byte[] data) {
         engine.requestMaskableInterrupt(data);
     }
@@ -106,6 +95,14 @@ public final class ContextZ80Impl implements ContextZ80 {
     @Override
     public int getCPUFrequency() {
         return clockFrequency;
+    }
+
+    @Override
+    public void setCPUFrequency(int frequency) {
+        if (frequency <= 0) {
+            throw new IllegalArgumentException("Invalid CPU frequency (expected > 0): " + frequency);
+        }
+        clockFrequency = frequency;
     }
 
     @Override

@@ -20,7 +20,9 @@
 
 package net.emustudio.plugins.memory.rasp.gui;
 
-import net.emustudio.plugins.memory.rasp.api.*;
+import net.emustudio.plugins.memory.rasp.api.RASPLabel;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -111,9 +113,9 @@ public class RASPTableModel extends AbstractTableModel {
                     case JZ:
                     case JGTZ:
                         return memory
-                            .getLabel(item.getValue())
-                            .map(RASPLabel::getLabel)
-                            .orElse(String.valueOf(item.getValue()));
+                                .getLabel(item.getValue())
+                                .map(RASPLabel::getLabel)
+                                .orElse(String.valueOf(item.getValue()));
                 }
             }
         }

@@ -22,9 +22,8 @@ public class SetTimerDelta implements Command {
     public final static SetTimerDelta INS = new SetTimerDelta();
 
     private final static int DEFAULT_TIMER_DELTA = 100; // default value for timer delta in ms
-
-    private int setTimerDeltaPos = 0; // determines state for receiving timerDelta
     public int timerDelta = DEFAULT_TIMER_DELTA;  // interrupt every 100 ms
+    private int setTimerDeltaPos = 0; // determines state for receiving timerDelta
 
     @Override
     public void reset(Control control) {

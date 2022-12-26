@@ -41,31 +41,31 @@ import static org.junit.Assert.assertEquals;
 
 public class Utils {
     public static Map<String, Integer> registers = Map.of(
-        "a", REG_A,
-        "b", REG_B,
-        "c", REG_C,
-        "d", REG_D,
-        "e", REG_E,
-        "h", REG_H,
-        "l", REG_L,
-        "m", REG_M
+            "a", REG_A,
+            "b", REG_B,
+            "c", REG_C,
+            "d", REG_D,
+            "e", REG_E,
+            "h", REG_H,
+            "l", REG_L,
+            "m", REG_M
     );
 
     public static Map<String, Integer> regPairsBD = Map.of(
-        "b", REG_B,
-        "d", REG_D
+            "b", REG_B,
+            "d", REG_D
     );
     public static Map<String, Integer> regPairsBDHSP = Map.of(
-        "b", REG_B,
-        "d", REG_D,
-        "h", REG_H,
-        "sp", REG_SP
+            "b", REG_B,
+            "d", REG_D,
+            "h", REG_H,
+            "sp", REG_SP
     );
     public static Map<String, Integer> regPairsBDHPSW = Map.of(
-        "b", REG_B,
-        "d", REG_D,
-        "h", REG_H,
-        "psw", REG_PSW
+            "b", REG_B,
+            "d", REG_D,
+            "h", REG_H,
+            "psw", REG_PSW
     );
 
 
@@ -128,7 +128,7 @@ public class Utils {
             }
             variations.add(new String(chars));
         }
-        for (String variation: variations) {
+        for (String variation : variations) {
             f.accept(variation);
         }
     }

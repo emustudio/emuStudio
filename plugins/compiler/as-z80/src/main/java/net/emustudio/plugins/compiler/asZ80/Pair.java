@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80;
 
-public class Pair<L,R> {
+public class Pair<L, R> {
     public final L l;
     public final R r;
 

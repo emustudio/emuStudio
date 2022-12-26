@@ -33,15 +33,6 @@ import java.util.List;
 public interface ByteMemoryContext extends MemoryContext<Byte> {
 
     /**
-     * This interface represents a range of addresses in the memory.
-     */
-    interface AddressRange {
-        int getStartAddress();
-
-        int getStopAddress();
-    }
-
-    /**
      * Determine whether specified memory position is read-only.
      *
      * @param address memory position
@@ -57,18 +48,18 @@ public interface ByteMemoryContext extends MemoryContext<Byte> {
     List<? extends AddressRange> getReadOnly();
 
     /**
-     * Set specified memory range as RAM (Random Access Memory).
-     *
-     * @param range address range
-     */
-    void setReadWrite(AddressRange range);
-
-    /**
      * Set specified memory range as ROM (Read Only Memory).
      *
      * @param range address range
      */
     void setReadOnly(AddressRange range);
+
+    /**
+     * Set specified memory range as RAM (Random Access Memory).
+     *
+     * @param range address range
+     */
+    void setReadWrite(AddressRange range);
 
     /**
      * Get number of available memory banks.
@@ -108,4 +99,13 @@ public interface ByteMemoryContext extends MemoryContext<Byte> {
      * @return raw memory
      */
     Byte[][] getRawMemory();
+
+    /**
+     * This interface represents a range of addresses in the memory.
+     */
+    interface AddressRange {
+        int getStartAddress();
+
+        int getStopAddress();
+    }
 }

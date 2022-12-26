@@ -53,7 +53,7 @@ public class PseudoLabel extends Node {
 
     @Override
     protected String toStringShallow() {
-        return "Label(" + label +")";
+        return "Label(" + label + ")";
     }
 
     @Override

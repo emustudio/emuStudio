@@ -94,7 +94,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
     @Override
     public synchronized void setLabels(List<RAMLabel> labels) {
         this.labels.clear();
-        for (RAMLabel label: labels) {
+        for (RAMLabel label : labels) {
             this.labels.put(label.getAddress(), label);
         }
     }
@@ -105,14 +105,14 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
     }
 
     @Override
-    public synchronized void setInputs(List<RAMValue> inputs) {
-        clearInputs();
-        this.inputs.addAll(inputs);
+    public List<RAMValue> getInputs() {
+        return Collections.unmodifiableList(inputs);
     }
 
     @Override
-    public List<RAMValue> getInputs() {
-        return Collections.unmodifiableList(inputs);
+    public synchronized void setInputs(List<RAMValue> inputs) {
+        clearInputs();
+        this.inputs.addAll(inputs);
     }
 
     @SuppressWarnings("unchecked")

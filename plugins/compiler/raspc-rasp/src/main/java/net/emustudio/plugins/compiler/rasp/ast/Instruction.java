@@ -72,9 +72,9 @@ public class Instruction {
     @Override
     public String toString() {
         return "Instruction{" +
-            "address=" + address +
-            ", opcode=" + opcode +
-            ", operand=" + operand +
-            '}';
+                "address=" + address +
+                ", opcode=" + opcode +
+                ", operand=" + operand +
+                '}';
     }
 }

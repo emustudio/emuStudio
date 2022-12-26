@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 /**
  * CP/M file entry.
- *
+ * <p>
  * Valid for all versions of CP/M.
  *
  * <p>
@@ -145,16 +145,6 @@ public class CpmFile implements CpmEntry {
         this.numberOfRecords = USE_EX_LSB ? ((ex & 1) << 8 + (rc & 0xFF)) : (rc & 0xFF);
     }
 
-    public String getFileName() {
-        String result = fileName.trim();
-
-        String ext = fileExt.trim();
-        if (!ext.equals("")) {
-            result += "." + ext;
-        }
-        return result;
-    }
-
     public static CpmFile fromEntry(ByteBuffer entry, byte exm) {
         byte status = entry.get();
 
@@ -190,6 +180,21 @@ public class CpmFile implements CpmEntry {
         }
 
         return new CpmFile(status, fileName, fileExt, flags, ex, s2, exm, bc, rc, extents);
+    }
+
+    public static String getLongHeader() {
+        return "St |File name    |Flags   |Ex |S2 |Rc |Bc |Al\n" +
+                "---------------------------------------------";
+    }
+
+    public String getFileName() {
+        String result = fileName.trim();
+
+        String ext = fileExt.trim();
+        if (!ext.equals("")) {
+            result += "." + ext;
+        }
+        return result;
     }
 
     public ByteBuffer toEntry() {
@@ -233,30 +238,25 @@ public class CpmFile implements CpmEntry {
         return entry;
     }
 
-    public static String getLongHeader() {
-        return "St |File name    |Flags   |Ex |S2 |Rc |Bc |Al\n" +
-            "---------------------------------------------";
-    }
-
     public String getFlagsString() {
         return ((flags & (1 << FLAG_WHEEL_REQUIRED)) != 0 ? "W" : " ") +
-            ((flags & (1 << FLAG_PUBLIC_FILE)) != 0 ? "P" : " ") +
-            ((flags & (1 << FLAG_DATE_STAMP)) != 0 ? "D" : " ") +
-            ((flags & (1 << FLAG_WHEEL_PROTECT)) != 0 ? "w" : " ") +
-            ((flags & (1 << FLAG_READ_ONLY)) != 0 ? "R" : " ") +
-            ((flags & (1 << FLAG_INVISIBLE)) != 0 ? "I" : " ") +
-            ((flags & (1 << FLAG_ARCHIVED)) != 0 ? "A" : " ");
+                ((flags & (1 << FLAG_PUBLIC_FILE)) != 0 ? "P" : " ") +
+                ((flags & (1 << FLAG_DATE_STAMP)) != 0 ? "D" : " ") +
+                ((flags & (1 << FLAG_WHEEL_PROTECT)) != 0 ? "w" : " ") +
+                ((flags & (1 << FLAG_READ_ONLY)) != 0 ? "R" : " ") +
+                ((flags & (1 << FLAG_INVISIBLE)) != 0 ? "I" : " ") +
+                ((flags & (1 << FLAG_ARCHIVED)) != 0 ? "A" : " ");
     }
 
     public String toLongString() {
         return String.format("%02x |", status & 0xFF) +
-            String.format("%12s |", getFileName()) +
-            String.format("%7s |", getFlagsString()) +
-            String.format("%02x |", ex & 0xFF) +
-            String.format("%02x |", s2 & 0xFF) +
-            String.format("%02x |", rc & 0xFF) +
-            String.format("%02x |", bc & 0xFF) +
-            al.stream().map(b -> String.format("%02X", b & 0xFF)).collect(Collectors.joining(" "));
+                String.format("%12s |", getFileName()) +
+                String.format("%7s |", getFlagsString()) +
+                String.format("%02x |", ex & 0xFF) +
+                String.format("%02x |", s2 & 0xFF) +
+                String.format("%02x |", rc & 0xFF) +
+                String.format("%02x |", bc & 0xFF) +
+                al.stream().map(b -> String.format("%02X", b & 0xFF)).collect(Collectors.joining(" "));
     }
 
     @Override

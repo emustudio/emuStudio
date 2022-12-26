@@ -21,43 +21,17 @@
 package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.*;
+import net.emustudio.plugins.memory.rasp.api.RASPLabel;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
+import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
 
 import java.io.*;
 import java.util.*;
 
 public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> implements RASPMemoryContext {
-    private final static class EmptyCell implements RASPMemoryCell {
-        private final int address;
-
-        private EmptyCell(int address) {
-            this.address = address;
-        }
-
-        @Override
-        public boolean isInstruction() {
-            return false;
-        }
-
-        @Override
-        public int getAddress() {
-            return address;
-        }
-
-        @Override
-        public int getValue() {
-            return 0;
-        }
-
-        static EmptyCell at(int address) {
-            return new EmptyCell(address);
-        }
-    }
-
     private final Map<Integer, RASPMemoryCell> memory = new HashMap<>();
     private final Map<Integer, RASPLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
-
     private int programLocation;
 
     @Override
@@ -124,7 +98,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
     @Override
     public synchronized void setLabels(List<RASPLabel> labels) {
         this.labels.clear();
-        for (RASPLabel label: labels) {
+        for (RASPLabel label : labels) {
             this.labels.put(label.getAddress(), label);
         }
     }
@@ -135,24 +109,23 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
     }
 
     @Override
-    public synchronized void setInputs(List<Integer> inputs) {
-        clearInputs();
-        this.inputs.addAll(inputs);
-    }
-
-    @Override
     public List<Integer> getInputs() {
         return Collections.unmodifiableList(inputs);
     }
 
-    public void setProgramLocation(int location) {
-        this.programLocation = location;
+    @Override
+    public synchronized void setInputs(List<Integer> inputs) {
+        clearInputs();
+        this.inputs.addAll(inputs);
     }
 
     public int getProgramLocation() {
         return programLocation;
     }
 
+    public void setProgramLocation(int location) {
+        this.programLocation = location;
+    }
 
     @SuppressWarnings("unchecked")
     public void deserialize(String filename) throws IOException, ClassNotFoundException {
@@ -179,5 +152,32 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
 
     public void destroy() {
         clear();
+    }
+
+    private final static class EmptyCell implements RASPMemoryCell {
+        private final int address;
+
+        private EmptyCell(int address) {
+            this.address = address;
+        }
+
+        static EmptyCell at(int address) {
+            return new EmptyCell(address);
+        }
+
+        @Override
+        public boolean isInstruction() {
+            return false;
+        }
+
+        @Override
+        public int getAddress() {
+            return address;
+        }
+
+        @Override
+        public int getValue() {
+            return 0;
+        }
     }
 }

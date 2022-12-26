@@ -32,7 +32,12 @@ public class SioGui extends JDialog {
     private final static Font FONT_MONOSPACED_BOLD_14 = new Font("Monospaced", Font.BOLD, 14);
 
     private final UART uart;
-
+    private final JButton btnClearBuffer = new JButton("Clear buffer");
+    private final JLabel lblData = new JLabel("0x00");
+    private final JLabel lblDataAscii = new JLabel("empty");
+    private final JLabel lblStatus = new JLabel("0x00");
+    private final JLabel lblStatusLong = new JLabel(". . . . . . . .");
+    private final JTextField txtAttachedDevice = new JTextField();
     public SioGui(JFrame parent, UART uart) {
         super(parent);
 
@@ -74,7 +79,6 @@ public class SioGui extends JDialog {
         lblStatusLong.setText(r + d + o + x + i);
     }
 
-
     private void initComponents() {
         JPanel panelAttachedDevice = new JPanel();
         JPanel panelControl = new JPanel();
@@ -101,8 +105,8 @@ public class SioGui extends JDialog {
         setTitle("MITS 88-SIO");
 
         panelAttachedDevice.setBorder(BorderFactory.createTitledBorder(
-            null, "Attached device", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            FONT_BOLD_13));
+                null, "Attached device", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                FONT_BOLD_13));
 
         txtAttachedDevice.setEditable(false);
         txtAttachedDevice.setFont(FONT_BOLD_14);
@@ -110,23 +114,23 @@ public class SioGui extends JDialog {
         GroupLayout panelAttachedDeviceLayout = new GroupLayout(panelAttachedDevice);
         panelAttachedDevice.setLayout(panelAttachedDeviceLayout);
         panelAttachedDeviceLayout.setHorizontalGroup(
-            panelAttachedDeviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelAttachedDeviceLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(txtAttachedDevice)
-                    .addContainerGap())
+                panelAttachedDeviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelAttachedDeviceLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(txtAttachedDevice)
+                                .addContainerGap())
         );
         panelAttachedDeviceLayout.setVerticalGroup(
-            panelAttachedDeviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelAttachedDeviceLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(txtAttachedDevice, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                panelAttachedDeviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelAttachedDeviceLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(txtAttachedDevice, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         panelControl.setBorder(BorderFactory.createTitledBorder(
-            null, "Control channel", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            FONT_BOLD_13));
+                null, "Control channel", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                FONT_BOLD_13));
 
         lblStatusLong.setFont(FONT_MONOSPACED_BOLD_14);
         lblStatusLong.setHorizontalAlignment(SwingConstants.CENTER);
@@ -141,79 +145,79 @@ public class SioGui extends JDialog {
         GroupLayout panelControlLayout = new GroupLayout(panelControl);
         panelControl.setLayout(panelControlLayout);
         panelControlLayout.setHorizontalGroup(
-            panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelControlLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, panelControlLayout.createSequentialGroup()
-                            .addGap(0, 0, Short.MAX_VALUE)
-                            .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                .addComponent(lblStatusLong, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 238, Short.MAX_VALUE)
-                                .addComponent(sepControl)
-                                .addComponent(lblNoteControl, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(panelControlLayout.createSequentialGroup()
-                            .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(panelControlLayout.createSequentialGroup()
-                                    .addComponent(lblHexControl)
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(lblStatus))
-                                .addGroup(panelControlLayout.createSequentialGroup()
-                                    .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblR)
-                                        .addComponent(lblD)
-                                        .addComponent(lblO)
-                                        .addComponent(lblX)
-                                        .addComponent(lblI))
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblNoteX)
-                                        .addComponent(lblNoteO)
-                                        .addComponent(lblNoteR)
-                                        .addComponent(lblNoteD)
-                                        .addComponent(lblNoteI))))
-                            .addGap(0, 0, Short.MAX_VALUE)))
-                    .addContainerGap())
+                                .addContainerGap()
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(GroupLayout.Alignment.TRAILING, panelControlLayout.createSequentialGroup()
+                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                                        .addComponent(lblStatusLong, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 238, Short.MAX_VALUE)
+                                                        .addComponent(sepControl)
+                                                        .addComponent(lblNoteControl, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                                        .addGroup(panelControlLayout.createSequentialGroup()
+                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addGroup(panelControlLayout.createSequentialGroup()
+                                                                .addComponent(lblHexControl)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(lblStatus))
+                                                        .addGroup(panelControlLayout.createSequentialGroup()
+                                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                                        .addComponent(lblR)
+                                                                        .addComponent(lblD)
+                                                                        .addComponent(lblO)
+                                                                        .addComponent(lblX)
+                                                                        .addComponent(lblI))
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                                        .addComponent(lblNoteX)
+                                                                        .addComponent(lblNoteO)
+                                                                        .addComponent(lblNoteR)
+                                                                        .addComponent(lblNoteD)
+                                                                        .addComponent(lblNoteI))))
+                                                .addGap(0, 0, Short.MAX_VALUE)))
+                                .addContainerGap())
         );
         panelControlLayout.setVerticalGroup(
-            panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelControlLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(lblNoteControl, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
-                    .addGap(18, 18, 18)
-                    .addComponent(lblStatusLong, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblHexControl)
-                        .addComponent(lblStatus))
-                    .addGap(18, 18, 18)
-                    .addComponent(sepControl, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
-                    .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(panelControlLayout.createSequentialGroup()
-                            .addGap(24, 24, 24)
-                            .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(lblD)
-                                .addComponent(lblNoteD)))
-                        .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblNoteR)
-                            .addComponent(lblR)))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblO)
-                        .addComponent(lblNoteO))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblNoteX)
-                        .addComponent(lblX))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblNoteI)
-                        .addComponent(lblI))
-                    .addContainerGap(13, Short.MAX_VALUE))
+                                .addContainerGap()
+                                .addComponent(lblNoteControl, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(lblStatusLong, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblHexControl)
+                                        .addComponent(lblStatus))
+                                .addGap(18, 18, 18)
+                                .addComponent(sepControl, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(panelControlLayout.createSequentialGroup()
+                                                .addGap(24, 24, 24)
+                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(lblD)
+                                                        .addComponent(lblNoteD)))
+                                        .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                .addComponent(lblNoteR)
+                                                .addComponent(lblR)))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblO)
+                                        .addComponent(lblNoteO))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblNoteX)
+                                        .addComponent(lblX))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblNoteI)
+                                        .addComponent(lblI))
+                                .addContainerGap(13, Short.MAX_VALUE))
         );
 
         panelData.setBorder(BorderFactory.createTitledBorder(
-            null, "Data buffer", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
-            FONT_BOLD_13));
+                null, "Data buffer", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                FONT_BOLD_13));
 
         lblDataAscii.setFont(FONT_BOLD_14);
         lblDataAscii.setHorizontalAlignment(SwingConstants.CENTER);
@@ -224,73 +228,65 @@ public class SioGui extends JDialog {
         GroupLayout panelDataLayout = new GroupLayout(panelData);
         panelData.setLayout(panelDataLayout);
         panelDataLayout.setHorizontalGroup(
-            panelDataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelDataLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelDataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, panelDataLayout.createSequentialGroup()
-                            .addGap(0, 102, Short.MAX_VALUE)
-                            .addComponent(btnClearBuffer))
+                panelDataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(panelDataLayout.createSequentialGroup()
-                            .addComponent(lblHexData)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(lblData)
-                            .addGap(0, 0, Short.MAX_VALUE))
-                        .addComponent(lblNoteData, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                        .addComponent(lblDataAscii, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap())
+                                .addContainerGap()
+                                .addGroup(panelDataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(GroupLayout.Alignment.TRAILING, panelDataLayout.createSequentialGroup()
+                                                .addGap(0, 102, Short.MAX_VALUE)
+                                                .addComponent(btnClearBuffer))
+                                        .addGroup(panelDataLayout.createSequentialGroup()
+                                                .addComponent(lblHexData)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(lblData)
+                                                .addGap(0, 0, Short.MAX_VALUE))
+                                        .addComponent(lblNoteData, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                        .addComponent(lblDataAscii, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap())
         );
         panelDataLayout.setVerticalGroup(
-            panelDataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelDataLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(lblNoteData, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
-                    .addGap(18, 18, 18)
-                    .addComponent(lblDataAscii, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(panelDataLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblHexData)
-                        .addComponent(lblData))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnClearBuffer)
-                    .addContainerGap())
+                panelDataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelDataLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(lblNoteData, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(lblDataAscii, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelDataLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblHexData)
+                                        .addComponent(lblData))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnClearBuffer)
+                                .addContainerGap())
         );
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(panelAttachedDevice, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(panelControl, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(panelData, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(panelAttachedDevice, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(panelControl, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(panelData, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(panelAttachedDevice, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(panelControl, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(panelData, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap())
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(panelAttachedDevice, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(panelControl, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(panelData, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap())
         );
 
         btnClearBuffer.addActionListener(e -> uart.readBuffer());
         pack();
     }
-
-
-    private final JButton btnClearBuffer = new JButton("Clear buffer");
-    private final JLabel lblData = new JLabel("0x00");
-    private final JLabel lblDataAscii = new JLabel("empty");
-    private final JLabel lblStatus = new JLabel("0x00");
-    private final JLabel lblStatusLong = new JLabel(". . . . . . . .");
-    private final JTextField txtAttachedDevice = new JTextField();
 }

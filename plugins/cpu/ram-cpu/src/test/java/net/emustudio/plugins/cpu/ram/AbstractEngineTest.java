@@ -25,7 +25,6 @@ import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RAMValue;
 import org.junit.Before;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.easymock.EasyMock.*;

@@ -18,19 +18,22 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
-import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
-import net.emustudio.plugins.memory.bytemem.gui.model.TableMemory;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
+import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
+import net.emustudio.plugins.memory.bytemem.gui.model.TableMemory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -49,6 +52,19 @@ public class MemoryGui extends JDialog {
 
     private final TableMemory table;
     private final MemoryTableModel tableModel;
+    private final JLabel lblBanksCount = new JLabel();
+    private final JLabel lblPageCount = new JLabel();
+    private final JScrollPane paneMemory = new JScrollPane();
+    private final JSpinner spnBank = new JSpinner();
+    private final JSpinner spnPage = new JSpinner();
+    private final JTextField txtAddress = new JTextField();
+    private final JTextField txtChar = new JTextField();
+    private final JTextField txtValueBin = new JTextField();
+    private final JTextField txtValueDec = new JTextField();
+    private final JTextField txtValueHex = new JTextField();
+    private final JTextField txtValueOct = new JTextField();
+    private final JToggleButton btnAsciiMode = new JToggleButton();
+
 
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
         super(parent);
@@ -100,7 +116,7 @@ public class MemoryGui extends JDialog {
             updateMemVal(row, column);
         });
         MouseHandler mouseHandler = new MouseHandler(
-            tableModel, () -> updateMemVal(table.getSelectedRow(), table.getSelectedColumn()));
+                tableModel, () -> updateMemVal(table.getSelectedRow(), table.getSelectedColumn()));
         table.addMouseListener(mouseHandler);
         table.addMouseWheelListener(mouseHandler);
         table.addKeyListener(new KeyboardHandler(table, spnPage.getModel(), this));
@@ -111,7 +127,7 @@ public class MemoryGui extends JDialog {
             return;
         }
         int address = tableModel.getRowCount() * tableModel.getColumnCount()
-            * tableModel.getPage() + row * tableModel.getColumnCount() + column;
+                * tableModel.getPage() + row * tableModel.getColumnCount() + column;
 
         int data = tableModel.getRawValueAt(row, column);
         txtAddress.setText(String.format("%04X", address));
@@ -121,7 +137,6 @@ public class MemoryGui extends JDialog {
         txtValueOct.setText(String.format("%02o", data));
         txtValueBin.setText(formatBinaryString(data, 8));
     }
-
 
     private void initComponents() {
         JToolBar toolBar = new JToolBar();
@@ -245,40 +260,40 @@ public class MemoryGui extends JDialog {
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jLabel1)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(spnPage, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jLabel2)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(lblPageCount)
-                    .addGap(54, 54, 54)
-                    .addComponent(jLabel3)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(spnBank, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jLabel4)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(lblBanksCount)
-                    .addContainerGap(283, Short.MAX_VALUE))
+                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(spnPage, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel2)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblPageCount)
+                                .addGap(54, 54, 54)
+                                .addComponent(jLabel3)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(spnBank, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel4)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblBanksCount)
+                                .addContainerGap(283, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel1)
-                        .addComponent(spnPage, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel2)
-                        .addComponent(lblPageCount)
-                        .addComponent(jLabel3)
-                        .addComponent(spnBank, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel4)
-                        .addComponent(lblBanksCount))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(jLabel1)
+                                        .addComponent(spnPage, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jLabel2)
+                                        .addComponent(lblPageCount)
+                                        .addComponent(jLabel3)
+                                        .addComponent(spnBank, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jLabel4)
+                                        .addComponent(lblBanksCount))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel4.setBorder(BorderFactory.createTitledBorder("Selected value"));
@@ -327,91 +342,91 @@ public class MemoryGui extends JDialog {
         GroupLayout jPanel4Layout = new GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel4Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel5)
-                        .addComponent(jLabel6))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(txtChar, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
-                        .addComponent(txtAddress, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, 13, GroupLayout.PREFERRED_SIZE)
-                    .addGap(2, 2, 2)
-                    .addComponent(jLabel7)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(txtValueHex)
-                        .addComponent(txtValueDec, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel8)
-                        .addComponent(jLabel9))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(txtValueBin)
-                        .addComponent(txtValueOct, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel4Layout.createSequentialGroup()
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(jLabel10))
-                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                            .addGap(7, 7, 7)
-                            .addComponent(jLabel11)))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel4Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel4Layout.createSequentialGroup()
-                            .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addContainerGap()
+                                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel5)
+                                        .addComponent(jLabel6))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(txtChar, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
+                                        .addComponent(txtAddress, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, 13, GroupLayout.PREFERRED_SIZE)
+                                .addGap(2, 2, 2)
                                 .addComponent(jLabel7)
-                                .addComponent(txtValueDec, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jLabel8)
-                                .addComponent(txtValueOct, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jLabel10))
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(txtValueHex, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jLabel9)
-                                .addComponent(txtValueBin, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jLabel11)))
-                        .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel5)
-                                    .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(txtValueHex)
+                                        .addComponent(txtValueDec, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel6)
-                                    .addComponent(txtChar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(jSeparator4)))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addComponent(jLabel8)
+                                        .addComponent(jLabel9))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(txtValueBin)
+                                        .addComponent(txtValueOct, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
+                                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(jPanel4Layout.createSequentialGroup()
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(jLabel10))
+                                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                                                .addGap(7, 7, 7)
+                                                .addComponent(jLabel11)))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel4Layout.setVerticalGroup(
+                jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(jPanel4Layout.createSequentialGroup()
+                                                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(jLabel7)
+                                                        .addComponent(txtValueDec, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                        .addComponent(jLabel8)
+                                                        .addComponent(txtValueOct, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                        .addComponent(jLabel10))
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(txtValueHex, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                        .addComponent(jLabel9)
+                                                        .addComponent(txtValueBin, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                        .addComponent(jLabel11)))
+                                        .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                                .addGroup(jPanel4Layout.createSequentialGroup()
+                                                        .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(jLabel5)
+                                                                .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                                .addComponent(jLabel6)
+                                                                .addComponent(txtChar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
+                                                .addComponent(jSeparator4)))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jPanel4, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap())
+                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(jPanel4, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jPanel4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jPanel4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         splitPane.setBottomComponent(jPanel2);
@@ -422,16 +437,16 @@ public class MemoryGui extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(toolBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(splitPane)
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(toolBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(splitPane)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 598, Short.MAX_VALUE))
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 598, Short.MAX_VALUE))
         );
 
         pack();
@@ -439,7 +454,7 @@ public class MemoryGui extends JDialog {
 
     private void btnLoadImageActionPerformed(ActionEvent evt) {
         dialogs.chooseFile(
-            "Load memory image", "Load", Path.of(System.getProperty("user.dir")), false, IMAGE_EXTENSION_FILTER
+                "Load memory image", "Load", Path.of(System.getProperty("user.dir")), false, IMAGE_EXTENSION_FILTER
         ).ifPresent(path -> {
             boolean isHex = path.toString().toLowerCase().endsWith(".hex");
             boolean hasBanks = context.getBanksCount() > 1;
@@ -450,7 +465,7 @@ public class MemoryGui extends JDialog {
 
             if (!isHex || hasBanks) {
                 SelectBankAddressDialog dialog = new SelectBankAddressDialog(
-                    this, hasBanks, !isHex, dialogs
+                        this, hasBanks, !isHex, dialogs
                 );
                 dialog.setVisible(true);
                 ok = dialog.isOk();
@@ -478,16 +493,16 @@ public class MemoryGui extends JDialog {
     private void btnGotoAddressActionPerformed(ActionEvent evt) {
         try {
             dialogs
-                .readInteger("Enter memory address:", "Go to address")
-                .ifPresent(address -> {
-                    if (address < 0 || address >= context.getSize()) {
-                        dialogs.showError(
-                            "Address out of bounds (min=0, max=" + (context.getSize() - 1) + ")", "Go to address"
-                        );
-                    } else {
-                        setPageFromAddress(address);
-                    }
-                });
+                    .readInteger("Enter memory address:", "Go to address")
+                    .ifPresent(address -> {
+                        if (address < 0 || address >= context.getSize()) {
+                            dialogs.showError(
+                                    "Address out of bounds (min=0, max=" + (context.getSize() - 1) + ")", "Go to address"
+                            );
+                        } else {
+                            setPageFromAddress(address);
+                        }
+                    });
         } catch (NumberFormatException e) {
             dialogs.showError("Invalid number format", "Go to address");
         }
@@ -496,7 +511,7 @@ public class MemoryGui extends JDialog {
     private void btnFindActionPerformed(ActionEvent evt) {
         AtomicInteger foundAddress = new AtomicInteger(-1);
         FindSequenceDialog dialog = new FindSequenceDialog(
-            dialogs, this, tableModel, getCurrentAddress(), foundAddress::set
+                dialogs, this, tableModel, getCurrentAddress(), foundAddress::set
         );
 
         dialog.setVisible(true);
@@ -518,9 +533,9 @@ public class MemoryGui extends JDialog {
     private void btnDumpActionPerformed(ActionEvent evt) {
         Path currentDirectory = Path.of(System.getProperty("user.dir"));
         dialogs.chooseFile(
-            "Dump memory content into a file", "Save", currentDirectory, true,
-            new FileExtensionsFilter("Human-readable dump", "txt"),
-            new FileExtensionsFilter("Binary dump", "bin")
+                "Dump memory content into a file", "Save", currentDirectory, true,
+                new FileExtensionsFilter("Human-readable dump", "txt"),
+                new FileExtensionsFilter("Binary dump", "bin")
         ).ifPresent(path -> {
             try {
                 if (path.toString().toLowerCase().endsWith(".txt")) {
@@ -559,18 +574,4 @@ public class MemoryGui extends JDialog {
         } catch (RuntimeException ignored) {
         }
     }
-
-
-    private final JLabel lblBanksCount = new JLabel();
-    private final JLabel lblPageCount = new JLabel();
-    private final JScrollPane paneMemory = new JScrollPane();
-    private final JSpinner spnBank = new JSpinner();
-    private final JSpinner spnPage = new JSpinner();
-    private final JTextField txtAddress = new JTextField();
-    private final JTextField txtChar = new JTextField();
-    private final JTextField txtValueBin = new JTextField();
-    private final JTextField txtValueDec = new JTextField();
-    private final JTextField txtValueHex = new JTextField();
-    private final JTextField txtValueOct = new JTextField();
-    private final JToggleButton btnAsciiMode = new JToggleButton();
 }

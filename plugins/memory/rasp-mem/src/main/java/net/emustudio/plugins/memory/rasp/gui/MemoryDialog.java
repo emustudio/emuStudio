@@ -41,6 +41,7 @@ public class MemoryDialog extends JDialog {
     private final MemoryContextImpl memory;
     private final RASPTableModel tableModel;
     private File recentOpenPath;
+    private javax.swing.JTable memoryTable;
 
     public MemoryDialog(JFrame parent, MemoryContextImpl context, Dialogs dialogs) {
         super(parent, false);
@@ -113,27 +114,26 @@ public class MemoryDialog extends JDialog {
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 491, Short.MAX_VALUE))
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 491, Short.MAX_VALUE))
         );
 
         pack();
     }
 
-
     private void onOpenClick(java.awt.event.ActionEvent evt) {
         File currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")));
         dialogs.chooseFile(
-            "Load compiled RASP program", "Load", currentDirectory.toPath(), false,
-            new FileExtensionsFilter("RASP compiler file", "bin")
+                "Load compiled RASP program", "Load", currentDirectory.toPath(), false,
+                new FileExtensionsFilter("RASP compiler file", "bin")
         ).ifPresent(path -> {
             recentOpenPath = path.toFile().getParentFile();
             try {
@@ -164,7 +164,4 @@ public class MemoryDialog extends JDialog {
             memoryTable.editCellAt(row, 1);
         }
     }
-
-
-    private javax.swing.JTable memoryTable;
 }

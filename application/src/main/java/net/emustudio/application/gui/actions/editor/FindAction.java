@@ -19,13 +19,12 @@
 package net.emustudio.application.gui.actions.editor;
 
 import org.fife.rsta.ui.search.FindDialog;
+import org.fife.rsta.ui.search.ReplaceDialog;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
-
-import org.fife.rsta.ui.search.ReplaceDialog;
 
 public class FindAction extends AbstractAction {
     private final FindDialog findDialog;

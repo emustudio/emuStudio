@@ -29,6 +29,11 @@ import java.util.List;
 public class DrawingModel {
 
     /**
+     * Temporary points used in the process of connection line drawing. If the line is drawn, these points are saved,
+     * they are cleared otherwise.
+     */
+    public final List<P> tmpPoints = new ArrayList<>();
+    /**
      * Holds a point of a connection line.
      * <p>
      * This is used in "moving" mode for: - moving of the connection line point - add/delete connection line point
@@ -37,9 +42,7 @@ public class DrawingModel {
      * mouse is released, while drawing a line
      */
     public P selectedPoint;
-
     public DrawingPanel.Tool drawTool = DrawingPanel.Tool.TOOL_NOTHING;
-
     /**
      * This variable is used when "moving" mode is active and user moves an element. It holds the moving element object.
      * <p>
@@ -48,28 +51,18 @@ public class DrawingModel {
      * released.
      */
     public Element tmpElem1;
-
     /**
      * Used when drawing lines. It represents last element that the line is connected to.
      */
     public Element tmpElem2;
-
     /**
      * Point where the selection starts. It is set when the "selection" mode is activated.
      */
     public Point selectionStart;
-
     /**
      * Point where the selection ends. It is set when the "selection" mode is active and mouse released.
      */
     public Point selectionEnd;
-
-    /**
-     * Temporary points used in the process of connection line drawing. If the line is drawn, these points are saved,
-     * they are cleared otherwise.
-     */
-    public final List<P> tmpPoints = new ArrayList<>();
-
     /**
      * Selected line. Used only in "moving" mode.
      * <p>

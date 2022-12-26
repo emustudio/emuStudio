@@ -38,11 +38,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public abstract class AbstractCompilerTest {
-    protected CompilerRASP compiler;
-    protected MemoryStub memoryStub;
-
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
+    protected CompilerRASP compiler;
+    protected MemoryStub memoryStub;
 
     @Before
     public void setUp() throws Exception {
@@ -89,14 +88,14 @@ public abstract class AbstractCompilerTest {
     protected void assertProgram(RASPMemoryCell... program) {
         for (int i = 0; i < program.length; i++) {
             assertEquals(
-                String.format("%d. expected=%s, but was=%s", i, program[i], memoryStub.read(i)),
-                program[i], memoryStub.read(i)
+                    String.format("%d. expected=%s, but was=%s", i, program[i], memoryStub.read(i)),
+                    program[i], memoryStub.read(i)
             );
         }
         for (int i = program.length; i < memoryStub.getSize(); i++) {
             assertNull(
-                String.format("%d. expected=null, but was=%s", i, memoryStub.read(i)),
-                memoryStub.read(i)
+                    String.format("%d. expected=null, but was=%s", i, memoryStub.read(i)),
+                    memoryStub.read(i)
             );
         }
     }

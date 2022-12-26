@@ -20,7 +20,7 @@ package net.emustudio.application.internal;
 
 /**
  * This code was borrowed from:
- *
+ * <p>
  * http://stackoverflow.com/questions/19757300/java-8-lambda-streams-filter-by-method-with-exception
  */
 public class Unchecked {

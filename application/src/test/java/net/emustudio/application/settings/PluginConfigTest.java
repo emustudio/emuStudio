@@ -33,8 +33,8 @@ public class PluginConfigTest {
     @Test
     public void testAbsolutePathInPluginConfigWontBeRelativized() {
         PluginConfig config = PluginConfig.create(
-            "xx", PLUGIN_TYPE.CPU, "myName", System.getProperty("user.dir") + File.separator + "path.jar",
-            P.of(0, 0), Config.inMemory()
+                "xx", PLUGIN_TYPE.CPU, "myName", System.getProperty("user.dir") + File.separator + "path.jar",
+                P.of(0, 0), Config.inMemory()
         );
         assertEquals(Path.of(System.getProperty("user.dir") + File.separator + "path.jar"), config.getPluginPath());
     }
@@ -42,7 +42,7 @@ public class PluginConfigTest {
     @Test
     public void testRelativePathInPluginConfigWillBeRelativized() {
         PluginConfig config = PluginConfig.create(
-            "xx", PLUGIN_TYPE.CPU, "myName", "relativepath.jar", P.of(0, 0), Config.inMemory()
+                "xx", PLUGIN_TYPE.CPU, "myName", "relativepath.jar", P.of(0, 0), Config.inMemory()
         );
         assertEquals(Path.of(System.getProperty("user.dir"), "cpu", "relativepath.jar"), config.getPluginPath());
     }

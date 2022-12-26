@@ -41,8 +41,8 @@ public class Cpmfs {
 
     @Command(header = "Show file content", name = "cat", description = "Prints the file in CP/M disk image")
     public void cat(
-        @Parameters(paramLabel = "FILE", description = "file name in CP/M disk image")
-        String fileName) throws IOException {
+            @Parameters(paramLabel = "FILE", description = "file name in CP/M disk image")
+            String fileName) throws IOException {
         System.out.println(cpmfs().readFile(cpmfile(fileName)));
     }
 
@@ -50,8 +50,8 @@ public class Cpmfs {
     public void ls() {
         System.out.println(CpmFile.getLongHeader());
         cpmfs()
-            .listExistingFiles()
-            .forEach(f -> System.out.println(f.toLongString()));
+                .listExistingFiles()
+                .forEach(f -> System.out.println(f.toLongString()));
     }
 
     @Command(header = "Show files dates", name = "dates", description = "Prints all valid file names in CP/M disk image with dates")
@@ -61,7 +61,7 @@ public class Cpmfs {
         cpmfs().listNativeDates().forEach(System.out::println);
     }
 
-    @Command(header = "Copy files", name = "copy", aliases = { "cp"}, description = "Copy a file between CP/M disk image and host")
+    @Command(header = "Copy files", name = "copy", aliases = {"cp"}, description = "Copy a file between CP/M disk image and host")
     public void copy(@Parameters(paramLabel = "SRC_FILE", index = "0", description = "source file (cpm:// prefix if in CP/M disk image)")
                      String src,
                      @Parameters(paramLabel = "DST_FILE", index = "1", description = "destination file (cpm:// prefix if in CP/M disk image")

@@ -18,10 +18,10 @@
  */
 package net.emustudio.application.gui.actions.opencomputer;
 
-import net.emustudio.application.settings.AppSettings;
-import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 
 import javax.swing.*;
@@ -39,7 +39,7 @@ public class EditComputerAction extends AbstractAction {
     public EditComputerAction(Dialogs dialogs, AppSettings appSettings,
                               Runnable update, JDialog parent, JList<ComputerConfig> lstConfig) {
         super(
-            "Edit computer...", new ImageIcon(EditComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/computer.png"))
+                "Edit computer...", new ImageIcon(EditComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/computer.png"))
         );
         this.dialogs = Objects.requireNonNull(dialogs);
         this.appSettings = Objects.requireNonNull(appSettings);
@@ -51,11 +51,11 @@ public class EditComputerAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         Optional
-            .ofNullable(lstConfig.getSelectedValue())
-            .ifPresentOrElse(computer -> {
-                Schema schema = new Schema(computer, appSettings);
-                new SchemaEditorDialog(parent, schema, dialogs).setVisible(true);
-                update.run();
-            }, () -> dialogs.showError("A computer has to be selected!", "Edit computer"));
+                .ofNullable(lstConfig.getSelectedValue())
+                .ifPresentOrElse(computer -> {
+                    Schema schema = new Schema(computer, appSettings);
+                    new SchemaEditorDialog(parent, schema, dialogs).setVisible(true);
+                    update.run();
+                }, () -> dialogs.showError("A computer has to be selected!", "Edit computer"));
     }
 }

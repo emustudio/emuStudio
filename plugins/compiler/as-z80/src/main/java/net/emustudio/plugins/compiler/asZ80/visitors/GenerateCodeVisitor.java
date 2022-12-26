@@ -55,15 +55,15 @@ public class GenerateCodeVisitor extends NodeVisitor {
     @Override
     public void visit(DataDS node) {
         node.collectChild(Evaluated.class)
-            .ifPresent(e -> {
-                if (e.value < 0) {
-                    error(valueMustBePositive(e));
-                } else {
-                    for (int i = 0; i < e.value; i++) {
-                        hex.add((byte) 0);
+                .ifPresent(e -> {
+                    if (e.value < 0) {
+                        error(valueMustBePositive(e));
+                    } else {
+                        for (int i = 0; i < e.value; i++) {
+                            hex.add((byte) 0);
+                        }
                     }
-                }
-            });
+                });
     }
 
     @Override
@@ -122,13 +122,13 @@ public class GenerateCodeVisitor extends NodeVisitor {
     @Override
     public void visit(PseudoOrg node) {
         node.collectChild(Evaluated.class)
-            .ifPresent(e -> {
-                if (e.value < 0) {
-                    error(valueMustBePositive(node));
-                } else {
-                    hex.setNextAddress(e.value);
-                }
-            });
+                .ifPresent(e -> {
+                    if (e.value < 0) {
+                        error(valueMustBePositive(node));
+                    } else {
+                        hex.setNextAddress(e.value);
+                    }
+                });
     }
 
     @Override

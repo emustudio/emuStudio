@@ -73,10 +73,10 @@ public class CpmFormat {
         this.dateFormat = Objects.requireNonNull(dateFormat, "Unknown date format");
         this.sectorSkew = sectorSkew;
         this.sectorSkewTable = sectorSkew
-            .map(integer -> computeSectorSkewTable(integer, dpb.spt))
-            .orElseGet(() -> sectorSkewTable
-                .map(NumberUtils::listToNativeInts)
-                .orElseGet(() -> computeSectorSkewTable(1, dpb.spt)));
+                .map(integer -> computeSectorSkewTable(integer, dpb.spt))
+                .orElseGet(() -> sectorSkewTable
+                        .map(NumberUtils::listToNativeInts)
+                        .orElseGet(() -> computeSectorSkewTable(1, dpb.spt)));
 
         this.blockSize = RECORD_SIZE * (dpb.blm + 1);
 
@@ -105,23 +105,6 @@ public class CpmFormat {
         this.bcInterpretsAsUnused = bcInterpretsAsUnused;
     }
 
-    public long positionToOffset(Position position) {
-        return (long) dpb.driveSpt * sectorSize * position.track + (long) sectorSize * sectorSkewTable[position.sector];
-    }
-
-    // so far it is not allowed to write to system/boot tracks
-    // block 0 is basically the first data block
-    public Position blockToPosition(int blockNumber) {
-        if (blockNumber > dpb.dsm) {
-            throw new IllegalArgumentException("Too big block number");
-        }
-        int linearSector = blockNumber * recordsPerBlock + dpb.spt * dpb.ofs;
-        int sector = linearSector % dpb.spt;
-        int track = linearSector / dpb.spt;
-        return new Position(track, sector);
-    }
-
-
     private static int[] computeSectorSkewTable(int sectorSkew, int sectorsPerTrack) {
         int[] skewTable = new int[sectorsPerTrack];
         int currentSkew = 0;
@@ -146,43 +129,59 @@ public class CpmFormat {
     public static List<CpmFormat> fromConfig(Config config) {
         Optional<List<Config>> formats = config.getOptional("format");
         return formats
-            .orElse(Collections.emptyList())
-            .stream()
-            .map(c -> {
-                String id = c.get("id");
-                int sectorSize = c.get("sectorSize");
-                Optional<Integer> sectorSkew = c.getOptional("sectorSkew");
-                Optional<List<Integer>> sectorSkewTable = c.getOptional("sectorSkewTable");
-                boolean bcInterpretsAsUnused = c.<Boolean>getOptional("bcInterpretsAsUnused").orElse(false);
-                DateFormat dateFormat = c.getEnumOrElse("dateFormat", DateFormat.class, () -> DateFormat.NOT_USED);
-                SectorOps sectorOps = c
-                    .<String>getOptional("sectorOps")
-                    .map(SectorOps::fromString)
-                    .orElse(SectorOps.DUMMY);
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(c -> {
+                    String id = c.get("id");
+                    int sectorSize = c.get("sectorSize");
+                    Optional<Integer> sectorSkew = c.getOptional("sectorSkew");
+                    Optional<List<Integer>> sectorSkewTable = c.getOptional("sectorSkewTable");
+                    boolean bcInterpretsAsUnused = c.<Boolean>getOptional("bcInterpretsAsUnused").orElse(false);
+                    DateFormat dateFormat = c.getEnumOrElse("dateFormat", DateFormat.class, () -> DateFormat.NOT_USED);
+                    SectorOps sectorOps = c
+                            .<String>getOptional("sectorOps")
+                            .map(SectorOps::fromString)
+                            .orElse(SectorOps.DUMMY);
 
-                DiskParameterBlock dpb = DiskParameterBlock.fromConfig(c.get("dpb"));
+                    DiskParameterBlock dpb = DiskParameterBlock.fromConfig(c.get("dpb"));
 
-                return new CpmFormat(
-                    id, dpb, sectorSize, sectorSkew, sectorSkewTable, sectorOps, bcInterpretsAsUnused, dateFormat
-                );
-            }).collect(Collectors.toList());
+                    return new CpmFormat(
+                            id, dpb, sectorSize, sectorSkew, sectorSkewTable, sectorOps, bcInterpretsAsUnused, dateFormat
+                    );
+                }).collect(Collectors.toList());
+    }
+
+    public long positionToOffset(Position position) {
+        return (long) dpb.driveSpt * sectorSize * position.track + (long) sectorSize * sectorSkewTable[position.sector];
+    }
+
+    // so far it is not allowed to write to system/boot tracks
+    // block 0 is basically the first data block
+    public Position blockToPosition(int blockNumber) {
+        if (blockNumber > dpb.dsm) {
+            throw new IllegalArgumentException("Too big block number");
+        }
+        int linearSector = blockNumber * recordsPerBlock + dpb.spt * dpb.ofs;
+        int sector = linearSector % dpb.spt;
+        int track = linearSector / dpb.spt;
+        return new Position(track, sector);
     }
 
     @Override
     public String toString() {
         return "CP/M Format:\n" +
-            "  ID: " + id + "\n" +
-            "  tracks: " + tracks + "\n" +
-            "  sectors per track (cp/m): " + dpb.spt + "\n" +
-            "  sectors per track (drive): " + dpb.driveSpt + "\n" +
-            "  sector size: " + sectorSize + "\n" +
-            "  sector skew:" + sectorSkew + "\n" +
-            "  sector skew table:" + Arrays.toString(sectorSkewTable) + "\n" +
-            "  block size: " + blockSize + "\n" +
-            "  block pointer is word: " + blockPointerIsWord + "\n" +
-            "  records per block: " + recordsPerBlock + "\n" +
-            "  entries per block: " + entriesPerBlock + "\n" +
-            "  directory blocks: " + directoryBlocks + "\n" +
-            "  date format: " + dateFormat;
+                "  ID: " + id + "\n" +
+                "  tracks: " + tracks + "\n" +
+                "  sectors per track (cp/m): " + dpb.spt + "\n" +
+                "  sectors per track (drive): " + dpb.driveSpt + "\n" +
+                "  sector size: " + sectorSize + "\n" +
+                "  sector skew:" + sectorSkew + "\n" +
+                "  sector skew table:" + Arrays.toString(sectorSkewTable) + "\n" +
+                "  block size: " + blockSize + "\n" +
+                "  block pointer is word: " + blockPointerIsWord + "\n" +
+                "  records per block: " + recordsPerBlock + "\n" +
+                "  entries per block: " + entriesPerBlock + "\n" +
+                "  directory blocks: " + directoryBlocks + "\n" +
+                "  date format: " + dateFormat;
     }
 }

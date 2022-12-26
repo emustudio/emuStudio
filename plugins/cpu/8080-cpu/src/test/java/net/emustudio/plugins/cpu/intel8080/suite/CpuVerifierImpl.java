@@ -39,8 +39,8 @@ public class CpuVerifierImpl extends CpuVerifier {
         expected &= 0xFF;
         int actual = cpu.getEngine().regs[register] & 0xFF;
         assertEquals(
-            String.format("Expected reg[%02x]=%02x, but was %02x", register, expected, actual),
-            expected, actual
+                String.format("Expected reg[%02x]=%02x, but was %02x", register, expected, actual),
+                expected, actual
         );
     }
 
@@ -66,8 +66,8 @@ public class CpuVerifierImpl extends CpuVerifier {
         }
 
         assertEquals(
-            String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
-            value, realValue
+                String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
+                value, realValue
         );
     }
 
@@ -77,8 +77,8 @@ public class CpuVerifierImpl extends CpuVerifier {
         } else if (registerPair == 3) {
             int realValue = (cpu.getEngine().regs[EmulatorEngine.REG_A] << 8) | (cpu.getEngine().flags & 0xD7 | 2);
             assertEquals(
-                String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
-                value, realValue
+                    String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
+                    value, realValue
             );
         } else {
             throw new IllegalArgumentException("Expected value between <0,3> !");
@@ -87,8 +87,8 @@ public class CpuVerifierImpl extends CpuVerifier {
 
     public void checkPC(int PC) {
         assertEquals(
-            String.format("Expected PC=%04x, but was %04x", PC, cpu.getEngine().PC),
-            PC, cpu.getEngine().PC
+                String.format("Expected PC=%04x, but was %04x", PC, cpu.getEngine().PC),
+                PC, cpu.getEngine().PC
         );
     }
 
@@ -123,12 +123,12 @@ public class CpuVerifierImpl extends CpuVerifier {
     @Override
     public void checkFlags(int mask) {
         assertEquals(String.format("Expected flags=%s, but was %s",
-            intToFlags(mask), intToFlags(cpu.getEngine().flags)), (cpu.getEngine().flags & mask), mask);
+                intToFlags(mask), intToFlags(cpu.getEngine().flags)), (cpu.getEngine().flags & mask), mask);
     }
 
     @Override
     public void checkNotFlags(int mask) {
         assertEquals(String.format("Expected NOT flags=%s, but was %s",
-            intToFlags(mask), intToFlags(cpu.getEngine().flags)), 0, (cpu.getEngine().flags & mask));
+                intToFlags(mask), intToFlags(cpu.getEngine().flags)), 0, (cpu.getEngine().flags & mask));
     }
 }

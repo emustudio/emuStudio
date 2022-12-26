@@ -31,7 +31,8 @@ import javax.swing.*;
 @PluginRoot(title = "CPU", type = PLUGIN_TYPE.CPU)
 public class CPUImplStub extends AbstractCPUStub {
 
-    public CPUImplStub(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {}
+    public CPUImplStub(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    }
 
     @Override
     public void addCPUListener(CPUListener listener) {

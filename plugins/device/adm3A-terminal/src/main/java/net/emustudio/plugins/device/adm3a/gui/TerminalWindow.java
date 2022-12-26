@@ -21,7 +21,6 @@ package net.emustudio.plugins.device.adm3a.gui;
 import net.emustudio.plugins.device.adm3a.interaction.Display;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.Objects;
 

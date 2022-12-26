@@ -38,16 +38,14 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
 
     private final RangeTree romRanges = new RangeTree();
     private final Dialogs dialogs;
-
-    public MemoryContextImpl(Dialogs dialogs) {
-        this.dialogs = Objects.requireNonNull(dialogs);
-    }
-
     int lastImageStart = 0;
     private Byte[][] mem = new Byte[1][0];
     private int banksCount;
     private int bankSelect = 0;
     private int bankCommon = 0;
+    public MemoryContextImpl(Dialogs dialogs) {
+        this.dialogs = Objects.requireNonNull(dialogs);
+    }
 
     void init(int size, int banks, int bankCommon) {
         if (banks <= 0) {
@@ -196,14 +194,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     }
 
     @Override
-    public void setReadOnly(AddressRange range) {
-        if (range.getStartAddress() > range.getStopAddress()) {
-            throw new IllegalArgumentException("Range stop address must be > than start address!");
-        }
-        addRomRange(range);
-    }
-
-    @Override
     public boolean isReadOnly(int address) {
         return romRanges.isIn(address);
     }
@@ -211,6 +201,14 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     @Override
     public List<? extends AddressRange> getReadOnly() {
         return romRanges.getRanges();
+    }
+
+    @Override
+    public void setReadOnly(AddressRange range) {
+        if (range.getStartAddress() > range.getStopAddress()) {
+            throw new IllegalArgumentException("Range stop address must be > than start address!");
+        }
+        addRomRange(range);
     }
 
     @Override

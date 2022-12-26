@@ -27,9 +27,9 @@ import java.util.Objects;
  * It has the type defined in compile time, but it can be integer or a String.
  */
 public class Value implements RAMValue {
+    public final Type type;
     private final int intValue;
     private final String stringValue;
-    public final Type type;
 
     public Value(int value) {
         this.intValue = value;

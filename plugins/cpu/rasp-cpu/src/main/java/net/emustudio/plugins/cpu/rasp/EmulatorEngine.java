@@ -29,63 +29,31 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class EmulatorEngine {
+    public final AtomicInteger IP = new AtomicInteger();
     private final AbstractTapeContext inputTape;
     private final AbstractTapeContext outputTape;
-
     private final RASPMemoryContext memory;
     private final Instruction[] dispatcher = new Instruction[]{
-        null,
-        this::read,
-        this::write_c,
-        this::write,
-        this::load_c,
-        this::load,
-        this::store,
-        this::add_c,
-        this::add,
-        this::sub_c,
-        this::sub,
-        this::mul_c,
-        this::mul,
-        this::div_c,
-        this::div,
-        this::jmp,
-        this::jz,
-        this::jgtz,
-        this::halt
+            null,
+            this::read,
+            this::write_c,
+            this::write,
+            this::load_c,
+            this::load,
+            this::store,
+            this::add_c,
+            this::add,
+            this::sub_c,
+            this::sub,
+            this::mul_c,
+            this::mul,
+            this::div_c,
+            this::div,
+            this::jmp,
+            this::jz,
+            this::jgtz,
+            this::halt
     };
-
-    public final AtomicInteger IP = new AtomicInteger();
-
-    private static class Cell implements RASPMemoryCell {
-        private final int address;
-        private final int value;
-
-        Cell(int address, int value) {
-            this.address = address;
-            this.value = value;
-        }
-
-        @Override
-        public boolean isInstruction() {
-            return false;
-        }
-
-        @Override
-        public int getAddress() {
-            return address;
-        }
-
-        @Override
-        public int getValue() {
-            return value;
-        }
-    }
-
-    @FunctionalInterface
-    private interface Instruction {
-        CPU.RunState execute() throws IOException;
-    }
 
     public EmulatorEngine(RASPMemoryContext memory, AbstractTapeContext inputTape, AbstractTapeContext outputTape) {
         this.inputTape = Objects.requireNonNull(inputTape);
@@ -257,5 +225,35 @@ public class EmulatorEngine {
 
     private CPU.RunState halt() {
         return CPU.RunState.STATE_STOPPED_NORMAL;
+    }
+
+    @FunctionalInterface
+    private interface Instruction {
+        CPU.RunState execute() throws IOException;
+    }
+
+    private static class Cell implements RASPMemoryCell {
+        private final int address;
+        private final int value;
+
+        Cell(int address, int value) {
+            this.address = address;
+            this.value = value;
+        }
+
+        @Override
+        public boolean isInstruction() {
+            return false;
+        }
+
+        @Override
+        public int getAddress() {
+            return address;
+        }
+
+        @Override
+        public int getValue() {
+            return value;
+        }
     }
 }

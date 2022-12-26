@@ -42,7 +42,7 @@ public class RenameComputerAction extends AbstractAction {
     public RenameComputerAction(Dialogs dialogs, Runnable update,
                                 JList<ComputerConfig> lstConfig) {
         super(
-            "Rename computer...", new ImageIcon(RenameComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/rename-computer.png"))
+                "Rename computer...", new ImageIcon(RenameComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/rename-computer.png"))
         );
         this.dialogs = Objects.requireNonNull(dialogs);
         this.update = Objects.requireNonNull(update);
@@ -52,21 +52,21 @@ public class RenameComputerAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         Optional
-            .ofNullable(lstConfig.getSelectedValue())
-            .ifPresentOrElse(computer -> dialogs
-                .readString("Enter new computer name:", "Rename computer")
-                .ifPresent(newName -> {
-                    if (newName.trim().isEmpty()) {
-                        dialogs.showError("Computer name must be non-empty", "Rename computer");
-                    } else {
-                        try {
-                            renameConfiguration(computer, newName);
-                            update.run();
-                        } catch (CannotUpdateSettingException | IOException ex) {
-                            LOGGER.error("Could not rename computer", ex);
-                            dialogs.showError("Computer could not be renamed. Please see log file for details.");
-                        }
-                    }
-                }), () -> dialogs.showError("A computer has to be selected!", "Rename computer"));
+                .ofNullable(lstConfig.getSelectedValue())
+                .ifPresentOrElse(computer -> dialogs
+                        .readString("Enter new computer name:", "Rename computer")
+                        .ifPresent(newName -> {
+                            if (newName.trim().isEmpty()) {
+                                dialogs.showError("Computer name must be non-empty", "Rename computer");
+                            } else {
+                                try {
+                                    renameConfiguration(computer, newName);
+                                    update.run();
+                                } catch (CannotUpdateSettingException | IOException ex) {
+                                    LOGGER.error("Could not rename computer", ex);
+                                    dialogs.showError("Computer could not be renamed. Please see log file for details.");
+                                }
+                            }
+                        }), () -> dialogs.showError("A computer has to be selected!", "Rename computer"));
     }
 }

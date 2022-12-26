@@ -37,58 +37,58 @@ public class Assembler8080Test extends AbstractCompilerTest {
     @Test
     public void testForwardAbsoluteJump() throws Exception {
         compile(
-            "now: mov a,b\n" +
-                "cpi 'C'\n" +
-                "jz ler\n" +
-                "ler: mov m, a"
+                "now: mov a,b\n" +
+                        "cpi 'C'\n" +
+                        "jz ler\n" +
+                        "ler: mov m, a"
         );
 
         assertProgram(
-            0x78, 0xFE, 0x43, 0xCA, 0x06, 0x00, 0x77
+                0x78, 0xFE, 0x43, 0xCA, 0x06, 0x00, 0x77
         );
     }
 
     @Test
     public void testBackwardAbsoluteJump() throws Exception {
         compile(
-            "now: mov a,b\n" +
-                "cpi 'C'\n" +
-                "jz now\n" +
-                "ler: mov m, a"
+                "now: mov a,b\n" +
+                        "cpi 'C'\n" +
+                        "jz now\n" +
+                        "ler: mov m, a"
         );
 
         assertProgram(
-            0x78, 0xFE, 0x43, 0xCA, 0x00, 0x00, 0x77
+                0x78, 0xFE, 0x43, 0xCA, 0x00, 0x00, 0x77
         );
     }
 
     @Test
     public void testCallBackward() throws Exception {
         compile(
-            "dcx sp\n" +
-                "now: mov a,b\n" +
-                "cpi 'C'\n" +
-                "call now\n" +
-                "ler: mov m, a"
+                "dcx sp\n" +
+                        "now: mov a,b\n" +
+                        "cpi 'C'\n" +
+                        "call now\n" +
+                        "ler: mov m, a"
         );
 
         assertProgram(
-            0x3B, 0x78, 0xFE, 0x43, 0xCD, 0x01, 0x00, 0x77
+                0x3B, 0x78, 0xFE, 0x43, 0xCD, 0x01, 0x00, 0x77
         );
     }
 
     @Test
     public void testCallForward() throws Exception {
         compile(
-            "dcx sp\n" +
-                "now: mov a,b\n" +
-                "cpi 'C'\n" +
-                "call ler\n" +
-                "ler: mov m, a"
+                "dcx sp\n" +
+                        "now: mov a,b\n" +
+                        "cpi 'C'\n" +
+                        "call ler\n" +
+                        "ler: mov m, a"
         );
 
         assertProgram(
-            0x3B, 0x78, 0xFE, 0x43, 0xCD, 0x07, 0x00, 0x77
+                0x3B, 0x78, 0xFE, 0x43, 0xCD, 0x07, 0x00, 0x77
         );
     }
 
@@ -100,48 +100,48 @@ public class Assembler8080Test extends AbstractCompilerTest {
     @Test
     public void testDCXwithLXI() throws Exception {
         compile(
-            "dcx sp\n"
-                + "lxi h, text\n"
-                + "text:\n"
-                + "db 'ahoj'"
+                "dcx sp\n"
+                        + "lxi h, text\n"
+                        + "text:\n"
+                        + "db 'ahoj'"
         );
 
         assertProgram(
-            0x3B, 0x21, 0x04, 0, 'a', 'h', 'o', 'j'
+                0x3B, 0x21, 0x04, 0, 'a', 'h', 'o', 'j'
         );
     }
 
     @Test
     public void testINthenJMP() throws Exception {
         compile(
-            "jmp sample\n"
-                + "in 10h\n"
-                + "sample:\n"
-                + "mov a, b\n"
+                "jmp sample\n"
+                        + "in 10h\n"
+                        + "sample:\n"
+                        + "mov a, b\n"
         );
 
         assertProgram(
-            0xC3, 0x5, 0, 0xDB, 0x10, 0x78
+                0xC3, 0x5, 0, 0xDB, 0x10, 0x78
         );
     }
 
     @Test
     public void testGetChar() throws Exception {
         compile(
-            "jmp sample\n"
-                + "getchar:\n"
-                + "in 10h\n"
-                + "ani 1\n"
-                + "jz getchar\n"
-                + "in 11h\n"
-                + "out 11h\n"
-                + "ret\n"
-                + "sample:\n"
-                + "mov a, b"
+                "jmp sample\n"
+                        + "getchar:\n"
+                        + "in 10h\n"
+                        + "ani 1\n"
+                        + "jz getchar\n"
+                        + "in 11h\n"
+                        + "out 11h\n"
+                        + "ret\n"
+                        + "sample:\n"
+                        + "mov a, b"
         );
 
         assertProgram(
-            0xC3, 0x0F, 0, 0xDB, 0x10, 0xE6, 1, 0xCA, 0x03, 0, 0xDB, 0x11, 0xD3, 0x11, 0xC9, 0x78
+                0xC3, 0x0F, 0, 0xDB, 0x10, 0xE6, 1, 0xCA, 0x03, 0, 0xDB, 0x11, 0xD3, 0x11, 0xC9, 0x78
         );
     }
 }

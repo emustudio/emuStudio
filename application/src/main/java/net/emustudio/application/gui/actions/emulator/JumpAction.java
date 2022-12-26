@@ -45,16 +45,16 @@ public class JumpAction extends AbstractAction {
         computer.getCPU().ifPresentOrElse(cpu -> {
             try {
                 dialogs
-                    .readInteger("Memory address:", "Jump to address", 0)
-                    .ifPresent(address -> {
-                        if (!cpu.setInstructionLocation(address)) {
-                            int memorySize = computer.getMemory().map(Memory::getSize).orElse(0);
-                            String maxSizeMessage = (memorySize == 0) ? "" : "(probably accepts range from 0 to " + memorySize + ")";
-                            dialogs.showError("Invalid memory address" + maxSizeMessage);
-                        } else {
-                            refreshDebugTable.run();
-                        }
-                    });
+                        .readInteger("Memory address:", "Jump to address", 0)
+                        .ifPresent(address -> {
+                            if (!cpu.setInstructionLocation(address)) {
+                                int memorySize = computer.getMemory().map(Memory::getSize).orElse(0);
+                                String maxSizeMessage = (memorySize == 0) ? "" : "(probably accepts range from 0 to " + memorySize + ")";
+                                dialogs.showError("Invalid memory address" + maxSizeMessage);
+                            } else {
+                                refreshDebugTable.run();
+                            }
+                        });
             } catch (NumberFormatException e) {
                 dialogs.showError("Invalid address format", "Jump to address");
             }

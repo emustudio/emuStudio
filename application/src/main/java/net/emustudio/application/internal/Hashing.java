@@ -29,7 +29,7 @@ public class Hashing {
 
     /**
      * Compute SHA-1 hash string.
-     *
+     * <p>
      * Letters in the hash string will be in upper-case.
      *
      * @param text Data to make hash from

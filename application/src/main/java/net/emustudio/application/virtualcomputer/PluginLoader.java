@@ -47,10 +47,24 @@ public class PluginLoader {
     private final static Logger LOGGER = LoggerFactory.getLogger(PluginLoader.class);
 
     /**
+     * Check if provided class meets plugin requirements.
+     *
+     * @param pluginClass the main class of the plugin
+     * @return true if the class meets plugin requirements; false otherwise
+     */
+    static boolean trustedPlugin(Class<?> pluginClass) {
+        Objects.requireNonNull(pluginClass);
+
+        return !pluginClass.isInterface() &&
+                pluginClass.isAnnotationPresent(PluginRoot.class) &&
+                doesImplement(pluginClass, Plugin.class);
+    }
+
+    /**
      * Loads emuStudio plugins.
-     *
+     * <p>
      * This method is called by emuStudio.
-     *
+     * <p>
      * The plugins are loaded into separate class loader.
      *
      * @param pluginFiles plugin files.
@@ -71,9 +85,9 @@ public class PluginLoader {
 
         try {
             return pluginFiles.stream()
-                .map(this::findClassesInJAR)
-                .map(l -> findMainClass(pluginsClassLoader, l))
-                .collect(toList());
+                    .map(this::findClassesInJAR)
+                    .map(l -> findMainClass(pluginsClassLoader, l))
+                    .collect(toList());
         } catch (Exception e) {
             // Those can be "sneaky" thrown
             if ((e instanceof InvalidPluginException) || (e instanceof IOException)) {
@@ -140,12 +154,12 @@ public class PluginLoader {
 
     /**
      * Transform a relative file name into valid Java class name.
-     *
+     * <p>
      * For example, if the class file name is "somepackage/nextpackage/SomeClass.class", the method
      * will transform it to the format "somepackage.nextpackage.SomeClass".
-     *
+     * <p>
      * It doesnt't work for absolute file names.
-     *
+     * <p>
      * It doesn't hurt if the class name is already in valid Java format.
      *
      * @param classFileName File name defining class
@@ -157,19 +171,5 @@ public class PluginLoader {
         }
         classFileName = classFileName.replace("\\\\", "/").replace('/', '.');
         return classFileName.replace(File.separatorChar, '.');
-    }
-
-    /**
-     * Check if provided class meets plugin requirements.
-     *
-     * @param pluginClass the main class of the plugin
-     * @return true if the class meets plugin requirements; false otherwise
-     */
-    static boolean trustedPlugin(Class<?> pluginClass) {
-        Objects.requireNonNull(pluginClass);
-
-        return !pluginClass.isInterface() &&
-            pluginClass.isAnnotationPresent(PluginRoot.class) &&
-            doesImplement(pluginClass, Plugin.class);
     }
 }

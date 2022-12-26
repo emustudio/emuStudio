@@ -59,19 +59,19 @@ public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
     Set<TapeSymbol.Type> getAcceptedTypes();
 
     /**
+     * Determine if the tape is left-bounded.
+     *
+     * @return true - left-bounded, false - unbounded.
+     */
+    boolean isLeftBounded();
+
+    /**
      * Set this tape to left-bounded or unbounded.
      *
      * @param bounded true if the tape should be left-bounded,
      *                false if unbounded.
      */
     void setLeftBounded(boolean bounded);
-
-    /**
-     * Determine if the tape is left-bounded.
-     *
-     * @return true - left-bounded, false - unbounded.
-     */
-    boolean isLeftBounded();
 
     /**
      * Move the tape one symbol to the left.
@@ -182,6 +182,7 @@ public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
 
     /**
      * {@inheritDoc}
+     *
      * @throws IllegalArgumentException if the symbol type is not among accepted ones
      */
     void writeData(TapeSymbol value);

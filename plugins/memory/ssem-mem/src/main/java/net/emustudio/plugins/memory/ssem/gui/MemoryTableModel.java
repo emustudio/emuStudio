@@ -28,12 +28,10 @@ import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
 
 public class MemoryTableModel extends AbstractTableModel {
-    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
-
     final static int COLUMN_HEX_VALUE = 32;
     final static int COLUMN_DEC_VALUE = 33;
     final static int COLUMN_RAW_VALUE = 34;
-
+    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
     private final static int ROW_COUNT = 32;
     private final static int COLUMN_COUNT = 3 + 32;
 
@@ -41,23 +39,6 @@ public class MemoryTableModel extends AbstractTableModel {
 
     MemoryTableModel(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
-    }
-
-    public void dump() {
-        for (int i = 0; i < 32; i++) {
-            Byte[] v = memory.read(i * 4, 4);
-            System.out.printf("0x%02X, 0x%02X, 0x%02X, 0x%02X,\n", v[0], v[1], v[2], v[3]);
-        }
-    }
-
-    @Override
-    public int getRowCount() {
-        return ROW_COUNT;
-    }
-
-    @Override
-    public int getColumnCount() {
-        return COLUMN_COUNT;
     }
 
     /**
@@ -80,6 +61,23 @@ public class MemoryTableModel extends AbstractTableModel {
      */
     static boolean isBitLine(int column) {
         return column >= 0 && column < 5;
+    }
+
+    public void dump() {
+        for (int i = 0; i < 32; i++) {
+            Byte[] v = memory.read(i * 4, 4);
+            System.out.printf("0x%02X, 0x%02X, 0x%02X, 0x%02X,\n", v[0], v[1], v[2], v[3]);
+        }
+    }
+
+    @Override
+    public int getRowCount() {
+        return ROW_COUNT;
+    }
+
+    @Override
+    public int getColumnCount() {
+        return COLUMN_COUNT;
     }
 
     @Override
@@ -126,7 +124,7 @@ public class MemoryTableModel extends AbstractTableModel {
                     return String.valueOf(value);
                 case COLUMN_RAW_VALUE:
                     return "" + (char) ((value >>> 24) & 0xFF) + (char) ((value >>> 16) & 0xFF)
-                        + (char) ((value >>> 8) & 0xFF) + (char) (value & 0xFF);
+                            + (char) ((value >>> 8) & 0xFF) + (char) (value & 0xFF);
                 default:
                     byte[] lineBits = readLineBits(row);
                     return lineBits[columnIndex];

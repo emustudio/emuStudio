@@ -54,24 +54,24 @@ public class GenerateCodeVisitor extends NodeVisitor {
     @Override
     public void visit(DataDS node) {
         node.collectChild(Evaluated.class)
-            .ifPresent(e -> {
-                if (e.value < 0) {
-                    error(valueMustBePositive(e));
-                } else {
-                    for (int i = 0; i < e.value; i++) {
-                        hex.add((byte) 0);
+                .ifPresent(e -> {
+                    if (e.value < 0) {
+                        error(valueMustBePositive(e));
+                    } else {
+                        for (int i = 0; i < e.value; i++) {
+                            hex.add((byte) 0);
+                        }
                     }
-                }
-            });
+                });
     }
 
     @Override
     public void visit(InstrExpr node) {
         node.eval()
-            .ifPresentOrElse(
-                hex::add,
-                () -> error(valueOutOfBounds(node, 0, 7))
-            );
+                .ifPresentOrElse(
+                        hex::add,
+                        () -> error(valueOutOfBounds(node, 0, 7))
+                );
         expectedBytes = node.getExprSizeBytes();
         visitChildren(node);
     }
@@ -113,13 +113,13 @@ public class GenerateCodeVisitor extends NodeVisitor {
     @Override
     public void visit(PseudoOrg node) {
         node.collectChild(Evaluated.class)
-            .ifPresent(e -> {
-                if (e.value < 0) {
-                    error(valueMustBePositive(node));
-                } else {
-                    hex.setNextAddress(e.value);
-                }
-            });
+                .ifPresent(e -> {
+                    if (e.value < 0) {
+                        error(valueMustBePositive(node));
+                    } else {
+                        hex.setNextAddress(e.value);
+                    }
+                });
     }
 
     @Override

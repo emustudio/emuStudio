@@ -92,7 +92,7 @@ public class MemoryTableModel extends AbstractTableModel {
             fireTableCellUpdated(rowIndex, columnIndex);
         } catch (NumberFormatException e) {
             LOGGER.error(
-                "Could not set memory cell at address 0x" + Integer.toHexString(address) + " to value " + value, e
+                    "Could not set memory cell at address 0x" + Integer.toHexString(address) + " to value " + value, e
             );
         }
     }
@@ -100,14 +100,6 @@ public class MemoryTableModel extends AbstractTableModel {
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
-    }
-
-    public void setPage(int page) throws IndexOutOfBoundsException {
-        if (page >= getPageCount() || page < 0) {
-            throw new IndexOutOfBoundsException();
-        }
-        currentPage = page;
-        fireTableDataChanged();
     }
 
     public Optional<Integer> findSequence(byte[] sequence, int from) {
@@ -137,8 +129,20 @@ public class MemoryTableModel extends AbstractTableModel {
         return currentPage;
     }
 
+    public void setPage(int page) throws IndexOutOfBoundsException {
+        if (page >= getPageCount() || page < 0) {
+            throw new IndexOutOfBoundsException();
+        }
+        currentPage = page;
+        fireTableDataChanged();
+    }
+
     public int getPageCount() {
         return memory.getSize() / (ROW_COUNT * COLUMN_COUNT);
+    }
+
+    public int getCurrentBank() {
+        return currentBank;
     }
 
     public void setCurrentBank(int bank) {
@@ -147,10 +151,6 @@ public class MemoryTableModel extends AbstractTableModel {
         }
         currentBank = bank;
         fireTableDataChanged();
-    }
-
-    public int getCurrentBank() {
-        return currentBank;
     }
 
     public int toAddress(int row, int column) {

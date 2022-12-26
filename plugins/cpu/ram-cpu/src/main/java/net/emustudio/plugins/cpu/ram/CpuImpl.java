@@ -27,10 +27,10 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.ram.gui.RAMDisassembler;
 import net.emustudio.plugins.cpu.ram.gui.RAMStatusPanel;
@@ -48,8 +48,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.CPU,
-    title = "Random Access Machine (RAM)"
+        type = PLUGIN_TYPE.CPU,
+        title = "Random Access Machine (RAM)"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
@@ -71,7 +71,7 @@ public class CpuImpl extends AbstractCPU {
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register RAM CPU context", e);
             applicationApi.getDialogs().showError(
-                "Could not register RAM CPU Context. Please see log file for details.", super.getTitle()
+                    "Could not register RAM CPU Context. Please see log file for details.", super.getTitle()
             );
         }
     }
@@ -105,7 +105,7 @@ public class CpuImpl extends AbstractCPU {
             DebuggerTable debugTable = applicationApi.getDebuggerTable();
             if (debugTable != null) {
                 debugTable.setDebuggerColumns(Arrays.asList(
-                    new BreakpointColumn(this), new LabelDebugColumn(memory), new MnemoColumn(disassembler)
+                        new BreakpointColumn(this), new LabelDebugColumn(memory), new MnemoColumn(disassembler)
                 ));
             }
             debugTableInitialized = true;

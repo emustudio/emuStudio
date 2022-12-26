@@ -31,7 +31,7 @@ public interface RAMMemoryContext extends MemoryContext<RAMInstruction> {
 
     Optional<RAMLabel> getLabel(int address);
 
-    void setInputs(List<RAMValue> inputs);
-
     List<RAMValue> getInputs();
+
+    void setInputs(List<RAMValue> inputs);
 }

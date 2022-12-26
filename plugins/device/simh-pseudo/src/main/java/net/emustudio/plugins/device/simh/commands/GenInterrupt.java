@@ -35,8 +35,8 @@ public class GenInterrupt implements Command {
             genInterruptPos = 0;
             control.clearCommand();
             System.out.printf(
-                "genInterruptVec=%d vectorInterrupt=%X dataBus=%02X genInterruptPos=%d\n",
-                genInterruptVec, 1 << genInterruptVec, data, genInterruptPos);
+                    "genInterruptVec=%d vectorInterrupt=%X dataBus=%02X genInterruptPos=%d\n",
+                    genInterruptVec, 1 << genInterruptVec, data, genInterruptPos);
         }
     }
 

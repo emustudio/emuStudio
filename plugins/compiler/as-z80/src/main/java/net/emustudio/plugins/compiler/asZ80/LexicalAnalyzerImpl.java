@@ -29,7 +29,6 @@ import java.util.Objects;
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Lexer.*;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
-    private final AsZ80Lexer lexer;
     public static final int[] tokenMap = new int[AsZ80Lexer.EOL + 1];
 
     static {
@@ -196,6 +195,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
         tokenMap[ERROR_IM] = Token.ERROR;
         tokenMap[ERROR_COND] = Token.ERROR;
     }
+
+    private final AsZ80Lexer lexer;
 
 
     public LexicalAnalyzerImpl(AsZ80Lexer lexer) {

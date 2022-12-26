@@ -29,10 +29,6 @@ public class SerializableOptional<T> implements Serializable {
         this.value = value;
     }
 
-    public Optional<T> opt() {
-        return Optional.ofNullable(value);
-    }
-
     public static <T> SerializableOptional<T> empty() {
         return new SerializableOptional<>(null);
     }
@@ -43,6 +39,10 @@ public class SerializableOptional<T> implements Serializable {
 
     public static <T> SerializableOptional<T> fromOpt(Optional<T> valueOpt) {
         return new SerializableOptional<>(valueOpt.orElse(null));
+    }
+
+    public Optional<T> opt() {
+        return Optional.ofNullable(value);
     }
 
     @Override

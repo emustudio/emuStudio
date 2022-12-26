@@ -18,9 +18,9 @@
  */
 package net.emustudio.application.emulation;
 
-import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.gui.dialogs.AutoDialog;
 import net.emustudio.application.internal.Unchecked;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
@@ -41,18 +41,15 @@ import java.util.concurrent.atomic.AtomicReference;
  * the emulation is started automatically and results are collected.
  */
 public class Automation implements Runnable {
-    private static final Logger LOGGER = LoggerFactory.getLogger("automation");
     public static final int DONT_WAIT = -1;
-
-    private AutoDialog progressGUI;
+    private static final Logger LOGGER = LoggerFactory.getLogger("automation");
     private final File inputFile;
-
     private final VirtualComputer computer;
     private final AppSettings appSettings;
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
     private final int programStart;
-
+    private AutoDialog progressGUI;
     private volatile CPU.RunState resultState;
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
@@ -219,7 +216,7 @@ public class Automation implements Runnable {
         LOGGER.info("Starting emulation automation...");
 
         computer.getCompiler().ifPresent(
-            compiler -> LOGGER.info("Compiler: " + compiler.getTitle() + ", version " + compiler.getVersion())
+                compiler -> LOGGER.info("Compiler: " + compiler.getTitle() + ", version " + compiler.getVersion())
         );
         computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: " + cpu.getTitle() + ", version " + cpu.getVersion()));
         computer.getMemory().ifPresent(memory -> {
@@ -227,7 +224,7 @@ public class Automation implements Runnable {
             LOGGER.info("Memory size: {}", memory.getSize());
         });
         computer.getDevices().forEach(
-            device -> LOGGER.info("Device: " + device.getTitle() + ", version " + device.getVersion())
+                device -> LOGGER.info("Device: " + device.getTitle() + ", version " + device.getVersion())
         );
 
         try {

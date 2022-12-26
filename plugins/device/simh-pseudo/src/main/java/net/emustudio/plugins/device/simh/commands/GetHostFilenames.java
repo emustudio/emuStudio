@@ -21,42 +21,27 @@ package net.emustudio.plugins.device.simh.commands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.Name;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 
 import static net.emustudio.plugins.device.simh.CpmUtils.cpmCommandLine;
 import static net.emustudio.plugins.device.simh.CpmUtils.readCPMCommandLine;
 
 public class GetHostFilenames implements Command {
     public final static GetHostFilenames INS = new GetHostFilenames();
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(GetHostFilenames.class);
-
     // support for wild card file expansion
     public final static char hostPathSeparator = File.separatorChar;
     public final static String hostPathSeparatorStr = String.valueOf(hostPathSeparator);
-
+    private final static Logger LOGGER = LoggerFactory.getLogger(GetHostFilenames.class);
     private NameNode nameListHead;
     private NameNode currentName;
     private int currentNameIndex = 0;
     private int lastPathSeparatorIndex = 0;
     private int firstPathCharacterIndex = 0;
-
-    static class NameNode {
-        char[] name;
-        NameNode next;
-
-        public NameNode(char[] name, NameNode next) {
-            this.name = name;
-            this.next = next;
-        }
-    }
 
     @Override
     public void reset(Control control) {
@@ -147,5 +132,15 @@ public class GetHostFilenames implements Command {
             }
         }
         return pb.toString();
+    }
+
+    static class NameNode {
+        char[] name;
+        NameNode next;
+
+        public NameNode(char[] name, NameNode next) {
+            this.name = name;
+            this.next = next;
+        }
     }
 }

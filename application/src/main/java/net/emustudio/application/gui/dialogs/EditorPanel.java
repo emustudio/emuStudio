@@ -76,7 +76,7 @@ public class EditorPanel extends JPanel {
         this.newFileAction = new NewFileAction(this::confirmSave, editor, compilerOutput, updateTitle);
         this.openFileAction = new OpenFileAction(this::confirmSave, editor, compilerOutput, updateTitle);
         this.compileAction = new CompileAction(
-            computer, dialogs, editor, runState, compilerOutput, updateTitle
+                computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
         JScrollPane compilerPane = new JScrollPane();
@@ -94,22 +94,22 @@ public class EditorPanel extends JPanel {
         GroupLayout panelSourceLayout = new GroupLayout(this);
         setLayout(panelSourceLayout);
         panelSourceLayout.setHorizontalGroup(
-            panelSourceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(mainToolBar)
-                .addGroup(
-                    panelSourceLayout
-                        .createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(splitSource)
-                        .addContainerGap()
-                )
+                panelSourceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(mainToolBar)
+                        .addGroup(
+                                panelSourceLayout
+                                        .createSequentialGroup()
+                                        .addContainerGap()
+                                        .addComponent(splitSource)
+                                        .addContainerGap()
+                        )
         );
         panelSourceLayout.setVerticalGroup(
-            panelSourceLayout
-                .createSequentialGroup()
-                .addComponent(mainToolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
-                .addContainerGap()
+                panelSourceLayout
+                        .createSequentialGroup()
+                        .addComponent(mainToolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
+                        .addContainerGap()
         );
     }
 
@@ -174,29 +174,29 @@ public class EditorPanel extends JPanel {
         mainToolBar.add(new ToolbarButton(saveFileAction, "Save file"));
         mainToolBar.addSeparator();
         mainToolBar.add(new ToolbarButton(
-            RTextArea.getAction(RTextArea.UNDO_ACTION),
-            "/net/emustudio/application/gui/dialogs/edit-undo.png",
-            "Undo"
+                RTextArea.getAction(RTextArea.UNDO_ACTION),
+                "/net/emustudio/application/gui/dialogs/edit-undo.png",
+                "Undo"
         ));
         mainToolBar.add(new ToolbarButton(RTextArea.getAction(RTextArea.REDO_ACTION),
-            "/net/emustudio/application/gui/dialogs/edit-redo.png",
-            "Redo"
+                "/net/emustudio/application/gui/dialogs/edit-redo.png",
+                "Redo"
         ));
         mainToolBar.addSeparator();
         mainToolBar.add(new ToolbarButton(
-            RTextArea.getAction(RTextArea.CUT_ACTION),
-            "/net/emustudio/application/gui/dialogs/edit-cut.png",
-            "Cut selection"
+                RTextArea.getAction(RTextArea.CUT_ACTION),
+                "/net/emustudio/application/gui/dialogs/edit-cut.png",
+                "Cut selection"
         ));
         mainToolBar.add(new ToolbarButton(
-            RTextArea.getAction(RTextArea.COPY_ACTION),
-            "/net/emustudio/application/gui/dialogs/edit-copy.png",
-            "Copy selection"
+                RTextArea.getAction(RTextArea.COPY_ACTION),
+                "/net/emustudio/application/gui/dialogs/edit-copy.png",
+                "Copy selection"
         ));
         mainToolBar.add(new ToolbarButton(
-            RTextArea.getAction(RTextArea.PASTE_ACTION),
-            "/net/emustudio/application/gui/dialogs/edit-paste.png",
-            "Paste from clipboard"
+                RTextArea.getAction(RTextArea.PASTE_ACTION),
+                "/net/emustudio/application/gui/dialogs/edit-paste.png",
+                "Paste from clipboard"
         ));
         mainToolBar.addSeparator();
         mainToolBar.add(new ToolbarButton(findAction, "Find text..."));

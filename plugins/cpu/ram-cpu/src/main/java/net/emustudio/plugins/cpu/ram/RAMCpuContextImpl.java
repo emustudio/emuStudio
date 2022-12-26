@@ -27,10 +27,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class RAMCpuContextImpl implements RAMCpuContext {
+    private final ContextPool contextPool;
     private AbstractTapeContext inputTape;
     private AbstractTapeContext outputTape;
     private AbstractTapeContext storageTape;
-    private final ContextPool contextPool;
 
     public RAMCpuContextImpl(ContextPool contextPool) {
         this.contextPool = Objects.requireNonNull(contextPool);
@@ -44,7 +44,7 @@ public class RAMCpuContextImpl implements RAMCpuContext {
 
     private AbstractTapeContext setupTape(long pluginID, String title, boolean clearAfterReset, boolean posVisible,
                                           boolean editable, int index)
-        throws PluginInitializationException {
+            throws PluginInitializationException {
 
         AbstractTapeContext tape = contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, index);
         if (tape == null) {

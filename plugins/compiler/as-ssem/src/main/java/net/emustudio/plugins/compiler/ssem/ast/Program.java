@@ -28,10 +28,9 @@ import java.util.function.BiConsumer;
 import static net.emustudio.plugins.compiler.ssem.CompilerChecks.*;
 
 public class Program {
+    private final Map<Integer, Instruction> instructions = new HashMap<>();
     private int startLine;
     private boolean startLineDefined;
-
-    private final Map<Integer, Instruction> instructions = new HashMap<>();
 
     public void setStartLine(int startLine, Position pos) {
         checkStartLineDefined(startLineDefined, pos, this.startLine);
@@ -54,7 +53,7 @@ public class Program {
         instructions.forEach(processor);
     }
 
-    public Map<Integer,Instruction> getInstructions() {
+    public Map<Integer, Instruction> getInstructions() {
         return Collections.unmodifiableMap(instructions);
     }
 

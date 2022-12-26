@@ -30,7 +30,6 @@ import static net.emustudio.plugins.compiler.ram.RAMLexer.*;
 import static org.antlr.v4.runtime.Recognizer.EOF;
 
 public class LexicalAnalyzerImpl implements LexicalAnalyzer {
-    private final RAMLexer lexer;
     public static final int[] tokenMap = new int[ERROR + 1];
 
     static {
@@ -69,6 +68,8 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
 
         tokenMap[ERROR] = Token.ERROR;
     }
+
+    private final RAMLexer lexer;
 
 
     public LexicalAnalyzerImpl(RAMLexer lexer) {

@@ -43,10 +43,10 @@ public class ShowMemoryAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         computer.getMemory()
-            .filter(Memory::isShowSettingsSupported)
-            .ifPresentOrElse(
-                p -> p.showSettings(parent),
-                () -> dialogs.showInfo("Memory GUI is not supported", "Show Memory")
-            );
+                .filter(Memory::isShowSettingsSupported)
+                .ifPresentOrElse(
+                        p -> p.showSettings(parent),
+                        () -> dialogs.showInfo("Memory GUI is not supported", "Show Memory")
+                );
     }
 }

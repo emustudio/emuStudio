@@ -24,9 +24,9 @@ import net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFileSystem;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.DriveIO;
 import picocli.CommandLine;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
+import picocli.CommandLine.Option;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,26 +39,24 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 @SuppressWarnings("unused")
 @Command(
-    name = "88-dcdd",
-    mixinStandardHelpOptions = true,
-    versionProvider = Runner.VersionProvider.class,
-    description = "88-DCDD Altair floppy disk drive",
-    scope = CommandLine.ScopeType.INHERIT,
-    subcommands = {Cpmfs.class}
+        name = "88-dcdd",
+        mixinStandardHelpOptions = true,
+        versionProvider = Runner.VersionProvider.class,
+        description = "88-DCDD Altair floppy disk drive",
+        scope = CommandLine.ScopeType.INHERIT,
+        subcommands = {Cpmfs.class}
 )
 public class Runner implements Runnable {
 
-    @Option(names = {"-F", "--format-file"}, description = "disk format file (TOML)", paramLabel = "FILE")
-    private Path formatFile = new File(System.getProperty("user.dir"))
-        .toPath()
-        .resolve("examples")
-        .resolve("altair8800")
-        .resolve("cpm-formats.toml");
-
     @CommandLine.ArgGroup(multiplicity = "1")
     public Exclusive exclusive;
-
     public CpmFileSystem cpmfs;
+    @Option(names = {"-F", "--format-file"}, description = "disk format file (TOML)", paramLabel = "FILE")
+    private Path formatFile = new File(System.getProperty("user.dir"))
+            .toPath()
+            .resolve("examples")
+            .resolve("altair8800")
+            .resolve("cpm-formats.toml");
 
     public static void main(String[] args) {
         CommandLine cmdline = new CommandLine(new Runner());
@@ -77,19 +75,19 @@ public class Runner implements Runnable {
     @Override
     public void run() {
         Optional
-            .ofNullable(exclusive)
-            .ifPresent(e -> {
-                if (e.listFormats) {
-                    loadFormats().stream().map(f -> f.id).forEach(System.out::println);
-                    return;
-                }
-                CpmFormat cpmFormat = findFormat();
-                try {
-                    cpmfs = new CpmFileSystem(new DriveIO(exclusive.dependent.imageFile, cpmFormat, READ, WRITE));
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-            });
+                .ofNullable(exclusive)
+                .ifPresent(e -> {
+                    if (e.listFormats) {
+                        loadFormats().stream().map(f -> f.id).forEach(System.out::println);
+                        return;
+                    }
+                    CpmFormat cpmFormat = findFormat();
+                    try {
+                        cpmfs = new CpmFileSystem(new DriveIO(exclusive.dependent.imageFile, cpmFormat, READ, WRITE));
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                });
     }
 
     public List<CpmFormat> loadFormats() {
@@ -101,9 +99,9 @@ public class Runner implements Runnable {
 
     public CpmFormat findFormat() {
         Optional<CpmFormat> format = loadFormats()
-            .stream()
-            .filter(f -> f.id.equals(exclusive.dependent.formatId))
-            .findAny();
+                .stream()
+                .filter(f -> f.id.equals(exclusive.dependent.formatId))
+                .findAny();
         if (format.isEmpty()) {
             throw new IllegalArgumentException("Unknown CP/M disk format ID!");
         }
@@ -119,11 +117,10 @@ public class Runner implements Runnable {
     }
 
     static class Exclusive {
-        @Option(names = {"-l", "--list-formats"}, description = "lists available disk format IDs")
-        private boolean listFormats;
-
         @CommandLine.ArgGroup(exclusive = false, multiplicity = "1")
         public Dependent dependent;
+        @Option(names = {"-l", "--list-formats"}, description = "lists available disk format IDs")
+        private boolean listFormats;
     }
 
     static class Dependent {

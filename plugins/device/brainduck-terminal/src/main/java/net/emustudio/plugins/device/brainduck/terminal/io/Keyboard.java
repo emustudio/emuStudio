@@ -32,13 +32,6 @@ public class Keyboard implements InputProvider, KeyListener {
     private final BlockingQueue<Byte> inputBuffer = new LinkedBlockingQueue<>();
     private final List<KeyboardListener> listeners = new CopyOnWriteArrayList<>();
 
-    @ThreadSafe
-    public interface KeyboardListener {
-        void readStarted();
-
-        void readEnded();
-    }
-
     public void addListener(KeyboardListener listener) {
         listeners.add(listener);
     }
@@ -83,7 +76,7 @@ public class Keyboard implements InputProvider, KeyListener {
         if (keycode == KeyEvent.VK_ESCAPE) {
             inputBuffer.add((byte) EOF);
         } else if (!((keycode == KeyEvent.VK_SHIFT || keycode == KeyEvent.VK_CONTROL ||
-            keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META))) {
+                keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META))) {
             inputBuffer.add((byte) (e.getKeyChar() & 0xFF));
         }
     }
@@ -91,5 +84,12 @@ public class Keyboard implements InputProvider, KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {
 
+    }
+
+    @ThreadSafe
+    public interface KeyboardListener {
+        void readStarted();
+
+        void readEnded();
     }
 }

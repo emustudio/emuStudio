@@ -25,8 +25,8 @@ import org.antlr.v4.runtime.Token;
 public class Instr extends Node {
     public final int opcode;
     public final int x;
-    private int y;
     public final int z;
+    private int y;
 
     public Instr(int line, int column, int opcode, int x, int y, int z) {
         super(line, column);
@@ -52,7 +52,7 @@ public class Instr extends Node {
     }
 
     public byte eval() {
-        return (byte)(((x << 6) | (y << 3) | (z & 7)) & 0xFF);
+        return (byte) (((x << 6) | (y << 3) | (z & 7)) & 0xFF);
     }
 
     public boolean hasRelativeAddress() {

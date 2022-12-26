@@ -18,11 +18,11 @@
  */
 package net.emustudio.application.gui.actions.opencomputer;
 
-import net.emustudio.application.settings.AppSettings;
-import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.internal.Unchecked;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public class AddNewComputerAction extends AbstractAction {
 
     public AddNewComputerAction(Dialogs dialogs, AppSettings appSettings, Runnable update, JDialog parent) {
         super(
-            "Create new computer...", new ImageIcon(AddNewComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-add.png"))
+                "Create new computer...", new ImageIcon(AddNewComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-add.png"))
         );
         this.dialogs = Objects.requireNonNull(dialogs);
         this.appSettings = Objects.requireNonNull(appSettings);
@@ -63,16 +63,16 @@ public class AddNewComputerAction extends AbstractAction {
             } else {
                 try {
                     loadConfiguration(name)
-                        .ifPresentOrElse(
-                            c -> dialogs.showError("Computer '" + name + "' already exists, choose another name."),
-                            () -> {
-                                ComputerConfig newComputer = Unchecked.call(() -> createConfiguration(name));
-                                Schema schema = new Schema(newComputer, appSettings);
-                                SchemaEditorDialog di = new SchemaEditorDialog(parent, schema, dialogs);
-                                di.setVisible(true);
-                                update.run();
-                            }
-                        );
+                            .ifPresentOrElse(
+                                    c -> dialogs.showError("Computer '" + name + "' already exists, choose another name."),
+                                    () -> {
+                                        ComputerConfig newComputer = Unchecked.call(() -> createConfiguration(name));
+                                        Schema schema = new Schema(newComputer, appSettings);
+                                        SchemaEditorDialog di = new SchemaEditorDialog(parent, schema, dialogs);
+                                        di.setVisible(true);
+                                        update.run();
+                                    }
+                            );
                 } catch (IOException ex) {
                     LOGGER.error("Could not load computer with name '" + name + "'", ex);
                     dialogs.showError("Could not load computer with name '" + name + "'. Please see log file for details.");

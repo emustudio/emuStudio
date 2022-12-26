@@ -24,8 +24,8 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.suite.CpuRunnerImpl;
 import net.emustudio.plugins.cpu.intel8080.suite.CpuVerifierImpl;
 import org.junit.After;
@@ -34,17 +34,15 @@ import org.junit.Before;
 import static org.easymock.EasyMock.*;
 
 public class InstructionsTest {
-    private static final long PLUGIN_ID = 0L;
-
     public static final int REG_PAIR_BC = 0;
-    static final int REG_PAIR_DE = 1;
     public static final int REG_PAIR_HL = 2;
     public static final int REG_SP = 3;
+    static final int REG_PAIR_DE = 1;
     static final int REG_PSW = 3;
-
-    private CpuImpl cpu;
+    private static final long PLUGIN_ID = 0L;
     protected CpuRunnerImpl cpuRunnerImpl;
     protected CpuVerifierImpl cpuVerifierImpl;
+    private CpuImpl cpu;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -53,8 +51,8 @@ public class InstructionsTest {
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class))
-            .andReturn(memoryStub)
-            .anyTimes();
+                .andReturn(memoryStub)
+                .anyTimes();
         replay(contextPool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);

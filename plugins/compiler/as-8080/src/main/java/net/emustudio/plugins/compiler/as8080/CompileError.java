@@ -63,7 +63,7 @@ public class CompileError {
 
     public static CompileError couldNotReadFile(Node node, String filename, IOException e) {
         return new CompileError(
-            node, ERROR_CANNOT_READ_FILE, "Could not read file: " + filename + " (" + e.getMessage() + ")"
+                node, ERROR_CANNOT_READ_FILE, "Could not read file: " + filename + " (" + e.getMessage() + ")"
         );
     }
 
@@ -77,7 +77,7 @@ public class CompileError {
 
     public static CompileError ifExpressionReferencesOwnBlock(Node node) {
         return new CompileError(
-            node, ERROR_IF_EXPRESSION_REFERENCES_OWN_BLOCK, "If expression references declaration in its own block"
+                node, ERROR_IF_EXPRESSION_REFERENCES_OWN_BLOCK, "If expression references declaration in its own block"
         );
     }
 
@@ -87,15 +87,15 @@ public class CompileError {
 
     public static CompileError macroArgumentsDoNotMatch(Node node) {
         return new CompileError(
-            node, ERROR_MACRO_ARGUMENTS_DO_NOT_MATCH, "Macro call arguments do not match with defined parameters"
+                node, ERROR_MACRO_ARGUMENTS_DO_NOT_MATCH, "Macro call arguments do not match with defined parameters"
         );
     }
 
     public static CompileError expressionIsBiggerThanExpected(Node node, int expectedBytes, int wasBytes) {
         return new CompileError(
-            node,
-            ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED,
-            "Expression (" + wasBytes + " bytes) is bigger than expected (" + expectedBytes + " byte(s))"
+                node,
+                ERROR_EXPRESSION_IS_BIGGER_THAN_EXPECTED,
+                "Expression (" + wasBytes + " bytes) is bigger than expected (" + expectedBytes + " byte(s))"
         );
     }
 
@@ -105,17 +105,17 @@ public class CompileError {
 
     public static CompileError valueOutOfBounds(Node node, int min, int max) {
         return new CompileError(
-            node, ERROR_VALUE_OUT_OF_BOUNDS, "Value is out of bounds (min=" + min + ", max=" + max + ")"
+                node, ERROR_VALUE_OUT_OF_BOUNDS, "Value is out of bounds (min=" + min + ", max=" + max + ")"
         );
     }
 
     @Override
     public String toString() {
         return "CompileError{" +
-            "line=" + line +
-            ", column=" + column +
-            ", msg='" + msg + '\'' +
-            ", errorCode=" + errorCode +
-            '}';
+                "line=" + line +
+                ", column=" + column +
+                ", msg='" + msg + '\'' +
+                ", errorCode=" + errorCode +
+                '}';
     }
 }

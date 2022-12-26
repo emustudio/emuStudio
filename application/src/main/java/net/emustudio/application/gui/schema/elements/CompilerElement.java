@@ -19,8 +19,8 @@
 package net.emustudio.application.gui.schema.elements;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.gui.P;
+import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
 import java.awt.*;
@@ -37,15 +37,15 @@ public class CompilerElement extends Element {
 
     public CompilerElement(P schemaPoint, String pluginName, String pluginFileName) {
         super(
-            BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.COMPILER, pluginName, pluginFileName,
-            Config.inMemory()
+                BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.COMPILER, pluginName, pluginFileName,
+                Config.inMemory()
         );
     }
 
     public CompilerElement(PluginConfig config, Function<P, P> searchGridPoint) {
         super(
-            BACK_COLOR, searchGridPoint.apply(P.of(config.getSchemaPoint())), config.getPluginId(), PLUGIN_TYPE.COMPILER,
-            config.getPluginName(), config.getPluginFile(), config.getPluginSettings()
+                BACK_COLOR, searchGridPoint.apply(P.of(config.getSchemaPoint())), config.getPluginId(), PLUGIN_TYPE.COMPILER,
+                config.getPluginName(), config.getPluginFile(), config.getPluginSettings()
         );
     }
 }

@@ -77,10 +77,10 @@ public class DisplayPanel extends JPanel {
                     g.setColor(Color.DARK_GRAY);
                 }
                 g.fillRect(
-                    startX + j * PIXEL_SIZE_WITH_GAP,
-                    startY + i * PIXEL_SIZE_WITH_GAP,
-                    PIXEL_SIZE,
-                    PIXEL_SIZE
+                        startX + j * PIXEL_SIZE_WITH_GAP,
+                        startY + i * PIXEL_SIZE_WITH_GAP,
+                        PIXEL_SIZE,
+                        PIXEL_SIZE
                 );
             }
         }

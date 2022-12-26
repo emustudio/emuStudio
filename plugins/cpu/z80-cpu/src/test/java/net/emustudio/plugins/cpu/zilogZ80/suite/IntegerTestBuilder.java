@@ -100,14 +100,14 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
 
     public IntegerTestBuilder first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte() {
         runner.injectTwoOperands((tmpRunner, first, second) ->
-            new MemoryByte<>(get8MSBplus8LSB(first)).accept(tmpRunner, second.byteValue())
+                new MemoryByte<>(get8MSBplus8LSB(first)).accept(tmpRunner, second.byteValue())
         );
         return this;
     }
 
     public IntegerTestBuilder first8MSBplus8LSBisMemoryByte(int value) {
         runner.injectTwoOperands((tmpRunner, first, second) ->
-            new MemoryByte<>(get8MSBplus8LSB(first)).accept(tmpRunner, (byte) value)
+                new MemoryByte<>(get8MSBplus8LSB(first)).accept(tmpRunner, (byte) value)
         );
         return this;
     }
@@ -137,7 +137,7 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
 
     public IntegerTestBuilder first8MSBisDeviceAndFirst8LSBIsPort() {
         runner.injectFirst((tmpRunner, first) ->
-            cpuRunner.getDevice(first & 0xFF).setValue((byte) ((first >>> 8) & 0xFF)));
+                cpuRunner.getDevice(first & 0xFF).setValue((byte) ((first >>> 8) & 0xFF)));
         return this;
     }
 

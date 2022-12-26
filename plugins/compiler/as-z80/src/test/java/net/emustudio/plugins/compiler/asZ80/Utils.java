@@ -41,51 +41,51 @@ import static org.junit.Assert.assertEquals;
 
 public class Utils {
     public static Map<String, Integer> registers = Map.of(
-        "a", REG_A,
-        "b", REG_B,
-        "c", REG_C,
-        "d", REG_D,
-        "e", REG_E,
-        "h", REG_H,
-        "l", REG_L,
-        "(HL)", REG_HL
+            "a", REG_A,
+            "b", REG_B,
+            "c", REG_C,
+            "d", REG_D,
+            "e", REG_E,
+            "h", REG_H,
+            "l", REG_L,
+            "(HL)", REG_HL
     );
 
     public static Map<String, Integer> regPairs = Map.of(
-        "bc", REG_BC,
-        "de", REG_DE,
-        "hl", REG_HL,
-        "sp", REG_SP
+            "bc", REG_BC,
+            "de", REG_DE,
+            "hl", REG_HL,
+            "sp", REG_SP
     );
 
     public static Map<String, Integer> regPairs2 = Map.of(
-        "bc", REG_BC,
-        "de", REG_DE,
-        "hl", REG_HL,
-        "af", REG_AF
+            "bc", REG_BC,
+            "de", REG_DE,
+            "hl", REG_HL,
+            "af", REG_AF
     );
 
     public static Map<String, Integer> rot = Map.of(
-        "rlc", OPCODE_RLC,
-        "rrc", OPCODE_RRC,
-        "rl", OPCODE_RL,
-        "rr", OPCODE_RR,
-        "sla", OPCODE_SLA,
-        "sra", OPCODE_SRA,
-        "sll", OPCODE_SLL,
-        "srl", OPCODE_SRL
+            "rlc", OPCODE_RLC,
+            "rrc", OPCODE_RRC,
+            "rl", OPCODE_RL,
+            "rr", OPCODE_RR,
+            "sla", OPCODE_SLA,
+            "sra", OPCODE_SRA,
+            "sll", OPCODE_SLL,
+            "srl", OPCODE_SRL
     );
 
     public static Map<String, Integer> prefixReg = Map.of(
-        "IX", REG_IX,
-        "IY", REG_IY
+            "IX", REG_IX,
+            "IY", REG_IY
     );
 
     public static Map<String, Integer> prefixReg8 = Map.of(
-        "IXH", REG_IXH,
-        "IYH", REG_IYH,
-        "IXL", REG_IXL,
-        "IYL", REG_IYL
+            "IXH", REG_IXH,
+            "IYH", REG_IYH,
+            "IXL", REG_IXL,
+            "IYL", REG_IYL
     );
 
     public static List<Token> getTokens(String variation) {
@@ -147,7 +147,7 @@ public class Utils {
             }
             variations.add(new String(chars));
         }
-        for (String variation: variations) {
+        for (String variation : variations) {
             f.accept(variation);
         }
     }

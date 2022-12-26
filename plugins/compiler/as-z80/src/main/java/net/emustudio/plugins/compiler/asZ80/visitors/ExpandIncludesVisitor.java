@@ -40,7 +40,7 @@ import static net.emustudio.plugins.compiler.asZ80.CompileError.infiniteLoopDete
 public class ExpandIncludesVisitor extends NodeVisitor {
     private final Set<String> includedFiles;
     private Optional<String> inputFileName = Optional.empty();
-    
+
     public ExpandIncludesVisitor() {
         this.includedFiles = Collections.emptySet();
     }
@@ -91,16 +91,16 @@ public class ExpandIncludesVisitor extends NodeVisitor {
         }
 
         String includeFileNameNormalized = includeFileName
-            .replace("/", File.separator)
-            .replace("\\", File.separator);
+                .replace("/", File.separator)
+                .replace("\\", File.separator);
         return inputFileName
-            .map(f -> f.replace("/", File.separator))
-            .map(f -> f.replace("\\", File.separator))
-            .map(File::new)
-            .map(File::getParentFile)
-            .map(File::toPath)
-            .map(p -> p.resolve(includeFileNameNormalized))
-            .map(Path::toString)
-            .orElse(includeFileNameNormalized);
+                .map(f -> f.replace("/", File.separator))
+                .map(f -> f.replace("\\", File.separator))
+                .map(File::new)
+                .map(File::getParentFile)
+                .map(File::toPath)
+                .map(p -> p.resolve(includeFileNameNormalized))
+                .map(Path::toString)
+                .orElse(includeFileNameNormalized);
     }
 }

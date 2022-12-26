@@ -128,7 +128,7 @@ class MovingMode extends AbstractMode {
             }
             P linePoint = drawingModel.selectedLine.findPoint(clickPoint);
             if ((drawingModel.selectedLine != schema.findCrossingLine(clickPoint))
-                || (drawingModel.selectedPoint != linePoint)) {
+                    || (drawingModel.selectedPoint != linePoint)) {
                 drawingModel.selectedLine = null;
                 drawingModel.selectedPoint = null;
                 return SelectMode.MOVING;

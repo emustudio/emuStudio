@@ -28,20 +28,20 @@ public class CompilerTest extends AbstractCompilerTest {
     @Test
     public void testJmpInstruction() throws Exception {
         compile(
-            "org 2\n" +
-                "START: jmp HERE\n" +
-                "jmp START\n" +
-                "HERE: halt"
+                "org 2\n" +
+                        "START: jmp HERE\n" +
+                        "jmp START\n" +
+                        "HERE: halt"
         );
 
         assertProgram(
-            null,
-            null,
-            new RASPMemoryCellImpl(true, 15, 2),
-            new RASPMemoryCellImpl(false, 6, 3),
-            new RASPMemoryCellImpl(true, 15, 4),
-            new RASPMemoryCellImpl(false, 2, 5),
-            new RASPMemoryCellImpl(true, 18, 6)
+                null,
+                null,
+                new RASPMemoryCellImpl(true, 15, 2),
+                new RASPMemoryCellImpl(false, 6, 3),
+                new RASPMemoryCellImpl(true, 15, 4),
+                new RASPMemoryCellImpl(false, 2, 5),
+                new RASPMemoryCellImpl(true, 18, 6)
         );
     }
 

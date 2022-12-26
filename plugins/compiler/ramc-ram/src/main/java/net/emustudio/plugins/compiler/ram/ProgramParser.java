@@ -97,7 +97,7 @@ public class ProgramParser extends RAMParserBaseVisitor<Program> {
         }
 
         Instruction instruction = new Instruction(
-            op.getLine(), op.getCharPositionInLine(), opcode, direction, currentAddress++, Optional.ofNullable(operand)
+                op.getLine(), op.getCharPositionInLine(), opcode, direction, currentAddress++, Optional.ofNullable(operand)
         );
         program.add(instruction);
         return program;

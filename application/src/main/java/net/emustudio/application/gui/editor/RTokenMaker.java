@@ -34,6 +34,34 @@ public class RTokenMaker extends AbstractTokenMaker {
         this.compiler = Objects.requireNonNull(compiler);
     }
 
+    private static int getTokenMakerType(int emuStudioTokenType) {
+        switch (emuStudioTokenType) {
+            case net.emustudio.emulib.plugins.compiler.Token.RESERVED:
+                return Token.RESERVED_WORD;
+            case net.emustudio.emulib.plugins.compiler.Token.PREPROCESSOR:
+                return Token.PREPROCESSOR;
+            case net.emustudio.emulib.plugins.compiler.Token.REGISTER:
+                return Token.RESERVED_WORD_2;
+            case net.emustudio.emulib.plugins.compiler.Token.SEPARATOR:
+                return Token.SEPARATOR;
+            case net.emustudio.emulib.plugins.compiler.Token.OPERATOR:
+                return Token.OPERATOR;
+            case net.emustudio.emulib.plugins.compiler.Token.COMMENT:
+                return Token.COMMENT_MARKUP;
+            case net.emustudio.emulib.plugins.compiler.Token.LITERAL:
+                return Token.LITERAL_NUMBER_DECIMAL_INT;
+            case net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER:
+                return Token.IDENTIFIER;
+            case net.emustudio.emulib.plugins.compiler.Token.LABEL:
+                return Token.ANNOTATION;
+            case net.emustudio.emulib.plugins.compiler.Token.ERROR:
+                return Token.ERROR_IDENTIFIER;
+            case net.emustudio.emulib.plugins.compiler.Token.EOF:
+                return Token.NULL;
+        }
+        return Token.WHITESPACE;
+    }
+
     @Override
     public Token getTokenList(Segment text, int initialTokenType, int startOffset) {
         resetTokenList();
@@ -61,7 +89,7 @@ public class RTokenMaker extends AbstractTokenMaker {
                 } else if (previousEnd != -1 && start != (previousEnd + 1)) {
                     // we have a gap in the middle! Let's treat this gap as ERROR
                     addToken(
-                        text, previousEnd + 1, start - 1, Token.ERROR_CHAR, previousStartOffset + 1
+                            text, previousEnd + 1, start - 1, Token.ERROR_CHAR, previousStartOffset + 1
                     );
                 }
                 previousEnd = end;
@@ -79,33 +107,5 @@ public class RTokenMaker extends AbstractTokenMaker {
     @Override
     public TokenMap getWordsToHighlight() {
         return new TokenMap();
-    }
-
-    private static int getTokenMakerType(int emuStudioTokenType) {
-        switch (emuStudioTokenType) {
-            case net.emustudio.emulib.plugins.compiler.Token.RESERVED:
-                return Token.RESERVED_WORD;
-            case net.emustudio.emulib.plugins.compiler.Token.PREPROCESSOR:
-                return Token.PREPROCESSOR;
-            case net.emustudio.emulib.plugins.compiler.Token.REGISTER:
-                return Token.RESERVED_WORD_2;
-            case net.emustudio.emulib.plugins.compiler.Token.SEPARATOR:
-                return Token.SEPARATOR;
-            case net.emustudio.emulib.plugins.compiler.Token.OPERATOR:
-                return Token.OPERATOR;
-            case net.emustudio.emulib.plugins.compiler.Token.COMMENT:
-                return Token.COMMENT_MARKUP;
-            case net.emustudio.emulib.plugins.compiler.Token.LITERAL:
-                return Token.LITERAL_NUMBER_DECIMAL_INT;
-            case net.emustudio.emulib.plugins.compiler.Token.IDENTIFIER:
-                return Token.IDENTIFIER;
-            case net.emustudio.emulib.plugins.compiler.Token.LABEL:
-                return Token.ANNOTATION;
-            case net.emustudio.emulib.plugins.compiler.Token.ERROR:
-                return Token.ERROR_IDENTIFIER;
-            case net.emustudio.emulib.plugins.compiler.Token.EOF:
-                return Token.NULL;
-        }
-        return Token.WHITESPACE;
     }
 }

@@ -185,13 +185,13 @@ public class REditor implements Editor {
     @Override
     public boolean saveFileAs() {
         List<FileExtensionsFilter> filters = sourceFileExtensions.stream()
-            .map(FileExtensionsFilter::new).collect(Collectors.toList());
+                .map(FileExtensionsFilter::new).collect(Collectors.toList());
 
         File currentDirectory = Optional
-            .ofNullable(textPane.getFileFullPath())
-            .filter(p -> !isnew)
-            .map(File::new)
-            .orElse(new File(System.getProperty("user.dir")));
+                .ofNullable(textPane.getFileFullPath())
+                .filter(p -> !isnew)
+                .map(File::new)
+                .orElse(new File(System.getProperty("user.dir")));
 
         Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", currentDirectory.toPath(), true, filters);
         if (savedPath.isPresent()) {
@@ -211,19 +211,19 @@ public class REditor implements Editor {
     public boolean openFile() {
         List<FileExtensionsFilter> filters = new ArrayList<>();
         List<String> sourceExtensions = sourceFileExtensions.stream()
-            .map(SourceFileExtension::getExtension).collect(Collectors.toList());
+                .map(SourceFileExtension::getExtension).collect(Collectors.toList());
         if (sourceExtensions.size() > 0) {
             filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
         }
 
         File currentDirectory = Optional
-            .ofNullable(textPane.getFileFullPath())
-            .filter(p -> !isnew)
-            .map(File::new)
-            .orElse(new File(System.getProperty("user.dir")));
+                .ofNullable(textPane.getFileFullPath())
+                .filter(p -> !isnew)
+                .map(File::new)
+                .orElse(new File(System.getProperty("user.dir")));
 
         Optional<Path> openedFile = dialogs.chooseFile(
-            "Open a file", "Open", currentDirectory.toPath(), false, filters
+                "Open a file", "Open", currentDirectory.toPath(), false, filters
         );
         return openedFile.map(this::openFile).orElse(false);
     }

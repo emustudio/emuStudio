@@ -32,12 +32,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
 public class EmulatorEngine {
+    public final AtomicInteger IP = new AtomicInteger();
     private final AbstractTapeContext inputTape;
     private final AbstractTapeContext outputTape;
     private final AbstractTapeContext storageTape;
-
     private final RAMMemoryContext memory;
-    public final AtomicInteger IP = new AtomicInteger();
 
     public EmulatorEngine(AbstractTapeContext inputTape, AbstractTapeContext outputTape,
                           AbstractTapeContext storageTape, RAMMemoryContext memory) {
@@ -87,7 +86,7 @@ public class EmulatorEngine {
                 break;
             case STORE:
                 getRegister(instr)
-                    .ifPresent(o -> storageTape.getSymbolAt(0).ifPresent(r -> storageTape.setSymbolAt(o, r)));
+                        .ifPresent(o -> storageTape.getSymbolAt(0).ifPresent(r -> storageTape.setSymbolAt(o, r)));
                 break;
             case ADD:
                 getValue(instr).ifPresent(op -> arithmetic(op, Integer::sum));
@@ -103,19 +102,19 @@ public class EmulatorEngine {
                 break;
             case JMP:
                 instr
-                    .getLabel()
-                    .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
-                        throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
-                    });
+                        .getLabel()
+                        .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
+                            throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
+                        });
                 break;
             case JZ: {
                 int r0 = getR0();
                 if (r0 == 0) {
                     instr
-                        .getLabel()
-                        .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
-                            throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
-                        });
+                            .getLabel()
+                            .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
+                                throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
+                            });
                 }
                 break;
             }
@@ -123,10 +122,10 @@ public class EmulatorEngine {
                 int r0 = getR0();
                 if (r0 > 0) {
                     instr
-                        .getLabel()
-                        .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
-                            throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
-                        });
+                            .getLabel()
+                            .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
+                                throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
+                            });
                 }
                 break;
             }
@@ -140,14 +139,14 @@ public class EmulatorEngine {
 
     private int getR0() {
         return storageTape
-            .getSymbolAt(0)
-            .filter(r0 -> r0 != TapeSymbol.EMPTY)
-            .map(r0 -> {
-                if (r0.type != TapeSymbol.Type.NUMBER) {
-                    throw new RuntimeException("Register 0 contains non-numeric value: " + r0);
-                }
-                return r0.number;
-            }).orElse(0);
+                .getSymbolAt(0)
+                .filter(r0 -> r0 != TapeSymbol.EMPTY)
+                .map(r0 -> {
+                    if (r0.type != TapeSymbol.Type.NUMBER) {
+                        throw new RuntimeException("Register 0 contains non-numeric value: " + r0);
+                    }
+                    return r0.number;
+                }).orElse(0);
     }
 
     private void arithmetic(TapeSymbol operand, BiFunction<Integer, Integer, Integer> operation) {
@@ -184,13 +183,13 @@ public class EmulatorEngine {
                         throw new RuntimeException("Instruction has non-numeric operand: " + instruction);
                     }
                     return storageTape
-                        .getSymbolAt(r.getNumberValue())
-                        .map(rr -> {
-                            if (rr.type != TapeSymbol.Type.NUMBER) {
-                                throw new RuntimeException("Value of register " + rr + " is non-numeric");
-                            }
-                            return rr.number;
-                        });
+                            .getSymbolAt(r.getNumberValue())
+                            .map(rr -> {
+                                if (rr.type != TapeSymbol.Type.NUMBER) {
+                                    throw new RuntimeException("Value of register " + rr + " is non-numeric");
+                                }
+                                return rr.number;
+                            });
                 });
         }
         throw new IllegalStateException("Unexpected direction: " + instruction.getDirection());
@@ -198,6 +197,6 @@ public class EmulatorEngine {
 
     private TapeSymbol toSymbol(RAMValue value) {
         return (value.getType() == RAMValue.Type.NUMBER) ?
-            new TapeSymbol(value.getNumberValue()) : new TapeSymbol(value.getStringValue());
+                new TapeSymbol(value.getNumberValue()) : new TapeSymbol(value.getStringValue());
     }
 }

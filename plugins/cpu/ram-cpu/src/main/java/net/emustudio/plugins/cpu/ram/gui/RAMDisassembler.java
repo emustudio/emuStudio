@@ -43,7 +43,7 @@ public class RAMDisassembler implements Disassembler {
             return new DisassembledInstruction(memLocation, mnemo, oper);
         }
         mnemo = in.getOpcode().toString() + " " + in.getDirection().value() +
-            in.getOperand().map(RAMValue::getStringRepresentation).orElse("<empty>");
+                in.getOperand().map(RAMValue::getStringRepresentation).orElse("<empty>");
         return new DisassembledInstruction(memLocation, mnemo, oper);
     }
 

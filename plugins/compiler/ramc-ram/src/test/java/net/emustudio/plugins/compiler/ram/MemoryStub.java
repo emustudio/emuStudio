@@ -82,12 +82,12 @@ public class MemoryStub extends AbstractMemoryContext<RAMInstruction> implements
     }
 
     @Override
-    public void setInputs(List<RAMValue> inputs) {
-        this.inputs.addAll(inputs);
+    public List<RAMValue> getInputs() {
+        return inputs;
     }
 
     @Override
-    public List<RAMValue> getInputs() {
-        return inputs;
+    public void setInputs(List<RAMValue> inputs) {
+        this.inputs.addAll(inputs);
     }
 }

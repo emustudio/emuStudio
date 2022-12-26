@@ -18,14 +18,14 @@
  */
 package net.emustudio.application.cmdline;
 
-import net.emustudio.application.settings.AppSettings;
-import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.emulation.Automation;
 import net.emustudio.application.gui.ExtendedDialogs;
 import net.emustudio.application.gui.GuiDialogsImpl;
 import net.emustudio.application.gui.NoGuiDialogsImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
@@ -68,8 +68,8 @@ public class AutomationCommand implements Runnable {
             }
 
             Optional<ComputerConfig> computerConfigOpt = (runner.exclusive != null) ?
-                runner.exclusive.loadConfiguration() :
-                (gui ? loadComputerConfigFromGui(appConfig, dialogs) : Optional.empty());
+                    runner.exclusive.loadConfiguration() :
+                    (gui ? loadComputerConfigFromGui(appConfig, dialogs) : Optional.empty());
 
             if (computerConfigOpt.isEmpty()) {
                 dialogs.showError("Virtual computer must be selected!");
@@ -83,16 +83,16 @@ public class AutomationCommand implements Runnable {
 
             ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
             DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
-            try(VirtualComputer computer = loadComputer(
-                appConfig, computerConfig, dialogs, contextPool, debugTableModel
+            try (VirtualComputer computer = loadComputer(
+                    appConfig, computerConfig, dialogs, contextPool, debugTableModel
             )) {
                 splash.ifPresent(Window::dispose);
                 new Automation(
-                    computer, runner.inputFile,
-                    appConfig,
-                    dialogs,
-                    waitForFinishMillis,
-                    RadixUtils.getInstance().parseRadix(programStart)
+                        computer, runner.inputFile,
+                        appConfig,
+                        dialogs,
+                        waitForFinishMillis,
+                        RadixUtils.getInstance().parseRadix(programStart)
                 ).run();
             }
             System.exit(0);

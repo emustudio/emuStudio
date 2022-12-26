@@ -25,10 +25,10 @@ public class MacroTest extends AbstractCompilerTest {
     @Test
     public void testMacroWithoutCallDoesNotGenerateCode() throws Exception {
         compile(
-            "shrt macro\n"
-                + "  rrc\n"
-                + "  ani 7Fh\n"
-                + "endm\n\n"
+                "shrt macro\n"
+                        + "  rrc\n"
+                        + "  ani 7Fh\n"
+                        + "endm\n\n"
         );
         assertProgram();
     }
@@ -36,106 +36,106 @@ public class MacroTest extends AbstractCompilerTest {
     @Test
     public void testMacroWithoutParams() throws Exception {
         compile(
-            "shrt macro\n"
-                + "  rrc\n"
-                + "  ani 7Fh\n"
-                + "endm\n\n"
-                + "shrt\n"
+                "shrt macro\n"
+                        + "  rrc\n"
+                        + "  ani 7Fh\n"
+                        + "endm\n\n"
+                        + "shrt\n"
         );
 
         assertProgram(
-            0x0F, 0xE6, 0x7F
+                0x0F, 0xE6, 0x7F
         );
     }
 
     @Test
     public void testMacroWithParams() throws Exception {
         compile(
-            "shrt macro amount, dbsize\n"
-                + "  rrc\n"
-                + "  ani amount\n"
-                + "  db dbsize\n"
-                + "endm\n\n"
-                + "shrt 7Fh, 0\n"
+                "shrt macro amount, dbsize\n"
+                        + "  rrc\n"
+                        + "  ani amount\n"
+                        + "  db dbsize\n"
+                        + "endm\n\n"
+                        + "shrt 7Fh, 0\n"
         );
 
         assertProgram(
-            0x0F, 0xE6, 0x7F
+                0x0F, 0xE6, 0x7F
         );
     }
 
     @Test
     public void testDBinMacroIsVisibleFromOutside() throws Exception {
         compile(
-            "shrt macro\n"
-                + "  text: db 0Fh\n"
-                + "  ani 7Fh\n"
-                + "endm\n\n"
-                + "shrt\n"
-                + "lxi h, text\n"
+                "shrt macro\n"
+                        + "  text: db 0Fh\n"
+                        + "  ani 7Fh\n"
+                        + "endm\n\n"
+                        + "shrt\n"
+                        + "lxi h, text\n"
         );
         assertProgram(
-            0x0F, 0xE6, 0x7F, 0x21, 0, 0
+                0x0F, 0xE6, 0x7F, 0x21, 0, 0
         );
     }
 
     @Test(expected = Exception.class)
     public void testCannotRedefineIdentifierInMacro() throws Exception {
         compile(
-            "hello: db 0\n"
-                + "shrt macro\n"
-                + "  hello equ 0Fh\n"
-                + "endm\n"
-                + "shrt\n"
+                "hello: db 0\n"
+                        + "shrt macro\n"
+                        + "  hello equ 0Fh\n"
+                        + "endm\n"
+                        + "shrt\n"
         );
     }
 
     @Test(expected = Exception.class)
     public void testMacroAlreadyDefined() throws Exception {
         compile(
-            "shrt macro\nendm\n"
-                + "shrt macro\nendm\n"
+                "shrt macro\nendm\n"
+                        + "shrt macro\nendm\n"
         );
     }
 
     @Test
     public void testMacroCanGetForwardLabelReferences() throws Exception {
         compile(
-            "shrt macro param\n"
-                + "  lxi h, param\n"
-                + "endm\n"
-                + "shrt text\n"
-                + "text: db 1\n"
+                "shrt macro param\n"
+                        + "  lxi h, param\n"
+                        + "endm\n"
+                        + "shrt text\n"
+                        + "text: db 1\n"
         );
         assertProgram(
-            0x21, 3, 0, 1
+                0x21, 3, 0, 1
         );
     }
 
     @Test(expected = Exception.class)
     public void testLessMacroParametersThanExpected() throws Exception {
         compile(
-            "shrt macro param\n"
-                + "  lxi h, param\n"
-                + "endm\n"
-                + "shrt\n"
+                "shrt macro param\n"
+                        + "  lxi h, param\n"
+                        + "endm\n"
+                        + "shrt\n"
         );
     }
 
     @Test(expected = Exception.class)
     public void testMoreMacroParametersThanExpected() throws Exception {
         compile(
-            "shrt macro param\n"
-                + "  lxi h, param\n"
-                + "endm\n"
-                + "shrt 1, 2\n"
+                "shrt macro param\n"
+                        + "  lxi h, param\n"
+                        + "endm\n"
+                        + "shrt 1, 2\n"
         );
     }
 
     @Test(expected = Exception.class)
     public void testCallUndefinedMacro() throws Exception {
         compile(
-            "shrt 1,2\n"
+                "shrt 1,2\n"
         );
     }
 }

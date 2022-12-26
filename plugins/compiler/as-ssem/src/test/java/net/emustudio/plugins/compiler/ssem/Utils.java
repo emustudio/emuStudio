@@ -26,7 +26,10 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 
@@ -77,9 +80,9 @@ public class Utils {
             byte[] chars = base.getBytes();
             for (int j = 0; j < base.length(); j++) {
                 if (r.nextBoolean()) {
-                    chars[j] = Character.valueOf((char)chars[j]).toString().toUpperCase().getBytes()[0];
+                    chars[j] = Character.valueOf((char) chars[j]).toString().toUpperCase().getBytes()[0];
                 } else {
-                    chars[j] = Character.valueOf((char)chars[j]).toString().toLowerCase().getBytes()[0];
+                    chars[j] = Character.valueOf((char) chars[j]).toString().toLowerCase().getBytes()[0];
                 }
             }
             variations.add(new String(chars));
@@ -94,8 +97,8 @@ public class Utils {
         assertEquals(instructions.length, pinstr.size());
         for (ParsedInstruction instruction : instructions) {
             assertEquals(
-                new Instruction(instruction.opcode, instruction.operand, Position.unknown(), Position.unknown()),
-                pinstr.get(instruction.line)
+                    new Instruction(instruction.opcode, instruction.operand, Position.unknown(), Position.unknown()),
+                    pinstr.get(instruction.line)
             );
         }
     }

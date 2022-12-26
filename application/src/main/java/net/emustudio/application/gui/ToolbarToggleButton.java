@@ -44,6 +44,7 @@ public class ToolbarToggleButton extends JToggleButton {
     }
 
     public ToolbarToggleButton(Consumer<ActionEvent> action, String iconResource, String tooltipText) {
-        this(action, (ItemEvent itemAction) -> {}, iconResource, tooltipText);
+        this(action, (ItemEvent itemAction) -> {
+        }, iconResource, tooltipText);
     }
 }

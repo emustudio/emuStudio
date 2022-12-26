@@ -32,7 +32,7 @@ import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
 /**
  * Expands macros. It means - find macro definitions, remove them from the parent node and put them as a child under
  * each macro call. It supports forward references too.
- *
+ * <p>
  * It doesn't mean the macro expansion will be used in code yet.
  */
 public class ExpandMacrosVisitor extends NodeVisitor {

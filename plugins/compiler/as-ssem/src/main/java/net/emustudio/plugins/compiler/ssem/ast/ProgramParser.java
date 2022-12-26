@@ -51,9 +51,9 @@ public class ProgramParser extends SSEMParserBaseVisitor<Program> {
                     program.setStartLine(line, Position.of(ctx.linenumber));
                 } else {
                     program.add(
-                        line,
-                        new Instruction(instrType, operand, Position.of(tokenInstr), Position.of(tokenOperand)),
-                        Position.of(ctx.linenumber)
+                            line,
+                            new Instruction(instrType, operand, Position.of(tokenInstr), Position.of(tokenOperand)),
+                            Position.of(ctx.linenumber)
                     );
                 }
             }

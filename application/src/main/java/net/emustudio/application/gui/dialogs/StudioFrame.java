@@ -18,7 +18,6 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.actions.AboutAction;
 import net.emustudio.application.gui.actions.CompilerSettingsAction;
@@ -30,6 +29,7 @@ import net.emustudio.application.gui.actions.editor.SaveFileAsAction;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.gui.editor.REditor;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
@@ -66,18 +66,18 @@ public class StudioFrame extends JFrame {
         Objects.requireNonNull(computer);
 
         this.editor = computer.getCompiler()
-            .map(compiler -> new REditor(dialogs, compiler))
-            .orElse(new REditor(dialogs));
+                .map(compiler -> new REditor(dialogs, compiler))
+                .orElse(new REditor(dialogs));
 
         EmulationController emulationController = computer.getCPU().map(cpu -> new EmulationController(
-            cpu, computer.getMemory().orElse(null), computer.getDevices()
+                cpu, computer.getMemory().orElse(null), computer.getDevices()
         )).orElse(null);
 
         this.emulatorPanel = new EmulatorPanel(
-            this, computer, debugTableModel, dialogs, emulationController, memoryContext
+                this, computer, debugTableModel, dialogs, emulationController, memoryContext
         );
         this.editorPanel = new EditorPanel(
-            this, dialogs, editor, computer, this::updateTitleOfSourceCodePanel, emulatorPanel::getRunState
+                this, dialogs, editor, computer, this::updateTitleOfSourceCodePanel, emulatorPanel::getRunState
         );
 
         this.saveFileAsAction = new SaveFileAsAction(editor, this::updateTitleOfSourceCodePanel);
@@ -107,6 +107,12 @@ public class StudioFrame extends JFrame {
         editor.grabFocus();
     }
 
+    private static JMenuItem createMenuItem(Action action) {
+        JMenuItem item = new JMenuItem(action);
+        item.setToolTipText(null); // Swing annoyingly adds tool tip text to the menu item
+        return item;
+    }
+
     private void resizeComponents() {
         int height = getHeight();
         editorPanel.resizeComponents(height);
@@ -119,8 +125,8 @@ public class StudioFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         getRootPane().registerKeyboardAction(
-            e -> editor.clearMarkedOccurences(),
-            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW
+                e -> editor.clearMarkedOccurences(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
         addWindowListener(new WindowAdapter() {
@@ -140,11 +146,11 @@ public class StudioFrame extends JFrame {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
+                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
+                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
     }
 
     private JMenuBar setupMainMenu() {
@@ -190,13 +196,6 @@ public class StudioFrame extends JFrame {
         return mainMenuBar;
     }
 
-
-    private static JMenuItem createMenuItem(Action action) {
-        JMenuItem item = new JMenuItem(action);
-        item.setToolTipText(null); // Swing annoyingly adds tool tip text to the menu item
-        return item;
-    }
-
     private void formWindowClosing() {
         editorPanel.dispose();
         dispose();
@@ -204,8 +203,8 @@ public class StudioFrame extends JFrame {
 
     private void updateTitleOfSourceCodePanel() {
         editor.getCurrentFile().ifPresentOrElse(
-            file -> tabbedPane.setTitleAt(0, file.getName()),
-            () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
+                file -> tabbedPane.setTitleAt(0, file.getName()),
+                () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
         );
     }
 }

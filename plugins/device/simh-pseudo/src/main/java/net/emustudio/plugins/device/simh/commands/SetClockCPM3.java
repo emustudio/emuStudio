@@ -65,17 +65,17 @@ public class SetClockCPM3 implements Command {
         4 BCD byte: SS                              */
     private void setClockCPM3(ByteMemoryContext mem) {
         long targetSeconds = CPM3_ORIGIN +
-            (mem.read(setClockCPM3Adr) + mem.read(setClockCPM3Adr + 1) * 256) * SECONDS_PER_DAY +
-            (long) bcd2bin(mem.read(setClockCPM3Adr + 2)) * SECONDS_PER_HOUR +
-            (long) bcd2bin(mem.read(setClockCPM3Adr + 3)) * SECONDS_PER_MINUTE +
-            bcd2bin(mem.read(setClockCPM3Adr + 4));
+                (mem.read(setClockCPM3Adr) + mem.read(setClockCPM3Adr + 1) * 256) * SECONDS_PER_DAY +
+                (long) bcd2bin(mem.read(setClockCPM3Adr + 2)) * SECONDS_PER_HOUR +
+                (long) bcd2bin(mem.read(setClockCPM3Adr + 3)) * SECONDS_PER_MINUTE +
+                bcd2bin(mem.read(setClockCPM3Adr + 4));
 
         // compute target year, month and day and replace hour, minute and second fields
         LocalDateTime targetDate = LocalDateTime
-            .ofEpochSecond(targetSeconds, 0, ZoneOffset.UTC)
-            .withHour(bcd2bin(mem.read(setClockCPM3Adr + 2)))
-            .withMinute(bcd2bin(mem.read(setClockCPM3Adr + 3)))
-            .withSecond(bcd2bin(mem.read(setClockCPM3Adr + 4)));
+                .ofEpochSecond(targetSeconds, 0, ZoneOffset.UTC)
+                .withHour(bcd2bin(mem.read(setClockCPM3Adr + 2)))
+                .withMinute(bcd2bin(mem.read(setClockCPM3Adr + 3)))
+                .withSecond(bcd2bin(mem.read(setClockCPM3Adr + 4)));
         ClockCPM3Delta = (int) (targetDate.toEpochSecond(ZoneOffset.UTC) - LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
     }
 }
