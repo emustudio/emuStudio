@@ -27,23 +27,23 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 import static net.emustudio.plugins.device.adm3a.TerminalSettings.DEFAULT_INPUT_FILE_NAME;
 import static net.emustudio.plugins.device.adm3a.TerminalSettings.DEFAULT_OUTPUT_FILE_NAME;
 
-public class ConfigDialog extends JDialog {
+public class SettingsDialog extends JDialog {
     private final TerminalSettings settings;
     private final TerminalWindow window;
     private final Dialogs dialogs;
     private final JCheckBox chkAlwaysOnTop = new JCheckBox("Display always on top");
-    private final JCheckBox chkAntiAliasing = new JCheckBox("Use anti-aliasing");
     private final JCheckBox chkHalfDuplex = new JCheckBox("Half duplex mode");
-    private final JCheckBox chkSaveSettings = new JCheckBox("Save settings");
     private final JSpinner spnInputDelay = new JSpinner();
     private final JTextField txtInputFileName = new JTextField(DEFAULT_INPUT_FILE_NAME);
     private final JTextField txtOutputFileName = new JTextField(DEFAULT_OUTPUT_FILE_NAME);
-    private final JComboBox<String> cmbFont = new JComboBox<>();
-    public ConfigDialog(JFrame parent, TerminalSettings settings, TerminalWindow window, Dialogs dialogs) {
+    private final JComboBox<Integer> cmbFont = new JComboBox<>(new Integer[]{0, 1});
+
+    public SettingsDialog(JFrame parent, TerminalSettings settings, TerminalWindow window, Dialogs dialogs) {
         super(parent, true);
 
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -59,23 +59,20 @@ public class ConfigDialog extends JDialog {
     private void readSettings() {
         chkHalfDuplex.setSelected(settings.isHalfDuplex());
         chkAlwaysOnTop.setSelected(settings.isAlwaysOnTop());
-        chkAntiAliasing.setSelected(settings.isAntiAliasing());
         txtInputFileName.setText(settings.getInputPath().toString());
         txtOutputFileName.setText(settings.getOutputPath().toString());
         spnInputDelay.setValue(settings.getInputReadDelay());
     }
 
-    private void updateSettings(boolean save) throws IOException {
+    private void updateSettings() throws IOException {
         settings.setHalfDuplex(chkHalfDuplex.isSelected());
         settings.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
-        settings.setAntiAliasing(chkAntiAliasing.isSelected());
         settings.setInputPath(Path.of(txtInputFileName.getText()));
         settings.setOutputPath(Path.of(txtOutputFileName.getText()));
         settings.setInputReadDelay((Integer) spnInputDelay.getValue());
-        settings.setFont(TerminalSettings.TerminalFont.valueOf(cmbFont.getSelectedItem().toString().toUpperCase()));
-        if (save) {
-            settings.write();
-        }
+        getSelectedFont().ifPresent(settings::setFont);
+
+        settings.write();
     }
 
     private void initComponents() {
@@ -84,33 +81,31 @@ public class ConfigDialog extends JDialog {
         JButton btnInputBrowse = new JButton("Browse...");
         JLabel lblOutputFileName = new JLabel("Output file name:");
         JButton btnOutputBrowse = new JButton("Browse...");
-        JLabel lblNote = new JLabel("Note: I/O redirection will be used only if No GUI mode is enabled.");
+        JLabel lblNote = new JLabel("Note: I/O redirection will be used only in case of No GUI mode.");
         JLabel lblInputDelay = new JLabel("Input delay:");
         JLabel lblMs = new JLabel("ms");
         JPanel panelTerminal = new JPanel();
-        JButton btnOK = new JButton("OK");
+        JButton btnSave = new JButton("Save");
         JLabel lblFont = new JLabel("Font");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        setTitle("Configuration of the terminal");
+        setTitle("LSI ADM-3A Settings");
 
         panelRedirectIO.setBorder(BorderFactory.createTitledBorder(
                 null, "Redirect I/O", 0, 0,
                 lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
         ));
 
-        cmbFont.setModel(new DefaultComboBoxModel<>(new String[]{"Original", "Modern"}));
         cmbFont.setRenderer(new DisplayFontJComboRenderer());
-        cmbFont.setPrototypeDisplayValue("Original original");
         cmbFont.setSelectedIndex(settings.getFont().ordinal());
 
         spnInputDelay.setModel(new SpinnerNumberModel(0, 0, null, 100));
-        chkSaveSettings.setSelected(true);
 
-        btnOK.addActionListener(this::btnOKActionPerformed);
-        btnOK.setDefaultCapable(true);
+        btnSave.addActionListener(this::btnSaveActionPerformed);
+        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
+        btnSave.setDefaultCapable(true);
 
         GroupLayout layoutRedirectIO = new GroupLayout(panelRedirectIO);
         panelRedirectIO.setLayout(layoutRedirectIO);
@@ -180,8 +175,7 @@ public class ConfigDialog extends JDialog {
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(cmbFont))
                                         .addComponent(chkHalfDuplex)
-                                        .addComponent(chkAlwaysOnTop)
-                                        .addComponent(chkAntiAliasing))
+                                        .addComponent(chkAlwaysOnTop))
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layoutTerminal.setVerticalGroup(
@@ -194,8 +188,6 @@ public class ConfigDialog extends JDialog {
                                 .addComponent(chkHalfDuplex)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(chkAlwaysOnTop)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkAntiAliasing)
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -211,12 +203,10 @@ public class ConfigDialog extends JDialog {
                                                 .addContainerGap())
                                         .addGroup(layout.createSequentialGroup()
                                                 .addComponent(panelTerminal, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                .addContainerGap())
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(chkSaveSettings))))
+                                                .addContainerGap())))
                         .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnOK, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(btnSave, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
                                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -226,27 +216,35 @@ public class ConfigDialog extends JDialog {
                                 .addComponent(panelRedirectIO, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(panelTerminal, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkSaveSettings)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnOK)
+                                .addComponent(btnSave)
                                 .addContainerGap())
         );
 
         pack();
     }
 
-    private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
+        if (txtInputFileName.getText().trim().equals(txtOutputFileName.getText().trim())) {
+            dialogs.showError("Input and output file names cannot point to the same file");
+            txtInputFileName.grabFocus();
+            return;
+        }
         if (window != null) {
             window.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
-            window.setDisplayFont(DisplayFont.fromTerminalFont(
-                    TerminalSettings.TerminalFont.valueOf(cmbFont.getSelectedItem().toString().toUpperCase())));
+            getSelectedFont().ifPresent(f -> window.setDisplayFont(DisplayFont.fromTerminalFont(f)));
         }
         try {
-            updateSettings(chkSaveSettings.isSelected());
+            updateSettings();
             dispose();
         } catch (IOException e) {
             dialogs.showError("Input or output file names (or both) do not exist. Please make sure they do.", "ADM-3A Terminal");
         }
+    }
+
+    private Optional<TerminalSettings.TerminalFont> getSelectedFont() {
+        return Optional.ofNullable(cmbFont.getSelectedItem())
+                .map(p -> (Integer) p)
+                .map(TerminalSettings.TerminalFont::valueOf);
     }
 }

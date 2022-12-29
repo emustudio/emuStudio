@@ -34,7 +34,6 @@ public class TerminalSettings {
     public final static String DEFAULT_INPUT_FILE_NAME = "adm3A-terminal.in";
     public final static String DEFAULT_OUTPUT_FILE_NAME = "adm3A-terminal.out";
     private final static Logger LOGGER = LoggerFactory.getLogger(TerminalSettings.class);
-    private final static String ANTI_ALIASING = "antiAliasing";
     private final static String HALF_DUPLEX = "halfDuplex";
     private final static String ALWAYS_ON_TOP = "alwaysOnTop";
     private final static String INPUT_FILE_NAME = "inputFileName";
@@ -47,7 +46,6 @@ public class TerminalSettings {
     private final boolean guiSupported;
     private final List<ChangedObserver> observers = new ArrayList<>();
     private boolean halfDuplex = false;
-    private boolean antiAliasing = true;
     private boolean alwaysOnTop = false;
     private volatile Path inputPath = Path.of(DEFAULT_INPUT_FILE_NAME);
     private volatile Path outputPath = Path.of(DEFAULT_OUTPUT_FILE_NAME);
@@ -111,15 +109,6 @@ public class TerminalSettings {
         notifyObservers();
     }
 
-    public boolean isAntiAliasing() {
-        return antiAliasing;
-    }
-
-    public void setAntiAliasing(boolean antiAliasing) {
-        this.antiAliasing = antiAliasing;
-        notifyObserversAndIgnoreError();
-    }
-
     public boolean isAlwaysOnTop() {
         return alwaysOnTop;
     }
@@ -150,7 +139,6 @@ public class TerminalSettings {
             settings.setInt(INPUT_READ_DELAY, inputReadDelay);
             settings.setBoolean(HALF_DUPLEX, halfDuplex);
             settings.setBoolean(ALWAYS_ON_TOP, alwaysOnTop);
-            settings.setBoolean(ANTI_ALIASING, antiAliasing);
             settings.setString(OUTPUT_FILE_NAME, outputPath.toString());
             settings.setString(INPUT_FILE_NAME, inputPath.toString());
             settings.setInt(DEVICE_INDEX, deviceIndex);
@@ -166,7 +154,6 @@ public class TerminalSettings {
     private void readSettings() {
         halfDuplex = settings.getBoolean(HALF_DUPLEX, false);
         alwaysOnTop = settings.getBoolean(ALWAYS_ON_TOP, false);
-        antiAliasing = settings.getBoolean(ANTI_ALIASING, true);
         inputPath = Path.of(settings.getString(INPUT_FILE_NAME, DEFAULT_INPUT_FILE_NAME));
         outputPath = Path.of(settings.getString(OUTPUT_FILE_NAME, DEFAULT_OUTPUT_FILE_NAME));
         deviceIndex = settings.getInt(DEVICE_INDEX, 0);
@@ -179,6 +166,13 @@ public class TerminalSettings {
             );
         }
         font = TerminalFont.valueOf(settings.getString(FONT, TerminalFont.ORIGINAL.name).toUpperCase());
+
+        if (inputPath.toString().equals(outputPath.toString())) {
+            LOGGER.error("ADM-3A settings: Input path is not allowed to be equal to the output path. Setting to default.");
+            inputPath = Path.of(DEFAULT_INPUT_FILE_NAME);
+            outputPath = Path.of(DEFAULT_OUTPUT_FILE_NAME);
+        }
+
         notifyObserversAndIgnoreError();
     }
 
@@ -206,6 +200,16 @@ public class TerminalSettings {
 
         TerminalFont(String name) {
             this.name = Objects.requireNonNull(name);
+        }
+
+        public static TerminalFont valueOf(int index) {
+            if (index == 0) {
+                return ORIGINAL;
+            } else if (index == 1) {
+                return MODERN;
+            } else {
+                throw new RuntimeException("Unknown font index: " + index);
+            }
         }
     }
 

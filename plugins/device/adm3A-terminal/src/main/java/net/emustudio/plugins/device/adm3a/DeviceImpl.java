@@ -30,7 +30,7 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.adm3a.api.ContextAdm3A;
 import net.emustudio.plugins.device.adm3a.api.Keyboard;
-import net.emustudio.plugins.device.adm3a.gui.ConfigDialog;
+import net.emustudio.plugins.device.adm3a.gui.SettingsDialog;
 import net.emustudio.plugins.device.adm3a.gui.GuiUtils;
 import net.emustudio.plugins.device.adm3a.gui.TerminalWindow;
 import net.emustudio.plugins.device.adm3a.interaction.Cursor;
@@ -165,7 +165,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     @Override
     public void showSettings(JFrame parent) {
         if (isShowSettingsSupported()) {
-            new ConfigDialog(parent, terminalSettings, terminalGUI, applicationApi.getDialogs()).setVisible(true);
+            new SettingsDialog(parent, terminalSettings, terminalGUI, applicationApi.getDialogs()).setVisible(true);
         }
     }
 
