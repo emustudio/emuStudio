@@ -108,7 +108,7 @@ public class AssemblerZ80 extends AbstractCompiler {
         notifyInfo(getTitle() + ", version " + getVersion());
 
         try (Reader reader = new FileReader(inputFileName)) {
-            org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
+            AsZ80Lexer lexer = createLexer(CharStreams.fromReader(reader));
             lexer.addErrorListener(new ParserErrorListener());
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 

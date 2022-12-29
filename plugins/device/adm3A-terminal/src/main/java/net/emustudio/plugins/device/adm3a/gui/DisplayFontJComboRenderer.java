@@ -23,7 +23,7 @@ import java.awt.*;
 
 import static net.emustudio.plugins.device.adm3a.Utils.loadFont;
 
-public class DisplayFontJComboRenderer extends JLabel implements ListCellRenderer<String> {
+public class DisplayFontJComboRenderer extends JLabel implements ListCellRenderer<Integer> {
     private final Font originalFont = loadFont(DisplayFont.FONT_ORIGINAL);
     private final Font modernFont = loadFont(DisplayFont.FONT_MODERN);
 
@@ -32,9 +32,8 @@ public class DisplayFontJComboRenderer extends JLabel implements ListCellRendere
     }
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends String> list, String value, int index,
+    public Component getListCellRendererComponent(JList list, Integer value, int index,
                                                   boolean isSelected, boolean cellHasFocus) {
-        setText(value);
         if (isSelected) {
             setBackground(list.getSelectionBackground());
             setForeground(list.getSelectionForeground());
@@ -42,12 +41,14 @@ public class DisplayFontJComboRenderer extends JLabel implements ListCellRendere
             setBackground(list.getBackground());
             setForeground(list.getForeground());
         }
-        switch (index) {
+        switch (value) {
             case 0:
                 setFont(originalFont);
+                setText("Original");
                 break;
             case 1:
                 setFont(modernFont);
+                setText("Modern");
                 break;
             default:
         }
