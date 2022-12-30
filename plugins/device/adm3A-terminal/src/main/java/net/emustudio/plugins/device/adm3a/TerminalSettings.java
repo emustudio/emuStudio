@@ -145,7 +145,7 @@ public class TerminalSettings {
             settings.setString(FONT, font.name);
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not update settings", e);
-            dialogs.showError("Could not save settings. Please see log file for details.", "ADM 3A");
+            dialogs.showError("Could not save settings. Please see log file for details.", "LSI ADM-3A");
         } finally {
             notifyObserversAndIgnoreError();
         }
