@@ -49,7 +49,6 @@ dependencies {
   extraLibs libs.logback
   extraLibs libs.slf4JApi
 
-  extraLibsRuntime libs.javaCupRuntime
   providedRuntime project(":plugins:compiler:as-8080")
   providedRuntime project(":plugins:compiler:as-ssem")
   providedRuntime project(":plugins:compiler:as-z80")

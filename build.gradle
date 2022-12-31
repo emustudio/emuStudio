@@ -22,29 +22,28 @@ import java.text.SimpleDateFormat
 apply from: 'test_report.gradle'
 
 ext.versions = [
-        slf4j: '1.7.30'
+        slf4j: '2.0.6'
 ]
 
 ext.libs = [
         emuLib           : "net.emustudio:emulib:11.7.0-SNAPSHOT",
         cpuTestSuite     : "net.emustudio:cpu-testsuite_11.6:1.2.0-SNAPSHOT",
 
-        javaCupRuntime   : "com.github.vbmacher:java-cup-runtime:11b-20160615",
         jcipAnnotations  : "net.jcip:jcip-annotations:1.0",
         antlrRuntime     : "org.antlr:antlr4-runtime:4.11.1",
 
         slf4JApi         : "org.slf4j:slf4j-api:${versions.slf4j}",
         slf4JSimple      : "org.slf4j:slf4j-simple:${versions.slf4j}",
         slf4JNop         : "org.slf4j:slf4j-nop:${versions.slf4j}",
-        logback          : "ch.qos.logback:logback-classic:1.2.3",
+        logback          : "ch.qos.logback:logback-classic:1.4.5",
 
         picocli          : "info.picocli:picocli:4.7.0",
         picocliAnnotation: "info.picocli:picocli-codegen:4.7.0",
 
-        tomlj            : "com.electronwill.night-config:toml:3.6.5",
+        tomlj            : "com.electronwill.night-config:toml:3.6.6",
 
-        editor           : "com.fifesoft:rsyntaxtextarea:3.1.6",
-        editorDialogs    : "com.fifesoft:rstaui:3.1.4",
+        editor           : "com.fifesoft:rsyntaxtextarea:3.3.1",
+        editorDialogs    : "com.fifesoft:rstaui:3.3.0",
 
         junit            : "junit:junit:4.13",
         easyMock         : "org.easymock:easymock:4.2",
