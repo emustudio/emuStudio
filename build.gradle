@@ -30,6 +30,7 @@ ext.libs = [
         cpuTestSuite     : "net.emustudio:cpu-testsuite_11.6:1.2.0-SNAPSHOT",
 
         jcipAnnotations  : "net.jcip:jcip-annotations:1.0",
+        antlr            : "org.antlr:antlr4:4.11.1",
         antlrRuntime     : "org.antlr:antlr4-runtime:4.11.1",
 
         slf4JApi         : "org.slf4j:slf4j-api:${versions.slf4j}",
@@ -45,7 +46,7 @@ ext.libs = [
         editor           : "com.fifesoft:rsyntaxtextarea:3.3.1",
         editorDialogs    : "com.fifesoft:rstaui:3.3.0",
 
-        junit            : "junit:junit:4.13",
+        junit            : "junit:junit:4.13.1",
         easyMock         : "org.easymock:easymock:4.2",
         mockito          : "org.mockito:mockito-all:1.10.19"
 ]

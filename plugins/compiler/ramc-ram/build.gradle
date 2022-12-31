@@ -27,8 +27,9 @@ plugins {
 }
 
 dependencies {
-  antlr "org.antlr:antlr4:4.9.2"
-  implementation "org.antlr:antlr4-runtime:4.9.2"
+  antlr libs.antlr
+  implementation libs.antlrRuntime
+
   implementation libs.emuLib
   implementation project.rootProject.project(":plugins:memory:ram-mem")
   implementation libs.slf4JApi
