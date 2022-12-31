@@ -12,10 +12,9 @@ UnderlineWidth: 208
 Ascent: 2048
 Descent: 0
 InvalidEm: 0
-LayerCount: 3
+LayerCount: 2
 Layer: 0 1 "Back" 1
 Layer: 1 1 "Fore" 0
-Layer: 2 0 "Back 2" 1
 XUID: [1021 261 208283644 15436461]
 StyleMap: 0x0040
 FSType: 0
@@ -23,7 +22,7 @@ OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: 1663397476
-ModificationTime: 1671009524
+ModificationTime: 1672471671
 PfmFamily: 49
 TTFWeight: 400
 TTFWidth: 5
@@ -47,14 +46,13 @@ MarkAttachClasses: 1
 DEI: 91125
 LangName: 1033 "" "" "" "" "" "" "" "" "" "" "" "" "" "This Font Software is licensed under the SIL Open Font License, Version 1.1.+AAoA-This license is copied below, and is also available with a FAQ at:+AAoA-http://scripts.sil.org/OFL+AAoACgAK------------------------------------------------------------+AAoA-SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007+AAoA------------------------------------------------------------+AAoACgAA-PREAMBLE+AAoA-The goals of the Open Font License (OFL) are to stimulate worldwide+AAoA-development of collaborative font projects, to support the font creation+AAoA-efforts of academic and linguistic communities, and to provide a free and+AAoA-open framework in which fonts may be shared and improved in partnership+AAoA-with others.+AAoACgAA-The OFL allows the licensed fonts to be used, studied, modified and+AAoA-redistributed freely as long as they are not sold by themselves. The+AAoA-fonts, including any derivative works, can be bundled, embedded, +AAoA-redistributed and/or sold with any software provided that any reserved+AAoA-names are not used by derivative works. The fonts and derivatives,+AAoA-however, cannot be released under any other type of license. The+AAoA-requirement for fonts to remain under this license does not apply+AAoA-to any document created using the fonts or their derivatives.+AAoACgAA-DEFINITIONS+AAoAIgAA-Font Software+ACIA refers to the set of files released by the Copyright+AAoA-Holder(s) under this license and clearly marked as such. This may+AAoA-include source files, build scripts and documentation.+AAoACgAi-Reserved Font Name+ACIA refers to any names specified as such after the+AAoA-copyright statement(s).+AAoACgAi-Original Version+ACIA refers to the collection of Font Software components as+AAoA-distributed by the Copyright Holder(s).+AAoACgAi-Modified Version+ACIA refers to any derivative made by adding to, deleting,+AAoA-or substituting -- in part or in whole -- any of the components of the+AAoA-Original Version, by changing formats or by porting the Font Software to a+AAoA-new environment.+AAoACgAi-Author+ACIA refers to any designer, engineer, programmer, technical+AAoA-writer or other person who contributed to the Font Software.+AAoACgAA-PERMISSION & CONDITIONS+AAoA-Permission is hereby granted, free of charge, to any person obtaining+AAoA-a copy of the Font Software, to use, study, copy, merge, embed, modify,+AAoA-redistribute, and sell modified and unmodified copies of the Font+AAoA-Software, subject to the following conditions:+AAoACgAA-1) Neither the Font Software nor any of its individual components,+AAoA-in Original or Modified Versions, may be sold by itself.+AAoACgAA-2) Original or Modified Versions of the Font Software may be bundled,+AAoA-redistributed and/or sold with any software, provided that each copy+AAoA-contains the above copyright notice and this license. These can be+AAoA-included either as stand-alone text files, human-readable headers or+AAoA-in the appropriate machine-readable metadata fields within text or+AAoA-binary files as long as those fields can be easily viewed by the user.+AAoACgAA-3) No Modified Version of the Font Software may use the Reserved Font+AAoA-Name(s) unless explicit written permission is granted by the corresponding+AAoA-Copyright Holder. This restriction only applies to the primary font name as+AAoA-presented to the users.+AAoACgAA-4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font+AAoA-Software shall not be used to promote, endorse or advertise any+AAoA-Modified Version, except to acknowledge the contribution(s) of the+AAoA-Copyright Holder(s) and the Author(s) or with their explicit written+AAoA-permission.+AAoACgAA-5) The Font Software, modified or unmodified, in part or in whole,+AAoA-must be distributed entirely under this license, and must not be+AAoA-distributed under any other license. The requirement for fonts to+AAoA-remain under this license does not apply to any document created+AAoA-using the Font Software.+AAoACgAA-TERMINATION+AAoA-This license becomes null and void if any of the above conditions are+AAoA-not met.+AAoACgAA-DISCLAIMER+AAoA-THE FONT SOFTWARE IS PROVIDED +ACIA-AS IS+ACIA, WITHOUT WARRANTY OF ANY KIND,+AAoA-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF+AAoA-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT+AAoA-OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE+AAoA-COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,+AAoA-INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL+AAoA-DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING+AAoA-FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM+AAoA-OTHER DEALINGS IN THE FONT SOFTWARE." "http://scripts.sil.org/OFL"
 GaspTable: 2 8 2 65535 3 0
-DesignSize: 120
 Encoding: Custom
 UnicodeInterp: none
 NameList: AGL For New Fonts
 DisplaySize: -48
 AntiAlias: 1
 FitToEm: 0
-WinInfo: 0 25 19
+WinInfo: 0 51 19
 BeginPrivate: 0
 EndPrivate
 Grid
@@ -193,14 +191,14 @@ Grid
 1024 2688 m 0
  1024 -896 l 1024
 EndSplineSet
-TeXData: 1 12582912 0 -256901 920125 613417 -256901 -50332 613417 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
+TeXData: 1 0 0 -256901 920125 613417 -256901 -50332 613417 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
 BeginChars: 257 256
 
 StartChar: SOH
 Encoding: 1 1 0
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?L$:C.@.+:*&9s1_f6R)B%2
@@ -240,7 +238,7 @@ StartChar: STX
 Encoding: 2 2 1
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 109 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1eC)$<#?K_r!ro=GQ8CJNffG9V\638
@@ -263,7 +261,7 @@ StartChar: ETX
 Encoding: 3 3 2
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 108 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1J'u#<#?K_r!ro=GQ8D_*$Z[Q1)J/h
@@ -286,7 +284,7 @@ StartChar: EOT
 Encoding: 4 4 3
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -322,7 +320,7 @@ StartChar: ENQ
 Encoding: 5 5 4
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8+BNffG971$7@
@@ -357,7 +355,7 @@ StartChar: ACK
 Encoding: 6 6 5
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 118 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4\8%-<#?K_r!ro=GQ8+BNffG971$7@
@@ -389,7 +387,7 @@ StartChar: BEEP
 Encoding: 7 7 6
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 122 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5tOI1<#?K_r!ro=GQ8CNNffG9`^HN:
@@ -442,7 +440,7 @@ StartChar: BS
 Encoding: 8 8 7
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8Bu3Ns3&!@&g6
@@ -471,7 +469,7 @@ StartChar: HT
 Encoding: 9 9 8
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 104 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W01ePt<#?K_r!ro=GQ8Bu3Ns4f$5aWu
@@ -497,7 +495,7 @@ StartChar: LF
 Encoding: 10 10 9
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -526,7 +524,7 @@ StartChar: VT
 Encoding: 11 11 10
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8Bu3Ns3&!@&g6
@@ -555,7 +553,7 @@ StartChar: FF
 Encoding: 12 12 11
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8Bu3Ns3&!@&g6
@@ -584,7 +582,7 @@ StartChar: CR
 Encoding: 13 13 12
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?L$NR8(50F.aCrr8Tp#)6VB
@@ -617,7 +615,7 @@ StartChar: SO
 Encoding: 14 14 13
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 124 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6V0[3<#?L$NmS16+:&(=s8UEqUl0oQ
@@ -654,7 +652,7 @@ StartChar: SI
 Encoding: 15 15 14
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8C%,9r(&3hH^h
@@ -690,7 +688,7 @@ StartChar: DLE
 Encoding: 16 16 15
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 125 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6qKd4<#?L$NmS16+:&'Ro`)[29fN`Y
@@ -731,7 +729,7 @@ StartChar: DC1
 Encoding: 17 17 16
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8CNNffG9`^HN:
@@ -769,7 +767,7 @@ StartChar: DC2
 Encoding: 18 18 17
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 123 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6:jR2<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -806,7 +804,7 @@ StartChar: DC3
 Encoding: 19 19 18
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -847,7 +845,7 @@ StartChar: DC4
 Encoding: 20 20 19
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 122 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5tOI1<#?K_r!ro=GQ8D_*$Z[Q1)J/h
@@ -886,7 +884,7 @@ StartChar: NAK
 Encoding: 21 21 20
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8CJNffG9Xot.%
@@ -920,7 +918,7 @@ StartChar: SYN
 Encoding: 22 22 21
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8C%,9r(&3hH^I
@@ -953,7 +951,7 @@ StartChar: ETB
 Encoding: 23 23 22
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8C%,9r(&3hH^I
@@ -997,7 +995,7 @@ StartChar: CAN
 Encoding: 24 24 23
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 126 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W77fm5<#?L$:.Z&u+:&>Ss5t#,..n,f
@@ -1036,7 +1034,7 @@ StartChar: EM
 Encoding: 25 25 24
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8C%,9r(&3hH^h
@@ -1069,7 +1067,7 @@ StartChar: SUB
 Encoding: 26 26 25
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 109 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1eC)$<#?K_r!ro=GQ8sb%RU9&*Yr8r
@@ -1101,7 +1099,7 @@ StartChar: ESC
 Encoding: 27 27 26
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 118 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4\8%-<#?K_r!ro=GQ8sb%RU9&*YsiL
@@ -1135,7 +1133,7 @@ StartChar: FS
 Encoding: 28 28 27
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8C%,9n7D"pQE9
@@ -1163,7 +1161,7 @@ StartChar: GS
 Encoding: 29 29 28
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -1193,7 +1191,7 @@ StartChar: RS
 Encoding: 30 30 29
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 118 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4\8%-<#?K_r!ro=GQ8Bu3Ns2BO@1f(
@@ -1220,7 +1218,7 @@ StartChar: US
 Encoding: 31 31 30
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8Dg*$Z[QM@bLD
@@ -1251,7 +1249,7 @@ StartChar: exclam
 Encoding: 33 33 31
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 96 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-V6]l<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -1277,7 +1275,7 @@ StartChar: quotedbl
 Encoding: 34 34 32
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 103 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/kJGs<#?K_r!ro=GQ8CJNffG9X9;!;
@@ -1303,7 +1301,7 @@ StartChar: numbersign
 Encoding: 35 35 33
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 107 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1.al"<#?K_r!ro=GQ8CJNffG9X9;!;
@@ -1353,7 +1351,7 @@ StartChar: dollar
 Encoding: 36 36 34
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 127 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W7S-!6<#?L$bs;]P5R^!,B't03:)+gl
@@ -1410,7 +1408,7 @@ StartChar: percent
 Encoding: 37 37 35
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?L$N_p8d+:(</FoNtYY\DBo
@@ -1444,7 +1442,7 @@ StartChar: ampersand
 Encoding: 38 38 36
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8CJNffG9V\1><
@@ -1498,7 +1496,7 @@ StartChar: quotesingle
 Encoding: 39 39 37
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 100 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.nN,p<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -1519,7 +1517,7 @@ StartChar: parenleft
 Encoding: 40 40 38
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 111 320 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2G$;&<#?K_r!ro=GQ8CNNffG9`^HN:
@@ -1546,7 +1544,7 @@ StartChar: parenright
 Encoding: 41 41 39
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 -192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -1573,7 +1571,7 @@ StartChar: asterisk
 Encoding: 42 42 40
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?L$NS=d?+:(?(s8UE1_?!r(
@@ -1613,7 +1611,7 @@ StartChar: plus
 Encoding: 43 43 41
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8Bu3Ns3&!@&g6
@@ -1642,7 +1640,7 @@ StartChar: comma
 Encoding: 44 44 42
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 91 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,"Y0g<#?K_r!ro=GQ8Bu3Ns2\'ehBu
@@ -1667,7 +1665,7 @@ StartChar: hyphen
 Encoding: 45 45 43
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 94 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,tUKj<#?K_r!ro=GQ8Bu3Ns4Z$5e?V
@@ -1688,7 +1686,7 @@ StartChar: period
 Encoding: 46 46 44
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 84 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W)bEF`<#?K_r!ro=GQ8Bu3O%#[;S^Ap
@@ -1709,7 +1707,7 @@ StartChar: slash
 Encoding: 47 47 45
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8Bu3Ns3P!_,XK
@@ -1732,7 +1730,7 @@ StartChar: zero
 Encoding: 48 48 46
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -1770,7 +1768,7 @@ StartChar: one
 Encoding: 49 49 47
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 107 64.0271 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1.al"<#?K_r!ro=GQ8CNNffG9`^HN:
@@ -1804,7 +1802,7 @@ StartChar: two
 Encoding: 50 50 48
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 124 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6V0[3<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -1845,7 +1843,7 @@ StartChar: three
 Encoding: 51 51 49
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 123 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6:jR2<#?K_r!ro=GQ8sb%RU9&*Yr8r
@@ -1891,7 +1889,7 @@ StartChar: four
 Encoding: 52 52 50
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8D_*$Z[Q1)J/h
@@ -1925,7 +1923,7 @@ StartChar: five
 Encoding: 53 53 51
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8sb%RU9&*YsiL
@@ -1964,7 +1962,7 @@ StartChar: six
 Encoding: 54 54 52
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8+FNffG9`ah?c
@@ -2004,7 +2002,7 @@ StartChar: seven
 Encoding: 55 55 53
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?K_r!ro=GQ8sb%RU9&*Yr8r
@@ -2032,7 +2030,7 @@ StartChar: eight
 Encoding: 56 56 54
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 100 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.nN,p<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -2081,7 +2079,7 @@ StartChar: nine
 Encoding: 57 57 55
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 123 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6:jR2<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -2121,7 +2119,7 @@ StartChar: colon
 Encoding: 58 58 56
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 97 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-qQfm<#?K_r!ro=GQ8Bu3Ns4f$5aWu
@@ -2147,7 +2145,7 @@ StartChar: semicolon
 Encoding: 59 59 57
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 104 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W01ePt<#?K_r!ro=GQ8Bu3Ns4f$5aWu
@@ -2177,7 +2175,7 @@ StartChar: less
 Encoding: 60 60 58
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8D_*$Z[Q1)J/h
@@ -2203,7 +2201,7 @@ StartChar: equal
 Encoding: 61 61 59
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 96 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-V6]l<#?K_r!ro=GQ8Bu3Ns2`"cP]X
@@ -2229,7 +2227,7 @@ StartChar: greater
 Encoding: 62 62 60
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?L$c9Vp?+:&'8li7!DD@\!2
@@ -2255,7 +2253,7 @@ StartChar: question
 Encoding: 63 63 61
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -2293,7 +2291,7 @@ StartChar: at
 Encoding: 64 64 62
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 124 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6V0[3<#?L$N^4!P+:&,)nGcju-;[[9
@@ -2337,7 +2335,7 @@ StartChar: A
 Encoding: 65 65 63
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 119 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5"S..<#?K_r!ro=GQ8CNNffG9`^HN:
@@ -2374,7 +2372,7 @@ StartChar: B
 Encoding: 66 66 64
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 96 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-V6]l<#?K_r!ro=GQ8sb%RgE0H5;TS
@@ -2414,7 +2412,7 @@ StartChar: C
 Encoding: 67 67 65
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -2453,7 +2451,7 @@ StartChar: D
 Encoding: 68 68 66
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 98 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.7lon<#?K_r!ro=GQ8sb%RgE0H5;TS
@@ -2483,7 +2481,7 @@ StartChar: E
 Encoding: 69 69 67
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 102 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/P/>r<#?K_r!ro=GQ8sb%RU9&*YsiL
@@ -2512,7 +2510,7 @@ StartChar: F
 Encoding: 70 70 68
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 100 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.nN,p<#?K_r!ro=GQ8sb%RU9&*YsiL
@@ -2539,7 +2537,7 @@ StartChar: G
 Encoding: 71 71 69
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8+BNffG971$7@
@@ -2573,7 +2571,7 @@ StartChar: H
 Encoding: 72 72 70
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 105 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0M+Yu<#?K_r!ro=GQ8C%,9r(&3hH^I
@@ -2602,7 +2600,7 @@ StartChar: I
 Encoding: 73 73 71
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 106 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0hFc!<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -2631,7 +2629,7 @@ StartChar: J
 Encoding: 74 74 72
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 100 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.nN,p<#?K_r!ro=GQ8Dg*$Z[QM@bLD
@@ -2660,7 +2658,7 @@ StartChar: K
 Encoding: 75 75 73
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 118 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4\8%-<#?K_r!ro=GQ8C%,9r(&3hH^]
@@ -2692,7 +2690,7 @@ StartChar: L
 Encoding: 76 76 74
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 94 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,tUKj<#?K_r!ro=GQ8C%,9n7D"pQEe
@@ -2715,7 +2713,7 @@ StartChar: M
 Encoding: 77 77 75
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8C%,9r(&3hH^(
@@ -2749,8 +2747,8 @@ EndChar
 StartChar: N
 Encoding: 78 78 76
 Width: 1408
-Flags: MWO
-LayerCount: 3
+Flags: MW
+LayerCount: 2
 Back
 Image2: image/png 114 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8C%,9r(&3hH^I
@@ -2778,7 +2776,7 @@ StartChar: O
 Encoding: 79 79 77
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 103 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/kJGs<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -2815,7 +2813,7 @@ StartChar: P
 Encoding: 80 80 78
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 103 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/kJGs<#?K_r!ro=GQ8sb%RgE0H5;TS
@@ -2847,7 +2845,7 @@ StartChar: Q
 Encoding: 81 81 79
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -2889,7 +2887,7 @@ StartChar: R
 Encoding: 82 82 80
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 118 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4\8%-<#?K_r!ro=GQ8sb%RgE0H5;TS
@@ -2926,7 +2924,7 @@ StartChar: S
 Encoding: 83 83 81
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -2973,7 +2971,7 @@ StartChar: T
 Encoding: 84 84 82
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 97 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-qQfm<#?K_r!ro=GQ8sb%RU9&*YoTJ
@@ -2998,7 +2996,7 @@ StartChar: U
 Encoding: 85 85 83
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 95 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-:pTk<#?K_r!ro=GQ8C%,9r(&3hH^I
@@ -3027,7 +3025,7 @@ StartChar: V
 Encoding: 86 86 84
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 103 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/kJGs<#?K_r!ro=GQ8C%,9r(&3hH^I
@@ -3055,7 +3053,7 @@ StartChar: W
 Encoding: 87 87 85
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 110 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2+^2%<#?K_r!ro=GQ8C%,9r(&3hH^I
@@ -3088,7 +3086,7 @@ StartChar: X
 Encoding: 88 88 86
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?L,:Kn/++:)bps..=>UQd0V
@@ -3126,7 +3124,7 @@ StartChar: Y
 Encoding: 89 89 87
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 110 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2+^2%<#?K_r!ro=GQ8C%,9r(&3hH^I
@@ -3156,7 +3154,7 @@ StartChar: Z
 Encoding: 90 90 88
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?K_r!ro=GQ8sb%RU9&*Yr8r
@@ -3186,7 +3184,7 @@ StartChar: bracketleft
 Encoding: 91 91 89
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 97 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-qQfm<#?K_r!ro=GQ8sb%RU9&*Yt,T
@@ -3211,7 +3209,7 @@ StartChar: backslash
 Encoding: 92 92 90
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 110 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2+^2%<#?K_r!ro=GQ8Bu3Ns22,9nF>
@@ -3234,7 +3232,7 @@ StartChar: bracketright
 Encoding: 93 93 91
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 100 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.nN,p<#?K_r!ro=GQ8sb%RU9&*Yr8r
@@ -3259,7 +3257,7 @@ StartChar: asciicircum
 Encoding: 94 94 92
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 110 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2+^2%<#?K_r!ro=GQ8Bu3Ns4f$5aWu
@@ -3285,7 +3283,7 @@ StartChar: underscore
 Encoding: 95 95 93
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 87 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*_Aac<#?K_r!ro=GQ8Bu3O%"p:r!?Y
@@ -3306,7 +3304,7 @@ StartChar: grave
 Encoding: 96 96 94
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 106 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0hFc!<#?K_r!ro=GQ8CJNffG9V\638
@@ -3329,7 +3327,7 @@ StartChar: a
 Encoding: 97 97 95
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 119 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5"S..<#?K_r!ro=GQ8Bu3Ns2*Lh(%,
@@ -3369,7 +3367,7 @@ StartChar: b
 Encoding: 98 98 96
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8CJNffG9V\638
@@ -3406,7 +3404,7 @@ StartChar: c
 Encoding: 99 99 97
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8Bu3Ns2*9E?@_
@@ -3437,7 +3435,7 @@ StartChar: d
 Encoding: 100 100 98
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?K_r!ro=GQ8D_*$Z[Q1)J/(
@@ -3474,7 +3472,7 @@ StartChar: e
 Encoding: 101 101 99
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8Bu3Ns3&!@&g6
@@ -3514,7 +3512,7 @@ StartChar: f
 Encoding: 102 102 100
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 122 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5tOI1<#?K_r!ro=GQ8D_*$Z[Q1)J/h
@@ -3554,7 +3552,7 @@ StartChar: g
 Encoding: 103 103 101
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 123 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6:jR2<#?L$N<'@d+:&'To`$RG-VQk$
@@ -3594,7 +3592,7 @@ StartChar: h
 Encoding: 104 104 102
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 110 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2+^2%<#?K_r!ro=GQ8CJNffG9V\638
@@ -3624,7 +3622,7 @@ StartChar: i
 Encoding: 105 105 103
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -3657,7 +3655,7 @@ StartChar: j
 Encoding: 106 106 104
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8D_*$Z[Q1)J/(
@@ -3693,7 +3691,7 @@ StartChar: k
 Encoding: 107 107 105
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8CJNffG9V\638
@@ -3725,7 +3723,7 @@ StartChar: l
 Encoding: 108 108 106
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 108 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1J'u#<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -3752,7 +3750,7 @@ StartChar: m
 Encoding: 109 109 107
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8Bu3Ns22,9nE8
@@ -3789,7 +3787,7 @@ StartChar: n
 Encoding: 110 110 108
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 110 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2+^2%<#?K_r!ro=GQ8Bu3Ns2*Lh(%,
@@ -3816,7 +3814,7 @@ StartChar: o
 Encoding: 111 111 109
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 119 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5"S..<#?K_r!ro=GQ8Bu3Ns3&!@&g6
@@ -3850,7 +3848,7 @@ StartChar: p
 Encoding: 112 112 110
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 118 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4\8%-<#?K_r!ro=GQ8Bu3Ns2*Lh(%,
@@ -3882,7 +3880,7 @@ StartChar: q
 Encoding: 113 113 111
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8Bu3Ns2*Lh(%,
@@ -3918,7 +3916,7 @@ StartChar: r
 Encoding: 114 114 112
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8Bu3Ns3"!@&g6
@@ -3945,7 +3943,7 @@ StartChar: s
 Encoding: 115 115 113
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 122 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5tOI1<#?K_r!ro=GQ8Bu3Ns2*Lh(%,
@@ -3985,7 +3983,7 @@ StartChar: t
 Encoding: 116 116 114
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8CNNffG9`^HN:
@@ -4021,7 +4019,7 @@ StartChar: u
 Encoding: 117 117 115
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8Bu3Ns3"!@&g6
@@ -4050,7 +4048,7 @@ StartChar: v
 Encoding: 118 118 116
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8Bu3Ns22,9nFj
@@ -4078,7 +4076,7 @@ StartChar: w
 Encoding: 119 119 117
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 108 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1J'u#<#?K_r!ro=GQ8Bu3Ns22,9nFj
@@ -4120,7 +4118,7 @@ StartChar: x
 Encoding: 120 120 118
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 124 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6V0[3<#?L$O22;+0EaaEs8UE72JImJ
@@ -4150,7 +4148,7 @@ StartChar: y
 Encoding: 121 121 119
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 118 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4\8%-<#?K_r!ro=GQ8Bu3Ns3"!@&g6
@@ -4186,7 +4184,7 @@ StartChar: z
 Encoding: 122 122 120
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 111 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2G$;&<#?K_r!ro=GQ8Bu3Ns2BOMigR
@@ -4218,7 +4216,7 @@ StartChar: braceleft
 Encoding: 123 123 121
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8D_*$Z[Q1)J/h
@@ -4257,7 +4255,7 @@ StartChar: bar
 Encoding: 124 124 122
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 96 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-V6]l<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -4283,7 +4281,7 @@ StartChar: braceright
 Encoding: 125 125 123
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?L$c7oA#+:(<]kl,cY@:8B`
@@ -4322,7 +4320,7 @@ StartChar: asciitilde
 Encoding: 126 126 124
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 105 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0M+Yu<#?K_r!ro=GQ8Bu3Ns4^$5aWu
@@ -4351,7 +4349,7 @@ StartChar: uni007F
 Encoding: 127 127 125
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 91 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,"Y0g<#?K_r!ro=GQ8Bu3Ns2`"cP]X
@@ -4372,7 +4370,7 @@ StartChar: uni0080
 Encoding: 128 128 126
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 125 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6qKd4<#?L$Na!+r&.AZ[o_qq3)XZ$a
@@ -4418,7 +4416,7 @@ StartChar: uni0081
 Encoding: 129 129 127
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 104 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W01ePt<#?K_r!ro=GQ8CJNffG9Xot.%
@@ -4455,7 +4453,7 @@ StartChar: uni0082
 Encoding: 130 130 128
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8D_*$Z[Q!sg+R
@@ -4501,7 +4499,7 @@ StartChar: uni0083
 Encoding: 131 131 129
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 123 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6:jR2<#?L$NWBIe+:&',qYun_#oBn?
@@ -4552,7 +4550,7 @@ StartChar: uni0084
 Encoding: 132 132 130
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8CJNffG9X9;!;
@@ -4603,7 +4601,7 @@ StartChar: uni0085
 Encoding: 133 133 131
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 123 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6:jR2<#?L$Nf+5E+:&'Ro`)[2:,ig-
@@ -4651,7 +4649,7 @@ StartChar: uni0086
 Encoding: 134 134 132
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 124 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6V0[3<#?L$N_'QX+:J@3q#<"J$)@]t
@@ -4705,7 +4703,7 @@ StartChar: uni0087
 Encoding: 135 135 133
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8+FNffG9`ah?c
@@ -4743,7 +4741,7 @@ StartChar: uni0088
 Encoding: 136 136 134
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 122 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5tOI1<#?L4NWBIe+:&'Tq#<!K-O;FN
@@ -4799,7 +4797,7 @@ StartChar: uni0089
 Encoding: 137 137 135
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8CJNffG9Xot.%
@@ -4850,7 +4848,7 @@ StartChar: uni008A
 Encoding: 138 138 136
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 118 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4\8%-<#?K_r!ro=GQ8sb%]fYs3[Tpk
@@ -4897,7 +4895,7 @@ StartChar: uni008B
 Encoding: 139 139 137
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 104 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W01ePt<#?K_r!ro=GQ8Bu3Ns3"!@&g6
@@ -4932,7 +4930,7 @@ StartChar: uni008C
 Encoding: 140 140 138
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 109 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1eC)$<#?K_r!ro=GQ8CNNffG9`^HN:
@@ -4970,7 +4968,7 @@ StartChar: uni008D
 Encoding: 141 141 139
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8sb%]fYs3[Tpk
@@ -5004,7 +5002,7 @@ StartChar: uni008E
 Encoding: 142 142 140
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 127 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W7S-!6<#?L$N^4-T+:,l<q#;ut,AGXJ
@@ -5048,7 +5046,7 @@ StartChar: uni008F
 Encoding: 143 143 141
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 126 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W77fm5<#?L$N_p8d+:(<OFoNtYZt[aQ
@@ -5096,7 +5094,7 @@ StartChar: uni0090
 Encoding: 144 144 142
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8D_*$Z[Q!sg+R
@@ -5133,7 +5131,7 @@ StartChar: uni0091
 Encoding: 145 145 143
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8Bu3Ns2BOMigR
@@ -5180,7 +5178,7 @@ StartChar: uni0092
 Encoding: 146 146 144
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?L$NmS=:+:&%fs8V6p2qg%3
@@ -5225,7 +5223,7 @@ StartChar: uni0093
 Encoding: 147 147 145
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8CNNffHd!JJi$
@@ -5274,7 +5272,7 @@ StartChar: uni0094
 Encoding: 148 148 146
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8CJNffG9Xot.%
@@ -5319,7 +5317,7 @@ StartChar: uni0095
 Encoding: 149 149 147
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?L$NWBIe+:J<mo`$Sr'F%%/
@@ -5361,7 +5359,7 @@ StartChar: uni0096
 Encoding: 150 150 148
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8CJNffG9N3T?l
@@ -5403,7 +5401,7 @@ StartChar: uni0097
 Encoding: 151 151 149
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 111 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2G$;&<#?K_r!ro=GQ8sb%]fYs3[Tpk
@@ -5439,7 +5437,7 @@ StartChar: uni0098
 Encoding: 152 152 150
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8CJNffG9Xot.%
@@ -5482,7 +5480,7 @@ StartChar: uni0099
 Encoding: 153 153 151
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 110 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2+^2%<#?K_r!ro=GQ8C%,9r(&#+pt`
@@ -5526,7 +5524,7 @@ StartChar: uni009A
 Encoding: 154 154 152
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 97 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-qQfm<#?K_r!ro=GQ8C%,9r(&#+o?<
@@ -5565,7 +5563,7 @@ StartChar: uni009B
 Encoding: 155 155 153
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 122 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5tOI1<#?L$NR8(5+:&'Rs8UE2K+e@/
@@ -5608,7 +5606,7 @@ StartChar: uni009C
 Encoding: 156 156 154
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8CNNffHd!JJi$
@@ -5641,7 +5639,7 @@ StartChar: uni009D
 Encoding: 157 157 155
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 109 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1eC)$<#?K_r!ro=GQ8C%,9r(&3hH^I
@@ -5685,7 +5683,7 @@ StartChar: uni009E
 Encoding: 158 158 156
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8sb%RgE0H5;TS
@@ -5726,7 +5724,7 @@ StartChar: uni009F
 Encoding: 159 159 157
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8D_*$Z[Q!sg+R
@@ -5764,7 +5762,7 @@ StartChar: uni00A0
 Encoding: 160 160 158
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 125 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6qKd4<#?L$N_p,`+:LRo])S$G(QNpF
@@ -5813,7 +5811,7 @@ StartChar: exclamdown
 Encoding: 161 161 159
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8D_*$Z[Q!sg+R
@@ -5847,7 +5845,7 @@ StartChar: cent
 Encoding: 162 162 160
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 118 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4\8%-<#?K_r!ro=GQ8D_*$Z[Q!sg+R
@@ -5888,7 +5886,7 @@ StartChar: sterling
 Encoding: 163 163 161
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8D_*$Z[Q!sg+R
@@ -5919,7 +5917,7 @@ StartChar: currency
 Encoding: 164 164 162
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 119 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5"S..<#?K_r!ro=GQ8C%,9n7D"pPj)
@@ -5957,7 +5955,7 @@ StartChar: yen
 Encoding: 165 165 163
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?L$bu"fJ+:&'G-f+gFeV%B@
@@ -5995,7 +5993,7 @@ StartChar: brokenbar
 Encoding: 166 166 164
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -6038,7 +6036,7 @@ StartChar: section
 Encoding: 167 167 165
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?K_r!ro=GQ8CNNffHd!JJi$
@@ -6078,7 +6076,7 @@ StartChar: dieresis
 Encoding: 168 168 166
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 111 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2G$;&<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -6115,7 +6113,7 @@ StartChar: copyright
 Encoding: 169 169 167
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 105 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0M+Yu<#?K_r!ro=GQ8Bu3Ns2`"cP]X
@@ -6138,7 +6136,7 @@ StartChar: ordfeminine
 Encoding: 170 170 168
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 109 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1eC)$<#?K_r!ro=GQ8Bu3Ns2`"cP]X
@@ -6161,7 +6159,7 @@ StartChar: guillemotleft
 Encoding: 171 171 169
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?L$:Wj4J+:&VZs.;r!*26.[
@@ -6203,7 +6201,7 @@ StartChar: logicalnot
 Encoding: 172 172 170
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 120 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5=n7/<#?L$NDU#_0F1!$G5j(21C0M0
@@ -6244,7 +6242,7 @@ StartChar: uni00AD
 Encoding: 173 173 171
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 102 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/P/>r<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -6270,7 +6268,7 @@ StartChar: registered
 Encoding: 174 174 172
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 35 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8Bu3Ns3"!@&g6
@@ -6314,7 +6312,7 @@ StartChar: macron
 Encoding: 175 175 173
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 93 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8Bu3Ns22,9nF<
@@ -6358,7 +6356,7 @@ StartChar: degree
 Encoding: 176 176 174
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 107 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1.al"<#?K_r!ro=GQ8CJNffG9Xot.%
@@ -6400,7 +6398,7 @@ StartChar: plusminus
 Encoding: 177 177 175
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 102 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/P/>r<#?K_r!ro=GQ8C%,9p;/SVHB;
@@ -6501,7 +6499,7 @@ StartChar: uni00B2
 Encoding: 178 178 176
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?L$N6qt4+:J<as8UE1_EmsY
@@ -6538,7 +6536,7 @@ StartChar: uni00B3
 Encoding: 179 179 177
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 89 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W+A"se<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -6559,7 +6557,7 @@ StartChar: acute
 Encoding: 180 180 178
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 93 320 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,Y:Bi<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -6582,7 +6580,7 @@ StartChar: mu
 Encoding: 181 181 179
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 101 320 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/4i5q<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -6609,7 +6607,7 @@ StartChar: paragraph
 Encoding: 182 182 180
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 95 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-:pTk<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -6637,7 +6635,7 @@ StartChar: periodcentered
 Encoding: 183 183 181
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 87 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*_Aac<#?K_r!ro=GQ8Bu3O%"p:r!?Y
@@ -6658,7 +6656,7 @@ StartChar: cedilla
 Encoding: 184 184 182
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 104 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W01ePt<#?K_r!ro=GQ8Bu3Ns2<'JKS?
@@ -6683,7 +6681,7 @@ StartChar: uni00B9
 Encoding: 185 185 183
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 105 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0M+Yu<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -6716,7 +6714,7 @@ StartChar: ordmasculine
 Encoding: 186 186 184
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 91 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,"Y0g<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -6742,7 +6740,7 @@ StartChar: guillemotright
 Encoding: 187 187 185
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 104 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W01ePt<#?K_r!ro=GQ8Bu3Ns2<'JKS?
@@ -6770,7 +6768,7 @@ StartChar: onequarter
 Encoding: 188 188 186
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 102 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/P/>r<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -6800,7 +6798,7 @@ StartChar: onehalf
 Encoding: 189 189 187
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 99 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.S3#o<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -6827,7 +6825,7 @@ StartChar: threequarters
 Encoding: 190 190 188
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 101 320 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/4i5q<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -6854,7 +6852,7 @@ StartChar: questiondown
 Encoding: 191 191 189
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 87 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*_Aac<#?K_r!ro=GQ8Bu3O%"p:r!?Y
@@ -6875,7 +6873,7 @@ StartChar: Agrave
 Encoding: 192 192 190
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 92 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,=t9h<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -6898,7 +6896,7 @@ StartChar: Aacute
 Encoding: 193 193 191
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 97 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-qQfm<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -6923,7 +6921,7 @@ StartChar: Acircumflex
 Encoding: 194 194 192
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 87 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*_Aac<#?K_r!ro=GQ8Bu3O%"p:r!?Y
@@ -6944,7 +6942,7 @@ StartChar: Atilde
 Encoding: 195 195 193
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 92 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,=t9h<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -6967,7 +6965,7 @@ StartChar: Adieresis
 Encoding: 196 196 194
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 87 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*_Aac<#?K_r!ro=GQ8Bu3O%"p:r!?Y
@@ -6988,7 +6986,7 @@ StartChar: Aring
 Encoding: 197 197 195
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 97 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-qQfm<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -7013,7 +7011,7 @@ StartChar: AE
 Encoding: 198 198 196
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 104 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W01ePt<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -7040,7 +7038,7 @@ StartChar: Ccedilla
 Encoding: 199 199 197
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 95 -192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-:pTk<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -7068,7 +7066,7 @@ StartChar: Egrave
 Encoding: 200 200 198
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 100 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.nN,p<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -7096,7 +7094,7 @@ StartChar: Eacute
 Encoding: 201 201 199
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 102 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/P/>r<#?K_r!ro=GQ8Bu3Ns2<'X3*=
@@ -7124,7 +7122,7 @@ StartChar: Ecircumflex
 Encoding: 202 202 200
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 105 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0M+Yu<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -7157,7 +7155,7 @@ StartChar: Edieresis
 Encoding: 203 203 201
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 102 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/P/>r<#?K_r!ro=GQ8Bu3Ns2<'JKS?
@@ -7188,7 +7186,7 @@ StartChar: Igrave
 Encoding: 204 204 202
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 99 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.S3#o<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -7219,7 +7217,7 @@ StartChar: Iacute
 Encoding: 205 205 203
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 94 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,tUKj<#?K_r!ro=GQ8Bu3Ns2<'JKS?
@@ -7245,7 +7243,7 @@ StartChar: Icircumflex
 Encoding: 206 206 204
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 109 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1eC)$<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -7283,7 +7281,7 @@ StartChar: Idieresis
 Encoding: 207 207 205
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 106 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0hFc!<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -7313,7 +7311,7 @@ StartChar: space
 Encoding: 32 32 206
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 79 2112 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W(.gn[<#?K_r!ro=GQ8Bu3O%$&:]LJ7
@@ -7327,7 +7325,7 @@ StartChar: uni0000
 Encoding: 0 0 207
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 81 704 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W(eI+]<#?K_A7/g?&&^F.'2BFD`:-S'
@@ -7341,7 +7339,7 @@ StartChar: Eth
 Encoding: 208 208 208
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 99 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.S3#o<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -7368,7 +7366,7 @@ StartChar: Ntilde
 Encoding: 209 209 209
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 94 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,tUKj<#?K_r!ro=GQ8Bu3Ns2<'JKS?
@@ -7394,7 +7392,7 @@ StartChar: Ograve
 Encoding: 210 210 210
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 87 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*_Aac<#?K_r!ro=GQ8Bu3O%"p:r!?Y
@@ -7416,7 +7414,7 @@ StartChar: Oacute
 Encoding: 211 211 211
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 95 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-:pTk<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -7441,7 +7439,7 @@ StartChar: Ocircumflex
 Encoding: 212 212 212
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 104 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W01ePt<#?K_r!ro=GQ8CJNffG9N3T>a
@@ -7468,7 +7466,7 @@ StartChar: Otilde
 Encoding: 213 213 213
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 87 -448 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*_Aac<#?K_r!ro=GQ8Bu3O%!u-t$Rr
@@ -7489,7 +7487,7 @@ StartChar: Odieresis
 Encoding: 214 214 214
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 84 -448 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W)bEF`<#?K_r!ro=GQ8Bu3O%#[<5?Sr
@@ -7510,7 +7508,7 @@ StartChar: multiply
 Encoding: 215 215 215
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 99 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.S3#o<#?K_r!ro=GQ8CJNffG9N+$O5
@@ -7537,7 +7535,7 @@ StartChar: Oslash
 Encoding: 216 216 216
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 101 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/4i5q<#?K_r!ro=GQ8Dg*$Z[QM@bLD
@@ -7564,7 +7562,7 @@ StartChar: Ugrave
 Encoding: 217 217 217
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 93 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,Y:Bi<#?K_r!ro=GQ8Dg*$Z[QM@bLD
@@ -7587,7 +7585,7 @@ StartChar: Uacute
 Encoding: 218 218 218
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 84 -448 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W)bEF`<#?K_r!ro=GQ8Bu3O%#[<5?Sr
@@ -7608,7 +7606,7 @@ StartChar: Ucircumflex
 Encoding: 219 219 219
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 86 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*D&Xb<#?K_r!ro=GQ8sb%RU9&*[X"<
@@ -7629,7 +7627,7 @@ StartChar: Udieresis
 Encoding: 220 220 220
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 87 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*_Aac<#?K_r!ro=GQ8Bu3O%"p:r!?Y
@@ -7650,7 +7648,7 @@ StartChar: Yacute
 Encoding: 221 221 221
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 86 320 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W*D&Xb<#?K_r!ro=GQ8sb%^#f$=scA#
@@ -7671,7 +7669,7 @@ StartChar: Thorn
 Encoding: 222 222 222
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 89 -192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W+A"se<#?K_r!ro=GQ8+FNffG9`ah?c
@@ -7692,7 +7690,7 @@ StartChar: germandbls
 Encoding: 223 223 223
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 94 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,tUKj<#?K_r!ro=GQ8sb%RU9&*[X"<
@@ -7713,7 +7711,7 @@ StartChar: agrave
 Encoding: 224 224 224
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?L,NA1nC0F._Qs8Q^H&iQI8
@@ -7757,7 +7755,7 @@ StartChar: aacute
 Encoding: 225 225 225
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8sb%^#f$=sf>C
@@ -7803,7 +7801,7 @@ StartChar: acircumflex
 Encoding: 226 226 226
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 107 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W1.al"<#?K_r!ro=GQ8sb%RU9&*YsiL
@@ -7828,7 +7826,7 @@ StartChar: atilde
 Encoding: 227 227 227
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 106 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0hFc!<#?K_r!ro=GQ8Bu3Ns2`"cP]X
@@ -7857,7 +7855,7 @@ StartChar: adieresis
 Encoding: 228 228 228
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 125 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6qKd4<#?L$NmS16+:&'JqYsnT:U#R>
@@ -7892,7 +7890,7 @@ StartChar: aring
 Encoding: 229 229 229
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 124 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W6V0[3<#?L$N^4!P+:&*+r;W+a&N8(3
@@ -7931,7 +7929,7 @@ StartChar: ae
 Encoding: 230 230 230
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8Bu3Ns3+"cSD!
@@ -7964,7 +7962,7 @@ StartChar: ccedilla
 Encoding: 231 231 231
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 106 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0hFc!<#?K_r!ro=GQ8Bu3Ns2`"cP]X
@@ -7989,7 +7987,7 @@ StartChar: egrave
 Encoding: 232 232 232
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 126 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W77fm5<#?L,N^4-T+:,lTiW!7c7P\42
@@ -8032,7 +8030,7 @@ StartChar: eacute
 Encoding: 233 233 233
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8Bu3Ns2*Lh(%,
@@ -8066,7 +8064,7 @@ StartChar: ecircumflex
 Encoding: 234 234 234
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8Bu3Ns2*Lh(%,
@@ -8107,7 +8105,7 @@ StartChar: edieresis
 Encoding: 235 235 235
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 112 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2b?D'<#?K_r!ro=GQ8CJNffG9N3T?l
@@ -8150,7 +8148,7 @@ StartChar: igrave
 Encoding: 236 236 236
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 110 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2+^2%<#?K_r!ro=GQ8Bu3Ns3"!@&g6
@@ -8199,7 +8197,7 @@ StartChar: iacute
 Encoding: 237 237 237
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 121 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W5Y4@0<#?L$:'h7-+:*&es3Ke[NKS6'
@@ -8244,7 +8242,7 @@ StartChar: icircumflex
 Encoding: 238 238 238
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -8277,7 +8275,7 @@ StartChar: idieresis
 Encoding: 239 239 239
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 97 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-qQfm<#?K_r!ro=GQ8+BNffG9Xor#n
@@ -8306,7 +8304,7 @@ StartChar: eth
 Encoding: 240 240 240
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 91 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W,"Y0g<#?K_r!ro=GQ8Bu3Ns2BOMigR
@@ -8337,7 +8335,7 @@ StartChar: ntilde
 Encoding: 241 241 241
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 114 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3CuV)<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -8371,7 +8369,7 @@ StartChar: ograve
 Encoding: 242 242 242
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 113 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3(ZM(<#?K_r!ro=GQ8C%,9n7D"pQE9
@@ -8399,7 +8397,7 @@ StartChar: oacute
 Encoding: 243 243 243
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?L$:.Z&u+:&>Ss5s_"%Pf=X
@@ -8427,7 +8425,7 @@ StartChar: ocircumflex
 Encoding: 244 244 244
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 106 -192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W0hFc!<#?K_r!ro=GQ8D_*$Z[Q1)J/h
@@ -8456,7 +8454,7 @@ StartChar: otilde
 Encoding: 245 245 245
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 103 320 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/kJGs<#?K_r!ro=GQ8CNNffG9`^HNZ
@@ -8485,7 +8483,7 @@ StartChar: odieresis
 Encoding: 246 246 246
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 104 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W01ePt<#?K_r!ro=GQ8Bu3Ns3&!@&g6
@@ -8516,7 +8514,7 @@ StartChar: divide
 Encoding: 247 247 247
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 100 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W.nN,p<#?K_r!ro=GQ8Dg*$Z[QM@^/O
@@ -8558,7 +8556,7 @@ StartChar: oslash
 Encoding: 248 248 248
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 115 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W3_;_*<#?K_r!ro=GQ8CJNffG9N3T?l
@@ -8592,7 +8590,7 @@ StartChar: ugrave
 Encoding: 249 249 249
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 116 -64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4%Vh+<#?K_r!ro=GQ8Bu3Ns4f$5aWu
@@ -8621,7 +8619,7 @@ StartChar: uacute
 Encoding: 250 250 250
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 97 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W-qQfm<#?K_r!ro=GQ8Bu3Ns24'ehBu
@@ -8642,7 +8640,7 @@ StartChar: ucircumflex
 Encoding: 251 251 251
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 117 64 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W4@qq,<#?K_r!ro=GQ8+FNffG9`ah?c
@@ -8673,7 +8671,7 @@ StartChar: udieresis
 Encoding: 252 252 252
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 111 192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2G$;&<#?K_r!ro=GQ8Bu3Ns2`"cP]X
@@ -8700,7 +8698,7 @@ StartChar: yacute
 Encoding: 253 253 253
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 110 448 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W2+^2%<#?L$N'RdN0FYgqo`&:TWj&8\
@@ -8729,7 +8727,7 @@ StartChar: thorn
 Encoding: 254 254 254
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 103 -192 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W/kJGs<#?K_r!ro=GQ8Bu3Ns2`"Y;>@
@@ -8750,7 +8748,7 @@ StartChar: ydieresis
 Encoding: 255 255 255
 Width: 1408
 Flags: MW
-LayerCount: 3
+LayerCount: 2
 Back
 Image2: image/png 79 1472 2048 256 256
 M,6r;%14!\!!!!.8Ou6I!!!!)!!!!)#R18/!5oD^MZ<_W(.gn[<#?K_r!ro=GQ8Bu3O%$&:]LJ7
