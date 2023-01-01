@@ -18,6 +18,10 @@
  */
 package net.emustudio.plugins.device.simh.commands;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Arrays;
 
 public class ReadURL implements Command {
@@ -87,9 +91,27 @@ public class ReadURL implements Command {
 
 
     private void setURLContent() {
-        String str = "URL is not supported on this platform. START URL \"" +
-                String.valueOf(urlStore, 0, urlPointer) + "\" URL END.";
+        String str = readURL(String.valueOf(urlStore, 0, urlPointer));
         resultLength = Math.min(URL_MAX_LENGTH, str.length());
         System.arraycopy(str.toCharArray(), 0, urlResult, 0, resultLength);
+    }
+
+    private String readURL(String theUrl) {
+        StringBuilder content = new StringBuilder();
+        try {
+            URL url = new URL(theUrl);
+            URLConnection urlConnection = url.openConnection();
+
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+            bufferedReader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Could not read from URL: " + theUrl + " due to: " + e.getMessage();
+        }
+        return content.toString();
     }
 }
