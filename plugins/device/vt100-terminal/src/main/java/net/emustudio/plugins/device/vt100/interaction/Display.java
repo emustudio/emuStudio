@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 
+// https://vt100.net/docs/vt220-rm/chapter4.html
 @ThreadSafe
 public class Display implements OutputProvider, net.emustudio.plugins.device.vt100.interaction.Cursor.LineRoller, Vt100StateMachine.Vt100Dispatcher {
     private final static Logger LOGGER = LoggerFactory.getLogger(Display.class);
@@ -282,6 +283,84 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
                     cursor.set(params.get(1), params.get(0));
                 }
                 break;
+            case 0x4C: // Insert Line (IL)
+                // Inserts Pn lines at the cursor. If fewer than Pn lines remain from the current line to the end of
+                // the scrolling region, the number of lines inserted is the lesser number. Lines within the scrolling
+                // region at and below the cursor move down. Lines moved past the bottom margin are lost. The cursor is
+                // reset to the first column. This sequence is ignored when the cursor is outside the scrolling region.
+                // TODO
+                break;
+            case 0x4D: // Delete Line (DL)
+                // Deletes Pn lines starting at the line with the cursor. If fewer than Pn lines remain from the current
+                // line to the end of the scrolling region, the number of lines deleted is the lesser number. As lines
+                // are deleted, lines within the scrolling region and below the cursor move up, and blank lines are
+                // added at the bottom of the scrolling region. The cursor is reset to the first column. This sequence
+                // is ignored when the cursor is outside the scrolling region.
+                // TODO
+                break;
+            case 0x40: // Insert Characters (ICH) (VT200 mode only)
+                // Insert Pn blank characters at the cursor position, with the character attributes set to normal.
+                // The cursor does not move and remains at the beginning of the inserted blank characters. A parameter
+                // of 0 or 1 inserts one blank character. Data on the line is shifted forward as in character insertion.
+                // TODO
+                break;
+            case 0x50: // Delete Character (DCH)
+                // Deletes Pn characters starting with the character at the cursor position. When a character is deleted,
+                // all characters to the right of the cursor move to the left. This creates a space character at the
+                // right margin for each character deleted. Character attributes move with the characters. The spaces
+                // created at the end of the line have all their character attributes off.
+                // TODO
+                break;
+            case 0x58: // Erase Character (ECH) (VT200 mode only)
+                // Erases characters at the cursor position and the next Pn-1 characters. A parameter of 0 or 1 erases
+                // a single character. Character attributes are set to normal. No reformatting of data on the line
+                // occurs. The cursor remains in the same position.
+                // TODO
+                break;
+            case 0x4B: // Erase in Line (EL)
+                // 9/11 4/11: Erases from the cursor to the end of the line, including the cursor position. Line
+                // attribute is not affected.
+                // 9/11 3/0  4/11: Same as above.
+                // 9/11 3/1  4/11: Erases from the beginning of the line to the cursor, including the cursor position.
+                // Line attribute is not affected.
+                // 9/11 3/2  4/11: Erases the complete line.
+
+                //Selective Erase In Line (DECSEL) (VT200 move only)
+                // 9/11 3/15 4/11: Erases all erasable characters (DECSCA) from the cursor to the end of the line. Does
+                // not affect video line attributes or video character attributes (SGR).
+                // 9/11 3/15 3/0 4/11: Same as above.
+                // 9/11 3/15 3/1 4/11: Erases all erasable characters (DECSCA) from the beginning of the line to and
+                // including the cursor position. Does not affect video line attributes or video character attributes.
+                // 9/11 3/15 3/2 4/11: Erases all erasable characters (DECSCA) on the line. Does not affect video line
+                // attributes or video character attributes.
+
+                // TODO
+                break;
+            case 0x4A: // Erase in Display (ED)
+                // 9/11 4/10: Erases from the cursor to the end of the screen, including the cursor position. Line
+                // attribute becomes single-height, single-width for all completely erased lines.
+                // 9/11 3/0  4/10: Same as above.
+                // 9/11 3/1  4/10: Erases from the beginning of the screen to the cursor, including the cursor position.
+                // Line attribute becomes single-height, single-width for all completely erased lines.
+                // 9/11 3/2  4/10: Erases the complete display. All lines are erased and changed to single-width.
+                // The cursor does not move.
+
+                // Selective Erase In Display (DECSED) (VT200 mode only)
+                // 9/11 3/15 4/10: Erases all erasable characters (DECSCA) from and including the cursor to the end of
+                // the screen. Does not affect video line attributes or video character attributes (SGR).
+                // 9/11 3/15 3/0 4/10: Same as above.
+                // 9/11 3/15 3/1 4/10: Erases all erasable characters (DECSCA) from the beginning of the screen to and
+                // including the cursor. Does not affect video line attributes or video character attributes (SGR).
+                // 9/11 3/15 3/2 4/10: Erases all erasable characters (DECSCA) in the entire display. Does not affect
+                // video character attributes or video line attributes (SGR).
+                // TODO
+                break;
+            case 0x72: // Set Top and Bottom Margins (DECSTBM)
+                // This sequence selects top and bottom margins defining the scrolling region.
+                // CSI  Pt  ;   Pb   r
+                // TODO
+                break;
+
         }
     }
 
