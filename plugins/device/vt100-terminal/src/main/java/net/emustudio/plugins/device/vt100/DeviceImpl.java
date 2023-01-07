@@ -44,32 +44,35 @@ import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "BrainDuck terminal")
+@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "VT100 Terminal")
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
+    private static final int DEFAULT_COLUMNS = 120;
+    private static final int DEFAULT_ROWS = 60;
+
+    private final TerminalSettings terminalSettings;
     private final ContextVt100 terminalContext;
     private final Keyboard keyboard;
     private final Display display;
-    private final boolean guiSupported;
 
     private boolean guiIOset = false;
     private TerminalWindow terminalGUI;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
+        this.terminalSettings = new TerminalSettings(settings, applicationApi.getDialogs());
 
-        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        Cursor cursor = new Cursor(Display.COLUMNS, Display.ROWS);
-        this.display = new Display(cursor, ContextVt100.OUTPUT_FILE_NAME.toPath(), guiSupported);
+        Cursor cursor = new Cursor(DEFAULT_COLUMNS, DEFAULT_ROWS);
+        this.display = new Display(cursor, terminalSettings);
 
-        if (guiSupported) {
+        if (terminalSettings.isGuiSupported()) {
             LOGGER.debug("Creating GUI-based keyboard");
             this.keyboard = new KeyboardGui();
         } else {
             LOGGER.debug("Creating file-based keyboard ({})", ContextVt100.INPUT_FILE_NAME);
-            this.keyboard = new KeyboardFromFile(ContextVt100.INPUT_FILE_NAME.toPath(), 0);
+            this.keyboard = new KeyboardFromFile(terminalSettings);
         }
         this.terminalContext = new ContextVt100(this.keyboard);
 
@@ -136,7 +139,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiIOset) {
             terminalGUI.setVisible(true);
-        } else if (guiSupported) {
+        } else if (terminalSettings.isGuiSupported()) {
             terminalGUI = new TerminalWindow(parent, display, applicationApi.getDialogs(), (KeyboardGui) keyboard);
             GuiUtils.addKeyListener(terminalGUI, (KeyboardGui) keyboard);
             terminalGUI.startPainting();
@@ -147,7 +150,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public boolean isGuiSupported() {
-        return guiSupported;
+        return terminalSettings.isGuiSupported();
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

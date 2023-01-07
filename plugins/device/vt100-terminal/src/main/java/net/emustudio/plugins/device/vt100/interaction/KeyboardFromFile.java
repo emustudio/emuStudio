@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.vt100.interaction;
 
+import net.emustudio.plugins.device.vt100.TerminalSettings;
 import net.emustudio.plugins.device.vt100.api.Keyboard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +34,9 @@ public class KeyboardFromFile extends Keyboard {
     private final long delayNanos;
     private final Path inputFile;
 
-    public KeyboardFromFile(Path inputFile, int delayInMilliseconds) {
-        this.delayNanos = delayInMilliseconds * 1000000L;
-        this.inputFile = Objects.requireNonNull(inputFile);
+    public KeyboardFromFile(TerminalSettings settings) {
+        this.delayNanos = settings.getInputReadDelayMillis() * 1000000L;
+        this.inputFile = Objects.requireNonNull(settings.getInputPath());
     }
 
     public void process() {

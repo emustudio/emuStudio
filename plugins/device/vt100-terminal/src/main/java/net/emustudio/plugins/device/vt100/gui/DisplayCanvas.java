@@ -29,8 +29,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.RenderingHints.*;
 import static java.awt.RenderingHints.VALUE_STROKE_NORMALIZE;
-import static net.emustudio.plugins.device.vt100.interaction.Display.COLUMNS;
-import static net.emustudio.plugins.device.vt100.interaction.Display.ROWS;
 
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     private static final Color FOREGROUND = new Color(255, 255, 255);
@@ -118,11 +116,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         graphics.setRenderingHint(KEY_TEXT_ANTIALIASING, VALUE_TEXT_ANTIALIAS_ON);
                         graphics.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
                         graphics.setRenderingHint(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
-                        for (int y = 0; y < ROWS; y++) {
+                        for (int y = 0; y < display.rows; y++) {
                             graphics.drawChars(
                                     display.videoMemory,
-                                    y * COLUMNS,
-                                    COLUMNS,
+                                    y * display.columns,
+                                    display.columns,
                                     1,
                                     (y + 1) * lineHeight);
                         }

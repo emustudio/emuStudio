@@ -53,8 +53,8 @@ import static net.emustudio.plugins.device.adm3a.gui.DisplayFont.fromTerminalFon
 )
 public class DeviceImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
-    private static final int COLUMNS_COUNT = 80;
-    private static final int ROWS_COUNT = 24;
+    private static final int DEFAULT_COLUMNS = 80;
+    private static final int DEFAULT_ROWS = 24;
 
     private final TerminalSettings terminalSettings;
     private final ContextAdm3A terminalContext;
@@ -65,15 +65,17 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        terminalSettings = new TerminalSettings(settings, applicationApi.getDialogs());
-        Cursor cursor = new Cursor(COLUMNS_COUNT, ROWS_COUNT);
+        this.terminalSettings = new TerminalSettings(settings, applicationApi.getDialogs());
+
+        Cursor cursor = new Cursor(DEFAULT_COLUMNS, DEFAULT_ROWS);
         this.display = new Display(cursor, terminalSettings);
+
         if (terminalSettings.isGuiSupported()) {
             LOGGER.debug("Creating GUI-based keyboard");
             this.keyboard = new KeyboardGui(cursor);
         } else {
             LOGGER.debug("Creating file-based keyboard ({})", terminalSettings.getInputPath());
-            this.keyboard = new KeyboardFromFile(terminalSettings.getInputPath(), terminalSettings.getInputReadDelay());
+            this.keyboard = new KeyboardFromFile(terminalSettings);
         }
         this.terminalContext = new ContextAdm3A(this.keyboard, terminalSettings);
 

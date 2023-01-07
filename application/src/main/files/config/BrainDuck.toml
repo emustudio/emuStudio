@@ -32,6 +32,11 @@ name = "VT100-terminal"
 id = "1d858668-d63d-4127-b881-226174a2b368"
 type = "DEVICE"
 
+[DEVICE.settings]
+outputFileName = "vt100-terminal.out"
+inputFileName = "vt100-terminal.in"
+inputReadDelayMillis = 0
+
 [[connections]]
 bidirectional = true
 from = "1d858668-d63d-4127-b881-226174a2b368"

@@ -120,11 +120,10 @@ id = "654a684c-b65e-4c6d-b1f1-1371a3027a90"
 type = "DEVICE"
 
 [DEVICE.settings]
-antiAliasing = true
 outputFileName = "adm3A-terminal.out"
 inputFileName = "adm3A-terminal.in"
 alwaysOnTop = true
-inputReadDelay = 0
+inputReadDelayMillis = 0
 halfDuplex = false
 font = "original"
 

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.vt100.interaction;
 
+import net.emustudio.plugins.device.vt100.TerminalSettings;
 import net.emustudio.plugins.device.vt100.Vt100StateMachine;
 import net.emustudio.plugins.device.vt100.api.OutputProvider;
 import net.jcip.annotations.ThreadSafe;
@@ -27,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.awt.*;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -39,25 +39,28 @@ import java.util.function.Consumer;
 public class Display implements OutputProvider, net.emustudio.plugins.device.vt100.interaction.Cursor.LineRoller, Vt100StateMachine.Vt100Dispatcher {
     private final static Logger LOGGER = LoggerFactory.getLogger(Display.class);
 
-    public final static int ROWS = 60;
-    public final static int COLUMNS = 120;
+    public final char[] videoMemory;
+    public final int columns;
+    public final int rows;
 
-    public final char[] videoMemory = new char[ROWS * COLUMNS];
-    private final net.emustudio.plugins.device.vt100.interaction.Cursor cursor;
+    private final TerminalSettings settings;
+    private final Cursor cursor;
     private final Vt100StateMachine vt100;
 
-    private final Path outputFile;
     private FileWriter outputWriter = null;
     private Point savedCursorPosition = new Point();
 
-
-    public Display(Cursor cursor, Path outputFile, boolean guiSupported) {
-        this.outputFile = Objects.requireNonNull(outputFile);
+    public Display(Cursor cursor, TerminalSettings settings) {
+        this.settings = Objects.requireNonNull(settings);
         this.cursor = Objects.requireNonNull(cursor);
+        this.columns = cursor.columns;
+        this.rows = cursor.rows;
+        this.videoMemory = new char[rows * columns];
+
         fillWithSpaces();
         this.vt100 = new Vt100StateMachine(this);
 
-        if (!guiSupported) {
+        if (!settings.isGuiSupported()) {
             openOutputWriter();
         }
     }
@@ -90,8 +93,8 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
     @Override
     public void rollUp() {
         synchronized (videoMemory) {
-            System.arraycopy(videoMemory, COLUMNS, videoMemory, 0, COLUMNS * ROWS - COLUMNS);
-            for (int i = COLUMNS * ROWS - COLUMNS; i < (COLUMNS * ROWS); i++) {
+            System.arraycopy(videoMemory, columns, videoMemory, 0, columns * rows - columns);
+            for (int i = columns * rows - columns; i < (columns * rows); i++) {
                 videoMemory[i] = ' ';
             }
         }
@@ -100,8 +103,8 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
     @Override
     public void rollDown() {
         synchronized (videoMemory) {
-            System.arraycopy(videoMemory, 0, videoMemory, COLUMNS, COLUMNS * ROWS - COLUMNS);
-            for (int i = 0; i < COLUMNS; i++) {
+            System.arraycopy(videoMemory, 0, videoMemory, columns, columns * rows - columns);
+            for (int i = 0; i < columns; i++) {
                 videoMemory[i] = ' ';
             }
         }
@@ -110,9 +113,10 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
     @Override
     public void write(byte data) {
         try {
+            writeToOutput(data);
             vt100.accept(data & 0xFF);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Could not write data to display", e);
         }
     }
 
@@ -201,7 +205,7 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
     public void print(int data) {
         Point point = cursor.getCursorPoint();
         synchronized (videoMemory) {
-            videoMemory[point.y * COLUMNS + point.x] = (char) data;
+            videoMemory[point.y * columns + point.x] = (char) data;
         }
         cursor.moveForwards();
     }
@@ -390,7 +394,7 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
     }
 
     private void cursorDown() {
-        if (cursor.getCursorPoint().y == COLUMNS - 1) {
+        if (cursor.getCursorPoint().y == columns - 1) {
             rollUp();
         } else {
             cursor.moveDown();
@@ -405,9 +409,20 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
 
     private void openOutputWriter() {
         try {
-            outputWriter = new FileWriter(outputFile.toFile());
+            outputWriter = new FileWriter(settings.getOutputPath().toFile());
         } catch (IOException e) {
-            LOGGER.error("Could not open file for writing output: {}", outputFile, e);
+            LOGGER.error("Could not open file for writing output: {}", settings.getOutputPath(), e);
+        }
+    }
+
+    private void writeToOutput(byte data) {
+        if (outputWriter != null) {
+            try {
+                outputWriter.write((char) data);
+                outputWriter.flush();
+            } catch (IOException e) {
+                LOGGER.error("Could not write to file: {}", settings.getOutputPath(), e);
+            }
         }
     }
 }

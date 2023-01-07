@@ -119,9 +119,8 @@ id = "0352cf74-2965-4723-bef9-3e918b1ac7c5"
 type = "DEVICE"
 
 [DEVICE.settings]
-antiAliasing = true
 alwaysOnTop = true
-inputReadDelay = 0
+inputReadDelayMillis = 0
 halfDuplex = false
 outputFileName = "adm3A-terminal.out"
 inputFileName = "adm3A-terminal.in"

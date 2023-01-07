@@ -61,7 +61,7 @@ public class SettingsDialog extends JDialog {
         chkAlwaysOnTop.setSelected(settings.isAlwaysOnTop());
         txtInputFileName.setText(settings.getInputPath().toString());
         txtOutputFileName.setText(settings.getOutputPath().toString());
-        spnInputDelay.setValue(settings.getInputReadDelay());
+        spnInputDelay.setValue(settings.getInputReadDelayMillis());
     }
 
     private void updateSettings() throws IOException {
@@ -69,7 +69,7 @@ public class SettingsDialog extends JDialog {
         settings.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
         settings.setInputPath(Path.of(txtInputFileName.getText()));
         settings.setOutputPath(Path.of(txtOutputFileName.getText()));
-        settings.setInputReadDelay((Integer) spnInputDelay.getValue());
+        settings.setInputReadDelayMillis((Integer) spnInputDelay.getValue());
         getSelectedFont().ifPresent(settings::setFont);
 
         settings.write();

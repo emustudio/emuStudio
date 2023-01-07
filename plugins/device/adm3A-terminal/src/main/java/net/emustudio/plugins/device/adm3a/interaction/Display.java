@@ -53,8 +53,8 @@ public class Display implements OutputProvider, Cursor.LineRoller {
         this.settings = Objects.requireNonNull(settings);
         this.cursor = Objects.requireNonNull(cursor);
         this.loadCursorPosition = new LoadCursorPosition(cursor);
-        this.columns = cursor.getColumns();
-        this.rows = cursor.getRows();
+        this.columns = cursor.columns;
+        this.rows = cursor.rows;
         this.videoMemory = new char[rows * columns];
 
         fillWithSpaces();
