@@ -20,6 +20,7 @@ package net.emustudio.plugins.device.zxspectrum.display;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.plugins.device.zxspectrum.display.io.*;
 
 import javax.swing.*;
@@ -72,7 +73,7 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
 
     static ZxSpectrumDisplayGui create(JFrame parent, Keyboard keyboard, Dialogs dialogs) {
         ZxSpectrumDisplayGui dialog = new ZxSpectrumDisplayGui(parent, keyboard, dialogs);
-        GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
+        GuiUtils.addKeyListener(dialog, dialog.keyboard);
         return dialog;
     }
 
@@ -204,7 +205,7 @@ class ZxSpectrumDisplayGui extends JDialog implements OutputProvider {
     @Override
     public void close() {
         canvas.stop();
-        GUIUtils.removeListenerRecursively(this, keyboard);
+        GuiUtils.removeKeyListener(this, keyboard);
         dispose();
     }
 

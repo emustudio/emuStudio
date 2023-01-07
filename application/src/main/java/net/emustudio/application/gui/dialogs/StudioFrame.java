@@ -104,6 +104,7 @@ public class StudioFrame extends JFrame {
             }
         });
         fileName.ifPresent(editor::openFile);
+        updateTitleOfSourceCodePanel();
         editor.grabFocus();
     }
 
