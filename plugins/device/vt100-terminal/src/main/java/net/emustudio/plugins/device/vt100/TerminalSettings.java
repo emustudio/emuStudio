@@ -1,22 +1,4 @@
-/*
- * This file is part of emuStudio.
- *
- * Copyright (C) 2006-2023  Peter Jakubčo
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-package net.emustudio.plugins.device.adm3a;
+package net.emustudio.plugins.device.vt100;
 
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
@@ -33,26 +15,19 @@ import java.util.Objects;
 public class TerminalSettings {
     private final static Logger LOGGER = LoggerFactory.getLogger(TerminalSettings.class);
 
-    public final static String DEFAULT_INPUT_FILE_NAME = "adm3A-terminal.in";
-    public final static String DEFAULT_OUTPUT_FILE_NAME = "adm3A-terminal.out";
-    private final static String HALF_DUPLEX = "halfDuplex";
-    private final static String ALWAYS_ON_TOP = "alwaysOnTop";
+    public final static String DEFAULT_INPUT_FILE_NAME = "vt100-terminal.in";
+    public final static String DEFAULT_OUTPUT_FILE_NAME = "vt100-terminal.out";
     private final static String INPUT_FILE_NAME = "inputFileName";
     private final static String OUTPUT_FILE_NAME = "outputFileName";
     private final static String INPUT_READ_DELAY_MILLIS = "inputReadDelayMillis";
-    private final static String DEVICE_INDEX = "deviceIndex";
-    private final static String FONT = "font";
+
     private final Dialogs dialogs;
     private final PluginSettings settings;
     private final boolean guiSupported;
     private final List<ChangedObserver> observers = new ArrayList<>();
-    private boolean halfDuplex = false;
-    private boolean alwaysOnTop = false;
     private volatile Path inputPath = Path.of(DEFAULT_INPUT_FILE_NAME);
     private volatile Path outputPath = Path.of(DEFAULT_OUTPUT_FILE_NAME);
     private int inputReadDelayMillis = 0;
-    private int deviceIndex = 0;
-    private TerminalFont font = TerminalFont.ORIGINAL;
 
     TerminalSettings(PluginSettings settings, Dialogs dialogs) {
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -83,15 +58,6 @@ public class TerminalSettings {
         notifyObserversAndIgnoreError();
     }
 
-    public boolean isHalfDuplex() {
-        return halfDuplex;
-    }
-
-    public void setHalfDuplex(boolean halfDuplex) {
-        this.halfDuplex = halfDuplex;
-        notifyObserversAndIgnoreError();
-    }
-
     public Path getInputPath() {
         return inputPath;
     }
@@ -110,54 +76,22 @@ public class TerminalSettings {
         notifyObservers();
     }
 
-    public boolean isAlwaysOnTop() {
-        return alwaysOnTop;
-    }
-
-    public void setAlwaysOnTop(boolean alwaysOnTop) {
-        this.alwaysOnTop = alwaysOnTop;
-        notifyObserversAndIgnoreError();
-    }
-
-    public int getDeviceIndex() {
-        return deviceIndex;
-    }
-
-    public void setDeviceIndex(int deviceIndex) {
-        this.deviceIndex = deviceIndex;
-    }
-
-    public TerminalFont getFont() {
-        return font;
-    }
-
-    public void setFont(TerminalFont font) {
-        this.font = Objects.requireNonNull(font);
-    }
-
     public void write() {
         try {
             settings.setInt(INPUT_READ_DELAY_MILLIS, inputReadDelayMillis);
-            settings.setBoolean(HALF_DUPLEX, halfDuplex);
-            settings.setBoolean(ALWAYS_ON_TOP, alwaysOnTop);
             settings.setString(OUTPUT_FILE_NAME, outputPath.toString());
             settings.setString(INPUT_FILE_NAME, inputPath.toString());
-            settings.setInt(DEVICE_INDEX, deviceIndex);
-            settings.setString(FONT, font.name);
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not update settings", e);
-            dialogs.showError("Could not save settings. Please see log file for details.", "LSI ADM-3A");
+            dialogs.showError("Could not save settings. Please see log file for details.", "VT100 Terminal");
         } finally {
             notifyObserversAndIgnoreError();
         }
     }
 
     private void readSettings() {
-        halfDuplex = settings.getBoolean(HALF_DUPLEX, false);
-        alwaysOnTop = settings.getBoolean(ALWAYS_ON_TOP, false);
         inputPath = Path.of(settings.getString(INPUT_FILE_NAME, DEFAULT_INPUT_FILE_NAME));
         outputPath = Path.of(settings.getString(OUTPUT_FILE_NAME, DEFAULT_OUTPUT_FILE_NAME));
-        deviceIndex = settings.getInt(DEVICE_INDEX, 0);
         try {
             inputReadDelayMillis = settings.getInt(INPUT_READ_DELAY_MILLIS, 0);
         } catch (NumberFormatException e) {
@@ -166,10 +100,9 @@ public class TerminalSettings {
                     "Could not read '" + INPUT_READ_DELAY_MILLIS + "' setting. Using default value ({})", inputReadDelayMillis, e
             );
         }
-        font = TerminalFont.valueOf(settings.getString(FONT, TerminalFont.ORIGINAL.name).toUpperCase());
 
         if (inputPath.toString().equals(outputPath.toString())) {
-            LOGGER.error("ADM-3A settings: Input path is not allowed to be equal to the output path. Setting to default.");
+            LOGGER.error("VT100 Terminal settings: Input path is not allowed to be equal to the output path. Setting to default.");
             inputPath = Path.of(DEFAULT_INPUT_FILE_NAME);
             outputPath = Path.of(DEFAULT_OUTPUT_FILE_NAME);
         }
@@ -189,27 +122,6 @@ public class TerminalSettings {
                 observer.settingsChanged();
             } catch (IOException e) {
                 LOGGER.error("Observer is not happy about the new settings", e);
-            }
-        }
-    }
-
-    public enum TerminalFont {
-        ORIGINAL("original"),
-        MODERN("modern");
-
-        public final String name;
-
-        TerminalFont(String name) {
-            this.name = Objects.requireNonNull(name);
-        }
-
-        public static TerminalFont valueOf(int index) {
-            if (index == 0) {
-                return ORIGINAL;
-            } else if (index == 1) {
-                return MODERN;
-            } else {
-                throw new RuntimeException("Unknown font index: " + index);
             }
         }
     }

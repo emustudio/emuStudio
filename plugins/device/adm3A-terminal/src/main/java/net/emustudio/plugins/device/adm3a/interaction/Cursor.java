@@ -26,22 +26,14 @@ import java.util.function.Function;
 
 @ThreadSafe
 public class Cursor {
-    private final int columns;
-    private final int rows;
+    public final int columns;
+    public final int rows;
 
     private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
 
     public Cursor(int columns, int rows) {
         this.columns = columns;
         this.rows = rows;
-    }
-
-    int getColumns() {
-        return columns;
-    }
-
-    int getRows() {
-        return rows;
     }
 
     void home() {
