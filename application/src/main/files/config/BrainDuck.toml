@@ -26,9 +26,9 @@ type = "CPU"
 
 [[DEVICE]]
 schemaPoint = "320,60"
-path = "brainduck-terminal.jar"
+path = "vt100-terminal.jar"
 settings = { }
-name = "brainduck-terminal"
+name = "VT100-terminal"
 id = "1d858668-d63d-4127-b881-226174a2b368"
 type = "DEVICE"
 
