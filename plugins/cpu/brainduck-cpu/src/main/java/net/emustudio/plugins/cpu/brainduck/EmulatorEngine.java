@@ -62,7 +62,7 @@ public class EmulatorEngine {
             }
         } catch (IndexOutOfBoundsException e) {
             // we get here if "adr" would point to nonexistant memory location,
-            // ie. when we go through all memory to the end without a result
+            // i.e. when we go through all memory to the end without a result
             adr = 0;
         }
         P = adr; // assign to the P register the address we have found
@@ -74,7 +74,7 @@ public class EmulatorEngine {
     }
 
     @SuppressWarnings("empty-statement")
-    CPU.RunState step(boolean optimize) throws IOException {
+    CPU.RunState step(boolean optimize) {
         short OP;
 
         // FETCH

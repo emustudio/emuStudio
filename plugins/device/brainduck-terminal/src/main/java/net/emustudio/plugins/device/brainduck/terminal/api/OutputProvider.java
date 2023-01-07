@@ -16,13 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.brainduck.terminal.io;
+package net.emustudio.plugins.device.brainduck.terminal.api;
 
-import java.io.Closeable;
+public interface OutputProvider extends AutoCloseable {
+    OutputProvider DUMMY = new OutputProvider() {
 
-public interface IOProvider extends Closeable {
-    int EOF = 0;
+        @Override
+        public void write(byte data) {
+        }
+
+        @Override
+        public void reset() {
+        }
+
+        @Override
+        public void close() {
+        }
+    };
 
     void reset();
 
+    void write(byte data);
 }

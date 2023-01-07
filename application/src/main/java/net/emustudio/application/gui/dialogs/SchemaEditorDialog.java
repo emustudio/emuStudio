@@ -25,6 +25,7 @@ import net.emustudio.application.gui.schema.DrawingPanel.Tool;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.gui.GuiUtils.addKeyListenerRecursively;
 import static net.emustudio.application.settings.ConfigFiles.listPluginFiles;
 
 public class SchemaEditorDialog extends JDialog implements KeyListener {
@@ -91,7 +91,7 @@ public class SchemaEditorDialog extends JDialog implements KeyListener {
         sliderGridGap.setValue(schema.getSchemaGridGap());
         panel.addMouseListener(panel);
         panel.addMouseMotionListener(panel);
-        addKeyListenerRecursively(this, this);
+        GuiUtils.addKeyListener(this, this);
 
         panel.addToolListener(() -> {
             panel.setTool(Tool.TOOL_NOTHING, null);

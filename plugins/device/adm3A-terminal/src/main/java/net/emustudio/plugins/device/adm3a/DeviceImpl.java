@@ -27,11 +27,11 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.adm3a.api.ContextAdm3A;
 import net.emustudio.plugins.device.adm3a.api.Keyboard;
 import net.emustudio.plugins.device.adm3a.gui.SettingsDialog;
-import net.emustudio.plugins.device.adm3a.gui.GuiUtils;
 import net.emustudio.plugins.device.adm3a.gui.TerminalWindow;
 import net.emustudio.plugins.device.adm3a.interaction.Cursor;
 import net.emustudio.plugins.device.adm3a.interaction.Display;
@@ -117,7 +117,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         } else if (terminalSettings.isGuiSupported()) {
             terminalGUI = new TerminalWindow(parent, display, fromTerminalFont(terminalSettings.getFont()));
             terminalGUI.setAlwaysOnTop(terminalSettings.isAlwaysOnTop());
-            GuiUtils.addListenerRecursively(terminalGUI, (KeyboardGui) keyboard);
+            GuiUtils.addKeyListener(terminalGUI, (KeyboardGui) keyboard);
             terminalGUI.startPainting();
             guiIOset = true;
             terminalGUI.setVisible(true);

@@ -26,36 +26,60 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.brainduck.BrainCPUContext;
-import net.emustudio.plugins.device.brainduck.terminal.io.FileIOProvider;
-import net.emustudio.plugins.device.brainduck.terminal.io.InputProvider;
-import net.emustudio.plugins.device.brainduck.terminal.io.Keyboard;
-import net.emustudio.plugins.device.brainduck.terminal.io.OutputProvider;
+import net.emustudio.plugins.device.brainduck.terminal.api.BrainTerminalContext;
+import net.emustudio.plugins.device.brainduck.terminal.api.Keyboard;
+import net.emustudio.plugins.device.brainduck.terminal.gui.TerminalWindow;
+import net.emustudio.plugins.device.brainduck.terminal.interaction.Cursor;
+import net.emustudio.plugins.device.brainduck.terminal.interaction.Display;
+import net.emustudio.plugins.device.brainduck.terminal.interaction.KeyboardFromFile;
+import net.emustudio.plugins.device.brainduck.terminal.interaction.KeyboardGui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
+
+import static net.emustudio.plugins.device.brainduck.terminal.api.BrainTerminalContext.INPUT_FILE_NAME;
+import static net.emustudio.plugins.device.brainduck.terminal.api.BrainTerminalContext.OUTPUT_FILE_NAME;
+import static net.emustudio.plugins.device.brainduck.terminal.interaction.Display.COLUMNS;
+import static net.emustudio.plugins.device.brainduck.terminal.interaction.Display.ROWS;
 
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "BrainDuck terminal")
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
+    private final BrainTerminalContext terminalContext;
+    private final Keyboard keyboard;
+    private final Display display;
     private final boolean guiSupported;
-    private final BrainTerminalContext terminal = new BrainTerminalContext();
+
     private boolean guiIOset = false;
+    private TerminalWindow terminalGUI;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        Cursor cursor = new Cursor(COLUMNS, ROWS);
+        this.display = new Display(cursor, OUTPUT_FILE_NAME.toPath(), guiSupported);
+
+        if (guiSupported) {
+            LOGGER.debug("Creating GUI-based keyboard");
+            this.keyboard = new KeyboardGui();
+        } else {
+            LOGGER.debug("Creating file-based keyboard ({})", INPUT_FILE_NAME);
+            this.keyboard = new KeyboardFromFile(INPUT_FILE_NAME.toPath(), 0);
+        }
+        this.terminalContext = new BrainTerminalContext(this.keyboard);
+
         try {
-            applicationApi.getContextPool().register(pluginID, terminal, DeviceContext.class);
+            applicationApi.getContextPool().register(pluginID, terminalContext, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register BrainTerminal context", e);
             applicationApi.getDialogs().showError("Could not register BrainDuck terminal. Please see log file for more details.", getTitle());
@@ -80,37 +104,26 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void initialize() throws PluginInitializationException {
         BrainCPUContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, BrainCPUContext.class);
+        cpu.attachDevice(terminalContext);
+        terminalContext.setDisplay(display);
 
-        InputProvider keyboard;
-        OutputProvider outputProvider;
-
-        try {
-            cpu.attachDevice(terminal);
-
-            if (!guiSupported) {
-                LOGGER.debug("Creating file-based keyboard: {}", FileIOProvider.INPUT_FILE_NAME);
-                FileIOProvider fileIOProvider = new FileIOProvider();
-                keyboard = fileIOProvider;
-                outputProvider = fileIOProvider;
-                terminal.setInputProvider(keyboard);
-                terminal.setOutputProvider(outputProvider);
-            }
-        } catch (IOException e) {
-            throw new PluginInitializationException(this, e);
-        }
+        keyboard.process();
     }
 
     @Override
     public void reset() {
-        terminal.reset();
+        terminalContext.reset();
     }
 
     @Override
     public void destroy() {
         try {
-            terminal.close();
-        } catch (IOException e) {
-            LOGGER.error("Could not close io provider", e);
+            terminalContext.close();
+        } catch (Exception e) {
+            LOGGER.error("Could not close BrainTerminal context", e);
+        }
+        if (terminalGUI != null) {
+            terminalGUI.destroy();
         }
     }
 
@@ -126,17 +139,14 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showGUI(JFrame parent) {
-        if (guiSupported) {
-            if (!guiIOset) {
-                LOGGER.debug("Creating GUI-based keyboard");
-                Keyboard keyboard = new Keyboard();
-                OutputProvider outputProvider = BrainTerminalGui.create(parent, keyboard, applicationApi.getDialogs());
-                terminal.setInputProvider(keyboard);
-                terminal.setOutputProvider(outputProvider);
-                guiIOset = true;
-            }
-
-            terminal.showGUI();
+        if (guiIOset) {
+            terminalGUI.setVisible(true);
+        } else if (guiSupported) {
+            terminalGUI = new TerminalWindow(parent, display, applicationApi.getDialogs(), (KeyboardGui) keyboard);
+            GuiUtils.addKeyListener(terminalGUI, (KeyboardGui) keyboard);
+            terminalGUI.startPainting();
+            guiIOset = true;
+            terminalGUI.setVisible(true);
         }
     }
 

@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.device.adm3a.interaction;
 
+import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.plugins.device.adm3a.api.Keyboard;
-import net.emustudio.plugins.device.adm3a.gui.GuiUtils;
 
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
@@ -141,12 +141,12 @@ public class KeyboardGui extends Keyboard implements ContainerListener, KeyListe
 
     @Override
     public void componentAdded(ContainerEvent e) {
-        GuiUtils.addListenerRecursively(e.getChild(), this);
+        GuiUtils.addKeyListener(e.getChild(), this);
     }
 
     @Override
     public void componentRemoved(ContainerEvent e) {
-        GuiUtils.removeListenerRecursively(e.getChild(), this);
+        GuiUtils.removeKeyListener(e.getChild(), this);
     }
 
     @Override

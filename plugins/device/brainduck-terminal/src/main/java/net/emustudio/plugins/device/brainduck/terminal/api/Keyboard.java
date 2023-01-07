@@ -16,30 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.brainduck.terminal.io;
+package net.emustudio.plugins.device.brainduck.terminal.api;
 
-public interface OutputProvider extends IOProvider {
-    OutputProvider DUMMY = new OutputProvider() {
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
-        @Override
-        public void write(int character) {
-        }
+public abstract class Keyboard implements AutoCloseable {
+    protected List<Consumer<Byte>> onKeyHandlers = new CopyOnWriteArrayList<>();
 
-        @Override
-        public void reset() {
-        }
+    public abstract void process();
 
-        @Override
-        public void close() {
-        }
+    public void addOnKeyHandler(Consumer<Byte> onKeyHandler) {
+        onKeyHandlers.add(Objects.requireNonNull(onKeyHandler));
+    }
 
-        @Override
-        public void showGUI() {
-        }
-    };
+    protected void notifyOnKey(byte key) {
+        onKeyHandlers.forEach(c -> c.accept(key));
+    }
 
-    void write(int character);
-
-    void showGUI();
-
+    public void close() {
+        onKeyHandlers.clear();
+    }
 }

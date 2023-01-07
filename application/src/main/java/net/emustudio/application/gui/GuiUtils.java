@@ -24,27 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyListener;
 
 public class GuiUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
-
-    /**
-     * This method adds this key listener to all sub-components of given
-     * component.
-     *
-     * @param c           Component to add this key listener recursively
-     * @param keyListener the key listener object
-     */
-    public static void addKeyListenerRecursively(Component c, KeyListener keyListener) {
-        c.addKeyListener(keyListener);
-        if (c instanceof Container) {
-            for (Component child : ((Container) c).getComponents()) {
-                addKeyListenerRecursively(child, keyListener);
-            }
-        }
-    }
 
     public static void setupLookAndFeel(AppSettings config) {
         String lookAndFeel = config.getLookAndFeel().orElse("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
