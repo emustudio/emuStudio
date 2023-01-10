@@ -37,4 +37,11 @@ public class Program {
             instruction.generateCode(hex);
         }
     }
+
+    @Override
+    public String toString() {
+        return "Program{" +
+                "instructions=" + instructions +
+                '}';
+    }
 }

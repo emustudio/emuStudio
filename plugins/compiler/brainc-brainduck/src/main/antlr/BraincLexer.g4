@@ -18,7 +18,8 @@
  */
 lexer grammar BraincLexer;
 
-WS:       [ \t\r\n] -> channel(HIDDEN);
+WS : (' ' | '\t') -> channel(HIDDEN);
+fragment EOL: '\r'? '\n';
 
 HALT: ';';
 INC: '>';
@@ -30,4 +31,4 @@ LOAD: ',';
 LOOP: '[';
 ENDL: ']';
 
-COMMENT:  .+?;
+COMMENT: ~[<>.;,+\-[\]\r\n \t] ~[\r\n]* EOL? | EOL;
