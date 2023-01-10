@@ -71,11 +71,22 @@ public class InstructionTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testProgramAfterCommentWorks() throws Exception {
+    public void testProgramAfterCommentDoesNotWork() throws Exception {
         compile(
                 "So this is the comment and program >>\n"
         );
-        assertProgram(1, 1);
+        assertProgram(0);
+    }
+
+    @Test
+    public void testCompileEmptyEol() throws Exception {
+        compile(
+                ";\n>"
+        );
+
+        assertProgram(
+                0, 1
+        );
     }
 
     @SuppressWarnings("unchecked")

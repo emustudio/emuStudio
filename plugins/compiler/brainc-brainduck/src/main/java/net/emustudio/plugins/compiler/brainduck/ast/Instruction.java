@@ -45,4 +45,11 @@ public class Instruction {
     public void generateCode(IntelHEX hex) {
         hex.add(String.format("%1$02X", instructionCode));
     }
+
+    @Override
+    public String toString() {
+        return "Instruction{" +
+                "instructionCode=" + instructionCode +
+                '}';
+    }
 }
