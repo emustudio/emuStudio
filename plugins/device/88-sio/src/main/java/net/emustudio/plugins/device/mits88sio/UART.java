@@ -25,11 +25,8 @@ import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -68,7 +65,7 @@ public class UART {
             7, (byte) 0xFF
     );
 
-    private final AtomicReference<Byte> bufferFromDevice = new AtomicReference<>();
+    private final Queue<Byte> bufferFromDevice = new ConcurrentLinkedQueue<>();
     private final Lock bufferAndStatusLock = new ReentrantLock();
     private final Context8080 cpu;
     private final List<Observer> observers = new ArrayList<>();
@@ -113,7 +110,7 @@ public class UART {
 
     void reset(boolean guiSupported) {
         if (guiSupported) {
-            bufferFromDevice.set(null);
+            bufferFromDevice.clear();
         }
         setStatus((byte) 0); // disable interrupts
         statusRegister = XMITTER_BUFFER_EMPTY;
@@ -124,13 +121,13 @@ public class UART {
         int status = statusRegister;
 
         try {
-            if (bufferFromDevice.get() != null) {
+            if (bufferFromDevice.isEmpty()) {
                 status |= DATA_OVERFLOW;
             } else {
                 status = (byte) (status & (~DATA_OVERFLOW));
             }
             status = (byte) (status | DATA_AVAILABLE | INPUT_DEVICE_READY);
-            bufferFromDevice.set(data);
+            bufferFromDevice.add(data);
             statusRegister = (byte) status;
         } finally {
             bufferAndStatusLock.unlock();
@@ -158,12 +155,15 @@ public class UART {
         int status = 0;
         bufferAndStatusLock.lock();
         try {
-            bufferData = bufferFromDevice.get();
-            bufferFromDevice.set(null);
+            bufferData = bufferFromDevice.poll();
             if (bufferData == null) {
                 return 0;
             }
-            statusRegister = XMITTER_BUFFER_EMPTY;
+            if (bufferFromDevice.isEmpty()) {
+                statusRegister = XMITTER_BUFFER_EMPTY;
+            } else {
+                statusRegister = (byte) (XMITTER_BUFFER_EMPTY | DATA_AVAILABLE | INPUT_DEVICE_READY);
+            }
             status = statusRegister;
             return bufferData;
         } finally {

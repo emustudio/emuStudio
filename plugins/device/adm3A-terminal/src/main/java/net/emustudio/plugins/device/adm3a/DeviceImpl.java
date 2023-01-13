@@ -136,6 +136,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         if (terminalGUI != null) {
             terminalGUI.clearScreen();
         }
+        keyboard.process();
     }
 
     @Override
