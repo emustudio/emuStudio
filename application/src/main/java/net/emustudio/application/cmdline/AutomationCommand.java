@@ -50,8 +50,9 @@ public class AutomationCommand implements Runnable {
     @CommandLine.Option(names = {"-w", "--waitmax"}, paramLabel = "MILLIS", description = "limit emulation time to max MILLIS (force kill afterwards)")
     private int waitForFinishMillis = Automation.DONT_WAIT;
 
-    @CommandLine.Option(names = "--gui", negatable = true, description = "show/don't show GUI during automation")
-    private boolean gui = true;
+    @CommandLine.Option(names = "--gui", negatable = true, defaultValue = "true", fallbackValue = "true",
+            description = "show/don't show GUI during automation")
+    private boolean gui;
 
     @CommandLine.Option(names = {"-s", "--start-address"}, description = "program start address", paramLabel = "ADDRESS")
     private String programStart = "0";
