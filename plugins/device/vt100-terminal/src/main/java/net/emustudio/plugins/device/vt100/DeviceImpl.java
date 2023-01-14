@@ -25,6 +25,7 @@ import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
+import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
@@ -99,10 +100,21 @@ public class DeviceImpl extends AbstractDevice {
         return "BrainDuck terminal device";
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        BrainCPUContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, BrainCPUContext.class);
-        cpu.attachDevice(terminalContext);
+        try {
+            BrainCPUContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, BrainCPUContext.class);
+            cpu.attachDevice(terminalContext);
+        } catch (ContextNotFoundException e) {
+            DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
+            if (device.getDataType() != Byte.class) {
+                throw new PluginInitializationException(
+                        "Unexpected device data type. Expected Byte but was: " + device.getDataType()
+                );
+            }
+            terminalContext.setExternalDevice(device);
+        }
         terminalContext.setDisplay(display);
 
         keyboard.process();
@@ -118,7 +130,7 @@ public class DeviceImpl extends AbstractDevice {
         try {
             terminalContext.close();
         } catch (Exception e) {
-            LOGGER.error("Could not close BrainTerminal context", e);
+            LOGGER.error("Could not close VT100-terminal context", e);
         }
         if (terminalGUI != null) {
             terminalGUI.destroy();

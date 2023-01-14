@@ -55,7 +55,7 @@ public class DeviceImpl extends AbstractDevice {
         try {
             applicationApi.getContextPool().register(pluginID, terminal, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register BrainTerminal context", e);
+            LOGGER.error("Could not register ZX Spectrum display context", e);
             applicationApi.getDialogs().showError("Could not register BrainDuck terminal. Please see log file for more details.", getTitle());
         }
     }
@@ -133,7 +133,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public String getDescription() {
-        return "BrainDuck terminal device";
+        return "ZX Spectrum display draft";
     }
 
 

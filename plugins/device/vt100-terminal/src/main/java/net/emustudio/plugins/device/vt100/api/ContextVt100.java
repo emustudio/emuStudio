@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.vt100.api;
 
+import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.jcip.annotations.ThreadSafe;
 
@@ -25,6 +26,7 @@ import java.io.File;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ThreadSafe
 public class ContextVt100 implements DeviceContext<Byte>, AutoCloseable {
@@ -33,6 +35,7 @@ public class ContextVt100 implements DeviceContext<Byte>, AutoCloseable {
 
     private final Keyboard keyboard;
     private final BlockingQueue<Byte> inputBuffer = new LinkedBlockingDeque<>();
+    private final AtomicReference<DeviceContext<Byte>> externalDevice = new AtomicReference<>();
     private volatile OutputProvider display = OutputProvider.DUMMY;
 
     public ContextVt100(Keyboard keyboard) {
@@ -42,6 +45,10 @@ public class ContextVt100 implements DeviceContext<Byte>, AutoCloseable {
 
     public void setDisplay(OutputProvider display) {
         this.display = display;
+    }
+
+    public void setExternalDevice(DeviceContext<Byte> device) {
+        this.externalDevice.set(device);
     }
 
     public void reset() {
@@ -93,5 +100,9 @@ public class ContextVt100 implements DeviceContext<Byte>, AutoCloseable {
 
     private void onKeyFromKeyboard(byte key) {
         inputBuffer.add(key);
+        DeviceContext<Byte> device = externalDevice.get();
+        if (device != null) {
+            device.writeData(key);
+        }
     }
 }
