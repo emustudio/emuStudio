@@ -32,6 +32,7 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.brainduck.BrainCPUContext;
 import net.emustudio.plugins.device.vt100.api.ContextVt100;
 import net.emustudio.plugins.device.vt100.api.Keyboard;
+import net.emustudio.plugins.device.vt100.gui.SettingsDialog;
 import net.emustudio.plugins.device.vt100.gui.TerminalWindow;
 import net.emustudio.plugins.device.vt100.interaction.Cursor;
 import net.emustudio.plugins.device.vt100.interaction.Display;
@@ -81,7 +82,7 @@ public class DeviceImpl extends AbstractDevice {
             applicationApi.getContextPool().register(pluginID, terminalContext, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register BrainTerminal context", e);
-            applicationApi.getDialogs().showError("Could not register BrainDuck terminal. Please see log file for more details.", getTitle());
+            applicationApi.getDialogs().showError("Could not register VT100-terminal. Please see log file for more details.", getTitle());
         }
     }
 
@@ -97,7 +98,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public String getDescription() {
-        return "BrainDuck terminal device";
+        return "VT100-terminal device";
     }
 
     @SuppressWarnings("unchecked")
@@ -138,13 +139,15 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public void showSettings(JFrame jFrame) {
-        // we don't have settings GUI
+    public void showSettings(JFrame parent) {
+        if (isShowSettingsSupported()) {
+            new SettingsDialog(parent, terminalSettings, applicationApi.getDialogs()).setVisible(true);
+        }
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        return false;
+        return terminalSettings.isGuiSupported();
     }
 
     @Override
