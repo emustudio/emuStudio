@@ -39,9 +39,9 @@ import java.util.function.Consumer;
 public class Display implements OutputProvider, net.emustudio.plugins.device.vt100.interaction.Cursor.LineRoller, Vt100StateMachine.Vt100Dispatcher {
     private final static Logger LOGGER = LoggerFactory.getLogger(Display.class);
 
-    public final char[] videoMemory;
-    public final int columns;
-    public final int rows;
+    public char[] videoMemory;
+    public volatile int columns;
+    public volatile int rows;
 
     private final TerminalSettings settings;
     private final Cursor cursor;
@@ -70,6 +70,13 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
         clearScreen();
     }
 
+    public synchronized void setSize(int columns, int rows) {
+        this.columns = columns;
+        this.rows = rows;
+        this.cursor.setSize(columns, rows);
+        this.videoMemory = new char[rows * columns];
+    }
+
     @Override
     public synchronized void close() {
         if (outputWriter != null) {
@@ -91,22 +98,18 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
     }
 
     @Override
-    public void rollUp() {
-        synchronized (videoMemory) {
-            System.arraycopy(videoMemory, columns, videoMemory, 0, columns * rows - columns);
-            for (int i = columns * rows - columns; i < (columns * rows); i++) {
-                videoMemory[i] = ' ';
-            }
+    public synchronized void rollUp() {
+        System.arraycopy(videoMemory, columns, videoMemory, 0, columns * rows - columns);
+        for (int i = columns * rows - columns; i < (columns * rows); i++) {
+            videoMemory[i] = ' ';
         }
     }
 
     @Override
-    public void rollDown() {
-        synchronized (videoMemory) {
-            System.arraycopy(videoMemory, 0, videoMemory, columns, columns * rows - columns);
-            for (int i = 0; i < columns; i++) {
-                videoMemory[i] = ' ';
-            }
+    public synchronized void rollDown() {
+        System.arraycopy(videoMemory, 0, videoMemory, columns, columns * rows - columns);
+        for (int i = 0; i < columns; i++) {
+            videoMemory[i] = ' ';
         }
     }
 
@@ -204,7 +207,7 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
     @Override
     public void print(int data) {
         Point point = cursor.getCursorPoint();
-        synchronized (videoMemory) {
+        synchronized (this) {
             videoMemory[point.y * columns + point.x] = (char) data;
         }
         cursor.moveForwards();
@@ -401,10 +404,8 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
         }
     }
 
-    private void fillWithSpaces() {
-        synchronized (videoMemory) {
-            Arrays.fill(videoMemory, ' ');
-        }
+    private synchronized void fillWithSpaces() {
+        Arrays.fill(videoMemory, ' ');
     }
 
     private void openOutputWriter() {

@@ -26,12 +26,17 @@ import java.util.function.Function;
 
 @ThreadSafe
 public class Cursor {
-    public final int columns;
-    public final int rows;
+    public volatile int columns;
+    public volatile int rows;
 
     private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
 
     public Cursor(int columns, int rows) {
+        this.columns = columns;
+        this.rows = rows;
+    }
+
+    public void setSize(int columns, int rows) {
         this.columns = columns;
         this.rows = rows;
     }
@@ -48,14 +53,16 @@ public class Cursor {
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
 
+            int tmpRows = rows - 1;
+
             newPoint.x++;
             if (newPoint.x > (columns - 1)) {
                 newPoint.x = 0;
                 newPoint.y++;
                 // automatic line rolling
-                if (newPoint.y > (rows - 1)) {
+                if (newPoint.y > tmpRows) {
                     lineRoller.rollUp();
-                    newPoint.y = (rows - 1);
+                    newPoint.y = tmpRows;
                 }
             }
             return newPoint;
@@ -69,11 +76,12 @@ public class Cursor {
     public void moveForwards(int count) {
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
+            int tmpColumns = columns - 1;
 
-            if ((newPoint.x + count) <= (columns - 1)) {
+            if ((newPoint.x + count) <= tmpColumns) {
                 newPoint.x += count;
             } else {
-                newPoint.x = columns - 1;
+                newPoint.x = tmpColumns;
             }
             return newPoint;
         });
@@ -144,10 +152,12 @@ public class Cursor {
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
 
-            if (newPoint.y < (rows - lines)) {
+            int tmpRows = rows;
+
+            if (newPoint.y < (tmpRows - lines)) {
                 newPoint.y += lines;
             } else {
-                newPoint.y = rows - 1;
+                newPoint.y = tmpRows - 1;
             }
             return newPoint;
         });

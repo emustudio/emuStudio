@@ -117,6 +117,7 @@ public class DeviceImpl extends AbstractDevice {
             terminalContext.setExternalDevice(device);
         }
         terminalContext.setDisplay(display);
+        terminalSettings.addSizeChangedObserver(display::setSize);
 
         keyboard.process();
     }
@@ -128,6 +129,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void destroy() {
+        terminalSettings.destroy();
         try {
             terminalContext.close();
         } catch (Exception e) {
