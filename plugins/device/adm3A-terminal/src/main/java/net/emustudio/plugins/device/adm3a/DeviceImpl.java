@@ -30,11 +30,12 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.adm3a.api.ContextAdm3A;
+import net.emustudio.plugins.device.adm3a.api.Display;
 import net.emustudio.plugins.device.adm3a.api.Keyboard;
 import net.emustudio.plugins.device.adm3a.gui.SettingsDialog;
 import net.emustudio.plugins.device.adm3a.gui.TerminalWindow;
 import net.emustudio.plugins.device.adm3a.interaction.Cursor;
-import net.emustudio.plugins.device.adm3a.interaction.Display;
+import net.emustudio.plugins.device.adm3a.interaction.DisplayImpl;
 import net.emustudio.plugins.device.adm3a.interaction.KeyboardFromFile;
 import net.emustudio.plugins.device.adm3a.interaction.KeyboardGui;
 import org.slf4j.Logger;
@@ -53,11 +54,11 @@ import static net.emustudio.plugins.device.adm3a.gui.DisplayFont.fromTerminalFon
 )
 public class DeviceImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
-    private static final int DEFAULT_COLUMNS = 80;
-    private static final int DEFAULT_ROWS = 24;
+    public static final int DEFAULT_COLUMNS = 80;
+    public static final int DEFAULT_ROWS = 24;
 
     private final TerminalSettings terminalSettings;
-    private final ContextAdm3A terminalContext;
+    private final ContextAdm3A context;
     private final Keyboard keyboard;
     private final Display display;
     private boolean guiIOset = false;
@@ -68,7 +69,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         this.terminalSettings = new TerminalSettings(settings, applicationApi.getDialogs());
 
         Cursor cursor = new Cursor(DEFAULT_COLUMNS, DEFAULT_ROWS);
-        this.display = new Display(cursor, terminalSettings);
+        this.display = new DisplayImpl(cursor, terminalSettings);
 
         if (terminalSettings.isGuiSupported()) {
             LOGGER.debug("Creating GUI-based keyboard");
@@ -77,10 +78,11 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
             LOGGER.debug("Creating file-based keyboard ({})", terminalSettings.getInputPath());
             this.keyboard = new KeyboardFromFile(terminalSettings);
         }
-        this.terminalContext = new ContextAdm3A(this.keyboard, terminalSettings);
+        this.context = new ContextAdm3A(terminalSettings::isHalfDuplex);
+        this.keyboard.addOnKeyHandler(context::onKeyFromKeyboard);
 
         try {
-            applicationApi.getContextPool().register(pluginID, terminalContext, DeviceContext.class);
+            applicationApi.getContextPool().register(pluginID, context, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register ADM-3A terminal", e);
             applicationApi.getDialogs().showError(
@@ -102,10 +104,10 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
                         "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
-            terminalContext.setExternalDevice(device);
-            terminalContext.setDisplay(display);
+            context.setExternalDevice(device);
+            context.setDisplay(display);
         } catch (ContextNotFoundException e) {
-            LOGGER.warn("The terminal is not connected to any I/O device.");
+            LOGGER.warn("The terminal is not connected to any I/O device.", e);
         }
 
         keyboard.process();
@@ -157,11 +159,19 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     @Override
     public void destroy() {
         terminalSettings.removeChangedObserver(this);
-        if (keyboard != null) {
-            keyboard.close();
-        }
         if (terminalGUI != null) {
             terminalGUI.destroy();
+        }
+        keyboard.close();
+        try {
+            display.close();
+        } catch (Exception e) {
+            LOGGER.error("Could not close ADM-3A display", e);
+        }
+        try {
+            context.close();
+        } catch (Exception e) {
+            LOGGER.error("Could not close ADM-3A context", e);
         }
     }
 
@@ -188,6 +198,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         try {
             return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.adm3a.version"));
         } catch (MissingResourceException e) {
+            LOGGER.error("Could not find resource bundle", e);
             return Optional.empty();
         }
     }

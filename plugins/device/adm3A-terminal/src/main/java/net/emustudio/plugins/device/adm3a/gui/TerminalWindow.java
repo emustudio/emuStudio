@@ -18,7 +18,8 @@
  */
 package net.emustudio.plugins.device.adm3a.gui;
 
-import net.emustudio.plugins.device.adm3a.interaction.Display;
+import net.emustudio.plugins.device.adm3a.api.Display;
+import net.emustudio.plugins.device.adm3a.interaction.DisplayImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,9 +55,8 @@ public class TerminalWindow extends JDialog {
     }
 
     public void destroy() {
-        this.canvas.close();
-        this.display.close();
         this.dispose();
+        this.canvas.close();
     }
 
     public void rollLine() {

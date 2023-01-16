@@ -20,7 +20,7 @@ package net.emustudio.plugins.device.adm3a.interaction;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.plugins.device.adm3a.TerminalSettings;
-import net.emustudio.plugins.device.adm3a.api.OutputProvider;
+import net.emustudio.plugins.device.adm3a.api.Display;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,31 +31,35 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Terminal can interpret ASCII codes from 0-127. Some have special purpose (0-31).
+ * Display implementation.
+ * A display is not a canvas! It's a visual "controller" of the terminal, but does not perform rendering.
+ * <p>
+ * It can interpret ASCII codes from 0-127. Some have special purpose (0-31).
  */
 @PluginContext(id = "LSI ADM-3A Terminal")
-public class Display implements OutputProvider, Cursor.LineRoller {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Display.class);
-    private static final String HERE_IS_CONSTANT = Display.class.getAnnotation(PluginContext.class).id();
+public class DisplayImpl implements Display, Cursor.LineRoller {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DisplayImpl.class);
+    private static final String HERE_IS_CONSTANT = DisplayImpl.class.getAnnotation(PluginContext.class).id();
 
     // must be synchronized on this object
-    public final char[] videoMemory;
-    public final int columns;
-    public final int rows;
+    private final char[] videoMemory;
 
     private final TerminalSettings settings;
     private final Cursor cursor;
     private final LoadCursorPosition loadCursorPosition;
+    private final int lastRowStartIndex;
+    private final int lastRowEndIndex;
+
 
     private FileWriter outputWriter = null;
 
-    public Display(Cursor cursor, TerminalSettings settings) {
+    public DisplayImpl(Cursor cursor, TerminalSettings settings) {
         this.settings = Objects.requireNonNull(settings);
         this.cursor = Objects.requireNonNull(cursor);
         this.loadCursorPosition = new LoadCursorPosition(cursor);
-        this.columns = cursor.columns;
-        this.rows = cursor.rows;
-        this.videoMemory = new char[rows * columns];
+        this.videoMemory = new char[cursor.rows * cursor.columns];
+        this.lastRowStartIndex = cursor.columns * cursor.rows - cursor.columns;
+        this.lastRowEndIndex = cursor.columns * cursor.rows;
 
         fillWithSpaces();
         if (!settings.isGuiSupported()) {
@@ -79,8 +83,24 @@ public class Display implements OutputProvider, Cursor.LineRoller {
         outputWriter = null;
     }
 
+    @Override
     public Point getCursorPoint() {
         return cursor.getCursorPoint();
+    }
+
+    @Override
+    public int getRows() {
+        return cursor.rows;
+    }
+
+    @Override
+    public int getColumns() {
+        return cursor.columns;
+    }
+
+    @Override
+    public char[] getVideoMemory() {
+        return videoMemory; // I should be punished for this
     }
 
     public void clearScreen() {
@@ -91,8 +111,8 @@ public class Display implements OutputProvider, Cursor.LineRoller {
     @Override
     public void rollLine() {
         synchronized (videoMemory) {
-            System.arraycopy(videoMemory, columns, videoMemory, 0, columns * rows - columns);
-            for (int i = columns * rows - columns; i < (columns * rows); i++) {
+            System.arraycopy(videoMemory, cursor.columns, videoMemory, 0, lastRowStartIndex);
+            for (int i = lastRowStartIndex; i < lastRowEndIndex; i++) {
                 videoMemory[i] = ' ';
             }
         }
@@ -150,7 +170,7 @@ public class Display implements OutputProvider, Cursor.LineRoller {
     }
 
     private void insertHereIs() {
-        for (char c : Display.HERE_IS_CONSTANT.toCharArray()) {
+        for (char c : DisplayImpl.HERE_IS_CONSTANT.toCharArray()) {
             drawChar(c);
             cursor.moveForwardsRolling(this);
         }
@@ -159,7 +179,7 @@ public class Display implements OutputProvider, Cursor.LineRoller {
     private void drawChar(char c) {
         Point cursorPoint = cursor.getCursorPoint();
         synchronized (videoMemory) {
-            videoMemory[cursorPoint.y * columns + cursorPoint.x] = c;
+            videoMemory[cursorPoint.y * cursor.columns + cursorPoint.x] = c;
         }
     }
 

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.vt100.interaction;
 
+import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.device.vt100.TerminalSettings;
 import net.emustudio.plugins.device.vt100.api.Keyboard;
 import org.slf4j.Logger;
@@ -26,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.locks.LockSupport;
 
 public class KeyboardFromFile extends Keyboard {
     private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardFromFile.class);
@@ -45,7 +45,7 @@ public class KeyboardFromFile extends Keyboard {
             while ((key = in.read()) != -1) {
                 notifyOnKey((byte) key);
                 if (delayNanos > 0) {
-                    LockSupport.parkNanos(delayNanos);
+                    SleepUtils.preciseSleepNanos(delayNanos);
                 }
             }
         } catch (Exception e) {
