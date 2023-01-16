@@ -40,7 +40,17 @@ public class Cursor {
         cursorPoint.set(new Point());
     }
 
-    void set(int x, int y) {
+    void move(int x, int y) {
+        if (x < 0) {
+            x = 0;
+        } else if (x >= columns) {
+            x = columns - 1;
+        }
+        if (y < 0) {
+            y = 0;
+        } else if (y >= rows) {
+            y = rows - 1;
+        }
         cursorPoint.set(new Point(x, y));
     }
 
@@ -49,11 +59,11 @@ public class Cursor {
             Point newPoint = new Point(oldPoint);
 
             newPoint.x++;
-            if (newPoint.x > (columns - 1)) {
+            if (newPoint.x >= columns) {
                 newPoint.x = 0;
                 newPoint.y++;
                 // automatic line rolling
-                if (newPoint.y > (rows - 1)) {
+                if (newPoint.y >= rows) {
                     lineRoller.rollLine();
                     newPoint.y = (rows - 1);
                 }
@@ -128,7 +138,7 @@ public class Cursor {
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    interface LineRoller {
+    public interface LineRoller {
 
         void rollLine();
     }

@@ -16,47 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.adm3a;
+package net.emustudio.plugins.device.adm3a.gui;
 
-import net.emustudio.plugins.device.adm3a.gui.DisplayFont;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
-import java.awt.geom.AffineTransform;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class Utils {
-    private final static Logger LOGGER = LoggerFactory.getLogger(Utils.class);
-    private static FontRenderContext DEFAULT_FRC;
-
-    public static FontRenderContext getDefaultFrc() {
-        if (DEFAULT_FRC == null) {
-            AffineTransform tx;
-            if (GraphicsEnvironment.isHeadless()) {
-                tx = new AffineTransform();
-            } else {
-                tx = GraphicsEnvironment
-                        .getLocalGraphicsEnvironment()
-                        .getDefaultScreenDevice()
-                        .getDefaultConfiguration()
-                        .getDefaultTransform();
-            }
-            DEFAULT_FRC = new FontRenderContext(tx, false, false);
-        }
-        return DEFAULT_FRC;
-    }
+public class GuiUtils {
+    private final static Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
 
     public static Font loadFont(DisplayFont displayFont) {
         Map<TextAttribute, Object> attrs = new HashMap<>();
         attrs.put(TextAttribute.KERNING, TextAttribute.KERNING_ON);
 
-        try (InputStream fin = Utils.class.getResourceAsStream(displayFont.path)) {
+        try (InputStream fin = GuiUtils.class.getResourceAsStream(displayFont.path)) {
             Font font = Font
                     .createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(fin))
                     .deriveFont(Font.PLAIN, displayFont.fontSize)

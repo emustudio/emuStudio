@@ -65,7 +65,7 @@ public class LoadCursorPosition {
             int cursorX = data - ASCII_COORDINATE_OFFSET;
             expect = ESCAPE;
             if (checkBounds(data)) {
-                cursor.set(cursorX, cursorY);
+                cursor.move(cursorX, cursorY);
                 return false;
             }
             return true;

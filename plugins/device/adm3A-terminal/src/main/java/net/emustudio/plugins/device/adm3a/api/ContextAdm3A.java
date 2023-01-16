@@ -23,47 +23,40 @@ import net.emustudio.plugins.device.adm3a.TerminalSettings;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 @ThreadSafe
 public class ContextAdm3A implements DeviceContext<Byte>, AutoCloseable {
-    private final Keyboard keyboard;
-    private final TerminalSettings settings;
+    private final Supplier<Boolean> isHalfDuplex;
 
     private volatile DeviceContext<Byte> externalDevice;
-    private volatile OutputProvider display = OutputProvider.DUMMY;
+    private volatile Display display = Display.DUMMY; // is never null; and this context is not an owner of display
 
-    public ContextAdm3A(Keyboard keyboard, TerminalSettings settings) {
-        this.keyboard = Objects.requireNonNull(keyboard);
-        this.settings = Objects.requireNonNull(settings);
-        keyboard.addOnKeyHandler(this::onKeyFromKeyboard);
+    public ContextAdm3A(Supplier<Boolean> isHalfDuplex) {
+        this.isHalfDuplex = Objects.requireNonNull(isHalfDuplex);
     }
 
     public void setExternalDevice(DeviceContext<Byte> externalDevice) {
         this.externalDevice = Objects.requireNonNull(externalDevice);
     }
 
-    public void setDisplay(OutputProvider outputProvider) {
-        this.display = Objects.requireNonNull(outputProvider);
+    public void setDisplay(Display display) {
+        this.display = Objects.requireNonNull(display);
     }
 
     public void reset() {
-        OutputProvider tmp = display;
-        if (tmp != null) {
-            tmp.reset();
-        }
+        display.reset();
     }
 
     @Override
     public Byte readData() {
+        // All data is immediately sent to externalDevice. We're not buffering anything.
         return 0;
     }
 
     @Override
     public void writeData(Byte data) {
-        OutputProvider tmpOutputProvider = display;
-        if (tmpOutputProvider != null) {
-            tmpOutputProvider.write(data);
-        }
+        display.write(data);
     }
 
     @Override
@@ -73,22 +66,15 @@ public class ContextAdm3A implements DeviceContext<Byte>, AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        Keyboard tmpKeyboard = keyboard;
-        if (tmpKeyboard != null) {
-            tmpKeyboard.close();
-        }
-        OutputProvider tmpOutputProvider = display;
-        if (tmpOutputProvider != null) {
-            tmpOutputProvider.close();
-        }
+        externalDevice = null;
     }
 
-    private void onKeyFromKeyboard(byte key) {
+    public void onKeyFromKeyboard(byte key) {
         DeviceContext<Byte> device = externalDevice;
         if (device != null) {
             device.writeData(key);
         }
-        if (settings.isHalfDuplex()) {
+        if (isHalfDuplex.get()) {
             writeData(key);
         }
     }
