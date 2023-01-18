@@ -19,7 +19,6 @@
 package net.emustudio.plugins.device.adm3a.api;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,11 +32,6 @@ public class ContextAdm3ATest {
     @Before
     public void setUp() {
         this.context = new ContextAdm3A(() -> false);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        this.context.close();
     }
 
     @Test
@@ -79,29 +73,6 @@ public class ContextAdm3ATest {
         assertEquals(Byte.class, context.getDataType());
     }
 
-    @Test
-    public void testCloseDoesNotCloseDisplay() throws Exception {
-        // Display is not owned by context
-
-        Display display = mock(Display.class);
-        replay(display);
-        context.setDisplay(display);
-        context.close();
-        verify(display);
-    }
-
-    @Test
-    public void testCloseSetsExternalDeviceToNull() throws Exception {
-        DeviceContext<Byte> device = mock(DeviceContext.class);
-        replay(device);
-
-        context.setExternalDevice(device);
-        context.close();
-
-        context.onKeyFromKeyboard((byte) 0xFF);
-        verify(device);
-    }
-
     @Test(expected = NullPointerException.class)
     public void testSetNullExternalDeviceThrows() {
         context.setExternalDevice(null);
@@ -124,16 +95,16 @@ public class ContextAdm3ATest {
     }
 
     @Test
-    public void testHalfDuplex() throws Exception {
+    public void testHalfDuplex() {
         Display display = mock(Display.class);
         display.write((byte) 0xFF);
         expectLastCall().once();
         replay(display);
 
-        try (ContextAdm3A tmpContext = new ContextAdm3A(() -> true)) {
-            tmpContext.setDisplay(display);
-            tmpContext.onKeyFromKeyboard((byte) 0xFF);
-        }
+        ContextAdm3A tmpContext = new ContextAdm3A(() -> true);
+        tmpContext.setDisplay(display);
+        tmpContext.onKeyFromKeyboard((byte) 0xFF);
+
         verify(display);
     }
 }

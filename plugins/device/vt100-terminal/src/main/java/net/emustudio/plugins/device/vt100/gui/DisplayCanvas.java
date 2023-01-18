@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.device.vt100.gui;
 
-import net.emustudio.plugins.device.vt100.interaction.Display;
+import net.emustudio.plugins.device.vt100.api.Display;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,13 +28,12 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.RenderingHints.*;
-import static java.awt.RenderingHints.VALUE_STROKE_NORMALIZE;
 
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     private static final Color FOREGROUND = new Color(255, 255, 255);
     private static final Color BACKGROUND = Color.BLACK;
     private final Timer repaintTimer;
-    private final Display display;
+    private final Display display; // not owning this
     private final AtomicBoolean painting = new AtomicBoolean(false);
     private volatile Dimension size = new Dimension(0, 0);
 
@@ -116,11 +115,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         graphics.setRenderingHint(KEY_TEXT_ANTIALIASING, VALUE_TEXT_ANTIALIAS_ON);
                         graphics.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
                         graphics.setRenderingHint(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
-                        for (int y = 0; y < display.rows; y++) {
+                        for (int y = 0; y < display.getRows(); y++) {
                             graphics.drawChars(
-                                    display.videoMemory,
-                                    y * display.columns,
-                                    display.columns,
+                                    display.getVideoMemory(),
+                                    y * display.getColumns(),
+                                    display.getColumns(),
                                     1,
                                     (y + 1) * lineHeight);
                         }

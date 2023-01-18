@@ -20,7 +20,7 @@ package net.emustudio.plugins.device.vt100.interaction;
 
 import net.emustudio.plugins.device.vt100.TerminalSettings;
 import net.emustudio.plugins.device.vt100.Vt100StateMachine;
-import net.emustudio.plugins.device.vt100.api.OutputProvider;
+import net.emustudio.plugins.device.vt100.api.Display;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,37 +31,43 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 
 // https://vt100.net/docs/vt220-rm/chapter4.html
 @ThreadSafe
-public class Display implements OutputProvider, net.emustudio.plugins.device.vt100.interaction.Cursor.LineRoller, Vt100StateMachine.Vt100Dispatcher {
-    private final static Logger LOGGER = LoggerFactory.getLogger(Display.class);
+public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
+    private final static Logger LOGGER = LoggerFactory.getLogger(DisplayImpl.class);
 
     public char[] videoMemory;
-    public volatile int columns;
-    public volatile int rows;
 
     private final TerminalSettings settings;
     private final Cursor cursor;
     private final Vt100StateMachine vt100;
 
-    private FileWriter outputWriter = null;
-    private Point savedCursorPosition = new Point();
+    private final FileWriter outputWriter;
+    private final AtomicReference<Point> savedCursorPosition = new AtomicReference<>(new Point());
 
-    public Display(Cursor cursor, TerminalSettings settings) {
+    public DisplayImpl(Cursor cursor, TerminalSettings settings) {
         this.settings = Objects.requireNonNull(settings);
         this.cursor = Objects.requireNonNull(cursor);
-        this.columns = cursor.columns;
-        this.rows = cursor.rows;
-        this.videoMemory = new char[rows * columns];
+        Rectangle rect = cursor.getRect();
+        this.videoMemory = new char[rect.height * rect.width];
 
         fillWithSpaces();
         this.vt100 = new Vt100StateMachine(this);
 
         if (!settings.isGuiSupported()) {
-            openOutputWriter();
+            FileWriter fw = null;
+            try {
+                fw = new FileWriter(settings.getOutputPath().toFile());
+            } catch (IOException e) {
+                LOGGER.error("Could not open file for writing output: {}", settings.getOutputPath(), e);
+            }
+            this.outputWriter = fw;
+        } else {
+            this.outputWriter = null;
         }
     }
 
@@ -71,25 +77,40 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
     }
 
     public synchronized void setSize(int columns, int rows) {
-        this.columns = columns;
-        this.rows = rows;
         this.cursor.setSize(columns, rows);
         this.videoMemory = new char[rows * columns];
     }
 
     @Override
-    public synchronized void close() {
-        if (outputWriter != null) {
+    public void close() {
+        FileWriter fw = outputWriter;
+        if (fw != null) {
             try {
-                outputWriter.close();
-            } catch (IOException ignored) {
+                fw.close();
+            } catch (IOException e) {
+                LOGGER.error("Could not close output file", e);
             }
         }
-        outputWriter = null;
     }
 
+    @Override
     public Point getCursorPoint() {
-        return cursor.getCursorPoint();
+        return cursor.getRect().getLocation();
+    }
+
+    @Override
+    public int getRows() {
+        return cursor.getRect().height;
+    }
+
+    @Override
+    public int getColumns() {
+        return cursor.getRect().width;
+    }
+
+    @Override
+    public char[] getVideoMemory() {
+        return videoMemory; // I should be punished for this
     }
 
     public void clearScreen() {
@@ -98,18 +119,24 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
     }
 
     @Override
-    public synchronized void rollUp() {
-        System.arraycopy(videoMemory, columns, videoMemory, 0, columns * rows - columns);
-        for (int i = columns * rows - columns; i < (columns * rows); i++) {
-            videoMemory[i] = ' ';
+    public void rollUp() {
+        Rectangle rect = cursor.getRect();
+        synchronized (this) {
+            System.arraycopy(videoMemory, rect.width, videoMemory, 0, rect.width * rect.height - rect.width);
+            for (int i = rect.width * rect.height - rect.width; i < (rect.width * rect.height); i++) {
+                videoMemory[i] = ' ';
+            }
         }
     }
 
     @Override
-    public synchronized void rollDown() {
-        System.arraycopy(videoMemory, 0, videoMemory, columns, columns * rows - columns);
-        for (int i = 0; i < columns; i++) {
-            videoMemory[i] = ' ';
+    public void rollDown() {
+        Rectangle rect = cursor.getRect();
+        synchronized (this) {
+            System.arraycopy(videoMemory, 0, videoMemory, rect.width, rect.width * rect.height - rect.width);
+            for (int i = 0; i < rect.width; i++) {
+                videoMemory[i] = ' ';
+            }
         }
     }
 
@@ -182,11 +209,11 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
             case 0x84: // Index
                 // 	Moves cursor down one line in same column. If cursor is at bottom margin, screen performs a scroll up.
                 // https://vt100.net/docs/vt220-rm/chapter4.html
-                cursorDown();
+                cursor.moveDownRolling(this);
                 break;
             case 0x85: // Next line
                 // 	Moves cursor to first position on next line. If cursor is at bottom margin, screen performs a scroll up.
-                cursorDown();
+                cursor.moveDownRolling(this);
                 cursor.carriageReturn();
                 break;
             case 0x88: // Horizontal tab set
@@ -197,20 +224,19 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
                 // 	Moves cursor up one line in same column. If cursor is at top margin, screen performs a scroll down.
                 cursor.moveUpRolling(this);
                 break;
-
-
         }
+        // missing: 0,1,2,3,4,6,0x12,0x14,0x15,0x16,0x17
 
         // data >= 0 && data <= 0x17 || data == 0x19 || data >= 0x1C && data <= 0x1F
     }
 
     @Override
     public void print(int data) {
-        Point point = cursor.getCursorPoint();
+        Rectangle rect = cursor.getRect();
         synchronized (this) {
-            videoMemory[point.y * columns + point.x] = (char) data;
+            videoMemory[rect.y * rect.width + rect.x] = (char) data;
         }
-        cursor.moveForwards();
+        cursor.moveForwardsRolling(this);
     }
 
     @Override
@@ -247,13 +273,14 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
                 // - state of wrap flag
                 // - state of origin mode
                 // - state of selective erase
-                savedCursorPosition = cursor.getCursorPoint();
+                savedCursorPosition.set(cursor.getRect().getLocation());
                 break;
             case 0x38: // Restore Cursor (DECRC)
                 // Restores the states described for (DECSC) above. If none of these characteristics were saved, the
                 // cursor moves to home position; origin mode is reset; no character attributes are assigned; and the
                 // default character set mapping is established.
-                cursor.set(savedCursorPosition.x, savedCursorPosition.y);
+                Point point = savedCursorPosition.get();
+                cursor.move(point);
                 break;
         }
     }
@@ -283,11 +310,11 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
                 // Moves the cursor to line Pl, column Pc. The numbering of the lines and columns depends on the state
                 // (set/reset) of origin mode (DECOM). Digital recommends using CUP instead of HVP.
                 if (params.size() == 0) {
-                    cursor.set(0, 0);
+                    cursor.move(0, 0);
                 } else if (params.size() == 1) {
-                    cursor.set(0, params.get(0));
+                    cursor.move(0, params.get(0));
                 } else {
-                    cursor.set(params.get(1), params.get(0));
+                    cursor.move(params.get(1), params.get(0));
                 }
                 break;
             case 0x4C: // Insert Line (IL)
@@ -396,31 +423,17 @@ public class Display implements OutputProvider, net.emustudio.plugins.device.vt1
         string.chars().forEach(vt100::accept);
     }
 
-    private void cursorDown() {
-        if (cursor.getCursorPoint().y == columns - 1) {
-            rollUp();
-        } else {
-            cursor.moveDown();
-        }
-    }
-
     private synchronized void fillWithSpaces() {
         Arrays.fill(videoMemory, ' ');
     }
 
-    private void openOutputWriter() {
-        try {
-            outputWriter = new FileWriter(settings.getOutputPath().toFile());
-        } catch (IOException e) {
-            LOGGER.error("Could not open file for writing output: {}", settings.getOutputPath(), e);
-        }
-    }
 
     private void writeToOutput(byte data) {
-        if (outputWriter != null) {
+        FileWriter fw = outputWriter;
+        if (fw != null) {
             try {
-                outputWriter.write((char) data);
-                outputWriter.flush();
+                fw.write((char) data);
+                fw.flush();
             } catch (IOException e) {
                 LOGGER.error("Could not write to file: {}", settings.getOutputPath(), e);
             }

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.vt100.interaction;
 
+import net.emustudio.plugins.device.vt100.api.Display;
 import net.jcip.annotations.ThreadSafe;
 
 import java.awt.*;
@@ -26,8 +27,8 @@ import java.util.function.Function;
 
 @ThreadSafe
 public class Cursor {
-    public volatile int columns;
-    public volatile int rows;
+    private volatile int columns;
+    private volatile int rows;
 
     private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
 
@@ -36,7 +37,7 @@ public class Cursor {
         this.rows = rows;
     }
 
-    public void setSize(int columns, int rows) {
+    public synchronized void setSize(int columns, int rows) {
         this.columns = columns;
         this.rows = rows;
     }
@@ -45,23 +46,49 @@ public class Cursor {
         cursorPoint.set(new Point());
     }
 
-    public void set(int x, int y) {
-        cursorPoint.set(new Point(x, y));
+    public void move(int x, int y) {
+        Point oldPoint;
+        Point newPoint;
+
+        do {
+            oldPoint = cursorPoint.get();
+            if (x < 0) {
+                x = 0;
+            } else if (x >= columns) {
+                x = columns - 1;
+            }
+            if (y < 0) {
+                y = 0;
+            } else if (y >= rows) {
+                y = rows - 1;
+            }
+            newPoint = new Point(x, y);
+        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    public void moveForwardsRolling(LineRoller lineRoller) {
+    public void move(Point point) {
+        cursorPoint.set(point);
+    }
+
+    public void moveForwardsRolling(Display display) {
+        int tmpRows;
+        int tmpColumns;
+
+        synchronized (this) {
+            tmpRows = rows - 1;
+            tmpColumns = columns - 1;
+        }
+
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
 
-            int tmpRows = rows - 1;
-
             newPoint.x++;
-            if (newPoint.x > (columns - 1)) {
+            if (newPoint.x > tmpColumns) {
                 newPoint.x = 0;
                 newPoint.y++;
                 // automatic line rolling
                 if (newPoint.y > tmpRows) {
-                    lineRoller.rollUp();
+                    display.rollUp();
                     newPoint.y = tmpRows;
                 }
             }
@@ -74,9 +101,13 @@ public class Cursor {
     }
 
     public void moveForwards(int count) {
+        int tmpColumns;
+        synchronized (this) {
+            tmpColumns = columns - 1;
+        }
+
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
-            int tmpColumns = columns - 1;
 
             if ((newPoint.x + count) <= tmpColumns) {
                 newPoint.x += count;
@@ -105,14 +136,14 @@ public class Cursor {
     }
 
 
-    public void moveUpRolling(LineRoller lineRoller) {
+    public void moveUpRolling(Display display) {
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
 
             if (newPoint.y > 0) {
                 newPoint.y--;
             } else {
-                lineRoller.rollDown();
+                display.rollDown();
             }
             return newPoint;
         });
@@ -131,12 +162,17 @@ public class Cursor {
         });
     }
 
-    public void moveDownRolling(LineRoller lineRoller) {
+    public void moveDownRolling(Display display) {
+        int tmpRows;
+        synchronized (this) {
+            tmpRows = rows - 1;
+        }
+
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
 
-            if (newPoint.y == (rows - 1)) {
-                lineRoller.rollUp();
+            if (newPoint.y == tmpRows) {
+                display.rollUp();
             } else {
                 newPoint.y++;
             }
@@ -149,10 +185,13 @@ public class Cursor {
     }
 
     public void moveDown(int lines) {
+        int tmpRows;
+        synchronized (this) {
+            tmpRows = rows;
+        }
+
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
-
-            int tmpRows = rows;
 
             if (newPoint.y < (tmpRows - lines)) {
                 newPoint.y += lines;
@@ -171,8 +210,9 @@ public class Cursor {
         });
     }
 
-    public Point getCursorPoint() {
-        return cursorPoint.get();
+    public synchronized Rectangle getRect() {
+        Point point = cursorPoint.get();
+        return new Rectangle(point.x, point.y, columns, rows);
     }
 
     private void setCursorPoint(Function<Point, Point> changer) {
@@ -181,12 +221,5 @@ public class Cursor {
         do {
             newPoint = changer.apply(oldPoint);
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
-    }
-
-    interface LineRoller {
-
-        void rollUp();
-
-        void rollDown();
     }
 }

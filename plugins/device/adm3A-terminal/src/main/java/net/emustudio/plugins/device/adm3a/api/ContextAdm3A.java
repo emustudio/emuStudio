@@ -26,7 +26,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 @ThreadSafe
-public class ContextAdm3A implements DeviceContext<Byte>, AutoCloseable {
+public class ContextAdm3A implements DeviceContext<Byte> {
     private final Supplier<Boolean> isHalfDuplex;
 
     private volatile DeviceContext<Byte> externalDevice;
@@ -62,11 +62,6 @@ public class ContextAdm3A implements DeviceContext<Byte>, AutoCloseable {
     @Override
     public Class<Byte> getDataType() {
         return Byte.class;
-    }
-
-    @Override
-    public void close() throws Exception {
-        externalDevice = null;
     }
 
     public void onKeyFromKeyboard(byte key) {
