@@ -35,7 +35,7 @@ import net.emustudio.plugins.device.vt100.api.Keyboard;
 import net.emustudio.plugins.device.vt100.gui.SettingsDialog;
 import net.emustudio.plugins.device.vt100.gui.TerminalWindow;
 import net.emustudio.plugins.device.vt100.interaction.Cursor;
-import net.emustudio.plugins.device.vt100.interaction.Display;
+import net.emustudio.plugins.device.vt100.interaction.DisplayImpl;
 import net.emustudio.plugins.device.vt100.interaction.KeyboardFromFile;
 import net.emustudio.plugins.device.vt100.interaction.KeyboardGui;
 import org.slf4j.Logger;
@@ -51,13 +51,10 @@ import java.util.ResourceBundle;
 public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
-    private static final int DEFAULT_COLUMNS = 120;
-    private static final int DEFAULT_ROWS = 60;
-
     private final TerminalSettings terminalSettings;
-    private final ContextVt100 terminalContext;
+    private final ContextVt100 context;
     private final Keyboard keyboard;
-    private final Display display;
+    private final DisplayImpl display;
 
     private boolean guiIOset = false;
     private TerminalWindow terminalGUI;
@@ -66,20 +63,20 @@ public class DeviceImpl extends AbstractDevice {
         super(pluginID, applicationApi, settings);
         this.terminalSettings = new TerminalSettings(settings, applicationApi.getDialogs());
 
-        Cursor cursor = new Cursor(DEFAULT_COLUMNS, DEFAULT_ROWS);
-        this.display = new Display(cursor, terminalSettings);
+        Cursor cursor = new Cursor(terminalSettings.getColumns(), terminalSettings.getRows());
+        this.display = new DisplayImpl(cursor, terminalSettings);
 
         if (terminalSettings.isGuiSupported()) {
             LOGGER.debug("Creating GUI-based keyboard");
             this.keyboard = new KeyboardGui();
         } else {
-            LOGGER.debug("Creating file-based keyboard ({})", ContextVt100.INPUT_FILE_NAME);
+            LOGGER.debug("Creating file-based keyboard ({})", terminalSettings.getInputPath());
             this.keyboard = new KeyboardFromFile(terminalSettings);
         }
-        this.terminalContext = new ContextVt100(this.keyboard);
+        this.context = new ContextVt100(keyboard);
 
         try {
-            applicationApi.getContextPool().register(pluginID, terminalContext, DeviceContext.class);
+            applicationApi.getContextPool().register(pluginID, context, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register BrainTerminal context", e);
             applicationApi.getDialogs().showError("Could not register VT100-terminal. Please see log file for more details.", getTitle());
@@ -106,7 +103,7 @@ public class DeviceImpl extends AbstractDevice {
     public void initialize() throws PluginInitializationException {
         try {
             BrainCPUContext cpu = applicationApi.getContextPool().getCPUContext(pluginID, BrainCPUContext.class);
-            cpu.attachDevice(terminalContext);
+            cpu.attachDevice(context);
         } catch (ContextNotFoundException e) {
             DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
             if (device.getDataType() != Byte.class) {
@@ -114,30 +111,26 @@ public class DeviceImpl extends AbstractDevice {
                         "Unexpected device data type. Expected Byte but was: " + device.getDataType()
                 );
             }
-            terminalContext.setExternalDevice(device);
+            context.setExternalDevice(device);
         }
-        terminalContext.setDisplay(display);
+        context.setDisplay(display);
         terminalSettings.addSizeChangedObserver(display::setSize);
-
         keyboard.process();
     }
 
     @Override
     public void reset() {
-        terminalContext.reset();
+        context.reset();
     }
 
     @Override
     public void destroy() {
         terminalSettings.destroy();
-        try {
-            terminalContext.close();
-        } catch (Exception e) {
-            LOGGER.error("Could not close VT100-terminal context", e);
-        }
+        keyboard.close();
         if (terminalGUI != null) {
             terminalGUI.destroy();
         }
+        display.close();
     }
 
     @Override

@@ -24,8 +24,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public abstract class Keyboard implements AutoCloseable {
-    private List<Consumer<Byte>> onKeyHandlers = new CopyOnWriteArrayList<>();
-    private List<Consumer<Boolean>> onInputRequestHandlers = new CopyOnWriteArrayList<>();
+    private final List<Consumer<Byte>> onKeyHandlers = new CopyOnWriteArrayList<>();
+    private final List<Consumer<Boolean>> onInputRequestHandlers = new CopyOnWriteArrayList<>();
 
     /**
      * Automatic processing of input if this keyboard is capable of doing so.

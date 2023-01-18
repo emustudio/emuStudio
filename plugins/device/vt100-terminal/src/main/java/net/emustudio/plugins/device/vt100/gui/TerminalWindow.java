@@ -20,7 +20,7 @@ package net.emustudio.plugins.device.vt100.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.device.vt100.interaction.Display;
+import net.emustudio.plugins.device.vt100.interaction.DisplayImpl;
 import net.emustudio.plugins.device.vt100.interaction.KeyboardGui;
 
 import javax.swing.*;
@@ -35,13 +35,11 @@ public class TerminalWindow extends JDialog {
     private final ImageIcon blueIcon; // not waiting for input
     private final ImageIcon redIcon; // waiting for input
 
-    private final Display display;
     private final DisplayCanvas canvas;
     private final KeyboardGui keyboard;
 
-    public TerminalWindow(JFrame parent, Display display, Dialogs dialogs, KeyboardGui keyboard) {
+    public TerminalWindow(JFrame parent, DisplayImpl display, Dialogs dialogs, KeyboardGui keyboard) {
         super(parent);
-        this.display = Objects.requireNonNull(display);
         this.canvas = new DisplayCanvas(display);
         this.keyboard = Objects.requireNonNull(keyboard);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -78,7 +76,6 @@ public class TerminalWindow extends JDialog {
 
     public void destroy() {
         this.canvas.close();
-        this.display.close();
         this.dispose();
     }
 

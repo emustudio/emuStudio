@@ -168,11 +168,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         } catch (Exception e) {
             LOGGER.error("Could not close ADM-3A display", e);
         }
-        try {
-            context.close();
-        } catch (Exception e) {
-            LOGGER.error("Could not close ADM-3A context", e);
-        }
     }
 
     @Override
