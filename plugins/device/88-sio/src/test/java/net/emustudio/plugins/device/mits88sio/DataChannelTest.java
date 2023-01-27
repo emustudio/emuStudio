@@ -39,7 +39,7 @@ public class DataChannelTest {
         replay(uart);
 
         DataChannel channel = new DataChannel(settings, uart);
-        channel.writeData((byte) 0xFF);
+        channel.write(0, (byte) 0xFF);
 
         verify(uart);
     }
@@ -58,7 +58,7 @@ public class DataChannelTest {
 
         DataChannel channel = new DataChannel(settings, uart);
 
-        assertEquals(0x7F, channel.readData() & 0xFF);
+        assertEquals(0x7F, channel.read(0) & 0xFF);
         verify(uart);
     }
 
@@ -75,7 +75,7 @@ public class DataChannelTest {
         replay(uart);
 
         DataChannel channel = new DataChannel(settings, uart);
-        assertEquals('A', channel.readData() & 0xFF);
+        assertEquals('A', channel.read(0) & 0xFF);
 
         verify(uart);
     }
@@ -93,7 +93,7 @@ public class DataChannelTest {
         replay(uart);
 
         DataChannel channel = new DataChannel(settings, uart);
-        channel.writeData((byte) '\b');
+        channel.write(0, (byte) '\b');
 
         verify(uart);
     }
@@ -111,7 +111,7 @@ public class DataChannelTest {
         replay(uart);
 
         DataChannel channel = new DataChannel(settings, uart);
-        channel.writeData((byte) 0x7F);
+        channel.write(0, (byte) 0x7F);
 
         verify(uart);
     }

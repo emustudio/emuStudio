@@ -73,7 +73,7 @@ public class InstructionsTest {
         for (int i = 0; i < 256; i++) {
             FakeByteDevice device = new FakeByteDevice();
             devices.add(device);
-            cpuContext.getValue().attachDevice(device, i);
+            cpuContext.getValue().attachDevice(i, device);
         }
 
         cpu.initialize();

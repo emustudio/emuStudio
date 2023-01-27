@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.ports;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88dcdd.drive.Drive;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveCollection;
 
@@ -32,7 +32,7 @@ import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE
  * IN: read data
  * OUT: write data
  */
-public class DataPort implements DeviceContext<Byte> {
+public class DataPort implements Context8080.CpuPortDevice {
     private final DriveCollection disk;
 
     public DataPort(DriveCollection disk) {
@@ -40,18 +40,18 @@ public class DataPort implements DeviceContext<Byte> {
     }
 
     @Override
-    public Byte readData() {
+    public byte read(int portAddress) {
         return disk.getCurrentDrive().map(Drive::readData).orElse((byte) 0);
     }
 
     @Override
-    public void writeData(Byte data) {
+    public void write(int portAddress, byte data) {
         disk.getCurrentDrive().ifPresent(drive -> drive.writeData(data));
     }
 
     @Override
-    public Class<Byte> getDataType() {
-        return Byte.class;
+    public String getName() {
+        return toString();
     }
 
     @Override

@@ -37,6 +37,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static net.emustudio.plugins.cpu.zilogZ80.DispatchTables.*;
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorTables.*;
@@ -77,7 +78,7 @@ public class EmulatorEngine implements CpuEngine {
     private int lastOpcode;
     private boolean interruptSkip; // when EI enabled, skip next instruction interrupt
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
-    private volatile long executedCycles = 0;
+    private final AtomicLong executedCycles = new AtomicLong(0);
 
     private volatile DispatchListener dispatchListener;
 
@@ -124,9 +125,7 @@ public class EmulatorEngine implements CpuEngine {
 
     @Override
     public long getAndResetExecutedCycles() {
-        long tmpExecutedCycles = executedCycles;
-        executedCycles = 0;
-        return tmpExecutedCycles;
+        return executedCycles.getAndSet(0);
     }
 
     public void addFrequencyChangedListener(FrequencyChangedListener listener) {
@@ -199,7 +198,7 @@ public class EmulatorEngine implements CpuEngine {
                 try {
                     cycles = dispatch();
                     cycles_executed += cycles;
-                    executedCycles += cycles;
+                    executedCycles.addAndGet(cycles);
                     tep.advanceClock(cycles);
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
@@ -305,7 +304,6 @@ public class EmulatorEngine implements CpuEngine {
         int cycles = 0;
 
         IFF[0] = IFF[1] = false;
-        //System.out.println("z80: interrupt! im=" + interruptMode + ", dataBus=" + Arrays.toString(dataBus));
         switch (interruptMode) {
             case 0:
                 cycles += 11;
@@ -867,7 +865,7 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_IN_R_REF_C() {
         int reg = (lastOpcode >>> 3) & 0x7;
-        putreg(reg, context.readIO(regs[REG_C]));
+        putreg(reg, context.readIO((regs[REG_B] << 8) | regs[REG_C]));
         if (reg == REG_A) {
             memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
         }
@@ -880,7 +878,7 @@ public class EmulatorEngine implements CpuEngine {
         if (reg == REG_A) {
             memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
         }
-        context.writeIO(regs[REG_C], (byte) getreg(reg));
+        context.writeIO((regs[REG_B] << 8) | regs[REG_C], (byte) getreg(reg));
         return 12;
     }
 
@@ -1001,13 +999,13 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_IN_REF_C() {
-        int tmp = context.readIO(regs[REG_C]) & 0xFF;
+        int tmp = context.readIO((regs[REG_B] << 8) | regs[REG_C]) & 0xFF;
         flags = TABLE_SZ[tmp] | PARITY_TABLE[tmp] | (flags & FLAG_C) | TABLE_XY[tmp];
         return 12;
     }
 
     int I_OUT_REF_C_0() {
-        context.writeIO(regs[REG_C], (byte) 0);
+        context.writeIO((regs[REG_B] << 8) | regs[REG_C], (byte) 0);
         return 12;
     }
 
@@ -1243,7 +1241,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_INI() {
-        byte value = context.readIO(regs[REG_C]);
+        byte value = context.readIO((regs[REG_B] << 8) | regs[REG_C]);
         int address = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(address, value);
         memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
@@ -1260,7 +1258,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_INIR() {
-        byte value = context.readIO(regs[REG_C]);
+        byte value = context.readIO((regs[REG_B] << 8) | regs[REG_C]);
         int address = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(address, value);
         memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
@@ -1295,7 +1293,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_IND() {
-        byte value = context.readIO(regs[REG_C]);
+        byte value = context.readIO((regs[REG_B] << 8) | regs[REG_C]);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(hl, value);
         memptr = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
@@ -1311,7 +1309,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_INDR() {
-        byte value = context.readIO(regs[REG_C]);
+        byte value = context.readIO((regs[REG_B] << 8) | regs[REG_C]);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         memory.write(hl, value);
         memptr = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
@@ -1347,7 +1345,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_OUTI() {
         int address = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(address);
-        context.writeIO(regs[REG_C], value);
+        context.writeIO((regs[REG_B] << 8) | regs[REG_C], value);
 
         address++;
         regs[REG_H] = (address >>> 8) & 0xFF;
@@ -1362,7 +1360,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_OTIR() {
         int address = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(address);
-        context.writeIO(regs[REG_C], value);
+        context.writeIO((regs[REG_B] << 8) | regs[REG_C], value);
 
         address++;
         regs[REG_H] = (address >>> 8) & 0xFF;
@@ -1395,7 +1393,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_OUTD() {
         int address = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(address);
-        context.writeIO(regs[REG_C], value);
+        context.writeIO((regs[REG_B] << 8) | regs[REG_C], value);
 
         address--;
         regs[REG_H] = (address >>> 8) & 0xFF;
@@ -1410,7 +1408,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_OTDR() {
         int address = (regs[REG_H] << 8) | regs[REG_L];
         byte value = memory.read(address);
-        context.writeIO(regs[REG_C], value);
+        context.writeIO((regs[REG_B] << 8) | regs[REG_C], value);
 
         address--;
         regs[REG_H] = (address >>> 8) & 0xFF;
@@ -1485,7 +1483,7 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         memptr = (regs[REG_A] << 8) | ((port + 1) & 0xFF);
         //	Note for *BM1: MEMPTR_low = (port + 1) & #FF,  MEMPTR_hi = 0
-        context.writeIO(port, (byte) regs[REG_A]);
+        context.writeIO((regs[REG_A] << 8) | port, (byte) regs[REG_A]);
         return 11;
     }
 
@@ -1494,7 +1492,7 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         //_memPtr = (A << 8) + _memory.ReadByte(PC) + _memory.ReadByte(PC + 1) * 256 + 1;
         memptr = ((regs[REG_A] << 8) + port + 1) & 0xFFFF;
-        regs[REG_A] = (context.readIO(port) & 0xFF);
+        regs[REG_A] = (context.readIO((regs[REG_A] << 8) | port) & 0xFF);
         return 11;
     }
 

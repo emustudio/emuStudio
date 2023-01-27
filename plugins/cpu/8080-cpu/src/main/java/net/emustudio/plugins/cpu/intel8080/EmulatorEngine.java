@@ -509,10 +509,10 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    public int I_OUT() throws IOException {
+    public int I_OUT() {
         int DAR = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
-        context.fireIO(DAR, false, (byte) regs[REG_A]);
+        context.writeIO(DAR, (byte) regs[REG_A]);
         return 10;
     }
 
@@ -529,10 +529,10 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    public int I_IN() throws IOException {
+    public int I_IN() {
         int DAR = readByte(PC);
         PC = (PC + 1) & 0xFFFF;
-        regs[REG_A] = context.fireIO(DAR, true, (byte) 0) & 0xFF;
+        regs[REG_A] = context.readIO(DAR) & 0xFF;
         return 10;
     }
 

@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.device.simh;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.simh.commands.Command;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
@@ -60,7 +59,7 @@ import static net.emustudio.plugins.device.simh.Commands.unknownCmd;
  * <p>
  * 4)  Commands requiring parameters and returning results do not exist currently.
  */
-class PseudoContext implements DeviceContext<Byte>, Command.Control {
+class PseudoContext implements Context8080.CpuPortDevice, Command.Control {
     private ByteMemoryContext memory;
     private Context8080 cpu;
 
@@ -102,11 +101,6 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
         this.cpu = cpu;
     }
 
-    @Override
-    public DeviceContext<Byte> getDevice() {
-        return this;
-    }
-
     void reset() {
         clearCommand();
         COMMANDS_MAP.values().forEach(c -> c.reset(this));
@@ -114,7 +108,7 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
 
 
     @Override
-    public Byte readData() {
+    public byte read(int portAddress) {
         int lastCommandOrdinal = lastReadCommand.ordinal();
         if (!COMMANDS_MAP.containsKey(lastCommandOrdinal)) {
             System.out.printf("SIMH: Unknown command (%d) to SIMH pseudo device ignored.\n", lastCommandOrdinal);
@@ -126,7 +120,7 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
     }
 
     @Override
-    public void writeData(Byte data) {
+    public void write(int portAddress, byte data) {
         int lastCommandOrdinal = lastWriteCommand.ordinal();
         if (!COMMANDS_MAP.containsKey(lastCommandOrdinal)) {
             if (!COMMANDS_MAP.containsKey(data & 0xFF)) {
@@ -142,7 +136,12 @@ class PseudoContext implements DeviceContext<Byte>, Command.Control {
     }
 
     @Override
-    public Class<Byte> getDataType() {
-        return Byte.class;
+    public String getName() {
+        return toString();
+    }
+
+    @Override
+    public String toString() {
+        return "SIMH-pseudo context";
     }
 }

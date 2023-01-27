@@ -66,8 +66,8 @@ public class SioUnit implements AutoCloseable {
         attachedStatusPorts.addAll(settings.getStatusPorts());
         attachedDataPorts.addAll(settings.getDataPorts());
 
-        attachedStatusPorts.forEach(p -> cpu.attachDevice(controlChannel, p));
-        attachedDataPorts.forEach(p -> cpu.attachDevice(dataChannel, p));
+        attachedStatusPorts.forEach(p -> cpu.attachDevice(p, controlChannel));
+        attachedDataPorts.forEach(p -> cpu.attachDevice(p, dataChannel));
     }
 
     public void detach() {

@@ -37,7 +37,7 @@ public class DeviceImplTest {
     @Before
     public void setup() throws PluginInitializationException {
         Context8080 cpu = mock(Context8080.class);
-        expect(cpu.attachDevice(anyObject(), anyInt())).andReturn(true).anyTimes();
+        expect(cpu.attachDevice(anyInt(), anyObject())).andReturn(true).anyTimes();
         cpu.detachDevice(anyInt());
         expectLastCall().anyTimes();
         replay(cpu);

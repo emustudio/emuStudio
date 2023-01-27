@@ -18,11 +18,11 @@
  */
 package net.emustudio.plugins.device.mits88sio;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import java.util.Objects;
 
-public class ControlChannel implements DeviceContext<Byte> {
+public class ControlChannel implements Context8080.CpuPortDevice {
     private final UART uart;
 
     public ControlChannel(UART uart) {
@@ -30,17 +30,22 @@ public class ControlChannel implements DeviceContext<Byte> {
     }
 
     @Override
-    public Byte readData() {
+    public byte read(int portAddress) {
         return uart.getStatus();
     }
 
     @Override
-    public void writeData(Byte data) {
+    public void write(int portAddress, byte data) {
         uart.setStatus(data);
     }
 
     @Override
-    public Class<Byte> getDataType() {
-        return Byte.class;
+    public String getName() {
+        return toString();
+    }
+
+    @Override
+    public String toString() {
+        return "MITS 88-SIO control channel";
     }
 }

@@ -19,7 +19,6 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -34,8 +33,10 @@ public final class ContextZ80Impl implements ContextZ80 {
     public final static int DEFAULT_FREQUENCY_KHZ = 20000;
     private final static byte NO_DATA = (byte) 0xFF;
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextZ80Impl.class);
-    private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
+
+    private final ConcurrentMap<Integer, CpuPortDevice> devices = new ConcurrentHashMap<>();
     private final TimedEventsProcessor tep = new TimedEventsProcessor();
+
     private volatile EmulatorEngine engine;
     private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
 
@@ -45,14 +46,17 @@ public final class ContextZ80Impl implements ContextZ80 {
 
     // device mapping = only one device can be attached to one port
     @Override
-    public boolean attachDevice(DeviceContext<Byte> device, int port) {
-        if (devices.containsKey(port)) {
-            LOGGER.debug("[port={}, device={}] Could not attach device to given port. The port is already taken by: {}", port, device, devices.get(port));
+    public boolean attachDevice(int port, CpuPortDevice device) {
+        CpuPortDevice oldDevice = devices.get(port);
+        if (oldDevice != null) {
+            LOGGER.debug("[port={}, device={}] Could not attach device to given port. The port is already taken by: {}", port, device.getName(), oldDevice.getName());
             return false;
         }
-        if (devices.putIfAbsent(port, device) == null) {
-            LOGGER.debug("[port={}] Attached device: {}", port, device);
+        if (devices.putIfAbsent(port, device) != null) {
+            LOGGER.debug("[port={}, device={}] Could not attach device to given port. The port is already taken.", port, device.getName());
+            return false;
         }
+        LOGGER.debug("[port={},device={}] Device was attached to CPU", port, device.getName());
         return true;
     }
 
@@ -67,17 +71,17 @@ public final class ContextZ80Impl implements ContextZ80 {
         devices.clear();
     }
 
-    void writeIO(int port, byte val) {
-        DeviceContext<Byte> device = devices.get(port);
+    void writeIO(int portAddress, byte data) {
+        CpuPortDevice device = devices.get(portAddress & 0xFF);
         if (device != null) {
-            device.writeData(val);
+            device.write(portAddress, data);
         }
     }
 
-    byte readIO(int port) {
-        DeviceContext<Byte> device = devices.get(port);
+    byte readIO(int portAddress) {
+        CpuPortDevice device = devices.get(portAddress & 0xFF);
         if (device != null) {
-            return device.readData();
+            return device.read(portAddress);
         }
         return NO_DATA;
     }

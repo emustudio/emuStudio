@@ -59,7 +59,7 @@ public class DeviceImpl extends AbstractDevice {
         context.setCpu(cpu);
 
         // attach IO port
-        if (!cpu.attachDevice(context, 0xFE)) {
+        if (!cpu.attachDevice(0xFE, context)) {
             throw new PluginInitializationException(
                     this, "SIMH device cannot be attached to CPU (maybe there is a hardware conflict?)"
             );
