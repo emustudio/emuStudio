@@ -52,12 +52,12 @@ public class TerminalWindow extends JDialog {
                 panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(panelStatusLayout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(lblStatusIcon, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(btnRedraw, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
                                 .addContainerGap(900, Short.MAX_VALUE))
         );
         panelStatusLayout.setVerticalGroup(
                 panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(lblStatusIcon, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnRedraw, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         GroupLayout layout = new GroupLayout(getContentPane());
@@ -76,7 +76,9 @@ public class TerminalWindow extends JDialog {
         );
 
         pack();
+
+        btnRedraw.addActionListener(e -> canvas.redrawNow());
     }
 
-    private final JLabel lblStatusIcon = new JLabel("No Status");
+    private final JButton btnRedraw = new JButton("Redraw screen");
 }

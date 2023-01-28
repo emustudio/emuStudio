@@ -28,9 +28,13 @@ import java.util.Objects;
 
 /**
  * https://worldofspectrum.org/faq/reference/48kreference.htm
+ * http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/screen-memory-layout
+ * <p>
+ * Uncommitted Logic Array (ULA).
+ *
  * <p>
  * OUT:
- * Bit   7   6   5   4   3   2   1   0
+ * Bit      7   6   5   4   3   2   1   0
  * +-------------------------------+
  * |   |   |   | E | M |   Border  |
  * +-------------------------------+
@@ -40,6 +44,20 @@ import java.util.Objects;
  * 0xfdfe  A, S, D, F, G                0xdffe  P, O, I, U, Y
  * 0xfbfe  Q, W, E, R, T                0xbffe  ENTER, L, K, J, H
  * 0xf7fe  1, 2, 3, 4, 5                0x7ffe  SPACE, SYM SHFT, M, N, B
+ * <p>
+ * The colour attribute data overlays the monochrome bitmap data and is arranged in a linear fashion from left to right,
+ * top to bottom.
+ * Each attribute byte colours an 8x8 character on the screen and is encoded as follows:
+ * <p>
+ * Bit      7   6   5   4   3   2   1   0
+ * +-------------------------------+
+ * | F | B | P2| P1| P0| I2| I1| I0|
+ * +-------------------------------+
+ * <p>
+ * - F sets the attribute FLASH mode
+ * - B sets the attribute BRIGHTNESS mode
+ * - P2 to P0 is the PAPER colour
+ * - I2 to I0 is the INK colour
  */
 public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     public static final int SCREEN_WIDTH = 32; // in bytes; each byte represents 8 pixels in a row, reversed
@@ -51,6 +69,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     private final Context8080 cpu;
     private final byte[] keymap = new byte[8];
     public final byte[][] videoMemory = new byte[SCREEN_WIDTH][SCREEN_HEIGHT];
+    public final byte[][] attributeMemory = new byte[SCREEN_WIDTH][SCREEN_HEIGHT / 8];
     private final static int[] lineStartOffsets = computeLineStartOffsets();
 
     private static int[] computeLineStartOffsets() {
@@ -73,11 +92,15 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     }
 
     public void readScreen() {
-        for (int y = 0; y < SCREEN_HEIGHT; y++) {
-            for (int x = 0; x < SCREEN_WIDTH; x++) {
+        for (int x = 0; x < SCREEN_WIDTH; x++) {
+            for (int y = 0; y < SCREEN_HEIGHT; y++) {
                 videoMemory[x][y] = memory.read(0x4000 + lineStartOffsets[y] + x);
+                if (y < SCREEN_HEIGHT / 8) {
+                    attributeMemory[x][y] = memory.read(0x5800 + lineStartOffsets[y] + x);
+                }
             }
         }
+
         cpu.signalInterrupt(RST_7);
     }
 

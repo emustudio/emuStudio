@@ -41,7 +41,29 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private static final int Y_GAP = 48; // pixels
 
     private static final Color FOREGROUND = new Color(255, 255, 255);
-    private static final Color BACKGROUND = Color.BLACK;
+    private static final Color BACKGROUND = new Color(0xAA, 0xAA, 0xAA);
+
+    private static final Color[] COLOR_MAP = new Color[] {
+            new Color(0,0 ,0),  // black
+            new Color(0,0, 0xEE), // blue
+            new Color(0xEE, 0, 0), // red
+            new Color(0xEE, 0, 0xEE), // magenta
+            new Color(0, 0xEE, 0), // green
+            new Color(0, 0xEE, 0xEE), // cyan
+            new Color(0xEE, 0xEE, 0), // yellow
+            new Color(0xEE, 0xEE, 0xEE) // white
+    };
+
+    private static final Color[] BRIGHT_COLOR_MAP = new Color[] {
+            new Color(0,0 ,0),  // black
+            new Color(0,0, 0xFF), // blue
+            new Color(0xFF, 0, 0), // red
+            new Color(0xFF, 0, 0xFF), // magenta
+            new Color(0, 0xFF, 0), // green
+            new Color(0, 0xFF, 0xFF), // cyan
+            new Color(0xFF, 0xFF, 0), // yellow
+            new Color(0xFF, 0xFF, 0xFF) // white
+    };
 
     private final AtomicBoolean painting = new AtomicBoolean(false);
     private volatile Dimension size = new Dimension(0, 0);
@@ -69,6 +91,10 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
             ted.schedule(REPAINT_CPU_TSTATES, paintCycle);
         }
+    }
+
+    public void redrawNow() {
+        paintCycle.run();
     }
 
     @Override
@@ -125,11 +151,18 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                     graphics.fillRect(0, 0, dimension.width, dimension.height);
 
                     graphics.setColor(FOREGROUND);
-                    byte[][] memory = ula.videoMemory;
+                    byte[][] videoMemory = ula.videoMemory;
+                    byte[][] attrMemory = ula.attributeMemory;
+
                     int screenX = 0;
                     for (int y = 0; y < SCREEN_HEIGHT; y++) {
                         for (int x = 0; x < SCREEN_WIDTH; x++) {
-                            byte row = memory[x][y];
+                            byte row = videoMemory[x][y];
+                            int attr = attrMemory[x][y/8];
+                            Color[] colorMap = ((attr & 0x40) == 0x40) ? BRIGHT_COLOR_MAP : COLOR_MAP;
+                            graphics.setBackground(colorMap[(attr >>> 3) & 7]);
+                            graphics.setColor(colorMap[attr & 7]);
+
                             for (int i = 0; i < 8; i++) {
                                 boolean bit = ((row << i) & 0x80) == 0x80;
                                 if (bit) {
