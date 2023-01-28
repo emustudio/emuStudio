@@ -67,6 +67,11 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         Arrays.fill(keymap, (byte) 0xFF);
     }
 
+    // little hack..
+    public Context8080 getCpu() {
+        return cpu;
+    }
+
     public void readScreen() {
         for (int y = 0; y < SCREEN_HEIGHT; y++) {
             for (int x = 0; x < SCREEN_WIDTH; x++) {

@@ -18,26 +18,37 @@
  */
 package net.emustudio.plugins.device.zxspectrum.display.gui;
 
+import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.plugins.device.zxspectrum.display.ULA;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.emustudio.plugins.device.zxspectrum.display.ULA.SCREEN_HEIGHT;
 import static net.emustudio.plugins.device.zxspectrum.display.ULA.SCREEN_WIDTH;
 
+// https://worldofspectrum.org/faq/reference/48kreference.htm
 public class DisplayCanvas extends Canvas implements AutoCloseable {
+    // a frame is (64+192+56)*224=69888 T states long, which means that the '50 Hz' interrupt is actually
+    // a 3.5MHz/69888=50.08 Hz interrupt
+    private static final int REPAINT_CPU_TSTATES = 69888;
+
+    private static final int BORDER_WIDHT = 48; // pixels
+    private static final int X_GAP = 48; // pixels
+    private static final int Y_GAP = 48; // pixels
+
     private static final Color FOREGROUND = new Color(255, 255, 255);
     private static final Color BACKGROUND = Color.BLACK;
 
-    private final Timer repaintTimer;
     private final AtomicBoolean painting = new AtomicBoolean(false);
     private volatile Dimension size = new Dimension(0, 0);
 
     private final ULA ula;
+    private final TimedEventsProcessor ted;
+    private final PaintCycle paintCycle = new PaintCycle();
 
     public DisplayCanvas(ULA ula) {
         this.ula = Objects.requireNonNull(ula);
@@ -47,18 +58,18 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         Font textFont = new Font("Monospaced", Font.PLAIN, 14);
         setFont(textFont);
 
-        PaintCycle paintCycle = new PaintCycle();
-        this.repaintTimer = new Timer(1000 / 50, e -> paintCycle.run()); // 50 HZ
-        this.repaintTimer.setCoalesce(true);
+        this.ted = ula.getCpu()
+                .getTimedEventsProcessor()
+                .orElseThrow(() -> new NoSuchElementException("The CPU does not provide TimedEventProcessor"));
     }
 
     public void start() {
         if (painting.compareAndSet(false, true)) {
             createBufferStrategy(2);
-            this.repaintTimer.restart();
+
+            ted.schedule(REPAINT_CPU_TSTATES, paintCycle);
         }
     }
-
 
     @Override
     public Dimension getPreferredSize() {
@@ -84,7 +95,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     @Override
     public void close() {
-        repaintTimer.stop();
+        ted.remove(REPAINT_CPU_TSTATES, paintCycle);
         painting.set(false);
     }
 
@@ -102,35 +113,42 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
         protected void paint() {
             Dimension dimension = size;
-            try {
+            // The buffers in a buffer strategy are usually type VolatileImage, they may become lost.
+            // VolatileImage differs from other Image variants in that if possible, VolatileImage is stored in
+            // Video RAM. This means that instead of keeping the image in the system memory with everything else,
+            // it is kept on the memory local to the graphics card. This allows for much faster drawing-to and
+            // copying-from operations.
+            do {
                 do {
-                    do {
-                        Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
-                        graphics.setColor(BACKGROUND);
-                        graphics.fillRect(0, 0, dimension.width, dimension.height);
+                    Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
+                    graphics.setColor(BACKGROUND);
+                    graphics.fillRect(0, 0, dimension.width, dimension.height);
 
-                        graphics.setColor(FOREGROUND);
-                        byte[][] memory = ula.videoMemory;
-                        int screenX = 0;
-                        for (int y = 0; y < SCREEN_HEIGHT; y++) {
-                            for (int x = 0; x < SCREEN_WIDTH; x++) {
-                                byte row = memory[x][y];
-                                for (int i = 0; i < 8; i++) {
-                                    boolean bit = ((row << i) & 0x80) == 0x80;
-                                    if (bit) {
-                                        graphics.drawLine(32 + screenX + i, y, 32 + screenX + i, y);
-                                    }
+                    graphics.setColor(FOREGROUND);
+                    byte[][] memory = ula.videoMemory;
+                    int screenX = 0;
+                    for (int y = 0; y < SCREEN_HEIGHT; y++) {
+                        for (int x = 0; x < SCREEN_WIDTH; x++) {
+                            byte row = memory[x][y];
+                            for (int i = 0; i < 8; i++) {
+                                boolean bit = ((row << i) & 0x80) == 0x80;
+                                if (bit) {
+                                    graphics.drawLine(
+                                            2*(X_GAP + BORDER_WIDHT) + 2*screenX + 2*i, 2*Y_GAP + 2*y,
+                                            2*(X_GAP + BORDER_WIDHT) + 2*screenX + 2*i + 1, 2*Y_GAP + 2*y);
+                                    graphics.drawLine(
+                                            2*(X_GAP + BORDER_WIDHT) + 2*screenX + 2*i, 2*Y_GAP + 2*y + 1,
+                                            2*(X_GAP + BORDER_WIDHT) + 2*screenX + 2*i + 1, 2*Y_GAP + 2*y + 1);
                                 }
-                                screenX += 8;
                             }
-                            screenX = 0;
+                            screenX += 8;
                         }
-                        graphics.dispose();
-                    } while (strategy.contentsRestored());
-                    strategy.show();
-                } while (strategy.contentsLost());
-            } catch (Exception ignored) {
-            }
+                        screenX = 0;
+                    }
+                    graphics.dispose();
+                } while (strategy.contentsRestored());
+                strategy.show();
+            } while (strategy.contentsLost());
         }
     }
 }
