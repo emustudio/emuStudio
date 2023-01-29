@@ -62,6 +62,7 @@ import java.util.Objects;
 public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     public static final int SCREEN_WIDTH = 32; // in bytes; each byte represents 8 pixels in a row, reversed
     public static final int SCREEN_HEIGHT = 192;
+    public static final int ATTRIBUTE_HEIGHT = SCREEN_HEIGHT / 8;
 
     private final static byte[] RST_7 = new byte[0x38]; // works for IM1 and IM2 modes
 
@@ -69,7 +70,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     private final Context8080 cpu;
     private final byte[] keymap = new byte[8];
     public final byte[][] videoMemory = new byte[SCREEN_WIDTH][SCREEN_HEIGHT];
-    public final byte[][] attributeMemory = new byte[SCREEN_WIDTH][SCREEN_HEIGHT / 8];
+    public final byte[][] attributeMemory = new byte[SCREEN_WIDTH][ATTRIBUTE_HEIGHT];
     private final static int[] lineStartOffsets = computeLineStartOffsets();
 
     private static int[] computeLineStartOffsets() {
@@ -95,8 +96,10 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
             for (int y = 0; y < SCREEN_HEIGHT; y++) {
                 videoMemory[x][y] = memory.read(0x4000 + lineStartOffsets[y] + x);
-                if (y < SCREEN_HEIGHT / 8) {
-                    attributeMemory[x][y] = memory.read(0x5800 + lineStartOffsets[y] + x);
+                if (y < ATTRIBUTE_HEIGHT) {
+                    int off = ((y >>> 3) << 8) | (((y & 0x07) << 5) | x);
+                    int attributeAddress = 0x5800 + off;
+                    attributeMemory[x][y] = memory.read(attributeAddress);
                 }
             }
         }
@@ -156,45 +159,59 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
             case KeyEvent.VK_SHIFT:
                 keymap[0] |= 0x1;
                 break;
+            case 'z':
             case 'Z':
                 keymap[0] |= 0x2;
                 break;
+            case 'x':
             case 'X':
                 keymap[0] |= 0x4;
                 break;
+            case 'c':
             case 'C':
                 keymap[0] |= 0x8;
                 break;
+            case 'v':
             case 'V':
                 keymap[0] |= 0x10;
                 break;
+            case 'a':
             case 'A':
                 keymap[1] |= 0x1;
                 break;
+            case 's':
             case 'S':
                 keymap[1] |= 0x2;
                 break;
+            case 'd':
             case 'D':
                 keymap[1] |= 0x4;
                 break;
+            case 'f':
             case 'F':
                 keymap[1] |= 0x8;
                 break;
+            case 'g':
             case 'G':
                 keymap[1] |= 0x10;
                 break;
+            case 'q':
             case 'Q':
                 keymap[2] |= 0x1;
                 break;
+            case 'w':
             case 'W':
                 keymap[2] |= 0x2;
                 break;
+            case 'e':
             case 'E':
                 keymap[2] |= 0x4;
                 break;
+            case 'r':
             case 'R':
                 keymap[2] |= 0x8;
                 break;
+            case 't':
             case 'T':
                 keymap[2] |= 0x10;
                 break;
@@ -228,33 +245,42 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
             case '6':
                 keymap[4] |= 0x10;
                 break;
+            case 'p':
             case 'P':
                 keymap[5] |= 0x1;
                 break;
+            case 'o':
             case 'O':
                 keymap[5] |= 0x2;
                 break;
+            case 'i':
             case 'I':
                 keymap[5] |= 0x4;
                 break;
+            case 'u':
             case 'U':
                 keymap[5] |= 0x8;
                 break;
+            case 'y':
             case 'Y':
                 keymap[5] |= 0x10;
                 break;
             case KeyEvent.VK_ENTER:
                 keymap[6] |= 0x1;
                 break;
+            case 'l':
             case 'L':
                 keymap[6] |= 0x2;
                 break;
+            case 'k':
             case 'K':
                 keymap[6] |= 0x4;
                 break;
+            case 'j':
             case 'J':
                 keymap[6] |= 0x8;
                 break;
+            case 'h':
             case 'H':
                 keymap[6] |= 0x10;
                 break;
@@ -262,12 +288,15 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
                 keymap[7] |= 0x1;
                 break;
             // SYM SHFT ???
+            case 'm':
             case 'M':
                 keymap[7] |= 0x4;
                 break;
+            case 'n':
             case 'N':
                 keymap[7] |= 0x8;
                 break;
+            case 'b':
             case 'B':
                 keymap[7] |= 0x10;
                 break;
