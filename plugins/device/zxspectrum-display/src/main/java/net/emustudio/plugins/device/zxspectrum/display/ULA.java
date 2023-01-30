@@ -34,7 +34,7 @@ import java.util.Objects;
  *
  * <p>
  * OUT:
- * Bit      7   6   5   4   3   2   1   0
+ * Bit         7   6   5   4   3   2   1   0
  * +-------------------------------+
  * |   |   |   | E | M |   Border  |
  * +-------------------------------+
@@ -66,12 +66,17 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
 
     private final static byte[] RST_7 = new byte[0x38]; // works for IM1 and IM2 modes
 
-    private final MemoryContext<Byte> memory;
-    private final Context8080 cpu;
     private final byte[] keymap = new byte[8];
     public final byte[][] videoMemory = new byte[SCREEN_WIDTH][SCREEN_HEIGHT];
     public final byte[][] attributeMemory = new byte[SCREEN_WIDTH][ATTRIBUTE_HEIGHT];
     private final static int[] lineStartOffsets = computeLineStartOffsets();
+
+    private final MemoryContext<Byte> memory;
+    private final Context8080 cpu;
+
+    private int borderColor;
+    private boolean microphone;
+    private boolean ear;
 
     private static int[] computeLineStartOffsets() {
         final int[] result = new int[SCREEN_HEIGHT];
@@ -84,7 +89,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     public ULA(MemoryContext<Byte> memory, Context8080 cpu) {
         this.memory = Objects.requireNonNull(memory);
         this.cpu = Objects.requireNonNull(cpu);
-        Arrays.fill(keymap, (byte) 0xFF);
+        Arrays.fill(keymap, (byte) 0xBF);
     }
 
     // little hack..
@@ -107,40 +112,62 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         cpu.signalInterrupt(RST_7);
     }
 
+    public void reset() {
+        borderColor = 7;
+        microphone = false;
+        ear = true;
+        Arrays.fill(keymap, (byte) 0xBF);
+    }
+
+    public int getBorderColor() {
+        return borderColor;
+    }
+
     @Override
     public byte read(int portAddress) {
-        if (portAddress == 0xfefe) {
-            // SHIFT, Z, X, C, V
-            return keymap[0];
-        } else if (portAddress == 0xfdfe) {
-            // A, S, D, F, G
-            return keymap[1];
-        } else if (portAddress == 0xfbfe) {
-            // Q, W, E, R, T
-            return keymap[2];
-        } else if (portAddress == 0xf7fe) {
-            // 1, 2, 3, 4, 5
-            return keymap[3];
-        } else if (portAddress == 0xeffe) {
-            // 0, 9, 8, 7, 6
-            return keymap[4];
-        } else if (portAddress == 0xdffe) {
-            // P, O, I, U, Y
-            return keymap[5];
-        } else if (portAddress == 0xbffe) {
-            // ENTER, L, K, J, H
-            return keymap[6];
-        } else if (portAddress == 0x7ffe) {
-            // SPACE, SYM SHFT, M, N, B
-            return keymap[7];
-        }
+        // A zero in one of the five lowest bits means that the corresponding key is pressed.
+        // If more than one address line is made low, the result is the logical AND of all single inputs
 
-        return (byte) 0xFF;
+        byte result = (byte)0xBF;
+        if ((portAddress & 0xFEFE) == 0xFEFE) {
+            // SHIFT, Z, X, C, V
+            result &= keymap[0];
+        } else if ((portAddress & 0xFDFE) == 0xFDFE) {
+            // A, S, D, F, G
+            result &= keymap[1];
+        } else if ((portAddress & 0xFBFE) == 0xFBFE) {
+            // Q, W, E, R, T
+            result &= keymap[2];
+        } else if ((portAddress & 0xF7FE) == 0xF7FE) {
+            // 1, 2, 3, 4, 5
+            result &= keymap[3];
+        } else if ((portAddress & 0xEFFE) == 0xEFFE) {
+            // 0, 9, 8, 7, 6
+            result &= keymap[4];
+        } else if ((portAddress & 0xDFFE) == 0xDFFE) {
+            // P, O, I, U, Y
+            result &= keymap[5];
+        } else if ((portAddress & 0xBFFE) == 0xBFFE) {
+            // ENTER, L, K, J, H
+            result &= keymap[6];
+        } else if ((portAddress & 0x7FFE) == 0x7FFE) {
+            // SPACE, SYM SHFT, M, N, B
+            result &= keymap[7];
+        }
+        if (!ear) {
+            result |= 0x40;
+        }
+        return result;
     }
 
     @Override
     public void write(int portAddress, byte data) {
-        // from CPU
+        this.borderColor = data & 7;
+        if (((data & 0x10) == 0x10) || ((data & 0x8) == 0)) {
+            // the EAR and MIC sockets are connected only by resistors, so activating one activates the other
+            microphone = true;
+            ear = true;
+        }
     }
 
     @Override
@@ -154,7 +181,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     }
 
     @Override
-    public void onKeyDown(byte data) {
+    public void onKeyUp(byte data) {
         switch (data) {
             case KeyEvent.VK_SHIFT:
                 keymap[0] |= 0x1;
@@ -304,50 +331,64 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     }
 
     @Override
-    public void onKeyUp(byte data) {
+    public void onKeyDown(byte data) {
         switch (data) {
             case KeyEvent.VK_SHIFT:
                 keymap[0] &= 0xFE;
                 break;
+            case 'z':
             case 'Z':
                 keymap[0] &= 0xFD;
                 break;
+            case 'x':
             case 'X':
                 keymap[0] &= 0xFB;
                 break;
+            case 'c':
             case 'C':
                 keymap[0] &= 0xF7;
                 break;
+            case 'v':
             case 'V':
                 keymap[0] &= 0xEF;
                 break;
+            case 'a':
             case 'A':
                 keymap[1] &= 0xFE;
                 break;
+            case 's':
             case 'S':
                 keymap[1] &= 0xFD;
                 break;
+            case 'd':
             case 'D':
                 keymap[1] &= 0xFB;
                 break;
+            case 'f':
             case 'F':
                 keymap[1] &= 0xF7;
                 break;
+            case 'g':
             case 'G':
                 keymap[1] &= 0xEF;
                 break;
+            case 'q':
             case 'Q':
                 keymap[2] &= 0xFE;
                 break;
+            case 'w':
             case 'W':
                 keymap[2] &= 0xFD;
                 break;
+            case 'e':
             case 'E':
                 keymap[2] &= 0xFB;
                 break;
+            case 'r':
             case 'R':
                 keymap[2] &= 0xF7;
                 break;
+            case 't':
             case 'T':
                 keymap[2] &= 0xEF;
                 break;
@@ -381,33 +422,42 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
             case '6':
                 keymap[4] &= 0xEF;
                 break;
+            case 'p':
             case 'P':
                 keymap[5] &= 0xFE;
                 break;
+            case 'o':
             case 'O':
                 keymap[5] &= 0xFD;
                 break;
+            case 'i':
             case 'I':
                 keymap[5] &= 0xFB;
                 break;
+            case 'u':
             case 'U':
                 keymap[5] &= 0xF7;
                 break;
+            case 'y':
             case 'Y':
                 keymap[5] &= 0xEF;
                 break;
             case KeyEvent.VK_ENTER:
                 keymap[6] &= 0xFE;
                 break;
+            case 'l':
             case 'L':
                 keymap[6] &= 0xFD;
                 break;
+            case 'k':
             case 'K':
                 keymap[6] &= 0xFB;
                 break;
+            case 'j':
             case 'J':
                 keymap[6] &= 0xF7;
                 break;
+            case 'h':
             case 'H':
                 keymap[6] &= 0xEF;
                 break;
@@ -415,12 +465,15 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
                 keymap[7] &= 0xFE;
                 break;
             // SYM SHFT ???
+            case 'm':
             case 'M':
                 keymap[7] &= 0xFB;
                 break;
+            case 'n':
             case 'N':
                 keymap[7] &= 0xF7;
                 break;
+            case 'b':
             case 'B':
                 keymap[7] &= 0xEF;
                 break;

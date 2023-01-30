@@ -46,6 +46,8 @@ public class TerminalWindow extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         canvas.setBounds(0, 0, 900, 700);
 
+        btnRedraw.setFocusable(false);
+
         GroupLayout panelStatusLayout = new GroupLayout(panelStatus);
         panelStatus.setLayout(panelStatusLayout);
         panelStatusLayout.setHorizontalGroup(

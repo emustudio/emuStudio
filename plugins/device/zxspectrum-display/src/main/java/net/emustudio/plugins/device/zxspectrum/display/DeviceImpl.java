@@ -76,7 +76,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void reset() {
-
+        ula.reset();
     }
 
     @Override

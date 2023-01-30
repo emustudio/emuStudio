@@ -154,6 +154,9 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                     byte[][] videoMemory = ula.videoMemory;
                     byte[][] attrMemory = ula.attributeMemory;
 
+                    // border
+
+
                     int screenX = 0;
                     for (int y = 0; y < SCREEN_HEIGHT; y++) {
                         for (int x = 0; x < SCREEN_WIDTH; x++) {
