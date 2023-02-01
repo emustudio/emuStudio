@@ -34,7 +34,7 @@ import java.util.Objects;
  *
  * <p>
  * OUT:
- * Bit         7   6   5   4   3   2   1   0
+ * 7   6   5   4   3   2   1   0
  * +-------------------------------+
  * |   |   |   | E | M |   Border  |
  * +-------------------------------+
@@ -49,7 +49,7 @@ import java.util.Objects;
  * top to bottom.
  * Each attribute byte colours an 8x8 character on the screen and is encoded as follows:
  * <p>
- * Bit      7   6   5   4   3   2   1   0
+ * 7   6   5   4   3   2   1   0
  * +-------------------------------+
  * | F | B | P2| P1| P0| I2| I1| I0|
  * +-------------------------------+
@@ -75,8 +75,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     private final Context8080 cpu;
 
     private int borderColor;
-    private boolean microphone;
-    private boolean ear;
+    private boolean microphoneAndEar;
 
     private static int[] computeLineStartOffsets() {
         final int[] result = new int[SCREEN_HEIGHT];
@@ -114,8 +113,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
 
     public void reset() {
         borderColor = 7;
-        microphone = false;
-        ear = true;
+        microphoneAndEar = false;
         Arrays.fill(keymap, (byte) 0xBF);
     }
 
@@ -128,7 +126,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         // A zero in one of the five lowest bits means that the corresponding key is pressed.
         // If more than one address line is made low, the result is the logical AND of all single inputs
 
-        byte result = (byte)0xBF;
+        byte result = (byte) 0xBF;
         if ((portAddress & 0xFEFE) == 0xFEFE) {
             // SHIFT, Z, X, C, V
             result &= keymap[0];
@@ -154,7 +152,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
             // SPACE, SYM SHFT, M, N, B
             result &= keymap[7];
         }
-        if (!ear) {
+        if (!microphoneAndEar) {
             result |= 0x40;
         }
         return result;
@@ -165,8 +163,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         this.borderColor = data & 7;
         if (((data & 0x10) == 0x10) || ((data & 0x8) == 0)) {
             // the EAR and MIC sockets are connected only by resistors, so activating one activates the other
-            microphone = true;
-            ear = true;
+            microphoneAndEar = true;
         }
     }
 

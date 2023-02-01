@@ -36,16 +36,17 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     // a 3.5MHz/69888=50.08 Hz interrupt
     private static final int REPAINT_CPU_TSTATES = 69888;
 
-    private static final int BORDER_WIDHT = 48; // pixels
+    private static final int BORDER_WIDTH = 48; // pixels
+    private static final int BORDER_HEIGHT = 56; // pixels
     private static final int X_GAP = 48; // pixels
     private static final int Y_GAP = 48; // pixels
 
     private static final Color FOREGROUND = new Color(255, 255, 255);
     private static final Color BACKGROUND = new Color(0xAA, 0xAA, 0xAA);
 
-    private static final Color[] COLOR_MAP = new Color[] {
-            new Color(0,0 ,0),  // black
-            new Color(0,0, 0xEE), // blue
+    private static final Color[] COLOR_MAP = new Color[]{
+            new Color(0, 0, 0),  // black
+            new Color(0, 0, 0xEE), // blue
             new Color(0xEE, 0, 0), // red
             new Color(0xEE, 0, 0xEE), // magenta
             new Color(0, 0xEE, 0), // green
@@ -54,9 +55,9 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             new Color(0xEE, 0xEE, 0xEE) // white
     };
 
-    private static final Color[] BRIGHT_COLOR_MAP = new Color[] {
-            new Color(0,0 ,0),  // black
-            new Color(0,0, 0xFF), // blue
+    private static final Color[] BRIGHT_COLOR_MAP = new Color[]{
+            new Color(0, 0, 0),  // black
+            new Color(0, 0, 0xFF), // blue
             new Color(0xFF, 0, 0), // red
             new Color(0xFF, 0, 0xFF), // magenta
             new Color(0, 0xFF, 0), // green
@@ -154,28 +155,33 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                     byte[][] videoMemory = ula.videoMemory;
                     byte[][] attrMemory = ula.attributeMemory;
 
-                    // border
-
-
+                    graphics.setBackground(COLOR_MAP[ula.getBorderColor()]);
+                    graphics.setColor(COLOR_MAP[ula.getBorderColor()]);
+                    graphics.fillRect(
+                            X_GAP, Y_GAP,
+                            2*(BORDER_WIDTH + SCREEN_WIDTH*8 + BORDER_WIDTH),
+                            2*(SCREEN_HEIGHT + 2*BORDER_HEIGHT)
+                    );
                     int screenX = 0;
                     for (int y = 0; y < SCREEN_HEIGHT; y++) {
                         for (int x = 0; x < SCREEN_WIDTH; x++) {
                             byte row = videoMemory[x][y];
-                            int attr = attrMemory[x][y/8];
+                            int attr = attrMemory[x][y / 8];
                             Color[] colorMap = ((attr & 0x40) == 0x40) ? BRIGHT_COLOR_MAP : COLOR_MAP;
-                            graphics.setBackground(colorMap[(attr >>> 3) & 7]);
-                            graphics.setColor(colorMap[attr & 7]);
 
                             for (int i = 0; i < 8; i++) {
                                 boolean bit = ((row << i) & 0x80) == 0x80;
                                 if (bit) {
-                                    graphics.drawLine(
-                                            2*(X_GAP + BORDER_WIDHT) + 2*screenX + 2*i, 2*Y_GAP + 2*y,
-                                            2*(X_GAP + BORDER_WIDHT) + 2*screenX + 2*i + 1, 2*Y_GAP + 2*y);
-                                    graphics.drawLine(
-                                            2*(X_GAP + BORDER_WIDHT) + 2*screenX + 2*i, 2*Y_GAP + 2*y + 1,
-                                            2*(X_GAP + BORDER_WIDHT) + 2*screenX + 2*i + 1, 2*Y_GAP + 2*y + 1);
+                                    graphics.setColor(colorMap[attr & 7]);
+                                } else {
+                                    graphics.setColor(colorMap[(attr >>> 3) & 7]);
                                 }
+                                graphics.drawLine(
+                                        X_GAP + 2 * (BORDER_WIDTH + screenX + i), Y_GAP + 2 * (BORDER_HEIGHT + y),
+                                        X_GAP + 2 * (BORDER_WIDTH + screenX + i) + 1, Y_GAP + 2 * (BORDER_HEIGHT + y));
+                                graphics.drawLine(
+                                        X_GAP + 2 * (BORDER_WIDTH + screenX + i), Y_GAP + 2 * (BORDER_HEIGHT + y) + 1,
+                                        X_GAP + 2 * (BORDER_WIDTH + screenX + i) + 1, Y_GAP + 2 * (BORDER_HEIGHT + y) + 1);
                             }
                             screenX += 8;
                         }
