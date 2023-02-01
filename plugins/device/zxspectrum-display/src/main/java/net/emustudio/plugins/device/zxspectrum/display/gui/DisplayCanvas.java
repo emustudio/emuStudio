@@ -32,17 +32,15 @@ import static net.emustudio.plugins.device.zxspectrum.display.ULA.SCREEN_WIDTH;
 
 // https://worldofspectrum.org/faq/reference/48kreference.htm
 public class DisplayCanvas extends Canvas implements AutoCloseable {
+    private static final int BORDER_WIDTH = 48; // pixels
+    private static final int BORDER_HEIGHT = 56; // pixels
+
+    public final static int HOST_SCREEN_WIDTH = 2 * (2 * BORDER_WIDTH + SCREEN_WIDTH * 8);
+    public final static int HOST_SCREEN_HEIGHT = 2 * (2 * BORDER_HEIGHT + SCREEN_HEIGHT);
+
     // a frame is (64+192+56)*224=69888 T states long, which means that the '50 Hz' interrupt is actually
     // a 3.5MHz/69888=50.08 Hz interrupt
     private static final int REPAINT_CPU_TSTATES = 69888;
-
-    private static final int BORDER_WIDTH = 48; // pixels
-    private static final int BORDER_HEIGHT = 56; // pixels
-    private static final int X_GAP = 48; // pixels
-    private static final int Y_GAP = 48; // pixels
-
-    private static final Color FOREGROUND = new Color(255, 255, 255);
-    private static final Color BACKGROUND = new Color(0xAA, 0xAA, 0xAA);
 
     private static final Color[] COLOR_MAP = new Color[]{
             new Color(0, 0, 0),  // black
@@ -75,12 +73,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     public DisplayCanvas(ULA ula) {
         this.ula = Objects.requireNonNull(ula);
-
-        setForeground(FOREGROUND);
-        setBackground(BACKGROUND);
-        Font textFont = new Font("Monospaced", Font.PLAIN, 14);
-        setFont(textFont);
-
         this.ted = ula.getCpu()
                 .getTimedEventsProcessor()
                 .orElseThrow(() -> new NoSuchElementException("The CPU does not provide TimedEventProcessor"));
@@ -139,7 +131,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         }
 
         protected void paint() {
-            Dimension dimension = size;
             // The buffers in a buffer strategy are usually type VolatileImage, they may become lost.
             // VolatileImage differs from other Image variants in that if possible, VolatileImage is stored in
             // Video RAM. This means that instead of keeping the image in the system memory with everything else,
@@ -148,19 +139,16 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             do {
                 do {
                     Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
-                    graphics.setColor(BACKGROUND);
-                    graphics.fillRect(0, 0, dimension.width, dimension.height);
 
-                    graphics.setColor(FOREGROUND);
                     byte[][] videoMemory = ula.videoMemory;
                     byte[][] attrMemory = ula.attributeMemory;
 
                     graphics.setBackground(COLOR_MAP[ula.getBorderColor()]);
                     graphics.setColor(COLOR_MAP[ula.getBorderColor()]);
                     graphics.fillRect(
-                            X_GAP, Y_GAP,
-                            2*(BORDER_WIDTH + SCREEN_WIDTH*8 + BORDER_WIDTH),
-                            2*(SCREEN_HEIGHT + 2*BORDER_HEIGHT)
+                            0, 0,
+                            2 * (2 * BORDER_WIDTH + SCREEN_WIDTH * 8),
+                            2 * (2 * BORDER_HEIGHT + SCREEN_HEIGHT)
                     );
                     int screenX = 0;
                     for (int y = 0; y < SCREEN_HEIGHT; y++) {
@@ -177,11 +165,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                                     graphics.setColor(colorMap[(attr >>> 3) & 7]);
                                 }
                                 graphics.drawLine(
-                                        X_GAP + 2 * (BORDER_WIDTH + screenX + i), Y_GAP + 2 * (BORDER_HEIGHT + y),
-                                        X_GAP + 2 * (BORDER_WIDTH + screenX + i) + 1, Y_GAP + 2 * (BORDER_HEIGHT + y));
+                                        2 * (BORDER_WIDTH + screenX + i), 2 * (BORDER_HEIGHT + y),
+                                        2 * (BORDER_WIDTH + screenX + i) + 1, 2 * (BORDER_HEIGHT + y));
                                 graphics.drawLine(
-                                        X_GAP + 2 * (BORDER_WIDTH + screenX + i), Y_GAP + 2 * (BORDER_HEIGHT + y) + 1,
-                                        X_GAP + 2 * (BORDER_WIDTH + screenX + i) + 1, Y_GAP + 2 * (BORDER_HEIGHT + y) + 1);
+                                        2 * (BORDER_WIDTH + screenX + i), 2 * (BORDER_HEIGHT + y) + 1,
+                                        2 * (BORDER_WIDTH + screenX + i) + 1, 2 * (BORDER_HEIGHT + y) + 1);
                             }
                             screenX += 8;
                         }

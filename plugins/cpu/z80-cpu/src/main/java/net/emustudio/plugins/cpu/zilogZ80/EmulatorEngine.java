@@ -2118,6 +2118,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_ADD_A_REF_II_N(int special) {
+        // TODO: BUG
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         int address = (special + disp) & 0xFFFF;

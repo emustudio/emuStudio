@@ -44,7 +44,7 @@ public class TerminalWindow extends JDialog {
 
         setTitle("ZX Spectrum48K");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        canvas.setBounds(0, 0, 900, 700);
+        canvas.setBounds(0, 0, DisplayCanvas.HOST_SCREEN_WIDTH, DisplayCanvas.HOST_SCREEN_HEIGHT);
 
         btnRedraw.setFocusable(false);
 
@@ -55,7 +55,7 @@ public class TerminalWindow extends JDialog {
                         .addGroup(panelStatusLayout.createSequentialGroup()
                                 .addContainerGap()
                                 .addComponent(btnRedraw, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(900, Short.MAX_VALUE))
+                                .addContainerGap())
         );
         panelStatusLayout.setVerticalGroup(
                 panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
