@@ -43,4 +43,9 @@ public class ControlChannel implements DeviceContext<Byte> {
     public Class<Byte> getDataType() {
         return Byte.class;
     }
+
+    @Override
+    public String toString() {
+        return "88-SIO Control Channel";
+    }
 }

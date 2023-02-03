@@ -252,6 +252,8 @@ public class EmulatorEngine implements CpuEngine {
                 interruptSkip = false; // See EI
             } else if (IFF[0] && !pendingInterrupts.isEmpty()) {
                 return doInterrupt();
+            } else if (!pendingInterrupts.isEmpty()) {
+                pendingInterrupts.poll(); // if interrupts are disabled, ignore it; otherwise stack overflow
             }
             return DISPATCH(DISPATCH_TABLE);
         } finally {

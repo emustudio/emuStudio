@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public final class ContextZ80Impl implements ContextZ80 {
-    public final static int DEFAULT_FREQUENCY_KHZ = 20000;
+    public final static int DEFAULT_FREQUENCY_KHZ = 4000;
     private final static byte NO_DATA = (byte) 0xFF;
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextZ80Impl.class);
     private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
@@ -68,14 +68,14 @@ public final class ContextZ80Impl implements ContextZ80 {
     }
 
     void writeIO(int port, byte val) {
-        DeviceContext<Byte> device = devices.get(port);
+        DeviceContext<Byte> device = devices.get(port & 0xFF);
         if (device != null) {
             device.writeData(val);
         }
     }
 
     byte readIO(int port) {
-        DeviceContext<Byte> device = devices.get(port);
+        DeviceContext<Byte> device = devices.get(port & 0xFF);
         if (device != null) {
             return device.readData();
         }
