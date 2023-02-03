@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 
+//https://stackoverflow.com/questions/8034566/overflow-and-carry-flags-on-z80
 @Ignore
 public class EmulatorTablesGeneration {
 
