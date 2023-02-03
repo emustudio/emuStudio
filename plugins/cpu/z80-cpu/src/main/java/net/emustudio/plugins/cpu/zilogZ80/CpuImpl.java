@@ -74,6 +74,7 @@ public class CpuImpl extends AbstractCPU {
                     "Could not register Z80 CPU context. Please see log file for more details.", getTitle()
             );
         }
+        context.setCPUFrequency(settings.getInt("frequency_khz", ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
 
         initializer = new InitializerZ80(
                 this, pluginID, applicationApi.getContextPool(), settings, context

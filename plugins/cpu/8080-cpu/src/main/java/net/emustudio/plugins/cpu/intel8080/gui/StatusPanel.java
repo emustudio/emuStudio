@@ -255,7 +255,7 @@ public class StatusPanel extends JPanel {
         lblRun.setForeground(new java.awt.Color(0, 102, 0));
 
         SpinnerNumberModel spFrequencyModel = new SpinnerNumberModel();
-        spFrequencyModel.setValue(2000);
+        spFrequencyModel.setValue(context.getCPUFrequency());
         spFrequencyModel.setStepSize(100);
         spnFrequency.setModel(spFrequencyModel);
         lblKHZ.setFont(lblKHZ.getFont().deriveFont(lblKHZ.getFont().getStyle() | java.awt.Font.BOLD));
