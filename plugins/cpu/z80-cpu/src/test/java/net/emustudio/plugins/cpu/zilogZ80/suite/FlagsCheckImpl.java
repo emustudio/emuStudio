@@ -402,4 +402,21 @@ public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckIm
         });
         return this;
     }
+
+    public FlagsCheckImpl<T> xy() {
+        evaluators.add((context, result) -> {
+            int flagxy = result & (FLAG_X | FLAG_Y);
+            if ((flagxy & FLAG_X) == FLAG_X) {
+                expectedFlags |= FLAG_X;
+            } else {
+                expectedNotFlags |= FLAG_X;
+            }
+            if ((flagxy & FLAG_Y) == FLAG_Y) {
+                expectedFlags |= FLAG_Y;
+            } else {
+                expectedNotFlags |= FLAG_Y;
+            }
+        });
+        return this;
+    }
 }

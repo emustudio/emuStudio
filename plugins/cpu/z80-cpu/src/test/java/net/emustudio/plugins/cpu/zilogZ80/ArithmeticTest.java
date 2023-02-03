@@ -872,10 +872,15 @@ public class ArithmeticTest extends InstructionsTest {
 
 
     private ByteTestBuilder additionTestBuilder() {
+        FlagsCheckImpl<Byte> flagsCheck = new FlagsCheckImpl<Byte>()
+                .sign().zero().carry().halfCarry().overflow()
+                .subtractionIsReset()
+                .xy();
+
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF))
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().carry().halfCarry().overflow().subtractionIsReset())
+                .verifyFlagsOfLastOp(flagsCheck)
                 .keepCurrentInjectorsAfterRun();
     }
 
@@ -886,7 +891,9 @@ public class ArithmeticTest extends InstructionsTest {
                 .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>()
                         .sign().zero().borrow()
                         .halfBorrow()
-                        .overflowSub().subtractionIsSet())
+                        .overflowSub()
+                        .subtractionIsSet()
+                        .xy())
                 .keepCurrentInjectorsAfterRun();
     }
 }

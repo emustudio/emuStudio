@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.cpu.zilogZ80;
 
+import net.emustudio.cpu.testsuite.FlagsCheck;
 import net.emustudio.cpu.testsuite.Generator;
 import net.emustudio.cpu.testsuite.RunnerContext;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
