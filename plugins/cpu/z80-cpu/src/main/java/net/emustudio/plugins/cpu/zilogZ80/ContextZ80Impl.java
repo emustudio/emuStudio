@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public final class ContextZ80Impl implements ContextZ80 {
-    public final static int DEFAULT_FREQUENCY_KHZ = 20000;
+    public final static int DEFAULT_FREQUENCY_KHZ = 4000;
     private final static byte NO_DATA = (byte) 0xFF;
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextZ80Impl.class);
 

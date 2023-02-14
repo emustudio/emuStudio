@@ -67,4 +67,9 @@ public class DataChannel implements Context8080.CpuPortDevice {
         }
         return data;
     }
+
+    @Override
+    public String toString() {
+        return "88 SIO Data Channel";
+    }
 }

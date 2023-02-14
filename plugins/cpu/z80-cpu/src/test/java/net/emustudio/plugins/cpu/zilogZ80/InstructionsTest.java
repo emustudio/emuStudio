@@ -48,16 +48,16 @@ public class InstructionsTest {
     private final List<FakeByteDevice> devices = new ArrayList<>();
     CpuRunnerImpl cpuRunnerImpl;
     CpuVerifierImpl cpuVerifierImpl;
-    private CpuImpl cpu;
+    protected CpuImpl cpu;
+    protected ByteMemoryStub memory;
 
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
-        ByteMemoryStub memoryStub = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
-
+        memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         Capture<Context8080> cpuContext = Capture.newInstance();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();
+        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
         contextPool.register(anyLong(), capture(cpuContext), same(Context8080.class));
         expectLastCall().anyTimes();
         replay(contextPool);
@@ -78,8 +78,8 @@ public class InstructionsTest {
 
         cpu.initialize();
 
-        cpuRunnerImpl = new CpuRunnerImpl(cpu, memoryStub, devices);
-        cpuVerifierImpl = new CpuVerifierImpl(cpu, memoryStub, devices);
+        cpuRunnerImpl = new CpuRunnerImpl(cpu, memory, devices);
+        cpuVerifierImpl = new CpuVerifierImpl(cpu, memory, devices);
 
         Generator.setRandomTestsCount(10);
     }

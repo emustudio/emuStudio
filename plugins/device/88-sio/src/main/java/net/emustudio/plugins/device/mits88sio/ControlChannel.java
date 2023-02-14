@@ -48,4 +48,9 @@ public class ControlChannel implements Context8080.CpuPortDevice {
     public String toString() {
         return "MITS 88-SIO control channel";
     }
+
+    @Override
+    public String toString() {
+        return "88-SIO Control Channel";
+    }
 }

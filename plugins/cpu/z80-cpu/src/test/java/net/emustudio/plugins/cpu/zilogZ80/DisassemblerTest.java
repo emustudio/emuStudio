@@ -68,7 +68,7 @@ public class DisassemblerTest {
                 0x12,                                        // ld (de), a
                 0x0A, // 20                                  // ld a, (bc)
                 0x1A,                                        // ld a, (de)
-                0x22, 0x34, 0x12,                            // ld (0x1234), hl\n"  //  0
+                0x22, 0x34, 0x12,                            // ld (0x1234), hl
                 0x32, 0x34, 0x12,                            // ld (0x1234), a
                 0x2A, 0x34, 0x12,                            // ld hl, (0x1234)
                 0x3A, 0x34, 0x12,                            // ld a, (0x1234)

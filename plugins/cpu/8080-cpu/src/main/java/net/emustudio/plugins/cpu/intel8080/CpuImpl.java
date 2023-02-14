@@ -72,6 +72,7 @@ public class CpuImpl extends AbstractCPU {
                     "Could not register CPU Context. Please see log file for details.", super.getTitle()
             );
         }
+        context.setCPUFrequency(settings.getInt("frequency_khz", Context8080Impl.DEFAULT_FREQUENCY_KHZ));
         initializer = new InitializerFor8080(
                 this, pluginID, applicationApi.getContextPool(), settings, context
         );

@@ -23,12 +23,21 @@ import net.emustudio.cpu.testsuite.TestBuilder;
 import net.emustudio.plugins.cpu.zilogZ80.suite.injectors.Register;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunnerImpl, CpuVerifierImpl> {
 
     public ByteTestBuilder(CpuRunnerImpl cpuRunner, CpuVerifierImpl cpuVerifier) {
         super(cpuRunner, cpuVerifier);
+    }
+
+    public ByteTestBuilder firstIsFlags() {
+        runner.injectFirst((runner, argument) -> {
+            runner.resetFlags();
+            runner.setFlags(argument);
+        });
+        return this;
     }
 
     public ByteTestBuilder firstIsRegister(int register) {
@@ -85,6 +94,26 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         return this;
     }
 
+    public ByteTestBuilder setIX(int ix) {
+        runner.injectFirst((runner, argument) -> runner.setIX(ix));
+        return this;
+    }
+
+    public ByteTestBuilder setIY(int iy) {
+        runner.injectFirst((runner, argument) -> runner.setIY(iy));
+        return this;
+    }
+
+    public ByteTestBuilder setSP(int sp) {
+        runner.injectFirst((runner, argument) -> runner.setSP(sp));
+        return this;
+    }
+
+    public ByteTestBuilder setMemoryByteAt(int address, byte value) {
+        runner.injectFirst((runner, argument) -> runner.setByte(address, value));
+        return this;
+    }
+
     public ByteTestBuilder verifyRegister(int register, Function<RunnerContext<Byte>, Integer> operation) {
         lastOperation = Objects.requireNonNull(operation);
         return verifyRegister(register);
@@ -120,6 +149,11 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
     public ByteTestBuilder verifyDeviceWhenSecondIsPort(Function<RunnerContext<Byte>, Integer> operation) {
         lastOperation = Objects.requireNonNull(operation);
         runner.verifyAfterTest(context -> cpuVerifier.checkDeviceValue(context.second, operation.apply(context)));
+        return this;
+    }
+
+    public ByteTestBuilder verify(Consumer<RunnerContext<Byte>> verifier) {
+        runner.verifyAfterTest(verifier);
         return this;
     }
 }
