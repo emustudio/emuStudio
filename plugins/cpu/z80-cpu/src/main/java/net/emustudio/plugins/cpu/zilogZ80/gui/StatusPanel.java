@@ -732,7 +732,7 @@ public class StatusPanel extends JPanel {
 
         jLabel31.setText("CPU Frequency:");
 
-        spnFrequency.setModel(new SpinnerNumberModel(20000, 1, null, 100));
+        spnFrequency.setModel(new SpinnerNumberModel(context.getCPUFrequency(), 1, null, 100));
         spnFrequency.setName("CPU frequency");
 
         jLabel33.setFont(jLabel33.getFont().deriveFont(jLabel33.getFont().getStyle() | java.awt.Font.BOLD));

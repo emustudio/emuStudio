@@ -29,12 +29,13 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public class Context8080Impl implements Context8080 {
+    public final static int DEFAULT_FREQUENCY_KHZ = 2000;
     private final static Logger LOGGER = LoggerFactory.getLogger(Context8080Impl.class);
 
     private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
 
     private volatile EmulatorEngine cpu;
-    private volatile int clockFrequency = 2000; // kHz
+    private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
 
     public void setCpu(EmulatorEngine cpu) {
         this.cpu = cpu;

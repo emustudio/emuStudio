@@ -62,4 +62,9 @@ public class DataChannel implements DeviceContext<Byte> {
         }
         return data;
     }
+
+    @Override
+    public String toString() {
+        return "88 SIO Data Channel";
+    }
 }

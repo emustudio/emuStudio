@@ -26,8 +26,8 @@ ext.versions = [
 ]
 
 ext.libs = [
-        emuLib           : "net.emustudio:emulib:11.7.0-SNAPSHOT",
-        cpuTestSuite     : "net.emustudio:cpu-testsuite_11.6:1.2.0-SNAPSHOT",
+        emuLib           : "net.emustudio:emulib:11.7.0",
+        cpuTestSuite     : "net.emustudio:cpu-testsuite_11.7:1.2.0",
 
         jcipAnnotations  : "net.jcip:jcip-annotations:1.0",
         antlr            : "org.antlr:antlr4:4.11.1",
