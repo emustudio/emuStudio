@@ -194,13 +194,13 @@ ddInstruction =
   "ld %s, %s":    01 10 r_ixhl(1) 0 r_bcde2(2)     |  # x=1, y=10 r_ixhl(1), z=0 r_bcde2
   "ld %s, %s":    01 10 r_ixhl(1) 10 r_ixhl2(1)    |  # x=1, y=10 r_ixhl(1), z=10 r_ixhl2
   "ld %s, a":     01 10 r_ixhl(1) 111              |  # x=1, y=10 r_ixhl(1), z=7
-  "ld %s, (ix+%Xh)": 01 10 r_ixhl(1) 110 disp      |  # x=1, y=10 r_ixhl(1), z=6
+  "ld %s, (ix+%Xh)": 01 10 r_h_l(1) 110 disp       |  # x=1, y=10 r_h_l(1), z=6
   "ld a, %s":    01 111 0 r_bcde(2)                |  # x=1, y=7, z=0 r_bcde
   "ld a, %s":    01 111 10 r_ixhl(1)               |  # x=1, y=7, z=10 r_ixhl
   "ld a, a":     01 111 111                        |  # x=1, y=7, z=7
   "ld a, (ix+%Xh)": 01 111 110 disp                |  # x=1, y=7, z=6
   "ld (ix+%Xh), %s": 01 110 0 r_bcde(2) disp       |  # x=1, y=6, z=0 r_bcde
-  "ld (ix+%Xh), %s": 01 110 10 r_ixhl2(1) disp     |  # x=1, y=6, z=10 r_ixhl2
+  "ld (ix+%Xh), %s": 01 110 10 r_h_l2(1) disp      |  # x=1, y=6, z=10 r_h_l2
   "ld (ix+%Xh), a":  01 110 111 disp               |  # x=1, y=6, z=7
 
   "%s %s":        10 alu(3) 0 r_bcde(2)            |  # x=2, y=alu, z=r
@@ -285,13 +285,13 @@ fdInstruction =
   "ld %s, %s":    01 10 r_iyhl(1) 0 r_bcde2(2)     |  # x=1, y=10 r_iyhl(1), z=0 r_bcde2
   "ld %s, %s":    01 10 r_iyhl(1) 10 r_iyhl2(1)    |  # x=1, y=10 r_iyhl(1), z=10 r_iyhl2
   "ld %s, a":     01 10 r_iyhl(1) 111              |  # x=1, y=10 r_iyhl(1), z=7
-  "ld %s, (iy+%Xh)": 01 10 r_iyhl(1) 110 disp      |  # x=1, y=10 r_iyhl(1), z=6
+  "ld %s, (iy+%Xh)": 01 10 r_h_l(1) 110 disp       |  # x=1, y=10 r_h_l(1), z=6
   "ld a, %s":    01 111 0 r_bcde(2)                |  # x=1, y=7, z=0 r_bcde
   "ld a, %s":    01 111 10 r_iyhl(1)               |  # x=1, y=7, z=10 r_iyhl
   "ld a, a":     01 111 111                        |  # x=1, y=7, z=7
   "ld a, (iy+%Xh)": 01 111 110 disp                |  # x=1, y=7, z=6
   "ld (iy+%Xh), %s": 01 110 0 r_bcde(2) disp       |  # x=1, y=6, z=0 r_bcde
-  "ld (iy+%Xh), %s": 01 110 10 r_iyhl2(1) disp     |  # x=1, y=6, z=10 r_iyhl2
+  "ld (iy+%Xh), %s": 01 110 10 r_h_l2(1) disp      |  # x=1, y=6, z=10 r_h_l2
   "ld (iy+%Xh), a":  01 110 111 disp               |  # x=1, y=6, z=7
 
   "%s %s":        10 alu(3) 0 r_bcde(2)            |  # x=2, y=alu, z=r
@@ -429,7 +429,7 @@ r_bcde,r_bcde2 =
   "d":    10 |
   "e":    11 ;
 
-r_h_l =
+r_h_l,r_h_l2 =
   "h":    0 |
   "l":    1 ;
 
@@ -498,8 +498,8 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = ddInstruction disp r_bcde;
 "%s" = ddInstruction r_ixhl r_bcde2;
 "%s" = ddInstruction r_ixhl r_ixhl2;
-"%s" = ddInstruction r_ixhl disp;
-"%s" = ddInstruction disp r_ixhl2;
+"%s" = ddInstruction r_h_l disp;
+"%s" = ddInstruction disp r_h_l2;
 "%s" = ddInstruction cc_jr imm8;
 "%s" = ddInstruction rp_ix imm16(reverse_bytes);
 "%s" = ddInstruction r_bcde imm8;
@@ -529,8 +529,8 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = fdInstruction disp r_bcde;
 "%s" = fdInstruction r_iyhl r_bcde2;
 "%s" = fdInstruction r_iyhl r_iyhl2;
-"%s" = fdInstruction r_iyhl disp;
-"%s" = fdInstruction disp r_iyhl2;
+"%s" = fdInstruction r_h_l disp;
+"%s" = fdInstruction disp r_h_l2;
 "%s" = fdInstruction cc_jr imm8;
 "%s" = fdInstruction rp_iy imm16(reverse_bytes);
 "%s" = fdInstruction r_bcde imm8;
