@@ -162,6 +162,10 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         cpu.getEngine().IY = iy;
     }
 
+    public void setSP(int sp) {
+        cpu.getEngine().SP = sp;
+    }
+
     public void enableIFF2() {
         cpu.getEngine().IFF[1] = true;
     }

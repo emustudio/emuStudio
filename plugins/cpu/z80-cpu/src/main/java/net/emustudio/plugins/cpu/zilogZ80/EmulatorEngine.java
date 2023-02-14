@@ -437,88 +437,480 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_REF_BC_A() {
-        memory.write(getpair(0, false), (byte) regs[REG_A]);
+        memory.write(regs[REG_B] << 8 | regs[REG_C], (byte) regs[REG_A]);
         memptr = (regs[REG_A] << 8) | 1;
         //	Note for *BM1: MEMPTR_low = (rp + 1) & #FF,  MEMPTR_hi = 0
         return 7;
     }
 
-    int I_INC_RP() {
-        int tmp = (lastOpcode >>> 4) & 0x03;
-        putpair(tmp, (getpair(tmp, true) + 1) & 0xFFFF, true);
-        return 6;
+    int I_LD_BC_NN() {
+        return I_LD_RP_NN(REG_C, REG_B);
     }
 
-    int I_ADD_HL_RP() {
-        int rp = getpair((lastOpcode >>> 4) & 0x03, true);
-        int hl = (regs[REG_H] << 8) | regs[REG_L];
-        memptr = (hl + 1) & 0xFFFF;
-
-        int res = hl + rp;
-        flags = (flags & FLAG_SZP) |
-                (((hl ^ res ^ rp) >>> 8) & FLAG_H) |
-                ((res >>> 16) & FLAG_C) | TABLE_XY[(res >>> 8) & 0xFF];
-        Q = flags;
-
-        regs[REG_H] = (res >>> 8) & 0xFF;
-        regs[REG_L] = res & 0xFF;
-
-        return 11;
+    int I_LD_DE_NN() {
+        return I_LD_RP_NN(REG_E, REG_D);
     }
 
-    int I_DEC_RP() {
-        int regPair = (lastOpcode >>> 4) & 0x03;
-        putpair(regPair, (getpair(regPair, true) - 1) & 0xFFFF, true);
-        return 6;
+    int I_LD_HL_NN() {
+        return I_LD_RP_NN(REG_L, REG_H);
     }
 
-    int I_POP_RP() {
-        int regPair = (lastOpcode >>> 4) & 0x03;
-        int value = readWord(SP);
-        SP = (SP + 2) & 0xffff;
-        putpair(regPair, value, false);
+    int I_LD_SP_NN() {
+        SP = readWord(PC);
+        PC = (PC + 2) & 0xFFFF;
         return 10;
     }
 
-    int I_PUSH_RP() {
-        int regPair = (lastOpcode >>> 4) & 0x03;
-        int value = getpair(regPair, false);
-        SP = (SP - 2) & 0xffff;
-        writeWord(SP, value);
+    int I_LD_RP_NN(int low, int high) {
+        int tmp = readWord(PC);
+        PC = (PC + 2) & 0xFFFF;
+        regs[high] = tmp >>> 8;
+        regs[low] = tmp & 0xFF;
+        return 10;
+    }
+
+    int I_INC_BC() {
+        return I_INC_RP(REG_C, REG_B, regs[REG_B] << 8 | regs[REG_C]);
+    }
+
+    int I_INC_DE() {
+        return I_INC_RP(REG_E, REG_D, regs[REG_D] << 8 | regs[REG_E]);
+    }
+
+    int I_INC_HL() {
+        return I_INC_RP(REG_L, REG_H, regs[REG_H] << 8 | regs[REG_L]);
+    }
+
+    int I_INC_SP() {
+        SP = (SP + 1) & 0xFFFF;
+        return 6;
+    }
+
+    int I_INC_IX() {
+        IX = (IX + 1) & 0xFFFF;
+        return 10;
+    }
+
+    int I_INC_IY() {
+        IY = (IY + 1) & 0xFFFF;
+        return 10;
+    }
+
+    int I_INC_RP(int low, int high, int value) {
+        int result = (value + 1) & 0xFFFF;
+        regs[high] = result >>> 8;
+        regs[low] = result & 0xFF;
+        return 6;
+    }
+
+    int I_INC_B() {
+        regs[REG_B] = I_INC(regs[REG_B]);
+        return 4;
+    }
+
+    int I_INC_C() {
+        regs[REG_C] = I_INC(regs[REG_C]);
+        return 4;
+    }
+
+    int I_INC_D() {
+        regs[REG_D] = I_INC(regs[REG_D]);
+        return 4;
+    }
+
+    int I_INC_E() {
+        regs[REG_E] = I_INC(regs[REG_E]);
+        return 4;
+    }
+
+    int I_INC_H() {
+        regs[REG_H] = I_INC(regs[REG_H]);
+        return 4;
+    }
+
+    int I_INC_L() {
+        regs[REG_L] = I_INC(regs[REG_L]);
+        return 4;
+    }
+
+    int I_INC_A() {
+        regs[REG_A] = I_INC(regs[REG_A]);
+        return 4;
+    }
+
+    int I_INC_REF_HL() {
+        int value = memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF;
+        memory.write((regs[REG_H] << 8) | regs[REG_L], (byte) I_INC(value));
         return 11;
     }
 
-    int I_LD_R_N() {
-        int reg = (lastOpcode >>> 3) & 0x07;
-        putreg(reg, memory.read(PC));
+    int I_INC_IXH() {
+        IX = ((I_INC(IX >>> 8) << 8) | (IX & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_INC_IYH() {
+        IY = ((I_INC(IY >>> 8) << 8) | (IY & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_INC_IXL() {
+        IX = ((IX & 0xFF00) | I_INC(IX & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_INC_IYL() {
+        IY = ((IY & 0xFF00) | I_INC(IY & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_INC(int value) {
+        int sum = (value + 1) & 0x1FF;
+        int sumByte = sum & 0xFF;
+        flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | TABLE_XY[sumByte];
+        Q = flags;
+        return sumByte;
+    }
+
+    int I_DEC_BC() {
+        return I_DEC_RP(REG_C, REG_B, regs[REG_B] << 8 | regs[REG_C]);
+    }
+
+    int I_DEC_DE() {
+        return I_DEC_RP(REG_E, REG_D, regs[REG_D] << 8 | regs[REG_E]);
+    }
+
+    int I_DEC_HL() {
+        return I_DEC_RP(REG_L, REG_H, regs[REG_H] << 8 | regs[REG_L]);
+    }
+
+    int I_DEC_SP() {
+        SP = (SP - 1) & 0xFFFF;
+        return 6;
+    }
+
+    int I_DEC_IX() {
+        IX = (IX - 1) & 0xFFFF;
+        return 10;
+    }
+
+    int I_DEC_IY() {
+        IY = (IY - 1) & 0xFFFF;
+        return 10;
+    }
+
+    int I_DEC_RP(int low, int high, int value) {
+        value = (value - 1) & 0xFFFF;
+        regs[high] = value >>> 8;
+        regs[low] = value & 0xFF;
+        return 6;
+    }
+
+    int I_DEC_B() {
+        regs[REG_B] = I_DEC(regs[REG_B]);
+        return 4;
+    }
+
+    int I_DEC_C() {
+        regs[REG_C] = I_DEC(regs[REG_C]);
+        return 4;
+    }
+
+    int I_DEC_D() {
+        regs[REG_D] = I_DEC(regs[REG_D]);
+        return 4;
+    }
+
+    int I_DEC_E() {
+        regs[REG_E] = I_DEC(regs[REG_E]);
+        return 4;
+    }
+
+    int I_DEC_H() {
+        regs[REG_H] = I_DEC(regs[REG_H]);
+        return 4;
+    }
+
+    int I_DEC_L() {
+        regs[REG_L] = I_DEC(regs[REG_L]);
+        return 4;
+    }
+
+    int I_DEC_A() {
+        regs[REG_A] = I_DEC(regs[REG_A]);
+        return 4;
+    }
+
+    int I_DEC_REF_HL() {
+        int value = memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF;
+        memory.write((regs[REG_H] << 8) | regs[REG_L], (byte) I_DEC(value));
+        return 11;
+    }
+
+    int I_DEC_IXH() {
+        IX = ((I_DEC(IX >>> 8) << 8) | (IX & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_DEC_IYH() {
+        IY = ((I_DEC(IY >>> 8) << 8) | (IY & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_DEC_IXL() {
+        IX = ((IX & 0xFF00) | (I_DEC(IX & 0xFF) & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_DEC_IYL() {
+        IY = ((IY & 0xFF00) | (I_DEC(IY & 0xFF) & 0xFF)) & 0xFFFF;
+        return 8;
+    }
+
+    int I_DEC_REF_IX_N() {
+        return I_DEC_REF_II_N(IX);
+    }
+
+    int I_DEC_REF_IY_N() {
+        return I_DEC_REF_II_N(IY);
+    }
+
+    int I_DEC(int value) {
+        int sum = (value - 1) & 0x1FF;
+        int sumByte = sum & 0xFF;
+        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | TABLE_XY[sumByte];
+        Q = flags;
+        return sumByte;
+    }
+
+    int I_DEC_REF_II_N(int special) {
+        byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        if (reg == 6) {
-            return 10;
-        } else {
-            return 7;
-        }
+        int address = (special + disp) & 0xFFFF;
+        int value = memory.read(address) & 0xFF;
+        memptr = address;
+
+        int sum = (value - 1) & 0x1FF;
+        int sumByte = sum & 0xFF;
+
+        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | TABLE_XY[sumByte];
+        memory.write(address, (byte) sumByte);
+        return 23;
     }
 
-    int I_INC_R() {
-        int reg = (lastOpcode >>> 3) & 0x07;
-        int regValue = getreg(reg);
-        int sum = (regValue + 1) & 0x1FF;
-        int sumByte = sum & 0xFF;
-        flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ regValue]) | (flags & FLAG_C) | TABLE_XY[sumByte];
-        Q = flags;
-        putreg(reg, sumByte);
-        return (reg == 6) ? 11 : 4;
+    int I_LD_B_N() {
+        return I_LD_R_N(REG_B);
     }
 
-    int I_DEC_R() {
-        int reg = (lastOpcode >>> 3) & 0x07;
-        int regValue = getreg(reg);
-        int sum = (regValue - 1) & 0x1FF;
-        int sumByte = sum & 0xFF;
-        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ regValue]) | (flags & FLAG_C) | TABLE_XY[sumByte];
+    int I_LD_C_N() {
+        return I_LD_R_N(REG_C);
+    }
+
+    int I_LD_D_N() {
+        return I_LD_R_N(REG_D);
+    }
+
+    int I_LD_E_N() {
+        return I_LD_R_N(REG_E);
+    }
+
+    int I_LD_H_N() {
+        return I_LD_R_N(REG_H);
+    }
+
+    int I_LD_L_N() {
+        return I_LD_R_N(REG_L);
+    }
+
+    int I_LD_A_N() {
+        return I_LD_R_N(REG_A);
+    }
+
+    int I_LD_REF_HL_N() {
+        memory.write((regs[REG_H] << 8) | regs[REG_L], memory.read(PC));
+        PC = (PC + 1) & 0xFFFF;
+        return 10;
+    }
+
+    int I_LD_R_N(int reg) {
+        regs[reg] = memory.read(PC) & 0xFF;
+        PC = (PC + 1) & 0xFFFF;
+        return 7;
+    }
+
+    int I_LD_REF_IX_D_N() {
+        return I_LD_REF_II_D_N(IX);
+    }
+
+    int I_LD_REF_IY_D_N() {
+        return I_LD_REF_II_D_N(IY);
+    }
+
+    int I_LD_REF_II_D_N(int special) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        byte number = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (special + disp) & 0xFFFF;
+        memptr = address;
+        memory.write(address, number);
+        return 19;
+    }
+
+    int I_ADD_HL_BC() {
+        return I_ADD_HL_RP(regs[REG_B] << 8 | regs[REG_C]);
+    }
+
+    int I_ADD_HL_DE() {
+        return I_ADD_HL_RP(regs[REG_D] << 8 | regs[REG_E]);
+    }
+
+    int I_ADD_HL_HL() {
+        return I_ADD_HL_RP(regs[REG_H] << 8 | regs[REG_L]);
+    }
+
+    int I_ADD_HL_SP() {
+        return I_ADD_HL_RP(SP);
+    }
+
+    int I_ADD_IX_BC() {
+        return I_ADD_IX_RP(regs[REG_B] << 8 | regs[REG_C]);
+    }
+
+    int I_ADD_IX_DE() {
+        return I_ADD_IX_RP(regs[REG_D] << 8 | regs[REG_E]);
+    }
+
+    int I_ADD_IX_IX() {
+        return I_ADD_IX_RP(IX);
+    }
+
+    int I_ADD_IX_SP() {
+        return I_ADD_IX_RP(SP);
+    }
+
+    int I_ADD_IY_BC() {
+        return I_ADD_IY_RP(regs[REG_B] << 8 | regs[REG_C]);
+    }
+
+    int I_ADD_IY_DE() {
+        return I_ADD_IY_RP(regs[REG_D] << 8 | regs[REG_E]);
+    }
+
+    int I_ADD_IY_IY() {
+        return I_ADD_IY_RP(IY);
+    }
+
+    int I_ADD_IY_SP() {
+        return I_ADD_IY_RP(SP);
+    }
+
+    int I_ADD_HL_RP(int rp) {
+        int res = I_ADD_SRC_RP((regs[REG_H] << 8) | regs[REG_L], rp);
+        regs[REG_H] = (res >>> 8) & 0xFF;
+        regs[REG_L] = res & 0xFF;
+        return 11;
+    }
+
+    int I_ADD_IX_RP(int rp) {
+        memptr = (IX + 1) & 0xFFFF;
+        IX = I_ADD_SRC_RP2(IX, rp);
+        return 15;
+    }
+
+    int I_ADD_IY_RP(int rp) {
+        memptr = (IY + 1) & 0xFFFF;
+        IY = I_ADD_SRC_RP2(IY, rp);
+        return 15;
+    }
+
+    int I_ADD_SRC_RP(int src, int rp) {
+        int res = I_ADD_SRC_RP2(src, rp);
         Q = flags;
-        putreg(reg, sumByte);
-        return (reg == 6) ? 11 : 4;
+        return res & 0xFFFF;
+    }
+
+    int I_ADD_SRC_RP2(int src, int rp) {
+        memptr = (src + 1) & 0xFFFF;
+        int res = src + rp;
+        flags = (flags & FLAG_SZP) |
+                (((src ^ res ^ rp) >>> 8) & FLAG_H) |
+                ((res >>> 16) & FLAG_C) | TABLE_XY[(res >>> 8) & 0xFF];
+        return res & 0xFFFF;
+    }
+
+    int I_POP_BC() {
+        return I_POP_RP(REG_C, REG_B);
+    }
+
+    int I_POP_DE() {
+        return I_POP_RP(REG_E, REG_D);
+    }
+
+    int I_POP_HL() {
+        return I_POP_RP(REG_L, REG_H);
+    }
+
+    int I_POP_AF() {
+        int value = readWord(SP);
+        SP = (SP + 2) & 0xFFFF;
+        regs[REG_A] = value >>> 8;
+        flags = value & 0xFF;
+        return 10;
+    }
+
+    int I_POP_IX() {
+        IX = readWord(SP);
+        SP = (SP + 2) & 0xFFFF;
+        return 14;
+    }
+
+    int I_POP_IY() {
+        IY = readWord(SP);
+        SP = (SP + 2) & 0xFFFF;
+        return 14;
+    }
+
+    int I_POP_RP(int low, int high) {
+        int value = readWord(SP);
+        SP = (SP + 2) & 0xFFFF;
+        regs[low] = value & 0xFF;
+        regs[high] = value >>> 8;
+        return 10;
+    }
+
+    int I_PUSH_BC() {
+        return I_PUSH_RP((regs[REG_B] << 8) | regs[REG_C]);
+    }
+
+    int I_PUSH_DE() {
+        return I_PUSH_RP((regs[REG_D] << 8) | regs[REG_E]);
+    }
+
+    int I_PUSH_HL() {
+        return I_PUSH_RP((regs[REG_H] << 8) | regs[REG_L]);
+    }
+
+    int I_PUSH_AF() {
+        return I_PUSH_RP((regs[REG_A] << 8) | (flags & 0xFF));
+    }
+
+    int I_PUSH_IX() {
+        SP = (SP - 2) & 0xFFFF;
+        writeWord(SP, IX);
+        return 15;
+    }
+
+    int I_PUSH_IY() {
+        SP = (SP - 2) & 0xFFFF;
+        writeWord(SP, IY);
+        return 15;
+    }
+
+    int I_PUSH_RP(int value) {
+        SP = (SP - 2) & 0xffff;
+        writeWord(SP, value);
+        return 11;
     }
 
     int I_RET_CC() {
@@ -539,14 +931,617 @@ public class EmulatorEngine implements CpuEngine {
         return 11;
     }
 
-    int I_ADD_A_R() {
-        int value = getreg(lastOpcode & 0x07);
+    int I_ADD_A_B() {
+        return I_ADD_A(regs[REG_B]);
+    }
+
+    int I_ADD_A_C() {
+        return I_ADD_A(regs[REG_C]);
+    }
+
+    int I_ADD_A_D() {
+        return I_ADD_A(regs[REG_D]);
+    }
+
+    int I_ADD_A_E() {
+        return I_ADD_A(regs[REG_E]);
+    }
+
+    int I_ADD_A_H() {
+        return I_ADD_A(regs[REG_H]);
+    }
+
+    int I_ADD_A_IXH() {
+        return I_ADD_A(IX >>> 8) + 4;
+    }
+
+    int I_ADD_A_IYH() {
+        return I_ADD_A(IY >>> 8) + 4;
+    }
+
+    int I_ADD_A_L() {
+        return I_ADD_A(regs[REG_L]);
+    }
+
+    int I_ADD_A_IXL() {
+        return I_ADD_A(IX & 0xFF) + 4;
+    }
+
+    int I_ADD_A_IYL() {
+        return I_ADD_A(IY & 0xFF) + 4;
+    }
+
+    int I_ADD_A_REF_HL() {
+        return I_ADD_A(memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF) + 3;
+    }
+
+    int I_ADD_A_REF_IX_D() {
+        return I_ADD_A_REF_XY_D(IX);
+    }
+
+    int I_ADD_A_REF_IY_D() {
+        return I_ADD_A_REF_XY_D(IY);
+    }
+
+    int I_ADD_A_A() {
+        return I_ADD_A(regs[REG_A]);
+    }
+
+    int I_ADD_A(int value) {
         int oldA = regs[REG_A];
         int sum = (oldA + value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
         Q = flags;
-        return (lastOpcode == 0x86) ? 7 : 4;
+        return 4;
+    }
+
+    int I_ADD_A_REF_XY_D(int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
+        int oldA = regs[REG_A];
+        int sum = (oldA + value) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
+        return 19;
+    }
+
+
+    int I_ADC_A_B() {
+        return I_ADC_A(regs[REG_B]);
+    }
+
+    int I_ADC_A_C() {
+        return I_ADC_A(regs[REG_C]);
+    }
+
+    int I_ADC_A_D() {
+        return I_ADC_A(regs[REG_D]);
+    }
+
+    int I_ADC_A_E() {
+        return I_ADC_A(regs[REG_E]);
+    }
+
+    int I_ADC_A_H() {
+        return I_ADC_A(regs[REG_H]);
+    }
+
+    int I_ADC_A_IXH() {
+        return I_ADC_A(IX >>> 8) + 4;
+    }
+
+    int I_ADC_A_IYH() {
+        return I_ADC_A(IY >>> 8) + 4;
+    }
+
+    int I_ADC_A_L() {
+        return I_ADC_A(regs[REG_L]);
+    }
+
+    int I_ADC_A_IXL() {
+        return I_ADC_A(IX & 0xFF) + 4;
+    }
+
+    int I_ADC_A_IYL() {
+        return I_ADC_A(IY & 0xFF) + 4;
+    }
+
+    int I_ADC_A_REF_HL() {
+        return I_ADC_A(memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF) + 3;
+    }
+
+    int I_ADC_A_REF_IX_D() {
+        return I_ADC_A_REF_XY_D(IX);
+    }
+
+    int I_ADC_A_REF_IY_D() {
+        return I_ADC_A_REF_XY_D(IY);
+    }
+
+    int I_ADC_A_A() {
+        return I_ADC_A(regs[REG_A]);
+    }
+
+    int I_ADC_A(int value) {
+        int oldA = regs[REG_A];
+        int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
+        Q = flags;
+        return 4;
+    }
+
+    int I_ADC_A_REF_XY_D(int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
+        int oldA = regs[REG_A];
+        int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
+        return 19;
+    }
+
+    int I_SUB_B() {
+        return I_SUB(regs[REG_B]);
+    }
+
+    int I_SUB_C() {
+        return I_SUB(regs[REG_C]);
+    }
+
+    int I_SUB_D() {
+        return I_SUB(regs[REG_D]);
+    }
+
+    int I_SUB_E() {
+        return I_SUB(regs[REG_E]);
+    }
+
+    int I_SUB_H() {
+        return I_SUB(regs[REG_H]);
+    }
+
+    int I_SUB_IXH() {
+        return I_SUB(IX >>> 8) + 4;
+    }
+
+    int I_SUB_IYH() {
+        return I_SUB(IY >>> 8) + 4;
+    }
+
+    int I_SUB_L() {
+        return I_SUB(regs[REG_L]);
+    }
+
+    int I_SUB_IXL() {
+        return I_SUB(IX & 0xFF) + 4;
+    }
+
+    int I_SUB_IYL() {
+        return I_SUB(IY & 0xFF) + 4;
+    }
+
+    int I_SUB_REF_HL() {
+        return I_SUB(memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF) + 3;
+    }
+
+    int I_SUB_REF_IX_D() {
+        return I_SUB_REF_XY_D(IX);
+    }
+
+    int I_SUB_REF_IY_D() {
+        return I_SUB_REF_XY_D(IY);
+    }
+
+    int I_SUB_A() {
+        return I_SUB(regs[REG_A]);
+    }
+
+    int I_SUB(int value) {
+        int oldA = regs[REG_A];
+        int sum = (oldA - value) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+        flags = TABLE_SUB[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
+        Q = flags;
+        return 4;
+    }
+
+    int I_SUB_REF_XY_D(int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
+        int oldA = regs[REG_A];
+        int sum = (oldA - value) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
+        return 19;
+    }
+
+    int I_SBC_A_B() {
+        return I_SBC_A(regs[REG_B]);
+    }
+
+    int I_SBC_A_C() {
+        return I_SBC_A(regs[REG_C]);
+    }
+
+    int I_SBC_A_D() {
+        return I_SBC_A(regs[REG_D]);
+    }
+
+    int I_SBC_A_E() {
+        return I_SBC_A(regs[REG_E]);
+    }
+
+    int I_SBC_A_H() {
+        return I_SBC_A(regs[REG_H]);
+    }
+
+    int I_SBC_A_IXH() {
+        return I_SBC_A(IX >>> 8) + 4;
+    }
+
+    int I_SBC_A_IYH() {
+        return I_SBC_A(IY >>> 8) + 4;
+    }
+
+    int I_SBC_A_L() {
+        return I_SBC_A(regs[REG_L]);
+    }
+
+    int I_SBC_A_IXL() {
+        return I_SBC_A(IX & 0xFF) + 4;
+    }
+
+    int I_SBC_A_IYL() {
+        return I_SBC_A(IY & 0xFF) + 4;
+    }
+
+    int I_SBC_A_REF_HL() {
+        return I_SBC_A(memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF) + 3;
+    }
+
+    int I_SBC_A_REF_IX_D() {
+        return I_SBC_A_REF_XY_D(IX);
+    }
+
+    int I_SBC_A_REF_IY_D() {
+        return I_SBC_A_REF_XY_D(IY);
+    }
+
+    int I_SBC_A_A() {
+        return I_SBC_A(regs[REG_A]);
+    }
+
+    int I_SBC_A(int value) {
+        int oldA = regs[REG_A];
+        int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
+        Q = flags;
+        return 4;
+    }
+
+    int I_SBC_A_REF_XY_D(int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
+        int oldA = regs[REG_A];
+        int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
+        regs[REG_A] = sum & 0xFF;
+        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
+        return 19;
+    }
+
+    int I_AND_B() {
+        return I_AND(regs[REG_B]);
+    }
+
+    int I_AND_C() {
+        return I_AND(regs[REG_C]);
+    }
+
+    int I_AND_D() {
+        return I_AND(regs[REG_D]);
+    }
+
+    int I_AND_E() {
+        return I_AND(regs[REG_E]);
+    }
+
+    int I_AND_H() {
+        return I_AND(regs[REG_H]);
+    }
+
+    int I_AND_IXH() {
+        return I_AND(IX >>> 8) + 4; // TODO: not Q
+    }
+
+    int I_AND_IYH() {
+        return I_AND(IY >>> 8) + 4; // TODO: not Q
+    }
+
+    int I_AND_L() {
+        return I_AND(regs[REG_L]);
+    }
+
+    int I_AND_IXL() {
+        return I_AND(IX & 0xFF) + 4; // TODO: not Q
+    }
+
+    int I_AND_IYL() {
+        return I_AND(IY & 0xFF) + 4; // TODO: not Q
+    }
+
+    int I_AND_REF_HL() {
+        return I_AND(memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF) + 3;
+    }
+
+    int I_AND_REF_IX_D() {
+        return I_AND_REF_XY_D(IX);
+    }
+
+    int I_AND_REF_IY_D() {
+        return I_AND_REF_XY_D(IY);
+    }
+
+    int I_AND_A() {
+        return I_AND(regs[REG_A]);
+    }
+
+    int I_AND(int value) {
+        regs[REG_A] = (regs[REG_A] & value) & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | FLAG_H | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
+        Q = flags;
+        return 4;
+    }
+
+    int I_AND_REF_XY_D(int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
+        regs[REG_A] = (regs[REG_A] & value) & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | FLAG_H | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
+        return 19;
+    }
+
+    int I_XOR_B() {
+        return I_XOR(regs[REG_B]);
+    }
+
+    int I_XOR_C() {
+        return I_XOR(regs[REG_C]);
+    }
+
+    int I_XOR_D() {
+        return I_XOR(regs[REG_D]);
+    }
+
+    int I_XOR_E() {
+        return I_XOR(regs[REG_E]);
+    }
+
+    int I_XOR_H() {
+        return I_XOR(regs[REG_H]);
+    }
+
+    int I_XOR_IXH() {
+        return I_XOR(IX >>> 8) + 4; // TODO: not Q
+    }
+
+    int I_XOR_IYH() {
+        return I_XOR(IY >>> 8) + 4; // TODO: not Q
+    }
+
+    int I_XOR_L() {
+        return I_XOR(regs[REG_L]);
+    }
+
+    int I_XOR_IXL() {
+        return I_XOR(IX & 0xFF) + 4; // TODO: not Q
+    }
+
+    int I_XOR_IYL() {
+        return I_XOR(IY & 0xFF) + 4; // TODO: not Q
+    }
+
+    int I_XOR_REF_HL() {
+        return I_XOR(memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF) + 3;
+    }
+
+    int I_XOR_REF_IX_D() {
+        return I_XOR_REF_XY_D(IX);
+    }
+
+    int I_XOR_REF_IY_D() {
+        return I_XOR_REF_XY_D(IY);
+    }
+
+    int I_XOR_A() {
+        return I_XOR(regs[REG_A]);
+    }
+
+    int I_XOR(int value) {
+        regs[REG_A] = ((regs[REG_A] ^ value) & 0xff);
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
+        Q = flags;
+        return 4;
+    }
+
+    int I_XOR_REF_XY_D(int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        byte value = memory.read(address);
+        regs[REG_A] = ((regs[REG_A] ^ value) & 0xff);
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
+        return 19;
+    }
+
+    int I_OR_B() {
+        return I_OR(regs[REG_B]);
+    }
+
+    int I_OR_C() {
+        return I_OR(regs[REG_C]);
+    }
+
+    int I_OR_D() {
+        return I_OR(regs[REG_D]);
+    }
+
+    int I_OR_E() {
+        return I_OR(regs[REG_E]);
+    }
+
+    int I_OR_H() {
+        return I_OR(regs[REG_H]);
+    }
+
+    int I_OR_IXH() {
+        return I_OR(IX >>> 8) + 4;
+    }
+
+    int I_OR_IXL() {
+        return I_OR(IX & 0xFF) + 4;
+    }
+
+    int I_OR_L() {
+        return I_OR(regs[REG_L]);
+    }
+
+    int I_OR_IYH() {
+        return I_OR(IY >>> 8) + 4;
+    }
+
+    int I_OR_IYL() {
+        return I_OR(IY & 0xFF) + 4;
+    }
+
+    int I_OR_REF_HL() {
+        return I_OR(memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF) + 3;
+    }
+
+    int I_OR_REF_IX_D() {
+        return I_OR_REF_XY_D(IX);
+    }
+
+    int I_OR_REF_IY_D() {
+        return I_OR_REF_XY_D(IY);
+    }
+
+    int I_OR_A() {
+        return I_OR(regs[REG_A]);
+    }
+
+    int I_OR(int value) {
+        regs[REG_A] = (regs[REG_A] | value) & 0xFF;
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
+        Q = flags;
+        return 4;
+    }
+
+    int I_OR_REF_XY_D(int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        byte value = memory.read(address);
+        regs[REG_A] = ((regs[REG_A] | value) & 0xff);
+        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
+        return 19;
+    }
+
+    int I_CP_B() {
+        return I_CP_R(regs[REG_B]);
+    }
+
+    int I_CP_C() {
+        return I_CP_R(regs[REG_C]);
+    }
+
+    int I_CP_D() {
+        return I_CP_R(regs[REG_D]);
+    }
+
+    int I_CP_E() {
+        return I_CP_R(regs[REG_E]);
+    }
+
+    int I_CP_H() {
+        return I_CP_R(regs[REG_H]);
+    }
+
+    int I_CP_IXH() {
+        return I_CP_R(IX >>> 8) + 4;
+    }
+
+    int I_CP_IYH() {
+        return I_CP_R(IY >>> 8) + 4;
+    }
+
+    int I_CP_L() {
+        return I_CP_R(regs[REG_L]);
+    }
+
+    int I_CP_IXL() {
+        return I_CP_R(IX & 0xFF) + 4;
+    }
+
+    int I_CP_IYL() {
+        return I_CP_R(IY & 0xFF) + 4;
+    }
+
+    int I_CP_REF_HL() {
+        return I_CP_R(memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF) + 3;
+    }
+
+    int I_CP_REF_IX_D() {
+        return I_CP_REF_XY_D(IX);
+    }
+
+    int I_CP_REF_IY_D() {
+        return I_CP_REF_XY_D(IY);
+    }
+
+    int I_CP_A() {
+        return I_CP_R(regs[REG_A]);
+    }
+
+    int I_CP_R(int value) {
+        int oldA = regs[REG_A];
+        int sum = (oldA - value) & 0x1FF;
+        int result = sum & 0xFF;
+        // F5 and F3 flags are set from the subtrahend instead of from the result.
+        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[value];
+        Q = flags;
+        return 4;
+    }
+
+    int I_CP_REF_XY_D(int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
+        int sum = (regs[REG_A] - value) & 0x1FF;
+        int result = sum & 0xFF;
+        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ regs[REG_A]]) | TABLE_XY[value];
+        return 19;
     }
 
     int I_ADD_A_N() {
@@ -560,16 +1555,6 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    int I_ADC_A_R() {
-        int value = getreg(lastOpcode & 0x07);
-        int oldA = regs[REG_A];
-        int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
-        Q = flags;
-        return (lastOpcode == 0x8E) ? 7 : 4;
-    }
-
     int I_ADC_A_N() {
         int value = memory.read(PC) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
@@ -581,109 +1566,47 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    int I_SUB_R() {
-        int value = getreg(lastOpcode & 0x07);
-
-        int oldA = regs[REG_A];
-        int sum = (oldA - value) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-
-        flags = TABLE_SUB[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
-        Q = flags;
-        return (lastOpcode == 0x96) ? 7 : 4;
-    }
-
-    int I_SBC_A_R() {
-        int value = getreg(lastOpcode & 0x07);
-
-        int oldA = regs[REG_A];
-        int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
-        Q = flags;
-        return (lastOpcode == 0x9E) ? 7 : 4;
-    }
-
     int I_SBC_A_N() {
         int value = memory.read(PC) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
-
         int oldA = regs[REG_A];
         int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
-
         flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
         Q = flags;
         return 7;
     }
 
-    int I_AND_R() {
-        regs[REG_A] = (regs[REG_A] & getreg(lastOpcode & 7)) & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | FLAG_H | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        Q = flags;
-        return (lastOpcode == 0xA6) ? 7 : 4;
-    }
-
     int I_AND_N() {
         int tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-
         regs[REG_A] = (regs[REG_A] & tmp) & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | FLAG_H | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
         Q = flags;
         return 7;
     }
 
-    int I_XOR_R() {
-        regs[REG_A] = ((regs[REG_A] ^ getreg(lastOpcode & 7)) & 0xff);
-        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        Q = flags;
-        return (lastOpcode == 0xAE) ? 7 : 4;
-    }
-
     int I_XOR_N() {
         int tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-
         regs[REG_A] = ((regs[REG_A] ^ tmp) & 0xFF);
         flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
         Q = flags;
         return 7;
     }
 
-    int I_OR_R() {
-        regs[REG_A] = (regs[REG_A] | getreg(lastOpcode & 7)) & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        Q = flags;
-        return (lastOpcode == 0xB6) ? 7 : 4;
-    }
-
     int I_OR_N() {
         int tmp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-
         regs[REG_A] = (regs[REG_A] | tmp) & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
         Q = flags;
         return 7;
     }
 
-    int I_CP_R() {
-        int value = getreg(lastOpcode & 7);
-        int oldA = regs[REG_A];
-        int sum = (oldA - value) & 0x1FF;
-        int result = sum & 0xFF;
-        // F5 and F3 flags are set from the subtrahend instead of from the result.
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[value];
-        Q = flags;
-        return (lastOpcode == 0xBE) ? 7 : 4;
-    }
-
     int I_CP_N() {
         int value = memory.read(PC) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
-
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         int result = sum & 0xFF;
@@ -802,18 +1725,12 @@ public class EmulatorEngine implements CpuEngine {
                 | FLAG_H | FLAG_N
                 | (regs[REG_A] & (FLAG_X | FLAG_Y));
         Q = flags;
-
-//        flags = (flags & (FLAG_SZP | FLAG_C))
-//                | FLAG_H | FLAG_N
-//                | TABLE_XY[regs[REG_A]];
         return 4;
     }
 
     int I_SCF() {
         flags = (flags & FLAG_SZP) | (((lastQ ^ flags) | regs[REG_A]) & (FLAG_X | FLAG_Y)) | FLAG_C;
         Q = flags;
-
-        //flags = (flags & FLAG_SZP) | TABLE_XY[regs[REG_A]] | FLAG_C;
         return 4;
     }
 
@@ -822,11 +1739,6 @@ public class EmulatorEngine implements CpuEngine {
                 | ((flags & FLAG_C) == 0 ? FLAG_C : FLAG_H)
                 | (((lastQ ^ flags) | regs[REG_A]) & (FLAG_X | FLAG_Y));
         Q = flags;
-
-//        int c = flags & FLAG_C;
-        //      flags = (flags & FLAG_SZP) | (c << 4)
-        //            | TABLE_XY[regs[REG_A]]
-        //          | (c ^ FLAG_C);
         return 4;
     }
 
@@ -969,7 +1881,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_NEG() {
         int v = regs[REG_A];
         regs[REG_A] = 0;
-        return I_SUB(v);
+        return I_SUB(v) + 4;
     }
 
     int I_RETN() {
@@ -1593,15 +2505,59 @@ public class EmulatorEngine implements CpuEngine {
         return 21;
     }
 
-    int I_LD_REF_NN_RP() {
+    int I_LD_REF_NN_BC() {
         int addr = readWord(PC);
         memptr = (addr + 1) & 0xFFFF;
         PC = (PC + 2) & 0xFFFF;
-
-        int tmp1 = getpair((lastOpcode >>> 4) & 3, true);
-        writeWord(addr, tmp1);
+        writeWord(addr, (regs[REG_B] << 8) | regs[REG_C]);
         return 20;
     }
+    int I_LD_REF_NN_DE() {
+        int addr = readWord(PC);
+        memptr = (addr + 1) & 0xFFFF;
+        PC = (PC + 2) & 0xFFFF;
+        writeWord(addr, (regs[REG_D] << 8) | regs[REG_E]);
+        return 20;
+    }
+    int I_LD_REF_NN_HL() {
+        int addr = readWord(PC);
+        memptr = (addr + 1) & 0xFFFF;
+        PC = (PC + 2) & 0xFFFF;
+        writeWord(addr, (regs[REG_H] << 8) | regs[REG_L]);
+        return 16;
+    }
+    int I_ED_LD_REF_NN_HL() {
+        return I_LD_REF_NN_HL() + 4;
+    }
+    int I_LD_REF_NN_SP() {
+        int addr = readWord(PC);
+        memptr = (addr + 1) & 0xFFFF;
+        PC = (PC + 2) & 0xFFFF;
+        writeWord(addr, SP);
+        return 20;
+    }
+    int I_LD_REF_NN_A() {
+        int addr = readWord(PC);
+        PC = (PC + 2) & 0xFFFF;
+        memptr = (regs[REG_A] << 8) | ((addr + 1) & 0xFF);
+        //	Note for *BM1: MEMPTR_low = (addr + 1) & #FF,  MEMPTR_hi = 0
+        memory.write(addr, (byte) regs[REG_A]);
+        return 13;
+    }
+    int I_LD_REF_NN_IX() {
+        return I_LD_REF_NN_XY(IX);
+    }
+    int I_LD_REF_NN_IY() {
+        return I_LD_REF_NN_XY(IY);
+    }
+
+    int I_LD_REF_NN_XY(int xy) {
+        int tmp = readWord(PC);
+        PC = (PC + 2) & 0xFFFF;
+        writeWord(tmp, xy);
+        return 16;
+    }
+
 
     int I_LD_RP_REF_NN() {
         int addr = readWord(PC);
@@ -1663,14 +2619,6 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    int I_LD_RP_NN() {
-        int tmp = readWord(PC);
-        PC = (PC + 2) & 0xFFFF;
-
-        putpair((lastOpcode >>> 4) & 3, tmp, true);
-        return 10;
-    }
-
     int I_JP_CC_NN() {
         int addr = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
@@ -1699,15 +2647,6 @@ public class EmulatorEngine implements CpuEngine {
         return 10;
     }
 
-    int I_LD_REF_NN_HL() {
-        int tmp = readWord(PC);
-        PC = (PC + 2) & 0xFFFF;
-
-        int tmp1 = getpair(2, false);
-        writeWord(tmp, tmp1);
-        return 16;
-    }
-
     int I_LD_HL_REF_NN() {
         int addr = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
@@ -1715,15 +2654,6 @@ public class EmulatorEngine implements CpuEngine {
         int tmp1 = readWord(addr);
         putpair(2, tmp1, false);
         return 16;
-    }
-
-    int I_LD_REF_NN_A() {
-        int addr = readWord(PC);
-        PC = (PC + 2) & 0xFFFF;
-        memptr = (regs[REG_A] << 8) | ((addr + 1) & 0xFF);
-        //	Note for *BM1: MEMPTR_low = (addr + 1) & #FF,  MEMPTR_hi = 0
-        memory.write(addr, (byte) regs[REG_A]);
-        return 13;
     }
 
     int I_LD_A_REF_NN() {
@@ -1750,15 +2680,657 @@ public class EmulatorEngine implements CpuEngine {
         return 17;
     }
 
-    int I_LD_R_R() {
-        int tmp = (lastOpcode >>> 3) & 0x07;
-        int tmp1 = lastOpcode & 0x07;
-        putreg(tmp, getreg(tmp1));
-        if ((tmp1 == 6) || (tmp == 6)) {
-            return 7;
-        } else {
-            return 4;
-        }
+    int I_LD_B_B() {
+        return I_LD_R_R(REG_B, REG_B);
+    }
+
+    int I_LD_B_C() {
+        return I_LD_R_R(REG_B, REG_C);
+    }
+
+    int I_LD_B_D() {
+        return I_LD_R_R(REG_B, REG_D);
+    }
+
+    int I_LD_B_E() {
+        return I_LD_R_R(REG_B, REG_E);
+    }
+
+    int I_LD_B_H() {
+        return I_LD_R_R(REG_B, REG_H);
+    }
+
+    int I_LD_B_L() {
+        return I_LD_R_R(REG_B, REG_L);
+    }
+
+    int I_LD_B_A() {
+        return I_LD_R_R(REG_B, REG_A);
+    }
+
+    int I_LD_B_REF_HL() {
+        return I_LD_R_REF_HL(REG_B);
+    }
+
+    int I_LD_B_IXH() {
+        regs[REG_B] = (IX >>> 8);
+        return 8;
+    }
+
+    int I_LD_B_IXL() {
+        regs[REG_B] = (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_B_IYH() {
+        regs[REG_B] = (IY >>> 8);
+        return 8;
+    }
+
+    int I_LD_B_IYL() {
+        regs[REG_B] = (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_B_REF_IX_D() {
+        return I_LD_R_REF_XY_D(REG_B, IX);
+    }
+
+    int I_LD_B_REF_IY_D() {
+        return I_LD_R_REF_XY_D(REG_B, IY);
+    }
+
+    int I_LD_C_B() {
+        return I_LD_R_R(REG_C, REG_B);
+    }
+
+    int I_LD_C_C() {
+        return I_LD_R_R(REG_C, REG_C);
+    }
+
+    int I_LD_C_D() {
+        return I_LD_R_R(REG_C, REG_D);
+    }
+
+    int I_LD_C_E() {
+        return I_LD_R_R(REG_C, REG_E);
+    }
+
+    int I_LD_C_H() {
+        return I_LD_R_R(REG_C, REG_H);
+    }
+
+    int I_LD_C_L() {
+        return I_LD_R_R(REG_C, REG_L);
+    }
+
+    int I_LD_C_A() {
+        return I_LD_R_R(REG_C, REG_A);
+    }
+
+    int I_LD_C_REF_HL() {
+        return I_LD_R_REF_HL(REG_C);
+    }
+
+    int I_LD_C_IXH() {
+        regs[REG_C] = (IX >>> 8);
+        return 8;
+    }
+
+    int I_LD_C_IXL() {
+        regs[REG_C] = (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_C_IYH() {
+        regs[REG_C] = (IY >>> 8);
+        return 8;
+    }
+
+    int I_LD_C_IYL() {
+        regs[REG_C] = (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_C_REF_IX_D() {
+        return I_LD_R_REF_XY_D(REG_C, IX);
+    }
+
+    int I_LD_C_REF_IY_D() {
+        return I_LD_R_REF_XY_D(REG_C, IY);
+    }
+
+    int I_LD_D_B() {
+        return I_LD_R_R(REG_D, REG_B);
+    }
+
+    int I_LD_D_C() {
+        return I_LD_R_R(REG_D, REG_C);
+    }
+
+    int I_LD_D_D() {
+        return I_LD_R_R(REG_D, REG_D);
+    }
+
+    int I_LD_D_E() {
+        return I_LD_R_R(REG_D, REG_E);
+    }
+
+    int I_LD_D_H() {
+        return I_LD_R_R(REG_D, REG_H);
+    }
+
+    int I_LD_D_L() {
+        return I_LD_R_R(REG_D, REG_L);
+    }
+
+    int I_LD_D_A() {
+        return I_LD_R_R(REG_D, REG_A);
+    }
+
+    int I_LD_D_REF_HL() {
+        return I_LD_R_REF_HL(REG_D);
+    }
+
+    int I_LD_D_IXH() {
+        regs[REG_D] = (IX >>> 8);
+        return 8;
+    }
+
+    int I_LD_D_IXL() {
+        regs[REG_D] = (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_D_IYH() {
+        regs[REG_D] = (IY >>> 8);
+        return 8;
+    }
+
+    int I_LD_D_IYL() {
+        regs[REG_D] = (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_D_REF_IX_D() {
+        return I_LD_R_REF_XY_D(REG_D, IX);
+    }
+
+    int I_LD_D_REF_IY_D() {
+        return I_LD_R_REF_XY_D(REG_D, IY);
+    }
+
+    int I_LD_E_B() {
+        return I_LD_R_R(REG_E, REG_B);
+    }
+
+    int I_LD_E_C() {
+        return I_LD_R_R(REG_E, REG_C);
+    }
+
+    int I_LD_E_D() {
+        return I_LD_R_R(REG_E, REG_D);
+    }
+
+    int I_LD_E_E() {
+        return I_LD_R_R(REG_E, REG_E);
+    }
+
+    int I_LD_E_H() {
+        return I_LD_R_R(REG_E, REG_H);
+    }
+
+    int I_LD_E_L() {
+        return I_LD_R_R(REG_E, REG_L);
+    }
+
+    int I_LD_E_A() {
+        return I_LD_R_R(REG_E, REG_A);
+    }
+
+    int I_LD_E_REF_HL() {
+        return I_LD_R_REF_HL(REG_E);
+    }
+
+    int I_LD_E_IXH() {
+        regs[REG_E] = (IX >>> 8);
+        return 8;
+    }
+
+    int I_LD_E_IXL() {
+        regs[REG_E] = (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_E_IYH() {
+        regs[REG_E] = (IY >>> 8);
+        return 8;
+    }
+
+    int I_LD_E_IYL() {
+        regs[REG_E] = (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_E_REF_IX_D() {
+        return I_LD_R_REF_XY_D(REG_E, IX);
+    }
+
+    int I_LD_E_REF_IY_D() {
+        return I_LD_R_REF_XY_D(REG_E, IY);
+    }
+
+    int I_LD_H_B() {
+        return I_LD_R_R(REG_H, REG_B);
+    }
+
+    int I_LD_H_C() {
+        return I_LD_R_R(REG_H, REG_C);
+    }
+
+    int I_LD_H_D() {
+        return I_LD_R_R(REG_H, REG_D);
+    }
+
+    int I_LD_H_E() {
+        return I_LD_R_R(REG_H, REG_E);
+    }
+
+    int I_LD_H_H() {
+        return I_LD_R_R(REG_H, REG_H);
+    }
+
+    int I_LD_H_L() {
+        return I_LD_R_R(REG_H, REG_L);
+    }
+
+    int I_LD_H_A() {
+        return I_LD_R_R(REG_H, REG_A);
+    }
+
+    int I_LD_H_REF_HL() {
+        return I_LD_R_REF_HL(REG_H);
+    }
+
+    int I_LD_IXH_B() {
+        IX = (regs[REG_B] << 8) | (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IXH_C() {
+        IX = (regs[REG_C] << 8) | (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IXH_D() {
+        IX = (regs[REG_D] << 8) | (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IXH_E() {
+        IX = (regs[REG_E] << 8) | (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IXH_IXH() {
+        return 8;
+    }
+
+    int I_LD_IXH_IXL() {
+        IX = (IX & 0xFF) | ((IX << 8) & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IXH_A() {
+        IX = (regs[REG_A] << 8) | (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IYH_B() {
+        IY = (regs[REG_B] << 8) | (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IYH_C() {
+        IY = (regs[REG_C] << 8) | (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IYH_D() {
+        IY = (regs[REG_D] << 8) | (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IYH_E() {
+        IY = (regs[REG_E] << 8) | (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IYH_A() {
+        IY = (regs[REG_A] << 8) | (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_IYH_IYH() {
+        return 8;
+    }
+
+    int I_LD_IYH_IYL() {
+        IY = (IY & 0xFF) | ((IY << 8) & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_H_REF_IX_D() {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (IX + disp) & 0xFFFF;
+        memptr = address;
+        regs[REG_H] = (memory.read(address) & 0xFF);
+        return 19;
+    }
+
+    int I_LD_H_REF_IY_D() {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (IY + disp) & 0xFFFF;
+        memptr = address;
+        regs[REG_H] = (memory.read(address) & 0xFF);
+        return 19;
+    }
+
+    int I_LD_L_B() {
+        return I_LD_R_R(REG_L, REG_B);
+    }
+
+    int I_LD_L_C() {
+        return I_LD_R_R(REG_L, REG_C);
+    }
+
+    int I_LD_L_D() {
+        return I_LD_R_R(REG_L, REG_D);
+    }
+
+    int I_LD_L_E() {
+        return I_LD_R_R(REG_L, REG_E);
+    }
+
+    int I_LD_L_H() {
+        return I_LD_R_R(REG_L, REG_H);
+    }
+
+    int I_LD_L_L() {
+        return I_LD_R_R(REG_L, REG_L);
+    }
+
+    int I_LD_L_A() {
+        return I_LD_R_R(REG_L, REG_A);
+    }
+
+    int I_LD_L_REF_HL() {
+        return I_LD_R_REF_HL(REG_L);
+    }
+
+    int I_LD_IXL_B() {
+        IX = regs[REG_B] | (IX & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IXL_C() {
+        IX = regs[REG_C] | (IX & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IXL_D() {
+        IX = regs[REG_D] | (IX & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IXL_E() {
+        IX = regs[REG_E] | (IX & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IXL_IXH() {
+        IX = (IX & 0xFF00) | (IX >>> 8);
+        return 8;
+    }
+
+    int I_LD_IXL_IXL() {
+        return 8;
+    }
+
+    int I_LD_L_REF_IX_D() {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (IX + disp) & 0xFFFF;
+        memptr = address;
+        regs[REG_L] = (memory.read(address) & 0xFF);
+        return 19;
+    }
+
+    int I_LD_IXL_A() {
+        IX = regs[REG_A] | (IX & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IYL_B() {
+        IY = regs[REG_B] | (IY & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IYL_C() {
+        IY = regs[REG_C] | (IY & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IYL_D() {
+        IY = regs[REG_D] | (IY & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IYL_E() {
+        IY = regs[REG_E] | (IY & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_IYL_IYH() {
+        IY = (IY & 0xFF00) | (IY >>> 8);
+        return 8;
+    }
+
+    int I_LD_IYL_IYL() {
+        return 8;
+    }
+
+    int I_LD_IYL_A() {
+        IY = regs[REG_A] | (IY & 0xFF00);
+        return 8;
+    }
+
+    int I_LD_L_REF_IY_D() {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (IY + disp) & 0xFFFF;
+        memptr = address;
+        regs[REG_L] = (memory.read(address) & 0xFF);
+        return 19;
+    }
+
+    int I_LD_A_B() {
+        return I_LD_R_R(REG_A, REG_B);
+    }
+
+    int I_LD_A_C() {
+        return I_LD_R_R(REG_A, REG_C);
+    }
+
+    int I_LD_A_D() {
+        return I_LD_R_R(REG_A, REG_D);
+    }
+
+    int I_LD_A_E() {
+        return I_LD_R_R(REG_A, REG_E);
+    }
+
+    int I_LD_A_H() {
+        return I_LD_R_R(REG_A, REG_H);
+    }
+
+    int I_LD_A_L() {
+        return I_LD_R_R(REG_A, REG_L);
+    }
+
+    int I_LD_A_A() {
+        return I_LD_R_R(REG_A, REG_A);
+    }
+
+    int I_LD_A_REF_HL() {
+        return I_LD_R_REF_HL(REG_A);
+    }
+
+    int I_LD_A_IXH() {
+        regs[REG_A] = (IX >>> 8);
+        return 8;
+    }
+
+    int I_LD_A_IXL() {
+        regs[REG_A] = (IX & 0xFF);
+        return 8;
+    }
+
+    int I_LD_A_IYH() {
+        regs[REG_A] = (IY >>> 8);
+        return 8;
+    }
+
+    int I_LD_A_IYL() {
+        regs[REG_A] = (IY & 0xFF);
+        return 8;
+    }
+
+    int I_LD_A_REF_IX_D() {
+        return I_LD_R_REF_XY_D(REG_A, IX);
+    }
+
+    int I_LD_A_REF_IY_D() {
+        return I_LD_R_REF_XY_D(REG_A, IY);
+    }
+
+    int I_LD_REF_HL_B() {
+        return I_LD_REF_HL_R(REG_B);
+    }
+
+    int I_LD_REF_HL_C() {
+        return I_LD_REF_HL_R(REG_C);
+    }
+
+    int I_LD_REF_HL_D() {
+        return I_LD_REF_HL_R(REG_D);
+    }
+
+    int I_LD_REF_HL_E() {
+        return I_LD_REF_HL_R(REG_E);
+    }
+
+    int I_LD_REF_HL_H() {
+        return I_LD_REF_HL_R(REG_H);
+    }
+
+    int I_LD_REF_HL_L() {
+        return I_LD_REF_HL_R(REG_L);
+    }
+
+    int I_LD_REF_HL_A() {
+        return I_LD_REF_HL_R(REG_A);
+    }
+
+    int I_LD_R_R(int dstReg, int srcReg) {
+        regs[dstReg] = regs[srcReg];
+        return 4;
+    }
+
+    int I_LD_R_REF_HL(int dstReg) {
+        regs[dstReg] = memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF;
+        return 7;
+    }
+
+    int I_LD_REF_HL_R(int srcReg) {
+        memory.write((regs[REG_H] << 8) | regs[REG_L], (byte) regs[srcReg]);
+        return 7;
+    }
+
+    int I_LD_R_REF_XY_D(int reg, int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        regs[reg] = memory.read(address) & 0xFF;
+        return 19;
+    }
+
+    int I_LD_REF_IX_D_B() {
+        return I_LD_REF_XY_D_R(regs[REG_B], IX);
+    }
+
+    int I_LD_REF_IX_D_C() {
+        return I_LD_REF_XY_D_R(regs[REG_C], IX);
+    }
+
+    int I_LD_REF_IX_D_D() {
+        return I_LD_REF_XY_D_R(regs[REG_D], IX);
+    }
+
+    int I_LD_REF_IX_D_E() {
+        return I_LD_REF_XY_D_R(regs[REG_E], IX);
+    }
+
+    int I_LD_REF_IX_D_IXH() {
+        return I_LD_REF_XY_D_R(IX >>> 8, IX);
+    }
+
+    int I_LD_REF_IX_D_IXL() {
+        return I_LD_REF_XY_D_R(IX & 0xFF, IX);
+    }
+
+    int I_LD_REF_IX_D_A() {
+        return I_LD_REF_XY_D_R(regs[REG_A], IX);
+    }
+
+    int I_LD_REF_IY_D_B() {
+        return I_LD_REF_XY_D_R(regs[REG_B], IY);
+    }
+
+    int I_LD_REF_IY_D_C() {
+        return I_LD_REF_XY_D_R(regs[REG_C], IY);
+    }
+
+    int I_LD_REF_IY_D_D() {
+        return I_LD_REF_XY_D_R(regs[REG_D], IY);
+    }
+
+    int I_LD_REF_IY_D_E() {
+        return I_LD_REF_XY_D_R(regs[REG_E], IY);
+    }
+
+    int I_LD_REF_IY_D_IYH() {
+        return I_LD_REF_XY_D_R(IY >>> 8, IY);
+    }
+
+    int I_LD_REF_IY_D_IYL() {
+        return I_LD_REF_XY_D_R(IY & 0xFF, IY);
+    }
+
+    int I_LD_REF_IY_D_A() {
+        return I_LD_REF_XY_D_R(regs[REG_A], IY);
+    }
+
+    int I_LD_REF_XY_D_R(int value, int xy) {
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        memory.write(address, (byte) value);
+        return 19;
     }
 
     int I_HALT() {
@@ -1949,40 +3521,6 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    int I_ADD_IX_RP() {
-        memptr = (IX + 1) & 0xFFFF;
-        IX = I_ADD_II_RP(IX);
-        return 15;
-    }
-
-    int I_ADD_IY_RP() {
-        memptr = (IY + 1) & 0xFFFF;
-        IY = I_ADD_II_RP(IY);
-        return 15;
-    }
-
-    int I_ADD_II_RP(int special) {
-        int dstRp;
-        int rp = (lastOpcode >>> 4) & 0x03;
-        switch (rp) {
-            case 3:
-                dstRp = SP;
-                break;
-            case 2:
-                dstRp = special;
-                break;
-            default:
-                int index = rp * 2;
-                dstRp = regs[index] << 8 | regs[index + 1];
-        }
-
-        int res = special + dstRp;
-        flags = (flags & FLAG_SZP) |
-                (((dstRp ^ res ^ special) >>> 8) & FLAG_H) |
-                ((res >>> 16) & FLAG_C) | TABLE_XY[(res >>> 8) & 0xFF];
-        return res & 0xFFFF;
-    }
-
     int I_LD_IX_NN() {
         IX = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
@@ -1993,31 +3531,6 @@ public class EmulatorEngine implements CpuEngine {
         IY = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         return 14;
-    }
-
-    int I_LD_REF_NN_IX() {
-        return I_LD_REF_NN_II(IX);
-    }
-
-    int I_LD_REF_NN_IY() {
-        return I_LD_REF_NN_II(IY);
-    }
-
-    int I_LD_REF_NN_II(int special) {
-        int tmp = readWord(PC);
-        PC = (PC + 2) & 0xFFFF;
-        writeWord(tmp, special);
-        return 16;
-    }
-
-    int I_INC_IX() {
-        IX = (IX + 1) & 0xFFFF;
-        return 10;
-    }
-
-    int I_INC_IY() {
-        IY = (IY + 1) & 0xFFFF;
-        return 10;
     }
 
     int I_LD_IX_REF_NN() {
@@ -2034,16 +3547,6 @@ public class EmulatorEngine implements CpuEngine {
         int tmp = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         return readWord(tmp);
-    }
-
-    int I_DEC_IX() {
-        IX = (IX - 1) & 0xFFFF;
-        return 10;
-    }
-
-    int I_DEC_IY() {
-        IY = (IY - 1) & 0xFFFF;
-        return 10;
     }
 
     int I_INC_REF_IX_N() {
@@ -2069,256 +3572,6 @@ public class EmulatorEngine implements CpuEngine {
         return 23;
     }
 
-    int I_DEC_REF_IX_N() {
-        return I_DEC_REF_II_N(IX);
-    }
-
-    int I_DEC_REF_IY_N() {
-        return I_DEC_REF_II_N(IY);
-    }
-
-    int I_DEC_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        int value = memory.read(address) & 0xFF;
-        memptr = address;
-
-        int sum = (value - 1) & 0x1FF;
-        int sumByte = sum & 0xFF;
-
-        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | TABLE_XY[sumByte];
-        memory.write(address, (byte) sumByte);
-        return 23;
-    }
-
-    int I_LD_REF_IX_N_N() {
-        return I_LD_REF_II_N_N(IX);
-    }
-
-    int I_LD_REF_IY_N_N() {
-        return I_LD_REF_II_N_N(IY);
-    }
-
-    int I_LD_REF_II_N_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        byte number = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        memory.write(address, number);
-        return 19;
-    }
-
-    int I_LD_R_REF_IX_N() {
-        return I_LD_R_REF_II_N(IX);
-    }
-
-    int I_LD_R_REF_IY_N() {
-        return I_LD_R_REF_II_N(IY);
-    }
-
-    int I_LD_R_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int tmp1 = (lastOpcode >>> 3) & 7;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        putreg(tmp1, memory.read(address));
-        return 19;
-    }
-
-    int I_LD_REF_IX_N_R() {
-        return I_LD_REF_II_N_R(IX);
-    }
-
-    int I_LD_REF_IY_N_R() {
-        return I_LD_REF_II_N_R(IY);
-    }
-
-    int I_LD_REF_II_N_R(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        memory.write(address, (byte) getreg(lastOpcode & 7));
-        return 19;
-    }
-
-    int I_ADD_A_REF_IX_N() {
-        return I_ADD_A_REF_II_N(IX);
-    }
-
-    int I_ADD_A_REF_IY_N() {
-        return I_ADD_A_REF_II_N(IY);
-    }
-
-    int I_ADD_A_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
-        int oldA = regs[REG_A];
-        int sum = (oldA + value) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
-        return 19;
-    }
-
-    int I_ADC_A_REF_IX_N() {
-        return I_ADC_A_REF_II_N(IX);
-    }
-
-    int I_ADC_A_REF_IY_N() {
-        return I_ADC_A_REF_II_N(IY);
-    }
-
-    int I_ADC_A_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
-        int oldA = regs[REG_A];
-        int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
-        return 19;
-    }
-
-    int I_SUB_REF_IX_N() {
-        return I_SUB_REF_II_N(IX);
-    }
-
-    int I_SUB_REF_IY_N() {
-        return I_SUB_REF_II_N(IY);
-    }
-
-    int I_SUB_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
-        int oldA = regs[REG_A];
-        int sum = (oldA - value) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
-        return 19;
-    }
-
-    int I_SBC_A_REF_IX_N() {
-        return I_SBC_A_REF_II_N(IX);
-    }
-
-    int I_SBC_A_REF_IY_N() {
-        return I_SBC_A_REF_II_N(IY);
-    }
-
-    int I_SBC_A_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
-        int oldA = regs[REG_A];
-        int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
-        return 19;
-    }
-
-    int I_AND_REF_IX_N() {
-        return I_AND_REF_II_N(IX);
-    }
-
-    int I_AND_REF_IY_N() {
-        return I_AND_REF_II_N(IY);
-    }
-
-    int I_AND_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address);
-        regs[REG_A] = (regs[REG_A] & value) & 0xFF;
-        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | FLAG_H | TABLE_XY[regs[REG_A]];
-        return 19;
-    }
-
-    int I_XOR_REF_IX_N() {
-        return I_XOR_REF_II_N(IX);
-    }
-
-    int I_XOR_REF_IY_N() {
-        return I_XOR_REF_II_N(IY);
-    }
-
-    int I_XOR_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        byte value = memory.read(address);
-        regs[REG_A] = ((regs[REG_A] ^ value) & 0xff);
-        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        return 19;
-    }
-
-    int I_OR_REF_IX_N() {
-        return I_OR_REF_II_N(IX);
-    }
-
-    int I_OR_REF_IY_N() {
-        return I_OR_REF_II_N(IY);
-    }
-
-    int I_OR_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        byte value = memory.read(address);
-        regs[REG_A] = ((regs[REG_A] | value) & 0xff);
-        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        return 19;
-    }
-
-    int I_CP_REF_IX_N() {
-        return I_CP_REF_II_N(IX);
-    }
-
-    int I_CP_REF_IY_N() {
-        return I_CP_REF_II_N(IY);
-    }
-
-    int I_CP_REF_II_N(int special) {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        int address = (special + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
-        int sum = (regs[REG_A] - value) & 0x1FF;
-        int result = sum & 0xFF;
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ regs[REG_A]]) | TABLE_XY[value];
-        return 19;
-    }
-
-    int I_POP_IX() {
-        IX = readWord(SP);
-        SP = (SP + 2) & 0xFFFF;
-        return 14;
-    }
-
-    int I_POP_IY() {
-        IY = readWord(SP);
-        SP = (SP + 2) & 0xFFFF;
-        return 14;
-    }
-
     int I_EX_REF_SP_IX() {
         int tmp = readWord(SP);
         int tmp1 = IX;
@@ -2335,18 +3588,6 @@ public class EmulatorEngine implements CpuEngine {
         memptr = IY;
         writeWord(SP, tmp1);
         return 23;
-    }
-
-    int I_PUSH_IX() {
-        SP = (SP - 2) & 0xFFFF;
-        writeWord(SP, IX);
-        return 15;
-    }
-
-    int I_PUSH_IY() {
-        SP = (SP - 2) & 0xFFFF;
-        writeWord(SP, IY);
-        return 15;
     }
 
     int I_JP_REF_IX() {
@@ -2621,72 +3862,6 @@ public class EmulatorEngine implements CpuEngine {
         return 23;
     }
 
-    int I_INC_IXH() {
-        IX = ((I_INC(IX >>> 8) << 8) | (IX & 0xFF)) & 0xFFFF;
-        return 8;
-    }
-
-    int I_INC_IYH() {
-        IY = ((I_INC(IY >>> 8) << 8) | (IY & 0xFF)) & 0xFFFF;
-        return 8;
-    }
-
-    int I_INC_IXL() {
-        IX = ((IX & 0xFF00) | I_INC(IX & 0xFF)) & 0xFFFF;
-        return 8;
-    }
-
-    int I_INC_IYL() {
-        IY = ((IY & 0xFF00) | I_INC(IY & 0xFF)) & 0xFFFF;
-        return 8;
-    }
-
-    int I_INC(int value) {
-        int sum = (value + 1) & 0x1FF;
-        int sumByte = sum & 0xFF;
-        flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | TABLE_XY[sumByte];
-        Q = flags;
-        return sumByte;
-    }
-
-    int I_DEC_IXH() {
-        IX = ((I_DEC_IIH(IX) << 8) | (IX & 0xFF)) & 0xFFFF;
-        return 8;
-    }
-
-    int I_DEC_IYH() {
-        IY = ((I_DEC_IIH(IY) << 8) | (IY & 0xFF)) & 0xFFFF;
-        return 8;
-    }
-
-    int I_DEC_IIH(int special) {
-        int reg = special >>> 8;
-        int sum = (reg - 1) & 0x1FF;
-        int sumByte = sum & 0xFF;
-        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ reg]) | (flags & FLAG_C) | TABLE_XY[sumByte];
-        Q = flags;
-        return sumByte;
-    }
-
-    int I_DEC_IXL() {
-        IX = ((IX & 0xFF00) | (I_DEC_IIL(IX) & 0xFF)) & 0xFFFF;
-        return 8;
-    }
-
-    int I_DEC_IYL() {
-        IY = ((IY & 0xFF00) | (I_DEC_IIL(IY) & 0xFF)) & 0xFFFF;
-        return 8;
-    }
-
-    int I_DEC_IIL(int special) {
-        int reg = special & 0xFF;
-        int sum = (reg - 1) & 0x1FF;
-        int sumByte = sum & 0xFF;
-        flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ reg]) | (flags & FLAG_C) | TABLE_XY[sumByte];
-        Q = flags;
-        return sumByte;
-    }
-
     int I_LD_IXH_N() {
         IX = (((memory.read(PC) & 0xFF) << 8) | (IX & 0xFF)) & 0xFFFF;
         PC = (PC + 1) & 0xFFFF;
@@ -2709,273 +3884,5 @@ public class EmulatorEngine implements CpuEngine {
         IY = ((IY & 0xFF00) | (memory.read(PC) & 0xFF)) & 0xFFFF;
         PC = (PC + 1) & 0xFFFF;
         return 11;
-    }
-
-    int I_LD_R_IXH() {
-        return I_LD_R_IIH(IX);
-    }
-
-    int I_LD_R_IYH() {
-        return I_LD_R_IIH(IY);
-    }
-
-    int I_LD_R_IIH(int special) {
-        int reg = ((lastOpcode >>> 2) & 0x0F) / 2; // 4,5,6 not supported
-        regs[reg] = special >>> 8;
-        return 8;
-    }
-
-    int I_LD_R_IXL() {
-        return I_LD_R_IIL(IX);
-    }
-
-    int I_LD_R_IYL() {
-        return I_LD_R_IIL(IY);
-    }
-
-    int I_LD_R_IIL(int special) {
-        int reg = ((lastOpcode >>> 2) & 0x0F) / 2; // 4,5,6 not supported
-        regs[reg] = special & 0xFF;
-        return 8;
-    }
-
-    int I_LD_IXH_R() {
-        int reg = lastOpcode & 7; // 4,5,6 not supported
-        IX = (IX & 0xFF) | ((regs[reg] << 8) & 0xFF00);
-        return 8;
-    }
-
-    int I_LD_IYH_R() {
-        int reg = lastOpcode & 7; // 4,5,6 not supported
-        IY = (IY & 0xFF) | ((regs[reg] << 8) & 0xFF00);
-        return 8;
-    }
-
-    int I_LD_IIH_IIH() {
-        return 8;
-    }
-
-    int I_LD_IXH_IXL() {
-        IX = (IX & 0xFF) | ((IX << 8) & 0xFF00);
-        return 8;
-    }
-
-    int I_LD_IYH_IYL() {
-        IY = (IY & 0xFF) | ((IY << 8) & 0xFF00);
-        return 8;
-    }
-
-    int I_LD_IXL_R() {
-        int reg = lastOpcode & 7; // 4,5,6 not supported
-        IX = (IX & 0xFF00) | (regs[reg] & 0xFF);
-        return 8;
-    }
-
-    int I_LD_IYL_R() {
-        int reg = lastOpcode & 7; // 4,5,6 not supported
-        IY = (IY & 0xFF00) | (regs[reg] & 0xFF);
-        return 8;
-    }
-
-    int I_LD_IXL_IXH() {
-        IX = (IX & 0xFF00) | (IX >>> 8);
-        return 8;
-    }
-
-    int I_LD_IYL_IYH() {
-        IY = (IY & 0xFF00) | (IY >>> 8);
-        return 8;
-    }
-
-    int I_LD_IIL_IIL() {
-        return 8;
-    }
-
-    int I_ADD_A_IXH() {
-        return I_ADD_A(IX >>> 8);
-    }
-
-    int I_ADD_A_IYH() {
-        return I_ADD_A(IY >>> 8);
-    }
-
-    int I_ADD_A_IXL() {
-        return I_ADD_A(IX & 0xFF);
-    }
-
-    int I_ADD_A_IYL() {
-        return I_ADD_A(IY & 0xFF);
-    }
-
-    int I_ADD_A(int value) {
-        int oldA = regs[REG_A];
-        int sum = (oldA + value) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
-        return 8;
-    }
-
-    int I_ADC_A_IXH() {
-        return I_ADC_A(IX >>> 8);
-    }
-
-    int I_ADC_A_IYH() {
-        return I_ADC_A(IY >>> 8);
-    }
-
-    int I_ADC_A_IXL() {
-        return I_ADC_A(IX & 0xFF);
-    }
-
-    int I_ADC_A_IYL() {
-        return I_ADC_A(IY & 0xFF);
-    }
-
-    int I_ADC_A(int value) {
-        int oldA = regs[REG_A];
-        int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
-        return 8;
-    }
-
-    int I_SUB_IXH() {
-        return I_SUB(IX >>> 8);
-    }
-
-    int I_SUB_IYH() {
-        return I_SUB(IY >>> 8);
-    }
-
-    int I_SUB_IXL() {
-        return I_SUB(IX & 0xFF);
-    }
-
-    int I_SUB_IYL() {
-        return I_SUB(IY & 0xFF);
-    }
-
-    int I_SUB(int value) {
-        int oldA = regs[REG_A];
-        int sum = (oldA - value) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
-        Q = flags;
-        return 8;
-    }
-
-    int I_SBC_A_IXH() {
-        return I_SBC_A(IX >>> 8);
-    }
-
-    int I_SBC_A_IYH() {
-        return I_SBC_A(IY >>> 8);
-    }
-
-    int I_SBC_A_IXL() {
-        return I_SBC_A(IX & 0xFF);
-    }
-
-    int I_SBC_A_IYL() {
-        return I_SBC_A(IY & 0xFF);
-    }
-
-    int I_SBC_A(int value) {
-        int oldA = regs[REG_A];
-        int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
-        regs[REG_A] = sum & 0xFF;
-        flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
-        return 8;
-    }
-
-    int I_AND_IXH() {
-        return I_AND(IX >>> 8);
-    }
-
-    int I_AND_IYH() {
-        return I_AND(IY >>> 8);
-    }
-
-    int I_AND_IXL() {
-        return I_AND(IX & 0xFF);
-    }
-
-    int I_AND_IYL() {
-        return I_AND(IY & 0xFF);
-    }
-
-    int I_AND(int value) {
-        regs[REG_A] = (regs[REG_A] & value) & 0xFF;
-        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | FLAG_H | TABLE_XY[regs[REG_A]];
-        return 8;
-    }
-
-    int I_XOR_IXH() {
-        return I_XOR(IX >>> 8);
-    }
-
-    int I_XOR_IYH() {
-        return I_XOR(IY >>> 8);
-    }
-
-    int I_XOR_IXL() {
-        return I_XOR(IX & 0xFF);
-    }
-
-    int I_XOR_IYL() {
-        return I_XOR(IY & 0xFF);
-    }
-
-    int I_XOR(int value) {
-        regs[REG_A] = (regs[REG_A] ^ value) & 0xFF;
-        flags = PARITY_TABLE[regs[REG_A]] | TABLE_SZ[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        return 8;
-    }
-
-    int I_OR_IXH() {
-        return I_OR(IX >>> 8);
-    }
-
-    int I_OR_IXL() {
-        return I_OR(IX & 0xFF);
-    }
-
-    int I_OR_IYH() {
-        return I_OR(IY >>> 8);
-    }
-
-    int I_OR_IYL() {
-        return I_OR(IY & 0xFF);
-    }
-
-    int I_OR(int value) {
-        regs[REG_A] = (regs[REG_A] | value) & 0xFF;
-        flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        return 8;
-    }
-
-    int I_CP_IXH() {
-        return I_CP(IX >>> 8);
-    }
-
-    int I_CP_IXL() {
-        return I_CP(IX & 0xFF);
-    }
-
-    int I_CP_IYH() {
-        return I_CP(IY >>> 8);
-    }
-
-    int I_CP_IYL() {
-        return I_CP(IY & 0xFF);
-    }
-
-    int I_CP(int value) {
-        int oldA = regs[REG_A];
-        int sum = (oldA - value) & 0x1FF;
-        int result = sum & 0xFF;
-        flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[value & 0xFF];
-        return 8;
     }
 }

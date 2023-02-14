@@ -84,165 +84,251 @@ instruction =
   "call %Xh":     11 001 101 imm16                 |  # x=3, p=0, q=1, z=5
 
   0xDD ddInstruction                               |
-
-  "in %s, (c)":   0xED 01 0 r_bcde(2) 000          |  # x=1, y=0 r_bcde, z=0
-  "in %s, (c)":   0xED 01 10 r_h_l(1) 000          |  # x=1, y=10 r_h_l, z=0
-  "in a, (c)":    0xED 01 111 000                  |  # x=1, y=7, z=0
-  "in (c)":       0xED 01 110 000                  |  # x=1, y=6, z=0
-  "out (c), %s":  0xED 01 0 r_bcde(2) 001          |  # x=1, y=0 r_bcde, z=1
-  "out (c), %s":  0xED 01 10 r_h_l(1) 001          |  # x=1, y=10 r_h_l, z=1
-  "out (c), a":   0xED 01 111 001                  |  # x=1, y=7, z=1
-  "out (c), 0":   0xED 01 110 001                  |  # x=1, y=6, z=1
-  "sbc hl, %s":   0xED 01 rp(2) 0 010              |  # x=1, p=rp, q=0, z=2
-  "adc hl, %s":   0xED 01 rp(2) 1 010              |  # x=1, p=rp, q=1, z=2
-  "ld (%Xh), %s": 0xED 01 rp(2) 0 011 ref16_2      |  # x=1, p=rp, q=0, z=3
-  "ld %s, (%Xh)": 0xED 01 rp(2) 1 011 ref16        |  # x=1, p=rp, q=1, z=3
-  "neg":          0xED 01 any(3) 100               |  # x=1, y=any, z=4
-  "reti":         0xED 01 001 101                  |  # x=1, y=1, z=5
-  "retn":         0xED 01 any2(2) 0 101            |  # x=1, y!=1, z=5
-  "retn":         0xED 01 10 1 101                 |  # x=1, y!=1, z=5
-  "retn":         0xED 01 01 1 101                 |  # x=1, y!=1, z=5
-  "retn":         0xED 01 11 1 101                 |  # x=1, y!=1, z=5
-  "im %s":        0xED 01 im(3) 110                |  # x=1, y=im, z=6
-  "ld i, a":      0xED 01 000 111                  |  # x=1, y=0, z=7
-  "ld r, a":      0xED 01 001 111                  |  # x=1, y=1, z=7
-  "ld a, i":      0xED 01 010 111                  |  # x=1, y=2, z=7
-  "ld a, r":      0xED 01 011 111                  |  # x=1, y=3, z=7
-  "rrd":          0xED 01 100 111                  |  # x=1, y=4, z=7
-  "rld":          0xED 01 101 111                  |  # x=1, y=5, z=7
-  "nop":          0xED 01 110 111                  |  # x=1, y=6, z=7
-  "nop":          0xED 01 111 111                  |  # x=1, y=7, z=7
-
-  "ldi":          0xED 10 100 000                  |  # x=2, y=4, z=0
-  "ldd":          0xED 10 101 000                  |  # x=2, y=5, z=0
-  "ldir":         0xED 10 110 000                  |  # x=2, y=6, z=0
-  "lddr":         0xED 10 111 000                  |  # x=2, y=7, z=0
-
-  "cpi":          0xED 10 100 001                  |  # x=2, y=4, z=1
-  "cpd":          0xED 10 101 001                  |  # x=2, y=5, z=1
-  "cpir":         0xED 10 110 001                  |  # x=2, y=6, z=1
-  "cpdr":         0xED 10 111 001                  |  # x=2, y=7, z=1
-
-  "ini":          0xED 10 100 010                  |  # x=2, y=4, z=2
-  "ind":          0xED 10 101 010                  |  # x=2, y=5, z=2
-  "inir":         0xED 10 110 010                  |  # x=2, y=6, z=2
-  "indr":         0xED 10 111 010                  |  # x=2, y=7, z=2
-
-  "outi":         0xED 10 100 011                  |  # x=2, y=4, z=3
-  "outd":         0xED 10 101 011                  |  # x=2, y=5, z=3
-  "otir":         0xED 10 110 011                  |  # x=2, y=6, z=3
-  "otdr":         0xED 10 111 011                  |  # x=2, y=7, z=3
-
-  "nop":          0xED 00 any6(6)                  |
-  "nop":          0xED 11 any6(6)                  |
-  "nop":          0xED 10 0 any5(5)                |
-  "nop":          0xED 10 1 001 any2(2)            |
-  "nop":          0xED 10 1 011 any2(2)            |
-  "nop":          0xED 10 1 101 any2(2)            |
-  "nop":          0xED 10 1 111 any2(2)            |
-
+  0xED edInstruction                               |
   0xFD fdInstruction                               |
 
   "%s %Xh":       11 alu(3) 110 imm8               |  # x=3, y=alu, z=6
   "rst %sh":      11 rst(3) 111                    ;  # x=3, y=rst, z=7
 
+edInstruction =
+  "in %s, (c)":   01 0 r_bcde(2) 000          |  # x=1, y=0 r_bcde, z=0
+  "in %s, (c)":   01 10 r_h_l(1) 000          |  # x=1, y=10 r_h_l, z=0
+  "in a, (c)":    01 111 000                  |  # x=1, y=7, z=0
+  "in (c)":       01 110 000                  |  # x=1, y=6, z=0
+  "out (c), %s":  01 0 r_bcde(2) 001          |  # x=1, y=0 r_bcde, z=1
+  "out (c), %s":  01 10 r_h_l(1) 001          |  # x=1, y=10 r_h_l, z=1
+  "out (c), a":   01 111 001                  |  # x=1, y=7, z=1
+  "out (c), 0":   01 110 001                  |  # x=1, y=6, z=1
+  "sbc hl, %s":   01 rp(2) 0 010              |  # x=1, p=rp, q=0, z=2
+  "adc hl, %s":   01 rp(2) 1 010              |  # x=1, p=rp, q=1, z=2
+  "ld (%Xh), %s": 01 rp(2) 0 011 ref16_2      |  # x=1, p=rp, q=0, z=3
+  "ld %s, (%Xh)": 01 rp(2) 1 011 ref16        |  # x=1, p=rp, q=1, z=3
+  "neg":          01 any(3) 100               |  # x=1, y=any, z=4
+  "reti":         01 001 101                  |  # x=1, y=1, z=5
+  "retn":         01 any2(2) 0 101            |  # x=1, y!=1, z=5
+  "retn":         01 10 1 101                 |  # x=1, y!=1, z=5
+  "retn":         01 01 1 101                 |  # x=1, y!=1, z=5
+  "retn":         01 11 1 101                 |  # x=1, y!=1, z=5
+  "im %s":        01 im(3) 110                |  # x=1, y=im, z=6
+  "ld i, a":      01 000 111                  |  # x=1, y=0, z=7
+  "ld r, a":      01 001 111                  |  # x=1, y=1, z=7
+  "ld a, i":      01 010 111                  |  # x=1, y=2, z=7
+  "ld a, r":      01 011 111                  |  # x=1, y=3, z=7
+  "rrd":          01 100 111                  |  # x=1, y=4, z=7
+  "rld":          01 101 111                  |  # x=1, y=5, z=7
+  "nop":          01 110 111                  |  # x=1, y=6, z=7
+  "nop":          01 111 111                  |  # x=1, y=7, z=7
+
+  "ldi":          10 100 000                  |  # x=2, y=4, z=0
+  "ldd":          10 101 000                  |  # x=2, y=5, z=0
+  "ldir":         10 110 000                  |  # x=2, y=6, z=0
+  "lddr":         10 111 000                  |  # x=2, y=7, z=0
+
+  "cpi":          10 100 001                  |  # x=2, y=4, z=1
+  "cpd":          10 101 001                  |  # x=2, y=5, z=1
+  "cpir":         10 110 001                  |  # x=2, y=6, z=1
+  "cpdr":         10 111 001                  |  # x=2, y=7, z=1
+
+  "ini":          10 100 010                  |  # x=2, y=4, z=2
+  "ind":          10 101 010                  |  # x=2, y=5, z=2
+  "inir":         10 110 010                  |  # x=2, y=6, z=2
+  "indr":         10 111 010                  |  # x=2, y=7, z=2
+
+  "outi":         10 100 011                  |  # x=2, y=4, z=3
+  "outd":         10 101 011                  |  # x=2, y=5, z=3
+  "otir":         10 110 011                  |  # x=2, y=6, z=3
+  "otdr":         10 111 011                  |  # x=2, y=7, z=3
+
+  "nop":          00 any6(6)                  |
+  "nop":          11 any6(6)                  |
+  "nop":          10 0 any5(5)                |
+  "nop":          10 1 001 any2(2)            |
+  "nop":          10 1 011 any2(2)            |
+  "nop":          10 1 101 any2(2)            |
+  "nop":          10 1 111 any2(2);
+
 ddInstruction =
-  "ld ix, %Xh":       00 100 001 imm16              |  # x=0, p=2, q=0, z=1
-  "add ix, %s":       00 rp_ix(2) 1 001             |  # x=0, p=rp_ix, q=1, z=1
-  "ld (%Xh), ix":     00 100 010 ref16              |  # x=0, p=2, q=0, z=2
-  "ld ix, (%Xh)":     00 101 010 ref16              |  # x=0, p=2, q=1, z=2
-  "inc ix":           00 100 011                    |  # x=0, p=2, q=0, z=3
-  "dec ix":           00 101 011                    |  # x=0, p=2, q=1, z=3
-  "inc %s":           00 10 r_ixhl(1) 100           |  # x=0, y=r_ixhl, z=4
-  "inc (ix+%Xh)":     00 110 100 disp               |  # x=0, y=6, z=4
-  "dec %s":           00 10 r_ixhl(1) 101           |  # x=0, y=r_ixhl, z=5
-  "dec (ix+%Xh)":     00 110 101 disp               |  # x=0, y=6, z=5
-  "ld %s, %Xh":       00 10 r_ixhl(1) 110 imm8      |  # x=0, y=r_ixhl, z=6
-  "ld (ix+%Xh), %Xh": 00 110 110 disp(8) imm8       |  # x=0, y=6, z=6
-  "ld %s, %s":        01 10 r_ixhl(1) 0 r_bcde(2)   |  # x=1, y=r_ixhl, z=r_bcde
-  "ld %s, %s":        01 10 r_ixhl(1) 10 r_ixhl2(1) |  # x=1, y=r_ixhl, z=r_ixhl2
-  "ld %s, a":         01 10 r_ixhl(1) 111           |  # x=1, y=r_ixhl, z=a
-  "ld a, %s":         01 111 10 r_ixhl(1)           |  # x=1, y=7, z=r_ixhl
-  "ld a, %s":         01 111 0 r_bcde(2)            |  # x=1, y=7, z=r_bcde
-  "ld a, a":          01 111 111                    |  # x=1, y=7, z=a
-  "ld %s, a":         01 0 r_bcde(2) 111            |  # x=1, y=r_bcde, z=a
-  "ld %s, %s":        01 0 r_bcde(2) 0 r_bcde2(2)   |  # x=1, y=r_bcde, z=r_bcde2
-  "ld %s, %s":        01 0 r_bcde(2) 10 r_ixhl2(1)  |  # x=1, y=r_bcde, z=r_ixhl2
-  "ld (ix+%Xh), %s":  01 110 r_no_hl(3) disp        |  # x=1, y=6, z=r_no_hl
-  "ld %s, (ix+%Xh)":  01 0 r_bcde(2) 110 disp       |  # x=1, y=0 r_bcde, z=6
-  "ld %s, (ix+%Xh)":  01 10 r_h_l(1) 110 disp       |  # x=1, y=10 r_h_l, z=6
-  "ld a, (ix+%Xh)":   01 111 110 disp               |  # x=1, y=7, z=6
+  "nop":          00 000 000                       |  # x=0, y=0, z=0
+  "ex af, af'":   00 001 000                       |  # x=0, y=1, z=0
+  "djnz %Xh":     00 010 000 imm8                  |  # x=0, y=2, z=0
+  "jr %Xh":       00 011 000 imm8                  |  # x=0, y=3, z=0
+  "jr %s, %Xh":   00 1 cc_jr(2) 000 imm8           |  # x=0, y=4..7, z=0
+  "ld %s, %Xh":   00 rp_ix(2) 0 001 imm16          |  # x=0, p=rp, q=0, z=1
+  "add ix, %s":   00 rp_ix(2) 1 001                |  # x=0, p=rp, q=1, z=1
+  "ld (bc), a":   00 000 010                       |  # x=0, p=0, q=0, z=2
+  "ld (de), a":   00 010 010                       |  # x=0, p=1, q=0, z=2
+  "ld (%Xh), ix": 00 100 010 ref16                 |  # x=0, p=2, q=0, z=2
+  "ld (%Xh), a":  00 110 010 ref16                 |  # x=0, p=3, q=0, z=2
+  "ld a, (bc)":   00 001 010                       |  # x=0, p=0, q=1, z=2
+  "ld a, (de)":   00 011 010                       |  # x=0, p=1, q=1, z=2
+  "ld ix, (%Xh)": 00 101 010 ref16                 |  # x=0, p=2, q=1, z=2
+  "ld a, (%Xh)":  00 111 010 ref16                 |  # x=0, p=3, q=1, z=2
+  "inc %s":       00 rp_ix(2) 0 011                |  # x=0, p=rp, q=0, z=3
+  "dec %s":       00 rp_ix(2) 1 011                |  # x=0, p=rp, q=1, z=3
+  "inc %s":       00 0 r_bcde(2) 100               |  # x=0, y=r, z=4
+  "inc %s":       00 10 r_ixhl(1) 100              |  # x=0, y=r, z=4
+  "inc (ix+%Xh)": 00 110 100 disp                  |  # x=0, y=6, z=4
+  "inc a":        00 111 100                       |  # x=0, y=r, z=4
+  "dec %s":       00 0 r_bcde(2) 101               |  # x=0, y=r, z=5
+  "dec %s":       00 10 r_ixhl(1) 101              |  # x=0, y=r, z=5
+  "dec (ix+%Xh)": 00 110 101 disp                  |  # x=0, y=6, z=5
+  "dec a":        00 111 101                       |  # x=0, y=r, z=5
+  "ld %s, %Xh":   00 0 r_bcde(2) 110 imm8          |  # x=0, y=r, z=6
+  "ld %s, %Xh":   00 10 r_ixhl(1) 110 imm8         |  # x=0, y=r, z=6
+  "ld (ix+%Xh), %Xh": 00 110 110 disp(8) imm8      |  # x=0, y=r, z=6
+  "ld a, %Xh":    00 111 110 imm8                  |  # x=0, y=r, z=6
+  "rlca":         00 000 111                       |  # x=0, y=0, z=7
+  "rrca":         00 001 111                       |  # x=0, y=1, z=7
+  "rla":          00 010 111                       |  # x=0, y=2, z=7
+  "rra":          00 011 111                       |  # x=0, y=3, z=7
+  "daa":          00 100 111                       |  # x=0, y=4, z=7
+  "cpl":          00 101 111                       |  # x=0, y=5, z=7
+  "scf":          00 110 111                       |  # x=0, y=6, z=7
+  "ccf":          00 111 111                       |  # x=0, y=7, z=7
 
-  "%s %s":            10 alu(3) 0 r_bcde(2)         |  # x=2, y=alu, z=r_bcde
-  "%s a":             10 alu(3) 111                 |  # x=2, y=alu, z=a
-  "%s %s":            10 alu(3) 10 r_ixhl(1)        |  # x=2, y=alu, z=r_ixhl
-  "%s (ix+%Xh)":      10 alu(3) 110 disp            |  # x=2, y=alu, z=6
+  "halt":         01 110 110                       |  # x=1, y=6, z=6
+  "ld %s, %s":    01 0 r_bcde(2) 0 r_bcde2(2)      |  # x=1, y=0 r_bcde, z=0 r_bcde2
+  "ld %s, %s":    01 0 r_bcde(2) 10 r_ixhl(1)      |  # x=1, y=0 r_bcde, z=10 r_ixhl
+  "ld %s, a":     01 0 r_bcde(2) 111               |  # x=1, y=0 r_bcde, z=7
+  "ld %s, (ix+%Xh)": 01 0 r_bcde(2) 110 disp       |  # x=1, y=0 r_bcde, z=6
+  "ld %s, %s":    01 10 r_ixhl(1) 0 r_bcde2(2)     |  # x=1, y=10 r_ixhl(1), z=0 r_bcde2
+  "ld %s, %s":    01 10 r_ixhl(1) 10 r_ixhl2(1)    |  # x=1, y=10 r_ixhl(1), z=10 r_ixhl2
+  "ld %s, a":     01 10 r_ixhl(1) 111              |  # x=1, y=10 r_ixhl(1), z=7
+  "ld %s, (ix+%Xh)": 01 10 r_ixhl(1) 110 disp      |  # x=1, y=10 r_ixhl(1), z=6
+  "ld a, %s":    01 111 0 r_bcde(2)                |  # x=1, y=7, z=0 r_bcde
+  "ld a, %s":    01 111 10 r_ixhl(1)               |  # x=1, y=7, z=10 r_ixhl
+  "ld a, a":     01 111 111                        |  # x=1, y=7, z=7
+  "ld a, (ix+%Xh)": 01 111 110 disp                |  # x=1, y=7, z=6
+  "ld (ix+%Xh), %s": 01 110 0 r_bcde(2) disp       |  # x=1, y=6, z=0 r_bcde
+  "ld (ix+%Xh), %s": 01 110 10 r_ixhl2(1) disp     |  # x=1, y=6, z=10 r_ixhl2
+  "ld (ix+%Xh), a":  01 110 111 disp               |  # x=1, y=6, z=7
 
-  "pop ix":           11 100 001                    |  # x=3, p=2, q=0, z=1
-  "jp (ix)":          11 101 001                    |  # x=3, p=2, q=1, z=1
-  "ld sp, ix":        11 111 001                    |  # x=3, p=3, q=1, z=1
+  "%s %s":        10 alu(3) 0 r_bcde(2)            |  # x=2, y=alu, z=r
+  "%s %s":        10 alu(3) 10 r_ixhl(1)           |  # x=2, y=alu, z=r
+  "%s a":         10 alu(3) 111                    |  # x=2, y=alu, z=r
+  "%s (ix+%Xh)":  10 alu(3) 110 disp               |  # x=2, y=alu, z=r
 
-  "nop":              00 000 any3(3)                |
-  "nop":              00 001 1 any2(2)              |
-  "nop":              00 010 any3(3)                |
-  "nop":              00 011 1 any2(2)              |
-  "nop":              00 100000                     |
-  "nop":              11 01 any4(4)                 |
-  "nop":              11 100000                     |
+  "ret %s":       11 cc(3) 000                     |  # x=3, y=cc, z=0
+  "pop %s":       11 rpx2(2) 0 001                 |  # x=3, p=rpx2, q=0, z=1
+  "ret":          11 001 001                       |  # x=3, p=0, q=1, z=1
+  "exx":          11 011 001                       |  # x=3, p=1, q=1, z=1
+  "jp (ix)":      11 101 001                       |  # x=3, p=2, q=1, z=1
+  "ld sp, ix":    11 111 001                       |  # x=3, p=3, q=1, z=1
+  "jp %s, %Xh":   11 cc(3) 010 imm16               |  # x=3, y=cc, z=2
+  "jp %Xh":       11 000 011 imm16                 |  # x=3, y=0, z=3
 
-  0xCB disp(8) ddcbInstruction                      |
+  0xCB disp(8) ddcbInstruction                     |
 
-  "ex (sp), ix":    11 100 011                      |  # x=3, y=4, z=3
-  "push ix":        11 100 101                      ;  # x=3, p=2, q=0, z=5
+  "out (%Xh), a": 11 010 011 ref8                  |  # x=3, y=2, z=3
+  "in a, (%Xh)":  11 011 011 ref8                  |  # x=3, y=3, z=3
+  "ex (sp), ix":  11 100 011                       |  # x=3, y=4, z=3
+  "ex de, hl":    11 101 011                       |  # x=3, y=5, z=3
+  "di":           11 110 011                       |  # x=3, y=6, z=3
+  "ei":           11 111 011                       |  # x=3, y=7, z=3
+  "call %s, %Xh": 11 cc(3) 100 imm16               |  # x=3, y=cc, z=4
+  "push %s":      11 rpx2(2) 0 101                 |  # x=3, p=rpx2, q=0, z=5
+  "call %Xh":     11 001 101 imm16                 |  # x=3, p=0, q=1, z=5
+
+ // Stack overflow
+ // 0xDD ddInstruction                               |
+ //  0xFD fdInstruction                               |
+  0xED edInstruction                               |
+
+  "%s %Xh":       11 alu(3) 110 imm8               |  # x=3, y=alu, z=6
+  "rst %sh":      11 rst(3) 111                    ;  # x=3, y=rst, z=7
+
 
 fdInstruction =
-  "ld iy, %Xh":       00 100 001 imm16              |  # x=0, p=2, q=0, z=1
-  "add iy, %s":       00 rp_iy(2) 1 001             |  # x=0, p=rp_iy, q=1, z=1
-  "ld (%Xh), iy":     00 100 010 ref16              |  # x=0, p=2, q=0, z=2
-  "ld iy, (%Xh)":     00 101 010 ref16              |  # x=0, p=2, q=1, z=2
-  "inc iy":           00 100 011                    |  # x=0, p=2, q=0, z=3
-  "dec iy":           00 101 011                    |  # x=0, p=2, q=1, z=3
-  "inc %s":           00 10 r_iyhl(1) 100           |  # x=0, y=r_iyhl, z=4
-  "inc (iy+%Xh)":     00 110 100 disp               |  # x=0, y=6, z=4
-  "dec %s":           00 10 r_iyhl(1) 101           |  # x=0, y=r_iyhl, z=5
-  "dec (iy+%Xh)":     00 110 101 disp               |  # x=0, y=6, z=5
-  "ld %s, %Xh":       00 10 r_iyhl(1) 110 imm8      |  # x=0, y=r_iyhl, z=6
-  "ld (iy+%Xh), %Xh": 00 110 110 disp(8) imm8       |  # x=0, y=6, z=6
-  "ld %s, %s":        01 10 r_iyhl(1) 0 r_bcde(2)   |  # x=1, y=r_iyhl, z=r_bcde
-  "ld %s, %s":        01 10 r_iyhl(1) 10 r_iyhl2(1) |  # x=1, y=r_iyhl, z=r_iyhl2
-  "ld %s, a":         01 10 r_iyhl(1) 111           |  # x=1, y=r_iyhl, z=7
-  "ld a, %s":         01 111 10 r_iyhl(1)           |  # x=1, y=7, z=r_iyhl
-  "ld a, %s":         01 111 0 r_bcde(2)            |  # x=1, y=7, z=r_bcde
-  "ld a, a":          01 111 111                    |  # x=1, y=7, z=a
-  "ld %s, a":         01 0 r_bcde(2) 111            |  # x=1, y=r_bcde, z=a
-  "ld %s, %s":        01 0 r_bcde(2) 0 r_bcde2(2)   |  # x=1, y=r_bcde, z=r_iyhl2
-  "ld %s, %s":        01 0 r_bcde(2) 10 r_iyhl2(1)  |  # x=1, y=r_bcde, z=r_iyhl2
-  "ld (iy+%Xh), %s":  01 110 r_no_hl(3) disp        |  # x=1, y=6, z=r_no_hl
-  "ld %s, (iy+%Xh)":  01 0 r_bcde(2) 110 disp       |  # x=1, y=0 r_bcde, z=6
-  "ld %s, (iy+%Xh)":  01 10 r_h_l(1) 110 disp       |  # x=1, y=10 r_h_l, z=6
-  "ld a, (iy+%Xh)":   01 111 110 disp               |  # x=1, y=7, z=6
+  "nop":          00 000 000                       |  # x=0, y=0, z=0
+  "ex af, af'":   00 001 000                       |  # x=0, y=1, z=0
+  "djnz %Xh":     00 010 000 imm8                  |  # x=0, y=2, z=0
+  "jr %Xh":       00 011 000 imm8                  |  # x=0, y=3, z=0
+  "jr %s, %Xh":   00 1 cc_jr(2) 000 imm8           |  # x=0, y=4..7, z=0
+  "ld %s, %Xh":   00 rp_iy(2) 0 001 imm16          |  # x=0, p=rp, q=0, z=1
+  "add iy, %s":   00 rp_iy(2) 1 001                |  # x=0, p=rp, q=1, z=1
+  "ld (bc), a":   00 000 010                       |  # x=0, p=0, q=0, z=2
+  "ld (de), a":   00 010 010                       |  # x=0, p=1, q=0, z=2
+  "ld (%Xh), iy": 00 100 010 ref16                 |  # x=0, p=2, q=0, z=2
+  "ld (%Xh), a":  00 110 010 ref16                 |  # x=0, p=3, q=0, z=2
+  "ld a, (bc)":   00 001 010                       |  # x=0, p=0, q=1, z=2
+  "ld a, (de)":   00 011 010                       |  # x=0, p=1, q=1, z=2
+  "ld iy, (%Xh)": 00 101 010 ref16                 |  # x=0, p=2, q=1, z=2
+  "ld a, (%Xh)":  00 111 010 ref16                 |  # x=0, p=3, q=1, z=2
+  "inc %s":       00 rp_iy(2) 0 011                |  # x=0, p=rp, q=0, z=3
+  "dec %s":       00 rp_iy(2) 1 011                |  # x=0, p=rp, q=1, z=3
+  "inc %s":       00 0 r_bcde(2) 100               |  # x=0, y=r, z=4
+  "inc %s":       00 10 r_iyhl(1) 100              |  # x=0, y=r, z=4
+  "inc (iy+%Xh)": 00 110 100 disp                  |  # x=0, y=6, z=4
+  "inc a":        00 111 100                       |  # x=0, y=r, z=4
+  "dec %s":       00 0 r_bcde(2) 101               |  # x=0, y=r, z=5
+  "dec %s":       00 10 r_iyhl(1) 101              |  # x=0, y=r, z=5
+  "dec (iy+%Xh)": 00 110 101 disp                  |  # x=0, y=6, z=5
+  "dec a":        00 111 101                       |  # x=0, y=r, z=5
+  "ld %s, %Xh":   00 0 r_bcde(2) 110 imm8          |  # x=0, y=r, z=6
+  "ld %s, %Xh":   00 10 r_iyhl(1) 110 imm8         |  # x=0, y=r, z=6
+  "ld (iy+%Xh), %Xh": 00 110 110 disp(8) imm8      |  # x=0, y=r, z=6
+  "ld a, %Xh":    00 111 110 imm8                  |  # x=0, y=r, z=6
+  "rlca":         00 000 111                       |  # x=0, y=0, z=7
+  "rrca":         00 001 111                       |  # x=0, y=1, z=7
+  "rla":          00 010 111                       |  # x=0, y=2, z=7
+  "rra":          00 011 111                       |  # x=0, y=3, z=7
+  "daa":          00 100 111                       |  # x=0, y=4, z=7
+  "cpl":          00 101 111                       |  # x=0, y=5, z=7
+  "scf":          00 110 111                       |  # x=0, y=6, z=7
+  "ccf":          00 111 111                       |  # x=0, y=7, z=7
 
-  "%s %s":            10 alu(3) 0 r_bcde(2)         |  # x=2, y=alu, z=r_bcde
-  "%s a":             10 alu(3) 111                 |  # x=2, y=alu, z=a
-  "%s %s":            10 alu(3) 10 r_iyhl(1)        |  # x=2, y=alu, z=r_iyhl
-  "%s (iy+%Xh)":      10 alu(3) 110 disp            |  # x=2, y=alu, z=6
+  "halt":         01 110 110                       |  # x=1, y=6, z=6
+  "ld %s, %s":    01 0 r_bcde(2) 0 r_bcde2(2)      |  # x=1, y=0 r_bcde, z=0 r_bcde2
+  "ld %s, %s":    01 0 r_bcde(2) 10 r_iyhl(1)      |  # x=1, y=0 r_bcde, z=10 r_iyhl
+  "ld %s, a":     01 0 r_bcde(2) 111               |  # x=1, y=0 r_bcde, z=7
+  "ld %s, (iy+%Xh)": 01 0 r_bcde(2) 110 disp       |  # x=1, y=0 r_bcde, z=6
+  "ld %s, %s":    01 10 r_iyhl(1) 0 r_bcde2(2)     |  # x=1, y=10 r_iyhl(1), z=0 r_bcde2
+  "ld %s, %s":    01 10 r_iyhl(1) 10 r_iyhl2(1)    |  # x=1, y=10 r_iyhl(1), z=10 r_iyhl2
+  "ld %s, a":     01 10 r_iyhl(1) 111              |  # x=1, y=10 r_iyhl(1), z=7
+  "ld %s, (iy+%Xh)": 01 10 r_iyhl(1) 110 disp      |  # x=1, y=10 r_iyhl(1), z=6
+  "ld a, %s":    01 111 0 r_bcde(2)                |  # x=1, y=7, z=0 r_bcde
+  "ld a, %s":    01 111 10 r_iyhl(1)               |  # x=1, y=7, z=10 r_iyhl
+  "ld a, a":     01 111 111                        |  # x=1, y=7, z=7
+  "ld a, (iy+%Xh)": 01 111 110 disp                |  # x=1, y=7, z=6
+  "ld (iy+%Xh), %s": 01 110 0 r_bcde(2) disp       |  # x=1, y=6, z=0 r_bcde
+  "ld (iy+%Xh), %s": 01 110 10 r_iyhl2(1) disp     |  # x=1, y=6, z=10 r_iyhl2
+  "ld (iy+%Xh), a":  01 110 111 disp               |  # x=1, y=6, z=7
 
-  "pop iy":           11 100 001                    |  # x=3, p=2, q=0, z=1
-  "jp (iy)":          11 101 001                    |  # x=3, p=2, q=1, z=1
-  "ld sp, iy":        11 111 001                    |  # x=3, p=3, q=1, z=1
+  "%s %s":        10 alu(3) 0 r_bcde(2)            |  # x=2, y=alu, z=r
+  "%s %s":        10 alu(3) 10 r_iyhl(1)           |  # x=2, y=alu, z=r
+  "%s a":         10 alu(3) 111                    |  # x=2, y=alu, z=r
+  "%s (iy+%Xh)":  10 alu(3) 110 disp               |  # x=2, y=alu, z=r
 
-  "nop":              00 000 any3(3)                |
-  "nop":              00 001 1 any2(2)              |
-  "nop":              00 010 any3(3)                |
-  "nop":              00 011 1 any2(2)              |
-  "nop":              00 100000                     |
-  "nop":              11 01 any4(4)                 |
-  "nop":              11 100000                     |
+  "ret %s":       11 cc(3) 000                     |  # x=3, y=cc, z=0
+  "pop %s":       11 rpy2(2) 0 001                 |  # x=3, p=rpy2, q=0, z=1
+  "ret":          11 001 001                       |  # x=3, p=0, q=1, z=1
+  "exx":          11 011 001                       |  # x=3, p=1, q=1, z=1
+  "jp (iy)":      11 101 001                       |  # x=3, p=2, q=1, z=1
+  "ld sp, iy":    11 111 001                       |  # x=3, p=3, q=1, z=1
+  "jp %s, %Xh":   11 cc(3) 010 imm16               |  # x=3, y=cc, z=2
+  "jp %Xh":       11 000 011 imm16                 |  # x=3, y=0, z=3
 
-  0xCB disp(8) fdcbInstruction                      |
+  0xCB disp(8) fdcbInstruction                     |
 
-  "ex (sp), iy":    11 100 011                      |  # x=3, y=4, z=3
-  "push iy":        11 100 101                      ;  # x=3, p=2, q=0, z=5
+  "out (%Xh), a": 11 010 011 ref8                  |  # x=3, y=2, z=3
+  "in a, (%Xh)":  11 011 011 ref8                  |  # x=3, y=3, z=3
+  "ex (sp), iy":  11 100 011                       |  # x=3, y=4, z=3
+  "ex de, hl":    11 101 011                       |  # x=3, y=5, z=3
+  "di":           11 110 011                       |  # x=3, y=6, z=3
+  "ei":           11 111 011                       |  # x=3, y=7, z=3
+  "call %s, %Xh": 11 cc(3) 100 imm16               |  # x=3, y=cc, z=4
+  "push %s":      11 rpy2(2) 0 101                 |  # x=3, p=rpy2, q=0, z=5
+  "call %Xh":     11 001 101 imm16                 |  # x=3, p=0, q=1, z=5
+
+ // Stack overflow
+ // 0xDD ddInstruction                               |
+ // 0xFD fdInstruction                               |
+
+  0xED edInstruction                               |
+
+  "%s %Xh":       11 alu(3) 110 imm8               |  # x=3, y=alu, z=6
+  "rst %sh":      11 rst(3) 111                    ;  # x=3, y=rst, z=7
+
 
 ddcbInstruction =
   "%s (ix+%Xh), %s":      00 rot(3) 0 r_bcde(2)   |  # x=0, y=rot, z=0 r_bcde
@@ -303,6 +389,18 @@ rp2 =
   "hl": 10 |
   "af": 11 ;
 
+rpx2 =
+  "bc": 00 |
+  "de": 01 |
+  "ix": 10 |
+  "af": 11 ;
+
+rpy2 =
+  "bc": 00 |
+  "de": 01 |
+  "iy": 10 |
+  "af": 11 ;
+
 rp_ix =
   "bc": 00 |
   "de": 01 |
@@ -325,7 +423,7 @@ r =
   "(hl)": 110 |
   "a":    111 ;
 
-r_bcde =
+r_bcde,r_bcde2 =
   "b":    00 |
   "c":    01 |
   "d":    10 |
@@ -337,15 +435,6 @@ r_h_l =
 
 r_ixhl,r_ixhl2 = "ixh": 0 | "ixl": 1;
 r_iyhl,r_iyhl2 = "iyh": 0 | "iyl": 1;
-
-r_no_hl =
-  "b":    000 |
-  "c":    001 |
-  "d":    010 |
-  "e":    011 |
-  "h":    100 |
-  "l":    101 |
-  "a":    111 ;
 
 alu =
   "add a,": 000 |
@@ -379,7 +468,10 @@ im =
 
 bit,any = bit: bit(3);
 imm8,ref8,disp = imm8: imm8(8);
+
+// Use with (reverse_bytes)
 imm16,ref16,ref16_2 = imm16: imm16(16);
+
 rst = "00": 000 | "08": 001 | "10": 010 | "18": 011 | "20": 100 | "28": 101 | "30": 110 | "38": 111;
 any2 = 00 | 01 | 10 | 11;
 
@@ -401,78 +493,99 @@ any2 = 00 | 01 | 10 | 11;
 "%s" = fdcbInstruction bit disp r_h_l;
 "%s" = fdcbInstruction bit disp;
 
-"%s" = ddInstruction imm16(reverse_bytes);
-"%s" = ddInstruction ref16(reverse_bytes);
-"%s" = ddInstruction r_ixhl;
-"%s" = ddInstruction disp;
+"%s" = ddInstruction r_bcde r_bcde2;
+"%s" = ddInstruction r_bcde r_ixhl;
+"%s" = ddInstruction disp r_bcde;
+"%s" = ddInstruction r_ixhl r_bcde2;
+"%s" = ddInstruction r_ixhl r_ixhl2;
+"%s" = ddInstruction r_ixhl disp;
+"%s" = ddInstruction disp r_ixhl2;
+"%s" = ddInstruction cc_jr imm8;
+"%s" = ddInstruction rp_ix imm16(reverse_bytes);
+"%s" = ddInstruction r_bcde imm8;
 "%s" = ddInstruction r_ixhl imm8;
 "%s" = ddInstruction disp imm8;
-"%s" = ddInstruction r_ixhl r_bcde;
-"%s" = ddInstruction r_bcde;
-"%s" = ddInstruction r_bcde r_bcde2;
-"%s" = ddInstruction r_bcde r_ixhl2;
-"%s" = ddInstruction r_ixhl r_ixhl2;
-"%s" = ddInstruction r_bcde disp;
-"%s" = ddInstruction r_h_l disp;
-"%s" = ddInstruction disp r_no_hl;
+"%s" = ddInstruction cc imm16(reverse_bytes);
+"%s" = ddInstruction alu imm8;
+"%s" = ddInstruction alu disp;
 "%s" = ddInstruction alu r_bcde;
 "%s" = ddInstruction alu r_ixhl;
-"%s" = ddInstruction alu disp;
 "%s" = ddInstruction alu;
+"%s" = ddInstruction imm8;
 "%s" = ddInstruction rp_ix;
-"%s" = ddInstruction any4;
-"%s" = ddInstruction any3;
+"%s" = ddInstruction ref8;
+"%s" = ddInstruction ref16(reverse_bytes);
+"%s" = ddInstruction r_bcde;
+"%s" = ddInstruction r_ixhl;
+"%s" = ddInstruction disp;
+"%s" = ddInstruction cc;
+"%s" = ddInstruction rpx2;
+"%s" = ddInstruction imm16(reverse_bytes);
+"%s" = ddInstruction rst;
 "%s" = ddInstruction;
 
-"%s" = fdInstruction imm16(reverse_bytes);
-"%s" = fdInstruction ref16(reverse_bytes);
-"%s" = fdInstruction r_iyhl;
-"%s" = fdInstruction disp;
+"%s" = fdInstruction r_bcde r_bcde2;
+"%s" = fdInstruction r_bcde r_iyhl;
+"%s" = fdInstruction disp r_bcde;
+"%s" = fdInstruction r_iyhl r_bcde2;
+"%s" = fdInstruction r_iyhl r_iyhl2;
+"%s" = fdInstruction r_iyhl disp;
+"%s" = fdInstruction disp r_iyhl2;
+"%s" = fdInstruction cc_jr imm8;
+"%s" = fdInstruction rp_iy imm16(reverse_bytes);
+"%s" = fdInstruction r_bcde imm8;
 "%s" = fdInstruction r_iyhl imm8;
 "%s" = fdInstruction disp imm8;
-"%s" = fdInstruction r_iyhl r_bcde;
-"%s" = fdInstruction r_bcde r_iyhl2;
-"%s" = fdInstruction r_bcde;
-"%s" = fdInstruction r_bcde r_bcde2;
-"%s" = fdInstruction r_iyhl r_iyhl2;
-"%s" = fdInstruction disp r_no_hl;
-"%s" = fdInstruction r_bcde disp;
-"%s" = fdInstruction r_h_l disp;
+"%s" = fdInstruction cc imm16(reverse_bytes);
+"%s" = fdInstruction alu imm8;
+"%s" = fdInstruction alu disp;
 "%s" = fdInstruction alu r_bcde;
 "%s" = fdInstruction alu r_iyhl;
-"%s" = fdInstruction alu disp;
 "%s" = fdInstruction alu;
+"%s" = fdInstruction imm8;
 "%s" = fdInstruction rp_iy;
-"%s" = fdInstruction any4;
-"%s" = fdInstruction any3;
+"%s" = fdInstruction ref8;
+"%s" = fdInstruction ref16(reverse_bytes);
+"%s" = fdInstruction r_bcde;
+"%s" = fdInstruction r_iyhl;
+"%s" = fdInstruction disp;
+"%s" = fdInstruction cc;
+"%s" = fdInstruction rpy2;
+"%s" = fdInstruction imm16(reverse_bytes);
+"%s" = fdInstruction rst;
 "%s" = fdInstruction;
 
-"%s" = instruction rp imm16(reverse_bytes);
-"%s" = instruction rp ref16(reverse_bytes);
-"%s" = instruction ref16_2(reverse_bytes) rp;
-"%s" = instruction cc imm16(reverse_bytes);
+"%s" = edInstruction r_bcde;
+"%s" = edInstruction r_h_l;
+"%s" = edInstruction rp;
+"%s" = edInstruction ref16_2(reverse_bytes) rp;
+"%s" = edInstruction rp ref16(reverse_bytes);
+"%s" = edInstruction any;
+"%s" = edInstruction im;
+"%s" = edInstruction any6;
+"%s" = edInstruction any5;
+"%s" = edInstruction;
+
+
 "%s" = instruction cc_jr imm8;
+"%s" = instruction rp imm16(reverse_bytes);
+"%s" = instruction r imm8;
 "%s" = instruction r_bcde r;
 "%s" = instruction r_h_l r;
-"%s" = instruction r imm8;
-"%s" = instruction alu r;
-"%s" = instruction alu imm8;
+"%s" = instruction cc imm16(reverse_bytes);
 "%s" = instruction rot r;
 "%s" = instruction bit r;
+"%s" = instruction alu imm8;
+"%s" = instruction alu r;
+"%s" = instruction imm8;
+"%s" = instruction rp;
+"%s" = instruction ref16(reverse_bytes);
+"%s" = instruction r;
 "%s" = instruction r_bcde;
 "%s" = instruction r_h_l;
-"%s" = instruction imm8;
+"%s" = instruction cc;
+"%s" = instruction rp2;
 "%s" = instruction ref8;
 "%s" = instruction imm16(reverse_bytes);
-"%s" = instruction ref16(reverse_bytes);
-"%s" = instruction rp;
-"%s" = instruction rp2;
-"%s" = instruction r;
-"%s" = instruction cc;
-"%s" = instruction im;
 "%s" = instruction rst;
-"%s" = instruction any;
-"%s" = instruction any6;
-"%s" = instruction any5;
 "%s" = instruction;
-

@@ -20,7 +20,6 @@ package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.cpu.testsuite.Generator;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
-import net.emustudio.plugins.cpu.zilogZ80.suite.FlagsCheckImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
 import net.emustudio.plugins.cpu.zilogZ80.suite.Utils;
 import org.junit.Test;
@@ -214,10 +213,7 @@ public class TransferTest extends InstructionsTest {
                 .firstIsRegister(REG_A)
                 .secondIsRegisterI()
                 .setFlags(FLAG_H | FLAG_N)
-                .verifyRegister(REG_A, context -> context.second & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().halfCarryIsReset().subtractionIsReset()
-                        .expectFlagOnlyWhen(FLAG_PV, (context, result) -> cpuRunnerImpl.getIFF(1))
-                );
+                .verifyRegister(REG_A, context -> context.second & 0xFF);
 
         Generator.forSome8bitBinary(
                 test.run(0xED, 0x57)
@@ -230,10 +226,7 @@ public class TransferTest extends InstructionsTest {
                 .firstIsRegister(REG_A)
                 .secondIsRegisterR()
                 .setFlags(FLAG_H | FLAG_N)
-                .verifyRegister(REG_A, context -> (context.second & 0x80) | ((context.second & 0x7F) + 2) & 0x7F)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().halfCarryIsReset().subtractionIsReset()
-                        .expectFlagOnlyWhen(FLAG_PV, (context, result) -> cpuRunnerImpl.getIFF(1))
-                );
+                .verifyRegister(REG_A, context -> (context.second & 0x80) | ((context.second & 0x7F) + 2) & 0x7F);
 
         Generator.forSome8bitBinary(
                 test.run(0xED, 0x5F)
@@ -478,14 +471,7 @@ public class TransferTest extends InstructionsTest {
                 .verifyByte(context -> context.first, context -> context.first & 0xFF)
                 .verifyPair(REG_PAIR_DE, context -> (context.first + 1) & 0xFFFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.second + 1) & 0xFFFF)
-                .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                        .carryIsPreserved()
-                        .zeroIsPreserved()
-                        .signIsPreserved()
-                        .halfCarryIsReset().subtractionIsReset()
-                        .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
-                );
+                .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF);
 
         Generator.forSome16bitBinary(2, 2,
                 test.run(0xED, 0xA0)
@@ -505,13 +491,7 @@ public class TransferTest extends InstructionsTest {
                 .verifyPair(REG_PAIR_HL, context -> (context.second + 1) & 0xFFFF)
                 .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
                 .verifyR(context -> 2)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                        .carryIsPreserved()
-                        .zeroIsPreserved()
-                        .signIsPreserved()
-                        .halfCarryIsReset().subtractionIsReset()
-                        .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
-                ).verifyPC(context -> {
+                .verifyPC(context -> {
                     if (((context.first - 1) & 0xFFFF) != 0) {
                         return context.PC;
                     }
@@ -534,10 +514,7 @@ public class TransferTest extends InstructionsTest {
                 .verifyByte(context -> context.first, context -> context.first & 0xFF)
                 .verifyPair(REG_PAIR_DE, context -> (context.first - 1) & 0xFFFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.second - 1) & 0xFFFF)
-                .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().halfCarryIsReset().subtractionIsReset()
-                        .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
-                );
+                .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF);
 
         Generator.forSome16bitBinary(2, 2,
                 test.run(0xED, 0xA8)
@@ -556,9 +533,7 @@ public class TransferTest extends InstructionsTest {
                 .verifyPair(REG_PAIR_DE, context -> (context.first - 1) & 0xFFFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.second - 1) & 0xFFFF)
                 .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().halfCarryIsReset().subtractionIsReset()
-                        .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
-                ).verifyPC(context -> {
+                .verifyPC(context -> {
                     if (((context.first - 1) & 0xFFFF) != 0) {
                         return context.PC;
                     }

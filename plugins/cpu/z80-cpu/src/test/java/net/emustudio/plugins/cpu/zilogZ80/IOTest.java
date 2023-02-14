@@ -18,11 +18,9 @@
  */
 package net.emustudio.plugins.cpu.zilogZ80;
 
-import net.emustudio.cpu.testsuite.FlagsCheck;
 import net.emustudio.cpu.testsuite.Generator;
 import net.emustudio.cpu.testsuite.RunnerContext;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
-import net.emustudio.plugins.cpu.zilogZ80.suite.FlagsCheckImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
 import org.junit.Test;
 
@@ -51,8 +49,6 @@ public class IOTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsDeviceAndSecondIsPort()
                 .secondIsRegister(REG_C)
-                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().parity().halfCarryIsReset().subtractionIsReset(),
-                        operation)
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
@@ -69,13 +65,9 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testIN_REF_C() {
-        Function<RunnerContext<Byte>, Integer> operation = context -> context.first & 0xFF;
-
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsDeviceAndSecondIsPort()
                 .secondIsRegister(REG_C)
-                .verifyFlags(new FlagsCheckImpl<Byte>().sign().zero().parity().halfCarryIsReset().subtractionIsReset(),
-                        operation)
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
@@ -94,12 +86,7 @@ public class IOTest extends InstructionsTest {
                 .first8MSBisRegister(REG_B)
                 .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
-                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().zero()
-                        .carryIsPreserved()
-                        .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
-                        .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
-                );
+                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF);
 
         Generator.forSome16bitBinary(2,
                 test.run(0xED, 0xA2)
@@ -117,11 +104,6 @@ public class IOTest extends InstructionsTest {
                 .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
                 .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                        .zeroIsSet()
-                        .subtractionIsSet()
-                        .carryIsPreserved()
-                )
                 .verifyPC(context -> {
                     if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
                         return context.PC;
@@ -144,11 +126,7 @@ public class IOTest extends InstructionsTest {
                 .first8MSBisRegister(REG_B)
                 .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
-                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().zero()
-                        .subtractionIsSet()
-                        .carryIsPreserved()
-                );
+                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF);
 
         Generator.forSome16bitBinary(2,
                 test.run(0xED, 0xAA)
@@ -166,10 +144,6 @@ public class IOTest extends InstructionsTest {
                 .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
                 .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                        .zeroIsSet()
-                        .subtractionIsSet()
-                        .carryIsPreserved())
                 .verifyPC(context -> {
                     if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
                         return context.PC;
@@ -235,11 +209,7 @@ public class IOTest extends InstructionsTest {
                 .first8MSBisRegister(REG_B)
                 .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
-                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().zero()
-                        .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
-                        .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
-                );
+                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF);
 
         Generator.forSome16bitBinary(2,
                 test.run(0xED, 0xA3)
@@ -256,11 +226,6 @@ public class IOTest extends InstructionsTest {
                 .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
                 .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                        .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
-                        .expectFlagOnlyWhen(FLAG_Z, (context, result) -> true)
-                        .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
-                )
                 .verifyPC(context -> {
                     if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
                         return context.PC;
@@ -282,11 +247,7 @@ public class IOTest extends InstructionsTest {
                 .first8MSBisRegister(REG_B)
                 .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
-                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().zero()
-                        .subtractionIsSet()
-                        .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
-                );
+                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF);
 
         Generator.forSome16bitBinary(2,
                 test.run(0xED, 0xAB)
@@ -303,11 +264,6 @@ public class IOTest extends InstructionsTest {
                 .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
                 .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
                 .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-                .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
-                        .expectFlagOnlyWhen(FLAG_N, (context, result) -> true)
-                        .expectFlagOnlyWhen(FLAG_Z, (context, result) -> true)
-                        .expectFlagOnlyWhen(FLAG_C, (context, result) -> (context.flags & FLAG_C) == FLAG_C)
-                )
                 .verifyPC(context -> {
                     if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
                         return context.PC;

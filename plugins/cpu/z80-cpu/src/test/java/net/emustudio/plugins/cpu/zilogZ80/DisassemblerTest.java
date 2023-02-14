@@ -362,21 +362,21 @@ public class DisassemblerTest {
                 0xFD, 0x6C,                                  // ld iyl, iyh
                 0xFD, 0x6D,                                  // ld iyl, iyl
                 0xDD, 0x72, 0x20,                            // ld (ix+0x20), d
-                0xDD, 0x74, 0x20,                            // ld (ix+0x20), h
-                0xDD, 0x75, 0x20,                            // ld (ix+0x20), l
+                0xDD, 0x74, 0x20,                            // ld (ix+0x20), ixh
+                0xDD, 0x75, 0x20,                            // ld (ix+0x20), ixl
                 0xFD, 0x73, 0x20,                            // ld (iy+0x20), e
-                0xFD, 0x74, 0x20,                            // ld (iy+0x20), h
-                0xFD, 0x75, 0x20,                            // ld (iy+0x20), l
+                0xFD, 0x74, 0x20,                            // ld (iy+0x20), iyh
+                0xFD, 0x75, 0x20,                            // ld (iy+0x20), iyl
                 0xDD, 0x7C,                                  // ld a, ixh
                 0xFD, 0x7C,                                  // ld a, iyh
                 0xDD, 0x7D,                                  // ld a, ixl
                 0xFD, 0x7D,                                  // ld a, iyl
                 0xDD, 0x7E, 0x20,                            // ld a, (ix+0x20)
                 0xFD, 0x7E, 0x20,                            // ld a, (iy+0x20)
-                0xDD, 0x66, 0x20,                            // ld h, (ix+0x20)
-                0xDD, 0x6E, 0x20,                            // ld l, (ix+0x20)
-                0xFD, 0x66, 0x20,                            // ld h, (iy+0x20)
-                0xFD, 0x6E, 0x20,                            // ld l, (iy+0x20)
+                0xDD, 0x66, 0x20,                            // ld ixh, (ix+0x20)
+                0xDD, 0x6E, 0x20,                            // ld ixl, (ix+0x20)
+                0xFD, 0x66, 0x20,                            // ld iyh, (iy+0x20)
+                0xFD, 0x6E, 0x20,                            // ld iyl, (iy+0x20)
                 0xDD, 0x84,                                  // add a, ixh
                 0xDD, 0x85,                                  // add a, ixl
                 0xDD, 0x86, 0x20,                            // add a, (ix + 0x20)
@@ -757,21 +757,21 @@ public class DisassemblerTest {
                         "ld iyl, iyh" +
                         "ld iyl, iyl" +
                         "ld (ix+20h), d" +
-                        "ld (ix+20h), h" +
-                        "ld (ix+20h), l" +
+                        "ld (ix+20h), ixh" +
+                        "ld (ix+20h), ixl" +
                         "ld (iy+20h), e" +
-                        "ld (iy+20h), h" +
-                        "ld (iy+20h), l" +
+                        "ld (iy+20h), iyh" +
+                        "ld (iy+20h), iyl" +
                         "ld a, ixh" +
                         "ld a, iyh" +
                         "ld a, ixl" +
                         "ld a, iyl" +
                         "ld a, (ix+20h)" +
                         "ld a, (iy+20h)" +
-                        "ld h, (ix+20h)" +
-                        "ld l, (ix+20h)" +
-                        "ld h, (iy+20h)" +
-                        "ld l, (iy+20h)" +
+                        "ld ixh, (ix+20h)" +
+                        "ld ixl, (ix+20h)" +
+                        "ld iyh, (iy+20h)" +
+                        "ld iyl, (iy+20h)" +
                         "add a, ixh" +
                         "add a, ixl" +
                         "add a, (ix+20h)" +
