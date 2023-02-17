@@ -1,121 +1,53 @@
-/*
- * This file is part of emuStudio.
- *
- * Copyright (C) 2006-2023  Peter Jakubčo
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.plugins.memory.bytemem.gui.FindSequenceDialog;
 import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
-import java.util.List;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FindSequenceAction extends AbstractAction {
-    public final static String ERROR_NUMBER_FORMAT = "Cannot parse sequence of bytes. Bytes (in correct radix format) must be separated with spaces.";
-    private final static Logger LOGGER = LoggerFactory.getLogger(FindSequenceAction.class);
+    private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/edit-find.png";
     private final Dialogs dialogs;
-    private final Runnable dispose;
+    private final Consumer<Integer> setPageFromAddress;
     private final MemoryTableModel tableModel;
+    private final Supplier<Integer> getCurrentAddress;
+    private final JDialog parent;
 
-    private final Consumer<Integer> setFoundAddress;
-
-    private final Supplier<Boolean> isCurrentPage;
-    private final Supplier<Boolean> isPlainText;
-    private final int currentAddress;
-    private final JTextComponent txtPosition;
-    private final JTextComponent txtFindText;
-
-    private final RadixUtils radixUtils = RadixUtils.getInstance();
-
-    public FindSequenceAction(Dialogs dialogs, Runnable dispose,
-                              MemoryTableModel tableModel,
-                              Consumer<Integer> setFoundAddress,
-                              Supplier<Boolean> isCurrentPage,
-                              Supplier<Boolean> isPlainText,
-                              int currentAddress,
-                              JTextComponent txtPosition,
-                              JTextComponent txtFindText) {
-        super("Find");
+    public FindSequenceAction(Dialogs dialogs, Consumer<Integer> setPageFromAddress, MemoryTableModel tableModel,
+                              Supplier<Integer> getCurrentAddress, JDialog parent) {
+        super("Find sequence...", new ImageIcon(FindSequenceAction.class.getResource(ICON_FILE)));
 
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.dispose = Objects.requireNonNull(dispose);
+        this.setPageFromAddress = Objects.requireNonNull(setPageFromAddress);
         this.tableModel = Objects.requireNonNull(tableModel);
+        this.getCurrentAddress = Objects.requireNonNull(getCurrentAddress);
+        this.parent = Objects.requireNonNull(parent);
 
-        this.setFoundAddress = Objects.requireNonNull(setFoundAddress);
-
-        this.currentAddress = currentAddress;
-        this.isCurrentPage = Objects.requireNonNull(isCurrentPage);
-        this.isPlainText = Objects.requireNonNull(isPlainText);
-        this.txtPosition = Objects.requireNonNull(txtPosition);
-        this.txtFindText = Objects.requireNonNull(txtFindText);
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
+        putValue(SHORT_DESCRIPTION, "Find sequence...");
+        putValue(MNEMONIC_KEY, KeyEvent.VK_F);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        LastError lastError = new LastError();
+        AtomicInteger foundAddress = new AtomicInteger(-1);
+        FindSequenceDialog dialog = new FindSequenceDialog(
+                dialogs, parent, tableModel, getCurrentAddress.get(), foundAddress::set
+        );
 
-        try {
-            lastError.component = txtPosition;
-            lastError.message = ERROR_NUMBER_FORMAT;
-            int from = isCurrentPage.get() ? currentAddress : radixUtils.parseRadix(txtPosition.getText().trim());
+        dialog.setVisible(true);
 
-            lastError.component = txtFindText;
-            lastError.message = "Sequence cannot be empty";
-            String text = txtFindText.getText();
-            if (text.isEmpty()) {
-                throw new Exception();
-            }
-
-            final byte[] sequenceToFind;
-            if (isPlainText.get()) {
-                sequenceToFind = text.getBytes();
-            } else {
-                lastError.message = ERROR_NUMBER_FORMAT;
-
-                List<Integer> mapped = Stream.of(text.split(" ")).map(radixUtils::parseRadix).collect(Collectors.toList());
-                sequenceToFind = new byte[mapped.size()];
-                for (int i = 0; i < sequenceToFind.length; i++) {
-                    sequenceToFind[i] = mapped.get(i).byteValue(); // NOTE: if integer is > than byte, the rest is cut off.
-                }
-            }
-
-            tableModel.findSequence(sequenceToFind, from).ifPresent(setFoundAddress);
-            dispose.run();
-        } catch (Exception ex) {
-            LOGGER.debug(lastError.message, ex);
-            dialogs.showError(lastError.message, "Find sequence");
-
-            lastError.component.selectAll();
-            lastError.component.requestFocus();
+        int address = foundAddress.get();
+        if (address != -1) {
+            setPageFromAddress.accept(address);
         }
-    }
-
-    private final static class LastError {
-        JTextComponent component;
-        String message;
     }
 }

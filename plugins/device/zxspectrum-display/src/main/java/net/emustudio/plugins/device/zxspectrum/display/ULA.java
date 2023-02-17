@@ -155,6 +155,11 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         if (!microphoneAndEar) {
             result |= 0x40;
         }
+
+   //     System.out.print(Integer.toHexString(portAddress & 0xFF00) + " = " + Integer.toHexString(result & 0xFF)  + "; ");
+     //   if ((portAddress & 0xFF00) == 0x7F00) {
+       //     System.out.println();
+        //}
         return result;
     }
 

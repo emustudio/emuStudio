@@ -34,8 +34,6 @@ Projects:
 - [simh](http://simh.trailing-edge.com/) project, which was the main inspiration for Altair8800 computer
 - [MAME](https://www.mamedev.org/) project, which helped with resolving a lot of bugs in a correct implementation of
   some 8080 and Z80 CPU instructions
-- [RedCode Z80](https://github.com/redcode/Z80) project, for helping with correctly implementing some Z80 instructions
-- [superzazu's Z80](https://github.com/superzazu/z80), includes test ROMs
 
 Sites:
 - [David Sharp's SSEM site](https://www.davidsharp.com/baby/), main inspiration for SSEM implementation
@@ -44,9 +42,6 @@ Sites:
 - [Altair Clone](https://altairclone.com/), more inspiration for Altair8800
 - [Study of techniques for emulation programming](http://www.xsim.com/papers/Bario.2001.emubook.pdf), emulation techniques classic
 - [8080 instruction table](https://tobiasvl.github.io/optable/intel-8080/classic)
-- [CLR home Z80 instructions table](https://clrhome.org/table/) 
-- [Z80 Undocumented documented](http://www.z80.info/zip/z80-documented.pdf), undocumented behavior of Z80 CPU
-- [Z80 undocumented](https://baltazarstudios.com/zilog-z80-undocumented-behavior/), another undocumented behavior of Z80 CPU
 
 Discord:
 - [Discord Emulation Development](https://discord.com/channels/465585922579103744/channel-browser)

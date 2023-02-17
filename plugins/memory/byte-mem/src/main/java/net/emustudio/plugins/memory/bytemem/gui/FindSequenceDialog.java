@@ -19,7 +19,7 @@
 package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.memory.bytemem.gui.actions.FindSequenceAction;
+import net.emustudio.plugins.memory.bytemem.gui.actions.find_sequence.PerformFindSequenceAction;
 import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
 
 import javax.swing.*;
@@ -27,7 +27,7 @@ import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
 
 public class FindSequenceDialog extends JDialog {
-    private final FindSequenceAction findSequenceAction;
+    private final PerformFindSequenceAction performFindSequenceAction;
     private final JRadioButton radioCurrentPage = new JRadioButton();
     private final JRadioButton radioPlainText = new JRadioButton();
     private final JTextField txtPosition = new JTextField();
@@ -37,7 +37,7 @@ public class FindSequenceDialog extends JDialog {
         super(parent, true);
         setLocationRelativeTo(parent);
 
-        this.findSequenceAction = new FindSequenceAction(
+        this.performFindSequenceAction = new PerformFindSequenceAction(
                 dialogs, this::dispose, tableModel, setFoundAddress, radioCurrentPage::isSelected,
                 radioPlainText::isSelected, currentAddress, txtPosition, txtSequence
         );
@@ -51,7 +51,7 @@ public class FindSequenceDialog extends JDialog {
         JRadioButton radioBytes = new JRadioButton();
         JPanel jPanel2 = new JPanel();
         JRadioButton radioSpecificPosition = new JRadioButton();
-        JButton btnFind = new JButton(findSequenceAction);
+        JButton btnFind = new JButton(performFindSequenceAction);
         btnGroupSequenceToFind.add(radioPlainText);
         btnGroupSequenceToFind.add(radioBytes);
 

@@ -16,20 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.bytemem.gui;
+package net.emustudio.plugins.memory.bytemem.loaders;
 
-import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
-import java.awt.*;
-import java.util.List;
+import java.nio.file.Path;
 
-import static net.emustudio.plugins.memory.bytemem.loaders.Loader.IMAGE_LOADERS;
+public class TzxLoader implements Loader {
 
+    @Override
+    public boolean isMemoryAddressAware() {
+        return true;
+    }
 
-public class Constants {
-    public final static Font MEMORY_CELLS_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+    @Override
+    public void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws Exception {
 
-    public final static FileExtensionsFilter IMAGE_EXTENSION_FILTER = new FileExtensionsFilter(
-            "Memory image", List.copyOf(IMAGE_LOADERS.keySet())
-    );
+    }
 }
