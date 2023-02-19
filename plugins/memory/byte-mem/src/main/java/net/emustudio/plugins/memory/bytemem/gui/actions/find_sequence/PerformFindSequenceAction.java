@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;

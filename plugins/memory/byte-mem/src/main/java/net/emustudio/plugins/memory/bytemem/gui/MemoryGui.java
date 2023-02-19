@@ -22,16 +22,12 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
-import net.emustudio.plugins.memory.bytemem.gui.actions.DumpMemoryAction;
-import net.emustudio.plugins.memory.bytemem.gui.actions.FindSequenceAction;
-import net.emustudio.plugins.memory.bytemem.gui.actions.GotoAddressAction;
-import net.emustudio.plugins.memory.bytemem.gui.actions.LoadImageAction;
+import net.emustudio.plugins.memory.bytemem.gui.actions.*;
 import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
 import net.emustudio.plugins.memory.bytemem.gui.model.TableMemory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -40,10 +36,6 @@ import java.util.Objects;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 
 public class MemoryGui extends JDialog {
-    private final MemoryContextImpl context;
-    private final MemoryImpl memory;
-    private final PluginSettings settings;
-    private final Dialogs dialogs;
 
     private final TableMemory table;
     private final MemoryTableModel tableModel;
@@ -58,7 +50,14 @@ public class MemoryGui extends JDialog {
     private final JTextField txtValueDec = new JTextField();
     private final JTextField txtValueHex = new JTextField();
     private final JTextField txtValueOct = new JTextField();
-    private final JToggleButton btnAsciiMode = new JToggleButton();
+
+    private final LoadImageAction loadImageAction;
+    private final DumpMemoryAction dumpMemoryAction;
+    private final GotoAddressAction gotoAddressAction;
+    private final FindSequenceAction findSequenceAction;
+    private final AsciiModeAction asciiModeAction;
+    private final EraseMemoryAction eraseMemoryAction;
+    private final SettingsAction settingsAction;
 
     private final LoadImageAction loadImageAction;
     private final DumpMemoryAction dumpMemoryAction;
@@ -69,10 +68,11 @@ public class MemoryGui extends JDialog {
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
         super(parent);
 
-        this.context = Objects.requireNonNull(context);
-        this.memory = Objects.requireNonNull(memory);
-        this.settings = Objects.requireNonNull(settings);
-        this.dialogs = Objects.requireNonNull(dialogs);
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(memory);
+        Objects.requireNonNull(settings);
+        Objects.requireNonNull(dialogs);
+
         this.tableModel = new MemoryTableModel(context);
         this.table = new TableMemory(tableModel, paneMemory);
 
@@ -84,6 +84,10 @@ public class MemoryGui extends JDialog {
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
         this.findSequenceAction = new FindSequenceAction(dialogs, this::setPageFromAddress, tableModel,
                 this::getCurrentAddress, this);
+        JToggleButton btnAsciiMode = new JToggleButton();
+        this.asciiModeAction = new AsciiModeAction(tableModel, btnAsciiMode);
+        this.eraseMemoryAction = new EraseMemoryAction(tableModel, context);
+        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings);
 
         initComponents();
         super.setLocationRelativeTo(parent);
@@ -149,24 +153,22 @@ public class MemoryGui extends JDialog {
 
     private void initComponents() {
         JToolBar toolBar = new JToolBar();
-        JButton btnClean = new JButton();
-        JButton btnSettings = new JButton();
         JSplitPane splitPane = new JSplitPane();
         JPanel jPanel2 = new JPanel();
         JPanel jPanel3 = new JPanel();
-        JLabel jLabel1 = new JLabel();
-        JLabel jLabel2 = new JLabel();
-        JLabel jLabel3 = new JLabel();
-        JLabel jLabel4 = new JLabel();
+        JLabel lblPageNumber = new JLabel();
+        JLabel lblPageFrom = new JLabel();
+        JLabel lblMemoryBank = new JLabel();
+        JLabel lblMemoryBankFrom = new JLabel();
         JPanel jPanel4 = new JPanel();
-        JLabel jLabel5 = new JLabel();
-        JLabel jLabel6 = new JLabel();
+        JLabel lblAddress = new JLabel();
+        JLabel lblSymbol = new JLabel();
         JSeparator jSeparator4 = new JSeparator();
-        JLabel jLabel7 = new JLabel();
-        JLabel jLabel8 = new JLabel();
-        JLabel jLabel9 = new JLabel();
-        JLabel jLabel10 = new JLabel();
-        JLabel jLabel11 = new JLabel();
+        JLabel lblValue = new JLabel();
+        JLabel lblValueDec = new JLabel();
+        JLabel lblValueHex = new JLabel();
+        JLabel lblValueOct = new JLabel();
+        JLabel lblValueBin = new JLabel();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -182,36 +184,11 @@ public class MemoryGui extends JDialog {
         toolBar.add(new ToolbarButton(gotoAddressAction));
         toolBar.add(new ToolbarButton(findSequenceAction));
         toolBar.addSeparator();
-
-        btnAsciiMode.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/ascii-mode.png")));
-        btnAsciiMode.setToolTipText("Toggle ASCII mode...");
-        btnAsciiMode.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnAsciiMode.setFocusable(false);
-        btnAsciiMode.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnAsciiMode.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnAsciiMode.setSelected(false);
-        btnAsciiMode.addActionListener(this::btnSymbolModeActionPerformed);
-        toolBar.add(btnAsciiMode);
+        toolBar.add(new ToolbarButton(asciiModeAction));
         toolBar.addSeparator();
-
-        btnClean.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/edit-clear.png")));
-        btnClean.setToolTipText("Erase memory");
-        btnClean.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnClean.setFocusable(false);
-        btnClean.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnClean.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnClean.addActionListener(this::btnCleanActionPerformed);
-        toolBar.add(btnClean);
+        toolBar.add(new ToolbarButton(eraseMemoryAction));
         toolBar.addSeparator();
-
-        btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/preferences-system.png")));
-        btnSettings.setToolTipText("Settings...");
-        btnSettings.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnSettings.setFocusable(false);
-        btnSettings.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnSettings.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnSettings.addActionListener(this::btnSettingsActionPerformed);
-        toolBar.add(btnSettings);
+        toolBar.add(new ToolbarButton(settingsAction));
 
         splitPane.setDividerLocation(390);
         splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -219,14 +196,14 @@ public class MemoryGui extends JDialog {
 
         jPanel3.setBorder(BorderFactory.createTitledBorder("Memory control"));
 
-        jLabel1.setText("Page number:");
-        jLabel2.setText("/");
+        lblPageNumber.setText("Page number:");
+        lblPageFrom.setText("/");
 
         lblPageCount.setFont(lblPageCount.getFont().deriveFont(lblPageCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblPageCount.setText("0");
 
-        jLabel3.setText("Memory bank:");
-        jLabel4.setText("/");
+        lblMemoryBank.setText("Memory bank:");
+        lblMemoryBankFrom.setText("/");
 
         lblBanksCount.setText("0");
 
@@ -236,19 +213,19 @@ public class MemoryGui extends JDialog {
                 jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(jLabel1)
+                                .addComponent(lblPageNumber)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(spnPage, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel2)
+                                .addComponent(lblPageFrom)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(lblPageCount)
                                 .addGap(54, 54, 54)
-                                .addComponent(jLabel3)
+                                .addComponent(lblMemoryBank)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(spnBank, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel4)
+                                .addComponent(lblMemoryBankFrom)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(lblBanksCount)
                                 .addContainerGap(283, Short.MAX_VALUE))
@@ -258,59 +235,59 @@ public class MemoryGui extends JDialog {
                         .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel1)
+                                        .addComponent(lblPageNumber)
                                         .addComponent(spnPage, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel2)
+                                        .addComponent(lblPageFrom)
                                         .addComponent(lblPageCount)
-                                        .addComponent(jLabel3)
+                                        .addComponent(lblMemoryBank)
                                         .addComponent(spnBank, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel4)
+                                        .addComponent(lblMemoryBankFrom)
                                         .addComponent(lblBanksCount))
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel4.setBorder(BorderFactory.createTitledBorder("Selected value"));
 
-        jLabel5.setText("Address:");
+        lblAddress.setText("Address:");
 
         txtAddress.setEditable(false);
         txtAddress.setHorizontalAlignment(JTextField.RIGHT);
         txtAddress.setText("0000");
 
-        jLabel6.setText("Symbol:");
+        lblSymbol.setText("Symbol:");
 
         txtChar.setEditable(false);
         txtChar.setHorizontalAlignment(JTextField.RIGHT);
 
         jSeparator4.setOrientation(SwingConstants.VERTICAL);
 
-        jLabel7.setText("Value:");
+        lblValue.setText("Value:");
 
         txtValueDec.setEditable(false);
         txtValueDec.setHorizontalAlignment(JTextField.RIGHT);
         txtValueDec.setText("00");
         txtValueDec.setToolTipText("");
 
-        jLabel8.setText("(dec)");
+        lblValueDec.setText("(dec)");
 
         txtValueHex.setEditable(false);
         txtValueHex.setHorizontalAlignment(JTextField.RIGHT);
         txtValueHex.setText("00");
 
-        jLabel9.setText("(hex)");
+        lblValueHex.setText("(hex)");
 
         txtValueOct.setEditable(false);
         txtValueOct.setHorizontalAlignment(JTextField.RIGHT);
         txtValueOct.setText("000");
 
-        jLabel10.setText("(oct)");
+        lblValueOct.setText("(oct)");
 
         txtValueBin.setEditable(false);
         txtValueBin.setHorizontalAlignment(JTextField.RIGHT);
         txtValueBin.setText("0000 0000");
         txtValueBin.setToolTipText("");
 
-        jLabel11.setText("(bin)");
+        lblValueBin.setText("(bin)");
 
         GroupLayout jPanel4Layout = new GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -319,8 +296,8 @@ public class MemoryGui extends JDialog {
                         .addGroup(jPanel4Layout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel5)
-                                        .addComponent(jLabel6))
+                                        .addComponent(lblAddress)
+                                        .addComponent(lblSymbol))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                                         .addComponent(txtChar, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
@@ -328,15 +305,15 @@ public class MemoryGui extends JDialog {
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, 13, GroupLayout.PREFERRED_SIZE)
                                 .addGap(2, 2, 2)
-                                .addComponent(jLabel7)
+                                .addComponent(lblValue)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                                         .addComponent(txtValueHex)
                                         .addComponent(txtValueDec, GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel8)
-                                        .addComponent(jLabel9))
+                                        .addComponent(lblValueDec)
+                                        .addComponent(lblValueHex))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                                         .addComponent(txtValueBin)
@@ -344,10 +321,10 @@ public class MemoryGui extends JDialog {
                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addGroup(jPanel4Layout.createSequentialGroup()
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(jLabel10))
+                                                .addComponent(lblValueOct))
                                         .addGroup(GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                                                 .addGap(7, 7, 7)
-                                                .addComponent(jLabel11)))
+                                                .addComponent(lblValueBin)))
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
@@ -357,25 +334,25 @@ public class MemoryGui extends JDialog {
                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addGroup(jPanel4Layout.createSequentialGroup()
                                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                        .addComponent(jLabel7)
+                                                        .addComponent(lblValue)
                                                         .addComponent(txtValueDec, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(jLabel8)
+                                                        .addComponent(lblValueDec)
                                                         .addComponent(txtValueOct, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(jLabel10))
+                                                        .addComponent(lblValueOct))
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                                         .addComponent(txtValueHex, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(jLabel9)
+                                                        .addComponent(lblValueHex)
                                                         .addComponent(txtValueBin, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(jLabel11)))
+                                                        .addComponent(lblValueBin)))
                                         .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                                                 .addGroup(jPanel4Layout.createSequentialGroup()
                                                         .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(jLabel5)
+                                                                .addComponent(lblAddress)
                                                                 .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                                         .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                         .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                                .addComponent(jLabel6)
+                                                                .addComponent(lblSymbol)
                                                                 .addComponent(txtChar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
                                                 .addComponent(jSeparator4)))
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -423,19 +400,6 @@ public class MemoryGui extends JDialog {
         );
 
         pack();
-    }
-
-    private void btnCleanActionPerformed(ActionEvent evt) {
-        context.clear();
-        tableModel.fireTableDataChanged();
-    }
-
-    private void btnSymbolModeActionPerformed(ActionEvent evt) {
-        tableModel.setAsciiMode(btnAsciiMode.isSelected());
-    }
-
-    private void btnSettingsActionPerformed(ActionEvent evt) {
-        new SettingsDialog(this, memory, context, table, settings, dialogs).setVisible(true);
     }
 
     private int getCurrentAddress() {
