@@ -22,16 +22,12 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
-import net.emustudio.plugins.memory.bytemem.gui.actions.DumpMemoryAction;
-import net.emustudio.plugins.memory.bytemem.gui.actions.FindSequenceAction;
-import net.emustudio.plugins.memory.bytemem.gui.actions.GotoAddressAction;
-import net.emustudio.plugins.memory.bytemem.gui.actions.LoadImageAction;
+import net.emustudio.plugins.memory.bytemem.gui.actions.*;
 import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
 import net.emustudio.plugins.memory.bytemem.gui.model.TableMemory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -40,10 +36,6 @@ import java.util.Objects;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 
 public class MemoryGui extends JDialog {
-    private final MemoryContextImpl context;
-    private final MemoryImpl memory;
-    private final PluginSettings settings;
-    private final Dialogs dialogs;
 
     private final TableMemory table;
     private final MemoryTableModel tableModel;
@@ -58,21 +50,24 @@ public class MemoryGui extends JDialog {
     private final JTextField txtValueDec = new JTextField();
     private final JTextField txtValueHex = new JTextField();
     private final JTextField txtValueOct = new JTextField();
-    private final JToggleButton btnAsciiMode = new JToggleButton();
 
     private final LoadImageAction loadImageAction;
     private final DumpMemoryAction dumpMemoryAction;
     private final GotoAddressAction gotoAddressAction;
     private final FindSequenceAction findSequenceAction;
+    private final AsciiModeAction asciiModeAction;
+    private final EraseMemoryAction eraseMemoryAction;
+    private final SettingsAction settingsAction;
 
 
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
         super(parent);
 
-        this.context = Objects.requireNonNull(context);
-        this.memory = Objects.requireNonNull(memory);
-        this.settings = Objects.requireNonNull(settings);
-        this.dialogs = Objects.requireNonNull(dialogs);
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(memory);
+        Objects.requireNonNull(settings);
+        Objects.requireNonNull(dialogs);
+
         this.tableModel = new MemoryTableModel(context);
         this.table = new TableMemory(tableModel, paneMemory);
 
@@ -84,6 +79,10 @@ public class MemoryGui extends JDialog {
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
         this.findSequenceAction = new FindSequenceAction(dialogs, this::setPageFromAddress, tableModel,
                 this::getCurrentAddress, this);
+        JToggleButton btnAsciiMode = new JToggleButton();
+        this.asciiModeAction = new AsciiModeAction(tableModel, btnAsciiMode);
+        this.eraseMemoryAction = new EraseMemoryAction(tableModel, context);
+        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings);
 
         initComponents();
         super.setLocationRelativeTo(parent);
@@ -149,8 +148,6 @@ public class MemoryGui extends JDialog {
 
     private void initComponents() {
         JToolBar toolBar = new JToolBar();
-        JButton btnClean = new JButton();
-        JButton btnSettings = new JButton();
         JSplitPane splitPane = new JSplitPane();
         JPanel jPanel2 = new JPanel();
         JPanel jPanel3 = new JPanel();
@@ -182,36 +179,11 @@ public class MemoryGui extends JDialog {
         toolBar.add(new ToolbarButton(gotoAddressAction));
         toolBar.add(new ToolbarButton(findSequenceAction));
         toolBar.addSeparator();
-
-        btnAsciiMode.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/ascii-mode.png")));
-        btnAsciiMode.setToolTipText("Toggle ASCII mode...");
-        btnAsciiMode.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnAsciiMode.setFocusable(false);
-        btnAsciiMode.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnAsciiMode.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnAsciiMode.setSelected(false);
-        btnAsciiMode.addActionListener(this::btnSymbolModeActionPerformed);
-        toolBar.add(btnAsciiMode);
+        toolBar.add(new ToolbarButton(asciiModeAction));
         toolBar.addSeparator();
-
-        btnClean.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/edit-clear.png")));
-        btnClean.setToolTipText("Erase memory");
-        btnClean.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnClean.setFocusable(false);
-        btnClean.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnClean.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnClean.addActionListener(this::btnCleanActionPerformed);
-        toolBar.add(btnClean);
+        toolBar.add(new ToolbarButton(eraseMemoryAction));
         toolBar.addSeparator();
-
-        btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/preferences-system.png")));
-        btnSettings.setToolTipText("Settings...");
-        btnSettings.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnSettings.setFocusable(false);
-        btnSettings.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnSettings.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnSettings.addActionListener(this::btnSettingsActionPerformed);
-        toolBar.add(btnSettings);
+        toolBar.add(new ToolbarButton(settingsAction));
 
         splitPane.setDividerLocation(390);
         splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -423,19 +395,6 @@ public class MemoryGui extends JDialog {
         );
 
         pack();
-    }
-
-    private void btnCleanActionPerformed(ActionEvent evt) {
-        context.clear();
-        tableModel.fireTableDataChanged();
-    }
-
-    private void btnSymbolModeActionPerformed(ActionEvent evt) {
-        tableModel.setAsciiMode(btnAsciiMode.isSelected());
-    }
-
-    private void btnSettingsActionPerformed(ActionEvent evt) {
-        new SettingsDialog(this, memory, context, table, settings, dialogs).setVisible(true);
     }
 
     private int getCurrentAddress() {
