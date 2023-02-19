@@ -18,9 +18,10 @@
  */
 package net.emustudio.plugins.memory.bytemem.loaders;
 
+import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
-import java.io.RandomAccessFile;
+import java.io.FileInputStream;
 import java.nio.file.Path;
 
 public class BinaryLoader implements Loader {
@@ -33,15 +34,11 @@ public class BinaryLoader implements Loader {
     @Override
     public void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws Exception {
         int oldBank = memory.getSelectedBank();
-        try (RandomAccessFile binaryFile = new RandomAccessFile(path.toFile(), "r")) {
-            memory.selectBank(bank.bank);
 
-            long position = 0, length = binaryFile.length();
-            int address = bank.address;
-            while (position < length) {
-                memory.write(address++, (byte) (binaryFile.readUnsignedByte() & 0xFF));
-                position++;
-            }
+        try (FileInputStream stream = new FileInputStream(path.toFile())) {
+            memory.selectBank(bank.bank);
+            byte[] content = stream.readAllBytes();
+            memory.write(bank.address, NumberUtils.nativeBytesToBytes(content));
         } catch (Exception e) {
             memory.selectBank(oldBank);
             throw e;

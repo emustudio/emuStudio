@@ -26,11 +26,11 @@ public class TzxLoader implements Loader {
 
     @Override
     public boolean isMemoryAddressAware() {
-        return true;
+        return false;
     }
 
     @Override
     public void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws Exception {
-
+        throw new RuntimeException("Not supported yet!");
     }
 }

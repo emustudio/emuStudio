@@ -42,12 +42,14 @@ public class LoadImageAction extends AbstractAction {
                 false, IMAGE_EXTENSION_FILTER);
         imagePath.ifPresent(path -> {
             Loader loader = Loader.createLoader(path);
-            Loader.MemoryBank bank = askForMemoryBank(loader.isMemoryAddressAware());
+            Loader.MemoryBank bank = askForMemoryBank(!loader.isMemoryAddressAware());
             try {
                 loader.load(path, context, bank);
                 repaint.run();
             } catch (Exception ex) {
                 dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");
+
+                ex.printStackTrace();
             }
         });
     }
