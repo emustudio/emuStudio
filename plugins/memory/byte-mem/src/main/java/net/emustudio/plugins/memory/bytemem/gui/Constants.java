@@ -21,12 +21,15 @@ package net.emustudio.plugins.memory.bytemem.gui;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 
 import java.awt.*;
+import java.util.List;
+
+import static net.emustudio.plugins.memory.bytemem.loaders.Loader.IMAGE_LOADERS;
 
 
 public class Constants {
     public final static Font MEMORY_CELLS_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
 
     public final static FileExtensionsFilter IMAGE_EXTENSION_FILTER = new FileExtensionsFilter(
-            "Memory image", "hex", "bin", "com", "out"
+            "Memory image", List.copyOf(IMAGE_LOADERS.keySet())
     );
 }

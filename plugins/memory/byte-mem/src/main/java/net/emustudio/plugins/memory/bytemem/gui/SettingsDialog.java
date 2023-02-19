@@ -437,11 +437,18 @@ public class SettingsDialog extends JDialog {
         if (index == -1) {
             dialogs.showError("Image has to be selected", "Load image now");
         } else {
-            memory.loadImage(
-                    Path.of(imagesModel.getFileNameAtRow(index)), imagesModel.getImageAddressAtRow(index),
-                    imagesModel.getImageBankAtRow(index)
-            );
-            tblMem.getTableModel().fireTableDataChanged();
+            Path imagePath = Path.of(imagesModel.getFileNameAtRow(index));
+            try {
+
+                memory.loadImage(
+                        imagePath, imagesModel.getImageAddressAtRow(index),
+                        imagesModel.getImageBankAtRow(index)
+                );
+                tblMem.getTableModel().fireTableDataChanged();
+            } catch (Exception e) {
+                dialogs.showError("Could not load image: " + e.getMessage() + ". Please see log file for details.");
+                LOGGER.error("Could not load memory image " + imagePath, e);
+            }
         }
     }
 }

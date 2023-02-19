@@ -19,14 +19,15 @@
 package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
+import net.emustudio.plugins.memory.bytemem.gui.actions.DumpMemoryAction;
+import net.emustudio.plugins.memory.bytemem.gui.actions.FindSequenceAction;
+import net.emustudio.plugins.memory.bytemem.gui.actions.GotoAddressAction;
+import net.emustudio.plugins.memory.bytemem.gui.actions.LoadImageAction;
 import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
 import net.emustudio.plugins.memory.bytemem.gui.model.TableMemory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,17 +35,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.*;
-import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
 
 public class MemoryGui extends JDialog {
-    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryGui.class);
-
     private final MemoryContextImpl context;
     private final MemoryImpl memory;
     private final PluginSettings settings;
@@ -65,6 +60,11 @@ public class MemoryGui extends JDialog {
     private final JTextField txtValueOct = new JTextField();
     private final JToggleButton btnAsciiMode = new JToggleButton();
 
+    private final LoadImageAction loadImageAction;
+    private final DumpMemoryAction dumpMemoryAction;
+    private final GotoAddressAction gotoAddressAction;
+    private final FindSequenceAction findSequenceAction;
+
 
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
         super(parent);
@@ -74,11 +74,20 @@ public class MemoryGui extends JDialog {
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.tableModel = new MemoryTableModel(context);
+        this.table = new TableMemory(tableModel, paneMemory);
+
+        this.loadImageAction = new LoadImageAction(dialogs, context, this, () -> {
+            table.revalidate();
+            table.repaint();
+        });
+        this.dumpMemoryAction = new DumpMemoryAction(dialogs, context);
+        this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
+        this.findSequenceAction = new FindSequenceAction(dialogs, this::setPageFromAddress, tableModel,
+                this::getCurrentAddress, this);
 
         initComponents();
         super.setLocationRelativeTo(parent);
 
-        table = new TableMemory(tableModel, paneMemory);
         paneMemory.setViewportView(table);
 
         tableModel.addTableModelListener(e -> spnPage.getModel().setValue(tableModel.getPage()));
@@ -140,10 +149,6 @@ public class MemoryGui extends JDialog {
 
     private void initComponents() {
         JToolBar toolBar = new JToolBar();
-        JButton btnLoadImage = new JButton();
-        JButton btnDump = new JButton();
-        JButton btnGotoAddress = new JButton();
-        JButton btnFind = new JButton();
         JButton btnClean = new JButton();
         JButton btnSettings = new JButton();
         JSplitPane splitPane = new JSplitPane();
@@ -171,43 +176,11 @@ public class MemoryGui extends JDialog {
 
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
-
-        btnLoadImage.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/document-open.png")));
-        btnLoadImage.setToolTipText("Load image...");
-        btnLoadImage.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnLoadImage.setFocusable(false);
-        btnLoadImage.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnLoadImage.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnLoadImage.addActionListener(this::btnLoadImageActionPerformed);
-        toolBar.add(btnLoadImage);
-
-        btnDump.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/document-save.png")));
-        btnDump.setToolTipText("Dump (save) memory...");
-        btnDump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnDump.setFocusable(false);
-        btnDump.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnDump.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnDump.addActionListener(this::btnDumpActionPerformed);
-        toolBar.add(btnDump);
+        toolBar.add(new ToolbarButton(loadImageAction));
+        toolBar.add(new ToolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
-
-        btnGotoAddress.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/format-indent-more.png")));
-        btnGotoAddress.setToolTipText("Go to address...");
-        btnGotoAddress.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnGotoAddress.setFocusable(false);
-        btnGotoAddress.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnGotoAddress.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnGotoAddress.addActionListener(this::btnGotoAddressActionPerformed);
-        toolBar.add(btnGotoAddress);
-
-        btnFind.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/edit-find.png")));
-        btnFind.setToolTipText("Find sequence...");
-        btnFind.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        btnFind.setFocusable(false);
-        btnFind.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnFind.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnFind.addActionListener(this::btnFindActionPerformed);
-        toolBar.add(btnFind);
+        toolBar.add(new ToolbarButton(gotoAddressAction));
+        toolBar.add(new ToolbarButton(findSequenceAction));
         toolBar.addSeparator();
 
         btnAsciiMode.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/bytemem/gui/ascii-mode.png")));
@@ -452,74 +425,9 @@ public class MemoryGui extends JDialog {
         pack();
     }
 
-    private void btnLoadImageActionPerformed(ActionEvent evt) {
-        dialogs.chooseFile(
-                "Load memory image", "Load", Path.of(System.getProperty("user.dir")), false, IMAGE_EXTENSION_FILTER
-        ).ifPresent(path -> {
-            boolean isHex = path.toString().toLowerCase().endsWith(".hex");
-            boolean hasBanks = context.getBanksCount() > 1;
-
-            int bank = 0;
-            int address = 0;
-            boolean ok = true;
-
-            if (!isHex || hasBanks) {
-                SelectBankAddressDialog dialog = new SelectBankAddressDialog(
-                        this, hasBanks, !isHex, dialogs
-                );
-                dialog.setVisible(true);
-                ok = dialog.isOk();
-                bank = dialog.getBank();
-                address = dialog.getAddress();
-            }
-
-            if (isHex && ok) {
-                context.loadHex(path, bank);
-            }
-            if (!isHex && ok) {
-                context.loadBin(path, address, bank);
-            }
-
-            table.revalidate();
-            table.repaint();
-        });
-    }
-
     private void btnCleanActionPerformed(ActionEvent evt) {
         context.clear();
         tableModel.fireTableDataChanged();
-    }
-
-    private void btnGotoAddressActionPerformed(ActionEvent evt) {
-        try {
-            dialogs
-                    .readInteger("Enter memory address:", "Go to address")
-                    .ifPresent(address -> {
-                        if (address < 0 || address >= context.getSize()) {
-                            dialogs.showError(
-                                    "Address out of bounds (min=0, max=" + (context.getSize() - 1) + ")", "Go to address"
-                            );
-                        } else {
-                            setPageFromAddress(address);
-                        }
-                    });
-        } catch (NumberFormatException e) {
-            dialogs.showError("Invalid number format", "Go to address");
-        }
-    }
-
-    private void btnFindActionPerformed(ActionEvent evt) {
-        AtomicInteger foundAddress = new AtomicInteger(-1);
-        FindSequenceDialog dialog = new FindSequenceDialog(
-                dialogs, this, tableModel, getCurrentAddress(), foundAddress::set
-        );
-
-        dialog.setVisible(true);
-
-        int address = foundAddress.get();
-        if (address != -1) {
-            setPageFromAddress(address);
-        }
     }
 
     private void btnSymbolModeActionPerformed(ActionEvent evt) {
@@ -528,34 +436,6 @@ public class MemoryGui extends JDialog {
 
     private void btnSettingsActionPerformed(ActionEvent evt) {
         new SettingsDialog(this, memory, context, table, settings, dialogs).setVisible(true);
-    }
-
-    private void btnDumpActionPerformed(ActionEvent evt) {
-        Path currentDirectory = Path.of(System.getProperty("user.dir"));
-        dialogs.chooseFile(
-                "Dump memory content into a file", "Save", currentDirectory, true,
-                new FileExtensionsFilter("Human-readable dump", "txt"),
-                new FileExtensionsFilter("Binary dump", "bin")
-        ).ifPresent(path -> {
-            try {
-                if (path.toString().toLowerCase().endsWith(".txt")) {
-                    try (BufferedWriter out = new BufferedWriter(new FileWriter(path.toFile()))) {
-                        for (int i = 0; i < context.getSize(); i++) {
-                            out.write(String.format("%X:\t%02X\n", i, context.read(i)));
-                        }
-                    }
-                } else {
-                    try (DataOutputStream ds = new DataOutputStream(new FileOutputStream(path.toFile()))) {
-                        for (int i = 0; i < context.getSize(); i++) {
-                            ds.writeByte(context.read(i) & 0xff);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                LOGGER.error("Memory dump could not be created", e);
-                dialogs.showError("Memory dump could not be created. Please see log file for more details.");
-            }
-        });
     }
 
     private int getCurrentAddress() {

@@ -30,6 +30,7 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.MemoryGui;
+import net.emustudio.plugins.memory.bytemem.loaders.Loader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,7 @@ import java.util.ResourceBundle;
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
-    private final MemoryContextImpl context;
+    private final MemoryContextImpl context = new MemoryContextImpl();
     private final boolean guiNotSupported;
     private MemoryGui gui;
 
@@ -56,7 +57,6 @@ public class MemoryImpl extends AbstractMemory {
         super(pluginID, applicationApi, settings);
 
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        this.context = new MemoryContextImpl(applicationApi.getDialogs());
         try {
             ContextPool contextPool = applicationApi.getContextPool();
             contextPool.register(pluginID, context, ByteMemoryContext.class);
@@ -157,17 +157,17 @@ public class MemoryImpl extends AbstractMemory {
                     break;
                 }
             } catch (NumberFormatException e) {
-                throw new PluginInitializationException(this, "Could not parse image address", e);
+                throw new PluginInitializationException(this, "Could not parse image address or bank", e);
+            } catch (Exception e) {
+                throw new PluginInitializationException(this, e);
             }
         }
     }
 
-    public void loadImage(Path imagePath, int address, int bank) {
-        if (imagePath.toString().toLowerCase().endsWith(".hex")) {
-            context.loadHex(imagePath, bank);
-        } else {
-            context.loadBin(imagePath, address, bank);
-        }
+    public void loadImage(Path imagePath, int address, int bank) throws Exception {
+        Loader.MemoryBank memoryBank = Loader.MemoryBank.of(bank, address);
+        Loader loader = Loader.createLoader(imagePath);
+        loader.load(imagePath, context, memoryBank);
     }
 
     /*
@@ -208,12 +208,6 @@ public class MemoryImpl extends AbstractMemory {
             settings.setInt("ROMto" + i, range.getStopAddress());
             i++;
         }
-    }
-
-    @Override
-    public void setProgramLocation(int location) {
-        super.setProgramLocation(location);
-        context.lastImageStart = location;
     }
 
     @Override
