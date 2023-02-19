@@ -2681,7 +2681,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_B_B() {
-        return I_LD_R_R(REG_B, REG_B);
+        return 4;
     }
 
     int I_LD_B_C() {
@@ -2745,7 +2745,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_C_C() {
-        return I_LD_R_R(REG_C, REG_C);
+        return 4;
     }
 
     int I_LD_C_D() {
@@ -2809,7 +2809,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_D_D() {
-        return I_LD_R_R(REG_D, REG_D);
+        return 4;
     }
 
     int I_LD_D_E() {
@@ -2873,7 +2873,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_E_E() {
-        return I_LD_R_R(REG_E, REG_E);
+        return 4;
     }
 
     int I_LD_E_H() {
@@ -2937,7 +2937,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_H_H() {
-        return I_LD_R_R(REG_H, REG_H);
+        return 4;
     }
 
     int I_LD_H_L() {
@@ -3059,7 +3059,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_L_L() {
-        return I_LD_R_R(REG_L, REG_L);
+        return 4;
     }
 
     int I_LD_L_A() {
@@ -3181,7 +3181,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_LD_A_A() {
-        return I_LD_R_R(REG_A, REG_A);
+        return 4;
     }
 
     int I_LD_A_REF_HL() {
