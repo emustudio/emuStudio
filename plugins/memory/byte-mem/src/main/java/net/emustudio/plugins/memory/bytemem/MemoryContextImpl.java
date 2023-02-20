@@ -20,32 +20,20 @@ package net.emustudio.plugins.memory.bytemem;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
-import java.io.EOFException;
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 @PluginContext(id = "Byte Memory")
 public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements ByteMemoryContext {
     final static int DEFAULT_MEM_SIZE = 65536;
 
     private final RangeTree romRanges = new RangeTree();
-    private final Dialogs dialogs;
-    int lastImageStart = 0;
     private Byte[][] mem = new Byte[1][0];
     private int banksCount;
     private int bankSelect = 0;
     private int bankCommon = 0;
-    public MemoryContextImpl(Dialogs dialogs) {
-        this.dialogs = Objects.requireNonNull(dialogs);
-    }
 
     void init(int size, int banks, int bankCommon) {
         if (banks <= 0) {
@@ -63,7 +51,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         for (Byte[] bank : mem) {
             Arrays.fill(bank, (byte) 0);
         }
-        lastImageStart = 0;
         notifyMemoryChanged(-1);
     }
 
@@ -93,40 +80,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     @Override
     public int getCommonBoundary() {
         return bankCommon;
-    }
-
-    public void loadHex(Path hexFile, int bank) {
-        int currentBank = bankSelect;
-        try {
-            bankSelect = (short) bank;
-            lastImageStart = IntelHEX.loadIntoMemory(hexFile.toFile(), this, p -> p);
-        } catch (FileNotFoundException ex) {
-            dialogs.showError("File not found: " + hexFile);
-        } catch (Exception e) {
-            dialogs.showError("Error opening file: " + hexFile);
-        } finally {
-            bankSelect = currentBank;
-            notifyMemoryChanged(-1);
-        }
-    }
-
-    public void loadBin(Path binFile, int address, int bank) {
-        lastImageStart = 0;
-        try (RandomAccessFile binaryFile = new RandomAccessFile(binFile.toFile(), "r")) {
-            long position = 0, length = binaryFile.length();
-            while (position < length) {
-                mem[bank][address++] = (byte) (binaryFile.readUnsignedByte() & 0xFF);
-                position++;
-            }
-        } catch (EOFException ignored) {
-            // ignored intentionally
-        } catch (FileNotFoundException ex) {
-            dialogs.showError("File not found: " + binFile);
-        } catch (Exception e) {
-            dialogs.showError("Error opening file: " + binFile);
-        } finally {
-            notifyMemoryChanged(-1);
-        }
     }
 
     @Override
