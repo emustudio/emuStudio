@@ -1863,12 +1863,34 @@ public class EmulatorEngine implements CpuEngine {
     }
 
 
-    int I_OUT_REF_C_R() {
-        int reg = (lastOpcode >>> 3) & 0x7;
-        memptr = (((regs[REG_B] << 8) | regs[REG_C]) + 1) & 0xFFFF;
-        context.writeIO((regs[REG_B] << 8) | regs[REG_C], (byte) getreg(reg));
+    int I_OUT_REF_C_B() {
+        return I_OUT_REF_C_R(regs[REG_B]);
+    }
+    int I_OUT_REF_C_C() {
+        return I_OUT_REF_C_R(regs[REG_C]);
+    }
+    int I_OUT_REF_C_D() {
+        return I_OUT_REF_C_R(regs[REG_D]);
+    }
+    int I_OUT_REF_C_E() {
+        return I_OUT_REF_C_R(regs[REG_E]);
+    }
+    int I_OUT_REF_C_H() {
+        return I_OUT_REF_C_R(regs[REG_H]);
+    }
+    int I_OUT_REF_C_L() {
+        return I_OUT_REF_C_R(regs[REG_L]);
+    }
+    int I_OUT_REF_C_A() {
+        return I_OUT_REF_C_R(regs[REG_A]);
+    }
+    int I_OUT_REF_C_R(int reg) {
+        memptr = (regs[REG_B] << 8) | regs[REG_C];
+        context.writeIO(memptr, (byte) reg);
+        memptr++;
         return 12;
     }
+
 
     int I_SBC_HL_RP() {
         int rp = getpair((lastOpcode >>> 4) & 0x03);
