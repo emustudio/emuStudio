@@ -44,7 +44,10 @@ public class TerminalWindow extends JDialog {
 
         setTitle("ZX Spectrum48K");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        canvas.setBounds(0, 0, DisplayCanvas.HOST_SCREEN_WIDTH, DisplayCanvas.HOST_SCREEN_HEIGHT);
+        canvas.setBounds(
+                0, 0,
+                (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_WIDTH),
+                (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_HEIGHT));
 
         btnRedraw.setFocusable(false);
 
@@ -78,7 +81,6 @@ public class TerminalWindow extends JDialog {
         );
 
         pack();
-
         btnRedraw.addActionListener(e -> canvas.redrawNow());
     }
 

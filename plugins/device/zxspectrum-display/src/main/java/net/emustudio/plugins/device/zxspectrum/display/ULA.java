@@ -107,8 +107,21 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
                 }
             }
         }
+    }
 
+    public void triggerInterrupt() {
         cpu.signalInterrupt(RST_7);
+    }
+
+    public void readLine(int y) {
+        for (int x = 0; x < SCREEN_WIDTH; x++) {
+            videoMemory[x][y] = memory.read(0x4000 + lineStartOffsets[y] + x);
+            if (y < ATTRIBUTE_HEIGHT) {
+                int off = ((y >>> 3) << 8) | (((y & 0x07) << 5) | x);
+                int attributeAddress = 0x5800 + off;
+                attributeMemory[x][y] = memory.read(attributeAddress);
+            }
+        }
     }
 
     public void reset() {
@@ -155,11 +168,6 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         if (!microphoneAndEar) {
             result |= 0x40;
         }
-
-   //     System.out.print(Integer.toHexString(portAddress & 0xFF00) + " = " + Integer.toHexString(result & 0xFF)  + "; ");
-     //   if ((portAddress & 0xFF00) == 0x7F00) {
-       //     System.out.println();
-        //}
         return result;
     }
 

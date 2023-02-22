@@ -23,6 +23,8 @@ import net.emustudio.plugins.device.zxspectrum.display.ULA;
 
 import java.awt.*;
 import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,16 +33,28 @@ import static net.emustudio.plugins.device.zxspectrum.display.ULA.SCREEN_HEIGHT;
 import static net.emustudio.plugins.device.zxspectrum.display.ULA.SCREEN_WIDTH;
 
 // https://worldofspectrum.org/faq/reference/48kreference.htm
+
+/**
+ * DisplayCanvas
+ * <p>
+ * A frame is (64+192+56)*224=69888 T states long, which means that the '50 Hz' interrupt is actually
+ * a 3.5MHz/69888=50.08 Hz interrupt.
+ */
 public class DisplayCanvas extends Canvas implements AutoCloseable {
+    private static final int PRE_SCREEN_LINES = 64;
+    private static final int POST_SCREEN_LINES = 56;
     private static final int BORDER_WIDTH = 48; // pixels
-    private static final int BORDER_HEIGHT = 56; // pixels
 
-    public final static int HOST_SCREEN_WIDTH = 2 * (2 * BORDER_WIDTH + SCREEN_WIDTH * 8);
-    public final static int HOST_SCREEN_HEIGHT = 2 * (2 * BORDER_HEIGHT + SCREEN_HEIGHT);
+    public static final float ZOOM = 2f;
+    public static final int SCREEN_IMAGE_WIDTH = 2 * BORDER_WIDTH + SCREEN_WIDTH * 8;
+    public static final int SCREEN_IMAGE_HEIGHT = PRE_SCREEN_LINES + SCREEN_HEIGHT + POST_SCREEN_LINES;
 
-    // a frame is (64+192+56)*224=69888 T states long, which means that the '50 Hz' interrupt is actually
-    // a 3.5MHz/69888=50.08 Hz interrupt
     private static final int REPAINT_CPU_TSTATES = 69888;
+    private static final int LINE_CPU_TSTATES = 224;
+
+    private final BufferedImage screenImage = new BufferedImage(
+            SCREEN_IMAGE_WIDTH, SCREEN_IMAGE_HEIGHT, BufferedImage.TYPE_INT_RGB);
+    private final int[] screenImageData;
 
     private static final Color[] COLOR_MAP = new Color[]{
             new Color(0, 0, 0),  // black
@@ -70,23 +84,77 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private final ULA ula;
     private final TimedEventsProcessor ted;
     private final PaintCycle paintCycle = new PaintCycle();
+    private int interrupts = 0;
 
     public DisplayCanvas(ULA ula) {
         this.ula = Objects.requireNonNull(ula);
         this.ted = ula.getCpu()
                 .getTimedEventsProcessor()
                 .orElseThrow(() -> new NoSuchElementException("The CPU does not provide TimedEventProcessor"));
+        this.screenImage.setAccelerationPriority(1.0f);
+        this.screenImageData = ((DataBufferInt) this.screenImage.getRaster().getDataBuffer()).getData();
     }
 
     public void start() {
         if (painting.compareAndSet(false, true)) {
             createBufferStrategy(2);
 
-            ted.schedule(REPAINT_CPU_TSTATES, paintCycle);
+            ted.schedule(REPAINT_CPU_TSTATES, this::triggerCpuInterrupt);
+            for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
+                int finalI = i;
+                ted.schedule(i * LINE_CPU_TSTATES + 1, () -> drawNextLine(finalI));
+            }
+        }
+    }
+
+    private void triggerCpuInterrupt() {
+        interrupts = (interrupts + 1) % 3;  // 0 1 2
+        ula.triggerInterrupt();
+        if (interrupts == 0) {
+            paintCycle.run();
+        }
+    }
+
+    private void drawNextLine(int line) {
+        int borderColor = COLOR_MAP[ula.getBorderColor()].getRGB();
+        if (line < PRE_SCREEN_LINES || line >= (PRE_SCREEN_LINES + SCREEN_HEIGHT)) {
+            for (int i = 0; i < SCREEN_IMAGE_WIDTH; i++) {
+                screenImageData[line * SCREEN_IMAGE_WIDTH + i] = borderColor;
+            }
+            if (line < PRE_SCREEN_LINES) {
+                for (int i = SCREEN_IMAGE_WIDTH; i < SCREEN_IMAGE_WIDTH + BORDER_WIDTH; i++) {
+                    screenImageData[line * SCREEN_IMAGE_WIDTH + i] = borderColor;
+                }
+            }
+        } else {
+            int y = line - PRE_SCREEN_LINES;
+            ula.readLine(y);
+            int screenX = 0;
+            for (int byteX = 0; byteX < SCREEN_WIDTH; byteX++) {
+                byte row = ula.videoMemory[byteX][y];
+                int attr = ula.attributeMemory[byteX][y / 8];
+                Color[] colorMap = ((attr & 0x40) == 0x40) ? BRIGHT_COLOR_MAP : COLOR_MAP;
+
+                for (int i = 0; i < 8; i++) {
+                    boolean bit = ((row << i) & 0x80) == 0x80;
+                    int color = (bit ? colorMap[attr & 7] : colorMap[(attr >>> 3) & 7]).getRGB();
+                    int offset = line * SCREEN_IMAGE_WIDTH + BORDER_WIDTH + screenX + i;
+                    screenImageData[offset] = color;
+                }
+                screenX += 8;
+            }
+            for (int i = 0; i < 2 * BORDER_WIDTH; i++) {
+                int offset = line * SCREEN_IMAGE_WIDTH + BORDER_WIDTH + SCREEN_WIDTH * 8 + i;
+                screenImageData[offset] = borderColor;
+            }
         }
     }
 
     public void redrawNow() {
+        ula.readScreen();
+        for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
+            drawNextLine(i);
+        }
         paintCycle.run();
     }
 
@@ -115,6 +183,10 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     @Override
     public void close() {
         ted.remove(REPAINT_CPU_TSTATES, paintCycle);
+        for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
+            int finalI = i;
+            ted.remove(i * LINE_CPU_TSTATES, () -> drawNextLine(finalI));
+        }
         painting.set(false);
     }
 
@@ -123,7 +195,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
         @Override
         public void run() {
-            ula.readScreen();
             strategy = getBufferStrategy();
             if (painting.get()) {
                 paint();
@@ -139,42 +210,13 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             do {
                 do {
                     Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
+                    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+                    graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 
-                    byte[][] videoMemory = ula.videoMemory;
-                    byte[][] attrMemory = ula.attributeMemory;
-
-                    graphics.setBackground(COLOR_MAP[ula.getBorderColor()]);
-                    graphics.setColor(COLOR_MAP[ula.getBorderColor()]);
-                    graphics.fillRect(
-                            0, 0,
-                            2 * (2 * BORDER_WIDTH + SCREEN_WIDTH * 8),
-                            2 * (2 * BORDER_HEIGHT + SCREEN_HEIGHT)
-                    );
-                    int screenX = 0;
-                    for (int y = 0; y < SCREEN_HEIGHT; y++) {
-                        for (int x = 0; x < SCREEN_WIDTH; x++) {
-                            byte row = videoMemory[x][y];
-                            int attr = attrMemory[x][y / 8];
-                            Color[] colorMap = ((attr & 0x40) == 0x40) ? BRIGHT_COLOR_MAP : COLOR_MAP;
-
-                            for (int i = 0; i < 8; i++) {
-                                boolean bit = ((row << i) & 0x80) == 0x80;
-                                if (bit) {
-                                    graphics.setColor(colorMap[attr & 7]);
-                                } else {
-                                    graphics.setColor(colorMap[(attr >>> 3) & 7]);
-                                }
-                                graphics.drawLine(
-                                        2 * (BORDER_WIDTH + screenX + i), 2 * (BORDER_HEIGHT + y),
-                                        2 * (BORDER_WIDTH + screenX + i) + 1, 2 * (BORDER_HEIGHT + y));
-                                graphics.drawLine(
-                                        2 * (BORDER_WIDTH + screenX + i), 2 * (BORDER_HEIGHT + y) + 1,
-                                        2 * (BORDER_WIDTH + screenX + i) + 1, 2 * (BORDER_HEIGHT + y) + 1);
-                            }
-                            screenX += 8;
-                        }
-                        screenX = 0;
-                    }
+                    graphics.drawImage(
+                            screenImage, 0, 0,
+                            (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM),
+                            null);
                     graphics.dispose();
                 } while (strategy.contentsRestored());
                 strategy.show();
