@@ -175,7 +175,7 @@ public class Z80Tests extends InstructionsTest {
             mk(0x6FED, 0x8cd2dc37).hl_mem(0x2F), // RLD
             mk(0x77ED, 0x34fd8b43), // NOP
             mk(0x7FED, 0x34fd8b43), // NOP
-            mk(0x80ED, 0x2c7aa213).hl_mem(0x2F).y(4, 7).z(0, 3), // bli[y, z]
+            mk(0x80ED, 0xe5555767).hl_mem(0x2F).y(4, 7).z(0, 3), // bli[y, z]
 
             mk(0x00DD, 0x34fd8b43), // NOP
             mk(0x08DD, 0xa007a4d), // EX AF, AF'
@@ -378,7 +378,7 @@ public class Z80Tests extends InstructionsTest {
                 }
             }
         }
-        //System.out.println("0x" + Integer.toHexString(cpu.getEngine().crc));
+   //     System.out.println("0x" + Integer.toHexString(crc.get()));
         assertEquals(instrTest.crc, crc.get());
     }
 
