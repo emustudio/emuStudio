@@ -1,4 +1,4 @@
-<input> 3 4 ignored world hello
+<input> 3 4 'ignored' 'world' 'hello'
 
 ; COPY(X,Y)
 ;
@@ -11,7 +11,7 @@
 ;   reg.Y: (reg.Y)
 
 
-<input> sss
+<input> 'sss'
 ; load X,Y
 read 1
 read 2
