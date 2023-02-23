@@ -12,22 +12,22 @@ read_next:
   jz final_test
   sub=1
   jz increment
-  load1
+  load 1
   sub=2
   jz decrement
   jmp read_next
 increment:
-  load2
+  load 2
   add=1
-  store2
+  store 2
   jmp read_next
 decrement:
   load 2
   sub=1
-  store2
+  store 2
   jmp read_next
 final_test:
-  load2
+  load 2
   jz print_one
   write=0
   halt
