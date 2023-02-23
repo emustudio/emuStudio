@@ -3,5 +3,3 @@ mdbl.bin: 88-disk modified boot loader; extracted from simh emulator
 
 dbl.asm : 88-disk boot loader; reverse-engineered from simh emulator
 dbl.bin : 88-disk boot loader; extracted from simh emulator
-
-cdbl.adm: common disk boot loader 3.0; https://deramp.com/downloads/altair/software/roms/custom_roms/M%20Eberhard%20Improved%20ROMs/CDBL%20Manual.pdf

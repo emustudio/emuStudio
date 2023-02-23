@@ -37,7 +37,7 @@ public enum Commands {
     getClockCPM3Cmd,            //   9 get the current time in CP/M 3 format
     setClockCPM3Cmd,            //  10 set the current time in CP/M 3 format
     getBankSelectCmd,           //  11 get the selected bank
-    setBankSelectCmd,           //  12 set the selected bank
+    setBankSelectCmd,           //  12 select bank
     getCommonCmd,               //  13 get the base address of the common memory segment
     resetSIMHInterfaceCmd,      //  14 reset the SIMH pseudo device
     showTimerCmd,               //  15 show time difference to timer on top of stack
