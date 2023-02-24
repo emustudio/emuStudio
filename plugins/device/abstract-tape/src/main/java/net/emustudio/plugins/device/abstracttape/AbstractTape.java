@@ -55,9 +55,9 @@ public class AbstractTape extends AbstractDevice {
     public AbstractTape(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.context = new AbstractTapeContextImpl(this);
         this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
+        this.context = new AbstractTapeContextImpl(this::setGUITitle);
 
         try {
             applicationApi.getContextPool().register(pluginID, context, AbstractTapeContext.class);

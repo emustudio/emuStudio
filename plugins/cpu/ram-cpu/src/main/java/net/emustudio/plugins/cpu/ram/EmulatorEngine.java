@@ -25,7 +25,6 @@ import net.emustudio.plugins.memory.ram.api.RAMInstruction;
 import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RAMValue;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,66 +64,64 @@ public class EmulatorEngine {
         outputTape.clear();
     }
 
-    public CPU.RunState step() throws IOException {
-        RAMInstruction instr = memory.read(IP.getAndIncrement());
-        if (instr == null) {
+    public CPU.RunState step() {
+        RAMInstruction instruction = memory.read(IP.getAndIncrement());
+        if (instruction == null) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
 
-        switch (instr.getOpcode()) {
+        switch (instruction.getOpcode()) {
             case READ:
                 TapeSymbol input = inputTape.readData();
                 inputTape.moveRight();
-                getRegister(instr).ifPresent(r -> storageTape.setSymbolAt(r, input));
+                getRegisterNumber(instruction).ifPresent(r -> storageTape.setSymbolAt(r, input));
                 break;
             case WRITE:
-                getValue(instr).ifPresent(outputTape::writeData);
+                evaluateOperand(instruction).ifPresent(outputTape::writeData);
                 outputTape.moveRight();
                 break;
             case LOAD:
-                getValue(instr).ifPresent(s -> storageTape.setSymbolAt(0, s));
+                evaluateOperand(instruction).ifPresent(v -> storageTape.setSymbolAt(0, v));
                 break;
             case STORE:
-                getRegister(instr)
-                        .ifPresent(o -> storageTape.getSymbolAt(0).ifPresent(r -> storageTape.setSymbolAt(o, r)));
+                TapeSymbol r0 = storageTape.getSymbolAt(0).orElse(TapeSymbol.EMPTY);
+                getRegisterNumber(instruction).ifPresent(r -> storageTape.setSymbolAt(r, r0));
                 break;
             case ADD:
-                getValue(instr).ifPresent(op -> arithmetic(op, Integer::sum));
+                evaluateOperand(instruction).ifPresent(v -> arithmetic(v, Integer::sum));
                 break;
             case SUB:
-                getValue(instr).ifPresent(op -> arithmetic(op, (a, b) -> a - b));
+                evaluateOperand(instruction).ifPresent(v -> arithmetic(v, (a, b) -> a - b));
                 break;
             case MUL:
-                getValue(instr).ifPresent(op -> arithmetic(op, (a, b) -> a * b));
+                evaluateOperand(instruction).ifPresent(v -> arithmetic(v, (a, b) -> a * b));
                 break;
             case DIV:
-                getValue(instr).ifPresent(op -> arithmetic(op, (a, b) -> a / b));
+                evaluateOperand(instruction).ifPresent(v -> arithmetic(v, (a, b) -> a / b));
                 break;
             case JMP:
-                instr
+                instruction
                         .getLabel()
                         .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
-                            throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
+                            throw new RuntimeException("Instruction operand contains non-numeric value: " + instruction);
                         });
                 break;
             case JZ: {
-                int r0 = getR0();
-                if (r0 == 0) {
-                    instr
+                if (isEmpty(storageTape.getSymbolAt(0).orElse(TapeSymbol.EMPTY))) {
+                    instruction
                             .getLabel()
                             .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
-                                throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
+                                throw new RuntimeException("Instruction operand contains non-numeric value: " + instruction);
                             });
                 }
                 break;
             }
             case JGTZ: {
-                int r0 = getR0();
-                if (r0 > 0) {
-                    instr
+                if (getR0() > 0) {
+                    instruction
                             .getLabel()
                             .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
-                                throw new RuntimeException("Instruction operand contains non-numeric value: " + instr);
+                                throw new RuntimeException("Instruction operand contains non-numeric value: " + instruction);
                             });
                 }
                 break;
@@ -140,57 +137,50 @@ public class EmulatorEngine {
     private int getR0() {
         return storageTape
                 .getSymbolAt(0)
-                .filter(r0 -> r0 != TapeSymbol.EMPTY)
-                .map(r0 -> {
-                    if (r0.type != TapeSymbol.Type.NUMBER) {
-                        throw new RuntimeException("Register 0 contains non-numeric value: " + r0);
-                    }
-                    return r0.number;
-                }).orElse(0);
+                .orElse(TapeSymbol.EMPTY)
+                .number;
+    }
+
+    private boolean isEmpty(TapeSymbol s) {
+        switch (s.type) {
+            case NUMBER:
+                return s.number == 0;
+            case STRING:
+                return s.string == null || s.string.isEmpty();
+        }
+        throw new RuntimeException("Unexpected symbol type: " + s);
     }
 
     private void arithmetic(TapeSymbol operand, BiFunction<Integer, Integer, Integer> operation) {
-        if (operand.type != TapeSymbol.Type.NUMBER) {
-            throw new RuntimeException("Operand is non-numeric: " + operand);
-        }
-        int r0 = getR0();
-        storageTape.setSymbolAt(0, new TapeSymbol(operation.apply(r0, operand.number)));
+        storageTape.setSymbolAt(0, TapeSymbol.fromInt(operation.apply(getR0(), operand.number)));
     }
 
-    private Optional<TapeSymbol> getValue(RAMInstruction instruction) {
+    private Optional<Integer> getRegisterNumber(RAMInstruction instruction) {
+        Optional<RAMValue> operand = instruction.getOperand();
         switch (instruction.getDirection()) {
             case CONSTANT:
-                return instruction.getOperand().map(this::toSymbol);
             case DIRECT:
+                return operand.map(RAMValue::getNumberValue);
             case INDIRECT:
-                return getRegister(instruction).flatMap(storageTape::getSymbolAt);
+                return operand.map(RAMValue::getNumberValue)
+                        .flatMap(storageTape::getSymbolAt)
+                        .map(t -> t.number);
         }
-        throw new IllegalStateException("Unexpected direction: " + instruction.getDirection());
+        throw new RuntimeException("Unexpected direction: " + instruction.getDirection());
     }
 
-    private Optional<Integer> getRegister(RAMInstruction instruction) {
+    private Optional<TapeSymbol> evaluateOperand(RAMInstruction instruction) {
+        Optional<RAMValue> operand = instruction.getOperand();
         switch (instruction.getDirection()) {
+            case CONSTANT:
+                return operand.map(this::toSymbol);
             case DIRECT:
-                return instruction.getOperand().map(r -> {
-                    if (r.getType() != RAMValue.Type.NUMBER) {
-                        throw new RuntimeException("Instruction has non-numeric operand: " + instruction);
-                    }
-                    return r.getNumberValue();
-                });
+                return operand.map(RAMValue::getNumberValue).flatMap(storageTape::getSymbolAt);
             case INDIRECT:
-                return instruction.getOperand().flatMap(r -> {
-                    if (r.getType() != RAMValue.Type.NUMBER) {
-                        throw new RuntimeException("Instruction has non-numeric operand: " + instruction);
-                    }
-                    return storageTape
-                            .getSymbolAt(r.getNumberValue())
-                            .map(rr -> {
-                                if (rr.type != TapeSymbol.Type.NUMBER) {
-                                    throw new RuntimeException("Value of register " + rr + " is non-numeric");
-                                }
-                                return rr.number;
-                            });
-                });
+                return operand.map(RAMValue::getNumberValue)
+                        .flatMap(storageTape::getSymbolAt)
+                        .map(t -> t.number)
+                        .flatMap(storageTape::getSymbolAt);
         }
         throw new IllegalStateException("Unexpected direction: " + instruction.getDirection());
     }

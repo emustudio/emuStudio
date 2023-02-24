@@ -108,6 +108,7 @@ clearOutputBit8 = false
 inputToUpperCase = false
 mapDeleteChar = "UNCHANGED"
 mapBackspaceChar = "UNCHANGED"
+interruptsSupported = true
 inputInterruptVector = 7
 outputInterruptVector = 7
 
