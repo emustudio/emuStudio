@@ -60,7 +60,7 @@ public class RaspStatusPanel extends JPanel {
 
     private void initComponents() {
         JPanel panelInternalState = new JPanel();
-        JLabel lblR0 = new JLabel("R0 (accumulator)");
+        JLabel lblR0 = new JLabel("R0");
         JLabel lblIP = new JLabel("IP");
         JPanel jPanel2 = new JPanel();
         JPanel jPanel3 = new JPanel();
