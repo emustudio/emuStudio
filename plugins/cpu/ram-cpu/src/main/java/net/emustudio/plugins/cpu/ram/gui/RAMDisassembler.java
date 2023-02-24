@@ -35,16 +35,14 @@ public class RAMDisassembler implements Disassembler {
 
     @Override
     public DisassembledInstruction disassemble(int memLocation) {
-        String mnemo, oper = "";
-
         RAMInstruction in = memory.read(memLocation);
         if (in == null) {
-            mnemo = "none";
-            return new DisassembledInstruction(memLocation, mnemo, oper);
+            return new DisassembledInstruction(memLocation, "", "");
         }
-        mnemo = in.getOpcode().toString() + " " + in.getDirection().value() +
-                in.getOperand().map(RAMValue::getStringRepresentation).orElse("");
-        return new DisassembledInstruction(memLocation, mnemo, oper);
+        String mnemo = String.format("%s %s%s",
+                in.getOpcode().toString().toLowerCase(), in.getDirection().value(),
+                in.getOperand().map(RAMValue::getStringRepresentation).orElse("").toUpperCase());
+        return new DisassembledInstruction(memLocation, mnemo, "");
     }
 
     @Override
