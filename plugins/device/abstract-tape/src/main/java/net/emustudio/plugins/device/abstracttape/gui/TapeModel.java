@@ -35,11 +35,13 @@ public class TapeModel extends AbstractListModel<String> {
     @Override
     public String getElementAt(int index) {
         String element = "";
+        int position = tapeContext.getNonEmptyPositions().get(index);
         if (tapeContext.getShowPositions()) {
-            element += String.format("%02d: ", index);
+            element += String.format("%02d: ", position);
         }
-        String symbolAtIndex = tapeContext.getSymbolAt(index).map(TapeSymbol::toString).orElse("<empty>");
-        element += symbolAtIndex;
+        element += tapeContext.getSymbolAt(position)
+                .map(TapeSymbol::toString)
+                .orElse("<empty>");
 
         return element;
     }

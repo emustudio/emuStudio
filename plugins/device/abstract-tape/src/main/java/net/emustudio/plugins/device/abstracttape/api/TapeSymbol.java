@@ -23,11 +23,13 @@ import java.util.Objects;
 import static net.emustudio.plugins.device.abstracttape.api.TapeSymbol.Type.NUMBER;
 import static net.emustudio.plugins.device.abstracttape.api.TapeSymbol.Type.STRING;
 
+@SuppressWarnings("unused")
 public class TapeSymbol {
     public final static TapeSymbol EMPTY = new TapeSymbol("");
     public final int number;
     public final String string;
     public final Type type;
+
     public TapeSymbol(String string) {
         this.string = Objects.requireNonNullElse(string, "");
         this.number = 0;
@@ -47,6 +49,14 @@ public class TapeSymbol {
         } catch (NumberFormatException e) {
             return new TapeSymbol(s);
         }
+    }
+
+    public static TapeSymbol fromInt(int number) {
+        return new TapeSymbol(number);
+    }
+
+    public static TapeSymbol fromString(String s) {
+        return new TapeSymbol(s);
     }
 
     @Override

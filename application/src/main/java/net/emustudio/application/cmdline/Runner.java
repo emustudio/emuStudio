@@ -58,7 +58,7 @@ public class Runner implements Runnable {
     public Exclusive exclusive;
     @CommandLine.Option(names = {"-i", "--input-file"}, description = "input file name (source code)", paramLabel = "FILE")
     public Path inputFile;
-    @CommandLine.Option(names = {"-l", "--list-computers"}, description = "list all existing virtual computers")
+    @CommandLine.Option(names = {"-cl", "--computers-list"}, description = "list all existing virtual computers")
     private boolean listConfigs;
 
     public static void main(String[] args) {
@@ -126,8 +126,8 @@ public class Runner implements Runnable {
     }
 
     public static class Exclusive {
-        @CommandLine.Option(names = {"-c", "--computer"},
-                description = "virtual computer name (see -l for options)",
+        @CommandLine.Option(names = {"-cn", "--computer-name"},
+                description = "virtual computer name (see -cl for options)",
                 paramLabel = "NAME"
         )
         public String configName;
@@ -140,8 +140,8 @@ public class Runner implements Runnable {
         public Path configFile;
 
         @CommandLine.Option(
-                names = {"-cn", "--computer-index"},
-                description = "virtual computer index (see -l for options)",
+                names = {"-ci", "--computer-index"},
+                description = "virtual computer index (see -cl for options)",
                 paramLabel = "INDEX"
         )
         public Integer configIndex;

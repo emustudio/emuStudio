@@ -21,6 +21,7 @@ package net.emustudio.plugins.device.abstracttape.api;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -92,11 +93,20 @@ public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
      * Allow or disallow to edit the tape.
      * <p>
      * If the tape is editable, the user (in GUI) can add, modify or remove symbols from the tape.
-     * Otherwise it is driven only by the CPU.
+     * Otherwise, it is driven only by the CPU.
      *
      * @param editable true if yes, false if not.
      */
     void setEditable(boolean editable);
+
+    /**
+     * Get positions of non-empty (or existing) symbols.
+     * It is assumed tape contains infinite number of symbols, but it's not true. This method allows to retrieve
+     * positions which were once set, so they really exists. Size of returned list equals to the getSize() method.
+     *
+     * @return list of non-empty (existing) symbol positions
+     */
+    List<Integer> getNonEmptyPositions();
 
     /**
      * Get symbol at the specified position.

@@ -213,6 +213,12 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     }
 
     @Override
+    public List<Integer> getNonEmptyPositions() {
+        return List.copyOf(content.keySet());
+    }
+
+
+    @Override
     public Optional<TapeSymbol> getSymbolAt(int position) {
         rwl.readLock().lock();
         try {
