@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.rasp;
 
-import net.emustudio.plugins.compiler.rasp.ast.Program.RASPMemoryCellImpl;
+import net.emustudio.plugins.compiler.rasp.ast.Program.RaspMemoryCellImpl;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotEquals;
@@ -37,11 +37,11 @@ public class CompilerTest extends AbstractCompilerTest {
         assertProgram(
                 null,
                 null,
-                new RASPMemoryCellImpl(true, 15, 2),
-                new RASPMemoryCellImpl(false, 6, 3),
-                new RASPMemoryCellImpl(true, 15, 4),
-                new RASPMemoryCellImpl(false, 2, 5),
-                new RASPMemoryCellImpl(true, 18, 6)
+                new RaspMemoryCellImpl(true, 15, 2),
+                new RaspMemoryCellImpl(false, 6, 3),
+                new RaspMemoryCellImpl(true, 15, 4),
+                new RaspMemoryCellImpl(false, 2, 5),
+                new RaspMemoryCellImpl(true, 18, 6)
         );
     }
 

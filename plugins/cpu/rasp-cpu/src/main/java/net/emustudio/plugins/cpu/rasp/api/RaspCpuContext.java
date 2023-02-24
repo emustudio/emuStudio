@@ -1,7 +1,8 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2023  Peter Jakubčo
+ * Copyright (C) 2016-2017  Michal Šipoš
+ * Copyright (C) 2006-2023-2022  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,26 +17,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.ram.api;
 
-import java.io.Serializable;
+package net.emustudio.plugins.cpu.rasp.api;
 
-/**
- * A Label is a named pointer to an address in memory.
- */
-public interface RAMLabel extends Serializable {
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
-    /**
-     * Get address to which this label points to
-     *
-     * @return memory address
-     */
-    int getAddress();
+public interface RaspCpuContext extends CPUContext {
 
-    /**
-     * Get name of this label
-     *
-     * @return name of this label
-     */
-    String getLabel();
+    AbstractTapeContext getInputTape();
+
+    AbstractTapeContext getOutputTape();
 }

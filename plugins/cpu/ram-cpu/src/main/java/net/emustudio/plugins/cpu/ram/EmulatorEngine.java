@@ -21,9 +21,9 @@ package net.emustudio.plugins.cpu.ram;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -35,10 +35,10 @@ public class EmulatorEngine {
     private final AbstractTapeContext inputTape;
     private final AbstractTapeContext outputTape;
     private final AbstractTapeContext storageTape;
-    private final RAMMemoryContext memory;
+    private final RamMemoryContext memory;
 
     public EmulatorEngine(AbstractTapeContext inputTape, AbstractTapeContext outputTape,
-                          AbstractTapeContext storageTape, RAMMemoryContext memory) {
+                          AbstractTapeContext storageTape, RamMemoryContext memory) {
         this.inputTape = Objects.requireNonNull(inputTape);
         this.outputTape = Objects.requireNonNull(outputTape);
         this.storageTape = Objects.requireNonNull(storageTape);
@@ -57,7 +57,7 @@ public class EmulatorEngine {
         IP.set(location);
         int position = 0;
         inputTape.clear();
-        for (RAMValue input : memory.getInputs()) {
+        for (RamValue input : memory.getInputs()) {
             inputTape.setSymbolAt(position++, toSymbol(input));
         }
         storageTape.clear();
@@ -65,7 +65,7 @@ public class EmulatorEngine {
     }
 
     public CPU.RunState step() {
-        RAMInstruction instruction = memory.read(IP.getAndIncrement());
+        RamInstruction instruction = memory.read(IP.getAndIncrement());
         if (instruction == null) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
@@ -155,29 +155,29 @@ public class EmulatorEngine {
         storageTape.setSymbolAt(0, TapeSymbol.fromInt(operation.apply(getR0(), operand.number)));
     }
 
-    private Optional<Integer> getRegisterNumber(RAMInstruction instruction) {
-        Optional<RAMValue> operand = instruction.getOperand();
+    private Optional<Integer> getRegisterNumber(RamInstruction instruction) {
+        Optional<RamValue> operand = instruction.getOperand();
         switch (instruction.getDirection()) {
             case CONSTANT:
             case DIRECT:
-                return operand.map(RAMValue::getNumberValue);
+                return operand.map(RamValue::getNumberValue);
             case INDIRECT:
-                return operand.map(RAMValue::getNumberValue)
+                return operand.map(RamValue::getNumberValue)
                         .flatMap(storageTape::getSymbolAt)
                         .map(t -> t.number);
         }
         throw new RuntimeException("Unexpected direction: " + instruction.getDirection());
     }
 
-    private Optional<TapeSymbol> evaluateOperand(RAMInstruction instruction) {
-        Optional<RAMValue> operand = instruction.getOperand();
+    private Optional<TapeSymbol> evaluateOperand(RamInstruction instruction) {
+        Optional<RamValue> operand = instruction.getOperand();
         switch (instruction.getDirection()) {
             case CONSTANT:
                 return operand.map(this::toSymbol);
             case DIRECT:
-                return operand.map(RAMValue::getNumberValue).flatMap(storageTape::getSymbolAt);
+                return operand.map(RamValue::getNumberValue).flatMap(storageTape::getSymbolAt);
             case INDIRECT:
-                return operand.map(RAMValue::getNumberValue)
+                return operand.map(RamValue::getNumberValue)
                         .flatMap(storageTape::getSymbolAt)
                         .map(t -> t.number)
                         .flatMap(storageTape::getSymbolAt);
@@ -185,8 +185,8 @@ public class EmulatorEngine {
         throw new IllegalStateException("Unexpected direction: " + instruction.getDirection());
     }
 
-    private TapeSymbol toSymbol(RAMValue value) {
-        return (value.getType() == RAMValue.Type.NUMBER) ?
+    private TapeSymbol toSymbol(RamValue value) {
+        return (value.getType() == RamValue.Type.NUMBER) ?
                 new TapeSymbol(value.getNumberValue()) : new TapeSymbol(value.getStringValue());
     }
 }

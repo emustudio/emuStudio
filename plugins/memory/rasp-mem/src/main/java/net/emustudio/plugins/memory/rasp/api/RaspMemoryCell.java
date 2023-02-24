@@ -16,17 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package net.emustudio.plugins.memory.rasp.api;
 
-package net.emustudio.plugins.cpu.ram.api;
+import java.io.Serializable;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
+public interface RaspMemoryCell extends Serializable {
 
-public interface RAMCpuContext extends CPUContext {
+    boolean isInstruction();
 
-    AbstractTapeContext getStorageTape();
+    int getAddress();
 
-    AbstractTapeContext getInputTape();
-
-    AbstractTapeContext getOutputTape();
+    int getValue();
 }

@@ -20,28 +20,28 @@ package net.emustudio.plugins.cpu.ram.gui;
 
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.util.Objects;
 
-public class RAMDisassembler implements Disassembler {
-    private final RAMMemoryContext memory;
+public class RamDisassembler implements Disassembler {
+    private final RamMemoryContext memory;
 
-    public RAMDisassembler(RAMMemoryContext memory) {
+    public RamDisassembler(RamMemoryContext memory) {
         this.memory = Objects.requireNonNull(memory);
     }
 
     @Override
     public DisassembledInstruction disassemble(int memLocation) {
-        RAMInstruction in = memory.read(memLocation);
+        RamInstruction in = memory.read(memLocation);
         if (in == null) {
             return new DisassembledInstruction(memLocation, "", "");
         }
         String mnemo = String.format("%s %s%s",
                 in.getOpcode().toString().toLowerCase(), in.getDirection().value(),
-                in.getOperand().map(RAMValue::getStringRepresentation).orElse("").toUpperCase());
+                in.getOperand().map(RamValue::getStringRepresentation).orElse("").toUpperCase());
         return new DisassembledInstruction(memLocation, mnemo, "");
     }
 

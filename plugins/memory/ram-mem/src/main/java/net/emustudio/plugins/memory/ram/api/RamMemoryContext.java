@@ -1,7 +1,6 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2016-2017  Michal Šipoš
  * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,32 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-package net.emustudio.plugins.memory.rasp.api;
+package net.emustudio.plugins.memory.ram.api;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.plugins.memory.rasp.gui.Disassembler;
 
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Context of the RASP memory.
- */
 @PluginContext
-@SuppressWarnings("unused")
-public interface RASPMemoryContext extends MemoryContext<RASPMemoryCell> {
+public interface RamMemoryContext extends MemoryContext<RamInstruction> {
 
-    void setLabels(List<RASPLabel> labels);
+    void setLabels(List<RamLabel> labels);
 
-    Optional<RASPLabel> getLabel(int address);
+    Optional<RamLabel> getLabel(int address);
 
-    List<Integer> getInputs();
+    List<RamValue> getInputs();
 
-    void setInputs(List<Integer> inputs);
-
-    default Optional<String> disassemble(int opcode) {
-        return Disassembler.disassemble(opcode);
-    }
+    void setInputs(List<RamValue> inputs);
 }

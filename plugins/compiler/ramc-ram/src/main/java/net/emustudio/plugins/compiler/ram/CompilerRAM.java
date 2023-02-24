@@ -28,7 +28,7 @@ import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ram.ast.Program;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -46,7 +46,7 @@ public class CompilerRAM extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerRAM.class);
     private static final List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(new SourceFileExtension("ram", "Random Access Machine source"));
 
-    private RAMMemoryContext memory;
+    private RamMemoryContext memory;
 
     public CompilerRAM(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -70,7 +70,7 @@ public class CompilerRAM extends AbstractCompiler {
     public void initialize() {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                memory = pool.getMemoryContext(pluginID, RAMMemoryContext.class);
+                memory = pool.getMemoryContext(pluginID, RamMemoryContext.class);
             } catch (InvalidContextException | ContextNotFoundException e) {
                 LOGGER.warn("Memory is not available", e);
             }

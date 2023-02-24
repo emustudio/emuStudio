@@ -23,8 +23,8 @@ import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
@@ -48,7 +48,7 @@ public abstract class AbstractCompilerTest {
         memoryStub = new MemoryStub();
 
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getMemoryContext(0, RAMMemoryContext.class)).andReturn(memoryStub).anyTimes();
+        expect(pool.getMemoryContext(0, RamMemoryContext.class)).andReturn(memoryStub).anyTimes();
         replay(pool);
 
         ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
@@ -87,7 +87,7 @@ public abstract class AbstractCompilerTest {
         }
     }
 
-    protected void assertProgram(RAMInstruction... program) {
+    protected void assertProgram(RamInstruction... program) {
         for (int i = 0; i < program.length; i++) {
             assertEquals(
                     String.format("%d. expected=%s, but was=%s", i, program[i], memoryStub.read(i)),

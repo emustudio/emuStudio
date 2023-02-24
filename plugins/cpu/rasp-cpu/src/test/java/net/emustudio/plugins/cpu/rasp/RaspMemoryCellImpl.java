@@ -18,25 +18,27 @@
  */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
+import net.jcip.annotations.Immutable;
 
-public class RASPCell implements RASPMemoryCell {
+@Immutable
+public class RaspMemoryCellImpl implements RaspMemoryCell {
     private final boolean isInstruction;
     private final int address;
     private final int value;
 
-    private RASPCell(boolean isInstruction, int address, int value) {
+    private RaspMemoryCellImpl(boolean isInstruction, int address, int value) {
         this.isInstruction = isInstruction;
         this.address = address;
         this.value = value;
     }
 
-    public static RASPCell instruction(int address, int opcode) {
-        return new RASPCell(true, address, opcode);
+    public static RaspMemoryCellImpl instruction(int address, int opcode) {
+        return new RaspMemoryCellImpl(true, address, opcode);
     }
 
-    public static RASPCell operand(int address, int value) {
-        return new RASPCell(false, address, value);
+    public static RaspMemoryCellImpl operand(int address, int value) {
+        return new RaspMemoryCellImpl(false, address, value);
     }
 
     @Override

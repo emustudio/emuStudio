@@ -21,8 +21,8 @@ package net.emustudio.plugins.cpu.rasp;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -32,7 +32,7 @@ public class EmulatorEngine {
     public final AtomicInteger IP = new AtomicInteger();
     private final AbstractTapeContext inputTape;
     private final AbstractTapeContext outputTape;
-    private final RASPMemoryContext memory;
+    private final RaspMemoryContext memory;
     private final Instruction[] dispatcher = new Instruction[]{
             null,
             this::read,
@@ -55,7 +55,7 @@ public class EmulatorEngine {
             this::halt
     };
 
-    public EmulatorEngine(RASPMemoryContext memory, AbstractTapeContext inputTape, AbstractTapeContext outputTape) {
+    public EmulatorEngine(RaspMemoryContext memory, AbstractTapeContext inputTape, AbstractTapeContext outputTape) {
         this.inputTape = Objects.requireNonNull(inputTape);
         this.outputTape = Objects.requireNonNull(outputTape);
         this.memory = Objects.requireNonNull(memory);
@@ -72,7 +72,7 @@ public class EmulatorEngine {
     }
 
     public CPU.RunState step() throws IOException {
-        RASPMemoryCell item = memory.read(IP.getAndIncrement());
+        RaspMemoryCell item = memory.read(IP.getAndIncrement());
         if (!item.isInstruction()) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
@@ -232,7 +232,7 @@ public class EmulatorEngine {
         CPU.RunState execute() throws IOException;
     }
 
-    private static class Cell implements RASPMemoryCell {
+    private static class Cell implements RaspMemoryCell {
         private final int address;
         private final int value;
 

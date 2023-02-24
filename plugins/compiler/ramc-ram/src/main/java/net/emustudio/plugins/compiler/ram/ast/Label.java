@@ -18,9 +18,9 @@
  */
 package net.emustudio.plugins.compiler.ram.ast;
 
-import net.emustudio.plugins.memory.ram.api.RAMLabel;
+import net.emustudio.plugins.memory.ram.api.RamLabel;
 
-public class Label implements RAMLabel {
+public class Label implements RamLabel {
     public final int line;
     public final int column;
 

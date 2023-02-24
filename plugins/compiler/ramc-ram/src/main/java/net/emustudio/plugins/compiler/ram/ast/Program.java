@@ -20,9 +20,9 @@ package net.emustudio.plugins.compiler.ram.ast;
 
 import net.emustudio.plugins.compiler.ram.ParsingUtils;
 import net.emustudio.plugins.compiler.ram.exceptions.CompileException;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.io.*;
 import java.util.*;
@@ -52,17 +52,17 @@ public class Program {
         for (Instruction instruction : instructions) {
             instruction
                     .getOperand()
-                    .filter(v -> v.getType() == RAMValue.Type.ID)
-                    .map(RAMValue::getStringValue)
+                    .filter(v -> v.getType() == RamValue.Type.ID)
+                    .map(RamValue::getStringValue)
                     .flatMap(this::getLabel)
                     .ifPresent(instruction::setLabel);
         }
     }
 
-    public void loadIntoMemory(RAMMemoryContext memory) {
+    public void loadIntoMemory(RamMemoryContext memory) {
         memory.setLabels(new ArrayList<>(labels.values()));
         memory.setInputs(new ArrayList<>(inputs));
-        for (RAMInstruction instruction : instructions) {
+        for (RamInstruction instruction : instructions) {
             memory.write(instruction.getAddress(), instruction);
         }
     }

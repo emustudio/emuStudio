@@ -26,7 +26,7 @@ import java.util.Optional;
  * RAM instruction.
  * It is the type of the "memory cell".
  */
-public interface RAMInstruction extends Serializable {
+public interface RamInstruction extends Serializable {
 
     /**
      * Get address of this instruction
@@ -55,14 +55,14 @@ public interface RAMInstruction extends Serializable {
      *
      * @return instruction operand if the instruction has any.
      */
-    Optional<RAMValue> getOperand();
+    Optional<RamValue> getOperand();
 
     /**
      * Get the label if the operand is a label.
      *
      * @return label operand
      */
-    Optional<RAMLabel> getLabel();
+    Optional<RamLabel> getLabel();
 
     enum Opcode {
         READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT

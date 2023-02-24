@@ -19,7 +19,7 @@
 package net.emustudio.plugins.memory.ram;
 
 import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,8 +60,8 @@ public class MemoryContextImplTest {
             }
         });
 
-        memory.write(0, (RAMInstruction) createNiceMock(RAMInstruction.class));
-        memory.write(0, (RAMInstruction) createNiceMock(RAMInstruction.class));
+        memory.write(0, (RamInstruction) createNiceMock(RamInstruction.class));
+        memory.write(0, (RamInstruction) createNiceMock(RamInstruction.class));
 
         assertEquals(1, memorySizeChanges.get());
         assertEquals(2, memoryChanges.get());
@@ -84,7 +84,7 @@ public class MemoryContextImplTest {
             }
         });
 
-        memory.write(0, new RAMInstruction[]{createNiceMock(RAMInstruction.class), createNiceMock(RAMInstruction.class)}, 2);
+        memory.write(0, new RamInstruction[]{createNiceMock(RamInstruction.class), createNiceMock(RamInstruction.class)}, 2);
 
         assertEquals(1, memorySizeChanges.get());
         assertEquals(2, memoryChanges.get());

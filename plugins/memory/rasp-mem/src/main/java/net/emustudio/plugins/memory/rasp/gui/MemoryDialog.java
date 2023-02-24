@@ -39,7 +39,7 @@ public class MemoryDialog extends JDialog {
     private final Dialogs dialogs;
 
     private final MemoryContextImpl memory;
-    private final RASPTableModel tableModel;
+    private final RaspTableModel tableModel;
     private File recentOpenPath;
     private javax.swing.JTable memoryTable;
 
@@ -53,7 +53,7 @@ public class MemoryDialog extends JDialog {
         initComponents();
         setLocationRelativeTo(parent);
 
-        tableModel = new RASPTableModel(memory);
+        tableModel = new RaspTableModel(memory);
         updateTable();
         memory.addMemoryListener(new Memory.MemoryListener() {
 
@@ -86,7 +86,7 @@ public class MemoryDialog extends JDialog {
 
         setTitle("RASP Memory");
 
-        memoryTable.setModel(new RASPTableModel(memory));
+        memoryTable.setModel(new RaspTableModel(memory));
         memoryTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 memoryTableMouseClicked(evt);

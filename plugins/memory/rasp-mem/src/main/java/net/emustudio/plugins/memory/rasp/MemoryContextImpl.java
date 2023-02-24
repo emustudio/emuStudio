@@ -21,16 +21,16 @@
 package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.RASPLabel;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspLabel;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.io.*;
 import java.util.*;
 
-public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> implements RASPMemoryContext {
-    private final Map<Integer, RASPMemoryCell> memory = new HashMap<>();
-    private final Map<Integer, RASPLabel> labels = new HashMap<>();
+public class MemoryContextImpl extends AbstractMemoryContext<RaspMemoryCell> implements RaspMemoryContext {
+    private final Map<Integer, RaspMemoryCell> memory = new HashMap<>();
+    private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
     private int programLocation;
 
@@ -53,23 +53,23 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
     }
 
     @Override
-    public RASPMemoryCell read(int address) {
-        RASPMemoryCell cell = memory.get(address);
+    public RaspMemoryCell read(int address) {
+        RaspMemoryCell cell = memory.get(address);
         return (cell == null) ? EmptyCell.at(address) : cell;
     }
 
     @Override
-    public RASPMemoryCell[] read(int address, int count) {
-        List<RASPMemoryCell> copy = new ArrayList<>();
+    public RaspMemoryCell[] read(int address, int count) {
+        List<RaspMemoryCell> copy = new ArrayList<>();
         for (int i = address; i < address + count; i++) {
-            RASPMemoryCell cell = memory.get(i);
+            RaspMemoryCell cell = memory.get(i);
             copy.add((cell == null) ? EmptyCell.at(address) : cell);
         }
-        return copy.toArray(new RASPMemoryCell[0]);
+        return copy.toArray(new RaspMemoryCell[0]);
     }
 
     @Override
-    public void write(int address, RASPMemoryCell value) {
+    public void write(int address, RaspMemoryCell value) {
         boolean sizeChanged = !memory.containsKey(address);
         memory.put(address, value);
         if (sizeChanged) {
@@ -79,7 +79,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
     }
 
     @Override
-    public void write(int address, RASPMemoryCell[] values, int count) {
+    public void write(int address, RaspMemoryCell[] values, int count) {
         for (int i = 0; i < count; i++) {
             boolean sizeChanged = !memory.containsKey(address);
             memory.put(address + i, values[i]);
@@ -91,20 +91,20 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
     }
 
     @Override
-    public Class<RASPMemoryCell> getDataType() {
-        return RASPMemoryCell.class;
+    public Class<RaspMemoryCell> getDataType() {
+        return RaspMemoryCell.class;
     }
 
     @Override
-    public synchronized void setLabels(List<RASPLabel> labels) {
+    public synchronized void setLabels(List<RaspLabel> labels) {
         this.labels.clear();
-        for (RASPLabel label : labels) {
+        for (RaspLabel label : labels) {
             this.labels.put(label.getAddress(), label);
         }
     }
 
     @Override
-    public Optional<RASPLabel> getLabel(int address) {
+    public Optional<RaspLabel> getLabel(int address) {
         return Optional.ofNullable(labels.get(address));
     }
 
@@ -139,9 +139,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
             memory.clear();
 
             programLocation = (Integer) input.readObject();
-            labels.putAll((Map<Integer, RASPLabel>) input.readObject());
+            labels.putAll((Map<Integer, RaspLabel>) input.readObject());
             inputs.addAll((List<Integer>) input.readObject());
-            memory.putAll((Map<Integer, RASPMemoryCell>) input.readObject());
+            memory.putAll((Map<Integer, RaspMemoryCell>) input.readObject());
 
             input.close();
         } finally {
@@ -154,7 +154,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
         clear();
     }
 
-    private final static class EmptyCell implements RASPMemoryCell {
+    private final static class EmptyCell implements RaspMemoryCell {
         private final int address;
 
         private EmptyCell(int address) {

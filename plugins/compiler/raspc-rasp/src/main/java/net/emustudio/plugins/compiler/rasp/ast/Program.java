@@ -20,8 +20,8 @@ package net.emustudio.plugins.compiler.rasp.ast;
 
 import net.emustudio.plugins.compiler.rasp.ParsingUtils;
 import net.emustudio.plugins.compiler.rasp.exceptions.CompileException;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.io.*;
 import java.util.*;
@@ -47,14 +47,14 @@ public class Program {
         this.inputs.add(input);
     }
 
-    public Map<Integer, RASPMemoryCell> compile() {
-        Map<Integer, RASPMemoryCell> compiled = new HashMap<>();
+    public Map<Integer, RaspMemoryCell> compile() {
+        Map<Integer, RaspMemoryCell> compiled = new HashMap<>();
 
         for (Instruction instruction : instructions) {
-            RASPMemoryCell instrCell = new RASPMemoryCellImpl(true, instruction.opcode, instruction.address);
+            RaspMemoryCell instrCell = new RaspMemoryCellImpl(true, instruction.opcode, instruction.address);
             compiled.put(instrCell.getAddress(), instrCell);
             instruction.operand.ifPresent(o -> {
-                RASPMemoryCell cell = new RASPMemoryCellImpl(false, o, instruction.address + 1);
+                RaspMemoryCell cell = new RaspMemoryCellImpl(false, o, instruction.address + 1);
                 compiled.put(cell.getAddress(), cell);
             });
             instruction.id.ifPresent(id -> {
@@ -62,22 +62,22 @@ public class Program {
                 if (label.isEmpty()) {
                     throw new CompileException(instruction.line, instruction.column, "Label is not defined");
                 }
-                RASPMemoryCell cell = new RASPMemoryCellImpl(false, label.get().getAddress(), instruction.address + 1);
+                RaspMemoryCell cell = new RaspMemoryCellImpl(false, label.get().getAddress(), instruction.address + 1);
                 compiled.put(cell.getAddress(), cell);
             });
         }
         return compiled;
     }
 
-    public void loadIntoMemory(RASPMemoryContext memory, Map<Integer, RASPMemoryCell> compiled) {
+    public void loadIntoMemory(RaspMemoryContext memory, Map<Integer, RaspMemoryCell> compiled) {
         memory.setLabels(new ArrayList<>(labels.values()));
         memory.setInputs(new ArrayList<>(inputs));
-        for (RASPMemoryCell cell : compiled.values()) {
+        for (RaspMemoryCell cell : compiled.values()) {
             memory.write(cell.getAddress(), cell);
         }
     }
 
-    public void saveToFile(String filename, Map<Integer, RASPMemoryCell> compiled) throws IOException {
+    public void saveToFile(String filename, Map<Integer, RaspMemoryCell> compiled) throws IOException {
         Map<Integer, String> labels = new HashMap<>();
         for (Label label : this.labels.values()) {
             labels.put(label.getAddress(), label.getLabel());
@@ -93,7 +93,7 @@ public class Program {
         }
     }
 
-    public int getProgramLocation(Map<Integer, RASPMemoryCell> compiled) {
+    public int getProgramLocation(Map<Integer, RaspMemoryCell> compiled) {
         return compiled.keySet().stream().min(Comparator.naturalOrder()).orElse(0);
     }
 
@@ -102,12 +102,12 @@ public class Program {
         return Optional.ofNullable(labels.get(labelNorm));
     }
 
-    public static class RASPMemoryCellImpl implements RASPMemoryCell {
+    public static class RaspMemoryCellImpl implements RaspMemoryCell {
         private final boolean isInstruction;
         private final int value;
         private final int address;
 
-        public RASPMemoryCellImpl(boolean isInstruction, int value, int address) {
+        public RaspMemoryCellImpl(boolean isInstruction, int value, int address) {
             this.isInstruction = isInstruction;
             this.value = value;
             this.address = address;
@@ -132,7 +132,7 @@ public class Program {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            RASPMemoryCellImpl that = (RASPMemoryCellImpl) o;
+            RaspMemoryCellImpl that = (RaspMemoryCellImpl) o;
             return isInstruction == that.isInstruction && value == that.value && address == that.address;
         }
 

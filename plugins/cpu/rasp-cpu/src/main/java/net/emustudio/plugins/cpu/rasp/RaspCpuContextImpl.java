@@ -20,13 +20,13 @@ package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.plugins.cpu.rasp.api.RASPCpuContext;
+import net.emustudio.plugins.cpu.rasp.api.RaspCpuContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import java.util.Optional;
 
-public class RASPCpuContextImpl implements RASPCpuContext {
+public class RaspCpuContextImpl implements RaspCpuContext {
     private AbstractTapeContext inputTape;
     private AbstractTapeContext outputTape;
 

@@ -1,6 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
+ * Copyright (C) 2016-2017  Michal Šipoš
  * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,15 +17,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 package net.emustudio.plugins.memory.rasp.api;
 
-import java.io.Serializable;
+import net.emustudio.emulib.plugins.annotations.PluginContext;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.plugins.memory.rasp.gui.Disassembler;
 
-public interface RASPMemoryCell extends Serializable {
+import java.util.List;
+import java.util.Optional;
 
-    boolean isInstruction();
+/**
+ * Context of the RASP memory.
+ */
+@PluginContext
+@SuppressWarnings("unused")
+public interface RaspMemoryContext extends MemoryContext<RaspMemoryCell> {
 
-    int getAddress();
+    void setLabels(List<RaspLabel> labels);
 
-    int getValue();
+    Optional<RaspLabel> getLabel(int address);
+
+    List<Integer> getInputs();
+
+    void setInputs(List<Integer> inputs);
+
+    default Optional<String> disassemble(int opcode) {
+        return Disassembler.disassemble(opcode);
+    }
 }

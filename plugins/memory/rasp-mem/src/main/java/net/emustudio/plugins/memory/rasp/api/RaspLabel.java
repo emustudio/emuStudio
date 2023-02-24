@@ -16,22 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.ram.api;
+package net.emustudio.plugins.memory.rasp.api;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import java.io.Serializable;
 
-import java.util.List;
-import java.util.Optional;
+/**
+ * A Label is a named pointer to an address in memory.
+ */
+public interface RaspLabel extends Serializable {
 
-@PluginContext
-public interface RAMMemoryContext extends MemoryContext<RAMInstruction> {
+    /**
+     * Get address to which this label points to
+     *
+     * @return memory address
+     */
+    int getAddress();
 
-    void setLabels(List<RAMLabel> labels);
-
-    Optional<RAMLabel> getLabel(int address);
-
-    List<RAMValue> getInputs();
-
-    void setInputs(List<RAMValue> inputs);
+    /**
+     * Get name of this label
+     *
+     * @return name of this label
+     */
+    String getLabel();
 }

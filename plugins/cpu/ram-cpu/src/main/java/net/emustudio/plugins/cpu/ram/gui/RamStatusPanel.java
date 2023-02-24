@@ -28,14 +28,14 @@ import javax.swing.*;
 import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_BIG_BOLD;
 import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_PLAIN;
 
-public class RAMStatusPanel extends JPanel {
+public class RamStatusPanel extends JPanel {
     private final JLabel lblStatus = new JLabel("breakpoint");
     private final JTextField txtIP = new JTextField("0");
     private final JTextField txtInput = new JTextField("N/A");
     private final JTextField txtOutput = new JTextField("N/A");
     private final JTextField txtR0 = new JTextField("0");
 
-    public RAMStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output) {
+    public RamStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output) {
         initComponents();
 
         cpu.addCPUListener(new CPU.CPUListener() {
@@ -47,12 +47,11 @@ public class RAMStatusPanel extends JPanel {
 
             @Override
             public void internalStateChanged() {
-                TapeSymbol r0 = cpu.getR0();
-                String repr = r0.toString();
-                if (repr.equals("")) {
-                    repr = "<empty>";
+                String r0 = cpu.getR0().toString();
+                if (r0.equals("")) {
+                    r0 = "<empty>";
                 }
-                txtR0.setText(repr);
+                txtR0.setText(r0);
                 txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
 
                 txtInput.setText(input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>"));
