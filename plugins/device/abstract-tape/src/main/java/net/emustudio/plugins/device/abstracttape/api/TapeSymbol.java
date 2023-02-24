@@ -18,14 +18,18 @@
  */
 package net.emustudio.plugins.device.abstracttape.api;
 
+import net.jcip.annotations.Immutable;
+
 import java.util.Objects;
 
 import static net.emustudio.plugins.device.abstracttape.api.TapeSymbol.Type.NUMBER;
 import static net.emustudio.plugins.device.abstracttape.api.TapeSymbol.Type.STRING;
 
 @SuppressWarnings("unused")
+@Immutable
 public class TapeSymbol {
     public final static TapeSymbol EMPTY = new TapeSymbol("");
+
     public final int number;
     public final String string;
     public final Type type;

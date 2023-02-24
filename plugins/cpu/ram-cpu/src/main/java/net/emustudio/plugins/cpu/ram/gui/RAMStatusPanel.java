@@ -29,12 +29,12 @@ import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_BIG_BOLD;
 import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_PLAIN;
 
 public class RAMStatusPanel extends JPanel {
+    private final JLabel lblStatus = new JLabel("breakpoint");
+    private final JTextField txtIP = new JTextField("0");
+    private final JTextField txtInput = new JTextField("N/A");
+    private final JTextField txtOutput = new JTextField("N/A");
+    private final JTextField txtR0 = new JTextField("0");
 
-    private JLabel lblStatus;
-    private JTextField txtIP;
-    private JTextField txtInput;
-    private JTextField txtOutput;
-    private JTextField txtR0;
     public RAMStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output) {
         initComponents();
 
@@ -63,63 +63,52 @@ public class RAMStatusPanel extends JPanel {
     }
 
     private void initComponents() {
-        JPanel jPanel1 = new JPanel();
-        JLabel jLabel1 = new JLabel();
-        JLabel jLabel2 = new JLabel();
-        txtR0 = new JTextField();
-        txtIP = new JTextField();
+        JPanel panelInternalState = new JPanel();
+        JLabel lblR0 = new JLabel("R0");
+        JLabel lblIP = new JLabel("IP");
         JPanel jPanel2 = new JPanel();
-        lblStatus = new JLabel();
         JPanel jPanel3 = new JPanel();
-        JLabel jLabel4 = new JLabel();
-        JLabel jLabel5 = new JLabel();
-        txtOutput = new JTextField();
-        txtInput = new JTextField();
+        JLabel lblNextInput = new JLabel("Next Input:");
+        JLabel lblLastOutput = new JLabel("Last Output:");
 
-        jPanel1.setBorder(BorderFactory.createTitledBorder("Internal state"));
+        panelInternalState.setBorder(BorderFactory.createTitledBorder("Internal state"));
 
-        jLabel1.setFont(MONOSPACED_PLAIN);
-        jLabel1.setText("R0");
-
-        jLabel2.setFont(MONOSPACED_PLAIN);
-        jLabel2.setText("IP");
-        jLabel2.setToolTipText("");
+        lblR0.setFont(MONOSPACED_PLAIN);
+        lblIP.setFont(MONOSPACED_PLAIN);
 
         txtR0.setEditable(false);
         txtR0.setFont(MONOSPACED_PLAIN);
-        txtR0.setText("0");
 
         txtIP.setEditable(false);
         txtIP.setFont(MONOSPACED_PLAIN);
-        txtIP.setText("0");
 
-        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
+        GroupLayout panelInternalStateLayout = new GroupLayout(panelInternalState);
+        panelInternalState.setLayout(panelInternalStateLayout);
+        panelInternalStateLayout.setHorizontalGroup(
+                panelInternalStateLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelInternalStateLayout.createSequentialGroup()
                                 .addContainerGap()
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addComponent(jLabel1)
+                                .addGroup(panelInternalStateLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addGroup(panelInternalStateLayout.createSequentialGroup()
+                                                .addComponent(lblR0)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(txtR0, GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE))
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addComponent(jLabel2)
+                                        .addGroup(panelInternalStateLayout.createSequentialGroup()
+                                                .addComponent(lblIP)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(txtIP)))
                                 .addContainerGap(64, Short.MAX_VALUE))
         );
-        jPanel1Layout.setVerticalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
+        panelInternalStateLayout.setVerticalGroup(
+                panelInternalStateLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelInternalStateLayout.createSequentialGroup()
                                 .addContainerGap()
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel1)
+                                .addGroup(panelInternalStateLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblR0)
                                         .addComponent(txtR0, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel2)
+                                .addGroup(panelInternalStateLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblIP)
                                         .addComponent(txtIP, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -129,7 +118,6 @@ public class RAMStatusPanel extends JPanel {
         lblStatus.setFont(MONOSPACED_BIG_BOLD);
         lblStatus.setForeground(new java.awt.Color(0, 153, 51));
         lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
-        lblStatus.setText("breakpoint");
 
         GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -150,16 +138,11 @@ public class RAMStatusPanel extends JPanel {
 
         jPanel3.setBorder(BorderFactory.createTitledBorder("Input / output"));
 
-        jLabel4.setText("Next Input:");
-        jLabel5.setText("Last Output:");
-
         txtOutput.setEditable(false);
         txtOutput.setFont(MONOSPACED_PLAIN);
-        txtOutput.setText("N/A");
 
         txtInput.setEditable(false);
         txtInput.setFont(MONOSPACED_PLAIN);
-        txtInput.setText("N/A");
 
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -168,8 +151,8 @@ public class RAMStatusPanel extends JPanel {
                         .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel5)
-                                        .addComponent(jLabel4))
+                                        .addComponent(lblLastOutput)
+                                        .addComponent(lblNextInput))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                                         .addComponent(txtOutput, GroupLayout.DEFAULT_SIZE, 109, Short.MAX_VALUE)
@@ -181,11 +164,11 @@ public class RAMStatusPanel extends JPanel {
                         .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel4)
+                                        .addComponent(lblNextInput)
                                         .addComponent(txtInput, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel5)
+                                        .addComponent(lblLastOutput)
                                         .addComponent(txtOutput, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -197,7 +180,7 @@ public class RAMStatusPanel extends JPanel {
                         .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jPanel1, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(panelInternalState, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addContainerGap())
@@ -206,7 +189,7 @@ public class RAMStatusPanel extends JPanel {
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(panelInternalState, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
