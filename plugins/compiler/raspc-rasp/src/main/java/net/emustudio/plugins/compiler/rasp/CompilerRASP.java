@@ -29,7 +29,6 @@ import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.rasp.ast.Program;
-import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -87,7 +86,7 @@ public class CompilerRASP extends AbstractCompiler {
                 Program program = new Program();
                 new ProgramParser(program).visit(parser.rStart());
 
-                Map<Integer, RaspMemoryCell> compiled = program.compile();
+                Map<Integer, Integer> compiled = program.compile();
                 this.programLocation = program.getProgramLocation(compiled);
                 program.saveToFile(outputFileName, compiled);
 

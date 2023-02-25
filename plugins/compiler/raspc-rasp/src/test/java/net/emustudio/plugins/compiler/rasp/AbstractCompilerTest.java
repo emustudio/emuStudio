@@ -23,7 +23,6 @@ import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import org.junit.Before;
 import org.junit.Rule;
@@ -85,7 +84,7 @@ public abstract class AbstractCompilerTest {
         }
     }
 
-    protected void assertProgram(RaspMemoryCell... program) {
+    protected void assertProgram(Integer... program) {
         for (int i = 0; i < program.length; i++) {
             assertEquals(
                     String.format("%d. expected=%s, but was=%s", i, program[i], memoryStub.read(i)),

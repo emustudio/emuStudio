@@ -22,12 +22,13 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.cpu.rasp.api.RaspCpuContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
-import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
 
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.HALT;
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.JMP;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
@@ -36,11 +37,11 @@ public class EmulatorEngineTest {
     @Test
     public void testJumpInstruction() throws IOException {
         EmulatorEngine engine = setup(List.of(
-                RaspMemoryCellImpl.instruction(0, 15),
-                RaspMemoryCellImpl.operand(1, 4),
-                RaspMemoryCellImpl.instruction(2, 15),
-                RaspMemoryCellImpl.operand(3, 0),
-                RaspMemoryCellImpl.instruction(4, 18)
+                JMP,
+                4,
+                JMP,
+                0,
+                HALT
         ), List.of(
                 new RaspLabel() {
                     @Override
@@ -62,7 +63,7 @@ public class EmulatorEngineTest {
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, state);
     }
 
-    private EmulatorEngine setup(List<RaspMemoryCell> items, List<RaspLabel> labels) {
+    private EmulatorEngine setup(List<Integer> memoryContent, List<RaspLabel> labels) {
         AbstractTapeContext outputTape = createNiceMock(AbstractTapeContext.class);
         replay(outputTape);
         AbstractTapeContext inputTape = createNiceMock(AbstractTapeContext.class);
@@ -75,8 +76,9 @@ public class EmulatorEngineTest {
 
         MemoryStub memory = new MemoryStub();
         memory.setLabels(labels);
-        for (RaspMemoryCell item : items) {
-            memory.write(item.getAddress(), item);
+        int address = 0;
+        for (int item : memoryContent) {
+            memory.write(address++, item);
         }
 
         return new EmulatorEngine(memory, inputTape, outputTape);

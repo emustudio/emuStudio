@@ -20,39 +20,38 @@ package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
-import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.util.*;
 
-public class MemoryStub extends AbstractMemoryContext<RaspMemoryCell> implements RaspMemoryContext {
-    private final RaspMemoryCell[] memory = new RaspMemoryCell[1000];
+public class MemoryStub extends AbstractMemoryContext<Integer> implements RaspMemoryContext {
+    private final Integer[] memory = new Integer[1000];
     private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
 
     @Override
-    public RaspMemoryCell read(int address) {
+    public Integer read(int address) {
         return memory[address];
     }
 
     @Override
-    public RaspMemoryCell[] read(int address, int count) {
+    public Integer[] read(int address, int count) {
         return Arrays.copyOfRange(memory, address, count);
     }
 
     @Override
-    public void write(int address, RaspMemoryCell value) {
+    public void write(int address, Integer value) {
         memory[address] = value;
     }
 
     @Override
-    public void write(int address, RaspMemoryCell[] instructions, int count) {
+    public void write(int address, Integer[] instructions, int count) {
         System.arraycopy(instructions, 0, this.memory, address, count);
     }
 
     @Override
-    public Class<RaspMemoryCell> getDataType() {
-        return RaspMemoryCell.class;
+    public Class<Integer> getDataType() {
+        return Integer.class;
     }
 
     @Override

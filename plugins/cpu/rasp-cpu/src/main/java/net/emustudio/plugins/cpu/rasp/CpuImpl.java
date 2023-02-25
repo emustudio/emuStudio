@@ -186,7 +186,7 @@ public class CpuImpl extends AbstractCPU {
      * @return current value of the accumulator (memory cell at address [0])
      */
     public int getACC() {
-        return memory.read(0).getValue();
+        return memory.read(0);
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

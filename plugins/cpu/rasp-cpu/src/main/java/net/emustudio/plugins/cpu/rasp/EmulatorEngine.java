@@ -21,12 +21,13 @@ package net.emustudio.plugins.cpu.rasp;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
-import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.HALT;
 
 public class EmulatorEngine {
     public final AtomicInteger IP = new AtomicInteger();
@@ -72,13 +73,11 @@ public class EmulatorEngine {
     }
 
     public CPU.RunState step() throws IOException {
-        RaspMemoryCell item = memory.read(IP.getAndIncrement());
-        if (!item.isInstruction()) {
+        int opcode = memory.read(IP.getAndIncrement());
+        if (!memory.isInstruction(opcode)) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
-
-        int opcode = item.getValue();
-        if (opcode > 0 && opcode <= 18) {
+        if (opcode > 0 && opcode <= HALT) {
             return dispatcher[opcode].execute();
         }
         return CPU.RunState.STATE_STOPPED_BAD_INSTR;
@@ -92,122 +91,122 @@ public class EmulatorEngine {
         return true;
     }
 
-    private CPU.RunState read() throws IOException {
-        int register = memory.read(IP.getAndIncrement()).getValue();
+    private CPU.RunState read() {
+        int register = memory.read(IP.getAndIncrement());
         int input = inputTape.readData().number;
 
         inputTape.moveRight();
-        memory.write(register, new Cell(register, input));
+        memory.write(register, input);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState write_c() {
-        int constant = memory.read(IP.getAndIncrement()).getValue();
+        int constant = memory.read(IP.getAndIncrement());
         outputTape.writeData(new TapeSymbol(constant));
         outputTape.moveRight();
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState write() {
-        int register = memory.read(IP.getAndIncrement()).getValue();
-        int value = memory.read(register).getValue();
+        int register = memory.read(IP.getAndIncrement());
+        int value = memory.read(register);
         outputTape.writeData(new TapeSymbol(value));
         outputTape.moveRight();
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState load_c() {
-        int value = memory.read(IP.getAndIncrement()).getValue();
-        memory.write(0, new Cell(0, value));
+        int value = memory.read(IP.getAndIncrement());
+        memory.write(0, value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState load() {
-        int register = memory.read(IP.getAndIncrement()).getValue();
+        int register = memory.read(IP.getAndIncrement());
         memory.write(0, memory.read(register));
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState store() {
-        int register = memory.read(IP.getAndIncrement()).getValue();
+        int register = memory.read(IP.getAndIncrement());
         memory.write(register, memory.read(0));
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState add_c() {
-        int value = memory.read(IP.getAndIncrement()).getValue();
-        int r0 = memory.read(0).getValue();
-        memory.write(0, new Cell(0, r0 + value));
+        int value = memory.read(IP.getAndIncrement());
+        int r0 = memory.read(0);
+        memory.write(0, r0 + value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState add() {
-        int register = memory.read(IP.getAndIncrement()).getValue();
-        int value = memory.read(register).getValue();
-        int r0 = memory.read(0).getValue();
-        memory.write(0, new Cell(0, r0 + value));
+        int register = memory.read(IP.getAndIncrement());
+        int value = memory.read(register);
+        int r0 = memory.read(0);
+        memory.write(0, r0 + value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState sub_c() {
-        int value = memory.read(IP.getAndIncrement()).getValue();
-        int r0 = memory.read(0).getValue();
-        memory.write(0, new Cell(0, r0 - value));
+        int value = memory.read(IP.getAndIncrement());
+        int r0 = memory.read(0);
+        memory.write(0, r0 - value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState sub() {
-        int register = memory.read(IP.getAndIncrement()).getValue();
-        int value = memory.read(register).getValue();
-        int r0 = memory.read(0).getValue();
-        memory.write(0, new Cell(0, r0 - value));
+        int register = memory.read(IP.getAndIncrement());
+        int value = memory.read(register);
+        int r0 = memory.read(0);
+        memory.write(0, r0 - value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState mul_c() {
-        int value = memory.read(IP.getAndIncrement()).getValue();
-        int r0 = memory.read(0).getValue();
-        memory.write(0, new Cell(0, r0 * value));
+        int value = memory.read(IP.getAndIncrement());
+        int r0 = memory.read(0);
+        memory.write(0, r0 * value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState mul() {
-        int register = memory.read(IP.getAndIncrement()).getValue();
-        int value = memory.read(register).getValue();
-        int r0 = memory.read(0).getValue();
-        memory.write(0, new Cell(0, r0 * value));
+        int register = memory.read(IP.getAndIncrement());
+        int value = memory.read(register);
+        int r0 = memory.read(0);
+        memory.write(0, r0 * value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState div_c() {
-        int value = memory.read(IP.getAndIncrement()).getValue();
-        int r0 = memory.read(0).getValue();
+        int value = memory.read(IP.getAndIncrement());
+        int r0 = memory.read(0);
         if (value == 0) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
-        memory.write(0, new Cell(0, r0 / value));
+        memory.write(0, r0 / value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState div() {
-        int register = memory.read(IP.getAndIncrement()).getValue();
-        int value = memory.read(register).getValue();
-        int r0 = memory.read(0).getValue();
+        int register = memory.read(IP.getAndIncrement());
+        int value = memory.read(register);
+        int r0 = memory.read(0);
         if (value == 0) {
             return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
-        memory.write(0, new Cell(0, r0 / value));
+        memory.write(0, r0 / value);
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState jmp() {
-        IP.set(memory.read(IP.get()).getValue());
+        IP.set(memory.read(IP.get()));
         return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
     private CPU.RunState jz() {
-        int address = memory.read(IP.getAndIncrement()).getValue();
-        int r0 = memory.read(0).getValue();
+        int address = memory.read(IP.getAndIncrement());
+        int r0 = memory.read(0);
         if (r0 == 0) {
             IP.set(address);
         }
@@ -215,8 +214,8 @@ public class EmulatorEngine {
     }
 
     private CPU.RunState jgtz() {
-        int address = memory.read(IP.getAndIncrement()).getValue();
-        int r0 = memory.read(0).getValue();
+        int address = memory.read(IP.getAndIncrement());
+        int r0 = memory.read(0);
         if (r0 > 0) {
             IP.set(address);
         }
@@ -230,30 +229,5 @@ public class EmulatorEngine {
     @FunctionalInterface
     private interface Instruction {
         CPU.RunState execute() throws IOException;
-    }
-
-    private static class Cell implements RaspMemoryCell {
-        private final int address;
-        private final int value;
-
-        Cell(int address, int value) {
-            this.address = address;
-            this.value = value;
-        }
-
-        @Override
-        public boolean isInstruction() {
-            return false;
-        }
-
-        @Override
-        public int getAddress() {
-            return address;
-        }
-
-        @Override
-        public int getValue() {
-            return value;
-        }
     }
 }

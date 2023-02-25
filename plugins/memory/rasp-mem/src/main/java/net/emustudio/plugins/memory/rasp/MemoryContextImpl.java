@@ -22,14 +22,13 @@ package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
-import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.io.*;
 import java.util.*;
 
-public class MemoryContextImpl extends AbstractMemoryContext<RaspMemoryCell> implements RaspMemoryContext {
-    private final Map<Integer, RaspMemoryCell> memory = new HashMap<>();
+public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements RaspMemoryContext {
+    private final Map<Integer, Integer> memory = new HashMap<>();
     private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
     private int programLocation;
@@ -53,23 +52,23 @@ public class MemoryContextImpl extends AbstractMemoryContext<RaspMemoryCell> imp
     }
 
     @Override
-    public RaspMemoryCell read(int address) {
-        RaspMemoryCell cell = memory.get(address);
-        return (cell == null) ? EmptyCell.at(address) : cell;
+    public Integer read(int address) {
+        Integer cell = memory.get(address);
+        return (cell == null) ? 0 : cell;
     }
 
     @Override
-    public RaspMemoryCell[] read(int address, int count) {
-        List<RaspMemoryCell> copy = new ArrayList<>();
+    public Integer[] read(int address, int count) {
+        List<Integer> copy = new ArrayList<>();
         for (int i = address; i < address + count; i++) {
-            RaspMemoryCell cell = memory.get(i);
-            copy.add((cell == null) ? EmptyCell.at(address) : cell);
+            Integer cell = memory.get(i);
+            copy.add((cell == null) ? 0 : cell);
         }
-        return copy.toArray(new RaspMemoryCell[0]);
+        return copy.toArray(new Integer[0]);
     }
 
     @Override
-    public void write(int address, RaspMemoryCell value) {
+    public void write(int address, Integer value) {
         boolean sizeChanged = !memory.containsKey(address);
         memory.put(address, value);
         if (sizeChanged) {
@@ -79,7 +78,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RaspMemoryCell> imp
     }
 
     @Override
-    public void write(int address, RaspMemoryCell[] values, int count) {
+    public void write(int address, Integer[] values, int count) {
         for (int i = 0; i < count; i++) {
             boolean sizeChanged = !memory.containsKey(address);
             memory.put(address + i, values[i]);
@@ -88,11 +87,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<RaspMemoryCell> imp
             }
             notifyMemoryChanged(address + i);
         }
-    }
-
-    @Override
-    public Class<RaspMemoryCell> getDataType() {
-        return RaspMemoryCell.class;
     }
 
     @Override
@@ -141,7 +135,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RaspMemoryCell> imp
             programLocation = (Integer) input.readObject();
             labels.putAll((Map<Integer, RaspLabel>) input.readObject());
             inputs.addAll((List<Integer>) input.readObject());
-            memory.putAll((Map<Integer, RaspMemoryCell>) input.readObject());
+            memory.putAll((Map<Integer, Integer>) input.readObject());
 
             input.close();
         } finally {
@@ -152,32 +146,5 @@ public class MemoryContextImpl extends AbstractMemoryContext<RaspMemoryCell> imp
 
     public void destroy() {
         clear();
-    }
-
-    private final static class EmptyCell implements RaspMemoryCell {
-        private final int address;
-
-        private EmptyCell(int address) {
-            this.address = address;
-        }
-
-        static EmptyCell at(int address) {
-            return new EmptyCell(address);
-        }
-
-        @Override
-        public boolean isInstruction() {
-            return false;
-        }
-
-        @Override
-        public int getAddress() {
-            return address;
-        }
-
-        @Override
-        public int getValue() {
-            return 0;
-        }
     }
 }

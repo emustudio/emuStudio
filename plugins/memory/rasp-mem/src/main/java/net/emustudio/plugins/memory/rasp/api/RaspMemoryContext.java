@@ -32,7 +32,7 @@ import java.util.Optional;
  */
 @PluginContext
 @SuppressWarnings("unused")
-public interface RaspMemoryContext extends MemoryContext<RaspMemoryCell> {
+public interface RaspMemoryContext extends MemoryContext<Integer> {
 
     void setLabels(List<RaspLabel> labels);
 
@@ -42,7 +42,15 @@ public interface RaspMemoryContext extends MemoryContext<RaspMemoryCell> {
 
     void setInputs(List<Integer> inputs);
 
-    default Optional<String> disassemble(int opcode) {
-        return Disassembler.disassemble(opcode);
+    default Class<Integer> getDataType() {
+        return Integer.class;
+    }
+
+    default boolean isInstruction(int opcode) {
+        return Disassembler.isInstruction(opcode);
+    }
+
+    default Optional<String> disassembleMnemo(int opcode) {
+        return Disassembler.disassembleMnemo(opcode);
     }
 }

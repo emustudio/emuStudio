@@ -21,7 +21,6 @@
 package net.emustudio.plugins.memory.rasp.gui;
 
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
-import net.emustudio.plugins.memory.rasp.api.RaspMemoryCell;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import javax.swing.table.AbstractTableModel;
@@ -87,8 +86,8 @@ public class RaspTableModel extends AbstractTableModel {
      * @return string contained in the numeric value column
      */
     private String getNumericValueColumnText(int rowIndex) {
-        RaspMemoryCell item = memory.read(rowIndex);
-        return String.valueOf(item.getValue());
+        int item = memory.read(rowIndex);
+        return String.valueOf(item);
     }
 
 
@@ -99,25 +98,25 @@ public class RaspTableModel extends AbstractTableModel {
      * @return string contained in the mnemonic column
      */
     private String getMnemonicColumnValue(int rowIndex) {
-        RaspMemoryCell item = memory.read(rowIndex);
-        if (item.isInstruction()) {
-            return Disassembler.disassemble(item.getValue()).orElse("unknown");
+        int item = memory.read(rowIndex);
+        if (Disassembler.isInstruction(item)) {
+            return Disassembler.disassembleMnemo(item).orElse("unknown");
         }
         if (rowIndex != 0) {
-            RaspMemoryCell previousItem = memory.read(rowIndex - 1);
-            if (previousItem.isInstruction()) {
-                switch (previousItem.getValue()) {
+            int previousItem = memory.read(rowIndex - 1);
+            if (Disassembler.isInstruction(previousItem)) {
+                switch (previousItem) {
                     case JMP:
                     case JZ:
                     case JGTZ:
                         return memory
-                                .getLabel(item.getValue())
+                                .getLabel(item)
                                 .map(RaspLabel::getLabel)
-                                .orElse(String.valueOf(item.getValue()));
+                                .orElse(String.valueOf(item));
                 }
             }
         }
-        return String.valueOf(item.getValue());
+        return String.valueOf(item);
     }
 
     /**
@@ -157,25 +156,7 @@ public class RaspTableModel extends AbstractTableModel {
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
         try {
             int numberValue = Integer.decode((String) value);
-            RaspMemoryCell original = memory.read(rowIndex);
-            boolean instruction = original.isInstruction();
-
-            memory.write(rowIndex, new RaspMemoryCell() {
-                @Override
-                public boolean isInstruction() {
-                    return instruction;
-                }
-
-                @Override
-                public int getAddress() {
-                    return rowIndex;
-                }
-
-                @Override
-                public int getValue() {
-                    return numberValue;
-                }
-            });
+            memory.write(rowIndex, numberValue); // higher bytes are cut off
         } catch (NumberFormatException e) {
             //do nothing, invalid value was inserted
         }
