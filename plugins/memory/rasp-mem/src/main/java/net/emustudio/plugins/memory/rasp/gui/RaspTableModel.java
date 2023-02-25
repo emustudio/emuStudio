@@ -156,7 +156,7 @@ public class RaspTableModel extends AbstractTableModel {
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
         try {
             int numberValue = Integer.decode((String) value);
-            memory.write(rowIndex, numberValue); // higher bytes are cut off
+            memory.write(rowIndex, numberValue);
         } catch (NumberFormatException e) {
             //do nothing, invalid value was inserted
         }
