@@ -18,18 +18,18 @@
  */
 package net.emustudio.plugins.memory.ram.gui;
 
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMLabel;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamLabel;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
 
-class RAMTableModel extends AbstractTableModel {
-    private final RAMMemoryContext memory;
+class RamTableModel extends AbstractTableModel {
+    private final RamMemoryContext memory;
 
-    RAMTableModel(RAMMemoryContext memory) {
+    RamTableModel(RamMemoryContext memory) {
         this.memory = Objects.requireNonNull(memory);
     }
 
@@ -49,10 +49,10 @@ class RAMTableModel extends AbstractTableModel {
             case 0:
                 return String.valueOf(rowIndex);
             case 1:
-                return memory.getLabel(rowIndex).map(RAMLabel::getLabel).orElse("");
+                return memory.getLabel(rowIndex).map(RamLabel::getLabel).orElse("");
             case 2:
-                RAMInstruction i = memory.read(rowIndex);
-                return i.getOpcode() + " " + i.getOperand().map(RAMValue::getStringRepresentation).orElse("");
+                RamInstruction i = memory.read(rowIndex);
+                return i.getOpcode() + " " + i.getOperand().map(RamValue::getStringRepresentation).orElse("");
         }
         return "";
     }

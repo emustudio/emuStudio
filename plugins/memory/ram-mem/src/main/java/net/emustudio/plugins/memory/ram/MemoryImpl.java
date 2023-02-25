@@ -27,7 +27,7 @@ import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.gui.MemoryDialog;
 
 import javax.swing.*;
@@ -49,7 +49,7 @@ public class MemoryImpl extends AbstractMemory {
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         context = new MemoryContextImpl();
         try {
-            contextPool.register(pluginID, context, RAMMemoryContext.class);
+            contextPool.register(pluginID, context, RamMemoryContext.class);
             contextPool.register(pluginID, context, MemoryContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             applicationApi.getDialogs().showError("Could not register Program tape context", super.getTitle());

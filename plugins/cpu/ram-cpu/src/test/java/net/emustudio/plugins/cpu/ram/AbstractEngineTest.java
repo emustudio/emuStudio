@@ -19,10 +19,10 @@
 package net.emustudio.plugins.cpu.ram;
 
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMLabel;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamLabel;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 import org.junit.Before;
 
 import java.util.Optional;
@@ -31,7 +31,7 @@ import static org.easymock.EasyMock.*;
 
 public abstract class AbstractEngineTest {
 
-    protected RAMMemoryContext memory;
+    protected RamMemoryContext memory;
     protected AbstractTapeContext input;
     protected AbstractTapeContext output;
     protected AbstractTapeContext storage;
@@ -39,33 +39,33 @@ public abstract class AbstractEngineTest {
 
     @Before
     public void setup() {
-        memory = createNiceMock(RAMMemoryContext.class);
+        memory = createNiceMock(RamMemoryContext.class);
         input = createNiceMock(AbstractTapeContext.class);
         output = createNiceMock(AbstractTapeContext.class);
         storage = createNiceMock(AbstractTapeContext.class);
         engine = new EmulatorEngine(input, output, storage, memory);
     }
 
-    public void setProgram(RAMInstruction... program) {
+    public void setProgram(RamInstruction... program) {
         int i = 0;
-        for (RAMInstruction instruction : program) {
+        for (RamInstruction instruction : program) {
             expect(memory.read(i++)).andReturn(instruction).anyTimes();
         }
         replay(memory);
     }
 
-    public RAMValue value(String operand) {
-        RAMValue value = createNiceMock(RAMValue.class);
-        expect(value.getType()).andReturn(RAMValue.Type.STRING).anyTimes();
+    public RamValue value(String operand) {
+        RamValue value = createNiceMock(RamValue.class);
+        expect(value.getType()).andReturn(RamValue.Type.STRING).anyTimes();
         expect(value.getStringValue()).andReturn(operand).anyTimes();
         expect(value.getStringRepresentation()).andReturn(operand).anyTimes();
         replay(value);
         return value;
     }
 
-    public RAMValue value(int operand) {
-        RAMValue value = createNiceMock(RAMValue.class);
-        expect(value.getType()).andReturn(RAMValue.Type.NUMBER).anyTimes();
+    public RamValue value(int operand) {
+        RamValue value = createNiceMock(RamValue.class);
+        expect(value.getType()).andReturn(RamValue.Type.NUMBER).anyTimes();
         expect(value.getNumberValue()).andReturn(operand).anyTimes();
         expect(value.getStringRepresentation()).andReturn(String.valueOf(operand)).anyTimes();
         replay(value);
@@ -73,8 +73,8 @@ public abstract class AbstractEngineTest {
     }
 
 
-    public RAMInstruction instr(RAMInstruction.Opcode opcode, RAMInstruction.Direction direction, int operand) {
-        RAMInstruction instruction = createNiceMock(RAMInstruction.class);
+    public RamInstruction instr(RamInstruction.Opcode opcode, RamInstruction.Direction direction, int operand) {
+        RamInstruction instruction = createNiceMock(RamInstruction.class);
         expect(instruction.getOpcode()).andReturn(opcode).anyTimes();
         expect(instruction.getDirection()).andReturn(direction).anyTimes();
         expect(instruction.getOperand()).andReturn(Optional.of(value(operand))).anyTimes();
@@ -83,8 +83,8 @@ public abstract class AbstractEngineTest {
         return instruction;
     }
 
-    public RAMInstruction instr(RAMInstruction.Opcode opcode, RAMInstruction.Direction direction, String operand) {
-        RAMInstruction instruction = createNiceMock(RAMInstruction.class);
+    public RamInstruction instr(RamInstruction.Opcode opcode, RamInstruction.Direction direction, String operand) {
+        RamInstruction instruction = createNiceMock(RamInstruction.class);
         expect(instruction.getOpcode()).andReturn(opcode).anyTimes();
         expect(instruction.getDirection()).andReturn(direction).anyTimes();
         expect(instruction.getOperand()).andReturn(Optional.of(value(operand))).anyTimes();
@@ -93,8 +93,8 @@ public abstract class AbstractEngineTest {
         return instruction;
     }
 
-    public RAMInstruction instr(RAMInstruction.Opcode opcode, RAMInstruction.Direction direction) {
-        RAMInstruction instruction = createNiceMock(RAMInstruction.class);
+    public RamInstruction instr(RamInstruction.Opcode opcode, RamInstruction.Direction direction) {
+        RamInstruction instruction = createNiceMock(RamInstruction.class);
         expect(instruction.getOpcode()).andReturn(opcode).anyTimes();
         expect(instruction.getDirection()).andReturn(direction).anyTimes();
         expect(instruction.getOperand()).andReturn(Optional.empty()).anyTimes();
@@ -103,17 +103,17 @@ public abstract class AbstractEngineTest {
         return instruction;
     }
 
-    public RAMInstruction instr(RAMInstruction.Opcode opcode, RAMLabel label) {
-        RAMInstruction instruction = createNiceMock(RAMInstruction.class);
+    public RamInstruction instr(RamInstruction.Opcode opcode, RamLabel label) {
+        RamInstruction instruction = createNiceMock(RamInstruction.class);
         expect(instruction.getOpcode()).andReturn(opcode).anyTimes();
-        expect(instruction.getDirection()).andReturn(RAMInstruction.Direction.DIRECT).anyTimes();
+        expect(instruction.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
         expect(instruction.getLabel()).andReturn(Optional.of(label)).anyTimes();
         replay(instruction);
         return instruction;
     }
 
-    public RAMLabel label(int address, String label) {
-        return new RAMLabel() {
+    public RamLabel label(int address, String label) {
+        return new RamLabel() {
             @Override
             public int getAddress() {
                 return address;

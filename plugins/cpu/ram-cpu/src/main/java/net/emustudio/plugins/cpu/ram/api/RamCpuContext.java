@@ -16,26 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.rasp.api;
 
-import java.io.Serializable;
+package net.emustudio.plugins.cpu.ram.api;
 
-/**
- * A Label is a named pointer to an address in memory.
- */
-public interface RASPLabel extends Serializable {
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 
-    /**
-     * Get address to which this label points to
-     *
-     * @return memory address
-     */
-    int getAddress();
+public interface RamCpuContext extends CPUContext {
 
-    /**
-     * Get name of this label
-     *
-     * @return name of this label
-     */
-    String getLabel();
+    AbstractTapeContext getStorageTape();
+
+    AbstractTapeContext getInputTape();
+
+    AbstractTapeContext getOutputTape();
 }

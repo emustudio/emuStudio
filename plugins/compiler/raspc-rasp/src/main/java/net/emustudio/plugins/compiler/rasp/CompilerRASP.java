@@ -29,8 +29,7 @@ import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.rasp.ast.Program;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -52,7 +51,7 @@ public class CompilerRASP extends AbstractCompiler {
             new SourceFileExtension("rasp", "RASP source file")
     );
 
-    private RASPMemoryContext memory;
+    private RaspMemoryContext memory;
     private int programLocation;
 
     public CompilerRASP(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -63,7 +62,7 @@ public class CompilerRASP extends AbstractCompiler {
     public void initialize() {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                memory = pool.getMemoryContext(pluginID, RASPMemoryContext.class);
+                memory = pool.getMemoryContext(pluginID, RaspMemoryContext.class);
             } catch (InvalidContextException | ContextNotFoundException e) {
                 LOGGER.warn("Memory is not available", e);
             }
@@ -87,7 +86,7 @@ public class CompilerRASP extends AbstractCompiler {
                 Program program = new Program();
                 new ProgramParser(program).visit(parser.rStart());
 
-                Map<Integer, RASPMemoryCell> compiled = program.compile();
+                Map<Integer, Integer> compiled = program.compile();
                 this.programLocation = program.getProgramLocation(compiled);
                 program.saveToFile(outputFileName, compiled);
 

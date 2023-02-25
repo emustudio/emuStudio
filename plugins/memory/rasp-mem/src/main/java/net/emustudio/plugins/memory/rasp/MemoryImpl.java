@@ -28,7 +28,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import net.emustudio.plugins.memory.rasp.gui.MemoryDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +57,7 @@ public class MemoryImpl extends AbstractMemory {
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                pool.register(pluginID, context, RASPMemoryContext.class);
+                pool.register(pluginID, context, RaspMemoryContext.class);
                 pool.register(pluginID, context, MemoryContext.class);
             } catch (InvalidContextException | ContextAlreadyRegisteredException ex) {
                 LOGGER.error("Could not register RASP memory context", ex);

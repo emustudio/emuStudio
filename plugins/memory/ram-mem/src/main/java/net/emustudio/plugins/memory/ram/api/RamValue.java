@@ -24,7 +24,7 @@ import java.io.Serializable;
  * The "Value" is a polymorphic value.
  * It has the type defined in compile time, but it can be integer or a String.
  */
-public interface RAMValue extends Serializable {
+public interface RamValue extends Serializable {
 
     /**
      * Whether this value is an integer number

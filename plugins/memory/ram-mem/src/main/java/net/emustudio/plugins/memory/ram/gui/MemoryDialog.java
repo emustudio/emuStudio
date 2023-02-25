@@ -39,7 +39,7 @@ public class MemoryDialog extends JDialog {
     private final Dialogs dialogs;
 
     private final MemoryContextImpl memory;
-    private final RAMTableModel tableModel;
+    private final RamTableModel tableModel;
     private File lastOpenedFile;
     private JTable tableProgram;
 
@@ -52,7 +52,7 @@ public class MemoryDialog extends JDialog {
         initComponents();
         setLocationRelativeTo(parent);
 
-        tableModel = new RAMTableModel(memory);
+        tableModel = new RamTableModel(memory);
         tableProgram.setModel(tableModel);
     }
 

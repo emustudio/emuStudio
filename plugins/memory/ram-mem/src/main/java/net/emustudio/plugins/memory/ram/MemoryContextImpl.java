@@ -19,18 +19,18 @@
 package net.emustudio.plugins.memory.ram;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMLabel;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamLabel;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.io.*;
 import java.util.*;
 
-public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> implements RAMMemoryContext {
-    private final Map<Integer, RAMInstruction> memory = new HashMap<>();
-    private final Map<Integer, RAMLabel> labels = new HashMap<>();
-    private final List<RAMValue> inputs = new ArrayList<>();
+public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> implements RamMemoryContext {
+    private final Map<Integer, RamInstruction> memory = new HashMap<>();
+    private final Map<Integer, RamLabel> labels = new HashMap<>();
+    private final List<RamValue> inputs = new ArrayList<>();
 
     @Override
     public void clear() {
@@ -51,21 +51,21 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
     }
 
     @Override
-    public RAMInstruction read(int address) {
+    public RamInstruction read(int address) {
         return memory.get(address);
     }
 
     @Override
-    public RAMInstruction[] read(int address, int count) {
-        List<RAMInstruction> copy = new ArrayList<>();
+    public RamInstruction[] read(int address, int count) {
+        List<RamInstruction> copy = new ArrayList<>();
         for (int i = address; i < address + count; i++) {
             copy.add(memory.get(i));
         }
-        return copy.toArray(new RAMInstruction[0]);
+        return copy.toArray(new RamInstruction[0]);
     }
 
     @Override
-    public void write(int address, RAMInstruction value) {
+    public void write(int address, RamInstruction value) {
         boolean sizeChanged = !memory.containsKey(address);
         memory.put(address, value);
         if (sizeChanged) {
@@ -75,7 +75,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
     }
 
     @Override
-    public void write(int address, RAMInstruction[] values, int count) {
+    public void write(int address, RamInstruction[] values, int count) {
         for (int i = 0; i < count; i++) {
             boolean sizeChanged = !memory.containsKey(address);
             memory.put(address + i, values[i]);
@@ -87,30 +87,30 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
     }
 
     @Override
-    public Class<RAMInstruction> getDataType() {
-        return RAMInstruction.class;
+    public Class<RamInstruction> getDataType() {
+        return RamInstruction.class;
     }
 
     @Override
-    public synchronized void setLabels(List<RAMLabel> labels) {
+    public synchronized void setLabels(List<RamLabel> labels) {
         this.labels.clear();
-        for (RAMLabel label : labels) {
+        for (RamLabel label : labels) {
             this.labels.put(label.getAddress(), label);
         }
     }
 
     @Override
-    public Optional<RAMLabel> getLabel(int address) {
+    public Optional<RamLabel> getLabel(int address) {
         return Optional.ofNullable(labels.get(address));
     }
 
     @Override
-    public List<RAMValue> getInputs() {
+    public List<RamValue> getInputs() {
         return Collections.unmodifiableList(inputs);
     }
 
     @Override
-    public synchronized void setInputs(List<RAMValue> inputs) {
+    public synchronized void setInputs(List<RamValue> inputs) {
         clearInputs();
         this.inputs.addAll(inputs);
     }
@@ -126,9 +126,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
             inputs.clear();
             memory.clear();
 
-            labels.putAll((Map<Integer, RAMLabel>) input.readObject());
-            inputs.addAll((List<RAMValue>) input.readObject());
-            memory.putAll((Map<Integer, RAMInstruction>) input.readObject());
+            labels.putAll((Map<Integer, RamLabel>) input.readObject());
+            inputs.addAll((List<RamValue>) input.readObject());
+            memory.putAll((Map<Integer, RamInstruction>) input.readObject());
 
             input.close();
         } finally {

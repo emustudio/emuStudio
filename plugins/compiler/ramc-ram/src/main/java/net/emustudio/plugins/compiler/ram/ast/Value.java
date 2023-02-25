@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.ram.ast;
 
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.util.Objects;
 
@@ -26,7 +26,7 @@ import java.util.Objects;
  * The "Value" is a polymorphic value.
  * It has the type defined in compile time, but it can be integer or a String.
  */
-public class Value implements RAMValue {
+public class Value implements RamValue {
     public final Type type;
     private final int intValue;
     private final String stringValue;

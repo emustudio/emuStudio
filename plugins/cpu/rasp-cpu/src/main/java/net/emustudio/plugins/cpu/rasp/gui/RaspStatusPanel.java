@@ -1,6 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
+ * Copyright (C) 2016-2017  Michal Šipoš
  * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,26 +17,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.cpu.ram.gui;
+package net.emustudio.plugins.cpu.rasp.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.plugins.cpu.ram.CpuImpl;
+import net.emustudio.plugins.cpu.rasp.CpuImpl;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
 
-import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_BIG_BOLD;
-import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_PLAIN;
+import static net.emustudio.plugins.cpu.rasp.gui.Constants.MONOSPACED_BIG_BOLD;
+import static net.emustudio.plugins.cpu.rasp.gui.Constants.MONOSPACED_PLAIN;
 
-public class RAMStatusPanel extends JPanel {
+public class RaspStatusPanel extends JPanel {
     private final JLabel lblStatus = new JLabel("breakpoint");
     private final JTextField txtIP = new JTextField("0");
     private final JTextField txtInput = new JTextField("N/A");
     private final JTextField txtOutput = new JTextField("N/A");
     private final JTextField txtR0 = new JTextField("0");
 
-    public RAMStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output) {
+    public RaspStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output) {
         initComponents();
 
         cpu.addCPUListener(new CPU.CPUListener() {
@@ -47,12 +48,7 @@ public class RAMStatusPanel extends JPanel {
 
             @Override
             public void internalStateChanged() {
-                TapeSymbol r0 = cpu.getR0();
-                String repr = r0.toString();
-                if (repr.equals("")) {
-                    repr = "<empty>";
-                }
-                txtR0.setText(repr);
+                txtR0.setText(String.valueOf(cpu.getACC()));
                 txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
 
                 txtInput.setText(input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>"));

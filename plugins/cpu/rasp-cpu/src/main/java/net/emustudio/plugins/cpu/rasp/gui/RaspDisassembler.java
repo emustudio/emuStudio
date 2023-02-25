@@ -22,47 +22,44 @@ package net.emustudio.plugins.cpu.rasp.gui;
 
 import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.plugins.memory.rasp.api.RASPLabel;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspLabel;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.util.Objects;
+import java.util.Optional;
 
-public class RASPDisassembler implements Disassembler {
-    private final RASPMemoryContext memory;
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.*;
 
-    public RASPDisassembler(RASPMemoryContext memory) {
+public class RaspDisassembler implements Disassembler {
+    private final RaspMemoryContext memory;
+
+    public RaspDisassembler(RaspMemoryContext memory) {
         this.memory = Objects.requireNonNull(memory);
     }
 
     @Override
     public DisassembledInstruction disassemble(int address) {
-        RASPMemoryCell instruction = memory.read(address);
-        int opcode = instruction.getValue();
-        String mnemo = memory.disassemble(opcode).orElse("unknown");
+        int opcode = memory.read(address);
+        Optional<String> mnemo = memory.disassembleMnemo(opcode);
+        String operand = "";
 
-        boolean isJump = (opcode == 15) || (opcode == 16) || (opcode == 17);
-        if (opcode != 18) {
-            int operand = memory.read(address + 1).getValue();
-            String operandStr = isJump ?
-                    memory.getLabel(operand).map(RASPLabel::getLabel).orElse(String.valueOf(operand)) :
-                    String.valueOf(operand);
-            mnemo += " " + operandStr;
+        if (mnemo.isPresent() && opcode != HALT) {
+            boolean isJump = (opcode == JMP) || (opcode == JZ) || (opcode == JGTZ);
+            int intOperand = memory.read(address + 1);
+            String strOperand = String.valueOf(intOperand);
+            operand = isJump ? memory.getLabel(intOperand).map(RaspLabel::getLabel).orElse(strOperand) : strOperand;
         }
 
-        return new DisassembledInstruction(address, mnemo, String.valueOf(opcode));
+        String strMnemo = String.format("%s %s", mnemo.orElse("").toLowerCase(), operand.toUpperCase()).trim();
+        return new DisassembledInstruction(address, strMnemo, Integer.toHexString(opcode));
     }
 
     @Override
     public int getNextInstructionPosition(int address) throws IndexOutOfBoundsException {
-        if (address >= memory.getSize()) {
-            return address + 1;
-        }
-        RASPMemoryCell item = memory.read(address);
-        if (!item.isInstruction() || item.getValue() == 18) {
+        int opcode = memory.read(address);
+        if (!memory.isInstruction(opcode) || opcode == HALT) {
             return address + 1;
         }
         return address + 2;
     }
-
 }

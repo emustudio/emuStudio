@@ -23,13 +23,15 @@ import java.util.Map;
 import java.util.Optional;
 
 public class Disassembler {
+    public final static int READ = 1;
     public final static int JMP = 15;
     public final static int JZ = 16;
     public final static int JGTZ = 17;
+    public final static int HALT = 18;
     private final static Map<Integer, String> instructions = new HashMap<>();
 
     static {
-        instructions.put(1, "READ");
+        instructions.put(READ, "READ");
         instructions.put(2, "WRITE =");
         instructions.put(3, "WRITE");
         instructions.put(4, "LOAD =");
@@ -46,10 +48,14 @@ public class Disassembler {
         instructions.put(JMP, "JMP");
         instructions.put(JZ, "JZ");
         instructions.put(JGTZ, "JGTZ");
-        instructions.put(18, "HALT");
+        instructions.put(HALT, "HALT");
     }
 
-    public static Optional<String> disassemble(int opcode) {
+    public static boolean isInstruction(int opcode) {
+        return instructions.containsKey(opcode);
+    }
+
+    public static Optional<String> disassembleMnemo(int opcode) {
         return Optional.ofNullable(instructions.get(opcode));
     }
 }

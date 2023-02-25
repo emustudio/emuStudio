@@ -16,15 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.rasp.api;
+package net.emustudio.plugins.memory.ram.api;
 
-import java.io.Serializable;
+import net.emustudio.emulib.plugins.annotations.PluginContext;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
 
-public interface RASPMemoryCell extends Serializable {
+import java.util.List;
+import java.util.Optional;
 
-    boolean isInstruction();
+@PluginContext
+public interface RamMemoryContext extends MemoryContext<RamInstruction> {
 
-    int getAddress();
+    void setLabels(List<RamLabel> labels);
 
-    int getValue();
+    Optional<RamLabel> getLabel(int address);
+
+    List<RamValue> getInputs();
+
+    void setInputs(List<RamValue> inputs);
 }
