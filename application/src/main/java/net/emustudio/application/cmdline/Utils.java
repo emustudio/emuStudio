@@ -31,7 +31,6 @@ import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.InvalidPluginException;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
@@ -46,6 +45,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 public class Utils {
     public static final long EMUSTUDIO_ID = UUID.randomUUID().toString().hashCode();
@@ -74,8 +74,8 @@ public class Utils {
         computer.initialize(contextPool);
         computer.reset();
 
-        final int memorySize = computer.getMemory().map(Memory::getSize).orElse(0);
-        computer.getCPU().ifPresent(cpu -> debugTableModel.setCPU(cpu, memorySize));
+        Optional<Supplier<Integer>> memory = computer.getMemory().map(m -> m::getSize);
+        computer.getCPU().ifPresent(cpu -> debugTableModel.setCPU(cpu, memory.orElse(() -> 0)));
         return computer;
     }
 
