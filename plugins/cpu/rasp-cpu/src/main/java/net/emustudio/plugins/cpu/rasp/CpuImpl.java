@@ -30,10 +30,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
-import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
+import net.emustudio.emulib.runtime.interaction.debugger.*;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.rasp.gui.LabelDebugColumn;
 import net.emustudio.plugins.cpu.rasp.gui.RaspDisassembler;
@@ -95,6 +92,7 @@ public class CpuImpl extends AbstractCPU {
             if (debugTable != null) {
                 ArrayList<DebuggerColumn<?>> debugColumns = new ArrayList<>();
                 debugColumns.add(new BreakpointColumn(this));
+                debugColumns.add(new AddressColumn("%d"));
                 debugColumns.add(new LabelDebugColumn(memory));
                 debugColumns.add(new MnemoColumn(disassembler));
                 debugTable.setDebuggerColumns(debugColumns);

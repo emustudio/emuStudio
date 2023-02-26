@@ -38,7 +38,7 @@ public class StatusPanel extends JPanel {
     private final EmulatorEngine engine;
     private final Context8080 context;
     private final AbstractTableModel flagModel;
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+
     JLabel lblFrequency;
     JLabel lblRun;
     JSpinner spnFrequency;
@@ -58,6 +58,7 @@ public class StatusPanel extends JPanel {
     JTextField txtRegSP;
     JCheckBox chkPrintInstructions;
     private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
+
     public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions) {
         this.cpu = cpu;
         this.context = context;
@@ -114,11 +115,7 @@ public class StatusPanel extends JPanel {
         flagModel.fireTableDataChanged();
 
         lblRun.setText(runState.toString());
-        if (runState == RunState.STATE_RUNNING) {
-            spnFrequency.setEnabled(false);
-        } else {
-            spnFrequency.setEnabled(true);
-        }
+        spnFrequency.setEnabled(runState != RunState.STATE_RUNNING);
     }
 
     private void onDumpInstructionsSelect(ActionEvent e) {
@@ -129,7 +126,6 @@ public class StatusPanel extends JPanel {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">
     private void initComponents() {
         JPanel paneRegisters = new JPanel();
         JLabel lblRegB = new JLabel("B");
@@ -312,6 +308,5 @@ public class StatusPanel extends JPanel {
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(paneRegisters, 10, 290, Short.MAX_VALUE).addComponent(panelRun, 10, 290, Short.MAX_VALUE));
         layout.setVerticalGroup(
                 layout.createSequentialGroup().addComponent(paneRegisters, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(panelRun, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addContainerGap());
-    }// </editor-fold>
-    // End of variables declaration//GEN-END:variables
+    }
 }
