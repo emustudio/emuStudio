@@ -1,3 +1,5 @@
+; Counts numbers in a string
+
 org 1000
 
 dcx sp           ; stack initialization (0FFFFh)

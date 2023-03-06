@@ -1,3 +1,6 @@
+; prints Hello, world!
+; Best use with ADM-3A terminal
+
 org 0000H
 
 ld HL, message
