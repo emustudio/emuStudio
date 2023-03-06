@@ -40,12 +40,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private volatile Dimension size = new Dimension(0, 0);
 
     public DisplayCanvas(DisplayFont displayFont, Display display) {
-        this.displayFont = Objects.requireNonNull(displayFont);
         this.display = Objects.requireNonNull(display);
 
         setForeground(FOREGROUND);
         setBackground(BACKGROUND);
-        setFont(loadFont(displayFont));
+        setDisplayFont(displayFont);
 
         PaintCycle paintCycle = new PaintCycle();
         this.repaintTimer = new Timer(1000 / 60, e -> paintCycle.run()); // 60 HZ
@@ -58,7 +57,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             this.repaintTimer.restart();
         }
     }
-
 
     @Override
     public Dimension getPreferredSize() {
