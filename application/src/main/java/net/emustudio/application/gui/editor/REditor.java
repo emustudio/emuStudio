@@ -45,6 +45,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
+import static net.emustudio.application.Constants.FONT_CODE;
 import static net.emustudio.application.Constants.FONT_DEFAULT_SIZE;
 
 public class REditor implements Editor {
@@ -67,6 +68,8 @@ public class REditor implements Editor {
         this.dialogs = Objects.requireNonNull(dialogs);
 
         UnicodeWriter.setWriteUtf8BOM(false);
+
+        textPane.setFont(FONT_CODE);
 
         textPane.setCodeFoldingEnabled(false);
         textPane.setEncoding(StandardCharsets.UTF_8.name());

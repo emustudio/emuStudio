@@ -31,6 +31,7 @@ import java.util.Objects;
 public class GuiUtils {
     private final static Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
 
+    // TODO: put in emuLib?
     public static Font loadFont(DisplayFont displayFont) {
         Map<TextAttribute, Object> attrs = new HashMap<>();
         attrs.put(TextAttribute.KERNING, TextAttribute.KERNING_ON);
