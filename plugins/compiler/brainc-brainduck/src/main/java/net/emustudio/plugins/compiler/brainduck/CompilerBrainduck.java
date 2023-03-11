@@ -21,12 +21,13 @@ package net.emustudio.plugins.compiler.brainduck;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.brainduck.ast.Program;
@@ -44,14 +45,15 @@ import java.util.*;
 
 @PluginRoot(type = PLUGIN_TYPE.COMPILER, title = "BrainDuck Compiler")
 @SuppressWarnings("unused")
-public class CompilerImpl extends AbstractCompiler {
-    private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
-    private final static List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(new SourceFileExtension("b", "brainfuck language source (*.b)"));
+public class CompilerBrainduck extends AbstractCompiler {
+    private final static Logger LOGGER = LoggerFactory.getLogger(CompilerBrainduck.class);
+    private final static List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
+            new FileExtension("b", "brainfuck language source (*.b)")
+    );
 
     private MemoryContext<Byte> memory;
-    private int programLocation;
 
-    public CompilerImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
+    public CompilerBrainduck(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
     }
 
@@ -86,9 +88,8 @@ public class CompilerImpl extends AbstractCompiler {
     }
 
     @Override
-    public LexicalAnalyzer createLexer(String s) {
-        BraincLexer lexer = createLexer(CharStreams.fromString(s));
-        return new LexicalAnalyzerImpl(lexer);
+    public LexicalAnalyzer createLexer() {
+        return new LexicalAnalyzerImpl(createLexer(null));
     }
 
     @Override
@@ -98,8 +99,13 @@ public class CompilerImpl extends AbstractCompiler {
             IntelHEX hex = compileToHex(inputFileName);
 
             hex.generate(outputFileName);
-            notifyInfo("Compile was successful. Output: " + outputFileName);
-            programLocation = hex.findProgramLocation();
+            int programLocation = hex.findProgramLocation();
+            applicationApi.setProgramLocation(programLocation);
+
+            notifyInfo(String.format(
+                    "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
+                    outputFileName, RadixUtils.formatWordHexString(programLocation)
+            ));
 
             if (memory != null) {
                 hex.loadIntoMemory(memory, b -> b);
@@ -121,7 +127,7 @@ public class CompilerImpl extends AbstractCompiler {
     @Override
     public boolean compile(String inputFileName) {
         String outputFileName = Objects.requireNonNull(inputFileName);
-        for (SourceFileExtension extension : SOURCE_FILE_EXTENSIONS) {
+        for (FileExtension extension : SOURCE_FILE_EXTENSIONS) {
             int i = inputFileName.lastIndexOf("." + extension.getExtension());
 
             if (i >= 0) {
@@ -134,12 +140,7 @@ public class CompilerImpl extends AbstractCompiler {
     }
 
     @Override
-    public int getProgramLocation() {
-        return programLocation;
-    }
-
-    @Override
-    public List<SourceFileExtension> getSourceFileExtensions() {
+    public List<FileExtension> getSourceFileExtensions() {
         return SOURCE_FILE_EXTENSIONS;
     }
 

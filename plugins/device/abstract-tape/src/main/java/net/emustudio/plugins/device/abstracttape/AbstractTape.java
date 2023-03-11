@@ -85,6 +85,11 @@ public class AbstractTape extends AbstractDevice {
     }
 
     @Override
+    public boolean isAutomationSupported() {
+        return true;
+    }
+
+    @Override
     public void initialize() {
         context.setLogSymbols(automaticEmulation);
 

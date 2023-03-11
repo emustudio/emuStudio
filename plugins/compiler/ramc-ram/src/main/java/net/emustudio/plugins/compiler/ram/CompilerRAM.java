@@ -21,8 +21,8 @@ package net.emustudio.plugins.compiler.ram;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
@@ -44,7 +44,9 @@ import java.util.*;
 @SuppressWarnings("unused")
 public class CompilerRAM extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerRAM.class);
-    private static final List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(new SourceFileExtension("ram", "Random Access Machine source"));
+    private static final List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
+            new FileExtension("ram", "Random Access Machine source")
+    );
 
     private RamMemoryContext memory;
 
@@ -131,18 +133,12 @@ public class CompilerRAM extends AbstractCompiler {
     }
 
     @Override
-    public LexicalAnalyzer createLexer(String s) {
-        RAMLexer lexer = createLexer(CharStreams.fromString(s));
-        return new LexicalAnalyzerImpl(lexer);
+    public LexicalAnalyzer createLexer() {
+        return new LexicalAnalyzerImpl(createLexer(null));
     }
 
     @Override
-    public int getProgramLocation() {
-        return 0;
-    }
-
-    @Override
-    public List<SourceFileExtension> getSourceFileExtensions() {
+    public List<FileExtension> getSourceFileExtensions() {
         return SOURCE_FILE_EXTENSIONS;
     }
 

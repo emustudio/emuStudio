@@ -102,7 +102,7 @@ public class InstructionTest extends AbstractCompilerTest {
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
-        new CompilerImpl(0L, applicationApi, PluginSettings.UNAVAILABLE).compile("nonexistant");
+        new CompilerBrainduck(0L, applicationApi, PluginSettings.UNAVAILABLE).compile("nonexistant");
 
         assertProgram(
                 1, 1

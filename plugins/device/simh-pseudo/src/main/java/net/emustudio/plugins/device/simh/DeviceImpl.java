@@ -103,6 +103,11 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
+    public boolean isAutomationSupported() {
+        return true;
+    }
+
+    @Override
     public void showSettings(JFrame parent) {
     }
 

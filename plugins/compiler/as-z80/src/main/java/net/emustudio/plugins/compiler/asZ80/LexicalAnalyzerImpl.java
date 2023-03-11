@@ -204,7 +204,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     @Override
-    public Token nextToken() {
+    public Token next() {
         org.antlr.v4.runtime.Token token = lexer.nextToken();
         return new Token() {
             @Override
@@ -225,13 +225,18 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     @Override
-    public boolean isAtEOF() {
-        return lexer._hitEOF;
+    public boolean hasNext() {
+        return !lexer._hitEOF;
     }
 
     @Override
     public void reset(InputStream inputStream) throws IOException {
         lexer.setInputStream(CharStreams.fromStream(inputStream));
+    }
+
+    @Override
+    public void reset(String source) {
+        lexer.setInputStream(CharStreams.fromString(source));
     }
 
     private int convertLexerTokenType(int tokenType) {

@@ -181,10 +181,8 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
 
     public void reset() {
         getCompiler().ifPresent(Compiler::reset);
-        getMemory().ifPresentOrElse(memory -> {
-            getCPU().ifPresent(cpu -> cpu.reset(memory.getProgramLocation()));
-            memory.reset();
-        }, () -> getCPU().ifPresent(CPU::reset));
+        getMemory().ifPresent(Plugin::reset);
+        getCPU().ifPresent(Plugin::reset);
         getDevices().forEach(Device::reset);
     }
 
