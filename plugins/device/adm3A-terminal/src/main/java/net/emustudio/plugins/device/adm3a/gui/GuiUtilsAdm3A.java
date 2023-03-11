@@ -25,7 +25,8 @@ import java.awt.*;
 public class GuiUtilsAdm3A {
 
     public static Font loadFont(DisplayFont displayFont) {
-        return GuiUtils.loadFontResource(displayFont.path)
-                .orElse(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        return GuiUtils.loadFontResource(displayFont.path, GuiUtilsAdm3A.class)
+                .map(f -> f.deriveFont(Font.PLAIN, displayFont.fontSize))
+                .orElse(new Font(Font.MONOSPACED, Font.PLAIN, displayFont.fontSize));
     }
 }
