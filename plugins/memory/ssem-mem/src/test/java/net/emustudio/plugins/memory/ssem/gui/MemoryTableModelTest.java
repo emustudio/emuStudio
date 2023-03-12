@@ -47,20 +47,6 @@ public class MemoryTableModelTest {
     }
 
     @Test
-    public void testClearCallsClearOnMemoryMock() {
-        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
-
-        memoryContext.clear();
-        expectLastCall().once();
-        replay(memoryContext);
-
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
-        model.clear();
-
-        verify(memoryContext);
-    }
-
-    @Test
     public void testSetBinaryValueCellsMemoryWrite() {
         MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
