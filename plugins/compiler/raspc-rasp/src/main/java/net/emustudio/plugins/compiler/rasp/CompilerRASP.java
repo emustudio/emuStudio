@@ -42,6 +42,8 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.*;
 
+import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
         title = "RASP Machine Assembler"
@@ -118,13 +120,7 @@ public class CompilerRASP extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        int i = inputFileName.toLowerCase(Locale.ENGLISH).lastIndexOf(".rasp");
-
-        String outputFileName = inputFileName;
-        if (i >= 0) {
-            outputFileName = outputFileName.substring(0, i);
-        }
-        outputFileName += ".brasp";
+        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".brasp";
         return compile(inputFileName, outputFileName);
     }
 

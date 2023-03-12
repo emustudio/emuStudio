@@ -136,7 +136,7 @@ public class MemoryDialog extends JDialog {
         File currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")));
         dialogs.chooseFile(
                 "Load compiled RASP program", "Load", currentDirectory.toPath(), false,
-                new FileExtensionsFilter("RASP compiler file", "bin")
+                new FileExtensionsFilter("RASP compiler file", "brasp")
         ).ifPresent(path -> {
             recentOpenPath = path.toFile().getParentFile();
             try {

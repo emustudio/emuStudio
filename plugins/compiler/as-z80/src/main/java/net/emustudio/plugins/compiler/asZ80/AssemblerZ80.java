@@ -45,6 +45,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
 
+import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
         title = "Zilog Z80 Assembler"
@@ -172,14 +174,8 @@ public class AssemblerZ80 extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        String outputFileName = Objects.requireNonNull(inputFileName);
-        FileExtension srcExtension = SOURCE_FILE_EXTENSIONS.get(0);
-
-        int i = inputFileName.toLowerCase(Locale.ENGLISH).lastIndexOf("." + srcExtension.getExtension());
-        if (i >= 0) {
-            outputFileName = outputFileName.substring(0, i);
-        }
-        return compile(inputFileName, outputFileName + ".hex");
+        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".hex";
+        return compile(inputFileName, outputFileName);
     }
 
     @Override

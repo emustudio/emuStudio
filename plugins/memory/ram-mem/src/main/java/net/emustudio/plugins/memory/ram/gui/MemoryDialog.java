@@ -58,7 +58,7 @@ public class MemoryDialog extends JDialog {
 
     private void openRAM() {
         File currentDirectory = Objects.requireNonNullElse(lastOpenedFile, new File(System.getProperty("user.dir")));
-        dialogs.chooseFile("Load compiled RAM program", "Load", currentDirectory.toPath(), false, new FileExtensionsFilter("RAM compiler file", "ro")).ifPresent(path -> {
+        dialogs.chooseFile("Load compiled RAM program", "Load", currentDirectory.toPath(), false, new FileExtensionsFilter("RAM compiled file", "bram")).ifPresent(path -> {
             lastOpenedFile = path.toFile();
             try {
                 memory.deserialize(lastOpenedFile.getAbsolutePath());

@@ -45,6 +45,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
 
+import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
         title = "SSEM Assembler"
@@ -146,14 +148,8 @@ public class SSEMCompiler extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        String outputFileName = Objects.requireNonNull(inputFileName);
-        FileExtension srcExtension = SOURCE_FILE_EXTENSIONS.get(0);
-
-        int i = inputFileName.lastIndexOf("." + srcExtension.getExtension());
-        if (i >= 0) {
-            outputFileName = outputFileName.substring(0, i);
-        }
-        return compile(inputFileName, outputFileName + ".bin");
+        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".bssem";
+        return compile(inputFileName, outputFileName);
     }
 
     @Override

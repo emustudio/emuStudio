@@ -40,6 +40,8 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.*;
 
+import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+
 @PluginRoot(type = PLUGIN_TYPE.COMPILER, title = "RAM Machine Assembler")
 @SuppressWarnings("unused")
 public class CompilerRAM extends AbstractCompiler {
@@ -122,13 +124,7 @@ public class CompilerRAM extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        int i = inputFileName.toLowerCase(Locale.ENGLISH).lastIndexOf(".ram");
-
-        String outputFileName = inputFileName;
-        if (i >= 0) {
-            outputFileName = outputFileName.substring(0, i);
-        }
-        outputFileName += ".bram";
+        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".bram";
         return compile(inputFileName, outputFileName);
     }
 

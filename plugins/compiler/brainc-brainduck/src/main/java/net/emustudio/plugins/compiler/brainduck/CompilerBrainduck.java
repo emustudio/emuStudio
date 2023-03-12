@@ -43,6 +43,8 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.*;
 
+import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+
 @PluginRoot(type = PLUGIN_TYPE.COMPILER, title = "BrainDuck Compiler")
 @SuppressWarnings("unused")
 public class CompilerBrainduck extends AbstractCompiler {
@@ -126,16 +128,7 @@ public class CompilerBrainduck extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        String outputFileName = Objects.requireNonNull(inputFileName);
-        for (FileExtension extension : SOURCE_FILE_EXTENSIONS) {
-            int i = inputFileName.lastIndexOf("." + extension.getExtension());
-
-            if (i >= 0) {
-                outputFileName = outputFileName.substring(0, i);
-                break;
-            }
-        }
-        outputFileName += ".hex";
+        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".hex";
         return compile(inputFileName, outputFileName);
     }
 
