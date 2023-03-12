@@ -22,8 +22,8 @@ package net.emustudio.plugins.compiler.ssem;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
@@ -45,6 +45,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
 
+import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
         title = "SSEM Assembler"
@@ -52,11 +54,10 @@ import java.util.*;
 @SuppressWarnings("unused")
 public class SSEMCompiler extends AbstractCompiler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SSEMCompiler.class);
-    private static final List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-            new SourceFileExtension("ssem", "SSEM source file")
+    private static final List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
+            new FileExtension("ssem", "SSEM source file")
     );
     private MemoryContext<Byte> memory;
-    private int programLocation;
 
     public SSEMCompiler(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -104,7 +105,8 @@ public class SSEMCompiler extends AbstractCompiler {
                 writeToMemory(code);
             }
 
-            programLocation = program.getStartLine() * 4;
+            int programLocation = program.getStartLine() * 4;
+            applicationApi.setProgramLocation(programLocation);
 
             notifyInfo(String.format(
                     "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
@@ -146,29 +148,17 @@ public class SSEMCompiler extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        String outputFileName = Objects.requireNonNull(inputFileName);
-        SourceFileExtension srcExtension = SOURCE_FILE_EXTENSIONS.get(0);
-
-        int i = inputFileName.lastIndexOf("." + srcExtension.getExtension());
-        if (i >= 0) {
-            outputFileName = outputFileName.substring(0, i);
-        }
-        return compile(inputFileName, outputFileName + ".bin");
+        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".bssem";
+        return compile(inputFileName, outputFileName);
     }
 
     @Override
-    public LexicalAnalyzer createLexer(String s) {
-        SSEMLexer lexer = createLexer(CharStreams.fromString(s));
-        return new LexicalAnalyzerImpl(lexer);
+    public LexicalAnalyzer createLexer() {
+        return new LexicalAnalyzerImpl(createLexer(null));
     }
 
     @Override
-    public int getProgramLocation() {
-        return programLocation;
-    }
-
-    @Override
-    public List<SourceFileExtension> getSourceFileExtensions() {
+    public List<FileExtension> getSourceFileExtensions() {
         return SOURCE_FILE_EXTENSIONS;
     }
 

@@ -143,6 +143,11 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
+    public boolean isAutomationSupported() {
+        return true;
+    }
+
+    @Override
     public RunState call() {
         return engine.run();
     }

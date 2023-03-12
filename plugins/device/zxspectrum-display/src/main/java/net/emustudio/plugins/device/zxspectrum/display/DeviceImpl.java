@@ -136,6 +136,11 @@ public class DeviceImpl extends AbstractDevice {
         return "ZX Spectrum display draft";
     }
 
+    @Override
+    public boolean isAutomationSupported() {
+        return true;
+    }
+
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {

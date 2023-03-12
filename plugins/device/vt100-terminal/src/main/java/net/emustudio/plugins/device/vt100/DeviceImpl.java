@@ -98,6 +98,11 @@ public class DeviceImpl extends AbstractDevice {
         return "VT100-terminal device";
     }
 
+    @Override
+    public boolean isAutomationSupported() {
+        return true;
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {

@@ -86,7 +86,7 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
-                gui = new MemoryDialog(parent, context, applicationApi.getDialogs());
+                gui = new MemoryDialog(parent, context, applicationApi);
             }
             gui.setVisible(true);
         }
@@ -110,16 +110,6 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public String getDescription() {
         return "RASP memory containing the program as well as the data";
-    }
-
-    @Override
-    public int getProgramLocation() {
-        return context.getProgramLocation();
-    }
-
-    @Override
-    public void setProgramLocation(int programLocation) {
-        context.setProgramLocation(programLocation);
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

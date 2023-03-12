@@ -21,6 +21,7 @@
 package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
@@ -31,7 +32,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements
     private final Map<Integer, Integer> memory = new HashMap<>();
     private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
-    private int programLocation;
 
     @Override
     public void clear() {
@@ -113,16 +113,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements
         this.inputs.addAll(inputs);
     }
 
-    public int getProgramLocation() {
-        return programLocation;
-    }
-
-    public void setProgramLocation(int location) {
-        this.programLocation = location;
-    }
-
     @SuppressWarnings("unchecked")
-    public void deserialize(String filename) throws IOException, ClassNotFoundException {
+    public void deserialize(String filename, ApplicationApi api) throws IOException, ClassNotFoundException {
         try {
             InputStream file = new FileInputStream(filename);
             InputStream buffer = new BufferedInputStream(file);
@@ -132,7 +124,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements
             inputs.clear();
             memory.clear();
 
-            programLocation = (Integer) input.readObject();
+            int programLocation = (Integer) input.readObject();
+            api.setProgramLocation(programLocation);
             labels.putAll((Map<Integer, RaspLabel>) input.readObject());
             inputs.addAll((List<Integer>) input.readObject());
             memory.putAll((Map<Integer, Integer>) input.readObject());

@@ -157,6 +157,11 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     }
 
     @Override
+    public boolean isAutomationSupported() {
+        return true;
+    }
+
+    @Override
     public void destroy() {
         terminalSettings.removeChangedObserver(this);
         if (terminalGUI != null) {

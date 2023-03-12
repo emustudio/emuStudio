@@ -108,6 +108,11 @@ public class DeviceImpl extends AbstractDevice {
         return "CRT display for SSEM computer";
     }
 
+    @Override
+    public boolean isAutomationSupported() {
+        return true;
+    }
+
     private Optional<ResourceBundle> getResourceBundle() {
         try {
             return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.ssem.display.version"));

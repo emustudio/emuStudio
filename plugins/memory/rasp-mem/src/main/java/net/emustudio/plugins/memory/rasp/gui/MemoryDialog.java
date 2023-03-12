@@ -21,6 +21,7 @@
 package net.emustudio.plugins.memory.rasp.gui;
 
 import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
@@ -36,6 +37,7 @@ import java.util.Objects;
 public class MemoryDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryDialog.class);
 
+    private final ApplicationApi api;
     private final Dialogs dialogs;
 
     private final MemoryContextImpl memory;
@@ -43,10 +45,11 @@ public class MemoryDialog extends JDialog {
     private File recentOpenPath;
     private javax.swing.JTable memoryTable;
 
-    public MemoryDialog(JFrame parent, MemoryContextImpl context, Dialogs dialogs) {
+    public MemoryDialog(JFrame parent, MemoryContextImpl context, ApplicationApi api) {
         super(parent, false);
 
-        this.dialogs = Objects.requireNonNull(dialogs);
+        this.api = Objects.requireNonNull(api);
+        this.dialogs = Objects.requireNonNull(api.getDialogs());
         this.memory = Objects.requireNonNull(context);
         this.recentOpenPath = new File(System.getProperty("user.home"));
 
@@ -133,11 +136,11 @@ public class MemoryDialog extends JDialog {
         File currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")));
         dialogs.chooseFile(
                 "Load compiled RASP program", "Load", currentDirectory.toPath(), false,
-                new FileExtensionsFilter("RASP compiler file", "bin")
+                new FileExtensionsFilter("RASP compiler file", "brasp")
         ).ifPresent(path -> {
             recentOpenPath = path.toFile().getParentFile();
             try {
-                memory.deserialize(path.toString());
+                memory.deserialize(path.toString(), api);
                 updateTable();
             } catch (IOException | ClassNotFoundException ex) {
                 LOGGER.error("Could not read file: {}", path, ex);

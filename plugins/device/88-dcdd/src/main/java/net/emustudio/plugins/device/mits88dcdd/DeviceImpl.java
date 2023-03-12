@@ -109,6 +109,11 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
+    public boolean isAutomationSupported() {
+        return true;
+    }
+
+    @Override
     public void destroy() {
         settings.clearObservers();
         if (gui != null) {

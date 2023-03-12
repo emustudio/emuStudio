@@ -21,8 +21,8 @@ package net.emustudio.plugins.compiler.asZ80;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
@@ -45,6 +45,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
 
+import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
         title = "Zilog Z80 Assembler"
@@ -52,13 +54,12 @@ import java.util.*;
 @SuppressWarnings("unused")
 public class AssemblerZ80 extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(AssemblerZ80.class);
-    private final static List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-            new SourceFileExtension("asm", "Assembler source file"),
-            new SourceFileExtension("inc", "Include file")
+    private final static List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
+            new FileExtension("asm", "Assembler source file"),
+            new FileExtension("inc", "Include file")
     );
 
     private MemoryContext<Byte> memory;
-    private int programLocation;
 
     public AssemblerZ80(long pluginID, ApplicationApi applicationApi, PluginSettings pluginSettings) {
         super(pluginID, applicationApi, pluginSettings);
@@ -97,9 +98,8 @@ public class AssemblerZ80 extends AbstractCompiler {
     }
 
     @Override
-    public LexicalAnalyzer createLexer(String s) {
-        AsZ80Lexer lexer = createLexer(CharStreams.fromString(s));
-        return new LexicalAnalyzerImpl(lexer);
+    public LexicalAnalyzer createLexer() {
+        return new LexicalAnalyzerImpl(createLexer(null));
     }
 
     @Override
@@ -138,10 +138,10 @@ public class AssemblerZ80 extends AbstractCompiler {
                 visitor.visit(program);
             }
 
-            programLocation = 0;
             if (program.env().hasNoErrors()) {
                 hex.generate(outputFileName);
-                programLocation = hex.findProgramLocation();
+                int programLocation = hex.findProgramLocation();
+                applicationApi.setProgramLocation(programLocation);
 
                 notifyInfo(String.format(
                         "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
@@ -174,23 +174,12 @@ public class AssemblerZ80 extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        String outputFileName = Objects.requireNonNull(inputFileName);
-        SourceFileExtension srcExtension = SOURCE_FILE_EXTENSIONS.get(0);
-
-        int i = inputFileName.toLowerCase(Locale.ENGLISH).lastIndexOf("." + srcExtension.getExtension());
-        if (i >= 0) {
-            outputFileName = outputFileName.substring(0, i);
-        }
-        return compile(inputFileName, outputFileName + ".hex");
+        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".hex";
+        return compile(inputFileName, outputFileName);
     }
 
     @Override
-    public int getProgramLocation() {
-        return programLocation;
-    }
-
-    @Override
-    public List<SourceFileExtension> getSourceFileExtensions() {
+    public List<FileExtension> getSourceFileExtensions() {
         return SOURCE_FILE_EXTENSIONS;
     }
 

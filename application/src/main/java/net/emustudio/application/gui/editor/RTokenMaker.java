@@ -20,6 +20,7 @@ package net.emustudio.application.gui.editor;
 
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
+import net.jcip.annotations.NotThreadSafe;
 import org.fife.ui.rsyntaxtextarea.AbstractTokenMaker;
 import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rsyntaxtextarea.TokenMap;
@@ -27,11 +28,12 @@ import org.fife.ui.rsyntaxtextarea.TokenMap;
 import javax.swing.text.Segment;
 import java.util.Objects;
 
+@NotThreadSafe
 public class RTokenMaker extends AbstractTokenMaker {
-    private final Compiler compiler;
+    private final LexicalAnalyzer lexer;
 
     public RTokenMaker(Compiler compiler) {
-        this.compiler = Objects.requireNonNull(compiler);
+        this.lexer = compiler.createLexer();
     }
 
     private static int getTokenMakerType(int emuStudioTokenType) {
@@ -65,7 +67,7 @@ public class RTokenMaker extends AbstractTokenMaker {
     @Override
     public Token getTokenList(Segment text, int initialTokenType, int startOffset) {
         resetTokenList();
-        LexicalAnalyzer lexer = compiler.createLexer((Objects.requireNonNull(text).toString()));
+        lexer.reset((Objects.requireNonNull(text).toString()));
         int previousEnd = -1;
         int previousStartOffset = -1;
 
@@ -96,9 +98,8 @@ public class RTokenMaker extends AbstractTokenMaker {
                 previousStartOffset = tokenStartOffset;
 
                 addToken(text, start, end, tokenMakerType, tokenStartOffset);
-            } catch (Exception ignored) {
-                ignored.printStackTrace();
-
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
         return firstToken;

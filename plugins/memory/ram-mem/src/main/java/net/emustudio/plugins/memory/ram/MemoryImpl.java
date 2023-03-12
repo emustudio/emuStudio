@@ -72,16 +72,6 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     @Override
-    public int getProgramLocation() {
-        return 0;
-    }
-
-    @Override
-    public void setProgramLocation(int location) {
-        // Program start is always 0
-    }
-
-    @Override
     public int getSize() {
         return context.getSize();
     }

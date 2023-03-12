@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.RenderingHints.*;
-import static net.emustudio.plugins.device.adm3a.gui.GuiUtils.loadFont;
+import static net.emustudio.plugins.device.adm3a.gui.GuiUtilsAdm3A.loadFont;
 
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     private static final Color FOREGROUND = new Color(255, 255, 255);
