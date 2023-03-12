@@ -18,12 +18,10 @@
  */
 package net.emustudio.application;
 
+
 import java.awt.*;
-import java.awt.font.TextAttribute;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadFontResource;
 
 public class Constants {
 
@@ -31,7 +29,8 @@ public class Constants {
     public static final Font FONT_MONOSPACED = new Font(Font.MONOSPACED, Font.PLAIN, FONT_DEFAULT_SIZE);
     public static final Font FONT_COMMON = new Font(Font.DIALOG, Font.PLAIN, FONT_DEFAULT_SIZE);
     public static final Font FONT_TITLE_BORDER = new Font(Font.SANS_SERIF, Font.BOLD, FONT_DEFAULT_SIZE);
-    public static final Font FONT_CODE = loadFont("/net/emustudio/application/gui/FiraCode-Regular.ttf", 13);
+    public static final Font FONT_CODE = loadFontResource(
+            "/net/emustudio/application/gui/FiraCode-Regular.ttf", Constants.class, 13);
 
 
     public static final Color DEBUGTABLE_COLOR_ROW_EVEN = new Color(241, 245, 250);
@@ -49,21 +48,4 @@ public class Constants {
     public static final Color TOKEN_SEPARATOR = Color.BLACK;
     public static final Color TOKEN_OPERATOR = new Color(0, 0, 128);
     public static final Color TOKEN_ERROR = Color.RED;
-
-    // TODO: put in emuLib?
-    public static Font loadFont(String path, int size) {
-        Map<TextAttribute, Object> attrs = new HashMap<>();
-        attrs.put(TextAttribute.KERNING, TextAttribute.KERNING_ON);
-
-        try (InputStream fin = Constants.class.getResourceAsStream(path)) {
-            Font font = Font
-                    .createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(fin))
-                    .deriveFont(Font.PLAIN, size)
-                    .deriveFont(attrs);
-            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
-            return font;
-        } catch (Exception e) {
-            return FONT_MONOSPACED;
-        }
-    }
 }
