@@ -38,6 +38,7 @@ public class OpenComputerAction extends AbstractAction {
         super(
                 "Create new computer...", new ImageIcon(OpenComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-add.png"))
         );
+        putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.parent = Objects.requireNonNull(parent);
         this.lstConfig = Objects.requireNonNull(lstConfig);

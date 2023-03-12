@@ -37,7 +37,7 @@ import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.MEMORY,
-        title = "SSEM memory (Williams-Kilburn Tube)"
+        title = "SSEM memory (Williams–Kilburn Tube)"
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {

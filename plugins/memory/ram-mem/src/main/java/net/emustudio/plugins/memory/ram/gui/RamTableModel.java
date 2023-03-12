@@ -26,7 +26,7 @@ import net.emustudio.plugins.memory.ram.api.RamValue;
 import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
 
-class RamTableModel extends AbstractTableModel {
+public class RamTableModel extends AbstractTableModel {
     private final RamMemoryContext memory;
 
     RamTableModel(RamMemoryContext memory) {

@@ -35,7 +35,7 @@ public class ReplaceAction extends AbstractAction {
         this.findDialog = Objects.requireNonNull(findDialog);
         this.replaceDialog = Objects.requireNonNull(replaceDialog);
 
-        putValue(SHORT_DESCRIPTION, "Replace text...");
+        putValue(SHORT_DESCRIPTION, "Find/replace text...");
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK));
         putValue(MNEMONIC_KEY, KeyEvent.VK_R);
     }

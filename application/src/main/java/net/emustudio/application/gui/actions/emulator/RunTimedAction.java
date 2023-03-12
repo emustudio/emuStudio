@@ -34,7 +34,7 @@ public class RunTimedAction extends AbstractAction {
 
     public RunTimedAction(EmulationController emulationController, Dialogs dialogs) {
         super("Run timed...", new ImageIcon(RunTimedAction.class.getResource("/net/emustudio/application/gui/dialogs/go-play-time.png")));
-
+        putValue(SHORT_DESCRIPTION, "Run \"timed\" emulation");
         this.emulationController = emulationController;
         this.dialogs = Objects.requireNonNull(dialogs);
     }

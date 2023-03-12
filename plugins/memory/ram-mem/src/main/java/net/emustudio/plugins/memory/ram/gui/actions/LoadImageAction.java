@@ -16,31 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.ssem.gui.actions;
+package net.emustudio.plugins.memory.ram.gui.actions;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.plugins.memory.ram.MemoryContextImpl;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
 public class LoadImageAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/document-open.png";
+    private final static String ICON_FILE = "/net/emustudio/plugins/memory/ram/gui/document-open.png";
     private final Dialogs dialogs;
-    private final MemoryContext<Byte> context;
+    private final MemoryContextImpl context;
     private final Runnable repaint;
     private Path recentOpenPath;
 
-    public LoadImageAction(Dialogs dialogs, MemoryContext<Byte> context, Runnable repaint) {
+    public LoadImageAction(Dialogs dialogs, MemoryContextImpl context, Runnable repaint) {
         super("Load image file...", new ImageIcon(LoadImageAction.class.getResource(ICON_FILE)));
 
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -57,14 +55,11 @@ public class LoadImageAction extends AbstractAction {
         Path currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")).toPath());
         Optional<Path> imagePath = dialogs.chooseFile(
                 "Load image file", "Load", currentDirectory,
-                false, new FileExtensionsFilter("Memory image", "bssem"));
+                false, new FileExtensionsFilter("Memory image", "bram"));
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
             try {
-                try (FileInputStream stream = new FileInputStream(path.toFile())) {
-                    byte[] content = stream.readAllBytes();
-                    context.write(0, NumberUtils.nativeBytesToBytes(content));
-                }
+                context.deserialize(path.toString());
                 repaint.run();
             } catch (Exception ex) {
                 dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");

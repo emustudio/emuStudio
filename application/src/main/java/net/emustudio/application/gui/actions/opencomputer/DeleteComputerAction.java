@@ -42,6 +42,7 @@ public class DeleteComputerAction extends AbstractAction {
         super(
                 "Delete computer", new ImageIcon(DeleteComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-remove.png"))
         );
+        putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.update = Objects.requireNonNull(update);
         this.lstConfig = Objects.requireNonNull(lstConfig);

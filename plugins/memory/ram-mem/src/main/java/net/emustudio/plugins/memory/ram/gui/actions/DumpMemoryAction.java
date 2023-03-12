@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.ssem.gui.actions;
+package net.emustudio.plugins.memory.ram.gui.actions;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.plugins.memory.ram.MemoryContextImpl;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,9 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
@@ -36,11 +39,11 @@ import java.util.Optional;
 
 public class DumpMemoryAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DumpMemoryAction.class);
-    private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/document-save.png";
+    private final static String ICON_FILE = "/net/emustudio/plugins/memory/ram/gui/document-save.png";
     private final Dialogs dialogs;
-    private final MemoryContext<Byte> context;
+    private final MemoryContextImpl context;
 
-    public DumpMemoryAction(Dialogs dialogs, MemoryContext<Byte> context) {
+    public DumpMemoryAction(Dialogs dialogs, MemoryContextImpl context) {
         super("Dump (save) memory to a file...", new ImageIcon(DumpMemoryAction.class.getResource(ICON_FILE)));
 
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -57,23 +60,18 @@ public class DumpMemoryAction extends AbstractAction {
         Optional<Path> dumpPath = dialogs.chooseFile(
                 "Dump memory content into a file", "Save", currentDirectory, true,
                 new FileExtensionsFilter("Human-readable dump", "txt"),
-                new FileExtensionsFilter("Binary dump", "bssem"));
+                new FileExtensionsFilter("Binary dump", "bram"));
 
         dumpPath.ifPresent(path -> {
             try {
                 if (path.toString().toLowerCase(Locale.ENGLISH).endsWith(".txt")) {
                     try (BufferedWriter out = new BufferedWriter(new FileWriter(path.toFile()))) {
-                        for (int i = 0; i < 32; i++) {
-                            Byte[] v = context.read(i * 4, 4);
-                            out.write(String.format("0x%02X, 0x%02X, 0x%02X, 0x%02X\n", v[0], v[1], v[2], v[3]));
+                        for (int i = 0; i < context.getSize(); i++) {
+                            out.write(String.format("%X:\t%s\n", i, context.read(i)));
                         }
                     }
                 } else {
-                    try (DataOutputStream ds = new DataOutputStream(new FileOutputStream(path.toFile()))) {
-                        for (int i = 0; i < context.getSize(); i++) {
-                            ds.writeByte(context.read(i) & 0xff);
-                        }
-                    }
+                    RamMemoryContext.serialize(path.toString(), context.getSnapshot());
                 }
             } catch (IOException ex) {
                 LOGGER.error("Memory dump could not be created", ex);

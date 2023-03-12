@@ -74,19 +74,9 @@ public class Program {
     }
 
     public void saveToFile(String filename, Map<Integer, Integer> compiled) throws IOException {
-        Map<Integer, String> labels = new HashMap<>();
-        for (Label label : this.labels.values()) {
-            labels.put(label.getAddress(), label.getLabel());
-        }
-
-        OutputStream file = new FileOutputStream(filename);
-        OutputStream buffer = new BufferedOutputStream(file);
-        try (ObjectOutput output = new ObjectOutputStream(buffer)) {
-            output.writeObject(getProgramLocation(compiled));
-            output.writeObject(labels);
-            output.writeObject(inputs);
-            output.writeObject(compiled);
-        }
+        RaspMemoryContext.serialize(filename, getProgramLocation(compiled), new RaspMemoryContext.RaspMemory(
+                this.labels.values(), compiled, inputs
+        ));
     }
 
     public int getProgramLocation(Map<Integer, Integer> compiled) {

@@ -44,6 +44,7 @@ public class RenameComputerAction extends AbstractAction {
         super(
                 "Rename computer...", new ImageIcon(RenameComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/rename-computer.png"))
         );
+        putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.update = Objects.requireNonNull(update);
         this.lstConfig = Objects.requireNonNull(lstConfig);

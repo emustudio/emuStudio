@@ -57,7 +57,7 @@ public class EmulatorEngine {
         IP.set(location);
         int position = 0;
         inputTape.clear();
-        for (RamValue input : memory.getInputs()) {
+        for (RamValue input : memory.getSnapshot().inputs) {
             inputTape.setSymbolAt(position++, toSymbol(input));
         }
         storageTape.clear();

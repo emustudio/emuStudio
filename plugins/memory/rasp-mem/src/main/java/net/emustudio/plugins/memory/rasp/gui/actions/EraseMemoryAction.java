@@ -1,6 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
+ * Copyright (C) 2016-2017  Michal Šipoš
  * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,28 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.gui.actions.opencomputer;
+package net.emustudio.plugins.memory.rasp.gui.actions;
 
-import net.emustudio.application.gui.schema.SchemaPreviewPanel;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.plugins.memory.rasp.gui.RaspTableModel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-public class SaveSchemaAction extends AbstractAction {
-    private final SchemaPreviewPanel preview;
+public class EraseMemoryAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/plugins/memory/rasp/gui/clear.png";
+    private final RaspTableModel tableModel;
+    private final MemoryContext<Integer> context;
 
-    public SaveSchemaAction(SchemaPreviewPanel preview) {
-        super(
-                "Save schema image...",
-                new ImageIcon(SaveSchemaAction.class.getResource("/net/emustudio/application/gui/dialogs/document-save.png"))
-        );
-        putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
-        this.preview = Objects.requireNonNull(preview);
+    public EraseMemoryAction(RaspTableModel tableModel, MemoryContext<Integer> context) {
+        super("Erase memory", new ImageIcon(EraseMemoryAction.class.getResource(ICON_FILE)));
+        this.tableModel = Objects.requireNonNull(tableModel);
+        this.context = Objects.requireNonNull(context);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        preview.saveSchemaImage();
+        context.clear();
+        tableModel.fireTableDataChanged();
     }
 }
