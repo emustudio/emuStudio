@@ -68,18 +68,13 @@ public class Program {
     }
 
     public void saveToFile(String filename) throws IOException {
-        Map<Integer, String> labels = new HashMap<>();
-        for (Label label : this.labels.values()) {
-            labels.put(label.getAddress(), label.getLabel());
+        Map<Integer, RamInstruction> programMemory = new HashMap<>();
+        for (RamInstruction instruction : instructions) {
+            programMemory.put(instruction.getAddress(), instruction);
         }
-
-        OutputStream file = new FileOutputStream(filename);
-        OutputStream buffer = new BufferedOutputStream(file);
-        try (ObjectOutput output = new ObjectOutputStream(buffer)) {
-            output.writeObject(labels);
-            output.writeObject(inputs);
-            output.writeObject(instructions);
-        }
+        RamMemoryContext.serialize(filename, new RamMemoryContext.RamMemory(
+                this.labels.values(), programMemory, inputs
+        ));
     }
 
     private Optional<Label> getLabel(String name) {

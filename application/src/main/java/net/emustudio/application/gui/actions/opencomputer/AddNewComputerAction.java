@@ -48,6 +48,8 @@ public class AddNewComputerAction extends AbstractAction {
         super(
                 "Create new computer...", new ImageIcon(AddNewComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-add.png"))
         );
+        putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
+
         this.dialogs = Objects.requireNonNull(dialogs);
         this.appSettings = Objects.requireNonNull(appSettings);
         this.update = Objects.requireNonNull(update);

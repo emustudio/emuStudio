@@ -19,7 +19,6 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.emulator.*;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -30,6 +29,7 @@ import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -288,21 +288,21 @@ public class EmulatorPanel extends JPanel {
         toolDebug.setRollover(true);
         toolDebug.setBorderPainted(false);
 
-        toolDebug.add(new ToolbarButton(resetAction, "Reset emulation"));
+        toolDebug.add(new ToolbarButton(resetAction));
         toolDebug.addSeparator();
-        toolDebug.add(new ToolbarButton(jumpToBeginningAction, "Jump to beginning"));
-        toolDebug.add(new ToolbarButton(stepBackAction, "Step back"));
-        toolDebug.add(new ToolbarButton(stopAction, "Stop emulation"));
-        toolDebug.add(new ToolbarButton(pauseAction, "Pause emulation"));
-        toolDebug.add(new ToolbarButton(runAction, "Run emulation"));
-        toolDebug.add(new ToolbarButton(runTimedAction, "Run \"timed\" emulation"));
-        toolDebug.add(new ToolbarButton(stepAction, "Step forward"));
+        toolDebug.add(new ToolbarButton(jumpToBeginningAction));
+        toolDebug.add(new ToolbarButton(stepBackAction));
+        toolDebug.add(new ToolbarButton(stopAction));
+        toolDebug.add(new ToolbarButton(pauseAction));
+        toolDebug.add(new ToolbarButton(runAction));
+        toolDebug.add(new ToolbarButton(runTimedAction));
+        toolDebug.add(new ToolbarButton(stepAction));
         toolDebug.addSeparator();
-        toolDebug.add(new ToolbarButton(jumpAction, "Jump to address"));
+        toolDebug.add(new ToolbarButton(jumpAction));
         toolDebug.addSeparator();
-        toolDebug.add(new ToolbarButton(breakpointAction, "Set/unset breakpoint to address..."));
+        toolDebug.add(new ToolbarButton(breakpointAction));
         toolDebug.addSeparator();
-        toolDebug.add(new ToolbarButton(showMemoryAction, "Show operating memory"));
+        toolDebug.add(new ToolbarButton(showMemoryAction));
     }
 
     private void refreshDebugTable() {

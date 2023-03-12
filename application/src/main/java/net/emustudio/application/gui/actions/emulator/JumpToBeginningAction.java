@@ -33,7 +33,7 @@ public class JumpToBeginningAction extends AbstractAction {
                 "Jump to beginning",
                 new ImageIcon(JumpToBeginningAction.class.getResource("/net/emustudio/application/gui/dialogs/go-first.png"))
         );
-
+        putValue(SHORT_DESCRIPTION, "Jump to beginning");
         this.computer = Objects.requireNonNull(computer);
         this.refreshDebugTable = Objects.requireNonNull(refreshDebugTable);
     }

@@ -16,28 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.gui.actions.opencomputer;
+package net.emustudio.plugins.memory.ram.gui.actions;
 
-import net.emustudio.application.gui.schema.SchemaPreviewPanel;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.gui.RamTableModel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-public class SaveSchemaAction extends AbstractAction {
-    private final SchemaPreviewPanel preview;
+public class EraseMemoryAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/plugins/memory/ram/gui/clear.png";
+    private final RamTableModel tableModel;
+    private final RamMemoryContext context;
 
-    public SaveSchemaAction(SchemaPreviewPanel preview) {
-        super(
-                "Save schema image...",
-                new ImageIcon(SaveSchemaAction.class.getResource("/net/emustudio/application/gui/dialogs/document-save.png"))
-        );
-        putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
-        this.preview = Objects.requireNonNull(preview);
+    public EraseMemoryAction(RamTableModel tableModel, RamMemoryContext context) {
+        super("Erase memory", new ImageIcon(EraseMemoryAction.class.getResource(ICON_FILE)));
+        this.tableModel = Objects.requireNonNull(tableModel);
+        this.context = Objects.requireNonNull(context);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        preview.saveSchemaImage();
+        context.clear();
+        tableModel.fireTableDataChanged();
     }
 }

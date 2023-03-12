@@ -21,6 +21,7 @@ package net.emustudio.plugins.memory.ssem.gui;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 import net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.EraseMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.LoadImageAction;
@@ -64,7 +65,7 @@ public class MemoryGui extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        setTitle("SSEM Memory (Williams-Killburn Tube)");
+        setTitle("SSEM Memory (Williams–Kilburn Tube)");
 
         toolBar.setFloatable(false);
         toolBar.setRollover(true);

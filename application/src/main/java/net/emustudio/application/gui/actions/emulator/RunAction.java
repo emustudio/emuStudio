@@ -32,7 +32,7 @@ public class RunAction extends AbstractAction {
 
     public RunAction(EmulationController emulationController, JTable debugTable) {
         super("Run", new ImageIcon(RunAction.class.getResource("/net/emustudio/application/gui/dialogs/go-play.png")));
-
+        putValue(SHORT_DESCRIPTION, "Run emulation");
         this.emulationController = emulationController;
         this.debugTable = Objects.requireNonNull(debugTable);
     }

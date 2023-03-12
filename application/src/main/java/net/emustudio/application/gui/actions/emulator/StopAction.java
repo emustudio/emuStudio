@@ -30,6 +30,7 @@ public class StopAction extends AbstractAction {
 
     public StopAction(EmulationController emulationController) {
         super("Stop", new ImageIcon(StopAction.class.getResource("/net/emustudio/application/gui/dialogs/go-stop.png")));
+        putValue(SHORT_DESCRIPTION, "Stop emulation");
         this.emulationController = emulationController;
     }
 

@@ -34,7 +34,7 @@ public class ShowMemoryAction extends AbstractAction {
 
     public ShowMemoryAction(JFrame parent, VirtualComputer computer, Dialogs dialogs) {
         super("Show memory...", new ImageIcon(ShowMemoryAction.class.getResource("/net/emustudio/application/gui/dialogs/grid_memory.gif")));
-
+        putValue(SHORT_DESCRIPTION, "Show operating memory");
         this.parent = Objects.requireNonNull(parent);
         this.computer = Objects.requireNonNull(computer);
         this.dialogs = Objects.requireNonNull(dialogs);

@@ -32,6 +32,7 @@ public class PauseAction extends AbstractAction {
 
     public PauseAction(EmulationController emulationController, Runnable updateStatus) {
         super("Pause", new ImageIcon(PauseAction.class.getResource("/net/emustudio/application/gui/dialogs/go-pause.png")));
+        putValue(SHORT_DESCRIPTION, "Pause emulation");
         this.emulationController = emulationController;
         this.updateStatus = Objects.requireNonNull(updateStatus);
     }

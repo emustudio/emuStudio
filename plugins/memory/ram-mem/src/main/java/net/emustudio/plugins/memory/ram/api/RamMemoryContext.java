@@ -20,18 +20,56 @@ package net.emustudio.plugins.memory.ram.api;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.jcip.annotations.Immutable;
+import net.jcip.annotations.ThreadSafe;
 
-import java.util.List;
-import java.util.Optional;
+import java.io.*;
+import java.util.*;
 
+@ThreadSafe
 @PluginContext
 public interface RamMemoryContext extends MemoryContext<RamInstruction> {
 
-    void setLabels(List<RamLabel> labels);
+    @Override
+    default Class<RamInstruction> getDataType() {
+        return RamInstruction.class;
+    }
 
     Optional<RamLabel> getLabel(int address);
 
-    List<RamValue> getInputs();
+    void setLabels(List<RamLabel> labels);
 
     void setInputs(List<RamValue> inputs);
+
+    RamMemory getSnapshot();
+
+    static void serialize(String filename, RamMemory memory) throws IOException {
+        Map<Integer, String> labels = new HashMap<>();
+        for (RamLabel label : memory.labels) {
+            labels.put(label.getAddress(), label.getLabel());
+        }
+
+        OutputStream file = new FileOutputStream(filename);
+        OutputStream buffer = new BufferedOutputStream(file);
+        try (ObjectOutput output = new ObjectOutputStream(buffer)) {
+            output.writeObject(labels);
+            output.writeObject(memory.inputs);
+            output.writeObject(memory.programMemory);
+        }
+    }
+
+    @Immutable
+    class RamMemory {
+        public final List<RamLabel> labels;
+        public final Map<Integer, RamInstruction> programMemory;
+        public final List<RamValue> inputs;
+
+        public RamMemory(Collection<? extends RamLabel> labels,
+                         Map<Integer, RamInstruction> programMemory,
+                         List<? extends RamValue> inputs) {
+            this.labels = List.copyOf(labels);
+            this.programMemory = Map.copyOf(programMemory);
+            this.inputs = List.copyOf(inputs);
+        }
+    }
 }

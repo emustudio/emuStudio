@@ -34,7 +34,7 @@ public class JumpAction extends AbstractAction {
 
     public JumpAction(VirtualComputer computer, Dialogs dialogs, Runnable refreshDebugTable) {
         super("Jump...", new ImageIcon(JumpAction.class.getResource("/net/emustudio/application/gui/dialogs/go-jump.png")));
-
+        putValue(SHORT_DESCRIPTION, "Jump to address");
         this.computer = Objects.requireNonNull(computer);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.refreshDebugTable = Objects.requireNonNull(refreshDebugTable);

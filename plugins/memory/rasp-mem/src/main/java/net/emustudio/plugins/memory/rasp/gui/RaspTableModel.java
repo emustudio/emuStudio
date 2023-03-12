@@ -25,6 +25,8 @@ import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import javax.swing.table.AbstractTableModel;
 
+import java.util.Objects;
+
 import static net.emustudio.plugins.memory.rasp.gui.Disassembler.*;
 
 /**
@@ -39,8 +41,8 @@ public class RaspTableModel extends AbstractTableModel {
      *
      * @param memory the memory that will hold the content.
      */
-    public RaspTableModel(final RaspMemoryContext memory) {
-        this.memory = memory;
+    public RaspTableModel(RaspMemoryContext memory) {
+        this.memory = Objects.requireNonNull(memory);
     }
 
     @Override

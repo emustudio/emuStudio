@@ -23,24 +23,27 @@ package net.emustudio.plugins.memory.rasp.api;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.plugins.memory.rasp.gui.Disassembler;
+import net.jcip.annotations.Immutable;
+import net.jcip.annotations.ThreadSafe;
 
-import java.util.List;
-import java.util.Optional;
+import java.io.*;
+import java.util.*;
 
 /**
  * Context of the RASP memory.
  */
+@ThreadSafe
 @PluginContext
 @SuppressWarnings("unused")
 public interface RaspMemoryContext extends MemoryContext<Integer> {
 
-    void setLabels(List<RaspLabel> labels);
-
     Optional<RaspLabel> getLabel(int address);
 
-    List<Integer> getInputs();
+    void setLabels(List<RaspLabel> labels);
 
     void setInputs(List<Integer> inputs);
+
+    RaspMemory getSnapshot();
 
     default Class<Integer> getDataType() {
         return Integer.class;
@@ -52,5 +55,36 @@ public interface RaspMemoryContext extends MemoryContext<Integer> {
 
     default Optional<String> disassembleMnemo(int opcode) {
         return Disassembler.disassembleMnemo(opcode);
+    }
+
+    static void serialize(String filename, int programLocation, RaspMemory memory) throws IOException {
+        Map<Integer, String> labels = new HashMap<>();
+        for (RaspLabel label : memory.labels) {
+            labels.put(label.getAddress(), label.getLabel());
+        }
+
+        OutputStream file = new FileOutputStream(filename);
+        OutputStream buffer = new BufferedOutputStream(file);
+        try (ObjectOutput output = new ObjectOutputStream(buffer)) {
+            output.writeObject(programLocation);
+            output.writeObject(labels);
+            output.writeObject(memory.inputs);
+            output.writeObject(memory.programMemory);
+        }
+    }
+
+    @Immutable
+    class RaspMemory {
+        public final List<RaspLabel> labels;
+        public final Map<Integer, Integer> programMemory;
+        public final List<Integer> inputs;
+
+        public RaspMemory(Collection<? extends RaspLabel> labels,
+                          Map<Integer, Integer> programMemory,
+                          List<Integer> inputs) {
+            this.labels = List.copyOf(labels);
+            this.programMemory = Map.copyOf(programMemory);
+            this.inputs = List.copyOf(inputs);
+        }
     }
 }

@@ -19,13 +19,13 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.Constants;
-import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.CompileAction;
 import net.emustudio.application.gui.actions.editor.*;
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 import org.fife.rsta.ui.search.FindDialog;
 import org.fife.rsta.ui.search.ReplaceDialog;
 import org.fife.ui.rtextarea.RTextArea;
@@ -169,9 +169,9 @@ public class EditorPanel extends JPanel {
         mainToolBar.setBorderPainted(false);
         mainToolBar.setRollover(true);
 
-        mainToolBar.add(new ToolbarButton(newFileAction, "New file"));
-        mainToolBar.add(new ToolbarButton(openFileAction, "Open file"));
-        mainToolBar.add(new ToolbarButton(saveFileAction, "Save file"));
+        mainToolBar.add(new ToolbarButton(newFileAction));
+        mainToolBar.add(new ToolbarButton(openFileAction));
+        mainToolBar.add(new ToolbarButton(saveFileAction));
         mainToolBar.addSeparator();
         mainToolBar.add(new ToolbarButton(
                 RTextArea.getAction(RTextArea.UNDO_ACTION),
@@ -199,10 +199,10 @@ public class EditorPanel extends JPanel {
                 "Paste from clipboard"
         ));
         mainToolBar.addSeparator();
-        mainToolBar.add(new ToolbarButton(findAction, "Find text..."));
-        mainToolBar.add(new ToolbarButton(replaceAction, "Find/replace text..."));
+        mainToolBar.add(new ToolbarButton(findAction));
+        mainToolBar.add(new ToolbarButton(replaceAction));
         mainToolBar.addSeparator();
-        mainToolBar.add(new ToolbarButton(compileAction, "Compile source"));
+        mainToolBar.add(new ToolbarButton(compileAction));
 
         return mainToolBar;
     }

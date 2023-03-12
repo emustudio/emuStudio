@@ -18,7 +18,6 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.ToolbarToggleButton;
 import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.DrawingPanel.Tool;
@@ -26,6 +25,7 @@ import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.GuiUtils;
+import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

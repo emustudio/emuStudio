@@ -27,6 +27,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
@@ -39,6 +40,7 @@ public class LoadImageAction extends AbstractAction {
     private final ByteMemoryContext context;
     private final JDialog parent;
     private final Runnable repaint;
+    private Path recentOpenPath;
 
     public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint) {
         super("Load image file...", new ImageIcon(LoadImageAction.class.getResource(ICON_FILE)));
@@ -55,10 +57,12 @@ public class LoadImageAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        Path currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")).toPath());
         Optional<Path> imagePath = dialogs.chooseFile(
-                "Load image file", "Load", Path.of(System.getProperty("user.dir")),
+                "Load image file", "Load", currentDirectory,
                 false, IMAGE_EXTENSION_FILTER);
         imagePath.ifPresent(path -> {
+            recentOpenPath = path;
             Loader loader = Loader.createLoader(path);
             Loader.MemoryBank bank = askForMemoryBank(!loader.isMemoryAddressAware());
             try {
