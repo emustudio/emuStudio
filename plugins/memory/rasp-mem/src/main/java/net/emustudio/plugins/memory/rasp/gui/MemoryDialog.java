@@ -73,7 +73,9 @@ public class MemoryDialog extends JDialog {
     }
 
     private void updateTable() {
+        tableModel.fireTableStructureChanged();
         tableModel.fireTableDataChanged();
+        revalidate();
         repaint();
     }
 

@@ -126,14 +126,29 @@ public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements
 
             int programLocation = (Integer) input.readObject();
             api.setProgramLocation(programLocation);
-            labels.putAll((Map<Integer, RaspLabel>) input.readObject());
+
+            Map<Integer, String> rawLabels = (Map<Integer, String>) input.readObject();
+            for (Map.Entry<Integer, String> rawLabel : rawLabels.entrySet()) {
+                this.labels.put(rawLabel.getKey(), new RaspLabel() {
+                    @Override
+                    public int getAddress() {
+                        return rawLabel.getKey();
+                    }
+
+                    @Override
+                    public String getLabel() {
+                        return rawLabel.getValue();
+                    }
+                });
+            }
+
             inputs.addAll((List<Integer>) input.readObject());
             memory.putAll((Map<Integer, Integer>) input.readObject());
 
             input.close();
         } finally {
-            notifyMemoryChanged(-1);
             notifyMemorySizeChanged();
+            notifyMemoryChanged(-1);
         }
     }
 
