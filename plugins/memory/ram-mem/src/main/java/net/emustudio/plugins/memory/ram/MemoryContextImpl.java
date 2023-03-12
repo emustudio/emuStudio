@@ -134,7 +134,21 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
             inputs.clear();
             memory.clear();
 
-            labels.putAll((Map<Integer, RamLabel>) input.readObject());
+            Map<Integer, String> rawLabels = (Map<Integer, String>) input.readObject();
+            for (Map.Entry<Integer, String> rawLabel : rawLabels.entrySet()) {
+                this.labels.put(rawLabel.getKey(), new RamLabel() {
+                    @Override
+                    public int getAddress() {
+                        return rawLabel.getKey();
+                    }
+
+                    @Override
+                    public String getLabel() {
+                        return rawLabel.getValue();
+                    }
+                });
+            }
+
             inputs.addAll((List<RamValue>) input.readObject());
             memory.putAll((Map<Integer, RamInstruction>) input.readObject());
 

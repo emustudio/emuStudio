@@ -60,7 +60,7 @@ public class DumpMemoryAction extends AbstractAction {
         Optional<Path> dumpPath = dialogs.chooseFile(
                 "Dump memory content into a file", "Save", currentDirectory, true,
                 new FileExtensionsFilter("Human-readable dump", "txt"),
-                new FileExtensionsFilter("Binary dump", "brasp"));
+                new FileExtensionsFilter("Binary dump", "bram"));
 
         dumpPath.ifPresent(path -> {
             try {
