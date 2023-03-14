@@ -20,6 +20,7 @@ package net.emustudio.plugins.compiler.rasp;
 
 import org.junit.Test;
 
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.*;
 import static org.junit.Assert.assertNotEquals;
 
 public class CompilerTest extends AbstractCompilerTest {
@@ -27,7 +28,7 @@ public class CompilerTest extends AbstractCompilerTest {
     @Test
     public void testJmpInstruction() throws Exception {
         compile(
-                "org 2\n" +
+                "org 22\n" +
                         "START: jmp HERE\n" +
                         "jmp START\n" +
                         "HERE: halt"
@@ -37,9 +38,9 @@ public class CompilerTest extends AbstractCompilerTest {
                 null,
                 null,
                 15,
-                6,
+                26,
                 15,
-                2,
+                22,
                 18
         );
     }
@@ -52,6 +53,90 @@ public class CompilerTest extends AbstractCompilerTest {
     @Test(expected = Exception.class)
     public void testAlreadyDefinedLabel() throws Exception {
         compile("label:\nlabel:");
+    }
+
+
+    @Test
+    public void testREAD() throws Exception {
+        compile("READ 5");
+        assertProgram(READ, 5);
+    }
+
+    @Test
+    public void testWRITE() throws Exception {
+        compile("WRITE =3\nWRITE 4");
+        assertProgram(2, 3, 3, 4);
+    }
+
+    @Test
+    public void testLOAD() throws Exception {
+        compile("LOAD =6\nLOAD 7");
+        assertProgram(4, 6, 5, 7);
+    }
+
+    @Test
+    public void testSTORE() throws Exception {
+        compile("STORE 111111112");
+        assertProgram(6, 111111112);
+    }
+
+    @Test
+    public void testADD() throws Exception {
+        compile("ADD =2\nADD 99");
+        assertProgram(7, 2, 8, 99);
+    }
+
+    @Test
+    public void testSUB() throws Exception {
+        compile("SUB =3\nSUB 229");
+        assertProgram(9, 3, 10, 229);
+    }
+
+    @Test
+    public void testMUL() throws Exception {
+        compile("MUL =-5\nMUL 229");
+        assertProgram(11, -5, 12, 229);
+    }
+
+    @Test
+    public void testDIV() throws Exception {
+        compile("DIV =0\nDIV 229");
+        assertProgram(13, 0, 14, 229);
+    }
+
+    @Test
+    public void testJMP() throws Exception {
+        compile("here: JMP here");
+        assertProgram(JMP, 20);
+    }
+
+    @Test
+    public void testJMP_ForwardReference() throws Exception {
+        compile("JMP here\nhere:HALT");
+        assertProgram(JMP, 22, HALT);
+    }
+
+    @Test
+    public void testJZ() throws Exception {
+        compile("JZ here\nhere:HALT");
+        assertProgram(JZ, 22, HALT);
+    }
+
+    @Test
+    public void testJGTZ() throws Exception {
+        compile("JGTZ here\nhere:HALT");
+        assertProgram(JGTZ, 22, HALT);
+    }
+
+    @Test
+    public void testHALT() throws Exception {
+        compile("halt");
+        assertProgram(HALT);
+    }
+
+    @Test(expected = Exception.class)
+    public void testNegativeRegistersAreNotSupported() throws Exception {
+        compile("STORE -2");
     }
 
     @Test

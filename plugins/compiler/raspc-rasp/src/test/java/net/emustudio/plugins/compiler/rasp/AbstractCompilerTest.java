@@ -85,13 +85,14 @@ public abstract class AbstractCompilerTest {
     }
 
     protected void assertProgram(Integer... program) {
+        int memStart = 20;
         for (int i = 0; i < program.length; i++) {
             assertEquals(
-                    String.format("%d. expected=%s, but was=%s", i, program[i], memoryStub.read(i)),
-                    program[i], memoryStub.read(i)
+                    String.format("%d. expected=%s, but was=%s", i, program[i], memoryStub.read(memStart + i)),
+                    program[i], memoryStub.read(memStart + i)
             );
         }
-        for (int i = program.length; i < memoryStub.getSize(); i++) {
+        for (int i = program.length + memStart; i < memoryStub.getSize(); i++) {
             assertNull(
                     String.format("%d. expected=null, but was=%s", i, memoryStub.read(i)),
                     memoryStub.read(i)

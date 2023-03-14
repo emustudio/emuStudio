@@ -28,6 +28,14 @@ import java.io.*;
 import java.util.*;
 
 public class Program {
+    private final static Set<RamInstruction.Opcode> nonNegative = Set.of(
+            RamInstruction.Opcode.READ, RamInstruction.Opcode.WRITE,
+            RamInstruction.Opcode.STORE, RamInstruction.Opcode.LOAD, RamInstruction.Opcode.ADD,
+            RamInstruction.Opcode.SUB, RamInstruction.Opcode.MUL, RamInstruction.Opcode.DIV);
+    private final static Set<RamInstruction.Direction> directions = Set.of(
+            RamInstruction.Direction.DIRECT, RamInstruction.Direction.INDIRECT);
+
+
     private final List<Instruction> instructions = new ArrayList<>();
     private final Map<String, Label> labels = new HashMap<>();
     private final List<Value> inputs = new ArrayList<>();
@@ -56,6 +64,20 @@ public class Program {
                     .map(RamValue::getStringValue)
                     .flatMap(this::getLabel)
                     .ifPresent(instruction::setLabel);
+        }
+    }
+
+    public void check() {
+        for (Instruction instruction : instructions) {
+            if (nonNegative.contains(instruction.getOpcode()) && directions.contains(instruction.getDirection())) {
+                Optional<RamValue> error = instruction
+                        .getOperand()
+                        .filter(op -> op.getType() == RamValue.Type.NUMBER)
+                        .filter(op -> op.getNumberValue() < 0);
+                if (error.isPresent()) {
+                    throw new CompileException(instruction.line, instruction.column, "Register number cannot be negative");
+                }
+            }
         }
     }
 

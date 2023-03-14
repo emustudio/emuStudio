@@ -25,7 +25,10 @@ import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import java.io.*;
 import java.util.*;
 
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.READ;
+
 public class Program {
+    private final static Set<Integer> nonNegative = Set.of(READ, 3, 5, 6, 8, 10, 12, 14);
     private final List<Instruction> instructions = new ArrayList<>();
     private final Map<String, Label> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
@@ -50,6 +53,7 @@ public class Program {
         Map<Integer, Integer> compiled = new HashMap<>();
 
         for (Instruction instruction : instructions) {
+            check(instruction);
             compiled.put(instruction.address, instruction.opcode);
             instruction.operand.ifPresent(o -> {
                 compiled.put(instruction.address + 1, o);
@@ -86,5 +90,16 @@ public class Program {
     private Optional<Label> getLabel(String name) {
         String labelNorm = ParsingUtils.normalizeId(name);
         return Optional.ofNullable(labels.get(labelNorm));
+    }
+
+    private void check(Instruction instruction) {
+        if (nonNegative.contains(instruction.opcode)) {
+            Optional<Integer> error = instruction
+                    .operand
+                    .filter(op -> op < 0);
+            if (error.isPresent()) {
+                throw new CompileException(instruction.line, instruction.column, "Register number cannot be negative");
+            }
+        }
     }
 }
