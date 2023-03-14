@@ -52,7 +52,8 @@ public class RamTableModel extends AbstractTableModel {
                 return memory.getLabel(rowIndex).map(RamLabel::getLabel).orElse("");
             case 2:
                 RamInstruction i = memory.read(rowIndex);
-                return i.getOpcode() + " " + i.getOperand().map(RamValue::getStringRepresentation).orElse("");
+                String operand = i.getOperand().map(RamValue::getStringRepresentation).orElse("").toUpperCase();
+                return i.getOpcode().toString().toLowerCase() + " " + operand;
         }
         return "";
     }
