@@ -99,6 +99,7 @@ public class CompilerRAM extends AbstractCompiler {
                 new ProgramParser(program).visit(parser.rStart());
 
                 program.assignLabels();
+                program.check();
                 program.saveToFile(outputFileName);
 
                 notifyInfo(String.format("Compile was successful.\n\tOutput: %s", outputFileName));

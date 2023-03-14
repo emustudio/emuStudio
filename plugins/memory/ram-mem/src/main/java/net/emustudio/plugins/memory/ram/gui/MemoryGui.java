@@ -30,6 +30,7 @@ import javax.swing.border.TitledBorder;
 import java.awt.event.KeyEvent;
 
 import static net.emustudio.plugins.memory.ram.gui.Constants.DIALOG_PLAIN;
+import static net.emustudio.plugins.memory.ram.gui.Constants.MONOSPACED_PLAIN;
 
 public class MemoryGui extends JDialog {
     private final JTable table;
@@ -43,6 +44,7 @@ public class MemoryGui extends JDialog {
 
         RamTableModel tableModel = new RamTableModel(memory);
         this.table = new JTable(tableModel);
+        this.table.setFont(MONOSPACED_PLAIN);
 
         this.loadImageAction = new LoadImageAction(dialogs, memory, () -> {
             table.revalidate();

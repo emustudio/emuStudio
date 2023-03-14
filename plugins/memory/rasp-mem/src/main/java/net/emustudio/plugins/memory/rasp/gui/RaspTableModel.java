@@ -20,14 +20,10 @@
 
 package net.emustudio.plugins.memory.rasp.gui;
 
-import net.emustudio.plugins.memory.rasp.api.RaspLabel;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import javax.swing.table.AbstractTableModel;
-
 import java.util.Objects;
-
-import static net.emustudio.plugins.memory.rasp.gui.Disassembler.*;
 
 /**
  * MODEL for the table with memory content.
@@ -68,7 +64,7 @@ public class RaspTableModel extends AbstractTableModel {
      */
     @Override
     public int getColumnCount() {
-        return 3;
+        return 2;
     }
 
     /**
@@ -92,35 +88,6 @@ public class RaspTableModel extends AbstractTableModel {
         return String.valueOf(item);
     }
 
-
-    /**
-     * Returns string contained in the mnemonic column (column No. 2)
-     *
-     * @param rowIndex the index of the row in the mnemonic column
-     * @return string contained in the mnemonic column
-     */
-    private String getMnemonicColumnValue(int rowIndex) {
-        int item = memory.read(rowIndex);
-        if (Disassembler.isInstruction(item)) {
-            return Disassembler.disassembleMnemo(item).orElse("unknown");
-        }
-        if (rowIndex != 0) {
-            int previousItem = memory.read(rowIndex - 1);
-            if (Disassembler.isInstruction(previousItem)) {
-                switch (previousItem) {
-                    case JMP:
-                    case JZ:
-                    case JGTZ:
-                        return memory
-                                .getLabel(item)
-                                .map(RaspLabel::getLabel)
-                                .orElse(String.valueOf(item));
-                }
-            }
-        }
-        return String.valueOf(item);
-    }
-
     /**
      * Returns the string representation of cell in the memory table cell at given position.
      *
@@ -135,9 +102,8 @@ public class RaspTableModel extends AbstractTableModel {
                 return getAddressColumnText(rowIndex);
             case 1:
                 return getNumericValueColumnText(rowIndex);
-            default:
-                return getMnemonicColumnValue(rowIndex);
         }
+        return "";
     }
 
     @Override
@@ -147,8 +113,6 @@ public class RaspTableModel extends AbstractTableModel {
                 return "Address";
             case 1:
                 return "Numeric Value";
-            case 2:
-                return "Mnemonic";
             default:
                 return null;
         }

@@ -61,11 +61,11 @@ OP_INDIRECT: '*';
 
 PREP_INPUT: '<' I N P U T '>';
 
-LIT_HEXNUMBER_1: '0' X [0-9a-fA-F]+;
-LIT_NUMBER: [0-9]+ D?;
-LIT_HEXNUMBER_2: [0-9a-fA-F]+ H;
-LIT_OCTNUMBER: [0-7]+ [oOqQ];
-LIT_BINNUMBER: [01]+ B;
+LIT_HEXNUMBER_1: [+-]?'0' X [0-9a-fA-F]+;
+LIT_NUMBER: [+-]?[0-9]+ D?;
+LIT_HEXNUMBER_2: [+-]?[0-9a-fA-F]+ H;
+LIT_OCTNUMBER: [+-]?[0-7]+ [oOqQ];
+LIT_BINNUMBER: [+-]?[01]+ B;
 LIT_STRING_1: '\'' ~[']* '\'';
 LIT_STRING_2: '"' ~["]* '"';
 
