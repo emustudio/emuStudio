@@ -41,16 +41,20 @@ public class KeyboardFromFile extends Keyboard {
 
     @Override
     public void process() {
-        try (FileInputStream in = new FileInputStream(inputFile.toFile())) {
-            int key;
-            while ((key = in.read()) != -1) {
-                notifyOnKey((byte) key);
-                if (delayNanos > 0) {
-                    SleepUtils.preciseSleepNanos(delayNanos);
+        if (!inputFile.toFile().exists()) {
+            LOGGER.warn("Input file {} does not exist", inputFile);
+        } else {
+            try (FileInputStream in = new FileInputStream(inputFile.toFile())) {
+                int key;
+                while ((key = in.read()) != -1) {
+                    notifyOnKey((byte) key);
+                    if (delayNanos > 0) {
+                        SleepUtils.preciseSleepNanos(delayNanos);
+                    }
                 }
+            } catch (Exception e) {
+                LOGGER.error("Could not process input file", e);
             }
-        } catch (Exception e) {
-            LOGGER.error("Could not process input file", e);
         }
     }
 }
