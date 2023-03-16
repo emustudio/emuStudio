@@ -27,7 +27,6 @@ type = "CPU"
 [[DEVICE]]
 schemaPoint = "320,60"
 path = "vt100-terminal.jar"
-settings = { }
 name = "VT100-terminal"
 id = "1d858668-d63d-4127-b881-226174a2b368"
 type = "DEVICE"
@@ -36,6 +35,8 @@ type = "DEVICE"
 outputFileName = "vt100-terminal.out"
 inputFileName = "vt100-terminal.in"
 inputReadDelayMillis = 0
+columns = 130
+rows = 50
 
 [[connections]]
 bidirectional = true
