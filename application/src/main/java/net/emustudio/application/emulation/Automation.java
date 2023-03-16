@@ -75,6 +75,58 @@ public class Automation implements Runnable {
         }
     }
 
+    /**
+     * Executes automatic emulation.
+     * <p/>
+     * It assumes that the virtual computer is loaded.
+     * <p/>
+     * All output is saved into output file.
+     */
+    @Override
+    public void run() {
+        if (progressGUI != null) {
+            progressGUI.setVisible(true);
+        }
+
+        LOGGER.info("Starting emulation automation...");
+        LOGGER.info("Emulating computer: " + computer.getComputerConfig().getName());
+
+        computer.getCompiler().ifPresent(
+                compiler -> LOGGER.info("Compiler: " + compiler.getTitle() + ", version " + compiler.getVersion())
+        );
+        computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: " + cpu.getTitle() + ", version " + cpu.getVersion()));
+        computer.getMemory().ifPresent(memory -> {
+            LOGGER.info("Memory: " + memory.getTitle() + ", version " + memory.getVersion());
+            LOGGER.info("Memory size: {}", memory.getSize());
+        });
+        computer.getDevices().forEach(
+                device -> LOGGER.info("Device: " + device.getTitle() + ", version " + device.getVersion())
+        );
+
+        try {
+            computer.getCompiler().ifPresent(compiler -> {
+                Unchecked.run(() -> autoCompile(compiler));
+            });
+
+            computer.getCPU().ifPresent(cpu -> {
+                setProgress("Resetting CPU...", false);
+                programLocation.ifPresentOrElse(l -> {
+                    setProgress("Program start location: " + String.format("%04Xh", l), false);
+                    cpu.reset(l);
+                }, cpu::reset);
+                autoEmulate(cpu);
+            });
+        } catch (Exception e) {
+            LOGGER.error("Error during automation", e);
+            dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
+        } finally {
+            if (progressGUI != null) {
+                progressGUI.dispose();
+                progressGUI = null;
+            }
+        }
+    }
+
     private void setProgress(String msg, boolean stopEnabled) {
         LOGGER.info(msg);
         if (progressGUI != null) {
@@ -187,57 +239,5 @@ public class Automation implements Runnable {
         LOGGER.info("Instruction location = " + String.format("%04Xh", cpu.getInstructionLocation()));
 
         setProgress("Emulation completed", false);
-    }
-
-
-    /**
-     * Executes automatic emulation.
-     * <p/>
-     * It assumes that the virtual computer is loaded.
-     * <p/>
-     * All output is saved into output file.
-     */
-    @Override
-    public void run() {
-        if (progressGUI != null) {
-            progressGUI.setVisible(true);
-        }
-
-        LOGGER.info("Starting emulation automation...");
-
-        computer.getCompiler().ifPresent(
-                compiler -> LOGGER.info("Compiler: " + compiler.getTitle() + ", version " + compiler.getVersion())
-        );
-        computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: " + cpu.getTitle() + ", version " + cpu.getVersion()));
-        computer.getMemory().ifPresent(memory -> {
-            LOGGER.info("Memory: " + memory.getTitle() + ", version " + memory.getVersion());
-            LOGGER.info("Memory size: {}", memory.getSize());
-        });
-        computer.getDevices().forEach(
-                device -> LOGGER.info("Device: " + device.getTitle() + ", version " + device.getVersion())
-        );
-
-        try {
-            computer.getCompiler().ifPresent(compiler -> {
-                Unchecked.run(() -> autoCompile(compiler));
-            });
-
-            computer.getCPU().ifPresent(cpu -> {
-                setProgress("Resetting CPU...", false);
-                programLocation.ifPresentOrElse(l -> {
-                    setProgress("Program start location: " + String.format("%04Xh", l), false);
-                    cpu.reset(l);
-                }, cpu::reset);
-                autoEmulate(cpu);
-            });
-        } catch (Exception e) {
-            LOGGER.error("Error during automation", e);
-            dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
-        } finally {
-            if (progressGUI != null) {
-                progressGUI.dispose();
-                progressGUI = null;
-            }
-        }
     }
 }

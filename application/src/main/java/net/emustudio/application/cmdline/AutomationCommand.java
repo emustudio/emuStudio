@@ -100,7 +100,10 @@ public class AutomationCommand implements Runnable {
                 splash.ifPresent(Window::dispose);
                 automation.run();
             }
-            System.exit(0);
+            if (!gui) {
+                // Let GUI live!
+                System.exit(0);
+            }
         } catch (Exception e) {
             LOGGER.error("Unexpected error during automation", e);
             dialogs.showError("Unexpected error during automation. Please see log file for details.");
