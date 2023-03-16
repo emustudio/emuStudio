@@ -25,10 +25,7 @@ import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,6 +58,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     @GuardedBy("rwl")
     private int position = 0;
 
+    @FunctionalInterface
     public interface TapeListener {
 
         void tapeChanged();
@@ -305,35 +303,32 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
      * Set if changed symbols should be logged in a file.
      * <p>
      * The log file name will be derived from a tape title: [tape-title].out
-     *
-     * @param logSymbols whether to log symbols in a file
      */
-    void setLogSymbols(boolean logSymbols) {
+    public void startLoggingSymbols() {
         // should be called in a synchronized context
         String tmpTitle = title.get();
-
-        if (!logSymbols) {
-            Writer w = symbolWriter.getAndSet(null);
-            if (w != null) {
-                LOGGER.info("Stopping logging symbols changes");
-                try {
-                    w.close();
-                } catch (IOException e) {
-                    LOGGER.error("Could not close the symbol log", e);
-                }
+        String fileName = createValidFileName(tmpTitle.trim()) + ".out";
+        File file = new File(fileName);
+        LOGGER.info("Starting logging symbols changes to a file:" + fileName);
+        try {
+            Writer w = new FileWriter(file);
+            Writer old = symbolWriter.getAndSet(w);
+            if (old != null) {
+                old.close();
             }
-        } else {
-            String fileName = createValidFileName(tmpTitle.trim()) + ".out";
-            File file = new File(fileName + ".out");
-            LOGGER.info("Starting logging symbols changes to a file:" + fileName);
+        } catch (IOException e) {
+            LOGGER.error("Could not create the symbol log file", e);
+        }
+    }
+
+    public void stopLoggingSymbols() {
+        Writer w = symbolWriter.getAndSet(null);
+        if (w != null) {
+            LOGGER.info("Stopping logging symbols changes");
             try {
-                Writer w = new FileWriter(file);
-                Writer old = symbolWriter.getAndSet(w);
-                if (old != null) {
-                    old.close();
-                }
+                w.close();
             } catch (IOException e) {
-                LOGGER.error("Could not create the symbol log file", e);
+                LOGGER.error("Could not close the symbol log", e);
             }
         }
     }
