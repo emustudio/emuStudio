@@ -23,6 +23,7 @@ import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
+import static net.emustudio.plugins.memory.ssem.gui.Constants.COLUMN_WIDTH;
 import static net.emustudio.plugins.memory.ssem.gui.Constants.DEFAULT_FONT;
 
 public class MemoryTable extends JTable {
@@ -40,7 +41,7 @@ public class MemoryTable extends JTable {
         MemoryCellEditor ed = new MemoryCellEditor();
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             TableColumn col = super.getColumnModel().getColumn(i);
-            col.setPreferredWidth(3 * 18);
+            col.setPreferredWidth(COLUMN_WIDTH[i]);
             col.setCellEditor(ed);
         }
 

@@ -26,6 +26,12 @@ import java.awt.*;
 import static net.emustudio.plugins.memory.ssem.gui.Constants.*;
 
 class MemoryCellRenderer extends JLabel implements TableCellRenderer {
+    private final static Color COLOR_FORE = Color.BLACK;
+    private final static Color COLOR_BACK_LINE = new Color(0xF3, 0xE3, 0xEC);
+    private final static Color COLOR_FORE_UNIMPORTANT = Color.DARK_GRAY;
+    private final static Color COLOR_CELL_BACK = Color.WHITE;
+    private final static Color COLOR_CELL_BACK_MOD2 = new Color((int) (0xFF * 0.8), (int) (0xFF * 0.8), (int) (0xFF * 0.8));
+
     private final Color selectedBackground;
     private final Color selectedForeground;
 

@@ -21,18 +21,10 @@ package net.emustudio.plugins.memory.ssem.gui;
 import java.awt.*;
 
 public final class Constants {
-    public final static Color COLOR_CELL_BACK = Color.WHITE;
-    public final static Color COLOR_CELL_BACK_MOD2 = new Color((int) (0xFF * 0.8), (int) (0xFF * 0.8), (int) (0xFF * 0.8));
-    public final static Color COLOR_FORE = Color.BLACK;
-    public final static Color COLOR_FORE_UNIMPORTANT = Color.DARK_GRAY;
-
-    public final static Color COLOR_BACK_LINE = new Color(0xF3, 0xE3, 0xEC);
-
     public final static Font DEFAULT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     public final static Font BOLD_FONT = new Font(Font.MONOSPACED, Font.BOLD, 12);
 
     public final static int CHAR_WIDTH = 17;
-    public final static int CHAR_HEIGHT = 5;
     public final static int TWO_CHARS = 2 * CHAR_WIDTH;
 
     public final static int[] COLUMN_WIDTH = new int[]{
