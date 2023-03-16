@@ -22,7 +22,7 @@ import java.awt.*;
 
 public final class Constants {
     public final static Color COLOR_CELL_BACK = Color.WHITE;
-    public final static Color COLOR_CELL_BACK_MOD2 = new Color((int) (0xFF * 0.9), (int) (0xFF * 0.9), (int) (0xFF * 0.9));
+    public final static Color COLOR_CELL_BACK_MOD2 = new Color((int) (0xFF * 0.8), (int) (0xFF * 0.8), (int) (0xFF * 0.8));
     public final static Color COLOR_FORE = Color.BLACK;
     public final static Color COLOR_FORE_UNIMPORTANT = Color.DARK_GRAY;
 

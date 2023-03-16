@@ -19,7 +19,7 @@
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.plugins.memory.ssem.gui.MemoryTableModel;
+import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

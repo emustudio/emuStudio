@@ -23,7 +23,7 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.gui.SettingsDialog;
-import net.emustudio.plugins.memory.bytemem.gui.model.TableMemory;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -35,11 +35,11 @@ public class SettingsAction extends AbstractAction {
     private final JDialog parent;
     private final MemoryContextImpl context;
     private final MemoryImpl memory;
-    private final TableMemory table;
+    private final MemoryTable table;
     private final PluginSettings settings;
 
     public SettingsAction(Dialogs dialogs, JDialog parent, MemoryImpl memory, MemoryContextImpl context,
-                          TableMemory table, PluginSettings settings) {
+                          MemoryTable table, PluginSettings settings) {
         super("Erase memory", new ImageIcon(SettingsAction.class.getResource(ICON_FILE)));
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);

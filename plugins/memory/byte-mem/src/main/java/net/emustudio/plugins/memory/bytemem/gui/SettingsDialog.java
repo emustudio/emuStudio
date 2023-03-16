@@ -27,7 +27,7 @@ import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.RangeTree;
 import net.emustudio.plugins.memory.bytemem.gui.model.FileImagesModel;
 import net.emustudio.plugins.memory.bytemem.gui.model.ROMmodel;
-import net.emustudio.plugins.memory.bytemem.gui.model.TableMemory;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,7 @@ public class SettingsDialog extends JDialog {
 
     private final MemoryContextImpl context;
     private final MemoryImpl memory;
-    private final TableMemory tblMem;
+    private final MemoryTable tblMem;
     private final FileImagesModel imagesModel;
     private final ROMmodel romModel;
     private final Dialogs dialogs;
@@ -54,7 +54,7 @@ public class SettingsDialog extends JDialog {
     private JTextField txtBanksCount;
     private JTextField txtCommonBoundary;
 
-    public SettingsDialog(JDialog parent, MemoryImpl memory, MemoryContextImpl context, TableMemory tblMem,
+    public SettingsDialog(JDialog parent, MemoryImpl memory, MemoryContextImpl context, MemoryTable tblMem,
                           PluginSettings settings, Dialogs dialogs) {
         super(parent, true);
 

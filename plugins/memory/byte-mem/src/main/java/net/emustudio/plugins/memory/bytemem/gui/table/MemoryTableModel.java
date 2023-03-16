@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.bytemem.gui.model;
+package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import org.slf4j.Logger;

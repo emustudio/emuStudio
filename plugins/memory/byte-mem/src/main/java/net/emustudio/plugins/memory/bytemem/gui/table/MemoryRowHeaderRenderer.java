@@ -16,33 +16,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.ssem.gui;
+package net.emustudio.plugins.memory.bytemem.gui.table;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 
-class RowHeaderRenderer extends JLabel implements ListCellRenderer<String> {
-    private final static int NO_COLUMN_WIDTH = Constants.CHAR_WIDTH * 4;
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.MEMORY_CELLS_FONT;
 
-    private int height;
+class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer<String> {
 
-    RowHeaderRenderer() {
-        super.setBorder(UIManager.getBorder("Button.border"));
-        super.setHorizontalAlignment(CENTER);
-        super.setFont(Constants.DEFAULT_FONT);
-    }
-
-    public void setup(JTable table) {
-        JTableHeader header = table.getTableHeader();
-        this.height = header.getPreferredSize().height + Constants.CHAR_HEIGHT;
+    MemoryRowHeaderRenderer(JTableHeader header) {
+        setBorder(header.getBorder());
+        setHorizontalAlignment(CENTER);
         setForeground(header.getForeground());
         setBackground(header.getBackground());
+        setFont(MEMORY_CELLS_FONT);
+        setOpaque(true);
+        setDoubleBuffered(true);
+        this.setPreferredSize(new Dimension(4 * 18, header.getPreferredSize().height + 3));
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, String value, int index, boolean isSelected, boolean cellHasFocus) {
-        setPreferredSize(new Dimension(NO_COLUMN_WIDTH, height));
+    public Component getListCellRendererComponent(JList list, String value,
+                                                  int index, boolean isSelected, boolean cellHasFocus) {
         setText((value == null) ? "" : value);
         return this;
     }

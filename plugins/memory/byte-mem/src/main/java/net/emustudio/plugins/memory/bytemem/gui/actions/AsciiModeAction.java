@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

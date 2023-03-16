@@ -24,8 +24,8 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.gui.actions.*;
-import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
-import net.emustudio.plugins.memory.bytemem.gui.model.TableMemory;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,19 +38,19 @@ import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString
 
 public class MemoryGui extends JDialog {
 
-    private final TableMemory table;
+    private final MemoryTable table;
     private final MemoryTableModel tableModel;
-    private final JLabel lblBanksCount = new JLabel();
-    private final JLabel lblPageCount = new JLabel();
+    private final JLabel lblBanksCount = new JLabel("0");
+    private final JLabel lblPageCount = new JLabel("0");
     private final JScrollPane paneMemory = new JScrollPane();
     private final JSpinner spnBank = new JSpinner();
     private final JSpinner spnPage = new JSpinner();
-    private final JTextField txtAddress = new JTextField();
+    private final JTextField txtAddress = new JTextField("0000");
     private final JTextField txtChar = new JTextField();
-    private final JTextField txtValueBin = new JTextField();
-    private final JTextField txtValueDec = new JTextField();
-    private final JTextField txtValueHex = new JTextField();
-    private final JTextField txtValueOct = new JTextField();
+    private final JTextField txtValueBin = new JTextField("0000 0000");
+    private final JTextField txtValueDec = new JTextField("00");
+    private final JTextField txtValueHex = new JTextField("00");
+    private final JTextField txtValueOct = new JTextField("000");
 
     private final LoadImageAction loadImageAction;
     private final DumpMemoryAction dumpMemoryAction;
@@ -70,7 +70,7 @@ public class MemoryGui extends JDialog {
         Objects.requireNonNull(dialogs);
 
         this.tableModel = new MemoryTableModel(context);
-        this.table = new TableMemory(tableModel, paneMemory);
+        this.table = new MemoryTable(tableModel, paneMemory);
 
         this.loadImageAction = new LoadImageAction(dialogs, context, this, () -> {
             table.revalidate();
@@ -152,19 +152,19 @@ public class MemoryGui extends JDialog {
         JSplitPane splitPane = new JSplitPane();
         JPanel jPanel2 = new JPanel();
         JPanel jPanel3 = new JPanel();
-        JLabel lblPageNumber = new JLabel();
-        JLabel lblPageFrom = new JLabel();
-        JLabel lblMemoryBank = new JLabel();
-        JLabel lblMemoryBankFrom = new JLabel();
+        JLabel lblPageNumber = new JLabel("Page number:");
+        JLabel lblPageFrom = new JLabel("/");
+        JLabel lblMemoryBank = new JLabel("Memory bank:");
+        JLabel lblMemoryBankFrom = new JLabel("/");
         JPanel jPanel4 = new JPanel();
-        JLabel lblAddress = new JLabel();
-        JLabel lblSymbol = new JLabel();
+        JLabel lblAddress = new JLabel("Address:");
+        JLabel lblSymbol = new JLabel("Symbol:");
         JSeparator jSeparator4 = new JSeparator();
-        JLabel lblValue = new JLabel();
-        JLabel lblValueDec = new JLabel();
-        JLabel lblValueHex = new JLabel();
-        JLabel lblValueOct = new JLabel();
-        JLabel lblValueBin = new JLabel();
+        JLabel lblValue = new JLabel("Value:");
+        JLabel lblValueDec = new JLabel("(dec)");
+        JLabel lblValueHex = new JLabel("(hex)");
+        JLabel lblValueOct = new JLabel("(oct)");
+        JLabel lblValueBin = new JLabel("(bin)");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -192,16 +192,7 @@ public class MemoryGui extends JDialog {
 
         jPanel3.setBorder(BorderFactory.createTitledBorder("Memory control"));
 
-        lblPageNumber.setText("Page number:");
-        lblPageFrom.setText("/");
-
         lblPageCount.setFont(lblPageCount.getFont().deriveFont(lblPageCount.getFont().getStyle() | java.awt.Font.BOLD));
-        lblPageCount.setText("0");
-
-        lblMemoryBank.setText("Memory bank:");
-        lblMemoryBankFrom.setText("/");
-
-        lblBanksCount.setText("0");
 
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -244,46 +235,22 @@ public class MemoryGui extends JDialog {
 
         jPanel4.setBorder(BorderFactory.createTitledBorder("Selected value"));
 
-        lblAddress.setText("Address:");
-
         txtAddress.setEditable(false);
         txtAddress.setHorizontalAlignment(JTextField.RIGHT);
-        txtAddress.setText("0000");
-
-        lblSymbol.setText("Symbol:");
 
         txtChar.setEditable(false);
         txtChar.setHorizontalAlignment(JTextField.RIGHT);
 
         jSeparator4.setOrientation(SwingConstants.VERTICAL);
 
-        lblValue.setText("Value:");
-
         txtValueDec.setEditable(false);
         txtValueDec.setHorizontalAlignment(JTextField.RIGHT);
-        txtValueDec.setText("00");
-        txtValueDec.setToolTipText("");
-
-        lblValueDec.setText("(dec)");
-
         txtValueHex.setEditable(false);
         txtValueHex.setHorizontalAlignment(JTextField.RIGHT);
-        txtValueHex.setText("00");
-
-        lblValueHex.setText("(hex)");
-
         txtValueOct.setEditable(false);
         txtValueOct.setHorizontalAlignment(JTextField.RIGHT);
-        txtValueOct.setText("000");
-
-        lblValueOct.setText("(oct)");
-
         txtValueBin.setEditable(false);
         txtValueBin.setHorizontalAlignment(JTextField.RIGHT);
-        txtValueBin.setText("0000 0000");
-        txtValueBin.setToolTipText("");
-
-        lblValueBin.setText("(bin)");
 
         GroupLayout jPanel4Layout = new GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);

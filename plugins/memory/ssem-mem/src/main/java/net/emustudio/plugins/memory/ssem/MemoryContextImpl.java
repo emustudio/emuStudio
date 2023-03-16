@@ -19,11 +19,9 @@
 package net.emustudio.plugins.memory.ssem;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.jcip.annotations.ThreadSafe;
 
 import java.util.Arrays;
 
-@ThreadSafe
 public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
     public static final int NUMBER_OF_CELLS = 32 * 4;
 

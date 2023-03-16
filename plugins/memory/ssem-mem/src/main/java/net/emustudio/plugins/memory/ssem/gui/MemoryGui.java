@@ -25,6 +25,8 @@ import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 import net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.EraseMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.LoadImageAction;
+import net.emustudio.plugins.memory.ssem.gui.table.MemoryTable;
+import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -53,9 +55,7 @@ public class MemoryGui extends JDialog {
         initComponents();
         setLocationRelativeTo(parent);
 
-        table.setup();
         scrollPane.setViewportView(table);
-
         memory.addMemoryListener(new MemoryListenerImpl());
     }
 

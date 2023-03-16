@@ -16,52 +16,54 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.ssem.gui;
+package net.emustudio.plugins.memory.ssem.gui.table;
 
 import javax.swing.*;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
 import static net.emustudio.plugins.memory.ssem.gui.Constants.*;
 
-class CellRenderer extends JLabel implements TableCellRenderer {
-    private final JList<String> rowHeader;
-    private final RowHeaderRenderer rowHeaderRenderer;
+class MemoryCellRenderer extends JLabel implements TableCellRenderer {
+    private final Color selectedBackground;
+    private final Color selectedForeground;
 
-    private Color selectionForeground;
-    private Color selectionBackground;
+    MemoryCellRenderer(JTableHeader header, MemoryTableModel tableModel, JScrollPane paneMemory, int rowHeight) {
+        setOpaque(true);
+        setDoubleBuffered(true);
+        setBorder(BorderFactory.createEmptyBorder());
+        setFont(DEFAULT_FONT);
+        setHorizontalAlignment(CENTER);
 
-    CellRenderer(final MemoryTableModel model) {
-        this.rowHeaderRenderer = new RowHeaderRenderer();
+        this.selectedBackground = UIManager.getColor("Table.selectionBackground");
+        this.selectedForeground = UIManager.getColor("Table.selectionForeground");
 
-        String[] rowNames = new String[model.getColumnCount()];
+        String[] rowNames = new String[tableModel.getColumnCount()];
         for (int i = 0; i < rowNames.length; i++) {
             rowNames[i] = String.format("%02X / %02d", i, i);
         }
-        rowHeader = new JList<>(rowNames);
-        rowHeader.setCellRenderer(rowHeaderRenderer);
 
-        super.setFont(DEFAULT_FONT);
-        super.setHorizontalAlignment(CENTER);
-    }
+        JList<String> rowHeader = new JList<>(rowNames);
 
-    public void setup(JTable table) {
-        rowHeader.setFixedCellHeight(table.getRowHeight() + CHAR_HEIGHT);
-        rowHeaderRenderer.setup(table);
+        FontMetrics fm = rowHeader.getFontMetrics(rowHeader.getFont());
+        int char_width = 17;
+        if (fm != null) {
+            char_width = fm.stringWidth("FF");
+        }
 
-        selectionBackground = table.getSelectionBackground();
-        selectionForeground = table.getSelectionForeground();
-    }
+        rowHeader.setFixedCellWidth(char_width * 4);
+        rowHeader.setFixedCellHeight(rowHeight);
+        rowHeader.setCellRenderer(new MemoryRowHeaderRenderer(header));
 
-    public JList<String> getRowHeader() {
-        return rowHeader;
+        paneMemory.setRowHeaderView(rowHeader);
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         if (isSelected) {
-            setBackground(selectionBackground);
-            setForeground(selectionForeground);
+            setBackground(selectedBackground);
+            setForeground(selectedForeground);
         } else {
             Color back = ((row % 2) == 0) ? COLOR_CELL_BACK : COLOR_CELL_BACK_MOD2;
             Color front = COLOR_FORE_UNIMPORTANT;
