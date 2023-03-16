@@ -309,7 +309,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         String tmpTitle = title.get();
         String fileName = createValidFileName(tmpTitle.trim()) + ".out";
         File file = new File(fileName);
-        LOGGER.info("Starting logging symbols changes to a file:" + fileName);
+        LOGGER.info("Starting logging symbols changes to a file: " + fileName);
         try {
             Writer w = new FileWriter(file);
             Writer old = symbolWriter.getAndSet(w);
