@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.ssem.gui;
+package net.emustudio.plugins.memory.ssem.gui.table;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
@@ -28,16 +28,16 @@ import javax.swing.table.AbstractTableModel;
 import java.util.Objects;
 
 public class MemoryTableModel extends AbstractTableModel {
-    final static int COLUMN_HEX_VALUE = 32;
-    final static int COLUMN_DEC_VALUE = 33;
-    final static int COLUMN_RAW_VALUE = 34;
+    public final static int COLUMN_HEX_VALUE = 32;
+    public final static int COLUMN_DEC_VALUE = 33;
+    public final static int COLUMN_RAW_VALUE = 34;
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
     private final static int ROW_COUNT = 32;
     private final static int COLUMN_COUNT = 3 + 32;
 
     private final MemoryContext<Byte> memory;
 
-    MemoryTableModel(MemoryContext<Byte> memory) {
+    public MemoryTableModel(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
     }
 
@@ -195,7 +195,7 @@ public class MemoryTableModel extends AbstractTableModel {
         return columnIndex >= 0 && columnIndex <= 34;
     }
 
-    void dataChangedAt(int address) {
+    public void dataChangedAt(int address) {
         int row = address / 4;
         for (int i = 0; i < COLUMN_COUNT; i++) {
             fireTableCellUpdated(row, i);

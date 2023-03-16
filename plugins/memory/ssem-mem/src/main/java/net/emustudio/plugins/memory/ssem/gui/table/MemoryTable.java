@@ -16,48 +16,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.ssem.gui;
+package net.emustudio.plugins.memory.ssem.gui.table;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.Objects;
 
-import static net.emustudio.plugins.memory.ssem.gui.Constants.*;
+import static net.emustudio.plugins.memory.ssem.gui.Constants.COLUMN_WIDTH;
+import static net.emustudio.plugins.memory.ssem.gui.Constants.DEFAULT_FONT;
 
-class MemoryTable extends JTable {
-    private final MemoryTableModel model;
-    private final CellRenderer cellRenderer;
-    private final JScrollPane scrollPane;
+public class MemoryTable extends JTable {
 
-    MemoryTable(MemoryTableModel model, JScrollPane scrollPane) {
-        this.scrollPane = Objects.requireNonNull(scrollPane);
-        this.model = Objects.requireNonNull(model);
-        this.cellRenderer = new CellRenderer(model);
+    public MemoryTable(MemoryTableModel tableModel, JScrollPane pm) {
+        setModel(tableModel);
+        setFont(DEFAULT_FONT);
+        setCellSelectionEnabled(true);
+        setFocusCycleRoot(true);
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        getTableHeader().setFont(DEFAULT_FONT);
+        setDefaultRenderer(Object.class, new MemoryCellRenderer(getTableHeader(), tableModel, pm, getRowHeight()));
+        setOpaque(true);
 
-        super.setModel(this.model);
-        super.setFont(DEFAULT_FONT);
-        super.setCellSelectionEnabled(true);
-        super.setFocusCycleRoot(true);
-        super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        super.getTableHeader().setFont(DEFAULT_FONT);
-    }
-
-    public void setup() {
-        cellRenderer.setup(this);
-        setDefaultRenderer(Object.class, cellRenderer);
-        scrollPane.setRowHeaderView(cellRenderer.getRowHeader());
-
-        net.emustudio.plugins.memory.ssem.gui.CellEditor editor = new CellEditor();
-        editor.setup(this);
-
-        for (int i = 0; i < columnModel.getColumnCount(); i++) {
-            TableColumn col = columnModel.getColumn(i);
+        MemoryCellEditor ed = new MemoryCellEditor();
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            TableColumn col = super.getColumnModel().getColumn(i);
             col.setPreferredWidth(COLUMN_WIDTH[i]);
-            col.setCellEditor(editor);
+            col.setCellEditor(ed);
         }
-        setRowHeight(getRowHeight() + CHAR_HEIGHT);
 
         InputMap im = getInputMap(JTable.WHEN_FOCUSED);
         ActionMap am = getActionMap();
@@ -69,11 +55,10 @@ class MemoryTable extends JTable {
                 int col = getSelectedColumn();
 
                 if (row != -1 && col != -1) {
-                    model.setValueAt("0", row, col);
+                    tableModel.setValueAt("0", row, col);
                 }
             }
         });
-
     }
-
 }
+

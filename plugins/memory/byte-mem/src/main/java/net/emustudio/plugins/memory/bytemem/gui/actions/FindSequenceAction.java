@@ -20,7 +20,7 @@ package net.emustudio.plugins.memory.bytemem.gui.actions;
 
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.memory.bytemem.gui.FindSequenceDialog;
-import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

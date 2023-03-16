@@ -18,8 +18,8 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
-import net.emustudio.plugins.memory.bytemem.gui.model.TableMemory;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTable;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -27,7 +27,7 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 
 public class KeyboardHandler extends KeyAdapter {
-    private final TableMemory tblMemory;
+    private final MemoryTable tblMemory;
     private final SpinnerModel spnPageModel;
     private final MemoryTableModel memoryModel;
     private final MemoryGui memDialog;
@@ -37,7 +37,7 @@ public class KeyboardHandler extends KeyAdapter {
     private boolean up_correct;
     private boolean down_correct;
 
-    public KeyboardHandler(TableMemory tblMemory, SpinnerModel spnPageModel, MemoryGui memDialog) {
+    public KeyboardHandler(MemoryTable tblMemory, SpinnerModel spnPageModel, MemoryGui memDialog) {
         this.tblMemory = Objects.requireNonNull(tblMemory);
         this.spnPageModel = Objects.requireNonNull(spnPageModel);
         this.memDialog = Objects.requireNonNull(memDialog);

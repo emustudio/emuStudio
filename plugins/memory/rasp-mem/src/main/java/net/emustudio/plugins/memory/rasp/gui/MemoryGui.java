@@ -31,6 +31,8 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
+import static net.emustudio.plugins.memory.rasp.gui.Constants.MONOSPACED_PLAIN;
+
 public class MemoryGui extends JDialog {
     private final JTable table;
 
@@ -44,6 +46,7 @@ public class MemoryGui extends JDialog {
         MemoryContextImpl memory = Objects.requireNonNull(context);
         RaspTableModel tableModel = new RaspTableModel(memory);
         this.table = new JTable(tableModel);
+        this.table.setFont(MONOSPACED_PLAIN);
 
         this.loadImageAction = new LoadImageAction(api.getDialogs(), context, () -> {
             table.revalidate();
