@@ -110,6 +110,8 @@ public class CompilerBrainduck extends AbstractCompiler {
             ));
 
             if (memory != null) {
+                memory.clear();
+                notifyInfo("Memory has been cleared.");
                 hex.loadIntoMemory(memory, b -> b);
                 notifyInfo("Compiled file was loaded into operating memory.");
             } else {
