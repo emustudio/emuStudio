@@ -19,6 +19,7 @@
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import org.slf4j.Logger;
@@ -37,13 +38,15 @@ import java.util.Optional;
 public class DumpMemoryAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DumpMemoryAction.class);
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/document-save.png";
+    private final ApplicationApi api;
     private final Dialogs dialogs;
     private final MemoryContext<Byte> context;
 
-    public DumpMemoryAction(Dialogs dialogs, MemoryContext<Byte> context) {
+    public DumpMemoryAction(ApplicationApi api, MemoryContext<Byte> context) {
         super("Dump (save) memory to a file...", new ImageIcon(DumpMemoryAction.class.getResource(ICON_FILE)));
 
-        this.dialogs = Objects.requireNonNull(dialogs);
+        this.api = Objects.requireNonNull(api);
+        this.dialogs = api.getDialogs();
         this.context = Objects.requireNonNull(context);
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
@@ -70,6 +73,8 @@ public class DumpMemoryAction extends AbstractAction {
                     }
                 } else {
                     try (DataOutputStream ds = new DataOutputStream(new FileOutputStream(path.toFile()))) {
+                        int programLocation = api.getProgramLocation() / 4;
+                        ds.writeInt(programLocation);
                         for (int i = 0; i < context.getSize(); i++) {
                             ds.writeByte(context.read(i) & 0xff);
                         }

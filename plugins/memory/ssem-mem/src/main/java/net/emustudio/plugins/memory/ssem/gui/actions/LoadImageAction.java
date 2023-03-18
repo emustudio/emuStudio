@@ -19,6 +19,7 @@
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
@@ -29,21 +30,24 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
 public class LoadImageAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/document-open.png";
+    private final ApplicationApi api;
     private final Dialogs dialogs;
     private final MemoryContext<Byte> context;
     private final Runnable repaint;
     private Path recentOpenPath;
 
-    public LoadImageAction(Dialogs dialogs, MemoryContext<Byte> context, Runnable repaint) {
+    public LoadImageAction(ApplicationApi api, MemoryContext<Byte> context, Runnable repaint) {
         super("Load image file...", new ImageIcon(LoadImageAction.class.getResource(ICON_FILE)));
 
-        this.dialogs = Objects.requireNonNull(dialogs);
+        this.api = Objects.requireNonNull(api);
+        this.dialogs = Objects.requireNonNull(api.getDialogs());
         this.context = Objects.requireNonNull(context);
         this.repaint = Objects.requireNonNull(repaint);
 
@@ -58,12 +62,19 @@ public class LoadImageAction extends AbstractAction {
         Optional<Path> imagePath = dialogs.chooseFile(
                 "Load image file", "Load", currentDirectory,
                 false, new FileExtensionsFilter("Memory image", "bssem"));
+
+        System.out.println(imagePath);
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
             try {
                 try (FileInputStream stream = new FileInputStream(path.toFile())) {
-                    byte[] content = stream.readAllBytes();
-                    context.write(0, NumberUtils.nativeBytesToBytes(content));
+                    ByteBuffer code = ByteBuffer.wrap(stream.readAllBytes());
+                    int startLine = code.getInt();
+                    byte[] data = new byte[code.remaining()];
+                    code.get(data);
+
+                    api.setProgramLocation(startLine * 4);
+                    context.write(0, NumberUtils.nativeBytesToBytes(data));
                 }
                 repaint.run();
             } catch (Exception ex) {

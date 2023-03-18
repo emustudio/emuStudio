@@ -19,26 +19,27 @@
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import org.junit.Test;
 
-import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import java.awt.event.ActionEvent;
-import java.util.Objects;
 
-public class EraseMemoryAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/clear.png";
-    private final AbstractTableModel tableModel;
-    private final MemoryContext<Byte> context;
+import static org.easymock.EasyMock.*;
 
-    public EraseMemoryAction(AbstractTableModel tableModel, MemoryContext<Byte> context) {
-        super("Erase memory", new ImageIcon(EraseMemoryAction.class.getResource(ICON_FILE)));
-        this.tableModel = Objects.requireNonNull(tableModel);
-        this.context = Objects.requireNonNull(context);
-    }
+public class EraseMemoryActionTest {
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        context.clear();
+    @Test
+    public void testEraseMemoryAction() {
+        AbstractTableModel tableModel = createMock(AbstractTableModel.class);
         tableModel.fireTableDataChanged();
+        expectLastCall().once();
+        replay(tableModel);
+
+        MemoryContext<Byte> memory = createMock(MemoryContext.class);
+        memory.clear();
+        expectLastCall().once();
+        replay(memory);
+
+        EraseMemoryAction action = new EraseMemoryAction(tableModel, memory);
+        action.actionPerformed(null);
     }
 }
