@@ -22,7 +22,6 @@ package net.emustudio.plugins.cpu.brainduck;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
@@ -55,6 +54,8 @@ public class EmulatorEngine {
 
     public void reset(int adr) {
         IP = adr; // initialize program counter
+        loopPointers.clear();
+        profiler.reset();
 
         // find closest "free" address which does not contain a program
         try {
