@@ -20,7 +20,7 @@ package net.emustudio.plugins.memory.ssem.gui;
 
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 import net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.EraseMemoryAction;
@@ -39,17 +39,17 @@ public class MemoryGui extends JDialog {
     private final DumpMemoryAction dumpMemoryAction;
     private final EraseMemoryAction eraseMemoryAction;
 
-    public MemoryGui(JFrame parent, MemoryContext<Byte> memory, Dialogs dialogs) {
+    public MemoryGui(JFrame parent, MemoryContext<Byte> memory, ApplicationApi api) {
         super(parent);
 
         this.tableModel = new MemoryTableModel(memory);
         MemoryTable table = new MemoryTable(tableModel, scrollPane);
 
-        this.loadImageAction = new LoadImageAction(dialogs, memory, () -> {
+        this.loadImageAction = new LoadImageAction(api, memory, () -> {
             table.revalidate();
             table.repaint();
         });
-        this.dumpMemoryAction = new DumpMemoryAction(dialogs, memory);
+        this.dumpMemoryAction = new DumpMemoryAction(api, memory);
         this.eraseMemoryAction = new EraseMemoryAction(tableModel, memory);
 
         initComponents();

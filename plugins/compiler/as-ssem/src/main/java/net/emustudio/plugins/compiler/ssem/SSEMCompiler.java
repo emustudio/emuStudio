@@ -42,8 +42,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.*;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
 import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
 
@@ -128,8 +130,8 @@ public class SSEMCompiler extends AbstractCompiler {
 
     private void writeToFile(ByteBuffer code, String outputFileName) throws IOException {
         code.rewind();
-        try (FileChannel channel = new FileOutputStream(outputFileName, false).getChannel()) {
-            channel.write(code);
+        try (FileOutputStream fos = new FileOutputStream(outputFileName, false)) {
+            fos.getChannel().write(code);
         }
     }
 

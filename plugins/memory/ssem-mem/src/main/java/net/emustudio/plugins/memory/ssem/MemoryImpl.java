@@ -89,7 +89,7 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (memoryGUI == null) {
-                memoryGUI = new MemoryGui(parent, memContext, applicationApi.getDialogs());
+                memoryGUI = new MemoryGui(parent, memContext, applicationApi);
             }
             memoryGUI.setVisible(true);
         }
