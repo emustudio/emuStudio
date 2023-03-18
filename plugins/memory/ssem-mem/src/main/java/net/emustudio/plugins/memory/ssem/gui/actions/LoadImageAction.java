@@ -62,6 +62,8 @@ public class LoadImageAction extends AbstractAction {
         Optional<Path> imagePath = dialogs.chooseFile(
                 "Load image file", "Load", currentDirectory,
                 false, new FileExtensionsFilter("Memory image", "bssem"));
+
+        System.out.println(imagePath);
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
             try {
