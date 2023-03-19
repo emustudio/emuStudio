@@ -146,8 +146,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
             Rectangle2D fontRectangle = getFont().getMaxCharBounds(graphics.getFontMetrics().getFontRenderContext());
 
-            int x = displayFont.xCursorOffset
-                    + (int) (cursorPoint.x * (fontRectangle.getWidth() + displayFont.xCursorMultiplierOffset));
+            int x = displayFont.xCursorOffset + (int) (cursorPoint.x * fontRectangle.getWidth());
             int y = displayFont.yCursorOffset + (cursorPoint.y * lineHeight);
 
             graphics.fillRect(x, y, (int) fontRectangle.getWidth(), (int) fontRectangle.getHeight() + displayFont.yCursorExtend);
