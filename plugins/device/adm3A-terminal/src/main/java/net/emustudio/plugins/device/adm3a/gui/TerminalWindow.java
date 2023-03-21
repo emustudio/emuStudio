@@ -19,7 +19,6 @@
 package net.emustudio.plugins.device.adm3a.gui;
 
 import net.emustudio.plugins.device.adm3a.api.Display;
-import net.emustudio.plugins.device.adm3a.interaction.DisplayImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,7 +75,8 @@ public class TerminalWindow extends JDialog {
         setTitle("LSI ADM-3A");
         setResizable(false);
 
-        canvas.setBounds(100, 170, 830, 530);
+        // 14pt original font: 9px 1 glyph
+        canvas.setBounds(150, 170, 725, 530);
 
         lblBack.setLocation(0, 0);
         lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 16));

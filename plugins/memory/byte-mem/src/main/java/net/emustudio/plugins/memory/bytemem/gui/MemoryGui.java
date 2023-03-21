@@ -34,6 +34,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Objects;
 
+import static javax.swing.Action.SHORT_DESCRIPTION;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 
 public class MemoryGui extends JDialog {
@@ -51,12 +52,12 @@ public class MemoryGui extends JDialog {
     private final JTextField txtValueDec = new JTextField("00");
     private final JTextField txtValueHex = new JTextField("00");
     private final JTextField txtValueOct = new JTextField("000");
+    private final JToggleButton btnAsciiMode = new JToggleButton();
 
     private final LoadImageAction loadImageAction;
     private final DumpMemoryAction dumpMemoryAction;
     private final GotoAddressAction gotoAddressAction;
     private final FindSequenceAction findSequenceAction;
-    private final AsciiModeAction asciiModeAction;
     private final EraseMemoryAction eraseMemoryAction;
     private final SettingsAction settingsAction;
 
@@ -80,8 +81,13 @@ public class MemoryGui extends JDialog {
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
         this.findSequenceAction = new FindSequenceAction(dialogs, this::setPageFromAddress, tableModel,
                 this::getCurrentAddress, this);
-        JToggleButton btnAsciiMode = new JToggleButton();
-        this.asciiModeAction = new AsciiModeAction(tableModel, btnAsciiMode);
+
+        AsciiModeAction asciiModeAction = new AsciiModeAction(tableModel, btnAsciiMode);
+        btnAsciiMode.setAction(asciiModeAction);
+        btnAsciiMode.setHideActionText(true);
+        btnAsciiMode.setToolTipText(String.valueOf(asciiModeAction.getValue(SHORT_DESCRIPTION)));
+        btnAsciiMode.setFocusable(false);
+
         this.eraseMemoryAction = new EraseMemoryAction(tableModel, context);
         this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings);
 
@@ -180,7 +186,7 @@ public class MemoryGui extends JDialog {
         toolBar.add(new ToolbarButton(gotoAddressAction));
         toolBar.add(new ToolbarButton(findSequenceAction));
         toolBar.addSeparator();
-        toolBar.add(new ToolbarButton(asciiModeAction));
+        toolBar.add(btnAsciiMode);
         toolBar.addSeparator();
         toolBar.add(new ToolbarButton(eraseMemoryAction));
         toolBar.addSeparator();
