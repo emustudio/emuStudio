@@ -52,7 +52,7 @@ ext.libs = [
 ]
 
 allprojects {
-  version = '0.41-SNAPSHOT'
+  version = '0.41'
 
   configurations {
     compilerLib
