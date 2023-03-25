@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,9 +25,11 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,10 +59,10 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
     @SuppressWarnings("unchecked")
     public final void initialize() throws PluginInitializationException {
         try {
-            MemoryContext<Short> memory = contextPool.getMemoryContext(pluginId, MemoryContext.class);
-            if (memory.getDataType() != Short.class) {
+            MemoryContext<Byte> memory = contextPool.getMemoryContext(pluginId, MemoryContext.class);
+            if (memory.getDataType() != Byte.class) {
                 throw new InvalidContextException(
-                    "Unexpected memory cell type. Expected Short but was: " + memory.getDataType()
+                        "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
                 );
             }
 
@@ -98,10 +100,10 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
         return dumpInstructions;
     }
 
-    protected abstract Engine createEmulatorEngine(MemoryContext<Short> memory);
+    protected abstract Engine createEmulatorEngine(MemoryContext<Byte> memory);
 
     protected abstract DispatchListener createInstructionPrinter(Disassembler disassembler, Engine engine,
                                                                  boolean useCache, PrintStream writer);
 
-    protected abstract Disassembler createDisassembler(MemoryContext<Short> memory);
+    protected abstract Disassembler createDisassembler(MemoryContext<Byte> memory);
 }

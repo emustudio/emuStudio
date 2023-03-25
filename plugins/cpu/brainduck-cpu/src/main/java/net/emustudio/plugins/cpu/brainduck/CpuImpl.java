@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,11 +26,11 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl;
 import net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl;
 import net.emustudio.plugins.cpu.brainduck.gui.StatusPanel;
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,10 +40,7 @@ import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-@PluginRoot(
-    type = PLUGIN_TYPE.CPU,
-    title = "BrainDuck CPU"
-)
+@PluginRoot(type = PLUGIN_TYPE.CPU, title = "BrainDuck CPU")
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
@@ -51,7 +48,7 @@ public class CpuImpl extends AbstractCPU {
     private final BrainCPUContextImpl context = new BrainCPUContextImpl();
 
     private Disassembler disassembler;
-    private RawMemoryContext memory;
+    private ByteMemoryContext memory;
     private EmulatorEngine engine;
     private volatile boolean optimize;
 
@@ -61,9 +58,7 @@ public class CpuImpl extends AbstractCPU {
             applicationApi.getContextPool().register(pluginID, context, BrainCPUContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register CPU context", e);
-            applicationApi.getDialogs().showError(
-                "Could not register CPU context. Please see log file for details", getTitle()
-            );
+            applicationApi.getDialogs().showError("Could not register CPU context. Please see log file for details", getTitle());
         }
     }
 
@@ -84,7 +79,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, RawMemoryContext.class);
+        memory = applicationApi.getContextPool().getMemoryContext(pluginID, ByteMemoryContext.class);
 
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         engine = new EmulatorEngine(memory, context, new Profiler(memory));

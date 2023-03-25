@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 package net.emustudio.application.gui;
 
-import net.emustudio.application.configuration.SchemaPoint;
+import net.emustudio.application.settings.SchemaPoint;
 
 import java.awt.*;
 
@@ -30,6 +30,22 @@ public class P {
     private P(double x, double y) {
         this.x = x;
         this.y = y;
+    }
+
+    public static P of(double x, double y) {
+        return new P(x, y);
+    }
+
+    public static P of(int x, int y) {
+        return new P(x, y);
+    }
+
+    public static P of(SchemaPoint schemaPoint) {
+        return new P(schemaPoint.x, schemaPoint.y);
+    }
+
+    public static P of(Point point) {
+        return new P(point.getX(), point.getY());
     }
 
     public int ix() {
@@ -61,24 +77,7 @@ public class P {
         return ((x >= leftTop.x) && (x <= rightBottom.x) && (y >= leftTop.y) && (y <= rightBottom.y));
     }
 
-
     public SchemaPoint toSchemaPoint() {
         return SchemaPoint.of(ix(), iy());
-    }
-
-    public static P of(double x, double y) {
-        return new P(x, y);
-    }
-
-    public static P of(int x, int y) {
-        return new P(x, y);
-    }
-
-    public static P of(SchemaPoint schemaPoint) {
-        return new P(schemaPoint.x, schemaPoint.y);
-    }
-
-    public static P of(Point point) {
-        return new P(point.getX(), point.getY());
     }
 }

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ package net.emustudio.application.virtualcomputer;
 
 /**
  * Abstraction over a "connection" of computer components - i.e. plugins.
- *
+ * <p>
  * A connection can be one-directional or bi-directional. Connections are determined solely from abstract schema
  * of the emulated computer.
  */
@@ -30,14 +30,14 @@ public interface PluginConnections {
 
     /**
      * Determine if two plugins are connected.
-     *
+     * <p>
      * More specifically, determines if <code>pluginA</code> "sees" <code>pluginB</code>. That means, if <code>pluginA</code>
      * can obtain and use contexts registered by <code>pluginB</code> in the context pool.
-     *
+     * <p>
      * Connections can be one-directional. In case of bi-directional connection, the following must hold:
      *
      * <code>
-     *     isConnected(pluginA, pluginB) == isConnected(pluginB, pluginA) == true
+     * isConnected(pluginA, pluginB) == isConnected(pluginB, pluginA) == true
      * </code>
      *
      * @param pluginA first plugin ID

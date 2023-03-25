@@ -1,166 +1,160 @@
 name = "MITS Altair8800"
 
 [MEMORY]
-	schemaPoint = "80,180"
-	path = "standard-mem.jar"
-	name = "standard-mem"
-	id = "fee24374-8d28-4472-85ef-e8ef182f44e3"
-	type = "MEMORY"
+schemaPoint = "80,180"
+path = "byte-mem.jar"
+name = "byte-mem"
+id = "fee24374-8d28-4472-85ef-e8ef182f44e3"
+type = "MEMORY"
 
-	[MEMORY.settings]
-		banksCount = 1
-		commonBoundary = 0
-#       memorySize = 65536
+[MEMORY.settings]
+banksCount = 1
+commonBoundary = 0
+#memorySize = 65536
 
-        # ROM areas are stored as pairs ROMfromN and ROMtoN, where N is 0-based counter. There can be multiple rom areas.
-#       ROMfromN = someAddress
-#       ROMtoN = someAddress
+# ROM areas are stored as pairs ROMfromN and ROMtoN, where N is 0-based counter. There can be multiple rom areas.
+#ROMfromN = someAddress
+#ROMtoN = someAddress
 
-        # Memory "images" (files) will be loaded at startup into memory. They are stored here as triplet:
-        # - imageNameN (file name),
-        # - imageAddressN (address where the file will be loaded),
-        # - imageBankN (if memory has >1 banksCount, then number of bank; 0 otherwise)
-        #
-        # where N is a 0-based counter
-#       imageNameN = imageFileName  # if the suffix ends with ".hex", the format will be Intel HEX; otherwise it will be binary
-#       imageAddressN = ...
-#       imageBankN = 0
+# Memory "images" (files) will be loaded at startup into memory. They are stored here as triplet:
+# - imageNameN (file name),
+# - imageAddressN (address where the file will be loaded),
+# - imageBankN (if memory has >1 banksCount, then number of bank; 0 otherwise)
+#
+# where N is a 0-based counter
+#imageNameN = imageFileName  # if the suffix ends with ".hex", the format will be Intel HEX; otherwise it will be binary
+#imageAddressN = ...
+#imageBankN = 0
 
 [COMPILER]
-	schemaPoint = "80,60"
-	path = "as-8080.jar"
-	settings = {}
-	name = "as-8080"
-	id = "14a9121e-348e-48d9-90ae-05a61b6ed8a8"
-	type = "COMPILER"
+schemaPoint = "80,60"
+path = "as-8080.jar"
+settings = { }
+name = "as-8080"
+id = "14a9121e-348e-48d9-90ae-05a61b6ed8a8"
+type = "COMPILER"
 
 [CPU]
-	schemaPoint = "220,180"
-	path = "8080-cpu.jar"
-	settings = {}
-	name = "8080-cpu"
-	id = "0c7bc110-554b-433d-b6e2-29885379fac6"
-	type = "CPU"
+schemaPoint = "220,180"
+path = "8080-cpu.jar"
+settings = { }
+name = "8080-cpu"
+id = "0c7bc110-554b-433d-b6e2-29885379fac6"
+type = "CPU"
 
 # Uncomment the following for specific settings (and remove settings = {} above)
-#    [CPU.settings]
-#        printCode = true
-#        printCodeUseCache = true
-#        printCodeFileName = syserr   # Or custom path to a file
+#[CPU.settings]
+#printCode = true
+#printCodeUseCache = true
+#printCodeFileName = "filename"   # (optional)
 
 
 [[DEVICE]]
-	schemaPoint = "220,60"
-	path = "88-disk.jar"
-	name = "88-disk"
-	id = "ad934179-3690-4bbc-b6ab-f4634346927a"
-	type = "DEVICE"
+schemaPoint = "220,60"
+path = "88-dcdd.jar"
+name = "88-dcdd"
+id = "ad934179-3690-4bbc-b6ab-f4634346927a"
+type = "DEVICE"
 
-	[DEVICE.settings]
-	    # imageN = "..."  # Load file into drive N at startup
-
-		sectorLength8 = 137
-		sectorLength9 = 137
-		sectorLength6 = 137
-		sectorLength7 = 137
-		sectorLength4 = 137
-		sectorLength5 = 137
-		sectorLength2 = 137
-		sectorLength3 = 137
-		sectorLength0 = 137
-		sectorLength1 = 137
-		port2CPU = 9
-		sectorsPerTrack15 = 32
-		sectorsPerTrack14 = 32
-		sectorsPerTrack13 = 32
-		sectorsPerTrack12 = 32
-		sectorsPerTrack1 = 32
-		sectorsPerTrack11 = 32
-		sectorsPerTrack2 = 32
-		sectorsPerTrack10 = 32
-		sectorsPerTrack0 = 32
-		sectorsPerTrack5 = 32
-		sectorsPerTrack6 = 32
-		sectorsPerTrack3 = 32
-		sectorsPerTrack4 = 32
-		sectorsPerTrack9 = 32
-		sectorsPerTrack7 = 32
-		sectorsPerTrack8 = 32
-		port1CPU = 8
-		port3CPU = 10
-		sectorLength15 = 137
-		sectorLength13 = 137
-		sectorLength14 = 137
-		sectorLength11 = 137
-		sectorLength12 = 137
-		sectorLength10 = 137
-
-[[DEVICE]]
-	schemaPoint = "340,180"
-	path = "88-sio.jar"
-	name = "88-sio"
-	id = "515f3dfd-5005-4b62-b002-a20f23324573"
-	type = "DEVICE"
-
-	[DEVICE.settings]
-		statusPortNumber1 = 16
-		statusPortNumber0 = 3
-		statusPortNumber3 = 22
-		statusPortNumber2 = 20
-		dataPortNumber2 = 21
-		dataPortNumber3 = 23
-		dataPortNumber0 = 2
-		dataPortNumber1 = 17
-		dataPortNumber4 = 25
-		statusPortNumber4 = 24
+[DEVICE.settings]
+#imageN = "..."  # Load file into drive N at startup
+sectorSize8 = 137
+sectorSize9 = 137
+sectorSize6 = 137
+sectorSize7 = 137
+sectorSize4 = 137
+sectorSize5 = 137
+sectorSize2 = 137
+sectorSize3 = 137
+sectorSize0 = 137
+sectorSize1 = 137
+port2CPU = 9
+sectorsPerTrack15 = 32
+sectorsPerTrack14 = 32
+sectorsPerTrack13 = 32
+sectorsPerTrack12 = 32
+sectorsPerTrack1 = 32
+sectorsPerTrack11 = 32
+sectorsPerTrack2 = 32
+sectorsPerTrack10 = 32
+sectorsPerTrack0 = 32
+sectorsPerTrack5 = 32
+sectorsPerTrack6 = 32
+sectorsPerTrack3 = 32
+sectorsPerTrack4 = 32
+sectorsPerTrack9 = 32
+sectorsPerTrack7 = 32
+sectorsPerTrack8 = 32
+port1CPU = 8
+port3CPU = 10
+sectorSize15 = 137
+sectorSize13 = 137
+sectorSize14 = 137
+sectorSize11 = 137
+sectorSize12 = 137
+sectorSize10 = 137
 
 [[DEVICE]]
-	schemaPoint = "340,60"
-	path = "adm3A-terminal.jar"
-	name = "adm3A-terminal"
-	id = "654a684c-b65e-4c6d-b1f1-1371a3027a90"
-	type = "DEVICE"
+schemaPoint = "340,180"
+path = "88-sio.jar"
+name = "88-sio"
+id = "515f3dfd-5005-4b62-b002-a20f23324573"
+type = "DEVICE"
 
-	[DEVICE.settings]
-		antiAliasing = true
-		outputFileName = "adm3A-terminal.out"
-		inputFileName = "adm3A-terminal.in"
-		alwaysOnTop = true
-		inputReadDelay = 0
-		halfDuplex = false
+[DEVICE.settings]
+statusPorts = "0x10, 0x14, 0x16, 0x18"
+dataPorts = "0x11, 0x15, 0x17, 0x19"
+clearInputBit8 = false
+clearOutputBit8 = false
+inputToUpperCase = false
+mapDeleteChar = "UNCHANGED"
+mapBackspaceChar = "UNCHANGED"
+interruptsSupported = false
+inputInterruptVector = 7
+outputInterruptVector = 7
 
-#       halfDuplex = false
-#       alwaysOnTop = false
-#       inputReadDelay = 0
-#       antiAliasing = true
+[[DEVICE]]
+schemaPoint = "340,60"
+path = "adm3A-terminal.jar"
+name = "adm3A-terminal"
+id = "654a684c-b65e-4c6d-b1f1-1371a3027a90"
+type = "DEVICE"
 
-[[connections]]
-	bidirectional = true
-	from = "14a9121e-348e-48d9-90ae-05a61b6ed8a8"
-	to = "fee24374-8d28-4472-85ef-e8ef182f44e3"
-	points = []
-
-[[connections]]
-	bidirectional = true
-	from = "fee24374-8d28-4472-85ef-e8ef182f44e3"
-	to = "0c7bc110-554b-433d-b6e2-29885379fac6"
-	points = []
-
-[[connections]]
-	bidirectional = true
-	from = "ad934179-3690-4bbc-b6ab-f4634346927a"
-	to = "0c7bc110-554b-433d-b6e2-29885379fac6"
-	points = []
+[DEVICE.settings]
+outputFileName = "adm3A-terminal.out"
+inputFileName = "adm3A-terminal.in"
+alwaysOnTop = true
+inputReadDelayMillis = 0
+halfDuplex = false
+font = "original"
 
 [[connections]]
-	bidirectional = true
-	from = "515f3dfd-5005-4b62-b002-a20f23324573"
-	to = "0c7bc110-554b-433d-b6e2-29885379fac6"
-	points = []
+bidirectional = true
+from = "14a9121e-348e-48d9-90ae-05a61b6ed8a8"
+to = "fee24374-8d28-4472-85ef-e8ef182f44e3"
+points = []
 
 [[connections]]
-	bidirectional = true
-	from = "654a684c-b65e-4c6d-b1f1-1371a3027a90"
-	to = "515f3dfd-5005-4b62-b002-a20f23324573"
-	points = []
+bidirectional = true
+from = "fee24374-8d28-4472-85ef-e8ef182f44e3"
+to = "0c7bc110-554b-433d-b6e2-29885379fac6"
+points = []
+
+[[connections]]
+bidirectional = true
+from = "ad934179-3690-4bbc-b6ab-f4634346927a"
+to = "0c7bc110-554b-433d-b6e2-29885379fac6"
+points = []
+
+[[connections]]
+bidirectional = true
+from = "515f3dfd-5005-4b62-b002-a20f23324573"
+to = "0c7bc110-554b-433d-b6e2-29885379fac6"
+points = []
+
+[[connections]]
+bidirectional = true
+from = "654a684c-b65e-4c6d-b1f1-1371a3027a90"
+to = "515f3dfd-5005-4b62-b002-a20f23324573"
+points = []
 

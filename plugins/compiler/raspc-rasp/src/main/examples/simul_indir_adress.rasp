@@ -1,8 +1,8 @@
-ORG 10
-
 ;Program illustrates application of simulation of indirect addressing. It just substracts one number from the other one.
 ;
 ; c = a - b
+
+ORG 10
 
 ;PROGRAM IN RASP LANGUAGE===================================================
 
@@ -33,15 +33,15 @@ HALT
 
 ;EQUIVALENT PROGRAM IN RAM LANGUAGE ==========================================
 
-;LOAD =10  
-;STORE 1 	
-;LOAD =6	
-;STORE 2	
-;LOAD =2	
-;STORE 3	
-;LOAD  1   
-;SUB  *3   
-;STORE 4	
-;WRITE 4  	
+;LOAD =10
+;STORE 1
+;LOAD =6
+;STORE 2
+;LOAD =2
+;STORE 3
+;LOAD  1
+;SUB  *3
+;STORE 4
+;WRITE 4
 ;HALT
 ;=============================================================================

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,13 +19,13 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.cpu.testsuite.Generator;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.plugins.cpu.intel8080.api.ExtendedContext;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.suite.CpuRunnerImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.CpuVerifierImpl;
 import org.easymock.Capture;
@@ -40,27 +40,25 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertTrue;
 
 public class InstructionsTest {
-    private static final long PLUGIN_ID = 0L;
-
     static final int REG_PAIR_BC = 0;
     static final int REG_PAIR_DE = 1;
     static final int REG_PAIR_HL = 2;
     static final int REG_SP = 3;
-
-    private CpuImpl cpu;
+    private static final long PLUGIN_ID = 0L;
+    private final List<FakeByteDevice> devices = new ArrayList<>();
     CpuRunnerImpl cpuRunnerImpl;
     CpuVerifierImpl cpuVerifierImpl;
-    private final List<FakeDevice> devices = new ArrayList<>();
+    protected CpuImpl cpu;
+    protected ByteMemoryStub memory;
 
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
-        ShortMemoryStub memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
-
-        Capture<ExtendedContext> cpuContext = Capture.newInstance();
+        memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        Capture<Context8080> cpuContext = Capture.newInstance();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memoryStub).anyTimes();
-        contextPool.register(anyLong(), capture(cpuContext), same(ExtendedContext.class));
+        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        contextPool.register(anyLong(), capture(cpuContext), same(Context8080.class));
         expectLastCall().anyTimes();
         replay(contextPool);
 
@@ -73,15 +71,15 @@ public class InstructionsTest {
         assertTrue(cpuContext.hasCaptured());
 
         for (int i = 0; i < 256; i++) {
-            FakeDevice device = new FakeDevice();
+            FakeByteDevice device = new FakeByteDevice();
             devices.add(device);
             cpuContext.getValue().attachDevice(device, i);
         }
 
         cpu.initialize();
 
-        cpuRunnerImpl = new CpuRunnerImpl(cpu, memoryStub, devices);
-        cpuVerifierImpl = new CpuVerifierImpl(cpu, memoryStub, devices);
+        cpuRunnerImpl = new CpuRunnerImpl(cpu, memory, devices);
+        cpuVerifierImpl = new CpuVerifierImpl(cpu, memory, devices);
 
         Generator.setRandomTestsCount(10);
     }

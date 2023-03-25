@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import java.util.Objects;
 class DisplayGui extends JDialog {
     private final MemoryContext<Byte> memory;
     private final DisplayPanel displayPanel;
+    private final JScrollPane scrollPane = new JScrollPane();
 
     DisplayGui(JFrame parent, MemoryContext<Byte> memory, DisplayPanel displayPanel) {
         super(parent);
@@ -38,6 +39,7 @@ class DisplayGui extends JDialog {
         setLocationRelativeTo(parent);
 
         scrollPane.setViewportView(displayPanel);
+        displayPanel.reset(memory);
         initListener();
     }
 
@@ -49,7 +51,8 @@ class DisplayGui extends JDialog {
                     displayPanel.reset(memory);
                 } else {
                     int row = bytePosition / 4;
-                    displayPanel.writeRow(memory.readWord(row * 4), row);
+                    int rowBytePosition = row * 4;
+                    displayPanel.writeRow(memory.read(rowBytePosition, 4), row);
                 }
             }
 
@@ -67,22 +70,20 @@ class DisplayGui extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 432, Short.MAX_VALUE)
-                    .addContainerGap())
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 432, Short.MAX_VALUE)
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
-                    .addContainerGap())
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
+                                .addContainerGap())
         );
 
         pack();
     }
-
-    private final JScrollPane scrollPane = new JScrollPane();
 }

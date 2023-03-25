@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -133,11 +133,9 @@ public class EmulationController implements Closeable {
             countDownLatch = new CountDownLatch(1);
 
             if (memory != null) {
-                cpu.reset(memory.getProgramLocation());
                 memory.reset();
-            } else {
-                cpu.reset();
             }
+            cpu.reset();
 
             awaitLatch();
 
@@ -151,7 +149,9 @@ public class EmulationController implements Closeable {
     public void close() {
         executor.shutdown();
         try {
-            executor.awaitTermination(5, TimeUnit.MINUTES);
+            if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
+                executor.shutdownNow();
+            }
         } catch (InterruptedException e) {
             executor.shutdownNow();
             Thread.currentThread().interrupt();

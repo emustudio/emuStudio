@@ -2,7 +2,7 @@
  * This file is part of emuStudio.
  *
  * Copyright (C) 2016-2017  Michal Šipoš
- * Copyright (C) 2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,15 +21,16 @@
 package net.emustudio.plugins.cpu.rasp.gui;
 
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspLabel;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.util.Objects;
 
 public class LabelDebugColumn implements DebuggerColumn<String> {
 
-    private final RASPMemoryContext memory;
+    private final RaspMemoryContext memory;
 
-    public LabelDebugColumn(RASPMemoryContext memory) {
+    public LabelDebugColumn(RaspMemoryContext memory) {
         this.memory = Objects.requireNonNull(memory);
     }
 
@@ -55,6 +56,6 @@ public class LabelDebugColumn implements DebuggerColumn<String> {
 
     @Override
     public String getValue(int position) {
-        return memory.getLabel(position);
+        return memory.getLabel(position).map(RaspLabel::getLabel).orElse("");
     }
 }

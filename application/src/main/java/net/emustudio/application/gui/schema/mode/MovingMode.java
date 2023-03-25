@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -128,7 +128,7 @@ class MovingMode extends AbstractMode {
             }
             P linePoint = drawingModel.selectedLine.findPoint(clickPoint);
             if ((drawingModel.selectedLine != schema.findCrossingLine(clickPoint))
-                || (drawingModel.selectedPoint != linePoint)) {
+                    || (drawingModel.selectedPoint != linePoint)) {
                 drawingModel.selectedLine = null;
                 drawingModel.selectedPoint = null;
                 return SelectMode.MOVING;

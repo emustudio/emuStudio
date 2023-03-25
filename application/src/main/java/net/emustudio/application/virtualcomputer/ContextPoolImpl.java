@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,6 +49,32 @@ public class ContextPoolImpl implements ContextPool {
 
     public ContextPoolImpl(long alwaysAllowedPluginId) {
         this.alwaysAllowedPluginId = alwaysAllowedPluginId;
+    }
+
+    /**
+     * Compute emuStudio-specific hash of the context interface.
+     * The name of the interface is not important, only method names and their signatures.
+     *
+     * @param contextInterface interface to compute hash of
+     * @return hash representing the interface
+     */
+    private static <T extends Context> String computeHash(Class<T> contextInterface) throws InvalidContextException {
+        List<Method> contextMethods = Arrays.asList(contextInterface.getMethods());
+        contextMethods.sort(Comparator.comparing(Method::getName));
+
+        StringBuilder hash = new StringBuilder();
+        for (Method method : contextMethods.toArray(new Method[0])) {
+            hash.append(method.getGenericReturnType().toString()).append(" ").append(method.getName()).append("(");
+            for (Class<?> param : method.getParameterTypes()) {
+                hash.append(param.getName()).append(",");
+            }
+            hash.append(");");
+        }
+        try {
+            return Hashing.SHA1(hash.toString());
+        } catch (NoSuchAlgorithmException e) {
+            throw new InvalidContextException("Could not compute hash for interface " + contextInterface, e);
+        }
     }
 
     @Override
@@ -114,14 +140,14 @@ public class ContextPoolImpl implements ContextPool {
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Context> T getContext(long pluginID, Class<T> contextInterface, int index)
-        throws InvalidContextException, ContextNotFoundException {
+            throws InvalidContextException, ContextNotFoundException {
 
         verifyPluginContext(contextInterface);
         // find the requested context
         List<Context> contextsByHash = contexts.get(computeHash(contextInterface));
         if ((contextsByHash == null) || contextsByHash.isEmpty()) {
             throw new ContextNotFoundException(
-                "Context " + contextInterface + " is not found in registered contexts list."
+                    "Context " + contextInterface + " is not found in registered contexts list."
             );
         }
         LOGGER.debug("Matching context " + contextInterface + " from " + contextsByHash.size() + " option(s)");
@@ -138,8 +164,8 @@ public class ContextPoolImpl implements ContextPool {
             currentIndex++;
         }
         throw new ContextNotFoundException(
-            "Plugin " + pluginID + " has either no permission to access context " + contextInterface +
-                " or index is out of bounds"
+                "Plugin " + pluginID + " has either no permission to access context " + contextInterface +
+                        " or index is out of bounds"
         );
     }
 
@@ -150,14 +176,14 @@ public class ContextPoolImpl implements ContextPool {
 
     @Override
     public <T extends CPUContext> T getCPUContext(long pluginID, Class<T> contextInterface)
-        throws InvalidContextException, ContextNotFoundException {
+            throws InvalidContextException, ContextNotFoundException {
 
         return getContext(pluginID, contextInterface, -1);
     }
 
     @Override
     public <T extends CPUContext> T getCPUContext(long pluginID, Class<T> contextInterface, int index)
-        throws InvalidContextException, ContextNotFoundException {
+            throws InvalidContextException, ContextNotFoundException {
 
         return getContext(pluginID, contextInterface, index);
     }
@@ -169,19 +195,19 @@ public class ContextPoolImpl implements ContextPool {
 
     @Override
     public <T extends CompilerContext> T getCompilerContext(long pluginID, Class<T> contextInterface)
-        throws InvalidContextException, ContextNotFoundException {
+            throws InvalidContextException, ContextNotFoundException {
         return getContext(pluginID, contextInterface, -1);
     }
 
     @Override
     public <T extends CompilerContext> T getCompilerContext(long pluginID, Class<T> contextInterface, int index)
-        throws InvalidContextException, ContextNotFoundException {
+            throws InvalidContextException, ContextNotFoundException {
         return getContext(pluginID, contextInterface, index);
     }
 
     @Override
     public <CellType, T extends MemoryContext<CellType>> T getMemoryContext(long pluginID, Class<T> contextInterface)
-        throws InvalidContextException, ContextNotFoundException {
+            throws InvalidContextException, ContextNotFoundException {
         return getContext(pluginID, contextInterface, -1);
     }
 
@@ -193,7 +219,7 @@ public class ContextPoolImpl implements ContextPool {
 
     @Override
     public <DataType, T extends DeviceContext<DataType>> T getDeviceContext(long pluginID, Class<T> contextInterface)
-        throws InvalidContextException, ContextNotFoundException {
+            throws InvalidContextException, ContextNotFoundException {
         return getContext(pluginID, contextInterface, -1);
     }
 
@@ -232,32 +258,6 @@ public class ContextPoolImpl implements ContextPool {
             }
         }
         return Optional.ofNullable(contextOwner);
-    }
-
-    /**
-     * Compute emuStudio-specific hash of the context interface.
-     * The name of the interface is not important, only method names and their signatures.
-     *
-     * @param contextInterface interface to compute hash of
-     * @return hash representing the interface
-     */
-    private static <T extends Context> String computeHash(Class<T> contextInterface) throws InvalidContextException {
-        List<Method> contextMethods = Arrays.asList(contextInterface.getMethods());
-        contextMethods.sort(Comparator.comparing(Method::getName));
-
-        StringBuilder hash = new StringBuilder();
-        for (Method method : contextMethods.toArray(new Method[0])) {
-            hash.append(method.getGenericReturnType().toString()).append(" ").append(method.getName()).append("(");
-            for (Class<?> param : method.getParameterTypes()) {
-                hash.append(param.getName()).append(",");
-            }
-            hash.append(");");
-        }
-        try {
-            return Hashing.SHA1(hash.toString());
-        } catch (NoSuchAlgorithmException e) {
-            throw new InvalidContextException("Could not compute hash for interface " + contextInterface, e);
-        }
     }
 
     private void verifyPluginContext(Class<? extends Context> contextInterface) throws InvalidContextException {

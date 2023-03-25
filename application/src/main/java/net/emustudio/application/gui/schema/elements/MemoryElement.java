@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 package net.emustudio.application.gui.schema.elements;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.configuration.PluginConfig;
 import net.emustudio.application.gui.P;
+import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
 import java.awt.*;
@@ -32,15 +32,15 @@ public class MemoryElement extends Element {
 
     public MemoryElement(P schemaPoint, String pluginName, String pluginFileName) {
         super(
-            BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.MEMORY, pluginName, pluginFileName,
-            Config.inMemory()
+                BACK_COLOR, schemaPoint, UUID.randomUUID().toString(), PLUGIN_TYPE.MEMORY, pluginName, pluginFileName,
+                Config.inMemory()
         );
     }
 
     public MemoryElement(PluginConfig config, Function<P, P> searchGridPoint) {
         super(
-            BACK_COLOR, searchGridPoint.apply(P.of(config.getSchemaPoint())), config.getPluginId(), PLUGIN_TYPE.MEMORY,
-            config.getPluginName(), config.getPluginFile(), config.getPluginSettings()
+                BACK_COLOR, searchGridPoint.apply(P.of(config.getSchemaPoint())), config.getPluginId(), PLUGIN_TYPE.MEMORY,
+                config.getPluginName(), config.getPluginFile(), config.getPluginSettings()
         );
     }
 }

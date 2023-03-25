@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,8 +28,12 @@ import java.util.List;
 import java.util.Optional;
 
 public class NoGuiDialogsImpl implements ExtendedDialogs {
-    private final static Logger LOGGER = LoggerFactory.getLogger(NoGuiDialogsImpl.class);
     public final static String INPUT_MESSAGE = "Please insert a value";
+    private final static Logger LOGGER = LoggerFactory.getLogger(NoGuiDialogsImpl.class);
+
+    public static String formatMessage(String title, String message) {
+        return "[" + title + "] " + message;
+    }
 
     @Override
     public void showError(String message) {
@@ -58,7 +62,7 @@ public class NoGuiDialogsImpl implements ExtendedDialogs {
 
     @Override
     public Optional<Integer> readInteger(String message, String title) {
-        return readInteger(message, title,0);
+        return readInteger(message, title, 0);
     }
 
     @Override
@@ -128,9 +132,5 @@ public class NoGuiDialogsImpl implements ExtendedDialogs {
     public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
                                      boolean appendMissingExtension, List<FileExtensionsFilter> list) {
         return Optional.empty();
-    }
-
-    public static String formatMessage(String title, String message) {
-        return "[" + title + "] " + message;
     }
 }

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,12 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.interaction.debugger.*;
 
+import javax.swing.event.TableModelEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class DebugTableModelImpl extends DebugTableModel {
     private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
@@ -35,16 +37,17 @@ public class DebugTableModelImpl extends DebugTableModel {
     public DebugTableModelImpl() {
     }
 
-    public void setCPU(CPU cpu, int memorySize) {
+    public void setCPU(CPU cpu, Supplier<Integer> getMemorySize) {
         this.cpu = Objects.requireNonNull(cpu);
         CallFlow callFlow = new CallFlow(cpu.getDisassembler());
-        this.ida = new PaginatingDisassembler(callFlow, memorySize);
+        this.ida = new PaginatingDisassembler(callFlow, getMemorySize);
         setDefaultColumns();
     }
 
     public void setMaxRows(int maxRows) {
         if (ida != null) {
             ida.setInstructionsPerPage(maxRows);
+            fireTableChanged(new TableModelEvent(this));
         }
     }
 
@@ -173,11 +176,12 @@ public class DebugTableModelImpl extends DebugTableModel {
     @Override
     public void memoryChanged(int from, int to) {
         Optional.ofNullable(ida).ifPresent(i -> i.flushCache(from, to + 1));
+        fireTableDataChanged();
     }
 
     @Override
-    public void setMemorySize(int memorySize) {
-        Optional.ofNullable(ida).ifPresent(i -> i.setMemorySize(memorySize));
+    public void memorySizeChanged(int memorySize) {
+        fireTableChanged(new TableModelEvent(this));
     }
 
     @Override
@@ -186,11 +190,11 @@ public class DebugTableModelImpl extends DebugTableModel {
             Disassembler dis = cpu.getDisassembler();
             if (cpu.isBreakpointSupported()) {
                 setDebuggerColumns(Arrays.asList(
-                    new BreakpointColumn(cpu), new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+                        new BreakpointColumn(cpu), new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
                 ));
             } else {
                 setDebuggerColumns(Arrays.asList(
-                    new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+                        new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
                 ));
             }
         });

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +18,15 @@
  */
 package net.emustudio.plugins.cpu.brainduck.gui;
 
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
-
 import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 public class MemoryTableModel extends AbstractTableModel {
-    private final short[] memory;
+    private final Byte[] memory;
     private volatile int P;
 
-    MemoryTableModel(RawMemoryContext memory) {
-        this.memory = memory.getRawMemory();
+    MemoryTableModel(Byte[] memory) {
+        this.memory = Objects.requireNonNull(memory);
     }
 
     @Override

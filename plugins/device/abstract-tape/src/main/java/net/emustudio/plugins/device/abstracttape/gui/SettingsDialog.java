@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
  */
 package net.emustudio.plugins.device.abstracttape.gui;
 
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
-import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +35,8 @@ public class SettingsDialog extends JDialog {
     private final PluginSettings settings;
     private final Dialogs dialogs;
     private final TapeGui gui;
+    private JCheckBox chkAlwaysOnTop;
+    private JCheckBox chkShowAtStartup;
 
     public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeGui gui, String title) {
         super(parent, true);
@@ -85,27 +87,24 @@ public class SettingsDialog extends JDialog {
         pane.setLayout(layout);
 
         layout.setHorizontalGroup(
-            layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(chkAlwaysOnTop)
-                    .addComponent(chkShowAtStartup)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap(-1, Short.MAX_VALUE)
-                        .addComponent(btnSave)))
-                .addContainerGap());
+                layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(chkAlwaysOnTop)
+                                .addComponent(chkShowAtStartup)
+                                .addGroup(layout.createSequentialGroup()
+                                        .addContainerGap(-1, Short.MAX_VALUE)
+                                        .addComponent(btnSave)))
+                        .addContainerGap());
         layout.setVerticalGroup(
-            layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(chkAlwaysOnTop)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(chkShowAtStartup)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnSave)
-                .addContainerGap());
+                layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(chkAlwaysOnTop)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkShowAtStartup)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnSave)
+                        .addContainerGap());
         pack();
     }
-
-    private JCheckBox chkAlwaysOnTop;
-    private JCheckBox chkShowAtStartup;
 }

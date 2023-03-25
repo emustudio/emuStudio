@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,16 +19,18 @@
 package net.emustudio.plugins.memory.ssem;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.jcip.annotations.ThreadSafe;
 
 import java.util.Arrays;
 
-@ThreadSafe
 public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
     public static final int NUMBER_OF_CELLS = 32 * 4;
 
     // byte type is atomic in JVM memory model
-    private final byte[] memory = new byte[NUMBER_OF_CELLS];
+    private final Byte[] memory = new Byte[NUMBER_OF_CELLS];
+
+    public MemoryContextImpl() {
+        Arrays.fill(memory, (byte) 0);
+    }
 
     @Override
     public void clear() {
@@ -42,23 +44,22 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
     }
 
     @Override
-    public Byte[] readWord(int from) {
-        return new Byte[]{memory[from], memory[from + 1], memory[from + 2], memory[from + 3]};
+    public Byte[] read(int from, int count) {
+        int to = Math.min(memory.length, from + count);
+        return Arrays.copyOfRange(memory, from, to);
     }
 
     @Override
-    public void write(int to, Byte val) {
-        memory[to] = val;
+    public void write(int to, Byte value) {
+        memory[to] = value;
         notifyMemoryChanged(to);
     }
 
     @Override
-    public void writeWord(int to, Byte[] cells) {
-        int i = 0;
-        for (byte cell : cells) {
-            memory[to + i] = cell;
+    public void write(int to, Byte[] values, int count) {
+        System.arraycopy(values, 0, memory, to, count);
+        for (int i = 0; i < values.length; i++) {
             notifyMemoryChanged(to + i);
-            i++;
         }
     }
 

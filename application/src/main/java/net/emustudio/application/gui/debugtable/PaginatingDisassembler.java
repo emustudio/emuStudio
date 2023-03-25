@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,16 +22,17 @@ import net.jcip.annotations.ThreadSafe;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.Supplier;
 
 @ThreadSafe
 public class PaginatingDisassembler {
     public final static int INSTR_PER_PAGE = 2 * 10 + 1;
 
-    private final CallFlow callFlow;
+    private final CallFlow callFlow; // call flow won't contain all locations, it grows only if row == middle
     private final NavigableMap<Integer, Page> bytesPerPageCache = new ConcurrentSkipListMap<>();
 
-    private int memorySize;
     private volatile int pageIndex;
+    private final Supplier<Integer> getMemorySize;
 
     private volatile Page currentPage = new Page(0, -1, -1);
     private volatile int lastKnownCurrentLocation;
@@ -40,24 +41,20 @@ public class PaginatingDisassembler {
     private volatile int currentInstrRow = instructionsPerPage / 2;
     private volatile int instrPerHalfPage = instructionsPerPage / 2;
 
-    PaginatingDisassembler(CallFlow callFlow, int memorySize) {
-        if (memorySize < 0) {
-            throw new IllegalArgumentException("Memory size < 0");
-        }
-
-        this.memorySize = memorySize;
+    PaginatingDisassembler(CallFlow callFlow, Supplier<Integer> getMemorySize) {
         this.callFlow = Objects.requireNonNull(callFlow);
+        this.getMemorySize = Objects.requireNonNull(getMemorySize);
         bytesPerPageCache.put(0, currentPage);
+    }
+
+    int getInstructionsPerPage() {
+        return instructionsPerPage;
     }
 
     void setInstructionsPerPage(int value) {
         instructionsPerPage = value;
         currentInstrRow = instructionsPerPage / 2;
         instrPerHalfPage = instructionsPerPage / 2;
-    }
-
-    int getInstructionsPerPage() {
-        return instructionsPerPage;
     }
 
     int getCurrentInstructionRow() {
@@ -99,7 +96,7 @@ public class PaginatingDisassembler {
     void pageNext() {
         int nextPageIndex = pageIndex + 1;
         Page tmpPage = bytesPerPageCache.get(nextPageIndex);
-        int maxMemoryIndex = memorySize - 1;
+        int maxMemoryIndex = getMemorySize.get() - 1;
 
         if (tmpPage == null) {
             tmpPage = currentPage;
@@ -166,10 +163,6 @@ public class PaginatingDisassembler {
         return (pageIndex == 0) && (currentInstrRow == row);
     }
 
-    void setMemorySize(int memorySize) {
-        this.memorySize = memorySize;
-    }
-
     int rowToLocation(int currentLocation, int row) {
         int tmpLastKnownCurrentLocation = lastKnownCurrentLocation;
         Page tmpCurrentPage = currentPage;
@@ -187,12 +180,18 @@ public class PaginatingDisassembler {
         lastKnownCurrentLocation = currentLocation;
 
         int newCurrentLocation = findCurrentLocationInPage(currentLocation, tmpCurrentPage);
+        boolean updateCalled = false;
         if (newCurrentLocation != currentLocation || tmpCurrentPage.middleLocation == -1) {
             tmpCurrentPage.setMiddleLocation(newCurrentLocation);
             callFlow.updateCache(currentLocation);
+            updateCalled = true;
         }
 
         if (row == currentInstrRow) {
+            if (!updateCalled) {
+                // update cache always on current instruction
+                callFlow.updateCache(currentLocation);
+            }
             return newCurrentLocation;
         }
 
@@ -244,7 +243,7 @@ public class PaginatingDisassembler {
 
         int maxBytesPP = maxBytesPerPage();
         int longestInstr = callFlow.getLongestInstructionSize();
-        int guessUpTo = Math.min(memorySize - 1, currentLocation + currentPageIndex * (maxBytesPP - longestInstr));
+        int guessUpTo = Math.min(getMemorySize.get() - 1, currentLocation + currentPageIndex * (maxBytesPP - longestInstr));
 
         int result = callFlow.traverseUpTo(from, guessUpTo, instructions::add);
         if (result == guessUpTo) {
@@ -276,7 +275,7 @@ public class PaginatingDisassembler {
 
     private int findDecreasing(int currentLocation, Page tmpPage, int currentPageIndex) {
         // currentLocation is above current page. So we will traverse back by maxBytesPerPage to the last known
-        // location in some adjacent page (the nearer the better).
+        // location in some adjacent page (the nearer, the better).
 
         while (tmpPage.index < 0 && tmpPage.middleLocation < 0) {
             Integer nextPageIndex = bytesPerPageCache.ceilingKey(tmpPage.index + 1);
@@ -310,7 +309,7 @@ public class PaginatingDisassembler {
 
 
     private int findLocationAboveHalf(int currentLocation, int row, int half, Page tmpCurrentPage) {
-        int lastMemoryIndex = memorySize - 1;
+        int lastMemoryIndex = getMemorySize.get() - 1;
         if (lastMemoryIndex < 0) {
             return -1;
         }
@@ -360,9 +359,9 @@ public class PaginatingDisassembler {
             // we do not have enough instructions. This might be caused by the "half" which is not big enough,
             // or by the fact that we just don't know how much instructions back is known.
             callFlow.traverseBackForInstructionCount(
-                realFrom,
-                INSTR_PER_PAGE - loadedHalfSize + 1,
-                loc -> halfPage.add(0, loc)
+                    realFrom,
+                    INSTR_PER_PAGE - loadedHalfSize + 1,
+                    loc -> halfPage.add(0, loc)
             );
             loadedHalfSize = halfPage.size();
         }
@@ -426,12 +425,12 @@ public class PaginatingDisassembler {
         @Override
         public String toString() {
             return "Page{" +
-                "index=" + index +
-                ", minLocation=" + minLocation +
-                ", maxLocation=" + maxLocation +
-                ", middleLocation=" + middleLocation +
-                ", lastPage=" + lastPage +
-                '}';
+                    "index=" + index +
+                    ", minLocation=" + minLocation +
+                    ", maxLocation=" + maxLocation +
+                    ", middleLocation=" + middleLocation +
+                    ", lastPage=" + lastPage +
+                    '}';
         }
     }
 }

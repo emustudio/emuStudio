@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,8 +42,8 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
 
     public ByteTestBuilder setPair(int registerPair, int value) {
         runner.injectFirst(
-            (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 1),
-            (tmpRunner, argument) -> cpuRunner.setRegisterPair(registerPair, value)
+                (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 1),
+                (tmpRunner, argument) -> cpuRunner.setRegisterPair(registerPair, value)
         );
         return this;
     }

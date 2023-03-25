@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,15 +27,16 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
-import net.emustudio.plugins.cpu.ram.gui.RAMDisassembler;
-import net.emustudio.plugins.cpu.ram.gui.RAMStatusPanel;
+import net.emustudio.plugins.cpu.ram.gui.RamDisassembler;
+import net.emustudio.plugins.cpu.ram.gui.RamStatusPanel;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,30 +48,30 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.CPU,
-    title = "Random Access Machine (RAM)"
+        type = PLUGIN_TYPE.CPU,
+        title = "Random Access Machine (RAM)"
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
-    private final RAMContextImpl context;
+    private final RamCpuContextImpl context;
 
     private EmulatorEngine engine;
-    private RAMMemoryContext memory;
-    private RAMDisassembler disassembler;
+    private RamMemoryContext memory;
+    private RamDisassembler disassembler;
     private boolean debugTableInitialized = false;
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        context = new RAMContextImpl(applicationApi.getContextPool());
+        context = new RamCpuContextImpl(applicationApi.getContextPool());
         try {
             applicationApi.getContextPool().register(pluginID, context, CPUContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register RAM CPU context", e);
             applicationApi.getDialogs().showError(
-                "Could not register RAM CPU Context. Please see log file for details.", super.getTitle()
+                    "Could not register RAM CPU Context. Please see log file for details.", super.getTitle()
             );
         }
     }
@@ -92,10 +93,10 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, RAMMemoryContext.class);
-        engine = new EmulatorEngine(context, memory);
-        disassembler = new RAMDisassembler(memory);
-        context.init(pluginID, engine);
+        memory = applicationApi.getContextPool().getMemoryContext(pluginID, RamMemoryContext.class);
+        disassembler = new RamDisassembler(memory);
+        context.init(pluginID);
+        engine = new EmulatorEngine(context.getInputTape(), context.getOutputTape(), context.getStorageTape(), memory);
     }
 
     @Override
@@ -104,12 +105,12 @@ public class CpuImpl extends AbstractCPU {
             DebuggerTable debugTable = applicationApi.getDebuggerTable();
             if (debugTable != null) {
                 debugTable.setDebuggerColumns(Arrays.asList(
-                    new BreakpointColumn(this), new LabelDebugColumn(memory), new MnemoColumn(disassembler)
+                        new BreakpointColumn(this), new LabelDebugColumn(memory), new MnemoColumn(disassembler)
                 ));
             }
             debugTableInitialized = true;
         }
-        return new RAMStatusPanel(this, context.getInput(), context.getOutput());
+        return new RamStatusPanel(this, context.getInputTape(), context.getOutputTape());
     }
 
     @Override
@@ -119,15 +120,15 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public int getInstructionLocation() {
-        return engine.IP;
+        return engine.IP.get();
     }
 
-    public String getR0() {
-        AbstractTapeContext storage = context.getStorage();
+    public TapeSymbol getR0() {
+        AbstractTapeContext storage = context.getStorageTape();
         if (storage == null) {
-            return "<empty>";
+            return TapeSymbol.EMPTY;
         }
-        return storage.getSymbolAt(0);
+        return storage.getSymbolAt(0).orElse(TapeSymbol.EMPTY);
     }
 
     @Override
@@ -144,7 +145,7 @@ public class CpuImpl extends AbstractCPU {
     public RunState call() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                if (isBreakpointSet(engine.IP)) {
+                if (isBreakpointSet(engine.IP.get())) {
                     throw new Breakpoint();
                 }
                 RunState tmpRunState = stepInternal();
@@ -154,11 +155,11 @@ public class CpuImpl extends AbstractCPU {
             } catch (IndexOutOfBoundsException ex) {
                 LOGGER.debug("Unexpected error", ex);
                 return RunState.STATE_STOPPED_ADDR_FALLOUT;
-            } catch (IOException ex) {
-                LOGGER.error("Unexpected error while reading/writing to the tape", ex);
-                return RunState.STATE_STOPPED_BAD_INSTR;
             } catch (Breakpoint breakpoint) {
                 return RunState.STATE_STOPPED_BREAK;
+            } catch (Exception ex) {
+                LOGGER.debug("Unexpected error", ex);
+                return RunState.STATE_STOPPED_BAD_INSTR;
             }
         }
         return RunState.STATE_STOPPED_NORMAL;

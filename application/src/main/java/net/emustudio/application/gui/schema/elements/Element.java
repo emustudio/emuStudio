@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 package net.emustudio.application.gui.schema.elements;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.configuration.PluginConfig;
 import net.emustudio.application.gui.P;
+import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 
 import java.awt.*;
@@ -33,11 +33,9 @@ import java.util.Objects;
  * It is a graphical object representing a plug-in.
  */
 public abstract class Element {
+    final static int MOUSE_TOLERANCE = 5;
     private final static int MIN_WIDTH = 80;
     private final static int MIN_HEIGHT = 50;
-
-    final static int MOUSE_TOLERANCE = 5;
-
     private final Font pluginNameFont = new Font(Font.DIALOG, Font.BOLD, 13);
     private final Font pluginTypeFont = new Font(Font.MONOSPACED, Font.ITALIC, 12);
 
@@ -205,13 +203,12 @@ public abstract class Element {
         return leftX + getWidth();
     }
 
+    public boolean isSelected() {
+        return selected;
+    }
 
     public void setSelected(boolean selected) {
         this.selected = selected;
-    }
-
-    public boolean isSelected() {
-        return selected;
     }
 
     /**
@@ -233,7 +230,7 @@ public abstract class Element {
         int yB = getBottomY();
 
         return (selectionStart.x <= xR) && (selectionEnd.x >= leftX)
-            && (selectionStart.y <= yB) && (selectionEnd.y >= topY);
+                && (selectionStart.y <= yB) && (selectionEnd.y >= topY);
     }
 
     /**

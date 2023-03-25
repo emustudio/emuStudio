@@ -6,7 +6,9 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
+
+import javax.swing.*;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
@@ -39,7 +41,7 @@ public class APluginDependsOnB implements Plugin {
     }
 
     @Override
-    public void showSettings() {
+    public void showSettings(JFrame parent) {
 
     }
 

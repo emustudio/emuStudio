@@ -1,19 +1,34 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2023  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.plugins.cpu.rasp.api.RaspCpuContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
-import net.emustudio.plugins.memory.rasp.InstructionImpl;
-import net.emustudio.plugins.memory.rasp.NumberMemoryItem;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
-import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
+import net.emustudio.plugins.memory.rasp.api.RaspLabel;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.HALT;
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.JMP;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
@@ -22,14 +37,23 @@ public class EmulatorEngineTest {
     @Test
     public void testJumpInstruction() throws IOException {
         EmulatorEngine engine = setup(List.of(
-            new InstructionImpl(RASPInstruction.JMP),
-            new NumberMemoryItem(4),
-            new InstructionImpl(RASPInstruction.JMP),
-            new NumberMemoryItem(0),
-            new InstructionImpl(RASPInstruction.HALT),
-            new NumberMemoryItem(0)
-        ), Map.of(
-            4, "HERE"
+                JMP,
+                4,
+                JMP,
+                0,
+                HALT
+        ), List.of(
+                new RaspLabel() {
+                    @Override
+                    public int getAddress() {
+                        return 4;
+                    }
+
+                    @Override
+                    public String getLabel() {
+                        return "HERE";
+                    }
+                }
         ));
 
         engine.reset(0);
@@ -39,25 +63,24 @@ public class EmulatorEngineTest {
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, state);
     }
 
-
-
-
-
-
-    private EmulatorEngine setup(List<MemoryItem> items, Map<Integer, String> labels) {
+    private EmulatorEngine setup(List<Integer> memoryContent, List<RaspLabel> labels) {
         AbstractTapeContext outputTape = createNiceMock(AbstractTapeContext.class);
         replay(outputTape);
         AbstractTapeContext inputTape = createNiceMock(AbstractTapeContext.class);
         replay(inputTape);
 
-        RASPCpuContext context = createMock(RASPCpuContext.class);
+        RaspCpuContext context = createMock(RaspCpuContext.class);
         expect(context.getOutputTape()).andReturn(outputTape).anyTimes();
         expect(context.getInputTape()).andReturn(inputTape).anyTimes();
         replay(context);
 
-        RaspMemoryStub memory = new RaspMemoryStub(items, Collections.emptyList(), labels);
-        Dialogs dialogs = createNiceMock(Dialogs.class);
+        MemoryStub memory = new MemoryStub();
+        memory.setLabels(labels);
+        int address = 0;
+        for (int item : memoryContent) {
+            memory.write(address++, item);
+        }
 
-        return new EmulatorEngine(context, memory, dialogs);
+        return new EmulatorEngine(memory, inputTape, outputTape);
     }
 }

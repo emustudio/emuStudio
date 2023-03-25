@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 package net.emustudio.plugins.cpu.zilogZ80.suite;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
-import net.emustudio.plugins.cpu.zilogZ80.FakeDevice;
+import net.emustudio.plugins.cpu.zilogZ80.FakeByteDevice;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +30,9 @@ import java.util.Objects;
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 
 public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
-    private final List<FakeDevice> devices;
+    private final List<FakeByteDevice> devices;
 
-    public CpuRunnerImpl(CpuImpl cpu, ShortMemoryStub memoryStub, List<FakeDevice> devices) {
+    public CpuRunnerImpl(CpuImpl cpu, ByteMemoryStub memoryStub, List<FakeByteDevice> devices) {
         super(cpu, memoryStub);
         this.devices = List.copyOf(Objects.requireNonNull(devices));
     }
@@ -110,7 +110,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         return cpu.getEngine().IFF[index];
     }
 
-    public FakeDevice getDevice(int port) {
+    public FakeByteDevice getDevice(int port) {
         return devices.get(port);
     }
 
@@ -122,11 +122,6 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     @Override
     public int getSP() {
         return cpu.getEngine().SP;
-    }
-
-    @Override
-    public void setFlags(int mask) {
-        cpu.getEngine().flags |= mask;
     }
 
     public void setFlags2(int mask) {
@@ -146,6 +141,11 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         return cpu.getEngine().flags;
     }
 
+    @Override
+    public void setFlags(int mask) {
+        cpu.getEngine().flags |= mask;
+    }
+
     public void setIX(int ix) {
         cpu.getEngine().IX = ix;
     }
@@ -162,6 +162,10 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         cpu.getEngine().IY = iy;
     }
 
+    public void setSP(int sp) {
+        cpu.getEngine().SP = sp;
+    }
+
     public void enableIFF2() {
         cpu.getEngine().IFF[1] = true;
     }
@@ -171,7 +175,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     }
 
     public void setIntMode(byte intMode) {
-        cpu.getEngine().intMode = intMode;
+        cpu.getEngine().interruptMode = intMode;
     }
 
     @Override

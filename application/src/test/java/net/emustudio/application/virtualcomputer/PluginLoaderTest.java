@@ -1,7 +1,7 @@
 /*
  * Run-time library for emuStudio and plugins.
  *
- *     Copyright (C) 2006-2020  Peter Jakubčo
+ *     Copyright (C) 2006-2023  Peter Jakubčo
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,7 +46,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class PluginLoaderTest {
-    private static final String GOOD_PLUGIN_PATH = "plugin-valid.jar";
     private static final String BAD_PLUGIN_PATH = "plugin-invalid.jar";
     private static final String NOT_A_PLUGIN_PATH = "not-a-plugin.jar";
 
@@ -116,7 +115,7 @@ public class PluginLoaderTest {
     }
 
     private File createJar(String className, String... dependsOn) throws IOException, URISyntaxException {
-        File file = temporaryFolder.newFile(className.replaceAll("/",".").concat(".jar"));
+        File file = temporaryFolder.newFile(className.replaceAll("/", ".").concat(".jar"));
         JarCreator jarCreator = new JarCreator();
 
         file.getParentFile().mkdirs();
@@ -140,7 +139,7 @@ public class PluginLoaderTest {
 
         Constructor<Plugin> constructor = cl.getDeclaredConstructor(long.class, ApplicationApi.class, PluginSettings.class);
         cl.getDeclaredMethod("hi").invoke(constructor.newInstance(
-            0L, createNiceMock(ApplicationApi.class), createNiceMock(PluginSettings.class)
+                0L, createNiceMock(ApplicationApi.class), createNiceMock(PluginSettings.class)
         ));
     }
 }

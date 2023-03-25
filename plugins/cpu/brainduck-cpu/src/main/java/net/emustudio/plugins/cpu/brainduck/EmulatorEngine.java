@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,41 +20,42 @@
 package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
 
 public class EmulatorEngine {
-    final static short I_STOP = 0; // ;
-    final static short I_INC = 1; // >
-    final static short I_DEC = 2; // <
-    final static short I_INCV = 3; // +
-    final static short I_DECV = 4; // -
-    final static short I_PRINT = 5; // .
-    final static short I_READ = 6; // ,
-    final static short I_LOOP_START = 7; // [
-    final static short I_LOOP_END = 8; // ]
-    final static short I_COPY_AND_CLEAR = 0xA1; // any copyloop, including clear
-    final static short I_SCANLOOP = 0xA2; // [<] or [>]
+    final static byte I_STOP = 0; // ;
+    final static byte I_INC = 1; // >
+    final static byte I_DEC = 2; // <
+    final static byte I_INCV = 3; // +
+    final static byte I_DECV = 4; // -
+    final static byte I_PRINT = 5; // .
+    final static byte I_READ = 6; // ,
+    final static byte I_LOOP_START = 7; // [
+    final static byte I_LOOP_END = 8; // ]
+    final static byte I_COPY_AND_CLEAR = (byte) 0xA1; // any copyloop, including clear
+    final static byte I_SCANLOOP = (byte) 0xA2; // [<] or [>]
 
-    private final short[] rawMemory;
+    private final Byte[] rawMemory;
     private final BrainCPUContextImpl context;
     private final Deque<Integer> loopPointers = new ArrayDeque<>();
     private final Profiler profiler;
 
     public volatile int IP, P; // registers of the CPU
 
-    EmulatorEngine(RawMemoryContext memory, BrainCPUContextImpl context, Profiler profiler) {
-        this.rawMemory = memory.getRawMemory();
+    EmulatorEngine(ByteMemoryContext memory, BrainCPUContextImpl context, Profiler profiler) {
+        this.rawMemory = Objects.requireNonNull(Objects.requireNonNull(memory.getRawMemory())[0]);
         this.context = Objects.requireNonNull(context);
         this.profiler = Objects.requireNonNull(profiler);
     }
 
     public void reset(int adr) {
         IP = adr; // initialize program counter
+        loopPointers.clear();
+        profiler.reset();
 
         // find closest "free" address which does not contain a program
         try {
@@ -62,7 +63,7 @@ public class EmulatorEngine {
             }
         } catch (IndexOutOfBoundsException e) {
             // we get here if "adr" would point to nonexistant memory location,
-            // ie. when we go through all memory to the end without a result
+            // i.e. when we go through all memory to the end without a result
             adr = 0;
         }
         P = adr; // assign to the P register the address we have found
@@ -74,7 +75,7 @@ public class EmulatorEngine {
     }
 
     @SuppressWarnings("empty-statement")
-    CPU.RunState step(boolean optimize) throws IOException {
+    CPU.RunState step(boolean optimize) {
         short OP;
 
         // FETCH
@@ -106,10 +107,10 @@ public class EmulatorEngine {
                 }
                 break;
             case I_INCV: /* + */
-                rawMemory[P] = (short) ((rawMemory[P] + argument) & 0xFF);
+                rawMemory[P] = (byte) ((rawMemory[P] + argument) & 0xFF);
                 break;
             case I_DECV: /* - */
-                rawMemory[P] = (short) ((rawMemory[P] - argument) & 0xFF);
+                rawMemory[P] = (byte) ((rawMemory[P] - argument) & 0xFF);
                 break;
             case I_PRINT: /* . */
                 while (argument > 0) {
@@ -144,8 +145,7 @@ public class EmulatorEngine {
                     } else if (copyLoop.specialOP == I_READ) {
                         rawMemory[P] = context.readFromDevice();
                     } else {
-                        rawMemory[P + copyLoop.relativePosition] = (short)
-                            ((rawMemory[P] * copyLoop.factor + rawMemory[P + copyLoop.relativePosition]) & 0xFF);
+                        rawMemory[P + copyLoop.relativePosition] = (byte) ((rawMemory[P] * copyLoop.factor + rawMemory[P + copyLoop.relativePosition]) & 0xFF);
                     }
                 }
                 rawMemory[P] = 0;

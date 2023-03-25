@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@ package net.emustudio.plugins.memory.ssem;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
-import net.emustudio.plugins.memory.ssem.MemoryImpl;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Test;
 

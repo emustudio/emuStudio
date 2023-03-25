@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,19 +20,18 @@ package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
 
-import java.io.IOException;
 import java.util.Objects;
 
 class BrainCPUContextImpl implements BrainCPUContext {
 
-    private DeviceContext<Short> device;
+    private DeviceContext<Byte> device;
 
     BrainCPUContextImpl() {
         device = null;
     }
 
     @Override
-    public void attachDevice(DeviceContext<Short> device) {
+    public void attachDevice(DeviceContext<Byte> device) {
         this.device = Objects.requireNonNull(device);
     }
 
@@ -46,8 +45,8 @@ class BrainCPUContextImpl implements BrainCPUContext {
      *
      * @param data value that will be written into the device
      */
-    public void writeToDevice(short data) throws IOException {
-        DeviceContext<Short> tmp = device;
+    public void writeToDevice(byte data) {
+        DeviceContext<Byte> tmp = device;
         if (tmp == null) {
             return;
         }
@@ -62,39 +61,12 @@ class BrainCPUContextImpl implements BrainCPUContext {
      *
      * @return value from the device, or 0 if the device is null or there's anything
      */
-    public short readFromDevice() throws IOException {
-        DeviceContext<Short> tmp = device;
+    public byte readFromDevice() {
+        DeviceContext<Byte> tmp = device;
         if (tmp == null) {
             return 0;
         }
-        Short value = tmp.readData();
+        Byte value = tmp.readData();
         return (value == null) ? 0 : value;
-    }
-
-    @Override
-    public boolean isInterruptSupported() {
-        return false;
-    }
-
-    @Override
-    public void clearInterrupt(DeviceContext device, int mask) {
-    }
-
-    @Override
-    public boolean isRawInterruptSupported() {
-        return false;
-    }
-
-    @Override
-    public void signalRawInterrupt(DeviceContext device, byte[] data) {
-    }
-
-    @Override
-    public void signalInterrupt(DeviceContext device, int mask) {
-    }
-
-    @Override
-    public int getCPUFrequency() {
-        return 0;
     }
 }

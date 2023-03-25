@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,103 +19,112 @@
 package net.emustudio.plugins.memory.ram;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamLabel;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 
-public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> implements RAMMemoryContext {
-    private final List<RAMInstruction> memory = new ArrayList<>();
-    private final Map<Integer, String> labels = new HashMap<>();
-    private final List<String> inputs = new ArrayList<>(); // not for memory, but for CPU. Memory holds program so...
+public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> implements RamMemoryContext {
+    private final Map<Integer, RamInstruction> memory = new HashMap<>();
+    private final Map<Integer, RamLabel> labels = new HashMap<>();
+    private final List<RamValue> inputs = new ArrayList<>();
+    private final ReadWriteLock rwl = new ReentrantReadWriteLock();
 
     @Override
     public void clear() {
-        memory.clear();
-        labels.clear();
-        inputs.clear();
+        writeLock(() -> {
+            memory.clear();
+            labels.clear();
+            inputs.clear();
+        });
         notifyMemoryChanged(-1);
         notifyMemorySizeChanged();
     }
 
-    public void clearInputs() {
-        inputs.clear();
-    }
-
     @Override
     public int getSize() {
-        return memory.size();
+        return readLock(memory::size);
     }
 
     @Override
-    public RAMInstruction read(int pos) {
-        return memory.get(pos);
+    public RamInstruction read(int address) {
+        return readLock(() -> memory.get(address));
     }
 
     @Override
-    public RAMInstruction[] readWord(int pos) {
-        return new RAMInstruction[]{memory.get(pos), null};
+    public RamInstruction[] read(int address, int count) {
+        List<RamInstruction> copy = new ArrayList<>();
+        readLock(() -> {
+            for (int i = address; i < address + count; i++) {
+                copy.add(memory.get(i));
+            }
+        });
+        return copy.toArray(new RamInstruction[0]);
     }
 
     @Override
-    public void write(int pos, RAMInstruction instr) {
-        if (pos >= memory.size()) {
-            memory.add(pos, instr);
-            notifyMemoryChanged(memory.size());
+    public void write(int address, RamInstruction value) {
+        AtomicBoolean sizeChanged = new AtomicBoolean();
+        writeLock(() -> {
+            sizeChanged.set(!memory.containsKey(address));
+            memory.put(address, value);
+        });
+        if (sizeChanged.get()) {
             notifyMemorySizeChanged();
-        } else {
-            memory.set(pos, instr);
         }
-        notifyMemoryChanged(pos);
-    }
-
-    // This method is not and won't be implemented.
-    @Override
-    public void writeWord(int pos, RAMInstruction[] instr) {
-        throw new UnsupportedOperationException();
+        notifyMemoryChanged(address);
     }
 
     @Override
-    public Class<RAMInstruction> getDataType() {
-        return RAMInstruction.class;
-    }
-
-    @Override
-    public void addLabel(int pos, String label) {
-        labels.put(pos, label);
-    }
-
-    @Override
-    public String getLabel(int pos) {
-        return labels.get(pos);
-    }
-
-    public Map<String, Integer> getSwitchedLabels() {
-        Map<String, Integer> h = new HashMap<>();
-        for (Map.Entry<Integer, String> entry : labels.entrySet()) {
-            h.put(entry.getValue(), entry.getKey());
+    public void write(int address, RamInstruction[] values, int count) {
+        AtomicBoolean sizeChanged = new AtomicBoolean();
+        writeLock(() -> {
+            for (int i = 0; i < count; i++) {
+                sizeChanged.set(sizeChanged.get() || !memory.containsKey(address));
+                memory.put(address + i, values[i]);
+            }
+        });
+        if (sizeChanged.get()) {
+            notifyMemorySizeChanged();
         }
-        return h;
-    }
-
-    @Override
-    public void addInputs(List<String> inputs) {
-        if (inputs == null) {
-            return;
+        for (int i = 0; i < count; i++) {
+            notifyMemoryChanged(address + i);
         }
-        this.inputs.addAll(inputs);
     }
 
     @Override
-    public List<String> getInputs() {
-        return inputs;
+    public void setLabels(List<RamLabel> labels) {
+        writeLock(() -> {
+            this.labels.clear();
+            for (RamLabel label : labels) {
+                this.labels.put(label.getAddress(), label);
+            }
+        });
     }
 
+    @Override
+    public Optional<RamLabel> getLabel(int address) {
+        return Optional.ofNullable(labels.get(address));
+    }
+
+    @Override
+    public void setInputs(List<RamValue> inputs) {
+        writeLock(() -> {
+            this.inputs.clear();
+            this.inputs.addAll(inputs);
+        });
+    }
+
+    @SuppressWarnings("unchecked")
     public void deserialize(String filename) throws IOException, ClassNotFoundException {
+        rwl.writeLock().lock();
         try {
             InputStream file = new FileInputStream(filename);
             InputStream buffer = new BufferedInputStream(file);
@@ -125,21 +134,65 @@ public class MemoryContextImpl extends AbstractMemoryContext<RAMInstruction> imp
             inputs.clear();
             memory.clear();
 
-            labels.putAll((Map<Integer, String>) input.readObject());
-            inputs.addAll((List<String>) input.readObject());
-            memory.addAll((List<RAMInstruction>) input.readObject());
+            Map<Integer, String> rawLabels = (Map<Integer, String>) input.readObject();
+            for (Map.Entry<Integer, String> rawLabel : rawLabels.entrySet()) {
+                this.labels.put(rawLabel.getKey(), new RamLabel() {
+                    @Override
+                    public int getAddress() {
+                        return rawLabel.getKey();
+                    }
+
+                    @Override
+                    public String getLabel() {
+                        return rawLabel.getValue();
+                    }
+                });
+            }
+
+            inputs.addAll((List<RamValue>) input.readObject());
+            memory.putAll((Map<Integer, RamInstruction>) input.readObject());
 
             input.close();
         } finally {
+            rwl.writeLock().unlock();
             notifyMemoryChanged(-1);
             notifyMemorySizeChanged();
         }
     }
 
     public void destroy() {
-        memory.clear();
+        clear();
     }
 
+    @Override
+    public RamMemory getSnapshot() {
+        return readLock(() -> new RamMemory(labels.values(), memory, inputs));
+    }
 
+    private void writeLock(Runnable r) {
+        rwl.writeLock().lock();
+        try {
+            r.run();
+        } finally {
+            rwl.writeLock().unlock();
+        }
+    }
 
+    private <T> T readLock(Supplier<T> r) {
+        rwl.readLock().lock();
+        try {
+            return r.get();
+        } finally {
+            rwl.readLock().unlock();
+        }
+    }
+
+    private void readLock(Runnable r) {
+        rwl.readLock().lock();
+        try {
+            r.run();
+        } finally {
+            rwl.readLock().unlock();
+        }
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,17 +50,17 @@ public class RunnerTest {
     }
 
     @Test
-    public void testCommandLinePrintHelp() throws Exception {
+    public void testCommandLinePrintHelp() {
         Runner.main("--help");
     }
 
     @Test
-    public void testCommandLineNonexistantSourceFileDoesNotThrow() throws Exception {
+    public void testCommandLineNonexistantSourceFileDoesNotThrow() {
         Runner.main("slfjkdf");
     }
 
     @Test
-    public void testCommandLinePrintVersion() throws Exception {
+    public void testCommandLinePrintVersion() {
         Runner.main("--version");
     }
 

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ public abstract class DebugTableModel extends AbstractTableModel implements Debu
 
     public abstract void memoryChanged(int from, int to);
 
-    public abstract void setMemorySize(int memorySize);
+    public abstract void memorySizeChanged(int memorySize);
 
     public abstract void setDefaultColumns();
 

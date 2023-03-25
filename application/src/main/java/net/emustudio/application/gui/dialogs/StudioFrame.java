@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.configuration.ApplicationConfig;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.actions.AboutAction;
 import net.emustudio.application.gui.actions.CompilerSettingsAction;
@@ -30,6 +29,7 @@ import net.emustudio.application.gui.actions.editor.SaveFileAsAction;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.gui.editor.REditor;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
@@ -37,7 +37,9 @@ import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 public class StudioFrame extends JFrame {
     private final static String SOURCE_CODE_EDITOR = "Source code editor";
@@ -59,29 +61,23 @@ public class StudioFrame extends JFrame {
     private final JTabbedPane tabbedPane = new JTabbedPane();
 
 
-    public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
-                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, String fileName) {
-        this(computer, applicationConfig, dialogs, debugTableModel, memoryContext);
-        editor.openFile(fileName);
-    }
-
-    public StudioFrame(VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs,
-                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext) {
+    public StudioFrame(VirtualComputer computer, AppSettings appSettings, Dialogs dialogs,
+                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, Optional<Path> fileName) {
         Objects.requireNonNull(computer);
 
         this.editor = computer.getCompiler()
-            .map(compiler -> new REditor(dialogs, compiler))
-            .orElse(new REditor(dialogs));
+                .map(compiler -> new REditor(dialogs, compiler))
+                .orElse(new REditor(dialogs));
 
         EmulationController emulationController = computer.getCPU().map(cpu -> new EmulationController(
-            cpu, computer.getMemory().orElse(null), computer.getDevices()
+                cpu, computer.getMemory().orElse(null), computer.getDevices()
         )).orElse(null);
 
         this.emulatorPanel = new EmulatorPanel(
-            this, computer, debugTableModel, dialogs, emulationController, memoryContext
+                this, computer, debugTableModel, dialogs, emulationController, memoryContext
         );
         this.editorPanel = new EditorPanel(
-            this, dialogs, editor, computer, this::updateTitleOfSourceCodePanel, emulatorPanel::getRunState
+                this, dialogs, editor, computer, this::updateTitleOfSourceCodePanel, emulatorPanel::getRunState
         );
 
         this.saveFileAsAction = new SaveFileAsAction(editor, this::updateTitleOfSourceCodePanel);
@@ -89,7 +85,7 @@ public class StudioFrame extends JFrame {
         this.findPreviousAction = new FindPreviousAction(editor, dialogs, editorPanel.getFindAction());
         this.exitAction = new ExitAction(editorPanel::confirmSave, emulationController, computer, this::formWindowClosing);
 
-        this.viewComputerAction = new ViewComputerAction(this, computer, dialogs, applicationConfig);
+        this.viewComputerAction = new ViewComputerAction(this, computer, dialogs, appSettings);
         this.compilerSettingsAction = new CompilerSettingsAction(this, computer);
         this.aboutAction = new AboutAction(this);
 
@@ -107,9 +103,16 @@ public class StudioFrame extends JFrame {
                 resizeComponents();
             }
         });
+        fileName.ifPresent(editor::openFile);
+        updateTitleOfSourceCodePanel();
         editor.grabFocus();
     }
 
+    private static JMenuItem createMenuItem(Action action) {
+        JMenuItem item = new JMenuItem(action);
+        item.setToolTipText(null); // Swing annoyingly adds tool tip text to the menu item
+        return item;
+    }
 
     private void resizeComponents() {
         int height = getHeight();
@@ -123,8 +126,8 @@ public class StudioFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         getRootPane().registerKeyboardAction(
-            e ->editor.clearMarkedOccurences(),
-            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW
+                e -> editor.clearMarkedOccurences(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
         addWindowListener(new WindowAdapter() {
@@ -144,11 +147,11 @@ public class StudioFrame extends JFrame {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
+                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
+                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
     }
 
     private JMenuBar setupMainMenu() {
@@ -194,13 +197,6 @@ public class StudioFrame extends JFrame {
         return mainMenuBar;
     }
 
-
-    private static JMenuItem createMenuItem(Action action) {
-        JMenuItem item = new JMenuItem(action);
-        item.setToolTipText(null); // Swing annoyingly adds tool tip text to the menu item
-        return item;
-    }
-
     private void formWindowClosing() {
         editorPanel.dispose();
         dispose();
@@ -208,8 +204,8 @@ public class StudioFrame extends JFrame {
 
     private void updateTitleOfSourceCodePanel() {
         editor.getCurrentFile().ifPresentOrElse(
-            file -> tabbedPane.setTitleAt(0, file.getName()),
-            () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
+                file -> tabbedPane.setTitleAt(0, file.getName()),
+                () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
         );
     }
 }

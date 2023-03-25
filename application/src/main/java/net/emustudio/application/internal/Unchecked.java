@@ -1,7 +1,7 @@
 /*
  * Run-time library for emuStudio and plugins.
  *
- *     Copyright (C) 2006-2020  Peter Jakubčo
+ *     Copyright (C) 2006-2023  Peter Jakubčo
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ package net.emustudio.application.internal;
 
 /**
  * This code was borrowed from:
- *
+ * <p>
  * http://stackoverflow.com/questions/19757300/java-8-lambda-streams-filter-by-method-with-exception
  */
 public class Unchecked {

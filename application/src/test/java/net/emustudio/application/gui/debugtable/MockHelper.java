@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static net.emustudio.application.gui.debugtable.PaginatingDisassembler.*;
+import static net.emustudio.application.gui.debugtable.PaginatingDisassembler.INSTR_PER_PAGE;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -125,16 +125,16 @@ class MockHelper {
 
         if (maxKnownPage == 0) {
             when(callFlow.getLocations(pageMin, pageCurr))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
             when(callFlow.getLocations(pageCurr, pageMax))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
         }
 
         while (maxKnownPage != 0) {
             when(callFlow.getLocations(pageMin, pageCurr))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageMin));
             when(callFlow.getLocations(pageCurr, pageMax))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, pageCurr));
 
             int nextPageMin = pageMax;
             int nextPageCurr = pageCurr + instructionsSize * (INSTR_PER_PAGE - 1);
@@ -151,14 +151,14 @@ class MockHelper {
             }
 
             when(callFlow.getLocations(nextPageMin, nextPageCurr))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageMin));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageMin));
             if (nextPageCurr > pageCurr) {
                 expectTraverse(pageCurr, nextPageCurr, instructionsSize);
             } else if (nextPageCurr < pageCurr) {
                 expectTraverse(nextPageCurr, pageCurr, instructionsSize);
             }
             when(callFlow.getLocations(nextPageCurr, nextPageCurr + instructionsSize * INSTR_PER_HALF_PAGE))
-                .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageCurr));
+                    .thenReturn(instructions(instructionsSize, INSTR_PER_HALF_PAGE + 1, nextPageCurr));
 
             pageMin = nextPageMin;
             pageCurr = nextPageCurr;
@@ -168,7 +168,7 @@ class MockHelper {
             currentInstructions.add(pageCurr);
         }
 
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
 
         currentInstructions.forEach(location -> {
             asm.rowToLocation(currentLocation, 0);

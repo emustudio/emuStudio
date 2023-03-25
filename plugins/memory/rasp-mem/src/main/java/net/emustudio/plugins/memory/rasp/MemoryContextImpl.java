@@ -2,7 +2,7 @@
  * This file is part of emuStudio.
  *
  * Copyright (C) 2016-2017  Michal Šipoš
- * Copyright (C) 2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,178 +21,185 @@
 package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.MemoryItem;
-import net.emustudio.plugins.memory.rasp.api.RASPInstruction;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspLabel;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public class MemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {
-
-    private final List<MemoryItem> memory = new ArrayList<>();
-    private int programLocation;
+public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements RaspMemoryContext {
+    private final Map<Integer, Integer> memory = new HashMap<>();
+    private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
+    private final ReadWriteLock rwl = new ReentrantReadWriteLock();
 
-    private final Map<Integer, String> labels = new HashMap<>();
-
-    /**
-     * Reads memory item from given address.
-     *
-     * @param position the memory address
-     * @return the item at the given address
-     */
-    @Override
-    public MemoryItem read(int position) {
-        if (position >= 0 && position < getSize()) {
-            return memory.get(position);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Write a memory item to the given address.
-     *
-     * @param position the memory address
-     * @param item     the item to write
-     */
-    @Override
-    public void write(int position, MemoryItem item) {
-        if (position >= memory.size()) {
-            //padd with nulls to prevent IndexOutOfBoundsException
-            for (int i = memory.size(); i < position; i++) {
-                memory.add(i, new NumberMemoryItem(0));
-            }
-            memory.add(position, item);
-            notifyMemoryChanged(memory.size());
-            notifyMemorySizeChanged();
-        } else {
-            //if there is an instruction at "position", modify its opcode
-            MemoryItem currentValue = read(position);
-            if (currentValue instanceof RASPInstruction) {
-                int number = ((NumberMemoryItem) item).getValue();
-                memory.set(position, new InstructionImpl(number));
-            } //if there is not an instruction, i.e. its a NumberMemoryItem or null
-            else {
-                memory.set(position, item);
-            }
-        }
-        notifyMemoryChanged(position);
-    }
-
-    @Override
-    public MemoryItem[] readWord(int i) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void writeWord(int i, MemoryItem[] cts) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Class<MemoryItem> getDataType() {
-        return MemoryItem.class;
-    }
-
-    /**
-     * Clears memory as well as labels.
-     */
     @Override
     public void clear() {
-        inputs.clear();
-        memory.clear();
-        labels.clear();
+        writeLock(() -> {
+            memory.clear();
+            labels.clear();
+            inputs.clear();
+        });
         notifyMemoryChanged(-1);
         notifyMemorySizeChanged();
     }
 
     @Override
     public int getSize() {
-        return memory.size();
+        return readLock(() -> memory.keySet().stream().max(Comparator.naturalOrder()).orElse(0));
     }
 
     @Override
-    public void addLabel(int pos, String label) {
-        labels.put(pos, label);
+    public Integer read(int address) {
+        return readLock(() -> memory.getOrDefault(address, 0));
     }
 
     @Override
-    public String getLabel(int pos) {
-        return labels.get(pos);
+    public Integer[] read(int address, int count) {
+        List<Integer> copy = new ArrayList<>();
+        readLock(() -> {
+            for (int i = address; i < address + count; i++) {
+                copy.add(memory.getOrDefault(i, 0));
+            }
+        });
+        return copy.toArray(new Integer[0]);
     }
 
     @Override
-    public String addressToLabelString(int address) {
-        String label = getLabel(address);
-        if (label != null) {
-            int index = label.lastIndexOf(':');
-            label = label.substring(0, index);
-            return label.toLowerCase();
-        } else {
-            //if no label at the address, simply return the number
-            return String.valueOf(address);
+    public void write(int address, Integer value) {
+        AtomicBoolean sizeChanged = new AtomicBoolean();
+        writeLock(() -> {
+            sizeChanged.set(!memory.containsKey(address));
+            memory.put(address, value);
+        });
+        if (sizeChanged.get()) {
+            notifyMemorySizeChanged();
+        }
+        notifyMemoryChanged(address);
+    }
+
+    @Override
+    public void write(int address, Integer[] values, int count) {
+        AtomicBoolean sizeChanged = new AtomicBoolean();
+        writeLock(() -> {
+            for (int i = 0; i < count; i++) {
+                sizeChanged.set(sizeChanged.get() || !memory.containsKey(address + i));
+                memory.put(address + i, values[i]);
+            }
+        });
+        if (sizeChanged.get()) {
+            notifyMemorySizeChanged();
+        }
+        for (int i = 0; i < count; i++) {
+            notifyMemoryChanged(address + i);
         }
     }
 
     @Override
-    public void addInputs(List<Integer> inputs) {
-        Objects.requireNonNull(inputs, "inputs cannot be null");
-        this.inputs.addAll(inputs);
-    }
-
-    @Override
-    public List<Integer> getInputs() {
-        return inputs;
-    }
-
-    /**
-     * Destroys the memory content.
-     */
-    public void destroy() {
-        memory.clear();
-    }
-
-    public int getProgramLocation() {
-        return programLocation;
-    }
-
-    @Override
-    public void setProgramLocation(Integer programLocation) {
-        this.programLocation = Optional.ofNullable(programLocation).orElse(0);
-    }
-
-    public void loadFromFile(String filename) throws IOException, ClassNotFoundException {
-        try {
-            FileInputStream fileInputStream = new FileInputStream(filename);
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-            try (ObjectInputStream objectInputStream = new ObjectInputStream(bufferedInputStream)) {
-                //clear labels and memory before loading
-                labels.clear();
-                memory.clear();
-                inputs.clear();
-
-                labels.putAll((Map<Integer, String>) objectInputStream.readObject());
-                programLocation = (Integer) objectInputStream.readObject();
-                inputs.addAll((List<Integer>) objectInputStream.readObject());
-                //load program from file
-                List<MemoryItem> program = (List<MemoryItem>) objectInputStream.readObject();
-                int position = programLocation;
-                //write all the program, beginning at programStart
-                for (MemoryItem item : program) {
-                    write(position++, item);
-                }
+    public void setLabels(List<RaspLabel> labels) {
+        writeLock(() -> {
+            this.labels.clear();
+            for (RaspLabel label : labels) {
+                this.labels.put(label.getAddress(), label);
             }
+        });
+    }
+
+    @Override
+    public Optional<RaspLabel> getLabel(int address) {
+        return readLock(() -> Optional.ofNullable(labels.get(address)));
+    }
+
+    @Override
+    public void setInputs(List<Integer> inputs) {
+        rwl.writeLock().lock();
+        try {
+            this.inputs.clear();
+            this.inputs.addAll(inputs);
         } finally {
-            /*any number can be put in this method, handling of the notification
-             is just updating the whole table
-             */
-            notifyMemoryChanged(0);
+            rwl.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public RaspMemory getSnapshot() {
+        return readLock(() -> new RaspMemory(labels.values(), memory, inputs));
+    }
+
+    @SuppressWarnings("unchecked")
+    public void deserialize(String filename, Consumer<Integer> setProgramLocation) throws IOException, ClassNotFoundException {
+        rwl.writeLock().lock();
+        try {
+            InputStream file = new FileInputStream(filename);
+            InputStream buffer = new BufferedInputStream(file);
+            ObjectInput input = new ObjectInputStream(buffer);
+
+            labels.clear();
+            inputs.clear();
+            memory.clear();
+
+            int programLocation = (Integer) input.readObject();
+            setProgramLocation.accept(programLocation);
+
+            Map<Integer, String> rawLabels = (Map<Integer, String>) input.readObject();
+            for (Map.Entry<Integer, String> rawLabel : rawLabels.entrySet()) {
+                this.labels.put(rawLabel.getKey(), new RaspLabel() {
+                    @Override
+                    public int getAddress() {
+                        return rawLabel.getKey();
+                    }
+
+                    @Override
+                    public String getLabel() {
+                        return rawLabel.getValue();
+                    }
+                });
+            }
+
+            inputs.addAll((List<Integer>) input.readObject());
+            memory.putAll((Map<Integer, Integer>) input.readObject());
+
+            input.close();
+        } finally {
+            rwl.writeLock().unlock();
             notifyMemorySizeChanged();
+            notifyMemoryChanged(-1);
+        }
+    }
+
+    public void destroy() {
+        clear();
+    }
+
+    private void writeLock(Runnable r) {
+        rwl.writeLock().lock();
+        try {
+            r.run();
+        } finally {
+            rwl.writeLock().unlock();
+        }
+    }
+
+    private <T> T readLock(Supplier<T> r) {
+        rwl.readLock().lock();
+        try {
+            return r.get();
+        } finally {
+            rwl.readLock().unlock();
+        }
+    }
+
+    private void readLock(Runnable r) {
+        rwl.readLock().lock();
+        try {
+            r.run();
+        } finally {
+            rwl.readLock().unlock();
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 package net.emustudio.plugins.cpu.intel8080.suite;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.plugins.cpu.intel8080.CpuImpl;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import static net.emustudio.plugins.cpu.intel8080.EmulatorEngine.*;
 
 public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
 
-    public CpuRunnerImpl(CpuImpl cpu, ShortMemoryStub memoryStub) {
+    public CpuRunnerImpl(CpuImpl cpu, ByteMemoryStub memoryStub) {
         super(cpu, memoryStub);
     }
 
@@ -68,7 +68,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         if (registerPair < 3) {
             setRegisterPair(registerPair, value);
         } else if (registerPair == 3) {
-            cpu.getEngine().regs[REG_A] = (value >>> 8) & 0xFF;
+            cpu.getEngine().regs[REG_A] = (byte) ((value >>> 8) & 0xFF);
             cpu.getEngine().flags = (short) (value & 0xD7 | 2);
         } else {
             throw new IllegalArgumentException("Expected value between <0,3> !");
@@ -86,13 +86,13 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     }
 
     @Override
-    public void setFlags(int mask) {
-        cpu.getEngine().flags |= mask;
+    public int getFlags() {
+        return cpu.getEngine().flags;
     }
 
     @Override
-    public int getFlags() {
-        return cpu.getEngine().flags;
+    public void setFlags(int mask) {
+        cpu.getEngine().flags |= mask;
     }
 
     @Override

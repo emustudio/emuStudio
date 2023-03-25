@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ class AutomaticEmulation {
         Byte[][] memorySnapshot = new Byte[memory.getSize() / 4][4];
 
         for (int i = 0; i < memorySnapshot.length; i++) {
-            Byte[] word = memory.readWord(i * 4);
+            Byte[] word = memory.read(i * 4, 4);
             System.arraycopy(word, 0, memorySnapshot[i], 0, 4);
         }
 

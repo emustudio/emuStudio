@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,14 +41,14 @@ public class EmulatorEngineTest {
         profiler = new Profiler(memory);
 
         context = createNiceMock(BrainCPUContextImpl.class);
-        context.writeToDevice(anyShort());
+        context.writeToDevice(anyByte());
         expectLastCall().anyTimes();
-        expect(context.readFromDevice()).andReturn((short) 0).anyTimes();
+        expect(context.readFromDevice()).andReturn((byte) 0).anyTimes();
     }
 
-    private void resetProgram(short... operations) {
+    private void resetProgram(byte... operations) {
         int i = 0;
-        for (short op : operations) {
+        for (byte op : operations) {
             memory.write(i++, op);
         }
         engine = new EmulatorEngine(memory, context, profiler);
@@ -65,13 +65,13 @@ public class EmulatorEngineTest {
     @Test
     public void testCopyLoop() throws Exception {
         resetProgram(
-            I_LOOP_START,
-            I_INC, I_INCV, I_INCV,
-            I_INC, I_INCV, I_DECV,
-            I_INC, I_INC, I_DECV, I_DECV,
-            I_DEC, I_DEC, I_DEC, I_DEC,
-            I_DECV,
-            I_LOOP_END
+                I_LOOP_START,
+                I_INC, I_INCV, I_INCV,
+                I_INC, I_INCV, I_DECV,
+                I_INC, I_INC, I_DECV, I_DECV,
+                I_DEC, I_DEC, I_DEC, I_DEC,
+                I_DECV,
+                I_LOOP_END
         ); // [>++>+->>++<<<<-]
         checkProfilerCopyLoop(17, new int[]{2, 0, -2}, new int[]{1, 2, 4});
 
@@ -79,12 +79,12 @@ public class EmulatorEngineTest {
     }
 
     @Test
-    public void testCopyLoopWeird() throws Exception {
+    public void testCopyLoopWeird() {
         resetProgram(
-            I_LOOP_START,
-            I_DECV,
-            I_DEC, I_INC, I_DECV,
-            I_LOOP_END
+                I_LOOP_START,
+                I_DECV,
+                I_DEC, I_INC, I_DECV,
+                I_LOOP_END
         ); // [-<>-]
 
         engine.reset(0);
@@ -94,14 +94,14 @@ public class EmulatorEngineTest {
     @Test
     public void testCopyLoopWithPrints() throws Exception {
         resetProgram(
-            I_LOOP_START,
-            I_DECV,
-            I_INC, I_INCV,
-            I_PRINT,
-            I_INC, I_INCV, I_INCV,
-            I_PRINT,
-            I_DEC, I_DEC,
-            I_LOOP_END
+                I_LOOP_START,
+                I_DECV,
+                I_INC, I_INCV,
+                I_PRINT,
+                I_INC, I_INCV, I_INCV,
+                I_PRINT,
+                I_DEC, I_DEC,
+                I_LOOP_END
         ); // [->+.>++.<<]
 
         checkProfilerCopyLoop(12, new int[]{1, 0, 2, 0}, new int[]{1, 0, 2, 0});
@@ -112,11 +112,11 @@ public class EmulatorEngineTest {
     @Test
     public void testScanloop() throws Exception {
         resetProgram(
-            I_LOOP_START,
-            I_DEC,
-            I_INC,
-            I_INC,
-            I_LOOP_END
+                I_LOOP_START,
+                I_DEC,
+                I_INC,
+                I_INC,
+                I_LOOP_END
         ); // [<>>]
 
         engine.reset(0);
@@ -125,10 +125,10 @@ public class EmulatorEngineTest {
         assertNotNull(operation);
         assertEquals(I_SCANLOOP, operation.operation);
 
-        memory.write(6, (short) 5);
-        memory.write(7, (short) 5);
-        memory.write(8, (short) 5);
-        memory.write(9, (short) 5);
+        memory.write(6, (byte) 5);
+        memory.write(7, (byte) 5);
+        memory.write(8, (byte) 5);
+        memory.write(9, (byte) 5);
         engine.P = 6;
 
         engine.step(true);
@@ -154,14 +154,14 @@ public class EmulatorEngineTest {
 
     private void runAndCheckCopyLoop(int start, int valueP, int[] resultValues, int[] relPositions) throws IOException {
         engine.P = start;
-        memory.write(engine.P, (short) valueP);
+        memory.write(engine.P, (byte) valueP);
 
         engine.step(true);
 
         for (int i = 0; i < resultValues.length; i++) {
             assertEquals("Expected res[" + i + "]=" + resultValues[i] + " at " + (start + relPositions[i]),
-                resultValues[i], (int) memory.read(start + relPositions[i]));
+                    resultValues[i], memory.read(start + relPositions[i]) & 0xFF);
         }
-        assertEquals(0, (int) memory.read(engine.P));
+        assertEquals(0, memory.read(engine.P) & 0xFF);
     }
 }

@@ -2,7 +2,7 @@
  * This file is part of emuStudio.
  *
  * Copyright (C) 2016-2017  Michal Šipoš
- * Copyright (C) 2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
-import net.emustudio.plugins.memory.rasp.gui.MemoryDialog;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
+import net.emustudio.plugins.memory.rasp.gui.MemoryGui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,15 +40,15 @@ import java.util.ResourceBundle;
 
 @SuppressWarnings("unused")
 @PluginRoot(
-    type = PLUGIN_TYPE.MEMORY,
-    title = "RASP Memory"
+        type = PLUGIN_TYPE.MEMORY,
+        title = "RASP Memory"
 )
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl context;
-    private MemoryDialog gui;
     private final boolean guiNotSupported;
+    private MemoryGui gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -57,12 +57,12 @@ public class MemoryImpl extends AbstractMemory {
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                pool.register(pluginID, context, RASPMemoryContext.class);
+                pool.register(pluginID, context, RaspMemoryContext.class);
                 pool.register(pluginID, context, MemoryContext.class);
             } catch (InvalidContextException | ContextAlreadyRegisteredException ex) {
                 LOGGER.error("Could not register RASP memory context", ex);
                 applicationApi.getDialogs().showError(
-                    "Could not register RASP memory context. Please see log file for details.", super.getTitle()
+                        "Could not register RASP memory context. Please see log file for details.", super.getTitle()
                 );
             }
         });
@@ -86,7 +86,7 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
-                gui = new MemoryDialog(parent, context, applicationApi.getDialogs());
+                gui = new MemoryGui(parent, context, applicationApi);
             }
             gui.setVisible(true);
         }
@@ -110,11 +110,6 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public String getDescription() {
         return "RASP memory containing the program as well as the data";
-    }
-
-    @Override
-    public int getProgramLocation() {
-        return context.getProgramLocation();
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 package net.emustudio.plugins.cpu.brainduck;
 
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,7 @@ import static net.emustudio.plugins.cpu.brainduck.EmulatorEngine.*;
 public class Profiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(Profiler.class);
 
-    private final short[] memory;
+    private final Byte[] memory;
     private final CachedOperation[] operationsCache;
     private final Integer[] loopEndsCache;
 
@@ -41,54 +41,8 @@ public class Profiler {
     private int copyLoopsCount = 0;
     private int scanLoopsCount = 0;
 
-    public static final class CachedOperation {
-        public enum TYPE {COPYLOOP, REPEAT, SCANLOOP}
-
-        final TYPE type;
-        int nextIP;
-
-        CachedOperation(TYPE type) {
-            this.type = type;
-        }
-
-        // for repeats
-        int argument;
-        short operation;
-
-        // for copyloops
-        List<CopyLoop> copyLoops;
-
-        @Override
-        public String toString() {
-            switch (type) {
-                case COPYLOOP:
-                    return type + copyLoops.toString();
-                case REPEAT:
-                    return type + "[op=" + operation + ", arg=" + argument + "]";
-            }
-            return "UNKNOWN";
-        }
-    }
-
-    public final static class CopyLoop {
-        int factor;
-        int relativePosition;
-
-        short specialOP;
-
-        CopyLoop(int factor, int relativePosition) {
-            this.factor = factor;
-            this.relativePosition = relativePosition;
-        }
-
-        @Override
-        public String toString() {
-            return "[f=" + factor + ",pos=" + relativePosition + "]";
-        }
-    }
-
-    Profiler(RawMemoryContext memory) {
-        this.memory = Objects.requireNonNull(memory.getRawMemory());
+    Profiler(ByteMemoryContext memory) {
+        this.memory = Objects.requireNonNull(memory.getRawMemory())[0];
 
         loopEndsCache = new Integer[this.memory.length];
         operationsCache = new CachedOperation[this.memory.length];
@@ -315,8 +269,51 @@ public class Profiler {
     public String toString() {
         int total = repeatedOptsCount + copyLoopsCount + scanLoopsCount;
         return "Profiler{optimizations=" + total
-            + ", repeatedOps=" + repeatedOptsCount + ", copyLoops=" + copyLoopsCount
-            + ", scanLoops=" + scanLoopsCount
-            + "}";
+                + ", repeatedOps=" + repeatedOptsCount + ", copyLoops=" + copyLoopsCount
+                + ", scanLoops=" + scanLoopsCount
+                + "}";
+    }
+
+    public static final class CachedOperation {
+        final TYPE type;
+        int nextIP;
+        // for repeats
+        int argument;
+        short operation;
+        // for copyloops
+        List<CopyLoop> copyLoops;
+        CachedOperation(TYPE type) {
+            this.type = type;
+        }
+
+        @Override
+        public String toString() {
+            switch (type) {
+                case COPYLOOP:
+                    return type + copyLoops.toString();
+                case REPEAT:
+                    return type + "[op=" + operation + ", arg=" + argument + "]";
+            }
+            return "UNKNOWN";
+        }
+
+        public enum TYPE {COPYLOOP, REPEAT, SCANLOOP}
+    }
+
+    public final static class CopyLoop {
+        int factor;
+        int relativePosition;
+
+        short specialOP;
+
+        CopyLoop(int factor, int relativePosition) {
+            this.factor = factor;
+            this.relativePosition = relativePosition;
+        }
+
+        @Override
+        public String toString() {
+            return "[f=" + factor + ",pos=" + relativePosition + "]";
+        }
     }
 }

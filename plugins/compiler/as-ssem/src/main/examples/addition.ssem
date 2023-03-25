@@ -1,7 +1,5 @@
-// A simple program to add two numbers together.
-//
 -- Description:      Sum = X + Y
--- Parameter Lines:  29: X 
+-- Parameter Lines:  29: X
 --                   30: Y
 -- Result Lines:     31: Sum
 

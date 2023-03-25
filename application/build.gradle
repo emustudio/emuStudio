@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,15 +39,16 @@ dependencies {
   extraLibs libs.emuLib
 
   implementation libs.jcipAnnotations
+  implementation libs.antlrRuntime
 
   extraLibs libs.editor
   extraLibs libs.editorDialogs
-  extraLibs libs.args4j
+  extraLibs libs.picocli
+  annotationProcessor libs.picocliAnnotation
   extraLibs libs.tomlj
   extraLibs libs.logback
   extraLibs libs.slf4JApi
 
-  extraLibsRuntime libs.javaCupRuntime
   providedRuntime project(":plugins:compiler:as-8080")
   providedRuntime project(":plugins:compiler:as-ssem")
   providedRuntime project(":plugins:compiler:as-z80")
@@ -57,9 +58,8 @@ dependencies {
 
   providedRuntime project(":plugins:memory:ram-mem")
   providedRuntime project(":plugins:memory:rasp-mem")
-  providedRuntime project(":plugins:memory:brainduck-mem")
   providedRuntime project(":plugins:memory:ssem-mem")
-  providedRuntime project(":plugins:memory:standard-mem")
+  providedRuntime project(":plugins:memory:byte-mem")
 
   providedRuntime project(":plugins:cpu:8080-cpu")
   providedRuntime project(":plugins:cpu:brainduck-cpu")
@@ -69,12 +69,13 @@ dependencies {
   providedRuntime project(":plugins:cpu:ssem-cpu")
 
   providedRuntime project(":plugins:device:abstract-tape")
-  providedRuntime project(":plugins:device:88-disk")
+  providedRuntime project(":plugins:device:88-dcdd")
   providedRuntime project(":plugins:device:88-sio")
   providedRuntime project(":plugins:device:adm3A-terminal")
-  providedRuntime project(":plugins:device:brainduck-terminal")
-  providedRuntime project(":plugins:device:simhPseudo-z80")
+  providedRuntime project(":plugins:device:vt100-terminal")
+  providedRuntime project(":plugins:device:simh-pseudo")
   providedRuntime project(":plugins:device:ssem-display")
+  providedRuntime project(":plugins:device:zxspectrum-display")
 
   testImplementation libs.junit
   testImplementation libs.easyMock
@@ -85,15 +86,20 @@ dependencies {
 
 application {
   applicationName = 'emuStudio'
-  mainClassName = 'net.emustudio.application.Runner'
-  applicationDefaultJvmArgs = ['-Dawt.useSystemAAFontSettings=on', '-Dswing.aatext=true', '-Dsun.java2d.xrender=true']
+  mainClassName = 'net.emustudio.application.cmdline.Runner'
+  applicationDefaultJvmArgs = [
+          '-Dawt.useSystemAAFontSettings=on', '-Dswing.aatext=true', '-Dsun.java2d.xrender=true', '-Dsun.java2d.d3d=false',
+          '-Dsun.java2d.noddraw=true'
+  ]
   executableDir = ''
 }
 
 compileJava {
   sourceSets.main.compileClasspath += configurations.providedRuntime
   options.encoding = 'UTF-8'
+  options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
+
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
@@ -106,12 +112,12 @@ jar {
   archiveVersion = ''
   manifest {
     attributes(
-      'Main-Class': 'net.emustudio.application.Runner',
-      "Implementation-Title": archivesBaseName,
-      "Implementation-Version": project.version,
-      'Build-Timestamp': new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
-      'Build-Jdk': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
-      'Build-OS': "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+            'Main-Class': 'net.emustudio.application.cmdline.Runner',
+            "Implementation-Title": archivesBaseName,
+            "Implementation-Version": project.version,
+            'Build-Timestamp': new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+            'Build-Jdk': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+            'Build-OS': "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
     )
   }
 }
@@ -119,8 +125,8 @@ jar {
 processResources {
   filesMatching("**/*.properties") {
     filter ReplaceTokens, tokens: [
-      "project.version": project.version,
-      "today.year": new Date().format("yyyy")
+            "project.version": project.version,
+            "today.year"     : new Date().format("yyyy")
     ]
   }
 }
@@ -142,6 +148,10 @@ def examples(String name) {
 
 def scripts(String name) {
   return project(name).buildDir.getAbsolutePath() + "/libs/scripts"
+}
+
+def rawfiles(String name) {
+  return project(name).buildDir.getAbsolutePath() + "/libs/files"
 }
 
 distZip {
@@ -184,9 +194,8 @@ distributions {
         include '*.jar'
         from(output(":plugins:memory:ram-mem"))
         from(output(":plugins:memory:rasp-mem"))
-        from(output(":plugins:memory:brainduck-mem"))
         from(output(":plugins:memory:ssem-mem"))
-        from(output(":plugins:memory:standard-mem"))
+        from(output(":plugins:memory:byte-mem"))
       }
 
       into('cpu') {
@@ -202,12 +211,13 @@ distributions {
       into('device') {
         include '*.jar'
         from(output(":plugins:device:abstract-tape"))
-        from(output(":plugins:device:88-disk"))
+        from(output(":plugins:device:88-dcdd"))
         from(output(":plugins:device:88-sio"))
         from(output(":plugins:device:adm3A-terminal"))
-        from(output(":plugins:device:brainduck-terminal"))
-        from(output(":plugins:device:simhPseudo-z80"))
+        from(output(":plugins:device:vt100-terminal"))
+        from(output(":plugins:device:simh-pseudo"))
         from(output(":plugins:device:ssem-display"))
+        from(output(":plugins:device:zxspectrum-display"))
       }
 
       // Examples
@@ -223,10 +233,11 @@ distributions {
           into "bin"
         }
       }
-      ["88-disk"].collect { device ->
+      ["88-dcdd"].collect { device ->
         from(scripts(":plugins:device:$device")) {
           into "bin"
         }
+        from(rawfiles(":plugins:device:$device"))
       }
     }
   }

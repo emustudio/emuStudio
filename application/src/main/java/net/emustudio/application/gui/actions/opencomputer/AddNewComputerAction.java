@@ -1,11 +1,28 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2023  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package net.emustudio.application.gui.actions.opencomputer;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.ConfigFiles;
 import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.internal.Unchecked;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,23 +33,25 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.application.settings.ConfigFiles.createConfiguration;
+import static net.emustudio.application.settings.ConfigFiles.loadConfiguration;
+
 public class AddNewComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(AddNewComputerAction.class);
 
     private final Dialogs dialogs;
-    private final ConfigFiles configFiles;
-    private final ApplicationConfig applicationConfig;
+    private final AppSettings appSettings;
     private final Runnable update;
     private final JDialog parent;
 
-    public AddNewComputerAction(Dialogs dialogs, ConfigFiles configFiles, ApplicationConfig applicationConfig,
-                                Runnable update, JDialog parent) {
+    public AddNewComputerAction(Dialogs dialogs, AppSettings appSettings, Runnable update, JDialog parent) {
         super(
-            "Create new computer...", new ImageIcon(AddNewComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-add.png"))
+                "Create new computer...", new ImageIcon(AddNewComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-add.png"))
         );
+        putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
+
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.configFiles = Objects.requireNonNull(configFiles);
-        this.applicationConfig = Objects.requireNonNull(applicationConfig);
+        this.appSettings = Objects.requireNonNull(appSettings);
         this.update = Objects.requireNonNull(update);
         this.parent = Objects.requireNonNull(parent);
     }
@@ -45,18 +64,17 @@ public class AddNewComputerAction extends AbstractAction {
                 dialogs.showError("Computer name must be non-empty", "Create new computer");
             } else {
                 try {
-                    configFiles
-                        .loadConfiguration(name)
-                        .ifPresentOrElse(
-                            c -> dialogs.showError("Computer '" + name + "' already exists, choose another name."),
-                            () -> {
-                                ComputerConfig newComputer = Unchecked.call(() -> configFiles.createConfiguration(name));
-                                Schema schema = new Schema(newComputer, applicationConfig);
-                                SchemaEditorDialog di = new SchemaEditorDialog(parent, schema, configFiles, dialogs);
-                                di.setVisible(true);
-                                update.run();
-                            }
-                        );
+                    loadConfiguration(name)
+                            .ifPresentOrElse(
+                                    c -> dialogs.showError("Computer '" + name + "' already exists, choose another name."),
+                                    () -> {
+                                        ComputerConfig newComputer = Unchecked.call(() -> createConfiguration(name));
+                                        Schema schema = new Schema(newComputer, appSettings);
+                                        SchemaEditorDialog di = new SchemaEditorDialog(parent, schema, dialogs);
+                                        di.setVisible(true);
+                                        update.run();
+                                    }
+                            );
                 } catch (IOException ex) {
                     LOGGER.error("Could not load computer with name '" + name + "'", ex);
                     dialogs.showError("Could not load computer with name '" + name + "'. Please see log file for details.");

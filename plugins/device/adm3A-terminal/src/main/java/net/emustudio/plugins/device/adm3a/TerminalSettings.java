@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
  */
 package net.emustudio.plugins.device.adm3a;
 
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
-import net.emustudio.emulib.runtime.PluginSettings;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,37 +33,32 @@ import java.util.Objects;
 public class TerminalSettings {
     private final static Logger LOGGER = LoggerFactory.getLogger(TerminalSettings.class);
 
-    private final static String DEFAULT_INPUT_FILE_NAME = "adm3A-terminal.in";
-    private final static String DEFAULT_OUTPUT_FILE_NAME = "adm3A-terminal.out";
-    private final static String ANTI_ALIASING = "antiAliasing";
+    public final static String DEFAULT_INPUT_FILE_NAME = "adm3A-terminal.in";
+    public final static String DEFAULT_OUTPUT_FILE_NAME = "adm3A-terminal.out";
     private final static String HALF_DUPLEX = "halfDuplex";
     private final static String ALWAYS_ON_TOP = "alwaysOnTop";
     private final static String INPUT_FILE_NAME = "inputFileName";
     private final static String OUTPUT_FILE_NAME = "outputFileName";
-    private final static String INPUT_READ_DELAY = "inputReadDelay";
-
+    private final static String INPUT_READ_DELAY_MILLIS = "inputReadDelayMillis";
+    private final static String DEVICE_INDEX = "deviceIndex";
+    private final static String FONT = "font";
     private final Dialogs dialogs;
     private final PluginSettings settings;
-    private final boolean guiNotSupported;
-
+    private final boolean guiSupported;
+    private final List<ChangedObserver> observers = new ArrayList<>();
     private boolean halfDuplex = false;
-    private boolean antiAliasing = true;
     private boolean alwaysOnTop = false;
     private volatile Path inputPath = Path.of(DEFAULT_INPUT_FILE_NAME);
     private volatile Path outputPath = Path.of(DEFAULT_OUTPUT_FILE_NAME);
-    private int inputReadDelay = 0;
-
-    private final List<ChangedObserver> observers = new ArrayList<>();
-
-    public interface ChangedObserver {
-        void settingsChanged() throws IOException;
-    }
+    private int inputReadDelayMillis = 0;
+    private int deviceIndex = 0;
+    private TerminalFont font = TerminalFont.ORIGINAL;
 
     TerminalSettings(PluginSettings settings, Dialogs dialogs) {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.settings = Objects.requireNonNull(settings);
 
-        guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         readSettings();
     }
 
@@ -76,15 +71,15 @@ public class TerminalSettings {
     }
 
     public boolean isGuiSupported() {
-        return !guiNotSupported;
+        return guiSupported;
     }
 
-    public int getInputReadDelay() {
-        return inputReadDelay;
+    public int getInputReadDelayMillis() {
+        return inputReadDelayMillis;
     }
 
-    public void setInputReadDelay(int inputReadDelay) {
-        this.inputReadDelay = inputReadDelay;
+    public void setInputReadDelayMillis(int inputReadDelayMillis) {
+        this.inputReadDelayMillis = inputReadDelayMillis;
         notifyObserversAndIgnoreError();
     }
 
@@ -115,15 +110,6 @@ public class TerminalSettings {
         notifyObservers();
     }
 
-    public boolean isAntiAliasing() {
-        return antiAliasing;
-    }
-
-    public void setAntiAliasing(boolean antiAliasing) {
-        this.antiAliasing = antiAliasing;
-        notifyObserversAndIgnoreError();
-    }
-
     public boolean isAlwaysOnTop() {
         return alwaysOnTop;
     }
@@ -133,17 +119,34 @@ public class TerminalSettings {
         notifyObserversAndIgnoreError();
     }
 
+    public int getDeviceIndex() {
+        return deviceIndex;
+    }
+
+    public void setDeviceIndex(int deviceIndex) {
+        this.deviceIndex = deviceIndex;
+    }
+
+    public TerminalFont getFont() {
+        return font;
+    }
+
+    public void setFont(TerminalFont font) {
+        this.font = Objects.requireNonNull(font);
+    }
+
     public void write() {
         try {
-            settings.setInt(INPUT_READ_DELAY, inputReadDelay);
+            settings.setInt(INPUT_READ_DELAY_MILLIS, inputReadDelayMillis);
             settings.setBoolean(HALF_DUPLEX, halfDuplex);
             settings.setBoolean(ALWAYS_ON_TOP, alwaysOnTop);
-            settings.setBoolean(ANTI_ALIASING, antiAliasing);
             settings.setString(OUTPUT_FILE_NAME, outputPath.toString());
             settings.setString(INPUT_FILE_NAME, inputPath.toString());
+            settings.setInt(DEVICE_INDEX, deviceIndex);
+            settings.setString(FONT, font.name);
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not update settings", e);
-            dialogs.showError("Could not save settings. Please see log file for details.", "ADM 3A");
+            dialogs.showError("Could not save settings. Please see log file for details.", "LSI ADM-3A");
         } finally {
             notifyObserversAndIgnoreError();
         }
@@ -152,17 +155,25 @@ public class TerminalSettings {
     private void readSettings() {
         halfDuplex = settings.getBoolean(HALF_DUPLEX, false);
         alwaysOnTop = settings.getBoolean(ALWAYS_ON_TOP, false);
-        antiAliasing = settings.getBoolean(ANTI_ALIASING, true);
         inputPath = Path.of(settings.getString(INPUT_FILE_NAME, DEFAULT_INPUT_FILE_NAME));
         outputPath = Path.of(settings.getString(OUTPUT_FILE_NAME, DEFAULT_OUTPUT_FILE_NAME));
+        deviceIndex = settings.getInt(DEVICE_INDEX, 0);
         try {
-            inputReadDelay = settings.getInt(INPUT_READ_DELAY, 0);
+            inputReadDelayMillis = settings.getInt(INPUT_READ_DELAY_MILLIS, 0);
         } catch (NumberFormatException e) {
-            inputReadDelay = 0;
+            inputReadDelayMillis = 0;
             LOGGER.error(
-                "Could not read '" + INPUT_READ_DELAY + "' setting. Using default value ({})", inputReadDelay, e
+                    "Could not read '" + INPUT_READ_DELAY_MILLIS + "' setting. Using default value ({})", inputReadDelayMillis, e
             );
         }
+        font = TerminalFont.valueOf(settings.getString(FONT, TerminalFont.ORIGINAL.name).toUpperCase());
+
+        if (inputPath.toString().equals(outputPath.toString())) {
+            LOGGER.error("ADM-3A settings: Input path is not allowed to be equal to the output path. Setting to default.");
+            inputPath = Path.of(DEFAULT_INPUT_FILE_NAME);
+            outputPath = Path.of(DEFAULT_OUTPUT_FILE_NAME);
+        }
+
         notifyObserversAndIgnoreError();
     }
 
@@ -180,5 +191,30 @@ public class TerminalSettings {
                 LOGGER.error("Observer is not happy about the new settings", e);
             }
         }
+    }
+
+    public enum TerminalFont {
+        ORIGINAL("original"),
+        MODERN("modern");
+
+        public final String name;
+
+        TerminalFont(String name) {
+            this.name = Objects.requireNonNull(name);
+        }
+
+        public static TerminalFont valueOf(int index) {
+            if (index == 0) {
+                return ORIGINAL;
+            } else if (index == 1) {
+                return MODERN;
+            } else {
+                throw new RuntimeException("Unknown font index: " + index);
+            }
+        }
+    }
+
+    public interface ChangedObserver {
+        void settingsChanged() throws IOException;
     }
 }

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.PluginSettings;
-import net.emustudio.plugins.memory.brainduck.api.RawMemoryContext;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import org.easymock.Capture;
 import org.junit.After;
 import org.junit.Before;
@@ -34,7 +34,6 @@ import java.util.Objects;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotEquals;
 
 public class CpuImplTest {
     private CpuImpl cpu;
@@ -50,7 +49,7 @@ public class CpuImplTest {
         Capture<BrainCPUContextImpl> cpuContextCapture = Capture.newInstance();
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, RawMemoryContext.class)).andReturn(memory).anyTimes();
+        expect(contextPool.getMemoryContext(0, ByteMemoryContext.class)).andReturn(memory).anyTimes();
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
         contextPool.register(eq(0L), capture(cpuContextCapture), same(BrainCPUContext.class));
         expectLastCall().once();
@@ -146,7 +145,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
 
         assertEquals(3, output.size());
         assertEquals(4, output.get(0).byteValue());
@@ -185,8 +184,8 @@ public class CpuImplTest {
     public void testCopyCell2() {
         // [->+>+<<]>>[-<<+>>]
         byte[] program = new byte[]{
-            7, 4, 1, 3, 1, 3, 2, 2, 8, 1, 1, 7, 4, 2, 2, 3,
-            1, 1, 8
+                7, 4, 1, 3, 1, 3, 2, 2, 8, 1, 1, 7, 4, 2, 2, 3,
+                1, 1, 8
         };
         byte[] data = new byte[]{4};
 
@@ -202,9 +201,9 @@ public class CpuImplTest {
     public void testAddition() {
         // ,>++++++[<-------->-],[<+>-],<.>.
         byte[] program = new byte[]{
-            6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
-            4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
-            5
+                6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
+                4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
+                5
         };
         byte[] input = new byte[]{'4', '4', '\n'};
 
@@ -216,7 +215,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
         assertEquals(2, output.size());
         assertEquals('8', output.get(0).byteValue());
         assertEquals('\n', output.get(1).byteValue());
@@ -226,9 +225,9 @@ public class CpuImplTest {
     public void testMoreAddition() {
         // ,>++++++[<-------->-],[<+>-],<.>.
         byte[] program = new byte[]{
-            6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
-            4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
-            5};
+                6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
+                4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
+                5};
         byte[] input = new byte[]{'8', '8', 'a'};
 
         emulate(program, null, input);
@@ -239,7 +238,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
         assertEquals(2, output.size());
         assertEquals(64, output.get(0).byteValue());
         assertEquals('a', output.get(1).byteValue());
@@ -262,11 +261,11 @@ public class CpuImplTest {
         // [>>>+>+<<<<-]>>>>[<<<<+>>>>-]<[<<[>>>+>+<<<<-]>>>>[<<<<+>>>>-]<[<<+>>-]<-]
 
         byte[] program = new byte[]{
-            7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1, 1,
-            1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7, 2,
-            2, 7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1,
-            1, 1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7,
-            2, 2, 3, 1, 1, 4, 8, 2, 4, 8
+                7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1, 1,
+                1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7, 2,
+                2, 7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1,
+                1, 1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7,
+                2, 2, 3, 1, 1, 4, 8, 2, 4, 8
         };
         byte[] data = new byte[]{20, 5};
 
@@ -286,7 +285,7 @@ public class CpuImplTest {
         emulate(program, null, null);
 
         assertEquals(memory.getDataStart(), cpu.getEngine().P);
-        assertEquals(255, memory.read(memory.getDataStart()).shortValue());
+        assertEquals(255, memory.read(memory.getDataStart()) & 0xFF);
     }
 
     @Test(timeout = 3000)
@@ -311,10 +310,10 @@ public class CpuImplTest {
     public void testSelfPrint() {
         // +++++[>+++++++++<-],[[>--.++>+<<-]>+.->[<.>-]<<,]
         byte[] program = new byte[]{
-            3, 3, 3, 3, 3, 7, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-            2, 4, 8, 6, 7, 7, 1, 4, 4, 5, 3, 3, 1, 3, 2, 2,
-            4, 8, 1, 3, 5, 4, 1, 7, 2, 5, 1, 4, 8, 2, 2, 6,
-            8
+                3, 3, 3, 3, 3, 7, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                2, 4, 8, 6, 7, 7, 1, 4, 4, 5, 3, 3, 1, 3, 2, 2,
+                4, 8, 1, 3, 5, 4, 1, 7, 2, 5, 1, 4, 8, 2, 2, 6,
+                8
         };
         byte[] input = new byte[]{1, 0};
 
@@ -356,7 +355,7 @@ public class CpuImplTest {
 
         assertTrue(ioDevice.wasInputRead());
 
-        List<Short> output = ioDevice.getOutput();
+        List<Byte> output = ioDevice.getOutput();
         assertEquals(3, output.size());
     }
 

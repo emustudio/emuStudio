@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ package net.emustudio.application.virtualcomputer;
 /**
  * This class represents an exception that can be raised during PluginLoader.loadPlugin method if a main plugin class
  * does not meet requirements for plugin classes.
- *
  */
 public class InvalidPluginException extends Exception {
 

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,10 @@
  */
 package net.emustudio.application;
 
+
 import java.awt.*;
+
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadFontResource;
 
 public class Constants {
 
@@ -26,6 +29,9 @@ public class Constants {
     public static final Font FONT_MONOSPACED = new Font(Font.MONOSPACED, Font.PLAIN, FONT_DEFAULT_SIZE);
     public static final Font FONT_COMMON = new Font(Font.DIALOG, Font.PLAIN, FONT_DEFAULT_SIZE);
     public static final Font FONT_TITLE_BORDER = new Font(Font.SANS_SERIF, Font.BOLD, FONT_DEFAULT_SIZE);
+    public static final Font FONT_CODE = loadFontResource(
+            "/net/emustudio/application/gui/FiraCode-Regular.ttf", Constants.class, 13);
+
 
     public static final Color DEBUGTABLE_COLOR_ROW_EVEN = new Color(241, 245, 250);
     public static final Color DEBUGTABLE_COLOR_ROW_ODD = Color.WHITE;

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.ConfigFiles;
-import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.opencomputer.*;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +41,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static net.emustudio.application.settings.ConfigFiles.loadConfigurations;
+
 public class OpenComputerDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);
 
     private final ConfigurationsListModel configurationsModel;
     private final SchemaPreviewPanel preview;
-    private final ConfigFiles configFiles;
-    private final ApplicationConfig applicationConfig;
+    private final AppSettings appSettings;
     private final Dialogs dialogs;
 
     private final AddNewComputerAction addNewComputerAction;
@@ -60,19 +60,18 @@ public class OpenComputerDialog extends JDialog {
 
     private final JList<ComputerConfig> lstConfig = new JList<>();
 
-    public OpenComputerDialog(ConfigFiles configFiles, ApplicationConfig applicationConfig, Dialogs dialogs,
+    public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs,
                               Consumer<ComputerConfig> selectComputer) {
-        this.configFiles = Objects.requireNonNull(configFiles);
-        this.configurationsModel = new ConfigurationsListModel(configFiles);
-        this.applicationConfig = Objects.requireNonNull(applicationConfig);
+        this.configurationsModel = new ConfigurationsListModel();
+        this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.preview = new SchemaPreviewPanel(null, dialogs);
 
-        addNewComputerAction = new AddNewComputerAction(dialogs, configFiles, applicationConfig, this::update, this);
-        deleteComputerAction = new DeleteComputerAction(dialogs, configFiles, this::update, lstConfig);
-        editComputerAction = new EditComputerAction(dialogs, configFiles, applicationConfig, this::update, this, lstConfig);
+        addNewComputerAction = new AddNewComputerAction(dialogs, appSettings, this::update, this);
+        deleteComputerAction = new DeleteComputerAction(dialogs, this::update, lstConfig);
+        editComputerAction = new EditComputerAction(dialogs, appSettings, this::update, this, lstConfig);
         openComputerAction = new OpenComputerAction(dialogs, this, lstConfig, selectComputer);
-        renameComputerAction = new RenameComputerAction(dialogs, configFiles, this::update, lstConfig);
+        renameComputerAction = new RenameComputerAction(dialogs, this::update, lstConfig);
         saveSchemaAction = new SaveSchemaAction(preview);
 
         setModal(true);
@@ -93,11 +92,11 @@ public class OpenComputerDialog extends JDialog {
         JPanel panelConfig = new JPanel();
         JScrollPane configScrollPane = new JScrollPane();
         JToolBar toolConfig = new JToolBar();
-        ToolbarButton btnAdd = new ToolbarButton(addNewComputerAction, "Create new computer...");
-        ToolbarButton btnDelete = new ToolbarButton(deleteComputerAction, "Delete computer");
-        ToolbarButton btnEdit = new ToolbarButton(editComputerAction, "Edit computer...");
-        ToolbarButton btnRename = new ToolbarButton(renameComputerAction, "Rename computer...");
-        ToolbarButton btnSaveSchemaImage = new ToolbarButton(saveSchemaAction, "Save schema image...");
+        ToolbarButton btnAdd = new ToolbarButton(addNewComputerAction);
+        ToolbarButton btnDelete = new ToolbarButton(deleteComputerAction);
+        ToolbarButton btnEdit = new ToolbarButton(editComputerAction);
+        ToolbarButton btnRename = new ToolbarButton(renameComputerAction);
+        ToolbarButton btnSaveSchemaImage = new ToolbarButton(saveSchemaAction);
         JPanel panelPreview = new JPanel();
         JScrollPane scrollPreview = new JScrollPane();
         JLabel jLabel1 = new JLabel();
@@ -137,16 +136,16 @@ public class OpenComputerDialog extends JDialog {
         GroupLayout panelConfigLayout = new GroupLayout(panelConfig);
         panelConfig.setLayout(panelConfigLayout);
         panelConfigLayout.setHorizontalGroup(
-            panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(toolConfig, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
-                .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(toolConfig, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                        .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
         );
         panelConfigLayout.setVerticalGroup(
-            panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelConfigLayout.createSequentialGroup()
-                    .addComponent(toolConfig, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE))
+                panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelConfigLayout.createSequentialGroup()
+                                .addComponent(toolConfig, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE))
         );
 
         splitConfig.setLeftComponent(panelConfig);
@@ -156,13 +155,13 @@ public class OpenComputerDialog extends JDialog {
         GroupLayout panelPreviewLayout = new GroupLayout(panelPreview);
         panelPreview.setLayout(panelPreviewLayout);
         panelPreviewLayout.setHorizontalGroup(
-            panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
+                panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
         );
         panelPreviewLayout.setVerticalGroup(
-            panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelPreviewLayout.createSequentialGroup()
-                    .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE))
+                panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelPreviewLayout.createSequentialGroup()
+                                .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE))
         );
 
         splitConfig.setRightComponent(panelPreview);
@@ -179,33 +178,33 @@ public class OpenComputerDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 797, Short.MAX_VALUE)
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(jLabel1)
-                            .addGap(0, 0, Short.MAX_VALUE))
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                            .addGap(0, 0, Short.MAX_VALUE)
-                            .addComponent(btnClose)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(btnOpen)))
-                    .addContainerGap())
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 797, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(jLabel1)
+                                                .addGap(0, 0, Short.MAX_VALUE))
+                                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                .addComponent(btnClose)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(btnOpen)))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jLabel1)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(btnOpen)
-                        .addComponent(btnClose))
-                    .addContainerGap())
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(btnOpen)
+                                        .addComponent(btnClose))
+                                .addContainerGap())
         );
 
         pack();
@@ -219,11 +218,11 @@ public class OpenComputerDialog extends JDialog {
 
     private void lstConfigValueChanged(ListSelectionEvent evt) {
         Optional
-            .ofNullable(lstConfig.getSelectedValue())
-            .ifPresentOrElse(computer -> {
-                Schema schema = new Schema(computer, applicationConfig);
-                preview.setSchema(schema);
-            }, () -> preview.setSchema(null));
+                .ofNullable(lstConfig.getSelectedValue())
+                .ifPresentOrElse(computer -> {
+                    Schema schema = new Schema(computer, appSettings);
+                    preview.setSchema(schema);
+                }, () -> preview.setSchema(null));
         preview.repaint();
     }
 
@@ -235,9 +234,9 @@ public class OpenComputerDialog extends JDialog {
     private class ConfigurationsListModel extends AbstractListModel<ComputerConfig> {
         private List<ComputerConfig> computerConfigs = Collections.emptyList();
 
-        ConfigurationsListModel(ConfigFiles configFiles) {
+        ConfigurationsListModel() {
             try {
-                computerConfigs = configFiles.loadConfigurations();
+                computerConfigs = loadConfigurations();
             } catch (IOException e) {
                 LOGGER.error("Could not load computer configurations", e);
                 dialogs.showError("Could not load computer configurations. Please consult log file for details.");
@@ -256,7 +255,7 @@ public class OpenComputerDialog extends JDialog {
 
         void update() {
             try {
-                computerConfigs = configFiles.loadConfigurations();
+                computerConfigs = loadConfigurations();
                 this.fireContentsChanged(this, -1, -1);
             } catch (IOException e) {
                 LOGGER.error("Could not load computer configurations", e);

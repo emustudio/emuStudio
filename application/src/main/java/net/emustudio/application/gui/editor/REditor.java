@@ -1,8 +1,26 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2023  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package net.emustudio.application.gui.editor;
 
 import net.emustudio.application.Constants;
 import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
+import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import org.fife.io.UnicodeWriter;
@@ -13,13 +31,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
@@ -27,6 +45,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
+import static net.emustudio.application.Constants.FONT_CODE;
 import static net.emustudio.application.Constants.FONT_DEFAULT_SIZE;
 
 public class REditor implements Editor {
@@ -34,10 +53,9 @@ public class REditor implements Editor {
 
     private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE, true);
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
-    private final ErrorStrip errorStrip;
 
     private final Dialogs dialogs;
-    private final List<SourceFileExtension> sourceFileExtensions;
+    private final List<FileExtension> fileExtensions;
     private boolean isnew = true;
     private SearchContext lastSearchedContext;
 
@@ -51,7 +69,9 @@ public class REditor implements Editor {
 
         UnicodeWriter.setWriteUtf8BOM(false);
 
-        textPane.setCodeFoldingEnabled(true);
+        textPane.setFont(FONT_CODE);
+
+        textPane.setCodeFoldingEnabled(false);
         textPane.setEncoding(StandardCharsets.UTF_8.name());
         textPane.setAnimateBracketMatching(true);
         textPane.setAutoIndentEnabled(true);
@@ -95,28 +115,22 @@ public class REditor implements Editor {
         });
         setupSyntaxTheme();
 
-        errorStrip = new ErrorStrip(textPane);
-
         if (compiler != null) {
-            sourceFileExtensions = compiler.getSourceFileExtensions();
-            RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler.getLexer(new StringReader(textPane.getText())));
+            fileExtensions = compiler.getSourceFileExtensions();
+            RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler);
 
             AbstractTokenMakerFactory atmf = (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
             atmf.putMapping("text/emustudio", RTokenMakerWrapper.class.getName());
             textPane.setSyntaxEditingStyle("text/emustudio");
         } else {
-            sourceFileExtensions = Collections.emptyList();
+            fileExtensions = Collections.emptyList();
         }
+        textPane.setDirty(false);
     }
 
     @Override
     public Component getView() {
         return scrollPane;
-    }
-
-    @Override
-    public JComponent getErrorStrip() {
-        return errorStrip;
     }
 
     @Override
@@ -127,6 +141,20 @@ public class REditor implements Editor {
     @Override
     public void grabFocus() {
         textPane.grabFocus();
+    }
+
+    @Override
+    public void setPosition(int line, int column) {
+        if (line >= 0) {
+            try {
+                int position = textPane.getLineStartOffset(Math.max(0, line - 1));
+                if (column >= 0) {
+                    position += column;
+                }
+                textPane.setCaretPosition(position);
+            } catch (BadLocationException ignored) {
+            }
+        }
     }
 
     @Override
@@ -159,14 +187,14 @@ public class REditor implements Editor {
 
     @Override
     public boolean saveFileAs() {
-        List<FileExtensionsFilter> filters = sourceFileExtensions.stream()
-            .map(FileExtensionsFilter::new).collect(Collectors.toList());
+        List<FileExtensionsFilter> filters = fileExtensions.stream()
+                .map(FileExtensionsFilter::new).collect(Collectors.toList());
 
         File currentDirectory = Optional
-            .ofNullable(textPane.getFileFullPath())
-            .filter(p -> !isnew)
-            .map(File::new)
-            .orElse(new File(System.getProperty("user.dir")));
+                .ofNullable(textPane.getFileFullPath())
+                .filter(p -> !isnew)
+                .map(File::new)
+                .orElse(new File(System.getProperty("user.dir")));
 
         Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", currentDirectory.toPath(), true, filters);
         if (savedPath.isPresent()) {
@@ -175,7 +203,7 @@ public class REditor implements Editor {
                 isnew = false;
                 return true;
             } catch (IOException e) {
-                LOGGER.error("Could not save file: " + savedPath.get().toString(), e);
+                LOGGER.error("Could not save file: " + savedPath.get(), e);
                 dialogs.showError("Cannot save current file. Please see log file for details.");
             }
         }
@@ -185,28 +213,30 @@ public class REditor implements Editor {
     @Override
     public boolean openFile() {
         List<FileExtensionsFilter> filters = new ArrayList<>();
-        List<String> sourceExtensions = sourceFileExtensions.stream()
-            .map(SourceFileExtension::getExtension).collect(Collectors.toList());
+        List<String> sourceExtensions = fileExtensions.stream()
+                .map(FileExtension::getExtension)
+                .collect(Collectors.toList());
+
         if (sourceExtensions.size() > 0) {
             filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
         }
 
         File currentDirectory = Optional
-            .ofNullable(textPane.getFileFullPath())
-            .filter(p -> !isnew)
-            .map(File::new)
-            .orElse(new File(System.getProperty("user.dir")));
+                .ofNullable(textPane.getFileFullPath())
+                .filter(p -> !isnew)
+                .map(File::new)
+                .orElse(new File(System.getProperty("user.dir")));
 
         Optional<Path> openedFile = dialogs.chooseFile(
-            "Open a file", "Open", currentDirectory.toPath(), false, filters
+                "Open a file", "Open", currentDirectory.toPath(), false, filters
         );
-        return openedFile.map(path -> openFile(path.toString())).orElse(false);
+        return openedFile.map(this::openFile).orElse(false);
     }
 
     @Override
-    public boolean openFile(String fileName) {
+    public boolean openFile(Path fileName) {
         try {
-            textPane.load(FileLocation.create(fileName));
+            textPane.load(FileLocation.create(fileName.toString()));
             textPane.discardAllEdits();
             isnew = false;
             return true;

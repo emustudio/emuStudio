@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,19 +23,14 @@ import net.emustudio.application.gui.schema.DrawingPanel;
 
 public class ModeSelector {
 
-    public enum SelectMode {
-        MOVING, MODELING, RESIZING, SELECTING
-    }
-
     private final Mode[] modes;
     private Mode currentMode;
-
     public ModeSelector(DrawingPanel panel, DrawingModel drawingModel) {
         modes = new Mode[]{
-            new MovingMode(panel, drawingModel),
-            new ModelingMode(panel, drawingModel),
-            new ResizingMode(panel, drawingModel),
-            new SelectingMode(panel, drawingModel)
+                new MovingMode(panel, drawingModel),
+                new ModelingMode(panel, drawingModel),
+                new ResizingMode(panel, drawingModel),
+                new SelectingMode(panel, drawingModel)
         };
     }
 
@@ -45,6 +40,10 @@ public class ModeSelector {
 
     public Mode get() {
         return currentMode;
+    }
+
+    public enum SelectMode {
+        MOVING, MODELING, RESIZING, SELECTING
     }
 
 }

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
 
 rootProject.name = 'emuStudio'
 
@@ -35,16 +42,17 @@ include ':plugins:cpu:rasp-cpu'
 include ':plugins:cpu:ssem-cpu'
 include ':plugins:cpu:z80-cpu'
 
-include ':plugins:device:88-disk'
+include ':plugins:device:88-dcdd'
 include ':plugins:device:88-sio'
 include ':plugins:device:abstract-tape'
 include ':plugins:device:adm3A-terminal'
-include ':plugins:device:brainduck-terminal'
-include ':plugins:device:simhPseudo-z80'
+include ':plugins:device:vt100-terminal'
+include ':plugins:device:simh-pseudo'
 include ':plugins:device:ssem-display'
+include ':plugins:device:zxspectrum-display'
 
-include ':plugins:memory:brainduck-mem'
 include ':plugins:memory:ram-mem'
 include ':plugins:memory:rasp-mem'
 include ':plugins:memory:ssem-mem'
-include ':plugins:memory:standard-mem'
+include ':plugins:memory:byte-mem'
+

@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ package net.emustudio.plugins.compiler.asZ80;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 
 public class Runner {
 
@@ -38,7 +38,7 @@ public class Runner {
                 printHelp();
                 return;
             } else if (arg.equals("--version") || arg.equals("-v")) {
-                System.out.println(new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
+                System.out.println(new AssemblerZ80(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE).getVersion());
                 return;
             } else {
                 break;
@@ -59,7 +59,7 @@ public class Runner {
             outputFile += ".hex";
         }
 
-        CompilerImpl compiler = new CompilerImpl(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
+        AssemblerZ80 compiler = new AssemblerZ80(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
         compiler.addCompilerListener(new CompilerListener() {
             @Override
             public void onStart() {
@@ -73,7 +73,6 @@ public class Runner {
             @Override
             public void onFinish() {
                 System.err.println("Compilation finished");
-
             }
         });
         try {

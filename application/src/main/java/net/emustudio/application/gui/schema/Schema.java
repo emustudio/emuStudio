@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,13 +18,12 @@
  */
 package net.emustudio.application.gui.schema;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.ComputerConfig;
-import net.emustudio.application.configuration.PluginConfig;
-import net.emustudio.application.configuration.PluginConnection;
 import net.emustudio.application.gui.P;
 import net.emustudio.application.gui.schema.elements.*;
-import net.emustudio.emulib.runtime.CannotUpdateSettingException;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.application.settings.PluginConfig;
+import net.emustudio.application.settings.PluginConnection;
 
 import java.awt.*;
 import java.util.List;
@@ -34,21 +33,30 @@ import java.util.stream.Collectors;
 public class Schema {
     public final static int MIN_LEFT_MARGIN = 5;
     public final static int MIN_TOP_MARGIN = 5;
-    private final static int DEFAULT_GRID_GAP = 20;
-
-    private CompilerElement compilerElement;
-    private CpuElement cpuElement;
-    private MemoryElement memoryElement;
     private final List<DeviceElement> deviceElements = new ArrayList<>();
     private final List<ConnectionLine> lines = new ArrayList<>();
     private final ComputerConfig config;
-    private final ApplicationConfig applicationConfig;
+    private final AppSettings appSettings;
+    private CompilerElement compilerElement;
+    private CpuElement cpuElement;
+    private MemoryElement memoryElement;
 
-    public Schema(ComputerConfig config, ApplicationConfig applicationConfig) throws NumberFormatException {
+    public Schema(ComputerConfig config, AppSettings appSettings) throws NumberFormatException {
         this.config = Objects.requireNonNull(config);
-        this.applicationConfig = Objects.requireNonNull(applicationConfig);
+        this.appSettings = Objects.requireNonNull(appSettings);
 
         load();
+    }
+
+    /**
+     * Determine if point fits to margins.
+     *
+     * @param x new X location
+     * @param y new Y location
+     * @return true if the line point can be moved, false otherwise
+     */
+    private static boolean doesNotFitToMargins(int x, int y) {
+        return (x < MIN_LEFT_MARGIN) || (y < MIN_TOP_MARGIN);
     }
 
     public ComputerConfig getComputerConfig() {
@@ -56,19 +64,19 @@ public class Schema {
     }
 
     public boolean useSchemaGrid() {
-        return applicationConfig.useSchemaGrid().orElse(true);
+        return appSettings.useSchemaGrid();
     }
 
     public void setUseSchemaGrid(boolean useSchemaGrid) {
-        applicationConfig.setUseSchemaGrid(useSchemaGrid);
+        appSettings.setUseSchemaGrid(useSchemaGrid);
     }
 
     public int getSchemaGridGap() {
-        return applicationConfig.getSchemaGridGap().orElse(DEFAULT_GRID_GAP);
+        return appSettings.getSchemaGridGap();
     }
 
     public void setSchemaGridGap(int gridGap) {
-        applicationConfig.setSchemaGridGap(gridGap);
+        appSettings.setSchemaGridGap(gridGap);
     }
 
     public void setCompilerElement(Point clickPoint, String pluginFile) {
@@ -154,7 +162,7 @@ public class Schema {
             int eY = elem.getY() - elem.getHeight() / 2;
 
             if ((eX <= p.getX()) && (eX + elem.getWidth() >= p.x)
-                && (eY <= p.getY()) && (eY + elem.getHeight() >= p.y)) {
+                    && (eY <= p.getY()) && (eY + elem.getHeight() >= p.y)) {
                 return elem;
             }
         }
@@ -173,7 +181,7 @@ public class Schema {
         List<Element> allElements = getAllElements();
         for (Element element : allElements) {
             if (element.crossesBottomBorder(borderPoint) || (element.crossesLeftBorder(borderPoint))
-                || element.crossesRightBorder(borderPoint) || element.crossesTopBorder(borderPoint)) {
+                    || element.crossesRightBorder(borderPoint) || element.crossesTopBorder(borderPoint)) {
                 return element;
             }
         }
@@ -204,11 +212,7 @@ public class Schema {
         Point p2 = new Point(x + width, y + height);
 
         for (Element elem : getAllElements()) {
-            if (elem.crossesArea(p1, p2)) {
-                elem.setSelected(true);
-            } else {
-                elem.setSelected(false);
-            }
+            elem.setSelected(elem.crossesArea(p1, p2));
         }
         lines.forEach(line -> line.setSelected(line.isAreaCrossing(p1, p2)));
     }
@@ -263,15 +267,15 @@ public class Schema {
 
         // actual movement
         allElements.stream()
-            .filter(Element::isSelected)
-            .forEach(element -> {
-                P movedPoint = searchGridPoint(element.getX() + diffX, element.getY() + diffY);
-                element.move(movedPoint);
-            });
+                .filter(Element::isSelected)
+                .forEach(element -> {
+                    P movedPoint = searchGridPoint(element.getX() + diffX, element.getY() + diffY);
+                    element.move(movedPoint);
+                });
 
         lines.stream()
-            .filter(ConnectionLine::isSelected)
-            .forEach(line -> line.moveAllPoints(diffX, diffY, this::searchGridPoint));
+                .filter(ConnectionLine::isSelected)
+                .forEach(line -> line.moveAllPoints(diffX, diffY, this::searchGridPoint));
     }
 
     public void moveElement(Element element, Point newLocation) {
@@ -323,31 +327,30 @@ public class Schema {
 
             // test left line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX() - elemW, elem.getY() - elemH),
-                new Point(elem.getX() - elemW, elem.getY() + elemH), elementStart, elementEnd)) {
+                    new Point(elem.getX() - elemW, elem.getY() + elemH), elementStart, elementEnd)) {
                 return true;
             }
 
             // test right line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX() + elemW, elem.getY() - elemH),
-                new Point(elem.getX() + elemW, elem.getY() + elemH), elementStart, elementEnd)) {
+                    new Point(elem.getX() + elemW, elem.getY() + elemH), elementStart, elementEnd)) {
                 return true;
             }
 
             // test top line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX() - elemW, elem.getY() - elemH),
-                new Point(elem.getX() + elemW, elem.getY() - elemH), elementStart, elementEnd)) {
+                    new Point(elem.getX() + elemW, elem.getY() - elemH), elementStart, elementEnd)) {
                 return true;
             }
 
             // test bottom line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX() - elemW, elem.getY() + elemH),
-                new Point(elem.getX() + elemW, elem.getY() + elemH), elementStart, elementEnd)) {
+                    new Point(elem.getX() + elemW, elem.getY() + elemH), elementStart, elementEnd)) {
                 return true;
             }
         }
         return false;
     }
-
 
     private boolean isPointNotMovable(P newLocation) {
         return isPointNotMovable(newLocation.ix(), newLocation.iy());
@@ -381,38 +384,25 @@ public class Schema {
         return true;
     }
 
-    public void save() throws CannotUpdateSettingException {
+    public void save() {
         List<PluginConnection> connections = lines.stream()
-            .map(ConnectionLine::toPluginConnection)
-            .collect(Collectors.toList());
+                .map(ConnectionLine::toPluginConnection)
+                .collect(Collectors.toList());
 
         config.setConnections(connections);
 
         Optional.ofNullable(compilerElement).ifPresentOrElse(
-            c -> config.setCompiler(c.save()), () -> config.setCompiler(null)
+                c -> config.setCompiler(c.save()), () -> config.setCompiler(null)
         );
         Optional.ofNullable(cpuElement).ifPresentOrElse(
-            c -> config.setCPU(c.save()), () -> config.setCPU(null)
+                c -> config.setCPU(c.save()), () -> config.setCPU(null)
         );
         Optional.ofNullable(memoryElement).ifPresentOrElse(
-            c -> config.setMemory(c.save()), () -> config.setMemory(null)
+                c -> config.setMemory(c.save()), () -> config.setMemory(null)
         );
 
         List<PluginConfig> devices = deviceElements.stream().map(Element::save).collect(Collectors.toList());
         config.setDevices(devices);
-
-        config.save();
-    }
-
-    /**
-     * Determine if point fits to margins.
-     *
-     * @param x new X location
-     * @param y new Y location
-     * @return true if the line point can be moved, false otherwise
-     */
-    private static boolean doesNotFitToMargins(int x, int y) {
-        return (x < MIN_LEFT_MARGIN) || (y < MIN_TOP_MARGIN);
     }
 
     /**
@@ -484,9 +474,11 @@ public class Schema {
             Element from = elements.get(c.getFromPluginId());
             Element to = elements.get(c.getToPluginId());
 
-            List<P> points = c.getSchemaPoints().stream().map(P::of).collect(Collectors.toList());
-            ConnectionLine line = new ConnectionLine(from, to, points, c.isBidirectional());
-            lines.add(line);
+            if (from != null && to != null) {
+                List<P> points = c.getSchemaPoints().stream().map(P::of).collect(Collectors.toList());
+                ConnectionLine line = new ConnectionLine(from, to, points, c.isBidirectional());
+                lines.add(line);
+            }
         });
     }
 

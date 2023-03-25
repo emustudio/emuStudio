@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 
 import javax.swing.*;
 import java.util.MissingResourceException;
@@ -32,19 +32,19 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginRoot(
-    type = PLUGIN_TYPE.DEVICE,
-    title = "SSEM CRT display"
+        type = PLUGIN_TYPE.DEVICE,
+        title = "SSEM CRT display"
 )
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {
     private final DisplayPanel displayPanel = new DisplayPanel();
-    private final boolean guiNotSupported;
+    private final boolean guiSupported;
     private MemoryContext<Byte> memory;
     private DisplayGui display;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
     }
 
     @SuppressWarnings("unchecked")
@@ -53,7 +53,7 @@ public class DeviceImpl extends AbstractDevice {
         memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
         if (memory.getDataType() != Byte.class) {
             throw new PluginInitializationException(
-                "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                    "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
             );
         }
     }
@@ -70,12 +70,17 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showGUI(JFrame parent) {
-        if (!guiNotSupported) {
+        if (guiSupported) {
             if (display == null) {
                 display = new DisplayGui(parent, memory, displayPanel);
             }
             display.setVisible(true);
         }
+    }
+
+    @Override
+    public boolean isGuiSupported() {
+        return guiSupported;
     }
 
     @Override
@@ -101,6 +106,11 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public String getDescription() {
         return "CRT display for SSEM computer";
+    }
+
+    @Override
+    public boolean isAutomationSupported() {
+        return true;
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

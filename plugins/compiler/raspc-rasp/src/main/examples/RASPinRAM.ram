@@ -47,7 +47,7 @@
  
   LOAD =4
   STORE 1  	;R1 contains the pointer for writing the next instruction or operand loaded from the input tape
-input: 
+input:
   READ  2   	;loads the input from the tape into R2
   LOAD  2
   SUB  =-1 

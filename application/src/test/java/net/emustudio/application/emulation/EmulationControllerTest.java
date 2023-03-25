@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -177,22 +177,6 @@ public class EmulationControllerTest {
     }
 
     @Test(timeout = 1000)
-    public void testResetCallsCPUresetWithProgramStartIfMemoryIsAvailable() throws Exception {
-        Memory memory = createMock(Memory.class);
-        expect(memory.getProgramLocation()).andReturn(10).once();
-        memory.reset();
-        expectLastCall().anyTimes(); // our latch won't wait for memory reset. So sometimes we catch it, sometimes not.
-        replay(memory);
-
-        EmulationController controller = new EmulationController(cpuStub, memory, Collections.emptyList());
-        awaitFor(controller::reset, 1);
-
-        assertEquals(10, cpuStub.resetStartPos);
-        assertEquals(1, cpuStub.resetCalled.get());
-        verify(memory);
-    }
-
-    @Test(timeout = 1000)
     public void testResetCallsCPUresetIfMemoryIsNotAvailable() throws Exception {
         EmulationController controller = createPlainEmulationController();
 
@@ -215,7 +199,7 @@ public class EmulationControllerTest {
         replay(dev1, dev2);
 
         EmulationController controller = new EmulationController(
-            cpuStub, null, Arrays.asList(dev1, dev2)
+                cpuStub, null, Arrays.asList(dev1, dev2)
         );
 
         awaitFor(controller::reset, 1);

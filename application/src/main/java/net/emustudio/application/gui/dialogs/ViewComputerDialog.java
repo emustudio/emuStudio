@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.configuration.ApplicationConfig;
-import net.emustudio.application.configuration.PluginConfig;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.device.Device;
@@ -39,8 +39,19 @@ public class ViewComputerDialog extends JDialog {
 
     private final VirtualComputer computer;
     private final SchemaPreviewPanel panelSchema;
-
-    public ViewComputerDialog(JFrame parent, VirtualComputer computer, ApplicationConfig applicationConfig, Dialogs dialogs) {
+    private JToggleButton btnCompiler;
+    private JToggleButton btnDevice;
+    private JToggleButton btnMemory;
+    private JComboBox<String> cmbDevice;
+    private JLabel lblComputerName;
+    private JLabel lblCopyright;
+    private JLabel lblFileName;
+    private JLabel lblName;
+    private JLabel lblSelectDevice;
+    private JLabel lblVersion;
+    private JScrollPane scrollPane;
+    private JTextArea txtDescription;
+    public ViewComputerDialog(JFrame parent, VirtualComputer computer, AppSettings appSettings, Dialogs dialogs) {
         super(parent, true);
         this.computer = Objects.requireNonNull(computer);
 
@@ -69,7 +80,7 @@ public class ViewComputerDialog extends JDialog {
             }
         });
 
-        panelSchema = new SchemaPreviewPanel(new Schema(computer.getComputerConfig(), applicationConfig), dialogs);
+        panelSchema = new SchemaPreviewPanel(new Schema(computer.getComputerConfig(), appSettings), dialogs);
         scrollPane.setViewportView(panelSchema);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
@@ -88,7 +99,7 @@ public class ViewComputerDialog extends JDialog {
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
         computer.getComputerConfig().getCPU().ifPresent(
-            conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf))
+                conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf))
         );
     }
 
@@ -199,79 +210,79 @@ public class ViewComputerDialog extends JDialog {
         GroupLayout panelDescriptionLayout = new GroupLayout(panelDescription);
         panelDescription.setLayout(panelDescriptionLayout);
         panelDescriptionLayout.setHorizontalGroup(
-            panelDescriptionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelDescriptionLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jScrollPane1)
-                    .addContainerGap())
+                panelDescriptionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelDescriptionLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jScrollPane1)
+                                .addContainerGap())
         );
         panelDescriptionLayout.setVerticalGroup(
-            panelDescriptionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelDescriptionLayout.createSequentialGroup()
-                    .addComponent(jScrollPane1)
-                    .addContainerGap())
+                panelDescriptionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelDescriptionLayout.createSequentialGroup()
+                                .addComponent(jScrollPane1)
+                                .addContainerGap())
         );
 
         GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(panelDescription, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel2Layout.createSequentialGroup()
-                            .addComponent(lblSelectDevice)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(cmbDevice, 0, 377, Short.MAX_VALUE))
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                            .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(lblName)
-                                .addComponent(lblVersion)
-                                .addComponent(lblCopyright)
-                                .addComponent(lblFileName))
-                            .addGap(0, 0, Short.MAX_VALUE)))
-                    .addContainerGap())
+                                .addContainerGap()
+                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(panelDescription, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                                .addComponent(lblSelectDevice)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(cmbDevice, 0, 377, Short.MAX_VALUE))
+                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addComponent(lblName)
+                                                        .addComponent(lblVersion)
+                                                        .addComponent(lblCopyright)
+                                                        .addComponent(lblFileName))
+                                                .addGap(0, 0, Short.MAX_VALUE)))
+                                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblSelectDevice)
-                        .addComponent(cmbDevice, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addGap(18, 18, 18)
-                    .addComponent(lblName)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(lblFileName)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(lblVersion)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(lblCopyright)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(panelDescription, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addContainerGap())
+                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblSelectDevice)
+                                        .addComponent(cmbDevice, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
+                                .addComponent(lblName)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblFileName)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(lblVersion)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblCopyright)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(panelDescription, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap())
         );
 
         GroupLayout panelTabInfoLayout = new GroupLayout(panelTabInfo);
         panelTabInfo.setLayout(panelTabInfoLayout);
         panelTabInfoLayout.setHorizontalGroup(
-            panelTabInfoLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelTabInfoLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addContainerGap())
+                panelTabInfoLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelTabInfoLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap())
         );
         panelTabInfoLayout.setVerticalGroup(
-            panelTabInfoLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(panelTabInfoLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelTabInfoLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jToolBar1, GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                        .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap())
+                panelTabInfoLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelTabInfoLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(panelTabInfoLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(jToolBar1, GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
+                                        .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap())
         );
 
         jTabbedPane1.addTab("Computer info", panelTabInfo);
@@ -291,22 +302,22 @@ public class ViewComputerDialog extends JDialog {
         GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jToolBar2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE)
-                    .addContainerGap())
+                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jToolBar2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE)
+                                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                        .addComponent(scrollPane)
-                        .addComponent(jToolBar2, GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE))
-                    .addContainerGap())
+                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                                        .addComponent(scrollPane)
+                                        .addComponent(jToolBar2, GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE))
+                                .addContainerGap())
         );
 
         jTabbedPane1.addTab("Abstract schema", jPanel1);
@@ -314,22 +325,22 @@ public class ViewComputerDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jTabbedPane1)
-                        .addComponent(lblComputerName, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap())
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(jTabbedPane1)
+                                        .addComponent(lblComputerName, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addGap(6, 6, 6)
-                    .addComponent(lblComputerName)
-                    .addGap(18, 18, 18)
-                    .addComponent(jTabbedPane1)
-                    .addContainerGap())
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGap(6, 6, 6)
+                                .addComponent(lblComputerName)
+                                .addGap(18, 18, 18)
+                                .addComponent(jTabbedPane1)
+                                .addContainerGap())
         );
 
         pack();
@@ -339,7 +350,7 @@ public class ViewComputerDialog extends JDialog {
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
         computer.getComputerConfig().getCompiler().ifPresent(
-            conf -> computer.getCompiler().ifPresent(compiler -> setInfo(compiler, conf))
+                conf -> computer.getCompiler().ifPresent(compiler -> setInfo(compiler, conf))
         );
     }
 
@@ -347,7 +358,7 @@ public class ViewComputerDialog extends JDialog {
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
         computer.getComputerConfig().getCPU().ifPresent(
-            conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf))
+                conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf))
         );
     }
 
@@ -355,7 +366,7 @@ public class ViewComputerDialog extends JDialog {
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
         computer.getComputerConfig().getMemory().ifPresent(
-            conf -> computer.getMemory().ifPresent(memory -> setInfo(memory, conf))
+                conf -> computer.getMemory().ifPresent(memory -> setInfo(memory, conf))
         );
     }
 
@@ -377,17 +388,4 @@ public class ViewComputerDialog extends JDialog {
     private void btnSaveSchemaActionPerformed(java.awt.event.ActionEvent evt) {
         panelSchema.saveSchemaImage();
     }
-
-    private JToggleButton btnCompiler;
-    private JToggleButton btnDevice;
-    private JToggleButton btnMemory;
-    private JComboBox<String> cmbDevice;
-    private JLabel lblComputerName;
-    private JLabel lblCopyright;
-    private JLabel lblFileName;
-    private JLabel lblName;
-    private JLabel lblSelectDevice;
-    private JLabel lblVersion;
-    private JScrollPane scrollPane;
-    private JTextArea txtDescription;
 }

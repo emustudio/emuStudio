@@ -1,0 +1,17 @@
+;Program loads two numbers, a and b, calculates a/b, but before the division, b is checked for zero division prevention.
+
+<input> 5 2
+
+READ 1
+READ 2
+LOAD 2
+JZ zero
+LOAD 1
+DIV 2
+STORE 1
+WRITE 1
+JMP exit
+zero:
+  WRITE =0
+exit:
+  HALT

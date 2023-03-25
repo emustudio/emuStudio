@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,18 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
-public class CompileException extends Exception {
+public class CompileException extends RuntimeException {
+    final int line;
+    final int column;
 
-    public CompileException(String message) {
+    public CompileException(int line, int column, String message) {
         super(message);
+        this.line = line;
+        this.column = column;
     }
 
+    @Override
+    public String toString() {
+        return "line " + line + ":" + column + " " + super.getMessage();
+    }
 }

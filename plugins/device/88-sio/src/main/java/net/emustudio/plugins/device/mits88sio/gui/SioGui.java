@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,190 +18,275 @@
  */
 package net.emustudio.plugins.device.mits88sio.gui;
 
-import net.emustudio.plugins.device.mits88sio.ports.CpuPorts;
-import net.emustudio.plugins.device.mits88sio.Transmitter;
+import net.emustudio.plugins.device.mits88sio.UART;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
 import java.awt.event.KeyEvent;
-
-import static net.emustudio.plugins.device.mits88sio.gui.Constants.MONOSPACED_PLAIN;
+import java.util.Objects;
 
 public class SioGui extends JDialog {
+    private final static Font FONT_BOLD_14 = new Font("sansserif", Font.BOLD, 14);
+    private final static Font FONT_BOLD_13 = new Font("sansserif", Font.BOLD, 13);
+    private final static Font FONT_MONOSPACED_BOLD_14 = new Font("Monospaced", Font.BOLD, 14);
 
-    public SioGui(JFrame parent, String deviceName, Transmitter transmitter, CpuPorts cpuPorts) {
+    private final UART uart;
+    private final JButton btnClearBuffer = new JButton("Clear buffer");
+    private final JLabel lblData = new JLabel("0x00");
+    private final JLabel lblDataAscii = new JLabel("empty");
+    private final JLabel lblStatus = new JLabel("0x00");
+    private final JLabel lblStatusLong = new JLabel(". . . . . . . .");
+    private final JTextField txtAttachedDevice = new JTextField();
+    public SioGui(JFrame parent, UART uart) {
         super(parent);
+
+        this.uart = Objects.requireNonNull(uart);
 
         initComponents();
         setLocationRelativeTo(parent);
 
-        tblCPUPorts.setModel(new CPUPortsTableModel(cpuPorts));
-        txtStatus.setText(String.format("0x%x", transmitter.readStatus()));
+        setStatus(uart.getStatus());
 
-        lblAttachedDevice.setText(deviceName);
-        transmitter.addObserver(new Transmitter.Observer() {
+        txtAttachedDevice.setText(uart.getDeviceId());
+        uart.addObserver(new UART.Observer() {
             @Override
             public void statusChanged(int status) {
-                txtStatus.setText(String.format("0x%x", status));
+                setStatus(status);
             }
 
             @Override
-            public void dataAvailable(int data) {
-                txtData.setText(String.format("0x%x", data));
+            public void dataAvailable(byte data) {
+                lblData.setText(String.format("0x%x", data & 0xFF));
+                lblDataAscii.setText(String.valueOf(data));
             }
 
             @Override
             public void noData() {
-                txtData.setText("N/A");
+                lblData.setText("0x00");
+                lblDataAscii.setText("empty");
             }
         });
     }
 
-    private void initComponents() {
+    private void setStatus(int status) {
+        lblStatus.setText(String.format("0x%x", status));
+        String r = ((status & 0x80) == 0) ? "R . " : ". . ";
+        String d = ((status & 0x20) == 0x20) ? "D " : ". ";
+        String o = ((status & 0x10) == 0x10) ? "O . . " : ". . . ";
+        String x = ((status & 0x2) == 0x2) ? "X " : ". ";
+        String i = ((status & 0x1) == 0) ? "I" : ".";
+        lblStatusLong.setText(r + d + o + x + i);
+    }
 
-        JPanel jPanel1 = new JPanel();
-        lblAttachedDevice = new JLabel();
-        JPanel jPanel2 = new JPanel();
-        JLabel jLabel1 = new JLabel();
-        JLabel jLabel2 = new JLabel();
-        txtData = new JTextField();
-        txtStatus = new JTextField();
-        JPanel jPanel3 = new JPanel();
-        JScrollPane jScrollPane1 = new JScrollPane();
-        tblCPUPorts = new JTable();
+    private void initComponents() {
+        JPanel panelAttachedDevice = new JPanel();
+        JPanel panelControl = new JPanel();
+        JLabel lblNoteControl = new JLabel("<html>Control channel shows intermal status of 88-SIO.");
+        JLabel lblHexControl = new JLabel("Hex value:");
+        JSeparator sepControl = new JSeparator();
+        JLabel lblR = new JLabel("R");
+        JLabel lblD = new JLabel("D");
+        JLabel lblO = new JLabel("O");
+        JLabel lblX = new JLabel("X");
+        JLabel lblI = new JLabel("I");
+        JLabel lblNoteR = new JLabel("Output device ready");
+        JLabel lblNoteD = new JLabel("Data available");
+        JLabel lblNoteO = new JLabel("Data overflow");
+        JLabel lblNoteX = new JLabel("Data sent to x-mitter");
+        JLabel lblNoteI = new JLabel("Input device ready");
+        JPanel panelData = new JPanel();
+        JLabel lblHexData = new JLabel("Hex value:");
+        JLabel lblNoteData = new JLabel("<html>Data buffer is an internal buffer to be read by CPU.");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        rootPane.registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        setResizable(false);
+        setTitle("MITS 88-SIO");
 
-        setTitle("MITS SIO Status");
+        panelAttachedDevice.setBorder(BorderFactory.createTitledBorder(
+                null, "Attached device", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                FONT_BOLD_13));
 
-        jPanel1.setBorder(BorderFactory.createTitledBorder("Attached device"));
+        txtAttachedDevice.setEditable(false);
+        txtAttachedDevice.setFont(FONT_BOLD_14);
 
-        lblAttachedDevice.setFont(lblAttachedDevice.getFont().deriveFont(14.0f));
-        lblAttachedDevice.setHorizontalAlignment(SwingConstants.CENTER);
-        lblAttachedDevice.setText("N/A");
-
-        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(lblAttachedDevice, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addContainerGap())
+        GroupLayout panelAttachedDeviceLayout = new GroupLayout(panelAttachedDevice);
+        panelAttachedDevice.setLayout(panelAttachedDeviceLayout);
+        panelAttachedDeviceLayout.setHorizontalGroup(
+                panelAttachedDeviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelAttachedDeviceLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(txtAttachedDevice)
+                                .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(lblAttachedDevice)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jPanel2.setBorder(BorderFactory.createTitledBorder("SIO Ports (for reading)"));
-
-        jLabel1.setText("Status:");
-        jLabel2.setText("Data:");
-
-        txtData.setEditable(false);
-        txtData.setText("N/A");
-
-        txtStatus.setEditable(false);
-
-        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel2)
-                        .addComponent(jLabel1))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(txtStatus)
-                        .addComponent(txtData, GroupLayout.DEFAULT_SIZE, 124, Short.MAX_VALUE))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel1)
-                        .addComponent(txtStatus, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel2)
-                        .addComponent(txtData, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        panelAttachedDeviceLayout.setVerticalGroup(
+                panelAttachedDeviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelAttachedDeviceLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(txtAttachedDevice, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel3.setBorder(BorderFactory.createTitledBorder("Used CPU ports"));
+        panelControl.setBorder(BorderFactory.createTitledBorder(
+                null, "Control channel", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                FONT_BOLD_13));
 
-        jScrollPane1.setBorder(null);
+        lblStatusLong.setFont(FONT_MONOSPACED_BOLD_14);
+        lblStatusLong.setHorizontalAlignment(SwingConstants.CENTER);
+        lblStatusLong.setBorder(BorderFactory.createEtchedBorder());
 
-        tblCPUPorts.setModel(new DefaultTableModel(
-            new Object[][]{
+        lblR.setFont(FONT_BOLD_14);
+        lblD.setFont(FONT_BOLD_14);
+        lblO.setFont(FONT_BOLD_14);
+        lblX.setFont(FONT_BOLD_14);
+        lblI.setFont(FONT_BOLD_14);
 
-            },
-            new String[]{
-
-            }
-        ));
-        tblCPUPorts.setRowSelectionAllowed(false);
-        tblCPUPorts.setShowHorizontalLines(false);
-        tblCPUPorts.setFont(MONOSPACED_PLAIN);
-        jScrollPane1.setViewportView(tblCPUPorts);
-
-        GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE)
-                    .addContainerGap())
+        GroupLayout panelControlLayout = new GroupLayout(panelControl);
+        panelControl.setLayout(panelControlLayout);
+        panelControlLayout.setHorizontalGroup(
+                panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelControlLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(GroupLayout.Alignment.TRAILING, panelControlLayout.createSequentialGroup()
+                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                                        .addComponent(lblStatusLong, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 238, Short.MAX_VALUE)
+                                                        .addComponent(sepControl)
+                                                        .addComponent(lblNoteControl, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                                        .addGroup(panelControlLayout.createSequentialGroup()
+                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addGroup(panelControlLayout.createSequentialGroup()
+                                                                .addComponent(lblHexControl)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(lblStatus))
+                                                        .addGroup(panelControlLayout.createSequentialGroup()
+                                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                                        .addComponent(lblR)
+                                                                        .addComponent(lblD)
+                                                                        .addComponent(lblO)
+                                                                        .addComponent(lblX)
+                                                                        .addComponent(lblI))
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                                        .addComponent(lblNoteX)
+                                                                        .addComponent(lblNoteO)
+                                                                        .addComponent(lblNoteR)
+                                                                        .addComponent(lblNoteD)
+                                                                        .addComponent(lblNoteI))))
+                                                .addGap(0, 0, Short.MAX_VALUE)))
+                                .addContainerGap())
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 162, GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        panelControlLayout.setVerticalGroup(
+                panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelControlLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(lblNoteControl, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(lblStatusLong, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblHexControl)
+                                        .addComponent(lblStatus))
+                                .addGap(18, 18, 18)
+                                .addComponent(sepControl, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(panelControlLayout.createSequentialGroup()
+                                                .addGap(24, 24, 24)
+                                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(lblD)
+                                                        .addComponent(lblNoteD)))
+                                        .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                .addComponent(lblNoteR)
+                                                .addComponent(lblR)))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblO)
+                                        .addComponent(lblNoteO))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblNoteX)
+                                        .addComponent(lblX))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblNoteI)
+                                        .addComponent(lblI))
+                                .addContainerGap(13, Short.MAX_VALUE))
+        );
+
+        panelData.setBorder(BorderFactory.createTitledBorder(
+                null, "Data buffer", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+                FONT_BOLD_13));
+
+        lblDataAscii.setFont(FONT_BOLD_14);
+        lblDataAscii.setHorizontalAlignment(SwingConstants.CENTER);
+        lblDataAscii.setBorder(BorderFactory.createEtchedBorder());
+
+        btnClearBuffer.setDefaultCapable(false);
+
+        GroupLayout panelDataLayout = new GroupLayout(panelData);
+        panelData.setLayout(panelDataLayout);
+        panelDataLayout.setHorizontalGroup(
+                panelDataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelDataLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(panelDataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(GroupLayout.Alignment.TRAILING, panelDataLayout.createSequentialGroup()
+                                                .addGap(0, 102, Short.MAX_VALUE)
+                                                .addComponent(btnClearBuffer))
+                                        .addGroup(panelDataLayout.createSequentialGroup()
+                                                .addComponent(lblHexData)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(lblData)
+                                                .addGap(0, 0, Short.MAX_VALUE))
+                                        .addComponent(lblNoteData, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                        .addComponent(lblDataAscii, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap())
+        );
+        panelDataLayout.setVerticalGroup(
+                panelDataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelDataLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(lblNoteData, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(lblDataAscii, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelDataLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblHexData)
+                                        .addComponent(lblData))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnClearBuffer)
+                                .addContainerGap())
         );
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addContainerGap())
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(panelAttachedDevice, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(panelControl, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(panelData, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(panelAttachedDevice, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(panelControl, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(panelData, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap())
         );
 
+        btnClearBuffer.addActionListener(e -> uart.readBuffer());
         pack();
     }
-
-    private JLabel lblAttachedDevice;
-    private JTable tblCPUPorts;
-    private JTextField txtData;
-    private JTextField txtStatus;
 }

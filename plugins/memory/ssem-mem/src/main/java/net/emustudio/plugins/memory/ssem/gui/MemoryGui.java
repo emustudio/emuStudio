@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,77 @@ package net.emustudio.plugins.memory.ssem.gui;
 
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.interaction.ToolbarButton;
+import net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryAction;
+import net.emustudio.plugins.memory.ssem.gui.actions.EraseMemoryAction;
+import net.emustudio.plugins.memory.ssem.gui.actions.LoadImageAction;
+import net.emustudio.plugins.memory.ssem.gui.table.MemoryTable;
+import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 
 public class MemoryGui extends JDialog {
     private final MemoryTableModel tableModel;
+    private final JScrollPane scrollPane = new JScrollPane();
+
+    private final LoadImageAction loadImageAction;
+    private final DumpMemoryAction dumpMemoryAction;
+    private final EraseMemoryAction eraseMemoryAction;
+
+    public MemoryGui(JFrame parent, MemoryContext<Byte> memory, ApplicationApi api) {
+        super(parent);
+
+        this.tableModel = new MemoryTableModel(memory);
+        MemoryTable table = new MemoryTable(tableModel, scrollPane);
+
+        this.loadImageAction = new LoadImageAction(api, memory, () -> {
+            table.revalidate();
+            table.repaint();
+        });
+        this.dumpMemoryAction = new DumpMemoryAction(api, memory);
+        this.eraseMemoryAction = new EraseMemoryAction(tableModel, memory);
+
+        initComponents();
+        setLocationRelativeTo(parent);
+
+        scrollPane.setViewportView(table);
+        memory.addMemoryListener(new MemoryListenerImpl());
+    }
+
+    private void initComponents() {
+        JToolBar toolBar = new JToolBar();
+
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+        setTitle("SSEM Memory (Williams–Kilburn Tube)");
+
+        toolBar.setFloatable(false);
+        toolBar.setRollover(true);
+        toolBar.add(new ToolbarButton(loadImageAction));
+        toolBar.add(new ToolbarButton(dumpMemoryAction));
+        toolBar.addSeparator();
+        toolBar.add(new ToolbarButton(eraseMemoryAction));
+
+        GroupLayout layout = new GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 965, Short.MAX_VALUE)
+                        .addComponent(toolBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE))
+        );
+
+        pack();
+    }
 
     private class MemoryListenerImpl implements Memory.MemoryListener {
 
@@ -39,62 +104,4 @@ public class MemoryGui extends JDialog {
             tableModel.fireTableDataChanged();
         }
     }
-
-    public MemoryGui(JFrame parent, MemoryContext<Byte> memory) {
-        super(parent);
-
-        initComponents();
-        setLocationRelativeTo(parent);
-
-        this.tableModel = new MemoryTableModel(memory);
-        MemoryTable memoryTable = new MemoryTable(tableModel, scrollPane);
-        memoryTable.setup();
-        scrollPane.setViewportView(memoryTable);
-
-        memory.addMemoryListener(new MemoryListenerImpl());
-    }
-
-    private void initComponents() {
-        scrollPane = new JScrollPane();
-        JToolBar jToolBar1 = new JToolBar();
-        JButton btnClear = new JButton();
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        setTitle("SSEM Memory (Williams-Killburn Tube)");
-
-        jToolBar1.setFloatable(false);
-        jToolBar1.setRollover(true);
-
-        btnClear.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/memory/ssem/gui/clear.png")));
-        btnClear.setFocusable(false);
-        btnClear.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnClear.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnClear.addActionListener(this::btnClearActionPerformed);
-        jToolBar1.add(btnClear);
-
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 965, Short.MAX_VALUE)
-                .addComponent(jToolBar1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE))
-        );
-
-        pack();
-    }
-
-    private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {
-        tableModel.clear();
-    }
-
-    private JScrollPane scrollPane;
 }

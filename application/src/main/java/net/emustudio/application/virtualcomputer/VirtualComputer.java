@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,11 @@
  */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.configuration.*;
 import net.emustudio.application.internal.Unchecked;
+import net.emustudio.application.settings.AppSettings;
+import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.application.settings.PluginConfig;
+import net.emustudio.application.settings.PluginSettingsImpl;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -28,7 +31,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,19 +41,24 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static net.emustudio.application.internal.Reflection.doesImplement;
 
-public class VirtualComputer implements PluginConnections {
+public class VirtualComputer implements PluginConnections, AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(VirtualComputer.class);
 
     private static final Map<PLUGIN_TYPE, Class<? extends Plugin>> pluginInterfaces = Map.of(
-        PLUGIN_TYPE.COMPILER, Compiler.class,
-        PLUGIN_TYPE.CPU, CPU.class,
-        PLUGIN_TYPE.MEMORY, Memory.class,
-        PLUGIN_TYPE.DEVICE, Device.class
+            PLUGIN_TYPE.COMPILER, Compiler.class,
+            PLUGIN_TYPE.CPU, CPU.class,
+            PLUGIN_TYPE.MEMORY, Memory.class,
+            PLUGIN_TYPE.DEVICE, Device.class
     );
+    // The first parameter of constructor is plug-in ID
+    private static final Class<?>[] PLUGIN_CONSTRUCTOR_PARAMS = {
+            long.class, ApplicationApi.class, PluginSettings.class
+    };
+
 
     private final ComputerConfig computerConfig;
 
@@ -71,31 +79,114 @@ public class VirtualComputer implements PluginConnections {
         });
     }
 
-    public  ComputerConfig getComputerConfig() {
+    public static VirtualComputer create(ComputerConfig computerConfig, ApplicationApi applicationApi,
+                                         AppSettings appSettings) throws IOException, InvalidPluginException {
+        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, appSettings);
+        return new VirtualComputer(computerConfig, plugins);
+    }
+
+    private static Map<Long, PluginMeta> loadPlugins(
+            ComputerConfig computerConfig,
+            ApplicationApi applicationApi,
+            AppSettings appSettings
+    ) throws IOException, InvalidPluginException {
+        List<PluginConfig> pluginConfigs = Stream.of(
+                        computerConfig.getCompiler(),
+                        computerConfig.getCPU(),
+                        computerConfig.getMemory()
+                ).map(opt -> opt.map(List::of).orElse(Collections.emptyList()))
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+        pluginConfigs.addAll(computerConfig.getDevices());
+
+        List<File> filesToLoad = pluginConfigs.stream()
+                .map(c -> c.getPluginPath().toFile())
+                .collect(Collectors.toList());
+
+        LOGGER.debug("Loading plugin files: {}", filesToLoad);
+
+        PluginLoader pluginLoader = new PluginLoader();
+        List<Class<Plugin>> pluginClasses = pluginLoader.loadPlugins(filesToLoad);
+
+        return constructPlugins(pluginClasses, pluginConfigs, applicationApi, appSettings, computerConfig.getConfig()::save);
+    }
+
+    private static Map<Long, PluginMeta> constructPlugins(
+            List<Class<Plugin>> pluginClasses,
+            List<PluginConfig> pluginConfigs,
+            ApplicationApi applicationApi,
+            AppSettings appSettings,
+            Runnable save
+    ) throws InvalidPluginException {
+
+        Map<Long, PluginMeta> plugins = new HashMap<>();
+        AtomicLong pluginIdCounter = new AtomicLong();
+
+        for (int i = 0; i < Math.min(pluginClasses.size(), pluginConfigs.size()); i++) {
+            Class<Plugin> pluginClass = pluginClasses.get(i);
+            PluginConfig pluginConfig = pluginConfigs.get(i);
+            PluginSettings pluginSettings = new PluginSettingsImpl(
+                    pluginConfig.getPluginSettings(), appSettings, save
+            );
+
+            if (!doesImplement(pluginClass, pluginInterfaces.get(pluginConfig.getPluginType()))) {
+                throw new InvalidPluginException(
+                        "Plugin" + pluginConfig.getPluginName() + " does not implement interface " + pluginClass.getName()
+                );
+            }
+
+            long pluginId = pluginIdCounter.getAndIncrement();
+            Plugin pluginInstance = Unchecked.call(
+                    () -> createPluginInstance(pluginId, pluginClass, applicationApi, pluginSettings)
+            );
+
+            PluginMeta pluginMeta = new PluginMeta(pluginSettings, pluginInstance, pluginConfig);
+            plugins.put(pluginId, pluginMeta);
+        }
+
+        return plugins;
+    }
+
+    private static Plugin createPluginInstance(long pluginID, Class<? extends Plugin> mainClass, ApplicationApi applicationApi,
+                                               PluginSettings pluginSettings) throws InvalidPluginException {
+        Objects.requireNonNull(mainClass);
+        Objects.requireNonNull(applicationApi);
+
+
+        try {
+            Constructor<?> constructor = mainClass.getDeclaredConstructor(PLUGIN_CONSTRUCTOR_PARAMS);
+            return (Plugin) constructor.newInstance(pluginID, applicationApi, pluginSettings);
+        } catch (Exception | NoClassDefFoundError e) {
+            throw new InvalidPluginException("Plug-in main class does not have proper constructor", e);
+        }
+    }
+
+    public ComputerConfig getComputerConfig() {
         return computerConfig;
     }
 
     public void initialize(ContextPoolImpl contextPool) throws PluginInitializationException {
         contextPool.setComputer(this);
-        List<PluginMeta> pluginsToInitialize = List.of(
-            pluginsByType.getOrDefault(PLUGIN_TYPE.COMPILER, Collections.emptyList()),
-            pluginsByType.getOrDefault(PLUGIN_TYPE.MEMORY, Collections.emptyList()),
-            pluginsByType.getOrDefault(PLUGIN_TYPE.CPU, Collections.emptyList()),
-            pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList())
-        ).stream().flatMap(Collection::stream).collect(Collectors.toList());
+        List<PluginMeta> pluginsToInitialize = Stream.of(
+                pluginsByType.getOrDefault(PLUGIN_TYPE.COMPILER, Collections.emptyList()),
+                pluginsByType.getOrDefault(PLUGIN_TYPE.MEMORY, Collections.emptyList()),
+                pluginsByType.getOrDefault(PLUGIN_TYPE.CPU, Collections.emptyList()),
+                pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList())
+        ).flatMap(Collection::stream).collect(Collectors.toList());
 
-        pluginsToInitialize.forEach(meta -> Unchecked.run(meta.pluginInstance::initialize));
+        for (PluginMeta pluginMeta : pluginsToInitialize) {
+            pluginMeta.pluginInstance.initialize();
+        }
     }
 
     public void reset() {
         getCompiler().ifPresent(Compiler::reset);
-        getMemory().ifPresentOrElse(memory -> {
-            getCPU().ifPresent(cpu -> cpu.reset(memory.getProgramLocation()));
-            memory.reset();
-        }, () -> getCPU().ifPresent(CPU::reset));
+        getMemory().ifPresent(Plugin::reset);
+        getCPU().ifPresent(Plugin::reset);
         getDevices().forEach(Device::reset);
     }
 
+    @Override
     public boolean isConnected(long pluginA, long pluginB) {
         String fst = pluginsById.get(pluginA).pluginConfig.getPluginId();
         String snd = pluginsById.get(pluginB).pluginConfig.getPluginId();
@@ -128,95 +219,9 @@ public class VirtualComputer implements PluginConnections {
         return meta.stream().map(m -> (Device) m.pluginInstance).collect(Collectors.toList());
     }
 
+    @Override
     public void close() {
         computerConfig.close();
-    }
-
-    public static VirtualComputer create(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                         ApplicationConfig applicationConfig, ConfigFiles configFiles) throws IOException, InvalidPluginException {
-        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, applicationConfig, configFiles);
-        return new VirtualComputer(computerConfig, plugins);
-    }
-
-    private static Map<Long, PluginMeta> loadPlugins(ComputerConfig computerConfig, ApplicationApi applicationApi,
-                                                     ApplicationConfig applicationConfig, ConfigFiles configFiles) throws IOException, InvalidPluginException {
-        List<PluginConfig> pluginConfigs = List.of(
-            computerConfig.getCompiler(),
-            computerConfig.getCPU(),
-            computerConfig.getMemory()
-        ).stream()
-            .map(opt -> opt.map(List::of).orElse(Collections.emptyList()))
-            .flatMap(List::stream)
-            .collect(Collectors.toList());
-        pluginConfigs.addAll(computerConfig.getDevices());
-
-        List<File> filesToLoad = pluginConfigs.stream()
-            .map(c -> c.getPluginPath(configFiles).toFile())
-            .collect(Collectors.toList());
-
-        LOGGER.debug("Loading plugin files: {}", filesToLoad);
-
-        PluginLoader pluginLoader = new PluginLoader();
-        List<Class<Plugin>> pluginClasses = pluginLoader.loadPlugins(filesToLoad);
-
-        return constructPlugins(computerConfig, pluginClasses, pluginConfigs, applicationApi, applicationConfig);
-    }
-
-    private static Map<Long, PluginMeta> constructPlugins(ComputerConfig computerConfig, List<Class<Plugin>> pluginClasses,
-                                                          List<PluginConfig> pluginConfigs, ApplicationApi applicationApi,
-                                                          ApplicationConfig applicationConfig)
-        throws InvalidPluginException {
-
-        Map<Long, PluginMeta> plugins = new HashMap<>();
-        AtomicLong pluginIdCounter = new AtomicLong();
-
-        IntStream
-            .range(0, Math.min(pluginClasses.size(), pluginConfigs.size()))
-            .forEach(i -> {
-                Class<Plugin> pluginClass = pluginClasses.get(i);
-                PluginConfig pluginConfig = pluginConfigs.get(i);
-                PluginSettings pluginSettings = new PluginSettingsImpl(
-                    pluginConfig.getPluginSettings(), computerConfig, applicationConfig
-                );
-
-                if (!doesImplement(pluginClass, pluginInterfaces.get(pluginConfig.getPluginType()))) {
-                    Unchecked.sneakyThrow(new InvalidPluginException(
-                        "Plugin" + pluginConfig.getPluginName() + " does not implement interface " + pluginClass.getName()
-                    ));
-                }
-
-                long pluginId = pluginIdCounter.getAndIncrement();
-                Plugin pluginInstance = Unchecked.call(
-                    () -> createPluginInstance(pluginId, pluginClass, applicationApi, pluginSettings)
-                );
-
-                PluginMeta pluginMeta = new PluginMeta(pluginSettings, pluginInstance, pluginConfig);
-                plugins.put(pluginId, pluginMeta);
-            });
-
-        return plugins;
-    }
-
-    private static Plugin createPluginInstance(long pluginID, Class<? extends Plugin> mainClass, ApplicationApi applicationApi,
-                                        PluginSettings pluginSettings) throws InvalidPluginException {
-        Objects.requireNonNull(mainClass);
-        Objects.requireNonNull(applicationApi);
-
-        // First parameter of constructor is plug-in ID
-        Class<?>[] constructorParams = { long.class, ApplicationApi.class, PluginSettings.class };
-
-        try {
-            Constructor<?> constructor = mainClass.getDeclaredConstructor(constructorParams);
-            if (constructor != null) {
-                return (Plugin) constructor.newInstance(pluginID, applicationApi, pluginSettings);
-            } else {
-                throw new InvalidPluginException("Could not find constructor with parameters: " + Arrays.deepToString(constructorParams));
-            }
-        } catch (InvalidPluginException e) {
-            throw e;
-        } catch (Exception | NoClassDefFoundError e) {
-            throw new InvalidPluginException("Plug-in main class does not have proper constructor", e);
-        }
     }
 
     static class PluginMeta {

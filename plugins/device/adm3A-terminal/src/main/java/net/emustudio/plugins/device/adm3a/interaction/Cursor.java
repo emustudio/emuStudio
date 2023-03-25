@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,34 +26,31 @@ import java.util.function.Function;
 
 @ThreadSafe
 public class Cursor {
-    private final int columns;
-    private final int rows;
+    public final int columns;
+    public final int rows;
 
     private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
-
-    interface LineRoller {
-
-        void rollLine();
-    }
 
     public Cursor(int columns, int rows) {
         this.columns = columns;
         this.rows = rows;
     }
 
-    int getColumns() {
-        return columns;
-    }
-
-    int getRows() {
-        return rows;
-    }
-
     void home() {
         cursorPoint.set(new Point());
     }
 
-    void set(int x, int y) {
+    void move(int x, int y) {
+        if (x < 0) {
+            x = 0;
+        } else if (x >= columns) {
+            x = columns - 1;
+        }
+        if (y < 0) {
+            y = 0;
+        } else if (y >= rows) {
+            y = rows - 1;
+        }
         cursorPoint.set(new Point(x, y));
     }
 
@@ -62,11 +59,11 @@ public class Cursor {
             Point newPoint = new Point(oldPoint);
 
             newPoint.x++;
-            if (newPoint.x > (columns - 1)) {
+            if (newPoint.x >= columns) {
                 newPoint.x = 0;
                 newPoint.y++;
                 // automatic line rolling
-                if (newPoint.y > (rows - 1)) {
+                if (newPoint.y >= rows) {
                     lineRoller.rollLine();
                     newPoint.y = (rows - 1);
                 }
@@ -121,7 +118,6 @@ public class Cursor {
         });
     }
 
-
     void carriageReturn() {
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
@@ -140,5 +136,10 @@ public class Cursor {
         do {
             newPoint = changer.apply(oldPoint);
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
+    }
+
+    public interface LineRoller {
+
+        void rollLine();
     }
 }

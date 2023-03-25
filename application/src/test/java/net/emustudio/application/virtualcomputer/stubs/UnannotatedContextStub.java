@@ -1,7 +1,7 @@
 /*
  * Run-time library for emuStudio and plugins.
  *
- *     Copyright (C) 2006-2020  Peter Jakubčo
+ *     Copyright (C) 2006-2023  Peter Jakubčo
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by

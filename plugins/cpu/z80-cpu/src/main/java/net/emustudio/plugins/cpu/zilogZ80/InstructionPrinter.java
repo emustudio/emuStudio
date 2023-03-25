@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,9 +40,8 @@ public class InstructionPrinter implements DispatchListener {
 
     private final List<Integer> cache = new CopyOnWriteArrayList<>();
     private final AtomicInteger numberOfMatch = new AtomicInteger();
-    private volatile int matchPC;
     private final boolean useCache;
-
+    private volatile int matchPC;
     private volatile long creationTimeStamp;
 
     public InstructionPrinter(Disassembler disassembler, EmulatorEngine emulatorEngine, boolean useCache, PrintStream writer) {
@@ -67,7 +66,7 @@ public class InstructionPrinter implements DispatchListener {
             if (useCache && !cache.contains(PC)) {
                 if (numberOfMatch.get() != 0) {
                     writer.println(String.format("%04d | Block from %04X to %04X; count=%d",
-                        timeStamp, matchPC, PC, numberOfMatch.get())
+                            timeStamp, matchPC, PC, numberOfMatch.get())
                     );
                 } else {
                     matchPC = PC;
@@ -80,7 +79,7 @@ public class InstructionPrinter implements DispatchListener {
 
             if (numberOfMatch.get() <= 1) {
                 writer.print(String.format("%04d | PC=%04x | %15s | %10s ",
-                    timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
+                        timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
                 );
             }
         } catch (InvalidInstructionException e) {
@@ -92,11 +91,11 @@ public class InstructionPrinter implements DispatchListener {
     public void afterDispatch() {
         if (numberOfMatch.get() <= 1) {
             writer.println(String.format("|| regs=%s IX=%04x IY=%04x IFF=%1x I=%02x R=%02x | flags=%s | SP=%04x | PC=%04x",
-                regsToString(), emulatorEngine.IX, emulatorEngine.IY,
-                emulatorEngine.IFF[0] ? 1 : 0,
-                emulatorEngine.I, emulatorEngine.R,
-                intToFlags(emulatorEngine.flags),
-                emulatorEngine.SP, emulatorEngine.PC)
+                    regsToString(), emulatorEngine.IX, emulatorEngine.IY,
+                    emulatorEngine.IFF[0] ? 1 : 0,
+                    emulatorEngine.I, emulatorEngine.R,
+                    intToFlags(emulatorEngine.flags),
+                    emulatorEngine.SP, emulatorEngine.PC)
             );
         }
     }

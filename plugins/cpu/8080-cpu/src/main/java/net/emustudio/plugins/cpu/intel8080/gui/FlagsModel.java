@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,15 @@ package net.emustudio.plugins.cpu.intel8080.gui;
 import net.emustudio.plugins.cpu.intel8080.EmulatorEngine;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 class FlagsModel extends AbstractTableModel {
-    private String[] flags = {"S", "Z", "A", "P", "C"};
-    private int[] flagsI = {0, 0, 0, 0, 0};
-    private EmulatorEngine cpu;
+    private final String[] flags = {"S", "Z", "A", "P", "C"};
+    private final int[] flagsI = {0, 0, 0, 0, 0};
+    private final EmulatorEngine engine;
 
-    FlagsModel(EmulatorEngine cpu) {
-        this.cpu = cpu;
+    FlagsModel(EmulatorEngine engine) {
+        this.engine = Objects.requireNonNull(engine);
     }
 
     @Override
@@ -59,7 +60,7 @@ class FlagsModel extends AbstractTableModel {
 
     @Override
     public void fireTableDataChanged() {
-        short F = cpu.flags;
+        short F = engine.flags;
         flagsI[0] = ((F & EmulatorEngine.FLAG_S) != 0) ? 1 : 0;
         flagsI[1] = ((F & EmulatorEngine.FLAG_Z) != 0) ? 1 : 0;
         flagsI[2] = ((F & EmulatorEngine.FLAG_AC) != 0) ? 1 : 0;

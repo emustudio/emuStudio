@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class RunnerTest {
@@ -41,10 +41,15 @@ public class RunnerTest {
 
         Runner.main("--output", outputFile.getPath(), sourceFile.getPath());
 
-        List<String> lines = Files.readAllLines(outputFile.toPath());
+        byte[] bytes = Files.readAllBytes(outputFile.toPath());
 
-        assertEquals(1, lines.size());
-        assertEquals("\150\6\0\0", lines.get(0));
+        // 32 words of 32 bits + 4 bytes for startLine
+        assertEquals(33 * 4, bytes.length);
+
+        byte[] expected = new byte[33 * 4];
+        expected[4] = 0x68;
+        expected[5] = 0x6;
+        assertArrayEquals(expected, bytes);
     }
 
     @Test
@@ -61,6 +66,4 @@ public class RunnerTest {
     public void testCommandLinePrintVersion() {
         Runner.main("--version");
     }
-
-
 }

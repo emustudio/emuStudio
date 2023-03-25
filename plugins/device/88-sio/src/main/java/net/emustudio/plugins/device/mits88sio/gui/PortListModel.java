@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,13 +42,13 @@ public class PortListModel extends AbstractListModel<String> {
         fireContentsChanged(this, 0, this.ports.size() - 1);
     }
 
-    public Collection<Integer> getAll() {
-        return Collections.unmodifiableCollection(ports);
+    public List<Integer> getAll() {
+        return Collections.unmodifiableList(ports);
     }
 
     public void clear() {
         ports.clear();
-        fireContentsChanged(this, 0, ports.size() - 1);
+        fireContentsChanged(this, 0, -1);
     }
 
     public void removeAt(int index) {

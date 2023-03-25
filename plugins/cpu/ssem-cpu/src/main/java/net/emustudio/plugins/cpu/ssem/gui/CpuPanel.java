@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,23 @@ import static net.emustudio.plugins.cpu.ssem.gui.Constants.MONOSPACED_PLAIN;
 public class CpuPanel extends JPanel {
     private final EmulatorEngine engine;
     private final MemoryContext<Byte> memory;
-
+    private JLabel lblRunState;
+    private JLabel lblSpeed;
+    private JTextField txtA;
+    private JTextField txtDecA;
+    private JTextField txtBinA;
+    private JTextField txtBinLine;
+    private JTextField txtBinMCI;
+    private JTextField txtBinMLine;
+    private JTextField txtCI;
+    private JTextField txtDecCI;
+    private JTextField txtBinCI;
+    private JTextField txtLine;
+    private JTextField txtDecLine;
+    private JTextField txtMCI;
+    private JTextField txtDecMCI;
+    private JTextField txtMLine;
+    private JTextField txtDecMLine;
     public CpuPanel(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory) {
         this.engine = Objects.requireNonNull(engine);
         this.memory = Objects.requireNonNull(memory);
@@ -42,53 +58,6 @@ public class CpuPanel extends JPanel {
         initComponents();
         cpu.addCPUListener(new Updater());
         lblSpeed.setText(String.valueOf(EmulatorEngine.INSTRUCTIONS_PER_SECOND));
-    }
-
-    private final class Updater implements CPU.CPUListener {
-
-        @Override
-        public void runStateChanged(CPU.RunState rs) {
-            lblRunState.setText(rs.toString().toUpperCase());
-        }
-
-        @Override
-        public void internalStateChanged() {
-            int acc = engine.Acc.get();
-            int ci = engine.CI.get();
-
-            txtA.setText(String.format("%08x", acc));
-            txtCI.setText(String.format("%08x", ci / 4));
-            txtBinA.setText(formatBinary(acc));
-            txtBinCI.setText(formatBinary(ci));
-
-            try {
-                Byte[] mCI = memory.readWord(ci);
-                byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
-                Byte[] mLine = memory.readWord(line * 4);
-
-                txtMCI.setText(String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
-                txtLine.setText(String.format("%02x", line));
-                txtMLine.setText(String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
-
-                txtBinMCI.setText(formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN)));
-                txtBinLine.setText(formatBinary(line, 8));
-                txtBinMLine.setText(formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN)));
-            } catch (IndexOutOfBoundsException e) {
-                txtMCI.setText("?");
-                txtMLine.setText("?");
-                txtBinMCI.setText("?");
-                txtBinMLine.setText("?");
-            }
-        }
-
-        private String formatBinary(int number) {
-            return formatBinary(number, 32);
-        }
-
-        private String formatBinary(int number, int length) {
-            return formatBinaryString(number, length, 4, true);
-        }
-
     }
 
     /**
@@ -107,18 +76,23 @@ public class CpuPanel extends JPanel {
         JLabel jLabel2 = new JLabel();
         JLabel jLabel3 = new JLabel();
         txtCI = new JTextField();
+        txtDecCI = new JTextField();
         txtA = new JTextField();
+        txtDecA = new JTextField();
         txtBinA = new JTextField();
         txtBinCI = new JTextField();
         JPanel jPanel3 = new JPanel();
         JLabel jLabel4 = new JLabel();
         JLabel jLabel5 = new JLabel();
         txtMLine = new JTextField();
+        txtDecMLine = new JTextField();
         txtMCI = new JTextField();
+        txtDecMCI = new JTextField();
         txtBinMCI = new JTextField();
         txtBinMLine = new JTextField();
         JLabel jLabel6 = new JLabel();
         txtLine = new JTextField();
+        txtDecLine = new JTextField();
         txtBinLine = new JTextField();
 
         jPanel1.setBorder(BorderFactory.createTitledBorder("Run control"));
@@ -137,25 +111,25 @@ public class CpuPanel extends JPanel {
         GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(lblRunState)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblSpeed)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jLabel7)
-                    .addContainerGap())
+                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(lblRunState)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(lblSpeed)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel7)
+                                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblRunState)
-                        .addComponent(jLabel7)
-                        .addComponent(lblSpeed))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblRunState)
+                                        .addComponent(jLabel7)
+                                        .addComponent(lblSpeed))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel2.setBorder(BorderFactory.createTitledBorder("Registers"));
@@ -173,10 +147,20 @@ public class CpuPanel extends JPanel {
         txtCI.setHorizontalAlignment(JTextField.RIGHT);
         txtCI.setText("0");
 
+        txtDecCI.setEditable(false);
+        txtDecCI.setFont(MONOSPACED_PLAIN);
+        txtDecCI.setHorizontalAlignment(JTextField.RIGHT);
+        txtDecCI.setText("0");
+
         txtA.setEditable(false);
         txtA.setFont(MONOSPACED_PLAIN);
         txtA.setHorizontalAlignment(JTextField.RIGHT);
         txtA.setText("0");
+
+        txtDecA.setEditable(false);
+        txtDecA.setFont(MONOSPACED_PLAIN);
+        txtDecA.setHorizontalAlignment(JTextField.RIGHT);
+        txtDecA.setText("0");
 
         txtBinA.setEditable(false);
         txtBinA.setFont(MONOSPACED_PLAIN);
@@ -191,36 +175,42 @@ public class CpuPanel extends JPanel {
         GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addGap(47, 47, 47)
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel3, GroupLayout.Alignment.TRAILING)
-                        .addComponent(jLabel2))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                        .addComponent(txtA, GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE)
-                        .addComponent(txtCI))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(txtBinCI)
-                        .addComponent(txtBinA))
-                    .addContainerGap())
+                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGap(47, 47, 47)
+                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel3, GroupLayout.Alignment.TRAILING)
+                                        .addComponent(jLabel2))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(txtA, GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE)
+                                        .addComponent(txtCI))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(txtDecA, GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE)
+                                        .addComponent(txtDecCI))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(txtBinCI)
+                                        .addComponent(txtBinA))
+                                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel2)
-                        .addComponent(txtA, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(txtBinA, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel3)
-                        .addComponent(txtCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(txtBinCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(jLabel2)
+                                        .addComponent(txtA, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtDecA, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtBinA, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(jLabel3)
+                                        .addComponent(txtCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtDecCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtBinCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel3.setBorder(BorderFactory.createTitledBorder("Memory snippet"));
@@ -238,10 +228,20 @@ public class CpuPanel extends JPanel {
         txtMLine.setHorizontalAlignment(JTextField.RIGHT);
         txtMLine.setText("0");
 
+        txtDecMLine.setEditable(false);
+        txtDecMLine.setFont(MONOSPACED_PLAIN);
+        txtDecMLine.setHorizontalAlignment(JTextField.RIGHT);
+        txtDecMLine.setText("0");
+
         txtMCI.setEditable(false);
         txtMCI.setFont(MONOSPACED_PLAIN);
         txtMCI.setHorizontalAlignment(JTextField.RIGHT);
         txtMCI.setText("0");
+
+        txtDecMCI.setEditable(false);
+        txtDecMCI.setFont(MONOSPACED_PLAIN);
+        txtDecMCI.setHorizontalAlignment(JTextField.RIGHT);
+        txtDecMCI.setText("0");
 
         txtBinMCI.setEditable(false);
         txtBinMCI.setFont(MONOSPACED_PLAIN);
@@ -262,6 +262,11 @@ public class CpuPanel extends JPanel {
         txtLine.setHorizontalAlignment(JTextField.RIGHT);
         txtLine.setText("0");
 
+        txtDecLine.setEditable(false);
+        txtDecLine.setFont(MONOSPACED_PLAIN);
+        txtDecLine.setHorizontalAlignment(JTextField.RIGHT);
+        txtDecLine.setText("0");
+
         txtBinLine.setEditable(false);
         txtBinLine.setFont(MONOSPACED_PLAIN);
         txtBinLine.setHorizontalAlignment(JTextField.RIGHT);
@@ -270,91 +275,143 @@ public class CpuPanel extends JPanel {
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel3Layout.createSequentialGroup()
-                            .addComponent(jLabel5)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(txtMLine, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(txtBinMLine))
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                            .addGap(14, 14, 14)
-                            .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                .addComponent(jLabel6)
-                                .addComponent(jLabel4))
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(jPanel3Layout.createSequentialGroup()
-                                    .addComponent(txtMCI, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(txtBinMCI))
-                                .addGroup(jPanel3Layout.createSequentialGroup()
-                                    .addComponent(txtLine, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(txtBinLine)))))
-                    .addContainerGap())
+                                .addContainerGap()
+                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(jPanel3Layout.createSequentialGroup()
+                                                .addComponent(jLabel5)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(txtMLine, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(txtDecMLine, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(txtBinMLine))
+                                        .addGroup(jPanel3Layout.createSequentialGroup()
+                                                .addGap(14, 14, 14)
+                                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                                                        .addComponent(jLabel6)
+                                                        .addComponent(jLabel4))
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addGroup(jPanel3Layout.createSequentialGroup()
+                                                                .addComponent(txtMCI, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(txtDecMCI, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(txtBinMCI))
+                                                        .addGroup(jPanel3Layout.createSequentialGroup()
+                                                                .addComponent(txtLine, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(txtDecLine, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(txtBinLine)))))
+                                .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel4)
-                        .addComponent(txtMCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(txtBinMCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel6)
-                        .addComponent(txtLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(txtBinLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel5)
-                        .addComponent(txtMLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(txtBinMLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(jLabel4)
+                                        .addComponent(txtMCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtDecMCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtBinMCI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(jLabel6)
+                                        .addComponent(txtLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtDecLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtBinLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(jLabel5)
+                                        .addComponent(txtMLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtDecMLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtBinMLine, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap())
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private final class Updater implements CPU.CPUListener {
 
-    private JLabel lblRunState;
-    private JLabel lblSpeed;
-    private JTextField txtA;
-    private JTextField txtBinA;
-    private JTextField txtBinCI;
-    private JTextField txtBinLine;
-    private JTextField txtBinMCI;
-    private JTextField txtBinMLine;
-    private JTextField txtCI;
-    private JTextField txtLine;
-    private JTextField txtMCI;
-    private JTextField txtMLine;
+        @Override
+        public void runStateChanged(CPU.RunState rs) {
+            lblRunState.setText(rs.toString().toUpperCase());
+        }
+
+        @Override
+        public void internalStateChanged() {
+            int acc = engine.Acc.get();
+            int ci = engine.CI.get();
+
+            txtA.setText(String.format("%08x", acc));
+            txtDecA.setText(String.format("%d", acc));
+            txtCI.setText(String.format("%08x", ci / 4));
+            txtDecCI.setText(String.format("%d", ci / 4));
+            txtBinA.setText(formatBinary(acc));
+            txtBinCI.setText(formatBinary(ci));
+
+            try {
+                Byte[] mCI = memory.read(ci, 4);
+                byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
+                Byte[] mLine = memory.read(line * 4, 4);
+
+                txtMCI.setText(String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
+                txtLine.setText(String.format("%02x", line));
+                txtMLine.setText(String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
+
+                txtDecMCI.setText(String.format("%d", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
+                txtDecLine.setText(String.format("%d", line));
+                txtDecMLine.setText(String.format("%d", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
+
+                txtBinMCI.setText(formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN)));
+                txtBinLine.setText(formatBinary(line, 8));
+                txtBinMLine.setText(formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN)));
+            } catch (IndexOutOfBoundsException e) {
+                txtLine.setText("?");
+                txtDecLine.setText("?");
+                txtMCI.setText("?");
+                txtDecMCI.setText("?");
+                txtMLine.setText("?");
+                txtDecMLine.setText("?");
+                txtBinMCI.setText("?");
+                txtBinMLine.setText("?");
+            }
+        }
+
+        private String formatBinary(int number) {
+            return formatBinary(number, 32);
+        }
+
+        private String formatBinary(int number, int length) {
+            return formatBinaryString(number, length, 4, true);
+        }
+
+    }
     // End of variables declaration//GEN-END:variables
 }

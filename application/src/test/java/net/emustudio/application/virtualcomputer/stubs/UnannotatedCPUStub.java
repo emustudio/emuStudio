@@ -1,7 +1,7 @@
 /*
  * Run-time library for emuStudio and plugins.
  *
- *     Copyright (C) 2006-2020  Peter Jakubčo
+ *     Copyright (C) 2006-2023  Peter Jakubčo
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -21,13 +21,14 @@ package net.emustudio.application.virtualcomputer.stubs;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.PluginSettings;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
 
 import javax.swing.*;
 
 public class UnannotatedCPUStub implements CPU {
 
-    public UnannotatedCPUStub(long pluginID, ApplicationApi applicationApi, PluginSettings pluginSettings) {}
+    public UnannotatedCPUStub(long pluginID, ApplicationApi applicationApi, PluginSettings pluginSettings) {
+    }
 
     @Override
     public void addCPUListener(CPUListener listener) {

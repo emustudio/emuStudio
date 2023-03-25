@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
  */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -42,6 +42,13 @@ public class PagesPanel extends JPanel {
         this.dialogs = Objects.requireNonNull(dialogs);
     }
 
+    public static PagesPanel create(DebugTableModel debugTableModel, Dialogs dialogs) {
+        PagesPanel pagesPanel = new PagesPanel(debugTableModel, dialogs);
+        pagesPanel.initComponents();
+
+        return pagesPanel;
+    }
+
     private void initComponents() {
         ToolbarButton btnFirst = new ToolbarButton(evt -> gotoFirstPage(), PAGE_FIRST_PNG, "Go to the first page");
         ToolbarButton btnBackward = new ToolbarButton(evt -> gotoPreviousPage(), PAGE_BACK_PNG, "Go to the previous page");
@@ -53,30 +60,30 @@ public class PagesPanel extends JPanel {
         GroupLayout pagesLayout = new GroupLayout(this);
         setLayout(pagesLayout);
         pagesLayout.setHorizontalGroup(
-            pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                .addGroup(pagesLayout.createSequentialGroup()
-                    .addComponent(btnFirst)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnSeekBackward)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnBackward)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnCurrentPage)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnForward)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(btnSeekForward))
+                pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                        .addGroup(pagesLayout.createSequentialGroup()
+                                .addComponent(btnFirst)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnSeekBackward)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnBackward)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnCurrentPage)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnForward)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnSeekForward))
         );
         pagesLayout.setVerticalGroup(
-            pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                .addGroup(pagesLayout.createSequentialGroup()
-                    .addGroup(pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(btnSeekBackward)
-                        .addComponent(btnBackward)
-                        .addComponent(btnFirst)
-                        .addComponent(btnCurrentPage)
-                        .addComponent(btnSeekForward)
-                        .addComponent(btnForward)))
+                pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                        .addGroup(pagesLayout.createSequentialGroup()
+                                .addGroup(pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                                        .addComponent(btnSeekBackward)
+                                        .addComponent(btnBackward)
+                                        .addComponent(btnFirst)
+                                        .addComponent(btnCurrentPage)
+                                        .addComponent(btnSeekForward)
+                                        .addComponent(btnForward)))
         );
     }
 
@@ -115,12 +122,5 @@ public class PagesPanel extends JPanel {
         if (gatherPageValue("Please enter number of pages to forward")) {
             debugTableModel.seekForwardPage(pageSeekLastValue);
         }
-    }
-
-    public static PagesPanel create(DebugTableModel debugTableModel, Dialogs dialogs) {
-        PagesPanel pagesPanel = new PagesPanel(debugTableModel, dialogs);
-        pagesPanel.initComponents();
-
-        return pagesPanel;
     }
 }

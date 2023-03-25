@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,22 +18,16 @@
  */
 package net.emustudio.plugins.device.adm3a.interaction;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.emustudio.emulib.runtime.interaction.GuiUtils;
+import net.emustudio.plugins.device.adm3a.api.Keyboard;
 
-import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.event.KeyListener;
 import java.util.Objects;
 
-public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboard {
-    private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardGui.class);
+public class KeyboardGui extends Keyboard implements ContainerListener, KeyListener {
 
     private static final int[] CONTROL_KEYCODES = new int[256];
     private static final int[] CONTROL_KEYCODES_ALWAYS_ACTIVE = new int[256];
@@ -105,23 +99,15 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
         CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_ENTER] = 13;
     }
 
-    private final List<DeviceContext<Short>> devices = new ArrayList<>();
     private final LoadCursorPosition loadCursorPosition;
 
     public KeyboardGui(Cursor cursor) {
         this.loadCursorPosition = new LoadCursorPosition(Objects.requireNonNull(cursor));
     }
 
-    public void addListenerRecursively(Component c) {
-        c.addKeyListener(this);
-        if (c instanceof Container) {
-            Container cont = (Container) c;
-            cont.addContainerListener(this);
-            Component[] children = cont.getComponents();
-            for (Component aChildren : children) {
-                addListenerRecursively(aChildren);
-            }
-        }
+    @Override
+    public void keyTyped(KeyEvent e) {
+
     }
 
     @Override
@@ -135,63 +121,36 @@ public class KeyboardGui extends KeyAdapter implements ContainerListener, Keyboa
             newKeyCode = CONTROL_KEYCODES_ALWAYS_ACTIVE[originalKeyCode];
             if (newKeyCode == 0) {
                 int tmpKeyChar = evt.getKeyChar();
-                if (tmpKeyChar > 254) {
+                if (tmpKeyChar >= 0xFF) {
                     return;
                 }
                 newKeyCode = tmpKeyChar;
             }
         }
         if (newKeyCode != 0) {
-            if (loadCursorPosition.notAccepted((short) newKeyCode)){
-                inputReceived((short) newKeyCode);
+            if (loadCursorPosition.notAccepted((byte) newKeyCode)) {
+                notifyOnKey((byte) newKeyCode);
             }
         }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 
     @Override
     public void componentAdded(ContainerEvent e) {
-        addListenerRecursively(e.getChild());
+        GuiUtils.addKeyListener(e.getChild(), this);
     }
 
     @Override
     public void componentRemoved(ContainerEvent e) {
-        removeListenerRecursively(e.getChild());
+        GuiUtils.removeKeyListener(e.getChild(), this);
     }
 
     @Override
-    public void connect(DeviceContext<Short> device) {
-        devices.add(device);
-    }
+    public void process() {
 
-    @Override
-    public void disconnect(DeviceContext<Short> device) {
-        devices.remove(device);
-    }
-
-    @Override
-    public void destroy() {
-        devices.clear();
-    }
-
-    private void inputReceived(short input) {
-        for (DeviceContext<Short> device : devices) {
-            try {
-                device.writeData(input);
-            } catch (IOException e) {
-                LOGGER.error("[device={}, input={}] Could not notify device about key pressed", device, input, e);
-            }
-        }
-    }
-
-    private void removeListenerRecursively(Component c) {
-        c.removeKeyListener(this);
-        if (c instanceof Container) {
-            Container cont = (Container) c;
-            cont.removeContainerListener(this);
-            Component[] children = cont.getComponents();
-            for (Component aChildren : children) {
-                removeListenerRecursively(aChildren);
-            }
-        }
     }
 }

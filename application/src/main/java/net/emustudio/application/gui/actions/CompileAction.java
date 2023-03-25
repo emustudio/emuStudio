@@ -1,7 +1,26 @@
+/*
+ * This file is part of emuStudio.
+ *
+ * Copyright (C) 2006-2023  Peter Jakubčo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package net.emustudio.application.gui.actions;
 
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
+import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.cpu.CPU;
@@ -25,7 +44,11 @@ public class CompileAction extends AbstractAction {
 
     public CompileAction(VirtualComputer computer, Dialogs dialogs, Editor editor, Supplier<CPU.RunState> runState,
                          JTextArea compilerOutput, Runnable updateTitle) {
-        super("Compile", new ImageIcon(CompileAction.class.getResource("/net/emustudio/application/gui/dialogs/compile.png")));
+        super("Compile",
+                new ImageIcon(Objects.requireNonNull(
+                        CompileAction.class.getResource("/net/emustudio/application/gui/dialogs/compile.png")
+                ))
+        );
 
         this.computer = Objects.requireNonNull(computer);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -48,6 +71,7 @@ public class CompileAction extends AbstractAction {
             @Override
             public void onMessage(CompilerMessage message) {
                 compilerOutput.append(message.getFormattedMessage() + "\n");
+                editor.setPosition(message.getLine(), message.getColumn());
             }
 
             @Override
@@ -71,13 +95,9 @@ public class CompileAction extends AbstractAction {
                     try {
                         computer.getMemory().ifPresent(Memory::reset);
                         compiler.compile(file.getAbsolutePath());
-                        int programStart = compiler.getProgramLocation();
-
-                        computer.getMemory().ifPresent(memory -> memory.setProgramLocation(programStart));
-
-                        computer.getCPU().ifPresent(cpu -> cpu.reset(programStart));
+                        computer.getCPU().ifPresent(Plugin::reset);
                     } catch (Exception e) {
-                        compilerOutput.append("Could not compile file: " + e.toString() + "\n");
+                        compilerOutput.append("Could not compile file: " + e + "\n");
                     }
                 });
             }

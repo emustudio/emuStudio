@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  * Copyright (C) 2020  Marcin Wieczorek
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,16 +28,9 @@ public class LoadCursorPosition {
     private static final int ASCII_ESC = 0x1B;
     // Offset in ASCII for X and Y coordinate
     private static final int ASCII_COORDINATE_OFFSET = 32;
-
-    enum ExpectedSequence {
-        ESCAPE, ASSIGN, X, Y
-    }
-
     private final Cursor cursor;
-
     private volatile ExpectedSequence expect = ESCAPE;
     private int cursorY;
-
     public LoadCursorPosition(Cursor cursor) {
         this.cursor = Objects.requireNonNull(cursor);
     }
@@ -48,11 +41,11 @@ public class LoadCursorPosition {
      * @param data received char
      * @return true if in bounds
      */
-    private boolean checkBounds(Short data) {
+    private boolean checkBounds(byte data) {
         return data >= ' ' && data <= 'o';
     }
 
-    boolean notAccepted(Short data) {
+    boolean notAccepted(byte data) {
         if (expect == ESCAPE && data == ASCII_ESC) {
             expect = ASSIGN;
             return false;
@@ -72,7 +65,7 @@ public class LoadCursorPosition {
             int cursorX = data - ASCII_COORDINATE_OFFSET;
             expect = ESCAPE;
             if (checkBounds(data)) {
-                cursor.set(cursorX, cursorY);
+                cursor.move(cursorX, cursorY);
                 return false;
             }
             return true;
@@ -81,5 +74,9 @@ public class LoadCursorPosition {
         }
 
         return true;
+    }
+
+    enum ExpectedSequence {
+        ESCAPE, ASSIGN, X, Y
     }
 }

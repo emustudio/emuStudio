@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,14 +102,14 @@ public class SchemaPreviewPanel extends JPanel {
     public void saveSchemaImage() {
         if (schema != null && panelResized) {
             Path currentDirectory = Optional
-                .ofNullable(lastImageFile)
-                .map(File::getParentFile)
-                .map(File::toPath)
-                .orElse(Path.of(System.getProperty("user.dir")));
+                    .ofNullable(lastImageFile)
+                    .map(File::getParentFile)
+                    .map(File::toPath)
+                    .orElse(Path.of(System.getProperty("user.dir")));
 
             dialogs.chooseFile(
-                "Save schema image", "Save", currentDirectory, true,
-                new FileExtensionsFilter("PNG image", "png")
+                    "Save schema image", "Save", currentDirectory, true,
+                    new FileExtensionsFilter("PNG image", "png")
             ).ifPresent(path -> {
                 lastImageFile = path.toFile();
 
@@ -120,9 +120,9 @@ public class SchemaPreviewPanel extends JPanel {
                 graphics.setBackground(Color.WHITE);
                 graphics.fillRect(0, 0, schemaWidth, schemaHeight);
                 RenderingHints hints = new RenderingHints(Map.of(
-                    RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON,
-                    RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY,
-                    RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON
+                        RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON,
+                        RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY,
+                        RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON
                 ));
 
                 graphics.setRenderingHints(hints);
@@ -167,8 +167,8 @@ public class SchemaPreviewPanel extends JPanel {
         topFactor = schemaRectangle.y - Schema.MIN_TOP_MARGIN;
         if (schemaRectangle.width != 0 && schemaRectangle.height != 0) {
             this.setSize(
-                schemaRectangle.width - leftFactor + Schema.MIN_LEFT_MARGIN,
-                schemaRectangle.height - topFactor + Schema.MIN_TOP_MARGIN
+                    schemaRectangle.width - leftFactor + Schema.MIN_LEFT_MARGIN,
+                    schemaRectangle.height - topFactor + Schema.MIN_TOP_MARGIN
             );
             this.revalidate();
         }

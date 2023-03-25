@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
+  id 'com.adarshr.test-logger' version '3.1.0'
 }
 
 dependencies {
@@ -45,8 +46,8 @@ jar {
 processResources {
   filesMatching("**/*.properties") {
     filter ReplaceTokens, tokens: [
-      "project.version": project.version,
-      "today.year": new Date().format("yyyy")
+            "project.version": project.version,
+            "today.year"     : new Date().format("yyyy")
     ]
   }
 }

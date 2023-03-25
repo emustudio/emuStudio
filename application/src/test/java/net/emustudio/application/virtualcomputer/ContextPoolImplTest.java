@@ -1,7 +1,7 @@
 /*
  * Run-time library for emuStudio and plugins.
  *
- *     Copyright (C) 2006-2020  Peter Jakubčo
+ *     Copyright (C) 2006-2023  Peter Jakubčo
  *
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -65,10 +65,10 @@ public class ContextPoolImplTest {
         shortDeviceContextMock = EasyMock.createNiceMock(DeviceContextStub.class);
         shortDeviceContextMockAnother = EasyMock.createNiceMock(DeviceContextStub.class);
         replay(
-            cpuContextMock, cpuContextMockAnother,
-            shortMemoryContextMock, shortMemoryContextMockAnother,
-            compilerContextMock, compilerContextMockAnother,
-            shortDeviceContextMock, shortDeviceContextMockAnother
+                cpuContextMock, cpuContextMockAnother,
+                shortMemoryContextMock, shortMemoryContextMockAnother,
+                compilerContextMock, compilerContextMockAnother,
+                shortDeviceContextMock, shortDeviceContextMockAnother
         );
 
         contextPool = new ContextPoolImpl(emuStudioId);
@@ -371,25 +371,17 @@ public class ContextPoolImplTest {
 
     //
 
-    @PluginContext
-    interface ByteMemoryContext extends MemoryContext<Byte> {}
-
     @Test
     public void testRegisterWithDifferentDataTypeThanGetMemory() throws Exception {
         contextPool.register(0, shortMemoryContextMock, MemoryContext.class);
         assertEquals(shortMemoryContextMock, contextPool.getMemoryContext(1, ByteMemoryContext.class));
     }
 
-    @PluginContext
-    interface ByteDeviceContext extends DeviceContext<Byte> {}
-
     @Test
     public void testRegisterWithDifferentDataTypeThanGetDevice() throws Exception {
         contextPool.register(0, shortDeviceContextMock, DeviceContext.class);
         assertEquals(shortDeviceContextMock, contextPool.getDeviceContext(1, ByteDeviceContext.class));
     }
-
-    //
 
     @Test(expected = InvalidContextException.class)
     public void testRegisterWrongInterfaceCPU() throws Exception {
@@ -401,6 +393,8 @@ public class ContextPoolImplTest {
         contextPool.register(1, shortMemoryContextMock, CPUContext.class);
     }
 
+    //
+
     @Test(expected = InvalidContextException.class)
     public void testRegisterWrongInterfaceCompiler() throws Exception {
         contextPool.register(1, compilerContextMock, CPUContext.class);
@@ -411,25 +405,25 @@ public class ContextPoolImplTest {
         contextPool.register(1, shortDeviceContextMock, CPUContext.class);
     }
 
-    //
-
     @Test(expected = InvalidContextException.class)
     public void testUnannotatedContextInterface() throws Exception {
         Context unannotatedContext = EasyMock.createNiceMock(UnannotatedContextStub.class);
         contextPool.register(0, unannotatedContext, UnannotatedContextStub.class);
     }
 
-    //
-
     @Test(expected = NullPointerException.class)
     public void testGetNullCPU() throws Exception {
         contextPool.getCPUContext(0, null);
     }
 
+    //
+
     @Test(expected = NullPointerException.class)
     public void testGetNullCompiler() throws Exception {
         contextPool.getCompilerContext(1, null);
     }
+
+    //
 
     @Test(expected = NullPointerException.class)
     public void testGetNullMemory() throws Exception {
@@ -440,8 +434,6 @@ public class ContextPoolImplTest {
     public void testGetNullDevice() throws Exception {
         contextPool.getDeviceContext(3, null);
     }
-
-    //
 
     @Test
     public void testUnregisterDifferentContextCPU() throws Exception {
@@ -455,6 +447,8 @@ public class ContextPoolImplTest {
         assertFalse(contextPool.unregister(0, CPUContext.class));
     }
 
+    //
+
     @Test
     public void testUnregisterDifferentContextCompiler() throws Exception {
         contextPool.register(0, compilerContextMock, CompilerContext.class);
@@ -467,8 +461,6 @@ public class ContextPoolImplTest {
         assertFalse(contextPool.unregister(0, CPUContext.class));
     }
 
-    //
-
     @Test
     public void testGetByEmuStudio() throws Exception {
         contextPool.setComputer(new ComputerStub(false));
@@ -476,6 +468,15 @@ public class ContextPoolImplTest {
         assertEquals(cpuContextMock, contextPool.getCPUContext(emuStudioId));
     }
 
+    @PluginContext
+    interface ByteMemoryContext extends MemoryContext<Byte> {
+    }
+
+    //
+
+    @PluginContext
+    interface ByteDeviceContext extends DeviceContext<Byte> {
+    }
 
     private static class ComputerStub implements PluginConnections {
         private final boolean connected;

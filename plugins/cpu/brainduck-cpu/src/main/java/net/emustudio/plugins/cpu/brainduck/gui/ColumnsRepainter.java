@@ -1,7 +1,7 @@
 /*
  * This file is part of emuStudio.
  *
- * Copyright (C) 2006-2020  Peter Jakubčo
+ * Copyright (C) 2006-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,26 @@ import java.util.Enumeration;
 import static net.emustudio.plugins.cpu.brainduck.gui.Constants.MONOSPACED_PLAIN;
 
 public class ColumnsRepainter {
+
+    public void setMainColumn(int column, JTable table) {
+        TableColumn tableColumn = table.getColumnModel().getColumn(table.convertColumnIndexToModel(column));
+        if (tableColumn != null) {
+            tableColumn.setHeaderRenderer(new MainRenderer(false));
+            tableColumn.setCellRenderer(new MainRenderer(true));
+        }
+    }
+
+    public void repaint(JTable table) {
+        TableModel tableModel = table.getModel();
+        Enumeration<TableColumn> columns = table.getColumnModel().getColumns();
+        while (columns.hasMoreElements()) {
+            TableColumn column = columns.nextElement();
+            column.setHeaderValue(tableModel.getColumnName(column.getModelIndex()));
+        }
+        JTableHeader header = table.getTableHeader();
+        header.revalidate();
+        header.repaint();
+    }
 
     private static class UBorder extends LineBorder {
         private final boolean upper;
@@ -85,26 +105,6 @@ public class ColumnsRepainter {
             return this;
         }
 
-    }
-
-    public void setMainColumn(int column, JTable table) {
-        TableColumn tableColumn = table.getColumnModel().getColumn(table.convertColumnIndexToModel(column));
-        if (tableColumn != null) {
-            tableColumn.setHeaderRenderer(new MainRenderer(false));
-            tableColumn.setCellRenderer(new MainRenderer(true));
-        }
-    }
-
-    public void repaint(JTable table) {
-        TableModel tableModel = table.getModel();
-        Enumeration<TableColumn> columns = table.getColumnModel().getColumns();
-        while (columns.hasMoreElements()) {
-            TableColumn column = columns.nextElement();
-            column.setHeaderValue(tableModel.getColumnName(column.getModelIndex()));
-        }
-        JTableHeader header = table.getTableHeader();
-        header.revalidate();
-        header.repaint();
     }
 
 }
