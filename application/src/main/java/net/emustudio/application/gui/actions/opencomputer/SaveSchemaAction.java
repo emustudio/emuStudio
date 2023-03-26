@@ -32,6 +32,7 @@ public class SaveSchemaAction extends AbstractAction {
                 "Save schema image...",
                 new ImageIcon(SaveSchemaAction.class.getResource("/net/emustudio/application/gui/dialogs/document-save.png"))
         );
+        putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.preview = Objects.requireNonNull(preview);
     }
 

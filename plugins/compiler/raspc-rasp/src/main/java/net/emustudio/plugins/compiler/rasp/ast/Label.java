@@ -18,9 +18,9 @@
  */
 package net.emustudio.plugins.compiler.rasp.ast;
 
-import net.emustudio.plugins.memory.rasp.api.RASPLabel;
+import net.emustudio.plugins.memory.rasp.api.RaspLabel;
 
-public class Label implements RASPLabel {
+public class Label implements RaspLabel {
     public final int line;
     public final int column;
 

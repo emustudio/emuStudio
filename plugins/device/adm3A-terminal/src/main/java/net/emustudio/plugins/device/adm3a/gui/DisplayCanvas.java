@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.RenderingHints.*;
-import static net.emustudio.plugins.device.adm3a.gui.GuiUtils.loadFont;
+import static net.emustudio.plugins.device.adm3a.gui.GuiUtilsAdm3A.loadFont;
 
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     private static final Color FOREGROUND = new Color(255, 255, 255);
@@ -40,12 +40,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private volatile Dimension size = new Dimension(0, 0);
 
     public DisplayCanvas(DisplayFont displayFont, Display display) {
-        this.displayFont = Objects.requireNonNull(displayFont);
         this.display = Objects.requireNonNull(display);
 
         setForeground(FOREGROUND);
         setBackground(BACKGROUND);
-        setFont(loadFont(displayFont));
+        setDisplayFont(displayFont);
 
         PaintCycle paintCycle = new PaintCycle();
         this.repaintTimer = new Timer(1000 / 60, e -> paintCycle.run()); // 60 HZ
@@ -58,7 +57,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             this.repaintTimer.restart();
         }
     }
-
 
     @Override
     public Dimension getPreferredSize() {
@@ -148,8 +146,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
             Rectangle2D fontRectangle = getFont().getMaxCharBounds(graphics.getFontMetrics().getFontRenderContext());
 
-            int x = displayFont.xCursorOffset
-                    + (int) (cursorPoint.x * (fontRectangle.getWidth() + displayFont.xCursorMultiplierOffset));
+            int x = displayFont.xCursorOffset + (int) (cursorPoint.x * fontRectangle.getWidth());
             int y = displayFont.yCursorOffset + (cursorPoint.y * lineHeight);
 
             graphics.fillRect(x, y, (int) fontRectangle.getWidth(), (int) fontRectangle.getHeight() + displayFont.yCursorExtend);

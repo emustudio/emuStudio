@@ -132,6 +132,11 @@ public class DeviceImpl extends AbstractDevice {
         return "ZX Spectrum48K";
     }
 
+    @Override
+    public boolean isAutomationSupported() {
+        return true;
+    }
+
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {

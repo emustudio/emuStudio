@@ -41,7 +41,7 @@ import static org.junit.Assert.assertEquals;
 public abstract class AbstractCompilerTest {
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
-    protected CompilerImpl compiler;
+    protected CompilerBrainduck compiler;
     protected MemoryStub<Byte> memoryStub;
 
     @SuppressWarnings("unchecked")
@@ -57,7 +57,7 @@ public abstract class AbstractCompilerTest {
         expect(applicationApi.getContextPool()).andReturn(pool).anyTimes();
         replay(applicationApi);
 
-        compiler = new CompilerImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        compiler = new CompilerBrainduck(0L, applicationApi, PluginSettings.UNAVAILABLE);
         compiler.addCompilerListener(new CompilerListener() {
             @Override
             public void onStart() {

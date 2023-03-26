@@ -54,8 +54,8 @@ public class AutomationCommand implements Runnable {
             description = "show/don't show GUI during automation")
     private boolean gui;
 
-    @CommandLine.Option(names = {"-s", "--start-address"}, description = "program start address", paramLabel = "ADDRESS")
-    private String programStart = "0";
+    @CommandLine.Option(names = {"-p", "--program-location"}, description = "program start location", paramLabel = "LOCATION")
+    private String programLocation = "-1";
 
 
     @Override
@@ -87,16 +87,23 @@ public class AutomationCommand implements Runnable {
             try (VirtualComputer computer = loadComputer(
                     appConfig, computerConfig, dialogs, contextPool, debugTableModel
             )) {
-                splash.ifPresent(Window::dispose);
-                new Automation(
+                Optional<Integer> programLocation = this.programLocation.equals("-1") ? Optional.empty() :
+                        Optional.of(RadixUtils.getInstance().parseRadix(this.programLocation));
+
+                Automation automation = new Automation(
                         computer, runner.inputFile,
                         appConfig,
                         dialogs,
                         waitForFinishMillis,
-                        RadixUtils.getInstance().parseRadix(programStart)
-                ).run();
+                        programLocation
+                );
+                splash.ifPresent(Window::dispose);
+                automation.run();
             }
-            System.exit(0);
+            if (!gui) {
+                // Let GUI live!
+                System.exit(0);
+            }
         } catch (Exception e) {
             LOGGER.error("Unexpected error during automation", e);
             dialogs.showError("Unexpected error during automation. Please see log file for details.");

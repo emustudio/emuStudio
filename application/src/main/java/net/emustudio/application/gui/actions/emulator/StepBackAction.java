@@ -33,7 +33,7 @@ public class StepBackAction extends AbstractAction {
 
     public StepBackAction(VirtualComputer computer, DebugTableModel debugTableModel, Runnable refreshDebugTable) {
         super("Step Back", new ImageIcon(StepBackAction.class.getResource("/net/emustudio/application/gui/dialogs/go-previous.png")));
-
+        putValue(SHORT_DESCRIPTION, "Step back");
         this.computer = Objects.requireNonNull(computer);
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.refreshDebugTable = Objects.requireNonNull(refreshDebugTable);

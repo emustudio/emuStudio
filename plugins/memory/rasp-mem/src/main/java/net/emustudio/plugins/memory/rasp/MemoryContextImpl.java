@@ -21,114 +21,119 @@
 package net.emustudio.plugins.memory.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.rasp.api.RASPLabel;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspLabel;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> implements RASPMemoryContext {
-    private final Map<Integer, RASPMemoryCell> memory = new HashMap<>();
-    private final Map<Integer, RASPLabel> labels = new HashMap<>();
+public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements RaspMemoryContext {
+    private final Map<Integer, Integer> memory = new HashMap<>();
+    private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
-    private int programLocation;
+    private final ReadWriteLock rwl = new ReentrantReadWriteLock();
 
     @Override
     public void clear() {
-        memory.clear();
-        labels.clear();
-        inputs.clear();
+        writeLock(() -> {
+            memory.clear();
+            labels.clear();
+            inputs.clear();
+        });
         notifyMemoryChanged(-1);
         notifyMemorySizeChanged();
     }
 
-    public void clearInputs() {
-        inputs.clear();
-    }
-
     @Override
     public int getSize() {
-        return memory.keySet().stream().max(Comparator.naturalOrder()).orElse(0);
+        return readLock(() -> memory.keySet().stream().max(Comparator.naturalOrder()).orElse(0));
     }
 
     @Override
-    public RASPMemoryCell read(int address) {
-        RASPMemoryCell cell = memory.get(address);
-        return (cell == null) ? EmptyCell.at(address) : cell;
+    public Integer read(int address) {
+        return readLock(() -> memory.getOrDefault(address, 0));
     }
 
     @Override
-    public RASPMemoryCell[] read(int address, int count) {
-        List<RASPMemoryCell> copy = new ArrayList<>();
-        for (int i = address; i < address + count; i++) {
-            RASPMemoryCell cell = memory.get(i);
-            copy.add((cell == null) ? EmptyCell.at(address) : cell);
-        }
-        return copy.toArray(new RASPMemoryCell[0]);
+    public Integer[] read(int address, int count) {
+        List<Integer> copy = new ArrayList<>();
+        readLock(() -> {
+            for (int i = address; i < address + count; i++) {
+                copy.add(memory.getOrDefault(i, 0));
+            }
+        });
+        return copy.toArray(new Integer[0]);
     }
 
     @Override
-    public void write(int address, RASPMemoryCell value) {
-        boolean sizeChanged = !memory.containsKey(address);
-        memory.put(address, value);
-        if (sizeChanged) {
+    public void write(int address, Integer value) {
+        AtomicBoolean sizeChanged = new AtomicBoolean();
+        writeLock(() -> {
+            sizeChanged.set(!memory.containsKey(address));
+            memory.put(address, value);
+        });
+        if (sizeChanged.get()) {
             notifyMemorySizeChanged();
         }
         notifyMemoryChanged(address);
     }
 
     @Override
-    public void write(int address, RASPMemoryCell[] values, int count) {
-        for (int i = 0; i < count; i++) {
-            boolean sizeChanged = !memory.containsKey(address);
-            memory.put(address + i, values[i]);
-            if (sizeChanged) {
-                notifyMemorySizeChanged();
+    public void write(int address, Integer[] values, int count) {
+        AtomicBoolean sizeChanged = new AtomicBoolean();
+        writeLock(() -> {
+            for (int i = 0; i < count; i++) {
+                sizeChanged.set(sizeChanged.get() || !memory.containsKey(address + i));
+                memory.put(address + i, values[i]);
             }
+        });
+        if (sizeChanged.get()) {
+            notifyMemorySizeChanged();
+        }
+        for (int i = 0; i < count; i++) {
             notifyMemoryChanged(address + i);
         }
     }
 
     @Override
-    public Class<RASPMemoryCell> getDataType() {
-        return RASPMemoryCell.class;
+    public void setLabels(List<RaspLabel> labels) {
+        writeLock(() -> {
+            this.labels.clear();
+            for (RaspLabel label : labels) {
+                this.labels.put(label.getAddress(), label);
+            }
+        });
     }
 
     @Override
-    public synchronized void setLabels(List<RASPLabel> labels) {
-        this.labels.clear();
-        for (RASPLabel label : labels) {
-            this.labels.put(label.getAddress(), label);
+    public Optional<RaspLabel> getLabel(int address) {
+        return readLock(() -> Optional.ofNullable(labels.get(address)));
+    }
+
+    @Override
+    public void setInputs(List<Integer> inputs) {
+        rwl.writeLock().lock();
+        try {
+            this.inputs.clear();
+            this.inputs.addAll(inputs);
+        } finally {
+            rwl.writeLock().unlock();
         }
     }
 
     @Override
-    public Optional<RASPLabel> getLabel(int address) {
-        return Optional.ofNullable(labels.get(address));
-    }
-
-    @Override
-    public List<Integer> getInputs() {
-        return Collections.unmodifiableList(inputs);
-    }
-
-    @Override
-    public synchronized void setInputs(List<Integer> inputs) {
-        clearInputs();
-        this.inputs.addAll(inputs);
-    }
-
-    public int getProgramLocation() {
-        return programLocation;
-    }
-
-    public void setProgramLocation(int location) {
-        this.programLocation = location;
+    public RaspMemory getSnapshot() {
+        return readLock(() -> new RaspMemory(labels.values(), memory, inputs));
     }
 
     @SuppressWarnings("unchecked")
-    public void deserialize(String filename) throws IOException, ClassNotFoundException {
+    public void deserialize(String filename, Consumer<Integer> setProgramLocation) throws IOException, ClassNotFoundException {
+        rwl.writeLock().lock();
         try {
             InputStream file = new FileInputStream(filename);
             InputStream buffer = new BufferedInputStream(file);
@@ -138,15 +143,32 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
             inputs.clear();
             memory.clear();
 
-            programLocation = (Integer) input.readObject();
-            labels.putAll((Map<Integer, RASPLabel>) input.readObject());
+            int programLocation = (Integer) input.readObject();
+            setProgramLocation.accept(programLocation);
+
+            Map<Integer, String> rawLabels = (Map<Integer, String>) input.readObject();
+            for (Map.Entry<Integer, String> rawLabel : rawLabels.entrySet()) {
+                this.labels.put(rawLabel.getKey(), new RaspLabel() {
+                    @Override
+                    public int getAddress() {
+                        return rawLabel.getKey();
+                    }
+
+                    @Override
+                    public String getLabel() {
+                        return rawLabel.getValue();
+                    }
+                });
+            }
+
             inputs.addAll((List<Integer>) input.readObject());
-            memory.putAll((Map<Integer, RASPMemoryCell>) input.readObject());
+            memory.putAll((Map<Integer, Integer>) input.readObject());
 
             input.close();
         } finally {
-            notifyMemoryChanged(-1);
+            rwl.writeLock().unlock();
             notifyMemorySizeChanged();
+            notifyMemoryChanged(-1);
         }
     }
 
@@ -154,30 +176,30 @@ public class MemoryContextImpl extends AbstractMemoryContext<RASPMemoryCell> imp
         clear();
     }
 
-    private final static class EmptyCell implements RASPMemoryCell {
-        private final int address;
-
-        private EmptyCell(int address) {
-            this.address = address;
+    private void writeLock(Runnable r) {
+        rwl.writeLock().lock();
+        try {
+            r.run();
+        } finally {
+            rwl.writeLock().unlock();
         }
+    }
 
-        static EmptyCell at(int address) {
-            return new EmptyCell(address);
+    private <T> T readLock(Supplier<T> r) {
+        rwl.readLock().lock();
+        try {
+            return r.get();
+        } finally {
+            rwl.readLock().unlock();
         }
+    }
 
-        @Override
-        public boolean isInstruction() {
-            return false;
-        }
-
-        @Override
-        public int getAddress() {
-            return address;
-        }
-
-        @Override
-        public int getValue() {
-            return 0;
+    private void readLock(Runnable r) {
+        rwl.readLock().lock();
+        try {
+            r.run();
+        } finally {
+            rwl.readLock().unlock();
         }
     }
 }

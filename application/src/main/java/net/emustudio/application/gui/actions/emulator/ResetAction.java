@@ -30,7 +30,7 @@ public class ResetAction extends AbstractAction {
 
     public ResetAction(EmulationController emulationController) {
         super("Reset", new ImageIcon(ResetAction.class.getResource("/net/emustudio/application/gui/dialogs/reset.png")));
-
+        putValue(SHORT_DESCRIPTION, "Reset emulation");
         this.emulationController = emulationController;
     }
 

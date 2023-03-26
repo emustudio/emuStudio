@@ -22,7 +22,7 @@ import net.emustudio.plugins.compiler.ram.ast.Instruction;
 import net.emustudio.plugins.compiler.ram.ast.Label;
 import net.emustudio.plugins.compiler.ram.ast.Program;
 import net.emustudio.plugins.compiler.ram.ast.Value;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import org.antlr.v4.runtime.Token;
 
 import java.util.HashMap;
@@ -34,21 +34,21 @@ import static net.emustudio.plugins.compiler.ram.ParsingUtils.*;
 import static net.emustudio.plugins.compiler.ram.RAMParser.*;
 
 public class ProgramParser extends RAMParserBaseVisitor<Program> {
-    private final static Map<Integer, RAMInstruction.Opcode> tokenOpcodes = new HashMap<>();
+    private final static Map<Integer, RamInstruction.Opcode> tokenOpcodes = new HashMap<>();
 
     static {
-        tokenOpcodes.put(OPCODE_READ, RAMInstruction.Opcode.READ);
-        tokenOpcodes.put(OPCODE_WRITE, RAMInstruction.Opcode.WRITE);
-        tokenOpcodes.put(OPCODE_LOAD, RAMInstruction.Opcode.LOAD);
-        tokenOpcodes.put(OPCODE_STORE, RAMInstruction.Opcode.STORE);
-        tokenOpcodes.put(OPCODE_ADD, RAMInstruction.Opcode.ADD);
-        tokenOpcodes.put(OPCODE_SUB, RAMInstruction.Opcode.SUB);
-        tokenOpcodes.put(OPCODE_MUL, RAMInstruction.Opcode.MUL);
-        tokenOpcodes.put(OPCODE_DIV, RAMInstruction.Opcode.DIV);
-        tokenOpcodes.put(OPCODE_JMP, RAMInstruction.Opcode.JMP);
-        tokenOpcodes.put(OPCODE_JZ, RAMInstruction.Opcode.JZ);
-        tokenOpcodes.put(OPCODE_JGTZ, RAMInstruction.Opcode.JGTZ);
-        tokenOpcodes.put(OPCODE_HALT, RAMInstruction.Opcode.HALT);
+        tokenOpcodes.put(OPCODE_READ, RamInstruction.Opcode.READ);
+        tokenOpcodes.put(OPCODE_WRITE, RamInstruction.Opcode.WRITE);
+        tokenOpcodes.put(OPCODE_LOAD, RamInstruction.Opcode.LOAD);
+        tokenOpcodes.put(OPCODE_STORE, RamInstruction.Opcode.STORE);
+        tokenOpcodes.put(OPCODE_ADD, RamInstruction.Opcode.ADD);
+        tokenOpcodes.put(OPCODE_SUB, RamInstruction.Opcode.SUB);
+        tokenOpcodes.put(OPCODE_MUL, RamInstruction.Opcode.MUL);
+        tokenOpcodes.put(OPCODE_DIV, RamInstruction.Opcode.DIV);
+        tokenOpcodes.put(OPCODE_JMP, RamInstruction.Opcode.JMP);
+        tokenOpcodes.put(OPCODE_JZ, RamInstruction.Opcode.JZ);
+        tokenOpcodes.put(OPCODE_JGTZ, RamInstruction.Opcode.JGTZ);
+        tokenOpcodes.put(OPCODE_HALT, RamInstruction.Opcode.HALT);
     }
 
     private final Program program;
@@ -78,13 +78,13 @@ public class ProgramParser extends RAMParserBaseVisitor<Program> {
     @Override
     public Program visitRInstruction(RAMParser.RInstructionContext ctx) {
         Token op = ctx.op;
-        RAMInstruction.Opcode opcode = tokenOpcodes.get(op.getType());
-        RAMInstruction.Direction direction = RAMInstruction.Direction.DIRECT;
+        RamInstruction.Opcode opcode = tokenOpcodes.get(op.getType());
+        RamInstruction.Direction direction = RamInstruction.Direction.DIRECT;
         if (ctx.d != null) {
             if (ctx.d.getType() == OP_CONSTANT) {
-                direction = RAMInstruction.Direction.CONSTANT;
+                direction = RamInstruction.Direction.CONSTANT;
             } else if (ctx.d.getType() == OP_INDIRECT) {
-                direction = RAMInstruction.Direction.INDIRECT;
+                direction = RamInstruction.Direction.INDIRECT;
             }
         }
         Value operand = null;

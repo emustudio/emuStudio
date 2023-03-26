@@ -35,7 +35,7 @@ public class RTokenMakerWrapper implements TokenMaker {
 
     @SuppressWarnings("unused")
     public RTokenMakerWrapper() {
-
+        // it is called by RSyntaxTextArea but not emuStudio
     }
 
     @Override

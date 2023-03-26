@@ -32,7 +32,7 @@ public class StackTest extends InstructionsTest {
                 .verifyWord(context -> (context.second - 2) & 0xFFFF, context -> context.first)
                 .keepCurrentInjectorsAfterRun();
 
-        Generator.forSome16bitBinary(
+        Generator.forSome16bitBinary(0, 6,
                 test.firstIsPair(REG_PAIR_BC).run(0xC5),
                 test.firstIsPair(REG_PAIR_DE).run(0xD5),
                 test.firstIsPair(REG_PAIR_HL).run(0xE5),

@@ -30,15 +30,12 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
-import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
+import net.emustudio.emulib.runtime.interaction.debugger.*;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.rasp.gui.LabelDebugColumn;
-import net.emustudio.plugins.cpu.rasp.gui.RASPCpuStatusPanel;
-import net.emustudio.plugins.cpu.rasp.gui.RASPDisassembler;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.cpu.rasp.gui.RaspDisassembler;
+import net.emustudio.plugins.cpu.rasp.gui.RaspStatusPanel;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,13 +53,13 @@ import java.util.ResourceBundle;
 public class CpuImpl extends AbstractCPU {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
-    private final RASPCpuContextImpl context = new RASPCpuContextImpl();
+    private final RaspCpuContextImpl context = new RaspCpuContextImpl();
     private final ContextPool contextPool;
 
     private EmulatorEngine engine;
-    private RASPMemoryContext memory;
-    private RASPDisassembler disassembler;
-    private RASPCpuStatusPanel gui;
+    private RaspMemoryContext memory;
+    private RaspDisassembler disassembler;
+    private RaspStatusPanel gui;
 
     private boolean debugTableInitialized = false;
 
@@ -82,8 +79,8 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, RASPMemoryContext.class);
-        disassembler = new RASPDisassembler(memory);
+        memory = applicationApi.getContextPool().getMemoryContext(pluginID, RaspMemoryContext.class);
+        disassembler = new RaspDisassembler(memory);
         context.init(pluginID, contextPool);
         engine = new EmulatorEngine(memory, context.getInputTape(), context.getOutputTape());
     }
@@ -95,6 +92,7 @@ public class CpuImpl extends AbstractCPU {
             if (debugTable != null) {
                 ArrayList<DebuggerColumn<?>> debugColumns = new ArrayList<>();
                 debugColumns.add(new BreakpointColumn(this));
+                debugColumns.add(new AddressColumn("%d"));
                 debugColumns.add(new LabelDebugColumn(memory));
                 debugColumns.add(new MnemoColumn(disassembler));
                 debugTable.setDebuggerColumns(debugColumns);
@@ -102,7 +100,7 @@ public class CpuImpl extends AbstractCPU {
             debugTableInitialized = true;
         }
         if (gui == null) {
-            gui = new RASPCpuStatusPanel(this);
+            gui = new RaspStatusPanel(this, context.getInputTape(), context.getOutputTape());
         }
         return gui;
     }
@@ -186,7 +184,7 @@ public class CpuImpl extends AbstractCPU {
      * @return current value of the accumulator (memory cell at address [0])
      */
     public int getACC() {
-        return memory.read(0).getValue();
+        return memory.read(0);
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

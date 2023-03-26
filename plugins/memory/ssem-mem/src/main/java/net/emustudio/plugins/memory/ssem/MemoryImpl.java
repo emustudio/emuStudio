@@ -37,7 +37,7 @@ import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.MEMORY,
-        title = "SSEM memory (Williams-Kilburn Tube)"
+        title = "SSEM memory (Williams–Kilburn Tube)"
 )
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
@@ -89,7 +89,7 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (memoryGUI == null) {
-                memoryGUI = new MemoryGui(parent, memContext);
+                memoryGUI = new MemoryGui(parent, memContext, applicationApi);
             }
             memoryGUI.setVisible(true);
         }

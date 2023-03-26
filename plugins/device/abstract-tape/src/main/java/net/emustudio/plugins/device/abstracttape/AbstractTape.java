@@ -55,9 +55,9 @@ public class AbstractTape extends AbstractDevice {
     public AbstractTape(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        this.context = new AbstractTapeContextImpl(this);
         this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
+        this.context = new AbstractTapeContextImpl(this::setGUITitle);
 
         try {
             applicationApi.getContextPool().register(pluginID, context, AbstractTapeContext.class);
@@ -85,9 +85,12 @@ public class AbstractTape extends AbstractDevice {
     }
 
     @Override
-    public void initialize() {
-        context.setLogSymbols(automaticEmulation);
+    public boolean isAutomationSupported() {
+        return true;
+    }
 
+    @Override
+    public void initialize() {
         boolean showAtStartup = settings.getBoolean("showAtStartup", false);
         if (showAtStartup) {
             showGUI(null);
@@ -115,19 +118,16 @@ public class AbstractTape extends AbstractDevice {
         return (guiTitle == null) ? super.getTitle() : guiTitle;
     }
 
-
     public void setGUITitle(String title) {
         this.guiTitle = Objects.requireNonNull(title);
         if (gui != null) {
             gui.setTitle(title);
-            context.setLogSymbols(false);
-            context.setLogSymbols(automaticEmulation);
         }
     }
 
     @Override
     public void destroy() {
-        context.setLogSymbols(false);
+        context.stopLoggingSymbols();
         if (gui != null) {
             gui.dispose();
             gui = null;
@@ -137,6 +137,10 @@ public class AbstractTape extends AbstractDevice {
     @Override
     public void reset() {
         context.reset();
+        if (automaticEmulation && !guiSupported) {
+            context.stopLoggingSymbols();
+            context.startLoggingSymbols();
+        }
     }
 
     @Override

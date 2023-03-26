@@ -22,15 +22,15 @@ package net.emustudio.plugins.compiler.rasp;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.rasp.ast.Program;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryCell;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -42,18 +42,19 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.*;
 
+import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
         title = "RASP Machine Assembler"
 )
 public class CompilerRASP extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerRASP.class);
-    private static final List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(
-            new SourceFileExtension("rasp", "RASP source file")
+    private static final List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
+            new FileExtension("rasp", "RASP source file")
     );
 
-    private RASPMemoryContext memory;
-    private int programLocation;
+    private RaspMemoryContext memory;
 
     public CompilerRASP(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -63,7 +64,7 @@ public class CompilerRASP extends AbstractCompiler {
     public void initialize() {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                memory = pool.getMemoryContext(pluginID, RASPMemoryContext.class);
+                memory = pool.getMemoryContext(pluginID, RaspMemoryContext.class);
             } catch (InvalidContextException | ContextNotFoundException e) {
                 LOGGER.warn("Memory is not available", e);
             }
@@ -87,11 +88,16 @@ public class CompilerRASP extends AbstractCompiler {
                 Program program = new Program();
                 new ProgramParser(program).visit(parser.rStart());
 
-                Map<Integer, RASPMemoryCell> compiled = program.compile();
-                this.programLocation = program.getProgramLocation(compiled);
+                Map<Integer, Integer> compiled = program.compile();
                 program.saveToFile(outputFileName, compiled);
 
-                notifyInfo(String.format("Compile was successful.\n\tOutput: %s", outputFileName));
+                int programLocation = program.getProgramLocation(compiled);
+                applicationApi.setProgramLocation(programLocation);
+
+                notifyInfo(String.format(
+                        "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
+                        outputFileName, RadixUtils.formatWordHexString(programLocation)
+                ));
 
                 if (memory != null) {
                     memory.clear();
@@ -114,29 +120,17 @@ public class CompilerRASP extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        int i = inputFileName.toLowerCase(Locale.ENGLISH).lastIndexOf(".rasp");
-
-        String outputFileName = inputFileName;
-        if (i >= 0) {
-            outputFileName = outputFileName.substring(0, i);
-        }
-        outputFileName += ".brasp";
+        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".brasp";
         return compile(inputFileName, outputFileName);
     }
 
     @Override
-    public LexicalAnalyzer createLexer(String s) {
-        RASPLexer lexer = createLexer(CharStreams.fromString(s));
-        return new LexicalAnalyzerImpl(lexer);
+    public LexicalAnalyzer createLexer() {
+        return new LexicalAnalyzerImpl(createLexer(null));
     }
 
     @Override
-    public int getProgramLocation() {
-        return programLocation;
-    }
-
-    @Override
-    public List<SourceFileExtension> getSourceFileExtensions() {
+    public List<FileExtension> getSourceFileExtensions() {
         return SOURCE_FILE_EXTENSIONS;
     }
 

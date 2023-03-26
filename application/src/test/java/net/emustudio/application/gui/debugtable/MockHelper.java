@@ -168,7 +168,7 @@ class MockHelper {
             currentInstructions.add(pageCurr);
         }
 
-        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
 
         currentInstructions.forEach(location -> {
             asm.rowToLocation(currentLocation, 0);

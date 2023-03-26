@@ -20,7 +20,9 @@ package net.emustudio.plugins.device.abstracttape.api;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.jcip.annotations.ThreadSafe;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,9 +32,11 @@ import java.util.Set;
  * The tape head can move to the left, or to the right. If a tape is left-bounded, it cannot move to the left
  * beyond the first symbol.
  * <p>
- * A CPU must setup the tape.
+ * Symbols are indexed from 0.
+ * A CPU must set up the tape (set the title, etc.).
  */
 @SuppressWarnings("unused")
+@ThreadSafe
 @PluginContext
 public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
 
@@ -92,11 +96,19 @@ public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
      * Allow or disallow to edit the tape.
      * <p>
      * If the tape is editable, the user (in GUI) can add, modify or remove symbols from the tape.
-     * Otherwise it is driven only by the CPU.
+     * Otherwise, it is driven only by the CPU.
      *
      * @param editable true if yes, false if not.
      */
     void setEditable(boolean editable);
+
+    /**
+     * Get symbol at index.
+     *
+     * @param index 0-based index; max value = Math.max(0, getSize() - 1)
+     * @return symbol at index
+     */
+    Map.Entry<Integer, TapeSymbol> getSymbolAtIndex(int index);
 
     /**
      * Get symbol at the specified position.
@@ -108,19 +120,19 @@ public interface AbstractTapeContext extends DeviceContext<TapeSymbol> {
 
     /**
      * Set symbol at the specified position.
-     * <p>
-     * If the position is < 0, then no symbol will be set.
      *
      * @param position position in the tape, starting from 0
      * @param symbol   symbol value
-     * @throws IllegalArgumentException if the symbol type is not among accepted ones
+     * @throws IllegalArgumentException if the symbol type is not among accepted ones, or position is < 0
      */
     void setSymbolAt(int position, TapeSymbol symbol);
 
     /**
      * Remove symbol at given position
+     * Head position is preserved.
      *
      * @param position symbol position in the tape
+     * @throws IllegalArgumentException if position < 0
      */
     void removeSymbolAt(int position);
 

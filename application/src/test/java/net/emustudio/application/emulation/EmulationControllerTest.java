@@ -177,22 +177,6 @@ public class EmulationControllerTest {
     }
 
     @Test(timeout = 1000)
-    public void testResetCallsCPUresetWithProgramStartIfMemoryIsAvailable() throws Exception {
-        Memory memory = createMock(Memory.class);
-        expect(memory.getProgramLocation()).andReturn(10).once();
-        memory.reset();
-        expectLastCall().anyTimes(); // our latch won't wait for memory reset. So sometimes we catch it, sometimes not.
-        replay(memory);
-
-        EmulationController controller = new EmulationController(cpuStub, memory, Collections.emptyList());
-        awaitFor(controller::reset, 1);
-
-        assertEquals(10, cpuStub.resetStartPos);
-        assertEquals(1, cpuStub.resetCalled.get());
-        verify(memory);
-    }
-
-    @Test(timeout = 1000)
     public void testResetCallsCPUresetIfMemoryIsNotAvailable() throws Exception {
         EmulationController controller = createPlainEmulationController();
 

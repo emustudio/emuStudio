@@ -20,6 +20,7 @@ package net.emustudio.plugins.memory.ssem.gui;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;
@@ -44,20 +45,6 @@ public class MemoryTableModelTest {
         for (int i = 0; i < 32; i++) {
             assertTrue(model.isCellEditable(0, i));
         }
-    }
-
-    @Test
-    public void testClearCallsClearOnMemoryMock() {
-        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
-
-        memoryContext.clear();
-        expectLastCall().once();
-        replay(memoryContext);
-
-        MemoryTableModel model = new MemoryTableModel(memoryContext);
-        model.clear();
-
-        verify(memoryContext);
     }
 
     @Test

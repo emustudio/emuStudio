@@ -41,6 +41,7 @@ public class EditComputerAction extends AbstractAction {
         super(
                 "Edit computer...", new ImageIcon(EditComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/computer.png"))
         );
+        putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.appSettings = Objects.requireNonNull(appSettings);
         this.update = Objects.requireNonNull(update);

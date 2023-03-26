@@ -19,30 +19,30 @@
 package net.emustudio.plugins.compiler.ram.ast;
 
 import net.emustudio.plugins.compiler.ram.SerializableOptional;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMLabel;
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamLabel;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.util.Objects;
 import java.util.Optional;
 
-public class Instruction implements RAMInstruction {
+public class Instruction implements RamInstruction {
     public final int line;
     public final int column;
 
     private final int address;
     private final Opcode opcode;
     private final Direction direction;
-    private final SerializableOptional<RAMValue> operand;
-    private SerializableOptional<RAMLabel> label;
+    private final SerializableOptional<RamValue> operand;
+    private SerializableOptional<RamLabel> label;
 
     public Instruction(int line, int column, Opcode opcode, Direction direction,
-                       int address, Optional<RAMValue> operand) {
+                       int address, Optional<RamValue> operand) {
         this(line, column, opcode, direction, address, operand, null);
     }
 
     public Instruction(int line, int column, Opcode opcode, Direction direction,
-                       int address, Optional<RAMValue> operand, RAMLabel label) {
+                       int address, Optional<RamValue> operand, RamLabel label) {
         this.opcode = opcode;
         this.direction = direction;
         this.address = address;
@@ -53,7 +53,7 @@ public class Instruction implements RAMInstruction {
     }
 
     public Instruction(Opcode opcode, Direction direction,
-                       int address, Optional<RAMValue> operand, RAMLabel label) {
+                       int address, Optional<RamValue> operand, RamLabel label) {
         this(0, 0, opcode, direction, address, operand, label);
     }
 
@@ -68,7 +68,7 @@ public class Instruction implements RAMInstruction {
     }
 
     @Override
-    public Optional<RAMValue> getOperand() {
+    public Optional<RamValue> getOperand() {
         return operand.opt();
     }
 
@@ -78,11 +78,11 @@ public class Instruction implements RAMInstruction {
     }
 
     @Override
-    public Optional<RAMLabel> getLabel() {
+    public Optional<RamLabel> getLabel() {
         return label.opt();
     }
 
-    public void setLabel(RAMLabel label) {
+    public void setLabel(RamLabel label) {
         this.label = SerializableOptional.ofNullable(label);
     }
 

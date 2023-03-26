@@ -27,8 +27,8 @@ import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import net.emustudio.plugins.memory.ram.gui.MemoryDialog;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.gui.MemoryGui;
 
 import javax.swing.*;
 import java.util.MissingResourceException;
@@ -40,7 +40,7 @@ import java.util.ResourceBundle;
 public class MemoryImpl extends AbstractMemory {
     private final MemoryContextImpl context;
     private final boolean guiNotSupported;
-    private MemoryDialog gui;
+    private MemoryGui gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -49,7 +49,7 @@ public class MemoryImpl extends AbstractMemory {
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         context = new MemoryContextImpl();
         try {
-            contextPool.register(pluginID, context, RAMMemoryContext.class);
+            contextPool.register(pluginID, context, RamMemoryContext.class);
             contextPool.register(pluginID, context, MemoryContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             applicationApi.getDialogs().showError("Could not register Program tape context", super.getTitle());
@@ -72,16 +72,6 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     @Override
-    public int getProgramLocation() {
-        return 0;
-    }
-
-    @Override
-    public void setProgramLocation(int location) {
-        // Program start is always 0
-    }
-
-    @Override
     public int getSize() {
         return context.getSize();
     }
@@ -90,7 +80,7 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
-                gui = new MemoryDialog(parent, context, applicationApi.getDialogs());
+                gui = new MemoryGui(parent, context, applicationApi.getDialogs());
             }
             gui.setVisible(true);
         }
@@ -103,11 +93,6 @@ public class MemoryImpl extends AbstractMemory {
             gui.dispose();
             gui = null;
         }
-    }
-
-    @Override
-    public void reset() {
-        context.clearInputs();
     }
 
     @Override

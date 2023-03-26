@@ -21,14 +21,14 @@ package net.emustudio.plugins.compiler.ram;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
+import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import net.emustudio.emulib.plugins.compiler.SourceFileExtension;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.compiler.ram.ast.Program;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -40,13 +40,17 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.*;
 
+import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+
 @PluginRoot(type = PLUGIN_TYPE.COMPILER, title = "RAM Machine Assembler")
 @SuppressWarnings("unused")
 public class CompilerRAM extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerRAM.class);
-    private static final List<SourceFileExtension> SOURCE_FILE_EXTENSIONS = List.of(new SourceFileExtension("ram", "Random Access Machine source"));
+    private static final List<FileExtension> SOURCE_FILE_EXTENSIONS = List.of(
+            new FileExtension("ram", "Random Access Machine source")
+    );
 
-    private RAMMemoryContext memory;
+    private RamMemoryContext memory;
 
     public CompilerRAM(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -70,7 +74,7 @@ public class CompilerRAM extends AbstractCompiler {
     public void initialize() {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                memory = pool.getMemoryContext(pluginID, RAMMemoryContext.class);
+                memory = pool.getMemoryContext(pluginID, RamMemoryContext.class);
             } catch (InvalidContextException | ContextNotFoundException e) {
                 LOGGER.warn("Memory is not available", e);
             }
@@ -95,6 +99,7 @@ public class CompilerRAM extends AbstractCompiler {
                 new ProgramParser(program).visit(parser.rStart());
 
                 program.assignLabels();
+                program.check();
                 program.saveToFile(outputFileName);
 
                 notifyInfo(String.format("Compile was successful.\n\tOutput: %s", outputFileName));
@@ -120,29 +125,17 @@ public class CompilerRAM extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        int i = inputFileName.toLowerCase(Locale.ENGLISH).lastIndexOf(".ram");
-
-        String outputFileName = inputFileName;
-        if (i >= 0) {
-            outputFileName = outputFileName.substring(0, i);
-        }
-        outputFileName += ".bram";
+        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".bram";
         return compile(inputFileName, outputFileName);
     }
 
     @Override
-    public LexicalAnalyzer createLexer(String s) {
-        RAMLexer lexer = createLexer(CharStreams.fromString(s));
-        return new LexicalAnalyzerImpl(lexer);
+    public LexicalAnalyzer createLexer() {
+        return new LexicalAnalyzerImpl(createLexer(null));
     }
 
     @Override
-    public int getProgramLocation() {
-        return 0;
-    }
-
-    @Override
-    public List<SourceFileExtension> getSourceFileExtensions() {
+    public List<FileExtension> getSourceFileExtensions() {
         return SOURCE_FILE_EXTENSIONS;
     }
 

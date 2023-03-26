@@ -1,0 +1,13 @@
+;Program substracts one constant from the other one (indirect addressing is used).
+
+<input> 20 16
+
+org 105
+
+READ 100
+READ 101
+LOAD 100
+SUB 101
+STORE 100
+WRITE 100
+HALT

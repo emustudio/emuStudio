@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Optional;
 
 /**
  * This class manages the emuStudio automation process. In the process
@@ -43,22 +43,23 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Automation implements Runnable {
     public static final int DONT_WAIT = -1;
     private static final Logger LOGGER = LoggerFactory.getLogger("automation");
+
     private final File inputFile;
     private final VirtualComputer computer;
     private final AppSettings appSettings;
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
-    private final int programStart;
+    private final Optional<Integer> programLocation;
     private AutoDialog progressGUI;
     private volatile CPU.RunState resultState;
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
-                      Dialogs dialogs, int waitForFinishMillis, int programStart) throws AutomationException {
+                      Dialogs dialogs, int waitForFinishMillis, Optional<Integer> programLocation) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.waitForFinishMillis = waitForFinishMillis;
-        this.programStart = programStart;
+        this.programLocation = Objects.requireNonNull(programLocation);
 
         if (inputFile != null) {
             this.inputFile = Objects.requireNonNull(inputFile, "Input file must be defined").toFile();
@@ -71,6 +72,58 @@ public class Automation implements Runnable {
 
         if (!appSettings.noGUI) {
             progressGUI = new AutoDialog(computer);
+        }
+    }
+
+    /**
+     * Executes automatic emulation.
+     * <p/>
+     * It assumes that the virtual computer is loaded.
+     * <p/>
+     * All output is saved into output file.
+     */
+    @Override
+    public void run() {
+        if (progressGUI != null) {
+            progressGUI.setVisible(true);
+        }
+
+        LOGGER.info("Starting emulation automation...");
+        LOGGER.info("Emulating computer: " + computer.getComputerConfig().getName());
+
+        computer.getCompiler().ifPresent(
+                compiler -> LOGGER.info("Compiler: " + compiler.getTitle() + ", version " + compiler.getVersion())
+        );
+        computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: " + cpu.getTitle() + ", version " + cpu.getVersion()));
+        computer.getMemory().ifPresent(memory -> {
+            LOGGER.info("Memory: " + memory.getTitle() + ", version " + memory.getVersion());
+            LOGGER.info("Memory size: {}", memory.getSize());
+        });
+        computer.getDevices().forEach(
+                device -> LOGGER.info("Device: " + device.getTitle() + ", version " + device.getVersion())
+        );
+
+        try {
+            computer.getCompiler().ifPresent(compiler -> {
+                Unchecked.run(() -> autoCompile(compiler));
+            });
+
+            computer.getCPU().ifPresent(cpu -> {
+                setProgress("Resetting CPU...", false);
+                programLocation.ifPresentOrElse(l -> {
+                    setProgress("Program start location: " + String.format("%04Xh", l), false);
+                    cpu.reset(l);
+                }, cpu::reset);
+                autoEmulate(cpu);
+            });
+        } catch (Exception e) {
+            LOGGER.error("Error during automation", e);
+            dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
+        } finally {
+            if (progressGUI != null) {
+                progressGUI.dispose();
+                progressGUI = null;
+            }
         }
     }
 
@@ -121,17 +174,6 @@ public class Automation implements Runnable {
         if (!compiler.compile(fileName)) {
             throw new AutomationException("Compile failed. Automation cannot continue.");
         }
-    }
-
-    private void setProgramLocation(int programLocation) {
-        computer.getMemory().ifPresentOrElse(memory -> {
-            setProgress("Program start address: " + String.format("%04Xh", programLocation), false);
-            memory.setProgramLocation(programLocation);
-        }, () -> {
-            if (programLocation > 0) {
-                setProgress("Ignoring program start address: " + String.format("%04Xh", programLocation), false);
-            }
-        });
     }
 
     private void autoEmulate(CPU cpu) {
@@ -194,63 +236,8 @@ public class Automation implements Runnable {
                 LOGGER.error("Invalid state (" + resultState + ")");
                 break;
         }
-        LOGGER.info("Instruction location = " + String.format("%04Xh", cpu.getInstructionLocation()));
+        LOGGER.info("Instruction location = " + String.format("0x%04X", cpu.getInstructionLocation()));
 
         setProgress("Emulation completed", false);
-    }
-
-
-    /**
-     * Executes automatic emulation.
-     * <p/>
-     * It assumes that the virtual computer is loaded.
-     * <p/>
-     * All output is saved into output file.
-     */
-    @Override
-    public void run() {
-        if (progressGUI != null) {
-            progressGUI.setVisible(true);
-        }
-
-        LOGGER.info("Starting emulation automation...");
-
-        computer.getCompiler().ifPresent(
-                compiler -> LOGGER.info("Compiler: " + compiler.getTitle() + ", version " + compiler.getVersion())
-        );
-        computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: " + cpu.getTitle() + ", version " + cpu.getVersion()));
-        computer.getMemory().ifPresent(memory -> {
-            LOGGER.info("Memory: " + memory.getTitle() + ", version " + memory.getVersion());
-            LOGGER.info("Memory size: {}", memory.getSize());
-        });
-        computer.getDevices().forEach(
-                device -> LOGGER.info("Device: " + device.getTitle() + ", version " + device.getVersion())
-        );
-
-        try {
-            AtomicReference<Integer> programLocation = new AtomicReference<>(0);
-            computer.getCompiler().ifPresent(compiler -> {
-                Unchecked.run(() -> autoCompile(compiler));
-                programLocation.set(compiler.getProgramLocation());
-                setProgramLocation(programLocation.get());
-            });
-            if (programStart > 0) {
-                programLocation.set(programStart);
-            }
-
-            computer.getCPU().ifPresent(cpu -> {
-                setProgress("Resetting CPU...", false);
-                cpu.reset(programLocation.get());
-                autoEmulate(cpu);
-            });
-        } catch (Exception e) {
-            LOGGER.error("Error during automation", e);
-            dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
-        } finally {
-            if (progressGUI != null) {
-                progressGUI.dispose();
-                progressGUI = null;
-            }
-        }
     }
 }

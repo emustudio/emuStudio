@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;

@@ -20,7 +20,7 @@ package net.emustudio.plugins.memory.bytemem.gui.actions.find_sequence;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

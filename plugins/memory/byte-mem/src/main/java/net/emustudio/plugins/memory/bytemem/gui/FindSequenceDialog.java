@@ -20,7 +20,7 @@ package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.memory.bytemem.gui.actions.find_sequence.PerformFindSequenceAction;
-import net.emustudio.plugins.memory.bytemem.gui.model.MemoryTableModel;
+import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -32,6 +32,7 @@ public class FindSequenceDialog extends JDialog {
     private final JRadioButton radioPlainText = new JRadioButton();
     private final JTextField txtPosition = new JTextField();
     private final JTextField txtSequence = new JTextField();
+
     public FindSequenceDialog(Dialogs dialogs, JDialog parent, MemoryTableModel tableModel, int currentAddress,
                               Consumer<Integer> setFoundAddress) {
         super(parent, true);
@@ -59,6 +60,9 @@ public class FindSequenceDialog extends JDialog {
         btnGroupStartPosition.add(radioSpecificPosition);
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        btnFind.setText("Find");
+
         getRootPane().setDefaultButton(btnFind);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
         setTitle("Find sequence");

@@ -18,13 +18,13 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.ToolbarButton;
 import net.emustudio.application.gui.actions.opencomputer.*;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,11 +92,11 @@ public class OpenComputerDialog extends JDialog {
         JPanel panelConfig = new JPanel();
         JScrollPane configScrollPane = new JScrollPane();
         JToolBar toolConfig = new JToolBar();
-        ToolbarButton btnAdd = new ToolbarButton(addNewComputerAction, "Create new computer...");
-        ToolbarButton btnDelete = new ToolbarButton(deleteComputerAction, "Delete computer");
-        ToolbarButton btnEdit = new ToolbarButton(editComputerAction, "Edit computer...");
-        ToolbarButton btnRename = new ToolbarButton(renameComputerAction, "Rename computer...");
-        ToolbarButton btnSaveSchemaImage = new ToolbarButton(saveSchemaAction, "Save schema image...");
+        ToolbarButton btnAdd = new ToolbarButton(addNewComputerAction);
+        ToolbarButton btnDelete = new ToolbarButton(deleteComputerAction);
+        ToolbarButton btnEdit = new ToolbarButton(editComputerAction);
+        ToolbarButton btnRename = new ToolbarButton(renameComputerAction);
+        ToolbarButton btnSaveSchemaImage = new ToolbarButton(saveSchemaAction);
         JPanel panelPreview = new JPanel();
         JScrollPane scrollPreview = new JScrollPane();
         JLabel jLabel1 = new JLabel();

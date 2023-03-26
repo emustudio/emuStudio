@@ -30,6 +30,7 @@ import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.rasp.ParsingUtils.*;
 import static net.emustudio.plugins.compiler.rasp.RASPParser.*;
+import static net.emustudio.plugins.memory.rasp.gui.Disassembler.HALT;
 
 
 public class ProgramParser extends RASPParserBaseVisitor<Program> {
@@ -60,7 +61,7 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
     }
 
     private final Program program;
-    private int currentAddress;
+    private int currentAddress = 20; // default start address, have 20 registers pre-allocated
 
     public ProgramParser(Program program) {
         this.program = Objects.requireNonNull(program);
@@ -134,7 +135,7 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
     @Override
     public Program visitInstrNoOperand(InstrNoOperandContext ctx) {
         Instruction instruction = new Instruction(
-                ctx.op.getLine(), ctx.op.getCharPositionInLine(), 18, currentAddress++, Optional.empty()
+                ctx.op.getLine(), ctx.op.getCharPositionInLine(), HALT, currentAddress++, Optional.empty()
         );
         program.add(instruction);
         return program;

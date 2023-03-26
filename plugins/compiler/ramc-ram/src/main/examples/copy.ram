@@ -1,17 +1,16 @@
-<input> 3 4 ignored world hello
-
-; COPY(X,Y)
+; Copy R(X) to R(Y)
 ;
-; input:
-;   reg.1: X
-;   reg.2: Y
+; input tape:
+;   destination register: X
+;   source register: Y
 ;
 ; output:
-;   reg.X: (reg.Y)
-;   reg.Y: (reg.Y)
+;   R(X) = R(Y)
+;   R(Y) = R(Y)
 
 
-<input> sss
+<input> 3 4 'hello' 'world'
+
 ; load X,Y
 read 1
 read 2

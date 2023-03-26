@@ -61,11 +61,11 @@ OP_CONSTANT: '=';
 PREP_ORG: O R G;
 PREP_INPUT: '<' I N P U T '>';
 
-LIT_HEXNUMBER_1: '0' X [0-9a-fA-F]+;
-LIT_NUMBER: [0-9]+ D?;
-LIT_HEXNUMBER_2: [0-9a-fA-F]+ H;
-LIT_OCTNUMBER: [0-7]+ [oOqQ];
-LIT_BINNUMBER: [01]+ B;
+LIT_HEXNUMBER_1: [+-]?'0' X [0-9a-fA-F]+;
+LIT_NUMBER: [+-]?[0-9]+ D?;
+LIT_HEXNUMBER_2: [+-]?[0-9a-fA-F]+ H;
+LIT_OCTNUMBER: [+-]?[0-7]+ [oOqQ];
+LIT_BINNUMBER: [+-]?[01]+ B;
 
 ID_IDENTIFIER: [a-zA-Z_?@] [a-zA-Z_?@0-9]*;
 ID_LABEL: ID_IDENTIFIER ':';

@@ -24,11 +24,13 @@ import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ApplicationApiImpl implements ApplicationApi {
     private final DebuggerTable debuggerTable;
     private final ContextPool contextPool;
     private final Dialogs dialogs;
+    private final AtomicInteger programLocation = new AtomicInteger();
 
     public ApplicationApiImpl(DebuggerTable debuggerTable, ContextPool contextPool, Dialogs dialogs) {
         this.debuggerTable = Objects.requireNonNull(debuggerTable);
@@ -49,5 +51,15 @@ public class ApplicationApiImpl implements ApplicationApi {
     @Override
     public Dialogs getDialogs() {
         return dialogs;
+    }
+
+    @Override
+    public void setProgramLocation(int location) {
+        programLocation.set(location);
+    }
+
+    @Override
+    public int getProgramLocation() {
+        return programLocation.get();
     }
 }

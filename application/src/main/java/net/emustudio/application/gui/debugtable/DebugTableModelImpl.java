@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class DebugTableModelImpl extends DebugTableModel {
     private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
@@ -36,10 +37,10 @@ public class DebugTableModelImpl extends DebugTableModel {
     public DebugTableModelImpl() {
     }
 
-    public void setCPU(CPU cpu, int memorySize) {
+    public void setCPU(CPU cpu, Supplier<Integer> getMemorySize) {
         this.cpu = Objects.requireNonNull(cpu);
         CallFlow callFlow = new CallFlow(cpu.getDisassembler());
-        this.ida = new PaginatingDisassembler(callFlow, memorySize);
+        this.ida = new PaginatingDisassembler(callFlow, getMemorySize);
         setDefaultColumns();
     }
 
@@ -179,8 +180,7 @@ public class DebugTableModelImpl extends DebugTableModel {
     }
 
     @Override
-    public void setMemorySize(int memorySize) {
-        Optional.ofNullable(ida).ifPresent(i -> i.setMemorySize(memorySize));
+    public void memorySizeChanged(int memorySize) {
         fireTableChanged(new TableModelEvent(this));
     }
 

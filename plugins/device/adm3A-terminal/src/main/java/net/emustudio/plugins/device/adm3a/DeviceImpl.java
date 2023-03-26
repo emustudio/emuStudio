@@ -109,8 +109,6 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
         } catch (ContextNotFoundException e) {
             LOGGER.warn("The terminal is not connected to any I/O device.", e);
         }
-
-        keyboard.process();
         terminalSettings.addChangedObserver(this);
     }
 
@@ -154,6 +152,11 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     @Override
     public String getDescription() {
         return "Custom implementation of LSI ADM-3A terminal";
+    }
+
+    @Override
+    public boolean isAutomationSupported() {
+        return true;
     }
 
     @Override

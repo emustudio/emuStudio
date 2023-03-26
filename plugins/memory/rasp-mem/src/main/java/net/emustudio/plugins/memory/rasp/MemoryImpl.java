@@ -28,8 +28,8 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.memory.rasp.api.RASPMemoryContext;
-import net.emustudio.plugins.memory.rasp.gui.MemoryDialog;
+import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
+import net.emustudio.plugins.memory.rasp.gui.MemoryGui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,7 @@ public class MemoryImpl extends AbstractMemory {
 
     private final MemoryContextImpl context;
     private final boolean guiNotSupported;
-    private MemoryDialog gui;
+    private MemoryGui gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -57,7 +57,7 @@ public class MemoryImpl extends AbstractMemory {
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
-                pool.register(pluginID, context, RASPMemoryContext.class);
+                pool.register(pluginID, context, RaspMemoryContext.class);
                 pool.register(pluginID, context, MemoryContext.class);
             } catch (InvalidContextException | ContextAlreadyRegisteredException ex) {
                 LOGGER.error("Could not register RASP memory context", ex);
@@ -86,7 +86,7 @@ public class MemoryImpl extends AbstractMemory {
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (gui == null) {
-                gui = new MemoryDialog(parent, context, applicationApi.getDialogs());
+                gui = new MemoryGui(parent, context, applicationApi);
             }
             gui.setVisible(true);
         }
@@ -110,16 +110,6 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public String getDescription() {
         return "RASP memory containing the program as well as the data";
-    }
-
-    @Override
-    public int getProgramLocation() {
-        return context.getProgramLocation();
-    }
-
-    @Override
-    public void setProgramLocation(int programLocation) {
-        context.setProgramLocation(programLocation);
     }
 
     private Optional<ResourceBundle> getResourceBundle() {

@@ -19,41 +19,41 @@
 package net.emustudio.plugins.compiler.ram;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMLabel;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamLabel;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.util.*;
 
-public class MemoryStub extends AbstractMemoryContext<RAMInstruction> implements RAMMemoryContext {
-    private final RAMInstruction[] memory = new RAMInstruction[1000];
-    private final Map<Integer, RAMLabel> labels = new HashMap<>();
-    private final List<RAMValue> inputs = new ArrayList<>();
+public class MemoryStub extends AbstractMemoryContext<RamInstruction> implements RamMemoryContext {
+    private final RamInstruction[] memory = new RamInstruction[1000];
+    private final Map<Integer, RamLabel> labels = new HashMap<>();
+    private final List<RamValue> inputs = new ArrayList<>();
 
     @Override
-    public RAMInstruction read(int address) {
+    public RamInstruction read(int address) {
         return memory[address];
     }
 
     @Override
-    public RAMInstruction[] read(int address, int count) {
+    public RamInstruction[] read(int address, int count) {
         return Arrays.copyOfRange(memory, address, count);
     }
 
     @Override
-    public void write(int address, RAMInstruction value) {
+    public void write(int address, RamInstruction value) {
         memory[address] = value;
     }
 
     @Override
-    public void write(int address, RAMInstruction[] instructions, int count) {
+    public void write(int address, RamInstruction[] instructions, int count) {
         System.arraycopy(instructions, 0, this.memory, address, count);
     }
 
     @Override
-    public Class<RAMInstruction> getDataType() {
-        return RAMInstruction.class;
+    public Class<RamInstruction> getDataType() {
+        return RamInstruction.class;
     }
 
     @Override
@@ -69,25 +69,25 @@ public class MemoryStub extends AbstractMemoryContext<RAMInstruction> implements
     }
 
     @Override
-    public void setLabels(List<RAMLabel> labels) {
+    public void setLabels(List<RamLabel> labels) {
         this.labels.clear();
-        for (RAMLabel label : labels) {
+        for (RamLabel label : labels) {
             this.labels.put(label.getAddress(), label);
         }
     }
 
     @Override
-    public Optional<RAMLabel> getLabel(int address) {
+    public Optional<RamLabel> getLabel(int address) {
         return Optional.ofNullable(labels.get(address));
     }
 
     @Override
-    public List<RAMValue> getInputs() {
-        return inputs;
+    public void setInputs(List<RamValue> inputs) {
+        this.inputs.addAll(inputs);
     }
 
     @Override
-    public void setInputs(List<RAMValue> inputs) {
-        this.inputs.addAll(inputs);
+    public RamMemory getSnapshot() {
+        return null;
     }
 }

@@ -21,7 +21,7 @@ package net.emustudio.plugins.device.adm3a.gui;
 import javax.swing.*;
 import java.awt.*;
 
-import static net.emustudio.plugins.device.adm3a.gui.GuiUtils.loadFont;
+import static net.emustudio.plugins.device.adm3a.gui.GuiUtilsAdm3A.loadFont;
 
 public class DisplayFontJComboRenderer extends JLabel implements ListCellRenderer<Integer> {
     private final Font originalFont = loadFont(DisplayFont.FONT_ORIGINAL);

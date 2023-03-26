@@ -1,3 +1,117 @@
+# Version 0.41
+
+All issues for the milestone are listed [here](https://github.com/emustudio/emuStudio/milestone/4?closed=1).
+
+## Whole project
+
+- rewrite command line arguments (replaced library args4j by picocli)
+
+## main-module
+
+- new command line
+- improved automation
+- fixed many bugs
+
+## all compilers
+
+- completely rewritten using ANTLR v4
+- improved examples
+
+## as-8080, as-z80
+
+- support forward references and improve expression evaluation
+- added `END` pseudo-instruction support
+
+## 8080-cpu
+
+- support loading/saving frequency from/to a config file
+- if port is not active, returns 0xFF on reading
+- rewritten disassembler
+- optimized performance
+
+## z80-cpu
+
+- completely rewritten, optimized performance
+- implemented unofficial instructions
+- all instructions tested fully using z80test, zexall
+- support loading/saving frequency from/to a config file
+- by default 4kHz frequency
+
+## adm3A-terminal
+
+- new font - custom made, true-type based on the original ADM-3A font matrix
+- new gui window, new settings window
+
+## 88-sio
+
+- support mapping characters to other characters
+- support TTY/ANSI modes
+- support interrupts
+- rewritten gui
+
+## 88-dcdd
+
+- renamed from 88-disk
+- experimental ability to read & save files from CP/M disk images, supporting various formats
+- support interrupts
+- rewritten gui
+- fix bugs (#186, #183)
+
+## byte-mem
+
+- renamed from standard-mem
+- ASCII mode support
+- mouse-wheel rolls pages too
+
+## simh-pseudo
+
+- renamed from simhPseudo-z80
+- implemented almost all commands except attaching/detaching/resetting PTP/PTR devices
+
+## ssem-cpu
+
+- improved emulation speed on Windows
+
+## ssem-mem
+
+- improved GUI
+- dump/load binary file support
+
+## ssem-display
+
+- fixed bugs (#180)
+
+## vt100-terminal
+
+- new terminal device, used instead of brainduck-terminal
+- implemented some ASCII control codes
+
+## brainduck-terminal
+
+- was removed, replaced by vt100-terminal
+
+## brainduck-mem
+
+- was removed, replaced by byte-mem
+
+## ramc-compiler
+
+- drop floating-point support
+- strings must be now in quotes
+
+## ram-mem
+
+- drop computing complexity feature
+- load/dump content from/to a file
+
+## rasp-cpu
+
+- rewritten status panel
+
+## rasp-mem
+
+- load/dump content from/to a file
+
 # Version 0.40
 
 All issues for the milestone are listed [here](https://github.com/emustudio/emuStudio/milestone/3?closed=1).

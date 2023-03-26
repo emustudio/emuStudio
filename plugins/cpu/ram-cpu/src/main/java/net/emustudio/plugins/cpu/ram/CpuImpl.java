@@ -32,11 +32,11 @@ import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
 import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.ram.gui.LabelDebugColumn;
-import net.emustudio.plugins.cpu.ram.gui.RAMDisassembler;
-import net.emustudio.plugins.cpu.ram.gui.RAMStatusPanel;
+import net.emustudio.plugins.cpu.ram.gui.RamDisassembler;
+import net.emustudio.plugins.cpu.ram.gui.RamStatusPanel;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,17 +55,17 @@ import java.util.ResourceBundle;
 public class CpuImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
-    private final RAMCpuContextImpl context;
+    private final RamCpuContextImpl context;
 
     private EmulatorEngine engine;
-    private RAMMemoryContext memory;
-    private RAMDisassembler disassembler;
+    private RamMemoryContext memory;
+    private RamDisassembler disassembler;
     private boolean debugTableInitialized = false;
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
-        context = new RAMCpuContextImpl(applicationApi.getContextPool());
+        context = new RamCpuContextImpl(applicationApi.getContextPool());
         try {
             applicationApi.getContextPool().register(pluginID, context, CPUContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
@@ -93,8 +93,8 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public void initialize() throws PluginInitializationException {
-        memory = applicationApi.getContextPool().getMemoryContext(pluginID, RAMMemoryContext.class);
-        disassembler = new RAMDisassembler(memory);
+        memory = applicationApi.getContextPool().getMemoryContext(pluginID, RamMemoryContext.class);
+        disassembler = new RamDisassembler(memory);
         context.init(pluginID);
         engine = new EmulatorEngine(context.getInputTape(), context.getOutputTape(), context.getStorageTape(), memory);
     }
@@ -110,7 +110,7 @@ public class CpuImpl extends AbstractCPU {
             }
             debugTableInitialized = true;
         }
-        return new RAMStatusPanel(this, context.getInputTape(), context.getOutputTape());
+        return new RamStatusPanel(this, context.getInputTape(), context.getOutputTape());
     }
 
     @Override

@@ -20,14 +20,22 @@ package net.emustudio.plugins.compiler.ram.ast;
 
 import net.emustudio.plugins.compiler.ram.ParsingUtils;
 import net.emustudio.plugins.compiler.ram.exceptions.CompileException;
-import net.emustudio.plugins.memory.ram.api.RAMInstruction;
-import net.emustudio.plugins.memory.ram.api.RAMMemoryContext;
-import net.emustudio.plugins.memory.ram.api.RAMValue;
+import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
+import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.io.*;
 import java.util.*;
 
 public class Program {
+    private final static Set<RamInstruction.Opcode> nonNegative = Set.of(
+            RamInstruction.Opcode.READ, RamInstruction.Opcode.WRITE,
+            RamInstruction.Opcode.STORE, RamInstruction.Opcode.LOAD, RamInstruction.Opcode.ADD,
+            RamInstruction.Opcode.SUB, RamInstruction.Opcode.MUL, RamInstruction.Opcode.DIV);
+    private final static Set<RamInstruction.Direction> directions = Set.of(
+            RamInstruction.Direction.DIRECT, RamInstruction.Direction.INDIRECT);
+
+
     private final List<Instruction> instructions = new ArrayList<>();
     private final Map<String, Label> labels = new HashMap<>();
     private final List<Value> inputs = new ArrayList<>();
@@ -52,34 +60,43 @@ public class Program {
         for (Instruction instruction : instructions) {
             instruction
                     .getOperand()
-                    .filter(v -> v.getType() == RAMValue.Type.ID)
-                    .map(RAMValue::getStringValue)
+                    .filter(v -> v.getType() == RamValue.Type.ID)
+                    .map(RamValue::getStringValue)
                     .flatMap(this::getLabel)
                     .ifPresent(instruction::setLabel);
         }
     }
 
-    public void loadIntoMemory(RAMMemoryContext memory) {
+    public void check() {
+        for (Instruction instruction : instructions) {
+            if (nonNegative.contains(instruction.getOpcode()) && directions.contains(instruction.getDirection())) {
+                Optional<RamValue> error = instruction
+                        .getOperand()
+                        .filter(op -> op.getType() == RamValue.Type.NUMBER)
+                        .filter(op -> op.getNumberValue() < 0);
+                if (error.isPresent()) {
+                    throw new CompileException(instruction.line, instruction.column, "Register number cannot be negative");
+                }
+            }
+        }
+    }
+
+    public void loadIntoMemory(RamMemoryContext memory) {
         memory.setLabels(new ArrayList<>(labels.values()));
         memory.setInputs(new ArrayList<>(inputs));
-        for (RAMInstruction instruction : instructions) {
+        for (RamInstruction instruction : instructions) {
             memory.write(instruction.getAddress(), instruction);
         }
     }
 
     public void saveToFile(String filename) throws IOException {
-        Map<Integer, String> labels = new HashMap<>();
-        for (Label label : this.labels.values()) {
-            labels.put(label.getAddress(), label.getLabel());
+        Map<Integer, RamInstruction> programMemory = new HashMap<>();
+        for (RamInstruction instruction : instructions) {
+            programMemory.put(instruction.getAddress(), instruction);
         }
-
-        OutputStream file = new FileOutputStream(filename);
-        OutputStream buffer = new BufferedOutputStream(file);
-        try (ObjectOutput output = new ObjectOutputStream(buffer)) {
-            output.writeObject(labels);
-            output.writeObject(inputs);
-            output.writeObject(instructions);
-        }
+        RamMemoryContext.serialize(filename, new RamMemoryContext.RamMemory(
+                this.labels.values(), programMemory, inputs
+        ));
     }
 
     private Optional<Label> getLabel(String name) {

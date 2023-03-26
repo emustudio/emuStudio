@@ -30,7 +30,7 @@ public class StepAction extends AbstractAction {
 
     public StepAction(EmulationController emulationController) {
         super("Step", new ImageIcon(StepAction.class.getResource("/net/emustudio/application/gui/dialogs/go-next.png")));
-
+        putValue(SHORT_DESCRIPTION, "Step forward");
         this.emulationController = emulationController;
     }
 

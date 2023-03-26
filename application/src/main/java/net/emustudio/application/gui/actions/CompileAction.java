@@ -20,6 +20,7 @@ package net.emustudio.application.gui.actions;
 
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
+import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.cpu.CPU;
@@ -94,11 +95,7 @@ public class CompileAction extends AbstractAction {
                     try {
                         computer.getMemory().ifPresent(Memory::reset);
                         compiler.compile(file.getAbsolutePath());
-                        int programStart = compiler.getProgramLocation();
-
-                        computer.getMemory().ifPresent(memory -> memory.setProgramLocation(programStart));
-
-                        computer.getCPU().ifPresent(cpu -> cpu.reset(programStart));
+                        computer.getCPU().ifPresent(Plugin::reset);
                     } catch (Exception e) {
                         compilerOutput.append("Could not compile file: " + e + "\n");
                     }

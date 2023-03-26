@@ -118,6 +118,18 @@ public class SettingsDialog extends JDialog {
         driveButtons.add(btnP);
 
         btnA.setSelected(true);
+        // update icons
+        drives.foreach((i, drive) -> {
+            DriveSettingsUI dsui = driveSettingsUI.get(i);
+            Optional
+                    .ofNullable(dsui.image)
+                    .filter(p -> !p.equals(""))
+                    .map(Path::of)
+                    .ifPresentOrElse(
+                            path -> driveButtons.get(i).setIcon(ON_ICON),
+                            () -> driveButtons.get(i).setIcon(OFF_ICON));
+            return null;
+        });
         updateGUI(0);
     }
 

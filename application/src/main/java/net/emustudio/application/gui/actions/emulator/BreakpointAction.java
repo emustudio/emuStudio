@@ -38,6 +38,7 @@ public class BreakpointAction extends AbstractAction {
                 "Set/unset breakpoint...",
                 new ImageIcon(ResetAction.class.getResource("/net/emustudio/application/gui/dialogs/breakpoints.png"))
         );
+        putValue(SHORT_DESCRIPTION, "Set/unset breakpoint to address...");
 
         this.parent = Objects.requireNonNull(parent);
         this.computer = Objects.requireNonNull(computer);

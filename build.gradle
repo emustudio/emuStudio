@@ -26,8 +26,8 @@ ext.versions = [
 ]
 
 ext.libs = [
-        emuLib           : "net.emustudio:emulib:11.7.0",
-        cpuTestSuite     : "net.emustudio:cpu-testsuite_11.7:1.2.0",
+        emuLib           : "net.emustudio:emulib:12.0.0",
+        cpuTestSuite     : "net.emustudio:cpu-testsuite_12.0:1.2.0",
 
         jcipAnnotations  : "net.jcip:jcip-annotations:1.0",
         antlr            : "org.antlr:antlr4:4.11.1",
@@ -43,8 +43,8 @@ ext.libs = [
 
         tomlj            : "com.electronwill.night-config:toml:3.6.6",
 
-        editor           : "com.fifesoft:rsyntaxtextarea:3.3.1",
-        editorDialogs    : "com.fifesoft:rstaui:3.3.0",
+        editor           : "com.fifesoft:rsyntaxtextarea:3.3.2",
+        editorDialogs    : "com.fifesoft:rstaui:3.3.1",
 
         junit            : "junit:junit:4.13.1",
         easyMock         : "org.easymock:easymock:4.2",
@@ -52,7 +52,7 @@ ext.libs = [
 ]
 
 allprojects {
-  version = '0.41-SNAPSHOT'
+  version = '0.42-SNAPSHOT'
 
   configurations {
     compilerLib
