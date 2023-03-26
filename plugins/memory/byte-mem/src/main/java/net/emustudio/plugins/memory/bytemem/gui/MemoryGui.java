@@ -61,12 +61,6 @@ public class MemoryGui extends JDialog {
     private final EraseMemoryAction eraseMemoryAction;
     private final SettingsAction settingsAction;
 
-    private final LoadImageAction loadImageAction;
-    private final DumpMemoryAction dumpMemoryAction;
-    private final GotoAddressAction gotoAddressAction;
-    private final FindSequenceAction findSequenceAction;
-
-
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
         super(parent);
 

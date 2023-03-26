@@ -53,11 +53,6 @@ public class DataChannel implements Context8080.CpuPortDevice {
         return toString();
     }
 
-    @Override
-    public String toString() {
-        return "MITS 88-SIO data channel";
-    }
-
     private byte mapCharacter(byte data) {
         if (data == DELETE_CHAR) {
             data = settings.getMapDeleteChar() == SioUnitSettings.MAP_CHAR.BACKSPACE ? BACKSPACE_CHAR : DELETE_CHAR;
@@ -70,6 +65,6 @@ public class DataChannel implements Context8080.CpuPortDevice {
 
     @Override
     public String toString() {
-        return "88 SIO Data Channel";
+        return "88-SIO Data Channel";
     }
 }
