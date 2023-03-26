@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.ports;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88dcdd.drive.Drive;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveCollection;
 
@@ -32,7 +32,7 @@ import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE
  * IN: disk flags
  * OUT: select/unselect drive
  */
-public class StatusPort implements DeviceContext<Byte> {
+public class StatusPort implements Context8080.CpuPortDevice {
     private final DriveCollection disk;
 
     public StatusPort(DriveCollection disk) {
@@ -40,12 +40,12 @@ public class StatusPort implements DeviceContext<Byte> {
     }
 
     @Override
-    public Byte readData() {
+    public byte read(int portAddress) {
         return disk.getCurrentDrive().map(Drive::getPort1status).orElse(Drive.DEAD_DRIVE);
     }
 
     @Override
-    public void writeData(Byte value) {
+    public void write(int portAddress, byte value) {
         if ((value & 0x80) != 0) {
             disk.getCurrentDrive().ifPresent(Drive::deselect);
             disk.unsetCurrentDrive();
@@ -56,8 +56,8 @@ public class StatusPort implements DeviceContext<Byte> {
     }
 
     @Override
-    public Class<Byte> getDataType() {
-        return Byte.class;
+    public String getName() {
+        return toString();
     }
 
     @Override

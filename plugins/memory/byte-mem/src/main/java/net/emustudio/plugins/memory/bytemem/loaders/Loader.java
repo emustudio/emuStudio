@@ -28,6 +28,8 @@ public interface Loader {
 
     Map<String, Loader> IMAGE_LOADERS = Map.of(
             "hex", new HexLoader(),
+            "tap", new TapLoader(),
+            "tzx", new TzxLoader(),
             "bin", new BinaryLoader(),
             "com", new BinaryLoader(),
             "out", new BinaryLoader()

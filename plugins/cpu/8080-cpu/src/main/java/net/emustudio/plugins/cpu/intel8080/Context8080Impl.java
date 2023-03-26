@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.cpu.intel8080;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -31,8 +30,9 @@ import java.util.concurrent.ConcurrentMap;
 public class Context8080Impl implements Context8080 {
     public final static int DEFAULT_FREQUENCY_KHZ = 2000;
     private final static Logger LOGGER = LoggerFactory.getLogger(Context8080Impl.class);
+    private final static byte NO_DATA = (byte) 0xFF; // ha! from survey.mac in cpm2.dsk: "inactive port could return 0xFF or echo port#"
 
-    private final ConcurrentMap<Integer, DeviceContext<Byte>> devices = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, CpuPortDevice> devices = new ConcurrentHashMap<>();
 
     private volatile EmulatorEngine cpu;
     private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
@@ -43,14 +43,17 @@ public class Context8080Impl implements Context8080 {
 
     // device mapping = only one device can be attached to one port
     @Override
-    public boolean attachDevice(DeviceContext<Byte> device, int port) {
-        if (devices.containsKey(port)) {
-            LOGGER.debug("[port={}, device={}] Could not attach device to given port. The port is already taken by: {}", port, device, devices.get(port));
+    public boolean attachDevice(int port, CpuPortDevice device) {
+        CpuPortDevice oldDevice = devices.get(port);
+        if (oldDevice != null) {
+            LOGGER.debug("[port={}, device={}] Could not attach device to given port. The port is already taken by: {}", port, device.getName(), oldDevice.getName());
             return false;
         }
-        if (devices.putIfAbsent(port, device) == null) {
-            LOGGER.debug("[port={},device={}] Device was attached to CPU", port, device);
+        if (devices.putIfAbsent(port, device) != null) {
+            LOGGER.debug("[port={}, device={}] Could not attach device to given port. The port is already taken.", port, device.getName());
+            return false;
         }
+        LOGGER.debug("[port={},device={}] Device was attached to CPU", port, device.getName());
         return true;
     }
 
@@ -66,24 +69,19 @@ public class Context8080Impl implements Context8080 {
         devices.clear();
     }
 
-    /**
-     * Performs I/O operation.
-     *
-     * @param port I/O port
-     * @param read whether method should read or write to the port
-     * @param data data to be written to the port. if parameter read is set to true, then data are ignored.
-     * @return value from the port if read is true, otherwise 0
-     */
-    public byte fireIO(int port, boolean read, byte data) {
-        DeviceContext<Byte> device = devices.get(port);
+    void writeIO(int portAddress, byte data) {
+        CpuPortDevice device = devices.get(portAddress & 0xFF);
         if (device != null) {
-            if (read) {
-                return device.readData();
-            } else {
-                device.writeData(data);
-            }
+            device.write(portAddress, data);
         }
-        return read ? (byte) 0xFF : 0; // ha! from survey.mac in cpm2.dsk: "inactive port could return 0xFF or echo port#"
+    }
+
+    byte readIO(int portAddress) {
+        CpuPortDevice device = devices.get(portAddress & 0xFF);
+        if (device != null) {
+            return device.read(portAddress);
+        }
+        return NO_DATA;
     }
 
     @Override
@@ -95,7 +93,7 @@ public class Context8080Impl implements Context8080 {
      * Signals raw interrupt to the CPU.
      * <p>
      * The interrupting device can insert any instruction on the data bus for
-     * execution by the CPU. The first byte of a multi-byte instruction is read
+     * execution by the CPU. The first byte of a multibyte instruction is read
      * during the interrupt acknowledge cycle. Subsequent bytes are read in by a
      * normal memory read sequence.
      *

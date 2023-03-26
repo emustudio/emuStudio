@@ -22,55 +22,53 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
-import net.emustudio.emulib.runtime.InvalidContextException;
+import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.device.zxspectrum.display.io.Keyboard;
-import net.emustudio.plugins.device.zxspectrum.display.io.OutputProvider;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.device.zxspectrum.display.gui.Keyboard;
+import net.emustudio.plugins.device.zxspectrum.display.gui.TerminalWindow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "ZX Spectrum Display")
+@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "ZX Spectrum48K")
 public class DeviceImpl extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private final boolean guiSupported;
-    private final ZxSpectrumDisplayContext terminal = new ZxSpectrumDisplayContext();
     private final Keyboard keyboard = new Keyboard();
     private boolean guiIOset = false;
+
+    private ULA ula;
+    private TerminalWindow gui;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        try {
-            applicationApi.getContextPool().register(pluginID, terminal, DeviceContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register ZX Spectrum display context", e);
-            applicationApi.getDialogs().showError("Could not register BrainDuck terminal. Please see log file for more details.", getTitle());
-        }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        // try to connect to a serial I/O board
         try {
-            DeviceContext<Byte> device = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
-            if (device.getDataType() != Byte.class) {
-                throw new PluginInitializationException(
-                        "Unexpected device data type. Expected Byte but was: " + device.getDataType()
-                );
+            MemoryContext<Byte> memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
+            if (memory.getDataType() != Byte.class) {
+                throw new PluginInitializationException("Could not find Byte-cell memory");
             }
-            keyboard.connect(device);
+            Context8080 cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
+
+            this.ula = new ULA(memory, cpu);
+            keyboard.addOnKeyListener(ula);
+
+            cpu.attachDevice(0xFE, ula);
         } catch (ContextNotFoundException e) {
             LOGGER.warn("The terminal is not connected to any I/O device.");
         }
@@ -78,15 +76,16 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void reset() {
-        terminal.reset();
+        ula.reset();
     }
 
     @Override
     public void destroy() {
-        try {
-            terminal.close();
-        } catch (IOException e) {
-            LOGGER.error("Could not close io provider", e);
+        keyboard.close();
+        if (guiIOset || gui != null) {
+            gui.destroy();
+            gui = null;
+            guiIOset = false;
         }
     }
 
@@ -104,14 +103,11 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (!guiIOset) {
-                LOGGER.debug("Creating GUI-based keyboard");
-
-                OutputProvider outputProvider = ZxSpectrumDisplayGui.create(parent, keyboard, applicationApi.getDialogs());
-                terminal.setOutputProvider(outputProvider);
+                this.gui = new TerminalWindow(parent, ula);
+                GuiUtils.addKeyListener(gui, keyboard);
                 guiIOset = true;
+                this.gui.setVisible(true);
             }
-
-            terminal.showGUI();
         }
     }
 
@@ -133,7 +129,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public String getDescription() {
-        return "ZX Spectrum display draft";
+        return "ZX Spectrum48K";
     }
 
     @Override

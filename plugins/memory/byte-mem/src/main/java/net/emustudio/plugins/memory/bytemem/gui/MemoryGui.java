@@ -61,7 +61,6 @@ public class MemoryGui extends JDialog {
     private final EraseMemoryAction eraseMemoryAction;
     private final SettingsAction settingsAction;
 
-
     public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
         super(parent);
 

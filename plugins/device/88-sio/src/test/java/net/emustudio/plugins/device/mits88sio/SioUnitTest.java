@@ -40,10 +40,10 @@ public class SioUnitTest {
         replay(s);
 
         Context8080 cpu = mock(Context8080.class);
-        expect(cpu.attachDevice(anyObject(ControlChannel.class), eq(1))).andReturn(true).times(2);
-        expect(cpu.attachDevice(anyObject(ControlChannel.class), eq(2))).andReturn(true).times(2);
-        expect(cpu.attachDevice(anyObject(DataChannel.class), eq(4))).andReturn(true).times(2);
-        expect(cpu.attachDevice(anyObject(DataChannel.class), eq(5))).andReturn(true).times(2);
+        expect(cpu.attachDevice(eq(1), anyObject(ControlChannel.class))).andReturn(true).times(2);
+        expect(cpu.attachDevice(eq(2), anyObject(ControlChannel.class))).andReturn(true).times(2);
+        expect(cpu.attachDevice(eq(4), anyObject(DataChannel.class))).andReturn(true).times(2);
+        expect(cpu.attachDevice(eq(5), anyObject(DataChannel.class))).andReturn(true).times(2);
 
         cpu.detachDevice(1);
         expectLastCall().times(2); // reattach + close()

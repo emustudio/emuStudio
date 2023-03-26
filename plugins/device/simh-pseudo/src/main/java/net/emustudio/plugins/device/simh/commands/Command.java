@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.device.simh.commands;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
@@ -75,8 +74,6 @@ public interface Command {
         ByteMemoryContext getMemory();
 
         Context8080 getCpu();
-
-        DeviceContext<Byte> getDevice();
     }
 
 

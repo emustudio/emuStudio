@@ -32,7 +32,7 @@ public class ControlChannelTest {
         replay(uart);
 
         ControlChannel channel = new ControlChannel(uart);
-        assertEquals(2, channel.readData() & 0xFF);
+        assertEquals(2, channel.read(0) & 0xFF);
     }
 
     @Test
@@ -43,7 +43,7 @@ public class ControlChannelTest {
         replay(uart);
 
         ControlChannel channel = new ControlChannel(uart);
-        channel.writeData((byte) 2);
+        channel.write(0, (byte) 2);
 
         verify(uart);
     }

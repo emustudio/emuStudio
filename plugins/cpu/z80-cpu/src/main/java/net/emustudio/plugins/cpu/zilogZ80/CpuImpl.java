@@ -51,9 +51,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CpuImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
-    private static final String PRINT_CODE = "printCode";
-    private static final String PRINT_CODE_USE_CACHE = "printCodeUseCache";
-
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
 
@@ -74,6 +71,8 @@ public class CpuImpl extends AbstractCPU {
                     "Could not register Z80 CPU context. Please see log file for more details.", getTitle()
             );
         }
+        context.setCPUFrequency(settings.getInt("frequency_khz", ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
+
         context.setCPUFrequency(settings.getInt("frequency_khz", ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
 
         initializer = new InitializerZ80(

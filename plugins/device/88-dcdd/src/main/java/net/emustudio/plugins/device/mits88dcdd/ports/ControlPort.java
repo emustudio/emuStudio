@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.ports;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.mits88dcdd.drive.Drive;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveCollection;
 
@@ -32,7 +32,7 @@ import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE
  * IN: sector pos
  * OUT: set flags
  */
-public class ControlPort implements DeviceContext<Byte> {
+public class ControlPort implements Context8080.CpuPortDevice {
     private final DriveCollection disk;
 
     public ControlPort(DriveCollection disk) {
@@ -40,7 +40,7 @@ public class ControlPort implements DeviceContext<Byte> {
     }
 
     @Override
-    public Byte readData() {
+    public byte read(int portAddress) {
         return disk.getCurrentDrive().map(drive -> {
             drive.nextSectorIfHeadIsLoaded();
             return drive.getPort2status();
@@ -48,18 +48,17 @@ public class ControlPort implements DeviceContext<Byte> {
     }
 
     @Override
-    public void writeData(Byte val) {
+    public void write(int portAddress, byte val) {
         disk.getCurrentDrive().ifPresent(drive -> drive.writeToPort2(val));
     }
 
     @Override
-    public Class<Byte> getDataType() {
-        return Byte.class;
+    public String getName() {
+        return toString();
     }
 
     @Override
     public String toString() {
         return DIALOG_TITLE + " Control Port";
     }
-
 }

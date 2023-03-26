@@ -19,9 +19,9 @@
 package net.emustudio.plugins.device.mits88dcdd.drive;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080.CpuPortDevice;
 import net.emustudio.plugins.device.mits88dcdd.DiskSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,27 +96,27 @@ public class DriveCollection implements Iterable<Drive> {
         }
     }
 
-    public void attach(DeviceContext<Byte> port1, DeviceContext<Byte> port2, DeviceContext<Byte> port3) throws PluginInitializationException {
+    public void attach(CpuPortDevice port1, CpuPortDevice port2, CpuPortDevice port3) throws PluginInitializationException {
         detach();
         int port1cpu = settings.getPort1CPU();
         int port2cpu = settings.getPort2CPU();
         int port3cpu = settings.getPort3CPU();
 
-        if (!cpu.attachDevice(port1, port1cpu)) {
+        if (!cpu.attachDevice(port1cpu, port1)) {
             throw new PluginInitializationException(
                     ": " + DIALOG_TITLE + " (port 1) can not be attached to default CPU port " + port1cpu
             );
         }
         attachedCpuPort1 = Optional.of(port1cpu);
 
-        if (!cpu.attachDevice(port2, port2cpu)) {
+        if (!cpu.attachDevice(port2cpu, port2)) {
             throw new PluginInitializationException(
                     ": " + DIALOG_TITLE + " (port 2) can not be attached to default CPU port " + port2cpu
             );
         }
         attachedCpuPort2 = Optional.of(port2cpu);
 
-        if (!cpu.attachDevice(port3, port3cpu)) {
+        if (!cpu.attachDevice(port3cpu, port3)) {
             throw new PluginInitializationException(
                     ": " + DIALOG_TITLE + " (port 3) can not be attached to default CPU port " + port3cpu
             );

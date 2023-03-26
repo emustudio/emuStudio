@@ -18,11 +18,11 @@
  */
 package net.emustudio.plugins.device.mits88sio;
 
-import net.emustudio.emulib.plugins.device.DeviceContext;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import java.util.Objects;
 
-public class DataChannel implements DeviceContext<Byte> {
+public class DataChannel implements Context8080.CpuPortDevice {
     private final static byte DELETE_CHAR = 0x7F;
     private final static byte BACKSPACE_CHAR = 0x08;
 
@@ -35,7 +35,7 @@ public class DataChannel implements DeviceContext<Byte> {
     }
 
     @Override
-    public Byte readData() {
+    public byte read(int portAddress) {
         byte data = uart.readBuffer();
         data = settings.isInputToUpperCase() ? (byte) Character.toUpperCase((char) (data & 0xFF)) : data;
         data = settings.isClearInputBit8() ? (byte) (data & 0x7F) : data;
@@ -43,14 +43,14 @@ public class DataChannel implements DeviceContext<Byte> {
     }
 
     @Override
-    public void writeData(Byte data) {
+    public void write(int portAddress, byte data) {
         data = settings.isClearOutputBit8() ? (byte) (data & 0x7F) : data;
         uart.sendToDevice(mapCharacter(data));
     }
 
     @Override
-    public Class<Byte> getDataType() {
-        return Byte.class;
+    public String getName() {
+        return toString();
     }
 
     private byte mapCharacter(byte data) {
@@ -65,6 +65,6 @@ public class DataChannel implements DeviceContext<Byte> {
 
     @Override
     public String toString() {
-        return "88 SIO Data Channel";
+        return "88-SIO Data Channel";
     }
 }

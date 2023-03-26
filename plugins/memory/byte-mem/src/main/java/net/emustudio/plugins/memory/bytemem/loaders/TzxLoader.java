@@ -16,11 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.zxspectrum.display.io;
+package net.emustudio.plugins.memory.bytemem.loaders;
 
-interface LineRoller {
+import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
-    void rollLine();
+import java.nio.file.Path;
 
-    void clearLine(int x, int y);
+public class TzxLoader implements Loader {
+
+    @Override
+    public boolean isMemoryAddressAware() {
+        return false;
+    }
+
+    @Override
+    public void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws Exception {
+        throw new RuntimeException("Not supported yet!");
+    }
 }
