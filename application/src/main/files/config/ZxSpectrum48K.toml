@@ -11,13 +11,7 @@ name = "ZX Spectrum 48K"
 		#memorySize = 49152
 		banksCount = 0
 		ROMfrom0 = 0
-		imageName0 = "/home/vbmacher/tmp/emuStudio/z80full.out"
-		imageName1 = "/home/vbmacher/tmp/emuStudio/examples/zxspectrum-48k/48.rom"
-		imageAddress1 = 0
-		imageBank1 = 0
-		imageBank0 = 0
 		commonBoundary = 0
-		imageAddress0 = 32768
 		ROMto0 = 16383
 
 #       memorySize = 65536
@@ -59,9 +53,9 @@ name = "ZX Spectrum 48K"
 #        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
 	schemaPoint = "380,180"
-	path = "zxspectrum-display.jar"
+	path = "zxspectrum-ula.jar"
 	settings = {}
-	name = "zxspectrum-display"
+	name = "zxspectrum-ula"
 	id = "1436ac2d-982f-4a52-b7c6-ecb6f2a0440d"
 	type = "DEVICE"
 

@@ -116,14 +116,6 @@ public class MemoryGui extends JDialog {
             }
         });
 
-        super.addWindowListener(new WindowAdapter() {
-
-            @Override
-            public void windowClosing(WindowEvent e) {
-                dispose();
-            }
-        });
-
         tableModel.addTableModelListener(e -> {
             int row = e.getFirstRow();
             int column = e.getColumn();

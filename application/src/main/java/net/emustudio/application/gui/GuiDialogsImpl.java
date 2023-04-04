@@ -212,4 +212,26 @@ public class GuiDialogsImpl implements ExtendedDialogs {
                 title, approveButtonText, baseDirectory, appendMissingExtension, filters.toArray(FileExtensionsFilter[]::new)
         );
     }
+
+    @Override
+    public Optional<Path> chooseDirectory(String title, String approveButtonText) {
+        return chooseDirectory(title, approveButtonText, Path.of(System.getProperty("user.dir")));
+    }
+
+    @Override
+    public Optional<Path> chooseDirectory(String title, String approveButtonText, Path baseDirectory) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle(title);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.setApproveButtonText(approveButtonText);
+        fileChooser.setCurrentDirectory(baseDirectory.toFile());
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int result = fileChooser.showOpenDialog(parent);
+        fileChooser.setVisible(true);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return Optional.ofNullable(fileChooser.getSelectedFile()).map(File::toPath);
+        }
+        return Optional.empty();
+    }
 }

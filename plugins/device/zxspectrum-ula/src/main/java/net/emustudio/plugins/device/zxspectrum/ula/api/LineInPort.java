@@ -16,30 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.memory.bytemem.loaders;
+package net.emustudio.plugins.device.zxspectrum.ula.api;
 
-import net.emustudio.emulib.runtime.io.IntelHEX;
-import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
+import net.emustudio.emulib.plugins.annotations.PluginContext;
+import net.emustudio.emulib.plugins.device.DeviceContext;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
-public class HexLoader implements Loader {
+// cassette receiver
+@PluginContext(id = "line-in port")
+public class LineInPort implements DeviceContext<Byte> {
 
     @Override
-    public boolean isMemoryAddressAware() {
-        return true;
+    public Byte readData() {
+        return null;
     }
 
     @Override
-    public void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws IOException {
-        int oldBank = memory.getSelectedBank();
-        try {
-            memory.selectBank(bank.bank); // need to do it before loading
-            IntelHEX.loadIntoMemory(path.toFile(), memory, p -> p);
-        } catch (IOException e) {
-            memory.selectBank(oldBank);
-            throw e;
-        }
+    public void writeData(Byte data) {
+        System.out.println("Received: " + Integer.toHexString(data & 0xFF));
+    }
+
+    @Override
+    public Class<Byte> getDataType() {
+        return Byte.class;
     }
 }

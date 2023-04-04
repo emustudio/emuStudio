@@ -75,7 +75,8 @@ dependencies {
   providedRuntime project(":plugins:device:vt100-terminal")
   providedRuntime project(":plugins:device:simh-pseudo")
   providedRuntime project(":plugins:device:ssem-display")
-  providedRuntime project(":plugins:device:zxspectrum-display")
+  providedRuntime project(":plugins:device:zxspectrum-ula")
+  providedRuntime project(":plugins:device:cassette-player")
 
   testImplementation libs.junit
   testImplementation libs.easyMock
@@ -217,7 +218,8 @@ distributions {
         from(output(":plugins:device:vt100-terminal"))
         from(output(":plugins:device:simh-pseudo"))
         from(output(":plugins:device:ssem-display"))
-        from(output(":plugins:device:zxspectrum-display"))
+        from(output(":plugins:device:zxspectrum-ula"))
+        from(output(":plugins:device:cassette-player"))
       }
 
       // Examples
