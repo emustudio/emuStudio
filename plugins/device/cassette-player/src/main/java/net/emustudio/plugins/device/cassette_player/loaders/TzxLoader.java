@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.device.cassette_player.loaders;
 
-import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +29,9 @@ import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.Objects;
 
+// https://k1.spdns.de/Develop/Projects/zasm/Info/TZX%20format.html#GLUEBLOCK
+// https://worldofspectrum.org/faq/reference/formats.htm
+// https://documentation.help/BASin/format_tape.html
 @ThreadSafe
 public class TzxLoader implements Loader {
     private final static Logger LOGGER = LoggerFactory.getLogger(TzxLoader.class);
@@ -40,17 +42,40 @@ public class TzxLoader implements Loader {
     }
 
     @Override
-    public void load(CassetteListener listener) throws IOException {
+    public void load(PlaybackListener listener) throws IOException {
         try (FileInputStream stream = new FileInputStream(path.toFile())) {
             interpret(stream.readAllBytes(), listener);
         }
     }
 
-    private void interpret(byte[] content, CassetteListener listener) {
+    private void interpret(byte[] content, PlaybackListener listener) throws IOException {
         ByteBuffer buffer = ByteBuffer.wrap(content);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        //Offset	Value	Type	Description
+        //0x00	"ZXTape!"	ASCII[7]	TZX signature
+        //0x07	0x1A	BYTE	End of text file marker
+        //0x08	1	BYTE	TZX major revision number
+        //0x09	20	BYTE	TZX minor revision number
+
+        byte[] signature = new byte[7];
+        buffer.get(signature);
+        if (!new String(signature).equals("ZXTape!")) {
+            throw new IOException("Invalid file content! (signature mismatch)");
+        }
+        int endOfTextMarker = buffer.get() & 0xFF;
+        if (endOfTextMarker != 0x1A) {
+            throw new IOException("Invalid file content! (end of text marker mismatch)");
+        }
+        buffer.get();
+        buffer.get();
+
+
+
         while (buffer.position() < buffer.limit()) {
             int id = buffer.get() & 0xFF; // 16 for ROM-saved block
+            System.out.println(id);
+
             int pause = buffer.getShort() & 0xFFFF; // pause after this block
             int blockLength = buffer.getShort() & 0xFFFF;
             int flagByte = buffer.get() & 0xFF;

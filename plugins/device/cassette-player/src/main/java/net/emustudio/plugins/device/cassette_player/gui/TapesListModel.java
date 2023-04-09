@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.cassette_player.gui;
 
+import net.emustudio.plugins.device.cassette_player.loaders.Loader;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +60,10 @@ public class TapesListModel extends DefaultListModel<String> {
             return Collections.emptyList();
         }
         try(Stream<Path> stream = Files.list(directory)) {
-            return stream.collect(Collectors.toList());
+            return stream
+                    .filter(Files::isReadable)
+                    .filter(Loader::hasLoader)
+                    .collect(Collectors.toList());
         } catch (IOException e) {
             LOGGER.error("Could not load tape files from directory: " + directory, e);
         }

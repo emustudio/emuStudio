@@ -33,7 +33,8 @@ public interface Loader {
             "tzx", new TzxLoader(),
             "bin", new BinaryLoader(),
             "com", new BinaryLoader(),
-            "out", new BinaryLoader()
+            "out", new BinaryLoader(),
+            "rom", new BinaryLoader()
     );
 
     /**

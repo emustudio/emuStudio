@@ -28,10 +28,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.Queue;
+import java.util.concurrent.*;
 
 @ThreadSafe
 public class CassetteController implements AutoCloseable {
@@ -41,10 +39,10 @@ public class CassetteController implements AutoCloseable {
         UNLOADED,
         PLAYING,
         STOPPED,
-        CLOSED
+        CLOSED // terminal state
     }
 
-    private final Loader.CassetteListener listener;
+    private final Loader.PlaybackListener listener;
     private final ExecutorService playPool = Executors.newFixedThreadPool(1);
 
     private final Object stateLock = new Object();
@@ -55,12 +53,14 @@ public class CassetteController implements AutoCloseable {
     @GuardedBy("stateLock")
     private Future<?> playFuture;
 
-    public CassetteController(Loader.CassetteListener listener) {
+    private final Queue<CassetteState> stateNotifications = new ConcurrentLinkedQueue<>();
+
+    public CassetteController(Loader.PlaybackListener listener) {
         this.listener = Objects.requireNonNull(listener);
     }
 
-    public CassetteState reset() {
-        return stop(true);
+    public void reset() {
+        stop(true);
     }
 
     @Override
@@ -73,7 +73,9 @@ public class CassetteController implements AutoCloseable {
                 tmpFuture.cancel(true);
             }
             playPool.shutdown();
+            stateNotifications.add(this.state);
         }
+        notifyStateChange();
         try {
             if (!playPool.awaitTermination(5, TimeUnit.SECONDS)) {
                 playPool.shutdownNow();
@@ -83,8 +85,8 @@ public class CassetteController implements AutoCloseable {
         }
     }
 
-    public CassetteState load(Path path) {
-        Optional<CassetteState> optResult = Loader.create(path).map(tmpLoader -> {
+    public void load(Path path) {
+        Loader.create(path).ifPresent(tmpLoader -> {
             synchronized (stateLock) {
                 switch (state) {
                     case UNLOADED:
@@ -92,18 +94,13 @@ public class CassetteController implements AutoCloseable {
                         this.loader = tmpLoader;
                         this.state = CassetteState.STOPPED;
                 }
-                return this.state;
+                stateNotifications.add(this.state);
             }
         });
-        if (optResult.isPresent()) {
-            return optResult.get();
-        }
-        synchronized (stateLock) {
-            return this.state;
-        }
+        notifyStateChange();
     }
 
-    public CassetteState play() {
+    public void play() {
         synchronized (stateLock) {
             if (this.state == CassetteState.STOPPED) {
                 Loader tmpLoader = this.loader;
@@ -112,6 +109,11 @@ public class CassetteController implements AutoCloseable {
                     this.playFuture = playPool.submit(() -> {
                         try {
                             tmpLoader.load(listener);
+                            synchronized (stateLock) {
+                                this.state = CassetteState.STOPPED;
+                                stateNotifications.add(this.state);
+                            }
+                            notifyStateChange();
                         } catch (IOException e) {
                             LOGGER.error("Could not load cassette", e);
                             Thread.currentThread().interrupt();
@@ -119,11 +121,12 @@ public class CassetteController implements AutoCloseable {
                     });
                 }
             }
-            return this.state;
+            stateNotifications.add(this.state);
         }
+        notifyStateChange();
     }
 
-    public CassetteState stop(boolean unload) {
+    public void stop(boolean unload) {
         synchronized (stateLock) {
             if (this.state == CassetteState.PLAYING) {
                 Future<?> tmpFuture = this.playFuture;
@@ -131,14 +134,24 @@ public class CassetteController implements AutoCloseable {
                 if (tmpFuture != null) {
                     tmpFuture.cancel(true);
                 }
-                if (unload) {
-                    this.loader = null;
-                    this.state = CassetteState.UNLOADED;
-                } else {
-                    this.state = CassetteState.STOPPED;
-                }
+                this.state = CassetteState.STOPPED;
             }
+            if (unload && this.state == CassetteState.STOPPED) {
+                this.loader = null;
+                this.state = CassetteState.UNLOADED;
+            }
+            stateNotifications.add(this.state);
+        }
+        notifyStateChange();
+    }
+
+    public CassetteState getState() {
+        synchronized (stateLock) {
             return this.state;
         }
+    }
+
+    private void notifyStateChange() {
+        Optional.ofNullable(stateNotifications.poll()).ifPresent(listener::onStateChange);
     }
 }

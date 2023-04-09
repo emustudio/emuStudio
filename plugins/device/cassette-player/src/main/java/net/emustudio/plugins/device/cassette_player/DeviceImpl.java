@@ -40,7 +40,7 @@ public class DeviceImpl extends AbstractDevice {
 
     private CassettePlayerGui gui;
     private CassetteController controller;
-    private CassetteListenerImpl cassetteListener;
+    private PlaybackListenerImpl cassetteListener;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -56,7 +56,7 @@ public class DeviceImpl extends AbstractDevice {
         if (lineIn.getDataType() != Byte.class) {
             throw new PluginInitializationException("Could not find Byte device");
         }
-        this.cassetteListener = new CassetteListenerImpl(lineIn);
+        this.cassetteListener = new PlaybackListenerImpl(lineIn);
         this.controller = new CassetteController(cassetteListener);
     }
 

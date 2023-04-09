@@ -41,13 +41,13 @@ public class TapLoader implements Loader {
     }
 
     @Override
-    public void load(CassetteListener listener) throws IOException {
+    public void load(PlaybackListener listener) throws IOException {
         try (FileInputStream stream = new FileInputStream(path.toFile())) {
             interpret(stream.readAllBytes(), listener);
         }
     }
 
-    private void interpret(byte[] content, CassetteListener listener) {
+    private void interpret(byte[] content, PlaybackListener listener) {
         ByteBuffer buffer = ByteBuffer.wrap(content);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         while (buffer.position() < buffer.limit() && !Thread.currentThread().isInterrupted()) {

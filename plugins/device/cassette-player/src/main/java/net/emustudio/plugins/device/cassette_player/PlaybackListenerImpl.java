@@ -24,46 +24,56 @@ import net.emustudio.plugins.device.cassette_player.loaders.Loader;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class CassetteListenerImpl implements Loader.CassetteListener {
+public class PlaybackListenerImpl implements Loader.PlaybackListener {
     private final DeviceContext<Byte> lineIn;
-    private Optional<CassettePlayerGui> gui = Optional.empty();
+    private final AtomicReference<CassettePlayerGui> gui = new AtomicReference<>();
 
-    public CassetteListenerImpl(DeviceContext<Byte> lineIn) {
+    public PlaybackListenerImpl(DeviceContext<Byte> lineIn) {
         this.lineIn = Objects.requireNonNull(lineIn);
     }
 
     public void setGui(CassettePlayerGui gui) {
-        this.gui = Optional.ofNullable(gui);
+        this.gui.set(gui);
     }
 
     @Override
     public void onProgram(String filename, int dataLength, int autoStart, int programLength) {
-        gui.ifPresent(g -> g.setMetadata(filename));
+        log(filename + " : PROGRAM (start=" + autoStart + ", length=" + programLength + ")");
     }
 
     @Override
     public void onNumberArray(String filename, int dataLength, char variable) {
-        gui.ifPresent(g -> g.setMetadata(filename));
+        log(filename + " : NUMBER ARRAY (variable=" + variable + ")");
     }
 
     @Override
     public void onStringArray(String filename, int dataLength, char variable) {
-        gui.ifPresent(g -> g.setMetadata(filename));
+        log(filename + " : STRING ARRAY (variable=" + variable + ")");
     }
 
     @Override
     public void onMemoryBlock(String filename, int dataLength, int startAddress) {
-        gui.ifPresent(g -> g.setMetadata(filename));
+        log(filename + " : MEMORY BLOCK (start=" + startAddress + ")");
     }
 
     @Override
     public void onData(byte[] data) {
-
+        log("DATA");
     }
 
     @Override
     public void onPause(int millis) {
-        gui.ifPresent(g -> g.setMetadata("PAUSE " + millis + "ms"));
+        Optional.ofNullable(gui.get()).ifPresent(g -> g.setMetadata("PAUSE " + millis + "ms"));
+    }
+
+    @Override
+    public void onStateChange(CassetteController.CassetteState state) {
+        Optional.ofNullable(gui.get()).ifPresent(g -> g.setCassetteState(state));
+    }
+
+    private void log(String message) {
+        Optional.ofNullable(gui.get()).ifPresent(g -> g.setMetadata(message));
     }
 }

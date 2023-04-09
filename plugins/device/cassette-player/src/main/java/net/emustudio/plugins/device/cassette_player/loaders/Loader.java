@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.cassette_player.loaders;
 
+import net.emustudio.plugins.device.cassette_player.CassetteController;
 import net.jcip.annotations.ThreadSafe;
 
 import java.io.IOException;
@@ -30,8 +31,21 @@ import java.util.function.Function;
 public interface Loader {
 
     Map<String, Function<Path, Loader>> LOADERS = Map.of(
-            "tap", TapLoader::new
+            "tap", TapLoader::new,
+            "tzx", TzxLoader::new
     );
+
+
+    static boolean hasLoader(Path path) {
+        int index = path.toString().lastIndexOf(".");
+        String extension = (index == -1) ?
+                "" : path.toString().substring(index + 1).toLowerCase(Locale.ENGLISH);
+
+        return LOADERS
+                .entrySet()
+                .stream()
+                .anyMatch(l -> l.getKey().equals(extension));
+    }
 
     static Optional<Loader> create(Path path) {
         int index = path.toString().lastIndexOf(".");
@@ -48,7 +62,10 @@ public interface Loader {
     }
 
     @ThreadSafe
-    interface CassetteListener {
+    interface PlaybackListener {
+
+        // tzx version
+
         /**
          * Data block will be a program in BASIC.
          *
@@ -99,7 +116,12 @@ public interface Loader {
          * @param millis milliseconds to pause
          */
         void onPause(int millis);
+
+        /**
+         * On state change
+         */
+        void onStateChange(CassetteController.CassetteState state);
     }
 
-    void load(CassetteListener listener) throws IOException;
+    void load(PlaybackListener listener) throws IOException;
 }

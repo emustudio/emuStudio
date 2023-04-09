@@ -55,6 +55,7 @@ public class CassettePlayerGui extends JDialog {
 
         initComponents();
         setLocationRelativeTo(parent);
+        setCassetteState(controller.getState());
     }
 
     public void setMetadata(String metadata) {
@@ -62,6 +63,39 @@ public class CassettePlayerGui extends JDialog {
             SwingUtilities.invokeAndWait(() -> lblHeader.setText(metadata));
         } catch (Exception ignored) {
 
+        }
+    }
+
+    public void setCassetteState(CassetteController.CassetteState state) {
+        this.lblStatus.setText(state.name());
+        switch (state) {
+            case CLOSED:
+                btnLoad.setEnabled(false);
+                btnStop.setEnabled(false);
+                btnPlay.setEnabled(false);
+                btnUnload.setEnabled(false);
+                break;
+
+            case PLAYING:
+                btnPlay.setEnabled(false);
+                btnLoad.setEnabled(false);
+                btnUnload.setEnabled(true);
+                btnStop.setEnabled(true);
+                break;
+
+            case STOPPED:
+                btnStop.setEnabled(false);
+                btnLoad.setEnabled(true);
+                btnUnload.setEnabled(true);
+                btnPlay.setEnabled(true);
+                break;
+
+            case UNLOADED:
+                btnStop.setEnabled(false);
+                btnPlay.setEnabled(false);
+                btnLoad.setEnabled(true);
+                btnUnload.setEnabled(false);
+                break;
         }
     }
 
@@ -93,18 +127,9 @@ public class CassettePlayerGui extends JDialog {
                 controller.load(lstTapesModel.getFilePath(index));
             }
         });
-        btnPlay.addActionListener(e -> {
-            CassetteController.CassetteState state = controller.play();
-            lblStatus.setText(state.name());
-        });
-        btnStop.addActionListener(e -> {
-            CassetteController.CassetteState state = controller.stop(false);
-            lblStatus.setText(state.name());
-        });
-        btnUnload.addActionListener(e -> {
-            CassetteController.CassetteState state = controller.stop(true);
-            lblStatus.setText(state.name());
-        });
+        btnPlay.addActionListener(e -> controller.play());
+        btnStop.addActionListener(e -> controller.stop(false));
+        btnUnload.addActionListener(e -> controller.stop(true));
 
         panelTapeSelection.setBorder(BorderFactory.createTitledBorder("Tape selection"));
 
