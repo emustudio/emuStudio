@@ -190,15 +190,6 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
 
     @Override
     public void onKeyUp(byte data) {
-
-        // // symshift
-        //        "   <>"         // A10
-        //        "!@#$%"         // A11
-        //        "_)('&"         // A12
-        //        "\";   "        // A13
-        //        " =+-^"         // A14
-        //        "  .,*";        // A15
-
         switch (data) {
             case KeyEvent.VK_SHIFT:
                 keymap[0] |= 0x1;

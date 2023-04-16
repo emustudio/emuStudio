@@ -120,7 +120,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     ) throws InvalidPluginException {
 
         Map<Long, PluginMeta> plugins = new HashMap<>();
-        AtomicLong pluginIdCounter = new AtomicLong();
+        AtomicLong pluginIdCounter = new AtomicLong(1); // 0 is reserved for emuStudio
 
         for (int i = 0; i < Math.min(pluginClasses.size(), pluginConfigs.size()); i++) {
             Class<Plugin> pluginClass = pluginClasses.get(i);
