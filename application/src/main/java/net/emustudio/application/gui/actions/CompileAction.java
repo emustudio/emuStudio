@@ -31,6 +31,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class CompileAction extends AbstractAction {
@@ -71,7 +72,7 @@ public class CompileAction extends AbstractAction {
             @Override
             public void onMessage(CompilerMessage message) {
                 compilerOutput.append(message.getFormattedMessage() + "\n");
-                editor.setPosition(message.getLine(), message.getColumn());
+                message.getPosition().ifPresent(editor::setPosition);
             }
 
             @Override
@@ -94,7 +95,7 @@ public class CompileAction extends AbstractAction {
 
                     try {
                         computer.getMemory().ifPresent(Memory::reset);
-                        compiler.compile(file.getAbsolutePath());
+                        compiler.compile(file.toPath(), Optional.empty());
                         computer.getCPU().ifPresent(Plugin::reset);
                     } catch (Exception e) {
                         compilerOutput.append("Could not compile file: " + e + "\n");

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.expr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
@@ -30,18 +31,18 @@ import java.util.function.Function;
 public class ExprNumber extends Node {
     public final int number;
 
-    public ExprNumber(int line, int column, int number) {
-        super(line, column);
+    public ExprNumber(SourceCodePosition position, int number) {
+        super(position);
         this.number = number;
     }
 
-    public ExprNumber(Token number, Function<Token, Integer> parser) {
-        this(number.getLine(), number.getCharPositionInLine(), parser.apply(number));
+    public ExprNumber(String fileName, Token number, Function<Token, Integer> parser) {
+        this(positionFromToken(fileName, number), parser.apply(number));
     }
 
     @Override
     public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return Optional.of(new Evaluated(line, column, number));
+        return Optional.of(new Evaluated(position, number));
     }
 
     @Override
@@ -56,7 +57,7 @@ public class ExprNumber extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new ExprNumber(line, column, number);
+        return new ExprNumber(position, number);
     }
 
     @Override

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.instr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -49,8 +50,8 @@ public class InstrCB extends Node {
     public final int z;
     private int y;
 
-    public InstrCB(int line, int column, int opcode, int y, int z) {
-        super(line, column);
+    public InstrCB(SourceCodePosition position, int opcode, int y, int z) {
+        super(position);
         this.opcode = opcode;
         this.x = xmap.get(opcode);
         this.y = y;
@@ -59,8 +60,8 @@ public class InstrCB extends Node {
         // possibly a child is expr: if so, then it's new y
     }
 
-    public InstrCB(Token opcode, int y, int z) {
-        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), y, z);
+    public InstrCB(String fileName, Token opcode, int y, int z) {
+        this(positionFromToken(fileName, opcode), opcode.getType(), y, z);
     }
 
     public void setY(int bit) {
@@ -81,7 +82,7 @@ public class InstrCB extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new InstrCB(line, column, opcode, y, z);
+        return new InstrCB(position, opcode, y, z);
     }
 
     @Override

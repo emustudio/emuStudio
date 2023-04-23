@@ -47,7 +47,7 @@ public class MemoryImpl extends AbstractMemory {
         ContextPool contextPool = applicationApi.getContextPool();
 
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-        context = new MemoryContextImpl();
+        context = new MemoryContextImpl(getAnnotations());
         try {
             contextPool.register(pluginID, context, RamMemoryContext.class);
             contextPool.register(pluginID, context, MemoryContext.class);
@@ -69,11 +69,6 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public String getDescription() {
         return "Read-only program tape for abstract RAM machine.";
-    }
-
-    @Override
-    public int getSize() {
-        return context.getSize();
     }
 
     @Override
@@ -106,5 +101,10 @@ public class MemoryImpl extends AbstractMemory {
         } catch (MissingResourceException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public int getSize() {
+        return context.getSize();
     }
 }

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.visitors;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
@@ -38,6 +39,8 @@ import static net.emustudio.plugins.compiler.as8080.Utils.*;
 import static org.junit.Assert.assertTrue;
 
 public class ExpandIncludesVisitorTest {
+    private final static SourceCodePosition POSITION = new SourceCodePosition(0, 0, "");
+
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
@@ -48,12 +51,12 @@ public class ExpandIncludesVisitorTest {
         ExpandIncludesVisitor visitor = new ExpandIncludesVisitor();
         visitor.visit(program);
 
-        Node expected = new Program()
-                .addChild(new InstrNoArgs(0, 0, OPCODE_CMC))
-                .addChild(new PseudoLabel(0, 0, "sample"))
-                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                        .addChild(new ExprNumber(0, 0, 0)))
-                .addChild(new InstrNoArgs(0, 0, OPCODE_RET));
+        Node expected = new Program("")
+                .addChild(new InstrNoArgs(POSITION, OPCODE_CMC))
+                .addChild(new PseudoLabel(POSITION, "sample"))
+                .addChild(new InstrRegExpr(POSITION, OPCODE_MVI, REG_A)
+                        .addChild(new ExprNumber(POSITION, 0)))
+                .addChild(new InstrNoArgs(POSITION, OPCODE_RET));
 
         assertTrees(expected, program);
     }
@@ -70,9 +73,9 @@ public class ExpandIncludesVisitorTest {
         ExpandIncludesVisitor visitor = new ExpandIncludesVisitor();
         visitor.visit(program);
 
-        Node expected = new Program()
-                .addChild(new InstrNoArgs(0, 0, OPCODE_RRC))
-                .addChild(new InstrNoArgs(0, 0, OPCODE_RRC));
+        Node expected = new Program("")
+                .addChild(new InstrNoArgs(POSITION, OPCODE_RRC))
+                .addChild(new InstrNoArgs(POSITION, OPCODE_RRC));
 
         assertTrees(expected, program);
     }

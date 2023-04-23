@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.parser;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprId;
@@ -35,13 +36,15 @@ import static net.emustudio.plugins.compiler.asZ80.Utils.assertTrees;
 import static net.emustudio.plugins.compiler.asZ80.Utils.parseProgram;
 
 public class ParsePseudoTest {
+    private final static SourceCodePosition POSITION = new SourceCodePosition(0, 0, "");
+
 
     @Test
     public void testConstant() {
         Program program = parseProgram("here equ 0x55");
-        assertTrees(new Program()
-                        .addChild(new PseudoEqu(0, 0, "here")
-                                .addChild(new ExprNumber(0, 0, 0x55))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoEqu(POSITION, "here")
+                                .addChild(new ExprNumber(POSITION, 0x55))),
                 program
         );
     }
@@ -49,9 +52,9 @@ public class ParsePseudoTest {
     @Test
     public void testVariable() {
         Program program = parseProgram("here var 0x55");
-        assertTrees(new Program()
-                        .addChild(new PseudoVar(0, 0, "here")
-                                .addChild(new ExprNumber(0, 0, 0x55))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoVar(POSITION, "here")
+                                .addChild(new ExprNumber(POSITION, 0x55))),
                 program
         );
     }
@@ -59,11 +62,11 @@ public class ParsePseudoTest {
     @Test
     public void testOrg() {
         Program program = parseProgram("org 55+88");
-        assertTrees(new Program()
-                        .addChild(new PseudoOrg(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_ADD)
-                                        .addChild(new ExprNumber(0, 0, 55))
-                                        .addChild(new ExprNumber(0, 0, 88)))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoOrg(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_ADD)
+                                        .addChild(new ExprNumber(POSITION, 55))
+                                        .addChild(new ExprNumber(POSITION, 88)))),
                 program
         );
     }
@@ -75,12 +78,12 @@ public class ParsePseudoTest {
                 + "  rrca\n"
                 + "endif");
 
-        assertTrees(new Program()
-                        .addChild(new PseudoIf(0, 0)
-                                .addChild(new PseudoIfExpression(0, 0)
-                                        .addChild(new ExprNumber(0, 0, 1)))
-                                .addChild(new Instr(0, 0, OPCODE_RRCA, 0, 1, 7))
-                                .addChild(new Instr(0, 0, OPCODE_RRCA, 0, 1, 7))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoIf(POSITION)
+                                .addChild(new PseudoIfExpression(POSITION)
+                                        .addChild(new ExprNumber(POSITION, 1)))
+                                .addChild(new Instr(POSITION, OPCODE_RRCA, 0, 1, 7))
+                                .addChild(new Instr(POSITION, OPCODE_RRCA, 0, 1, 7))),
                 program
         );
     }
@@ -95,10 +98,10 @@ public class ParsePseudoTest {
 
         for (String src : programs) {
             Program program = parseProgram(src);
-            Node expected = new Program()
-                    .addChild(new PseudoIf(0, 0)
-                            .addChild(new PseudoIfExpression(0, 0)
-                                    .addChild(new ExprNumber(0, 0, 1))));
+            Node expected = new Program("")
+                    .addChild(new PseudoIf(POSITION)
+                            .addChild(new PseudoIfExpression(POSITION)
+                                    .addChild(new ExprNumber(POSITION, 1))));
             assertTrees(expected, program);
         }
     }
@@ -115,12 +118,12 @@ public class ParsePseudoTest {
                 + "  label2:\n"
                 + "endif");
 
-        assertTrees(new Program()
-                        .addChild(new PseudoIf(0, 0)
-                                .addChild(new PseudoIfExpression(0, 0)
-                                        .addChild(new ExprNumber(0, 0, 1)))
-                                .addChild(new PseudoLabel(0, 0, "label1"))
-                                .addChild(new PseudoLabel(0, 0, "label2"))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoIf(POSITION)
+                                .addChild(new PseudoIfExpression(POSITION)
+                                        .addChild(new ExprNumber(POSITION, 1)))
+                                .addChild(new PseudoLabel(POSITION, "label1"))
+                                .addChild(new PseudoLabel(POSITION, "label2"))),
                 program
         );
     }
@@ -129,7 +132,7 @@ public class ParsePseudoTest {
     public void testInclude() {
         Program program = parseProgram("include 'filename.asm'");
         assertTrees(
-                new Program().addChild(new PseudoInclude(0, 0, "filename.asm")),
+                new Program("").addChild(new PseudoInclude(POSITION, "filename.asm")),
                 program
         );
     }
@@ -141,16 +144,16 @@ public class ParsePseudoTest {
                 + "  heylabel: and 7Fh\n"
                 + "endm\n\n");
 
-        Node expected = new Program()
-                .addChild(new PseudoMacroDef(0, 0, "shrt")
-                        .addChild(new PseudoMacroParameter(0, 0)
-                                .addChild(new ExprId(0, 0, "param1")))
-                        .addChild(new PseudoMacroParameter(0, 0)
-                                .addChild(new ExprId(0, 0, "param2")))
-                        .addChild(new Instr(0, 0, OPCODE_RRCA, 0, 1, 7))
-                        .addChild(new PseudoLabel(0, 0, "heylabel")
-                                .addChild(new Instr(0, 0, OPCODE_AND, 3, 4, 6)
-                                        .addChild(new ExprNumber(0, 0, 0x7F)))));
+        Node expected = new Program("")
+                .addChild(new PseudoMacroDef(POSITION, "shrt")
+                        .addChild(new PseudoMacroParameter(POSITION)
+                                .addChild(new ExprId(POSITION, "param1")))
+                        .addChild(new PseudoMacroParameter(POSITION)
+                                .addChild(new ExprId(POSITION, "param2")))
+                        .addChild(new Instr(POSITION, OPCODE_RRCA, 0, 1, 7))
+                        .addChild(new PseudoLabel(POSITION, "heylabel")
+                                .addChild(new Instr(POSITION, OPCODE_AND, 3, 4, 6)
+                                        .addChild(new ExprNumber(POSITION, 0x7F)))));
 
         assertTrees(expected, program);
     }
@@ -165,7 +168,7 @@ public class ParsePseudoTest {
 
         for (String src : programs) {
             Program program = parseProgram(src);
-            Node expected = new Program().addChild(new PseudoMacroDef(0, 0, "shrt"));
+            Node expected = new Program("").addChild(new PseudoMacroDef(POSITION, "shrt"));
             assertTrees(expected, program);
         }
     }
@@ -178,7 +181,7 @@ public class ParsePseudoTest {
     @Test
     public void testMacroCallNoParams() {
         Program program = parseProgram("shrt");
-        Node expected = new Program().addChild(new PseudoMacroCall(0, 0, "shrt"));
+        Node expected = new Program("").addChild(new PseudoMacroCall(POSITION, "shrt"));
         assertTrees(expected, program);
     }
 
@@ -186,12 +189,12 @@ public class ParsePseudoTest {
     public void testMacroCallWithParams() {
         Program program = parseProgram("shrt param1, 45");
 
-        Node expected = new Program()
-                .addChild(new PseudoMacroCall(0, 0, "shrt")
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprId(0, 0, "param1")))
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 45))));
+        Node expected = new Program("")
+                .addChild(new PseudoMacroCall(POSITION, "shrt")
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprId(POSITION, "param1")))
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 45))));
 
         assertTrees(expected, program);
     }

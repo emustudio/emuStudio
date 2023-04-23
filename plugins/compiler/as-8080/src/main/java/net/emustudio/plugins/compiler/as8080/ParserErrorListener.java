@@ -18,12 +18,21 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.exceptions.SyntaxErrorException;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 
+import java.util.Objects;
+
 class ParserErrorListener extends BaseErrorListener {
+    private final String fileName;
+
+    ParserErrorListener(String fileName) {
+        this.fileName = Objects.requireNonNull(fileName);
+    }
+
     // TODO: parse message expected tokens to token categories
     @Override
     public void syntaxError(
@@ -35,9 +44,9 @@ class ParserErrorListener extends BaseErrorListener {
             RecognitionException e) {
 
         if (e == null) {
-            throw new SyntaxErrorException(line, charPositionInLine, msg);
+            throw new SyntaxErrorException(new SourceCodePosition(line, charPositionInLine, fileName), msg);
         } else {
-            throw new SyntaxErrorException(line, charPositionInLine, msg, e);
+            throw new SyntaxErrorException(new SourceCodePosition(line, charPositionInLine, fileName), msg, e);
         }
     }
 }

@@ -18,7 +18,8 @@
  */
 package net.emustudio.plugins.memory.ram;
 
-import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class MemoryContextImplTest {
 
     @Before
     public void setUp() {
-        this.memory = new MemoryContextImpl();
+        this.memory = new MemoryContextImpl(new Annotations());
     }
 
     @Test
@@ -48,9 +49,9 @@ public class MemoryContextImplTest {
         AtomicInteger memoryChanges = new AtomicInteger();
         AtomicInteger memorySizeChanges = new AtomicInteger();
 
-        memory.addMemoryListener(new Memory.MemoryListener() {
+        memory.addMemoryListener(new MemoryContext.MemoryListener() {
             @Override
-            public void memoryChanged(int memoryPosition) {
+            public void memoryContentChanged(int from, int to) {
                 memoryChanges.incrementAndGet();
             }
 
@@ -72,9 +73,9 @@ public class MemoryContextImplTest {
         AtomicInteger memoryChanges = new AtomicInteger();
         AtomicInteger memorySizeChanges = new AtomicInteger();
 
-        memory.addMemoryListener(new Memory.MemoryListener() {
+        memory.addMemoryListener(new MemoryContext.MemoryListener() {
             @Override
-            public void memoryChanged(int memoryPosition) {
+            public void memoryContentChanged(int from, int to) {
                 memoryChanges.incrementAndGet();
             }
 
@@ -95,9 +96,9 @@ public class MemoryContextImplTest {
         AtomicInteger memoryChanges = new AtomicInteger();
         AtomicInteger memorySizeChanges = new AtomicInteger();
 
-        memory.addMemoryListener(new Memory.MemoryListener() {
+        memory.addMemoryListener(new MemoryContext.MemoryListener() {
             @Override
-            public void memoryChanged(int memoryPosition) {
+            public void memoryContentChanged(int from, int to) {
                 memoryChanges.incrementAndGet();
             }
 

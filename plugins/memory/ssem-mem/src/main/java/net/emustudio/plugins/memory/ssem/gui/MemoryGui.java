@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.memory.ssem.gui;
 
-import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.interaction.ToolbarButton;
@@ -92,11 +91,11 @@ public class MemoryGui extends JDialog {
         pack();
     }
 
-    private class MemoryListenerImpl implements Memory.MemoryListener {
+    private class MemoryListenerImpl implements MemoryContext.MemoryListener {
 
         @Override
-        public void memoryChanged(int memoryPosition) {
-            tableModel.dataChangedAt(memoryPosition);
+        public void memoryContentChanged(int fromLocation, int toLocation) {
+            tableModel.dataChangedAt(fromLocation, toLocation);
         }
 
         @Override

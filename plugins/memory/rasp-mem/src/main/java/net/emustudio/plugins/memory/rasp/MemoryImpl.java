@@ -52,7 +52,7 @@ public class MemoryImpl extends AbstractMemory {
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
-        this.context = new MemoryContextImpl();
+        this.context = new MemoryContextImpl(getAnnotations());
 
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
@@ -66,11 +66,6 @@ public class MemoryImpl extends AbstractMemory {
                 );
             }
         });
-    }
-
-    @Override
-    public int getSize() {
-        return context.getSize();
     }
 
     @Override
@@ -118,5 +113,10 @@ public class MemoryImpl extends AbstractMemory {
         } catch (MissingResourceException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public int getSize() {
+        return context.getSize();
     }
 }

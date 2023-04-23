@@ -73,7 +73,8 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void initialize() throws PluginInitializationException {
         MemoryContext<Byte> memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
-        if (memory.getDataType() != Byte.class) {
+        Class<?> cellTypeClass = memory.getCellTypeClass();
+        if (cellTypeClass != Byte.class) {
             throw new PluginInitializationException("Could not find Byte-cell memory");
         }
         Context8080 cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);

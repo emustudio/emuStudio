@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.visitors;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.data.DataDB;
@@ -38,13 +39,14 @@ import static net.emustudio.plugins.compiler.as8080.Utils.assertTrees;
 import static org.junit.Assert.assertTrue;
 
 public class CheckExprSizesVisitorTest {
+    private final static SourceCodePosition POSITION = new SourceCodePosition(0, 0, "");
 
     @Test
     public void testDBoneByte() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new DataDB(0, 0)
-                        .addChild(new Evaluated(0, 0, 0xFF)));
+                .addChild(new DataDB(POSITION)
+                        .addChild(new Evaluated(POSITION, 0xFF)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -54,11 +56,11 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testDBtwoBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new DataDB(0, 0)
-                        .addChild(new Evaluated(0, 0, 0xFF))
-                        .addChild(new Evaluated(0, 0, 0x100))); // bad size
+                .addChild(new DataDB(POSITION)
+                        .addChild(new Evaluated(POSITION, 0xFF))
+                        .addChild(new Evaluated(POSITION, 0x100))); // bad size
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -68,10 +70,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testDWtwoBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new DataDW(0, 0)
-                        .addChild(new Evaluated(0, 0, 0xFFFF)));
+                .addChild(new DataDW(POSITION)
+                        .addChild(new Evaluated(POSITION, 0xFFFF)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -81,11 +83,11 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testDWthreeBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new DataDW(0, 0)
-                        .addChild(new Evaluated(0, 0, 0xFFFF))
-                        .addChild(new Evaluated(0, 0, 0x10000)));
+                .addChild(new DataDW(POSITION)
+                        .addChild(new Evaluated(POSITION, 0xFFFF))
+                        .addChild(new Evaluated(POSITION, 0x10000)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -95,10 +97,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testDStwoBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new DataDS(0, 0)
-                        .addChild(new Evaluated(0, 0, 0xFFFF)));
+                .addChild(new DataDS(POSITION)
+                        .addChild(new Evaluated(POSITION, 0xFFFF)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -108,10 +110,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testDSthreeBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new DataDS(0, 0)
-                        .addChild(new Evaluated(0, 0, 0x10000)));
+                .addChild(new DataDS(POSITION)
+                        .addChild(new Evaluated(POSITION, 0x10000)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -121,10 +123,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testInstrExprTwoBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new InstrExpr(0, 0, OPCODE_ADI)
-                        .addChild(new Evaluated(0, 0, 0xFF00)));
+                .addChild(new InstrExpr(POSITION, OPCODE_ADI)
+                        .addChild(new Evaluated(POSITION, 0xFF00)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -134,10 +136,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testInstrExprThreeBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new InstrExpr(0, 0, OPCODE_JMP)
-                        .addChild(new Evaluated(0, 0, 0xFF000)));
+                .addChild(new InstrExpr(POSITION, OPCODE_JMP)
+                        .addChild(new Evaluated(POSITION, 0xFF000)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -147,10 +149,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testInstrRegExprOneByte() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                        .addChild(new Evaluated(0, 0, 0xFF)));
+                .addChild(new InstrRegExpr(POSITION, OPCODE_MVI, REG_A)
+                        .addChild(new Evaluated(POSITION, 0xFF)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -160,10 +162,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testInstrRegExprTwoBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                        .addChild(new Evaluated(0, 0, 0x100))); // bad size
+                .addChild(new InstrRegExpr(POSITION, OPCODE_MVI, REG_A)
+                        .addChild(new Evaluated(POSITION, 0x100))); // bad size
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -173,10 +175,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testInstrRegPairExprTwoBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
-                        .addChild(new Evaluated(0, 0, 0xFFFF)));
+                .addChild(new InstrRegPairExpr(POSITION, OPCODE_LXI, REG_B)
+                        .addChild(new Evaluated(POSITION, 0xFFFF)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -186,10 +188,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testInstrRegPairExprThreeBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
-                        .addChild(new Evaluated(0, 0, 0x10000))); // bad size
+                .addChild(new InstrRegPairExpr(POSITION, OPCODE_LXI, REG_B)
+                        .addChild(new Evaluated(POSITION, 0x10000))); // bad size
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -199,10 +201,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testPseudoOrgTwoBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new PseudoOrg(0, 0)
-                        .addChild(new Evaluated(0, 0, 0xFFFF)));
+                .addChild(new PseudoOrg(POSITION)
+                        .addChild(new Evaluated(POSITION, 0xFFFF)));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -212,10 +214,10 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testPseudoOrgThreeBytes() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new PseudoOrg(0, 0)
-                        .addChild(new Evaluated(0, 0, 0x10000))); // bad size
+                .addChild(new PseudoOrg(POSITION)
+                        .addChild(new Evaluated(POSITION, 0x10000))); // bad size
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
@@ -225,36 +227,36 @@ public class CheckExprSizesVisitorTest {
 
     @Test
     public void testMacroArgumentsAreRemoved() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprId(0, 0, "arg"))
-                                .addChild(new Evaluated(0, 0, 0)))
-                        .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
-                                .addChild(new Evaluated(0, 0, 0)))
-                        .addChild(new PseudoMacroCall(0, 0, "y")
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprId(0, 0, "arg"))
-                                        .addChild(new Evaluated(0, 0, 1)))
-                                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
-                                        .addChild(new Evaluated(0, 0, 1))))
-                        .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
-                                .addChild(new Evaluated(0, 0, 0))));
+                .addChild(new PseudoMacroCall(POSITION, "x")
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprId(POSITION, "arg"))
+                                .addChild(new Evaluated(POSITION, 0)))
+                        .addChild(new InstrRegPairExpr(POSITION, OPCODE_LXI, REG_B)
+                                .addChild(new Evaluated(POSITION, 0)))
+                        .addChild(new PseudoMacroCall(POSITION, "y")
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprId(POSITION, "arg"))
+                                        .addChild(new Evaluated(POSITION, 1)))
+                                .addChild(new InstrRegPairExpr(POSITION, OPCODE_LXI, REG_B)
+                                        .addChild(new Evaluated(POSITION, 1))))
+                        .addChild(new InstrRegPairExpr(POSITION, OPCODE_LXI, REG_B)
+                                .addChild(new Evaluated(POSITION, 0))));
 
         CheckExprSizesVisitor visitor = new CheckExprSizesVisitor();
         visitor.visit(program);
 
         assertTrees(
-                new Program()
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
-                                        .addChild(new Evaluated(0, 0, 0)))
-                                .addChild(new PseudoMacroCall(0, 0, "y")
-                                        .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
-                                                .addChild(new Evaluated(0, 0, 1))))
-                                .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, REG_B)
-                                        .addChild(new Evaluated(0, 0, 0)))),
+                new Program("")
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new InstrRegPairExpr(POSITION, OPCODE_LXI, REG_B)
+                                        .addChild(new Evaluated(POSITION, 0)))
+                                .addChild(new PseudoMacroCall(POSITION, "y")
+                                        .addChild(new InstrRegPairExpr(POSITION, OPCODE_LXI, REG_B)
+                                                .addChild(new Evaluated(POSITION, 1))))
+                                .addChild(new InstrRegPairExpr(POSITION, OPCODE_LXI, REG_B)
+                                        .addChild(new Evaluated(POSITION, 0)))),
                 program
         );
     }

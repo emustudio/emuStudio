@@ -18,12 +18,14 @@
  */
 package net.emustudio.plugins.compiler.asZ80.exceptions;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+
 public class SyntaxErrorException extends CompileException {
-    public SyntaxErrorException(int line, int column, String message) {
-        super(line, column, message);
+    public SyntaxErrorException(SourceCodePosition position, String message) {
+        super(position, message);
     }
 
-    public SyntaxErrorException(int line, int column, String message, Throwable cause) {
-        super(line, column, message, cause);
+    public SyntaxErrorException(SourceCodePosition position, String message, Throwable cause) {
+        super(position, message, cause);
     }
 }

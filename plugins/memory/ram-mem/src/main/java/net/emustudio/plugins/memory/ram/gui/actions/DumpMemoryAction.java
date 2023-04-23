@@ -71,7 +71,7 @@ public class DumpMemoryAction extends AbstractAction {
                         }
                     }
                 } else {
-                    RamMemoryContext.serialize(path.toString(), context.getSnapshot());
+                    RamMemoryContext.serialize(path, context.getSnapshot());
                 }
             } catch (IOException ex) {
                 LOGGER.error("Memory dump could not be created", ex);

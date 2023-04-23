@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.expr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
@@ -27,8 +28,8 @@ import java.util.Optional;
 
 public class ExprCurrentAddress extends Node {
 
-    public ExprCurrentAddress(int line, int column) {
-        super(line, column);
+    public ExprCurrentAddress(SourceCodePosition position) {
+        super(position);
     }
 
     @Override
@@ -38,11 +39,11 @@ public class ExprCurrentAddress extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new ExprCurrentAddress(line, column);
+        return new ExprCurrentAddress(position);
     }
 
     @Override
     public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return currentAddress.map(addr -> new Evaluated(line, column, addr, true));
+        return currentAddress.map(addr -> new Evaluated(position, addr, true));
     }
 }

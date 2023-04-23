@@ -42,12 +42,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
-
-import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
@@ -71,9 +70,10 @@ public class SSEMCompiler extends AbstractCompiler {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
                 memory = pool.getMemoryContext(pluginID, MemoryContext.class);
-                if (memory.getDataType() != Byte.class) {
+                Class<?> cellTypeClass = memory.getCellTypeClass();
+                if (cellTypeClass != Byte.class) {
                     throw new InvalidContextException(
-                            "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                            "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
                     );
                 }
             } catch (InvalidContextException | ContextNotFoundException e) {
@@ -83,19 +83,20 @@ public class SSEMCompiler extends AbstractCompiler {
     }
 
     @Override
-    public boolean compile(String inputFileName, String outputFileName) {
+    public void compile(Path inputPath, Optional<Path> outputPath) {
         notifyCompileStart();
         notifyInfo(getTitle() + ", version " + getVersion());
 
-        try (Reader reader = new FileReader(inputFileName)) {
+        Path finalOutputPath = outputPath.orElse(convertInputToOutputPath(inputPath, ".bssem"));
+        try (Reader reader = new FileReader(inputPath.toFile())) {
             Lexer lexer = createLexer(CharStreams.fromReader(reader));
-            lexer.addErrorListener(new ParserErrorListener());
+            lexer.addErrorListener(new ParserErrorListener(inputPath.toString()));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             SSEMParser parser = createParser(tokens);
-            parser.addErrorListener(new ParserErrorListener());
+            parser.addErrorListener(new ParserErrorListener(inputPath.toString()));
 
-            ProgramParser programParser = new ProgramParser();
+            ProgramParser programParser = new ProgramParser(inputPath.toString());
             programParser.visit(parser.start());
 
             Program program = programParser.getProgram();
@@ -103,7 +104,7 @@ public class SSEMCompiler extends AbstractCompiler {
             ByteBuffer code = codeGenerator.generateCode(program);
 
             if (code.hasRemaining()) {
-                writeToFile(code, outputFileName);
+                writeToFile(code, finalOutputPath);
                 writeToMemory(code);
             }
 
@@ -112,46 +113,16 @@ public class SSEMCompiler extends AbstractCompiler {
 
             notifyInfo(String.format(
                     "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                    outputFileName, RadixUtils.formatWordHexString(programLocation)
+                    finalOutputPath, RadixUtils.formatWordHexString(programLocation)
             ));
         } catch (CompileException e) {
-            notifyError(e.line, e.column, e.getMessage());
-            return false;
+            notifyError(e.position, e.getMessage());
         } catch (IOException e) {
             notifyError("Compilation error: " + e);
             LOGGER.error("Compilation error", e);
-            return false;
         } finally {
             notifyCompileFinish();
         }
-
-        return true;
-    }
-
-    private void writeToFile(ByteBuffer code, String outputFileName) throws IOException {
-        code.rewind();
-        try (FileOutputStream fos = new FileOutputStream(outputFileName, false)) {
-            fos.getChannel().write(code);
-        }
-    }
-
-    private void writeToMemory(ByteBuffer code) {
-        if (memory != null) {
-            code.rewind();
-            code.position(4); // First 4 bytes is start line
-            byte[] data = new byte[code.remaining()];
-            code.get(data);
-            memory.clear();
-            memory.write(0, NumberUtils.nativeBytesToBytes(data));
-        } else {
-            notifyWarning("Memory is not available.");
-        }
-    }
-
-    @Override
-    public boolean compile(String inputFileName) {
-        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".bssem";
-        return compile(inputFileName, outputFileName);
     }
 
     @Override
@@ -196,6 +167,26 @@ public class SSEMCompiler extends AbstractCompiler {
             return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.ssem.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
+        }
+    }
+
+    private void writeToFile(ByteBuffer code, Path outputPath) throws IOException {
+        code.rewind();
+        try (FileOutputStream fos = new FileOutputStream(outputPath.toFile(), false)) {
+            fos.getChannel().write(code);
+        }
+    }
+
+    private void writeToMemory(ByteBuffer code) {
+        if (memory != null) {
+            code.rewind();
+            code.position(4); // First 4 bytes is start line
+            byte[] data = new byte[code.remaining()];
+            code.get(data);
+            memory.clear();
+            memory.write(0, NumberUtils.nativeBytesToBytes(data));
+        } else {
+            notifyWarning("Memory is not available.");
         }
     }
 }

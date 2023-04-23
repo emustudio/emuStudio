@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.device.ssem.display;
 
-import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 
 import javax.swing.*;
@@ -44,15 +43,17 @@ class DisplayGui extends JDialog {
     }
 
     private void initListener() {
-        memory.addMemoryListener(new Memory.MemoryListener() {
+        memory.addMemoryListener(new MemoryContext.MemoryListener() {
             @Override
-            public void memoryChanged(int bytePosition) {
-                if (bytePosition == -1) {
+            public void memoryContentChanged(int fromLocation, int toLocation) {
+                if (fromLocation == -1) {
                     displayPanel.reset(memory);
                 } else {
-                    int row = bytePosition / 4;
-                    int rowBytePosition = row * 4;
-                    displayPanel.writeRow(memory.read(rowBytePosition, 4), row);
+                    for (int location = fromLocation; location <= toLocation; location++) {
+                        int row = location / 4;
+                        int rowBytePosition = row * 4;
+                        displayPanel.writeRow(memory.read(rowBytePosition, 4), row);
+                    }
                 }
             }
 

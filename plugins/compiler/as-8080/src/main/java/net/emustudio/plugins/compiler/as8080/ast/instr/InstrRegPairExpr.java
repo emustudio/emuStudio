@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast.instr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -26,15 +27,15 @@ public class InstrRegPairExpr extends Node {
     public final int opcode;
     public final int regPair;
 
-    public InstrRegPairExpr(int line, int column, int opcode, int regPair) {
-        super(line, column);
+    public InstrRegPairExpr(SourceCodePosition position, int opcode, int regPair) {
+        super(position);
         this.opcode = opcode;
         this.regPair = regPair;
         // child is expr
     }
 
-    public InstrRegPairExpr(Token opcode, Token regPair) {
-        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), regPair.getType());
+    public InstrRegPairExpr(String fileName, Token opcode, Token regPair) {
+        this(new SourceCodePosition(opcode.getLine(), opcode.getCharPositionInLine(), fileName), opcode.getType(), regPair.getType());
     }
 
     public byte eval() {
@@ -54,7 +55,7 @@ public class InstrRegPairExpr extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new InstrRegPairExpr(line, column, opcode, regPair);
+        return new InstrRegPairExpr(position, opcode, regPair);
     }
 
     @Override

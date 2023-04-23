@@ -18,18 +18,20 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
-public class CompileException extends RuntimeException {
-    final int line;
-    final int column;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 
-    public CompileException(int line, int column, String message) {
+import java.util.Objects;
+
+public class CompileException extends RuntimeException {
+    public final SourceCodePosition position;
+
+    public CompileException(SourceCodePosition position, String message) {
         super(message);
-        this.line = line;
-        this.column = column;
+        this.position = Objects.requireNonNull(position);
     }
 
     @Override
     public String toString() {
-        return "line " + line + ":" + column + " " + super.getMessage();
+        return position + " " + super.getMessage();
     }
 }

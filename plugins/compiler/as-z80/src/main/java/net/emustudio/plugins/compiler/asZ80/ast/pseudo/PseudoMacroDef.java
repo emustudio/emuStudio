@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.pseudo;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -27,15 +28,15 @@ import java.util.Objects;
 public class PseudoMacroDef extends Node {
     public final String id;
 
-    public PseudoMacroDef(int line, int column, String id) {
-        super(line, column);
+    public PseudoMacroDef(SourceCodePosition position, String id) {
+        super(position);
         this.id = Objects.requireNonNull(id);
         // parameters are the first children
         // statements are followed
     }
 
-    public PseudoMacroDef(Token id) {
-        this(id.getLine(), id.getCharPositionInLine(), id.getText());
+    public PseudoMacroDef(String fileName, Token id) {
+        this(positionFromToken(fileName, id), id.getText());
     }
 
     @Override
@@ -58,6 +59,6 @@ public class PseudoMacroDef extends Node {
     }
 
     public PseudoMacroDef mkCopy() {
-        return new PseudoMacroDef(line, column, id);
+        return new PseudoMacroDef(position, id);
     }
 }

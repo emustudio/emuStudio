@@ -26,12 +26,17 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * Call flow.
+ * <p>
+ * Directed set of graphs, possibly with cycles.
+ */
 @ThreadSafe
 class CallFlow {
     private final static Logger LOGGER = LoggerFactory.getLogger(CallFlow.class);
 
     private final Disassembler disassembler;
-    private final NavigableMap<Integer, Integer> flowGraph = new TreeMap<>();
+    private final NavigableMap<Integer, Integer> flowGraph = new TreeMap<>(); // location -> next location
     private int longestInstructionSize = 1;
 
     CallFlow(Disassembler disassembler) {

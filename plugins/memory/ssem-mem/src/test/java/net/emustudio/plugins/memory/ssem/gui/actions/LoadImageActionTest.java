@@ -19,6 +19,7 @@
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.plugins.memory.ssem.MemoryContextImpl;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,7 +43,7 @@ public class LoadImageActionTest {
     public void testNoFileIsChosenWorks() {
         Runnable repaint = createMock(Runnable.class);
         replay(repaint);
-        new LoadImageAction(mockApi(), new MemoryContextImpl(), repaint).actionPerformed(null);
+        new LoadImageAction(mockApi(), new MemoryContextImpl(new Annotations()), repaint).actionPerformed(null);
         verify(repaint);
     }
 

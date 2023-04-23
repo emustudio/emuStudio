@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.pseudo;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 
@@ -26,8 +27,8 @@ import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
  */
 public class PseudoMacroArgument extends Node {
 
-    public PseudoMacroArgument(int line, int column) {
-        super(line, column);
+    public PseudoMacroArgument(SourceCodePosition position) {
+        super(position);
         // the only child is expr
     }
 
@@ -38,6 +39,6 @@ public class PseudoMacroArgument extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new PseudoMacroArgument(line, column);
+        return new PseudoMacroArgument(position);
     }
 }

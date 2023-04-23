@@ -21,6 +21,7 @@ package net.emustudio.application.gui.editor;
 import net.emustudio.application.Constants;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.FileExtension;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 import org.fife.io.UnicodeWriter;
@@ -144,14 +145,14 @@ public class REditor implements Editor {
     }
 
     @Override
-    public void setPosition(int line, int column) {
-        if (line >= 0) {
+    public void setPosition(SourceCodePosition position) {
+        if (position.line >= 0) {
             try {
-                int position = textPane.getLineStartOffset(Math.max(0, line - 1));
-                if (column >= 0) {
-                    position += column;
+                int offset = textPane.getLineStartOffset(Math.max(0, position.line - 1));
+                if (position.column >= 0) {
+                    offset += position.column;
                 }
-                textPane.setCaretPosition(position);
+                textPane.setCaretPosition(offset);
             } catch (BadLocationException ignored) {
             }
         }

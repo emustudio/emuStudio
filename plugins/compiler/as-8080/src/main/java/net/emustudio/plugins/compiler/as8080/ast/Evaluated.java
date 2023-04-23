@@ -18,19 +18,20 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 
 public class Evaluated extends Node {
     public final int value;
 
-    public Evaluated(int line, int column, int value) {
-        super(line, column);
+    public Evaluated(SourceCodePosition position, int value) {
+        super(position);
         this.value = value;
     }
 
     @Override
     protected Node mkCopy() {
-        return new Evaluated(line, column, value);
+        return new Evaluated(position, value);
     }
 
     @Override

@@ -23,13 +23,21 @@ import net.emustudio.plugins.compiler.as8080.As8080ParserBaseVisitor;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.pseudo.PseudoLabel;
 
+import java.util.Objects;
+
 public class CreateLineVisitor extends As8080ParserBaseVisitor<Node> {
+    private final String sourceFileName;
+
+    public CreateLineVisitor(String sourceFileName) {
+        this.sourceFileName = Objects.requireNonNull(sourceFileName);
+    }
+
 
     @Override
     public Node visitRLine(As8080Parser.RLineContext ctx) {
         Node label = null;
         if (ctx.label != null) {
-            label = new PseudoLabel(ctx.label);
+            label = new PseudoLabel(sourceFileName, ctx.label);
         }
         Node statement = null;
         if (ctx.statement != null) {
@@ -47,12 +55,26 @@ public class CreateLineVisitor extends As8080ParserBaseVisitor<Node> {
     @Override
     public Node visitRStatement(As8080Parser.RStatementContext ctx) {
         if (ctx.instr != null) {
-            return CreateVisitors.instr.visit(ctx.instr);
+            return instrVisitor().visit(ctx.instr);
         } else if (ctx.data != null) {
-            return CreateVisitors.data.visit(ctx.data);
+            return dataVisitor().visit(ctx.data);
         } else if (ctx.pseudo != null) {
-            return CreateVisitors.pseudo.visit(ctx.pseudo);
+            return pseudoVisitor().visit(ctx.pseudo);
         }
         throw new IllegalStateException("No statement defined!");
+    }
+
+    private CreateInstrVisitor instrVisitor() {
+        return CreateVisitors.instr(sourceFileName);
+    }
+
+    ;
+
+    private CreateDataVisitor dataVisitor() {
+        return CreateVisitors.data(sourceFileName);
+    }
+
+    private CreatePseudoVisitor pseudoVisitor() {
+        return CreateVisitors.pseudo(sourceFileName);
     }
 }

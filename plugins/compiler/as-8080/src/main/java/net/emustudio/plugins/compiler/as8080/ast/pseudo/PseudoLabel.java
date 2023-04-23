@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
@@ -32,18 +33,18 @@ import static net.emustudio.plugins.compiler.as8080.ParsingUtils.parseLabel;
 public class PseudoLabel extends Node {
     public final String label;
 
-    public PseudoLabel(int line, int column, String label) {
-        super(line, column);
+    public PseudoLabel(SourceCodePosition position, String label) {
+        super(position);
         this.label = Objects.requireNonNull(label);
     }
 
-    public PseudoLabel(Token label) {
-        this(label.getLine(), label.getCharPositionInLine(), parseLabel(label));
+    public PseudoLabel(String fileName, Token label) {
+        this(new SourceCodePosition(label.getLine(), label.getCharPositionInLine(), fileName), parseLabel(label));
     }
 
     @Override
     public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return currentAddress.map(addr -> new Evaluated(line, column, addr));
+        return currentAddress.map(addr -> new Evaluated(position, addr));
     }
 
     @Override
@@ -58,7 +59,7 @@ public class PseudoLabel extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new PseudoLabel(line, column, label);
+        return new PseudoLabel(position, label);
     }
 
     @Override

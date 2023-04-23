@@ -51,13 +51,14 @@ import java.util.ResourceBundle;
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
-    private final MemoryContextImpl context = new MemoryContextImpl();
+    private final MemoryContextImpl context;
     private final boolean guiNotSupported;
     private MemoryGui gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
+        this.context = new MemoryContextImpl(getAnnotations());
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
             ContextPool contextPool = applicationApi.getContextPool();
@@ -93,11 +94,6 @@ public class MemoryImpl extends AbstractMemory {
             this.gui = null;
         }
         context.destroy();
-    }
-
-    @Override
-    public int getSize() {
-        return context.getSize();
     }
 
     @Override
@@ -235,5 +231,10 @@ public class MemoryImpl extends AbstractMemory {
         } catch (MissingResourceException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public int getSize() {
+        return context.getSize();
     }
 }

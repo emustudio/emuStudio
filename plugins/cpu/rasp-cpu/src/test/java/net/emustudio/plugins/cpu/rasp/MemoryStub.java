@@ -19,6 +19,7 @@
 package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
@@ -28,6 +29,10 @@ public class MemoryStub extends AbstractMemoryContext<Integer> implements RaspMe
     private final Integer[] memory = new Integer[1000];
     private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
+
+    protected MemoryStub(MemoryContextAnnotations annotations) {
+        super(annotations);
+    }
 
     @Override
     public Integer read(int address) {
@@ -50,7 +55,7 @@ public class MemoryStub extends AbstractMemoryContext<Integer> implements RaspMe
     }
 
     @Override
-    public Class<Integer> getDataType() {
+    public Class<Integer> getCellTypeClass() {
         return Integer.class;
     }
 

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.ssem.ast.Instruction;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
 import net.emustudio.plugins.compiler.ssem.ast.ProgramParser;
@@ -26,10 +27,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -48,10 +46,10 @@ public class Utils {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SSEMParser parser = new SSEMParser(tokens);
         parser.removeErrorListeners();
-        parser.addErrorListener(new ParserErrorListener());
+        parser.addErrorListener(new ParserErrorListener(""));
 
         ParseTree tree = parser.start();
-        ProgramParser programParser = new ProgramParser();
+        ProgramParser programParser = new ProgramParser("");
         programParser.visit(tree);
         return programParser.getProgram();
     }
@@ -97,7 +95,7 @@ public class Utils {
         assertEquals(instructions.length, pinstr.size());
         for (ParsedInstruction instruction : instructions) {
             assertEquals(
-                    new Instruction(instruction.opcode, instruction.operand, Position.unknown(), Position.unknown()),
+                    new Instruction(instruction.opcode, instruction.operand, new SourceCodePosition(0, 0, ""), Optional.empty()),
                     pinstr.get(instruction.line)
             );
         }

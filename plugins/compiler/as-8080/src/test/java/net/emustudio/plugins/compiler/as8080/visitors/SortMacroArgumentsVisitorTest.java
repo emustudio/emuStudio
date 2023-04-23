@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.visitors;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
@@ -33,132 +34,133 @@ import static net.emustudio.plugins.compiler.as8080.Utils.assertTrees;
 import static org.junit.Assert.assertTrue;
 
 public class SortMacroArgumentsVisitorTest {
+    private final static SourceCodePosition POSITION = new SourceCodePosition(0, 0, "");
 
     @Test
     public void testMacroArgumentsAreConnectedWithIds() {
-        Node program = new Program()
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 1)))
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 2)))
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 3)))
-                        .addChild(new PseudoMacroDef(0, 0, "x")
-                                .addChild(new PseudoMacroParameter(0, 0)
-                                        .addChild(new ExprId(0, 0, "q")))
-                                .addChild(new PseudoMacroParameter(0, 0)
-                                        .addChild(new ExprId(0, 0, "r")))
-                                .addChild(new PseudoMacroParameter(0, 0)
-                                        .addChild(new ExprId(0, 0, "t")))
-                                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                                        .addChild(new ExprId(0, 0, "q")))
-                                .addChild(new PseudoEqu(0, 0, "uu")
-                                        .addChild(new ExprInfix(0, 0, OP_ADD)
-                                                .addChild(new ExprId(0, 0, "r"))
-                                                .addChild(new ExprId(0, 0, "t"))))));
+        Node program = new Program("")
+                .addChild(new PseudoMacroCall(POSITION, "x")
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 1)))
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 2)))
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 3)))
+                        .addChild(new PseudoMacroDef(POSITION, "x")
+                                .addChild(new PseudoMacroParameter(POSITION)
+                                        .addChild(new ExprId(POSITION, "q")))
+                                .addChild(new PseudoMacroParameter(POSITION)
+                                        .addChild(new ExprId(POSITION, "r")))
+                                .addChild(new PseudoMacroParameter(POSITION)
+                                        .addChild(new ExprId(POSITION, "t")))
+                                .addChild(new InstrRegExpr(POSITION, OPCODE_MVI, REG_A)
+                                        .addChild(new ExprId(POSITION, "q")))
+                                .addChild(new PseudoEqu(POSITION, "uu")
+                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                                .addChild(new ExprId(POSITION, "r"))
+                                                .addChild(new ExprId(POSITION, "t"))))));
 
         SortMacroArgumentsVisitor visitor = new SortMacroArgumentsVisitor();
         visitor.visit(program);
 
-        assertTrees(new Program()
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprId(0, 0, "q"))
-                                        .addChild(new ExprNumber(0, 0, 1)))
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprId(0, 0, "r"))
-                                        .addChild(new ExprNumber(0, 0, 2)))
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprId(0, 0, "t"))
-                                        .addChild(new ExprNumber(0, 0, 3)))
-                                .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, REG_A)
-                                        .addChild(new ExprId(0, 0, "q")))
-                                .addChild(new PseudoEqu(0, 0, "uu")
-                                        .addChild(new ExprInfix(0, 0, OP_ADD)
-                                                .addChild(new ExprId(0, 0, "r"))
-                                                .addChild(new ExprId(0, 0, "t"))))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprId(POSITION, "q"))
+                                        .addChild(new ExprNumber(POSITION, 1)))
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprId(POSITION, "r"))
+                                        .addChild(new ExprNumber(POSITION, 2)))
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprId(POSITION, "t"))
+                                        .addChild(new ExprNumber(POSITION, 3)))
+                                .addChild(new InstrRegExpr(POSITION, OPCODE_MVI, REG_A)
+                                        .addChild(new ExprId(POSITION, "q")))
+                                .addChild(new PseudoEqu(POSITION, "uu")
+                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                                .addChild(new ExprId(POSITION, "r"))
+                                                .addChild(new ExprId(POSITION, "t"))))),
                 program
         );
     }
 
     @Test
     public void testMultipleMacroCalls() {
-        Node program = new Program()
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 1)))
-                        .addChild(new PseudoMacroDef(0, 0, "x")
-                                .addChild(new PseudoMacroParameter(0, 0)
-                                        .addChild(new ExprId(0, 0, "q")))))
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 2)))
-                        .addChild(new PseudoMacroDef(0, 0, "x")
-                                .addChild(new PseudoMacroParameter(0, 0)
-                                        .addChild(new ExprId(0, 0, "q")))));
+        Node program = new Program("")
+                .addChild(new PseudoMacroCall(POSITION, "x")
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 1)))
+                        .addChild(new PseudoMacroDef(POSITION, "x")
+                                .addChild(new PseudoMacroParameter(POSITION)
+                                        .addChild(new ExprId(POSITION, "q")))))
+                .addChild(new PseudoMacroCall(POSITION, "x")
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 2)))
+                        .addChild(new PseudoMacroDef(POSITION, "x")
+                                .addChild(new PseudoMacroParameter(POSITION)
+                                        .addChild(new ExprId(POSITION, "q")))));
 
         SortMacroArgumentsVisitor visitor = new SortMacroArgumentsVisitor();
         visitor.visit(program);
 
-        assertTrees(new Program()
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprId(0, 0, "q"))
-                                        .addChild(new ExprNumber(0, 0, 1))))
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprId(0, 0, "q"))
-                                        .addChild(new ExprNumber(0, 0, 2)))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprId(POSITION, "q"))
+                                        .addChild(new ExprNumber(POSITION, 1))))
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprId(POSITION, "q"))
+                                        .addChild(new ExprNumber(POSITION, 2)))),
                 program
         );
     }
 
     @Test
     public void testNestedMacroCallWithSameNamedArgs() {
-        Node program = new Program()
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 1)))
-                        .addChild(new PseudoMacroDef(0, 0, "x")
-                                .addChild(new PseudoMacroParameter(0, 0)
-                                        .addChild(new ExprId(0, 0, "q")))
-                                .addChild(new PseudoMacroCall(0, 0, "y")
-                                        .addChild(new PseudoMacroArgument(0, 0)
-                                                .addChild(new ExprNumber(0, 0, 3)))
-                                        .addChild(new PseudoMacroDef(0, 0, "y")
-                                                .addChild(new PseudoMacroParameter(0, 0)
-                                                        .addChild(new ExprId(0, 0, "q")))))));
+        Node program = new Program("")
+                .addChild(new PseudoMacroCall(POSITION, "x")
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 1)))
+                        .addChild(new PseudoMacroDef(POSITION, "x")
+                                .addChild(new PseudoMacroParameter(POSITION)
+                                        .addChild(new ExprId(POSITION, "q")))
+                                .addChild(new PseudoMacroCall(POSITION, "y")
+                                        .addChild(new PseudoMacroArgument(POSITION)
+                                                .addChild(new ExprNumber(POSITION, 3)))
+                                        .addChild(new PseudoMacroDef(POSITION, "y")
+                                                .addChild(new PseudoMacroParameter(POSITION)
+                                                        .addChild(new ExprId(POSITION, "q")))))));
 
         SortMacroArgumentsVisitor visitor = new SortMacroArgumentsVisitor();
         visitor.visit(program);
 
         assertTrees(
-                new Program()
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprId(0, 0, "q"))
-                                        .addChild(new ExprNumber(0, 0, 1)))
-                                .addChild(new PseudoMacroCall(0, 0, "y")
-                                        .addChild(new PseudoMacroArgument(0, 0)
-                                                .addChild(new ExprId(0, 0, "q"))
-                                                .addChild(new ExprNumber(0, 0, 3))))),
+                new Program("")
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprId(POSITION, "q"))
+                                        .addChild(new ExprNumber(POSITION, 1)))
+                                .addChild(new PseudoMacroCall(POSITION, "y")
+                                        .addChild(new PseudoMacroArgument(POSITION)
+                                                .addChild(new ExprId(POSITION, "q"))
+                                                .addChild(new ExprNumber(POSITION, 3))))),
                 program
         );
     }
 
     @Test
     public void testMoreMacroArgumentsThanParameters() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 1)))
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 2)))
-                        .addChild(new PseudoMacroDef(0, 0, "x")
-                                .addChild(new PseudoMacroParameter(0, 0)
-                                        .addChild(new ExprId(0, 0, "q")))));
+                .addChild(new PseudoMacroCall(POSITION, "x")
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 1)))
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 2)))
+                        .addChild(new PseudoMacroDef(POSITION, "x")
+                                .addChild(new PseudoMacroParameter(POSITION)
+                                        .addChild(new ExprId(POSITION, "q")))));
 
         SortMacroArgumentsVisitor visitor = new SortMacroArgumentsVisitor();
         visitor.visit(program);
@@ -168,16 +170,16 @@ public class SortMacroArgumentsVisitorTest {
 
     @Test
     public void testMoreMacroParametersThanArguments() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                        .addChild(new PseudoMacroArgument(0, 0)
-                                .addChild(new ExprNumber(0, 0, 1)))
-                        .addChild(new PseudoMacroDef(0, 0, "x")
-                                .addChild(new PseudoMacroParameter(0, 0)
-                                        .addChild(new ExprId(0, 0, "q")))
-                                .addChild(new PseudoMacroParameter(0, 0)
-                                        .addChild(new ExprId(0, 0, "r")))));
+                .addChild(new PseudoMacroCall(POSITION, "x")
+                        .addChild(new PseudoMacroArgument(POSITION)
+                                .addChild(new ExprNumber(POSITION, 1)))
+                        .addChild(new PseudoMacroDef(POSITION, "x")
+                                .addChild(new PseudoMacroParameter(POSITION)
+                                        .addChild(new ExprId(POSITION, "q")))
+                                .addChild(new PseudoMacroParameter(POSITION)
+                                        .addChild(new ExprId(POSITION, "r")))));
 
         SortMacroArgumentsVisitor visitor = new SortMacroArgumentsVisitor();
         visitor.visit(program);

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.instr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -65,8 +66,8 @@ public class InstrED extends Node {
     public final int y;
     public final int z;
 
-    public InstrED(int line, int column, int opcode, int y, int z) {
-        super(line, column);
+    public InstrED(SourceCodePosition position, int opcode, int y, int z) {
+        super(position);
         this.opcode = opcode;
         this.x = xmap.get(opcode);
         this.y = y;
@@ -75,12 +76,12 @@ public class InstrED extends Node {
         // possibly child is expr
     }
 
-    public InstrED(Token opcode, int y, int z) {
-        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), y, z);
+    public InstrED(String fileName, Token opcode, int y, int z) {
+        this(positionFromToken(fileName, opcode), opcode.getType(), y, z);
     }
 
-    public InstrED(Token opcode, int p, int q, int z) {
-        this(opcode, (p << 1) | q, z);
+    public InstrED(String fileName, Token opcode, int p, int q, int z) {
+        this(fileName, opcode, (p << 1) | q, z);
     }
 
     public byte[] eval() {
@@ -97,7 +98,7 @@ public class InstrED extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new InstrED(line, column, opcode, y, z);
+        return new InstrED(position, opcode, y, z);
     }
 
     @Override

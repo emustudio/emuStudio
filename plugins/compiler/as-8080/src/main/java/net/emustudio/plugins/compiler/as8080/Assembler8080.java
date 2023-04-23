@@ -43,9 +43,11 @@ import org.slf4j.LoggerFactory;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
-
-import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
@@ -71,9 +73,10 @@ public class Assembler8080 extends AbstractCompiler {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
                 memory = pool.getMemoryContext(pluginID, MemoryContext.class);
-                if (memory.getDataType() != Byte.class) {
+                Class<?> cellTypeClass = memory.getCellTypeClass();
+                if (cellTypeClass != Byte.class) {
                     throw new InvalidContextException(
-                            "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                            "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
                     );
                 }
             } catch (InvalidContextException | ContextNotFoundException e) {
@@ -103,21 +106,21 @@ public class Assembler8080 extends AbstractCompiler {
     }
 
     @Override
-    public boolean compile(String inputFileName, String outputFileName) {
+    public void compile(Path inputPath, Optional<Path> outputPath) {
         notifyCompileStart();
         notifyInfo(getTitle() + ", version " + getVersion());
 
-        try (Reader reader = new FileReader(inputFileName)) {
+        Path finalOutputPath = outputPath.orElse(convertInputToOutputPath(inputPath, ".hex"));
+        try (Reader reader = new FileReader(inputPath.toFile())) {
             org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
-            lexer.addErrorListener(new ParserErrorListener());
+            lexer.addErrorListener(new ParserErrorListener(inputPath.toString()));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             As8080Parser parser = createParser(tokens);
             parser.removeErrorListeners();
-            parser.addErrorListener(new ParserErrorListener());
+            parser.addErrorListener(new ParserErrorListener(inputPath.toString()));
 
-            Program program = new Program();
-            program.setFileName(inputFileName);
+            Program program = new Program(inputPath.toString());
             new CreateProgramVisitor(program).visit(parser.rStart());
 
             IntelHEX hex = new IntelHEX();
@@ -139,13 +142,13 @@ public class Assembler8080 extends AbstractCompiler {
             }
 
             if (program.env().hasNoErrors()) {
-                hex.generate(outputFileName);
+                hex.generate(finalOutputPath);
                 int programLocation = hex.findProgramLocation();
                 applicationApi.setProgramLocation(programLocation);
 
                 notifyInfo(String.format(
                         "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                        outputFileName, RadixUtils.formatWordHexString(programLocation)
+                        finalOutputPath, RadixUtils.formatWordHexString(programLocation)
                 ));
 
                 if (memory != null) {
@@ -154,28 +157,18 @@ public class Assembler8080 extends AbstractCompiler {
                 } else {
                     notifyWarning("Memory is not available.");
                 }
-                return true;
             } else {
                 for (CompileError error : program.env().getErrors()) {
-                    notifyError(error.line, error.column, error.msg);
+                    notifyError(error.position, error.msg);
                 }
-                return false;
             }
         } catch (CompileException e) {
-            notifyError(e.line, e.column, e.getMessage());
-            return false;
+            notifyError(e.position, e.getMessage());
         } catch (IOException e) {
             notifyError("Compilation error: " + e);
-            return false;
         } finally {
             notifyCompileFinish();
         }
-    }
-
-    @Override
-    public boolean compile(String inputFileName) {
-        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".hex";
-        return compile(inputFileName, outputFileName);
     }
 
     @Override

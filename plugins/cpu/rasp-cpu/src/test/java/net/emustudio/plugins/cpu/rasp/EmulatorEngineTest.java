@@ -19,6 +19,7 @@
 package net.emustudio.plugins.cpu.rasp;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.plugins.cpu.rasp.api.RaspCpuContext;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.memory.rasp.api.RaspLabel;
@@ -74,7 +75,7 @@ public class EmulatorEngineTest {
         expect(context.getInputTape()).andReturn(inputTape).anyTimes();
         replay(context);
 
-        MemoryStub memory = new MemoryStub();
+        MemoryStub memory = new MemoryStub(new Annotations());
         memory.setLabels(labels);
         int address = 0;
         for (int item : memoryContent) {

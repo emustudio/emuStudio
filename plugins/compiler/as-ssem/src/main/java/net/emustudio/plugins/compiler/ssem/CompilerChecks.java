@@ -18,51 +18,50 @@
  */
 package net.emustudio.plugins.compiler.ssem;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import org.antlr.v4.runtime.Token;
 
 import java.util.function.Function;
 
 public class CompilerChecks {
 
-    public static void checkStartLineDefined(boolean defined, Position pos, int startLine) {
+    public static void checkStartLineDefined(boolean defined, SourceCodePosition position, int startLine) {
         if (defined) {
-            throw new CompileException(pos.line, pos.column, "Start line is already defined (at line " + startLine + ")!");
+            throw new CompileException(position, "Start line is already defined (at line " + startLine + ")!");
         }
     }
 
-    public static void checkLineOutOfBounds(Position pos, int line) {
+    public static void checkLineOutOfBounds(SourceCodePosition position, int line) {
         if (line < 0 || line > 31) {
-            throw new CompileException(pos.line, pos.column, "Line number is out of bounds <0;31>: " + line);
+            throw new CompileException(position, "Line number is out of bounds <0;31>: " + line);
         }
     }
 
-    public static void checkDuplicateLineDefinition(boolean duplicate, Position pos, int line) {
+    public static void checkDuplicateLineDefinition(boolean duplicate, SourceCodePosition position, int line) {
         if (duplicate) {
-            throw new CompileException(pos.line, pos.column, "Duplicate line definition: " + line);
+            throw new CompileException(position, "Duplicate line definition: " + line);
         }
     }
 
-    public static void checkUnknownInstruction(boolean unknown, Position pos) {
+    public static void checkUnknownInstruction(boolean unknown, SourceCodePosition position) {
         if (unknown) {
-            throw new CompileException(pos.line, pos.column, "Unrecognized instruction");
+            throw new CompileException(position, "Unrecognized instruction");
         }
     }
 
-    public static void checkOperandOutOfBounds(Position pos, int tokenType, long operand) {
+    public static void checkOperandOutOfBounds(SourceCodePosition position, int tokenType, long operand) {
         if (tokenType != SSEMLexer.BNUM && tokenType != SSEMLexer.NUM && (operand < 0 || operand > 31)) {
             throw new CompileException(
-                    pos.line, pos.column, "Operand must be between <0, 31>; it was " + operand
+                    position, "Operand must be between <0, 31>; it was " + operand
             );
         }
     }
 
-    public static <T extends Number> T checkedParseNumber(Token token, Function<Token, T> parser) {
+    public static <T extends Number> T checkedParseNumber(String fileName, Token token, Function<Token, T> parser) {
         try {
             return parser.apply(token);
         } catch (NumberFormatException e) {
-            throw new CompileException(
-                    token.getLine(), token.getCharPositionInLine(), "Could not parse number: " + token.getText()
-            );
+            throw new CompileException(Position.of(fileName, token), "Could not parse number: " + token.getText());
         }
     }
 }

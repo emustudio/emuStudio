@@ -18,24 +18,25 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
+import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public abstract class Node {
-    public final int line;
-    public final int column;
+    public final SourceCodePosition position;
     protected final List<Node> children = new ArrayList<>();
     protected Node parent;
     private int address;
     private Optional<Integer> maxValue = Optional.empty();
     private Optional<Integer> sizeBytes = Optional.empty();
 
-    public Node(int line, int column) {
-        this.line = line;
-        this.column = column;
+    public Node(SourceCodePosition position) {
+        this.position = Objects.requireNonNull(position);
     }
 
     public void addChildFirst(Node node) {
@@ -186,5 +187,9 @@ public abstract class Node {
         this.sizeBytes = Optional.of(bytes);
         this.maxValue = Optional.of(value);
         return this;
+    }
+
+    public static SourceCodePosition positionFromToken(String fileName, Token token) {
+        return new SourceCodePosition(token.getLine(), token.getCharPositionInLine(), fileName);
     }
 }

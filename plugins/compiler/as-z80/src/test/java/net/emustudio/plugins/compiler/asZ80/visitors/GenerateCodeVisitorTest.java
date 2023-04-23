@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.runtime.io.IntelHEX;
 import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.Program;
@@ -35,30 +36,32 @@ import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 import static org.junit.Assert.assertEquals;
 
 public class GenerateCodeVisitorTest {
+    private final static SourceCodePosition POSITION = new SourceCodePosition(0, 0, "");
+
 
     @Test
     public void testCodeGeneration() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new DataDB(0, 0)
-                        .addChild(new Evaluated(0, 0, 255))
-                        .addChild(new Instr(0, 0, OPCODE_RST, 3, 0, 7)
-                                .addChild(new Evaluated(0, 0, 4))))
-                .addChild(new DataDW(0, 0)
-                        .addChild(new Evaluated(0, 0, 1)))
-                .addChild(new DataDS(0, 0)
-                        .addChild(new Evaluated(0, 0, 5)))
-                .addChild(new PseudoMacroCall(0, 0, "x")
-                        .addChild(new Instr(0, 0, OPCODE_LD, 0, 0, 1)
+                .addChild(new DataDB(POSITION)
+                        .addChild(new Evaluated(POSITION, 255))
+                        .addChild(new Instr(POSITION, OPCODE_RST, 3, 0, 7)
+                                .addChild(new Evaluated(POSITION, 4))))
+                .addChild(new DataDW(POSITION)
+                        .addChild(new Evaluated(POSITION, 1)))
+                .addChild(new DataDS(POSITION)
+                        .addChild(new Evaluated(POSITION, 5)))
+                .addChild(new PseudoMacroCall(POSITION, "x")
+                        .addChild(new Instr(POSITION, OPCODE_LD, 0, 0, 1)
                                 .setSizeBytes(3)
-                                .addChild(new Evaluated(0, 0, 0xFEAB).setSizeBytes(2)))
-                        .addChild(new PseudoMacroCall(0, 0, "y")
-                                .addChild(new Instr(0, 0, OPCODE_LD, 0, 2, 1)
+                                .addChild(new Evaluated(POSITION, 0xFEAB).setSizeBytes(2)))
+                        .addChild(new PseudoMacroCall(POSITION, "y")
+                                .addChild(new Instr(POSITION, OPCODE_LD, 0, 2, 1)
                                         .setSizeBytes(3)
-                                        .addChild(new Evaluated(0, 0, 1).setSizeBytes(2))))
-                        .addChild(new Instr(0, 0, OPCODE_LD, 0, 4, 1)
+                                        .addChild(new Evaluated(POSITION, 1).setSizeBytes(2))))
+                        .addChild(new Instr(POSITION, OPCODE_LD, 0, 4, 1)
                                 .setSizeBytes(3)
-                                .addChild(new Evaluated(0, 0, 0x1234).setSizeBytes(2))));
+                                .addChild(new Evaluated(POSITION, 0x1234).setSizeBytes(2))));
 
         IntelHEX hex = new IntelHEX();
         GenerateCodeVisitor visitor = new GenerateCodeVisitor(hex);
@@ -87,16 +90,16 @@ public class GenerateCodeVisitorTest {
 
     @Test
     public void testPseudoOrg() {
-        Program program = new Program();
+        Program program = new Program("");
         program
-                .addChild(new PseudoOrg(0, 0)
-                        .addChild(new Evaluated(0, 0, 5)))
-                .addChild(new Instr(0, 0, OPCODE_CALL, 3, 0, 4)
+                .addChild(new PseudoOrg(POSITION)
+                        .addChild(new Evaluated(POSITION, 5)))
+                .addChild(new Instr(POSITION, OPCODE_CALL, 3, 0, 4)
                         .setSizeBytes(3)
-                        .addChild(new Evaluated(0, 0, 0x400).setSizeBytes(2)))
-                .addChild(new PseudoOrg(0, 0)
-                        .addChild(new Evaluated(0, 0, 0)))
-                .addChild(new Instr(0, 0, OPCODE_EX, 3, 5, 3));
+                        .addChild(new Evaluated(POSITION, 0x400).setSizeBytes(2)))
+                .addChild(new PseudoOrg(POSITION)
+                        .addChild(new Evaluated(POSITION, 0)))
+                .addChild(new Instr(POSITION, OPCODE_EX, 3, 5, 3));
 
         IntelHEX hex = new IntelHEX();
         GenerateCodeVisitor visitor = new GenerateCodeVisitor(hex);

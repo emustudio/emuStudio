@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
@@ -45,6 +46,7 @@ public abstract class AbstractCompilerTest {
     public TemporaryFolder folder = new TemporaryFolder();
     protected AssemblerZ80 compiler;
     protected MemoryStub<Byte> memoryStub;
+    private int errorCount;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -59,6 +61,7 @@ public abstract class AbstractCompilerTest {
         expect(applicationApi.getContextPool()).andReturn(contextPool);
         replay(applicationApi);
 
+        errorCount = 0;
         compiler = new AssemblerZ80(0L, applicationApi, PluginSettings.UNAVAILABLE);
         compiler.addCompilerListener(new CompilerListener() {
             @Override
@@ -69,6 +72,9 @@ public abstract class AbstractCompilerTest {
             public void onMessage(CompilerMessage message) {
                 if (message.getMessageType() != CompilerMessage.MessageType.TYPE_INFO) {
                     System.out.println(message);
+                }
+                if (message.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) {
+                    errorCount++;
                 }
             }
 
@@ -85,8 +91,9 @@ public abstract class AbstractCompilerTest {
             Files.write(sourceFile.toPath(), content.getBytes(), StandardOpenOption.WRITE);
 
             File outputFile = folder.newFile();
-            if (!compiler.compile(sourceFile.getAbsolutePath(), outputFile.getAbsolutePath())) {
-                throw new RuntimeException("Compilation failed");
+            compiler.compile(sourceFile.toPath(), Optional.of(outputFile.toPath()));
+            if (errorCount > 0) {
+                throw new RuntimeException("Compilation failed with " + errorCount + " errors");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

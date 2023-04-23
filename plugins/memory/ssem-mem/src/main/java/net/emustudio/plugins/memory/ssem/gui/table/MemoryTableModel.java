@@ -195,10 +195,12 @@ public class MemoryTableModel extends AbstractTableModel {
         return columnIndex >= 0 && columnIndex <= 34;
     }
 
-    public void dataChangedAt(int address) {
-        int row = address / 4;
-        for (int i = 0; i < COLUMN_COUNT; i++) {
-            fireTableCellUpdated(row, i);
+    public void dataChangedAt(int fromAddress, int toAddress) {
+        for (int address = fromAddress; address <= toAddress; address++) {
+            int row = address / 4;
+            for (int i = 0; i < COLUMN_COUNT; i++) {
+                fireTableCellUpdated(row, i);
+            }
         }
     }
 }

@@ -18,13 +18,14 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 
 public class PseudoOrg extends Node {
 
-    public PseudoOrg(int line, int column) {
-        super(line, column);
+    public PseudoOrg(SourceCodePosition position) {
+        super(position);
         // expr is the only child
     }
 
@@ -35,6 +36,6 @@ public class PseudoOrg extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new PseudoOrg(line, column);
+        return new PseudoOrg(position);
     }
 }

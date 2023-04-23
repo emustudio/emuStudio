@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.pseudo;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -27,14 +28,14 @@ import java.util.Objects;
 public class PseudoEqu extends Node {
     public final String id;
 
-    public PseudoEqu(int line, int column, String id) {
-        super(line, column);
+    public PseudoEqu(SourceCodePosition position, String id) {
+        super(position);
         this.id = Objects.requireNonNull(id);
         // expr is the only child
     }
 
-    public PseudoEqu(Token id) {
-        this(id.getLine(), id.getCharPositionInLine(), id.getText());
+    public PseudoEqu(String fileName, Token id) {
+        this(positionFromToken(fileName, id), id.getText());
     }
 
     @Override
@@ -49,7 +50,7 @@ public class PseudoEqu extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new PseudoEqu(line, column, id);
+        return new PseudoEqu(position, id);
     }
 
     @Override

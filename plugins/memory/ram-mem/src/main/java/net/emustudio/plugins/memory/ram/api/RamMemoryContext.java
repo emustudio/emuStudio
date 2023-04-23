@@ -24,6 +24,7 @@ import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 
 @ThreadSafe
@@ -31,7 +32,7 @@ import java.util.*;
 public interface RamMemoryContext extends MemoryContext<RamInstruction> {
 
     @Override
-    default Class<RamInstruction> getDataType() {
+    default Class<RamInstruction> getCellTypeClass() {
         return RamInstruction.class;
     }
 
@@ -43,13 +44,13 @@ public interface RamMemoryContext extends MemoryContext<RamInstruction> {
 
     RamMemory getSnapshot();
 
-    static void serialize(String filename, RamMemory memory) throws IOException {
+    static void serialize(Path filename, RamMemory memory) throws IOException {
         Map<Integer, String> labels = new HashMap<>();
         for (RamLabel label : memory.labels) {
             labels.put(label.getAddress(), label.getLabel());
         }
 
-        OutputStream file = new FileOutputStream(filename);
+        OutputStream file = new FileOutputStream(filename.toFile());
         OutputStream buffer = new BufferedOutputStream(file);
         try (ObjectOutput output = new ObjectOutputStream(buffer)) {
             output.writeObject(labels);

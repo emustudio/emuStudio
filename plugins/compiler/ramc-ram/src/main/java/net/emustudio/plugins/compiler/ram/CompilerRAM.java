@@ -38,9 +38,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.*;
-
-import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
 @PluginRoot(type = PLUGIN_TYPE.COMPILER, title = "RAM Machine Assembler")
 @SuppressWarnings("unused")
@@ -82,12 +84,13 @@ public class CompilerRAM extends AbstractCompiler {
     }
 
     @Override
-    public boolean compile(String inputFileName, String outputFileName) {
+    public void compile(Path inputPath, Optional<Path> outputPath) {
         try {
             this.notifyCompileStart();
             notifyInfo(getTitle() + ", version " + getVersion());
 
-            try (Reader reader = new FileReader(inputFileName)) {
+            Path finalOutputPath = outputPath.orElse(convertInputToOutputPath(inputPath, ".bram"));
+            try (Reader reader = new FileReader(inputPath.toFile())) {
                 org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
                 lexer.addErrorListener(new ParserErrorListener());
                 CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -100,9 +103,9 @@ public class CompilerRAM extends AbstractCompiler {
 
                 program.assignLabels();
                 program.check();
-                program.saveToFile(outputFileName);
+                program.saveToFile(finalOutputPath);
 
-                notifyInfo(String.format("Compile was successful.\n\tOutput: %s", outputFileName));
+                notifyInfo(String.format("Compile was successful.\n\tOutput: %s", finalOutputPath));
 
                 if (memory != null) {
                     memory.clear();
@@ -116,17 +119,9 @@ public class CompilerRAM extends AbstractCompiler {
         } catch (Exception e) {
             LOGGER.trace("Compilation failed", e);
             notifyError("Compilation failed: " + e.getMessage());
-            return false;
         } finally {
             notifyCompileFinish();
         }
-        return true;
-    }
-
-    @Override
-    public boolean compile(String inputFileName) {
-        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".bram";
-        return compile(inputFileName, outputFileName);
     }
 
     @Override

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.pseudo;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ParsingUtils;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
@@ -28,13 +29,13 @@ import java.util.Objects;
 public class PseudoInclude extends Node {
     public final String filename;
 
-    public PseudoInclude(int line, int column, String fileName) {
-        super(line, column);
+    public PseudoInclude(SourceCodePosition position, String fileName) {
+        super(position);
         this.filename = Objects.requireNonNull(fileName);
     }
 
-    public PseudoInclude(Token fileName) {
-        this(fileName.getLine(), fileName.getCharPositionInLine(), ParsingUtils.parseLitString(fileName));
+    public PseudoInclude(String srcFileName, Token fileName) {
+        this(positionFromToken(srcFileName, fileName), ParsingUtils.parseLitString(fileName));
     }
 
     @Override
@@ -49,7 +50,7 @@ public class PseudoInclude extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new PseudoInclude(line, column, filename);
+        return new PseudoInclude(position, filename);
     }
 
     @Override

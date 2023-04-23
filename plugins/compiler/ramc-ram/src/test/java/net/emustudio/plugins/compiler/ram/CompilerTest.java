@@ -219,7 +219,7 @@ public class CompilerTest extends AbstractCompilerTest {
         File sourceFile = folder.newFile("test-ram.ram");
         Files.write(sourceFile.toPath(), "HALT".getBytes(), StandardOpenOption.WRITE);
 
-        tmpCompiler.compile(sourceFile.getPath());
+        tmpCompiler.compile(sourceFile.toPath(), Optional.empty());
 
         assertTrue(sourceFile.getParentFile().toPath().resolve("test-ram.bram").toFile().exists());
     }

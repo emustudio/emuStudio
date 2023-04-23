@@ -23,6 +23,7 @@ import net.emustudio.plugins.compiler.rasp.exceptions.CompileException;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 
 import static net.emustudio.plugins.memory.rasp.gui.Disassembler.READ;
@@ -77,7 +78,7 @@ public class Program {
         }
     }
 
-    public void saveToFile(String filename, Map<Integer, Integer> compiled) throws IOException {
+    public void saveToFile(Path filename, Map<Integer, Integer> compiled) throws IOException {
         RaspMemoryContext.serialize(filename, getProgramLocation(compiled), new RaspMemoryContext.RaspMemory(
                 this.labels.values(), compiled, inputs
         ));

@@ -43,16 +43,17 @@ import java.util.ResourceBundle;
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
-    private final MemoryContextImpl memContext = new MemoryContextImpl();
+    private final MemoryContextImpl context;
     private final boolean guiNotSupported;
     private MemoryGui memoryGUI;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
+        this.context = new MemoryContextImpl(getAnnotations());
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
-            applicationApi.getContextPool().register(pluginID, memContext, MemoryContext.class);
+            applicationApi.getContextPool().register(pluginID, context, MemoryContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register SSEM memory context", e);
             applicationApi.getDialogs().showError(
@@ -81,15 +82,10 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     @Override
-    public int getSize() {
-        return MemoryContextImpl.NUMBER_OF_CELLS;
-    }
-
-    @Override
     public void showSettings(JFrame parent) {
         if (!guiNotSupported) {
             if (memoryGUI == null) {
-                memoryGUI = new MemoryGui(parent, memContext, applicationApi);
+                memoryGUI = new MemoryGui(parent, context, applicationApi);
             }
             memoryGUI.setVisible(true);
         }
@@ -106,5 +102,10 @@ public class MemoryImpl extends AbstractMemory {
         } catch (MissingResourceException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public int getSize() {
+        return context.getSize();
     }
 }

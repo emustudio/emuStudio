@@ -20,9 +20,9 @@ package net.emustudio.application.gui.actions.opencomputer;
 
 import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
-import net.emustudio.application.internal.Unchecked;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
+import net.emustudio.emulib.runtime.helpers.Unchecked;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
