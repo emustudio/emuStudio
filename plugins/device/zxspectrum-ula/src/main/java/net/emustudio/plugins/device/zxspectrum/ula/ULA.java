@@ -18,12 +18,14 @@
  */
 package net.emustudio.plugins.device.zxspectrum.ula;
 
-import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.Keyboard;
 
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -71,8 +73,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     public final byte[][] attributeMemory = new byte[SCREEN_WIDTH][ATTRIBUTE_HEIGHT];
     private final static int[] lineStartOffsets = computeLineStartOffsets();
 
-    private final MemoryContext<Byte> memory;
-    private final Context8080 cpu;
+    private final ZxSpectrumBus bus;
 
     private int borderColor;
     private boolean microphoneAndEar;
@@ -85,41 +86,41 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         return result;
     }
 
-    public ULA(MemoryContext<Byte> memory, Context8080 cpu) {
-        this.memory = Objects.requireNonNull(memory);
-        this.cpu = Objects.requireNonNull(cpu);
+    public ULA(ZxSpectrumBus bus) {
+        this.bus = Objects.requireNonNull(bus);
         Arrays.fill(keymap, (byte) 0xBF);
-    }
-
-    // little hack..
-    public Context8080 getCpu() {
-        return cpu;
     }
 
     public void readScreen() {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
             for (int y = 0; y < SCREEN_HEIGHT; y++) {
-                videoMemory[x][y] = memory.read(0x4000 + lineStartOffsets[y] + x);
+                videoMemory[x][y] = bus.readMemoryNotContended(0x4000 + lineStartOffsets[y] + x);
                 if (y < ATTRIBUTE_HEIGHT) {
                     int off = ((y >>> 3) << 8) | (((y & 0x07) << 5) | x);
                     int attributeAddress = 0x5800 + off;
-                    attributeMemory[x][y] = memory.read(attributeAddress);
+                    attributeMemory[x][y] = bus.readMemoryNotContended(attributeAddress);
                 }
             }
         }
     }
 
     public void triggerInterrupt() {
-        cpu.signalInterrupt(RST_7);
+        bus.signalInterrupt(RST_7);
+    }
+
+    public TimedEventsProcessor getTimedEventsProcessor() {
+        return bus
+                .getTimedEventsProcessor()
+                .orElseThrow(() -> new NoSuchElementException("The CPU does not provide TimedEventProcessor"));
     }
 
     public void readLine(int y) {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
-            videoMemory[x][y] = memory.read(0x4000 + lineStartOffsets[y] + x);
+            videoMemory[x][y] = bus.readMemoryNotContended(0x4000 + lineStartOffsets[y] + x);
             if (y < ATTRIBUTE_HEIGHT) {
                 int off = ((y >>> 3) << 8) | (((y & 0x07) << 5) | x);
                 int attributeAddress = 0x5800 + off;
-                attributeMemory[x][y] = memory.read(attributeAddress);
+                attributeMemory[x][y] = bus.readMemoryNotContended(attributeAddress);
             }
         }
     }

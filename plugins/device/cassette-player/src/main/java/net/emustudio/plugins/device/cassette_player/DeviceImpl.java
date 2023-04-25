@@ -54,7 +54,7 @@ public class DeviceImpl extends AbstractDevice {
         // a cassette player needs a device to which it will write at its own pace
         DeviceContext<Byte> lineIn = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
         if (lineIn.getDataType() != Byte.class) {
-            throw new PluginInitializationException("Could not find Byte device");
+            throw new PluginInitializationException("Could not find line-in device");
         }
         this.cassetteListener = new PlaybackListenerImpl(lineIn);
         this.controller = new CassetteController(cassetteListener);

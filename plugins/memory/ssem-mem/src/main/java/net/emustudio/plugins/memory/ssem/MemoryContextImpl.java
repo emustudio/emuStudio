@@ -22,15 +22,17 @@ import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
     public static final int NUMBER_OF_CELLS = 32 * 4;
 
     // byte type is atomic in JVM memory model
     private final Byte[] memory = new Byte[NUMBER_OF_CELLS];
+    private final MemoryContextAnnotations annotations;
 
     public MemoryContextImpl(MemoryContextAnnotations annotations) {
-        super(annotations);
+        this.annotations = Objects.requireNonNull(annotations);
         Arrays.fill(memory, (byte) 0);
     }
 
@@ -71,5 +73,10 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
     @Override
     public int getSize() {
         return memory.length;
+    }
+
+    @Override
+    public MemoryContextAnnotations annotations() {
+        return annotations;
     }
 }

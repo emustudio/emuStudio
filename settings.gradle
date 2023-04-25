@@ -49,6 +49,7 @@ include ':plugins:device:adm3A-terminal'
 include ':plugins:device:vt100-terminal'
 include ':plugins:device:simh-pseudo'
 include ':plugins:device:ssem-display'
+include ':plugins:device:zxspectrum-bus'
 include ':plugins:device:zxspectrum-ula'
 include ':plugins:device:cassette-player'
 

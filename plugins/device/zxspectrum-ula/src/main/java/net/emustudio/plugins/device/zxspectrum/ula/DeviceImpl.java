@@ -22,20 +22,12 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
-import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
-import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.device.zxspectrum.ula.api.LineInPort;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.Keyboard;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.TerminalWindow;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.MissingResourceException;
@@ -44,7 +36,6 @@ import java.util.ResourceBundle;
 
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "ZX Spectrum48K ULA")
 public class DeviceImpl extends AbstractDevice {
-    private final static Logger LOGGER = LoggerFactory.getLogger(DeviceImpl.class);
 
     private final boolean guiSupported;
     private final Keyboard keyboard = new Keyboard();
@@ -57,32 +48,14 @@ public class DeviceImpl extends AbstractDevice {
         super(pluginID, applicationApi, settings);
 
         this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
-
-        try {
-            ContextPool contextPool = applicationApi.getContextPool();
-            contextPool.register(pluginID, new LineInPort(), DeviceContext.class);
-        } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register memory context", e);
-            applicationApi.getDialogs().showError(
-                    "Could not register memory. Please see log file for more details", getTitle()
-            );
-        }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
-        MemoryContext<Byte> memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
-        Class<?> cellTypeClass = memory.getCellTypeClass();
-        if (cellTypeClass != Byte.class) {
-            throw new PluginInitializationException("Could not find Byte-cell memory");
-        }
-        Context8080 cpu = applicationApi.getContextPool().getCPUContext(pluginID, Context8080.class);
-
-        this.ula = new ULA(memory, cpu);
+        ZxSpectrumBus bus = applicationApi.getContextPool().getDeviceContext(pluginID, ZxSpectrumBus.class);
+        this.ula = new ULA(bus);
         keyboard.addOnKeyListener(ula);
-
-        cpu.attachDevice(0xFE, ula);
+        bus.attachDevice(0xFE, ula);
     }
 
     @Override
@@ -147,7 +120,6 @@ public class DeviceImpl extends AbstractDevice {
     public boolean isAutomationSupported() {
         return true;
     }
-
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {

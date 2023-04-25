@@ -151,8 +151,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                                                PluginSettings pluginSettings) throws InvalidPluginException {
         Objects.requireNonNull(mainClass);
         Objects.requireNonNull(applicationApi);
-
-
+        
         try {
             Constructor<?> constructor = mainClass.getDeclaredConstructor(PLUGIN_CONSTRUCTOR_PARAMS);
             return (Plugin) constructor.newInstance(pluginID, applicationApi, pluginSettings);

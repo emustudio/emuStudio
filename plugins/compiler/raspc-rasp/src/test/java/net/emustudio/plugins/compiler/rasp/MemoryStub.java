@@ -29,9 +29,10 @@ public class MemoryStub extends AbstractMemoryContext<Integer> implements RaspMe
     private final Integer[] memory = new Integer[1000];
     private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
+    private final MemoryContextAnnotations annotations;
 
     protected MemoryStub(MemoryContextAnnotations annotations) {
-        super(annotations);
+        this.annotations = Objects.requireNonNull(annotations);
     }
 
     @Override
@@ -64,6 +65,11 @@ public class MemoryStub extends AbstractMemoryContext<Integer> implements RaspMe
     @Override
     public int getSize() {
         return memory.length;
+    }
+
+    @Override
+    public MemoryContextAnnotations annotations() {
+        return annotations;
     }
 
     @Override

@@ -25,19 +25,21 @@ import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @PluginContext(id = "Byte Memory")
 public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements ByteMemoryContext {
     final static int DEFAULT_MEM_SIZE = 65536;
 
     private final RangeTree romRanges = new RangeTree();
+    private final MemoryContextAnnotations annotations;
     private Byte[][] mem = new Byte[1][0];
     private int banksCount;
     private int bankSelect = 0;
     private int bankCommon = 0;
 
     protected MemoryContextImpl(MemoryContextAnnotations annotations) {
-        super(annotations);
+        this.annotations = Objects.requireNonNull(annotations);
     }
 
     void init(int size, int banks, int bankCommon) {
@@ -139,6 +141,11 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     @Override
     public int getSize() {
         return mem[0].length;
+    }
+
+    @Override
+    public MemoryContextAnnotations annotations() {
+        return annotations;
     }
 
     @Override

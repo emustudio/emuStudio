@@ -26,12 +26,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+//Machine	Pilot pulse	Length	Sync1	Sync2	Bit 0	Bit 1
+//ZX Spectrum	2168	(1)	667	735	855	1710
 public class PlaybackListenerImpl implements Loader.PlaybackListener {
-    private final DeviceContext<Byte> lineIn;
+    private final DeviceContext<Byte> bus;
     private final AtomicReference<CassettePlayerGui> gui = new AtomicReference<>();
 
-    public PlaybackListenerImpl(DeviceContext<Byte> lineIn) {
-        this.lineIn = Objects.requireNonNull(lineIn);
+    public PlaybackListenerImpl(DeviceContext<Byte> bus) {
+        this.bus = Objects.requireNonNull(bus);
     }
 
     public void setGui(CassettePlayerGui gui) {

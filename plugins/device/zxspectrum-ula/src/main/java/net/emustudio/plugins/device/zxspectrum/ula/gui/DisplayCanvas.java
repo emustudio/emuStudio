@@ -25,7 +25,6 @@ import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -88,9 +87,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     public DisplayCanvas(ULA ula) {
         this.ula = Objects.requireNonNull(ula);
-        this.ted = ula.getCpu()
-                .getTimedEventsProcessor()
-                .orElseThrow(() -> new NoSuchElementException("The CPU does not provide TimedEventProcessor"));
+        this.ted = ula.getTimedEventsProcessor();
         this.screenImage.setAccelerationPriority(1.0f);
         this.screenImageData = ((DataBufferInt) this.screenImage.getRaster().getDataBuffer()).getData();
     }

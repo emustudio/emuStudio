@@ -29,19 +29,17 @@ import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements RaspMemoryContext {
     private final Map<Integer, Integer> memory = new HashMap<>();
     private final Map<Integer, RaspLabel> labels = new HashMap<>();
     private final List<Integer> inputs = new ArrayList<>();
     private final ReadWriteLockSupport rwl = new ReadWriteLockSupport();
+    private final MemoryContextAnnotations annotations;
 
     protected MemoryContextImpl(MemoryContextAnnotations annotations) {
-        super(annotations);
+        this.annotations = Objects.requireNonNull(annotations);
     }
 
     @Override
@@ -58,6 +56,11 @@ public class MemoryContextImpl extends AbstractMemoryContext<Integer> implements
     @Override
     public int getSize() {
         return rwl.lockRead(() -> memory.keySet().stream().max(Comparator.naturalOrder()).orElse(0));
+    }
+
+    @Override
+    public MemoryContextAnnotations annotations() {
+        return annotations;
     }
 
     @Override

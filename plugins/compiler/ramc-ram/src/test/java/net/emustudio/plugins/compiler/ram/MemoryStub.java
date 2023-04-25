@@ -31,9 +31,10 @@ public class MemoryStub extends AbstractMemoryContext<RamInstruction> implements
     private final RamInstruction[] memory = new RamInstruction[1000];
     private final Map<Integer, RamLabel> labels = new HashMap<>();
     private final List<RamValue> inputs = new ArrayList<>();
+    private final MemoryContextAnnotations annotations;
 
     protected MemoryStub(MemoryContextAnnotations annotations) {
-        super(annotations);
+        this.annotations = Objects.requireNonNull(annotations);
     }
 
     @Override
@@ -71,6 +72,11 @@ public class MemoryStub extends AbstractMemoryContext<RamInstruction> implements
     @Override
     public int getSize() {
         return memory.length;
+    }
+
+    @Override
+    public MemoryContextAnnotations annotations() {
+        return annotations;
     }
 
     @Override

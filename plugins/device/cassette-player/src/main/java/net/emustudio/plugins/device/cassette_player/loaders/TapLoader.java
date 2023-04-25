@@ -79,7 +79,7 @@ public class TapLoader implements Loader {
                 if (flagByte == 255) {
                     listener.onData(data);
                 } else {
-                    LOGGER.warn("TAP: Unknwon flag: " + flagByte);
+                    LOGGER.warn("TAP: unknown flag: " + flagByte);
                 }
             }
             buffer.get(); // checksum

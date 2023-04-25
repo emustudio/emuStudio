@@ -1,7 +1,7 @@
 name = "ZX Spectrum 48K"
 
 [MEMORY]
-	schemaPoint = "220,60"
+	schemaPoint = "80,180"
 	path = "byte-mem.jar"
 	name = "byte-mem"
 	id = "1e13a25d-fb23-4061-853a-5fe996b03281"
@@ -10,9 +10,11 @@ name = "ZX Spectrum 48K"
 	[MEMORY.settings]
 		#memorySize = 49152
 		banksCount = 0
-		ROMfrom0 = 0
+		imageName0 = "/home/vbmacher/tmp/emuStudio/examples/zxspectrum-48k/48.rom"  # TODO: change!
+		imageBank1 = 0
+		imageBank0 = 0
 		commonBoundary = 0
-		ROMto0 = 16383
+		imageAddress0 = 0
 
 #       memorySize = 65536
 # ROM areas are stored as pairs ROMfromN and ROMtoN, where N is 0-based counter. There can be multiple rom areas.
@@ -36,15 +38,14 @@ name = "ZX Spectrum 48K"
 	type = "COMPILER"
 
 [CPU]
-	schemaPoint = "220,180"
+	schemaPoint = "260,300"
 	path = "z80-cpu.jar"
-	settings = {}
 	name = "z80-cpu"
 	id = "b86d4bc2-632c-46e3-bba1-c088c9177983"
 	type = "CPU"
 
 	[CPU.settings]
-	frequency_khz = 3500
+		frequency_khz = 3500
 
 # Uncomment the following for specific settings (and remove settings = {} above)
 #    [CPU.settings]
@@ -52,11 +53,27 @@ name = "ZX Spectrum 48K"
 #        printCodeUseCache = true
 #        printCodeFileName = "syserr"   # Or custom path to a file
 [[DEVICE]]
-	schemaPoint = "380,180"
+	schemaPoint = "420,60"
 	path = "zxspectrum-ula.jar"
 	settings = {}
 	name = "zxspectrum-ula"
 	id = "1436ac2d-982f-4a52-b7c6-ecb6f2a0440d"
+	type = "DEVICE"
+
+[[DEVICE]]
+	schemaPoint = "420,180"
+	path = "cassette-player.jar"
+	settings = {}
+	name = "cassette-player"
+	id = "581cc598-3beb-4a67-b1e3-b4ec1731a9a7"
+	type = "DEVICE"
+
+[[DEVICE]]
+	schemaPoint = "260,180"
+	path = "zxspectrum-bus.jar"
+	settings = {}
+	name = "zxspectrum-bus"
+	id = "c16f6ea4-c26f-4dbf-972b-893c22a0d92c"
 	type = "DEVICE"
 
 [[connections]]
@@ -68,18 +85,24 @@ name = "ZX Spectrum 48K"
 [[connections]]
 	bidirectional = true
 	from = "1e13a25d-fb23-4061-853a-5fe996b03281"
+	to = "c16f6ea4-c26f-4dbf-972b-893c22a0d92c"
+	points = []
+
+[[connections]]
+	bidirectional = true
+	from = "1436ac2d-982f-4a52-b7c6-ecb6f2a0440d"
+	to = "c16f6ea4-c26f-4dbf-972b-893c22a0d92c"
+	points = ["260,60"]
+
+[[connections]]
+	bidirectional = true
+	from = "581cc598-3beb-4a67-b1e3-b4ec1731a9a7"
+	to = "c16f6ea4-c26f-4dbf-972b-893c22a0d92c"
+	points = []
+
+[[connections]]
+	bidirectional = true
+	from = "c16f6ea4-c26f-4dbf-972b-893c22a0d92c"
 	to = "b86d4bc2-632c-46e3-bba1-c088c9177983"
 	points = []
-
-[[connections]]
-	bidirectional = true
-	from = "b86d4bc2-632c-46e3-bba1-c088c9177983"
-	to = "1436ac2d-982f-4a52-b7c6-ecb6f2a0440d"
-	points = []
-
-[[connections]]
-	bidirectional = true
-	from = "1e13a25d-fb23-4061-853a-5fe996b03281"
-	to = "1436ac2d-982f-4a52-b7c6-ecb6f2a0440d"
-	points = ["360,60"]
 

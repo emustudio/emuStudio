@@ -35,9 +35,10 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
     private final Map<Integer, RamLabel> labels = new HashMap<>();
     private final List<RamValue> inputs = new ArrayList<>();
     private final ReadWriteLockSupport rwl = new ReadWriteLockSupport();
+    private final MemoryContextAnnotations annotations;
 
     protected MemoryContextImpl(MemoryContextAnnotations annotations) {
-        super(annotations);
+        this.annotations = Objects.requireNonNull(annotations);
     }
 
     @Override
@@ -54,6 +55,11 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
     @Override
     public int getSize() {
         return rwl.lockRead(memory::size);
+    }
+
+    @Override
+    public MemoryContextAnnotations annotations() {
+        return annotations;
     }
 
     @Override
