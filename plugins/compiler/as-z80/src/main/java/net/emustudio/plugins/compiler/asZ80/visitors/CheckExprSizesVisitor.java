@@ -34,6 +34,9 @@ import static net.emustudio.plugins.compiler.asZ80.CompileError.valueOutOfBounds
  */
 public class CheckExprSizesVisitor extends NodeVisitor {
     private int expectedBytes;
+    private boolean isRelative; // if we should treat Evaluated value as "relative address"
+    private int currentAddress; // for computing relative address
+
 
     @Override
     public void visit(DataDB node) {
@@ -55,8 +58,13 @@ public class CheckExprSizesVisitor extends NodeVisitor {
 
     @Override
     public void visit(Instr node) {
-        expectedBytes = node.hasRelativeAddress() ? 1 : 0;
+        boolean oldIsRelative = isRelative;
+        isRelative = node.hasRelativeAddress();
+        currentAddress = node.getAddress();
+
+        expectedBytes = isRelative ? 1 : 0;
         visitChildren(node);
+        isRelative = oldIsRelative;
     }
 
     @Override
@@ -96,7 +104,12 @@ public class CheckExprSizesVisitor extends NodeVisitor {
 
     @Override
     public void visit(Evaluated node) {
-        int value = node.value < 0 ? ((~node.value) * 2) : node.value;
+        int value;
+        if (isRelative && node.isAddress) {
+            value = (node.value - currentAddress - 2);
+        } else {
+            value = node.value < 0 ? ((~node.value) * 2) : node.value;
+        }
         if (expectedBytes > 0) {
             int wasBits = (int) Math.floor(Math.log10(Math.abs(value)) / Math.log10(2)) + 1;
             int wasBytes = (int) Math.ceil(wasBits / 8.0);

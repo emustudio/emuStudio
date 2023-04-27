@@ -23,7 +23,7 @@ import org.junit.Test;
 public class IfNodeTest extends AbstractCompilerTest {
 
     @Test
-    public void testIfNodeIsProcessed() throws Exception {
+    public void testIfNodeIsProcessed() {
         compile(
                 "if 1\n"
                         + "  rrca\n"
@@ -36,7 +36,7 @@ public class IfNodeTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testIfNodeIsNotProcessed() throws Exception {
+    public void testIfNodeIsNotProcessed() {
         compile(
                 "if 0\n"
                         + "  rrca\n"
@@ -47,7 +47,7 @@ public class IfNodeTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testIfNoteIsProcessedForNegativeExpression() throws Exception {
+    public void testIfNoteIsProcessedForNegativeExpression() {
         compile(
                 "if -1\n"
                         + "  rrca\n"
@@ -60,7 +60,7 @@ public class IfNodeTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testIfCanEvaluateBackwardReferenceInExpression() throws Exception {
+    public void testIfCanEvaluateBackwardReferenceInExpression() {
         compile(
                 "present equ 1\n"
                         + "if present\n"
@@ -74,7 +74,7 @@ public class IfNodeTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testIfCannotRedefineIdentifierInside() throws Exception {
+    public void testIfCannotRedefineIdentifierInside() {
         compile(
                 "text: db 6\n"
                         + "if 554\n"

@@ -68,6 +68,7 @@ public class GenerateCodeVisitor extends NodeVisitor {
 
     @Override
     public void visit(Instr node) {
+        boolean oldIsRelative = isRelative;
         isRelative = node.hasRelativeAddress();
         currentAddress = node.getAddress();
 
@@ -77,7 +78,7 @@ public class GenerateCodeVisitor extends NodeVisitor {
             expectedBytes = 0;
             visitChildren(node);
         }
-        isRelative = false;
+        isRelative = oldIsRelative;
     }
 
     @Override
