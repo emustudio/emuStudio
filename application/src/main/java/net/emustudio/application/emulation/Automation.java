@@ -19,7 +19,6 @@
 package net.emustudio.application.emulation;
 
 import net.emustudio.application.gui.dialogs.AutoDialog;
-import net.emustudio.application.internal.Unchecked;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.compiler.Compiler;
@@ -27,6 +26,7 @@ import net.emustudio.emulib.plugins.compiler.CompilerListener;
 import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
+import net.emustudio.emulib.runtime.helpers.Unchecked;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +35,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class manages the emuStudio automation process. In the process
@@ -97,7 +98,6 @@ public class Automation implements Runnable {
         computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: " + cpu.getTitle() + ", version " + cpu.getVersion()));
         computer.getMemory().ifPresent(memory -> {
             LOGGER.info("Memory: " + memory.getTitle() + ", version " + memory.getVersion());
-            LOGGER.info("Memory size: {}", memory.getSize());
         });
         computer.getDevices().forEach(
                 device -> LOGGER.info("Device: " + device.getTitle() + ", version " + device.getVersion())
@@ -139,6 +139,7 @@ public class Automation implements Runnable {
             return;
         }
         setProgress("Compiling input file: " + inputFile, false);
+        AtomicInteger errors = new AtomicInteger();
         CompilerListener reporter = new CompilerListener() {
             @Override
             public void onStart() {
@@ -150,6 +151,7 @@ public class Automation implements Runnable {
 
                 switch (message.getMessageType()) {
                     case TYPE_ERROR:
+                        errors.incrementAndGet();
                         LOGGER.error(message.getFormattedMessage());
                         break;
                     case TYPE_WARNING:
@@ -169,10 +171,10 @@ public class Automation implements Runnable {
 
         // Initialize compiler
         compiler.addCompilerListener(reporter);
+        compiler.compile(inputFile.toPath(), Optional.empty());
 
-        String fileName = inputFile.getAbsolutePath();
-        if (!compiler.compile(fileName)) {
-            throw new AutomationException("Compile failed. Automation cannot continue.");
+        if (errors.get() > 0) {
+            throw new AutomationException("Compilation failed. Automation cannot continue.");
         }
     }
 

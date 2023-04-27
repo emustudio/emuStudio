@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast.instr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
@@ -80,14 +81,14 @@ public class InstrExpr extends Node {
 
     public final int opcode;
 
-    public InstrExpr(int line, int column, int opcode) {
-        super(line, column);
+    public InstrExpr(SourceCodePosition position, int opcode) {
+        super(position);
         this.opcode = opcode;
         // child is expr
     }
 
-    public InstrExpr(Token opcode) {
-        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType());
+    public InstrExpr(String fileName, Token opcode) {
+        this(new SourceCodePosition(opcode.getLine(), opcode.getCharPositionInLine(), fileName), opcode.getType());
     }
 
     public int getExprSizeBytes() {
@@ -122,7 +123,7 @@ public class InstrExpr extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new InstrExpr(line, column, opcode);
+        return new InstrExpr(position, opcode);
     }
 
     @Override

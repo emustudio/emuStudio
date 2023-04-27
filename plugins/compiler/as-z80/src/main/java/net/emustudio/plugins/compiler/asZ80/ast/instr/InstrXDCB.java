@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.instr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -53,8 +54,8 @@ public class InstrXDCB extends Node {
     public final int prefix;
     private int y;
 
-    public InstrXDCB(int line, int column, int opcode, int prefix, int y, int z) {
-        super(line, column);
+    public InstrXDCB(SourceCodePosition position, int opcode, int prefix, int y, int z) {
+        super(position);
 
         this.opcode = opcode;
         this.prefix = prefix;
@@ -67,8 +68,8 @@ public class InstrXDCB extends Node {
         // 2. possibly another expr child
     }
 
-    public InstrXDCB(Token opcode, int prefix, int y, int z) {
-        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), prefix, y, z);
+    public InstrXDCB(String fileName, Token opcode, int prefix, int y, int z) {
+        this(positionFromToken(fileName, opcode), opcode.getType(), prefix, y, z);
     }
 
     public void setY(int y) {
@@ -90,7 +91,7 @@ public class InstrXDCB extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new InstrXDCB(line, column, opcode, prefix, y, z);
+        return new InstrXDCB(position, opcode, prefix, y, z);
     }
 
     @Override

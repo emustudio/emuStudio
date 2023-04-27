@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.data;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 
@@ -26,8 +27,9 @@ import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
  * Child is an expression which must not use forward references and must not be negative.
  */
 public class DataDS extends Node {
-    public DataDS(int line, int column) {
-        super(line, column);
+
+    public DataDS(SourceCodePosition position) {
+        super(position);
     }
 
     @Override
@@ -37,6 +39,6 @@ public class DataDS extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new DataDS(line, column);
+        return new DataDS(position);
     }
 }

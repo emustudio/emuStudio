@@ -341,12 +341,12 @@ public class EvaluateExprVisitor extends NodeVisitor {
             if (strLen > 1) {
                 result |= (node.string.charAt(1) << 8);
             }
-            Node evaluated = new Evaluated(node.line, node.column, result);
+            Node evaluated = new Evaluated(node.position, result);
             parent.ifPresent(p -> p.addChild(evaluated));
             currentAddress += sizeBytes;
         } else {
             for (int i = 0; i < strLen; i++) {
-                Node evaluated = new Evaluated(node.line, node.column, node.string.charAt(i));
+                Node evaluated = new Evaluated(node.position, node.string.charAt(i));
                 parent.ifPresent(p -> p.addChild(evaluated));
             }
             if (sizeBytes != 0) {

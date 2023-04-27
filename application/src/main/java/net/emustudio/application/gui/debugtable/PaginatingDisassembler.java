@@ -24,6 +24,33 @@ import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Supplier;
 
+/**
+ * Paginating disassembler
+ * <p>
+ * Disassembler which holds pages of disassembled instructions as they go sequentially from current CPU position
+ * onwards. One page is active at a time, which represents the content of a debug table. Debug table model reads instructions
+ * from the active page.
+ * <p>
+ * A page is specified by its min and max location in memory. These locations tries to bound a fixed number of
+ * instructions. A page is "filled" using "call flow" object, which can return disassembled instructions in given location
+ * range.
+ * <p>
+ * A first-time fill creates first "snapshot" of instructions in memory. But there are a few situations implying the
+ * need of refill of some pages. In such cases, all pages starting from changed location onwards are removed from cache.
+ * The situations are as follows:
+ * <p>
+ * - on memory change (can change instruction size)
+ * - on jump to a location which is not in the current call-flow path.
+ * <p>
+ * Call flow is the most important component of the paginating disassembler.
+ * It is basically a map of known instruction locations pointing to next instructions. In other words, it's a set of
+ * separate directed graphs. By using this graph map, one can build continuous "paths" from one location to another.
+ * <p>
+ * The complexity of a paginating disassembler lies in a requirement that all instructions in all pages must be reachable
+ * from the current CPU position - the following ones and also previous ones. It's tricky since between the current
+ * instruction and any other one can be data. The paginating disassembler doesn't know that, so if the data is "in the path"
+ * of filling up the page, it is not recognized - it's treated as instructions.
+ */
 @ThreadSafe
 public class PaginatingDisassembler {
     public final static int INSTR_PER_PAGE = 2 * 10 + 1;
@@ -61,10 +88,6 @@ public class PaginatingDisassembler {
         return currentInstrRow;
     }
 
-    private int maxBytesPerPage() {
-        return instructionsPerPage * callFlow.getLongestInstructionSize();
-    }
-
     int getPageIndex() {
         return pageIndex;
     }
@@ -96,7 +119,6 @@ public class PaginatingDisassembler {
     void pageNext() {
         int nextPageIndex = pageIndex + 1;
         Page tmpPage = bytesPerPageCache.get(nextPageIndex);
-        int maxMemoryIndex = getMemorySize.get() - 1;
 
         if (tmpPage == null) {
             tmpPage = currentPage;
@@ -105,7 +127,7 @@ public class PaginatingDisassembler {
                 return;
             }
 
-            if (!tmpPage.lastPage && tmpPage.maxLocation >= 0 && tmpPage.maxLocation + 1 < maxMemoryIndex) {
+            if (!tmpPage.lastPage && tmpPage.maxLocation >= 0) {
                 tmpPage = new Page(nextPageIndex, tmpPage.maxLocation, -1);
             } else {
                 return;
@@ -204,6 +226,14 @@ public class PaginatingDisassembler {
         }
     }
 
+    void flushCache(int from, int to) {
+        callFlow.flushCache(from, to + 1);
+    }
+
+    private int maxBytesPerPage() {
+        return instructionsPerPage * callFlow.getLongestInstructionSize();
+    }
+
     private int findCurrentLocationInPage(int currentLocation, Page tmpCurrentPage) {
         if (tmpCurrentPage.index == 0) {
             return currentLocation;
@@ -243,7 +273,7 @@ public class PaginatingDisassembler {
 
         int maxBytesPP = maxBytesPerPage();
         int longestInstr = callFlow.getLongestInstructionSize();
-        int guessUpTo = Math.min(getMemorySize.get() - 1, currentLocation + currentPageIndex * (maxBytesPP - longestInstr));
+        int guessUpTo = currentLocation + currentPageIndex * (maxBytesPP - longestInstr);
 
         int result = callFlow.traverseUpTo(from, guessUpTo, instructions::add);
         if (result == guessUpTo) {
@@ -306,7 +336,6 @@ public class PaginatingDisassembler {
         }
         return instructions.listIterator(instrCount - INSTR_PER_PAGE).next();
     }
-
 
     private int findLocationAboveHalf(int currentLocation, int row, int half, Page tmpCurrentPage) {
         int lastMemoryIndex = getMemorySize.get() - 1;
@@ -387,10 +416,6 @@ public class PaginatingDisassembler {
         }
 
         return rowLocation;
-    }
-
-    void flushCache(int from, int to) {
-        callFlow.flushCache(from, to + 1);
     }
 
     private static final class Page {

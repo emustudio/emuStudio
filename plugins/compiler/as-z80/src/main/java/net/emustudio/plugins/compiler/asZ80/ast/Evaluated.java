@@ -18,25 +18,26 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 
 public class Evaluated extends Node {
     public final int value;
     public final boolean isAddress;
 
-    public Evaluated(int line, int column, int value, boolean isAddress) {
-        super(line, column);
+    public Evaluated(SourceCodePosition position, int value, boolean isAddress) {
+        super(position);
         this.value = value;
         this.isAddress = isAddress;
     }
 
-    public Evaluated(int line, int column, int value) {
-        this(line, column, value, false);
+    public Evaluated(SourceCodePosition position, int value) {
+        this(position, value, false);
     }
 
     @Override
     protected Node mkCopy() {
-        return new Evaluated(line, column, value, isAddress);
+        return new Evaluated(position, value, isAddress);
     }
 
     @Override

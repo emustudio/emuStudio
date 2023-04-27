@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -27,14 +28,14 @@ import java.util.Objects;
 public class PseudoSet extends Node {
     public final String id;
 
-    public PseudoSet(int line, int column, String id) {
-        super(line, column);
+    public PseudoSet(SourceCodePosition position, String id) {
+        super(position);
         this.id = Objects.requireNonNull(id);
         // expr is the only child
     }
 
-    public PseudoSet(Token id) {
-        this(id.getLine(), id.getCharPositionInLine(), id.getText());
+    public PseudoSet(String fileName, Token id) {
+        this(new SourceCodePosition(id.getLine(), id.getCharPositionInLine(), fileName), id.getText());
     }
 
     @Override
@@ -49,7 +50,7 @@ public class PseudoSet extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new PseudoSet(line, column, id);
+        return new PseudoSet(position, id);
     }
 
     @Override

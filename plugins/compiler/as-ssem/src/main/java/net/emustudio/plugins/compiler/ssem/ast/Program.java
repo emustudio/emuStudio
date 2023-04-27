@@ -18,7 +18,7 @@
  */
 package net.emustudio.plugins.compiler.ssem.ast;
 
-import net.emustudio.plugins.compiler.ssem.Position;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,9 +32,9 @@ public class Program {
     private int startLine;
     private boolean startLineDefined;
 
-    public void setStartLine(int startLine, Position pos) {
-        checkStartLineDefined(startLineDefined, pos, this.startLine);
-        checkLineOutOfBounds(pos, startLine);
+    public void setStartLine(int startLine, SourceCodePosition position) {
+        checkStartLineDefined(startLineDefined, position, this.startLine);
+        checkLineOutOfBounds(position, startLine);
         this.startLine = startLine;
         startLineDefined = true;
     }
@@ -43,9 +43,9 @@ public class Program {
         return startLine;
     }
 
-    public void add(int line, Instruction instruction, Position pos) {
-        checkDuplicateLineDefinition(instructions.containsKey(line), pos, line);
-        checkLineOutOfBounds(pos, line);
+    public void add(int line, Instruction instruction, SourceCodePosition position) {
+        checkDuplicateLineDefinition(instructions.containsKey(line), position, line);
+        checkLineOutOfBounds(position, line);
         instructions.put(line, instruction);
     }
 

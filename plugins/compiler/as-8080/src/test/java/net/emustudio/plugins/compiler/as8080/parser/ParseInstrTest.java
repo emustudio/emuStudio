@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.parser;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprCurrentAddress;
@@ -33,6 +34,7 @@ import static net.emustudio.plugins.compiler.as8080.As8080Parser.*;
 import static net.emustudio.plugins.compiler.as8080.Utils.*;
 
 public class ParseInstrTest {
+    private final static SourceCodePosition POSITION = new SourceCodePosition(0, 0, "");
 
     @Test
     public void testInstrNoArgs() {
@@ -126,9 +128,9 @@ public class ParseInstrTest {
 
     @Test
     public void testMVI() {
-        Node expr = new ExprInfix(0, 0, OP_ADD)
-                .addChild(new ExprCurrentAddress(0, 0))
-                .addChild(new ExprNumber(0, 0, 5));
+        Node expr = new ExprInfix(POSITION, OP_ADD)
+                .addChild(new ExprCurrentAddress(POSITION))
+                .addChild(new ExprNumber(POSITION, 5));
 
         forStringCaseVariations("mvi", instrVariation -> {
             for (Map.Entry<String, Integer> register : registers.entrySet()) {
@@ -136,8 +138,8 @@ public class ParseInstrTest {
                     String row = instrVariation + " " + registerVariation + ", $ + 5";
                     Program program = parseProgram(row);
                     assertTrees(
-                            new Program()
-                                    .addChild(new InstrRegExpr(0, 0, OPCODE_MVI, register.getValue())
+                            new Program("")
+                                    .addChild(new InstrRegExpr(POSITION, OPCODE_MVI, register.getValue())
                                             .addChild(expr)),
                             program
                     );
@@ -148,9 +150,9 @@ public class ParseInstrTest {
 
     @Test
     public void testLXI() {
-        Node expr = new ExprInfix(0, 0, OP_ADD)
-                .addChild(new ExprCurrentAddress(0, 0))
-                .addChild(new ExprNumber(0, 0, 5));
+        Node expr = new ExprInfix(POSITION, OP_ADD)
+                .addChild(new ExprCurrentAddress(POSITION))
+                .addChild(new ExprNumber(POSITION, 5));
 
         forStringCaseVariations("lxi", instrVariation -> {
             for (Map.Entry<String, Integer> regPair : regPairsBDHSP.entrySet()) {
@@ -158,8 +160,8 @@ public class ParseInstrTest {
                     String row = instrVariation + " " + registerVariation + ", $ + 5";
                     Program program = parseProgram(row);
                     assertTrees(
-                            new Program()
-                                    .addChild(new InstrRegPairExpr(0, 0, OPCODE_LXI, regPair.getValue())
+                            new Program("")
+                                    .addChild(new InstrRegPairExpr(POSITION, OPCODE_LXI, regPair.getValue())
                                             .addChild(expr)),
                             program
                     );
@@ -179,8 +181,8 @@ public class ParseInstrTest {
                                 String row = instrVariation + " " + registerVariation1 + ", " + registerVariation2;
                                 Program program = parseProgram(row);
                                 assertTrees(
-                                        new Program()
-                                                .addChild(new InstrRegReg(0, 0, OPCODE_MOV, register1.getValue(), register2.getValue())),
+                                        new Program("")
+                                                .addChild(new InstrRegReg(POSITION, OPCODE_MOV, register1.getValue(), register2.getValue())),
                                         program
                                 );
                             }
@@ -194,7 +196,7 @@ public class ParseInstrTest {
     private void assertInstrNoArgs(String instr, int instrType) {
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation);
-            assertTrees(new Program().addChild(new InstrNoArgs(0, 0, instrType)), program);
+            assertTrees(new Program("").addChild(new InstrNoArgs(POSITION, instrType)), program);
         });
     }
 
@@ -205,7 +207,7 @@ public class ParseInstrTest {
                     String row = instrVariation + " " + registerVariation;
                     Program program = parseProgram(row);
                     assertTrees(
-                            new Program().addChild(new InstrReg(0, 0, instrType, register.getValue())),
+                            new Program("").addChild(new InstrReg(POSITION, instrType, register.getValue())),
                             program
                     );
                 });
@@ -214,13 +216,13 @@ public class ParseInstrTest {
     }
 
     private void assertInstrExpr(String instr, int instrType) {
-        Node expr = new ExprInfix(0, 0, OP_ADD)
-                .addChild(new ExprCurrentAddress(0, 0))
-                .addChild(new ExprNumber(0, 0, 5));
+        Node expr = new ExprInfix(POSITION, OP_ADD)
+                .addChild(new ExprCurrentAddress(POSITION))
+                .addChild(new ExprNumber(POSITION, 5));
 
         forStringCaseVariations(instr, variation -> {
             Program program = parseProgram(variation + " $ + 5");
-            assertTrees(new Program().addChild(new InstrExpr(0, 0, instrType).addChild(expr)), program);
+            assertTrees(new Program("").addChild(new InstrExpr(POSITION, instrType).addChild(expr)), program);
         });
     }
 
@@ -231,7 +233,7 @@ public class ParseInstrTest {
                     String row = instrVariation + " " + registerVariation;
                     Program program = parseProgram(row);
                     assertTrees(
-                            new Program().addChild(new InstrRegPair(0, 0, instrType, regPair.getValue())),
+                            new Program("").addChild(new InstrRegPair(POSITION, instrType, regPair.getValue())),
                             program
                     );
                 });

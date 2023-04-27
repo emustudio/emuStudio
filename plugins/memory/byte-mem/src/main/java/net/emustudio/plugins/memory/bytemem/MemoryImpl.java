@@ -35,6 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -49,13 +51,14 @@ import java.util.ResourceBundle;
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
-    private final MemoryContextImpl context = new MemoryContextImpl();
+    private final MemoryContextImpl context;
     private final boolean guiNotSupported;
     private MemoryGui gui;
 
     public MemoryImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
+        this.context = new MemoryContextImpl(getAnnotations());
         this.guiNotSupported = settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
         try {
             ContextPool contextPool = applicationApi.getContextPool();
@@ -91,11 +94,6 @@ public class MemoryImpl extends AbstractMemory {
             this.gui = null;
         }
         context.destroy();
-    }
-
-    @Override
-    public int getSize() {
-        return context.getSize();
     }
 
     @Override
@@ -144,7 +142,7 @@ public class MemoryImpl extends AbstractMemory {
         }
     }
 
-    private void loadImages() throws PluginInitializationException {
+    private void loadImages() {
         for (int i = 0; ; i++) {
             try {
                 Optional<Path> imageName = settings.getString("imageName" + i).map(Path::of);
@@ -157,14 +155,16 @@ public class MemoryImpl extends AbstractMemory {
                     break;
                 }
             } catch (NumberFormatException e) {
-                throw new PluginInitializationException(this, "Could not parse image address or bank", e);
+                LOGGER.error("Could not parse image address or bank", e);
+            } catch (FileNotFoundException e) {
+                LOGGER.error("Could not load image {}", settings.getString("imageName" + i), e);
             } catch (Exception e) {
-                throw new PluginInitializationException(this, e);
+                LOGGER.error("Could not load image due to unknown reason", e);
             }
         }
     }
 
-    public void loadImage(Path imagePath, int address, int bank) throws Exception {
+    public void loadImage(Path imagePath, int address, int bank) throws IOException {
         Loader.MemoryBank memoryBank = Loader.MemoryBank.of(bank, address);
         Loader loader = Loader.createLoader(imagePath);
         loader.load(imagePath, context, memoryBank);
@@ -231,5 +231,10 @@ public class MemoryImpl extends AbstractMemory {
         } catch (MissingResourceException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public int getSize() {
+        return context.getSize();
     }
 }

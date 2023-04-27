@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.instr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -29,8 +30,8 @@ public class InstrXD extends Node {
     public final int y;
     public final int z;
 
-    public InstrXD(int line, int column, int opcode, int prefix, int x, int y, int z) {
-        super(line, column);
+    public InstrXD(SourceCodePosition position, int opcode, int prefix, int x, int y, int z) {
+        super(position);
         this.opcode = opcode;
         this.prefix = prefix;
         this.x = x;
@@ -41,12 +42,12 @@ public class InstrXD extends Node {
         // 2. child is maybe N if (II+d) is defined
     }
 
-    public InstrXD(Token opcode, int prefix, int x, int y, int z) {
-        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), prefix, x, y, z);
+    public InstrXD(String fileName, Token opcode, int prefix, int x, int y, int z) {
+        this(positionFromToken(fileName, opcode), opcode.getType(), prefix, x, y, z);
     }
 
-    public InstrXD(Token opcode, int prefix, int x, int q, int p, int z) {
-        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), prefix, x, (p << 1) | q, z);
+    public InstrXD(String fileName, Token opcode, int prefix, int x, int q, int p, int z) {
+        this(positionFromToken(fileName, opcode), opcode.getType(), prefix, x, (p << 1) | q, z);
     }
 
     public byte[] eval() {
@@ -63,7 +64,7 @@ public class InstrXD extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new InstrXD(line, column, opcode, prefix, x, y, z);
+        return new InstrXD(position, opcode, prefix, x, y, z);
     }
 
     @Override

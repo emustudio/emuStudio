@@ -24,6 +24,9 @@ import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Test;
 
+import java.nio.file.Path;
+import java.util.Optional;
+
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertNotEquals;
 
@@ -102,7 +105,7 @@ public class InstructionTest extends AbstractCompilerTest {
         expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
         replay(applicationApi);
 
-        new CompilerBrainduck(0L, applicationApi, PluginSettings.UNAVAILABLE).compile("nonexistant");
+        new CompilerBrainduck(0L, applicationApi, PluginSettings.UNAVAILABLE).compile(Path.of("nonexistant"), Optional.empty());
 
         assertProgram(
                 1, 1

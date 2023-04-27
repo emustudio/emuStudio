@@ -19,6 +19,7 @@
 package net.emustudio.plugins.memory.ssem.gui.actions;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
@@ -45,7 +46,7 @@ public class DumpMemoryActionTest {
 
     @Test
     public void testNoFileIsChosen() {
-        DumpMemoryAction action = new DumpMemoryAction(mockApi(), new MemoryContextImpl());
+        DumpMemoryAction action = new DumpMemoryAction(mockApi(), new MemoryContextImpl(new Annotations()));
         action.actionPerformed(null);
     }
 
@@ -137,7 +138,7 @@ public class DumpMemoryActionTest {
     }
 
     private MemoryContext<Byte> prepareMemory() {
-        MemoryContextImpl mem = new MemoryContextImpl();
+        MemoryContextImpl mem = new MemoryContextImpl(new Annotations());
         for (int i = 0; i < 32 * 4; i += 4) {
             mem.write(i, new Byte[] { (byte)i, (byte)(i+1), (byte)(i+2), (byte)(i+3) });
         }

@@ -41,9 +41,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.Reader;
+import java.nio.file.Path;
 import java.util.*;
-
-import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
 
 @PluginRoot(type = PLUGIN_TYPE.COMPILER, title = "BrainDuck Compiler")
 @SuppressWarnings("unused")
@@ -65,8 +64,9 @@ public class CompilerBrainduck extends AbstractCompiler {
         Optional.ofNullable(applicationApi.getContextPool()).ifPresent(pool -> {
             try {
                 memory = pool.getMemoryContext(pluginID, MemoryContext.class);
-                if (memory.getDataType() != Byte.class) {
-                    throw new InvalidContextException("Unexpected memory cell type. Expected Byte but was: " + memory.getDataType());
+                Class<?> cellTypeClass = memory.getCellTypeClass();
+                if (cellTypeClass != Byte.class) {
+                    throw new InvalidContextException("Unexpected memory cell type. Expected Byte but was: " + cellTypeClass);
                 }
             } catch (ContextNotFoundException | InvalidContextException e) {
                 LOGGER.warn("Memory is not available", e);
@@ -95,18 +95,20 @@ public class CompilerBrainduck extends AbstractCompiler {
     }
 
     @Override
-    public boolean compile(String inputFileName, String outputFileName) {
+    public void compile(Path inputPath, Optional<Path> outputPath) {
         try {
             notifyCompileStart();
-            IntelHEX hex = compileToHex(inputFileName);
 
-            hex.generate(outputFileName);
+            Path finalOutputPath = outputPath.orElse(convertInputToOutputPath(inputPath, ".hex"));
+            IntelHEX hex = compileToHex(inputPath);
+
+            hex.generate(finalOutputPath);
             int programLocation = hex.findProgramLocation();
             applicationApi.setProgramLocation(programLocation);
 
             notifyInfo(String.format(
                     "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                    outputFileName, RadixUtils.formatWordHexString(programLocation)
+                    finalOutputPath, RadixUtils.formatWordHexString(programLocation)
             ));
 
             if (memory != null) {
@@ -117,21 +119,11 @@ public class CompilerBrainduck extends AbstractCompiler {
             } else {
                 notifyWarning("Memory is not available.");
             }
-            return true;
         } catch (Exception e) {
-            LOGGER.trace("Compilation error", e);
             notifyError("Compilation error: " + e);
-            e.printStackTrace();
-            return false;
         } finally {
             notifyCompileFinish();
         }
-    }
-
-    @Override
-    public boolean compile(String inputFileName) {
-        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".hex";
-        return compile(inputFileName, outputFileName);
     }
 
     @Override
@@ -139,11 +131,11 @@ public class CompilerBrainduck extends AbstractCompiler {
         return SOURCE_FILE_EXTENSIONS;
     }
 
-    private IntelHEX compileToHex(String inputFileName) throws Exception {
-        Objects.requireNonNull(inputFileName);
+    private IntelHEX compileToHex(Path inputPath) throws Exception {
+        Objects.requireNonNull(inputPath);
         notifyInfo(getTitle() + ", version " + getVersion());
 
-        try (Reader reader = new FileReader(inputFileName)) {
+        try (Reader reader = new FileReader(inputPath.toFile())) {
             org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
             lexer.addErrorListener(new ParserErrorListener());
             CommonTokenStream tokens = new CommonTokenStream(lexer);

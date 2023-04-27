@@ -38,6 +38,7 @@ public class SioGui extends JDialog {
     private final JLabel lblStatus = new JLabel("0x00");
     private final JLabel lblStatusLong = new JLabel(". . . . . . . .");
     private final JTextField txtAttachedDevice = new JTextField();
+
     public SioGui(JFrame parent, UART uart) {
         super(parent);
 

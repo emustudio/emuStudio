@@ -100,14 +100,14 @@ public class Utils {
         CommonTokenStream stream = new CommonTokenStream(lexer);
         AsZ80Parser parser = new AsZ80Parser(stream);
         parser.removeErrorListeners();
-        parser.addErrorListener(new ParserErrorListener());
+        parser.addErrorListener(new ParserErrorListener(""));
         stream.fill();
         return parser.rStart();
     }
 
     public static Program parseProgram(String programString) {
         ParseTree tree = parse(programString);
-        Program program = new Program();
+        Program program = new Program("");
         CreateProgramVisitor visitor = new CreateProgramVisitor(program);
         visitor.visit(tree);
         return program;

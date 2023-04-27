@@ -60,9 +60,10 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
     public final void initialize() throws PluginInitializationException {
         try {
             MemoryContext<Byte> memory = contextPool.getMemoryContext(pluginId, MemoryContext.class);
-            if (memory.getDataType() != Byte.class) {
+            Class<?> cellTypeClass = memory.getCellTypeClass();
+            if (cellTypeClass != Byte.class) {
                 throw new InvalidContextException(
-                        "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                        "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
                 );
             }
 

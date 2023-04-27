@@ -18,9 +18,11 @@
  */
 package net.emustudio.plugins.cpu.zilogZ80.api;
 
+import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 @SuppressWarnings("unused")
+@PluginContext
 public interface ContextZ80 extends Context8080 {
 
     /**

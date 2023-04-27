@@ -69,7 +69,7 @@ public class EmulatorPanel extends JPanel {
     private final ShowDeviceGuiAction showDeviceGuiAction;
 
     private final MemoryContext<?> memoryContext;
-    private final Memory.MemoryListener memoryListener;
+    private final MemoryContext.MemoryListener memoryListener;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
 
     public EmulatorPanel(JFrame parent, VirtualComputer computer, DebugTableModel debugTableModel, Dialogs dialogs,
@@ -221,10 +221,10 @@ public class EmulatorPanel extends JPanel {
                         .addComponent(splitLeftRight, 0, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
                         .addContainerGap());
 
-        this.memoryListener = new Memory.MemoryListener() {
+        this.memoryListener = new MemoryContext.MemoryListener() {
             @Override
-            public void memoryChanged(int memoryPosition) {
-                debugTableModel.memoryChanged(memoryPosition, memoryPosition + 1);
+            public void memoryContentChanged(int fromLocatiom, int toLocation) {
+                debugTableModel.memoryChanged(fromLocatiom, toLocation + 1);
                 refreshDebugTable();
             }
 

@@ -18,9 +18,9 @@
  */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.internal.Unchecked;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
+import net.emustudio.emulib.runtime.helpers.Unchecked;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

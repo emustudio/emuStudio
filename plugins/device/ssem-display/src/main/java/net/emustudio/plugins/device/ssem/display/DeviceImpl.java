@@ -51,9 +51,10 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void initialize() throws PluginInitializationException {
         memory = applicationApi.getContextPool().getMemoryContext(pluginID, MemoryContext.class);
-        if (memory.getDataType() != Byte.class) {
+        Class<?> cellTypeClass = memory.getCellTypeClass();
+        if (cellTypeClass != Byte.class) {
             throw new PluginInitializationException(
-                    "Unexpected memory cell type. Expected Byte but was: " + memory.getDataType()
+                    "Unexpected memory cell type. Expected Byte but was: " + cellTypeClass
             );
         }
     }

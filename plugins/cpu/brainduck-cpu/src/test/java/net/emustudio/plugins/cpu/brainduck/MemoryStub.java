@@ -20,6 +20,7 @@ package net.emustudio.plugins.cpu.brainduck;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.util.Arrays;
@@ -103,11 +104,11 @@ public class MemoryStub implements ByteMemoryContext {
     }
 
     @Override
-    public void addMemoryListener(Memory.MemoryListener listener) {
+    public void addMemoryListener(MemoryListener listener) {
     }
 
     @Override
-    public void removeMemoryListener(Memory.MemoryListener listener) {
+    public void removeMemoryListener(MemoryListener listener) {
     }
 
     @Override
@@ -118,6 +119,11 @@ public class MemoryStub implements ByteMemoryContext {
     @Override
     public boolean areMemoryNotificationsEnabled() {
         return false;
+    }
+
+    @Override
+    public MemoryContextAnnotations annotations() {
+        return null;
     }
 
     @Override
@@ -146,7 +152,7 @@ public class MemoryStub implements ByteMemoryContext {
     }
 
     @Override
-    public Class<Byte> getDataType() {
+    public Class<Byte> getCellTypeClass() {
         return null;
     }
 }

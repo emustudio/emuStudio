@@ -37,10 +37,14 @@ public class CreateProgramVisitor extends As8080ParserBaseVisitor<Program> {
 
     @Override
     public Program visitRLine(As8080Parser.RLineContext ctx) {
-        Node statement = CreateVisitors.line.visitRLine(ctx);
+        Node statement = lineVisitor().visitRLine(ctx);
         if (statement != null) {
             program.addChild(statement);
         }
         return program;
+    }
+
+    private CreateLineVisitor lineVisitor() {
+        return CreateVisitors.line(program.position.fileName);
     }
 }

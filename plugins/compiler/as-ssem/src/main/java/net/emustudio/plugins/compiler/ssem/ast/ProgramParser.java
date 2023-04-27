@@ -23,10 +23,19 @@ import net.emustudio.plugins.compiler.ssem.SSEMParser;
 import net.emustudio.plugins.compiler.ssem.SSEMParserBaseVisitor;
 import org.antlr.v4.runtime.Token;
 
+import java.util.Objects;
+import java.util.Optional;
+
 import static net.emustudio.plugins.compiler.ssem.CompilerChecks.checkedParseNumber;
 
 public class ProgramParser extends SSEMParserBaseVisitor<Program> {
     private final Program program = new Program();
+    private final String fileName;
+
+    public ProgramParser(String fileName) {
+        this.fileName = Objects.requireNonNull(fileName);
+    }
+
 
     @Override
     public Program visitLine(SSEMParser.LineContext ctx) {
@@ -35,25 +44,25 @@ public class ProgramParser extends SSEMParserBaseVisitor<Program> {
 
             if (ctx.command != null) {
                 Token tokenInstr = ctx.command.instr;
-                Token tokenOperand = ctx.command.operand;
+                Optional<Token> tokenOperand = Optional.ofNullable(ctx.command.operand);
 
                 long operand = 0;
-                if (tokenOperand != null) {
+                if (tokenOperand.isPresent()) {
                     if (tokenInstr.getType() == SSEMParser.BNUM) {
-                        operand = parseBinary(tokenOperand);
+                        operand = parseBinary(tokenOperand.get());
                     } else {
-                        operand = parseNumber(tokenOperand);
+                        operand = parseNumber(tokenOperand.get());
                     }
                 }
 
                 int instrType = tokenInstr.getType();
                 if (instrType == SSEMParser.START) {
-                    program.setStartLine(line, Position.of(ctx.linenumber));
+                    program.setStartLine(line, Position.of(fileName, ctx.linenumber));
                 } else {
                     program.add(
                             line,
-                            new Instruction(instrType, operand, Position.of(tokenInstr), Position.of(tokenOperand)),
-                            Position.of(ctx.linenumber)
+                            new Instruction(instrType, operand, Position.of(fileName, tokenInstr), tokenOperand.map(o -> Position.of(fileName, o))),
+                            Position.of(fileName, ctx.linenumber)
                     );
                 }
             }
@@ -66,11 +75,11 @@ public class ProgramParser extends SSEMParserBaseVisitor<Program> {
     }
 
     private long parseBinary(Token token) {
-        return checkedParseNumber(token, t -> Long.parseLong(t.getText(), 2));
+        return checkedParseNumber(fileName, token, t -> Long.parseLong(t.getText(), 2));
     }
 
     private long parseNumber(Token token) {
-        return checkedParseNumber(token, t -> {
+        return checkedParseNumber(fileName, token, t -> {
             if (t.getType() == SSEMParser.HEXNUMBER) {
                 return Long.decode(t.getText());
             } else {
@@ -81,7 +90,7 @@ public class ProgramParser extends SSEMParserBaseVisitor<Program> {
     }
 
     private int parsePositiveInteger(Token token) {
-        return checkedParseNumber(token, t -> {
+        return checkedParseNumber(fileName, token, t -> {
             if (t.getType() == SSEMParser.HEXNUMBER) {
                 return Integer.decode(t.getText());
             } else {

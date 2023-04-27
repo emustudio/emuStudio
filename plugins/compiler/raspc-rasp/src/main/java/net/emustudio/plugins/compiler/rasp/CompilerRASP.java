@@ -40,9 +40,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.Reader;
+import java.nio.file.Path;
 import java.util.*;
-
-import static net.emustudio.emulib.plugins.compiler.FileExtension.stripKnownExtension;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
@@ -72,12 +71,13 @@ public class CompilerRASP extends AbstractCompiler {
     }
 
     @Override
-    public boolean compile(String inputFileName, String outputFileName) {
+    public void compile(Path inputPath, Optional<Path> outputPathX) {
         try {
             this.notifyCompileStart();
             notifyInfo(getTitle() + ", version " + getVersion());
 
-            try (Reader reader = new FileReader(inputFileName)) {
+            Path finalOutputPath = outputPathX.orElse(convertInputToOutputPath(inputPath, ".brasp"));
+            try (Reader reader = new FileReader(inputPath.toFile())) {
                 org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
                 lexer.addErrorListener(new ParserErrorListener());
                 CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -89,14 +89,14 @@ public class CompilerRASP extends AbstractCompiler {
                 new ProgramParser(program).visit(parser.rStart());
 
                 Map<Integer, Integer> compiled = program.compile();
-                program.saveToFile(outputFileName, compiled);
+                program.saveToFile(finalOutputPath, compiled);
 
                 int programLocation = program.getProgramLocation(compiled);
                 applicationApi.setProgramLocation(programLocation);
 
                 notifyInfo(String.format(
                         "Compile was successful.\n\tOutput: %s\n\tProgram starts at 0x%s",
-                        outputFileName, RadixUtils.formatWordHexString(programLocation)
+                        finalOutputPath, RadixUtils.formatWordHexString(programLocation)
                 ));
 
                 if (memory != null) {
@@ -111,17 +111,9 @@ public class CompilerRASP extends AbstractCompiler {
         } catch (Exception e) {
             LOGGER.trace("Compilation failed", e);
             notifyError("Compilation failed: " + e.getMessage());
-            return false;
         } finally {
             notifyCompileFinish();
         }
-        return true;
-    }
-
-    @Override
-    public boolean compile(String inputFileName) {
-        String outputFileName = stripKnownExtension(inputFileName, SOURCE_FILE_EXTENSIONS) + ".brasp";
-        return compile(inputFileName, outputFileName);
     }
 
     @Override

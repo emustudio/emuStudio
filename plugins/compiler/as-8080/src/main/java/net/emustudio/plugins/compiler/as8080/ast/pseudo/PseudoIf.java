@@ -18,13 +18,14 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast.pseudo;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 
 public class PseudoIf extends Node {
 
-    public PseudoIf(int line, int column) {
-        super(line, column);
+    public PseudoIf(SourceCodePosition position) {
+        super(position);
         // expr is the first child
         // statement is the second child
     }
@@ -36,6 +37,6 @@ public class PseudoIf extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new PseudoIf(line, column);
+        return new PseudoIf(position);
     }
 }

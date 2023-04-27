@@ -23,6 +23,9 @@ import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 
+import java.nio.file.Path;
+import java.util.Optional;
+
 public class Runner {
 
     public static void main(String... args) {
@@ -49,15 +52,6 @@ public class Runner {
             return;
         }
         inputFile = args[i];
-        if (outputFile == null) {
-            int index = inputFile.lastIndexOf('.');
-            if (index != -1) {
-                outputFile = inputFile.substring(0, index);
-            } else {
-                outputFile = inputFile;
-            }
-            outputFile += ".hex";
-        }
 
         CompilerBrainduck compiler = new CompilerBrainduck(0L, ApplicationApi.UNAVAILABLE, PluginSettings.UNAVAILABLE);
         compiler.addCompilerListener(new CompilerListener() {
@@ -77,7 +71,7 @@ public class Runner {
         });
 
         try {
-            compiler.compile(inputFile, outputFile);
+            compiler.compile(Path.of(inputFile), Optional.ofNullable(outputFile).map(Path::of));
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }

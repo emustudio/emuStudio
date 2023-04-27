@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.parser;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Program;
 import net.emustudio.plugins.compiler.asZ80.ast.data.DataDB;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.ExprInfix;
@@ -30,18 +31,19 @@ import static net.emustudio.plugins.compiler.asZ80.Utils.assertTrees;
 import static net.emustudio.plugins.compiler.asZ80.Utils.parseProgram;
 
 public class ParseExprTest {
+    private final static SourceCodePosition POSITION = new SourceCodePosition(0, 0, "");
 
     @Test
     public void testPrioritiesAddMul() {
         Program program = parseProgram("db 2+3*4");
         assertTrees(
-                new Program()
-                        .addChild(new DataDB(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_ADD)
-                                        .addChild(new ExprNumber(0, 0, 2))
-                                        .addChild(new ExprInfix(0, 0, OP_MULTIPLY)
-                                                .addChild(new ExprNumber(0, 0, 3))
-                                                .addChild(new ExprNumber(0, 0, 4))))),
+                new Program("")
+                        .addChild(new DataDB(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_ADD)
+                                        .addChild(new ExprNumber(POSITION, 2))
+                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                                .addChild(new ExprNumber(POSITION, 3))
+                                                .addChild(new ExprNumber(POSITION, 4))))),
                 program
         );
     }
@@ -50,13 +52,13 @@ public class ParseExprTest {
     public void testPrioritiesMulAdd() {
         Program program = parseProgram("db 2*3+4");
         assertTrees(
-                new Program()
-                        .addChild(new DataDB(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_ADD)
-                                        .addChild(new ExprInfix(0, 0, OP_MULTIPLY)
-                                                .addChild(new ExprNumber(0, 0, 2))
-                                                .addChild(new ExprNumber(0, 0, 3)))
-                                        .addChild(new ExprNumber(0, 0, 4)))),
+                new Program("")
+                        .addChild(new DataDB(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_ADD)
+                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                                .addChild(new ExprNumber(POSITION, 2))
+                                                .addChild(new ExprNumber(POSITION, 3)))
+                                        .addChild(new ExprNumber(POSITION, 4)))),
                 program
         );
     }
@@ -65,15 +67,15 @@ public class ParseExprTest {
     public void testAssociativityPlusMinus() {
         Program program = parseProgram("db 2-3+4-9");
         assertTrees(
-                new Program()
-                        .addChild(new DataDB(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_SUBTRACT)
-                                        .addChild(new ExprInfix(0, 0, OP_ADD)
-                                                .addChild(new ExprInfix(0, 0, OP_SUBTRACT)
-                                                        .addChild(new ExprNumber(0, 0, 2))
-                                                        .addChild(new ExprNumber(0, 0, 3)))
-                                                .addChild(new ExprNumber(0, 0, 4)))
-                                        .addChild(new ExprNumber(0, 0, 9)))),
+                new Program("")
+                        .addChild(new DataDB(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                                .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                                        .addChild(new ExprNumber(POSITION, 2))
+                                                        .addChild(new ExprNumber(POSITION, 3)))
+                                                .addChild(new ExprNumber(POSITION, 4)))
+                                        .addChild(new ExprNumber(POSITION, 9)))),
                 program
         );
     }
@@ -82,15 +84,15 @@ public class ParseExprTest {
     public void testAssociativitMulDiv() {
         Program program = parseProgram("db 2/3*4/9");
         assertTrees(
-                new Program()
-                        .addChild(new DataDB(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_DIVIDE)
-                                        .addChild(new ExprInfix(0, 0, OP_MULTIPLY)
-                                                .addChild(new ExprInfix(0, 0, OP_DIVIDE)
-                                                        .addChild(new ExprNumber(0, 0, 2))
-                                                        .addChild(new ExprNumber(0, 0, 3)))
-                                                .addChild(new ExprNumber(0, 0, 4)))
-                                        .addChild(new ExprNumber(0, 0, 9)))),
+                new Program("")
+                        .addChild(new DataDB(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_DIVIDE)
+                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                                .addChild(new ExprInfix(POSITION, OP_DIVIDE)
+                                                        .addChild(new ExprNumber(POSITION, 2))
+                                                        .addChild(new ExprNumber(POSITION, 3)))
+                                                .addChild(new ExprNumber(POSITION, 4)))
+                                        .addChild(new ExprNumber(POSITION, 9)))),
                 program
         );
     }
@@ -99,19 +101,19 @@ public class ParseExprTest {
     public void testPrecedencePlusMinusMulDivMod() {
         Program program = parseProgram("db 2+3*4-9/2 mod 3");
         assertTrees(
-                new Program()
-                        .addChild(new DataDB(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_SUBTRACT)
-                                        .addChild(new ExprInfix(0, 0, OP_ADD)
-                                                .addChild(new ExprNumber(0, 0, 2))
-                                                .addChild(new ExprInfix(0, 0, OP_MULTIPLY)
-                                                        .addChild(new ExprNumber(0, 0, 3))
-                                                        .addChild(new ExprNumber(0, 0, 4))))
-                                        .addChild(new ExprInfix(0, 0, OP_MOD)
-                                                .addChild(new ExprInfix(0, 0, OP_DIVIDE)
-                                                        .addChild(new ExprNumber(0, 0, 9))
-                                                        .addChild(new ExprNumber(0, 0, 2)))
-                                                .addChild(new ExprNumber(0, 0, 3))))),
+                new Program("")
+                        .addChild(new DataDB(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                                .addChild(new ExprNumber(POSITION, 2))
+                                                .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                                        .addChild(new ExprNumber(POSITION, 3))
+                                                        .addChild(new ExprNumber(POSITION, 4))))
+                                        .addChild(new ExprInfix(POSITION, OP_MOD)
+                                                .addChild(new ExprInfix(POSITION, OP_DIVIDE)
+                                                        .addChild(new ExprNumber(POSITION, 9))
+                                                        .addChild(new ExprNumber(POSITION, 2)))
+                                                .addChild(new ExprNumber(POSITION, 3))))),
                 program
         );
     }
@@ -120,21 +122,21 @@ public class ParseExprTest {
     public void testAssociativityEqual() {
         Program program = parseProgram("db 1 + 2 + 2 = 5 = 5 = 6 - 1");
         assertTrees(
-                new Program()
-                        .addChild(new DataDB(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_EQUAL)
-                                        .addChild(new ExprInfix(0, 0, OP_ADD) // 1 + 2 + 2 associates to left
-                                                .addChild(new ExprInfix(0, 0, OP_ADD)
-                                                        .addChild(new ExprNumber(0, 0, 1))
-                                                        .addChild(new ExprNumber(0, 0, 2)))
-                                                .addChild(new ExprNumber(0, 0, 2)))
-                                        .addChild(new ExprInfix(0, 0, OP_EQUAL)
-                                                .addChild(new ExprNumber(0, 0, 5)) // ... = 5 associates to right
-                                                .addChild(new ExprInfix(0, 0, OP_EQUAL)
-                                                        .addChild(new ExprNumber(0, 0, 5))
-                                                        .addChild(new ExprInfix(0, 0, OP_SUBTRACT) // minus has > precedence than =
-                                                                .addChild(new ExprNumber(0, 0, 6))
-                                                                .addChild(new ExprNumber(0, 0, 1))))))),
+                new Program("")
+                        .addChild(new DataDB(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                        .addChild(new ExprInfix(POSITION, OP_ADD) // 1 + 2 + 2 associates to left
+                                                .addChild(new ExprInfix(POSITION, OP_ADD)
+                                                        .addChild(new ExprNumber(POSITION, 1))
+                                                        .addChild(new ExprNumber(POSITION, 2)))
+                                                .addChild(new ExprNumber(POSITION, 2)))
+                                        .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                                .addChild(new ExprNumber(POSITION, 5)) // ... = 5 associates to right
+                                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                                        .addChild(new ExprNumber(POSITION, 5))
+                                                        .addChild(new ExprInfix(POSITION, OP_SUBTRACT) // minus has > precedence than =
+                                                                .addChild(new ExprNumber(POSITION, 6))
+                                                                .addChild(new ExprNumber(POSITION, 1))))))),
                 program
         );
     }
@@ -143,27 +145,27 @@ public class ParseExprTest {
     public void testAndMulXorDivNotPlusMinus() {
         Program program = parseProgram("db not 1 & 2 | 2 ^ 5 = - 5 * 6 shl 4 - 1 shr 2");
         assertTrees(
-                new Program()
-                        .addChild(new DataDB(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_OR)
-                                        .addChild(new ExprInfix(0, 0, OP_AND)
-                                                .addChild(new ExprUnary(0, 0, OP_NOT)
-                                                        .addChild(new ExprNumber(0, 0, 1)))
-                                                .addChild(new ExprNumber(0, 0, 2)))
-                                        .addChild(new ExprInfix(0, 0, OP_XOR)
-                                                .addChild(new ExprNumber(0, 0, 2))
-                                                .addChild(new ExprInfix(0, 0, OP_EQUAL)
-                                                        .addChild(new ExprNumber(0, 0, 5))
-                                                        .addChild(new ExprInfix(0, 0, OP_SHR)
-                                                                .addChild(new ExprInfix(0, 0, OP_SHL)
-                                                                        .addChild(new ExprInfix(0, 0, OP_MULTIPLY)
-                                                                                .addChild(new ExprUnary(0, 0, OP_SUBTRACT)
-                                                                                        .addChild(new ExprNumber(0, 0, 5)))
-                                                                                .addChild(new ExprNumber(0, 0, 6)))
-                                                                        .addChild(new ExprInfix(0, 0, OP_SUBTRACT)
-                                                                                .addChild(new ExprNumber(0, 0, 4))
-                                                                                .addChild(new ExprNumber(0, 0, 1))))
-                                                                .addChild(new ExprNumber(0, 0, 2))))))),
+                new Program("")
+                        .addChild(new DataDB(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_OR)
+                                        .addChild(new ExprInfix(POSITION, OP_AND)
+                                                .addChild(new ExprUnary(POSITION, OP_NOT)
+                                                        .addChild(new ExprNumber(POSITION, 1)))
+                                                .addChild(new ExprNumber(POSITION, 2)))
+                                        .addChild(new ExprInfix(POSITION, OP_XOR)
+                                                .addChild(new ExprNumber(POSITION, 2))
+                                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                                        .addChild(new ExprNumber(POSITION, 5))
+                                                        .addChild(new ExprInfix(POSITION, OP_SHR)
+                                                                .addChild(new ExprInfix(POSITION, OP_SHL)
+                                                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                                                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                                                                        .addChild(new ExprNumber(POSITION, 5)))
+                                                                                .addChild(new ExprNumber(POSITION, 6)))
+                                                                        .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                                                                .addChild(new ExprNumber(POSITION, 4))
+                                                                                .addChild(new ExprNumber(POSITION, 1))))
+                                                                .addChild(new ExprNumber(POSITION, 2))))))),
                 program
         );
     }
@@ -173,27 +175,27 @@ public class ParseExprTest {
         //Program program = parseProgram("db ((~1) & 2) | (2 ^ (5 = ((((-5) * 6) << (4 - 1)) >> 2)))");
         Program program = parseProgram("db ~1 & 2 | 2 ^ 5 = -5 * 6 << 4 - 1 >> 2");
         assertTrees(
-                new Program()
-                        .addChild(new DataDB(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_OR)
-                                        .addChild(new ExprInfix(0, 0, OP_AND)
-                                                .addChild(new ExprUnary(0, 0, OP_NOT_2)
-                                                        .addChild(new ExprNumber(0, 0, 1)))
-                                                .addChild(new ExprNumber(0, 0, 2)))
-                                        .addChild(new ExprInfix(0, 0, OP_XOR)
-                                                .addChild(new ExprNumber(0, 0, 2))
-                                                .addChild(new ExprInfix(0, 0, OP_EQUAL)
-                                                        .addChild(new ExprNumber(0, 0, 5))
-                                                        .addChild(new ExprInfix(0, 0, OP_SHR_2)
-                                                                .addChild(new ExprInfix(0, 0, OP_SHL_2)
-                                                                        .addChild(new ExprInfix(0, 0, OP_MULTIPLY)
-                                                                                .addChild(new ExprUnary(0, 0, OP_SUBTRACT)
-                                                                                        .addChild(new ExprNumber(0, 0, 5)))
-                                                                                .addChild(new ExprNumber(0, 0, 6)))
-                                                                        .addChild(new ExprInfix(0, 0, OP_SUBTRACT)
-                                                                                .addChild(new ExprNumber(0, 0, 4))
-                                                                                .addChild(new ExprNumber(0, 0, 1))))
-                                                                .addChild(new ExprNumber(0, 0, 2))))))),
+                new Program("")
+                        .addChild(new DataDB(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_OR)
+                                        .addChild(new ExprInfix(POSITION, OP_AND)
+                                                .addChild(new ExprUnary(POSITION, OP_NOT_2)
+                                                        .addChild(new ExprNumber(POSITION, 1)))
+                                                .addChild(new ExprNumber(POSITION, 2)))
+                                        .addChild(new ExprInfix(POSITION, OP_XOR)
+                                                .addChild(new ExprNumber(POSITION, 2))
+                                                .addChild(new ExprInfix(POSITION, OP_EQUAL)
+                                                        .addChild(new ExprNumber(POSITION, 5))
+                                                        .addChild(new ExprInfix(POSITION, OP_SHR_2)
+                                                                .addChild(new ExprInfix(POSITION, OP_SHL_2)
+                                                                        .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                                                                .addChild(new ExprUnary(POSITION, OP_SUBTRACT)
+                                                                                        .addChild(new ExprNumber(POSITION, 5)))
+                                                                                .addChild(new ExprNumber(POSITION, 6)))
+                                                                        .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                                                                .addChild(new ExprNumber(POSITION, 4))
+                                                                                .addChild(new ExprNumber(POSITION, 1))))
+                                                                .addChild(new ExprNumber(POSITION, 2))))))),
                 program
         );
     }
@@ -202,15 +204,15 @@ public class ParseExprTest {
     public void testParenthesis() {
         Program program = parseProgram("db (2 + 3) * (4 - 2)");
         assertTrees(
-                new Program()
-                        .addChild(new DataDB(0, 0)
-                                .addChild(new ExprInfix(0, 0, OP_MULTIPLY)
-                                        .addChild(new ExprInfix(0, 0, OP_ADD)
-                                                .addChild(new ExprNumber(0, 0, 2))
-                                                .addChild(new ExprNumber(0, 0, 3)))
-                                        .addChild(new ExprInfix(0, 0, OP_SUBTRACT)
-                                                .addChild(new ExprNumber(0, 0, 4))
-                                                .addChild(new ExprNumber(0, 0, 2))))),
+                new Program("")
+                        .addChild(new DataDB(POSITION)
+                                .addChild(new ExprInfix(POSITION, OP_MULTIPLY)
+                                        .addChild(new ExprInfix(POSITION, OP_ADD)
+                                                .addChild(new ExprNumber(POSITION, 2))
+                                                .addChild(new ExprNumber(POSITION, 3)))
+                                        .addChild(new ExprInfix(POSITION, OP_SUBTRACT)
+                                                .addChild(new ExprNumber(POSITION, 4))
+                                                .addChild(new ExprNumber(POSITION, 2))))),
                 program
         );
     }

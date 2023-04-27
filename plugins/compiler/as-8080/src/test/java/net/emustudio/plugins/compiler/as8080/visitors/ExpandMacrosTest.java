@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.visitors;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Program;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprId;
 import net.emustudio.plugins.compiler.as8080.ast.expr.ExprNumber;
@@ -38,6 +39,8 @@ import static net.emustudio.plugins.compiler.as8080.Utils.*;
 import static org.junit.Assert.assertTrue;
 
 public class ExpandMacrosTest {
+    private final static SourceCodePosition POSITION = new SourceCodePosition(0, 0, "");
+
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
@@ -47,9 +50,9 @@ public class ExpandMacrosTest {
         ExpandMacrosVisitor macrosVisitor = new ExpandMacrosVisitor();
         macrosVisitor.visit(program);
 
-        assertTrees(new Program()
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroDef(0, 0, "x"))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroDef(POSITION, "x"))),
                 program
         );
     }
@@ -60,9 +63,9 @@ public class ExpandMacrosTest {
         ExpandMacrosVisitor macrosVisitor = new ExpandMacrosVisitor();
         macrosVisitor.visit(program);
 
-        assertTrees(new Program()
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroDef(0, 0, "x"))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroDef(POSITION, "x"))),
                 program
         );
     }
@@ -73,11 +76,11 @@ public class ExpandMacrosTest {
         ExpandMacrosVisitor macrosVisitor = new ExpandMacrosVisitor();
         macrosVisitor.visit(program);
 
-        assertTrees(new Program()
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroDef(0, 0, "x")))
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroDef(0, 0, "x"))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroDef(POSITION, "x")))
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroDef(POSITION, "x"))),
                 program
         );
     }
@@ -93,9 +96,9 @@ public class ExpandMacrosTest {
         ExpandMacrosVisitor macrosVisitor = new ExpandMacrosVisitor();
         macrosVisitor.visit(program);
 
-        assertTrees(new Program()
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroDef(0, 0, "x"))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroDef(POSITION, "x"))),
                 program
         );
     }
@@ -120,21 +123,21 @@ public class ExpandMacrosTest {
         ExpandMacrosVisitor macrosVisitor = new ExpandMacrosVisitor();
         macrosVisitor.visit(program);
 
-        assertTrees(new Program()
-                        .addChild(new PseudoMacroCall(0, 0, "x")
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprNumber(0, 0, 1)))
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprNumber(0, 0, 2)))
-                                .addChild(new PseudoMacroArgument(0, 0)
-                                        .addChild(new ExprNumber(0, 0, 3)))
-                                .addChild(new PseudoMacroDef(0, 0, "x")
-                                        .addChild(new PseudoMacroParameter(0, 0)
-                                                .addChild(new ExprId(0, 0, "q")))
-                                        .addChild(new PseudoMacroParameter(0, 0)
-                                                .addChild(new ExprId(0, 0, "r")))
-                                        .addChild(new PseudoMacroParameter(0, 0)
-                                                .addChild(new ExprId(0, 0, "t"))))),
+        assertTrees(new Program("")
+                        .addChild(new PseudoMacroCall(POSITION, "x")
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprNumber(POSITION, 1)))
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprNumber(POSITION, 2)))
+                                .addChild(new PseudoMacroArgument(POSITION)
+                                        .addChild(new ExprNumber(POSITION, 3)))
+                                .addChild(new PseudoMacroDef(POSITION, "x")
+                                        .addChild(new PseudoMacroParameter(POSITION)
+                                                .addChild(new ExprId(POSITION, "q")))
+                                        .addChild(new PseudoMacroParameter(POSITION)
+                                                .addChild(new ExprId(POSITION, "r")))
+                                        .addChild(new PseudoMacroParameter(POSITION)
+                                                .addChild(new ExprId(POSITION, "t"))))),
                 program
         );
     }

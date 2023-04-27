@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.expr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
@@ -32,13 +33,13 @@ import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.normalizeId;
 public class ExprId extends Node {
     public final String id;
 
-    public ExprId(int line, int column, String id) {
-        super(line, column);
+    public ExprId(SourceCodePosition position, String id) {
+        super(position);
         this.id = Objects.requireNonNull(id);
     }
 
-    public ExprId(Token id) {
-        this(id.getLine(), id.getCharPositionInLine(), id.getText());
+    public ExprId(String fileName, Token id) {
+        this(positionFromToken(fileName, id), id.getText());
     }
 
     @Override
@@ -58,7 +59,7 @@ public class ExprId extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new ExprId(line, column, id);
+        return new ExprId(position, id);
     }
 
     @Override

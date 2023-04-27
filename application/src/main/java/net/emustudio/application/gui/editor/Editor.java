@@ -18,6 +18,7 @@
  */
 package net.emustudio.application.gui.editor;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import org.fife.rsta.ui.search.SearchListener;
 
 import java.awt.*;
@@ -54,10 +55,9 @@ public interface Editor extends SearchListener {
     /**
      * Set caret position.
      *
-     * @param line   line (if -1 does nothing)
-     * @param column column (if -1 only sets the line)
+     * @param position position in the source code
      */
-    void setPosition(int line, int column);
+    void setPosition(SourceCodePosition position);
 
 
     Optional<File> getCurrentFile();

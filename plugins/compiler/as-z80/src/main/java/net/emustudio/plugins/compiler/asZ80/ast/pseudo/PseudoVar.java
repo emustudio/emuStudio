@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.pseudo;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -27,14 +28,14 @@ import java.util.Objects;
 public class PseudoVar extends Node {
     public final String id;
 
-    public PseudoVar(int line, int column, String id) {
-        super(line, column);
+    public PseudoVar(SourceCodePosition position, String id) {
+        super(position);
         this.id = Objects.requireNonNull(id);
         // expr is the only child
     }
 
-    public PseudoVar(Token id) {
-        this(id.getLine(), id.getCharPositionInLine(), id.getText());
+    public PseudoVar(String fileName, Token id) {
+        this(positionFromToken(fileName, id), id.getText());
     }
 
     @Override
@@ -49,7 +50,7 @@ public class PseudoVar extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new PseudoVar(line, column, id);
+        return new PseudoVar(position, id);
     }
 
     @Override

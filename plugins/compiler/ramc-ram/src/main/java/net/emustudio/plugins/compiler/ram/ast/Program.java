@@ -25,6 +25,7 @@ import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 
 public class Program {
@@ -89,7 +90,7 @@ public class Program {
         }
     }
 
-    public void saveToFile(String filename) throws IOException {
+    public void saveToFile(Path filename) throws IOException {
         Map<Integer, RamInstruction> programMemory = new HashMap<>();
         for (RamInstruction instruction : instructions) {
             programMemory.put(instruction.getAddress(), instruction);

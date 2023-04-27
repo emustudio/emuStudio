@@ -18,7 +18,8 @@
  */
 package net.emustudio.plugins.memory.ssem;
 
-import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
 import org.junit.Test;
 
 import static org.easymock.EasyMock.*;
@@ -29,10 +30,10 @@ public class MemoryContextImplTest {
 
     @Test
     public void testAfterClearObserversAreNotified() {
-        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
 
-        Memory.MemoryListener listener = createMock(Memory.MemoryListener.class);
-        listener.memoryChanged(eq(-1));
+        MemoryContext.MemoryListener listener = createMock(MemoryContext.MemoryListener.class);
+        listener.memoryContentChanged(eq(-1), eq(-1));
         expectLastCall().once();
         replay(listener);
 
@@ -44,23 +45,23 @@ public class MemoryContextImplTest {
 
     @Test
     public void testReadWithoutWritReturnsZero() {
-        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
 
         assertEquals(0L, (long) context.read(10));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testReadAtInvalidLocationThrows() {
-        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
 
         context.read(-1);
     }
 
     @Test
     public void testAfterReadNoObserversAreNotified() {
-        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
 
-        Memory.MemoryListener listener = createMock(Memory.MemoryListener.class);
+        MemoryContext.MemoryListener listener = createMock(MemoryContext.MemoryListener.class);
         replay(listener);
 
         context.addMemoryListener(listener);
@@ -71,10 +72,10 @@ public class MemoryContextImplTest {
 
     @Test
     public void testAfterWriteObserversAreNotified() {
-        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
 
-        Memory.MemoryListener listener = createMock(Memory.MemoryListener.class);
-        listener.memoryChanged(eq(10));
+        MemoryContext.MemoryListener listener = createMock(MemoryContext.MemoryListener.class);
+        listener.memoryContentChanged(eq(10), eq(10));
         expectLastCall().once();
         replay(listener);
 
@@ -86,7 +87,7 @@ public class MemoryContextImplTest {
 
     @Test
     public void testWriteReallyWritesCorrectValueAtCorrectLocation() {
-        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
 
         context.write(10, (byte) 134);
         assertEquals((byte) 134, (byte) context.read(10));
@@ -94,31 +95,31 @@ public class MemoryContextImplTest {
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testWriteAtInvalidLocationThrows() {
-        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
 
         context.write(-1, (byte) 134);
     }
 
     @Test
     public void testGetSizeReturnsNumberOfCells() {
-        MemoryContextImpl context = new MemoryContextImpl();
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
 
         assertEquals(MemoryContextImpl.NUMBER_OF_CELLS, context.getSize());
     }
 
     @Test
     public void testClassTypeIsByte() {
-        assertEquals(Byte.class, new MemoryContextImpl().getDataType());
+        assertEquals(Byte.class, new MemoryContextImpl(new Annotations()).getCellTypeClass());
     }
 
     @Test
     public void testReadArrayIsSupported() {
-        assertArrayEquals(new Byte[]{0, 0, 0, 0}, new MemoryContextImpl().read(0, 4));
+        assertArrayEquals(new Byte[]{0, 0, 0, 0}, new MemoryContextImpl(new Annotations()).read(0, 4));
     }
 
     @Test
     public void testWriteArrayIsSupported() {
-        MemoryContextImpl mem = new MemoryContextImpl();
+        MemoryContextImpl mem = new MemoryContextImpl(new Annotations());
 
         Byte[] row = new Byte[]{1, 2, 3, 4};
         mem.write(0, row);

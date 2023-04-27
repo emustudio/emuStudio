@@ -76,7 +76,7 @@ public class DumpMemoryAction extends AbstractAction {
                         }
                     }
                 } else {
-                    RaspMemoryContext.serialize(path.toString(), programLocation.get(), context.getSnapshot());
+                    RaspMemoryContext.serialize(path, programLocation.get(), context.getSnapshot());
                 }
             } catch (IOException ex) {
                 LOGGER.error("Memory dump could not be created", ex);

@@ -20,20 +20,27 @@ package net.emustudio.plugins.memory.bytemem;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @PluginContext(id = "Byte Memory")
 public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements ByteMemoryContext {
     final static int DEFAULT_MEM_SIZE = 65536;
 
     private final RangeTree romRanges = new RangeTree();
+    private final MemoryContextAnnotations annotations;
     private Byte[][] mem = new Byte[1][0];
     private int banksCount;
     private int bankSelect = 0;
     private int bankCommon = 0;
+
+    protected MemoryContextImpl(MemoryContextAnnotations annotations) {
+        this.annotations = Objects.requireNonNull(annotations);
+    }
 
     void init(int size, int banks, int bankCommon) {
         if (banks <= 0) {
@@ -51,7 +58,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         for (Byte[] bank : mem) {
             Arrays.fill(bank, (byte) 0);
         }
-        notifyMemoryChanged(-1);
+        notifyMemoryContentChanged(-1);
     }
 
     void destroy() {
@@ -107,7 +114,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     public void write(int to, Byte value) {
         if (!isReadOnly(to)) {
             mem[bank(to)][to] = value;
-            notifyMemoryChanged(to);
+            notifyMemoryContentChanged(to);
         }
     }
 
@@ -115,27 +122,30 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
         if (!isReadOnly(to)) {
             int activeBank = (to < bankCommon) ? bank : 0;
             mem[activeBank][to] = val;
-            notifyMemoryChanged(to);
+            notifyMemoryContentChanged(to);
         }
     }
 
     public void write(int to, Byte[] values, int count) {
         if (!romRanges.intersects(to, to + count)) {
             System.arraycopy(values, 0, mem[bank(to)], to, count);
-            for (int i = 0; i < values.length; i++) {
-                notifyMemoryChanged(to + i);
-            }
+            notifyMemoryContentChanged(to, to + values.length);
         }
     }
 
     @Override
-    public Class<Byte> getDataType() {
+    public Class<Byte> getCellTypeClass() {
         return Byte.class;
     }
 
     @Override
     public int getSize() {
         return mem[0].length;
+    }
+
+    @Override
+    public MemoryContextAnnotations annotations() {
+        return annotations;
     }
 
     @Override

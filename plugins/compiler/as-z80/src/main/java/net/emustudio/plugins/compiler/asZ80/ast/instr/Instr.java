@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.instr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
@@ -28,8 +29,8 @@ public class Instr extends Node {
     public final int z;
     private int y;
 
-    public Instr(int line, int column, int opcode, int x, int y, int z) {
-        super(line, column);
+    public Instr(SourceCodePosition position, int opcode, int x, int y, int z) {
+        super(position);
         this.opcode = opcode;
         this.x = x;
         this.y = y;
@@ -38,12 +39,12 @@ public class Instr extends Node {
         // children might be expr in the same order as when compiled
     }
 
-    public Instr(Token opcode, int x, int y, int z) {
-        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), x, y, z);
+    public Instr(String fileName, Token opcode, int x, int y, int z) {
+        this(positionFromToken(fileName, opcode), opcode.getType(), x, y, z);
     }
 
-    public Instr(Token opcode, int x, int q, int p, int z) {
-        this(opcode.getLine(), opcode.getCharPositionInLine(), opcode.getType(), x, (p << 1) | q, z);
+    public Instr(String fileName, Token opcode, int x, int q, int p, int z) {
+        this(positionFromToken(fileName, opcode), opcode.getType(), x, (p << 1) | q, z);
     }
 
     public void setY(int y) {
@@ -67,7 +68,7 @@ public class Instr extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new Instr(line, column, opcode, x, y, z);
+        return new Instr(position, opcode, x, y, z);
     }
 
     @Override

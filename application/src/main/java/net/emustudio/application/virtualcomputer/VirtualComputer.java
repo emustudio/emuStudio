@@ -18,7 +18,6 @@
  */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.internal.Unchecked;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
@@ -31,6 +30,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.helpers.Unchecked;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,7 +120,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
     ) throws InvalidPluginException {
 
         Map<Long, PluginMeta> plugins = new HashMap<>();
-        AtomicLong pluginIdCounter = new AtomicLong();
+        AtomicLong pluginIdCounter = new AtomicLong(1); // 0 is reserved for emuStudio
 
         for (int i = 0; i < Math.min(pluginClasses.size(), pluginConfigs.size()); i++) {
             Class<Plugin> pluginClass = pluginClasses.get(i);
@@ -151,8 +151,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                                                PluginSettings pluginSettings) throws InvalidPluginException {
         Objects.requireNonNull(mainClass);
         Objects.requireNonNull(applicationApi);
-
-
+        
         try {
             Constructor<?> constructor = mainClass.getDeclaredConstructor(PLUGIN_CONSTRUCTOR_PARAMS);
             return (Plugin) constructor.newInstance(pluginID, applicationApi, pluginSettings);

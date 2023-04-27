@@ -18,13 +18,14 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.data;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 
 public class DataDB extends Node {
 
-    public DataDB(int line, int column) {
-        super(line, column);
+    public DataDB(SourceCodePosition position) {
+        super(position);
         // child is string, expr or 8-bit instruction
     }
 
@@ -35,6 +36,6 @@ public class DataDB extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new DataDB(line, column);
+        return new DataDB(position);
     }
 }

@@ -22,33 +22,33 @@ import java.text.SimpleDateFormat
 apply from: 'test_report.gradle'
 
 ext.versions = [
-        slf4j: '2.0.6'
+        slf4j: '2.0.7'
 ]
 
 ext.libs = [
-        emuLib           : "net.emustudio:emulib:12.0.0",
-        cpuTestSuite     : "net.emustudio:cpu-testsuite_12.0:1.2.0",
+        emuLib           : "net.emustudio:emulib:12.1.0-SNAPSHOT",
+        cpuTestSuite     : "net.emustudio:cpu-testsuite_12.1:1.2.0-SNAPSHOT",
 
         jcipAnnotations  : "net.jcip:jcip-annotations:1.0",
-        antlr            : "org.antlr:antlr4:4.11.1",
-        antlrRuntime     : "org.antlr:antlr4-runtime:4.11.1",
+        antlr            : "org.antlr:antlr4:4.12.0",
+        antlrRuntime     : "org.antlr:antlr4-runtime:4.12.0",
 
         slf4JApi         : "org.slf4j:slf4j-api:${versions.slf4j}",
         slf4JSimple      : "org.slf4j:slf4j-simple:${versions.slf4j}",
         slf4JNop         : "org.slf4j:slf4j-nop:${versions.slf4j}",
-        logback          : "ch.qos.logback:logback-classic:1.4.5",
+        logback          : "ch.qos.logback:logback-classic:1.4.6",
 
-        picocli          : "info.picocli:picocli:4.7.0",
-        picocliAnnotation: "info.picocli:picocli-codegen:4.7.0",
+        picocli          : "info.picocli:picocli:4.7.1",
+        picocliAnnotation: "info.picocli:picocli-codegen:4.7.1",
 
         tomlj            : "com.electronwill.night-config:toml:3.6.6",
 
-        editor           : "com.fifesoft:rsyntaxtextarea:3.3.2",
+        editor           : "com.fifesoft:rsyntaxtextarea:3.3.3",
         editorDialogs    : "com.fifesoft:rstaui:3.3.1",
 
-        junit            : "junit:junit:4.13.1",
-        easyMock         : "org.easymock:easymock:4.2",
-        mockito          : "org.mockito:mockito-all:1.10.19"
+        junit            : "junit:junit:4.13.2",
+        easyMock         : "org.easymock:easymock:5.1.0",
+        mockito          : "org.mockito:mockito-core:5.2.0"
 ]
 
 allprojects {

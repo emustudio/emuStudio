@@ -22,6 +22,7 @@ import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class BinaryLoader implements Loader {
@@ -32,14 +33,14 @@ public class BinaryLoader implements Loader {
     }
 
     @Override
-    public void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws Exception {
+    public void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws IOException {
         int oldBank = memory.getSelectedBank();
 
         try (FileInputStream stream = new FileInputStream(path.toFile())) {
             memory.selectBank(bank.bank);
             byte[] content = stream.readAllBytes();
             memory.write(bank.address, NumberUtils.nativeBytesToBytes(content));
-        } catch (Exception e) {
+        } catch (IOException e) {
             memory.selectBank(oldBank);
             throw e;
         }

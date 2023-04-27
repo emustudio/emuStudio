@@ -20,34 +20,38 @@ package net.emustudio.plugins.memory.bytemem.loaders;
 
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.Optional;
 
 public class TapLoader implements Loader {
+    private final static Logger LOGGER = LoggerFactory.getLogger(TapLoader.class);
 
     @Override
     public boolean isMemoryAddressAware() {
-        // Tape is usually loaded by BASIC; interprets program start line to address; it depends on emulated machine..
-        return false;
+        // Only tapes with memory blocks (with given start address) are loadable
+        return true;
     }
 
     @Override
-    public void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws Exception {
+    public void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws IOException{
         int oldBank = memory.getSelectedBank();
         try (FileInputStream stream = new FileInputStream(path.toFile())) {
             memory.selectBank(bank.bank);
-            parse(stream.readAllBytes(), bank.address, memory);
-        } catch (Exception e) {
+            parse(stream.readAllBytes(), memory);
+        } catch (IOException e) {
             memory.selectBank(oldBank);
             throw e;
         }
     }
 
-    private void parse(byte[] content, int address, ByteMemoryContext memory) {
+    private void parse(byte[] content, ByteMemoryContext memory) {
         Optional<Integer> startAddress = Optional.empty();
 
         ByteBuffer buffer = ByteBuffer.wrap(content);
@@ -57,23 +61,19 @@ public class TapLoader implements Loader {
             int flagByte = buffer.get() & 0xFF;
 
             if (flagByte == 0) {
-                final Optional<Integer> javaFail = startAddress;
-                startAddress = parseHeader(buffer).or(() -> javaFail);
+                final Optional<Integer> failOver = startAddress;
+                startAddress = parseHeader(buffer).or(() -> failOver);
             } else {
                 byte[] data = new byte[blockLength - 2];
                 buffer.get(data);
-
-                if (startAddress.isPresent()) {
-                    memory.write(startAddress.get(), NumberUtils.nativeBytesToBytes(data));
-                } else {
-                    memory.write(0, NumberUtils.nativeBytesToBytes(data));
-                    startAddress = Optional.of(data.length);
-                }
+                // ignore other than memory blocks
+                startAddress.ifPresentOrElse(
+                        integer -> memory.write(integer, NumberUtils.nativeBytesToBytes(data)),
+                        () -> LOGGER.warn("Ignoring non-memory block data (program or variables)")
+                );
             }
             buffer.get(); // checksum
         }
-
-        memory.write(address, NumberUtils.nativeBytesToBytes(content));
     }
 
     private Optional<Integer> parseHeader(ByteBuffer buffer) {
@@ -85,6 +85,7 @@ public class TapLoader implements Loader {
         buffer.getShort();
 
         if (headerFlag == 3) {
+            // memory block
             return Optional.of(maybeAddress);
         }
         return Optional.empty();

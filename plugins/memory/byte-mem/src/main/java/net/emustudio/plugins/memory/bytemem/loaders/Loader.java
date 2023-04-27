@@ -20,6 +20,7 @@ package net.emustudio.plugins.memory.bytemem.loaders;
 
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
@@ -32,7 +33,8 @@ public interface Loader {
             "tzx", new TzxLoader(),
             "bin", new BinaryLoader(),
             "com", new BinaryLoader(),
-            "out", new BinaryLoader()
+            "out", new BinaryLoader(),
+            "rom", new BinaryLoader()
     );
 
     /**
@@ -50,7 +52,7 @@ public interface Loader {
      * @param memory memory context
      * @param bank   memory bank + address
      */
-    void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws Exception;
+    void load(Path path, ByteMemoryContext memory, MemoryBank bank) throws IOException;
 
     class MemoryBank {
         final int bank;

@@ -19,7 +19,6 @@
 package net.emustudio.application.gui.actions.emulator;
 
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 
 import javax.swing.*;
@@ -48,9 +47,7 @@ public class JumpAction extends AbstractAction {
                         .readInteger("Memory address:", "Jump to address", 0)
                         .ifPresent(address -> {
                             if (!cpu.setInstructionLocation(address)) {
-                                int memorySize = computer.getMemory().map(Memory::getSize).orElse(0);
-                                String maxSizeMessage = (memorySize == 0) ? "" : "(probably accepts range from 0 to " + memorySize + ")";
-                                dialogs.showError("Invalid memory address" + maxSizeMessage);
+                                dialogs.showError("Invalid memory address (please check memory size)");
                             } else {
                                 refreshDebugTable.run();
                             }

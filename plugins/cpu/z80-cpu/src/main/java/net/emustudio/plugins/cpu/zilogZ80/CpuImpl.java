@@ -29,6 +29,7 @@ import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.intel8080.api.FrequencyUpdater;
+import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.cpu.zilogZ80.gui.StatusPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +66,7 @@ public class CpuImpl extends AbstractCPU {
         super(pluginID, applicationApi, settings);
         try {
             applicationApi.getContextPool().register(pluginID, context, Context8080.class);
+            applicationApi.getContextPool().register(pluginID, context, ContextZ80.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register Z80 CPU context", e);
             applicationApi.getDialogs().showError(

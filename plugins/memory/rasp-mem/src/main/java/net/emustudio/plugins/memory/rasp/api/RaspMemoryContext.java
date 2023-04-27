@@ -27,6 +27,7 @@ import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -45,7 +46,8 @@ public interface RaspMemoryContext extends MemoryContext<Integer> {
 
     RaspMemory getSnapshot();
 
-    default Class<Integer> getDataType() {
+    @Override
+    default Class<Integer> getCellTypeClass() {
         return Integer.class;
     }
 
@@ -57,13 +59,13 @@ public interface RaspMemoryContext extends MemoryContext<Integer> {
         return Disassembler.disassembleMnemo(opcode);
     }
 
-    static void serialize(String filename, int programLocation, RaspMemory memory) throws IOException {
+    static void serialize(Path filename, int programLocation, RaspMemory memory) throws IOException {
         Map<Integer, String> labels = new HashMap<>();
         for (RaspLabel label : memory.labels) {
             labels.put(label.getAddress(), label.getLabel());
         }
 
-        OutputStream file = new FileOutputStream(filename);
+        OutputStream file = new FileOutputStream(filename.toFile());
         OutputStream buffer = new BufferedOutputStream(file);
         try (ObjectOutput output = new ObjectOutputStream(buffer)) {
             output.writeObject(programLocation);

@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.ast.expr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.ast.Evaluated;
 import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
@@ -59,15 +60,15 @@ public class ExprInfix extends Node {
     public final int operationCode;
     private final BiFunction<Integer, Integer, Integer> operation;
 
-    public ExprInfix(int line, int column, int op) {
-        super(line, column);
+    public ExprInfix(SourceCodePosition position, int op) {
+        super(position);
         this.operationCode = op;
         this.operation = Objects.requireNonNull(infixOps.get(op), "Unknown infix operation");
         // children are: left, right
     }
 
-    public ExprInfix(Token op) {
-        this(op.getLine(), op.getCharPositionInLine(), op.getType());
+    public ExprInfix(String fileName, Token op) {
+        this(positionFromToken(fileName, op), op.getType());
     }
 
     @Override
@@ -86,7 +87,7 @@ public class ExprInfix extends Node {
         if (left.isPresent() && right.isPresent()) {
             int l = left.get().value;
             int r = right.get().value;
-            return Optional.of(new Evaluated(line, column, operation.apply(l, r)));
+            return Optional.of(new Evaluated(position, operation.apply(l, r)));
         }
 
         return Optional.empty();
@@ -99,7 +100,7 @@ public class ExprInfix extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new ExprInfix(line, column, operationCode);
+        return new ExprInfix(position, operationCode);
     }
 
     @Override

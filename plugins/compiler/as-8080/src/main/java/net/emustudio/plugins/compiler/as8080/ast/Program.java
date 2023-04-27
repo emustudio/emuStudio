@@ -18,34 +18,25 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 
 import java.util.Objects;
-import java.util.Optional;
 
 public class Program extends Node {
     private final NameSpace env;
-    private String filename;
 
-    public Program(int line, int column, NameSpace env) {
-        super(line, column);
+    public Program(SourceCodePosition position, NameSpace env) {
+        super(position);
         this.env = Objects.requireNonNull(env);
     }
 
-    public Program(NameSpace env) {
-        this(0, 0, env);
+    public Program(String fileName, NameSpace env) {
+        this(new SourceCodePosition(0, 0, fileName), env);
     }
 
-    public Program() {
-        this(new NameSpace());
-    }
-
-    public Optional<String> getFileName() {
-        return Optional.ofNullable(filename);
-    }
-
-    public void setFileName(String filename) {
-        this.filename = filename;
+    public Program(String fileName) {
+        this(fileName, new NameSpace());
     }
 
     public NameSpace env() {
@@ -59,8 +50,6 @@ public class Program extends Node {
 
     @Override
     protected Node mkCopy() {
-        Program program = new Program(line, column, env);
-        program.setFileName(filename);
-        return program;
+        return new Program(position, env);
     }
 }

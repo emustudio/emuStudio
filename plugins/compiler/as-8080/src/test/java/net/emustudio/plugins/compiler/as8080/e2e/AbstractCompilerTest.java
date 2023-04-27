@@ -35,6 +35,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
@@ -44,6 +45,7 @@ public abstract class AbstractCompilerTest {
     public TemporaryFolder folder = new TemporaryFolder();
     protected Assembler8080 compiler;
     protected MemoryStub<Byte> memoryStub;
+    private int errorCount;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -59,6 +61,7 @@ public abstract class AbstractCompilerTest {
         replay(applicationApi);
 
         compiler = new Assembler8080(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        errorCount = 0;
         compiler.addCompilerListener(new CompilerListener() {
             @Override
             public void onStart() {
@@ -68,6 +71,9 @@ public abstract class AbstractCompilerTest {
             public void onMessage(CompilerMessage message) {
                 if (message.getMessageType() != CompilerMessage.MessageType.TYPE_INFO) {
                     System.out.println(message);
+                }
+                if (message.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) {
+                    errorCount++;
                 }
             }
 
@@ -83,8 +89,9 @@ public abstract class AbstractCompilerTest {
         Files.write(sourceFile.toPath(), content.getBytes(), StandardOpenOption.WRITE);
 
         File outputFile = folder.newFile();
-        if (!compiler.compile(sourceFile.getAbsolutePath(), outputFile.getAbsolutePath())) {
-            throw new Exception("Compilation failed");
+        compiler.compile(sourceFile.toPath(), Optional.of(outputFile.toPath()));
+        if (errorCount > 0) {
+            throw new Exception("Compilation failed with " + errorCount + " errors");
         }
     }
 

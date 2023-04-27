@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
 
 import java.io.IOException;
@@ -36,20 +37,18 @@ public class CompileError {
     public static final int ERROR_VALUE_MUST_BE_POSITIVE = 10;
     public static final int ERROR_VALUE_OUT_OF_BOUNDS = 11;
 
-    public final int line;
-    public final int column;
+    public final SourceCodePosition position;
     public final String msg;
     public final int errorCode;
 
-    private CompileError(int line, int column, int errorCode, String msg) {
-        this.line = line;
-        this.column = column;
+    private CompileError(SourceCodePosition position, int errorCode, String msg) {
+        this.position = Objects.requireNonNull(position);
         this.errorCode = errorCode;
         this.msg = Objects.requireNonNull(msg);
     }
 
     private CompileError(Node node, int errorCode, String msg) {
-        this(node.line, node.column, errorCode, msg);
+        this(node.position, errorCode, msg);
     }
 
 
@@ -112,8 +111,7 @@ public class CompileError {
     @Override
     public String toString() {
         return "CompileError{" +
-                "line=" + line +
-                ", column=" + column +
+                position +
                 ", msg='" + msg + '\'' +
                 ", errorCode=" + errorCode +
                 '}';

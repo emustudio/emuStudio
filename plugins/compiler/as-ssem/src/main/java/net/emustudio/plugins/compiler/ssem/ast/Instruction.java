@@ -18,12 +18,13 @@
  */
 package net.emustudio.plugins.compiler.ssem.ast;
 
-import net.emustudio.plugins.compiler.ssem.Position;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.ssem.SSEMParser;
 import net.jcip.annotations.Immutable;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.ssem.CompilerChecks.checkOperandOutOfBounds;
 import static net.emustudio.plugins.compiler.ssem.CompilerChecks.checkUnknownInstruction;
@@ -45,9 +46,9 @@ public class Instruction {
     public final int tokenType;
     public final long operand;
 
-    public Instruction(int tokenType, long operand, Position instrPosition, Position operandPosition) {
+    public Instruction(int tokenType, long operand, SourceCodePosition instrPosition, Optional<SourceCodePosition> operandPosition) {
         checkUnknownInstruction(!OPCODES.containsKey(tokenType), instrPosition);
-        checkOperandOutOfBounds(operandPosition, tokenType, operand);
+        operandPosition.ifPresent(t -> checkOperandOutOfBounds(t, tokenType, operand));
         this.tokenType = tokenType;
         this.operand = operand;
     }

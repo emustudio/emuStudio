@@ -267,7 +267,7 @@ public class ContextPoolImpl implements ContextPool {
             throw new InvalidContextException("Given class is not an interface");
         }
         if (!contextInterface.isAnnotationPresent(PluginContext.class)) {
-            throw new InvalidContextException("The interface is not annotated with 'PluginContext' annotation");
+            throw new InvalidContextException("The interface is not annotated with 'PluginContext' annotation: " + contextInterface);
         }
     }
 }

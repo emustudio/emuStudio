@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.asZ80.visitors;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.AsZ80Lexer;
 import net.emustudio.plugins.compiler.asZ80.AsZ80Parser;
 import net.emustudio.plugins.compiler.asZ80.ast.Program;
@@ -51,7 +52,7 @@ public class ExpandIncludesVisitor extends NodeVisitor {
 
     @Override
     public void visit(Program node) {
-        this.inputFileName = node.getFileName();
+        this.inputFileName = Optional.ofNullable(node.position.fileName);
         super.visit(node);
     }
 
@@ -68,8 +69,7 @@ public class ExpandIncludesVisitor extends NodeVisitor {
             AsZ80Parser parser = new AsZ80Parser(stream);
             stream.fill();
             ParseTree tree = parser.rStart();
-            Program program = new Program(node.line, node.column, env);
-            program.setFileName(absoluteFileName);
+            Program program = new Program(new SourceCodePosition(node.position.line, node.position.column, absoluteFileName), env);
 
             new CreateProgramVisitor(program).visit(tree);
 

@@ -18,22 +18,23 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public abstract class Node {
-    public final int line;
-    public final int column;
+    public final SourceCodePosition position;
+
     protected final List<Node> children = new ArrayList<>();
     protected Node parent;
     private int address;
 
-    public Node(int line, int column) {
-        this.line = line;
-        this.column = column;
+    public Node(SourceCodePosition position) {
+        this.position = Objects.requireNonNull(position);
     }
 
     public void addChildFirst(Node node) {

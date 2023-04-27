@@ -20,6 +20,8 @@ package net.emustudio.plugins.compiler.ssem;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
+import net.emustudio.emulib.plugins.compiler.CompilerListener;
+import net.emustudio.emulib.plugins.compiler.CompilerMessage;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -33,6 +35,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertArrayEquals;
@@ -43,6 +46,7 @@ public class SSEMCompilerTest {
     public TemporaryFolder folder = new TemporaryFolder();
     private SSEMCompiler compiler;
     private MemoryStub<Byte> memoryStub;
+    private int errorCount;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -56,7 +60,26 @@ public class SSEMCompilerTest {
         expect(applicationApi.getContextPool()).andReturn(pool).anyTimes();
         replay(applicationApi);
 
+        errorCount = 0;
         compiler = new SSEMCompiler(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        compiler.addCompilerListener(new CompilerListener() {
+            @Override
+            public void onStart() {
+
+            }
+
+            @Override
+            public void onMessage(CompilerMessage compilerMessage) {
+                if (compilerMessage.getMessageType() == CompilerMessage.MessageType.TYPE_ERROR) {
+                    errorCount++;
+                }
+            }
+
+            @Override
+            public void onFinish() {
+
+            }
+        });
         compiler.initialize();
     }
 
@@ -65,8 +88,9 @@ public class SSEMCompilerTest {
         Files.write(sourceFile.toPath(), content.getBytes(), StandardOpenOption.WRITE);
 
         File outputFile = folder.newFile();
-        if (!compiler.compile(sourceFile.getAbsolutePath(), outputFile.getAbsolutePath())) {
-            throw new Exception("Compilation failed");
+        compiler.compile(sourceFile.toPath(), Optional.of(outputFile.toPath()));
+        if (errorCount > 0) {
+            throw new Exception("Compilation failed with " + errorCount + " errors");
         }
     }
 

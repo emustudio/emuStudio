@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.compiler.as8080.ast.expr;
 
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
@@ -41,15 +42,15 @@ public class ExprUnary extends Node {
     public final int operationCode;
     private final Function<Integer, Integer> operation;
 
-    public ExprUnary(int line, int column, int op) {
-        super(line, column);
+    public ExprUnary(SourceCodePosition position, int op) {
+        super(position);
         this.operationCode = op;
         this.operation = Objects.requireNonNull(unaryOps.get(op), "Unknown unary operation");
         // child is expr
     }
 
-    public ExprUnary(Token op) {
-        this(op.getLine(), op.getCharPositionInLine(), op.getType());
+    public ExprUnary(String fileName, Token op) {
+        this(new SourceCodePosition(op.getLine(), op.getCharPositionInLine(), fileName), op.getType());
     }
 
     @Override
@@ -61,7 +62,7 @@ public class ExprUnary extends Node {
     public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
         return getChild(0)
                 .eval(currentAddress, env)
-                .map(childEval -> new Evaluated(line, column, operation.apply(childEval.value)));
+                .map(childEval -> new Evaluated(position, operation.apply(childEval.value)));
     }
 
     @Override
@@ -71,7 +72,7 @@ public class ExprUnary extends Node {
 
     @Override
     protected Node mkCopy() {
-        return new ExprUnary(line, column, operationCode);
+        return new ExprUnary(position, operationCode);
     }
 
     @Override

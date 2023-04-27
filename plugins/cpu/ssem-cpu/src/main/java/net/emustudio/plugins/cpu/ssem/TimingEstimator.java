@@ -20,6 +20,9 @@ package net.emustudio.plugins.cpu.ssem;
 
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.Annotation;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
+import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 
 import java.util.Arrays;
@@ -62,6 +65,7 @@ public class TimingEstimator {
     };
 
     private final MemoryContext<Byte> memoryContext = new AbstractMemoryContext<>() {
+        private final Annotations annotations = new Annotations();
 
         @Override
         public Byte read(int position) {
@@ -84,7 +88,7 @@ public class TimingEstimator {
         }
 
         @Override
-        public Class<Byte> getDataType() {
+        public Class<Byte> getCellTypeClass() {
             return Byte.class;
         }
 
@@ -96,6 +100,11 @@ public class TimingEstimator {
         @Override
         public int getSize() {
             return memory.length;
+        }
+
+        @Override
+        public MemoryContextAnnotations annotations() {
+            return annotations;
         }
     };
 

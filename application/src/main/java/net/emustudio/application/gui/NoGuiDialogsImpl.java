@@ -133,4 +133,14 @@ public class NoGuiDialogsImpl implements ExtendedDialogs {
                                      boolean appendMissingExtension, List<FileExtensionsFilter> list) {
         return Optional.empty();
     }
+
+    @Override
+    public Optional<Path> chooseDirectory(String title, String approveButtonText) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Path> chooseDirectory(String title, String approveButtonText, Path baseDirectory) {
+        return Optional.empty();
+    }
 }
