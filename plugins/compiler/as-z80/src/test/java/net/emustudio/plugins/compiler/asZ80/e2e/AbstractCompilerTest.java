@@ -114,4 +114,19 @@ public abstract class AbstractCompilerTest {
             );
         }
     }
+
+    protected void assertProgramWithStart(int startAddress, int... bytes) {
+        for (int i = 0; i < bytes.length; i++) {
+            assertEquals(
+                    String.format("[addr=%x] expected=%x, but was=%x", startAddress + i, bytes[i], memoryStub.read(startAddress + i)),
+                    (byte) bytes[i], memoryStub.read(startAddress + i).byteValue()
+            );
+        }
+        for (int i = bytes.length + startAddress; i < memoryStub.getSize(); i++) {
+            assertEquals(
+                    String.format("[addr=%x] expected=%x, but was=%x", i, 0, memoryStub.read(i)),
+                    0, memoryStub.read(i).byteValue()
+            );
+        }
+    }
 }
