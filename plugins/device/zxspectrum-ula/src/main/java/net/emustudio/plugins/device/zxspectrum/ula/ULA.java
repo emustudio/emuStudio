@@ -45,15 +45,14 @@ import java.util.Objects;
  * 0xfefe  SHIFT, Z, X, C, V            0xeffe  0, 9, 8, 7, 6
  * 0xfdfe  A, S, D, F, G                0xdffe  P, O, I, U, Y
  * 0xfbfe  Q, W, E, R, T                0xbffe  ENTER, L, K, J, H
- * 0xf7fe  1, 2, 3, 4, 5                0x7ffe  SPACE, SYM SHFT, M, N, B
+ * 0xf7fe  1, 2, 3, 4, 5                0x7ffe  SPACE, SYM SHIFT, M, N, B
  * <p>
  * The colour attribute data overlays the monochrome bitmap data and is arranged in a linear fashion from left to right,
  * top to bottom.
- * Each attribute byte colours an 8x8 character on the screen and is encoded as follows:
+ * Each attribute byte colours is 8x8 character on the screen and is encoded as follows:
  * <p>
- * 7   6   5   4   3   2   1   0
- * +-------------------------------+
- * | F | B | P2| P1| P0| I2| I1| I0|
+ * 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+ * F | B | P2| P1| P0| I2| I1| I0|
  * +-------------------------------+
  * <p>
  * - F sets the attribute FLASH mode
@@ -73,22 +72,33 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     public final byte[][] attributeMemory = new byte[SCREEN_WIDTH][ATTRIBUTE_HEIGHT];
     private final static int[] lineStartOffsets = computeLineStartOffsets();
 
+    // The Spectrum's 'FLASH' effect is also produced by the ULA: Every 16 frames, the ink and paper of all flashing
+    // bytes is swapped; ie a normal to inverted to normal cycle takes 32 frames, which is (good as) 0.64 seconds.
+    public boolean videoFlash = false;
+    private int flashFramesCount = 0;
+
     private final ZxSpectrumBus bus;
 
     private int borderColor;
     private boolean microphoneAndEar;
 
-    private static int[] computeLineStartOffsets() {
-        final int[] result = new int[SCREEN_HEIGHT];
-        for (int y = 0; y < SCREEN_HEIGHT; y++) {
-            result[y] = ((y & 0xC0) << 5) | ((y & 7) << 8) | ((y & 0x38) << 2);
-        }
-        return result;
-    }
 
     public ULA(ZxSpectrumBus bus) {
         this.bus = Objects.requireNonNull(bus);
         Arrays.fill(keymap, (byte) 0xBF);
+    }
+
+    public void reset() {
+        borderColor = 7;
+        microphoneAndEar = false;
+        Arrays.fill(keymap, (byte) 0xBF);
+    }
+
+    public void onNextFrame() {
+        if (flashFramesCount == 15) {
+            videoFlash = !videoFlash;
+        }
+        flashFramesCount = (flashFramesCount + 1) % 16;
     }
 
     public void readScreen() {
@@ -125,11 +135,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         }
     }
 
-    public void reset() {
-        borderColor = 7;
-        microphoneAndEar = false;
-        Arrays.fill(keymap, (byte) 0xBF);
-    }
+
 
     public int getBorderColor() {
         return borderColor;
@@ -587,4 +593,11 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         }
     }
 
+    private static int[] computeLineStartOffsets() {
+        final int[] result = new int[SCREEN_HEIGHT];
+        for (int y = 0; y < SCREEN_HEIGHT; y++) {
+            result[y] = ((y & 0xC0) << 5) | ((y & 7) << 8) | ((y & 0x38) << 2);
+        }
+        return result;
+    }
 }
