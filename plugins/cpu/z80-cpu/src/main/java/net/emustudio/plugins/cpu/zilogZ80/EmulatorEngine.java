@@ -36,7 +36,6 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -375,14 +374,14 @@ public class EmulatorEngine implements CpuEngine {
         return cycles;
     }
 
-    private int getreg(int reg) {
+    private int getReg(int reg) {
         if (reg == 6) {
             return memory.read((regs[REG_H] << 8) | regs[REG_L]) & 0xFF;
         }
         return regs[reg];
     }
 
-    private void putreg(int reg, int val) {
+    private void putReg(int reg, int val) {
         if (reg == 6) {
             memory.write((regs[REG_H] << 8) | regs[REG_L], (byte) (val & 0xFF));
         } else {
@@ -390,7 +389,7 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    private void putpair(int reg, int val) {
+    private void putPair(int reg, int val) {
         int high = (val >>> 8) & 0xFF;
         int low = val & 0xFF;
         int index = reg * 2;
@@ -403,7 +402,7 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    private int getpair(int reg) {
+    private int getPair(int reg) {
         if (reg == 3) {
             return SP;
         }
@@ -1908,7 +1907,7 @@ public class EmulatorEngine implements CpuEngine {
 
 
     int I_SBC_HL_RP() {
-        int rp = getpair((lastOpcode >>> 4) & 0x03);
+        int rp = getPair((lastOpcode >>> 4) & 0x03);
         int hl = ((regs[REG_H] << 8) | regs[REG_L]) & 0xFFFF;
         memptr = (hl + 1) & 0xFFFF;
         int res = hl - rp - (flags & FLAG_C);
@@ -1926,7 +1925,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     int I_ADC_HL_RP() {
-        int rp = getpair((lastOpcode >>> 4) & 0x03);
+        int rp = getPair((lastOpcode >>> 4) & 0x03);
         int hl = (regs[REG_H] << 8 | regs[REG_L]) & 0xFFFF;
         memptr = (hl + 1) & 0xFFFF;
         int res = hl + rp + (flags & FLAG_C);
@@ -2616,7 +2615,7 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 2) & 0xFFFF;
 
         int tmp1 = readWord(addr);
-        putpair((lastOpcode >>> 4) & 3, tmp1);
+        putPair((lastOpcode >>> 4) & 3, tmp1);
         return 20;
     }
 
@@ -3395,11 +3394,11 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_RLC_R() {
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
 
         int flagC = ((regValue & 0x80) != 0) ? FLAG_C : 0;
         regValue = ((regValue << 1) | (regValue >>> 7)) & 0xFF;
-        putreg(reg, regValue);
+        putReg(reg, regValue);
         flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | TABLE_XY[regValue];
         Q = flags;
 
@@ -3412,10 +3411,10 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_RRC_R() {
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
         int flagC = regValue & FLAG_C;
         regValue = ((regValue >>> 1) | (regValue << 7)) & 0xFF;
-        putreg(reg, regValue);
+        putReg(reg, regValue);
         flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | TABLE_XY[regValue];
         Q = flags;
 
@@ -3428,10 +3427,10 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_RL_R() {
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
         int flagC = ((regValue & 0x80) == 0x80) ? FLAG_C : 0;
         regValue = ((regValue << 1) | (flags & FLAG_C)) & 0xFF;
-        putreg(reg, regValue);
+        putReg(reg, regValue);
         flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | TABLE_XY[regValue];
         Q = flags;
 
@@ -3444,10 +3443,10 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_RR_R() {
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
         int flagC = regValue & FLAG_C;
         regValue = ((regValue >>> 1) | (flags << 7)) & 0xFF;
-        putreg(reg, regValue);
+        putReg(reg, regValue);
         flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | TABLE_XY[regValue];
         Q = flags;
 
@@ -3460,11 +3459,11 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_SLA_R() {
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
 
         int flagC = ((regValue & 0x80) == 0x80) ? FLAG_C : 0;
         regValue = (regValue << 1) & 0xFF;
-        putreg(reg, regValue);
+        putReg(reg, regValue);
         flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | TABLE_XY[regValue];
         Q = flags;
 
@@ -3477,10 +3476,10 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_SRA_R() {
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
         int flagC = regValue & FLAG_C;
         regValue = ((regValue >>> 1) | (regValue & 0x80)) & 0xFF;
-        putreg(reg, regValue);
+        putReg(reg, regValue);
         flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | TABLE_XY[regValue];
         Q = flags;
 
@@ -3493,10 +3492,10 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_SLL_R() {
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
         int flagC = ((regValue & 0x80) != 0) ? FLAG_C : 0;
         regValue = ((regValue << 1) | 0x01) & 0xFF;
-        putreg(reg, regValue);
+        putReg(reg, regValue);
         flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | TABLE_XY[regValue];
         Q = flags;
 
@@ -3509,10 +3508,10 @@ public class EmulatorEngine implements CpuEngine {
 
     int I_SRL_R() {
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
         int flagC = regValue & FLAG_C;
         regValue = (regValue >>> 1) & 0xFF;
-        putreg(reg, regValue);
+        putReg(reg, regValue);
         flags = TABLE_SZ[regValue] | PARITY_TABLE[regValue] | flagC | TABLE_XY[regValue];
         Q = flags;
 
@@ -3526,7 +3525,7 @@ public class EmulatorEngine implements CpuEngine {
     int I_BIT_N_R() {
         int bit = (lastOpcode >>> 3) & 7;
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
         int result = (1 << bit) & regValue;
 
         flags = ((result != 0) ? (result & FLAG_S) : (FLAG_Z | FLAG_PV))
@@ -3549,9 +3548,9 @@ public class EmulatorEngine implements CpuEngine {
     int I_RES_N_R() {
         int bit = (lastOpcode >>> 3) & 7;
         int reg = lastOpcode & 7;
-        int regValue = getreg(reg) & 0xFF;
+        int regValue = getReg(reg) & 0xFF;
         regValue = (regValue & (~(1 << bit)));
-        putreg(reg, regValue);
+        putReg(reg, regValue);
         if (reg == 6) {
             return 15;
         } else {
@@ -3562,9 +3561,9 @@ public class EmulatorEngine implements CpuEngine {
     int I_SET_N_R() {
         int tmp = (lastOpcode >>> 3) & 7;
         int tmp2 = lastOpcode & 7;
-        int tmp1 = getreg(tmp2) & 0xFF;
+        int tmp1 = getReg(tmp2) & 0xFF;
         tmp1 = (tmp1 | (1 << tmp));
-        putreg(tmp2, tmp1);
+        putReg(tmp2, tmp1);
         if (tmp2 == 6) {
             return 15;
         } else {
