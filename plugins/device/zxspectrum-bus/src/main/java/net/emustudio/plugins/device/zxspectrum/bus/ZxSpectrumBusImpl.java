@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.device.zxspectrum.bus;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -28,19 +27,40 @@ import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.jcip.annotations.NotThreadSafe;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
- * Also a memory proxy
+ * ZX Spectrum bus.
+ * Adds memory & I/O port contention.
+ * <p>
+ * At cycle 14335 (just one cycle before the top left corner is reached) the delay is 6 cycles.
+ * At cycle 14336 the delay is 5 cycles, and so on according to the following table:
+ *
+ * Cycle #    Delay
+ * -------    -----
+ * 14335       6 (until 14341)
+ * 14336       5 (  "     "  )
+ * 14337       4 (  "     "  )
+ * 14338       3 (  "     "  )
+ * 14339       2 (  "     "  )
+ * 14340       1 (  "     "  )
+ * 14341   No delay
+ * 14342   No delay
+ * 14343       6 (until 14349)
+ * 14344       5 (  "     "  )
+ * 14345       4 (  "     "  )
+ * 14346       3 (  "     "  )
+ * 14347       2 (  "     "  )
+ * 14348       1 (  "     "  )
+ * 14349   No delay
+ * 14350   No delay
  */
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus {
     private ContextZ80 cpu;
     private MemoryContext<Byte> memory;
     private volatile byte busData; // data on the bus
+    private TimedEventsProcessor ted;
 
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
 
@@ -48,6 +68,8 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     public void initialize(ContextZ80 cpu, MemoryContext<Byte> memory) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memory = Objects.requireNonNull(memory);
+        this.ted = cpu.getTimedEventsProcessor().orElseThrow(() -> new RuntimeException("CPU must provide TimedEventProcessor"));
+
 
         for (Map.Entry<Integer, Context8080.CpuPortDevice> attachment : deferredAttachments.entrySet()) {
             // TODO: contended device proxy if needed

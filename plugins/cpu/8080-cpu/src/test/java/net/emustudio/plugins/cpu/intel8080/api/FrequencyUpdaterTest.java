@@ -28,7 +28,7 @@ public class FrequencyUpdaterTest {
     @Test
     public void testFrequencyNotChanged() throws Exception {
         CpuEngine cpuEngine = createMock(CpuEngine.class);
-        expect(cpuEngine.getAndResetExecutedCycles()).andReturn(0L);
+        expect(cpuEngine.getAndResetGlobalExecutedCycles()).andReturn(0L);
         replay(cpuEngine);
 
         new FrequencyUpdater(cpuEngine).run();
@@ -39,7 +39,7 @@ public class FrequencyUpdaterTest {
     @Test
     public void testFrequencyChanged() throws Exception {
         CpuEngine cpuEngine = createMock(CpuEngine.class);
-        expect(cpuEngine.getAndResetExecutedCycles()).andReturn(2000L);
+        expect(cpuEngine.getAndResetGlobalExecutedCycles()).andReturn(2000L);
         cpuEngine.fireFrequencyChanged(anyFloat());
         expectLastCall().once();
         replay(cpuEngine);

@@ -32,4 +32,13 @@ public interface ContextZ80 extends Context8080 {
      * at address 0066h. Routines should exit with RETN instruction.
      */
     void signalNonMaskableInterrupt();
+
+    /**
+     * Explicitly adds machine cycles (slows down CPU).
+     * <p>
+     * Used primarily in contention implementation.
+     *
+     * @param tStates number of t-states (machine cycles) to add
+     */
+    void addCycles(int tStates);
 }

@@ -36,7 +36,9 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static net.emustudio.plugins.cpu.zilogZ80.DispatchTables.*;
@@ -67,7 +69,8 @@ public class EmulatorEngine implements CpuEngine {
     private final TimedEventsProcessor tep;
     private final MemoryContext<Byte> memory;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
-    private final AtomicLong executedCycles = new AtomicLong(0);
+    private final AtomicLong cyclesExecutedGlobal = new AtomicLong(0);
+    private final AtomicInteger cyclesExecutedPerTimeSlice = new AtomicInteger(0);
 
     public final int[] regs = new int[8];
     public final int[] regs2 = new int[8];
@@ -138,8 +141,12 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     @Override
-    public long getAndResetExecutedCycles() {
-        return executedCycles.getAndSet(0);
+    public long getAndResetGlobalExecutedCycles() {
+        return cyclesExecutedGlobal.getAndSet(0);
+    }
+
+    public void addExecutedCyclesPerTimeSlice(int tstates) {
+        cyclesExecutedPerTimeSlice.addAndGet(tstates);
     }
 
     public void addFrequencyChangedListener(FrequencyChangedListener listener) {
@@ -193,26 +200,22 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     public CPU.RunState run(CPU cpu) {
-        long startTime, endTime;
-        int cycles_executed;
         // In Z80, 1 t-state = 250 ns = 0.25 microseconds = 0.00025 milliseconds
-        // in 10 milliseconds = 10 / 0.00025 = 40000 t-states are executed uncontrollably
-        // in 1 millisecond = 1 / 0.00025 = 4000 t-states :(
+        // in 1 millisecond time slice = 1 / 0.00025 = 4000 t-states are executed uncontrollably
 
-        int checkTimeSlice = (int) Math.ceil(SleepUtils.SLEEP_PRECISION / 1000000.0); // milliseconds
-        int cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
-        int cycles;
-        long slice = checkTimeSlice * 1000000L; // nanoseconds
+        long timeSliceNanos = SleepUtils.SLEEP_PRECISION;
+        int timeSliceMillis = (int) Math.ceil(timeSliceNanos / 1000000.0);
+        int cyclesPerTimeSlice = timeSliceMillis * context.getCPUFrequency();
 
         currentRunState = CPU.RunState.STATE_RUNNING;
         while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
-            startTime = System.nanoTime();
-            cycles_executed = 0;
-            while ((cycles_executed < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
+            long startTime = System.nanoTime();
+            cyclesExecutedPerTimeSlice.set(0);
+            while ((cyclesExecutedPerTimeSlice.get() < cyclesPerTimeSlice) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
-                    cycles = dispatch();
-                    cycles_executed += cycles;
-                    executedCycles.addAndGet(cycles);
+                    int cycles = dispatch();
+                    cyclesExecutedPerTimeSlice.addAndGet(cycles);
+                    cyclesExecutedGlobal.addAndGet(cycles);
                     tep.advanceClock(cycles);
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
@@ -227,10 +230,10 @@ public class EmulatorEngine implements CpuEngine {
                     return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 }
             }
-            endTime = System.nanoTime() - startTime;
-            if (endTime < slice) {
+            long endTime = System.nanoTime() - startTime;
+            if (endTime < timeSliceNanos) {
                 // time correction
-                SleepUtils.preciseSleepNanos(slice - endTime);
+                SleepUtils.preciseSleepNanos(timeSliceNanos - endTime);
             }
         }
         return currentRunState;
@@ -344,7 +347,12 @@ public class EmulatorEngine implements CpuEngine {
                 break;
             case 1:
                 cycles += 12;
-                writeWord((SP - 2) & 0xFFFF, PC);
+                if (memory.read(PC) == 0x76) {
+                    // jump over HALT
+                    writeWord((SP - 2) & 0xFFFF, (PC + 1) & 0xFFFF);
+                } else {
+                    writeWord((SP - 2) & 0xFFFF, PC);
+                }
                 SP = (SP - 2) & 0xffff;
                 PC = 0x38;
                 memptr = PC;
@@ -1866,24 +1874,31 @@ public class EmulatorEngine implements CpuEngine {
     int I_OUT_REF_C_B() {
         return I_OUT_REF_C_R(regs[REG_B]);
     }
+
     int I_OUT_REF_C_C() {
         return I_OUT_REF_C_R(regs[REG_C]);
     }
+
     int I_OUT_REF_C_D() {
         return I_OUT_REF_C_R(regs[REG_D]);
     }
+
     int I_OUT_REF_C_E() {
         return I_OUT_REF_C_R(regs[REG_E]);
     }
+
     int I_OUT_REF_C_H() {
         return I_OUT_REF_C_R(regs[REG_H]);
     }
+
     int I_OUT_REF_C_L() {
         return I_OUT_REF_C_R(regs[REG_L]);
     }
+
     int I_OUT_REF_C_A() {
         return I_OUT_REF_C_R(regs[REG_A]);
     }
+
     int I_OUT_REF_C_R(int reg) {
         memptr = (regs[REG_B] << 8) | regs[REG_C];
         context.writeIO(memptr, (byte) reg);
