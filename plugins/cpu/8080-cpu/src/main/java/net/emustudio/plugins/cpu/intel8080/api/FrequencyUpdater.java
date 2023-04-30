@@ -40,7 +40,7 @@ public class FrequencyUpdater implements Runnable {
         synchronized (this) {
             long endTime = System.nanoTime();
             long time = endTime - startTimeSaved;
-            long executedCycles = cpu.getAndResetExecutedCycles();
+            long executedCycles = cpu.getAndResetGlobalExecutedCycles();
 
             if (executedCycles > 0) {
                 frequency = (float) (executedCycles / (time / 1000000.0));

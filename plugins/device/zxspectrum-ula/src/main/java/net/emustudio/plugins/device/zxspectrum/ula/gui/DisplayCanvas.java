@@ -97,6 +97,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             createBufferStrategy(2);
 
             ted.schedule(REPAINT_CPU_TSTATES, this::triggerCpuInterrupt);
+            ted.schedule(REPAINT_CPU_TSTATES, ula::onNextFrame);
             for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
                 int finalI = i;
                 ted.schedule(i * LINE_CPU_TSTATES + 1, () -> drawNextLine(finalI));
@@ -131,10 +132,17 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 byte row = ula.videoMemory[byteX][y];
                 int attr = ula.attributeMemory[byteX][y / 8];
                 Color[] colorMap = ((attr & 0x40) == 0x40) ? BRIGHT_COLOR_MAP : COLOR_MAP;
+                boolean flash = (attr & 0x80) == 0x80;
 
                 for (int i = 0; i < 8; i++) {
                     boolean bit = ((row << i) & 0x80) == 0x80;
-                    int color = (bit ? colorMap[attr & 7] : colorMap[(attr >>> 3) & 7]).getRGB();
+                    int color;
+                    if (ula.videoFlash && flash) {
+                        color = (bit ? colorMap[(attr >>> 3) & 7] : colorMap[attr & 7]).getRGB();
+                    } else {
+                        color = (bit ? colorMap[attr & 7] : colorMap[(attr >>> 3) & 7]).getRGB();
+                    }
+
                     int offset = line * SCREEN_IMAGE_WIDTH + BORDER_WIDTH + screenX + i;
                     screenImageData[offset] = color;
                 }

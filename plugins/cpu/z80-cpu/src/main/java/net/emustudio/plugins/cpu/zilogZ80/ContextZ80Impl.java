@@ -115,6 +115,11 @@ public final class ContextZ80Impl implements ContextZ80 {
     }
 
     @Override
+    public void addCycles(int tStates) {
+        engine.addExecutedCyclesPerTimeSlice(tStates);
+    }
+
+    @Override
     public Optional<TimedEventsProcessor> getTimedEventsProcessor() {
         return Optional.of(tep);
     }

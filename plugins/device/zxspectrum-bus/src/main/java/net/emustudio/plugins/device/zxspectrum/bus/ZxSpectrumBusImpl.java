@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.device.zxspectrum.bus;
 
-import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -28,19 +27,51 @@ import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.jcip.annotations.NotThreadSafe;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
- * Also a memory proxy
+ * ZX Spectrum bus (for 48K ZX spectrum).
+ * <p>
+ * Adds memory & I/O port contention.
+ * <p>
+ * https://sinclair.wiki.zxnet.co.uk/wiki/Contended_memory#Timing_differences
+ * On the 16K and 48K models of ZX Spectrum, the memory from 0x4000 to 0x7fff is contended. If the contended
+ * memory is accessed 14335[2] or 14336 tstates after an interrupt (see the timing differences section below
+ * for information on the 14335/14336 issue), the Z80 will be delayed for 6 tstates. After 14336 tstates,
+ * the delay is 5 tstates:
+ * <p>
+ * Cycle #    Delay
+ * -------    -----
+ * 14335       6 (until 14341)
+ * 14336       5 (  "     "  )
+ * 14337       4 (  "     "  )
+ * 14338       3 (  "     "  )
+ * 14339       2 (  "     "  )
+ * 14340       1 (  "     "  )
+ * 14341   No delay
+ * 14342   No delay
+ * 14343       6 (until 14349)
+ * 14344       5 (  "     "  )
+ * 14345       4 (  "     "  )
+ * 14346       3 (  "     "  )
+ * 14347       2 (  "     "  )
+ * 14348       1 (  "     "  )
+ * 14349   No delay
+ * 14350   No delay
+ * <p>
+ * This pattern (6,5,4,3,2,1,0,0) continues until 14463 tstates after interrupt, at which point there is no
+ * delay for 96 tstates while the border and horizontal refresh are drawn. The pattern starts again at 14559
+ * tstates and continues for all 192 lines of screen data. After this, there is no delay until the end of the
+ * frame as the bottom border and vertical refresh happen, and no delay until 14335 tstates after the start of
+ * the next frame as the top border is drawn.
  */
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus {
     private ContextZ80 cpu;
     private MemoryContext<Byte> memory;
     private volatile byte busData; // data on the bus
+    private TimedEventsProcessor ted;
+    private boolean lastMemoryContended = false;
 
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
 
@@ -48,6 +79,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     public void initialize(ContextZ80 cpu, MemoryContext<Byte> memory) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memory = Objects.requireNonNull(memory);
+        this.ted = cpu.getTimedEventsProcessor().orElseThrow(() -> new RuntimeException("CPU must provide TimedEventProcessor"));
 
         for (Map.Entry<Integer, Context8080.CpuPortDevice> attachment : deferredAttachments.entrySet()) {
             // TODO: contended device proxy if needed
@@ -55,7 +87,16 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
                 throw new RuntimeException("Could not attach device " + attachment.getValue().getName() + " to CPU");
             }
         }
+
+        //  17 x from 14335 to 14463, then 96 tstates pause to reach "end of line", then repeat.
+        // the t-state 14335 is the first screen line to be read.
+        int cycles = 14335;
+        for (int line = 0; line < 192; line++) {
+            scheduleMemoryContention(cycles);
+            cycles = cycles + 16 * 8 + 96;
+        }
     }
+
 
     @Override
     public void attachDevice(int port, Context8080.CpuPortDevice device) {
@@ -106,25 +147,25 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public Byte read(int location) {
-        // TODO: contention
+        setContended(location);
         return memory.read(location);
     }
 
     @Override
     public Byte[] read(int location, int count) {
-        // TODO: contention
+        setContended(location);
         return memory.read(location, count);
     }
 
     @Override
     public void write(int location, Byte data) {
-        // TODO: contention
+        setContended(location);
         memory.write(location, data);
     }
 
     @Override
     public void write(int location, Byte[] data, int count) {
-        // TODO: contention
+        setContended(location);
         memory.write(location, data, count);
     }
 
@@ -151,5 +192,21 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     @Override
     public MemoryContextAnnotations annotations() {
         return memory.annotations();
+    }
+
+    private void setContended(int location) {
+        this.lastMemoryContended = location >= 0x4000 && location <= 0x7FFF;
+    }
+
+    private void scheduleMemoryContention(int startCycles) {
+        for (int i = 0; i < 17; i++) {
+            for (int j = 0; j < 6; j++) {
+                ted.schedule(startCycles + i * 8 + j, () -> {
+                    if (lastMemoryContended) {
+                        cpu.addCycles(1);
+                    }
+                });
+            }
+        }
     }
 }

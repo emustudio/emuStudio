@@ -85,7 +85,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     @Override
-    public long getAndResetExecutedCycles() {
+    public long getAndResetGlobalExecutedCycles() {
         long tmpExecutedCycles = executedCycles;
         executedCycles = 0;
         return tmpExecutedCycles;
