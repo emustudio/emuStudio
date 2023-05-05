@@ -38,7 +38,7 @@ public final class ContextZ80Impl implements ContextZ80 {
     private final TimedEventsProcessor tep = new TimedEventsProcessor();
 
     private volatile EmulatorEngine engine;
-    private volatile int clockFrequency = DEFAULT_FREQUENCY_KHZ;
+    private volatile int clockFrequencyKHz = DEFAULT_FREQUENCY_KHZ;
 
     public void setEngine(EmulatorEngine engine) {
         this.engine = engine;
@@ -98,7 +98,7 @@ public final class ContextZ80Impl implements ContextZ80 {
 
     @Override
     public int getCPUFrequency() {
-        return clockFrequency;
+        return clockFrequencyKHz;
     }
 
     @Override
@@ -106,7 +106,7 @@ public final class ContextZ80Impl implements ContextZ80 {
         if (frequency <= 0) {
             throw new IllegalArgumentException("Invalid CPU frequency (expected > 0): " + frequency);
         }
-        clockFrequency = frequency;
+        clockFrequencyKHz = frequency;
     }
 
     @Override

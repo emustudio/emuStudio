@@ -28,9 +28,18 @@ import java.util.concurrent.atomic.AtomicReference;
 
 // Pulse length:
 // https://worldofspectrum.org/faq/reference/48kreference.htm
+// https://softspectrum48.weebly.com/notes/tape-loading-routines
 
 //Machine	Pilot pulse	Length	Sync1	Sync2	Bit 0	Bit 1
-//ZX Spectrum	2168	(1)	667	735	855	1710
+//ZX Spectrum	2168	(1)  	667 	735 	855 	1710
+
+// Tape data is encoded as two 855 T-state pulses for binary zero, and two 1,710 T-state pulses for binary one.
+
+// To distinguish header blocks from data blocks, a sequence of leader pulses precedes each type of block.
+// The leader pulse is 2,168 T-states long and is repeated 8,063 times for header blocks and 3,223 times for data blocks.
+//
+// After the leader pulses, two sync pulses (667 T-states plus 735 T-states long) follow to signal the beginning of the
+// actual data.
 public class PlaybackListenerImpl implements Loader.PlaybackListener {
     private final DeviceContext<Byte> bus;
     private final AtomicReference<CassettePlayerGui> gui = new AtomicReference<>();
@@ -80,5 +89,9 @@ public class PlaybackListenerImpl implements Loader.PlaybackListener {
 
     private void log(String message) {
         Optional.ofNullable(gui.get()).ifPresent(g -> g.setMetadata(message));
+    }
+
+    private void pulse(boolean active, int howLong) {
+
     }
 }

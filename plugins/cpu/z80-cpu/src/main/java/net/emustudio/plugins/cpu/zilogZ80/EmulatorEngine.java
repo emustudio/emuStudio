@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -203,8 +204,11 @@ public class EmulatorEngine implements CpuEngine {
         // in 1 millisecond time slice = 1 / 0.00025 = 4000 t-states are executed uncontrollably
 
         long timeSliceNanos = SleepUtils.SLEEP_PRECISION;
-        int timeSliceMillis = (int) Math.ceil(timeSliceNanos / 1000000.0);
-        int cyclesPerTimeSlice = timeSliceMillis * context.getCPUFrequency();
+        double timeSliceMicros = timeSliceNanos / 1_000.0;
+        int cyclesPerTimeSlice = (int) (timeSliceMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHz
+
+        //System.out.println("Time slice millis: " + timeSliceMillis);
+        //System.out.println("Cycles per time slice: " + cyclesPerTimeSlice);
 
         currentRunState = CPU.RunState.STATE_RUNNING;
         while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
@@ -248,7 +252,13 @@ public class EmulatorEngine implements CpuEngine {
             lastQ = Q;
             Q = 0;
             if (pendingNonMaskableInterrupt.getAndSet(false)) {
-                writeWord((SP - 2) & 0xFFFF, PC);
+                if (memory.read(PC) == 0x76) {
+                    // jump over HALT
+                    writeWord((SP - 2) & 0xFFFF, (PC + 1) & 0xFFFF);
+                } else {
+                    writeWord((SP - 2) & 0xFFFF, PC);
+                }
+
                 SP = (SP - 2) & 0xffff;
                 PC = 0x66;
                 return 12;
