@@ -36,7 +36,6 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -205,7 +204,7 @@ public class EmulatorEngine implements CpuEngine {
 
         long timeSliceNanos = SleepUtils.SLEEP_PRECISION;
         double timeSliceMicros = timeSliceNanos / 1_000.0;
-        int cyclesPerTimeSlice = (int) (timeSliceMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHz
+        int cyclesPerTimeSlice = (int) (timeSliceMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHzq
 
         //System.out.println("Time slice millis: " + timeSliceMillis);
         //System.out.println("Cycles per time slice: " + cyclesPerTimeSlice);
