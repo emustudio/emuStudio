@@ -28,6 +28,7 @@ import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * ZX Spectrum bus (for 48K ZX spectrum).

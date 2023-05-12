@@ -100,7 +100,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             tep.schedule(REPAINT_CPU_TSTATES, ula::onNextFrame);
             for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
                 int finalI = i;
-                tep.schedule(i * LINE_CPU_TSTATES + 1, () -> drawNextLine(finalI));
+                tep.schedule(REPAINT_CPU_TSTATES + i * LINE_CPU_TSTATES, () -> drawNextLine(finalI));
             }
         }
     }
@@ -190,7 +190,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         tep.remove(REPAINT_CPU_TSTATES, paintCycle);
         for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
             int finalI = i;
-            tep.remove(i * LINE_CPU_TSTATES, () -> drawNextLine(finalI));
+            tep.remove(REPAINT_CPU_TSTATES + i * LINE_CPU_TSTATES, () -> drawNextLine(finalI));
         }
         painting.set(false);
     }

@@ -31,6 +31,12 @@ import java.util.Objects;
 
 // https://sinclair.wiki.zxnet.co.uk/wiki/TAP_format
 // https://documentation.help/BASin/format_tape.html
+
+/**
+ * TAP file loader.
+ * <p>
+ * Loads full file content and schedules it for playback.
+ */
 @ThreadSafe
 public class TapLoader implements Loader {
     private final static Logger LOGGER = LoggerFactory.getLogger(TapLoader.class);
@@ -41,21 +47,36 @@ public class TapLoader implements Loader {
     }
 
     @Override
-    public void load(PlaybackListener listener) throws IOException {
+    public void load(TapePlayback playback) throws IOException {
         try (FileInputStream stream = new FileInputStream(path.toFile())) {
-            interpret(stream.readAllBytes(), listener);
+            interpret(stream.readAllBytes(), playback);
         }
     }
 
-    private void interpret(byte[] content, PlaybackListener listener) {
+    private void interpret(byte[] content, TapePlayback listener) {
         ByteBuffer buffer = ByteBuffer.wrap(content);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
+        listener.onFileStart();
+
         while (buffer.position() < buffer.limit() && !Thread.currentThread().isInterrupted()) {
-            int blockLength = buffer.getShort() & 0xFFFF;
+            int blockLength = buffer.getShort() & 0xFFFF; // - flag - checksum
             int flagByte = buffer.get() & 0xFF;
 
-            if (flagByte == 0) {
-                TapTzxHeader header = TapTzxHeader.parse(buffer);
+            byte[] data = new byte[blockLength - 2];
+            buffer.get(data);
+
+            byte checksum = buffer.get(); // checksum
+            int controlChecksum = flagByte;
+            for (byte d : data) {
+                controlChecksum ^= (d & 0xFF);
+            }
+            if ((checksum & 0xFF) != (controlChecksum & 0xFF)) {
+                LOGGER.error(String.format("Tape checksum is wrong: expected=%02X != %02X", checksum & 0xFF, controlChecksum & 0xFF));
+            }
+
+            if (flagByte < 0x80) {
+                listener.onHeaderStart();
+                TapTzxHeader header = TapTzxHeader.parse(ByteBuffer.wrap(data));
                 switch (header.id) {
                     case 0: // program
                         listener.onProgram(header.fileName, header.dataLength, header.parameter1, header.parameter2);
@@ -73,16 +94,12 @@ public class TapLoader implements Loader {
                         LOGGER.warn("TAP: Unknown header ID: " + header.id);
                 }
             } else {
-                byte[] data = new byte[blockLength - 2];
-                buffer.get(data);
-
-                if (flagByte == 255) {
-                    listener.onData(data);
-                } else {
-                    LOGGER.warn("TAP: unknown flag: " + flagByte);
-                }
+                listener.onDataStart();
             }
-            buffer.get(); // checksum
+            listener.onBlockFlag(flagByte);
+            listener.onBlockData(data);
+            listener.onBlockChecksum(checksum);
         }
+        listener.onFileEnd();
     }
 }

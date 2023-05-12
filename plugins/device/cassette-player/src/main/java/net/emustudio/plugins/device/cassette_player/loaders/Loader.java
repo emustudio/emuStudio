@@ -62,9 +62,42 @@ public interface Loader {
     }
 
     @ThreadSafe
-    interface PlaybackListener {
+    interface TapePlayback {
 
-        // tzx version
+        void onFileStart();
+
+        /**
+         * Header block starts
+         */
+        void onHeaderStart();
+
+        /**
+         * Data block starts
+         */
+        void onDataStart();
+
+        /**
+         * Block flag (0 - header, 255- data)
+         *
+         * @param flag block flag
+         */
+        void onBlockFlag(int flag);
+
+        /**
+         * Raw data block. The type is determined by a previous onXXX call
+         *
+         * @param data data
+         */
+        void onBlockData(byte[] data);
+
+        /**
+         * On block checksum
+         *
+         * @param checksum block checksum
+         */
+        void onBlockChecksum(byte checksum);
+
+        void onFileEnd();
 
         /**
          * Data block will be a program in BASIC.
@@ -104,24 +137,10 @@ public interface Loader {
         void onMemoryBlock(String filename, int dataLength, int startAddress);
 
         /**
-         * Raw data block. The type is determined by a previous onXXX call
-         *
-         * @param data data
-         */
-        void onData(byte[] data);
-
-        /**
-         * Pause given milliseconds
-         *
-         * @param millis milliseconds to pause
-         */
-        void onPause(int millis);
-
-        /**
          * On state change
          */
         void onStateChange(CassetteController.CassetteState state);
     }
 
-    void load(PlaybackListener listener) throws IOException;
+    void load(TapePlayback playback) throws IOException;
 }
