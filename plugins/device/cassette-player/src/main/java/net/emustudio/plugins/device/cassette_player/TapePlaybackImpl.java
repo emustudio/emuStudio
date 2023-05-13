@@ -116,7 +116,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
 
     @Override
     public void onProgram(String filename, int dataLength, int autoStart, int programLength) {
-        logProgramDetail(filename,"PROGRAM (start=" + autoStart + ", length=" + programLength + ")");
+        logProgramDetail(filename, "PROGRAM (start=" + autoStart + ", length=" + programLength + ")");
     }
 
     @Override
@@ -156,6 +156,11 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
         try {
             barrier.await();
         } catch (InterruptedException e) {
+            // cancel playing
+            for (int cycles : loaderSchedule.keySet()) {
+                tep.removeAllScheduledOnce(cycles);
+            }
+
             Thread.currentThread().interrupt();
         } catch (BrokenBarrierException e) {
             throw new RuntimeException(e);
@@ -181,7 +186,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
             int pulseLength = ((data & mask) == 0) ? DATA_PULSE_ZERO_TSTATES : DATA_PULSE_ONE_TSTATES;
             schedulePulse(pulseLength, msg); // 2x according to https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface
             schedulePulse(pulseLength, "");
-            msg="";
+            msg = "";
             mask >>>= 1;
         }
     }
@@ -214,8 +219,8 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
                 barrier.await();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-            } catch (BrokenBarrierException e) {
-                throw new RuntimeException(e);
+            } catch (BrokenBarrierException ignored) {
+
             }
         });
         tep.scheduleOnceMultiple(loaderSchedule);
