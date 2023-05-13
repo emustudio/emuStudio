@@ -110,8 +110,8 @@ public class DeviceImpl extends AbstractDevice {
                 this.gui = new CassettePlayerGui(parent, applicationApi.getDialogs(), controller);
                 guiIOset = true;
                 this.cassetteListener.setGui(gui);
-                this.gui.setVisible(true);
             }
+            this.gui.setVisible(true);
         }
     }
 
