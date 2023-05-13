@@ -36,10 +36,12 @@ public class CassettePlayerGui extends JDialog {
     private final JButton btnPlay = new JButton("Play");
     private final JButton btnStop = new JButton("Stop");
     private final JButton btnUnload = new JButton("Unload");
-    private final JLabel lblHeader = new JLabel();
     private final JLabel lblStatus = new JLabel("STOPPED");
+    private final JLabel lblPulseInfo = new JLabel();
     private final JComboBox<Path> cmbDirs = new JComboBox<>();
     private final JList<String> lstTapes = new JList<>();
+    private final JLabel lblDetail = new JLabel();
+    private final JLabel lblProgram = new JLabel();
 
     private final CachedComboBoxModel<Path> cmbDirsModel = new CachedComboBoxModel<>();
     private final TapesListModel lstTapesModel = new TapesListModel();
@@ -58,12 +60,13 @@ public class CassettePlayerGui extends JDialog {
         setCassetteState(controller.getState());
     }
 
-    public void setMetadata(String metadata) {
-        try {
-            SwingUtilities.invokeAndWait(() -> lblHeader.setText(metadata));
-        } catch (Exception ignored) {
+    public void setProgramDetail(String program, String detail) {
+        lblProgram.setText(program);
+        lblDetail.setText(detail);
+    }
 
-        }
+    public void setPulseInfo(String pulseInfo) {
+        lblPulseInfo.setText(pulseInfo);
     }
 
     public void setCassetteState(CassetteController.CassetteState state) {
@@ -105,6 +108,10 @@ public class CassettePlayerGui extends JDialog {
         JScrollPane scrollTapes = new JScrollPane();
         JPanel panelTapeControl = new JPanel();
         JPanel panelMetadata = new JPanel();
+        JTabbedPane tabPane = new JTabbedPane();
+        JPanel panelStatus = new JPanel();
+        JLabel lblProgramLabel = new JLabel("Program:");
+        JLabel lblDetailLabel = new JLabel("Detail:");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -131,8 +138,6 @@ public class CassettePlayerGui extends JDialog {
         btnStop.addActionListener(e -> controller.stop(false));
         btnUnload.addActionListener(e -> controller.stop(true));
 
-        panelTapeSelection.setBorder(BorderFactory.createTitledBorder("Tape selection"));
-
         scrollTapes.setViewportView(lstTapes);
 
         GroupLayout panelTapeSelectionLayout = new GroupLayout(panelTapeSelection);
@@ -142,15 +147,13 @@ public class CassettePlayerGui extends JDialog {
                         .addGroup(panelTapeSelectionLayout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(panelTapeSelectionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(scrollTapes, GroupLayout.DEFAULT_SIZE, 349, Short.MAX_VALUE)
+                                        .addComponent(scrollTapes, GroupLayout.DEFAULT_SIZE, 625, Short.MAX_VALUE)
                                         .addGroup(panelTapeSelectionLayout.createSequentialGroup()
                                                 .addComponent(btnRefresh)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(btnBrowse)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                .addComponent(btnLoad)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(btnUnload))
+                                                .addComponent(btnLoad))
                                         .addGroup(panelTapeSelectionLayout.createSequentialGroup()
                                                 .addComponent(lblTapes)
                                                 .addGap(0, 0, Short.MAX_VALUE))
@@ -165,24 +168,25 @@ public class CassettePlayerGui extends JDialog {
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmbDirs, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(scrollTapes, GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE)
+                                .addComponent(scrollTapes, GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(panelTapeSelectionLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnBrowse)
-                                        .addComponent(btnUnload)
                                         .addComponent(btnLoad)
                                         .addComponent(btnRefresh))
                                 .addContainerGap())
         );
 
-        panelTapeControl.setBorder(BorderFactory.createTitledBorder("Tape control"));
+        tabPane.addTab("Tape selection", panelTapeSelection);
+        tabPane.addTab("Tape control", panelTapeControl);
 
         lblStatus.setFont(new java.awt.Font("Monospaced", Font.BOLD, 18));
         lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
 
-        panelMetadata.setBorder(BorderFactory.createTitledBorder("Metadata"));
+        panelMetadata.setBorder(BorderFactory.createTitledBorder("Block Metadata"));
 
-        lblHeader.setFont(new java.awt.Font("Monospaced", Font.PLAIN, 15));
+        lblPulseInfo.setVerticalAlignment(SwingConstants.TOP);
+        lblPulseInfo.setVerticalTextPosition(SwingConstants.TOP);
 
         GroupLayout panelMetadataLayout = new GroupLayout(panelMetadata);
         panelMetadata.setLayout(panelMetadataLayout);
@@ -190,16 +194,47 @@ public class CassettePlayerGui extends JDialog {
                 panelMetadataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(panelMetadataLayout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(lblHeader, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGroup(panelMetadataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(lblPulseInfo, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(panelMetadataLayout.createSequentialGroup()
+                                                .addGroup(panelMetadataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addComponent(lblProgramLabel)
+                                                        .addComponent(lblDetailLabel))
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(panelMetadataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addComponent(lblDetail, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                        .addComponent(lblProgram, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                                 .addContainerGap())
         );
         panelMetadataLayout.setVerticalGroup(
                 panelMetadataLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(panelMetadataLayout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(lblHeader)
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGroup(panelMetadataLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblProgramLabel)
+                                        .addComponent(lblProgram))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelMetadataLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblDetailLabel)
+                                        .addComponent(lblDetail))
+                                .addGap(18, 18, 18)
+                                .addComponent(lblPulseInfo, GroupLayout.DEFAULT_SIZE, 138, Short.MAX_VALUE)
+                                .addContainerGap())
         );
+
+        panelStatus.setBorder(BorderFactory.createTitledBorder("Tape Status"));
+
+        GroupLayout panelStatusLayout = new GroupLayout(panelStatus);
+        panelStatus.setLayout(panelStatusLayout);
+        panelStatusLayout.setHorizontalGroup(
+                panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelStatusLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(lblStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap()));
+        panelStatusLayout.setVerticalGroup(
+                panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(lblStatus, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE));
 
         GroupLayout panelTapeControlLayout = new GroupLayout(panelTapeControl);
         panelTapeControl.setLayout(panelTapeControlLayout);
@@ -208,27 +243,28 @@ public class CassettePlayerGui extends JDialog {
                         .addGroup(panelTapeControlLayout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(panelTapeControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblStatus, GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
                                         .addComponent(panelMetadata, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addGroup(panelTapeControlLayout.createSequentialGroup()
-                                                .addGap(0, 0, Short.MAX_VALUE)
                                                 .addComponent(btnPlay)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(btnStop)))
-                                .addContainerGap())
-        );
+                                                .addComponent(btnStop)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 395, Short.MAX_VALUE)
+                                                .addComponent(btnUnload))
+                                        .addComponent(panelStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap()));
         panelTapeControlLayout.setVerticalGroup(
                 panelTapeControlLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(panelTapeControlLayout.createSequentialGroup()
-                                .addComponent(lblStatus)
+                                .addContainerGap()
+                                .addComponent(panelStatus, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(panelMetadata, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(panelTapeControlLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnPlay)
-                                        .addComponent(btnStop))
-                                .addContainerGap())
-        );
+                                        .addComponent(btnStop)
+                                        .addComponent(btnUnload))
+                                .addContainerGap()));
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -236,20 +272,13 @@ public class CassettePlayerGui extends JDialog {
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(panelTapeSelection, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(panelTapeControl, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
+                                .addComponent(tabPane)
+                                .addContainerGap()));
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                        .addComponent(panelTapeControl, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(panelTapeSelection, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
+                                .addComponent(tabPane)));
 
         pack();
     }

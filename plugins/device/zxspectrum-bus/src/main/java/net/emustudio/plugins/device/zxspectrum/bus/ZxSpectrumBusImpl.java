@@ -28,6 +28,7 @@ import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * ZX Spectrum bus (for 48K ZX spectrum).
@@ -64,36 +65,47 @@ import java.util.*;
  * tstates and continues for all 192 lines of screen data. After this, there is no delay until the end of the
  * frame as the bottom border and vertical refresh happen, and no delay until 14335 tstates after the start of
  * the next frame as the top border is drawn.
+ * <p>
+ * Contended I/O
+ * High byte   |         |
+ * in 40 - 7F? | Low bit | Contention pattern
+ * ------------+---------+-------------------
+ * No          |  Reset  | N:1, C:3
+ * No          |   Set   | N:4
+ * Yes         |  Reset  | C:1, C:3
+ * Yes         |   Set   | C:1, C:1, C:1, C:1
  */
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus {
+    private final static int SCREEN_LINES = 192;
+    private final static int CONTENTION_TSTATE_START = 14335;
+    private static final int CPU_INTERRUPT_TSTATES = 69888;
+
     private ContextZ80 cpu;
     private MemoryContext<Byte> memory;
     private volatile byte busData; // data on the bus
-    private TimedEventsProcessor ted;
-    private boolean lastMemoryContended = false;
+    private TimedEventsProcessor tep;
+    private boolean isContended = false;
 
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
-
 
     public void initialize(ContextZ80 cpu, MemoryContext<Byte> memory) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memory = Objects.requireNonNull(memory);
-        this.ted = cpu.getTimedEventsProcessor().orElseThrow(() -> new RuntimeException("CPU must provide TimedEventProcessor"));
+        this.tep = cpu.getTimedEventsProcessor().orElseThrow(() -> new RuntimeException("CPU must provide TimedEventProcessor"));
 
         for (Map.Entry<Integer, Context8080.CpuPortDevice> attachment : deferredAttachments.entrySet()) {
-            // TODO: contended device proxy if needed
-            if (!cpu.attachDevice(attachment.getKey(), attachment.getValue())) {
+            if (!cpu.attachDevice(attachment.getKey(), new ContendedDeviceProxy(attachment.getValue()))) {
                 throw new RuntimeException("Could not attach device " + attachment.getValue().getName() + " to CPU");
             }
         }
 
         //  17 x from 14335 to 14463, then 96 tstates pause to reach "end of line", then repeat.
         // the t-state 14335 is the first screen line to be read.
-        int cycles = 14335;
-        for (int line = 0; line < 192; line++) {
+        int cycles = CONTENTION_TSTATE_START + CPU_INTERRUPT_TSTATES;
+        for (int line = 0; line < SCREEN_LINES; line++) {
             scheduleMemoryContention(cycles);
-            cycles = cycles + 16 * 8 + 96;
+            cycles = cycles + 17 * 8 + 96 - 1;
         }
     }
 
@@ -104,7 +116,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             deferredAttachments.put(port, device);
         } else {
             // TODO: contended device proxy if needed
-            if (!cpu.attachDevice(port, device)) {
+            if (!cpu.attachDevice(port, new ContendedDeviceProxy(device))) {
                 throw new RuntimeException("Could not attach device " + device.getName() + " to CPU");
             }
         }
@@ -195,18 +207,48 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     private void setContended(int location) {
-        this.lastMemoryContended = location >= 0x4000 && location <= 0x7FFF;
+        this.isContended = location >= 0x4000 && location <= 0x7FFF;
     }
 
     private void scheduleMemoryContention(int startCycles) {
+        //  17 x from 14335 to 14463, then 96 tstates pause to reach "end of line", then repeat.
+        Runnable slowDownByOneCycle = () -> {
+            if (isContended) {
+                cpu.addCycles(1);
+            }
+        };
+
         for (int i = 0; i < 17; i++) {
             for (int j = 0; j < 6; j++) {
-                ted.schedule(startCycles + i * 8 + j, () -> {
-                    if (lastMemoryContended) {
-                        cpu.addCycles(1);
-                    }
-                });
+                tep.schedule(startCycles + i * 8 + j, slowDownByOneCycle);
             }
+        }
+    }
+
+    private class ContendedDeviceProxy implements Context8080.CpuPortDevice {
+        private final Context8080.CpuPortDevice device;
+
+        private ContendedDeviceProxy(Context8080.CpuPortDevice device) {
+            this.device = Objects.requireNonNull(device);
+        }
+
+        @Override
+        public byte read(int portAddress) {
+            setContended(portAddress);
+            // TODO: portAddress & 1 == 0  ==> contended for 3 cycles only
+            return device.read(portAddress);
+        }
+
+        @Override
+        public void write(int portAddress, byte data) {
+            setContended(portAddress);
+            // TODO: portAddress & 1 == 0  ==> contended for 3 cycles only
+            device.write(portAddress, data);
+        }
+
+        @Override
+        public String getName() {
+            return device.getName();
         }
     }
 }

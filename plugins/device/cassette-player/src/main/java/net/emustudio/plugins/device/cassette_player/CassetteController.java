@@ -42,7 +42,7 @@ public class CassetteController implements AutoCloseable {
         CLOSED // terminal state
     }
 
-    private final Loader.PlaybackListener listener;
+    private final Loader.TapePlayback listener;
     private final ExecutorService playPool = Executors.newFixedThreadPool(1);
 
     private final Object stateLock = new Object();
@@ -55,7 +55,7 @@ public class CassetteController implements AutoCloseable {
 
     private final Queue<CassetteState> stateNotifications = new ConcurrentLinkedQueue<>();
 
-    public CassetteController(Loader.PlaybackListener listener) {
+    public CassetteController(Loader.TapePlayback listener) {
         this.listener = Objects.requireNonNull(listener);
     }
 

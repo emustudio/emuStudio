@@ -81,13 +81,13 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private volatile Dimension size = new Dimension(0, 0);
 
     private final ULA ula;
-    private final TimedEventsProcessor ted;
+    private final TimedEventsProcessor tep;
     private final PaintCycle paintCycle = new PaintCycle();
     private int interrupts = 0;
 
     public DisplayCanvas(ULA ula) {
         this.ula = Objects.requireNonNull(ula);
-        this.ted = ula.getTimedEventsProcessor();
+        this.tep = ula.getTimedEventsProcessor();
         this.screenImage.setAccelerationPriority(1.0f);
         this.screenImageData = ((DataBufferInt) this.screenImage.getRaster().getDataBuffer()).getData();
     }
@@ -96,11 +96,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         if (painting.compareAndSet(false, true)) {
             createBufferStrategy(2);
 
-            ted.schedule(REPAINT_CPU_TSTATES, this::triggerCpuInterrupt);
-            ted.schedule(REPAINT_CPU_TSTATES, ula::onNextFrame);
+            tep.schedule(REPAINT_CPU_TSTATES, this::triggerCpuInterrupt);
+            tep.schedule(REPAINT_CPU_TSTATES, ula::onNextFrame);
             for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
                 int finalI = i;
-                ted.schedule(i * LINE_CPU_TSTATES + 1, () -> drawNextLine(finalI));
+                tep.schedule(REPAINT_CPU_TSTATES + i * LINE_CPU_TSTATES, () -> drawNextLine(finalI));
             }
         }
     }
@@ -187,10 +187,10 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     @Override
     public void close() {
-        ted.remove(REPAINT_CPU_TSTATES, paintCycle);
+        tep.remove(REPAINT_CPU_TSTATES, paintCycle);
         for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
             int finalI = i;
-            ted.remove(i * LINE_CPU_TSTATES, () -> drawNextLine(finalI));
+            tep.remove(REPAINT_CPU_TSTATES + i * LINE_CPU_TSTATES, () -> drawNextLine(finalI));
         }
         painting.set(false);
     }

@@ -21,16 +21,21 @@ package net.emustudio.plugins.device.cassette_player;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.cassette_player.gui.CassettePlayerGui;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 
 import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Cassette Player")
 public class DeviceImpl extends AbstractDevice {
@@ -40,7 +45,7 @@ public class DeviceImpl extends AbstractDevice {
 
     private CassettePlayerGui gui;
     private CassetteController controller;
-    private PlaybackListenerImpl cassetteListener;
+    private TapePlaybackImpl cassetteListener;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -51,12 +56,25 @@ public class DeviceImpl extends AbstractDevice {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() throws PluginInitializationException {
+        ContextPool contextPool = applicationApi.getContextPool();
+
         // a cassette player needs a device to which it will write at its own pace
-        DeviceContext<Byte> lineIn = applicationApi.getContextPool().getDeviceContext(pluginID, DeviceContext.class);
-        if (lineIn.getDataType() != Byte.class) {
-            throw new PluginInitializationException("Could not find line-in device");
+        Supplier<TimedEventsProcessor> tep; // Line-in device initialization might be happening just now
+        DeviceContext<Byte> lineIn;
+        try {
+            CPUContext cpu = contextPool.getCPUContext(pluginID);
+            lineIn = contextPool.getDeviceContext(pluginID, DeviceContext.class);
+            if (lineIn.getDataType() != Byte.class) {
+                throw new PluginInitializationException("Could not find line-in device");
+            }
+            tep = cpu.getTimedEventsProcessor()::get;
+        } catch (PluginInitializationException ignored) {
+            ZxSpectrumBus bus = contextPool.getDeviceContext(pluginID, ZxSpectrumBus.class);
+            lineIn = bus;
+            tep = () -> bus.getTimedEventsProcessor().orElseThrow();
         }
-        this.cassetteListener = new PlaybackListenerImpl(lineIn);
+
+        this.cassetteListener = new TapePlaybackImpl(lineIn, tep);
         this.controller = new CassetteController(cassetteListener);
     }
 
@@ -92,8 +110,8 @@ public class DeviceImpl extends AbstractDevice {
                 this.gui = new CassettePlayerGui(parent, applicationApi.getDialogs(), controller);
                 guiIOset = true;
                 this.cassetteListener.setGui(gui);
-                this.gui.setVisible(true);
             }
+            this.gui.setVisible(true);
         }
     }
 

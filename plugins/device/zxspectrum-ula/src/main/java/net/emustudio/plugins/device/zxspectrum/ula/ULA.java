@@ -29,10 +29,11 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
- * https://worldofspectrum.org/faq/reference/48kreference.htm
- * http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/screen-memory-layout
- * <p>
  * Uncommitted Logic Array (ULA).
+ * <p>
+ * References:
+ * - <a href="https://worldofspectrum.org/faq/reference/48kreference.htm">ZX-Spctrum 48K Technical Reference</a>
+ * - <a href="http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/screen-memory-layout">Screen Memory layout</a>
  *
  * <p>
  * OUT:
@@ -80,7 +81,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     private final ZxSpectrumBus bus;
 
     private int borderColor;
-    private boolean microphoneAndEar;
+    private boolean microphoneAndEarOut; // TODO: audio
 
 
     public ULA(ZxSpectrumBus bus) {
@@ -90,7 +91,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
 
     public void reset() {
         borderColor = 7;
-        microphoneAndEar = false;
+        microphoneAndEarOut = false;
         Arrays.fill(keymap, (byte) 0xBF);
     }
 
@@ -135,8 +136,6 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         }
     }
 
-
-
     public int getBorderColor() {
         return borderColor;
     }
@@ -146,7 +145,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         // A zero in one of the five lowest bits means that the corresponding key is pressed.
         // If more than one address line is made low, the result is the logical AND of all single inputs
 
-        byte result = (byte) 0xBF; // 1011 1111   // EAR on
+        byte result = (byte) 0xBF; // 1011 1111   // no EAR input
         if ((portAddress & 0xFEFE) == 0xFEFE) {
             // SHIFT, Z, X, C, V
             result &= keymap[0];
@@ -172,7 +171,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
             // SPACE, SYM SHFT, M, N, B
             result &= keymap[7];
         }
-        if (!microphoneAndEar) {
+        if ((bus.readData() & 1) == 1) {
             result |= 0x40;
         }
         return result;
@@ -182,7 +181,7 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     public void write(int portAddress, byte data) {
         this.borderColor = data & 7;
         // the EAR and MIC sockets are connected only by resistors, so activating one activates the other
-        microphoneAndEar = ((data & 0x10) == 0x10) || ((data & 0x8) == 0);
+        microphoneAndEarOut = ((data & 0x10) == 0x10) || ((data & 0x8) == 0);
     }
 
     @Override

@@ -42,13 +42,13 @@ public class TzxLoader implements Loader {
     }
 
     @Override
-    public void load(PlaybackListener listener) throws IOException {
+    public void load(TapePlayback playback) throws IOException {
         try (FileInputStream stream = new FileInputStream(path.toFile())) {
-            interpret(stream.readAllBytes(), listener);
+            interpret(stream.readAllBytes(), playback);
         }
     }
 
-    private void interpret(byte[] content, PlaybackListener listener) throws IOException {
+    private void interpret(byte[] content, TapePlayback listener) throws IOException {
         ByteBuffer buffer = ByteBuffer.wrap(content);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
 
@@ -70,8 +70,6 @@ public class TzxLoader implements Loader {
         buffer.get();
         buffer.get();
 
-
-
         while (buffer.position() < buffer.limit()) {
             int id = buffer.get() & 0xFF; // 16 for ROM-saved block
             System.out.println(id);
@@ -81,6 +79,8 @@ public class TzxLoader implements Loader {
             int flagByte = buffer.get() & 0xFF;
 
             if (flagByte == 0) {
+                listener.onHeaderStart();
+                listener.onBlockFlag(flagByte);
                 TapTzxHeader header = TapTzxHeader.parse(buffer);
                 switch (header.id) {
                     case 0: // program
@@ -103,13 +103,15 @@ public class TzxLoader implements Loader {
                 buffer.get(data);
 
                 if (flagByte == 255) {
-                    listener.onData(data);
+                    listener.onDataStart();
+                    listener.onBlockFlag(flagByte);
+                    listener.onBlockData(data);
                 } else {
                     LOGGER.warn("TZX: Unknown flag: " + flagByte);
                 }
             }
             buffer.get(); // checksum
-            listener.onPause(pause);
+           // listener.onPause(pause);
         }
     }
 }
