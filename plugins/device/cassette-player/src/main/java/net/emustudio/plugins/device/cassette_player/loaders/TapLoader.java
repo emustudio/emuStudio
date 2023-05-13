@@ -53,10 +53,10 @@ public class TapLoader implements Loader {
         }
     }
 
-    private void interpret(byte[] content, TapePlayback listener) {
+    private void interpret(byte[] content, TapePlayback playback) {
         ByteBuffer buffer = ByteBuffer.wrap(content);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
-        listener.onFileStart();
+        playback.onFileStart();
 
         while (buffer.position() < buffer.limit() && !Thread.currentThread().isInterrupted()) {
             int blockLength = buffer.getShort() & 0xFFFF; // - flag - checksum
@@ -75,31 +75,31 @@ public class TapLoader implements Loader {
             }
 
             if (flagByte < 0x80) {
-                listener.onHeaderStart();
+                playback.onHeaderStart();
                 TapTzxHeader header = TapTzxHeader.parse(ByteBuffer.wrap(data));
                 switch (header.id) {
                     case 0: // program
-                        listener.onProgram(header.fileName, header.dataLength, header.parameter1, header.parameter2);
+                        playback.onProgram(header.fileName, header.dataLength, header.parameter1, header.parameter2);
                         break;
                     case 1: // number array
-                        listener.onNumberArray(header.fileName, header.dataLength, header.getVariable());
+                        playback.onNumberArray(header.fileName, header.dataLength, header.getVariable());
                         break;
                     case 2: // String array
-                        listener.onStringArray(header.fileName, header.dataLength, header.getVariable());
+                        playback.onStringArray(header.fileName, header.dataLength, header.getVariable());
                         break;
                     case 3: // Memory block
-                        listener.onMemoryBlock(header.fileName, header.dataLength, header.parameter1);
+                        playback.onMemoryBlock(header.fileName, header.dataLength, header.parameter1);
                         break;
                     default:
                         LOGGER.warn("TAP: Unknown header ID: " + header.id);
                 }
             } else {
-                listener.onDataStart();
+                playback.onDataStart();
             }
-            listener.onBlockFlag(flagByte);
-            listener.onBlockData(data);
-            listener.onBlockChecksum(checksum);
+            playback.onBlockFlag(flagByte);
+            playback.onBlockData(data);
+            playback.onBlockChecksum(checksum);
         }
-        listener.onFileEnd();
+        playback.onFileEnd();
     }
 }

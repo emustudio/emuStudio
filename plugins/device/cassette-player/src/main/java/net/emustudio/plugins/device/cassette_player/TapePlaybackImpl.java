@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -66,6 +68,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
     private final Map<Integer, Runnable> loaderSchedule = new HashMap<>();
     private int currentTstates;
     private boolean pulseUp;
+    private final CyclicBarrier barrier = new CyclicBarrier(2);
 
     public TapePlaybackImpl(DeviceContext<Byte> lineIn, Supplier<TimedEventsProcessor> tepSupplier) {
         this.lineIn = Objects.requireNonNull(lineIn);
@@ -80,70 +83,83 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
     public void onFileStart() {
         loaderSchedule.clear();
         currentTstates = 1;
-        pulseUp = true;
+        pulseUp = false;
+        schedulePulse(PAUSE_PULSE_TSTATES, "PAUSE");
     }
 
     @Override
     public void onHeaderStart() {
+        String msg = "PILOT (header)";
         for (int i = 0; i < HEADER_LEADER_PULSE_COUNT; i++) {
-            schedulePulse(LEADER_PULSE_TSTATES);
+            schedulePulse(LEADER_PULSE_TSTATES, msg);
+            msg = "";
         }
-        schedulePulse(SYNC1_PULSE_TSTATES);
-        schedulePulse(SYNC2_PULSE_TSTATES);
+        schedulePulse(SYNC1_PULSE_TSTATES, "SYNC1");
+        schedulePulse(SYNC2_PULSE_TSTATES, "SYNC2");
     }
 
     @Override
     public void onDataStart() {
+        String msg = "PILOT (data)";
         for (int i = 0; i < DATA_LEADER_PULSE_COUNT; i++) {
-            schedulePulse(LEADER_PULSE_TSTATES);
+            schedulePulse(LEADER_PULSE_TSTATES, msg);
+            msg = "";
         }
-        schedulePulse(SYNC1_PULSE_TSTATES);
-        schedulePulse(SYNC2_PULSE_TSTATES);
+        schedulePulse(SYNC1_PULSE_TSTATES, "SYNC1");
+        schedulePulse(SYNC2_PULSE_TSTATES, "SYNC2");
     }
 
     @Override
     public void onBlockFlag(int flag) {
-        transmitByte(flag);
+        transmitByte(flag, String.format("FLAG (0x%02X)", flag & 0xFF));
     }
 
     @Override
     public void onProgram(String filename, int dataLength, int autoStart, int programLength) {
-        log(filename + " : PROGRAM (start=" + autoStart + ", length=" + programLength + ")");
+        logProgramDetail(filename,"PROGRAM (start=" + autoStart + ", length=" + programLength + ")");
     }
 
     @Override
     public void onNumberArray(String filename, int dataLength, char variable) {
-        log(filename + " : NUMBER ARRAY (variable=" + variable + ")");
+        logProgramDetail(filename, "NUMBER ARRAY (variable=" + variable + ")");
     }
 
     @Override
     public void onStringArray(String filename, int dataLength, char variable) {
-        log(filename + " : STRING ARRAY (variable=" + variable + ")");
+        logProgramDetail(filename, "STRING ARRAY (variable=" + variable + ")");
     }
 
     @Override
     public void onMemoryBlock(String filename, int dataLength, int startAddress) {
-        log(filename + " : MEMORY BLOCK (start=" + startAddress + ")");
+        logProgramDetail(filename, "MEMORY BLOCK (start=" + startAddress + ")");
     }
 
     @Override
     public void onBlockData(byte[] data) {
+        String msg = String.format("DATA (length=0x%04X)", data.length & 0xFFFF);
         for (byte d : data) {
-            transmitByte(d & 0xFF);
+            transmitByte(d & 0xFF, msg);
+            msg = "";
         }
     }
 
     @Override
     public void onBlockChecksum(byte checksum) {
-        transmitByte(checksum & 0xFF);
-        //  schedulePulse(SYNC3_PULSE_TSTATES);
-        //   pulseUp = false;
-        //   schedulePulse(PAUSE_PULSE_TSTATES);
+        transmitByte(checksum & 0xFF, String.format("CHECKSUM (0x%02X)", checksum & 0xFF));
+        schedulePulse(SYNC3_PULSE_TSTATES, "SYNC3");
     }
 
     @Override
     public void onFileEnd() {
+        barrier.reset();
         playPulses();
+        try {
+            barrier.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (BrokenBarrierException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -151,23 +167,38 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
         Optional.ofNullable(gui.get()).ifPresent(g -> g.setCassetteState(state));
     }
 
-    private void log(String message) {
-        Optional.ofNullable(gui.get()).ifPresent(g -> g.setMetadata(message));
+    private void logPulse(String message) {
+        Optional.ofNullable(gui.get()).ifPresent(g -> g.setPulseInfo(message));
     }
 
-    private void transmitByte(int data) {
+    private void logProgramDetail(String program, String detail) {
+        Optional.ofNullable(gui.get()).ifPresent(g -> g.setProgramDetail(program, detail));
+    }
+
+    private void transmitByte(int data, String msg) {
         int mask = 0x80; // 1000 0000
         while (mask != 0) {
             int pulseLength = ((data & mask) == 0) ? DATA_PULSE_ZERO_TSTATES : DATA_PULSE_ONE_TSTATES;
-            schedulePulse(pulseLength); // 2x according to https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface
-            schedulePulse(pulseLength);
+            schedulePulse(pulseLength, msg); // 2x according to https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface
+            schedulePulse(pulseLength, "");
+            msg="";
             mask >>>= 1;
         }
     }
 
-    private void schedulePulse(int length) {
-        Runnable one = () -> lineIn.writeData((byte) 1);
-        Runnable zero = () -> lineIn.writeData((byte) 0);
+    private void schedulePulse(int length, String msg) {
+        Runnable one = () -> {
+            if (!msg.isEmpty()) {
+                logPulse(msg);
+            }
+            lineIn.writeData((byte) 1);
+        };
+        Runnable zero = () -> {
+            if (!msg.isEmpty()) {
+                logPulse(msg);
+            }
+            lineIn.writeData((byte) 0);
+        };
 
         loaderSchedule.put(currentTstates, pulseUp ? one : zero);
         currentTstates += length;
@@ -178,6 +209,15 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
         if (tep == null) {
             tep = tepSupplier.get();
         }
+        loaderSchedule.put(currentTstates, () -> {
+            try {
+                barrier.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (BrokenBarrierException e) {
+                throw new RuntimeException(e);
+            }
+        });
         tep.scheduleOnceMultiple(loaderSchedule);
     }
 }
