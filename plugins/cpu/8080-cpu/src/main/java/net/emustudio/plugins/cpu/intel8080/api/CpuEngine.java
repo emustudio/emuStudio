@@ -20,7 +20,5 @@ package net.emustudio.plugins.cpu.intel8080.api;
 
 public interface CpuEngine {
 
-    void fireFrequencyChanged(float newFrequency);
-
     void setDispatchListener(DispatchListener dispatchListener);
 }

@@ -86,7 +86,7 @@ public class StatusPanel extends JPanel {
             }
 
         });
-        cpu.getEngine().addFrequencyChangedListener(newFrequency -> lblFrequency.setText(String.format("%.2f kHz", newFrequency)));
+        cpu.getFrequencyCalculator().addListener(f -> lblFrequency.setText(String.format("%.2f kHz", f)));
         spnFrequency.addChangeListener(e -> {
             int i = (Integer) spnFrequency.getModel().getValue();
             try {

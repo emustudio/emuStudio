@@ -54,7 +54,7 @@ public class CpuImpl extends AbstractCPU {
     private Disassembler disassembler;
     private EmulatorEngine engine;
 
-    private FrequencyCalculator frequencyCalculator;
+    private final FrequencyCalculator frequencyCalculator = new FrequencyCalculator();
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -68,9 +68,6 @@ public class CpuImpl extends AbstractCPU {
             );
         }
         context.setCPUFrequency(settings.getInt("frequency_khz", ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
-
-        context.setCPUFrequency(settings.getInt("frequency_khz", ContextZ80Impl.DEFAULT_FREQUENCY_KHZ));
-
         initializer = new InitializerZ80(
                 this, pluginID, applicationApi.getContextPool(), settings, context
         );
@@ -96,7 +93,7 @@ public class CpuImpl extends AbstractCPU {
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
         context.setEngine(engine);
-        frequencyCalculator = new FrequencyCalculator(engine::fireFrequencyChanged);
+        context.addPassedCyclesListener(frequencyCalculator);
         statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
     }
 
@@ -149,6 +146,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     protected void destroyInternal() {
+        context.removePassedCyclesListener(frequencyCalculator);
         frequencyCalculator.stop();
         frequencyCalculator.close();
         context.clearDevices();
@@ -177,5 +175,9 @@ public class CpuImpl extends AbstractCPU {
         } catch (MissingResourceException e) {
             return Optional.empty();
         }
+    }
+
+    public FrequencyCalculator getFrequencyCalculator() {
+        return frequencyCalculator;
     }
 }

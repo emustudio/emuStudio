@@ -25,7 +25,6 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
-import net.emustudio.plugins.cpu.intel8080.api.FrequencyChangedListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +65,6 @@ public class EmulatorEngine implements CpuEngine {
     private final ContextZ80Impl context;
     private final TimedEventsProcessor tep;
     private final MemoryContext<Byte> memory;
-    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
     private final AtomicLong cyclesExecutedPerTimeSlice = new AtomicLong(0);
 
     public final int[] regs = new int[8];
@@ -139,17 +137,6 @@ public class EmulatorEngine implements CpuEngine {
 
     public void addExecutedCyclesPerTimeSlice(long tstates) {
         cyclesExecutedPerTimeSlice.addAndGet(tstates);
-    }
-
-    public void addFrequencyChangedListener(FrequencyChangedListener listener) {
-        frequencyChangedListeners.add(listener);
-    }
-
-    @Override
-    public void fireFrequencyChanged(float newFrequency) {
-        for (FrequencyChangedListener listener : frequencyChangedListeners) {
-            listener.frequencyChanged(newFrequency);
-        }
     }
 
     public void requestMaskableInterrupt(byte[] data) {
@@ -338,11 +325,11 @@ public class EmulatorEngine implements CpuEngine {
                 if (dataBus != null && dataBus.length > 0) {
                     lastOpcode = dataBus[0] & 0xFF; // TODO: if dataBus had more bytes, they're ignored (except call).
                     if (lastOpcode == 0xCD) {  /* CALL */
-                        advanceCycles(4+7); // fetch
+                        advanceCycles(4 + 7); // fetch
                         SP = (SP - 2) & 0xFFFF;
-                        memory.write(SP, (byte)(PC & 0xFF));
+                        memory.write(SP, (byte) (PC & 0xFF));
                         advanceCycles(3);
-                        memory.write((SP + 1) & 0xFFFF, (byte)(PC >>> 8));
+                        memory.write((SP + 1) & 0xFFFF, (byte) (PC >>> 8));
 
                         PC = ((dataBus[2] & 0xFF) << 8) | (dataBus[1] & 0xFF);
                         memptr = PC;
@@ -918,18 +905,18 @@ public class EmulatorEngine implements CpuEngine {
     void I_PUSH_IX() {
         // pc:5,sp-1:3,sp-2:3
         SP = (SP - 2) & 0xFFFF;
-        memory.write((SP + 1) & 0xFFFF, (byte)(IX >>> 8));
+        memory.write((SP + 1) & 0xFFFF, (byte) (IX >>> 8));
         advanceCycles(3);
-        memory.write(SP, (byte)(IX & 0xFF));
+        memory.write(SP, (byte) (IX & 0xFF));
         advanceCycles(3);
     }
 
     void I_PUSH_IY() {
         // pc:5,sp-1:3,sp-2:3
         SP = (SP - 2) & 0xFFFF;
-        memory.write((SP + 1) & 0xFFFF, (byte)(IY & 0xFF));
+        memory.write((SP + 1) & 0xFFFF, (byte) (IY & 0xFF));
         advanceCycles(3);
-        memory.write(SP, (byte)(IY >>> 8));
+        memory.write(SP, (byte) (IY >>> 8));
         advanceCycles(3);
     }
 
@@ -2827,10 +2814,10 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 2) & 0xFFFF;
         advanceCycles(3);
 
-        memory.write(address, (byte)(xy & 0xFF));
+        memory.write(address, (byte) (xy & 0xFF));
         advanceCycles(3);
         memptr = (address + 1) & 0xFFFF;
-        memory.write(memptr, (byte)(xy >>> 8));
+        memory.write(memptr, (byte) (xy >>> 8));
         advanceCycles(3);
     }
 
@@ -3833,7 +3820,7 @@ public class EmulatorEngine implements CpuEngine {
     void I_LD_IX_NN() {
         IX = memory.read(PC) & 0xFF;
         advanceCycles(3);
-        IX = ((memory.read((PC +1) & 0xFFFF) << 8) | IX) & 0xFFFF;
+        IX = ((memory.read((PC + 1) & 0xFFFF) << 8) | IX) & 0xFFFF;
         PC = (PC + 2) & 0xFFFF;
         advanceCycles(3);
     }
@@ -3841,7 +3828,7 @@ public class EmulatorEngine implements CpuEngine {
     void I_LD_IY_NN() {
         IY = memory.read(PC) & 0xFF;
         advanceCycles(3);
-        IY = ((memory.read((PC +1) & 0xFFFF) << 8) | IY) & 0xFFFF;
+        IY = ((memory.read((PC + 1) & 0xFFFF) << 8) | IY) & 0xFFFF;
         PC = (PC + 2) & 0xFFFF;
         advanceCycles(3);
     }
@@ -3904,9 +3891,9 @@ public class EmulatorEngine implements CpuEngine {
         IX = tmp;
         memptr = IX;
 
-        memory.write(SP, (byte)(tmp1 & 0xFF));
+        memory.write(SP, (byte) (tmp1 & 0xFF));
         advanceCycles(3);
-        memory.write((SP + 1) & 0xFFFF, (byte)(tmp1 >>> 8));
+        memory.write((SP + 1) & 0xFFFF, (byte) (tmp1 >>> 8));
         advanceCycles(6);
     }
 
@@ -3920,9 +3907,9 @@ public class EmulatorEngine implements CpuEngine {
         IY = tmp;
         memptr = IY;
 
-        memory.write(SP, (byte)(tmp1 & 0xFF));
+        memory.write(SP, (byte) (tmp1 & 0xFF));
         advanceCycles(3);
-        memory.write((SP + 1) & 0xFFFF, (byte)(tmp1 >>> 8));
+        memory.write((SP + 1) & 0xFFFF, (byte) (tmp1 >>> 8));
         advanceCycles(6);
     }
 

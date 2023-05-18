@@ -53,7 +53,7 @@ public class CpuImpl extends AbstractCPU {
     private StatusPanel statusPanel;
     private Disassembler disassembler;
 
-    private FrequencyCalculator frequencyCalculator;
+    private final FrequencyCalculator frequencyCalculator = new FrequencyCalculator();
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -93,12 +93,17 @@ public class CpuImpl extends AbstractCPU {
         engine = initializer.getEngine();
         context.setCpu(engine);
         disassembler = initializer.getDisassembler();
+        context.addPassedCyclesListener(frequencyCalculator);
         statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
-        frequencyCalculator = new FrequencyCalculator(engine::fireFrequencyChanged);
+    }
+
+    public FrequencyCalculator getFrequencyCalculator() {
+        return frequencyCalculator;
     }
 
     @Override
     protected void destroyInternal() {
+        context.removePassedCyclesListener(frequencyCalculator);
         frequencyCalculator.stop();
         frequencyCalculator.close();
         context.clearDevices();

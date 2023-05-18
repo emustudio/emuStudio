@@ -23,16 +23,13 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
-import net.emustudio.plugins.cpu.intel8080.api.FrequencyChangedListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static net.emustudio.plugins.cpu.intel8080.DispatchTables.DISPATCH_TABLE;
 
@@ -58,7 +55,6 @@ public class EmulatorEngine implements CpuEngine {
     );
     private final MemoryContext<Byte> memory;
     private final Context8080Impl context;
-    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
     public boolean INTE = false; // enabling / disabling of interrupts
     public int PC = 0; // program counter
     public int SP = 0; // stack pointer
@@ -81,17 +77,6 @@ public class EmulatorEngine implements CpuEngine {
     @Override
     public void setDispatchListener(DispatchListener dispatchListener) {
         this.dispatchListener = dispatchListener;
-    }
-
-    public void addFrequencyChangedListener(FrequencyChangedListener listener) {
-        frequencyChangedListeners.add(listener);
-    }
-
-    @Override
-    public void fireFrequencyChanged(float newFrequency) {
-        for (FrequencyChangedListener listener : frequencyChangedListeners) {
-            listener.frequencyChanged(newFrequency);
-        }
     }
 
     public void reset(int startPos) {
