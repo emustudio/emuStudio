@@ -69,4 +69,19 @@ class BrainCPUContextImpl implements BrainCPUContext {
         Byte value = tmp.readData();
         return (value == null) ? 0 : value;
     }
+
+    @Override
+    public boolean passedCyclesSupported() {
+        return false;
+    }
+
+    @Override
+    public void addPassedCyclesListener(PassedCyclesListener passedCyclesListener) {
+
+    }
+
+    @Override
+    public void removePassedCyclesListener(PassedCyclesListener passedCyclesListener) {
+
+    }
 }

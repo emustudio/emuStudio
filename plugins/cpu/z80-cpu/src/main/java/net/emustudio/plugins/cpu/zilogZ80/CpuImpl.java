@@ -23,12 +23,12 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.cpu.intel8080.api.FrequencyUpdater;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.cpu.zilogZ80.gui.StatusPanel;
 import org.slf4j.Logger;
@@ -38,11 +38,6 @@ import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
@@ -52,15 +47,14 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CpuImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
-    private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
-    private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
-
     private final ContextZ80Impl context = new ContextZ80Impl();
     private final InitializerZ80 initializer;
 
     private StatusPanel statusPanel;
     private Disassembler disassembler;
     private EmulatorEngine engine;
+
+    private FrequencyCalculator frequencyCalculator;
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -102,6 +96,7 @@ public class CpuImpl extends AbstractCPU {
         disassembler = initializer.getDisassembler();
         engine = initializer.getEngine();
         context.setEngine(engine);
+        frequencyCalculator = new FrequencyCalculator(engine::fireFrequencyChanged);
         statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
     }
 
@@ -114,55 +109,32 @@ public class CpuImpl extends AbstractCPU {
         return statusPanel;
     }
 
-    private void stopFrequencyUpdater() {
-        Future tmpFuture;
-
-        do {
-            tmpFuture = frequencyUpdaterFuture.get();
-            if (tmpFuture != null) {
-                tmpFuture.cancel(false);
-            }
-        } while (!frequencyUpdaterFuture.compareAndSet(tmpFuture, null));
-    }
-
-    private void startFrequencyUpdater() {
-        Future tmpFuture;
-        Future newFuture = frequencyScheduler.scheduleAtFixedRate(new FrequencyUpdater(engine), 0, 1, TimeUnit.SECONDS);
-
-        do {
-            tmpFuture = frequencyUpdaterFuture.get();
-            if (tmpFuture != null) {
-                tmpFuture.cancel(false);
-            }
-        } while (!frequencyUpdaterFuture.compareAndSet(tmpFuture, newFuture));
-    }
-
     @Override
     public RunState call() {
         try {
-            startFrequencyUpdater();
+            frequencyCalculator.start();
             return engine.run(this);
         } finally {
-            stopFrequencyUpdater();
+            frequencyCalculator.stop();
         }
     }
 
     @Override
     protected void resetInternal(int startPos) {
+        frequencyCalculator.stop();
         engine.reset(startPos);
-        stopFrequencyUpdater();
     }
 
     @Override
     public void pause() {
         super.pause();
-        stopFrequencyUpdater();
+        frequencyCalculator.stop();
     }
 
     @Override
     public void stop() {
         super.stop();
-        stopFrequencyUpdater();
+        frequencyCalculator.stop();
     }
 
     @Override
@@ -177,6 +149,8 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     protected void destroyInternal() {
+        frequencyCalculator.stop();
+        frequencyCalculator.close();
         context.clearDevices();
         initializer.destroy();
     }
@@ -195,7 +169,6 @@ public class CpuImpl extends AbstractCPU {
     public String getDescription() {
         return "Emulator of Zilog Z80 CPU";
     }
-
 
 
     private Optional<ResourceBundle> getResourceBundle() {

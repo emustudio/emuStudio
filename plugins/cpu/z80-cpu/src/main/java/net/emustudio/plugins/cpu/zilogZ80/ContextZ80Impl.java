@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.cpu.zilogZ80;
 
+import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
 import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.jcip.annotations.ThreadSafe;
@@ -29,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
-public final class ContextZ80Impl implements ContextZ80 {
+public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ80 {
     public final static int DEFAULT_FREQUENCY_KHZ = 4000;
     private final static byte NO_DATA = (byte) 0xFF;
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextZ80Impl.class);
@@ -115,13 +116,18 @@ public final class ContextZ80Impl implements ContextZ80 {
     }
 
     @Override
-    public void addCycles(int tStates) {
+    public void addCycles(long tStates) {
         engine.addExecutedCyclesPerTimeSlice(tStates);
     }
 
     @Override
     public Optional<TimedEventsProcessor> getTimedEventsProcessor() {
         return Optional.of(tep);
+    }
+
+    @Override
+    public boolean passedCyclesSupported() {
+        return true;
     }
 
     public TimedEventsProcessor getTimedEventsProcessorNow() {

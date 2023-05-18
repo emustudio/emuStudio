@@ -37,7 +37,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static net.emustudio.plugins.cpu.zilogZ80.DispatchTables.*;
@@ -68,8 +67,7 @@ public class EmulatorEngine implements CpuEngine {
     private final TimedEventsProcessor tep;
     private final MemoryContext<Byte> memory;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
-    private final AtomicLong cyclesExecutedGlobal = new AtomicLong(0);
-    private final AtomicInteger cyclesExecutedPerTimeSlice = new AtomicInteger(0);
+    private final AtomicLong cyclesExecutedPerTimeSlice = new AtomicLong(0);
 
     public final int[] regs = new int[8];
     public final int[] regs2 = new int[8];
@@ -139,12 +137,7 @@ public class EmulatorEngine implements CpuEngine {
         this.dispatchListener = dispatchListener;
     }
 
-    @Override
-    public long getAndResetGlobalExecutedCycles() {
-        return cyclesExecutedGlobal.getAndSet(0);
-    }
-
-    public void addExecutedCyclesPerTimeSlice(int tstates) {
+    public void addExecutedCyclesPerTimeSlice(long tstates) {
         cyclesExecutedPerTimeSlice.addAndGet(tstates);
     }
 
@@ -240,8 +233,8 @@ public class EmulatorEngine implements CpuEngine {
 
     private void advanceCycles(int cycles) {
         cyclesExecutedPerTimeSlice.addAndGet(cycles);
-        cyclesExecutedGlobal.addAndGet(cycles);
         tep.advanceClock(cycles);
+        context.passedCycles(cycles);
     }
 
     private void dispatch() throws Throwable {

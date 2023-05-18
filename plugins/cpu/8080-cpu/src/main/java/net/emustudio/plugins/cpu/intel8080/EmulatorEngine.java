@@ -70,7 +70,6 @@ public class EmulatorEngine implements CpuEngine {
     private short b2 = 0;
     private short b3 = 0;
     private int lastOpcode;
-    private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
 
@@ -82,13 +81,6 @@ public class EmulatorEngine implements CpuEngine {
     @Override
     public void setDispatchListener(DispatchListener dispatchListener) {
         this.dispatchListener = dispatchListener;
-    }
-
-    @Override
-    public long getAndResetGlobalExecutedCycles() {
-        long tmpExecutedCycles = executedCycles;
-        executedCycles = 0;
-        return tmpExecutedCycles;
     }
 
     public void addFrequencyChangedListener(FrequencyChangedListener listener) {
@@ -125,7 +117,7 @@ public class EmulatorEngine implements CpuEngine {
 
     public CPU.RunState run(CPU cpu) {
         long startTime, endTime;
-        int cycles_executed;
+        int cyclesExecuted;
         int checkTimeSlice = 100;
         int cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         int cycles;
@@ -134,12 +126,12 @@ public class EmulatorEngine implements CpuEngine {
         currentRunState = CPU.RunState.STATE_RUNNING;
         while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
             startTime = System.nanoTime();
-            cycles_executed = 0;
-            while ((cycles_executed < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
+            cyclesExecuted = 0;
+            while ((cyclesExecuted < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
                     cycles = dispatch();
-                    cycles_executed += cycles;
-                    executedCycles += cycles;
+                    cyclesExecuted += cycles;
+                    context.passedCycles(cycles);
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }
