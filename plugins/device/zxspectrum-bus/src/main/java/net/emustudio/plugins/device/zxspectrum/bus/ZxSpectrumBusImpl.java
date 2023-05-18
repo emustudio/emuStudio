@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.zxspectrum.bus;
 
+import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -27,15 +28,17 @@ import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.jcip.annotations.NotThreadSafe;
 
-import java.util.*;
-import java.util.function.Consumer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * ZX Spectrum bus (for 48K ZX spectrum).
  * <p>
  * Adds memory & I/O port contention.
  * <p>
- * https://sinclair.wiki.zxnet.co.uk/wiki/Contended_memory#Timing_differences
+ * <a href="https://sinclair.wiki.zxnet.co.uk/wiki/Contended_memory#Timing_differences">ZX Spectrum48 timing</a>
  * On the 16K and 48K models of ZX Spectrum, the memory from 0x4000 to 0x7fff is contended. If the contended
  * memory is accessed 14335[2] or 14336 tstates after an interrupt (see the timing differences section below
  * for information on the 14335/14336 issue), the Z80 will be delayed for 6 tstates. After 14336 tstates,
@@ -76,36 +79,55 @@ import java.util.function.Consumer;
  * Yes         |   Set   | C:1, C:1, C:1, C:1
  */
 @NotThreadSafe
-public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus {
-    private final static int SCREEN_LINES = 192;
-    private final static int CONTENTION_TSTATE_START = 14335;
-    private static final int CPU_INTERRUPT_TSTATES = 69888;
+public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
+    private static final long LINE_TSTATES = 224;
+
+    // from 14335 to 14463, then 96 tstates pause to reach "end of line", then repeat.
+    private final static Map<Long, Integer> CONTENTION_MAP = new HashMap<>();
+
+    static {
+        CONTENTION_MAP.put(14335L, 6);
+        CONTENTION_MAP.put(14336L, 5);
+        CONTENTION_MAP.put(14337L, 4);
+        CONTENTION_MAP.put(14338L, 3);
+        CONTENTION_MAP.put(14339L, 2);
+        CONTENTION_MAP.put(14340L, 1);
+        CONTENTION_MAP.put(14343L, 6);
+        CONTENTION_MAP.put(14344L, 5);
+        CONTENTION_MAP.put(14345L, 4);
+        CONTENTION_MAP.put(14346L, 3);
+        CONTENTION_MAP.put(14347L, 2);
+        CONTENTION_MAP.put(14348L, 1);
+        CONTENTION_MAP.put(14351L, 6);
+        CONTENTION_MAP.put(14352L, 5);
+        CONTENTION_MAP.put(14353L, 4);
+        CONTENTION_MAP.put(14354L, 3);
+        CONTENTION_MAP.put(14355L, 2);
+        CONTENTION_MAP.put(14356L, 1);
+        CONTENTION_MAP.put(14359L, 6);
+        CONTENTION_MAP.put(14360L, 5);
+        CONTENTION_MAP.put(14361L, 4);
+        CONTENTION_MAP.put(14362L, 3);
+        CONTENTION_MAP.put(14363L, 2);
+        //     CONTENTION_MAP.put(14364L, 1);
+    }
 
     private ContextZ80 cpu;
     private MemoryContext<Byte> memory;
     private volatile byte busData; // data on the bus
-    private TimedEventsProcessor tep;
-    private boolean isContended = false;
+
+    private long contentionCycles;
 
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
 
     public void initialize(ContextZ80 cpu, MemoryContext<Byte> memory) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memory = Objects.requireNonNull(memory);
-        this.tep = cpu.getTimedEventsProcessor().orElseThrow(() -> new RuntimeException("CPU must provide TimedEventProcessor"));
 
         for (Map.Entry<Integer, Context8080.CpuPortDevice> attachment : deferredAttachments.entrySet()) {
             if (!cpu.attachDevice(attachment.getKey(), new ContendedDeviceProxy(attachment.getValue()))) {
                 throw new RuntimeException("Could not attach device " + attachment.getValue().getName() + " to CPU");
             }
-        }
-
-        //  17 x from 14335 to 14463, then 96 tstates pause to reach "end of line", then repeat.
-        // the t-state 14335 is the first screen line to be read.
-        int cycles = CONTENTION_TSTATE_START + CPU_INTERRUPT_TSTATES;
-        for (int line = 0; line < SCREEN_LINES; line++) {
-            scheduleMemoryContention(cycles);
-            cycles = cycles + 17 * 8 + 96 - 1;
         }
     }
 
@@ -148,6 +170,16 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     @Override
+    public void addPassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener) {
+        cpu.addPassedCyclesListener(passedCyclesListener);
+    }
+
+    @Override
+    public void removePassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener) {
+        cpu.removePassedCyclesListener(passedCyclesListener);
+    }
+
+    @Override
     public Byte readData() {
         return busData;
     }
@@ -159,25 +191,25 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public Byte read(int location) {
-        setContended(location);
+        contendedMemory(location);
         return memory.read(location);
     }
 
     @Override
     public Byte[] read(int location, int count) {
-        setContended(location);
+        contendedMemory(location);
         return memory.read(location, count);
     }
 
     @Override
     public void write(int location, Byte data) {
-        setContended(location);
+        contendedMemory(location);
         memory.write(location, data);
     }
 
     @Override
     public void write(int location, Byte[] data, int count) {
-        setContended(location);
+        contendedMemory(location);
         memory.write(location, data, count);
     }
 
@@ -206,23 +238,69 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         return memory.annotations();
     }
 
-    private void setContended(int location) {
-        this.isContended = location >= 0x4000 && location <= 0x7FFF;
-    }
-
-    private void scheduleMemoryContention(int startCycles) {
-        //  17 x from 14335 to 14463, then 96 tstates pause to reach "end of line", then repeat.
-        Runnable slowDownByOneCycle = () -> {
-            if (isContended) {
-                cpu.addCycles(1);
-            }
-        };
-
-        for (int i = 0; i < 17; i++) {
-            for (int j = 0; j < 6; j++) {
-                tep.schedule(startCycles + i * 8 + j, slowDownByOneCycle);
+    private void contendedMemory(int location) {
+        if (location >= 0x4000 && location <= 0x7FFF) {
+            Integer cycles = CONTENTION_MAP.get(contentionCycles);
+            if (cycles != null) {
+                cpu.addCycles(cycles);
             }
         }
+    }
+
+    private void contendedPort(int portAddress) {
+        //    High byte   |         |
+        //    in 40 - 7F? | Low bit | Contention pattern
+        //    ------------+---------+-------------------
+        //         No     |  Reset  | N:1, C:3
+        //         No     |   Set   | N:4
+        //        Yes     |  Reset  | C:1, C:3
+        //        Yes     |   Set   | C:1, C:1, C:1, C:1
+
+        if (portAddress >= 0x4000 && portAddress <= 0x7FFF) {
+            // after this, CPU adds 4 cycles for I/O.
+            if ((portAddress & 1) == 0) {
+                //        Yes     |  Reset  | C:1, C:3
+                Integer cycles = CONTENTION_MAP.get(contentionCycles); // at C:1
+                if (cycles != null) {
+                    cpu.addCycles(cycles);
+                }
+                cycles = CONTENTION_MAP.get(contentionCycles + 1); // after C:1
+                if (cycles != null) {
+                    cpu.addCycles(cycles);
+                }
+            } else {
+                //        Yes     |   Set   | C:1, C:1, C:1, C:1
+                Integer cycles = CONTENTION_MAP.get(contentionCycles); // at C:1
+                if (cycles != null) {
+                    cpu.addCycles(cycles);
+                }
+                cycles = CONTENTION_MAP.get(contentionCycles + 1); // 2x at C:1
+                if (cycles != null) {
+                    cpu.addCycles(cycles);
+                }
+                cycles = CONTENTION_MAP.get(contentionCycles + 2); // 3x at C:1
+                if (cycles != null) {
+                    cpu.addCycles(cycles);
+                }
+                cycles = CONTENTION_MAP.get(contentionCycles + 3); // after 3x at C:1
+                if (cycles != null) {
+                    cpu.addCycles(cycles);
+                }
+            }
+        } else {
+            //         No     |  Reset  | N:1, C:3
+            if ((portAddress & 1) == 0) {
+                Integer cycles = CONTENTION_MAP.get(contentionCycles + 1); // after N:1
+                if (cycles != null) {
+                    cpu.addCycles(cycles);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void passedCycles(long tstates) {
+        contentionCycles = (contentionCycles + tstates) % (LINE_TSTATES + 14335);
     }
 
     private class ContendedDeviceProxy implements Context8080.CpuPortDevice {
@@ -234,15 +312,13 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
         @Override
         public byte read(int portAddress) {
-            setContended(portAddress);
-            // TODO: portAddress & 1 == 0  ==> contended for 3 cycles only
+            contendedPort(portAddress);
             return device.read(portAddress);
         }
 
         @Override
         public void write(int portAddress, byte data) {
-            setContended(portAddress);
-            // TODO: portAddress & 1 == 0  ==> contended for 3 cycles only
+            contendedPort(portAddress);
             device.write(portAddress, data);
         }
 

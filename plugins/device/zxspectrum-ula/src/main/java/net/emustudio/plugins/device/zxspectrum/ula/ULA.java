@@ -18,14 +18,12 @@
  */
 package net.emustudio.plugins.device.zxspectrum.ula;
 
-import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.Keyboard;
 
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -119,12 +117,6 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         bus.signalInterrupt(RST_7);
     }
 
-    public TimedEventsProcessor getTimedEventsProcessor() {
-        return bus
-                .getTimedEventsProcessor()
-                .orElseThrow(() -> new NoSuchElementException("The CPU does not provide TimedEventProcessor"));
-    }
-
     public void readLine(int y) {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
             videoMemory[x][y] = bus.readMemoryNotContended(0x4000 + lineStartOffsets[y] + x);
@@ -138,6 +130,10 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
 
     public int getBorderColor() {
         return borderColor;
+    }
+
+    public ZxSpectrumBus getBus() {
+        return bus;
     }
 
     @Override
