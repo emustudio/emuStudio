@@ -322,10 +322,11 @@ public class Z80Tests extends InstructionsTest {
 
     @Test
     public void testInstructions() {
-        testData.forEach(this::testInstruction);
+        AtomicInteger i = new AtomicInteger();
+        testData.forEach(d -> testInstruction(d, i.incrementAndGet()));
     }
 
-    public void testInstruction(InstrTest instrTest) {
+    public void testInstruction(InstrTest instrTest, int i) {
         // reg A is repeated with TEST_VALUES
         // flags are flipped from 0 and 0xFF
         final AtomicInteger crc = new AtomicInteger();
@@ -378,7 +379,7 @@ public class Z80Tests extends InstructionsTest {
                 }
             }
         }
-   //     System.out.println("0x" + Integer.toHexString(crc.get()));
+        //System.out.printf("%02d. 0x%08x opcode=%04x%n", i, crc.get(), instrTest.opcode);
         assertEquals(instrTest.crc, crc.get());
     }
 

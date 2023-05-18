@@ -95,7 +95,7 @@ public class ControlTest extends InstructionsTest {
     }
 
     @Test
-    public void testCALL__nn__AND__CALL_cc__nn() {
+    public void testCALL__nn() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsMemoryAddressWord(0)
                 .secondIsPair(REG_SP)
@@ -105,15 +105,26 @@ public class ControlTest extends InstructionsTest {
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(3, 5,
-                test.runWithFirstOperand(0xCD),
-                test.runWithFirstOperand(0xC4),
-                test.setFlags(FLAG_Z).runWithFirstOperand(0xCC),
-                test.runWithFirstOperand(0xD4),
-                test.setFlags(FLAG_C).runWithFirstOperand(0xDC),
-                test.runWithFirstOperand(0xE4),
-                test.setFlags(FLAG_PV).runWithFirstOperand(0xEC),
-                test.runWithFirstOperand(0xF4),
-                test.setFlags(FLAG_S).runWithFirstOperand(0xFC)
+                test.runWithFirstOperand(0xCD)
+        );
+    }
+
+    @Test
+    public void testCALL_cc__nn() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsMemoryAddressWord(0)
+                .secondIsPair(REG_SP)
+                .verifyPair(REG_SP, context -> (context.second - 2) & 0xFFFF)
+                .verifyPC(context -> context.first)
+                .verifyWord(context -> (context.second - 2) & 0xFFFF, context -> context.PC + 3)
+                .setFlags(FLAG_Z | FLAG_C | FLAG_PV | FLAG_S)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinary(3, 5,
+                test.runWithFirstOperand(0xCC),
+                test.runWithFirstOperand(0xDC),
+                test.runWithFirstOperand(0xEC),
+                test.runWithFirstOperand(0xFC)
         );
     }
 
@@ -122,25 +133,21 @@ public class ControlTest extends InstructionsTest {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsMemoryAddressWord(0)
                 .secondIsPair(REG_SP)
-                .verifyPair(REG_SP, context -> context.second)
-                .verifyPC(context -> context.PC + 3)
-                .verifyWord(context -> context.second, context -> 0)
+                .verifyPair(REG_SP, context -> (context.second - 2) & 0xFFFF)
+                .verifyPC(context -> context.first)
+                .verifyWord(context -> (context.second - 2) & 0xFFFF, context -> context.PC + 3)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(3, 5,
-                test.setFlags(FLAG_Z).runWithFirstOperand(0xC4),
-                test.runWithFirstOperand(0xCC),
-                test.setFlags(FLAG_C).runWithFirstOperand(0xD4),
-                test.runWithFirstOperand(0xDC),
-                test.setFlags(FLAG_PV).runWithFirstOperand(0xE4),
-                test.runWithFirstOperand(0xEC),
-                test.setFlags(FLAG_S).runWithFirstOperand(0xF4),
-                test.runWithFirstOperand(0xFC)
+                test.runWithFirstOperand(0xC4),
+                test.runWithFirstOperand(0xD4),
+                test.runWithFirstOperand(0xE4),
+                test.runWithFirstOperand(0xF4)
         );
     }
 
     @Test
-    public void testRET__AND__RET__cc() {
+    public void testRET() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsAddressAndSecondIsMemoryWord()
                 .firstIsPair(REG_SP)
@@ -149,15 +156,25 @@ public class ControlTest extends InstructionsTest {
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(1,
-                test.run(0xC9),
-                test.run(0xC0),
-                test.setFlags(FLAG_Z).run(0xC8),
-                test.run(0xD0),
-                test.setFlags(FLAG_C).run(0xD8),
-                test.run(0xE0),
-                test.setFlags(FLAG_PV).run(0xE8),
-                test.run(0xF0),
-                test.setFlags(FLAG_S).run(0xF8)
+                test.run(0xC9)
+        );
+    }
+
+    @Test
+    public void testRET__cc() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryWord()
+                .firstIsPair(REG_SP)
+                .verifyPC(context -> context.second)
+                .verifyPair(REG_SP, context -> (context.first + 2) & 0xFFFF)
+                .setFlags(FLAG_Z | FLAG_C | FLAG_PV | FLAG_S)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinary(1,
+                test.run(0xC8),
+                test.run(0xD8),
+                test.run(0xE8),
+                test.run(0xF8)
         );
     }
 
@@ -166,19 +183,15 @@ public class ControlTest extends InstructionsTest {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsAddressAndSecondIsMemoryWord()
                 .firstIsPair(REG_SP)
-                .verifyPC(context -> context.PC + 1)
-                .verifyPair(REG_SP, context -> context.first)
+                .verifyPC(context -> context.second)
+                .verifyPair(REG_SP, context -> (context.first + 2) & 0xFFFF)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(1,
-                test.setFlags(FLAG_Z).run(0xC0),
-                test.run(0xC8),
-                test.setFlags(FLAG_C).run(0xD0),
-                test.run(0xD8),
-                test.setFlags(FLAG_PV).run(0xE0),
-                test.run(0xE8),
-                test.setFlags(FLAG_S).run(0xF0),
-                test.run(0xF8)
+                test.run(0xC0),
+                test.run(0xD0),
+                test.run(0xE0),
+                test.run(0xF0)
         );
     }
 

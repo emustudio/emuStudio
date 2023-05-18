@@ -23,16 +23,13 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
-import net.emustudio.plugins.cpu.intel8080.api.FrequencyChangedListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static net.emustudio.plugins.cpu.intel8080.DispatchTables.DISPATCH_TABLE;
 
@@ -58,7 +55,6 @@ public class EmulatorEngine implements CpuEngine {
     );
     private final MemoryContext<Byte> memory;
     private final Context8080Impl context;
-    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
     public boolean INTE = false; // enabling / disabling of interrupts
     public int PC = 0; // program counter
     public int SP = 0; // stack pointer
@@ -70,7 +66,6 @@ public class EmulatorEngine implements CpuEngine {
     private short b2 = 0;
     private short b3 = 0;
     private int lastOpcode;
-    private long executedCycles = 0;
 
     private volatile DispatchListener dispatchListener;
 
@@ -82,24 +77,6 @@ public class EmulatorEngine implements CpuEngine {
     @Override
     public void setDispatchListener(DispatchListener dispatchListener) {
         this.dispatchListener = dispatchListener;
-    }
-
-    @Override
-    public long getAndResetGlobalExecutedCycles() {
-        long tmpExecutedCycles = executedCycles;
-        executedCycles = 0;
-        return tmpExecutedCycles;
-    }
-
-    public void addFrequencyChangedListener(FrequencyChangedListener listener) {
-        frequencyChangedListeners.add(listener);
-    }
-
-    @Override
-    public void fireFrequencyChanged(float newFrequency) {
-        for (FrequencyChangedListener listener : frequencyChangedListeners) {
-            listener.frequencyChanged(newFrequency);
-        }
     }
 
     public void reset(int startPos) {
@@ -125,7 +102,7 @@ public class EmulatorEngine implements CpuEngine {
 
     public CPU.RunState run(CPU cpu) {
         long startTime, endTime;
-        int cycles_executed;
+        int cyclesExecuted;
         int checkTimeSlice = 100;
         int cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         int cycles;
@@ -134,12 +111,12 @@ public class EmulatorEngine implements CpuEngine {
         currentRunState = CPU.RunState.STATE_RUNNING;
         while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
             startTime = System.nanoTime();
-            cycles_executed = 0;
-            while ((cycles_executed < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
+            cyclesExecuted = 0;
+            while ((cyclesExecuted < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
                     cycles = dispatch();
-                    cycles_executed += cycles;
-                    executedCycles += cycles;
+                    cyclesExecuted += cycles;
+                    context.passedCycles(cycles);
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }

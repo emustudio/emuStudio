@@ -77,4 +77,19 @@ public class RamCpuContextImpl implements RamCpuContext {
         Optional.ofNullable(storageTape).ifPresent(AbstractTapeContext::clear);
         Optional.ofNullable(outputTape).ifPresent(AbstractTapeContext::clear);
     }
+
+    @Override
+    public boolean passedCyclesSupported() {
+        return false;
+    }
+
+    @Override
+    public void addPassedCyclesListener(PassedCyclesListener passedCyclesListener) {
+
+    }
+
+    @Override
+    public void removePassedCyclesListener(PassedCyclesListener passedCyclesListener) {
+
+    }
 }

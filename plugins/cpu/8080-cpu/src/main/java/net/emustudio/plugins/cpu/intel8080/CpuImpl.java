@@ -23,12 +23,12 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.FrequencyCalculator;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-import net.emustudio.plugins.cpu.intel8080.api.FrequencyUpdater;
 import net.emustudio.plugins.cpu.intel8080.gui.StatusPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,11 +37,6 @@ import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 @PluginRoot(
         type = PLUGIN_TYPE.CPU,
@@ -51,15 +46,14 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CpuImpl extends AbstractCPU {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
-    private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
-    private final AtomicReference<Future<?>> frequencyUpdaterFuture = new AtomicReference<>();
-
     private final Context8080Impl context = new Context8080Impl();
     private final InitializerFor8080 initializer;
 
     private EmulatorEngine engine;
     private StatusPanel statusPanel;
     private Disassembler disassembler;
+
+    private final FrequencyCalculator frequencyCalculator = new FrequencyCalculator();
 
     public CpuImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -99,11 +93,19 @@ public class CpuImpl extends AbstractCPU {
         engine = initializer.getEngine();
         context.setCpu(engine);
         disassembler = initializer.getDisassembler();
+        context.addPassedCyclesListener(frequencyCalculator);
         statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
+    }
+
+    public FrequencyCalculator getFrequencyCalculator() {
+        return frequencyCalculator;
     }
 
     @Override
     protected void destroyInternal() {
+        context.removePassedCyclesListener(frequencyCalculator);
+        frequencyCalculator.stop();
+        frequencyCalculator.close();
         context.clearDevices();
         initializer.destroy();
     }
@@ -115,19 +117,19 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void resetInternal(int startPos) {
         engine.reset(startPos);
-        stopFrequencyUpdater();
+        frequencyCalculator.stop();
     }
 
     @Override
     public void pause() {
         super.pause();
-        stopFrequencyUpdater();
+        frequencyCalculator.stop();
     }
 
     @Override
     public void stop() {
         super.stop();
-        stopFrequencyUpdater();
+        frequencyCalculator.stop();
     }
 
     @Override
@@ -140,36 +142,13 @@ public class CpuImpl extends AbstractCPU {
         return statusPanel;
     }
 
-    private void stopFrequencyUpdater() {
-        Future<?> tmpFuture;
-
-        do {
-            tmpFuture = frequencyUpdaterFuture.get();
-            if (tmpFuture != null) {
-                tmpFuture.cancel(false);
-            }
-        } while (!frequencyUpdaterFuture.compareAndSet(tmpFuture, null));
-    }
-
-    private void startFrequencyUpdater() {
-        Future<?> tmpFuture;
-        Future<?> newFuture = frequencyScheduler.scheduleAtFixedRate(new FrequencyUpdater(engine), 0, 1, TimeUnit.SECONDS);
-
-        do {
-            tmpFuture = frequencyUpdaterFuture.get();
-            if (tmpFuture != null) {
-                tmpFuture.cancel(false);
-            }
-        } while (!frequencyUpdaterFuture.compareAndSet(tmpFuture, newFuture));
-    }
-
     @Override
     public RunState call() {
         try {
-            startFrequencyUpdater();
+            frequencyCalculator.start();
             return engine.run(this);
         } finally {
-            stopFrequencyUpdater();
+            frequencyCalculator.stop();
         }
     }
 
@@ -196,6 +175,7 @@ public class CpuImpl extends AbstractCPU {
         try {
             return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.intel8080.version"));
         } catch (MissingResourceException e) {
+            e.printStackTrace();
             return Optional.empty();
         }
     }

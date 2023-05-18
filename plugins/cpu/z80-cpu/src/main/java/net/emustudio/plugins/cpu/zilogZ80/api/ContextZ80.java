@@ -40,5 +40,5 @@ public interface ContextZ80 extends Context8080 {
      *
      * @param tStates number of t-states (machine cycles) to add
      */
-    void addCycles(int tStates);
+    void addCycles(long tStates);
 }

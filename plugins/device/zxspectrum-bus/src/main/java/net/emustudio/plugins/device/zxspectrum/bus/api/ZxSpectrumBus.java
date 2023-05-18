@@ -19,6 +19,7 @@
 package net.emustudio.plugins.device.zxspectrum.bus.api;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -86,4 +87,8 @@ public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> 
      * @param data     data to write
      */
     void writeMemoryNotContended(int location, byte data);
+
+    void addPassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener);
+
+    void removePassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener);
 }

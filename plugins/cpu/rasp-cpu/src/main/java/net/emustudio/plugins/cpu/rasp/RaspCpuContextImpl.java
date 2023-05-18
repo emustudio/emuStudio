@@ -63,4 +63,19 @@ public class RaspCpuContextImpl implements RaspCpuContext {
         Optional.ofNullable(inputTape).ifPresent(AbstractTapeContext::clear);
         Optional.ofNullable(outputTape).ifPresent(AbstractTapeContext::clear);
     }
+
+    @Override
+    public boolean passedCyclesSupported() {
+        return false;
+    }
+
+    @Override
+    public void addPassedCyclesListener(PassedCyclesListener passedCyclesListener) {
+
+    }
+
+    @Override
+    public void removePassedCyclesListener(PassedCyclesListener passedCyclesListener) {
+
+    }
 }
