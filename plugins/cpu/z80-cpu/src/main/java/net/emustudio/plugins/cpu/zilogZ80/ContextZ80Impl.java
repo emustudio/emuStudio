@@ -36,7 +36,6 @@ public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextZ80Impl.class);
 
     private final ConcurrentMap<Integer, CpuPortDevice> devices = new ConcurrentHashMap<>();
-    private final TimedEventsProcessor tep = new TimedEventsProcessor();
 
     private volatile EmulatorEngine engine;
     private volatile int clockFrequencyKHz = DEFAULT_FREQUENCY_KHZ;
@@ -122,16 +121,11 @@ public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ
 
     @Override
     public Optional<TimedEventsProcessor> getTimedEventsProcessor() {
-        return Optional.of(tep);
+        return Optional.empty();
     }
 
     @Override
     public boolean passedCyclesSupported() {
         return true;
-    }
-
-    public TimedEventsProcessor getTimedEventsProcessorNow() {
-        // bypassing optional
-        return tep;
     }
 }

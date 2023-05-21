@@ -19,7 +19,6 @@
 package net.emustudio.plugins.device.zxspectrum.bus;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
@@ -28,10 +27,7 @@ import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.jcip.annotations.NotThreadSafe;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * ZX Spectrum bus (for 48K ZX spectrum).
@@ -119,6 +115,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     private long contentionCycles;
 
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
+    private final Set<CPUContext.PassedCyclesListener> deferredListeners = new HashSet<>();
 
     public void initialize(ContextZ80 cpu, MemoryContext<Byte> memory) {
         this.cpu = Objects.requireNonNull(cpu);
@@ -129,6 +126,12 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
                 throw new RuntimeException("Could not attach device " + attachment.getValue().getName() + " to CPU");
             }
         }
+        for (CPUContext.PassedCyclesListener listener : deferredListeners) {
+            cpu.addPassedCyclesListener(listener);
+        }
+
+        deferredAttachments.clear();
+        deferredListeners.clear();
     }
 
 
@@ -155,11 +158,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     @Override
-    public Optional<TimedEventsProcessor> getTimedEventsProcessor() {
-        return cpu.getTimedEventsProcessor();
-    }
-
-    @Override
     public byte readMemoryNotContended(int location) {
         return memory.read(location);
     }
@@ -171,12 +169,20 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public void addPassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener) {
-        cpu.addPassedCyclesListener(passedCyclesListener);
+        if (cpu == null) {
+            deferredListeners.add(passedCyclesListener);
+        } else {
+            cpu.addPassedCyclesListener(passedCyclesListener);
+        }
     }
 
     @Override
     public void removePassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener) {
-        cpu.removePassedCyclesListener(passedCyclesListener);
+        if (cpu == null) {
+            deferredListeners.remove(passedCyclesListener);
+        } else {
+            cpu.removePassedCyclesListener(passedCyclesListener);
+        }
     }
 
     @Override

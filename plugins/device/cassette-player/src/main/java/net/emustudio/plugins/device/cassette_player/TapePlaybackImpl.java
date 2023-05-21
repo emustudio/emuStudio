@@ -18,19 +18,15 @@
  */
 package net.emustudio.plugins.device.cassette_player;
 
-import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.plugins.device.cassette_player.gui.CassettePlayerGui;
 import net.emustudio.plugins.device.cassette_player.loaders.Loader;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 /**
  * Tape playback.
@@ -49,7 +45,7 @@ import java.util.function.Supplier;
  * - <a href="https://softspectrum48.weebly.com/notes/tape-loading-routines">Tape loading routines</a>
  * - <a href="https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface">Spectrum tape interface</a>
  */
-public class TapePlaybackImpl implements Loader.TapePlayback {
+public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedCyclesListener {
     private final static int LEADER_PULSE_TSTATES = 2168;
     private final static int SYNC1_PULSE_TSTATES = 667;
     private final static int SYNC2_PULSE_TSTATES = 735;
@@ -62,17 +58,17 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
 
     private final DeviceContext<Byte> lineIn;
     private final AtomicReference<CassettePlayerGui> gui = new AtomicReference<>();
-    private final Supplier<TimedEventsProcessor> tepSupplier;
-    private TimedEventsProcessor tep = null;
 
-    private final Map<Integer, Runnable> loaderSchedule = new HashMap<>();
+    private final NavigableMap<Integer, Runnable> loaderSchedule = new TreeMap<>();
     private int currentTstates;
     private boolean pulseUp;
+
+    private volatile boolean playing;
+    private int playingTstates;
     private final CyclicBarrier barrier = new CyclicBarrier(2);
 
-    public TapePlaybackImpl(DeviceContext<Byte> lineIn, Supplier<TimedEventsProcessor> tepSupplier) {
+    public TapePlaybackImpl(DeviceContext<Byte> lineIn) {
         this.lineIn = Objects.requireNonNull(lineIn);
-        this.tepSupplier = Objects.requireNonNull(tepSupplier);
     }
 
     public void setGui(CassettePlayerGui gui) {
@@ -157,10 +153,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
             barrier.await();
         } catch (InterruptedException e) {
             // cancel playing
-            for (int cycles : loaderSchedule.keySet()) {
-                tep.removeAllScheduledOnce(cycles);
-            }
-
+            playing = false;
             Thread.currentThread().interrupt();
         } catch (BrokenBarrierException e) {
             throw new RuntimeException(e);
@@ -211,18 +204,29 @@ public class TapePlaybackImpl implements Loader.TapePlayback {
     }
 
     private void playPulses() {
-        if (tep == null) {
-            tep = tepSupplier.get();
-        }
-        loaderSchedule.put(currentTstates, () -> {
-            try {
-                barrier.await();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            } catch (BrokenBarrierException ignored) {
+        playingTstates = 0;
+        playing = true;
+    }
 
+    @Override
+    public void passedCycles(long tstates) {
+        if (playing) {
+            playingTstates += tstates;
+            Map.Entry<Integer, Runnable> entry = loaderSchedule.floorEntry(playingTstates);
+            if (entry != null) {
+                loaderSchedule.remove(entry.getKey());
+                entry.getValue().run();
             }
-        });
-        tep.scheduleOnceMultiple(loaderSchedule);
+            if (loaderSchedule.isEmpty()) {
+                playing = false;
+                try {
+                    barrier.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (BrokenBarrierException ignored) {
+
+                }
+            }
+        }
     }
 }

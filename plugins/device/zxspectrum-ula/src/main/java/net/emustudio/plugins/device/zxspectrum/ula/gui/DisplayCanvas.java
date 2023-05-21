@@ -56,7 +56,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable, CPUContext.P
     // border-lines; the others may be either border or vertical retrace.
     //
     //Then the 192 screen+border lines are displayed, followed by 56 border lines again. Note that this
-    // means that a frame is (64+192+56)*224=69888 T states long, which means that the '50 Hz' interrupt is actually a 3.5MHz/69888=50.08 Hz interrupt. This fact can be seen by taking a clock program, and running it for an hour, after which it will be the expected 6 seconds fast. However, on a real Spectrum, the frequency of the interrupt varies slightly as the Spectrum gets hot; the reason for this is unknown, but placing a cooler onto the ULA has been observed to remove this effect.
+    // means that a frame is (64+192+56)*224=69888 T states long, which means that the '50 Hz' interrupt is actually
+    // a 3.5MHz/69888=50.08 Hz interrupt. This fact can be seen by taking a clock program, and running it for an hour,
+    // after which it will be the expected 6 seconds fast. However, on a real Spectrum, the frequency of the interrupt
+    // varies slightly as the Spectrum gets hot; the reason for this is unknown, but placing a cooler onto the ULA has
+    // been observed to remove this effect.
     private long frameCycleCounter = 0;
     private long lineCycleCounter = 0;
     private int lastLinePainted = 0;
@@ -92,7 +96,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable, CPUContext.P
 
     private final ULA ula;
     private final PaintCycle paintCycle = new PaintCycle();
-    private int interrupts = 0;
 
     public DisplayCanvas(ULA ula) {
         this.ula = Objects.requireNonNull(ula);
@@ -111,11 +114,8 @@ public class DisplayCanvas extends Canvas implements AutoCloseable, CPUContext.P
     }
 
     private void triggerCpuInterrupt() {
-        interrupts = (interrupts + 1) % 3;  // 0 1 2
         ula.triggerInterrupt();
-        if (interrupts == 0) {
-            paintCycle.run();
-        }
+        paintCycle.run();
     }
 
     private void drawNextLine(int line) {

@@ -60,13 +60,6 @@ public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> 
     void signalInterrupt(byte[] data);
 
     /**
-     * For synchronizing with Z80 T-state cycles.
-     *
-     * @return CPU timed events processor if any
-     */
-    Optional<TimedEventsProcessor> getTimedEventsProcessor();
-
-    /**
      * Read data from memory, a non-contended variant.
      * <p>
      * Under the hood it uses existing byte-memory. The reason for this method is the default readMemory() applies
