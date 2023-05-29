@@ -420,7 +420,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private void incrementR() {
-        R = (R & 0x80) | (((R & 0x7F) + 1) & 0x7F);
+        R = (R & 0x80) | ((R + 1) & 0x7F);
     }
 
     void I_NOP() {
@@ -910,9 +910,9 @@ public class EmulatorEngine implements CpuEngine {
     void I_PUSH_IY() {
         // pc:5,sp-1:3,sp-2:3
         SP = (SP - 2) & 0xFFFF;
-        memory.write((SP + 1) & 0xFFFF, (byte) (IY & 0xFF));
+        memory.write((SP + 1) & 0xFFFF, (byte) (IY >>> 8));
         advanceCycles(3);
-        memory.write(SP, (byte) (IY >>> 8));
+        memory.write(SP, (byte) (IY & 0xFF));
         advanceCycles(3);
     }
 

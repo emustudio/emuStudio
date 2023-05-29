@@ -72,7 +72,6 @@ public class TzxLoader implements Loader {
 
         while (buffer.position() < buffer.limit()) {
             int id = buffer.get() & 0xFF; // 16 for ROM-saved block
-            System.out.println(id);
 
             int pause = buffer.getShort() & 0xFFFF; // pause after this block
             int blockLength = buffer.getShort() & 0xFFFF;
