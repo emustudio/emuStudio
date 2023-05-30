@@ -20,12 +20,9 @@ package net.emustudio.plugins.device.zxspectrum.bus.api;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-
-import java.util.Optional;
 
 /**
  * ZX Spectrum bus.

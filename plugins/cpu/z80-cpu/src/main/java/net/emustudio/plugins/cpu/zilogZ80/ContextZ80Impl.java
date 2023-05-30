@@ -19,7 +19,6 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.cpu.AbstractCPUContext;
-import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -117,11 +116,6 @@ public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ
     @Override
     public void addCycles(long tStates) {
         engine.addExecutedCyclesPerTimeSlice(tStates);
-    }
-
-    @Override
-    public Optional<TimedEventsProcessor> getTimedEventsProcessor() {
-        return Optional.empty();
     }
 
     @Override
