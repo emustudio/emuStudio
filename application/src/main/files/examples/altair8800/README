@@ -1,0 +1,13 @@
+Altair 8800 boot loaders:
+
+- boot/mdbl.asm: 88-disk modified boot loader; reverse-engineered from simh emulator
+- boot/dbl.asm : 88-disk boot loader; reverse-engineered from simh emulator
+
+Altair 88-DCDD Floppy disk images can be downloaded at:
+
+- http://schorn.ch/
+- http://simh.trailing-edge.com/kits/ceoaltair.zip
+- http://simh.trailing-edge.com/kits/psaltair.zip
+- http://altairclone.com/support.htm
+- https://deramp.com/downloads/altair/
+
