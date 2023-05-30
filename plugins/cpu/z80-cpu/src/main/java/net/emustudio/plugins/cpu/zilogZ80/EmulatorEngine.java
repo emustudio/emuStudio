@@ -20,7 +20,6 @@ package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
-import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
@@ -30,11 +29,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -63,7 +60,6 @@ public class EmulatorEngine implements CpuEngine {
     };
 
     private final ContextZ80Impl context;
-    private final TimedEventsProcessor tep;
     private final MemoryContext<Byte> memory;
     private final AtomicLong cyclesExecutedPerTimeSlice = new AtomicLong(0);
 
@@ -96,7 +92,6 @@ public class EmulatorEngine implements CpuEngine {
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
-        this.tep = context.getTimedEventsProcessorNow();
         LOGGER.info("Sleep precision: " + SleepUtils.SLEEP_PRECISION + " nanoseconds.");
     }
 
@@ -220,8 +215,9 @@ public class EmulatorEngine implements CpuEngine {
 
     private void advanceCycles(int cycles) {
         cyclesExecutedPerTimeSlice.addAndGet(cycles);
-        tep.advanceClock(cycles);
-        context.passedCycles(cycles);
+        for (int i = 0; i < cycles; i++) {
+            context.passedCycles(1); // make it precise to the bones
+        }
     }
 
     private void dispatch() throws Throwable {
@@ -424,7 +420,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private void incrementR() {
-        R = (R & 0x80) | (((R & 0x7F) + 1) & 0x7F);
+        R = (R & 0x80) | ((R + 1) & 0x7F);
     }
 
     void I_NOP() {
@@ -914,9 +910,9 @@ public class EmulatorEngine implements CpuEngine {
     void I_PUSH_IY() {
         // pc:5,sp-1:3,sp-2:3
         SP = (SP - 2) & 0xFFFF;
-        memory.write((SP + 1) & 0xFFFF, (byte) (IY & 0xFF));
+        memory.write((SP + 1) & 0xFFFF, (byte) (IY >>> 8));
         advanceCycles(3);
-        memory.write(SP, (byte) (IY >>> 8));
+        memory.write(SP, (byte) (IY & 0xFF));
         advanceCycles(3);
     }
 

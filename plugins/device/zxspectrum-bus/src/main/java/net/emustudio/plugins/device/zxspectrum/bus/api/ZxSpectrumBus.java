@@ -20,12 +20,9 @@ package net.emustudio.plugins.device.zxspectrum.bus.api;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
-
-import java.util.Optional;
 
 /**
  * ZX Spectrum bus.
@@ -58,13 +55,6 @@ public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> 
      * @param data interrupt data
      */
     void signalInterrupt(byte[] data);
-
-    /**
-     * For synchronizing with Z80 T-state cycles.
-     *
-     * @return CPU timed events processor if any
-     */
-    Optional<TimedEventsProcessor> getTimedEventsProcessor();
 
     /**
      * Read data from memory, a non-contended variant.

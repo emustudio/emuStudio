@@ -22,7 +22,6 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
@@ -35,7 +34,6 @@ import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.function.Supplier;
 
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Cassette Player")
 public class DeviceImpl extends AbstractDevice {
@@ -59,22 +57,19 @@ public class DeviceImpl extends AbstractDevice {
         ContextPool contextPool = applicationApi.getContextPool();
 
         // a cassette player needs a device to which it will write at its own pace
-        Supplier<TimedEventsProcessor> tep; // Line-in device initialization might be happening just now
-        DeviceContext<Byte> lineIn;
         try {
             CPUContext cpu = contextPool.getCPUContext(pluginID);
-            lineIn = contextPool.getDeviceContext(pluginID, DeviceContext.class);
+            DeviceContext<Byte> lineIn = contextPool.getDeviceContext(pluginID, DeviceContext.class);
             if (lineIn.getDataType() != Byte.class) {
                 throw new PluginInitializationException("Could not find line-in device");
             }
-            tep = cpu.getTimedEventsProcessor()::get;
+            this.cassetteListener = new TapePlaybackImpl(lineIn);
+            cpu.addPassedCyclesListener(this.cassetteListener);
         } catch (PluginInitializationException ignored) {
             ZxSpectrumBus bus = contextPool.getDeviceContext(pluginID, ZxSpectrumBus.class);
-            lineIn = bus;
-            tep = () -> bus.getTimedEventsProcessor().orElseThrow();
+            this.cassetteListener = new TapePlaybackImpl(bus);
+            bus.addPassedCyclesListener(this.cassetteListener);
         }
-
-        this.cassetteListener = new TapePlaybackImpl(lineIn, tep);
         this.controller = new CassetteController(cassetteListener);
     }
 

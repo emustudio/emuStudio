@@ -18,57 +18,63 @@
  */
 package net.emustudio.plugins.device.simh.commands;
 
-import net.emustudio.emulib.plugins.cpu.TimedEventsProcessor;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StartTimerInterrupts implements Command {
     public final static StartTimerInterrupts INS = new StartTimerInterrupts();
     private static final int TRY_AFTER_CYCLES = 50000;
     public final AtomicReference<TimerInterruptCallback> callback = new AtomicReference<>();
-    private Optional<TimedEventsProcessor> tep;
 
     @Override
     public void reset(Control control) {
-        this.tep = control.getCpu().getTimedEventsProcessor();
         TimerInterruptCallback old = callback.getAndSet(null);
         if (old != null) {
-            tep.ifPresent(t -> t.remove(TRY_AFTER_CYCLES, old));
+            control.getCpu().removePassedCyclesListener(old);
         }
     }
 
     @Override
     public void start(Control control) {
         reset(control);
-        TimerInterruptCallback cb = new TimerInterruptCallback(control.getCpu());
+
+        Context8080 cpu = control.getCpu();
+        TimerInterruptCallback cb = new TimerInterruptCallback(cpu);
         callback.set(cb);
-        tep.ifPresent(t -> t.schedule(TRY_AFTER_CYCLES, cb));
+
+        cpu.addPassedCyclesListener(cb);
         control.clearCommand();
     }
 
-    private static class TimerInterruptCallback implements Runnable {
+    private static class TimerInterruptCallback implements CPUContext.PassedCyclesListener {
         private final Context8080 cpu;
-        private volatile long startTime = System.nanoTime();
+        private long startTime = System.nanoTime();
+        private long cyclesPassed = 0;
 
         private TimerInterruptCallback(Context8080 cpu) {
             this.cpu = Objects.requireNonNull(cpu);
         }
 
         @Override
-        public void run() {
-            long endTime = System.nanoTime();
-            long elapsed = endTime - startTime;
+        public void passedCycles(long cycles) {
+            cyclesPassed += cycles;
 
-            if (elapsed >= (SetTimerDelta.INS.timerDelta * 1000000L)) {
-                startTime = endTime;
-                // will work only in interrupt mode 0
-                int addr = SetTimerInterruptAdr.INS.timerInterruptHandler;
-                byte b1 = (byte) (addr & 0xFF);
-                byte b2 = (byte) (addr >>> 8);
-                cpu.signalInterrupt(new byte[]{(byte) 0xCD, b1, b2});
+            if (cyclesPassed >= TRY_AFTER_CYCLES) {
+                cyclesPassed -= TRY_AFTER_CYCLES;
+                long endTime = System.nanoTime();
+                long elapsed = endTime - startTime;
+
+                if (elapsed >= (SetTimerDelta.INS.timerDelta * 1000000L)) {
+                    startTime = endTime;
+                    // will work only in interrupt mode 0
+                    int addr = SetTimerInterruptAdr.INS.timerInterruptHandler;
+                    byte b1 = (byte) (addr & 0xFF);
+                    byte b2 = (byte) (addr >>> 8);
+                    cpu.signalInterrupt(new byte[]{(byte) 0xCD, b1, b2});
+                }
             }
         }
     }
