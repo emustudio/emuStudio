@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.cassette_player.gui;
+package net.emustudio.plugins.device.audiotape_player.gui;
 
 import net.emustudio.emulib.runtime.interaction.BrowseButton;
 import net.emustudio.emulib.runtime.interaction.CachedComboBoxModel;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.plugins.device.cassette_player.CassetteController;
+import net.emustudio.plugins.device.audiotape_player.TapePlaybackController;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -30,10 +30,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public class TapePlayerGui extends JDialog {
-    private final static String FOLDER_OPEN_ICON = "/net/emustudio/plugins/device/cassette_player/gui/folder-open.png";
+    private final static String FOLDER_OPEN_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/folder-open.png";
 
     private final JButton btnBrowse;
     private final JButton btnLoad = new JButton("Load");
@@ -43,10 +44,13 @@ public class TapePlayerGui extends JDialog {
     private final JList<String> lstTapes = new JList<>(lstTapesModel);
     private final JScrollPane scrollTapes = new JScrollPane(lstTapes);
 
+    private final AtomicReference<PathString> loadedFileName = new AtomicReference<>();
+
     private final JButton btnPlay = new JButton("Play");
     private final JButton btnStop = new JButton("Stop");
     private final JButton btnUnload = new JButton("Unload");
 
+    private final JPanel panelTapeInformation = new JPanel();
     private final JLabel lblFileName = new JLabel("N/A");
     private final JLabel lblStatus = new JLabel("Stopped");
 
@@ -54,9 +58,9 @@ public class TapePlayerGui extends JDialog {
     private final DefaultListModel<String> lstEventsModel = new DefaultListModel<>();
     private final JList<String> lstEvents = new JList<>(lstEventsModel);
 
-    private final CassetteController controller;
+    private final TapePlaybackController controller;
 
-    public TapePlayerGui(JFrame parent, Dialogs dialogs, CassetteController controller) {
+    public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller) {
         super(parent);
         Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
@@ -80,7 +84,7 @@ public class TapePlayerGui extends JDialog {
         lstEvents.add(pulseLabel);
     }
 
-    public void setCassetteState(CassetteController.CassetteState state) {
+    public void setCassetteState(TapePlaybackController.CassetteState state) {
         this.lblStatus.setText(state.name());
         switch (state) {
             case CLOSED:
@@ -112,23 +116,33 @@ public class TapePlayerGui extends JDialog {
                 btnPlay.setEnabled(false);
                 btnLoad.setEnabled(true);
                 btnUnload.setEnabled(false);
+                loadedFileName.set(null);
+                lblFileName.setToolTipText("");
                 lblFileName.setText("N/A");
                 break;
         }
     }
 
     private void buildLayout(JFrame parent) {
-        JPanel panelTapeInformation = new JPanel();
         JPanel panelTapeButtons = new JPanel();
         JPanel panelAvailableTapesButtons = new JPanel();
         JPanel panelAvailableTapes = new JPanel();
         JPanel panelTape = new JPanel();
+        JScrollPane scrollEvents = new JScrollPane(lstEvents);
 
         JSplitPane splitPane = new JSplitPane(
                 JSplitPane.HORIZONTAL_SPLIT, true, panelAvailableTapes, panelTape
         );
         JLabel lblFileNameLabel = new JLabel("File name:");
         JLabel lblStatusLabel = new JLabel("Status:");
+
+        // btnRefresh.addActionListener(e -> lstTapesModel.refresh());
+        btnBrowse.setIcon(new ImageIcon(getClass().getResource(FOLDER_OPEN_ICON)));
+        btnBrowse.setText("");
+        btnBrowse.setToolTipText("Select directory");
+        btnBrowse.setBorder(null);
+
+        lstTapes.setCellRenderer(new TapesListRenderer());
 
         setTitle("Tape Player");
         setLocationRelativeTo(parent);
@@ -140,21 +154,12 @@ public class TapePlayerGui extends JDialog {
         panelDirs.add(cmbDirs, "pushx, growx");
         panelDirs.add(btnBrowse, "align right");
 
-
-        // btnRefresh.addActionListener(e -> lstTapesModel.refresh());
-        btnBrowse.setIcon(new ImageIcon(getClass().getResource(FOLDER_OPEN_ICON)));
-        btnBrowse.setText("");
-        btnBrowse.setToolTipText("Select directory");
-        btnBrowse.setBorder(null);
-
-        lstTapes.setCellRenderer(new TapesListRenderer());
-
         panelAvailableTapes.setBorder(new TitledBorder("Available tapes"));
         panelTape.setBorder(new TitledBorder("Tape"));
 
         JPanel content = new JPanel();
-        content.setLayout(new MigLayout("insets dialog"));
-        content.setBorder(BorderFactory.createEmptyBorder());
+        content.setLayout(new MigLayout("insets dialog, debug", "[]", "[]"));
+        content.setBorder(null);
 
         splitPane.setResizeWeight(0.3);
         splitPane.setDividerLocation(0.3);
@@ -168,19 +173,35 @@ public class TapePlayerGui extends JDialog {
         panelAvailableTapesButtons.setLayout(new MigLayout("ins 2 2 2 2", "3[]3", "5[]5"));
         panelAvailableTapesButtons.add(btnLoad, "align left");
 
-        panelTape.setLayout(new MigLayout("flowy"));
-        panelTape.add(panelTapeInformation, "pushx, dock north");
-        panelTape.add(lblEvents, "left");
-        panelTape.add(lstEvents, "push");
+        panelTape.setLayout(new MigLayout());
+        panelTape.add(panelTapeInformation, "growx, pushx, wrap");
+        panelTape.add(lblEvents, "align left, wrap");
+        panelTape.add(scrollEvents, "push, grow, wrap");
         panelTape.add(panelTapeButtons, "pushx, dock south");
 
-        panelTapeInformation.setLayout(new MigLayout());
+        panelTapeInformation.setLayout(new MigLayout("debug, fillx"));
         panelTapeInformation.add(lblFileNameLabel, "align label");
-        panelTapeInformation.add(lblFileName, "growx, wrap");
+        panelTapeInformation.add(lblFileName, "growx, width 0:0:100, wrap");
         panelTapeInformation.add(lblStatusLabel, "align label");
-        panelTapeInformation.add(lblStatus, "growx, wrap");
+        panelTapeInformation.add(lblStatus, "pushx, wrap");
 
-        panelTapeButtons.setLayout(new MigLayout("ins 10px 0 5px n"));
+        panelTapeInformation.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                PathString ps = loadedFileName.get();
+                if (ps != null) {
+                    ps.deriveMaxStringLength(panelTapeInformation, panelTapeInformation.getWidth());
+                    String shortened = ps.getPathShortened();
+                    if (shortened.length() < ps.getPath().toString().length()) {
+                        lblFileName.setToolTipText(ps.getPath().toString());
+                    }
+                    lblFileName.setText(shortened);
+                }
+            }
+        });
+
+
+        panelTapeButtons.setLayout(new MigLayout("ins 2 2 2 2", "3[]3", "5[]5"));
         panelTapeButtons.add(btnPlay, "align left");
         panelTapeButtons.add(btnStop, "pushx"); // gap
         panelTapeButtons.add(btnUnload, "align right");
@@ -240,7 +261,11 @@ public class TapePlayerGui extends JDialog {
             if (index != -1) {
                 Path path = lstTapesModel.getFilePath(index);
                 controller.load(path);
-                lblFileName.setText("<html>" + path.toString());
+
+                PathString ps = new PathString(path);
+                loadedFileName.set(ps);
+                ps.deriveMaxStringLength(panelTapeInformation, panelTapeInformation.getWidth());
+                lblFileName.setText(ps.getPathShortened());
             }
         });
         btnPlay.addActionListener(e -> controller.play());

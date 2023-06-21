@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.cassette_player.loaders;
+package net.emustudio.plugins.device.audiotape_player.loaders;
 
 import net.jcip.annotations.Immutable;
 

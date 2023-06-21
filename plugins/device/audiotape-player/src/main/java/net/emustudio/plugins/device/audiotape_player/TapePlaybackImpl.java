@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.cassette_player;
+package net.emustudio.plugins.device.audiotape_player;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.device.cassette_player.gui.TapePlayerGui;
-import net.emustudio.plugins.device.cassette_player.loaders.Loader;
+import net.emustudio.plugins.device.audiotape_player.gui.TapePlayerGui;
+import net.emustudio.plugins.device.audiotape_player.loaders.Loader;
 
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
@@ -161,7 +161,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     }
 
     @Override
-    public void onStateChange(CassetteController.CassetteState state) {
+    public void onStateChange(TapePlaybackController.CassetteState state) {
         Optional.ofNullable(gui.get()).ifPresent(g -> g.setCassetteState(state));
     }
 
