@@ -18,11 +18,12 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
+import net.emustudio.emulib.runtime.interaction.GuiConstants;
+
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.MEMORY_CELLS_FONT;
 
 class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer<String> {
 
@@ -31,7 +32,7 @@ class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer<String>
         setHorizontalAlignment(CENTER);
         setForeground(header.getForeground());
         setBackground(header.getBackground());
-        setFont(MEMORY_CELLS_FONT);
+        setFont(GuiConstants.FONT_MONOSPACED);
         setOpaque(true);
         setDoubleBuffered(true);
         this.setPreferredSize(new Dimension(4 * 18, header.getPreferredSize().height + 3));

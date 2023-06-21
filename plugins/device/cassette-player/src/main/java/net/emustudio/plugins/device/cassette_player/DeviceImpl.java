@@ -27,7 +27,7 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.device.cassette_player.gui.CassettePlayerGui;
+import net.emustudio.plugins.device.cassette_player.gui.TapePlayerGui;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 
 import javax.swing.*;
@@ -41,7 +41,7 @@ public class DeviceImpl extends AbstractDevice {
     private final boolean guiSupported;
     private boolean guiIOset = false;
 
-    private CassettePlayerGui gui;
+    private TapePlayerGui gui;
     private CassetteController controller;
     private TapePlaybackImpl cassetteListener;
 
@@ -102,7 +102,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (!guiIOset) {
-                this.gui = new CassettePlayerGui(parent, applicationApi.getDialogs(), controller);
+                this.gui = new TapePlayerGui(parent, applicationApi.getDialogs(), controller);
                 guiIOset = true;
                 this.cassetteListener.setGui(gui);
             }

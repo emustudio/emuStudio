@@ -27,7 +27,7 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.Enumeration;
 
-import static net.emustudio.plugins.cpu.brainduck.gui.Constants.MONOSPACED_PLAIN;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
 
 public class ColumnsRepainter {
 
@@ -93,7 +93,7 @@ public class ColumnsRepainter {
     private static class MainRenderer extends JLabel implements TableCellRenderer {
 
         private MainRenderer(boolean upper) {
-            setFont(MONOSPACED_PLAIN);
+            setFont(FONT_MONOSPACED);
             setBorder(new UBorder(Color.BLACK, 3, upper));
             setHorizontalAlignment(CENTER);
         }

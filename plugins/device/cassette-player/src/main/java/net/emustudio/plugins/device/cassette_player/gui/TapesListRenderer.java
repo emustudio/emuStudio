@@ -16,43 +16,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.application.gui.debugtable;
-
-import net.emustudio.application.Constants;
+package net.emustudio.plugins.device.cassette_player.gui;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
 
-class TextCellRenderer extends JLabel implements TableCellRenderer {
+public class TapesListRenderer extends JLabel implements ListCellRenderer<String> {
 
-    private final DebugTableModel model;
-
-    TextCellRenderer(DebugTableModel model) {
-        this.model = Objects.requireNonNull(model);
+    TapesListRenderer() {
         setFont(FONT_MONOSPACED);
         setDoubleBuffered(true);
         setOpaque(true);
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value,
-                                                   boolean isSelected, boolean hasFocus, int row, int column) {
-        if (model.isRowAtCurrentInstruction(row)) {
-            setBackground(Constants.DEBUGTABLE_COLOR_CURRENT_INSTRUCTION);
-            setForeground(Color.WHITE);
+    public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
+        if (isSelected) {
+            setBackground(UIManager.getColor("List.selectionBackground"));
+            setForeground(UIManager.getColor("List.selectionForeground"));
         } else {
-            setBackground((row % 2 == 0) ? TABLE_COLOR_ROW_ODD : TABLE_COLOR_ROW_EVEN);
+            setBackground((index % 2 == 0) ? TABLE_COLOR_ROW_ODD : TABLE_COLOR_ROW_EVEN);
             setForeground(Color.BLACK);
         }
-        if (value != null) {
-            setText(value.toString());
-        } else {
-            setText("");
-        }
+        setText(Objects.requireNonNullElse(value, ""));
         return this;
     }
 }
+

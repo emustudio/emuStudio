@@ -34,6 +34,8 @@ import javax.swing.*;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+
 public class EditorPanel extends JPanel {
     private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
     private final static double GOLDEN_RATIO = 1.6180339887;
@@ -65,7 +67,7 @@ public class EditorPanel extends JPanel {
         JTextArea compilerOutput = new JTextArea();
         compilerOutput.setColumns(20);
         compilerOutput.setEditable(false);
-        compilerOutput.setFont(Constants.FONT_MONOSPACED);
+        compilerOutput.setFont(FONT_MONOSPACED);
         compilerOutput.setLineWrap(true);
         compilerOutput.setRows(3);
         compilerOutput.setWrapStyleWord(true);

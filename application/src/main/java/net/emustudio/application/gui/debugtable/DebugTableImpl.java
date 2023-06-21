@@ -28,6 +28,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_TABLE_GRID;
+
 public class DebugTableImpl extends JTable {
     private final DebugTableModel tableModel;
     private final BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
@@ -39,7 +41,7 @@ public class DebugTableImpl extends JTable {
         this.textRenderer = new TextCellRenderer(tableModel);
 
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        setGridColor(Constants.DEBUGTABLE_COLOR_TABLE_GRID);
+        setGridColor(TABLE_COLOR_TABLE_GRID);
         setIntercellSpacing(new Dimension(0, 0));
         // turn off grid painting as we'll handle this manually
         setShowGrid(false);

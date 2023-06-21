@@ -18,11 +18,12 @@
  */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
+import net.emustudio.emulib.runtime.interaction.GuiConstants;
+
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.util.Objects;
 
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.MEMORY_CELLS_FONT;
 
 public class MemoryTable extends JTable {
     private final MemoryTableModel tableModel;
@@ -31,11 +32,11 @@ public class MemoryTable extends JTable {
         this.tableModel = Objects.requireNonNull(tableModel);
 
         setModel(this.tableModel);
-        setFont(MEMORY_CELLS_FONT);
+        setFont(GuiConstants.FONT_MONOSPACED);
         setCellSelectionEnabled(true);
         setFocusCycleRoot(true);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        getTableHeader().setFont(MEMORY_CELLS_FONT);
+        getTableHeader().setFont(GuiConstants.FONT_MONOSPACED);
         setDefaultRenderer(Object.class, new MemoryCellRenderer(getTableHeader(), tableModel, pm, getRowHeight()));
         setOpaque(true);
 

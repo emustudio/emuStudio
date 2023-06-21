@@ -25,17 +25,9 @@ import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadFontResource
 
 public class Constants {
 
-    public static final int FONT_DEFAULT_SIZE = 12;
-    public static final Font FONT_MONOSPACED = new Font(Font.MONOSPACED, Font.PLAIN, FONT_DEFAULT_SIZE);
-    public static final Font FONT_COMMON = new Font(Font.DIALOG, Font.PLAIN, FONT_DEFAULT_SIZE);
-    public static final Font FONT_TITLE_BORDER = new Font(Font.SANS_SERIF, Font.BOLD, FONT_DEFAULT_SIZE);
     public static final Font FONT_CODE = loadFontResource(
             "/net/emustudio/application/gui/FiraCode-Regular.ttf", Constants.class, 13);
 
-
-    public static final Color DEBUGTABLE_COLOR_ROW_EVEN = new Color(241, 245, 250);
-    public static final Color DEBUGTABLE_COLOR_ROW_ODD = Color.WHITE;
-    public static final Color DEBUGTABLE_COLOR_TABLE_GRID = new Color(0xd9d9d9);
     public static final Color DEBUGTABLE_COLOR_CURRENT_INSTRUCTION = Color.RED;
 
     public static final Color TOKEN_COMMENT = new Color(0, 128, 0);

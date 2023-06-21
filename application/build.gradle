@@ -48,6 +48,7 @@ dependencies {
   extraLibs libs.tomlj
   extraLibs libs.logback
   extraLibs libs.slf4JApi
+  extraLibs libs.migLayout
 
   providedRuntime project(":plugins:compiler:as-8080")
   providedRuntime project(":plugins:compiler:as-ssem")
@@ -165,7 +166,7 @@ distTar {
 }
 
 startScripts {
-  classpath += files('logback.xml') // for logback
+  classpath += files('logback.xml')
   doLast {
     def windowsScriptFile = file getWindowsScript()
     def unixScriptFile = file getUnixScript()

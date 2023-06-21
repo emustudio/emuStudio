@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static net.emustudio.application.Constants.FONT_CODE;
-import static net.emustudio.application.Constants.FONT_DEFAULT_SIZE;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_DEFAULT_SIZE;
 
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);

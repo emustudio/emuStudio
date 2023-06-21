@@ -26,10 +26,12 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.MEMORY_CELLS_FONT;
+import net.emustudio.emulib.runtime.interaction.GuiConstants;
+
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.BANK_COLOR;
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.ROM_COLOR;
 
 class MemoryCellRenderer extends JLabel implements TableCellRenderer {
-    private final static Color ROM_COLOR = new Color(0xE8, 0x68, 0x50);
     private final Color selectedBackground;
     private final Color selectedForeground;
 
@@ -44,7 +46,7 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         setOpaque(true);
         setDoubleBuffered(true);
         setBorder(BorderFactory.createEmptyBorder());
-        setFont(MEMORY_CELLS_FONT);
+        setFont(GuiConstants.FONT_MONOSPACED);
         setHorizontalAlignment(CENTER);
 
         this.selectedBackground = UIManager.getColor("Table.selectionBackground");
@@ -80,7 +82,7 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
             if (tableModel.isROMAt(row, column)) {
                 this.setBackground(ROM_COLOR);
             } else if (tableModel.isAtBANK(row, column)) {
-                this.setBackground(Color.decode("0xFFE6BF"));
+                this.setBackground(BANK_COLOR);
             } else {
                 this.setBackground(Color.WHITE);
             }

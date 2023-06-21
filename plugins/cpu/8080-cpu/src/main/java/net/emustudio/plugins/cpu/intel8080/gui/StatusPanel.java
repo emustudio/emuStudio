@@ -32,6 +32,7 @@ import java.awt.event.ActionEvent;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_TITLE_BORDER;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
@@ -244,7 +245,7 @@ public class StatusPanel extends JPanel {
                 new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true),
                 "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
                 javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                new java.awt.Font("DejaVu Sans", Font.BOLD, 14),
+                FONT_TITLE_BORDER,
                 new java.awt.Color(102, 102, 102)));
 
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | java.awt.Font.BOLD));
