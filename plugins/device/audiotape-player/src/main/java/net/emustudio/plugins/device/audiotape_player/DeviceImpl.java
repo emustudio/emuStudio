@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.cassette_player;
+package net.emustudio.plugins.device.audiotape_player;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
@@ -27,7 +27,7 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
-import net.emustudio.plugins.device.cassette_player.gui.TapePlayerGui;
+import net.emustudio.plugins.device.audiotape_player.gui.TapePlayerGui;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 
 import javax.swing.*;
@@ -35,14 +35,14 @@ import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Cassette Player")
+@PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Audio Tape Player")
 public class DeviceImpl extends AbstractDevice {
 
     private final boolean guiSupported;
     private boolean guiIOset = false;
 
     private TapePlayerGui gui;
-    private CassetteController controller;
+    private TapePlaybackController controller;
     private TapePlaybackImpl cassetteListener;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -70,7 +70,7 @@ public class DeviceImpl extends AbstractDevice {
             this.cassetteListener = new TapePlaybackImpl(bus);
             bus.addPassedCyclesListener(this.cassetteListener);
         }
-        this.controller = new CassetteController(cassetteListener);
+        this.controller = new TapePlaybackController(cassetteListener);
     }
 
     @Override
@@ -128,7 +128,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public String getDescription() {
-        return "Cassette Player";
+        return "Audio Tape Player";
     }
 
     @Override
@@ -139,7 +139,7 @@ public class DeviceImpl extends AbstractDevice {
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.zxspectrum.display.version"));
+            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.audiotape_player.version"));
         } catch (MissingResourceException e) {
             return Optional.empty();
         }

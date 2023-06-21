@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.cassette_player.gui;
+package net.emustudio.plugins.device.audiotape_player.gui;
 
-import net.emustudio.plugins.device.cassette_player.loaders.Loader;
+import net.emustudio.plugins.device.audiotape_player.loaders.Loader;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

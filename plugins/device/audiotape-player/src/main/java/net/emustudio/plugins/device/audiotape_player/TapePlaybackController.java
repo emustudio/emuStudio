@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.cassette_player;
+package net.emustudio.plugins.device.audiotape_player;
 
-import net.emustudio.plugins.device.cassette_player.loaders.Loader;
+import net.emustudio.plugins.device.audiotape_player.loaders.Loader;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -32,8 +32,8 @@ import java.util.Queue;
 import java.util.concurrent.*;
 
 @ThreadSafe
-public class CassetteController implements AutoCloseable {
-    private final static Logger LOGGER = LoggerFactory.getLogger(CassetteController.class);
+public class TapePlaybackController implements AutoCloseable {
+    private final static Logger LOGGER = LoggerFactory.getLogger(TapePlaybackController.class);
 
     public enum CassetteState {
         UNLOADED,
@@ -55,7 +55,7 @@ public class CassetteController implements AutoCloseable {
 
     private final Queue<CassetteState> stateNotifications = new ConcurrentLinkedQueue<>();
 
-    public CassetteController(Loader.TapePlayback listener) {
+    public TapePlaybackController(Loader.TapePlayback listener) {
         this.listener = Objects.requireNonNull(listener);
     }
 

@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package net.emustudio.plugins.device.cassette_player.loaders;
+package net.emustudio.plugins.device.audiotape_player.loaders;
 
-import net.emustudio.plugins.device.cassette_player.CassetteController;
+import net.emustudio.plugins.device.audiotape_player.TapePlaybackController;
 import net.jcip.annotations.ThreadSafe;
 
 import java.io.IOException;
@@ -139,7 +139,7 @@ public interface Loader {
         /**
          * On state change
          */
-        void onStateChange(CassetteController.CassetteState state);
+        void onStateChange(TapePlaybackController.CassetteState state);
     }
 
     void load(TapePlayback playback) throws IOException;
