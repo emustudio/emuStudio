@@ -20,7 +20,7 @@ package net.emustudio.plugins.device.cassette_player;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.device.cassette_player.gui.CassettePlayerGui;
+import net.emustudio.plugins.device.cassette_player.gui.TapePlayerGui;
 import net.emustudio.plugins.device.cassette_player.loaders.Loader;
 
 import java.util.*;
@@ -57,7 +57,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     private final static int DATA_PULSE_ZERO_TSTATES = 855;
 
     private final DeviceContext<Byte> lineIn;
-    private final AtomicReference<CassettePlayerGui> gui = new AtomicReference<>();
+    private final AtomicReference<TapePlayerGui> gui = new AtomicReference<>();
 
     private final NavigableMap<Integer, Runnable> loaderSchedule = new TreeMap<>();
     private int currentTstates;
@@ -71,7 +71,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         this.lineIn = Objects.requireNonNull(lineIn);
     }
 
-    public void setGui(CassettePlayerGui gui) {
+    public void setGui(TapePlayerGui gui) {
         this.gui.set(gui);
     }
 
@@ -166,11 +166,11 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     }
 
     private void logPulse(String message) {
-        Optional.ofNullable(gui.get()).ifPresent(g -> g.setPulseInfo(message));
+        Optional.ofNullable(gui.get()).ifPresent(g -> g.addPulseInfo(message));
     }
 
     private void logProgramDetail(String program, String detail) {
-        Optional.ofNullable(gui.get()).ifPresent(g -> g.setProgramDetail(program, detail));
+        Optional.ofNullable(gui.get()).ifPresent(g -> g.addProgramDetail(program, detail));
     }
 
     private void transmitByte(int data, String msg) {

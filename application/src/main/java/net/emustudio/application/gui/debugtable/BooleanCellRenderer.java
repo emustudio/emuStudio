@@ -18,14 +18,14 @@
  */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.application.Constants;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
 import static net.emustudio.application.gui.debugtable.BooleanComponent.BOOLEAN_ICON;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_ROW_EVEN;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_ROW_ODD;
 
 class BooleanCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
 
@@ -37,10 +37,10 @@ class BooleanCellRenderer extends DefaultTableCellRenderer implements TableCellR
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                    boolean hasFocus, int row, int column) {
 
-        setBackground((row % 2 == 0) ? Constants.DEBUGTABLE_COLOR_ROW_ODD : Constants.DEBUGTABLE_COLOR_ROW_EVEN);
+        setBackground((row % 2 == 0) ? TABLE_COLOR_ROW_ODD : TABLE_COLOR_ROW_EVEN);
         super.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
 
-        boolean isBreakpointSet = (value == null) ? false : (Boolean) value;
+        boolean isBreakpointSet = value != null && (Boolean) value;
         if (isBreakpointSet) {
             setIcon(BOOLEAN_ICON);
         } else {
