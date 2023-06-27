@@ -41,7 +41,12 @@ public class TapesListRenderer extends JLabel implements ListCellRenderer<String
             setBackground((index % 2 == 0) ? TABLE_COLOR_ROW_ODD : TABLE_COLOR_ROW_EVEN);
             setForeground(Color.BLACK);
         }
-        setText(Objects.requireNonNullElse(value, ""));
+        String val = Objects.requireNonNullElse(value, "");
+        if (val.toLowerCase().endsWith(".tap") || val.toLowerCase().endsWith(".tzx")) {
+            val = val.substring(0, val.length() - 4);
+        }
+
+        setText(val);
         return this;
     }
 }
