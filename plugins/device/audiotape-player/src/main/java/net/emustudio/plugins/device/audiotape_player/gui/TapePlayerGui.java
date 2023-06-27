@@ -1,42 +1,33 @@
-/*
- * This file is part of emuStudio.
- *
- * Copyright (C) 2006-2023  Peter Jakubčo
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 package net.emustudio.plugins.device.audiotape_player.gui;
+
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.*;
+import javax.swing.border.*;
 
 import net.emustudio.emulib.runtime.interaction.BrowseButton;
 import net.emustudio.emulib.runtime.interaction.CachedComboBoxModel;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.plugins.device.audiotape_player.TapePlaybackController;
-import net.miginfocom.swing.MigLayout;
-
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import java.awt.*;
-import java.awt.event.*;
-import java.nio.file.Path;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
-
+import net.miginfocom.swing.*;
 
 public class TapePlayerGui extends JDialog {
     private final static String FOLDER_OPEN_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/folder-open.png";
+    private final static String PLAY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-playback-start.png";
+    private final static String STOP_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-playback-stop.png";
+    private final static String EJECT_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-eject.png";
+    private final static String REFRESH_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/view-refresh.png";
+    private final static String LOAD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/applications-multimedia.png";
 
+    private final JPanel panelTapeInfo = new JPanel();
     private final JButton btnBrowse;
+    private final JButton btnRefresh = new JButton("Refresh");
     private final JButton btnLoad = new JButton("Load");
     private final CachedComboBoxModel<PathString> cmbDirsModel = new CachedComboBoxModel<>();
     private final JComboBox<PathString> cmbDirs = new JComboBox<>(cmbDirsModel);
@@ -48,167 +39,82 @@ public class TapePlayerGui extends JDialog {
 
     private final JButton btnPlay = new JButton("Play");
     private final JButton btnStop = new JButton("Stop");
-    private final JButton btnUnload = new JButton("Unload");
+    private final JButton btnEject = new JButton("Eject");
 
-    private final JPanel panelTapeInformation = new JPanel();
     private final JLabel lblFileName = new JLabel("N/A");
     private final JLabel lblStatus = new JLabel("Stopped");
 
-    private final JLabel lblEvents = new JLabel("Tape events:");
-    private final DefaultListModel<String> lstEventsModel = new DefaultListModel<>();
-    private final JList<String> lstEvents = new JList<>(lstEventsModel);
+    private final JTextArea txtEvents = new JTextArea();
 
     private final TapePlaybackController controller;
 
-    public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller) {
-        super(parent);
+	public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller) {
+		super(parent, "Audio Tape Player");
         Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
 
         btnBrowse = new BrowseButton(dialogs, "Select Directory", "Select", p -> {
-            cmbDirsModel.add(new PathString(p, true));
+            PathString ps = new PathString(p, true);
+            ps.deriveMaxStringLength(cmbDirs, cmbDirs.getWidth());
+            cmbDirsModel.add(ps);
             cmbDirs.setSelectedIndex(0);
         });
-        buildLayout(parent);
+        btnBrowse.setIcon(new ImageIcon(getClass().getResource(FOLDER_OPEN_ICON)));
+        btnBrowse.setText("");
+        btnBrowse.setToolTipText("Select directory");
+
+		initComponents();
         setupListeners();
         setCassetteState(controller.getState());
-    }
+	}
 
     public void addProgramDetail(String program, String detail) {
-        lstEventsModel.add(0, program + ": " + detail);
+        txtEvents.setText(txtEvents.getText() + "\n" + program + ": " + detail);
     }
 
     public void addPulseInfo(String pulse) {
         JLabel pulseLabel = new JLabel(pulse);
         pulseLabel.setFont(pulseLabel.getFont().deriveFont(Font.ITALIC));
-        lstEvents.add(pulseLabel);
+        txtEvents.setText(txtEvents.getText() + "\n" + pulseLabel);
     }
 
     public void setCassetteState(TapePlaybackController.CassetteState state) {
         this.lblStatus.setText(state.name());
         switch (state) {
             case CLOSED:
-                lstEventsModel.removeAllElements();
+                txtEvents.setText("");
                 btnLoad.setEnabled(false);
                 btnStop.setEnabled(false);
                 btnPlay.setEnabled(false);
-                btnUnload.setEnabled(false);
+                btnEject.setEnabled(false);
                 break;
 
             case PLAYING:
-                lstEventsModel.removeAllElements();
+                txtEvents.setText("");
                 btnPlay.setEnabled(false);
                 btnLoad.setEnabled(false);
-                btnUnload.setEnabled(true);
+                btnEject.setEnabled(true);
                 btnStop.setEnabled(true);
                 break;
 
             case STOPPED:
                 btnStop.setEnabled(false);
                 btnLoad.setEnabled(true);
-                btnUnload.setEnabled(true);
+                btnEject.setEnabled(true);
                 btnPlay.setEnabled(true);
                 break;
 
             case UNLOADED:
-                lstEventsModel.removeAllElements();
+                txtEvents.setText("");
                 btnStop.setEnabled(false);
                 btnPlay.setEnabled(false);
                 btnLoad.setEnabled(true);
-                btnUnload.setEnabled(false);
+                btnEject.setEnabled(false);
                 loadedFileName.set(null);
                 lblFileName.setToolTipText("");
                 lblFileName.setText("N/A");
                 break;
         }
-    }
-
-    private void buildLayout(JFrame parent) {
-        JPanel panelTapeButtons = new JPanel();
-        JPanel panelAvailableTapesButtons = new JPanel();
-        JPanel panelAvailableTapes = new JPanel();
-        JPanel panelTape = new JPanel();
-        JScrollPane scrollEvents = new JScrollPane(lstEvents);
-
-        JSplitPane splitPane = new JSplitPane(
-                JSplitPane.HORIZONTAL_SPLIT, true, panelAvailableTapes, panelTape
-        );
-        JLabel lblFileNameLabel = new JLabel("File name:");
-        JLabel lblStatusLabel = new JLabel("Status:");
-
-        // btnRefresh.addActionListener(e -> lstTapesModel.refresh());
-        btnBrowse.setIcon(new ImageIcon(getClass().getResource(FOLDER_OPEN_ICON)));
-        btnBrowse.setText("");
-        btnBrowse.setToolTipText("Select directory");
-        btnBrowse.setBorder(null);
-
-        lstTapes.setCellRenderer(new TapesListRenderer());
-
-        setTitle("Tape Player");
-        setLocationRelativeTo(parent);
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(600, 400));
-
-        JPanel panelDirs = new JPanel();
-        panelDirs.setLayout(new MigLayout("insets 2 2 2 2, fillx", "3[]3[]3", "5[]5"));
-        panelDirs.add(cmbDirs, "pushx, growx");
-        panelDirs.add(btnBrowse, "align right");
-
-        panelAvailableTapes.setBorder(new TitledBorder("Available tapes"));
-        panelTape.setBorder(new TitledBorder("Tape"));
-
-        JPanel content = new JPanel();
-        content.setLayout(new MigLayout("insets dialog, debug", "[]", "[]"));
-        content.setBorder(null);
-
-        splitPane.setResizeWeight(0.3);
-        splitPane.setDividerLocation(0.3);
-        content.add(splitPane, "grow, push");
-
-        panelAvailableTapes.setLayout(new MigLayout());
-        panelAvailableTapes.add(panelDirs, "growx, pushx, wrap");
-        panelAvailableTapes.add(scrollTapes, "grow, push, wrap");
-        panelAvailableTapes.add(panelAvailableTapesButtons, "pushx, dock south");
-
-        panelAvailableTapesButtons.setLayout(new MigLayout("ins 2 2 2 2", "3[]3", "5[]5"));
-        panelAvailableTapesButtons.add(btnLoad, "align left");
-
-        panelTape.setLayout(new MigLayout());
-        panelTape.add(panelTapeInformation, "growx, pushx, wrap");
-        panelTape.add(lblEvents, "align left, wrap");
-        panelTape.add(scrollEvents, "push, grow, wrap");
-        panelTape.add(panelTapeButtons, "pushx, dock south");
-
-        panelTapeInformation.setLayout(new MigLayout("debug, fillx"));
-        panelTapeInformation.add(lblFileNameLabel, "align label");
-        panelTapeInformation.add(lblFileName, "growx, width 0:0:100, wrap");
-        panelTapeInformation.add(lblStatusLabel, "align label");
-        panelTapeInformation.add(lblStatus, "pushx, wrap");
-
-        panelTapeInformation.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                PathString ps = loadedFileName.get();
-                if (ps != null) {
-                    ps.deriveMaxStringLength(panelTapeInformation, panelTapeInformation.getWidth());
-                    String shortened = ps.getPathShortened();
-                    if (shortened.length() < ps.getPath().toString().length()) {
-                        lblFileName.setToolTipText(ps.getPath().toString());
-                    }
-                    lblFileName.setText(shortened);
-                }
-            }
-        });
-
-
-        panelTapeButtons.setLayout(new MigLayout("ins 2 2 2 2", "3[]3", "5[]5"));
-        panelTapeButtons.add(btnPlay, "align left");
-        panelTapeButtons.add(btnStop, "pushx"); // gap
-        panelTapeButtons.add(btnUnload, "align right");
-
-        setContentPane(content);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        pack();
     }
 
     private void setupListeners() {
@@ -218,18 +124,35 @@ public class TapePlayerGui extends JDialog {
                 lstTapesModel.reset(path.getPath());
             }
         });
-
-        cmbDirs.addMouseMotionListener(new MouseMotionAdapter() {
+        cmbDirs.addComponentListener(new ComponentAdapter() {
             @Override
-            public void mouseMoved(MouseEvent e) {
+            public void componentResized(ComponentEvent e) {
                 PathString path = (PathString) cmbDirs.getSelectedItem();
+
                 if (path != null) {
+                    path.deriveMaxStringLength(cmbDirs, cmbDirs.getWidth());
                     String dirName = path.getPath().toString();
                     if (dirName.length() > path.getMaxStringLength()) {
                         cmbDirs.setToolTipText(dirName);
                     } else {
                         cmbDirs.setToolTipText(null);
                     }
+                    revalidate();
+                }
+            }
+        });
+
+        panelTapeInfo.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                PathString ps = loadedFileName.get();
+                if (ps != null) {
+                    ps.deriveMaxStringLength(panelTapeInfo, panelTapeInfo.getWidth());
+                    String shortened = ps.getPathShortened();
+                    if (shortened.length() < ps.getPath().toString().length()) {
+                        lblFileName.setToolTipText(ps.getPath().toString());
+                    }
+                    lblFileName.setText(shortened);
                 }
             }
         });
@@ -255,7 +178,7 @@ public class TapePlayerGui extends JDialog {
             }
         });
 
-        //  btnRefresh.addActionListener(e -> lstTapesModel.refresh());
+        btnRefresh.addActionListener(e -> lstTapesModel.refresh());
         btnLoad.addActionListener(e -> {
             int index = lstTapes.getSelectedIndex();
             if (index != -1) {
@@ -264,12 +187,89 @@ public class TapePlayerGui extends JDialog {
 
                 PathString ps = new PathString(path);
                 loadedFileName.set(ps);
-                ps.deriveMaxStringLength(panelTapeInformation, panelTapeInformation.getWidth());
+                ps.deriveMaxStringLength(panelTapeInfo, panelTapeInfo.getWidth());
                 lblFileName.setText(ps.getPathShortened());
             }
         });
         btnPlay.addActionListener(e -> controller.play());
         btnStop.addActionListener(e -> controller.stop(false));
-        btnUnload.addActionListener(e -> controller.stop(true));
+        btnEject.addActionListener(e -> controller.stop(true));
     }
+
+	private void initComponents() {
+		JPanel panelAvailableTapes = new JPanel();
+		JToolBar toolbarDirs = new JToolBar();
+		JToolBar toolbarAvailableTapes = new JToolBar();
+		JPanel panelTape = new JPanel();
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, panelAvailableTapes, panelTape);
+
+		JLabel lblFileNameLabel = new JLabel("File name:");
+		JLabel lblStatusLabel = new JLabel("Status:");
+		JScrollPane scrollEvents = new JScrollPane(txtEvents);
+		JToolBar toolbarTape = new JToolBar();
+		JPanel hSpacer1 = new JPanel(null);
+        JPanel hSpacer2 = new JPanel(null);
+
+		Container contentPane = getContentPane();
+		contentPane.setLayout(new MigLayout("insets dialog, fill", "[fill]", "[fill]"));
+
+        splitPane.setDividerLocation(250);
+        splitPane.setResizeWeight(0.3);
+        splitPane.setDividerLocation(0.3);
+
+        panelAvailableTapes.setBorder(new TitledBorder("Available tapes"));
+        panelAvailableTapes.setLayout(new MigLayout("fill,insets 2", "[fill, grow]"));
+
+        toolbarDirs.add(cmbDirs);
+        toolbarDirs.add(btnBrowse);
+        toolbarDirs.setFloatable(false);
+
+        btnRefresh.setIcon(new ImageIcon(getClass().getResource(REFRESH_ICON)));
+        btnLoad.setIcon(new ImageIcon(getClass().getResource(LOAD_ICON)));
+
+        toolbarAvailableTapes.add(btnRefresh);
+        toolbarAvailableTapes.add(hSpacer2);
+        toolbarAvailableTapes.add(btnLoad);
+        toolbarAvailableTapes.setFloatable(false);
+
+        lstTapes.setCellRenderer(new TapesListRenderer());
+
+        panelAvailableTapes.add(toolbarDirs, "cell 0 0, growx, pushx");
+        panelAvailableTapes.add(scrollTapes, "cell 0 1, growy, pushy");
+        panelAvailableTapes.add(toolbarAvailableTapes, "cell 0 2");
+        splitPane.setLeftComponent(panelAvailableTapes);
+
+        panelTape.setBorder(new TitledBorder("Audio Tape"));
+        panelTape.setLayout(new MigLayout("fill,insets 2,hidemode 3", "[fill]", "[][][]"));
+
+        btnPlay.setIcon(new ImageIcon(getClass().getResource(PLAY_ICON)));
+        btnStop.setIcon(new ImageIcon(getClass().getResource(STOP_ICON)));
+        btnEject.setIcon(new ImageIcon(getClass().getResource(EJECT_ICON)));
+
+        toolbarTape.add(btnPlay);
+        toolbarTape.add(btnStop);
+        toolbarTape.addSeparator();
+        toolbarTape.add(hSpacer1);
+        toolbarTape.add(btnEject);
+        toolbarTape.setFloatable(false);
+
+        lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getStyle() | Font.BOLD));
+
+        panelTapeInfo.setLayout(new MigLayout("fillx,hidemode 3","[fill][fill]", "[][]"));
+        panelTapeInfo.add(lblFileNameLabel, "cell 0 0,alignx right,growx 0");
+        panelTapeInfo.add(lblFileName, "cell 1 0,push, grow");
+        panelTapeInfo.add(lblStatusLabel, "cell 0 1,alignx right,growx 0");
+        panelTapeInfo.add(lblStatus, "cell 1 1,pushx,growx");
+
+        panelTape.add(panelTapeInfo, "cell 0 0");
+        panelTape.add(scrollEvents, "cell 0 1, growy, pushy");
+        panelTape.add(toolbarTape, "cell 0 2");
+        splitPane.setRightComponent(panelTape);
+
+		contentPane.add(splitPane, "cell 0 0");
+
+		pack();
+		setLocationRelativeTo(getOwner());
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+	}
 }
