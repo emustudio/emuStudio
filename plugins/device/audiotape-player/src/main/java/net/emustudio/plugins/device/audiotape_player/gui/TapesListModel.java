@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.device.audiotape_player.gui;
 
+import net.emustudio.emulib.runtime.interaction.ShortenedString;
 import net.emustudio.plugins.device.audiotape_player.loaders.Loader;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ import java.util.stream.Stream;
 public class TapesListModel extends DefaultListModel<String> {
     private final static Logger LOGGER = LoggerFactory.getLogger(TapesListModel.class);
 
-    private List<PathString> files = Collections.emptyList();
+    private List<ShortenedString<Path>> files = Collections.emptyList();
     private Path directory;
     private final AtomicReference<Component> componentRef = new AtomicReference<>();
     private int componentWidth;
@@ -52,19 +53,19 @@ public class TapesListModel extends DefaultListModel<String> {
         clear();
         this.files = listPaths(directory);
         Component c = componentRef.get();
-        for (PathString file : files) {
+        for (ShortenedString<Path> file : files) {
             if (c != null) {
                 file.deriveMaxStringLength(c, componentWidth);
             }
-            addElement(file.getPathShortened());
+            addElement(file.getShortenedString());
         }
     }
 
     public Path getFilePath(int index) {
-        return files.get(index).getPath();
+        return files.get(index).getValue();
     }
 
-    private static List<PathString> listPaths(Path directory) {
+    private static List<ShortenedString<Path>> listPaths(Path directory) {
         if (directory == null) {
             return Collections.emptyList();
         }
@@ -72,7 +73,7 @@ public class TapesListModel extends DefaultListModel<String> {
             return stream
                     .filter(Files::isReadable)
                     .filter(Loader::hasLoader)
-                    .map(PathString::new)
+                    .map(p -> new ShortenedString<>(p, pp -> pp.getFileName().toString()))
                     .collect(Collectors.toList());
         } catch (IOException e) {
             LOGGER.error("Could not load tape files from directory: " + directory, e);
