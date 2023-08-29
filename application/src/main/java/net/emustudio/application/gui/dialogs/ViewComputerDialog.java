@@ -161,14 +161,14 @@ public class ViewComputerDialog extends JDialog {
         jToolBar1.setDoubleBuffered(true);
 
         buttonGroup1.add(btnCompiler);
-        btnCompiler.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/compile.png")));
+        btnCompiler.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/compile.png")));
         btnCompiler.setToolTipText("Compiler information");
         btnCompiler.setFocusable(false);
         btnCompiler.addActionListener(this::btnCompilerActionPerformed);
         jToolBar1.add(btnCompiler);
 
         buttonGroup1.add(btnCPU);
-        btnCPU.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/cpu.gif")));
+        btnCPU.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/cpu.gif")));
         btnCPU.setSelected(true);
         btnCPU.setToolTipText("CPU information");
         btnCPU.setFocusable(false);
@@ -176,14 +176,14 @@ public class ViewComputerDialog extends JDialog {
         jToolBar1.add(btnCPU);
 
         buttonGroup1.add(btnMemory);
-        btnMemory.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/ram.gif")));
+        btnMemory.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/ram.gif")));
         btnMemory.setToolTipText("Memory information");
         btnMemory.setFocusable(false);
         btnMemory.addActionListener(this::btnMemoryActionPerformed);
         jToolBar1.add(btnMemory);
 
         buttonGroup1.add(btnDevice);
-        btnDevice.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/device.png")));
+        btnDevice.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/device.png")));
         btnDevice.setToolTipText("Devices information");
         btnDevice.setFocusable(false);
         btnDevice.addActionListener(this::btnDeviceActionPerformed);
@@ -291,7 +291,7 @@ public class ViewComputerDialog extends JDialog {
         jToolBar2.setOrientation(SwingConstants.VERTICAL);
         jToolBar2.setRollover(true);
 
-        btnSaveSchema.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/document-save.png")));
+        btnSaveSchema.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/document-save.png")));
         btnSaveSchema.setToolTipText("Save schema image");
         btnSaveSchema.setFocusable(false);
         btnSaveSchema.setHorizontalTextPosition(SwingConstants.CENTER);

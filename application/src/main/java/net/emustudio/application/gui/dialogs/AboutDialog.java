@@ -51,7 +51,7 @@ public class AboutDialog extends JDialog {
 
         lblLogo.setBackground(Color.WHITE);
         lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
-        lblLogo.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/dialogs/logo.png")));
+        lblLogo.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/logo.png")));
         lblLogo.setBorder(BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         lblLogo.setDoubleBuffered(true);
         lblLogo.setFocusable(false);

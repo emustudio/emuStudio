@@ -69,7 +69,7 @@ public class TerminalWindow extends JDialog {
 
     private void initComponents() {
         JLabel lblBack = new JLabel();
-        ImageIcon backgroundImage = new ImageIcon(getClass().getResource(BACKGROUND_IMAGE));
+        ImageIcon backgroundImage = new ImageIcon(ClassLoader.getSystemResource(BACKGROUND_IMAGE));
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("LSI ADM-3A");
@@ -89,13 +89,13 @@ public class TerminalWindow extends JDialog {
 
         JButton btnClear = new JButton();
         btnClear.setFocusable(false);
-        btnClear.setIcon(new ImageIcon(getClass().getResource(CLEAR_SCREEN_ICON)));
+        btnClear.setIcon(new ImageIcon(ClassLoader.getSystemResource(CLEAR_SCREEN_ICON)));
         btnClear.setToolTipText("Clear screen");
         btnClear.addActionListener(e -> clearScreen());
 
         JButton btnRoll = new JButton();
         btnRoll.setFocusable(false);
-        btnRoll.setIcon(new ImageIcon(getClass().getResource(ROLL_LINE_ICON)));
+        btnRoll.setIcon(new ImageIcon(ClassLoader.getSystemResource(ROLL_LINE_ICON)));
         btnRoll.setToolTipText("Roll line up");
         btnRoll.addActionListener(e -> rollLine());
 

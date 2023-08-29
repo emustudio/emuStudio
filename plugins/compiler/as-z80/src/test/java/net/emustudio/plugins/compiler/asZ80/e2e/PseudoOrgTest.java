@@ -30,8 +30,8 @@ public class PseudoOrgTest extends AbstractCompilerTest {
 
     @Before
     public void setup() {
-        sampleFile = Objects.requireNonNull(getClass().getResource("/sample.asm")).getFile();
-        sample2File = Objects.requireNonNull(getClass().getResource("/sample2.asm")).getFile();
+        sampleFile = Objects.requireNonNull(ClassLoader.getSystemResource("/sample.asm")).getFile();
+        sample2File = Objects.requireNonNull(ClassLoader.getSystemResource("/sample2.asm")).getFile();
     }
 
 

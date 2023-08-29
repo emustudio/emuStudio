@@ -121,7 +121,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void initComponents() {
-        setIconImage(new ImageIcon(getClass().getResource("/net/emustudio/application/gui/favicon16.png")).getImage());
+        setIconImage(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/favicon16.png")).getImage());
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 

@@ -44,10 +44,10 @@ public class TerminalWindow extends JDialog {
         this.keyboard = Objects.requireNonNull(keyboard);
         this.dialogs = Objects.requireNonNull(dialogs);
 
-        URL blueIconURL = getClass().getResource(
+        URL blueIconURL = ClassLoader.getSystemResource(
                 "/net/emustudio/plugins/device/vt100/16_circle_blue.png"
         );
-        URL redIconURL = getClass().getResource(
+        URL redIconURL = ClassLoader.getSystemResource(
                 "/net/emustudio/plugins/device/vt100/16_circle_red.png"
         );
 
@@ -91,7 +91,7 @@ public class TerminalWindow extends JDialog {
         lblStatusIcon.setVerticalAlignment(SwingConstants.TOP);
 
         btnASCII.setFont(btnASCII.getFont());
-        btnASCII.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/vt100/16_ascii.png")));
+        btnASCII.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/plugins/device/vt100/16_ascii.png")));
         btnASCII.setToolTipText("Input by ASCII code");
         btnASCII.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         btnASCII.setEnabled(false);
