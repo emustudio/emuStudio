@@ -23,7 +23,7 @@ import org.junit.Test;
 public class MacroTest extends AbstractCompilerTest {
 
     @Test
-    public void testMacroWithoutCallDoesNotGenerateCode() throws Exception {
+    public void testMacroWithoutCallDoesNotGenerateCode() {
         compile(
                 "shrt macro\n"
                         + "  rrc\n"
@@ -34,7 +34,7 @@ public class MacroTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testMacroWithoutParams() throws Exception {
+    public void testMacroWithoutParams() {
         compile(
                 "shrt macro\n"
                         + "  rrc\n"
@@ -49,7 +49,7 @@ public class MacroTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testMacroWithParams() throws Exception {
+    public void testMacroWithParams() {
         compile(
                 "shrt macro amount, dbsize\n"
                         + "  rrc\n"
@@ -65,7 +65,7 @@ public class MacroTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testDBinMacroIsVisibleFromOutside() throws Exception {
+    public void testDBinMacroIsVisibleFromOutside() {
         compile(
                 "shrt macro\n"
                         + "  text: db 0Fh\n"
@@ -80,7 +80,7 @@ public class MacroTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testCannotRedefineIdentifierInMacro() throws Exception {
+    public void testCannotRedefineIdentifierInMacro() {
         compile(
                 "hello: db 0\n"
                         + "shrt macro\n"
@@ -91,7 +91,7 @@ public class MacroTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testMacroAlreadyDefined() throws Exception {
+    public void testMacroAlreadyDefined() {
         compile(
                 "shrt macro\nendm\n"
                         + "shrt macro\nendm\n"
@@ -99,7 +99,7 @@ public class MacroTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testMacroCanGetForwardLabelReferences() throws Exception {
+    public void testMacroCanGetForwardLabelReferences() {
         compile(
                 "shrt macro param\n"
                         + "  lxi h, param\n"
@@ -113,7 +113,7 @@ public class MacroTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testLessMacroParametersThanExpected() throws Exception {
+    public void testLessMacroParametersThanExpected() {
         compile(
                 "shrt macro param\n"
                         + "  lxi h, param\n"
@@ -123,7 +123,7 @@ public class MacroTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testMoreMacroParametersThanExpected() throws Exception {
+    public void testMoreMacroParametersThanExpected() {
         compile(
                 "shrt macro param\n"
                         + "  lxi h, param\n"
@@ -133,9 +133,7 @@ public class MacroTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testCallUndefinedMacro() throws Exception {
-        compile(
-                "shrt 1,2\n"
-        );
+    public void testCallUndefinedMacro() {
+        compile("shrt 1,2\n");
     }
 }

@@ -23,7 +23,7 @@ import org.junit.Test;
 public class InstrRegTest extends AbstractCompilerTest {
 
     @Test
-    public void testINR() throws Exception {
+    public void testINR() {
         compile(
                 "inr A\n"
                         + "inr B\n"
@@ -41,7 +41,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testDCR() throws Exception {
+    public void testDCR() {
         compile(
                 "dcr A\n"
                         + "dcr B\n"
@@ -59,7 +59,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testADD() throws Exception {
+    public void testADD() {
         compile(
                 "add A\n"
                         + "add B\n"
@@ -77,7 +77,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testADC() throws Exception {
+    public void testADC() {
         compile(
                 "adc A\n"
                         + "adc B\n"
@@ -95,7 +95,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testSUB() throws Exception {
+    public void testSUB() {
         compile(
                 "sub A\n"
                         + "sub B\n"
@@ -113,7 +113,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testSBB() throws Exception {
+    public void testSBB() {
         compile(
                 "sbb A\n"
                         + "sbb B\n"
@@ -131,7 +131,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testANA() throws Exception {
+    public void testANA() {
         compile(
                 "ana A\n"
                         + "ana B\n"
@@ -149,7 +149,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testXRA() throws Exception {
+    public void testXRA() {
         compile(
                 "xra A\n"
                         + "xra B\n"
@@ -167,7 +167,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testORA() throws Exception {
+    public void testORA() {
         compile(
                 "ora A\n"
                         + "ora B\n"
@@ -185,7 +185,7 @@ public class InstrRegTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testCMP() throws Exception {
+    public void testCMP() {
         compile(
                 "cmp A\n"
                         + "cmp B\n"
