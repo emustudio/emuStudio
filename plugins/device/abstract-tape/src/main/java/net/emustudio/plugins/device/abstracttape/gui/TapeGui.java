@@ -87,7 +87,7 @@ public class TapeGui extends JDialog {
         lstTape.setCellRenderer(new TapeCellRenderer(tapeContext));
         scrollTape.setViewportView(lstTape);
 
-        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png")));
+        btnAddFirst.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png")));
         btnAddFirst.addActionListener(e -> dialogs
                 .readString("Symbol value:", "Add symbol (on top)")
                 .map(TapeSymbol::guess)
@@ -99,7 +99,7 @@ public class TapeGui extends JDialog {
                     }
                 }));
 
-        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png")));
+        btnAddLast.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png")));
         btnAddLast.addActionListener(e -> dialogs
                 .readString("Symbol value:", "Add symbol (on bottom)")
                 .map(TapeSymbol::guess)

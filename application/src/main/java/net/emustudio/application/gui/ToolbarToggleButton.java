@@ -34,7 +34,7 @@ public class ToolbarToggleButton extends JToggleButton {
                 action.accept(actionEvent);
             }
         });
-        setIcon(new ImageIcon(getClass().getResource(iconResource)));
+        setIcon(new ImageIcon(ClassLoader.getSystemResource(iconResource)));
         setToolTipText(tooltipText);
 
         setFocusable(false);

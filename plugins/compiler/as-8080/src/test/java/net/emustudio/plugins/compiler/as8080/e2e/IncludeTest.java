@@ -26,7 +26,7 @@ public class IncludeTest extends AbstractCompilerTest {
 
     @Test
     public void testIncludeAndForwardCall() throws Exception {
-        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        File includeFile = new File(ClassLoader.getSystemResource("/sample.asm").toURI());
         compile(
                 "call sample\n"
                         + "include '" + includeFile.getAbsolutePath() + "'\n"
@@ -36,7 +36,7 @@ public class IncludeTest extends AbstractCompilerTest {
 
     @Test
     public void testCallDataInclude() throws Exception {
-        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        File includeFile = new File(ClassLoader.getSystemResource("/sample.asm").toURI());
         compile(
                 "call sample\n" +
                         "label: db 'hello'\n" +
@@ -49,8 +49,8 @@ public class IncludeTest extends AbstractCompilerTest {
 
     @Test
     public void testDoubleIncludeAndForwardCall() throws Exception {
-        File first = new File(getClass().getResource("/sample.asm").toURI());
-        File second = new File(getClass().getResource("/sample2.asm").toURI());
+        File first = new File(ClassLoader.getSystemResource("/sample.asm").toURI());
+        File second = new File(ClassLoader.getSystemResource("/sample2.asm").toURI());
         compile(
                 "call sample2\n"
                         + "include '" + first.getAbsolutePath() + "'\n"
@@ -64,7 +64,7 @@ public class IncludeTest extends AbstractCompilerTest {
 
     @Test
     public void testIncludeAndBackwardCall() throws Exception {
-        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        File includeFile = new File(ClassLoader.getSystemResource("/sample.asm").toURI());
         compile(
                 "include '" + includeFile.getAbsolutePath() + "'\n"
                         + "call sample\n"
@@ -77,8 +77,8 @@ public class IncludeTest extends AbstractCompilerTest {
 
     @Test
     public void testDoubleIncludeAndBackwardCall() throws Exception {
-        File first = new File(getClass().getResource("/sample.asm").toURI());
-        File second = new File(getClass().getResource("/sample2.asm").toURI());
+        File first = new File(ClassLoader.getSystemResource("/sample.asm").toURI());
+        File second = new File(ClassLoader.getSystemResource("/sample2.asm").toURI());
         compile(
                 "include '" + first.getAbsolutePath() + "'\n"
                         + "include '" + second.getAbsolutePath() + "'\n"
@@ -92,7 +92,7 @@ public class IncludeTest extends AbstractCompilerTest {
 
     @Test
     public void testIncludeAndJMPafter() throws Exception {
-        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        File includeFile = new File(ClassLoader.getSystemResource("/sample.asm").toURI());
         compile(
                 "jmp next\n"
                         + "include '" + includeFile.getAbsolutePath() + "'\n"
@@ -107,8 +107,8 @@ public class IncludeTest extends AbstractCompilerTest {
 
     @Test
     public void testDoubleIncludeAndJMPafter() throws Exception {
-        File first = new File(getClass().getResource("/sample.asm").toURI());
-        File second = new File(getClass().getResource("/sample2.asm").toURI());
+        File first = new File(ClassLoader.getSystemResource("/sample.asm").toURI());
+        File second = new File(ClassLoader.getSystemResource("/sample2.asm").toURI());
         compile(
                 "jmp next\n"
                         + "include '" + first.getAbsolutePath() + "'\n"
