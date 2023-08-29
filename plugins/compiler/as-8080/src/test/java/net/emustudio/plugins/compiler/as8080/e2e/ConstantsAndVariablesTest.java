@@ -23,7 +23,7 @@ import org.junit.Test;
 public class ConstantsAndVariablesTest extends AbstractCompilerTest {
 
     @Test
-    public void testLabelAsConstantWorks() throws Exception {
+    public void testLabelAsConstantWorks() {
         compile(
                 "here equ 0\n"
                         + "mov a,b\n"
@@ -36,7 +36,7 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testConstantAsLabelWorks() throws Exception {
+    public void testConstantAsLabelWorks() {
         compile(
                 "here equ there\n"
                         + "there: mov a,b\n"
@@ -49,7 +49,7 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testRecursiveConstantDefinitionsDoesNotWork() throws Exception {
+    public void testRecursiveConstantDefinitionsDoesNotWork() {
         compile(
                 "here equ there\n"
                         + "there equ here\n"
@@ -58,21 +58,21 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testTwoSameLabelsDoNotWork() throws Exception {
+    public void testTwoSameLabelsDoNotWork() {
         compile(
                 "here:\nhere:\njz here"
         );
     }
 
     @Test(expected = Exception.class)
-    public void testTwoSameConstantsDoNotWork() throws Exception {
+    public void testTwoSameConstantsDoNotWork() {
         compile(
                 "here equ 0\nhere equ 1"
         );
     }
 
     @Test
-    public void testVariableCanBeOverwritten() throws Exception {
+    public void testVariableCanBeOverwritten() {
         compile(
                 "here set 0\nhere set 1\ncpi here"
         );
@@ -82,21 +82,21 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testCannotSetVariableBecauseIdentifierIsAlreadyDefined() throws Exception {
+    public void testCannotSetVariableBecauseIdentifierIsAlreadyDefined() {
         compile(
                 "here equ 0\nhere set 1\n"
         );
     }
 
     @Test(expected = Exception.class)
-    public void testCannotDefineConstantBecauseIdentifierIsAlreadyDefined() throws Exception {
+    public void testCannotDefineConstantBecauseIdentifierIsAlreadyDefined() {
         compile(
                 "here: db 4\nhere equ 1\n"
         );
     }
 
     @Test
-    public void testForwardReferenceOfConstantShouldWork() throws Exception {
+    public void testForwardReferenceOfConstantShouldWork() {
         compile("LXI SP,STACK\n" +
                 "TEMPP: DW TEMP0\n" +
                 "TEMP0: DS 1\n" +
@@ -108,7 +108,7 @@ public class ConstantsAndVariablesTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testUnknownIdentifier() throws Exception {
+    public void testUnknownIdentifier() {
         compile("LXI SP,STACK");
     }
 }

@@ -23,7 +23,7 @@ import org.junit.Test;
 public class InstrExprTest extends AbstractCompilerTest {
 
     @Test
-    public void testRST() throws Exception {
+    public void testRST() {
         compile(
                 "JMP EXAMPLE\n" +
                         "RST 00H\n" +
@@ -37,13 +37,13 @@ public class InstrExprTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testCPI() throws Exception {
+    public void testCPI() {
         compile("cpi '9' + 1");
         assertProgram(0xFE, '9' + 1);
     }
 
     @Test
-    public void testForwardCall() throws Exception {
+    public void testForwardCall() {
         compile("call sample\n" +
                 "label: db 'hello'\n" +
                 "sample: hlt");

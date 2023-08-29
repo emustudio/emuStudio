@@ -33,6 +33,7 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Optional;
@@ -84,14 +85,18 @@ public abstract class AbstractCompilerTest {
         compiler.initialize();
     }
 
-    protected void compile(String content) throws Exception {
-        File sourceFile = folder.newFile();
-        Files.write(sourceFile.toPath(), content.getBytes(), StandardOpenOption.WRITE);
+    protected void compile(String content) {
+        try {
+            File sourceFile = folder.newFile();
+            Files.write(sourceFile.toPath(), content.getBytes(), StandardOpenOption.WRITE);
 
-        File outputFile = folder.newFile();
-        compiler.compile(sourceFile.toPath(), Optional.of(outputFile.toPath()));
-        if (errorCount > 0) {
-            throw new Exception("Compilation failed with " + errorCount + " errors");
+            File outputFile = folder.newFile();
+            compiler.compile(sourceFile.toPath(), Optional.of(outputFile.toPath()));
+            if (errorCount > 0) {
+                throw new RuntimeException("Compilation failed with " + errorCount + " errors");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

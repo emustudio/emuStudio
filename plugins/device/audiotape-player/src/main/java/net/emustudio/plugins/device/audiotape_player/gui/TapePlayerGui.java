@@ -207,6 +207,8 @@ public class TapePlayerGui extends JDialog {
 
         JLabel lblFileNameLabel = new JLabel("File name:");
         JLabel lblStatusLabel = new JLabel("Status:");
+
+        txtEvents.setEditable(false);
         JScrollPane scrollEvents = new JScrollPane(txtEvents);
         JToolBar toolbarTape = new JToolBar();
         JPanel hSpacer1 = new JPanel(null);
