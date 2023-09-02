@@ -28,6 +28,8 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.loadIcon;
+
 public class GotoAddressAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/format-indent-more.png";
     private final Dialogs dialogs;
@@ -35,7 +37,7 @@ public class GotoAddressAction extends AbstractAction {
     private final Consumer<Integer> setPageFromAddress;
 
     public GotoAddressAction(Dialogs dialogs, ByteMemoryContext context, Consumer<Integer> setPageFromAddress) {
-        super("Go to address...", new ImageIcon(GotoAddressAction.class.getResource(ICON_FILE)));
+        super("Go to address...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);

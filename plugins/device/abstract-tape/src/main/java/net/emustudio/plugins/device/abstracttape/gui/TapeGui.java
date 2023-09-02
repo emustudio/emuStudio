@@ -25,10 +25,13 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.net.URL;
 import java.util.Objects;
 
 public class TapeGui extends JDialog {
     public static final Font FONT_MONOSPACED = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+    private static final String ICON_ADD_FIRST = "/net/emustudio/plugins/device/abstracttape/gui/go-up.png";
+    private static final String ICON_ADD_LAST = "/net/emustudio/plugins/device/abstracttape/gui/go-down.png";
 
     private final Dialogs dialogs;
     private final AbstractTapeContextImpl tapeContext;
@@ -73,8 +76,8 @@ public class TapeGui extends JDialog {
     private void initComponents() {
         JScrollPane scrollTape = new JScrollPane();
         lstTape = new JList<>(listModel);
-        btnAddFirst = new NiceButton("Add symbol");
-        btnAddLast = new NiceButton("Add symbol");
+        btnAddFirst = new NiceButton("Add symbol", loadIcon(ICON_ADD_FIRST));
+        btnAddLast = new NiceButton("Add symbol", loadIcon(ICON_ADD_LAST));
         btnRemove = new NiceButton("Remove symbol");
         btnEdit = new NiceButton("Edit symbol");
         btnClear = new NiceButton("Clear tape");
@@ -87,7 +90,6 @@ public class TapeGui extends JDialog {
         lstTape.setCellRenderer(new TapeCellRenderer(tapeContext));
         scrollTape.setViewportView(lstTape);
 
-        btnAddFirst.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/plugins/device/abstracttape/gui/go-up.png")));
         btnAddFirst.addActionListener(e -> dialogs
                 .readString("Symbol value:", "Add symbol (on top)")
                 .map(TapeSymbol::guess)
@@ -99,7 +101,6 @@ public class TapeGui extends JDialog {
                     }
                 }));
 
-        btnAddLast.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/plugins/device/abstracttape/gui/go-down.png")));
         btnAddLast.addActionListener(e -> dialogs
                 .readString("Symbol value:", "Add symbol (on bottom)")
                 .map(TapeSymbol::guess)
@@ -161,5 +162,10 @@ public class TapeGui extends JDialog {
                         .addComponent(btnClear)
                         .addContainerGap());
         pack();
+    }
+
+    private ImageIcon loadIcon(String resource) {
+        URL url = getClass().getResource(resource);
+        return url == null ? null : new ImageIcon(url);
     }
 }

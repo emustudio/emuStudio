@@ -41,8 +41,11 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 public class StudioFrame extends JFrame {
     private final static String SOURCE_CODE_EDITOR = "Source code editor";
+    private final static String ICON_FILE = "/net/emustudio/application/gui/favicon16.png";
 
     private final Editor editor;
 
@@ -121,7 +124,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void initComponents() {
-        setIconImage(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/favicon16.png")).getImage());
+        setIconImage(Optional.ofNullable(loadIcon(ICON_FILE)).map(ImageIcon::getImage).orElse(null));
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 

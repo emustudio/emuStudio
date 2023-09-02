@@ -30,9 +30,11 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
 import static net.emustudio.application.settings.ConfigFiles.renameConfiguration;
 
 public class RenameComputerAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/rename-computer.png";
     private final static Logger LOGGER = LoggerFactory.getLogger(RenameComputerAction.class);
 
     private final Dialogs dialogs;
@@ -41,9 +43,7 @@ public class RenameComputerAction extends AbstractAction {
 
     public RenameComputerAction(Dialogs dialogs, Runnable update,
                                 JList<ComputerConfig> lstConfig) {
-        super(
-                "Rename computer...", new ImageIcon(RenameComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/rename-computer.png"))
-        );
+        super("Rename computer...", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.update = Objects.requireNonNull(update);

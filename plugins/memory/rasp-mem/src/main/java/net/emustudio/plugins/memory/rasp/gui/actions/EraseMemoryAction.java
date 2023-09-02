@@ -26,13 +26,15 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.plugins.memory.rasp.gui.Constants.loadIcon;
+
 public class EraseMemoryAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/rasp/gui/clear.png";
     private final RaspTableModel tableModel;
     private final MemoryContext<Integer> context;
 
     public EraseMemoryAction(RaspTableModel tableModel, MemoryContext<Integer> context) {
-        super("Erase memory", new ImageIcon(EraseMemoryAction.class.getResource(ICON_FILE)));
+        super("Erase memory", loadIcon(ICON_FILE));
         this.tableModel = Objects.requireNonNull(tableModel);
         this.context = Objects.requireNonNull(context);
     }

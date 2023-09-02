@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.plugins.memory.ram.gui.Constants.loadIcon;
+
 public class LoadImageAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ram/gui/document-open.png";
     private final Dialogs dialogs;
@@ -39,7 +41,7 @@ public class LoadImageAction extends AbstractAction {
     private Path recentOpenPath;
 
     public LoadImageAction(Dialogs dialogs, MemoryContextImpl context, Runnable repaint) {
-        super("Load image file...", new ImageIcon(LoadImageAction.class.getResource(ICON_FILE)));
+        super("Load image file...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);

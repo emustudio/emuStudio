@@ -25,14 +25,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 public class AboutAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/favicon16.png";
     private final JFrame parent;
 
     public AboutAction(JFrame parent) {
-        super("About...", new ImageIcon(AboutAction.class.getResource("/net/emustudio/application/gui/favicon16.png")));
-
+        super("About...", loadIcon(ICON_FILE));
         this.parent = Objects.requireNonNull(parent);
-
         putValue(MNEMONIC_KEY, KeyEvent.VK_A);
     }
 

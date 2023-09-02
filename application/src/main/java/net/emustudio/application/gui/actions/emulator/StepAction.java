@@ -24,12 +24,15 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 public class StepAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-next.png";
 
     private final EmulationController emulationController;
 
     public StepAction(EmulationController emulationController) {
-        super("Step", new ImageIcon(StepAction.class.getResource("/net/emustudio/application/gui/dialogs/go-next.png")));
+        super("Step", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, "Step forward");
         this.emulationController = emulationController;
     }

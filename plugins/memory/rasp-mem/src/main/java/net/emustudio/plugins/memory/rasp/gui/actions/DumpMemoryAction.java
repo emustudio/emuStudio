@@ -40,6 +40,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static net.emustudio.plugins.memory.rasp.gui.Constants.loadIcon;
+
 public class DumpMemoryAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DumpMemoryAction.class);
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/rasp/gui/document-save.png";
@@ -48,7 +50,7 @@ public class DumpMemoryAction extends AbstractAction {
     private final MemoryContextImpl context;
 
     public DumpMemoryAction(Dialogs dialogs, MemoryContextImpl context, Supplier<Integer> programLocation) {
-        super("Dump (save) memory to a file...", new ImageIcon(DumpMemoryAction.class.getResource(ICON_FILE)));
+        super("Dump (save) memory to a file...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);

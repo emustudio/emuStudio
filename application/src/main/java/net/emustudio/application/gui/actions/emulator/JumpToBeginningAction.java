@@ -24,15 +24,16 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 public class JumpToBeginningAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-first.png";
+
     private final VirtualComputer computer;
     private final Runnable refreshDebugTable;
 
     public JumpToBeginningAction(VirtualComputer computer, Runnable refreshDebugTable) {
-        super(
-                "Jump to beginning",
-                new ImageIcon(JumpToBeginningAction.class.getResource("/net/emustudio/application/gui/dialogs/go-first.png"))
-        );
+        super("Jump to beginning", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, "Jump to beginning");
         this.computer = Objects.requireNonNull(computer);
         this.refreshDebugTable = Objects.requireNonNull(refreshDebugTable);

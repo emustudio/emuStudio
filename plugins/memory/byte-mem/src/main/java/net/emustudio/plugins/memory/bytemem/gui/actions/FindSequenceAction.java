@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.loadIcon;
+
 public class FindSequenceAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/edit-find.png";
     private final Dialogs dialogs;
@@ -23,7 +25,7 @@ public class FindSequenceAction extends AbstractAction {
 
     public FindSequenceAction(Dialogs dialogs, Consumer<Integer> setPageFromAddress, MemoryTableModel tableModel,
                               Supplier<Integer> getCurrentAddress, JDialog parent) {
-        super("Find sequence...", new ImageIcon(FindSequenceAction.class.getResource(ICON_FILE)));
+        super("Find sequence...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.setPageFromAddress = Objects.requireNonNull(setPageFromAddress);

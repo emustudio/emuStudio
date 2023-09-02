@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,8 +27,8 @@ public class TapePlayerGui extends JDialog {
 
     private final JPanel panelTapeInfo = new JPanel();
     private final JButton btnBrowse;
-    private final JButton btnRefresh = new JButton("Refresh", new ImageIcon(ClassLoader.getSystemResource(REFRESH_ICON)));
-    private final JButton btnLoad = new JButton("Load", new ImageIcon(ClassLoader.getSystemResource(LOAD_ICON)));
+    private final JButton btnRefresh = new JButton("Refresh", getIcon(REFRESH_ICON));
+    private final JButton btnLoad = new JButton("Load", getIcon(LOAD_ICON));
     private final CachedComboBoxModel<ShortenedString<Path>> cmbDirsModel = new CachedComboBoxModel<>();
     private final JComboBox<ShortenedString<Path>> cmbDirs = new JComboBox<>(cmbDirsModel);
     private final TapesListModel lstTapesModel = new TapesListModel();
@@ -36,9 +37,9 @@ public class TapePlayerGui extends JDialog {
 
     private final AtomicReference<ShortenedString<Path>> loadedFileName = new AtomicReference<>();
 
-    private final JButton btnPlay = new JButton("Play", new ImageIcon(ClassLoader.getSystemResource(PLAY_ICON)));
-    private final JButton btnStop = new JButton("Stop", new ImageIcon(ClassLoader.getSystemResource(STOP_ICON)));
-    private final JButton btnEject = new JButton("Eject", new ImageIcon(ClassLoader.getSystemResource(EJECT_ICON)));
+    private final JButton btnPlay = new JButton("Play", getIcon(PLAY_ICON));
+    private final JButton btnStop = new JButton("Stop", getIcon(STOP_ICON));
+    private final JButton btnEject = new JButton("Eject", getIcon(EJECT_ICON));
 
     private final JTextArea txtFileName = new JTextArea("N/A");
     private final JLabel lblStatus = new JLabel("Stopped");
@@ -59,7 +60,7 @@ public class TapePlayerGui extends JDialog {
             cmbDirs.setSelectedIndex(0);
             cmbDirs.setMinimumSize(new Dimension(0, 0));
         });
-        btnBrowse.setIcon(new ImageIcon(ClassLoader.getSystemResource(FOLDER_OPEN_ICON)));
+        btnBrowse.setIcon(getIcon(FOLDER_OPEN_ICON));
         btnBrowse.setText("");
         btnBrowse.setToolTipText("Select directory");
         btnBrowse.setFocusPainted(false);
@@ -277,5 +278,10 @@ public class TapePlayerGui extends JDialog {
         setLocationRelativeTo(getOwner());
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
+
+    private ImageIcon getIcon(String resource) {
+        URL url = getClass().getResource(resource);
+        return url == null ? null : new ImageIcon(url);
     }
 }

@@ -25,8 +25,10 @@ import java.awt.event.KeyEvent;
 
 import static net.emustudio.application.Resources.getCopyright;
 import static net.emustudio.application.Resources.getVersion;
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
 
 public class AboutDialog extends JDialog {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/logo.png";
 
     public AboutDialog(JFrame parent) {
         super(parent, true);
@@ -36,7 +38,7 @@ public class AboutDialog extends JDialog {
 
     private void initComponents() {
         JPanel panelLogo = new JPanel();
-        JLabel lblLogo = new JLabel();
+        JLabel lblLogo = new JLabel(loadIcon(ICON_FILE));
         JPanel panelInfo = new JPanel();
         JLabel lblName = new JLabel();
         JLabel lblCopyright = new JLabel();
@@ -51,7 +53,6 @@ public class AboutDialog extends JDialog {
 
         lblLogo.setBackground(Color.WHITE);
         lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
-        lblLogo.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/logo.png")));
         lblLogo.setBorder(BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         lblLogo.setDoubleBuffered(true);
         lblLogo.setFocusable(false);

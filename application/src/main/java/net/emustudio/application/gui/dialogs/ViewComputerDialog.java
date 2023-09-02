@@ -34,8 +34,15 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 public class ViewComputerDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);
+    private final static String ICON_COMPILER = "/net/emustudio/application/gui/dialogs/compile.png";
+    private final static String ICON_CPU = "/net/emustudio/application/gui/dialogs/cpu.gif";
+    private final static String ICON_MEMORY = "/net/emustudio/application/gui/dialogs/ram.gif";
+    private final static String ICON_DEVICE = "/net/emustudio/application/gui/dialogs/device.png";
+    private final static String ICON_SAVE = "/net/emustudio/application/gui/dialogs/document-save.png";
 
     private final VirtualComputer computer;
     private final SchemaPreviewPanel panelSchema;
@@ -127,10 +134,10 @@ public class ViewComputerDialog extends JDialog {
         JTabbedPane jTabbedPane1 = new JTabbedPane();
         JPanel panelTabInfo = new JPanel();
         JToolBar jToolBar1 = new JToolBar();
-        btnCompiler = new JToggleButton();
-        JToggleButton btnCPU = new JToggleButton();
-        btnMemory = new JToggleButton();
-        btnDevice = new JToggleButton();
+        btnCompiler = new JToggleButton(loadIcon(ICON_COMPILER));
+        JToggleButton btnCPU = new JToggleButton(loadIcon(ICON_CPU));
+        btnMemory = new JToggleButton(loadIcon(ICON_MEMORY));
+        btnDevice = new JToggleButton(loadIcon(ICON_DEVICE));
         JPanel jPanel2 = new JPanel();
         lblSelectDevice = new JLabel();
         cmbDevice = new JComboBox<>();
@@ -143,7 +150,7 @@ public class ViewComputerDialog extends JDialog {
         txtDescription = new JTextArea();
         JPanel jPanel1 = new JPanel();
         JToolBar jToolBar2 = new JToolBar();
-        JButton btnSaveSchema = new JButton();
+        JButton btnSaveSchema = new JButton(loadIcon(ICON_SAVE));
         scrollPane = new JScrollPane();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -161,14 +168,12 @@ public class ViewComputerDialog extends JDialog {
         jToolBar1.setDoubleBuffered(true);
 
         buttonGroup1.add(btnCompiler);
-        btnCompiler.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/compile.png")));
         btnCompiler.setToolTipText("Compiler information");
         btnCompiler.setFocusable(false);
         btnCompiler.addActionListener(this::btnCompilerActionPerformed);
         jToolBar1.add(btnCompiler);
 
         buttonGroup1.add(btnCPU);
-        btnCPU.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/cpu.gif")));
         btnCPU.setSelected(true);
         btnCPU.setToolTipText("CPU information");
         btnCPU.setFocusable(false);
@@ -176,14 +181,12 @@ public class ViewComputerDialog extends JDialog {
         jToolBar1.add(btnCPU);
 
         buttonGroup1.add(btnMemory);
-        btnMemory.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/ram.gif")));
         btnMemory.setToolTipText("Memory information");
         btnMemory.setFocusable(false);
         btnMemory.addActionListener(this::btnMemoryActionPerformed);
         jToolBar1.add(btnMemory);
 
         buttonGroup1.add(btnDevice);
-        btnDevice.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/device.png")));
         btnDevice.setToolTipText("Devices information");
         btnDevice.setFocusable(false);
         btnDevice.addActionListener(this::btnDeviceActionPerformed);
@@ -291,7 +294,6 @@ public class ViewComputerDialog extends JDialog {
         jToolBar2.setOrientation(SwingConstants.VERTICAL);
         jToolBar2.setRollover(true);
 
-        btnSaveSchema.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/document-save.png")));
         btnSaveSchema.setToolTipText("Save schema image");
         btnSaveSchema.setFocusable(false);
         btnSaveSchema.setHorizontalTextPosition(SwingConstants.CENTER);

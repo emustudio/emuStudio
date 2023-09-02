@@ -24,12 +24,15 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 public class ResetAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/reset.png";
 
     private final EmulationController emulationController;
 
     public ResetAction(EmulationController emulationController) {
-        super("Reset", new ImageIcon(ResetAction.class.getResource("/net/emustudio/application/gui/dialogs/reset.png")));
+        super("Reset", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, "Reset emulation");
         this.emulationController = emulationController;
     }
