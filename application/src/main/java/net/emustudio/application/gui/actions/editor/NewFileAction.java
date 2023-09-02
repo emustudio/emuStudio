@@ -26,7 +26,10 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 public class NewFileAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/document-new.png";
 
     private final Supplier<Boolean> confirmSave;
     private final Editor editor;
@@ -34,7 +37,7 @@ public class NewFileAction extends AbstractAction {
     private final Runnable updateTitle;
 
     public NewFileAction(Supplier<Boolean> confirmSave, Editor editor, JTextArea compilerOutput, Runnable updateTitle) {
-        super("New", new ImageIcon(NewFileAction.class.getResource("/net/emustudio/application/gui/dialogs/document-new.png")));
+        super("New", loadIcon(ICON_FILE));
 
         this.confirmSave = Objects.requireNonNull(confirmSave);
         this.editor = Objects.requireNonNull(editor);

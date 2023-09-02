@@ -24,12 +24,15 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 public class StopAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-stop.png";
 
     private final EmulationController emulationController;
 
     public StopAction(EmulationController emulationController) {
-        super("Stop", new ImageIcon(StopAction.class.getResource("/net/emustudio/application/gui/dialogs/go-stop.png")));
+        super("Stop", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, "Stop emulation");
         this.emulationController = emulationController;
     }

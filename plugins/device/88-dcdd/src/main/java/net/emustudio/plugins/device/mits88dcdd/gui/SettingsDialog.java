@@ -43,13 +43,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import static net.emustudio.plugins.device.mits88dcdd.DiskSettings.*;
-import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
+import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.*;
 
 public class SettingsDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
-    private final static Font DRIVE_BUTTON_FONT = new Font("Monospaced", Font.PLAIN, 14);
-    private final static ImageIcon OFF_ICON = new ImageIcon(SettingsDialog.class.getResource("/net/emustudio/plugins/device/mits88dcdd/gui/off.png"));
-    private final static ImageIcon ON_ICON = new ImageIcon(SettingsDialog.class.getResource("/net/emustudio/plugins/device/mits88dcdd/gui/on.png"));
 
     private final Dialogs dialogs;
     private final DiskSettings settings;
@@ -126,8 +123,8 @@ public class SettingsDialog extends JDialog {
                     .filter(p -> !p.equals(""))
                     .map(Path::of)
                     .ifPresentOrElse(
-                            path -> driveButtons.get(i).setIcon(ON_ICON),
-                            () -> driveButtons.get(i).setIcon(OFF_ICON));
+                            path -> driveButtons.get(i).setIcon(ICON_ON),
+                            () -> driveButtons.get(i).setIcon(ICON_OFF));
             return null;
         });
         updateGUI(0);
@@ -204,12 +201,12 @@ public class SettingsDialog extends JDialog {
                     } else {
                         btnMountUnmount.setText("Mount");
                     }
-                    driveButtons.get(index).setIcon(ON_ICON);
+                    driveButtons.get(index).setIcon(ICON_ON);
                 }, () -> {
                     txtImageFile.setText("");
                     btnMountUnmount.setSelected(false);
                     btnMountUnmount.setText("Mount");
-                    driveButtons.get(index).setIcon(OFF_ICON);
+                    driveButtons.get(index).setIcon(ICON_OFF);
                 });
     }
 
@@ -590,7 +587,7 @@ public class SettingsDialog extends JDialog {
     private void setupDriveButton(ButtonGroup group, JToggleButton button, int index) {
         group.add(button);
         button.setFont(DRIVE_BUTTON_FONT);
-        button.setIcon(OFF_ICON);
+        button.setIcon(ICON_OFF);
         button.setFocusPainted(false);
         button.addActionListener(e -> updateGUI(index));
     }

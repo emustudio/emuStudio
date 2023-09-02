@@ -18,12 +18,24 @@
  */
 package net.emustudio.plugins.device.mits88dcdd.gui;
 
+import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 
 public class Constants {
-    public static Font DIALOG_PLAIN = new Font(Font.DIALOG, Font.PLAIN, 12);
-    public static Font MONOSPACED_PLAIN = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-    public static Font MONOSPACED_BOLD = new Font(Font.MONOSPACED, Font.BOLD, 12);
+    public final static Font MONOSPACED_PLAIN = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+    public final static Font DRIVE_BUTTON_FONT = new Font("Monospaced", Font.PLAIN, 14);
 
-    public static String DIALOG_TITLE = "MITS 88-DCDD";
+    public final static String DIALOG_TITLE = "MITS 88-DCDD";
+
+    public final static ImageIcon ICON_UNSELECTED = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/unselected.png");
+    public final static ImageIcon ICON_SELECTED = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/selected.png");
+
+    public final static ImageIcon ICON_OFF = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/off.png");
+    public final static ImageIcon ICON_ON = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/on.png");
+
+    private static ImageIcon loadIcon(String resource) {
+        URL url = Constants.class.getResource(resource);
+        return url == null ? null : new ImageIcon(url);
+    }
 }

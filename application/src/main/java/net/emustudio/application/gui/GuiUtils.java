@@ -19,10 +19,13 @@
 package net.emustudio.application.gui;
 
 import net.emustudio.application.settings.AppSettings;
+import net.emustudio.plugins.device.mits88dcdd.gui.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+
+import java.net.URL;
 
 import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
 
@@ -117,5 +120,10 @@ public class GuiUtils {
         UIManager.put("ToolTip.font", FONT_COMMON);
         UIManager.put("Tree.font", FONT_COMMON);
         UIManager.put("Viewport.font", FONT_COMMON);
+    }
+
+    public static ImageIcon loadIcon(String resource) {
+        URL url = GuiUtils.class.getResource(resource);
+        return url == null ? null : new ImageIcon(url);
     }
 }

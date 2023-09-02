@@ -33,6 +33,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
+import static net.emustudio.plugins.memory.bytemem.gui.Constants.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/document-open.png";
@@ -43,7 +44,7 @@ public class LoadImageAction extends AbstractAction {
     private Path recentOpenPath;
 
     public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint) {
-        super("Load image file...", new ImageIcon(LoadImageAction.class.getResource(ICON_FILE)));
+        super("Load image file...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);

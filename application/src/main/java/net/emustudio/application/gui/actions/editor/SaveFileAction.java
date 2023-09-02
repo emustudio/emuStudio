@@ -25,12 +25,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 public class SaveFileAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/document-save.png";
+
     private final Editor editor;
     private final Runnable updateTitle;
 
     public SaveFileAction(Editor editor, Runnable updateTitle) {
-        super("Save", new ImageIcon(SaveFileAction.class.getResource("/net/emustudio/application/gui/dialogs/document-save.png")));
+        super("Save", loadIcon(ICON_FILE));
 
         this.editor = Objects.requireNonNull(editor);
         this.updateTitle = Objects.requireNonNull(updateTitle);

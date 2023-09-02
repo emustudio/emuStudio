@@ -40,4 +40,11 @@ class NiceButton extends JButton {
         this();
         this.setText(text);
     }
+
+
+    NiceButton(String text, Icon icon) {
+        this();
+        this.setIcon(icon);
+        this.setText(text);
+    }
 }

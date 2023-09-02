@@ -43,16 +43,8 @@ public class TerminalWindow extends JDialog {
         this.canvas = new DisplayCanvas(display);
         this.keyboard = Objects.requireNonNull(keyboard);
         this.dialogs = Objects.requireNonNull(dialogs);
-
-        URL blueIconURL = ClassLoader.getSystemResource(
-                "/net/emustudio/plugins/device/vt100/16_circle_blue.png"
-        );
-        URL redIconURL = ClassLoader.getSystemResource(
-                "/net/emustudio/plugins/device/vt100/16_circle_red.png"
-        );
-
-        blueIcon = new ImageIcon(Objects.requireNonNull(blueIconURL));
-        redIcon = new ImageIcon(Objects.requireNonNull(redIconURL));
+        this.blueIcon = loadIcon("/net/emustudio/plugins/device/vt100/16_circle_blue.png");
+        this.redIcon = loadIcon("/net/emustudio/plugins/device/vt100/16_circle_red.png");
 
         initComponents();
         setLocationRelativeTo(parent);
@@ -91,7 +83,7 @@ public class TerminalWindow extends JDialog {
         lblStatusIcon.setVerticalAlignment(SwingConstants.TOP);
 
         btnASCII.setFont(btnASCII.getFont());
-        btnASCII.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/plugins/device/vt100/16_ascii.png")));
+        btnASCII.setIcon(loadIcon("/net/emustudio/plugins/device/vt100/16_ascii.png"));
         btnASCII.setToolTipText("Input by ASCII code");
         btnASCII.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         btnASCII.setEnabled(false);
@@ -149,6 +141,12 @@ public class TerminalWindow extends JDialog {
                         dialogs.showError("Invalid number format in the input: " + ex.getMessage(), "Add ASCII codes");
                     }
                 });
+    }
+
+
+    private ImageIcon loadIcon(String resource) {
+        URL url = getClass().getResource(resource);
+        return url == null ? null : new ImageIcon(url);
     }
 
     private final JLabel lblStatusIcon = new JLabel();

@@ -25,11 +25,14 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.GuiUtils.loadIcon;
+
 /**
  * This is the dialog form that displays when the emuStudio automatization
  * is running.
  */
 public class AutoDialog extends JDialog {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/motherboard-icon.gif";
     private final VirtualComputer computer;
 
     private final JLabel lblAction = new JLabel();
@@ -43,12 +46,11 @@ public class AutoDialog extends JDialog {
     }
 
     private void initComponents() {
-        JLabel lblPerforming = new JLabel();
+        JLabel lblPerforming = new JLabel(loadIcon(ICON_FILE));
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setResizable(false);
 
         lblPerforming.setFont(lblPerforming.getFont().deriveFont(lblPerforming.getFont().getStyle() | java.awt.Font.BOLD));
-        lblPerforming.setIcon(new ImageIcon(ClassLoader.getSystemResource("/net/emustudio/application/gui/dialogs/motherboard-icon.gif")));
         lblPerforming.setText("Running automatic emulation, please wait...");
 
         lblAction.setText("Initializing...");
