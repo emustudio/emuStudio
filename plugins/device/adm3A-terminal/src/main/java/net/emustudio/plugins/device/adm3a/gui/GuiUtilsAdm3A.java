@@ -20,18 +20,11 @@ package net.emustudio.plugins.device.adm3a.gui;
 
 import net.emustudio.emulib.runtime.interaction.GuiUtils;
 
-import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 
 public class GuiUtilsAdm3A {
 
     public static Font loadFont(DisplayFont displayFont) {
         return GuiUtils.loadFontResource(displayFont.path, GuiUtilsAdm3A.class, displayFont.fontSize);
-    }
-
-    public static ImageIcon loadIcon(String resource) {
-        URL url = GuiUtilsAdm3A.class.getResource(resource);
-        return url == null ? null : new ImageIcon(url);
     }
 }

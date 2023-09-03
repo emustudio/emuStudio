@@ -18,9 +18,7 @@
  */
 package net.emustudio.plugins.memory.ssem.gui;
 
-import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 
 public final class Constants {
     public final static Font DEFAULT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
@@ -36,9 +34,4 @@ public final class Constants {
             TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS, TWO_CHARS,
             10 * CHAR_WIDTH, 10 * CHAR_WIDTH, 5 * CHAR_WIDTH
     };
-
-    public static ImageIcon loadIcon(String resource) {
-        URL url = Constants.class.getResource(resource);
-        return url == null ? null : new ImageIcon(url);
-    }
 }

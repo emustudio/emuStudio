@@ -121,9 +121,4 @@ public class GuiUtils {
         UIManager.put("Tree.font", FONT_COMMON);
         UIManager.put("Viewport.font", FONT_COMMON);
     }
-
-    public static ImageIcon loadIcon(String resource) {
-        URL url = GuiUtils.class.getResource(resource);
-        return url == null ? null : new ImageIcon(url);
-    }
 }

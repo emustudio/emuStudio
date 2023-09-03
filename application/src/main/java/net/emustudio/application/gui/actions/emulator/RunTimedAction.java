@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static net.emustudio.application.gui.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class RunTimedAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-play-time.png";

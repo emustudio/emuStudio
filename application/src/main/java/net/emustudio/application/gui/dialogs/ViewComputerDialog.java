@@ -34,7 +34,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Objects;
 
-import static net.emustudio.application.gui.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class ViewComputerDialog extends JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);

@@ -26,7 +26,7 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static net.emustudio.application.gui.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class NewFileAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/document-new.png";

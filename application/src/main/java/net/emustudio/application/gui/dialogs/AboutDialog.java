@@ -25,7 +25,7 @@ import java.awt.event.KeyEvent;
 
 import static net.emustudio.application.Resources.getCopyright;
 import static net.emustudio.application.Resources.getVersion;
-import static net.emustudio.application.gui.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class AboutDialog extends JDialog {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/logo.png";

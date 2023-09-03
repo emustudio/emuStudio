@@ -20,9 +20,7 @@ package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
 
-import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 import java.util.List;
 
 import static net.emustudio.plugins.memory.bytemem.loaders.Loader.IMAGE_LOADERS;
@@ -35,9 +33,4 @@ public class Constants {
     public final static FileExtensionsFilter IMAGE_EXTENSION_FILTER = new FileExtensionsFilter(
             "Memory image", List.copyOf(IMAGE_LOADERS.keySet())
     );
-
-    public static ImageIcon loadIcon(String resource) {
-        URL url = Constants.class.getResource(resource);
-        return url == null ? null : new ImageIcon(url);
-    }
 }
