@@ -32,8 +32,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/document-open.png";

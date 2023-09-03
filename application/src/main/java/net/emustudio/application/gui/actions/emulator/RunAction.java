@@ -25,7 +25,7 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.gui.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class RunAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-play.png";

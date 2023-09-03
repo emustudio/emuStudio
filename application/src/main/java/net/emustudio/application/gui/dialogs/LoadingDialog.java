@@ -20,7 +20,7 @@ package net.emustudio.application.gui.dialogs;
 
 import javax.swing.*;
 
-import static net.emustudio.application.gui.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class LoadingDialog extends JDialog {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/loading.gif";

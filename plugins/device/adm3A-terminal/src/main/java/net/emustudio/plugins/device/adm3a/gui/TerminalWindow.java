@@ -25,7 +25,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static java.awt.FlowLayout.LEFT;
-import static net.emustudio.plugins.device.adm3a.gui.GuiUtilsAdm3A.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class TerminalWindow extends JDialog {
     private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";

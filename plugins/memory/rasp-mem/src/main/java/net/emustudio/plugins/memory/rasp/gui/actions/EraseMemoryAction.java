@@ -26,7 +26,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.plugins.memory.rasp.gui.Constants.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class EraseMemoryAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/rasp/gui/clear.png";

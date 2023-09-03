@@ -29,7 +29,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.plugins.memory.bytemem.gui.Constants.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class SettingsAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/preferences-system.png";

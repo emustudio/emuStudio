@@ -25,7 +25,7 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.plugins.memory.ssem.gui.Constants.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class EraseMemoryAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/clear.png";

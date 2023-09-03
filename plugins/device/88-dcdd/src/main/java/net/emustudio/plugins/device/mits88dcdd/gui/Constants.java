@@ -20,7 +20,8 @@ package net.emustudio.plugins.device.mits88dcdd.gui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
+
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class Constants {
     public final static Font MONOSPACED_PLAIN = new Font(Font.MONOSPACED, Font.PLAIN, 12);
@@ -33,9 +34,4 @@ public class Constants {
 
     public final static ImageIcon ICON_OFF = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/off.png");
     public final static ImageIcon ICON_ON = loadIcon("/net/emustudio/plugins/device/mits88dcdd/gui/on.png");
-
-    private static ImageIcon loadIcon(String resource) {
-        URL url = Constants.class.getResource(resource);
-        return url == null ? null : new ImageIcon(url);
-    }
 }

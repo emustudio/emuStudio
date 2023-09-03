@@ -37,7 +37,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.plugins.memory.ram.gui.Constants.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class DumpMemoryAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DumpMemoryAction.class);

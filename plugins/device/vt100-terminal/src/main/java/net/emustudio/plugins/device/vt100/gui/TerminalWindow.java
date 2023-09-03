@@ -25,9 +25,10 @@ import net.emustudio.plugins.device.vt100.interaction.KeyboardGui;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
-import java.net.URL;
 import java.util.Objects;
 import java.util.StringTokenizer;
+
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class TerminalWindow extends JDialog {
     private final Dialogs dialogs;
@@ -141,12 +142,6 @@ public class TerminalWindow extends JDialog {
                         dialogs.showError("Invalid number format in the input: " + ex.getMessage(), "Add ASCII codes");
                     }
                 });
-    }
-
-
-    private ImageIcon loadIcon(String resource) {
-        URL url = getClass().getResource(resource);
-        return url == null ? null : new ImageIcon(url);
     }
 
     private final JLabel lblStatusIcon = new JLabel();

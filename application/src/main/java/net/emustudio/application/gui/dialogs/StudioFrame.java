@@ -41,7 +41,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.gui.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class StudioFrame extends JFrame {
     private final static String SOURCE_CODE_EDITOR = "Source code editor";

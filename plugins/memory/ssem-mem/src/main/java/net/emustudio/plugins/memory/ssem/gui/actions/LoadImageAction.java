@@ -35,7 +35,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.plugins.memory.ssem.gui.Constants.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/document-open.png";

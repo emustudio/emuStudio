@@ -33,7 +33,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static net.emustudio.plugins.memory.rasp.gui.Constants.loadIcon;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/rasp/gui/document-open.png";
