@@ -23,7 +23,8 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-import static net.emustudio.plugins.memory.ssem.gui.Constants.*;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED_BOLD;
 
 class MemoryCellRenderer extends JLabel implements TableCellRenderer {
     private final static Color COLOR_FORE = Color.BLACK;
@@ -39,7 +40,7 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         setOpaque(true);
         setDoubleBuffered(true);
         setBorder(BorderFactory.createEmptyBorder());
-        setFont(DEFAULT_FONT);
+        setFont(FONT_MONOSPACED);
         setHorizontalAlignment(CENTER);
 
         this.selectedBackground = UIManager.getColor("Table.selectionBackground");
@@ -75,10 +76,10 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
             Color front = COLOR_FORE_UNIMPORTANT;
 
             if (MemoryTableModel.isBitInstruction(column) || MemoryTableModel.isBitLine(column)) {
-                setFont(BOLD_FONT);
+                setFont(FONT_MONOSPACED_BOLD);
                 front = COLOR_FORE;
             } else {
-                setFont(DEFAULT_FONT);
+                setFont(FONT_MONOSPACED);
             }
 
             if (MemoryTableModel.isBitLine(column)) {

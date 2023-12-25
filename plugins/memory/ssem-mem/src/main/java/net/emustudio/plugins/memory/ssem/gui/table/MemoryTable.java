@@ -23,18 +23,18 @@ import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
 import static net.emustudio.plugins.memory.ssem.gui.Constants.COLUMN_WIDTH;
-import static net.emustudio.plugins.memory.ssem.gui.Constants.DEFAULT_FONT;
 
 public class MemoryTable extends JTable {
 
     public MemoryTable(MemoryTableModel tableModel, JScrollPane pm) {
         setModel(tableModel);
-        setFont(DEFAULT_FONT);
+        setFont(FONT_MONOSPACED);
         setCellSelectionEnabled(true);
         setFocusCycleRoot(true);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        getTableHeader().setFont(DEFAULT_FONT);
+        getTableHeader().setFont(FONT_MONOSPACED);
         setDefaultRenderer(Object.class, new MemoryCellRenderer(getTableHeader(), tableModel, pm, getRowHeight()));
         setOpaque(true);
 
