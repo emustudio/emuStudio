@@ -23,14 +23,13 @@ import net.emustudio.plugins.device.abstracttape.AbstractTapeContextImpl;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
 import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class TapeGui extends JDialog {
-    public static final Font FONT_MONOSPACED = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     private static final String ICON_ADD_FIRST = "/net/emustudio/plugins/device/abstracttape/gui/go-up.png";
     private static final String ICON_ADD_LAST = "/net/emustudio/plugins/device/abstracttape/gui/go-down.png";
 

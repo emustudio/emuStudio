@@ -29,8 +29,8 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.event.KeyEvent;
 
-import static net.emustudio.plugins.memory.ram.gui.Constants.DIALOG_PLAIN;
-import static net.emustudio.plugins.memory.ram.gui.Constants.MONOSPACED_PLAIN;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_COMMON;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
 
 public class MemoryGui extends JDialog {
     private final JTable table;
@@ -44,7 +44,7 @@ public class MemoryGui extends JDialog {
 
         RamTableModel tableModel = new RamTableModel(memory);
         this.table = new JTable(tableModel);
-        this.table.setFont(MONOSPACED_PLAIN);
+        this.table.setFont(FONT_MONOSPACED);
 
         this.loadImageAction = new LoadImageAction(dialogs, memory, () -> {
             table.revalidate();
@@ -74,7 +74,7 @@ public class MemoryGui extends JDialog {
         toolBar.addSeparator();
         toolBar.add(new ToolbarButton(eraseMemoryAction));
 
-        jPanel1.setBorder(BorderFactory.createTitledBorder(null, "Tape content", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, DIALOG_PLAIN));
+        jPanel1.setBorder(BorderFactory.createTitledBorder(null, "Tape content", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, FONT_COMMON));
 
         table.setGridColor(java.awt.SystemColor.control);
         jScrollPane1.setViewportView(table);

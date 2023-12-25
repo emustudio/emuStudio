@@ -26,7 +26,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.plugins.device.mits88sio.gui.Constants.MONOSPACED_PLAIN;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
 
 public class SettingsDialog extends JDialog {
     private final Dialogs dialogs;
@@ -56,6 +56,7 @@ public class SettingsDialog extends JDialog {
     private final JList<String> lstStatusPorts = new JList<>();
     private final JSpinner spnInputInterrupt = new JSpinner(new SpinnerNumberModel(0, 0, 7, 1));
     private final JSpinner spnOutputInterrupt = new JSpinner(new SpinnerNumberModel(0, 0, 7, 1));
+
     public SettingsDialog(JFrame parent, SioUnitSettings settings, Dialogs dialogs) {
         super(parent, true);
 
@@ -162,7 +163,7 @@ public class SettingsDialog extends JDialog {
 
         panelStatusChannel.setBorder(BorderFactory.createTitledBorder("Status channel ports"));
 
-        lstStatusPorts.setFont(MONOSPACED_PLAIN);
+        lstStatusPorts.setFont(FONT_MONOSPACED);
         lstStatusPorts.setModel(statusPortsModel);
         lstStatusPorts.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         srlStatus.setViewportView(lstStatusPorts);
@@ -198,7 +199,7 @@ public class SettingsDialog extends JDialog {
 
         panelDataChannel.setBorder(BorderFactory.createTitledBorder("Data channel ports"));
 
-        lstDataPorts.setFont(MONOSPACED_PLAIN);
+        lstDataPorts.setFont(FONT_MONOSPACED);
         lstDataPorts.setModel(dataPortsModel);
         lstDataPorts.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         srlData.setViewportView(lstDataPorts);

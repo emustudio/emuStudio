@@ -18,12 +18,7 @@
  */
 package net.emustudio.plugins.memory.ssem.gui;
 
-import java.awt.*;
-
 public final class Constants {
-    public final static Font DEFAULT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-    public final static Font BOLD_FONT = new Font(Font.MONOSPACED, Font.BOLD, 12);
-
     public final static int CHAR_WIDTH = 17;
     public final static int TWO_CHARS = 2 * CHAR_WIDTH;
 

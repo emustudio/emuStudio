@@ -20,14 +20,16 @@ package net.emustudio.plugins.device.mits88dcdd.gui;
 
 import javax.swing.*;
 
-import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.*;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.ICON_SELECTED;
+import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.ICON_UNSELECTED;
 
 public class DriveButton extends JToggleButton {
 
     public DriveButton(String text, Runnable action) {
         super(text, ICON_UNSELECTED);
         setToolTipText("Disk is unselected");
-        setFont(MONOSPACED_PLAIN);
+        setFont(FONT_MONOSPACED);
         setFocusPainted(false);
         addActionListener(actionEvent -> action.run());
     }
