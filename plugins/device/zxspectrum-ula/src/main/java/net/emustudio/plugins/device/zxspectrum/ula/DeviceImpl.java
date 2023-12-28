@@ -27,7 +27,7 @@ import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.Keyboard;
-import net.emustudio.plugins.device.zxspectrum.ula.gui.TerminalWindow;
+import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow;
 
 import javax.swing.*;
 import java.util.MissingResourceException;
@@ -42,7 +42,7 @@ public class DeviceImpl extends AbstractDevice {
     private boolean guiIOset = false;
 
     private ULA ula;
-    private TerminalWindow gui;
+    private DisplayWindow gui;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -87,7 +87,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (!guiIOset) {
-                this.gui = new TerminalWindow(parent, ula);
+                this.gui = new DisplayWindow(parent, ula, keyboard);
                 GuiUtils.addKeyListener(gui, keyboard);
                 guiIOset = true;
                 this.gui.setVisible(true);

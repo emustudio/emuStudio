@@ -78,9 +78,6 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     public final byte[][] attributeMemory = new byte[SCREEN_WIDTH][ATTRIBUTE_HEIGHT];
     private final static int[] lineStartOffsets = computeLineStartOffsets();
 
-    private boolean hostControlDown = false;
-    private boolean hostShiftDown = false;
-
     // maps host characters to ZX Spectrum key "commands" (keymap index, "zero" value)
     private final static Map<Character, Byte[]> CHAR_MAPPING = new HashMap<>();
 
@@ -220,6 +217,8 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
             // SPACE, SYM SHFT, M, N, B
             result &= keymap[7];
         }
+
+        // LINE IN?
         if ((bus.readData() & 1) == 1) {
             result |= 0x40;
         }
@@ -248,14 +247,8 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         int keyCode = evt.getExtendedKeyCode();
 
         if (keyCode == KeyEvent.VK_CONTROL) {
-            hostControlDown = false;
-        } else if (evt.getKeyCode() == KeyEvent.VK_SHIFT) {
-            hostShiftDown = false;
-        }
-
-        if (hostControlDown) {
             keymap[7] |= 0x2; // symshift
-        } else if (hostShiftDown) {
+        } else if (evt.getKeyCode() == KeyEvent.VK_SHIFT) {
             keymap[0] |= 0x1; // shift
         }
 
@@ -265,9 +258,6 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
             char c = (char) Character.toLowerCase(keyCode);
             Byte[] command = CHAR_MAPPING.get(c);
             if (command != null) {
-                if (command[2] == 1) {
-                    keymap[7] |= 0x02; // symshift off
-                }
                 keymap[command[0]] |= command[1];
             }
         }
@@ -278,14 +268,8 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         int keyCode = evt.getExtendedKeyCode();
 
         if (keyCode == KeyEvent.VK_CONTROL) {
-            hostControlDown = true;
-        } else if (keyCode == KeyEvent.VK_SHIFT) {
-            hostShiftDown = true;
-        }
-
-        if (hostControlDown) {
             keymap[7] &= (byte) 0xFD; // symshift
-        } else if (hostShiftDown) {
+        } else if (keyCode == KeyEvent.VK_SHIFT) {
             keymap[0] &= (byte) 0xFE; // shift
         }
 
@@ -295,9 +279,6 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
             char c = (char) Character.toLowerCase(keyCode);
             Byte[] command = CHAR_MAPPING.get(c);
             if (command != null) {
-                if (command[2] == 1) {
-                    keymap[7] &= (byte) 0xFD; // symshift on
-                }
                 keymap[command[0]] &= (byte) ((~command[1]) & 0xFF);
             }
         }
