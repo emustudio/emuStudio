@@ -21,17 +21,31 @@ package net.emustudio.plugins.device.zxspectrum.ula.gui;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import javax.swing.*;
+import java.awt.event.WindowEvent;
 
-public class TerminalWindow extends JDialog {
+public class DisplayWindow extends JDialog {
     private final DisplayCanvas canvas;
+    private final KeyboardCanvas keyboardCanvas;
 
-    public TerminalWindow(JFrame parent, ULA ula) {
+    public final static int MARGIN = 30;
+
+    public DisplayWindow(JFrame parent, ULA ula, Keyboard keyboard) {
         super(parent);
         this.canvas = new DisplayCanvas(ula);
+        this.keyboardCanvas = new KeyboardCanvas(keyboard);
 
         initComponents();
         setLocationRelativeTo(parent);
         canvas.start();
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowOpened(WindowEvent winEvt) {
+                canvas.redrawNow();
+            }
+
+            public void windowActivated(WindowEvent winEvt) {
+                canvas.redrawNow();
+            }
+        });
     }
 
     public void destroy() {
@@ -40,49 +54,26 @@ public class TerminalWindow extends JDialog {
     }
 
     private void initComponents() {
-        JPanel panelStatus = new JPanel();
-
         setTitle("ZX Spectrum48K");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         canvas.setBounds(
-                0, 0,
-                (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_WIDTH),
-                (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_HEIGHT));
-
-        btnRedraw.setFocusable(false);
-
-        GroupLayout panelStatusLayout = new GroupLayout(panelStatus);
-        panelStatus.setLayout(panelStatusLayout);
-        panelStatusLayout.setHorizontalGroup(
-                panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelStatusLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(btnRedraw, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap())
-        );
-        panelStatusLayout.setVerticalGroup(
-                panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(btnRedraw, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
+                MARGIN, MARGIN,
+                (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_WIDTH + 2 * MARGIN),
+                (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_HEIGHT + 2 * MARGIN));
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(panelStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(canvas)
-        );
+                        .addComponent(keyboardCanvas));
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
                                 .addComponent(canvas, GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(panelStatus, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-        );
-
+                                .addComponent(keyboardCanvas, GroupLayout.DEFAULT_SIZE, KeyboardCanvas.KEYBOARD_HEIGHT + 3, Short.MAX_VALUE)
+                                .addContainerGap()));
         pack();
-        btnRedraw.addActionListener(e -> canvas.redrawNow());
     }
-
-    private final JButton btnRedraw = new JButton("Redraw screen");
 }

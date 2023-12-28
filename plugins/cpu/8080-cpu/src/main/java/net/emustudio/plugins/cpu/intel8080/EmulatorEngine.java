@@ -26,10 +26,10 @@ import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static net.emustudio.plugins.cpu.intel8080.DispatchTables.DISPATCH_TABLE;
 
@@ -100,22 +100,33 @@ public class EmulatorEngine implements CpuEngine {
         return currentRunState;
     }
 
+    @SuppressWarnings("BusyWait")
     public CPU.RunState run(CPU cpu) {
-        long startTime, endTime;
-        int cyclesExecuted;
-        int checkTimeSlice = 100;
-        int cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
-        int cycles;
-        long slice = checkTimeSlice * 1000000;
+        final long slotNanos = SleepUtils.SLEEP_PRECISION;
+        final double slotMicros = slotNanos / 1_000.0;
+        final int cyclesPerSlot = (int) (slotMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHz
 
         currentRunState = CPU.RunState.STATE_RUNNING;
+        long delayNanos = SleepUtils.SLEEP_PRECISION;
+
+        long startTime = System.nanoTime();
+        long executedCyclesPerSlot = 0;
         while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
-            startTime = System.nanoTime();
-            cyclesExecuted = 0;
-            while ((cyclesExecuted < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
+            try {
+                if (delayNanos > 0) {
+                    Thread.sleep(TimeUnit.NANOSECONDS.toMillis(delayNanos));
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            long endTime = System.nanoTime();
+            long targetCycles = (endTime - startTime) / slotNanos * cyclesPerSlot;
+
+            while ((executedCyclesPerSlot < targetCycles) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
-                    cycles = dispatch();
-                    cyclesExecuted += cycles;
+                    int cycles = dispatch();
+                    executedCyclesPerSlot += cycles;
                     context.passedCycles(cycles);
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
@@ -123,21 +134,16 @@ public class EmulatorEngine implements CpuEngine {
                 } catch (Breakpoint e) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 } catch (IndexOutOfBoundsException e) {
-                    LOGGER.debug("Unexpected error", e);
-                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                } catch (IOException e) {
                     LOGGER.error("Unexpected error", e);
-                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
                 } catch (Throwable e) {
-                    LOGGER.debug("Unexpected error", e);
+                    LOGGER.error("Unexpected error", e);
                     return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 }
             }
-            endTime = System.nanoTime() - startTime;
-            if (endTime < slice) {
-                // time correction
-                SleepUtils.preciseSleepNanos(slice - endTime);
-            }
+
+            long computationTime = System.nanoTime() - endTime;
+            delayNanos = slotNanos - computationTime;
         }
         return currentRunState;
     }
@@ -319,7 +325,7 @@ public class EmulatorEngine implements CpuEngine {
         int temp = (regs[REG_A] & 0x80) >>> 7;
 
         flags &= (~FLAG_C);
-        flags |= temp;
+        flags |= (short) temp;
 
         regs[REG_A] = (regs[REG_A] << 1 | temp) & 0xFF;
         return 4;
@@ -329,7 +335,7 @@ public class EmulatorEngine implements CpuEngine {
         int temp = regs[REG_A] & 0x01;
 
         flags &= (~FLAG_C);
-        flags |= temp;
+        flags |= (short) temp;
 
         regs[REG_A] = ((regs[REG_A] >>> 1) | (temp << 7)) & 0xFF;
         return 4;
@@ -352,7 +358,7 @@ public class EmulatorEngine implements CpuEngine {
             regs[REG_A] |= 0x80;
         }
         flags &= (~FLAG_C);
-        flags |= newCarry;
+        flags |= (short) newCarry;
 
         return 4;
     }
