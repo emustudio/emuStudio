@@ -49,7 +49,7 @@ class DisplayGui extends JDialog {
                 if (fromLocation == -1) {
                     displayPanel.reset(memory);
                 } else {
-                    for (int location = fromLocation; location <= toLocation; location++) {
+                    for (int location = fromLocation; location < toLocation; location++) {
                         int row = location / 4;
                         int rowBytePosition = row * 4;
                         displayPanel.writeRow(memory.read(rowBytePosition, 4), row);
