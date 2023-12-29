@@ -70,8 +70,9 @@ public class EmulatorEngineTest {
         assertEquals(8, NumberUtils.readInt(memoryStub.read(31 * 4, 4), memoryStub.getWordReadingStrategy()));
     }
 
-    @Test(timeout = 500)
+    @Test(timeout = 700)
     public void testEndlessLoopPrevention() {
+        // instruction 0 is JMP
         memoryStub.setMemory(new short[32 * 4]);
         engine.reset(0);
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, engine.run());

@@ -177,16 +177,16 @@ public class EmulatorEngine implements CpuEngine {
     @SuppressWarnings("BusyWait")
     public CPU.RunState run(CPU cpu) {
         // In Z80, 1 t-state = 250 ns = 0.25 microseconds = 0.00025 milliseconds
-        // in 1 millisecond time slice = 1 / 0.00025 = 4000 t-states are executed uncontrollably
+        // in 1 millisecond time slot = 1 / 0.00025 = 4000 t-states are executed uncontrollably
 
         final long slotNanos = SleepUtils.SLEEP_PRECISION;
-        final double slotMicros = slotNanos / 1_000.0;
+        final double slotMicros = slotNanos / 1000.0;
         final int cyclesPerSlot = (int) (slotMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHz
 
         currentRunState = CPU.RunState.STATE_RUNNING;
         long delayNanos = SleepUtils.SLEEP_PRECISION;
 
-        long startTime = System.nanoTime();
+        long emulationStartTime = System.nanoTime();
         executedCyclesPerSlot.set(0);
         while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
             try {
@@ -197,15 +197,15 @@ public class EmulatorEngine implements CpuEngine {
                 Thread.currentThread().interrupt();
             }
 
-            long endTime = System.nanoTime();
-            long targetCycles = (endTime - startTime) / slotNanos * cyclesPerSlot;
+            long computationStartTime = System.nanoTime();
+            long targetCycles = (computationStartTime - emulationStartTime) / slotNanos * cyclesPerSlot;
 
             while ((executedCyclesPerSlot.get() < targetCycles) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
-                    dispatch();
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }
+                    dispatch();
                 } catch (Breakpoint e) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 } catch (IndexOutOfBoundsException e) {
@@ -217,7 +217,7 @@ public class EmulatorEngine implements CpuEngine {
                 }
             }
 
-            long computationTime = System.nanoTime() - endTime;
+            long computationTime = System.nanoTime() - computationStartTime;
             delayNanos = slotNanos - computationTime;
         }
         return currentRunState;
