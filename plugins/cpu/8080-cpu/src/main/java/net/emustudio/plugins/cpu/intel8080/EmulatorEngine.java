@@ -103,7 +103,7 @@ public class EmulatorEngine implements CpuEngine {
     @SuppressWarnings("BusyWait")
     public CPU.RunState run(CPU cpu) {
         final long slotNanos = SleepUtils.SLEEP_PRECISION;
-        final double slotMicros = slotNanos / 1_000.0;
+        final double slotMicros = slotNanos / 1000.0;
         final int cyclesPerSlot = (int) (slotMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHz
 
         currentRunState = CPU.RunState.STATE_RUNNING;
@@ -125,12 +125,12 @@ public class EmulatorEngine implements CpuEngine {
 
             while ((executedCyclesPerSlot < targetCycles) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
-                    int cycles = dispatch();
-                    executedCyclesPerSlot += cycles;
-                    context.passedCycles(cycles);
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }
+                    int cycles = dispatch();
+                    executedCyclesPerSlot += cycles;
+                    context.passedCycles(cycles);
                 } catch (Breakpoint e) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 } catch (IndexOutOfBoundsException e) {
