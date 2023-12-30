@@ -20,7 +20,10 @@ package net.emustudio.application.gui.dialogs;
 
 import javax.swing.*;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class LoadingDialog extends JDialog {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/loading.gif";
 
     public LoadingDialog() {
         super();
@@ -30,7 +33,7 @@ public class LoadingDialog extends JDialog {
 
     private void initComponents() {
 
-        JLabel lblLoading = new JLabel();
+        JLabel lblLoading = new JLabel(loadIcon(ICON_FILE));
         JLabel lblWarning = new JLabel();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -38,8 +41,6 @@ public class LoadingDialog extends JDialog {
         setTitle("emuStudio");
 
         lblLoading.setFont(lblLoading.getFont().deriveFont(lblLoading.getFont().getStyle() | java.awt.Font.BOLD));
-        lblLoading.setIcon(new ImageIcon(getClass()
-                .getResource("/net/emustudio/application/gui/dialogs/loading.gif")));
         lblLoading.setText("Loading computer, please wait...");
 
         lblWarning.setText("If you see some errors, please see the log file.");

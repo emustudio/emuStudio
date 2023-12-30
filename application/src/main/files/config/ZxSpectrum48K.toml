@@ -62,9 +62,9 @@ name = "ZX Spectrum 48K"
 
 [[DEVICE]]
 	schemaPoint = "420,180"
-	path = "cassette-player.jar"
+	path = "audiotape-player.jar"
 	settings = {}
-	name = "cassette-player"
+	name = "audiotape-player"
 	id = "581cc598-3beb-4a67-b1e3-b4ec1731a9a7"
 	type = "DEVICE"
 

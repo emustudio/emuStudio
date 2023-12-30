@@ -24,7 +24,7 @@ import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 
-import static net.emustudio.plugins.memory.ssem.gui.Constants.DEFAULT_FONT;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
 
 class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer<String> {
 
@@ -33,7 +33,7 @@ class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer<String>
         setHorizontalAlignment(CENTER);
         setForeground(header.getForeground());
         setBackground(header.getBackground());
-        setFont(DEFAULT_FONT);
+        setFont(FONT_MONOSPACED);
         setOpaque(true);
         setDoubleBuffered(true);
         this.setPreferredSize(new Dimension(4 * Constants.CHAR_WIDTH, header.getPreferredSize().height + 3));

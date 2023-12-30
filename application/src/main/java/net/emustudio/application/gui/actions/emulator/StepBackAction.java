@@ -25,14 +25,17 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class StepBackAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-previous.png";
 
     private final VirtualComputer computer;
     private final DebugTableModel debugTableModel;
     private final Runnable refreshDebugTable;
 
     public StepBackAction(VirtualComputer computer, DebugTableModel debugTableModel, Runnable refreshDebugTable) {
-        super("Step Back", new ImageIcon(StepBackAction.class.getResource("/net/emustudio/application/gui/dialogs/go-previous.png")));
+        super("Step Back", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, "Step back");
         this.computer = Objects.requireNonNull(computer);
         this.debugTableModel = Objects.requireNonNull(debugTableModel);

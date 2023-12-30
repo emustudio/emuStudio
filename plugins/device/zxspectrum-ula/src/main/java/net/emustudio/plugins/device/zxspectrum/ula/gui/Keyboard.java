@@ -35,21 +35,21 @@ public class Keyboard implements AutoCloseable, KeyListener, ContainerListener {
 
     public interface OnKeyListener {
 
-        void onKeyDown(byte keyCode);
+        void onKeyDown(KeyEvent evt);
 
-        void onKeyUp(byte keyCode);
+        void onKeyUp(KeyEvent evt);
     }
 
     public void addOnKeyListener(OnKeyListener onKeyListener) {
         onKeyListeners.add(Objects.requireNonNull(onKeyListener));
     }
 
-    protected void notifyOnKeyDown(byte key) {
-        onKeyListeners.forEach(c -> c.onKeyDown(key));
+    protected void notifyOnKeyDown(KeyEvent evt) {
+        onKeyListeners.forEach(c -> c.onKeyDown(evt));
     }
 
-    protected void notifyOnKeyUp(byte key) {
-        onKeyListeners.forEach(c -> c.onKeyUp(key));
+    protected void notifyOnKeyUp(KeyEvent evt) {
+        onKeyListeners.forEach(c -> c.onKeyUp(evt));
     }
 
     public void close() {
@@ -63,12 +63,12 @@ public class Keyboard implements AutoCloseable, KeyListener, ContainerListener {
 
     @Override
     public void keyPressed(KeyEvent evt) {
-        notifyOnKeyDown((byte) evt.getKeyCode());
+        notifyOnKeyDown(evt);
     }
 
     @Override
     public void keyReleased(KeyEvent evt) {
-        notifyOnKeyUp((byte) evt.getKeyCode());
+        notifyOnKeyUp(evt);
     }
 
     @Override

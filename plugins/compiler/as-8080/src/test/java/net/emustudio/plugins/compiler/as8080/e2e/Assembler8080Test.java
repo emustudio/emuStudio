@@ -35,7 +35,7 @@ public class Assembler8080Test extends AbstractCompilerTest {
     }
 
     @Test
-    public void testForwardAbsoluteJump() throws Exception {
+    public void testForwardAbsoluteJump() {
         compile(
                 "now: mov a,b\n" +
                         "cpi 'C'\n" +
@@ -49,7 +49,7 @@ public class Assembler8080Test extends AbstractCompilerTest {
     }
 
     @Test
-    public void testBackwardAbsoluteJump() throws Exception {
+    public void testBackwardAbsoluteJump() {
         compile(
                 "now: mov a,b\n" +
                         "cpi 'C'\n" +
@@ -63,7 +63,7 @@ public class Assembler8080Test extends AbstractCompilerTest {
     }
 
     @Test
-    public void testCallBackward() throws Exception {
+    public void testCallBackward() {
         compile(
                 "dcx sp\n" +
                         "now: mov a,b\n" +
@@ -78,7 +78,7 @@ public class Assembler8080Test extends AbstractCompilerTest {
     }
 
     @Test
-    public void testCallForward() throws Exception {
+    public void testCallForward() {
         compile(
                 "dcx sp\n" +
                         "now: mov a,b\n" +
@@ -93,12 +93,12 @@ public class Assembler8080Test extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testRSTtooBigArgument() throws Exception {
+    public void testRSTtooBigArgument() {
         compile("rst 10");
     }
 
     @Test
-    public void testDCXwithLXI() throws Exception {
+    public void testDCXwithLXI() {
         compile(
                 "dcx sp\n"
                         + "lxi h, text\n"
@@ -112,7 +112,7 @@ public class Assembler8080Test extends AbstractCompilerTest {
     }
 
     @Test
-    public void testINthenJMP() throws Exception {
+    public void testINthenJMP() {
         compile(
                 "jmp sample\n"
                         + "in 10h\n"
@@ -126,7 +126,7 @@ public class Assembler8080Test extends AbstractCompilerTest {
     }
 
     @Test
-    public void testGetChar() throws Exception {
+    public void testGetChar() {
         compile(
                 "jmp sample\n"
                         + "getchar:\n"

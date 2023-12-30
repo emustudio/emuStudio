@@ -28,8 +28,7 @@ import javax.swing.*;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
-import static net.emustudio.plugins.cpu.ssem.gui.Constants.MONOSPACED_BIG_BOLD;
-import static net.emustudio.plugins.cpu.ssem.gui.Constants.MONOSPACED_PLAIN;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
 
 public class CpuPanel extends JPanel {
     private final EmulatorEngine engine;
@@ -97,14 +96,14 @@ public class CpuPanel extends JPanel {
 
         jPanel1.setBorder(BorderFactory.createTitledBorder("Run control"));
 
-        lblRunState.setFont(MONOSPACED_BIG_BOLD);
-        lblRunState.setForeground(new java.awt.Color(0, 153, 0));
+        lblRunState.setFont(FONT_MONOSPACED_BIG_BOLD);
+        lblRunState.setForeground(CPU_RUN_STATE_COLOR);
         lblRunState.setText("BREAKPOINT");
 
         jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel7.setText("ins/s");
 
-        lblSpeed.setFont(MONOSPACED_PLAIN);
+        lblSpeed.setFont(FONT_MONOSPACED);
         lblSpeed.setText("0");
         lblSpeed.setToolTipText("Speed");
 
@@ -134,41 +133,41 @@ public class CpuPanel extends JPanel {
 
         jPanel2.setBorder(BorderFactory.createTitledBorder("Registers"));
 
-        jLabel2.setFont(MONOSPACED_PLAIN);
+        jLabel2.setFont(FONT_MONOSPACED);
         jLabel2.setText("A");
         jLabel2.setToolTipText("Accumulator");
 
-        jLabel3.setFont(MONOSPACED_PLAIN);
+        jLabel3.setFont(FONT_MONOSPACED);
         jLabel3.setText("CI");
         jLabel3.setToolTipText("Control Instruction");
 
         txtCI.setEditable(false);
-        txtCI.setFont(MONOSPACED_PLAIN);
+        txtCI.setFont(FONT_MONOSPACED);
         txtCI.setHorizontalAlignment(JTextField.RIGHT);
         txtCI.setText("0");
 
         txtDecCI.setEditable(false);
-        txtDecCI.setFont(MONOSPACED_PLAIN);
+        txtDecCI.setFont(FONT_MONOSPACED);
         txtDecCI.setHorizontalAlignment(JTextField.RIGHT);
         txtDecCI.setText("0");
 
         txtA.setEditable(false);
-        txtA.setFont(MONOSPACED_PLAIN);
+        txtA.setFont(FONT_MONOSPACED);
         txtA.setHorizontalAlignment(JTextField.RIGHT);
         txtA.setText("0");
 
         txtDecA.setEditable(false);
-        txtDecA.setFont(MONOSPACED_PLAIN);
+        txtDecA.setFont(FONT_MONOSPACED);
         txtDecA.setHorizontalAlignment(JTextField.RIGHT);
         txtDecA.setText("0");
 
         txtBinA.setEditable(false);
-        txtBinA.setFont(MONOSPACED_PLAIN);
+        txtBinA.setFont(FONT_MONOSPACED);
         txtBinA.setHorizontalAlignment(JTextField.RIGHT);
         txtBinA.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
         txtBinCI.setEditable(false);
-        txtBinCI.setFont(MONOSPACED_PLAIN);
+        txtBinCI.setFont(FONT_MONOSPACED);
         txtBinCI.setHorizontalAlignment(JTextField.RIGHT);
         txtBinCI.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
@@ -215,60 +214,60 @@ public class CpuPanel extends JPanel {
 
         jPanel3.setBorder(BorderFactory.createTitledBorder("Memory snippet"));
 
-        jLabel4.setFont(MONOSPACED_PLAIN);
+        jLabel4.setFont(FONT_MONOSPACED);
         jLabel4.setText("M[CI]");
         jLabel4.setToolTipText("Control Instruction");
 
-        jLabel5.setFont(MONOSPACED_PLAIN);
+        jLabel5.setFont(FONT_MONOSPACED);
         jLabel5.setText("M[line]");
         jLabel5.setToolTipText("Control Instruction");
 
         txtMLine.setEditable(false);
-        txtMLine.setFont(MONOSPACED_PLAIN);
+        txtMLine.setFont(FONT_MONOSPACED);
         txtMLine.setHorizontalAlignment(JTextField.RIGHT);
         txtMLine.setText("0");
 
         txtDecMLine.setEditable(false);
-        txtDecMLine.setFont(MONOSPACED_PLAIN);
+        txtDecMLine.setFont(FONT_MONOSPACED);
         txtDecMLine.setHorizontalAlignment(JTextField.RIGHT);
         txtDecMLine.setText("0");
 
         txtMCI.setEditable(false);
-        txtMCI.setFont(MONOSPACED_PLAIN);
+        txtMCI.setFont(FONT_MONOSPACED);
         txtMCI.setHorizontalAlignment(JTextField.RIGHT);
         txtMCI.setText("0");
 
         txtDecMCI.setEditable(false);
-        txtDecMCI.setFont(MONOSPACED_PLAIN);
+        txtDecMCI.setFont(FONT_MONOSPACED);
         txtDecMCI.setHorizontalAlignment(JTextField.RIGHT);
         txtDecMCI.setText("0");
 
         txtBinMCI.setEditable(false);
-        txtBinMCI.setFont(MONOSPACED_PLAIN);
+        txtBinMCI.setFont(FONT_MONOSPACED);
         txtBinMCI.setHorizontalAlignment(JTextField.RIGHT);
         txtBinMCI.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
         txtBinMLine.setEditable(false);
-        txtBinMLine.setFont(MONOSPACED_PLAIN);
+        txtBinMLine.setFont(FONT_MONOSPACED);
         txtBinMLine.setHorizontalAlignment(JTextField.RIGHT);
         txtBinMLine.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
-        jLabel6.setFont(MONOSPACED_PLAIN);
+        jLabel6.setFont(FONT_MONOSPACED);
         jLabel6.setText("line");
         jLabel6.setToolTipText("Control Instruction");
 
         txtLine.setEditable(false);
-        txtLine.setFont(MONOSPACED_PLAIN);
+        txtLine.setFont(FONT_MONOSPACED);
         txtLine.setHorizontalAlignment(JTextField.RIGHT);
         txtLine.setText("0");
 
         txtDecLine.setEditable(false);
-        txtDecLine.setFont(MONOSPACED_PLAIN);
+        txtDecLine.setFont(FONT_MONOSPACED);
         txtDecLine.setHorizontalAlignment(JTextField.RIGHT);
         txtDecLine.setText("0");
 
         txtBinLine.setEditable(false);
-        txtBinLine.setFont(MONOSPACED_PLAIN);
+        txtBinLine.setFont(FONT_MONOSPACED);
         txtBinLine.setHorizontalAlignment(JTextField.RIGHT);
         txtBinLine.setText("0000 0000");
 

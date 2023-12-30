@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -61,7 +62,7 @@ public class EmulatorEngine implements CpuEngine {
 
     private final ContextZ80Impl context;
     private final MemoryContext<Byte> memory;
-    private final AtomicLong cyclesExecutedPerTimeSlice = new AtomicLong(0);
+    private final AtomicLong executedCyclesPerSlot = new AtomicLong(0);
 
     public final int[] regs = new int[8];
     public final int[] regs2 = new int[8];
@@ -131,7 +132,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     public void addExecutedCyclesPerTimeSlice(long tstates) {
-        cyclesExecutedPerTimeSlice.addAndGet(tstates);
+        executedCyclesPerSlot.addAndGet(tstates);
     }
 
     public void requestMaskableInterrupt(byte[] data) {
@@ -173,27 +174,38 @@ public class EmulatorEngine implements CpuEngine {
         return currentRunState;
     }
 
+    @SuppressWarnings("BusyWait")
     public CPU.RunState run(CPU cpu) {
         // In Z80, 1 t-state = 250 ns = 0.25 microseconds = 0.00025 milliseconds
-        // in 1 millisecond time slice = 1 / 0.00025 = 4000 t-states are executed uncontrollably
+        // in 1 millisecond time slot = 1 / 0.00025 = 4000 t-states are executed uncontrollably
 
-        long timeSliceNanos = SleepUtils.SLEEP_PRECISION;
-        double timeSliceMicros = timeSliceNanos / 1_000.0;
-        int cyclesPerTimeSlice = (int) (timeSliceMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHzq
-
-        //System.out.println("Time slice millis: " + timeSliceMillis);
-        //System.out.println("Cycles per time slice: " + cyclesPerTimeSlice);
+        final long slotNanos = SleepUtils.SLEEP_PRECISION;
+        final double slotMicros = slotNanos / 1000.0;
+        final int cyclesPerSlot = (int) (slotMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHz
 
         currentRunState = CPU.RunState.STATE_RUNNING;
+        long delayNanos = SleepUtils.SLEEP_PRECISION;
+
+        long emulationStartTime = System.nanoTime();
+        executedCyclesPerSlot.set(0);
         while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
-            long startTime = System.nanoTime();
-            cyclesExecutedPerTimeSlice.set(0);
-            while ((cyclesExecutedPerTimeSlice.get() < cyclesPerTimeSlice) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
+            try {
+                if (delayNanos > 0) {
+                    Thread.sleep(TimeUnit.NANOSECONDS.toMillis(delayNanos));
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            long computationStartTime = System.nanoTime();
+            long targetCycles = (computationStartTime - emulationStartTime) / slotNanos * cyclesPerSlot;
+
+            while ((executedCyclesPerSlot.get() < targetCycles) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
-                    dispatch();
                     if (cpu.isBreakpointSet(PC)) {
                         throw new Breakpoint();
                     }
+                    dispatch();
                 } catch (Breakpoint e) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 } catch (IndexOutOfBoundsException e) {
@@ -204,17 +216,15 @@ public class EmulatorEngine implements CpuEngine {
                     return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 }
             }
-            long endTime = System.nanoTime() - startTime;
-            if (endTime < timeSliceNanos) {
-                // time correction
-                SleepUtils.preciseSleepNanos(timeSliceNanos - endTime);
-            }
+
+            long computationTime = System.nanoTime() - computationStartTime;
+            delayNanos = slotNanos - computationTime;
         }
         return currentRunState;
     }
 
     private void advanceCycles(int cycles) {
-        cyclesExecutedPerTimeSlice.addAndGet(cycles);
+        executedCyclesPerSlot.addAndGet(cycles);
         for (int i = 0; i < cycles; i++) {
             context.passedCycles(1); // make it precise to the bones
         }

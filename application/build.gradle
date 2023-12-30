@@ -48,6 +48,7 @@ dependencies {
   extraLibs libs.tomlj
   extraLibs libs.logback
   extraLibs libs.slf4JApi
+  extraLibs libs.migLayout
 
   providedRuntime project(":plugins:compiler:as-8080")
   providedRuntime project(":plugins:compiler:as-ssem")
@@ -77,7 +78,7 @@ dependencies {
   providedRuntime project(":plugins:device:ssem-display")
   providedRuntime project(":plugins:device:zxspectrum-bus")
   providedRuntime project(":plugins:device:zxspectrum-ula")
-  providedRuntime project(":plugins:device:cassette-player")
+  providedRuntime project(":plugins:device:audiotape-player")
 
   testImplementation libs.junit
   testImplementation libs.easyMock
@@ -165,7 +166,7 @@ distTar {
 }
 
 startScripts {
-  classpath += files('logback.xml') // for logback
+  classpath += files('logback.xml')
   doLast {
     def windowsScriptFile = file getWindowsScript()
     def unixScriptFile = file getUnixScript()
@@ -221,7 +222,7 @@ distributions {
         from(output(":plugins:device:ssem-display"))
         from(output(":plugins:device:zxspectrum-bus"))
         from(output(":plugins:device:zxspectrum-ula"))
-        from(output(":plugins:device:cassette-player"))
+        from(output(":plugins:device:audiotape-player"))
       }
 
       // Examples

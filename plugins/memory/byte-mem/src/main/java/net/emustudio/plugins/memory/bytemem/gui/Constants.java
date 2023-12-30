@@ -27,7 +27,8 @@ import static net.emustudio.plugins.memory.bytemem.loaders.Loader.IMAGE_LOADERS;
 
 
 public class Constants {
-    public final static Font MEMORY_CELLS_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+    public final static Color ROM_COLOR = new Color(0xE8, 0x68, 0x50);
+    public final static Color BANK_COLOR = new Color(0xFF, 0xE6, 0xBF);
 
     public final static FileExtensionsFilter IMAGE_EXTENSION_FILTER = new FileExtensionsFilter(
             "Memory image", List.copyOf(IMAGE_LOADERS.keySet())

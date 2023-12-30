@@ -30,18 +30,18 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.application.settings.ConfigFiles.removeConfiguration;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class DeleteComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DeleteComputerAction.class);
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/list-remove.png";
 
     private final Dialogs dialogs;
     private final Runnable update;
     private final JList<ComputerConfig> lstConfig;
 
     public DeleteComputerAction(Dialogs dialogs, Runnable update, JList<ComputerConfig> lstConfig) {
-        super(
-                "Delete computer", new ImageIcon(DeleteComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/list-remove.png"))
-        );
+        super("Delete computer", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.update = Objects.requireNonNull(update);

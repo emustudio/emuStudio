@@ -29,8 +29,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
-import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.MONOSPACED_PLAIN;
 
 public class DiskGui extends JDialog {
     private final DriveCollection drives;
@@ -74,7 +74,7 @@ public class DiskGui extends JDialog {
 
     private static JLabel createMonospacedLabel(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(MONOSPACED_PLAIN);
+        label.setFont(FONT_MONOSPACED);
         return label;
     }
 
@@ -216,7 +216,7 @@ public class DiskGui extends JDialog {
         txtMountedImage.setEditable(false);
         txtMountedImage.setBackground(UIManager.getDefaults().getColor("TextField.disabledBackground"));
         txtMountedImage.setColumns(20);
-        txtMountedImage.setFont(MONOSPACED_PLAIN);
+        txtMountedImage.setFont(FONT_MONOSPACED);
         txtMountedImage.setLineWrap(true);
         txtMountedImage.setRows(5);
         jScrollPane1.setViewportView(txtMountedImage);

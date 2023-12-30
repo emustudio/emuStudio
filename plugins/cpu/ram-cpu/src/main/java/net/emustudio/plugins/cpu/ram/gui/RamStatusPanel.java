@@ -25,8 +25,7 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
 
-import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_BIG_BOLD;
-import static net.emustudio.plugins.cpu.ram.gui.Constants.MONOSPACED_PLAIN;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
 
 public class RamStatusPanel extends JPanel {
     private final JLabel lblStatus = new JLabel("breakpoint");
@@ -72,14 +71,14 @@ public class RamStatusPanel extends JPanel {
 
         panelInternalState.setBorder(BorderFactory.createTitledBorder("Internal state"));
 
-        lblR0.setFont(MONOSPACED_PLAIN);
-        lblIP.setFont(MONOSPACED_PLAIN);
+        lblR0.setFont(FONT_MONOSPACED);
+        lblIP.setFont(FONT_MONOSPACED);
 
         txtR0.setEditable(false);
-        txtR0.setFont(MONOSPACED_PLAIN);
+        txtR0.setFont(FONT_MONOSPACED);
 
         txtIP.setEditable(false);
-        txtIP.setFont(MONOSPACED_PLAIN);
+        txtIP.setFont(FONT_MONOSPACED);
 
         GroupLayout panelInternalStateLayout = new GroupLayout(panelInternalState);
         panelInternalState.setLayout(panelInternalStateLayout);
@@ -114,8 +113,8 @@ public class RamStatusPanel extends JPanel {
 
         jPanel2.setBorder(BorderFactory.createTitledBorder("Run state"));
 
-        lblStatus.setFont(MONOSPACED_BIG_BOLD);
-        lblStatus.setForeground(new java.awt.Color(0, 153, 51));
+        lblStatus.setFont(FONT_MONOSPACED_BIG_BOLD);
+        lblStatus.setForeground(CPU_RUN_STATE_COLOR);
         lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
 
         GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
@@ -138,10 +137,10 @@ public class RamStatusPanel extends JPanel {
         jPanel3.setBorder(BorderFactory.createTitledBorder("Input / output"));
 
         txtOutput.setEditable(false);
-        txtOutput.setFont(MONOSPACED_PLAIN);
+        txtOutput.setFont(FONT_MONOSPACED);
 
         txtInput.setEditable(false);
-        txtInput.setFont(MONOSPACED_PLAIN);
+        txtInput.setFont(FONT_MONOSPACED);
 
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);

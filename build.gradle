@@ -29,6 +29,8 @@ ext.libs = [
         emuLib           : "net.emustudio:emulib:12.1.0-SNAPSHOT",
         cpuTestSuite     : "net.emustudio:cpu-testsuite_12.1:1.2.0-SNAPSHOT",
 
+        migLayout        : "com.miglayout:miglayout-swing:11.1",
+
         jcipAnnotations  : "net.jcip:jcip-annotations:1.0",
         antlr            : "org.antlr:antlr4:4.12.0",
         antlrRuntime     : "org.antlr:antlr4-runtime:4.12.0",
@@ -43,7 +45,7 @@ ext.libs = [
 
         tomlj            : "com.electronwill.night-config:toml:3.6.6",
 
-        editor           : "com.fifesoft:rsyntaxtextarea:3.3.3",
+        editor           : "com.fifesoft:rsyntaxtextarea:3.3.4",
         editorDialogs    : "com.fifesoft:rstaui:3.3.1",
 
         junit            : "junit:junit:4.13.2",

@@ -29,6 +29,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class SettingsAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/preferences-system.png";
     private final Dialogs dialogs;
@@ -40,7 +42,7 @@ public class SettingsAction extends AbstractAction {
 
     public SettingsAction(Dialogs dialogs, JDialog parent, MemoryImpl memory, MemoryContextImpl context,
                           MemoryTable table, PluginSettings settings) {
-        super("Erase memory", new ImageIcon(SettingsAction.class.getResource(ICON_FILE)));
+        super("Erase memory", loadIcon(ICON_FILE));
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
         this.table = Objects.requireNonNull(table);

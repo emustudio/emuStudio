@@ -25,13 +25,15 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class EraseMemoryAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ram/gui/clear.png";
     private final RamTableModel tableModel;
     private final RamMemoryContext context;
 
     public EraseMemoryAction(RamTableModel tableModel, RamMemoryContext context) {
-        super("Erase memory", new ImageIcon(EraseMemoryAction.class.getResource(ICON_FILE)));
+        super("Erase memory", loadIcon(ICON_FILE));
         this.tableModel = Objects.requireNonNull(tableModel);
         this.context = Objects.requireNonNull(context);
     }

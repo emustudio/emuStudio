@@ -29,7 +29,11 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class EditComputerAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/computer.png";
+
     private final Dialogs dialogs;
     private final AppSettings appSettings;
     private final Runnable update;
@@ -38,9 +42,7 @@ public class EditComputerAction extends AbstractAction {
 
     public EditComputerAction(Dialogs dialogs, AppSettings appSettings,
                               Runnable update, JDialog parent, JList<ComputerConfig> lstConfig) {
-        super(
-                "Edit computer...", new ImageIcon(EditComputerAction.class.getResource("/net/emustudio/application/gui/dialogs/computer.png"))
-        );
+        super("Edit computer...", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.appSettings = Objects.requireNonNull(appSettings);

@@ -26,12 +26,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class FindAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/edit-find.png";
     private final FindDialog findDialog;
     private final ReplaceDialog replaceDialog;
 
     public FindAction(FindDialog findDialog, ReplaceDialog replaceDialog) {
-        super("Find...", new ImageIcon(FindAction.class.getResource("/net/emustudio/application/gui/dialogs/edit-find.png")));
+        super("Find...", loadIcon(ICON_FILE));
         this.findDialog = Objects.requireNonNull(findDialog);
         this.replaceDialog = Objects.requireNonNull(replaceDialog);
 

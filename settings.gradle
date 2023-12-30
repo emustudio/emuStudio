@@ -51,7 +51,7 @@ include ':plugins:device:simh-pseudo'
 include ':plugins:device:ssem-display'
 include ':plugins:device:zxspectrum-bus'
 include ':plugins:device:zxspectrum-ula'
-include ':plugins:device:cassette-player'
+include ':plugins:device:audiotape-player'
 
 include ':plugins:memory:ram-mem'
 include ':plugins:memory:rasp-mem'

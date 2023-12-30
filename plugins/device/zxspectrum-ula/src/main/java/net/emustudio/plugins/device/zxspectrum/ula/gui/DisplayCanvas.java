@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.emustudio.plugins.device.zxspectrum.ula.ULA.SCREEN_HEIGHT;
 import static net.emustudio.plugins.device.zxspectrum.ula.ULA.SCREEN_WIDTH;
+import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
 
 // https://worldofspectrum.org/faq/reference/48kreference.htm
 
@@ -231,20 +232,25 @@ public class DisplayCanvas extends Canvas implements AutoCloseable, CPUContext.P
             // Video RAM. This means that instead of keeping the image in the system memory with everything else,
             // it is kept on the memory local to the graphics card. This allows for much faster drawing-to and
             // copying-from operations.
-            do {
+            try {
                 do {
-                    Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
-                    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-                    graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+                    do {
 
-                    graphics.drawImage(
-                            screenImage, 0, 0,
-                            (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM),
-                            null);
-                    graphics.dispose();
-                } while (strategy.contentsRestored());
-                strategy.show();
-            } while (strategy.contentsLost());
+                        Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
+                        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+                        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+
+                        graphics.drawImage(
+                                screenImage, MARGIN, MARGIN,
+                                (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM), null);
+                        graphics.dispose();
+
+                    } while (strategy.contentsRestored());
+                    strategy.show();
+                } while (strategy.contentsLost());
+            } catch (Exception ignored) {
+                repaint();
+            }
         }
     }
 }

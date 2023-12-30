@@ -24,14 +24,14 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class SaveSchemaAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/document-save.png";
     private final SchemaPreviewPanel preview;
 
     public SaveSchemaAction(SchemaPreviewPanel preview) {
-        super(
-                "Save schema image...",
-                new ImageIcon(SaveSchemaAction.class.getResource("/net/emustudio/application/gui/dialogs/document-save.png"))
-        );
+        super("Save schema image...", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.preview = Objects.requireNonNull(preview);
     }

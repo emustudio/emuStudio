@@ -25,14 +25,17 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class JumpAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-jump.png";
 
     private final VirtualComputer computer;
     private final Dialogs dialogs;
     private final Runnable refreshDebugTable;
 
     public JumpAction(VirtualComputer computer, Dialogs dialogs, Runnable refreshDebugTable) {
-        super("Jump...", new ImageIcon(JumpAction.class.getResource("/net/emustudio/application/gui/dialogs/go-jump.png")));
+        super("Jump...", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, "Jump to address");
         this.computer = Objects.requireNonNull(computer);
         this.dialogs = Objects.requireNonNull(dialogs);

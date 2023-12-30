@@ -23,6 +23,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.util.function.Consumer;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class ToolbarToggleButton extends JToggleButton {
 
     public ToolbarToggleButton(Consumer<ActionEvent> action, Consumer<ItemEvent> itemAction, String iconResource,
@@ -34,12 +36,10 @@ public class ToolbarToggleButton extends JToggleButton {
                 action.accept(actionEvent);
             }
         });
-        setIcon(new ImageIcon(getClass().getResource(iconResource)));
+        setIcon(loadIcon(iconResource));
         setToolTipText(tooltipText);
 
         setFocusable(false);
-        setHorizontalTextPosition(SwingConstants.CENTER);
-        setVerticalTextPosition(SwingConstants.BOTTOM);
         addItemListener(itemAction::accept);
     }
 

@@ -36,8 +36,8 @@ public abstract class Element {
     final static int MOUSE_TOLERANCE = 5;
     private final static int MIN_WIDTH = 80;
     private final static int MIN_HEIGHT = 50;
-    private final Font pluginNameFont = new Font(Font.DIALOG, Font.BOLD, 13);
-    private final Font pluginTypeFont = new Font(Font.MONOSPACED, Font.ITALIC, 12);
+    private final static Font PLUGIN_NAME_FONT = new Font(Font.DIALOG, Font.BOLD, 13);
+    private final static Font PLUGIN_TYPE_FONT = new Font(Font.MONOSPACED, Font.ITALIC, 12);
 
     private final Color backColor;
     private final Color foreColor = new Color(0x909090);
@@ -101,12 +101,12 @@ public abstract class Element {
             g.setColor(foreColor);
         }
         g.draw3DRect(leftX, topY, getWidth(), getHeight(), true);
-        g.setFont(pluginNameFont);
+        g.setFont(PLUGIN_NAME_FONT);
         if (!selected) {
             g.setColor(Color.BLACK);
         }
         g.drawString(pluginName, textX, textY);
-        g.setFont(pluginTypeFont);
+        g.setFont(PLUGIN_TYPE_FONT);
         g.drawString(pluginType.name(), detailsX, detailsY);
     }
 
@@ -144,9 +144,9 @@ public abstract class Element {
      */
     public void measure(Graphics g) {
         // First measure width and height of text
-        FontMetrics fm = g.getFontMetrics(pluginNameFont);
+        FontMetrics fm = g.getFontMetrics(PLUGIN_NAME_FONT);
         Rectangle2D r = fm.getStringBounds(pluginName, g);
-        FontMetrics fm1 = g.getFontMetrics(pluginTypeFont);
+        FontMetrics fm1 = g.getFontMetrics(PLUGIN_TYPE_FONT);
         Rectangle2D r1 = fm1.getStringBounds(pluginType.name(), g);
 
         int tW = (int) Math.max(r.getWidth(), r1.getWidth());

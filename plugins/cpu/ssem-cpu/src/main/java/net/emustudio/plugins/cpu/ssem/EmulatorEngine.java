@@ -34,13 +34,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static net.emustudio.plugins.cpu.ssem.DecoderImpl.LINE;
 
 public class EmulatorEngine {
-    public final static int INSTRUCTIONS_PER_SECOND = 700;
+    public final static double INSTRUCTION_TIME_MS = 1.44;
+    public final static double INSTRUCTIONS_PER_SECOND = 1.0 / (INSTRUCTION_TIME_MS / 1000.0);
     final static int LINE_MASK = 0b11111000;
     private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
     private static final Method[] DISPATCH_TABLE = new Method[8];
@@ -61,12 +63,10 @@ public class EmulatorEngine {
 
     public final AtomicInteger Acc = new AtomicInteger();
     public final AtomicInteger CI = new AtomicInteger();
-    private final TimingEstimator estimator = new TimingEstimator();
     private final MemoryContext<Byte> memory;
     private final Decoder decoder;
     private final Function<Integer, Boolean> isBreakpointSet;
     private final Bits emptyBits = new Bits(0, 0);
-    private volatile long waitNanos = -1;
 
     EmulatorEngine(MemoryContext<Byte> memory, Function<Integer, Boolean> isBreakpointSet) {
         this.memory = Objects.requireNonNull(memory);
@@ -154,31 +154,54 @@ public class EmulatorEngine {
         memory.write(lineAddress, word);
     }
 
+    @SuppressWarnings("BusyWait")
     CPU.RunState run() {
-        if (waitNanos < 0) {
-            waitNanos = estimator.estimateWaitNanos(INSTRUCTIONS_PER_SECOND);
-            LOGGER.debug("Estimated wait nanos: " + waitNanos);
-        }
+        // 1 instruction takes 1.44 ms (~700 instructions per second)
+        // 1 / (INSTRUCTION_TIME_MS / 1000) = 694.4444444444444 Hz
+
+        final long slotNanos = 2 * SleepUtils.SLEEP_PRECISION; // sleeping precision is usually ~1 ms
+        final double slotMillis = slotNanos / 1_000_000.0;
+        final int instructionsPerSlot = (int) (slotMillis / INSTRUCTION_TIME_MS);
 
         CPU.RunState currentRunState = CPU.RunState.STATE_RUNNING;
+        long delayNanos = SleepUtils.SLEEP_PRECISION;
 
-        while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_RUNNING) {
+        long startTime = System.nanoTime();
+        long executedInstructionsPerSlot = 0;
+
+        while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
             try {
-                if (isBreakpointSet.apply(CI.get())) {
-                    return CPU.RunState.STATE_STOPPED_BREAK;
+                if (delayNanos > 0) {
+                    Thread.sleep(TimeUnit.NANOSECONDS.toMillis(delayNanos));
                 }
-                currentRunState = step();
-            } catch (IllegalArgumentException e) {
-                LOGGER.debug("Unexpected error", e);
-                if (e.getCause() != null && e.getCause() instanceof IndexOutOfBoundsException) {
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            long endTime = System.nanoTime();
+            long targetInstructions = (endTime - startTime) / slotNanos * instructionsPerSlot;
+
+            while ((executedInstructionsPerSlot < targetInstructions) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
+                try {
+                    if (isBreakpointSet.apply(CI.get())) {
+                        return CPU.RunState.STATE_STOPPED_BREAK;
+                    }
+                    currentRunState = step();
+                    executedInstructionsPerSlot += 1;
+                } catch (IllegalArgumentException e) {
+                    LOGGER.debug("Unexpected error", e);
+                    if (e.getCause() != null && e.getCause() instanceof IndexOutOfBoundsException) {
+                        return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    }
+                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+                } catch (IndexOutOfBoundsException e) {
+                    LOGGER.debug("Unexpected error", e);
                     return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
                 }
-                return CPU.RunState.STATE_STOPPED_BAD_INSTR;
-            } catch (IndexOutOfBoundsException e) {
-                LOGGER.debug("Unexpected error", e);
-                return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
-            SleepUtils.preciseSleepNanos(waitNanos);
+
+            long computationTime = System.nanoTime() - endTime;
+            delayNanos = slotNanos - computationTime;
         }
         return currentRunState;
     }

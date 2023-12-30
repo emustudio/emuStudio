@@ -25,9 +25,10 @@ import net.emustudio.plugins.device.vt100.interaction.KeyboardGui;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
-import java.net.URL;
 import java.util.Objects;
 import java.util.StringTokenizer;
+
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class TerminalWindow extends JDialog {
     private final Dialogs dialogs;
@@ -43,16 +44,8 @@ public class TerminalWindow extends JDialog {
         this.canvas = new DisplayCanvas(display);
         this.keyboard = Objects.requireNonNull(keyboard);
         this.dialogs = Objects.requireNonNull(dialogs);
-
-        URL blueIconURL = getClass().getResource(
-                "/net/emustudio/plugins/device/vt100/16_circle_blue.png"
-        );
-        URL redIconURL = getClass().getResource(
-                "/net/emustudio/plugins/device/vt100/16_circle_red.png"
-        );
-
-        blueIcon = new ImageIcon(Objects.requireNonNull(blueIconURL));
-        redIcon = new ImageIcon(Objects.requireNonNull(redIconURL));
+        this.blueIcon = loadIcon("/net/emustudio/plugins/device/vt100/16_circle_blue.png");
+        this.redIcon = loadIcon("/net/emustudio/plugins/device/vt100/16_circle_red.png");
 
         initComponents();
         setLocationRelativeTo(parent);
@@ -91,7 +84,7 @@ public class TerminalWindow extends JDialog {
         lblStatusIcon.setVerticalAlignment(SwingConstants.TOP);
 
         btnASCII.setFont(btnASCII.getFont());
-        btnASCII.setIcon(new ImageIcon(getClass().getResource("/net/emustudio/plugins/device/vt100/16_ascii.png")));
+        btnASCII.setIcon(loadIcon("/net/emustudio/plugins/device/vt100/16_ascii.png"));
         btnASCII.setToolTipText("Input by ASCII code");
         btnASCII.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         btnASCII.setEnabled(false);

@@ -25,6 +25,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static java.awt.FlowLayout.LEFT;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
 public class TerminalWindow extends JDialog {
     private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";
@@ -69,7 +70,7 @@ public class TerminalWindow extends JDialog {
 
     private void initComponents() {
         JLabel lblBack = new JLabel();
-        ImageIcon backgroundImage = new ImageIcon(getClass().getResource(BACKGROUND_IMAGE));
+        Icon backgroundImage = loadIcon(BACKGROUND_IMAGE);
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("LSI ADM-3A");
@@ -87,15 +88,13 @@ public class TerminalWindow extends JDialog {
         lblBack.setBounds(0, 0, backgroundImage.getIconWidth(), backgroundImage.getIconHeight());
         lblBack.setDoubleBuffered(true);
 
-        JButton btnClear = new JButton();
+        JButton btnClear = new JButton(loadIcon(CLEAR_SCREEN_ICON));
         btnClear.setFocusable(false);
-        btnClear.setIcon(new ImageIcon(getClass().getResource(CLEAR_SCREEN_ICON)));
         btnClear.setToolTipText("Clear screen");
         btnClear.addActionListener(e -> clearScreen());
 
-        JButton btnRoll = new JButton();
+        JButton btnRoll = new JButton(loadIcon(ROLL_LINE_ICON));
         btnRoll.setFocusable(false);
-        btnRoll.setIcon(new ImageIcon(getClass().getResource(ROLL_LINE_ICON)));
         btnRoll.setToolTipText("Roll line up");
         btnRoll.addActionListener(e -> rollLine());
 

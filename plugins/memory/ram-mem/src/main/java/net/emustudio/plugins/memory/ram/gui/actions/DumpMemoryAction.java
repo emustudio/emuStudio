@@ -37,6 +37,8 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class DumpMemoryAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DumpMemoryAction.class);
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ram/gui/document-save.png";
@@ -44,7 +46,7 @@ public class DumpMemoryAction extends AbstractAction {
     private final MemoryContextImpl context;
 
     public DumpMemoryAction(Dialogs dialogs, MemoryContextImpl context) {
-        super("Dump (save) memory to a file...", new ImageIcon(DumpMemoryAction.class.getResource(ICON_FILE)));
+        super("Dump (save) memory to a file...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);

@@ -25,13 +25,16 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class RunAction extends AbstractAction {
+    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-play.png";
 
     private final EmulationController emulationController;
     private final JTable debugTable;
 
     public RunAction(EmulationController emulationController, JTable debugTable) {
-        super("Run", new ImageIcon(RunAction.class.getResource("/net/emustudio/application/gui/dialogs/go-play.png")));
+        super("Run", loadIcon(ICON_FILE));
         putValue(SHORT_DESCRIPTION, "Run emulation");
         this.emulationController = emulationController;
         this.debugTable = Objects.requireNonNull(debugTable);

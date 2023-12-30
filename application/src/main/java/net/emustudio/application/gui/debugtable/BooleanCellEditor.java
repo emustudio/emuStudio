@@ -18,8 +18,6 @@
  */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.application.Constants;
-
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
@@ -28,6 +26,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.EventObject;
+
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_ROW_EVEN;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_ROW_ODD;
 
 public class BooleanCellEditor extends AbstractCellEditor implements TableCellEditor, MouseListener {
     private final BooleanComponent component;
@@ -70,7 +71,7 @@ public class BooleanCellEditor extends AbstractCellEditor implements TableCellEd
         }
         component.setValue(state);
         component.setOpaque(isSelected);
-        component.setBackground((row % 2 == 0) ? Constants.DEBUGTABLE_COLOR_ROW_ODD : Constants.DEBUGTABLE_COLOR_ROW_EVEN);
+        component.setBackground((row % 2 == 0) ? TABLE_COLOR_ROW_ODD : TABLE_COLOR_ROW_EVEN);
         return component;
     }
 

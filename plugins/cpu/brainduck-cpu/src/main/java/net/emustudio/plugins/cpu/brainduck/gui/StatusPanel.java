@@ -26,7 +26,7 @@ import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
-import static net.emustudio.plugins.cpu.brainduck.gui.Constants.MONOSPACED_PLAIN;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
 
 public class StatusPanel extends JPanel {
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();
@@ -82,15 +82,15 @@ public class StatusPanel extends JPanel {
         jLabel3.setText("*P:");
 
         txtMemP.setEditable(false);
-        txtMemP.setFont(MONOSPACED_PLAIN);
+        txtMemP.setFont(FONT_MONOSPACED);
         txtMemP.setText("0");
 
         txtP.setEditable(false);
-        txtP.setFont(MONOSPACED_PLAIN);
+        txtP.setFont(FONT_MONOSPACED);
         txtP.setText("0");
 
         txtIP.setEditable(false);
-        txtIP.setFont(MONOSPACED_PLAIN);
+        txtIP.setFont(FONT_MONOSPACED);
         txtIP.setText("0");
 
         jLabel4.setText("h");
@@ -180,7 +180,8 @@ public class StatusPanel extends JPanel {
 
         jPanel2.setBorder(BorderFactory.createTitledBorder("Run state"));
 
-        lblRunState.setFont(lblRunState.getFont().deriveFont(lblRunState.getFont().getStyle() | java.awt.Font.BOLD));
+        lblRunState.setFont(FONT_MONOSPACED_BIG_BOLD);
+        lblRunState.setForeground(CPU_RUN_STATE_COLOR);
         lblRunState.setHorizontalAlignment(SwingConstants.CENTER);
         lblRunState.setText("stopped (breakpoint)");
 
@@ -205,7 +206,7 @@ public class StatusPanel extends JPanel {
 
         jScrollPane1.setBorder(null);
 
-        tblMemory.setFont(MONOSPACED_PLAIN);
+        tblMemory.setFont(FONT_MONOSPACED);
         tblMemory.setModel(new DefaultTableModel(
                 new Object[][]{
                         {null, null, null, null, null}

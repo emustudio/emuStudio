@@ -25,7 +25,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
-import static net.emustudio.application.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
 
 class TextCellRenderer extends JLabel implements TableCellRenderer {
 
@@ -45,7 +45,7 @@ class TextCellRenderer extends JLabel implements TableCellRenderer {
             setBackground(Constants.DEBUGTABLE_COLOR_CURRENT_INSTRUCTION);
             setForeground(Color.WHITE);
         } else {
-            setBackground((row % 2 == 0) ? Constants.DEBUGTABLE_COLOR_ROW_ODD : Constants.DEBUGTABLE_COLOR_ROW_EVEN);
+            setBackground((row % 2 == 0) ? TABLE_COLOR_ROW_ODD : TABLE_COLOR_ROW_EVEN);
             setForeground(Color.BLACK);
         }
         if (value != null) {

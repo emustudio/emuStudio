@@ -24,13 +24,15 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+
 public class AsciiModeAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/ascii-mode.png";
     private final MemoryTableModel tableModel;
     private final JToggleButton btnAsciiMode;
 
     public AsciiModeAction(MemoryTableModel tableModel, JToggleButton btnAsciiMode) {
-        super("Toggle ASCII mode", new ImageIcon(AsciiModeAction.class.getResource(ICON_FILE)));
+        super("Toggle ASCII mode", loadIcon(ICON_FILE));
         this.tableModel = Objects.requireNonNull(tableModel);
         this.btnAsciiMode = Objects.requireNonNull(btnAsciiMode);
     }
