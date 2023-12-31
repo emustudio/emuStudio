@@ -50,13 +50,14 @@ public class CpuPanel extends JPanel {
     private JTextField txtDecMCI;
     private JTextField txtMLine;
     private JTextField txtDecMLine;
+
     public CpuPanel(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory) {
         this.engine = Objects.requireNonNull(engine);
         this.memory = Objects.requireNonNull(memory);
 
         initComponents();
         cpu.addCPUListener(new Updater());
-        lblSpeed.setText(String.valueOf(EmulatorEngine.INSTRUCTIONS_PER_SECOND));
+        lblSpeed.setText(String.format("%.2f", EmulatorEngine.INSTRUCTIONS_PER_SECOND));
     }
 
     /**
@@ -68,43 +69,40 @@ public class CpuPanel extends JPanel {
     private void initComponents() {
 
         JPanel jPanel1 = new JPanel();
-        lblRunState = new JLabel();
-        JLabel jLabel7 = new JLabel();
-        lblSpeed = new JLabel();
+        lblRunState = new JLabel("BREAKPOINT");
+        JLabel jLabel7 = new JLabel("ins/s");
+        lblSpeed = new JLabel("0");
         JPanel jPanel2 = new JPanel();
-        JLabel jLabel2 = new JLabel();
-        JLabel jLabel3 = new JLabel();
-        txtCI = new JTextField();
-        txtDecCI = new JTextField();
-        txtA = new JTextField();
-        txtDecA = new JTextField();
-        txtBinA = new JTextField();
-        txtBinCI = new JTextField();
+        JLabel jLabel2 = new JLabel("A");
+        JLabel jLabel3 = new JLabel("CI");
+        txtCI = new JTextField("0");
+        txtDecCI = new JTextField("0");
+        txtA = new JTextField("0");
+        txtDecA = new JTextField("0");
+        txtBinA = new JTextField("0000 0000  0000 0000  0000 0000  0000 0000");
+        txtBinCI = new JTextField("0000 0000  0000 0000  0000 0000  0000 0000");
         JPanel jPanel3 = new JPanel();
-        JLabel jLabel4 = new JLabel();
-        JLabel jLabel5 = new JLabel();
-        txtMLine = new JTextField();
-        txtDecMLine = new JTextField();
-        txtMCI = new JTextField();
-        txtDecMCI = new JTextField();
-        txtBinMCI = new JTextField();
-        txtBinMLine = new JTextField();
-        JLabel jLabel6 = new JLabel();
-        txtLine = new JTextField();
-        txtDecLine = new JTextField();
-        txtBinLine = new JTextField();
+        JLabel jLabel4 = new JLabel("M[CI]");
+        JLabel jLabel5 = new JLabel("M[line]");
+        txtMLine = new JTextField("0");
+        txtDecMLine = new JTextField("0");
+        txtMCI = new JTextField("0");
+        txtDecMCI = new JTextField("0");
+        txtBinMCI = new JTextField("0000 0000  0000 0000  0000 0000  0000 0000");
+        txtBinMLine = new JTextField("0000 0000  0000 0000  0000 0000  0000 0000");
+        JLabel jLabel6 = new JLabel("line");
+        txtLine = new JTextField("0");
+        txtDecLine = new JTextField("0");
+        txtBinLine = new JTextField("0000 0000");
 
         jPanel1.setBorder(BorderFactory.createTitledBorder("Run control"));
 
         lblRunState.setFont(FONT_MONOSPACED_BIG_BOLD);
         lblRunState.setForeground(CPU_RUN_STATE_COLOR);
-        lblRunState.setText("BREAKPOINT");
 
         jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel7.setText("ins/s");
 
         lblSpeed.setFont(FONT_MONOSPACED);
-        lblSpeed.setText("0");
         lblSpeed.setToolTipText("Speed");
 
         GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
@@ -134,42 +132,34 @@ public class CpuPanel extends JPanel {
         jPanel2.setBorder(BorderFactory.createTitledBorder("Registers"));
 
         jLabel2.setFont(FONT_MONOSPACED);
-        jLabel2.setText("A");
         jLabel2.setToolTipText("Accumulator");
 
         jLabel3.setFont(FONT_MONOSPACED);
-        jLabel3.setText("CI");
         jLabel3.setToolTipText("Control Instruction");
 
         txtCI.setEditable(false);
         txtCI.setFont(FONT_MONOSPACED);
         txtCI.setHorizontalAlignment(JTextField.RIGHT);
-        txtCI.setText("0");
 
         txtDecCI.setEditable(false);
         txtDecCI.setFont(FONT_MONOSPACED);
         txtDecCI.setHorizontalAlignment(JTextField.RIGHT);
-        txtDecCI.setText("0");
 
         txtA.setEditable(false);
         txtA.setFont(FONT_MONOSPACED);
         txtA.setHorizontalAlignment(JTextField.RIGHT);
-        txtA.setText("0");
 
         txtDecA.setEditable(false);
         txtDecA.setFont(FONT_MONOSPACED);
         txtDecA.setHorizontalAlignment(JTextField.RIGHT);
-        txtDecA.setText("0");
 
         txtBinA.setEditable(false);
         txtBinA.setFont(FONT_MONOSPACED);
         txtBinA.setHorizontalAlignment(JTextField.RIGHT);
-        txtBinA.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
         txtBinCI.setEditable(false);
         txtBinCI.setFont(FONT_MONOSPACED);
         txtBinCI.setHorizontalAlignment(JTextField.RIGHT);
-        txtBinCI.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
         GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -215,61 +205,49 @@ public class CpuPanel extends JPanel {
         jPanel3.setBorder(BorderFactory.createTitledBorder("Memory snippet"));
 
         jLabel4.setFont(FONT_MONOSPACED);
-        jLabel4.setText("M[CI]");
         jLabel4.setToolTipText("Control Instruction");
 
         jLabel5.setFont(FONT_MONOSPACED);
-        jLabel5.setText("M[line]");
         jLabel5.setToolTipText("Control Instruction");
 
         txtMLine.setEditable(false);
         txtMLine.setFont(FONT_MONOSPACED);
         txtMLine.setHorizontalAlignment(JTextField.RIGHT);
-        txtMLine.setText("0");
 
         txtDecMLine.setEditable(false);
         txtDecMLine.setFont(FONT_MONOSPACED);
         txtDecMLine.setHorizontalAlignment(JTextField.RIGHT);
-        txtDecMLine.setText("0");
 
         txtMCI.setEditable(false);
         txtMCI.setFont(FONT_MONOSPACED);
         txtMCI.setHorizontalAlignment(JTextField.RIGHT);
-        txtMCI.setText("0");
 
         txtDecMCI.setEditable(false);
         txtDecMCI.setFont(FONT_MONOSPACED);
         txtDecMCI.setHorizontalAlignment(JTextField.RIGHT);
-        txtDecMCI.setText("0");
 
         txtBinMCI.setEditable(false);
         txtBinMCI.setFont(FONT_MONOSPACED);
         txtBinMCI.setHorizontalAlignment(JTextField.RIGHT);
-        txtBinMCI.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
         txtBinMLine.setEditable(false);
         txtBinMLine.setFont(FONT_MONOSPACED);
         txtBinMLine.setHorizontalAlignment(JTextField.RIGHT);
-        txtBinMLine.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
         jLabel6.setFont(FONT_MONOSPACED);
-        jLabel6.setText("line");
         jLabel6.setToolTipText("Control Instruction");
 
         txtLine.setEditable(false);
         txtLine.setFont(FONT_MONOSPACED);
         txtLine.setHorizontalAlignment(JTextField.RIGHT);
-        txtLine.setText("0");
 
         txtDecLine.setEditable(false);
         txtDecLine.setFont(FONT_MONOSPACED);
         txtDecLine.setHorizontalAlignment(JTextField.RIGHT);
-        txtDecLine.setText("0");
 
         txtBinLine.setEditable(false);
         txtBinLine.setFont(FONT_MONOSPACED);
         txtBinLine.setHorizontalAlignment(JTextField.RIGHT);
-        txtBinLine.setText("0000 0000");
 
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -412,5 +390,4 @@ public class CpuPanel extends JPanel {
         }
 
     }
-    // End of variables declaration//GEN-END:variables
 }
