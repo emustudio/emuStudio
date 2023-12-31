@@ -18,6 +18,7 @@
  */
 package net.emustudio.plugins.cpu.zilogZ80;
 
+import net.emustudio.emulib.plugins.cpu.AccurateFrequencyRunner;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -32,9 +33,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static net.emustudio.plugins.cpu.zilogZ80.DispatchTables.*;
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorTables.*;
@@ -62,7 +61,7 @@ public class EmulatorEngine implements CpuEngine {
 
     private final ContextZ80Impl context;
     private final MemoryContext<Byte> memory;
-    private final AtomicLong executedCyclesPerSlot = new AtomicLong(0);
+    private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
 
     public final int[] regs = new int[8];
     public final int[] regs2 = new int[8];
@@ -132,7 +131,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     public void addExecutedCyclesPerTimeSlice(long tstates) {
-        executedCyclesPerSlot.addAndGet(tstates);
+        preciseRunner.addExecutedCycles(tstates);
     }
 
     public void requestMaskableInterrupt(byte[] data) {
@@ -174,57 +173,33 @@ public class EmulatorEngine implements CpuEngine {
         return currentRunState;
     }
 
-    @SuppressWarnings("BusyWait")
     public CPU.RunState run(CPU cpu) {
         // In Z80, 1 t-state = 250 ns = 0.25 microseconds = 0.00025 milliseconds
         // in 1 millisecond time slot = 1 / 0.00025 = 4000 t-states are executed uncontrollably
-
-        final long slotNanos = SleepUtils.SLEEP_PRECISION;
-        final double slotMicros = slotNanos / 1000.0;
-        final int cyclesPerSlot = (int) (slotMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHz
-
         currentRunState = CPU.RunState.STATE_RUNNING;
-        long delayNanos = SleepUtils.SLEEP_PRECISION;
-
-        long emulationStartTime = System.nanoTime();
-        executedCyclesPerSlot.set(0);
-        while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
-            try {
-                if (delayNanos > 0) {
-                    Thread.sleep(TimeUnit.NANOSECONDS.toMillis(delayNanos));
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            long computationStartTime = System.nanoTime();
-            long targetCycles = (computationStartTime - emulationStartTime) / slotNanos * cyclesPerSlot;
-
-            while ((executedCyclesPerSlot.get() < targetCycles) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
-                try {
-                    if (cpu.isBreakpointSet(PC)) {
-                        throw new Breakpoint();
+        return preciseRunner.run(
+                () -> (double) context.getCPUFrequency(),
+                () -> {
+                    try {
+                        if (cpu.isBreakpointSet(PC)) {
+                            currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+                        } else {
+                            dispatch();
+                        }
+                    } catch (IndexOutOfBoundsException e) {
+                        LOGGER.error("Unexpected error", e);
+                        currentRunState = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    } catch (Throwable e) {
+                        LOGGER.error("Unexpected error", e);
+                        currentRunState = CPU.RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    dispatch();
-                } catch (Breakpoint e) {
-                    return CPU.RunState.STATE_STOPPED_BREAK;
-                } catch (IndexOutOfBoundsException e) {
-                    LOGGER.error("Unexpected error", e);
-                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                } catch (Throwable e) {
-                    LOGGER.error("Unexpected error", e);
-                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+                    return currentRunState;
                 }
-            }
-
-            long computationTime = System.nanoTime() - computationStartTime;
-            delayNanos = slotNanos - computationTime;
-        }
-        return currentRunState;
+        );
     }
 
     private void advanceCycles(int cycles) {
-        executedCyclesPerSlot.addAndGet(cycles);
+        preciseRunner.addExecutedCycles(cycles);
         for (int i = 0; i < cycles; i++) {
             context.passedCycles(1); // make it precise to the bones
         }
