@@ -18,9 +18,9 @@
  */
 package net.emustudio.plugins.cpu.intel8080;
 
+import net.emustudio.emulib.plugins.cpu.AccurateFrequencyRunner;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
 import org.slf4j.Logger;
@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static net.emustudio.plugins.cpu.intel8080.DispatchTables.DISPATCH_TABLE;
 
@@ -55,6 +54,8 @@ public class EmulatorEngine implements CpuEngine {
     );
     private final MemoryContext<Byte> memory;
     private final Context8080Impl context;
+    private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
+
     public boolean INTE = false; // enabling / disabling of interrupts
     public int PC = 0; // program counter
     public int SP = 0; // stack pointer
@@ -100,52 +101,29 @@ public class EmulatorEngine implements CpuEngine {
         return currentRunState;
     }
 
-    @SuppressWarnings("BusyWait")
     public CPU.RunState run(CPU cpu) {
-        final long slotNanos = SleepUtils.SLEEP_PRECISION;
-        final double slotMicros = slotNanos / 1000.0;
-        final int cyclesPerSlot = (int) (slotMicros * context.getCPUFrequency() / 1000.0); // frequency in kHZ -> MHz
-
         currentRunState = CPU.RunState.STATE_RUNNING;
-        long delayNanos = SleepUtils.SLEEP_PRECISION;
-
-        long startTime = System.nanoTime();
-        long executedCyclesPerSlot = 0;
-        while (!Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
-            try {
-                if (delayNanos > 0) {
-                    Thread.sleep(TimeUnit.NANOSECONDS.toMillis(delayNanos));
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            long endTime = System.nanoTime();
-            long targetCycles = (endTime - startTime) / slotNanos * cyclesPerSlot;
-
-            while ((executedCyclesPerSlot < targetCycles) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
-                try {
-                    if (cpu.isBreakpointSet(PC)) {
-                        throw new Breakpoint();
+        return preciseRunner.run(
+                () -> (double) context.getCPUFrequency(),
+                () -> {
+                    try {
+                        if (cpu.isBreakpointSet(PC)) {
+                            currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+                        } else {
+                            int cycles = dispatch();
+                            preciseRunner.addExecutedCycles(cycles);
+                            context.passedCycles(cycles);
+                        }
+                    } catch (IndexOutOfBoundsException e) {
+                        LOGGER.error("Unexpected error", e);
+                        currentRunState = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    } catch (Throwable e) {
+                        LOGGER.error("Unexpected error", e);
+                        currentRunState = CPU.RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    int cycles = dispatch();
-                    executedCyclesPerSlot += cycles;
-                    context.passedCycles(cycles);
-                } catch (Breakpoint e) {
-                    return CPU.RunState.STATE_STOPPED_BREAK;
-                } catch (IndexOutOfBoundsException e) {
-                    LOGGER.error("Unexpected error", e);
-                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                } catch (Throwable e) {
-                    LOGGER.error("Unexpected error", e);
-                    return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+                    return currentRunState;
                 }
-            }
-
-            long computationTime = System.nanoTime() - endTime;
-            delayNanos = slotNanos - computationTime;
-        }
-        return currentRunState;
+        );
     }
 
     private int dispatch() throws Throwable {
