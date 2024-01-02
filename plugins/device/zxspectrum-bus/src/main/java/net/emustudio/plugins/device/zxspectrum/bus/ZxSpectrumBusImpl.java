@@ -77,6 +77,7 @@ import java.util.*;
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
     private static final long LINE_TSTATES = 224;
+    private static final long FRAME_TSTATES = 69888;
 
     // from 14335 to 14463, then 96 tstates pause to reach "end of line", then repeat.
     private final static Map<Long, Integer> CONTENTION_MAP = new HashMap<>();
@@ -129,6 +130,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         for (CPUContext.PassedCyclesListener listener : deferredListeners) {
             cpu.addPassedCyclesListener(listener);
         }
+        cpu.addPassedCyclesListener(this);
 
         deferredAttachments.clear();
         deferredListeners.clear();
@@ -248,6 +250,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         if (location >= 0x4000 && location <= 0x7FFF) {
             Integer cycles = CONTENTION_MAP.get(contentionCycles);
             if (cycles != null) {
+           //     System.out.printf("%04x: %d, tstates=%d\n", location, cycles, contentionCycles);
                 cpu.addCycles(cycles);
             }
         }
@@ -306,7 +309,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public void passedCycles(long tstates) {
-        contentionCycles = (contentionCycles + tstates) % (LINE_TSTATES + 14335);
+        contentionCycles = (contentionCycles + tstates) % FRAME_TSTATES;
     }
 
     private class ContendedDeviceProxy implements Context8080.CpuPortDevice {
