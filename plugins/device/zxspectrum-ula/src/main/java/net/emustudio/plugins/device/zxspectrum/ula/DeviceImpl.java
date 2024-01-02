@@ -34,6 +34,7 @@ import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+@SuppressWarnings("unused")
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "ZX Spectrum48K ULA")
 public class DeviceImpl extends AbstractDevice {
 
@@ -42,6 +43,7 @@ public class DeviceImpl extends AbstractDevice {
     private boolean guiIOset = false;
 
     private ULA ula;
+    private PassedCyclesMediator passedCyclesMediator;
     private DisplayWindow gui;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -54,6 +56,8 @@ public class DeviceImpl extends AbstractDevice {
     public void initialize() throws PluginInitializationException {
         ZxSpectrumBus bus = applicationApi.getContextPool().getDeviceContext(pluginID, ZxSpectrumBus.class);
         this.ula = new ULA(bus);
+        this.passedCyclesMediator = new PassedCyclesMediator(ula);
+        bus.addPassedCyclesListener(passedCyclesMediator);
         keyboard.addOnKeyListener(ula);
         bus.attachDevice(0xFE, ula);
     }
@@ -88,6 +92,7 @@ public class DeviceImpl extends AbstractDevice {
         if (guiSupported) {
             if (!guiIOset) {
                 this.gui = new DisplayWindow(parent, ula, keyboard);
+                passedCyclesMediator.setCanvas(gui.getCanvas());
                 GuiUtils.addKeyListener(gui, keyboard);
                 guiIOset = true;
                 this.gui.setVisible(true);

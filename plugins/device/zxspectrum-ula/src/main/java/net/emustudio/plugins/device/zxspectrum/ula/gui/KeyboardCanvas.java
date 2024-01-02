@@ -5,10 +5,13 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.font.GlyphVector;
 
-import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCREEN_IMAGE_WIDTH;
+import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IMAGE_WIDTH;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.ZOOM;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
 
+/**
+ * Host-ZX Keyboard mapping visual representation.
+ */
 public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener {
     private final static int bw = 45; // button width
     private final static int bh = 33; // button height
@@ -166,7 +169,6 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
 
     private void drawKeyboard(Graphics2D g) {
         BasicStroke stroke = new BasicStroke(2.0f);
-
 
         // keyboard shape
         g.setStroke(stroke);
