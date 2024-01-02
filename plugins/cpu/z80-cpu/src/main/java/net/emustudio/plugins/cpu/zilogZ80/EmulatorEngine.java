@@ -131,7 +131,8 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     public void addExecutedCyclesPerTimeSlice(long tstates) {
-        preciseRunner.addExecutedCycles(tstates);
+        advanceCycles(tstates);
+    //    preciseRunner.addExecutedCycles(tstates);
     }
 
     public void requestMaskableInterrupt(byte[] data) {
@@ -198,7 +199,7 @@ public class EmulatorEngine implements CpuEngine {
         );
     }
 
-    private void advanceCycles(int cycles) {
+    private void advanceCycles(long cycles) {
         preciseRunner.addExecutedCycles(cycles);
         for (int i = 0; i < cycles; i++) {
             context.passedCycles(1); // make it precise to the bones

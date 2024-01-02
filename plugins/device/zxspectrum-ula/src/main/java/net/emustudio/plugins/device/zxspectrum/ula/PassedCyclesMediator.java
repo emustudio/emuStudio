@@ -24,6 +24,7 @@ import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus.LINE_CYCLES;
 import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
 
 /**
@@ -41,7 +42,6 @@ import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
  * at 3.5MHz/69888=50.08 Hz.
  */
 public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
-    private static final long LINE_CYCLES = 224;
     private static final long FRAME_CYCLES = (PRE_SCREEN_LINES + SCREEN_HEIGHT + POST_SCREEN_LINES) * LINE_CYCLES;  // 69888;
 
     private long frameCycles = 0;
