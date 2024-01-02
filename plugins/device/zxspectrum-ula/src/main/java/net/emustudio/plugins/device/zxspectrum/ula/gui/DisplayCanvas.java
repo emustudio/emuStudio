@@ -18,7 +18,6 @@
  */
 package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
-import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import java.awt.*;
@@ -28,43 +27,11 @@ import java.awt.image.DataBufferInt;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static net.emustudio.plugins.device.zxspectrum.ula.ULA.SCREEN_HEIGHT;
-import static net.emustudio.plugins.device.zxspectrum.ula.ULA.SCREEN_WIDTH;
+import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
 
-// https://worldofspectrum.org/faq/reference/48kreference.htm
-
-/**
- * DisplayCanvas
- * <p>
- * A frame is (64+192+56)*224=69888 T states long, which means that the '50 Hz' interrupt is actually
- * a 3.5MHz/69888=50.08 Hz interrupt.
- */
-public class DisplayCanvas extends Canvas implements AutoCloseable, CPUContext.PassedCyclesListener {
-    private static final int PRE_SCREEN_LINES = 64;
-    private static final int POST_SCREEN_LINES = 56;
-    private static final int BORDER_WIDTH = 48; // pixels
-
+public class DisplayCanvas extends Canvas implements AutoCloseable {
     public static final float ZOOM = 2f;
-    public static final int SCREEN_IMAGE_WIDTH = 2 * BORDER_WIDTH + SCREEN_WIDTH * 8;
-    public static final int SCREEN_IMAGE_HEIGHT = PRE_SCREEN_LINES + SCREEN_HEIGHT + POST_SCREEN_LINES;
-
-    private static final long FRAME_CPU_TSTATES = 69888;
-    private static final long LINE_CPU_TSTATES = 224;
-
-    // After an interrupt occurs, 64 line times (14336 T states; see below for exact timings) pass before
-    // the first byte of the screen (16384) is displayed. At least the last 48 of these are actual
-    // border-lines; the others may be either border or vertical retrace.
-    //
-    //Then the 192 screen+border lines are displayed, followed by 56 border lines again. Note that this
-    // means that a frame is (64+192+56)*224=69888 T states long, which means that the '50 Hz' interrupt is actually
-    // a 3.5MHz/69888=50.08 Hz interrupt. This fact can be seen by taking a clock program, and running it for an hour,
-    // after which it will be the expected 6 seconds fast. However, on a real Spectrum, the frequency of the interrupt
-    // varies slightly as the Spectrum gets hot; the reason for this is unknown, but placing a cooler onto the ULA has
-    // been observed to remove this effect.
-    private long frameCycleCounter = 0;
-    private long lineCycleCounter = 0;
-    private int lastLinePainted = 0;
 
     private final BufferedImage screenImage = new BufferedImage(
             SCREEN_IMAGE_WIDTH, SCREEN_IMAGE_HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -100,7 +67,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable, CPUContext.P
 
     public DisplayCanvas(ULA ula) {
         this.ula = Objects.requireNonNull(ula);
-        ula.getBus().addPassedCyclesListener(this);
         this.screenImage.setAccelerationPriority(1.0f);
         this.screenImageData = ((DataBufferInt) this.screenImage.getRaster().getDataBuffer()).getData();
     }
@@ -108,18 +74,14 @@ public class DisplayCanvas extends Canvas implements AutoCloseable, CPUContext.P
     public void start() {
         if (painting.compareAndSet(false, true)) {
             createBufferStrategy(2);
-            frameCycleCounter = 0;
-            lineCycleCounter = 0;
-            lastLinePainted = 0;
         }
     }
 
-    private void triggerCpuInterrupt() {
-        ula.triggerInterrupt();
+    public void runPaintCycle() {
         paintCycle.run();
     }
 
-    private void drawNextLine(int line) {
+    public void drawNextLine(int line) {
         int borderColor = COLOR_MAP[ula.getBorderColor()].getRGB();
         if (line < PRE_SCREEN_LINES || line >= (PRE_SCREEN_LINES + SCREEN_HEIGHT)) {
             for (int i = 0; i < SCREEN_IMAGE_WIDTH; i++) {
@@ -196,25 +158,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable, CPUContext.P
         painting.set(false);
     }
 
-    @Override
-    public void passedCycles(long tstates) {
-        if (painting.get()) {
-            frameCycleCounter += tstates;
-            lineCycleCounter += tstates;
-
-            for (int i = 0; i < lineCycleCounter / LINE_CPU_TSTATES; i++) {
-                drawNextLine(lastLinePainted++);
-            }
-            lineCycleCounter = lineCycleCounter % LINE_CPU_TSTATES;
-            if (frameCycleCounter >= FRAME_CPU_TSTATES) {
-                lastLinePainted = 0;
-                triggerCpuInterrupt();
-                ula.onNextFrame();
-                frameCycleCounter = frameCycleCounter % FRAME_CPU_TSTATES;
-            }
-        }
-    }
-
     public class PaintCycle implements Runnable {
         private BufferStrategy strategy;
 
@@ -235,7 +178,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable, CPUContext.P
             try {
                 do {
                     do {
-
                         Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
                         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
                         graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);

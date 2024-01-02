@@ -23,6 +23,9 @@ import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 import javax.swing.*;
 import java.awt.event.WindowEvent;
 
+import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IMAGE_HEIGHT;
+import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IMAGE_WIDTH;
+
 public class DisplayWindow extends JDialog {
     private final DisplayCanvas canvas;
     private final KeyboardCanvas keyboardCanvas;
@@ -58,8 +61,8 @@ public class DisplayWindow extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         canvas.setBounds(
                 MARGIN, MARGIN,
-                (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_WIDTH + 2 * MARGIN),
-                (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_HEIGHT + 2 * MARGIN));
+                (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_WIDTH + 2 * MARGIN),
+                (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_HEIGHT + 2 * MARGIN));
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -75,5 +78,9 @@ public class DisplayWindow extends JDialog {
                                 .addComponent(keyboardCanvas, GroupLayout.DEFAULT_SIZE, KeyboardCanvas.KEYBOARD_HEIGHT + 3, Short.MAX_VALUE)
                                 .addContainerGap()));
         pack();
+    }
+
+    public DisplayCanvas getCanvas() {
+        return canvas;
     }
 }
