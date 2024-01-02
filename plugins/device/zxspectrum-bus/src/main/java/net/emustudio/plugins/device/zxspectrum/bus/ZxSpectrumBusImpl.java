@@ -76,44 +76,37 @@ import java.util.*;
  */
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
-    private static final long LINE_TSTATES = 224;
-    private static final long FRAME_TSTATES = 69888;
+    private static final long FRAME_CYCLES = (64 + 192 + 56) * LINE_CYCLES;  // 69888
 
     // from 14335 to 14463, then 96 tstates pause to reach "end of line", then repeat.
     private final static Map<Long, Integer> CONTENTION_MAP = new HashMap<>();
 
     static {
-        CONTENTION_MAP.put(14335L, 6);
-        CONTENTION_MAP.put(14336L, 5);
-        CONTENTION_MAP.put(14337L, 4);
-        CONTENTION_MAP.put(14338L, 3);
-        CONTENTION_MAP.put(14339L, 2);
-        CONTENTION_MAP.put(14340L, 1);
-        CONTENTION_MAP.put(14343L, 6);
-        CONTENTION_MAP.put(14344L, 5);
-        CONTENTION_MAP.put(14345L, 4);
-        CONTENTION_MAP.put(14346L, 3);
-        CONTENTION_MAP.put(14347L, 2);
-        CONTENTION_MAP.put(14348L, 1);
-        CONTENTION_MAP.put(14351L, 6);
-        CONTENTION_MAP.put(14352L, 5);
-        CONTENTION_MAP.put(14353L, 4);
-        CONTENTION_MAP.put(14354L, 3);
-        CONTENTION_MAP.put(14355L, 2);
-        CONTENTION_MAP.put(14356L, 1);
-        CONTENTION_MAP.put(14359L, 6);
-        CONTENTION_MAP.put(14360L, 5);
-        CONTENTION_MAP.put(14361L, 4);
-        CONTENTION_MAP.put(14362L, 3);
-        CONTENTION_MAP.put(14363L, 2);
-        //     CONTENTION_MAP.put(14364L, 1);
+        // border contention
+        for (long i = 14335; i <= 14463; i += 8) {
+            CONTENTION_MAP.put(i, 6);
+            CONTENTION_MAP.put(i + 1, 5);
+            CONTENTION_MAP.put(i + 2, 4);
+            CONTENTION_MAP.put(i + 3, 3);
+            CONTENTION_MAP.put(i + 4, 2);
+            CONTENTION_MAP.put(i + 5, 1);
+        }
+        // screen contention
+        for (long i = 14559; i <= LINE_CYCLES * 192; i += 8) {
+            CONTENTION_MAP.put(i, 6);
+            CONTENTION_MAP.put(i + 1, 5);
+            CONTENTION_MAP.put(i + 2, 4);
+            CONTENTION_MAP.put(i + 3, 3);
+            CONTENTION_MAP.put(i + 4, 2);
+            CONTENTION_MAP.put(i + 5, 1);
+        }
     }
 
     private ContextZ80 cpu;
     private MemoryContext<Byte> memory;
     private volatile byte busData; // data on the bus
 
-    private long contentionCycles;
+    private long frameCycles;
 
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
     private final Set<CPUContext.PassedCyclesListener> deferredListeners = new HashSet<>();
@@ -199,25 +192,25 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public Byte read(int location) {
-        contendedMemory(location);
+        contendMemory(location);
         return memory.read(location);
     }
 
     @Override
     public Byte[] read(int location, int count) {
-        contendedMemory(location);
+        contendMemory(location);
         return memory.read(location, count);
     }
 
     @Override
     public void write(int location, Byte data) {
-        contendedMemory(location);
+        contendMemory(location);
         memory.write(location, data);
     }
 
     @Override
     public void write(int location, Byte[] data, int count) {
-        contendedMemory(location);
+        contendMemory(location);
         memory.write(location, data, count);
     }
 
@@ -246,11 +239,10 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         return memory.annotations();
     }
 
-    private void contendedMemory(int location) {
+    private void contendMemory(int location) {
         if (location >= 0x4000 && location <= 0x7FFF) {
-            Integer cycles = CONTENTION_MAP.get(contentionCycles);
+            Integer cycles = CONTENTION_MAP.get(frameCycles);
             if (cycles != null) {
-           //     System.out.printf("%04x: %d, tstates=%d\n", location, cycles, contentionCycles);
                 cpu.addCycles(cycles);
             }
         }
@@ -269,29 +261,29 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             // after this, CPU adds 4 cycles for I/O.
             if ((portAddress & 1) == 0) {
                 //        Yes     |  Reset  | C:1, C:3
-                Integer cycles = CONTENTION_MAP.get(contentionCycles); // at C:1
+                Integer cycles = CONTENTION_MAP.get(frameCycles); // at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
-                cycles = CONTENTION_MAP.get(contentionCycles + 1); // after C:1
+                cycles = CONTENTION_MAP.get(frameCycles + 1); // after C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
             } else {
                 //        Yes     |   Set   | C:1, C:1, C:1, C:1
-                Integer cycles = CONTENTION_MAP.get(contentionCycles); // at C:1
+                Integer cycles = CONTENTION_MAP.get(frameCycles); // at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
-                cycles = CONTENTION_MAP.get(contentionCycles + 1); // 2x at C:1
+                cycles = CONTENTION_MAP.get(frameCycles + 1); // 2x at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
-                cycles = CONTENTION_MAP.get(contentionCycles + 2); // 3x at C:1
+                cycles = CONTENTION_MAP.get(frameCycles + 2); // 3x at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
-                cycles = CONTENTION_MAP.get(contentionCycles + 3); // after 3x at C:1
+                cycles = CONTENTION_MAP.get(frameCycles + 3); // after 3x at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
@@ -299,7 +291,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         } else {
             //         No     |  Reset  | N:1, C:3
             if ((portAddress & 1) == 0) {
-                Integer cycles = CONTENTION_MAP.get(contentionCycles + 1); // after N:1
+                Integer cycles = CONTENTION_MAP.get(frameCycles + 1); // after N:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
@@ -309,7 +301,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public void passedCycles(long tstates) {
-        contentionCycles = (contentionCycles + tstates) % FRAME_TSTATES;
+        frameCycles = (frameCycles + tstates) % FRAME_CYCLES;
     }
 
     private class ContendedDeviceProxy implements Context8080.CpuPortDevice {
