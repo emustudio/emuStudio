@@ -130,9 +130,8 @@ public class EmulatorEngine implements CpuEngine {
         this.dispatchListener = dispatchListener;
     }
 
-    public void addExecutedCyclesPerTimeSlice(long tstates) {
-        advanceCycles(tstates);
-    //    preciseRunner.addExecutedCycles(tstates);
+    public void addExecutedCyclesPerTimeSlice(long cycles) {
+        advanceCycles(cycles);
     }
 
     public void requestMaskableInterrupt(byte[] data) {
