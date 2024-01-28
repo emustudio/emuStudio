@@ -21,6 +21,7 @@ package net.emustudio.plugins.device.zxspectrum.ula.gui;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowEvent;
 
 import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IMAGE_HEIGHT;
@@ -32,10 +33,10 @@ public class DisplayWindow extends JDialog {
 
     public final static int MARGIN = 30;
 
-    public DisplayWindow(JFrame parent, ULA ula, Keyboard keyboard) {
+    public DisplayWindow(JFrame parent, ULA ula) {
         super(parent);
         this.canvas = new DisplayCanvas(ula);
-        this.keyboardCanvas = new KeyboardCanvas(keyboard);
+        this.keyboardCanvas = new KeyboardCanvas();
 
         initComponents();
         setLocationRelativeTo(parent);
@@ -49,6 +50,12 @@ public class DisplayWindow extends JDialog {
                 canvas.redrawNow();
             }
         });
+        KeyboardDispatcher keyboardDispatcher = new KeyboardDispatcher();
+        KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        manager.addKeyEventDispatcher(keyboardDispatcher);
+
+        keyboardDispatcher.addOnKeyListener(keyboardCanvas);
+        keyboardDispatcher.addOnKeyListener(ula);
     }
 
     public void destroy() {

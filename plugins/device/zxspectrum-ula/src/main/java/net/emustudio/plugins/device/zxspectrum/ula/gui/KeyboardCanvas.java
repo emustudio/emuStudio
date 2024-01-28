@@ -5,6 +5,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.font.GlyphVector;
 
+import static java.awt.event.KeyEvent.KEY_PRESSED;
+import static java.awt.event.KeyEvent.KEY_RELEASED;
 import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IMAGE_WIDTH;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.ZOOM;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
@@ -12,7 +14,7 @@ import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARG
 /**
  * Host-ZX Keyboard mapping visual representation.
  */
-public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener {
+public class KeyboardCanvas extends JComponent implements KeyboardDispatcher.OnKeyListener {
     private final static int bw = 45; // button width
     private final static int bh = 33; // button height
     private final static int bsw = 70; // backspace width
@@ -104,30 +106,19 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
     private boolean symShift = false;
     private boolean shift = false;
 
-    public KeyboardCanvas(Keyboard keyboard) {
+    public KeyboardCanvas() {
         setDoubleBuffered(true);
-        keyboard.addOnKeyListener(this);
     }
 
     @Override
-    public void onKeyDown(KeyEvent evt) {
-        int keyCode = evt.getExtendedKeyCode();
-        if (keyCode == KeyEvent.VK_CONTROL) {
-            symShift = true;
-        } else if (keyCode == KeyEvent.VK_SHIFT) {
-            shift = true;
+    public void onKeyEvent(KeyEvent e) {
+        boolean pressed = e.getID() == KEY_PRESSED;
+        if (!pressed && e.getID() != KEY_RELEASED) {
+            return;
         }
-        repaint();
-    }
 
-    @Override
-    public void onKeyUp(KeyEvent evt) {
-        int keyCode = evt.getExtendedKeyCode();
-        if (keyCode == KeyEvent.VK_CONTROL) {
-            symShift = false;
-        } else if (evt.getKeyCode() == KeyEvent.VK_SHIFT) {
-            shift = false;
-        }
+        symShift = (e.getModifiersEx() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0;
+        shift = (e.getModifiersEx() & (KeyEvent.SHIFT_DOWN_MASK)) != 0;
         repaint();
     }
 

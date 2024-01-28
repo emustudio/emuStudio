@@ -20,14 +20,16 @@ package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
-import net.emustudio.plugins.device.zxspectrum.ula.gui.Keyboard;
+import net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardDispatcher;
 
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 
+import static java.awt.event.KeyEvent.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
 
 /**
@@ -74,7 +76,7 @@ import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
  * - P2 to P0 is the PAPER colour
  * - I2 to I0 is the INK colour
  */
-public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
+public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyListener {
     private final static byte[] RST_7 = new byte[0x38]; // works for IM1 and IM2 modes
     private final static byte[] KEY_SHIFT = new byte[]{0, 1};
     private final static byte[] KEY_SYM_SHIFT = new byte[]{7, 2};
@@ -88,49 +90,72 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
 
     // maps host characters to ZX Spectrum key "commands"
     // Byte[] = {keymap index, "zero" value, shift, symshift}
-    private final static Map<Character, Byte[]> CHAR_MAPPING = new HashMap<>();
+    private final static Map<Integer, Byte[]> CHAR_MAPPING = new HashMap<>();
 
     static {
-        CHAR_MAPPING.put('Z', new Byte[]{0, 2, -1, -1}); // z, COPY, ":"
-        CHAR_MAPPING.put('X', new Byte[]{0, 4, -1, -1}); // x, CLEAR, "£"
-        CHAR_MAPPING.put('C', new Byte[]{0, 8, -1, -1}); // c, CONT, "?"
-        CHAR_MAPPING.put('V', new Byte[]{0, 16, -1, -1}); // v, CLS, "/"
-        CHAR_MAPPING.put('B', new Byte[]{7, 16, -1, -1}); // b, BORDER, "*"
-        CHAR_MAPPING.put('N', new Byte[]{7, 8, -1, -1}); // n, NEXT, ","
-        CHAR_MAPPING.put('M', new Byte[]{7, 4, -1, -1}); // m, PAUSE, "."
-        CHAR_MAPPING.put(' ', new Byte[]{7, 1, -1, -1}); // " "
-        CHAR_MAPPING.put('\n', new Byte[]{6, 1, -1, -1}); // ENTER
-        CHAR_MAPPING.put('A', new Byte[]{1, 1, -1, -1}); // a, NEW, "STOP"
-        CHAR_MAPPING.put('S', new Byte[]{1, 2, -1, -1}); // s, SAVE, "NOT"
-        CHAR_MAPPING.put('D', new Byte[]{1, 4, -1, -1}); // d, DIM, "STEP"
-        CHAR_MAPPING.put('F', new Byte[]{1, 8, -1, -1}); // f, FOR, "TO"
-        CHAR_MAPPING.put('G', new Byte[]{1, 16, -1, -1}); // g, GOTO, "THEN"
-        CHAR_MAPPING.put('H', new Byte[]{6, 16, -1, -1}); // h, GOSUB, "↑"
-        CHAR_MAPPING.put('J', new Byte[]{6, 8, -1, -1}); // j, LOAD, "-"
-        CHAR_MAPPING.put('K', new Byte[]{6, 4, -1, -1}); // k, LIST, "+"
-        CHAR_MAPPING.put('L', new Byte[]{6, 2, -1, -1}); // l, LET, "="
-        CHAR_MAPPING.put('Q', new Byte[]{2, 1, -1, -1}); // q, PLOT, "<="
-        CHAR_MAPPING.put('W', new Byte[]{2, 2, -1, -1}); // w, DRAW, "<>"
-        CHAR_MAPPING.put('E', new Byte[]{2, 4, -1, -1}); // e, REM, ">="
-        CHAR_MAPPING.put('R', new Byte[]{2, 8, -1, -1}); // r, RUN, "<"
-        CHAR_MAPPING.put('T', new Byte[]{2, 16, -1, -1}); // t, RAND, ">"
-        CHAR_MAPPING.put('Y', new Byte[]{5, 16, -1, -1}); // y, RETURN, "AND"
-        CHAR_MAPPING.put('U', new Byte[]{5, 8, -1, -1}); // u, IF, "OR"
-        CHAR_MAPPING.put('I', new Byte[]{5, 4, -1, -1}); // i, INPUT, "AT"
-        CHAR_MAPPING.put('O', new Byte[]{5, 2, -1, -1}); // o, POKE, ";"
-        CHAR_MAPPING.put('P', new Byte[]{5, 1, -1, -1}); // p, PRINT, "
-        CHAR_MAPPING.put('1', new Byte[]{3, 1, -1, -1}); // 1, "!"
-        CHAR_MAPPING.put('2', new Byte[]{3, 2, -1, -1}); // 2, "@"
-        CHAR_MAPPING.put('3', new Byte[]{3, 4, -1, -1}); // 3, "#"
-        CHAR_MAPPING.put('4', new Byte[]{3, 8, -1, -1}); // 4, "$"
-        CHAR_MAPPING.put('5', new Byte[]{3, 16, -1, -1}); // 5, "%"
-        CHAR_MAPPING.put('6', new Byte[]{4, 16, -1, -1}); // 6, "&"
-        CHAR_MAPPING.put('7', new Byte[]{4, 8, -1, -1}); // 7, "'"
-        CHAR_MAPPING.put('8', new Byte[]{4, 4, -1, -1}); // 8, "("
-        CHAR_MAPPING.put('9', new Byte[]{4, 2, -1, -1}); // 9, ")"
-        CHAR_MAPPING.put('0', new Byte[]{4, 1, -1, -1}); // 0, "_"
-        CHAR_MAPPING.put('\b', new Byte[]{4, 1, 1, -1}); // backspace
-        CHAR_MAPPING.put((char) 127, new Byte[]{4, 1, 1, -1}); // delete
+        CHAR_MAPPING.put(VK_Z, new Byte[]{0, 2, -1, -1}); // z, COPY, ":"
+        CHAR_MAPPING.put(VK_COLON, new Byte[]{0, 2, 0, 1});
+        CHAR_MAPPING.put(VK_X, new Byte[]{0, 4, -1, -1}); // x, CLEAR, "£"
+        CHAR_MAPPING.put(VK_C, new Byte[]{0, 8, -1, -1}); // c, CONT, "?"
+        CHAR_MAPPING.put(VK_V, new Byte[]{0, 16, -1, -1}); // v, CLS, "/"
+        CHAR_MAPPING.put(VK_SLASH, new Byte[]{0, 16, 0, 1});
+        CHAR_MAPPING.put(VK_B, new Byte[]{7, 16, -1, -1}); // b, BORDER, "*"
+        CHAR_MAPPING.put(VK_ASTERISK, new Byte[]{7, 16, 0, 1});
+        CHAR_MAPPING.put(VK_N, new Byte[]{7, 8, -1, -1}); // n, NEXT, ","
+        CHAR_MAPPING.put(VK_COMMA, new Byte[]{7, 8, 0, 1});
+        CHAR_MAPPING.put(VK_M, new Byte[]{7, 4, -1, -1}); // m, PAUSE, "."
+        CHAR_MAPPING.put(VK_DECIMAL, new Byte[]{7, 4, 0, 1});
+        CHAR_MAPPING.put(VK_PERIOD, new Byte[]{7, 4, 0, 1});
+        CHAR_MAPPING.put(VK_SPACE, new Byte[]{7, 1, -1, -1}); // " "
+        CHAR_MAPPING.put(VK_ENTER, new Byte[]{6, 1, -1, -1}); // ENTER
+        CHAR_MAPPING.put(VK_A, new Byte[]{1, 1, -1, -1}); // a, NEW, "STOP"
+        CHAR_MAPPING.put(VK_S, new Byte[]{1, 2, -1, -1}); // s, SAVE, "NOT"
+        CHAR_MAPPING.put(VK_D, new Byte[]{1, 4, -1, -1}); // d, DIM, "STEP"
+        CHAR_MAPPING.put(VK_F, new Byte[]{1, 8, -1, -1}); // f, FOR, "TO"
+        CHAR_MAPPING.put(VK_G, new Byte[]{1, 16, -1, -1}); // g, GOTO, "THEN"
+        CHAR_MAPPING.put(VK_H, new Byte[]{6, 16, -1, -1}); // h, GOSUB, "↑"
+        CHAR_MAPPING.put(VK_UP, new Byte[]{6, 16, 0, 1});
+        CHAR_MAPPING.put(VK_J, new Byte[]{6, 8, -1, -1}); // j, LOAD, "-"
+        CHAR_MAPPING.put(VK_SUBTRACT, new Byte[]{6, 8, 0, 1});
+        CHAR_MAPPING.put(VK_K, new Byte[]{6, 4, -1, -1}); // k, LIST, "+"
+        CHAR_MAPPING.put(VK_ADD, new Byte[]{6, 4, 0, 1});
+        CHAR_MAPPING.put(VK_L, new Byte[]{6, 2, -1, -1}); // l, LET, "="
+        CHAR_MAPPING.put(VK_EQUALS, new Byte[]{6, 2, 0, 1});
+        CHAR_MAPPING.put(VK_Q, new Byte[]{2, 1, -1, -1}); // q, PLOT, "<="
+        CHAR_MAPPING.put(VK_W, new Byte[]{2, 2, -1, -1}); // w, DRAW, "<>"
+        CHAR_MAPPING.put(VK_E, new Byte[]{2, 4, -1, -1}); // e, REM, ">="
+        CHAR_MAPPING.put(VK_R, new Byte[]{2, 8, -1, -1}); // r, RUN, "<"
+        CHAR_MAPPING.put(VK_LESS, new Byte[]{2, 8, 0, 1});
+        CHAR_MAPPING.put(VK_T, new Byte[]{2, 16, -1, -1}); // t, RAND, ">"
+        CHAR_MAPPING.put(VK_GREATER, new Byte[]{2, 16, 0, 1});
+        CHAR_MAPPING.put(VK_Y, new Byte[]{5, 16, -1, -1}); // y, RETURN, "AND"
+        CHAR_MAPPING.put(VK_U, new Byte[]{5, 8, -1, -1}); // u, IF, "OR"
+        CHAR_MAPPING.put(VK_I, new Byte[]{5, 4, -1, -1}); // i, INPUT, "AT"
+        CHAR_MAPPING.put(VK_O, new Byte[]{5, 2, -1, -1}); // o, POKE, ";"
+        CHAR_MAPPING.put(VK_SEMICOLON, new Byte[]{5, 2, 0, 1});
+        CHAR_MAPPING.put(VK_P, new Byte[]{5, 1, -1, -1}); // p, PRINT, "
+        CHAR_MAPPING.put(VK_QUOTEDBL, new Byte[]{5, 1, 0, 1});
+        CHAR_MAPPING.put(VK_1, new Byte[]{3, 1, -1, -1}); // 1, "!"
+        CHAR_MAPPING.put(VK_EXCLAMATION_MARK, new Byte[]{3, 1, 0, 1});
+        CHAR_MAPPING.put(VK_2, new Byte[]{3, 2, -1, -1}); // 2, "@"
+        CHAR_MAPPING.put(VK_AT, new Byte[]{3, 2, 0, 1});
+        CHAR_MAPPING.put(VK_3, new Byte[]{3, 4, -1, -1}); // 3, "#"
+        CHAR_MAPPING.put(VK_NUMBER_SIGN, new Byte[]{3, 4, 0, 1});
+        CHAR_MAPPING.put(VK_4, new Byte[]{3, 8, -1, -1}); // 4, "$"
+        CHAR_MAPPING.put(VK_DOLLAR, new Byte[]{3, 8, 0, 1});
+        CHAR_MAPPING.put(VK_5, new Byte[]{3, 16, -1, -1}); // 5, "%"
+        CHAR_MAPPING.put(VK_6, new Byte[]{4, 16, -1, -1}); // 6, "&"
+        CHAR_MAPPING.put(VK_AMPERSAND, new Byte[]{4, 16, 0, 1});
+        CHAR_MAPPING.put(VK_7, new Byte[]{4, 8, -1, -1}); // 7, "'"
+        CHAR_MAPPING.put(VK_QUOTE, new Byte[]{4, 8, 0, 1});
+        CHAR_MAPPING.put(VK_8, new Byte[]{4, 4, -1, -1}); // 8, "("
+        CHAR_MAPPING.put(VK_LEFT_PARENTHESIS, new Byte[]{4, 4, 0, 1});
+        CHAR_MAPPING.put(VK_9, new Byte[]{4, 2, -1, -1}); // 9, ")"
+        CHAR_MAPPING.put(VK_RIGHT_PARENTHESIS, new Byte[]{4, 2, 0, 1});
+        CHAR_MAPPING.put(VK_0, new Byte[]{4, 1, -1, -1}); // 0, "_"
+        CHAR_MAPPING.put(VK_UNDERSCORE, new Byte[]{4, 1, 0, 1});
+        CHAR_MAPPING.put(VK_BACK_SPACE, new Byte[]{4, 1, 1, 0}); // backspace
+        CHAR_MAPPING.put(VK_DELETE, new Byte[]{4, 1, 1, 0}); // delete
     }
 
     public boolean videoFlash = false;
@@ -187,30 +212,23 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
         // If more than one address line is made low, the result is the logical AND of all single inputs
 
         byte result = (byte) 0xBF; // 1011 1111   // no EAR input
-        if ((portAddress & 0xFEFE) == 0xFEFE) {
-            // SHIFT, Z, X, C, V
-            result &= keymap[0];
-        } else if ((portAddress & 0xFDFE) == 0xFDFE) {
-            // A, S, D, F, G
-            result &= keymap[1];
-        } else if ((portAddress & 0xFBFE) == 0xFBFE) {
-            // Q, W, E, R, T
-            result &= keymap[2];
-        } else if ((portAddress & 0xF7FE) == 0xF7FE) {
-            // 1, 2, 3, 4, 5
-            result &= keymap[3];
-        } else if ((portAddress & 0xEFFE) == 0xEFFE) {
-            // 0, 9, 8, 7, 6
-            result &= keymap[4];
-        } else if ((portAddress & 0xDFFE) == 0xDFFE) {
-            // P, O, I, U, Y
-            result &= keymap[5];
-        } else if ((portAddress & 0xBFFE) == 0xBFFE) {
-            // ENTER, L, K, J, H
-            result &= keymap[6];
-        } else if ((portAddress & 0x7FFE) == 0x7FFE) {
-            // SPACE, SYM SHIFT, M, N, B
-            result &= keymap[7];
+        if ((portAddress & 0xFE) == 0xFE) {
+            int keyLine = 0;
+            portAddress >>>= 8;
+            while ((portAddress & 1) != 0) {
+                portAddress >>>= 1;
+                keyLine++;
+            }
+
+            // FE = 0  1111 1110
+            // FD = 1  1111 1101
+            // FB = 2  1111 1011
+            // F7 = 3  1111 0111
+            // EF = 4  1110 1111
+            // DF = 5  1101 1111
+            // BF = 6  1011 1111
+            // 7F = 7  0111 1111
+            result &= keymap[keyLine];
         }
 
         // LINE IN?
@@ -235,59 +253,52 @@ public class ULA implements Context8080.CpuPortDevice, Keyboard.OnKeyListener {
     }
 
     @Override
-    public void onKeyUp(KeyEvent evt) {
-        int keyCode = evt.getExtendedKeyCode();
-        switch (keyCode) {
-            case KeyEvent.VK_CONTROL:
-                keymap[KEY_SYM_SHIFT[0]] |= KEY_SYM_SHIFT[1];
-                break;
-            case KeyEvent.VK_SHIFT:
-                keymap[KEY_SHIFT[0]] |= KEY_SHIFT[1];
-                break;
-            default:
-                Byte[] command = CHAR_MAPPING.get((char) keyCode);
-                if (command != null) {
-                    if (command[2] == 1) {
-                        keymap[KEY_SHIFT[0]] |= KEY_SHIFT[1];
-                    } else if (command[2] == 0) {
-                        keymap[KEY_SHIFT[0]] &= (byte) ((~KEY_SHIFT[1]) & 0xFF);
-                    }
-                    if (command[3] == 1) {
-                        keymap[KEY_SYM_SHIFT[0]] |= KEY_SYM_SHIFT[1];
-                    } else if (command[3] == 0) {
-                        keymap[KEY_SYM_SHIFT[0]] &= (byte) ((~KEY_SYM_SHIFT[1]) & 0xFF);
-                    }
-                    keymap[command[0]] |= command[1];
-                }
+    public void onKeyEvent(KeyEvent e) {
+        boolean pressed = e.getID() == KEY_PRESSED;
+        if (!pressed && e.getID() != KEY_RELEASED) {
+            return;
+        }
+        BiConsumer<Byte, Byte> keySet = pressed ? this::andKeyMap : this::orKeyMap;
+        BiConsumer<Byte, Byte> keyUnset = pressed ? this::orKeyMap : this::andKeyMap;
+
+        // shift / alt / ctrl are visible in modifiersEx only if pressed = true
+        boolean symShift = (e.getModifiersEx() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0;
+        boolean shift = (e.getModifiersEx() & (KeyEvent.SHIFT_DOWN_MASK)) != 0;
+
+        Byte[] command = CHAR_MAPPING.get(e.getKeyCode());
+        if (command != null) {
+            if (command[2] == 1 || (command[2] == -1 && shift)) {
+                keySet.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
+            } else if (command[2] == 0 || !shift) {
+                keyUnset.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
+            }
+            if (command[3] == 1 || (command[3] == -1 && symShift)) {
+                keySet.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+            } else if (command[3] == 0 || !symShift) {
+                keyUnset.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+            }
+            // TODO: shift/symshift are toggling for some reason
+            keySet.accept(command[0], command[1]);
+        } else {
+            if (shift) {
+                keySet.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
+            } else {
+                keyUnset.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
+            }
+            if (symShift) {
+                keySet.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+            } else {
+                keyUnset.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+            }
         }
     }
 
-    @Override
-    public void onKeyDown(KeyEvent evt) {
-        int keyCode = evt.getExtendedKeyCode();
-        switch (keyCode) {
-            case KeyEvent.VK_CONTROL:
-                keymap[KEY_SYM_SHIFT[0]] &= (byte) ((~KEY_SYM_SHIFT[1]) & 0xFF);
-                break;
-            case KeyEvent.VK_SHIFT:
-                keymap[KEY_SHIFT[0]] &= (byte) ((~KEY_SHIFT[1]) & 0xFF);
-                break;
-            default:
-                Byte[] command = CHAR_MAPPING.get((char) keyCode);
-                if (command != null) {
-                    if (command[2] == 1) {
-                        keymap[KEY_SHIFT[0]] &= (byte) ((~KEY_SHIFT[1]) & 0xFF);
-                    } else if (command[2] == 0) {
-                        keymap[KEY_SHIFT[0]] |= KEY_SHIFT[1];
-                    }
-                    if (command[3] == 1) {
-                        keymap[KEY_SYM_SHIFT[0]] &= (byte) ((~KEY_SYM_SHIFT[1]) & 0xFF);
-                    } else if (command[3] == 0) {
-                        keymap[KEY_SYM_SHIFT[0]] |= KEY_SYM_SHIFT[1];
-                    }
-                    keymap[command[0]] &= (byte) ((~command[1]) & 0xFF);
-                }
-        }
+    private void andKeyMap(byte key, byte value) {
+        keymap[key] &= (byte) ((~value) & 0xFF);
+    }
+
+    private void orKeyMap(byte key, byte value) {
+        keymap[key] |= value;
     }
 
     /**
