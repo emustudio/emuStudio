@@ -16,16 +16,21 @@ public class KeyboardDispatcher implements AutoCloseable, KeyEventDispatcher {
 
     public interface OnKeyListener {
 
-        void onKeyEvent(KeyEvent e);
+        boolean onKeyEvent(KeyEvent e);
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         boolean isConsumed = false;
         if (!e.isConsumed()) {
-            onKeyListeners.forEach(c -> c.onKeyEvent(e));
-            e.consume();
-            isConsumed = true;
+            boolean consumed = false;
+            for (OnKeyListener listener : onKeyListeners) {
+                consumed |= listener.onKeyEvent(e);
+            }
+            if (consumed) {
+                e.consume();
+                isConsumed = true;
+            }
         }
         return isConsumed;
     }

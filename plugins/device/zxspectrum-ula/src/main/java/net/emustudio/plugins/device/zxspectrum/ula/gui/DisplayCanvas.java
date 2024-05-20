@@ -48,9 +48,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     private final ULA ula;
     private final PaintCycle paintCycle = new PaintCycle();
+    private final KeyboardCanvas keyboardCanvas;
 
-    public DisplayCanvas(ULA ula) {
+    public DisplayCanvas(ULA ula, KeyboardCanvas keyboardCanvas) {
         this.ula = Objects.requireNonNull(ula);
+        this.keyboardCanvas = Objects.requireNonNull(keyboardCanvas);
         this.screenImage.setAccelerationPriority(1.0f);
         this.screenImageData = ((DataBufferInt) this.screenImage.getRaster().getDataBuffer()).getData();
     }
@@ -169,6 +171,13 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         graphics.drawImage(
                                 screenImage, MARGIN, MARGIN,
                                 (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM), null);
+
+                        Color color = graphics.getColor();
+                        graphics.setColor(new Color(0, 0, 0, 127));
+                        graphics.translate(0, SCREEN_IMAGE_HEIGHT * ZOOM - KeyboardCanvas.KEYBOARD_HEIGHT + MARGIN);
+                        keyboardCanvas.paint(graphics);
+                        graphics.setColor(color);
+
                         graphics.dispose();
 
                     } while (strategy.contentsRestored());

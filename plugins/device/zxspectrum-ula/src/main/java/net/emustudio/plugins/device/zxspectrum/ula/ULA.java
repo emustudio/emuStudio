@@ -237,10 +237,10 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     @Override
-    public void onKeyEvent(KeyEvent e) {
+    public boolean onKeyEvent(KeyEvent e) {
         boolean pressed = e.getID() == KEY_PRESSED;
         if (!pressed && e.getID() != KEY_RELEASED) {
-            return;
+            return false;
         }
         BiConsumer<Byte, Byte> keySet = pressed ? this::andKeyMap : this::orKeyMap;
         BiConsumer<Byte, Byte> keyUnset = pressed ? this::orKeyMap : this::andKeyMap;
@@ -248,7 +248,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         // shift / alt / ctrl are visible in modifiersEx only if pressed = true
         boolean symShift = (e.getModifiersEx() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0;
         boolean shift = (e.getModifiersEx() & (KeyEvent.SHIFT_DOWN_MASK)) != 0;
-
+        
         Byte[] command = CHAR_MAPPING.get(e.getKeyCode());
         if (command != null) {
             if (command[2] == 1 || (command[2] == -1 && shift)) {
@@ -275,6 +275,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
                 keyUnset.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
             }
         }
+        return true;
     }
 
     private void andKeyMap(byte key, byte value) {

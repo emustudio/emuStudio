@@ -12,15 +12,17 @@ import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IM
 import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IMAGE_WIDTH;
 
 public class DisplayWindow extends JDialog {
-    private final DisplayCanvas canvas;
-    private final KeyboardCanvas keyboardCanvas;
-
     public final static int MARGIN = 30;
+
+    private final static int BOUND_X = (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_WIDTH + 2 * MARGIN);
+    private final static int BOUND_Y = (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_HEIGHT + 2 * MARGIN);
+
+    private final DisplayCanvas canvas;
 
     public DisplayWindow(JFrame parent, ULA ula) {
         super(parent);
-        this.canvas = new DisplayCanvas(ula);
-        this.keyboardCanvas = new KeyboardCanvas();
+        KeyboardCanvas keyboardCanvas = new KeyboardCanvas(70);
+        this.canvas = new DisplayCanvas(ula, keyboardCanvas);
 
         initComponents();
         setLocationRelativeTo(parent);
@@ -50,23 +52,17 @@ public class DisplayWindow extends JDialog {
     private void initComponents() {
         setTitle("ZX Spectrum48K");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        canvas.setBounds(
-                MARGIN, MARGIN,
-                (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_WIDTH + 2 * MARGIN),
-                (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_HEIGHT + 2 * MARGIN));
+        canvas.setBounds(MARGIN, MARGIN, BOUND_X, BOUND_Y);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(canvas)
-                        .addComponent(keyboardCanvas));
+                        .addComponent(canvas));
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
                                 .addComponent(canvas, GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(keyboardCanvas, GroupLayout.DEFAULT_SIZE, KeyboardCanvas.KEYBOARD_HEIGHT + 3, Short.MAX_VALUE)
                                 .addContainerGap()));
         pack();
     }
