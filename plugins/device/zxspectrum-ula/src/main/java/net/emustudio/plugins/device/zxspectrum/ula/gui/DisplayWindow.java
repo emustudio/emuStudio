@@ -21,6 +21,7 @@ package net.emustudio.plugins.device.zxspectrum.ula.gui;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 
@@ -34,10 +35,11 @@ public class DisplayWindow extends JDialog {
     private final static int BOUND_Y = (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_HEIGHT + 2 * MARGIN);
 
     private final DisplayCanvas canvas;
+    private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(70);
+    private final JPanel statusBar = new JPanel();
 
     public DisplayWindow(JFrame parent, ULA ula) {
         super(parent);
-        KeyboardCanvas keyboardCanvas = new KeyboardCanvas(70);
         this.canvas = new DisplayCanvas(ula, keyboardCanvas);
 
         initComponents();
@@ -70,16 +72,32 @@ public class DisplayWindow extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         canvas.setBounds(MARGIN, MARGIN, BOUND_X, BOUND_Y);
 
+        statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.X_AXIS));
+        statusBar.setBorder(new BevelBorder(BevelBorder.LOWERED));
+
+        JLabel labelOpacity = new JLabel("Keyboard opacity:");
+        labelOpacity.setHorizontalAlignment(SwingConstants.LEFT);
+        statusBar.add(labelOpacity);
+
+        JSlider sliderOpacity = new JSlider();
+        sliderOpacity.setMinimum(0);
+        sliderOpacity.setMaximum(100);
+        sliderOpacity.setValue(keyboardCanvas.getAlpha());
+        sliderOpacity.addChangeListener(e -> keyboardCanvas.setAlpha(sliderOpacity.getValue()));
+        statusBar.add(sliderOpacity);
+
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(canvas));
+                        .addComponent(canvas)
+                        .addComponent(statusBar, GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE));
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
                                 .addComponent(canvas, GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
-                                .addContainerGap()));
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(statusBar, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)));
         pack();
     }
 

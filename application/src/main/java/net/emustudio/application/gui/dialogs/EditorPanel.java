@@ -18,7 +18,6 @@
  */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.Constants;
 import net.emustudio.application.gui.actions.CompileAction;
 import net.emustudio.application.gui.actions.editor.*;
 import net.emustudio.application.gui.editor.Editor;
