@@ -21,6 +21,8 @@ package net.emustudio.plugins.compiler.asZ80.e2e;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.net.URISyntaxException;
 import java.util.Objects;
 
 
@@ -29,14 +31,14 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     private String sample2File;
 
     @Before
-    public void setup() {
-        sampleFile = Objects.requireNonNull(getClass().getResource("/sample.asm")).getFile();
-        sample2File = Objects.requireNonNull(getClass().getResource("/sample2.asm")).getFile();
+    public void setup() throws URISyntaxException {
+        sampleFile = new File(Objects.requireNonNull(getClass().getResource("/sample.asm")).toURI()).getAbsolutePath();
+        sample2File = new File(Objects.requireNonNull(getClass().getResource("/sample2.asm")).toURI()).getAbsolutePath();
     }
 
 
     @Test
-    public void testORGwithInclude() throws Exception {
+    public void testORGwithInclude() {
         compile(
                 "org 3\n"
                         + "call sample\n"
@@ -49,7 +51,7 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testORGwithDoubleInclude() throws Exception {
+    public void testORGwithDoubleInclude() {
         compile(
                 "org 3\n"
                         + "call sample\n"
@@ -63,7 +65,7 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testORGwithDoubleIncludeAndJMPafter() throws Exception {
+    public void testORGwithDoubleIncludeAndJMPafter() {
         compile(
                 "org 3\n"
                         + "jp next\n"
@@ -79,7 +81,7 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testORGwithDB() throws Exception {
+    public void testORGwithDB() {
         compile(
                 "org 3\n"
                         + "ld HL, text\n"
@@ -93,7 +95,7 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testORG() throws Exception {
+    public void testORG() {
         compile(
                 "org 2\n" +
                         "now: ld a,b\n" +
@@ -109,7 +111,7 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testORGwithJumpBackwards() throws Exception {
+    public void testORGwithJumpBackwards() {
         compile(
                 "sample:\n"
                         + "org 2\n"
@@ -122,7 +124,7 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testORGwithJumpForwards() throws Exception {
+    public void testORGwithJumpForwards() {
         compile(
                 "jp sample\n"
                         + "org 5\n"
@@ -136,7 +138,7 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testORGdoesNotBreakPreviousMemoryContent() throws Exception {
+    public void testORGdoesNotBreakPreviousMemoryContent() {
         memoryStub.write(0, (byte) 0x10);
         memoryStub.write(1, (byte) 0x11);
 
@@ -150,7 +152,7 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     }
 
     @Test
-    public void testORGthenDSdoNotOverlap() throws Exception {
+    public void testORGthenDSdoNotOverlap() {
         compile(
                 "org 2\nds 2\nld a,b"
         );
@@ -160,7 +162,7 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     }
 
     @Test(expected = Exception.class)
-    public void testORGisAmbiguous() throws Exception {
+    public void testORGisAmbiguous() {
         compile(
                 "org text\nld a, 4\ntext: db 4\n"
         );

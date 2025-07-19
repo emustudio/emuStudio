@@ -30,6 +30,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Objects;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_CANNOT_READ_FILE;
@@ -41,8 +43,8 @@ public class ExpandIncludesVisitorTest {
     public TemporaryFolder folder = new TemporaryFolder();
 
     @Test
-    public void testExpandInclude() {
-        String filename = ExpandIncludesVisitorTest.class.getResource("/sample.asm").getFile();
+    public void testExpandInclude() throws URISyntaxException {
+        String filename = new File(Objects.requireNonNull(ExpandIncludesVisitorTest.class.getResource("/sample.asm")).toURI()).getAbsolutePath();
         Program program = parseProgram("ccf\ninclude '" + filename + "'");
         ExpandIncludesVisitor visitor = new ExpandIncludesVisitor();
         visitor.visit(program);
