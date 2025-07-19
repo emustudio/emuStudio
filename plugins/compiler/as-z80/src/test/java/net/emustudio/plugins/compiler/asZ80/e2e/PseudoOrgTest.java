@@ -21,6 +21,8 @@ package net.emustudio.plugins.compiler.asZ80.e2e;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.net.URISyntaxException;
 import java.util.Objects;
 
 
@@ -29,9 +31,9 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     private String sample2File;
 
     @Before
-    public void setup() {
-        sampleFile = Objects.requireNonNull(getClass().getResource("/sample.asm")).getFile();
-        sample2File = Objects.requireNonNull(getClass().getResource("/sample2.asm")).getFile();
+    public void setup() throws URISyntaxException {
+        sampleFile = new File(Objects.requireNonNull(getClass().getResource("/sample.asm")).toURI()).getAbsolutePath();
+        sample2File = new File(Objects.requireNonNull(getClass().getResource("/sample2.asm")).toURI()).getAbsolutePath();
     }
 
 
