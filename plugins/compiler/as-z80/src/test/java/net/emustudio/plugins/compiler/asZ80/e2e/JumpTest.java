@@ -1,3 +1,5 @@
+/* SPDX-FileCopyrightText: 2006-2025 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.asZ80.e2e;
 
 import org.junit.Test;

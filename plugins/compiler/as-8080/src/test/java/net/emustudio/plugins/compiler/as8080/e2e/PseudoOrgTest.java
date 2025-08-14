@@ -1,26 +1,12 @@
-/*
- * This file is part of emuStudio.
- *
- * Copyright (C) 2006-2023  Peter Jakubčo
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+/* SPDX-FileCopyrightText: 2006-2025 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080.e2e;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.net.URISyntaxException;
 import java.util.Objects;
 
 
@@ -29,9 +15,9 @@ public class PseudoOrgTest extends AbstractCompilerTest {
     private String sample2File;
 
     @Before
-    public void setup() {
-        sampleFile = Objects.requireNonNull(getClass().getResource("/sample.asm")).getFile();
-        sample2File = Objects.requireNonNull(getClass().getResource("/sample2.asm")).getFile();
+    public void setup() throws URISyntaxException {
+        sampleFile = new File(Objects.requireNonNull(getClass().getResource("/sample.asm").toURI())).getAbsolutePath();
+        sample2File = new File(Objects.requireNonNull(getClass().getResource("/sample2.asm").toURI())).getAbsolutePath();
     }
 
 
