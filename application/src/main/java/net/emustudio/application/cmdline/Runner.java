@@ -38,10 +38,13 @@ public class Runner implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
     // if a command is being run, default behavior is: do nothing
     private static boolean runsSomeCommand;
+
     @CommandLine.ArgGroup(heading = "Virtual computer%n")
     public Exclusive exclusive;
+
     @CommandLine.Option(names = {"-i", "--input-file"}, description = "input file name (source code)", paramLabel = "FILE")
     public Path inputFile;
+
     @CommandLine.Option(names = {"-cl", "--computers-list"}, description = "list all existing virtual computers")
     private boolean listConfigs;
 

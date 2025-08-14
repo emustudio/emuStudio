@@ -7,6 +7,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.font.GlyphVector;
 
+import static java.awt.event.KeyEvent.KEY_PRESSED;
+import static java.awt.event.KeyEvent.KEY_RELEASED;
 import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IMAGE_WIDTH;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.ZOOM;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
@@ -14,27 +16,26 @@ import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARG
 /**
  * Host-ZX Keyboard mapping visual representation.
  */
-public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener {
-    private final static int bw = 45; // button width
+public class KeyboardCanvas extends JComponent implements KeyboardDispatcher.OnKeyListener {
+    private final static int bw = 42; // button width
     private final static int bh = 33; // button height
     private final static int bsw = 70; // backspace width
     private final static int tabw = 60; // tab width
     private final static int lshiftw = 55; // left shift width
-    private final static int brakew = 300; // break width
+    private final static int brakew = 270; // break width
     private final static int s = 5; // space between buttons
+    private final static double sHalf = s / 2.0; // space between buttons
     private final static int arc = 15; // arc radius
     private final static int margin = 10;
-    private final static int rshiftw = 3 * bw - 3 * s - margin; // right shift width
+    private final static int rshiftw = 3 * bw - 3 * s - margin + (int) sHalf; // right shift width
 
-    public final static int KEYBOARD_WIDTH = 13 * (bw + s) + 10 + bsw + 10;
-    public final static int KEYBOARD_HEIGHT = 5 * (bh + s) + 2 * margin;
+    public final static int KEYBOARD_WIDTH = 13 * (bw + s) + bsw + 10 + 10;
+    public final static int KEYBOARD_HEIGHT = 5 * (bh + s) + 2 * margin - s;
 
     private final static int X_SHIFT = (int) ((ZOOM * SCREEN_IMAGE_WIDTH + 2 * MARGIN - KEYBOARD_WIDTH) / 2.0);
     private final static int X_SHIFT_L = X_SHIFT + margin;
     private final static int Y_SHIFT_T = margin;
-
-    private final static Color USABLE_BUTTON_COLOR = Color.LIGHT_GRAY;
-
+    private final static int STROKE_WIDTH = 3;
 
     private final static double[][] KEY_MAP = new double[][]{
             new double[]{bw + s + bw / 2.0, bh}, // 1
@@ -47,7 +48,7 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
             new double[]{bw + s, 0}, // 8
             new double[]{bw + s, 0}, // 9
             new double[]{bw + s, 0}, // 0,
-            new double[]{-(11 * bw + s) + tabw + s, bh + s}, // Q
+            new double[]{-(11 * bw + s) + tabw + sHalf, bh + s}, // Q
             new double[]{bw + s, 0}, // W
             new double[]{bw + s, 0}, // E
             new double[]{bw + s, 0}, // R
@@ -57,7 +58,7 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
             new double[]{bw + s, 0}, // I
             new double[]{bw + s, 0}, // O
             new double[]{bw + s, 0}, // P
-            new double[]{-(10 * bw + s) - tabw + bsw + s, bh + s}, // A
+            new double[]{-(10 * bw + s) - tabw + bsw + sHalf, bh + s}, // A
             new double[]{bw + s, 0}, // S
             new double[]{bw + s, 0}, // D
             new double[]{bw + s, 0}, // F
@@ -101,36 +102,45 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
             "SHIFT", ":", "£", "?", "/", "*", ",", ".", "SHIFT", "SYM", "SYM"
     };
 
-    private final BasicStroke outlineStroke = new BasicStroke(3.0f);
+    private final BasicStroke outlineStroke = new BasicStroke(STROKE_WIDTH);
+    private final Color usableButtonColor;
+    private final Color outlineColor;
+    private final Color brightColor;
+    private int alpha;
 
     private boolean symShift = false;
     private boolean shift = false;
 
-    public KeyboardCanvas(Keyboard keyboard) {
+    public KeyboardCanvas(int alpha) {
         setDoubleBuffered(true);
-        keyboard.addOnKeyListener(this);
+        this.alpha = alpha;
+        this.usableButtonColor = new Color(
+                Color.LIGHT_GRAY.getRed(),
+                Color.LIGHT_GRAY.getGreen(),
+                Color.LIGHT_GRAY.getBlue(), alpha);
+        this.outlineColor = new Color(0, 0, 0, alpha);
+        this.brightColor = new Color(255, 255, 255, alpha);
     }
 
     @Override
-    public void onKeyDown(KeyEvent evt) {
-        int keyCode = evt.getExtendedKeyCode();
-        if (keyCode == KeyEvent.VK_CONTROL) {
-            symShift = true;
-        } else if (keyCode == KeyEvent.VK_SHIFT) {
-            shift = true;
+    public boolean onKeyEvent(KeyEvent e) {
+        boolean pressed = e.getID() == KEY_PRESSED;
+        if (!pressed && e.getID() != KEY_RELEASED) {
+            return false;
         }
+
+        symShift = (e.getModifiersEx() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0;
+        shift = (e.getModifiersEx() & (KeyEvent.SHIFT_DOWN_MASK)) != 0;
         repaint();
+        return true;
     }
 
-    @Override
-    public void onKeyUp(KeyEvent evt) {
-        int keyCode = evt.getExtendedKeyCode();
-        if (keyCode == KeyEvent.VK_CONTROL) {
-            symShift = false;
-        } else if (evt.getKeyCode() == KeyEvent.VK_SHIFT) {
-            shift = false;
-        }
-        repaint();
+    public int getAlpha() {
+        return alpha;
+    }
+
+    public void setAlpha(int alpha) {
+        this.alpha = alpha;
     }
 
     public void paint(Graphics g) {
@@ -144,7 +154,7 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
 
         g2d.setFont(new Font("SansSerif", Font.PLAIN, 11));
         g2d.setStroke(outlineStroke);
-        g2d.setColor(Color.WHITE);
+        g2d.setColor(adjustAlpha(brightColor));
         g2d.translate(X_SHIFT_L, 0);
 
         for (int i = 0; i < KEY_MAP.length; i++) {
@@ -163,7 +173,7 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
             int sw = g2d.getFontMetrics().stringWidth(text);
 
             g2d.translate(KEY_MAP[i][0] - sw / 2.0, KEY_MAP[i][1]);
-            g2d.setColor(Color.BLACK);
+            g2d.setColor(adjustAlpha(outlineColor));
             g2d.fill(textShape);
             g2d.translate(sw / 2.0, 0);
         }
@@ -171,17 +181,20 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
 
     private void drawKeyboard(Graphics2D g) {
         BasicStroke stroke = new BasicStroke(2.0f);
+        Color adjUsableButtonColor = adjustAlpha(usableButtonColor);
+        Color adjOutlineColor = adjustAlpha(outlineColor);
 
         // keyboard shape
         g.setStroke(stroke);
-        g.drawRoundRect(X_SHIFT, 0, KEYBOARD_WIDTH, KEYBOARD_HEIGHT, arc, arc);
+        g.setColor(adjOutlineColor);
+        g.drawRoundRect(X_SHIFT, -STROKE_WIDTH, KEYBOARD_WIDTH, KEYBOARD_HEIGHT, arc, arc);
 
         // top row
         for (int i = 0; i < 13; i++) {
             if (i >= 1 && i <= 10) {
-                g.setColor(USABLE_BUTTON_COLOR);
+                g.setColor(adjUsableButtonColor);
                 g.fillRoundRect(X_SHIFT_L + i * (bw + s), Y_SHIFT_T, bw, bh, arc, arc);
-                g.setColor(Color.BLACK);
+                g.setColor(adjOutlineColor);
             }
             g.drawRoundRect(X_SHIFT_L + i * (bw + s), Y_SHIFT_T, bw, bh, arc, arc);
         }
@@ -194,9 +207,9 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
         g.drawRoundRect(X_SHIFT_L, y1, tabw, bh, arc, arc);
         for (int i = 0; i < 12; i++) {
             if (i < 10) {
-                g.setColor(USABLE_BUTTON_COLOR);
+                g.setColor(adjUsableButtonColor);
                 g.fillRoundRect(X_SHIFT_L + i * (bw + s) + tabw + s, y1, bw, bh, arc, arc);
-                g.setColor(Color.BLACK);
+                g.setColor(adjOutlineColor);
             }
             g.drawRoundRect(X_SHIFT_L + i * (bw + s) + tabw + s, y1, bw, bh, arc, arc);
         }
@@ -205,14 +218,14 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
         int x0 = X_SHIFT_L + 12 * (bw + s) + tabw + s;
         int y0 = Y_SHIFT_T + bh + s;
         Polygon enterPolygon = new Polygon(
-                new int[]{x0, x0 + tabw - s, x0 + tabw - s, x0 + 2 * s, x0 + 2 * s, x0},
+                new int[]{x0, x0 + tabw - 2 * s, x0 + tabw - 2 * s, x0 + 2 * s, x0 + 2 * s, x0},
                 new int[]{y0, y0, y0 + 2 * bh + s, y0 + 2 * bh + s, y0 + bh, y0 + bh},
                 6
         );
 
-        g.setColor(USABLE_BUTTON_COLOR);
+        g.setColor(adjUsableButtonColor);
         g.fillPolygon(enterPolygon);
-        g.setColor(Color.BLACK);
+        g.setColor(adjOutlineColor);
         g.drawPolygon(enterPolygon);
 
         // caps lock
@@ -220,9 +233,9 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
         g.drawRoundRect(X_SHIFT_L, y2, bsw, bh, arc, arc);
         for (int i = 0; i < 12; i++) {
             if (i < 9) {
-                g.setColor(USABLE_BUTTON_COLOR);
+                g.setColor(adjUsableButtonColor);
                 g.fillRoundRect(X_SHIFT_L + i * (bw + s) + bsw + s, y2, bw, bh, arc, arc);
-                g.setColor(Color.BLACK);
+                g.setColor(adjOutlineColor);
             }
             g.drawRoundRect(X_SHIFT_L + i * (bw + s) + bsw + s, y2, bw, bh, arc, arc);
         }
@@ -230,43 +243,50 @@ public class KeyboardCanvas extends JComponent implements Keyboard.OnKeyListener
         // l shift
         int y3 = Y_SHIFT_T + (bh + s) * 3;
 
-        g.setColor(USABLE_BUTTON_COLOR);
+        g.setColor(adjUsableButtonColor);
         g.fillRoundRect(X_SHIFT_L, y3, lshiftw, bh, arc, arc);
-        g.setColor(Color.BLACK);
+        g.setColor(adjOutlineColor);
         g.drawRoundRect(X_SHIFT_L, y3, lshiftw, bh, arc, arc);
         for (int i = 0; i < 11; i++) {
             if (i >= 1 && i < 8) {
-                g.setColor(USABLE_BUTTON_COLOR);
+                g.setColor(adjUsableButtonColor);
                 g.fillRoundRect(X_SHIFT_L + i * (bw + s) + lshiftw + s, y3, bw, bh, arc, arc);
-                g.setColor(Color.BLACK);
+                g.setColor(adjOutlineColor);
             }
             g.drawRoundRect(X_SHIFT_L + i * (bw + s) + lshiftw + s, y3, bw, bh, arc, arc);
         }
-        g.setColor(USABLE_BUTTON_COLOR);
+        g.setColor(adjUsableButtonColor);
         g.fillRoundRect(X_SHIFT_L + 11 * (bw + s) + lshiftw + s, y3, rshiftw, bh, arc, arc);
-        g.setColor(Color.BLACK);
+        g.setColor(adjOutlineColor);
         g.drawRoundRect(X_SHIFT_L + 11 * (bw + s) + lshiftw + s, y3, rshiftw, bh, arc, arc);
 
         // l ctrl
         int y4 = Y_SHIFT_T + (bh + s) * 4;
-        g.setColor(USABLE_BUTTON_COLOR);
+        g.setColor(adjUsableButtonColor);
         g.fillRoundRect(X_SHIFT_L, y4, tabw, bh, arc, arc);
-        g.setColor(Color.BLACK);
+        g.setColor(adjOutlineColor);
         g.drawRoundRect(X_SHIFT_L, y4, tabw, bh, arc, arc);
         g.drawRoundRect(X_SHIFT_L + tabw + s, y4, bw, bh, arc, arc);
         g.drawRoundRect(X_SHIFT_L + tabw + bw + 2 * s, y4, tabw, bh, arc, arc);
 
-        g.setColor(USABLE_BUTTON_COLOR);
+        g.setColor(adjUsableButtonColor);
         g.fillRoundRect(X_SHIFT_L + 2 * (tabw + s) + bw + 2 * s, y4, brakew, bh, arc, arc);
-        g.setColor(Color.BLACK);
+        g.setColor(adjOutlineColor);
         g.drawRoundRect(X_SHIFT_L + 2 * (tabw + s) + bw + 2 * s, y4, brakew, bh, arc, arc);
         g.drawRoundRect(X_SHIFT_L + 2 * (tabw + s) + bw + 4 * s + brakew, y4, tabw, bh, arc, arc);
 
-        g.setColor(USABLE_BUTTON_COLOR);
+        g.setColor(adjUsableButtonColor);
         g.fillRoundRect(X_SHIFT_L + 3 * (tabw + s) + bw + 4 * s + brakew, y4, bw, bh, arc, arc);
-        g.setColor(Color.BLACK);
+        g.setColor(adjOutlineColor);
         g.drawRoundRect(X_SHIFT_L + 3 * (tabw + s) + bw + 4 * s + brakew, y4, bw, bh, arc, arc); // RCTRL
         g.drawRoundRect(X_SHIFT_L + 3 * (tabw + s) + 2 * bw + 5 * s + brakew, y4, bw, bh, arc, arc);
         g.drawRoundRect(X_SHIFT_L + 3 * (tabw + s) + 3 * bw + 6 * s + brakew, y4, tabw, bh, arc, arc);
+    }
+
+    private Color adjustAlpha(Color color) {
+        int r = color.getRed();
+        int g = color.getGreen();
+        int b = color.getBlue();
+        return new Color(r, g, b, this.alpha);
     }
 }

@@ -7,10 +7,8 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
-import net.emustudio.plugins.device.zxspectrum.ula.gui.Keyboard;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow;
 
 import javax.swing.*;
@@ -23,7 +21,6 @@ import java.util.ResourceBundle;
 public class DeviceImpl extends AbstractDevice {
 
     private final boolean guiSupported;
-    private final Keyboard keyboard = new Keyboard();
     private boolean guiIOset = false;
 
     private ULA ula;
@@ -42,7 +39,6 @@ public class DeviceImpl extends AbstractDevice {
         this.ula = new ULA(bus);
         this.passedCyclesMediator = new PassedCyclesMediator(ula);
         bus.addPassedCyclesListener(passedCyclesMediator);
-        keyboard.addOnKeyListener(ula);
         bus.attachDevice(0xFE, ula);
     }
 
@@ -53,7 +49,6 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void destroy() {
-        keyboard.close();
         if (guiIOset || gui != null) {
             gui.destroy();
             gui = null;
@@ -75,9 +70,8 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (!guiIOset) {
-                this.gui = new DisplayWindow(parent, ula, keyboard);
+                this.gui = new DisplayWindow(parent, ula);
                 passedCyclesMediator.setCanvas(gui.getCanvas());
-                GuiUtils.addKeyListener(gui, keyboard);
                 guiIOset = true;
                 this.gui.setVisible(true);
             }

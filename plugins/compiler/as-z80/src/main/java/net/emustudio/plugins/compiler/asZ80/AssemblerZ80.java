@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -95,7 +97,7 @@ public class AssemblerZ80 extends AbstractCompiler {
         notifyInfo(getTitle() + ", version " + getVersion());
 
         Path finalOutputPath = outputPath.orElse(convertInputToOutputPath(inputPath, ".hex"));
-        try (Reader reader = new FileReader(inputPath.toFile())) {
+        try (Reader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8)) {
             AsZ80Lexer lexer = createLexer(CharStreams.fromReader(reader));
             lexer.addErrorListener(new ParserErrorListener(inputPath.toString()));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
