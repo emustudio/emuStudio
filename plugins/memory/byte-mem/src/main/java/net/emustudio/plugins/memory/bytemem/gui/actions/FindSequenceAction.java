@@ -1,3 +1,5 @@
+/* SPDX-FileCopyrightText: 2006-2025 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
 import net.emustudio.emulib.runtime.interaction.Dialogs;
