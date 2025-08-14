@@ -135,10 +135,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
     @SuppressWarnings("unchecked")
     public void deserialize(String filename) throws IOException, ClassNotFoundException {
         rwl.lockWrite(() -> {
-            try {
-                InputStream file = new FileInputStream(filename);
-                InputStream buffer = new BufferedInputStream(file);
-                ObjectInput input = new ObjectInputStream(buffer);
+            try (InputStream file = new FileInputStream(filename);
+                 InputStream buffer = new BufferedInputStream(file);
+                 ObjectInput input = new ObjectInputStream(buffer)) {
 
                 labels.clear();
                 inputs.clear();
@@ -161,8 +160,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
 
                 inputs.addAll((List<RamValue>) input.readObject());
                 memory.putAll((Map<Integer, RamInstruction>) input.readObject());
-
-                input.close();
             } finally {
                 notifyMemoryContentChanged(-1);
                 notifyMemorySizeChanged();

@@ -40,6 +40,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -77,7 +79,7 @@ public class CompilerRASP extends AbstractCompiler {
             notifyInfo(getTitle() + ", version " + getVersion());
 
             Path finalOutputPath = outputPathX.orElse(convertInputToOutputPath(inputPath, ".brasp"));
-            try (Reader reader = new FileReader(inputPath.toFile())) {
+            try (Reader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8)) {
                 org.antlr.v4.runtime.Lexer lexer = createLexer(CharStreams.fromReader(reader));
                 lexer.addErrorListener(new ParserErrorListener());
                 CommonTokenStream tokens = new CommonTokenStream(lexer);

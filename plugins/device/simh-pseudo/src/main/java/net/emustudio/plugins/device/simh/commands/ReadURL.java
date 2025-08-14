@@ -101,6 +101,8 @@ public class ReadURL implements Command {
         try {
             URL url = new URL(theUrl);
             URLConnection urlConnection = url.openConnection();
+            urlConnection.setConnectTimeout(10_000);
+            urlConnection.setReadTimeout(10_000);
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
             String line;

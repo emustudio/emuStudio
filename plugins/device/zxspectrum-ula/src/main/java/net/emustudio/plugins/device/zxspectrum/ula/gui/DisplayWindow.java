@@ -35,7 +35,7 @@ public class DisplayWindow extends JDialog {
     private final static int BOUND_Y = (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_HEIGHT + 2 * MARGIN);
 
     private final DisplayCanvas canvas;
-    private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(70);
+    private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(0);
     private final JPanel statusBar = new JPanel();
 
     public DisplayWindow(JFrame parent, ULA ula) {
@@ -75,23 +75,30 @@ public class DisplayWindow extends JDialog {
         statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.X_AXIS));
         statusBar.setBorder(new BevelBorder(BevelBorder.LOWERED));
 
-        JLabel labelOpacity = new JLabel("Keyboard opacity:");
-        labelOpacity.setHorizontalAlignment(SwingConstants.LEFT);
-        statusBar.add(labelOpacity);
+        JLabel lblOpacity = new JLabel("Keyboard opacity:");
+        lblOpacity.setHorizontalAlignment(SwingConstants.LEFT);
+        statusBar.add(lblOpacity);
 
         JSlider sliderOpacity = new JSlider();
         sliderOpacity.setMinimum(0);
         sliderOpacity.setMaximum(100);
         sliderOpacity.setValue(keyboardCanvas.getAlpha());
-        sliderOpacity.addChangeListener(e -> keyboardCanvas.setAlpha(sliderOpacity.getValue()));
         statusBar.add(sliderOpacity);
+
+        JLabel lblOpacityPercent = new JLabel(keyboardCanvas.getAlpha() + "%");
+        statusBar.add(lblOpacityPercent);
+        sliderOpacity.addChangeListener(e -> {
+            int value = sliderOpacity.getValue();
+            keyboardCanvas.setAlpha(value);
+            lblOpacityPercent.setText(value + "%");
+        });
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addComponent(canvas)
-                        .addComponent(statusBar, GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE));
+                        .addComponent(statusBar, GroupLayout.DEFAULT_SIZE, 400, 400)); // TODO: gap?
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
