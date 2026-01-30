@@ -3,9 +3,10 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.emulation.Automation;
-import net.emustudio.application.gui.ExtendedDialogs;
-import net.emustudio.application.gui.GuiDialogsImpl;
-import net.emustudio.application.gui.NoGuiDialogsImpl;
+import net.emustudio.application.gui.framework.EmuStudioUI;
+import net.emustudio.application.gui.framework.ExtendedDialogs;
+import net.emustudio.application.gui.framework.GuiDialogsImpl;
+import net.emustudio.application.gui.framework.NoGuiDialogsImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.settings.AppSettings;
@@ -21,7 +22,6 @@ import java.awt.*;
 import java.util.Optional;
 
 import static net.emustudio.application.cmdline.Utils.*;
-import static net.emustudio.application.gui.GuiUtils.setupLookAndFeel;
 
 @SuppressWarnings("unused")
 @CommandLine.Command(name = "automation", aliases = {"auto"}, description = "run emulation automation")
@@ -48,7 +48,7 @@ public class AutomationCommand implements Runnable {
         try {
             AppSettings appConfig = loadAppSettings(gui, true);
             if (gui) {
-                setupLookAndFeel(appConfig);
+                EmuStudioUI.initialize(appConfig);
                 dialogs = new GuiDialogsImpl();
             }
 

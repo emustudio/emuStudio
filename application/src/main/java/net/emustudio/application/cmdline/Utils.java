@@ -3,7 +3,7 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.ApplicationApiImpl;
-import net.emustudio.application.gui.ExtendedDialogs;
+import net.emustudio.application.gui.framework.ExtendedDialogs;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;

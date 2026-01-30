@@ -17,12 +17,18 @@ public class AppSettings extends BasicSettingsImpl {
     public final static String KEY_AUTO = EMUSTUDIO_AUTO.substring(EMUSTUDIO_PREFIX.length());
     public final static String KEY_USE_SCHEMA_GRID = "useSchemaGrid";
     public final static String KEY_SCHEMA_GRID_GAP = "schemaGridGap";
-    public final static String KEY_LOOK_AND_FEEL = "lookAndFeel";
+    public final static String KEY_THEME = "theme";
 
     private final static int DEFAULT_GRID_GAP = 20;
 
     public transient final boolean emuStudioAuto;
     public transient final boolean noGUI;
+
+    public enum Theme {
+        LIGHT,
+        DARK,
+        INTELLIJ
+    }
 
     public AppSettings(Config config, boolean nogui, boolean auto) {
         super(config, System.out::println);
@@ -57,8 +63,8 @@ public class AppSettings extends BasicSettingsImpl {
         setInt(KEY_SCHEMA_GRID_GAP, value);
     }
 
-    public Optional<String> getLookAndFeel() {
-        return getString(KEY_LOOK_AND_FEEL);
+    public Optional<Theme> getTheme() {
+        return getString(KEY_THEME).map(Theme::valueOf);
     }
 
     @Override

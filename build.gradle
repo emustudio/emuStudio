@@ -5,7 +5,8 @@ import java.text.SimpleDateFormat
 apply from: 'test_report.gradle'
 
 ext.versions = [
-        slf4j: '2.0.17'
+        slf4j: '2.0.17',
+        flatlaf: '3.5.2'
 ]
 
 ext.libs = [
@@ -13,6 +14,8 @@ ext.libs = [
         cpuTestSuite     : "net.emustudio:cpu-testsuite_12.1:1.2.0-SNAPSHOT",
 
         migLayout        : "com.miglayout:miglayout-swing:11.1",
+        flatLaf          : "com.formdev:flatlaf:${versions.flatlaf}:no-natives",
+        flatLafExtras    : "com.formdev:flatlaf-extras:${versions.flatlaf}",
 
         jcipAnnotations  : "net.jcip:jcip-annotations:1.0",
         antlr            : "org.antlr:antlr4:4.13.2",

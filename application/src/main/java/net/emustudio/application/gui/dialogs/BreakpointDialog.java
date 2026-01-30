@@ -2,19 +2,21 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.ConstantSizeButton;
+import net.emustudio.application.gui.framework.EDialog;
+import net.emustudio.application.gui.framework.EPanel;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.interaction.Dialogs;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.util.Objects;
+
+import static net.emustudio.application.gui.framework.EmuStudioUI.*;
 
 /**
  * The breakpoint dialog - it asks user for the address where should be
  * set or unset the breakpoint.
  */
-public class BreakpointDialog extends JDialog {
+public class BreakpointDialog extends EDialog {
     private final Dialogs dialogs;
 
     private int address = -1; // if adr == -1 then it means cancel
@@ -22,13 +24,11 @@ public class BreakpointDialog extends JDialog {
     private JTextField txtAddress;
 
     public BreakpointDialog(JFrame parent, Dialogs dialogs) {
-        super(parent, true);
+        super(parent, "Set/unset breakpoint", true);
 
         this.dialogs = Objects.requireNonNull(dialogs);
-
-        initComponents();
-        setLocationRelativeTo(parent);
-        txtAddress.grabFocus();
+        setResizable(false);
+        buildContent();
     }
 
     public int getAddress() {
@@ -39,43 +39,24 @@ public class BreakpointDialog extends JDialog {
         return set;
     }
 
-    private void initComponents() {
-        JLabel lblSetUnset = new JLabel();
-        txtAddress = new JTextField();
-        ConstantSizeButton btnSet = new ConstantSizeButton(this::btnSetActionPerformed);
-        ConstantSizeButton btnUnset = new ConstantSizeButton(this::btnUnsetActionPerformed);
+    @Override
+    protected JComponent initializeComponents() {
+        EPanel panel = EPanel.vertical();
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        panel.add(label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
 
-        setTitle("Set/unset breakpoint");
-        setResizable(false);
+        txtAddress = textField("0");
+        panel.add(txtAddress, "growx, wrap, gapbottom 10");
 
-        lblSetUnset.setText("Set/unset breakpoint to address:");
-        txtAddress.setText("0");
+        EPanel buttonPanel = EPanel.buttonBar();
+        buttonPanel.add(button("Unset", this::btnUnsetActionPerformed), "");
+        buttonPanel.add(button("Set", this::btnSetActionPerformed), "");
 
-        btnSet.setText("Set");
-        btnUnset.setText("Unset");
+        panel.add(buttonPanel, "growx, span");
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        SwingUtilities.invokeLater(() -> txtAddress.grabFocus());
 
-        layout.setHorizontalGroup(layout.createSequentialGroup().addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(lblSetUnset).addComponent(txtAddress)
-                        .addGroup(GroupLayout.Alignment.CENTER, layout.createSequentialGroup()
-                                .addComponent(btnUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnSet))).addContainerGap());
-        layout.setVerticalGroup(layout.createSequentialGroup().addContainerGap().addComponent(lblSetUnset)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
-                        GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(btnUnset).addComponent(btnSet)).addContainerGap());
-
-
-        pack();
+        return panel;
     }
 
     private boolean parseAddress() {
@@ -89,14 +70,14 @@ public class BreakpointDialog extends JDialog {
         return true;
     }
 
-    private void btnSetActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnSetActionPerformed() {
         if (parseAddress()) {
             set = true;
             dispose();
         }
     }
 
-    private void btnUnsetActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnUnsetActionPerformed() {
         if (parseAddress()) {
             set = false;
             dispose();

@@ -2,11 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import net.emustudio.application.gui.framework.EDialog;
+import net.emustudio.application.gui.framework.EPanel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
@@ -15,7 +16,7 @@ import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
  * This is the dialog form that displays when the emuStudio automatization
  * is running.
  */
-public class AutoDialog extends JDialog {
+public class AutoDialog extends EDialog {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/motherboard-icon.gif";
     private final VirtualComputer computer;
 
@@ -23,47 +24,31 @@ public class AutoDialog extends JDialog {
     private final JButton btnStop = new JButton("Stop");
 
     public AutoDialog(VirtualComputer computer) {
+        super((JFrame) null, "Automatic Emulation", false);
         this.computer = Objects.requireNonNull(computer);
-
-        initComponents();
-        setLocationRelativeTo(null);
+        setResizable(false);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        buildContent();
     }
 
-    private void initComponents() {
-        JLabel lblPerforming = new JLabel(loadIcon(ICON_FILE));
-        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        setResizable(false);
+    @Override
+    protected JComponent initializeComponents() {
+        EPanel panel = EPanel.vertical();
 
+        JLabel lblPerforming = new JLabel(loadIcon(ICON_FILE));
         lblPerforming.setFont(lblPerforming.getFont().deriveFont(lblPerforming.getFont().getStyle() | java.awt.Font.BOLD));
         lblPerforming.setText("Running automatic emulation, please wait...");
 
         lblAction.setText("Initializing...");
 
-        btnStop.addActionListener(this::btnStopActionPerformed);
+        btnStop.addActionListener(e -> computer.getCPU().ifPresent(CPU::stop));
         btnStop.setEnabled(false);
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(lblAction, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(lblPerforming)
-                                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                        .addComponent(btnStop))
-                        ).addContainerGap());
-        layout.setVerticalGroup(
-                layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(lblPerforming)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lblAction)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnStop)
-                        .addContainerGap());
+        panel.add(lblPerforming, "wrap, gapbottom 10");
+        panel.add(lblAction, "growx, wrap, gapbottom 10");
+        panel.add(btnStop, "align right");
 
-        pack();
+        return panel;
     }
 
     /**
@@ -77,9 +62,5 @@ public class AutoDialog extends JDialog {
         lblAction.setText(action);
         lblAction.repaint();
         btnStop.setEnabled(enableStopButton);
-    }
-
-    private void btnStopActionPerformed(ActionEvent e) {
-        computer.getCPU().ifPresent(CPU::stop);
     }
 }

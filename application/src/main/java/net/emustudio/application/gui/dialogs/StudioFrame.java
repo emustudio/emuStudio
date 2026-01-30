@@ -131,14 +131,8 @@ public class StudioFrame extends JFrame {
         JMenuBar mainMenu = setupMainMenu();
         setJMenuBar(mainMenu);
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+        getContentPane().setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[grow]", "[grow]"));
+        getContentPane().add(tabbedPane, "grow");
     }
 
     private JMenuBar setupMainMenu() {
