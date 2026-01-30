@@ -43,6 +43,8 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             new Color(0xFF, 0xFF, 0xFF) // white
     };
 
+    private static final Color KEYBOARD_OVERLAY_COLOR = new Color(0, 0, 0, 127); // Cache the color
+
     private final AtomicBoolean painting = new AtomicBoolean(false);
     private volatile Dimension size = new Dimension(0, 0);
 
@@ -165,18 +167,24 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 do {
                     do {
                         Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
+                        // Disable expensive rendering hints for maximum performance
                         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+                        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
                         graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+                        graphics.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 
                         graphics.drawImage(
                                 screenImage, MARGIN, MARGIN,
                                 (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM), null);
 
-                        Color color = graphics.getColor();
-                        graphics.setColor(new Color(0, 0, 0, 127));
-                        graphics.translate(0, SCREEN_IMAGE_HEIGHT * ZOOM - KeyboardCanvas.KEYBOARD_HEIGHT + MARGIN);
-                        keyboardCanvas.paint(graphics);
-                        graphics.setColor(color);
+                        // Only draw keyboard overlay if explicitly enabled (disabled by default for performance)
+                        if (keyboardCanvas.getAlpha() > 0) {
+                            Color color = graphics.getColor();
+                            graphics.setColor(KEYBOARD_OVERLAY_COLOR);
+                            graphics.translate(0, SCREEN_IMAGE_HEIGHT * ZOOM - KeyboardCanvas.KEYBOARD_HEIGHT + MARGIN);
+                            keyboardCanvas.paint(graphics);
+                            graphics.setColor(color);
+                        }
 
                         graphics.dispose();
 

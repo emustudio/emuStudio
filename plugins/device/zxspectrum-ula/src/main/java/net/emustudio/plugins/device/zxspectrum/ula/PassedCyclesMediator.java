@@ -6,7 +6,6 @@ import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus.LINE_CYCLES;
 import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
@@ -32,7 +31,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
     private long lineCycles = 0;
     private int lastLinePainted = 0;
 
-    private final AtomicReference<DisplayCanvas> canvas = new AtomicReference<>();
+    private volatile DisplayCanvas canvas; // Use volatile instead of AtomicReference for better performance
     private final ULA ula;
 
     public PassedCyclesMediator(ULA ula) {
@@ -40,7 +39,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
     }
 
     public void setCanvas(DisplayCanvas canvas) {
-        this.canvas.set(canvas);
+        this.canvas = canvas;
     }
 
     @Override
@@ -48,7 +47,8 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
         frameCycles += cycles;
         lineCycles += cycles;
 
-        DisplayCanvas canvas = this.canvas.get();
+        // Draw completed lines in batch
+        DisplayCanvas canvas = this.canvas; // Read volatile once
         if (canvas != null) {
             if (lineCycles >= LINE_CYCLES) {
                 canvas.drawNextLine(lastLinePainted++);
