@@ -145,10 +145,10 @@ public class KeyboardCanvas extends JComponent implements KeyboardDispatcher.OnK
 
     public void paint(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-        // we must set RenderingHints before any drawing
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        // Disable expensive rendering for maximum performance
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 
         drawKeyboard(g2d);
 
@@ -167,14 +167,11 @@ public class KeyboardCanvas extends JComponent implements KeyboardDispatcher.OnK
                 text = NO_SHIFT_LABELS[i];
             }
 
-            GlyphVector glyphVector = g2d.getFont().createGlyphVector(g2d.getFontRenderContext(), text);
-            Shape textShape = glyphVector.getOutline();
-
+            // Use simple text drawing instead of expensive GlyphVector
             int sw = g2d.getFontMetrics().stringWidth(text);
-
             g2d.translate(KEY_MAP[i][0] - sw / 2.0, KEY_MAP[i][1]);
             g2d.setColor(adjustAlpha(outlineColor));
-            g2d.fill(textShape);
+            g2d.drawString(text, 0, 0);
             g2d.translate(sw / 2.0, 0);
         }
     }
