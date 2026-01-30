@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import net.emustudio.application.gui.framework.EDialog;
+import net.emustudio.application.gui.framework.EPanel;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.settings.AppSettings;
@@ -14,13 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
-public class ViewComputerDialog extends JDialog {
+public class ViewComputerDialog extends EDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);
     private final static String ICON_COMPILER = "/net/emustudio/application/gui/dialogs/compile.png";
     private final static String ICON_CPU = "/net/emustudio/application/gui/dialogs/cpu.gif";
@@ -42,12 +43,12 @@ public class ViewComputerDialog extends JDialog {
     private JLabel lblVersion;
     private JScrollPane scrollPane;
     private JTextArea txtDescription;
+
     public ViewComputerDialog(JFrame parent, VirtualComputer computer, AppSettings appSettings, Dialogs dialogs) {
-        super(parent, true);
+        super(parent, "Computer information preview", true);
         this.computer = Objects.requireNonNull(computer);
 
-        initComponents();
-        setLocationRelativeTo(parent);
+        buildContent();
 
         lblComputerName.setText(computer.getComputerConfig().getName());
 
@@ -112,17 +113,16 @@ public class ViewComputerDialog extends JDialog {
         txtDescription.setVisible(visible);
     }
 
-    private void initComponents() {
+    @Override
+    protected JComponent initializeComponents() {
         ButtonGroup buttonGroup1 = new ButtonGroup();
         lblComputerName = new JLabel();
         JTabbedPane jTabbedPane1 = new JTabbedPane();
-        JPanel panelTabInfo = new JPanel();
         JToolBar jToolBar1 = new JToolBar();
         btnCompiler = new JToggleButton(loadIcon(ICON_COMPILER));
         JToggleButton btnCPU = new JToggleButton(loadIcon(ICON_CPU));
         btnMemory = new JToggleButton(loadIcon(ICON_MEMORY));
         btnDevice = new JToggleButton(loadIcon(ICON_DEVICE));
-        JPanel jPanel2 = new JPanel();
         lblSelectDevice = new JLabel();
         cmbDevice = new JComboBox<>();
         lblName = new JLabel();
@@ -132,15 +132,9 @@ public class ViewComputerDialog extends JDialog {
         JPanel panelDescription = new JPanel();
         JScrollPane jScrollPane1 = new JScrollPane();
         txtDescription = new JTextArea();
-        JPanel jPanel1 = new JPanel();
         JToolBar jToolBar2 = new JToolBar();
         JButton btnSaveSchema = new JButton(loadIcon(ICON_SAVE));
         scrollPane = new JScrollPane();
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        setTitle("Computer information preview");
 
         lblComputerName.setFont(lblComputerName.getFont().deriveFont(lblComputerName.getFont().getStyle() | java.awt.Font.BOLD, lblComputerName.getFont().getSize() + 3));
         lblComputerName.setHorizontalAlignment(SwingConstants.CENTER);
@@ -194,85 +188,24 @@ public class ViewComputerDialog extends JDialog {
         txtDescription.setWrapStyleWord(true);
         jScrollPane1.setViewportView(txtDescription);
 
-        GroupLayout panelDescriptionLayout = new GroupLayout(panelDescription);
-        panelDescription.setLayout(panelDescriptionLayout);
-        panelDescriptionLayout.setHorizontalGroup(
-                panelDescriptionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelDescriptionLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jScrollPane1)
-                                .addContainerGap())
-        );
-        panelDescriptionLayout.setVerticalGroup(
-                panelDescriptionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelDescriptionLayout.createSequentialGroup()
-                                .addComponent(jScrollPane1)
-                                .addContainerGap())
-        );
+        EPanel descriptionPanel = new EPanel("insets dialog", "[grow]", "[grow]");
+        descriptionPanel.setBorder(BorderFactory.createTitledBorder("Short description"));
+        descriptionPanel.add(jScrollPane1, "grow");
 
-        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(panelDescription, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                                .addComponent(lblSelectDevice)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(cmbDevice, 0, 377, Short.MAX_VALUE))
-                                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addComponent(lblName)
-                                                        .addComponent(lblVersion)
-                                                        .addComponent(lblCopyright)
-                                                        .addComponent(lblFileName))
-                                                .addGap(0, 0, Short.MAX_VALUE)))
-                                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblSelectDevice)
-                                        .addComponent(cmbDevice, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addGap(18, 18, 18)
-                                .addComponent(lblName)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblFileName)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(lblVersion)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblCopyright)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(panelDescription, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
+        EPanel infoPanel = new EPanel("insets dialog", "[grow]", "[][][][][][][][grow]");
+        infoPanel.add(lblSelectDevice, "split 2");
+        infoPanel.add(cmbDevice, "grow, wrap");
+        infoPanel.add(lblName, "wrap");
+        infoPanel.add(lblFileName, "wrap");
+        infoPanel.add(lblVersion, "wrap");
+        infoPanel.add(lblCopyright, "wrap");
+        infoPanel.add(descriptionPanel, "grow");
 
-        GroupLayout panelTabInfoLayout = new GroupLayout(panelTabInfo);
-        panelTabInfo.setLayout(panelTabInfoLayout);
-        panelTabInfoLayout.setHorizontalGroup(
-                panelTabInfoLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelTabInfoLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
-        panelTabInfoLayout.setVerticalGroup(
-                panelTabInfoLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelTabInfoLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(panelTabInfoLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jToolBar1, GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                                        .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
+        EPanel tabInfoPanel = new EPanel("insets dialog", "[][grow]", "[grow]");
+        tabInfoPanel.add(jToolBar1, "grow");
+        tabInfoPanel.add(infoPanel, "grow");
 
-        jTabbedPane1.addTab("Computer info", panelTabInfo);
+        jTabbedPane1.addTab("Computer info", tabInfoPanel);
 
         jToolBar2.setFloatable(false);
         jToolBar2.setOrientation(SwingConstants.VERTICAL);
@@ -285,51 +218,17 @@ public class ViewComputerDialog extends JDialog {
         btnSaveSchema.addActionListener(this::btnSaveSchemaActionPerformed);
         jToolBar2.add(btnSaveSchema);
 
-        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jToolBar2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                        .addComponent(scrollPane)
-                                        .addComponent(jToolBar2, GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
+        EPanel schemaPanel = new EPanel("insets dialog", "[][grow]", "[grow]");
+        schemaPanel.add(jToolBar2, "grow");
+        schemaPanel.add(scrollPane, "grow");
 
-        jTabbedPane1.addTab("Abstract schema", jPanel1);
+        jTabbedPane1.addTab("Abstract schema", schemaPanel);
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jTabbedPane1)
-                                        .addComponent(lblComputerName, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
-                                .addComponent(lblComputerName)
-                                .addGap(18, 18, 18)
-                                .addComponent(jTabbedPane1)
-                                .addContainerGap())
-        );
+        EPanel mainPanel = new EPanel("insets dialog", "[grow]", "[][grow]");
+        mainPanel.add(lblComputerName, "growx, wrap");
+        mainPanel.add(jTabbedPane1, "grow");
 
-        pack();
+        return mainPanel;
     }
 
     private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {

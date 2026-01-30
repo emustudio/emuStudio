@@ -3,6 +3,8 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
+import net.emustudio.application.gui.framework.EPanel;
+import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.actions.emulator.*;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -65,6 +67,8 @@ public class EmulatorPanel extends JPanel {
         paneDebug.setViewportView(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         debugTable.setFillsViewportHeight(true);
+        EmuStudioUI.styleScrollPane(paneDebug);
+        EmuStudioUI.styleTable(debugTable);
 
         paneDebug.addComponentListener(new ComponentAdapter() {
             @Override
@@ -99,24 +103,11 @@ public class EmulatorPanel extends JPanel {
 
         panelPages = PagesPanel.create(debugTableModel, dialogs);
 
-        JPanel debuggerPanel = new JPanel();
+        EPanel debuggerPanel = new EPanel("insets dialog", "[grow]", "[][grow][]");
         debuggerPanel.setBorder(BorderFactory.createTitledBorder("Debugger"));
-        GroupLayout debuggerPanelLayout = new GroupLayout(debuggerPanel);
-
-        debuggerPanelLayout.setAutoCreateGaps(true);
-        debuggerPanelLayout.setAutoCreateContainerGaps(true);
-
-        debuggerPanel.setLayout(debuggerPanelLayout);
-        debuggerPanelLayout.setHorizontalGroup(
-                debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(toolDebug)
-                        .addComponent(paneDebug)
-                        .addComponent(panelPages));
-        debuggerPanelLayout.setVerticalGroup(
-                debuggerPanelLayout.createSequentialGroup()
-                        .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(paneDebug, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(panelPages, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE));
+        debuggerPanel.add(toolDebug, "growx, wrap");
+        debuggerPanel.add(paneDebug, "grow, wrap");
+        debuggerPanel.add(panelPages, "growx");
 
         this.showDeviceSettingsAction = new ShowDeviceSettingsAction(parent, computer, dialogs, lstDevices::getSelectedIndex);
         this.showDeviceGuiAction = new ShowDeviceGuiAction(parent, computer, dialogs, lstDevices::getSelectedIndex);
@@ -150,60 +141,42 @@ public class EmulatorPanel extends JPanel {
             }
         });
 
-        JPanel peripheralPanel = new JPanel();
+        EPanel peripheralPanel = new EPanel("insets dialog", "[grow]", "[grow][]");
         peripheralPanel.setBorder(BorderFactory.createTitledBorder("Peripheral devices"));
         JScrollPane paneDevices = new JScrollPane();
         paneDevices.setViewportView(lstDevices);
+        EmuStudioUI.styleList(lstDevices);
+        EmuStudioUI.styleScrollPane(paneDevices);
 
         JButton btnShowSettings = new JButton(showDeviceSettingsAction);
         JButton btnShowGUI = new JButton(showDeviceGuiAction);
 
-        GroupLayout peripheralPanelLayout = new GroupLayout(peripheralPanel);
-        peripheralPanel.setLayout(peripheralPanelLayout);
-        peripheralPanelLayout.setHorizontalGroup(
-                peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(paneDevices)
-                        .addGroup(GroupLayout.Alignment.TRAILING,
-                                peripheralPanelLayout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addComponent(btnShowSettings)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(btnShowGUI)
-                                        .addContainerGap()));
-        peripheralPanelLayout.setVerticalGroup(
-                peripheralPanelLayout.createSequentialGroup()
-                        .addComponent(paneDevices)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(btnShowSettings)
-                                .addComponent(btnShowGUI)));
+        peripheralPanel.add(paneDevices, "grow, wrap");
+        peripheralPanel.add(btnShowSettings, "split 2, sizegroup btns, tag ok");
+        peripheralPanel.add(btnShowGUI, "sizegroup btns, tag cancel");
 
         splitPerDebug.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         splitPerDebug.setDividerLocation(500);
         splitPerDebug.setOrientation(JSplitPane.VERTICAL_SPLIT);
         splitPerDebug.setAutoscrolls(true);
         splitPerDebug.setContinuousLayout(true);
+        splitPerDebug.setResizeWeight(1.0);
         splitPerDebug.setTopComponent(debuggerPanel);
         splitPerDebug.setRightComponent(peripheralPanel);
+        EmuStudioUI.styleSplitPane(splitPerDebug);
 
         JSplitPane splitLeftRight = new JSplitPane();
         splitLeftRight.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         splitLeftRight.setContinuousLayout(true);
         splitLeftRight.setFocusable(false);
         splitLeftRight.setDividerLocation(1.0);
+        splitLeftRight.setResizeWeight(1.0);
         splitLeftRight.setRightComponent(statusWindow);
         splitLeftRight.setLeftComponent(splitPerDebug);
+        EmuStudioUI.styleSplitPane(splitLeftRight);
 
-        GroupLayout panelEmulatorLayout = new GroupLayout(this);
-        setLayout(panelEmulatorLayout);
-        panelEmulatorLayout.setHorizontalGroup(
-                panelEmulatorLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(splitLeftRight));
-        panelEmulatorLayout.setVerticalGroup(
-                panelEmulatorLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(splitLeftRight, 0, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
-                        .addContainerGap());
+        setLayout(new net.miginfocom.swing.MigLayout("insets dialog, fill", "[grow]", "[grow]"));
+        add(splitLeftRight, "grow");
 
         this.memoryListener = new MemoryContext.MemoryListener() {
             @Override

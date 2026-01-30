@@ -31,6 +31,10 @@ dependencies {
   extraLibs libs.logback
   extraLibs libs.slf4JApi
   extraLibs libs.migLayout
+  extraLibs libs.flatLaf
+  extraLibs(libs.flatLafExtras) {
+    exclude group: 'com.formdev', module: 'flatlaf'
+  }
 
   providedRuntime project(":plugins:compiler:as-8080")
   providedRuntime project(":plugins:compiler:as-ssem")
@@ -67,7 +71,6 @@ dependencies {
   testImplementation libs.mockito
   testImplementation libs.slf4JSimple
 }
-
 
 application {
   applicationName = 'emuStudio'
@@ -154,6 +157,18 @@ startScripts {
     def unixScriptFile = file getUnixScript()
     windowsScriptFile.text = windowsScriptFile.text.replace('%APP_HOME%\\lib\\logback.xml', '.')
     unixScriptFile.text = unixScriptFile.text.replace('$APP_HOME/lib/logback.xml', '.')
+
+    // --- NEW: Wayland/Sway fix for AWT (XWayland) ---
+    def unixText = unixScriptFile.text
+    if (!unixText.contains('_JAVA_AWT_WM_NONREPARENTING')) {
+      unixText = unixText.replaceFirst(
+              /(?m)^#!.*$/,
+              '#!/usr/bin/env sh\n\n' +
+                      '# Workaround for Swing/AWT resizing under Sway/Wayland (XWayland)\n' +
+                      'export _JAVA_AWT_WM_NONREPARENTING=1\n'
+      )
+      unixScriptFile.text = unixText
+    }
   }
 }
 

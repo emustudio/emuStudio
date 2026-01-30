@@ -2,7 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.ToolbarToggleButton;
+import net.emustudio.application.gui.framework.EDialog;
+import net.emustudio.application.gui.framework.EPanel;
+import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.DrawingPanel.Tool;
 import net.emustudio.application.gui.schema.Schema;
@@ -28,7 +30,7 @@ import java.util.Optional;
 
 import static net.emustudio.application.settings.ConfigFiles.listPluginFiles;
 
-public class SchemaEditorDialog extends JDialog implements KeyListener {
+public class SchemaEditorDialog extends EDialog implements KeyListener {
     private final static Logger LOGGER = LoggerFactory.getLogger(SchemaEditorDialog.class);
     private final static PluginComboModel EMPTY_MODEL = new PluginComboModel(Collections.emptyList());
 
@@ -37,36 +39,28 @@ public class SchemaEditorDialog extends JDialog implements KeyListener {
 
     private DrawingPanel panel;
     private boolean buttonSelected = false;
-    private ToolbarToggleButton btnBidirection;
-    private ToolbarToggleButton btnCPU;
-    private ToolbarToggleButton btnCompiler;
-    private ToolbarToggleButton btnDelete;
-    private ToolbarToggleButton btnDevice;
-    private ToolbarToggleButton btnLine;
-    private ToolbarToggleButton btnRAM;
-    private ToolbarToggleButton btnUseGrid;
+    private JToggleButton btnBidirection;
+    private JToggleButton btnCPU;
+    private JToggleButton btnCompiler;
+    private JToggleButton btnDelete;
+    private JToggleButton btnDevice;
+    private JToggleButton btnLine;
+    private JToggleButton btnRAM;
+    private JToggleButton btnUseGrid;
     private JComboBox<String> cmbPlugin;
     private ButtonGroup groupDraw;
     private JScrollPane scrollScheme;
     private JSlider sliderGridGap;
 
     public SchemaEditorDialog(JDialog parent, Schema schema, Dialogs dialogs) {
-        super(parent, true);
+        super(parent, "Computer editor [" + schema.getComputerConfig().getName() + "]", true);
 
         this.schema = Objects.requireNonNull(schema);
         this.dialogs = Objects.requireNonNull(dialogs);
 
-        initialize();
-        setTitle("Computer editor [" + schema.getComputerConfig().getName() + "]");
-        setLocationRelativeTo(parent);
-    }
+        buildContent();
 
-    public Schema getSchema() {
-        return schema;
-    }
-
-    private void initialize() {
-        initComponents();
+        // Additional initialization after buildContent is called
         btnUseGrid.setSelected(schema.useSchemaGrid());
         panel = new DrawingPanel(this.schema);
         scrollScheme.setViewportView(panel);
@@ -106,7 +100,12 @@ public class SchemaEditorDialog extends JDialog implements KeyListener {
     public void keyReleased(KeyEvent e) {
     }
 
-    private void initComponents() {
+    public Schema getSchema() {
+        return schema;
+    }
+
+    @Override
+    protected JComponent initializeComponents() {
 
         groupDraw = new ButtonGroup();
         JToolBar toolDraw = new JToolBar();
@@ -116,44 +115,44 @@ public class SchemaEditorDialog extends JDialog implements KeyListener {
                 "Save & Close"
         );
         JToolBar.Separator separator1 = new JToolBar.Separator();
-        btnCompiler = new ToolbarToggleButton(
+        btnCompiler = EmuStudioUI.toolbarToggleButton(
                 this::btnCompilerActionPerformed,
                 this::btnCompilerItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/compile.png",
                 "Set compiler"
         );
-        btnCPU = new ToolbarToggleButton(
+        btnCPU = EmuStudioUI.toolbarToggleButton(
                 this::btnCPUActionPerformed,
                 this::btnCPUItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/cpu.gif",
                 "Set CPU"
         );
-        btnRAM = new ToolbarToggleButton(
+        btnRAM = EmuStudioUI.toolbarToggleButton(
                 this::btnRAMActionPerformed,
                 this::btnRAMItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/ram.gif",
                 "Set operating memory"
         );
-        btnDevice = new ToolbarToggleButton(
+        btnDevice = EmuStudioUI.toolbarToggleButton(
                 this::btnDeviceActionPerformed,
                 this::btnDeviceItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/device.png",
                 "Add device"
         );
         JToolBar.Separator separator2 = new JToolBar.Separator();
-        btnLine = new ToolbarToggleButton(
+        btnLine = EmuStudioUI.toolbarToggleButton(
                 this::btnLineActionPerformed,
                 this::btnLineItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/connection.png",
                 "Add connection"
         );
-        btnBidirection = new ToolbarToggleButton(
+        btnBidirection = EmuStudioUI.toolbarToggleButton(
                 this::btnBidirectionActionPerformed,
                 "/net/emustudio/application/gui/dialogs/bidirection.gif",
                 "Bidirectional connection"
         );
         JToolBar.Separator separator3 = new JToolBar.Separator();
-        btnDelete = new ToolbarToggleButton(
+        btnDelete = EmuStudioUI.toolbarToggleButton(
                 this::btnDeleteActionPerformed,
                 this::btnDeleteItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/edit-delete.png",
@@ -162,17 +161,13 @@ public class SchemaEditorDialog extends JDialog implements KeyListener {
         JToolBar.Separator separator4 = new JToolBar.Separator();
         cmbPlugin = new JComboBox<>();
         JToolBar.Separator separator5 = new JToolBar.Separator();
-        btnUseGrid = new ToolbarToggleButton(
+        btnUseGrid = EmuStudioUI.toolbarToggleButton(
                 this::btnUseGridActionPerformed,
                 "/net/emustudio/application/gui/dialogs/grid_memory.gif",
                 "Set/unset using grid"
         );
         scrollScheme = new JScrollPane();
         sliderGridGap = new JSlider();
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Virtual computer editor");
-        setIconImages(null);
 
         toolDraw.setFloatable(false);
         toolDraw.setRollover(true);
@@ -215,34 +210,12 @@ public class SchemaEditorDialog extends JDialog implements KeyListener {
         sliderGridGap.setValue(30);
         sliderGridGap.addChangeListener(this::sliderGridGapStateChanged);
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(toolDraw, GroupLayout.DEFAULT_SIZE, 641, Short.MAX_VALUE)
-                                                .addContainerGap())
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(scrollScheme, GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(sliderGridGap, GroupLayout.PREFERRED_SIZE, 31, GroupLayout.PREFERRED_SIZE))))
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(toolDraw, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                        .addComponent(sliderGridGap, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
-                                        .addComponent(scrollScheme, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
+        EPanel mainPanel = new EPanel("insets dialog", "[grow]", "[][grow]");
+        mainPanel.add(toolDraw, "growx, wrap");
+        mainPanel.add(scrollScheme, "grow");
+        mainPanel.add(sliderGridGap, "w 31!");
 
-        pack();
+        return mainPanel;
     }
 
     private void sliderGridGapStateChanged(ChangeEvent evt) {

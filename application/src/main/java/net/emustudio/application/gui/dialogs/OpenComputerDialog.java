@@ -2,6 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import net.emustudio.application.gui.framework.EDialog;
+import net.emustudio.application.gui.framework.EFadingBorder;
+import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.actions.opencomputer.*;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
@@ -14,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -25,9 +29,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static net.emustudio.application.Resources.getVersion;
+import static net.emustudio.application.gui.dialogs.AboutDialog.LOGO_FILE;
 import static net.emustudio.application.settings.ConfigFiles.loadConfigurations;
+import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
 
-public class OpenComputerDialog extends JDialog {
+public class OpenComputerDialog extends EDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);
 
     private final ConfigurationsListModel configurationsModel;
@@ -46,6 +53,7 @@ public class OpenComputerDialog extends JDialog {
 
     public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs,
                               Consumer<ComputerConfig> selectComputer) {
+        super((java.awt.Frame) null, "emuStudio - Open virtual computer", true);
         this.configurationsModel = new ConfigurationsListModel();
         this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -58,11 +66,11 @@ public class OpenComputerDialog extends JDialog {
         renameComputerAction = new RenameComputerAction(dialogs, this::update, lstConfig);
         saveSchemaAction = new SaveSchemaAction(preview);
 
-        setModal(true);
-        initComponents();
-        setLocationRelativeTo(null);
-
         lstConfig.setModel(configurationsModel);
+
+        buildContent();
+        setMinimumSize(new Dimension(700, 500));
+        setSize(900, 650);
     }
 
     void update() {
@@ -71,7 +79,8 @@ public class OpenComputerDialog extends JDialog {
         lstConfigValueChanged(null);
     }
 
-    private void initComponents() {
+    @Override
+    protected JComponent initializeComponents() {
         JSplitPane splitConfig = new JSplitPane();
         JPanel panelConfig = new JPanel();
         JScrollPane configScrollPane = new JScrollPane();
@@ -81,22 +90,12 @@ public class OpenComputerDialog extends JDialog {
         ToolbarButton btnEdit = new ToolbarButton(editComputerAction);
         ToolbarButton btnRename = new ToolbarButton(renameComputerAction);
         ToolbarButton btnSaveSchemaImage = new ToolbarButton(saveSchemaAction);
-        JPanel panelPreview = new JPanel();
         JScrollPane scrollPreview = new JScrollPane();
-        JLabel jLabel1 = new JLabel();
         JButton btnOpen = new JButton();
         JButton btnClose = new JButton();
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        setTitle("emuStudio - Open virtual computer");
-
-        splitConfig.setDividerLocation(300);
-        splitConfig.setMinimumSize(new java.awt.Dimension(50, 102));
-        splitConfig.setPreferredSize(new java.awt.Dimension(400, 300));
-
-        panelConfig.setPreferredSize(new java.awt.Dimension(200, 300));
+        splitConfig.setResizeWeight(0.3);
+        EmuStudioUI.styleSplitPane(splitConfig);
 
         lstConfig.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -107,9 +106,13 @@ public class OpenComputerDialog extends JDialog {
         lstConfig.registerKeyboardAction(openComputerAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         configScrollPane.setViewportView(lstConfig);
+        configScrollPane.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Component.borderColor")));
+        EmuStudioUI.styleList(lstConfig);
 
         toolConfig.setFloatable(false);
         toolConfig.setRollover(true);
+        toolConfig.setOrientation(JToolBar.VERTICAL);
+        EmuStudioUI.styleToolbar(toolConfig);
 
         toolConfig.add(btnAdd);
         toolConfig.add(btnDelete);
@@ -117,81 +120,72 @@ public class OpenComputerDialog extends JDialog {
         toolConfig.add(btnRename);
         toolConfig.add(btnSaveSchemaImage);
 
-        GroupLayout panelConfigLayout = new GroupLayout(panelConfig);
-        panelConfig.setLayout(panelConfigLayout);
-        panelConfigLayout.setHorizontalGroup(
-                panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(toolConfig, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
-                        .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
-        );
-        panelConfigLayout.setVerticalGroup(
-                panelConfigLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelConfigLayout.createSequentialGroup()
-                                .addComponent(toolConfig, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(configScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE))
-        );
-
+        panelConfig.setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[][grow]", "[grow]"));
+        panelConfig.add(toolConfig, "growy");
+        panelConfig.add(configScrollPane, "grow");
         splitConfig.setLeftComponent(panelConfig);
 
         scrollPreview.setViewportView(preview);
+        EmuStudioUI.styleScrollPane(scrollPreview);
+        splitConfig.setRightComponent(scrollPreview);
 
-        GroupLayout panelPreviewLayout = new GroupLayout(panelPreview);
-        panelPreview.setLayout(panelPreviewLayout);
-        panelPreviewLayout.setHorizontalGroup(
-                panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
-        );
-        panelPreviewLayout.setVerticalGroup(
-                panelPreviewLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelPreviewLayout.createSequentialGroup()
-                                .addComponent(scrollPreview, GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE))
-        );
+        // Create logo panel
+        JLabel lblLogo = new JLabel(loadIcon(LOGO_FILE));
+        lblLogo.setBackground(Color.WHITE);
+        lblLogo.setBorder(new EFadingBorder(10, Color.WHITE));
+        lblLogo.setOpaque(false);
 
-        splitConfig.setRightComponent(panelPreview);
+        JLabel lblIntroduction = new JLabel("<html><h1>Welcome to emuStudio!</h1><i>Version:" + getVersion() + "</i>");
+        lblIntroduction.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        jLabel1.setText("Please select a virtual configuration that will be emulated:");
+        JLabel lblPlease = new JLabel("Please select computer you wish to emulate:");
+        lblPlease.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        btnOpen.setFont(btnOpen.getFont().deriveFont(btnOpen.getFont().getStyle() | java.awt.Font.BOLD));
+        // Create a vertical panel for introduction and selection prompt
+        JPanel textPanel = new JPanel(new java.awt.BorderLayout());
+        textPanel.add(lblIntroduction, java.awt.BorderLayout.NORTH);
+        textPanel.add(lblPlease, java.awt.BorderLayout.CENTER);
+
+        // Create header panel with logo and introduction
+        JPanel headerPanel = new JPanel(new java.awt.BorderLayout(10, 0));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15)); // Top, Left, Bottom, Right
+        headerPanel.add(lblLogo, java.awt.BorderLayout.WEST);
+        headerPanel.add(textPanel, java.awt.BorderLayout.CENTER);
+
         btnOpen.setText("Open computer");
         btnOpen.addActionListener(openComputerAction);
+        EmuStudioUI.makePrimaryButton(btnOpen);
 
         btnClose.setText("Exit");
         btnClose.addActionListener(this::btnCloseActionPerformed);
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 797, Short.MAX_VALUE)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(jLabel1)
-                                                .addGap(0, 0, Short.MAX_VALUE))
-                                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                                .addGap(0, 0, Short.MAX_VALUE)
-                                                .addComponent(btnClose)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(btnOpen)))
-                                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jLabel1)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(splitConfig, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(btnOpen)
-                                        .addComponent(btnClose))
-                                .addContainerGap())
-        );
+        SwingUtilities.invokeLater(() -> splitConfig.setDividerLocation(270));
 
-        pack();
+        // --- Layout Construction ---
+        // We configure the clean structure directly on the content pane in the constructor,
+        // so here we return null or a dummy.
+        // But to respect the pattern, let's allow buildContent to assemble the pieces.
+
+        // Center Panel: Header + SplitPane
+        JPanel centerPanel = new JPanel(new java.awt.BorderLayout());
+        centerPanel.add(headerPanel, java.awt.BorderLayout.NORTH);
+        centerPanel.add(splitConfig, java.awt.BorderLayout.CENTER);
+
+        // Buttons Panel: Bottom Right
+        JPanel buttonsPanel = new JPanel(new net.miginfocom.swing.MigLayout("insets 5 10 10 10, fillx", "[grow][][]", "[]"));
+        buttonsPanel.add(btnOpen, "align right, skip 1, split 2, tag ok, wmin 100");
+        buttonsPanel.add(btnClose, "tag cancel, wmin 80");
+
+        // Root Container to hold both centers
+        JPanel root = new JPanel(new net.miginfocom.swing.MigLayout(
+                "fill, insets 0",
+                "[grow]",
+                "[grow]0[]"
+        ));
+
+        root.add(centerPanel, "grow, push, wrap");
+        root.add(buttonsPanel, "growx");
+        return root;
     }
 
     private void lstConfigMouseClicked(MouseEvent evt) {

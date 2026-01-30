@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
+import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.actions.CompileAction;
 import net.emustudio.application.gui.actions.editor.*;
 import net.emustudio.application.gui.editor.Editor;
@@ -70,32 +71,17 @@ public class EditorPanel extends JPanel {
         splitSource.setBorder(null);
         splitSource.setOrientation(JSplitPane.VERTICAL_SPLIT);
         splitSource.setOneTouchExpandable(true);
+        splitSource.setResizeWeight(1.0);
+        EmuStudioUI.styleSplitPane(splitSource);
         splitSource.setLeftComponent(editor.getView());
         splitSource.setRightComponent(compilerPane);
 
         JToolBar mainToolBar = setupMainToolbar();
         mainToolBar.setRollover(true);
 
-        GroupLayout panelSourceLayout = new GroupLayout(this);
-        setLayout(panelSourceLayout);
-        panelSourceLayout.setHorizontalGroup(
-                panelSourceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(mainToolBar)
-                        .addGroup(
-                                panelSourceLayout
-                                        .createSequentialGroup()
-                                        .addContainerGap()
-                                        .addComponent(splitSource)
-                                        .addContainerGap()
-                        )
-        );
-        panelSourceLayout.setVerticalGroup(
-                panelSourceLayout
-                        .createSequentialGroup()
-                        .addComponent(mainToolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
-                        .addContainerGap()
-        );
+        setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[grow]", "[][grow]"));
+        add(mainToolBar, "growx, wrap");
+        add(splitSource, "grow, gaptop 0");
     }
 
     public void resizeComponents(int height) {
