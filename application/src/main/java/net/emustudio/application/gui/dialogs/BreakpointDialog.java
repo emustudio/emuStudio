@@ -2,21 +2,19 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.framework.EDialog;
-import net.emustudio.application.gui.framework.EPanel;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.util.Objects;
-
-import static net.emustudio.application.gui.framework.EmuStudioUI.*;
 
 /**
  * The breakpoint dialog - it asks user for the address where should be
  * set or unset the breakpoint.
  */
-public class BreakpointDialog extends EDialog {
+public class BreakpointDialog extends DialogBase {
     private final Dialogs dialogs;
 
     private int address = -1; // if adr == -1 then it means cancel
@@ -41,16 +39,16 @@ public class BreakpointDialog extends EDialog {
 
     @Override
     protected JComponent initializeComponents() {
-        EPanel panel = EPanel.vertical();
+        JPanel panel = GUI.panelVertical();
 
-        panel.add(label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
+        panel.add(GUI.label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
 
-        txtAddress = textField("0");
+        txtAddress = GUI.textField("0");
         panel.add(txtAddress, "growx, wrap, gapbottom 10");
 
-        EPanel buttonPanel = EPanel.buttonBar();
-        buttonPanel.add(button("Unset", this::btnUnsetActionPerformed), "");
-        buttonPanel.add(button("Set", this::btnSetActionPerformed), "");
+        JPanel buttonPanel = GUI.panelButtons();
+        buttonPanel.add(GUI.button("Unset", this::btnUnsetActionPerformed), "");
+        buttonPanel.add(GUI.button("Set", this::btnSetActionPerformed), "");
 
         panel.add(buttonPanel, "growx, span");
 

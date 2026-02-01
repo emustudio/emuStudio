@@ -3,13 +3,14 @@
 package net.emustudio.application.gui.actions.emulator;
 
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+
 
 public class JumpAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-jump.png";
@@ -30,8 +31,7 @@ public class JumpAction extends AbstractAction {
     public void actionPerformed(ActionEvent actionEvent) {
         computer.getCPU().ifPresentOrElse(cpu -> {
             try {
-                dialogs
-                        .readInteger("Memory address:", "Jump to address", 0)
+                dialogs.readInteger("Memory address:", "Jump to address", 0)
                         .ifPresent(address -> {
                             if (!cpu.setInstructionLocation(address)) {
                                 dialogs.showError("Invalid memory address (please check memory size)");

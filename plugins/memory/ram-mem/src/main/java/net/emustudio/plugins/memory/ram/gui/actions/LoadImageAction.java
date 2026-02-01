@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ram.gui.actions;
 
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.memory.ram.MemoryContextImpl;
 
 import javax.swing.*;
@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ram/gui/document-open.png";

@@ -2,8 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.ToolbarButton;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -34,12 +35,12 @@ public class PagesPanel extends JPanel {
     }
 
     private void initComponents() {
-        ToolbarButton btnFirst = new ToolbarButton(evt -> gotoFirstPage(), PAGE_FIRST_PNG, "Go to the first page");
-        ToolbarButton btnBackward = new ToolbarButton(evt -> gotoPreviousPage(), PAGE_BACK_PNG, "Go to the previous page");
-        ToolbarButton btnCurrentPage = new ToolbarButton(evt -> gotoCurrentPage(), PAGE_CURRENT_PNG, "Go to the current page");
-        ToolbarButton btnForward = new ToolbarButton(evt -> gotoNextPage(), PAGE_FORWARD_PNG, "Go to the next page");
-        ToolbarButton btnSeekBackward = new ToolbarButton(evt -> seekBackward(), PAGE_SEEK_BACKWARD_PNG, "Go to the current page");
-        ToolbarButton btnSeekForward = new ToolbarButton(evt -> seekForward(), PAGE_SEEK_FORWARD_PNG, "Go to the current page");
+        ToolbarButton btnFirst = GUI.toolbarButton(evt -> gotoFirstPage(), PAGE_FIRST_PNG, "Go to the first page");
+        ToolbarButton btnBackward = GUI.toolbarButton(evt -> gotoPreviousPage(), PAGE_BACK_PNG, "Go to the previous page");
+        ToolbarButton btnCurrentPage = GUI.toolbarButton(evt -> gotoCurrentPage(), PAGE_CURRENT_PNG, "Go to the current page");
+        ToolbarButton btnForward = GUI.toolbarButton(evt -> gotoNextPage(), PAGE_FORWARD_PNG, "Go to the next page");
+        ToolbarButton btnSeekBackward = GUI.toolbarButton(evt -> seekBackward(), PAGE_SEEK_BACKWARD_PNG, "Go to the current page");
+        ToolbarButton btnSeekForward = GUI.toolbarButton(evt -> seekForward(), PAGE_SEEK_FORWARD_PNG, "Go to the current page");
 
         GroupLayout pagesLayout = new GroupLayout(this);
         setLayout(pagesLayout);

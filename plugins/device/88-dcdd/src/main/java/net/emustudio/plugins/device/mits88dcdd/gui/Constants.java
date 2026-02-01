@@ -5,8 +5,8 @@ package net.emustudio.plugins.device.mits88dcdd.gui;
 import javax.swing.*;
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class Constants {
     public final static String DIALOG_TITLE = "MITS 88-DCDD";

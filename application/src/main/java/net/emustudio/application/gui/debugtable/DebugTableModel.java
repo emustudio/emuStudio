@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
 
 import javax.swing.table.AbstractTableModel;
 

@@ -3,7 +3,7 @@
 package net.emustudio.plugins.device.mits88dcdd.drive;
 
 import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080.CpuPortDevice;
 import net.emustudio.plugins.device.mits88dcdd.DiskSettings;

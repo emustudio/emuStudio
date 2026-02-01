@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.gui;
 
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.plugins.device.adm3a.TerminalSettings;
 
 import javax.swing.*;

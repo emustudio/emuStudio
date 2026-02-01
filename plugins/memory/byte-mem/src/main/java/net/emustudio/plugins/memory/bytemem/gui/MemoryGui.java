@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.ToolbarButton;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.gui.actions.*;
@@ -14,8 +14,6 @@ import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Objects;
 
 import static javax.swing.Action.SHORT_DESCRIPTION;
@@ -155,17 +153,17 @@ public class MemoryGui extends JDialog {
 
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
-        toolBar.add(new ToolbarButton(loadImageAction));
-        toolBar.add(new ToolbarButton(dumpMemoryAction));
+        toolBar.add(GUI.toolbarButton(loadImageAction));
+        toolBar.add(GUI.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
-        toolBar.add(new ToolbarButton(gotoAddressAction));
-        toolBar.add(new ToolbarButton(findSequenceAction));
+        toolBar.add(GUI.toolbarButton(gotoAddressAction));
+        toolBar.add(GUI.toolbarButton(findSequenceAction));
         toolBar.addSeparator();
         toolBar.add(btnAsciiMode);
         toolBar.addSeparator();
-        toolBar.add(new ToolbarButton(eraseMemoryAction));
+        toolBar.add(GUI.toolbarButton(eraseMemoryAction));
         toolBar.addSeparator();
-        toolBar.add(new ToolbarButton(settingsAction));
+        toolBar.add(GUI.toolbarButton(settingsAction));
 
         splitPane.setDividerLocation(390);
         splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);

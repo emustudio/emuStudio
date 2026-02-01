@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ssem;
 
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 
 public class LineColumn implements DebuggerColumn<String> {
     private final static String LINE_FORMAT = "%04X";
@@ -30,10 +30,5 @@ public class LineColumn implements DebuggerColumn<String> {
     @Override
     public String getValue(int location) {
         return String.format(LINE_FORMAT, location / 4);
-    }
-
-    @Override
-    public int getDefaultWidth() {
-        return -1;
     }
 }

@@ -4,7 +4,7 @@ package net.emustudio.plugins.memory.ssem.gui;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.interaction.ToolbarButton;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.EraseMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.LoadImageAction;
@@ -52,10 +52,10 @@ public class MemoryGui extends JDialog {
 
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
-        toolBar.add(new ToolbarButton(loadImageAction));
-        toolBar.add(new ToolbarButton(dumpMemoryAction));
+        toolBar.add(GUI.toolbarButton(loadImageAction));
+        toolBar.add(GUI.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
-        toolBar.add(new ToolbarButton(eraseMemoryAction));
+        toolBar.add(GUI.toolbarButton(eraseMemoryAction));
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

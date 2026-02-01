@@ -16,7 +16,7 @@ import java.awt.event.ActionEvent;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_TITLE_BORDER;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_TITLE_BORDER;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;

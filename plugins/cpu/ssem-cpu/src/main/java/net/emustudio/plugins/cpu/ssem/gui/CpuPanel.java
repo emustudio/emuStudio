@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
+import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class CpuPanel extends JPanel {
     private final EmulatorEngine engine;

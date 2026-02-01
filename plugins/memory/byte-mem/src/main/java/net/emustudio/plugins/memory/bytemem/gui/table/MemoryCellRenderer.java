@@ -10,8 +10,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
-import net.emustudio.emulib.runtime.interaction.GuiConstants;
-
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.BANK_COLOR;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.ROM_COLOR;
 
@@ -30,7 +29,7 @@ class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         setOpaque(true);
         setDoubleBuffered(true);
         setBorder(BorderFactory.createEmptyBorder());
-        setFont(GuiConstants.FONT_MONOSPACED);
+        setFont(FONT_MONOSPACED);
         setHorizontalAlignment(CENTER);
 
         this.selectedBackground = UIManager.getColor("Table.selectionBackground");

@@ -5,8 +5,8 @@ package net.emustudio.plugins.memory.ssem.gui.actions;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/document-open.png";

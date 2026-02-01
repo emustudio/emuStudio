@@ -2,16 +2,16 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.framework.EDialog;
-import net.emustudio.application.gui.framework.EFadingBorder;
-import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.actions.opencomputer.*;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.ToolbarButton;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.runtime.ui.components.FadingBorder;
+import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +32,9 @@ import java.util.function.Consumer;
 import static net.emustudio.application.Resources.getVersion;
 import static net.emustudio.application.gui.dialogs.AboutDialog.LOGO_FILE;
 import static net.emustudio.application.settings.ConfigFiles.loadConfigurations;
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
-public class OpenComputerDialog extends EDialog {
+public class OpenComputerDialog extends DialogBase {
     private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);
 
     private final ConfigurationsListModel configurationsModel;
@@ -51,8 +51,7 @@ public class OpenComputerDialog extends EDialog {
 
     private final JList<ComputerConfig> lstConfig = new JList<>();
 
-    public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs,
-                              Consumer<ComputerConfig> selectComputer) {
+    public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs, Consumer<ComputerConfig> selectComputer) {
         super((java.awt.Frame) null, "emuStudio - Open virtual computer", true);
         this.configurationsModel = new ConfigurationsListModel();
         this.appSettings = Objects.requireNonNull(appSettings);
@@ -81,21 +80,19 @@ public class OpenComputerDialog extends EDialog {
 
     @Override
     protected JComponent initializeComponents() {
-        JSplitPane splitConfig = new JSplitPane();
+        JSplitPane splitConfig = GUI.splitPane();
         JPanel panelConfig = new JPanel();
         JScrollPane configScrollPane = new JScrollPane();
-        JToolBar toolConfig = new JToolBar();
-        ToolbarButton btnAdd = new ToolbarButton(addNewComputerAction);
+        JToolBar toolConfig = GUI.toolBar();
+        ToolbarButton btnAdd = GUI.toolbarButton(addNewComputerAction);
         ToolbarButton btnDelete = new ToolbarButton(deleteComputerAction);
         ToolbarButton btnEdit = new ToolbarButton(editComputerAction);
         ToolbarButton btnRename = new ToolbarButton(renameComputerAction);
         ToolbarButton btnSaveSchemaImage = new ToolbarButton(saveSchemaAction);
-        JScrollPane scrollPreview = new JScrollPane();
+        JScrollPane scrollPreview = GUI.scrollPane(preview);
         JButton btnOpen = new JButton();
         JButton btnClose = new JButton();
 
-        splitConfig.setResizeWeight(0.3);
-        EmuStudioUI.styleSplitPane(splitConfig);
 
         lstConfig.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -107,13 +104,11 @@ public class OpenComputerDialog extends EDialog {
 
         configScrollPane.setViewportView(lstConfig);
         configScrollPane.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Component.borderColor")));
-        EmuStudioUI.styleList(lstConfig);
+        GUI.styleList(lstConfig);
 
         toolConfig.setFloatable(false);
         toolConfig.setRollover(true);
         toolConfig.setOrientation(JToolBar.VERTICAL);
-        EmuStudioUI.styleToolbar(toolConfig);
-
         toolConfig.add(btnAdd);
         toolConfig.add(btnDelete);
         toolConfig.add(btnEdit);
@@ -123,16 +118,15 @@ public class OpenComputerDialog extends EDialog {
         panelConfig.setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[][grow]", "[grow]"));
         panelConfig.add(toolConfig, "growy");
         panelConfig.add(configScrollPane, "grow");
-        splitConfig.setLeftComponent(panelConfig);
 
-        scrollPreview.setViewportView(preview);
-        EmuStudioUI.styleScrollPane(scrollPreview);
+        splitConfig.setResizeWeight(0.3);
+        splitConfig.setLeftComponent(panelConfig);
         splitConfig.setRightComponent(scrollPreview);
 
         // Create logo panel
         JLabel lblLogo = new JLabel(loadIcon(LOGO_FILE));
         lblLogo.setBackground(Color.WHITE);
-        lblLogo.setBorder(new EFadingBorder(10, Color.WHITE));
+        lblLogo.setBorder(new FadingBorder(10, Color.WHITE));
         lblLogo.setOpaque(false);
 
         JLabel lblIntroduction = new JLabel("<html><h1>Welcome to emuStudio!</h1><i>Version:" + getVersion() + "</i>");
@@ -154,7 +148,7 @@ public class OpenComputerDialog extends EDialog {
 
         btnOpen.setText("Open computer");
         btnOpen.addActionListener(openComputerAction);
-        EmuStudioUI.makePrimaryButton(btnOpen);
+        GUI.buttonMakePrimary(btnOpen);
 
         btnClose.setText("Exit");
         btnClose.addActionListener(this::btnCloseActionPerformed);
@@ -177,11 +171,7 @@ public class OpenComputerDialog extends EDialog {
         buttonsPanel.add(btnClose, "tag cancel, wmin 80");
 
         // Root Container to hold both centers
-        JPanel root = new JPanel(new net.miginfocom.swing.MigLayout(
-                "fill, insets 0",
-                "[grow]",
-                "[grow]0[]"
-        ));
+        JPanel root = new JPanel(new net.miginfocom.swing.MigLayout("fill, insets 0", "[grow]", "[grow]0[]"));
 
         root.add(centerPanel, "grow, push, wrap");
         root.add(buttonsPanel, "growx");
@@ -195,12 +185,10 @@ public class OpenComputerDialog extends EDialog {
     }
 
     private void lstConfigValueChanged(ListSelectionEvent evt) {
-        Optional
-                .ofNullable(lstConfig.getSelectedValue())
-                .ifPresentOrElse(computer -> {
-                    Schema schema = new Schema(computer, appSettings);
-                    preview.setSchema(schema);
-                }, () -> preview.setSchema(null));
+        Optional.ofNullable(lstConfig.getSelectedValue()).ifPresentOrElse(computer -> {
+            Schema schema = new Schema(computer, appSettings);
+            preview.setSchema(schema);
+        }, () -> preview.setSchema(null));
         preview.repaint();
     }
 

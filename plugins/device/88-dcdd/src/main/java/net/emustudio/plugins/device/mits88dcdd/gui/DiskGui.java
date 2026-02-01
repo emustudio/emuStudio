@@ -13,7 +13,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
 
 public class DiskGui extends JDialog {

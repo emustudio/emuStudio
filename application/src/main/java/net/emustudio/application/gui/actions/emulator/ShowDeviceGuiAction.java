@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.actions.emulator;
 
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -8,7 +8,7 @@ import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer<String> {
 

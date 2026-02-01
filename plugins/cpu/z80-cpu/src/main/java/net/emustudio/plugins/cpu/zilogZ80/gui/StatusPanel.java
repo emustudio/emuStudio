@@ -13,7 +13,7 @@ import javax.swing.table.DefaultTableModel;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
+import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;

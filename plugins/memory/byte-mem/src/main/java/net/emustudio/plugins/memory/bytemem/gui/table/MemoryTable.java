@@ -2,11 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.runtime.interaction.GuiConstants;
-
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.util.Objects;
+
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 
 public class MemoryTable extends JTable {
@@ -16,11 +16,11 @@ public class MemoryTable extends JTable {
         this.tableModel = Objects.requireNonNull(tableModel);
 
         setModel(this.tableModel);
-        setFont(GuiConstants.FONT_MONOSPACED);
+        setFont(FONT_MONOSPACED);
         setCellSelectionEnabled(true);
         setFocusCycleRoot(true);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        getTableHeader().setFont(GuiConstants.FONT_MONOSPACED);
+        getTableHeader().setFont(FONT_MONOSPACED);
         setDefaultRenderer(Object.class, new MemoryCellRenderer(getTableHeader(), tableModel, pm, getRowHeight()));
         setOpaque(true);
 

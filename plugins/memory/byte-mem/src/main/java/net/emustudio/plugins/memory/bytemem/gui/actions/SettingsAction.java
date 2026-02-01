@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
-import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.gui.SettingsDialog;
@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class SettingsAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/preferences-system.png";

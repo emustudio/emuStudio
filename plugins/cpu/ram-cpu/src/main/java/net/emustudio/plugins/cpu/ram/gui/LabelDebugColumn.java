@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.ram.gui;
 
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import net.emustudio.plugins.memory.ram.api.RamLabel;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 

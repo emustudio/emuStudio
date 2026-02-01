@@ -7,7 +7,7 @@ import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.helpers.Unchecked;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ import java.util.Optional;
 
 import static net.emustudio.application.settings.ConfigFiles.createConfiguration;
 import static net.emustudio.application.settings.ConfigFiles.loadConfiguration;
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class AddNewComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(AddNewComputerAction.class);

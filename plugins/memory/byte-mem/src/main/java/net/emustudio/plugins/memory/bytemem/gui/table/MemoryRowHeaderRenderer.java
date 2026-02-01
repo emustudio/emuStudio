@@ -2,11 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui.table;
 
-import net.emustudio.emulib.runtime.interaction.GuiConstants;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
+
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 
 class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer<String> {
@@ -16,7 +17,7 @@ class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer<String>
         setHorizontalAlignment(CENTER);
         setForeground(header.getForeground());
         setBackground(header.getBackground());
-        setFont(GuiConstants.FONT_MONOSPACED);
+        setFont(FONT_MONOSPACED);
         setOpaque(true);
         setDoubleBuffered(true);
         this.setPreferredSize(new Dimension(4 * 18, header.getPreferredSize().height + 3));

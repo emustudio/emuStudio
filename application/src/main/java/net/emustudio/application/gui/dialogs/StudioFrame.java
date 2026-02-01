@@ -16,7 +16,7 @@ import net.emustudio.application.gui.editor.REditor;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
@@ -25,7 +25,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+
 
 public class StudioFrame extends JFrame {
     private final static String SOURCE_CODE_EDITOR = "Source code editor";

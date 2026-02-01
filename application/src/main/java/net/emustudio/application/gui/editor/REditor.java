@@ -6,8 +6,8 @@ import net.emustudio.application.Constants;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.fife.io.UnicodeWriter;
 import org.fife.rsta.ui.search.SearchEvent;
 import org.fife.ui.rsyntaxtextarea.*;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static net.emustudio.application.Constants.FONT_CODE;
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_DEFAULT_SIZE;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_DEFAULT_SIZE;
 
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
@@ -202,7 +202,7 @@ public class REditor implements Editor {
                 .map(FileExtension::getExtension)
                 .collect(Collectors.toList());
 
-        if (sourceExtensions.size() > 0) {
+        if (!sourceExtensions.isEmpty()) {
             filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
         }
 

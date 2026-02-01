@@ -3,7 +3,7 @@
 package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

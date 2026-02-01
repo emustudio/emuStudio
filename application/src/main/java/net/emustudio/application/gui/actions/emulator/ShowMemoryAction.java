@@ -4,13 +4,13 @@ package net.emustudio.application.gui.actions.emulator;
 
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.memory.Memory;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class ShowMemoryAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/grid_memory.gif";

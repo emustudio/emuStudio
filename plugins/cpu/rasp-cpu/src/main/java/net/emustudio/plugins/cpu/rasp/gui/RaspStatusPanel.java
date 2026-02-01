@@ -9,7 +9,7 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
+import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class RaspStatusPanel extends JPanel {
     private final JLabel lblStatus = new JLabel("breakpoint");

@@ -2,8 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.ram.gui;
 
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.ToolbarButton;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.ram.MemoryContextImpl;
 import net.emustudio.plugins.memory.ram.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.ram.gui.actions.EraseMemoryAction;
@@ -11,10 +11,11 @@ import net.emustudio.plugins.memory.ram.gui.actions.LoadImageAction;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+
 import java.awt.event.KeyEvent;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_COMMON;
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_COMMON;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 public class MemoryGui extends JDialog {
     private final JTable table;
@@ -24,7 +25,7 @@ public class MemoryGui extends JDialog {
     private final EraseMemoryAction eraseMemoryAction;
 
     public MemoryGui(JFrame parent, MemoryContextImpl memory, Dialogs dialogs) {
-        super(parent, false);
+        super(parent, "Program memory", false);
 
         RamTableModel tableModel = new RamTableModel(memory);
         this.table = new JTable(tableModel);
@@ -42,26 +43,21 @@ public class MemoryGui extends JDialog {
     }
 
     private void initComponents() {
-        JToolBar toolBar = new JToolBar();
+        JToolBar toolBar = GUI.toolBar();
         JPanel jPanel1 = new JPanel();
-        JScrollPane jScrollPane1 = new JScrollPane();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        setTitle("Program memory");
-
-        toolBar.setFloatable(false);
-        toolBar.setRollover(true);
-        toolBar.add(new ToolbarButton(loadImageAction));
-        toolBar.add(new ToolbarButton(dumpMemoryAction));
+        toolBar.add(GUI.toolbarButton(loadImageAction));
+        toolBar.add(GUI.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
-        toolBar.add(new ToolbarButton(eraseMemoryAction));
+        toolBar.add(GUI.toolbarButton(eraseMemoryAction));
 
         jPanel1.setBorder(BorderFactory.createTitledBorder(null, "Tape content", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, FONT_COMMON));
 
         table.setGridColor(java.awt.SystemColor.control);
-        jScrollPane1.setViewportView(table);
+        JScrollPane jScrollPane1 = GUI.scrollPane(table);
 
         GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);

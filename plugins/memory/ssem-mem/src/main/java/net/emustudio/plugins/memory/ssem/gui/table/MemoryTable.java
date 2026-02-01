@@ -7,7 +7,7 @@ import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.plugins.memory.ssem.gui.Constants.COLUMN_WIDTH;
 
 public class MemoryTable extends JTable {

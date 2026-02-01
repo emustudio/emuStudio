@@ -11,7 +11,7 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.Enumeration;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 public class ColumnsRepainter {
 

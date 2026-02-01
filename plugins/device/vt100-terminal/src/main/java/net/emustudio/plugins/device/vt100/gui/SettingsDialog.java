@@ -3,7 +3,7 @@
 package net.emustudio.plugins.device.vt100.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.plugins.device.vt100.TerminalSettings;
 
 import java.awt.*;

@@ -11,8 +11,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.EventObject;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_ROW_EVEN;
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_ROW_ODD;
+import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_ROW_EVEN;
+import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_ROW_ODD;
 
 public class BooleanCellEditor extends AbstractCellEditor implements TableCellEditor, MouseListener {
     private final BooleanComponent component;
