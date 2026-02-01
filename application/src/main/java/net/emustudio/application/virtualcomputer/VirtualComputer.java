@@ -1,4 +1,4 @@
-/* SPDX-FileCopyrightText: 2006-2025 Peter Jakubčo
+/* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
@@ -135,7 +135,7 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
                                                PluginSettings pluginSettings) throws InvalidPluginException {
         Objects.requireNonNull(mainClass);
         Objects.requireNonNull(applicationApi);
-        
+
         try {
             Constructor<?> constructor = mainClass.getDeclaredConstructor(PLUGIN_CONSTRUCTOR_PARAMS);
             return (Plugin) constructor.newInstance(pluginID, applicationApi, pluginSettings);
