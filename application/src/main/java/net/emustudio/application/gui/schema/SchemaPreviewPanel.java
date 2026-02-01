@@ -59,6 +59,14 @@ public class SchemaPreviewPanel extends JPanel {
     }
 
     @Override
+    public Dimension getPreferredSize() {
+        if (panelResized && schemaWidth > 0 && schemaHeight > 0) {
+            return new Dimension(schemaWidth, schemaHeight);
+        }
+        return super.getPreferredSize();
+    }
+
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (schema == null) {
