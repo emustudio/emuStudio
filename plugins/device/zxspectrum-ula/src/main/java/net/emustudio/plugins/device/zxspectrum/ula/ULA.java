@@ -1,4 +1,4 @@
-/* SPDX-FileCopyrightText: 2006-2025 Peter Jakubčo
+/* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula;
 
@@ -248,7 +248,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         // shift / alt / ctrl are visible in modifiersEx only if pressed = true
         boolean symShift = (e.getModifiersEx() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0;
         boolean shift = (e.getModifiersEx() & (KeyEvent.SHIFT_DOWN_MASK)) != 0;
-        
+
         Byte[] command = CHAR_MAPPING.get(e.getKeyCode());
         if (command != null) {
             if (command[2] == 1 || (command[2] == -1 && shift)) {
