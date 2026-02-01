@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.memory.bytemem.gui;
 
-import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
 import java.awt.*;
 import java.util.List;

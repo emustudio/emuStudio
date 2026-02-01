@@ -9,7 +9,7 @@ import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
+import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class RamStatusPanel extends JPanel {
     private final JLabel lblStatus = new JLabel("breakpoint");
@@ -31,7 +31,7 @@ public class RamStatusPanel extends JPanel {
             @Override
             public void internalStateChanged() {
                 String r0 = cpu.getR0().toString();
-                if (r0.equals("")) {
+                if (r0.isEmpty()) {
                     r0 = "<empty>";
                 }
                 txtR0.setText(r0);

@@ -4,7 +4,7 @@ package net.emustudio.plugins.device.mits88dcdd.gui;
 
 import javax.swing.*;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.ICON_SELECTED;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.ICON_UNSELECTED;
 

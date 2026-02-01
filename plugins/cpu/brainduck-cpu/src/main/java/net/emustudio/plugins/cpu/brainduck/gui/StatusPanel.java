@@ -10,7 +10,7 @@ import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
+import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();

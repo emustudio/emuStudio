@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.audiotape_player.gui;
 
-import net.emustudio.emulib.runtime.interaction.BrowseButton;
-import net.emustudio.emulib.runtime.interaction.CachedComboBoxModel;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.ShortenedString;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.ShortenedString;
+import net.emustudio.emulib.runtime.ui.components.CachedComboBoxModel;
 import net.emustudio.plugins.device.audiotape_player.TapePlaybackController;
 import net.miginfocom.swing.MigLayout;
 
@@ -55,7 +55,7 @@ public class TapePlayerGui extends JDialog {
         Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
 
-        btnBrowse = new BrowseButton(dialogs, "Select Directory", "Select", p -> {
+        btnBrowse = GUI.buttonBrowseDirectories(dialogs, "Select Directory", "Select", p -> {
             ShortenedString<Path> ps = new ShortenedString<>(p, Path::toString);
             ps.deriveMaxStringLength(cmbDirs, cmbDirs.getWidth() - 36);
             cmbDirsModel.add(ps);

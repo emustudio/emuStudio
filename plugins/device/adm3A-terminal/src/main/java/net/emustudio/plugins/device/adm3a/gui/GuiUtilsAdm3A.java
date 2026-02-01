@@ -2,13 +2,13 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.gui;
 
-import net.emustudio.emulib.runtime.interaction.GuiUtils;
-
 import java.awt.*;
+
+import static net.emustudio.emulib.runtime.ui.GUI.loadFontResource;
 
 public class GuiUtilsAdm3A {
 
     public static Font loadFont(DisplayFont displayFont) {
-        return GuiUtils.loadFontResource(displayFont.path, GuiUtilsAdm3A.class, displayFont.fontSize);
+        return loadFontResource(displayFont.path, GuiUtilsAdm3A.class, displayFont.fontSize);
     }
 }

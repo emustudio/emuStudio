@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.mits88sio.gui;
 
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.plugins.device.mits88sio.SioUnitSettings;
 
 import javax.swing.*;
@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 public class SettingsDialog extends JDialog {
     private final Dialogs dialogs;

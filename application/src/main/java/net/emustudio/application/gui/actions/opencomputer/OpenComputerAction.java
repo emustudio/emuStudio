@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.actions.opencomputer;
 
 import net.emustudio.application.settings.ComputerConfig;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class OpenComputerAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/list-add.png";

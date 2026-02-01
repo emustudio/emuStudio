@@ -2,21 +2,21 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.framework.EDialog;
-import net.emustudio.application.gui.framework.EPanel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 /**
  * This is the dialog form that displays when the emuStudio automatization
  * is running.
  */
-public class AutoDialog extends EDialog {
+public class AutoDialog extends DialogBase {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/motherboard-icon.gif";
     private final VirtualComputer computer;
 
@@ -33,7 +33,7 @@ public class AutoDialog extends EDialog {
 
     @Override
     protected JComponent initializeComponents() {
-        EPanel panel = EPanel.vertical();
+        JPanel panel = GUI.panelVertical();
 
         JLabel lblPerforming = new JLabel(loadIcon(ICON_FILE));
         lblPerforming.setFont(lblPerforming.getFont().deriveFont(lblPerforming.getFont().getStyle() | java.awt.Font.BOLD));

@@ -4,7 +4,7 @@ package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
-import net.emustudio.emulib.runtime.interaction.debugger.*;
+import net.emustudio.emulib.runtime.ui.debugger.*;
 
 import javax.swing.event.TableModelEvent;
 import java.util.Arrays;

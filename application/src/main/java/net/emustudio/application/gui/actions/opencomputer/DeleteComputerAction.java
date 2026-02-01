@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.actions.opencomputer;
 
 import net.emustudio.application.settings.ComputerConfig;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.application.settings.ConfigFiles.removeConfiguration;
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class DeleteComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(DeleteComputerAction.class);

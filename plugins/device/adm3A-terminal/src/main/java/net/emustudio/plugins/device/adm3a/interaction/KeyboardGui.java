@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.interaction;
 
-import net.emustudio.emulib.runtime.interaction.GuiUtils;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.device.adm3a.api.Keyboard;
 
 import java.awt.event.ContainerEvent;
@@ -125,12 +125,12 @@ public class KeyboardGui extends Keyboard implements ContainerListener, KeyListe
 
     @Override
     public void componentAdded(ContainerEvent e) {
-        GuiUtils.addKeyListener(e.getChild(), this);
+        GUI.addKeyListenerRecursively(e.getChild(), this);
     }
 
     @Override
     public void componentRemoved(ContainerEvent e) {
-        GuiUtils.removeKeyListener(e.getChild(), this);
+        GUI.removeKeyListenerRecursively(e.getChild(), this);
     }
 
     @Override

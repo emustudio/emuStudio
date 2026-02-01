@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.actions.editor;
 
 import net.emustudio.application.gui.editor.Editor;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

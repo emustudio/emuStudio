@@ -2,15 +2,15 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.framework.EDialog;
-import net.emustudio.application.gui.framework.EPanel;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.*;
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.label;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
-public class LoadingDialog extends EDialog {
+public class LoadingDialog extends DialogBase {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/loading.gif";
 
     public LoadingDialog() {
@@ -21,7 +21,7 @@ public class LoadingDialog extends EDialog {
 
     @Override
     protected JComponent initializeComponents() {
-        EPanel panel = EPanel.vertical();
+        JPanel panel = GUI.panelVertical();
 
         JLabel lblLoading = new JLabel(loadIcon(ICON_FILE));
         lblLoading.setFont(lblLoading.getFont().deriveFont(lblLoading.getFont().getStyle() | java.awt.Font.BOLD));

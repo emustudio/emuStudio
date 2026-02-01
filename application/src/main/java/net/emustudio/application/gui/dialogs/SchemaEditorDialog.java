@@ -2,17 +2,16 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.framework.EDialog;
-import net.emustudio.application.gui.framework.EPanel;
-import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.DrawingPanel.Tool;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.GuiUtils;
-import net.emustudio.emulib.runtime.interaction.ToolbarButton;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
+import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,7 @@ import java.util.Optional;
 
 import static net.emustudio.application.settings.ConfigFiles.listPluginFiles;
 
-public class SchemaEditorDialog extends EDialog implements KeyListener {
+public class SchemaEditorDialog extends DialogBase implements KeyListener {
     private final static Logger LOGGER = LoggerFactory.getLogger(SchemaEditorDialog.class);
     private final static PluginComboModel EMPTY_MODEL = new PluginComboModel(Collections.emptyList());
 
@@ -69,7 +68,7 @@ public class SchemaEditorDialog extends EDialog implements KeyListener {
         sliderGridGap.setValue(schema.getSchemaGridGap());
         panel.addMouseListener(panel);
         panel.addMouseMotionListener(panel);
-        GuiUtils.addKeyListener(this, this);
+        GUI.addKeyListenerRecursively(this, this);
 
         panel.addToolListener(() -> {
             panel.setTool(Tool.TOOL_NOTHING, null);
@@ -109,50 +108,50 @@ public class SchemaEditorDialog extends EDialog implements KeyListener {
 
         groupDraw = new ButtonGroup();
         JToolBar toolDraw = new JToolBar();
-        ToolbarButton btnSave = new ToolbarButton(
+        ToolbarButton btnSave = GUI.toolbarButton(
                 this::btnSaveActionPerformed,
                 "/net/emustudio/application/gui/dialogs/document-save.png",
                 "Save & Close"
         );
         JToolBar.Separator separator1 = new JToolBar.Separator();
-        btnCompiler = EmuStudioUI.toolbarToggleButton(
+        btnCompiler = GUI.toolbarToggleButton(
                 this::btnCompilerActionPerformed,
                 this::btnCompilerItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/compile.png",
                 "Set compiler"
         );
-        btnCPU = EmuStudioUI.toolbarToggleButton(
+        btnCPU = GUI.toolbarToggleButton(
                 this::btnCPUActionPerformed,
                 this::btnCPUItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/cpu.gif",
                 "Set CPU"
         );
-        btnRAM = EmuStudioUI.toolbarToggleButton(
+        btnRAM = GUI.toolbarToggleButton(
                 this::btnRAMActionPerformed,
                 this::btnRAMItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/ram.gif",
                 "Set operating memory"
         );
-        btnDevice = EmuStudioUI.toolbarToggleButton(
+        btnDevice = GUI.toolbarToggleButton(
                 this::btnDeviceActionPerformed,
                 this::btnDeviceItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/device.png",
                 "Add device"
         );
         JToolBar.Separator separator2 = new JToolBar.Separator();
-        btnLine = EmuStudioUI.toolbarToggleButton(
+        btnLine = GUI.toolbarToggleButton(
                 this::btnLineActionPerformed,
                 this::btnLineItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/connection.png",
                 "Add connection"
         );
-        btnBidirection = EmuStudioUI.toolbarToggleButton(
+        btnBidirection = GUI.toolbarToggleButton(
                 this::btnBidirectionActionPerformed,
                 "/net/emustudio/application/gui/dialogs/bidirection.gif",
                 "Bidirectional connection"
         );
         JToolBar.Separator separator3 = new JToolBar.Separator();
-        btnDelete = EmuStudioUI.toolbarToggleButton(
+        btnDelete = GUI.toolbarToggleButton(
                 this::btnDeleteActionPerformed,
                 this::btnDeleteItemStateChanged,
                 "/net/emustudio/application/gui/dialogs/edit-delete.png",
@@ -161,7 +160,7 @@ public class SchemaEditorDialog extends EDialog implements KeyListener {
         JToolBar.Separator separator4 = new JToolBar.Separator();
         cmbPlugin = new JComboBox<>();
         JToolBar.Separator separator5 = new JToolBar.Separator();
-        btnUseGrid = EmuStudioUI.toolbarToggleButton(
+        btnUseGrid = GUI.toolbarToggleButton(
                 this::btnUseGridActionPerformed,
                 "/net/emustudio/application/gui/dialogs/grid_memory.gif",
                 "Set/unset using grid"
@@ -210,7 +209,7 @@ public class SchemaEditorDialog extends EDialog implements KeyListener {
         sliderGridGap.setValue(30);
         sliderGridGap.addChangeListener(this::sliderGridGapStateChanged);
 
-        EPanel mainPanel = new EPanel("insets dialog", "[grow]", "[][grow]");
+        JPanel mainPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[][grow]"));
         mainPanel.add(toolDraw, "growx, wrap");
         mainPanel.add(scrollScheme, "grow");
         mainPanel.add(sliderGridGap, "w 31!");

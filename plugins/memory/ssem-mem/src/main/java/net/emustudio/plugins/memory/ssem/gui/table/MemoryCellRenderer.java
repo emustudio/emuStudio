@@ -7,8 +7,8 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED_BOLD;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED_BOLD;
 
 class MemoryCellRenderer extends JLabel implements TableCellRenderer {
     private final static Color COLOR_FORE = Color.BLACK;

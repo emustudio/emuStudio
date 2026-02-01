@@ -3,8 +3,8 @@
 package net.emustudio.application.gui.actions.opencomputer;
 
 import net.emustudio.application.settings.ComputerConfig;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.application.settings.ConfigFiles.renameConfiguration;
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class RenameComputerAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/rename-computer.png";

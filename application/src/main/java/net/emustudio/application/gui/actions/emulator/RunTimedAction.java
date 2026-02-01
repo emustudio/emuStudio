@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.actions.emulator;
 
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -11,7 +11,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+
 
 public class RunTimedAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-play-time.png";
@@ -30,9 +31,11 @@ public class RunTimedAction extends AbstractAction {
     public void actionPerformed(ActionEvent actionEvent) {
         Optional.ofNullable(emulationController).ifPresent(c -> {
             try {
-                dialogs
-                        .readInteger("Enter time slice in milliseconds:", "Timed emulation", 500)
-                        .ifPresent(sliceMillis -> c.step(sliceMillis, TimeUnit.MILLISECONDS));
+                dialogs.readInteger(
+                        "Enter time slice in milliseconds:",
+                        "Timed emulation",
+                        500
+                ).ifPresent(sliceMillis -> c.step(sliceMillis, TimeUnit.MILLISECONDS));
             } catch (NumberFormatException e) {
                 dialogs.showError("Invalid number format", "Timed emulation");
             }

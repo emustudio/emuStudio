@@ -6,14 +6,14 @@ import net.emustudio.application.gui.dialogs.SchemaEditorDialog;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class EditComputerAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/computer.png";

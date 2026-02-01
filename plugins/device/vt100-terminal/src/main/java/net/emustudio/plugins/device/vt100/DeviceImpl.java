@@ -11,8 +11,8 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import net.emustudio.emulib.runtime.interaction.GuiUtils;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.cpu.brainduck.BrainCPUContext;
 import net.emustudio.plugins.device.vt100.api.ContextVt100;
 import net.emustudio.plugins.device.vt100.api.Keyboard;
@@ -140,7 +140,7 @@ public class DeviceImpl extends AbstractDevice {
             terminalGUI.setVisible(true);
         } else if (terminalSettings.isGuiSupported()) {
             terminalGUI = new TerminalWindow(parent, display, applicationApi.getDialogs(), (KeyboardGui) keyboard);
-            GuiUtils.addKeyListener(terminalGUI, (KeyboardGui) keyboard);
+            GUI.addKeyListenerRecursively(terminalGUI, (KeyboardGui) keyboard);
             terminalGUI.startPainting();
             guiIOset = true;
             terminalGUI.setVisible(true);

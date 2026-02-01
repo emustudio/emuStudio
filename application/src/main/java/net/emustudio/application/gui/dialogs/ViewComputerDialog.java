@@ -2,8 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.dialogs;
 
-import net.emustudio.application.gui.framework.EDialog;
-import net.emustudio.application.gui.framework.EPanel;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.settings.AppSettings;
@@ -11,7 +9,9 @@ import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,9 +19,9 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
-public class ViewComputerDialog extends EDialog {
+public class ViewComputerDialog extends DialogBase {
     private final static Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);
     private final static String ICON_COMPILER = "/net/emustudio/application/gui/dialogs/compile.png";
     private final static String ICON_CPU = "/net/emustudio/application/gui/dialogs/cpu.gif";
@@ -90,9 +90,7 @@ public class ViewComputerDialog extends EDialog {
         // Select default info
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        computer.getComputerConfig().getCPU().ifPresent(
-                conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf))
-        );
+        computer.getComputerConfig().getCPU().ifPresent(conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf)));
     }
 
     private void setInfo(Plugin plugin, PluginConfig config) {
@@ -188,11 +186,11 @@ public class ViewComputerDialog extends EDialog {
         txtDescription.setWrapStyleWord(true);
         jScrollPane1.setViewportView(txtDescription);
 
-        EPanel descriptionPanel = new EPanel("insets dialog", "[grow]", "[grow]");
+        JPanel descriptionPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[grow]"));
         descriptionPanel.setBorder(BorderFactory.createTitledBorder("Short description"));
         descriptionPanel.add(jScrollPane1, "grow");
 
-        EPanel infoPanel = new EPanel("insets dialog", "[grow]", "[][][][][][][][grow]");
+        JPanel infoPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[][][][][][][][grow]"));
         infoPanel.add(lblSelectDevice, "split 2");
         infoPanel.add(cmbDevice, "grow, wrap");
         infoPanel.add(lblName, "wrap");
@@ -201,7 +199,7 @@ public class ViewComputerDialog extends EDialog {
         infoPanel.add(lblCopyright, "wrap");
         infoPanel.add(descriptionPanel, "grow");
 
-        EPanel tabInfoPanel = new EPanel("insets dialog", "[][grow]", "[grow]");
+        JPanel tabInfoPanel = new JPanel(new MigLayout("insets dialog", "[][grow]", "[grow]"));
         tabInfoPanel.add(jToolBar1, "grow");
         tabInfoPanel.add(infoPanel, "grow");
 
@@ -218,13 +216,13 @@ public class ViewComputerDialog extends EDialog {
         btnSaveSchema.addActionListener(this::btnSaveSchemaActionPerformed);
         jToolBar2.add(btnSaveSchema);
 
-        EPanel schemaPanel = new EPanel("insets dialog", "[][grow]", "[grow]");
+        JPanel schemaPanel = new JPanel(new MigLayout("insets dialog", "[][grow]", "[grow]"));
         schemaPanel.add(jToolBar2, "grow");
         schemaPanel.add(scrollPane, "grow");
 
         jTabbedPane1.addTab("Abstract schema", schemaPanel);
 
-        EPanel mainPanel = new EPanel("insets dialog", "[grow]", "[][grow]");
+        JPanel mainPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[][grow]"));
         mainPanel.add(lblComputerName, "growx, wrap");
         mainPanel.add(jTabbedPane1, "grow");
 
@@ -234,25 +232,19 @@ public class ViewComputerDialog extends EDialog {
     private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        computer.getComputerConfig().getCompiler().ifPresent(
-                conf -> computer.getCompiler().ifPresent(compiler -> setInfo(compiler, conf))
-        );
+        computer.getComputerConfig().getCompiler().ifPresent(conf -> computer.getCompiler().ifPresent(compiler -> setInfo(compiler, conf)));
     }
 
     private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        computer.getComputerConfig().getCPU().ifPresent(
-                conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf))
-        );
+        computer.getComputerConfig().getCPU().ifPresent(conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf)));
     }
 
     private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        computer.getComputerConfig().getMemory().ifPresent(
-                conf -> computer.getMemory().ifPresent(memory -> setInfo(memory, conf))
-        );
+        computer.getComputerConfig().getMemory().ifPresent(conf -> computer.getMemory().ifPresent(memory -> setInfo(memory, conf)));
     }
 
     private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {

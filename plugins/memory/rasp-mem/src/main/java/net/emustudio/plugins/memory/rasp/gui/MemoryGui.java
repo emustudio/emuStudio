@@ -3,7 +3,7 @@
 package net.emustudio.plugins.memory.rasp.gui;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.interaction.ToolbarButton;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import net.emustudio.plugins.memory.rasp.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.rasp.gui.actions.EraseMemoryAction;
@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 public class MemoryGui extends JDialog {
     private final JTable table;
@@ -63,10 +63,10 @@ public class MemoryGui extends JDialog {
 
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
-        toolBar.add(new ToolbarButton(loadImageAction));
-        toolBar.add(new ToolbarButton(dumpMemoryAction));
+        toolBar.add(GUI.toolbarButton(loadImageAction));
+        toolBar.add(GUI.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
-        toolBar.add(new ToolbarButton(eraseMemoryAction));
+        toolBar.add(GUI.toolbarButton(eraseMemoryAction));
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

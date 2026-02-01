@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.framework;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.interaction.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;

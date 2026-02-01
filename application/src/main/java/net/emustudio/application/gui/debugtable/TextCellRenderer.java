@@ -9,7 +9,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.*;
+import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 class TextCellRenderer extends JLabel implements TableCellRenderer {
 

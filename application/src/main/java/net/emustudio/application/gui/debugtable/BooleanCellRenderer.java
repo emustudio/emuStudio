@@ -8,8 +8,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
 import static net.emustudio.application.gui.debugtable.BooleanComponent.BOOLEAN_ICON;
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_ROW_EVEN;
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_ROW_ODD;
+import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_ROW_EVEN;
+import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_ROW_ODD;
 
 class BooleanCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
 

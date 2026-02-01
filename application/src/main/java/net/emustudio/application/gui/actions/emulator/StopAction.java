@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class StopAction extends AbstractAction {
     private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-stop.png";

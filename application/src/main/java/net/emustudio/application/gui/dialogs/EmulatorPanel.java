@@ -3,8 +3,6 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
-import net.emustudio.application.gui.framework.EPanel;
-import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.actions.emulator.*;
 import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
@@ -14,8 +12,9 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.ToolbarButton;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -31,10 +30,10 @@ public class EmulatorPanel extends JPanel {
 
     private final JToolBar toolDebug = new JToolBar();
     private final JPanel panelPages;
-    private final JScrollPane paneDebug = new JScrollPane();
+    private final JScrollPane paneDebug;
 
     private final JList<String> lstDevices = new JList<>();
-    private final JSplitPane splitPerDebug = new JSplitPane();
+    private final JSplitPane splitPerDebug = GUI.splitPane();
 
     private final DebugTableModel debugTableModel;
     private final JTable debugTable;
@@ -64,11 +63,11 @@ public class EmulatorPanel extends JPanel {
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.debugTable = new DebugTableImpl(debugTableModel);
 
-        paneDebug.setViewportView(debugTable);
+        paneDebug = GUI.scrollPane(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         debugTable.setFillsViewportHeight(true);
-        EmuStudioUI.styleScrollPane(paneDebug);
-        EmuStudioUI.styleTable(debugTable);
+
+        GUI.styleTable(debugTable);
 
         paneDebug.addComponentListener(new ComponentAdapter() {
             @Override
@@ -80,9 +79,7 @@ public class EmulatorPanel extends JPanel {
         statusWindow.setBorder(BorderFactory.createTitledBorder("Status"));
         statusWindow.setLayout(statusWindowLayout);
 
-        computer.getCPU()
-                .flatMap(cpu -> Optional.ofNullable(cpu.getStatusPanel()))
-                .ifPresent(this::setStatusPanel);
+        computer.getCPU().flatMap(cpu -> Optional.ofNullable(cpu.getStatusPanel())).ifPresent(this::setStatusPanel);
 
         this.stepBackAction = new StepBackAction(computer, debugTableModel, this::refreshDebugTable);
         this.resetAction = new ResetAction(emulationController);
@@ -103,7 +100,7 @@ public class EmulatorPanel extends JPanel {
 
         panelPages = PagesPanel.create(debugTableModel, dialogs);
 
-        EPanel debuggerPanel = new EPanel("insets dialog", "[grow]", "[][grow][]");
+        JPanel debuggerPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[][grow][]"));
         debuggerPanel.setBorder(BorderFactory.createTitledBorder("Debugger"));
         debuggerPanel.add(toolDebug, "growx, wrap");
         debuggerPanel.add(paneDebug, "grow, wrap");
@@ -141,12 +138,10 @@ public class EmulatorPanel extends JPanel {
             }
         });
 
-        EPanel peripheralPanel = new EPanel("insets dialog", "[grow]", "[grow][]");
+        JPanel peripheralPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[grow][]"));
         peripheralPanel.setBorder(BorderFactory.createTitledBorder("Peripheral devices"));
-        JScrollPane paneDevices = new JScrollPane();
-        paneDevices.setViewportView(lstDevices);
-        EmuStudioUI.styleList(lstDevices);
-        EmuStudioUI.styleScrollPane(paneDevices);
+        JScrollPane paneDevices = GUI.scrollPane(lstDevices);
+        GUI.styleList(lstDevices);
 
         JButton btnShowSettings = new JButton(showDeviceSettingsAction);
         JButton btnShowGUI = new JButton(showDeviceGuiAction);
@@ -163,9 +158,8 @@ public class EmulatorPanel extends JPanel {
         splitPerDebug.setResizeWeight(1.0);
         splitPerDebug.setTopComponent(debuggerPanel);
         splitPerDebug.setRightComponent(peripheralPanel);
-        EmuStudioUI.styleSplitPane(splitPerDebug);
 
-        JSplitPane splitLeftRight = new JSplitPane();
+        JSplitPane splitLeftRight = GUI.splitPane();
         splitLeftRight.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         splitLeftRight.setContinuousLayout(true);
         splitLeftRight.setFocusable(false);
@@ -173,9 +167,8 @@ public class EmulatorPanel extends JPanel {
         splitLeftRight.setResizeWeight(1.0);
         splitLeftRight.setRightComponent(statusWindow);
         splitLeftRight.setLeftComponent(splitPerDebug);
-        EmuStudioUI.styleSplitPane(splitLeftRight);
 
-        setLayout(new net.miginfocom.swing.MigLayout("insets dialog, fill", "[grow]", "[grow]"));
+        setLayout(new MigLayout("insets dialog, fill", "[grow]", "[grow]"));
         add(splitLeftRight, "grow");
 
         this.memoryListener = new MemoryContext.MemoryListener() {
@@ -232,12 +225,8 @@ public class EmulatorPanel extends JPanel {
 
 
     private void setStatusPanel(JPanel statusPanel) {
-        statusWindowLayout.setHorizontalGroup(
-                statusWindowLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(statusPanel));
-        statusWindowLayout.setVerticalGroup(
-                statusWindowLayout.createSequentialGroup()
-                        .addComponent(statusPanel));
+        statusWindowLayout.setHorizontalGroup(statusWindowLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(statusPanel));
+        statusWindowLayout.setVerticalGroup(statusWindowLayout.createSequentialGroup().addComponent(statusPanel));
     }
 
     private void setupDebugToolbar() {
@@ -245,21 +234,21 @@ public class EmulatorPanel extends JPanel {
         toolDebug.setRollover(true);
         toolDebug.setBorderPainted(false);
 
-        toolDebug.add(new ToolbarButton(resetAction));
+        toolDebug.add(GUI.toolbarButton(resetAction));
         toolDebug.addSeparator();
-        toolDebug.add(new ToolbarButton(jumpToBeginningAction));
-        toolDebug.add(new ToolbarButton(stepBackAction));
-        toolDebug.add(new ToolbarButton(stopAction));
-        toolDebug.add(new ToolbarButton(pauseAction));
-        toolDebug.add(new ToolbarButton(runAction));
-        toolDebug.add(new ToolbarButton(runTimedAction));
-        toolDebug.add(new ToolbarButton(stepAction));
+        toolDebug.add(GUI.toolbarButton(jumpToBeginningAction));
+        toolDebug.add(GUI.toolbarButton(stepBackAction));
+        toolDebug.add(GUI.toolbarButton(stopAction));
+        toolDebug.add(GUI.toolbarButton(pauseAction));
+        toolDebug.add(GUI.toolbarButton(runAction));
+        toolDebug.add(GUI.toolbarButton(runTimedAction));
+        toolDebug.add(GUI.toolbarButton(stepAction));
         toolDebug.addSeparator();
-        toolDebug.add(new ToolbarButton(jumpAction));
+        toolDebug.add(GUI.toolbarButton(jumpAction));
         toolDebug.addSeparator();
-        toolDebug.add(new ToolbarButton(breakpointAction));
+        toolDebug.add(GUI.toolbarButton(breakpointAction));
         toolDebug.addSeparator();
-        toolDebug.add(new ToolbarButton(showMemoryAction));
+        toolDebug.add(GUI.toolbarButton(showMemoryAction));
     }
 
     private void refreshDebugTable() {

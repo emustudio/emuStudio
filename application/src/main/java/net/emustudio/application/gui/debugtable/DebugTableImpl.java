@@ -2,8 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
-import net.emustudio.application.Constants;
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerColumn;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -12,7 +11,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.Objects;
 
-import static net.emustudio.emulib.runtime.interaction.GuiConstants.TABLE_COLOR_TABLE_GRID;
+import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_TABLE_GRID;
 
 public class DebugTableImpl extends JTable {
     private final DebugTableModel tableModel;

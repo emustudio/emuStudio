@@ -10,11 +10,11 @@ import net.emustudio.emulib.plugins.cpu.Decoder;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
-import net.emustudio.emulib.runtime.interaction.debugger.BreakpointColumn;
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
-import net.emustudio.emulib.runtime.interaction.debugger.MnemoColumn;
-import net.emustudio.emulib.runtime.interaction.debugger.OpcodeColumn;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.runtime.ui.debugger.BreakpointColumn;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
+import net.emustudio.emulib.runtime.ui.debugger.MnemoColumn;
+import net.emustudio.emulib.runtime.ui.debugger.OpcodeColumn;
 import net.emustudio.plugins.cpu.ssem.gui.CpuPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,11 +125,6 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public String getDescription() {
         return "Emulator of SSEM machine";
-    }
-
-    @Override
-    public boolean isAutomationSupported() {
-        return true;
     }
 
     @Override

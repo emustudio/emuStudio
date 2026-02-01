@@ -3,7 +3,7 @@
 package net.emustudio.plugins.device.vt100.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.plugins.device.vt100.interaction.DisplayImpl;
 import net.emustudio.plugins.device.vt100.interaction.KeyboardGui;
 
@@ -12,7 +12,7 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-import static net.emustudio.emulib.runtime.interaction.GuiUtils.loadIcon;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class TerminalWindow extends JDialog {
     private final Dialogs dialogs;

@@ -4,8 +4,8 @@ package net.emustudio.application;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
-import net.emustudio.emulib.runtime.interaction.Dialogs;
-import net.emustudio.emulib.runtime.interaction.debugger.DebuggerTable;
+import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.debugger.DebuggerTable;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
