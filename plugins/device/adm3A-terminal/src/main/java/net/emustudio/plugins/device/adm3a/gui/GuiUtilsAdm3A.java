@@ -4,11 +4,11 @@ package net.emustudio.plugins.device.adm3a.gui;
 
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadFontResource;
+import net.emustudio.emulib.runtime.ui.GUI;
 
 public class GuiUtilsAdm3A {
 
     public static Font loadFont(DisplayFont displayFont) {
-        return loadFontResource(displayFont.path, GuiUtilsAdm3A.class, displayFont.fontSize);
+        return GUI.loadFont(displayFont.path, GuiUtilsAdm3A.class, displayFont.fontSize);
     }
 }

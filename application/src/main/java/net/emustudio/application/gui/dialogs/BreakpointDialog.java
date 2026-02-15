@@ -39,16 +39,20 @@ public class BreakpointDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.panelVertical();
+        JPanel panel = GUI.column();
 
         panel.add(GUI.label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
 
-        txtAddress = GUI.textField("0");
+        txtAddress = new JTextField("0", 20);
         panel.add(txtAddress, "growx, wrap, gapbottom 10");
 
-        JPanel buttonPanel = GUI.panelButtons();
-        buttonPanel.add(GUI.button("Unset", this::btnUnsetActionPerformed), "");
-        buttonPanel.add(GUI.button("Set", this::btnSetActionPerformed), "");
+        JPanel buttonPanel = GUI.panel("insets dialog", "[grow, right]", "[]");
+        JButton btnUnset = new JButton("Unset");
+        btnUnset.addActionListener(e -> btnUnsetActionPerformed());
+        JButton btnSet = new JButton("Set");
+        btnSet.addActionListener(e -> btnSetActionPerformed());
+        buttonPanel.add(btnUnset, "");
+        buttonPanel.add(btnSet, "");
 
         panel.add(buttonPanel, "growx, span");
 

@@ -30,18 +30,16 @@ class CallFlow {
     void updateCache(int currentLocation) {
         try {
             int nextPosition = disassembler.getNextInstructionPosition(currentLocation);
-            if (nextPosition - currentLocation > longestInstructionSize) {
-                longestInstructionSize = nextPosition - currentLocation;
-            }
+            updateLongestInstructionSize(currentLocation, nextPosition);
+            
             Integer prev = flowGraph.get(currentLocation);
-            if (prev != null) {
+            if (prev != null && prev != nextPosition) {
                 // jump over previous instruction chain until we get to the last one
-
                 int originalPrev = prev;
                 while (prev != null && prev < nextPosition) {
                     prev = flowGraph.get(prev);
                 }
-                if (prev != null && prev != nextPosition) {
+                if (prev != null) {
                     // If the current instruction points to a different address than before
                     // and the previous instruction chain does not end in the new position, remove the whole chain
                     flowGraph.subMap(originalPrev, true, prev, true).clear();
@@ -50,6 +48,13 @@ class CallFlow {
             flowGraph.put(currentLocation, nextPosition);
         } catch (RuntimeException ex) {
             LOGGER.warn("Could not update call-flow cache", ex);
+        }
+    }
+
+    private void updateLongestInstructionSize(int from, int to) {
+        int size = to - from;
+        if (size > longestInstructionSize) {
+            longestInstructionSize = size;
         }
     }
 
@@ -71,7 +76,6 @@ class CallFlow {
         int lastKnownFrom;
         do {
             lastKnownFrom = knownFrom;
-
             consumer.accept(lastKnownFrom);
 
             try {
@@ -79,9 +83,7 @@ class CallFlow {
             } catch (IndexOutOfBoundsException e) {
                 break;
             }
-            if (knownFrom - lastKnownFrom > longestInstructionSize) {
-                longestInstructionSize = knownFrom - lastKnownFrom;
-            }
+            updateLongestInstructionSize(lastKnownFrom, knownFrom);
         } while (knownFrom < to);
         return (knownFrom == to) ? knownFrom : lastKnownFrom;
     }
@@ -95,13 +97,10 @@ class CallFlow {
             } catch (IndexOutOfBoundsException e) {
                 break;
             }
-            if (knownFrom - lastKnownFrom > longestInstructionSize) {
-                longestInstructionSize = knownFrom - lastKnownFrom;
-            }
+            updateLongestInstructionSize(lastKnownFrom, knownFrom);
             if (lastKnownFrom == knownFrom) {
                 break;
             }
-
             consumer.accept(knownFrom);
         }
     }
@@ -119,10 +118,7 @@ class CallFlow {
             } catch (IndexOutOfBoundsException e) {
                 break;
             }
-            if (knownFrom - lastKnownFrom > longestInstructionSize) {
-                longestInstructionSize = knownFrom - lastKnownFrom;
-            }
-
+            updateLongestInstructionSize(lastKnownFrom, knownFrom);
             consumer.accept(knownFrom);
             knownFrom = previousLocation;
         }
@@ -143,9 +139,7 @@ class CallFlow {
         if (from > to) {
             throw new IllegalArgumentException("From (" + from + ") > to (" + to + ") !");
         }
-        if (from < 0) {
-            from = 0;
-        }
+        from = Math.max(0, from);
         if (to < 0) {
             return Collections.emptyList();
         }

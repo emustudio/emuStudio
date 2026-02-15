@@ -17,13 +17,13 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_ADD;
 import static net.emustudio.application.settings.ConfigFiles.createConfiguration;
 import static net.emustudio.application.settings.ConfigFiles.loadConfiguration;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class AddNewComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(AddNewComputerAction.class);
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/list-add.png";
 
     private final Dialogs dialogs;
     private final AppSettings appSettings;
@@ -31,7 +31,7 @@ public class AddNewComputerAction extends AbstractAction {
     private final JDialog parent;
 
     public AddNewComputerAction(Dialogs dialogs, AppSettings appSettings, Runnable update, JDialog parent) {
-        super("Create new computer...", loadIcon(ICON_FILE));
+        super("Create new computer...", loadIcon(ICON_ADD));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
 
         this.dialogs = Objects.requireNonNull(dialogs);

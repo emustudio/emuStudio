@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.actions.opencomputer.*;
+import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.settings.AppSettings;
@@ -10,7 +11,6 @@ import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.emulib.runtime.ui.components.FadingBorder;
 import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +30,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import static net.emustudio.application.Resources.getVersion;
-import static net.emustudio.application.gui.dialogs.AboutDialog.LOGO_FILE;
 import static net.emustudio.application.settings.ConfigFiles.loadConfigurations;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class OpenComputerDialog extends DialogBase {
     private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);
@@ -81,18 +79,15 @@ public class OpenComputerDialog extends DialogBase {
     @Override
     protected JComponent initializeComponents() {
         JSplitPane splitConfig = GUI.splitPane();
-        JPanel panelConfig = new JPanel();
-        JScrollPane configScrollPane = new JScrollPane();
-        JToolBar toolConfig = GUI.toolBar();
+        JToolBar toolConfig = GUI.toolbarVertical();
         ToolbarButton btnAdd = GUI.toolbarButton(addNewComputerAction);
-        ToolbarButton btnDelete = new ToolbarButton(deleteComputerAction);
-        ToolbarButton btnEdit = new ToolbarButton(editComputerAction);
-        ToolbarButton btnRename = new ToolbarButton(renameComputerAction);
-        ToolbarButton btnSaveSchemaImage = new ToolbarButton(saveSchemaAction);
-        JScrollPane scrollPreview = GUI.scrollPane(preview);
-        JButton btnOpen = new JButton();
+        ToolbarButton btnDelete = GUI.toolbarButton(deleteComputerAction);
+        ToolbarButton btnEdit = GUI.toolbarButton(editComputerAction);
+        ToolbarButton btnRename = GUI.toolbarButton(renameComputerAction);
+        ToolbarButton btnSaveSchemaImage = GUI.toolbarButton(saveSchemaAction);
+        JScrollPane scrollPreview = GUI.scrollable(preview);
         JButton btnClose = new JButton();
-
+        JLabel lblLogo = EmuStudioUI.createLogoJLabel();
 
         lstConfig.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -102,20 +97,16 @@ public class OpenComputerDialog extends DialogBase {
         lstConfig.addListSelectionListener(this::lstConfigValueChanged);
         lstConfig.registerKeyboardAction(openComputerAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        configScrollPane.setViewportView(lstConfig);
-        configScrollPane.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Component.borderColor")));
-        GUI.styleList(lstConfig);
+        JScrollPane configScrollPane = GUI.scrollableBordered(lstConfig);
+        GUI.style(lstConfig);
 
-        toolConfig.setFloatable(false);
-        toolConfig.setRollover(true);
-        toolConfig.setOrientation(JToolBar.VERTICAL);
         toolConfig.add(btnAdd);
         toolConfig.add(btnDelete);
         toolConfig.add(btnEdit);
         toolConfig.add(btnRename);
         toolConfig.add(btnSaveSchemaImage);
 
-        panelConfig.setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[][grow]", "[grow]"));
+        JPanel panelConfig = GUI.panel("insets 0, fill", "[][grow]", "[grow]");
         panelConfig.add(toolConfig, "growy");
         panelConfig.add(configScrollPane, "grow");
 
@@ -123,55 +114,39 @@ public class OpenComputerDialog extends DialogBase {
         splitConfig.setLeftComponent(panelConfig);
         splitConfig.setRightComponent(scrollPreview);
 
-        // Create logo panel
-        JLabel lblLogo = new JLabel(loadIcon(LOGO_FILE));
-        lblLogo.setBackground(Color.WHITE);
-        lblLogo.setBorder(new FadingBorder(10, Color.WHITE));
-        lblLogo.setOpaque(false);
+        JLabel lblIntroduction = GUI.labelPadded("<html><h1>Welcome to emuStudio!</h1><i>Version:" + getVersion() + "</i>", 5, 10, 5, 10);
 
-        JLabel lblIntroduction = new JLabel("<html><h1>Welcome to emuStudio!</h1><i>Version:" + getVersion() + "</i>");
-        lblIntroduction.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-
-        JLabel lblPlease = new JLabel("Please select computer you wish to emulate:");
-        lblPlease.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        JLabel lblPlease = GUI.labelPadded("Please select computer you wish to emulate:", 5, 10, 5, 10);
 
         // Create a vertical panel for introduction and selection prompt
-        JPanel textPanel = new JPanel(new java.awt.BorderLayout());
-        textPanel.add(lblIntroduction, java.awt.BorderLayout.NORTH);
-        textPanel.add(lblPlease, java.awt.BorderLayout.CENTER);
+        JPanel textPanel = GUI.panel("insets 0, flowy, fill", "[grow]", "[]0[grow]");
+        textPanel.add(lblIntroduction);
+        textPanel.add(lblPlease);
 
         // Create header panel with logo and introduction
-        JPanel headerPanel = new JPanel(new java.awt.BorderLayout(10, 0));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15)); // Top, Left, Bottom, Right
-        headerPanel.add(lblLogo, java.awt.BorderLayout.WEST);
-        headerPanel.add(textPanel, java.awt.BorderLayout.CENTER);
+        JPanel headerPanel = GUI.panel("insets 15", "[]10[grow]", "[grow]");
+        headerPanel.add(lblLogo);
+        headerPanel.add(textPanel, "grow");
 
-        btnOpen.setText("Open computer");
-        btnOpen.addActionListener(openComputerAction);
-        GUI.buttonMakePrimary(btnOpen);
+        JButton btnOpen = GUI.buttonPrimary("Open computer", openComputerAction);
 
         btnClose.setText("Exit");
         btnClose.addActionListener(this::btnCloseActionPerformed);
 
         SwingUtilities.invokeLater(() -> splitConfig.setDividerLocation(270));
 
-        // --- Layout Construction ---
-        // We configure the clean structure directly on the content pane in the constructor,
-        // so here we return null or a dummy.
-        // But to respect the pattern, let's allow buildContent to assemble the pieces.
-
         // Center Panel: Header + SplitPane
-        JPanel centerPanel = new JPanel(new java.awt.BorderLayout());
-        centerPanel.add(headerPanel, java.awt.BorderLayout.NORTH);
-        centerPanel.add(splitConfig, java.awt.BorderLayout.CENTER);
+        JPanel centerPanel = GUI.panel("insets 0, fill", "[grow]", "[]0[grow]");
+        centerPanel.add(headerPanel, "growx, wrap");
+        centerPanel.add(splitConfig, "grow");
 
         // Buttons Panel: Bottom Right
-        JPanel buttonsPanel = new JPanel(new net.miginfocom.swing.MigLayout("insets 5 10 10 10, fillx", "[grow][][]", "[]"));
+        JPanel buttonsPanel = GUI.panel("insets 5 10 10 10, fillx", "[grow][][]", "[]");
         buttonsPanel.add(btnOpen, "align right, skip 1, split 2, tag ok, wmin 100");
         buttonsPanel.add(btnClose, "tag cancel, wmin 80");
 
         // Root Container to hold both centers
-        JPanel root = new JPanel(new net.miginfocom.swing.MigLayout("fill, insets 0", "[grow]", "[grow]0[]"));
+        JPanel root = GUI.panel("fill, insets 0", "[grow]", "[grow]0[]");
 
         root.add(centerPanel, "grow, push, wrap");
         root.add(buttonsPanel, "growx");

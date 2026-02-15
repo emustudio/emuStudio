@@ -4,16 +4,17 @@ package net.emustudio.application.gui.debugtable;
 
 import javax.swing.*;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_BREAKPOINT;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class BooleanComponent extends JLabel {
-    public static final Icon BOOLEAN_ICON = loadIcon("/net/emustudio/application/gui/dialogs/breakpoint.png");
+    public static final Icon BOOLEAN_ICON = loadIcon(ICON_BREAKPOINT);
 
     private boolean value;
 
     public BooleanComponent(boolean value) {
-        this.value = value;
         setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        setValue(value);
     }
 
     public boolean getValue() {
@@ -22,10 +23,6 @@ public class BooleanComponent extends JLabel {
 
     public void setValue(boolean value) {
         this.value = value;
-        if (value) {
-            setIcon(BOOLEAN_ICON);
-        } else {
-            setIcon(null);
-        }
+        setIcon(value ? BOOLEAN_ICON : null);
     }
 }

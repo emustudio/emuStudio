@@ -17,6 +17,7 @@ import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
@@ -25,12 +26,12 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_FAVICON;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 
 public class StudioFrame extends JFrame {
     private final static String SOURCE_CODE_EDITOR = "Source code editor";
-    private final static String ICON_FILE = "/net/emustudio/application/gui/favicon16.png";
 
     private final Editor editor;
 
@@ -96,12 +97,6 @@ public class StudioFrame extends JFrame {
         editor.grabFocus();
     }
 
-    private static JMenuItem createMenuItem(Action action) {
-        JMenuItem item = new JMenuItem(action);
-        item.setToolTipText(null); // Swing annoyingly adds tool tip text to the menu item
-        return item;
-    }
-
     private void resizeComponents() {
         int height = getHeight();
         editorPanel.resizeComponents(height);
@@ -109,7 +104,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void initComponents() {
-        setIconImage(Optional.ofNullable(loadIcon(ICON_FILE)).map(ImageIcon::getImage).orElse(null));
+        setIconImage(Optional.ofNullable(loadIcon(ICON_FAVICON)).map(ImageIcon::getImage).orElse(null));
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -144,37 +139,37 @@ public class StudioFrame extends JFrame {
         JMenu mnuHelp = new JMenu();
 
         mnuFile.setText("File");
-        mnuFile.add(createMenuItem(editorPanel.getNewFileAction()));
-        mnuFile.add(createMenuItem(editorPanel.getOpenFileAction()));
+        mnuFile.add(GUI.menuItem(editorPanel.getNewFileAction()));
+        mnuFile.add(GUI.menuItem(editorPanel.getOpenFileAction()));
         mnuFile.addSeparator();
-        mnuFile.add(createMenuItem(editorPanel.getSaveFileAction()));
+        mnuFile.add(GUI.menuItem(editorPanel.getSaveFileAction()));
         mnuFile.add(saveFileAsAction);
         mnuFile.addSeparator();
-        mnuFile.add(createMenuItem(exitAction));
+        mnuFile.add(GUI.menuItem(exitAction));
         mainMenuBar.add(mnuFile);
 
         mnuEdit.setText("Edit");
-        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
-        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
+        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
+        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
         mnuEdit.addSeparator();
-        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
-        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
-        mnuEdit.add(createMenuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
+        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
+        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
+        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
         mnuEdit.addSeparator();
-        mnuEdit.add(createMenuItem(editorPanel.getFindAction()));
-        mnuEdit.add(createMenuItem(editorPanel.getReplaceAction()));
-        mnuEdit.add(createMenuItem(findNextAction));
-        mnuEdit.add(createMenuItem(findPreviousAction));
+        mnuEdit.add(GUI.menuItem(editorPanel.getFindAction()));
+        mnuEdit.add(GUI.menuItem(editorPanel.getReplaceAction()));
+        mnuEdit.add(GUI.menuItem(findNextAction));
+        mnuEdit.add(GUI.menuItem(findPreviousAction));
         mainMenuBar.add(mnuEdit);
 
         mnuProject.setText("Project");
-        mnuProject.add(createMenuItem(editorPanel.getCompileAction()));
-        mnuProject.add(createMenuItem(viewComputerAction));
-        mnuProject.add(createMenuItem(compilerSettingsAction));
+        mnuProject.add(GUI.menuItem(editorPanel.getCompileAction()));
+        mnuProject.add(GUI.menuItem(viewComputerAction));
+        mnuProject.add(GUI.menuItem(compilerSettingsAction));
         mainMenuBar.add(mnuProject);
 
         mnuHelp.setText("Help");
-        mnuHelp.add(createMenuItem(aboutAction));
+        mnuHelp.add(GUI.menuItem(aboutAction));
         mainMenuBar.add(mnuHelp);
         return mainMenuBar;
     }

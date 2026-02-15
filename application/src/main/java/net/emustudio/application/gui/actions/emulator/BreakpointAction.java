@@ -10,11 +10,11 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_BREAKPOINTS;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 
 public class BreakpointAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/breakpoints.png";
 
     private final JFrame parent;
     private final VirtualComputer computer;
@@ -22,7 +22,7 @@ public class BreakpointAction extends AbstractAction {
     private final Runnable refreshDebugTable;
 
     public BreakpointAction(JFrame parent, VirtualComputer computer, Dialogs dialogs, Runnable refreshDebugTable) {
-        super("Set/unset breakpoint...", loadIcon(ICON_FILE));
+        super("Set/unset breakpoint...", loadIcon(ICON_BREAKPOINTS));
         putValue(SHORT_DESCRIPTION, "Set/unset breakpoint to address...");
 
         this.parent = Objects.requireNonNull(parent);

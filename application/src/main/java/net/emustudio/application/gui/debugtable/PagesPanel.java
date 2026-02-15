@@ -8,15 +8,10 @@ import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 
 import javax.swing.*;
 import java.util.Objects;
-import java.util.Optional;
+
+import static net.emustudio.application.gui.framework.EmuStudioUI.*;
 
 public class PagesPanel extends JPanel {
-    private static final String PAGE_FIRST_PNG = "/net/emustudio/application/gui/dialogs/page-first.png";
-    private static final String PAGE_BACK_PNG = "/net/emustudio/application/gui/dialogs/page-back.png";
-    private static final String PAGE_CURRENT_PNG = "/net/emustudio/application/gui/dialogs/page-current.png";
-    private static final String PAGE_FORWARD_PNG = "/net/emustudio/application/gui/dialogs/page-forward.png";
-    private static final String PAGE_SEEK_BACKWARD_PNG = "/net/emustudio/application/gui/dialogs/page-seek-backward.png";
-    private static final String PAGE_SEEK_FORWARD_PNG = "/net/emustudio/application/gui/dialogs/page-seek-forward.png";
 
     private final Dialogs dialogs;
     private final DebugTableModel debugTableModel;
@@ -35,12 +30,12 @@ public class PagesPanel extends JPanel {
     }
 
     private void initComponents() {
-        ToolbarButton btnFirst = GUI.toolbarButton(evt -> gotoFirstPage(), PAGE_FIRST_PNG, "Go to the first page");
-        ToolbarButton btnBackward = GUI.toolbarButton(evt -> gotoPreviousPage(), PAGE_BACK_PNG, "Go to the previous page");
-        ToolbarButton btnCurrentPage = GUI.toolbarButton(evt -> gotoCurrentPage(), PAGE_CURRENT_PNG, "Go to the current page");
-        ToolbarButton btnForward = GUI.toolbarButton(evt -> gotoNextPage(), PAGE_FORWARD_PNG, "Go to the next page");
-        ToolbarButton btnSeekBackward = GUI.toolbarButton(evt -> seekBackward(), PAGE_SEEK_BACKWARD_PNG, "Go to the current page");
-        ToolbarButton btnSeekForward = GUI.toolbarButton(evt -> seekForward(), PAGE_SEEK_FORWARD_PNG, "Go to the current page");
+        ToolbarButton btnFirst = GUI.toolbarButton(evt -> debugTableModel.firstPage(), ICON_PAGE_FIRST, "Go to the first page");
+        ToolbarButton btnBackward = GUI.toolbarButton(evt -> debugTableModel.previousPage(), ICON_PAGE_BACK, "Go to the previous page");
+        ToolbarButton btnCurrentPage = GUI.toolbarButton(evt -> debugTableModel.currentPage(), ICON_PAGE_CURRENT, "Go to the current page");
+        ToolbarButton btnForward = GUI.toolbarButton(evt -> debugTableModel.nextPage(), ICON_PAGE_FORWARD, "Go to the next page");
+        ToolbarButton btnSeekBackward = GUI.toolbarButton(evt -> seekBackward(), ICON_PAGE_SEEK_BACKWARD, "Go to the current page");
+        ToolbarButton btnSeekForward = GUI.toolbarButton(evt -> seekForward(), ICON_PAGE_SEEK_FORWARD, "Go to the current page");
 
         GroupLayout pagesLayout = new GroupLayout(this);
         setLayout(pagesLayout);
@@ -72,40 +67,19 @@ public class PagesPanel extends JPanel {
         );
     }
 
-    private void gotoFirstPage() {
-        debugTableModel.firstPage();
-    }
-
-    private void gotoPreviousPage() {
-        debugTableModel.previousPage();
-    }
-
-    private void gotoCurrentPage() {
-        debugTableModel.currentPage();
-    }
-
-    private void gotoNextPage() {
-        debugTableModel.nextPage();
-    }
-
-    private boolean gatherPageValue(String message) {
-        Optional<Integer> result = dialogs.readInteger(message, "Seek", pageSeekLastValue);
-        if (result.isPresent()) {
-            pageSeekLastValue = result.get();
-            return true;
-        }
-        return false;
-    }
-
     private void seekBackward() {
-        if (gatherPageValue("Please enter number of pages to backward")) {
-            debugTableModel.seekBackwardPage(pageSeekLastValue);
-        }
+        dialogs.readInteger("Please enter number of pages to backward", "Seek", pageSeekLastValue)
+                .ifPresent(value -> {
+                    pageSeekLastValue = value;
+                    debugTableModel.seekBackwardPage(value);
+                });
     }
 
     private void seekForward() {
-        if (gatherPageValue("Please enter number of pages to forward")) {
-            debugTableModel.seekForwardPage(pageSeekLastValue);
-        }
+        dialogs.readInteger("Please enter number of pages to forward", "Seek", pageSeekLastValue)
+                .ifPresent(value -> {
+                    pageSeekLastValue = value;
+                    debugTableModel.seekForwardPage(value);
+                });
     }
 }

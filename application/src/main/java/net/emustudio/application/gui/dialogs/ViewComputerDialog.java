@@ -10,30 +10,27 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.Dimension;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.EmuStudioUI.*;
 
 public class ViewComputerDialog extends DialogBase {
-    private final static Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);
-    private final static String ICON_COMPILER = "/net/emustudio/application/gui/dialogs/compile.png";
-    private final static String ICON_CPU = "/net/emustudio/application/gui/dialogs/cpu.gif";
-    private final static String ICON_MEMORY = "/net/emustudio/application/gui/dialogs/ram.gif";
-    private final static String ICON_DEVICE = "/net/emustudio/application/gui/dialogs/device.png";
-    private final static String ICON_SAVE = "/net/emustudio/application/gui/dialogs/document-save.png";
+    private static final Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);
 
     private final VirtualComputer computer;
+    private final List<Device> devices;
     private final SchemaPreviewPanel panelSchema;
-    private JToggleButton btnCompiler;
-    private JToggleButton btnDevice;
-    private JToggleButton btnMemory;
+    private final ButtonGroup pluginButtonGroup = new ButtonGroup();
+
     private JComboBox<String> cmbDevice;
     private JLabel lblComputerName;
     private JLabel lblCopyright;
@@ -41,156 +38,124 @@ public class ViewComputerDialog extends DialogBase {
     private JLabel lblName;
     private JLabel lblSelectDevice;
     private JLabel lblVersion;
-    private JScrollPane scrollPane;
     private JTextArea txtDescription;
 
     public ViewComputerDialog(JFrame parent, VirtualComputer computer, AppSettings appSettings, Dialogs dialogs) {
         super(parent, "Computer information preview", true);
         this.computer = Objects.requireNonNull(computer);
+        this.devices = computer.getDevices();
+        this.panelSchema = new SchemaPreviewPanel(new Schema(computer.getComputerConfig(), appSettings), dialogs);
 
         buildContent();
-
+        setMinimumSize(new Dimension(600, 450));
+        setSize(new Dimension(800, 600));
         lblComputerName.setText(computer.getComputerConfig().getName());
+        devices.forEach(device -> cmbDevice.addItem(device.getTitle()));
 
-        final List<Device> devices = computer.getDevices();
-        for (Device device : devices) {
-            cmbDevice.addItem(device.getTitle());
-        }
-
-        cmbDevice.addActionListener(e -> {
-            int i = cmbDevice.getSelectedIndex();
-            if (i < 0) {
-                setVisibleInfo(false);
-            } else {
-                try {
-                    setInfo(devices.get(i), computer.getComputerConfig().getDevices().get(i));
-                    setVisibleInfo(true);
-                } catch (Exception ex) {
-                    setVisibleInfo(false);
-                    LOGGER.error("Could not setup plugin information", ex);
-                }
-            }
-        });
-
-        panelSchema = new SchemaPreviewPanel(new Schema(computer.getComputerConfig(), appSettings), dialogs);
-        scrollPane.setViewportView(panelSchema);
-        scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-
-        if (computer.getCompiler().isEmpty()) {
-            btnCompiler.setEnabled(false);
-        }
-        if (computer.getMemory().isEmpty()) {
-            btnMemory.setEnabled(false);
-        }
-        if (computer.getDevices().isEmpty()) {
-            btnDevice.setEnabled(false);
-        }
-
-        // Select default info
+        // Select default info (CPU)
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        computer.getComputerConfig().getCPU().ifPresent(conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf)));
+        showPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
     }
 
-    private void setInfo(Plugin plugin, PluginConfig config) {
-        lblName.setText(plugin.getTitle());
-        lblVersion.setText(plugin.getVersion());
-        lblFileName.setText(config.getPluginFile());
-        lblCopyright.setText(plugin.getCopyright());
-        txtDescription.setText(plugin.getDescription());
-    }
-
-    private void setVisibleInfo(boolean visible) {
-        if (!visible) {
+    private <T extends Plugin> void showPluginInfo(Optional<T> plugin, Optional<PluginConfig> config) {
+        if (plugin.isPresent() && config.isPresent()) {
+            Plugin p = plugin.get();
+            PluginConfig c = config.get();
+            lblName.setText(p.getTitle());
+            lblVersion.setText(p.getVersion());
+            lblFileName.setText(c.getPluginFile());
+            lblCopyright.setText(p.getCopyright());
+            txtDescription.setText(p.getDescription());
+            lblCopyright.setVisible(true);
+            lblVersion.setVisible(true);
+            lblFileName.setVisible(true);
+            txtDescription.setVisible(true);
+        } else {
             lblName.setText("Plug-in is not available. Please select another one.");
+            lblCopyright.setVisible(false);
+            lblVersion.setVisible(false);
+            lblFileName.setVisible(false);
+            txtDescription.setVisible(false);
         }
-        lblCopyright.setVisible(visible);
-        lblVersion.setVisible(visible);
-        lblFileName.setVisible(visible);
-        txtDescription.setVisible(visible);
     }
 
     @Override
     protected JComponent initializeComponents() {
-        ButtonGroup buttonGroup1 = new ButtonGroup();
-        lblComputerName = new JLabel();
-        JTabbedPane jTabbedPane1 = new JTabbedPane();
-        JToolBar jToolBar1 = new JToolBar();
-        btnCompiler = new JToggleButton(loadIcon(ICON_COMPILER));
-        JToggleButton btnCPU = new JToggleButton(loadIcon(ICON_CPU));
-        btnMemory = new JToggleButton(loadIcon(ICON_MEMORY));
-        btnDevice = new JToggleButton(loadIcon(ICON_DEVICE));
-        lblSelectDevice = new JLabel();
-        cmbDevice = new JComboBox<>();
-        lblName = new JLabel();
-        lblFileName = new JLabel();
-        lblVersion = new JLabel();
-        lblCopyright = new JLabel();
-        JPanel panelDescription = new JPanel();
-        JScrollPane jScrollPane1 = new JScrollPane();
-        txtDescription = new JTextArea();
-        JToolBar jToolBar2 = new JToolBar();
-        JButton btnSaveSchema = new JButton(loadIcon(ICON_SAVE));
-        scrollPane = new JScrollPane();
-
-        lblComputerName.setFont(lblComputerName.getFont().deriveFont(lblComputerName.getFont().getStyle() | java.awt.Font.BOLD, lblComputerName.getFont().getSize() + 3));
+        lblComputerName = GUI.labelTitle("computer_name");
         lblComputerName.setHorizontalAlignment(SwingConstants.CENTER);
-        lblComputerName.setText("computer_name");
 
-        jToolBar1.setFloatable(false);
-        jToolBar1.setOrientation(SwingConstants.VERTICAL);
-        jToolBar1.setRollover(true);
-        jToolBar1.setDoubleBuffered(true);
+        lblSelectDevice = GUI.label("Select device:");
+        cmbDevice = new JComboBox<>();
+        lblName = GUI.labelBold("");
+        lblFileName = GUI.label("");
+        lblVersion = GUI.label("");
+        lblCopyright = GUI.label("");
 
-        buttonGroup1.add(btnCompiler);
-        btnCompiler.setToolTipText("Compiler information");
-        btnCompiler.setFocusable(false);
-        btnCompiler.addActionListener(this::btnCompilerActionPerformed);
-        jToolBar1.add(btnCompiler);
+        txtDescription = GUI.textAreaReadOnly(5, 20);
 
-        buttonGroup1.add(btnCPU);
-        btnCPU.setSelected(true);
-        btnCPU.setToolTipText("CPU information");
-        btnCPU.setFocusable(false);
-        btnCPU.addActionListener(this::btnCPUActionPerformed);
-        jToolBar1.add(btnCPU);
+        cmbDevice.addActionListener(e -> {
+            int index = cmbDevice.getSelectedIndex();
+            if (index >= 0 && index < devices.size()) {
+                try {
+                    showPluginInfo(Optional.of(devices.get(index)),
+                            Optional.of(computer.getComputerConfig().getDevices().get(index)));
+                } catch (Exception ex) {
+                    showPluginInfo(Optional.empty(), Optional.empty());
+                    LOGGER.error("Could not setup plugin information", ex);
+                }
+            } else {
+                showPluginInfo(Optional.empty(), Optional.empty());
+            }
+        });
 
-        buttonGroup1.add(btnMemory);
-        btnMemory.setToolTipText("Memory information");
-        btnMemory.setFocusable(false);
-        btnMemory.addActionListener(this::btnMemoryActionPerformed);
-        jToolBar1.add(btnMemory);
+        // Info tab toolbar
+        JToolBar infoToolbar = GUI.toolbarVertical();
 
-        buttonGroup1.add(btnDevice);
-        btnDevice.setToolTipText("Devices information");
-        btnDevice.setFocusable(false);
-        btnDevice.addActionListener(this::btnDeviceActionPerformed);
-        jToolBar1.add(btnDevice);
+        JToggleButton btnCompiler = GUI.toggle(ICON_COMPILER, "Compiler information", false,
+                computer.getCompiler().isPresent(), () -> {
+                    lblSelectDevice.setVisible(false);
+                    cmbDevice.setVisible(false);
+                    showPluginInfo(computer.getCompiler(), computer.getComputerConfig().getCompiler());
+                });
+        pluginButtonGroup.add(btnCompiler);
+        infoToolbar.add(btnCompiler);
 
-        lblSelectDevice.setText("Select device:");
+        JToggleButton btnCPU = GUI.toggle(ICON_CPU, "CPU information", true, true, () -> {
+            lblSelectDevice.setVisible(false);
+            cmbDevice.setVisible(false);
+            showPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
+        });
+        pluginButtonGroup.add(btnCPU);
+        infoToolbar.add(btnCPU);
 
-        lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));
-        lblName.setText("plugin_name");
+        JToggleButton btnMemory = GUI.toggle(ICON_MEMORY, "Memory information", false,
+                computer.getMemory().isPresent(), () -> {
+                    lblSelectDevice.setVisible(false);
+                    cmbDevice.setVisible(false);
+                    showPluginInfo(computer.getMemory(), computer.getComputerConfig().getMemory());
+                });
+        pluginButtonGroup.add(btnMemory);
+        infoToolbar.add(btnMemory);
 
-        lblFileName.setText("plugin_file_name");
-        lblVersion.setText("plugin_version");
-        lblCopyright.setText("plugin_copyright");
+        JToggleButton btnDevice = GUI.toggle(ICON_DEVICE, "Devices information", false,
+                !devices.isEmpty(), () -> {
+                    lblSelectDevice.setVisible(true);
+                    cmbDevice.setVisible(true);
+                    if (cmbDevice.getItemCount() > 0) {
+                        cmbDevice.setSelectedIndex(0);
+                    } else {
+                        cmbDevice.setEnabled(false);
+                        showPluginInfo(Optional.empty(), Optional.empty());
+                    }
+                });
+        pluginButtonGroup.add(btnDevice);
+        infoToolbar.add(btnDevice);
 
-        panelDescription.setBorder(BorderFactory.createTitledBorder("Short description"));
+        JPanel descriptionPanel = GUI.section("Short description", "insets dialog", "[grow]", "[grow]");
+        descriptionPanel.add(GUI.scrollable(txtDescription), "grow");
 
-        txtDescription.setColumns(20);
-        txtDescription.setEditable(false);
-        txtDescription.setLineWrap(true);
-        txtDescription.setRows(5);
-        txtDescription.setWrapStyleWord(true);
-        jScrollPane1.setViewportView(txtDescription);
-
-        JPanel descriptionPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[grow]"));
-        descriptionPanel.setBorder(BorderFactory.createTitledBorder("Short description"));
-        descriptionPanel.add(jScrollPane1, "grow");
-
-        JPanel infoPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[][][][][][][][grow]"));
+        JPanel infoPanel = GUI.panel("insets dialog", "[grow]", "[][][][][][grow]");
         infoPanel.add(lblSelectDevice, "split 2");
         infoPanel.add(cmbDevice, "grow, wrap");
         infoPanel.add(lblName, "wrap");
@@ -199,70 +164,30 @@ public class ViewComputerDialog extends DialogBase {
         infoPanel.add(lblCopyright, "wrap");
         infoPanel.add(descriptionPanel, "grow");
 
-        JPanel tabInfoPanel = new JPanel(new MigLayout("insets dialog", "[][grow]", "[grow]"));
-        tabInfoPanel.add(jToolBar1, "grow");
-        tabInfoPanel.add(infoPanel, "grow");
+        JPanel infoTab = GUI.panel("insets dialog", "[][grow]", "[grow]");
+        infoTab.add(infoToolbar, "grow");
+        infoTab.add(infoPanel, "grow");
 
-        jTabbedPane1.addTab("Computer info", tabInfoPanel);
+        // Schema tab
+        JToolBar schemaToolbar = GUI.toolbarVertical();
 
-        jToolBar2.setFloatable(false);
-        jToolBar2.setOrientation(SwingConstants.VERTICAL);
-        jToolBar2.setRollover(true);
+        JButton btnSave = GUI.buttonIcon(ICON_SAVE, "Save schema image", e -> panelSchema.saveSchemaImage());
+        schemaToolbar.add(btnSave);
 
-        btnSaveSchema.setToolTipText("Save schema image");
-        btnSaveSchema.setFocusable(false);
-        btnSaveSchema.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnSaveSchema.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnSaveSchema.addActionListener(this::btnSaveSchemaActionPerformed);
-        jToolBar2.add(btnSaveSchema);
+        JScrollPane scrollPane = GUI.scrollable(panelSchema);
 
-        JPanel schemaPanel = new JPanel(new MigLayout("insets dialog", "[][grow]", "[grow]"));
-        schemaPanel.add(jToolBar2, "grow");
-        schemaPanel.add(scrollPane, "grow");
+        JPanel schemaTab = GUI.panel("insets dialog", "[][grow]", "[grow]");
+        schemaTab.add(schemaToolbar, "grow");
+        schemaTab.add(scrollPane, "grow");
 
-        jTabbedPane1.addTab("Abstract schema", schemaPanel);
+        // Main panel
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Computer info", infoTab);
+        tabbedPane.addTab("Abstract schema", schemaTab);
 
-        JPanel mainPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[][grow]"));
+        JPanel mainPanel = GUI.panel("insets dialog", "[grow]", "[][grow]");
         mainPanel.add(lblComputerName, "growx, wrap");
-        mainPanel.add(jTabbedPane1, "grow");
-
+        mainPanel.add(tabbedPane, "grow");
         return mainPanel;
-    }
-
-    private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {
-        lblSelectDevice.setVisible(false);
-        cmbDevice.setVisible(false);
-        computer.getComputerConfig().getCompiler().ifPresent(conf -> computer.getCompiler().ifPresent(compiler -> setInfo(compiler, conf)));
-    }
-
-    private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {
-        lblSelectDevice.setVisible(false);
-        cmbDevice.setVisible(false);
-        computer.getComputerConfig().getCPU().ifPresent(conf -> computer.getCPU().ifPresent(cpu -> setInfo(cpu, conf)));
-    }
-
-    private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {
-        lblSelectDevice.setVisible(false);
-        cmbDevice.setVisible(false);
-        computer.getComputerConfig().getMemory().ifPresent(conf -> computer.getMemory().ifPresent(memory -> setInfo(memory, conf)));
-    }
-
-    private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {
-        lblSelectDevice.setVisible(true);
-        cmbDevice.setVisible(true);
-        setVisibleInfo(false);
-        if (cmbDevice.getItemCount() > 0) {
-            cmbDevice.setSelectedIndex(0);
-            PluginConfig conf = computer.getComputerConfig().getDevices().get(0);
-            Device device = computer.getDevices().get(0);
-            setInfo(device, conf);
-            setVisibleInfo(true);
-        } else {
-            cmbDevice.setEnabled(false);
-        }
-    }
-
-    private void btnSaveSchemaActionPerformed(java.awt.event.ActionEvent evt) {
-        panelSchema.saveSchemaImage();
     }
 }

@@ -43,7 +43,7 @@ public class MemoryGui extends JDialog {
     }
 
     private void initComponents() {
-        JToolBar toolBar = GUI.toolBar();
+        JToolBar toolBar = GUI.toolbar();
         JPanel jPanel1 = new JPanel();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -57,7 +57,7 @@ public class MemoryGui extends JDialog {
         jPanel1.setBorder(BorderFactory.createTitledBorder(null, "Tape content", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, FONT_COMMON));
 
         table.setGridColor(java.awt.SystemColor.control);
-        JScrollPane jScrollPane1 = GUI.scrollPane(table);
+        JScrollPane jScrollPane1 = GUI.scrollable(table);
 
         GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);

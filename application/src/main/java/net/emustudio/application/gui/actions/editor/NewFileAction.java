@@ -10,18 +10,17 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_NEW_FILE;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class NewFileAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/document-new.png";
-
     private final Supplier<Boolean> confirmSave;
     private final Editor editor;
     private final JTextArea compilerOutput;
     private final Runnable updateTitle;
 
     public NewFileAction(Supplier<Boolean> confirmSave, Editor editor, JTextArea compilerOutput, Runnable updateTitle) {
-        super("New", loadIcon(ICON_FILE));
+        super("New", loadIcon(ICON_NEW_FILE));
 
         this.confirmSave = Objects.requireNonNull(confirmSave);
         this.editor = Objects.requireNonNull(editor);

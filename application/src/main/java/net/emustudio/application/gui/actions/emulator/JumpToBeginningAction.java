@@ -8,16 +8,16 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_JUMP_TO_BEGINNING;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class JumpToBeginningAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-first.png";
 
     private final VirtualComputer computer;
     private final Runnable refreshDebugTable;
 
     public JumpToBeginningAction(VirtualComputer computer, Runnable refreshDebugTable) {
-        super("Jump to beginning", loadIcon(ICON_FILE));
+        super("Jump to beginning", loadIcon(ICON_JUMP_TO_BEGINNING));
         putValue(SHORT_DESCRIPTION, "Jump to beginning");
         this.computer = Objects.requireNonNull(computer);
         this.refreshDebugTable = Objects.requireNonNull(refreshDebugTable);

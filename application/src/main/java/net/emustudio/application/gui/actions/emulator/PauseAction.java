@@ -9,16 +9,16 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_PAUSE;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class PauseAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-pause.png";
 
     private final EmulationController emulationController;
     private final Runnable updateStatus;
 
     public PauseAction(EmulationController emulationController, Runnable updateStatus) {
-        super("Pause", loadIcon(ICON_FILE));
+        super("Pause", loadIcon(ICON_PAUSE));
         putValue(SHORT_DESCRIPTION, "Pause emulation");
         this.emulationController = emulationController;
         this.updateStatus = Objects.requireNonNull(updateStatus);

@@ -32,11 +32,7 @@ class TextCellRenderer extends JLabel implements TableCellRenderer {
             setBackground((row % 2 == 0) ? TABLE_COLOR_ROW_ODD : TABLE_COLOR_ROW_EVEN);
             setForeground(Color.BLACK);
         }
-        if (value != null) {
-            setText(value.toString());
-        } else {
-            setText("");
-        }
+        setText((value != null) ? value.toString() : "");
         return this;
     }
 }

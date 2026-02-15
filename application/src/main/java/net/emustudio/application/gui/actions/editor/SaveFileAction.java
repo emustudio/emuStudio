@@ -9,16 +9,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_SAVE;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class SaveFileAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/document-save.png";
-
     private final Editor editor;
     private final Runnable updateTitle;
 
     public SaveFileAction(Editor editor, Runnable updateTitle) {
-        super("Save", loadIcon(ICON_FILE));
+        super("Save", loadIcon(ICON_SAVE));
 
         this.editor = Objects.requireNonNull(editor);
         this.updateTitle = Objects.requireNonNull(updateTitle);

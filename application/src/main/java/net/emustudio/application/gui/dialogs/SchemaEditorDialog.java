@@ -11,12 +11,12 @@ import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
-import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.*;
 import static net.emustudio.application.settings.ConfigFiles.listPluginFiles;
 
 public class SchemaEditorDialog extends DialogBase implements KeyListener {
@@ -36,7 +37,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     private final Schema schema;
     private final Dialogs dialogs;
 
-    private DrawingPanel panel;
+    private final DrawingPanel panel;
     private boolean buttonSelected = false;
     private JToggleButton btnBidirection;
     private JToggleButton btnCPU;
@@ -107,69 +108,68 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     protected JComponent initializeComponents() {
 
         groupDraw = new ButtonGroup();
-        JToolBar toolDraw = new JToolBar();
+        JToolBar toolDraw = GUI.toolbar();
         ToolbarButton btnSave = GUI.toolbarButton(
                 this::btnSaveActionPerformed,
-                "/net/emustudio/application/gui/dialogs/document-save.png",
+                ICON_SAVE,
                 "Save & Close"
         );
         JToolBar.Separator separator1 = new JToolBar.Separator();
-        btnCompiler = GUI.toolbarToggleButton(
+        btnCompiler = GUI.toolbarToggle(
                 this::btnCompilerActionPerformed,
                 this::btnCompilerItemStateChanged,
-                "/net/emustudio/application/gui/dialogs/compile.png",
+                ICON_COMPILER,
                 "Set compiler"
         );
-        btnCPU = GUI.toolbarToggleButton(
+        btnCPU = GUI.toolbarToggle(
                 this::btnCPUActionPerformed,
                 this::btnCPUItemStateChanged,
-                "/net/emustudio/application/gui/dialogs/cpu.gif",
+                ICON_CPU,
                 "Set CPU"
         );
-        btnRAM = GUI.toolbarToggleButton(
+        btnRAM = GUI.toolbarToggle(
                 this::btnRAMActionPerformed,
                 this::btnRAMItemStateChanged,
-                "/net/emustudio/application/gui/dialogs/ram.gif",
+                ICON_MEMORY,
                 "Set operating memory"
         );
-        btnDevice = GUI.toolbarToggleButton(
+        btnDevice = GUI.toolbarToggle(
                 this::btnDeviceActionPerformed,
                 this::btnDeviceItemStateChanged,
-                "/net/emustudio/application/gui/dialogs/device.png",
+                ICON_DEVICE,
                 "Add device"
         );
         JToolBar.Separator separator2 = new JToolBar.Separator();
-        btnLine = GUI.toolbarToggleButton(
+        btnLine = GUI.toolbarToggle(
                 this::btnLineActionPerformed,
                 this::btnLineItemStateChanged,
-                "/net/emustudio/application/gui/dialogs/connection.png",
+                ICON_CONNECTION,
                 "Add connection"
         );
-        btnBidirection = GUI.toolbarToggleButton(
+        btnBidirection = GUI.toolbarToggle(
                 this::btnBidirectionActionPerformed,
-                "/net/emustudio/application/gui/dialogs/bidirection.gif",
+                ICON_BIDIRECTION,
                 "Bidirectional connection"
         );
         JToolBar.Separator separator3 = new JToolBar.Separator();
-        btnDelete = GUI.toolbarToggleButton(
+        btnDelete = GUI.toolbarToggle(
                 this::btnDeleteActionPerformed,
                 this::btnDeleteItemStateChanged,
-                "/net/emustudio/application/gui/dialogs/edit-delete.png",
+                ICON_DELETE,
                 "Delete component or connection"
         );
         JToolBar.Separator separator4 = new JToolBar.Separator();
         cmbPlugin = new JComboBox<>();
         JToolBar.Separator separator5 = new JToolBar.Separator();
-        btnUseGrid = GUI.toolbarToggleButton(
+        btnUseGrid = GUI.toolbarToggle(
                 this::btnUseGridActionPerformed,
-                "/net/emustudio/application/gui/dialogs/grid_memory.gif",
+                ICON_GRID,
                 "Set/unset using grid"
         );
         scrollScheme = new JScrollPane();
+        scrollScheme.setPreferredSize(new Dimension(800, 600));
         sliderGridGap = new JSlider();
 
-        toolDraw.setFloatable(false);
-        toolDraw.setRollover(true);
 
         toolDraw.add(btnSave);
         toolDraw.add(separator1);
@@ -209,10 +209,10 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         sliderGridGap.setValue(30);
         sliderGridGap.addChangeListener(this::sliderGridGapStateChanged);
 
-        JPanel mainPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[][grow]"));
-        mainPanel.add(toolDraw, "growx, wrap");
+        JPanel mainPanel = GUI.panel("insets dialog", "[grow][]", "[][grow]");
+        mainPanel.add(toolDraw, "growx, span, wrap");
         mainPanel.add(scrollScheme, "grow");
-        mainPanel.add(sliderGridGap, "w 31!");
+        mainPanel.add(sliderGridGap, "w 31!, growy");
 
         return mainPanel;
     }
@@ -274,7 +274,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
             } else if (btnDevice.isSelected()) {
                 panel.setTool(Tool.TOOL_DEVICE, fileName);
             }
-        }, () -> panel.cancelDrawing());
+        }, panel::cancelDrawing);
     }
 
     private void btnCompilerItemStateChanged(ItemEvent evt) {

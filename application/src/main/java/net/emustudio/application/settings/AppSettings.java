@@ -31,7 +31,7 @@ public class AppSettings extends BasicSettingsImpl {
     }
 
     public AppSettings(Config config, boolean nogui, boolean auto) {
-        super(config, System.out::println);
+        super(config, () -> {});
         this.emuStudioAuto = auto;
         this.noGUI = nogui;
     }
