@@ -4,13 +4,14 @@ package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-public class SelectBankAddressDialog extends JDialog {
+public class SelectBankAddressDialog extends DialogBase {
     private final RadixUtils ru = RadixUtils.getInstance();
     private final Dialogs dialogs;
     private final boolean selectBank;
@@ -22,12 +23,11 @@ public class SelectBankAddressDialog extends JDialog {
     private boolean okPressed;
 
     public SelectBankAddressDialog(JDialog parent, boolean selectBank, boolean selectAddress, Dialogs dialogs) {
-        super(parent, true);
+        super(parent, "Select address", true);
         this.selectBank = selectBank;
         this.selectAddress = selectAddress;
         this.dialogs = Objects.requireNonNull(dialogs);
-        setLocationRelativeTo(parent);
-        initComponents();
+        buildContent();
         txtAddress.grabFocus();
     }
 
@@ -43,17 +43,13 @@ public class SelectBankAddressDialog extends JDialog {
         return okPressed;
     }
 
-    private void initComponents() {
-        setTitle("Select address");
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        JLabel lblBank = new JLabel("Memory bank:");
-        JLabel lblAddress = new JLabel("Address:");
+    @Override
+    protected JComponent initializeComponents() {
+        JLabel lblBank = GUI.label("Memory bank:");
+        JLabel lblAddress = GUI.label("Address:");
         JButton btnOK = new JButton("OK");
         btnOK.setDefaultCapable(true);
         btnOK.addActionListener(this::clickBtnOK);
-
         getRootPane().setDefaultButton(btnOK);
 
         if (!selectBank) {
@@ -68,41 +64,13 @@ public class SelectBankAddressDialog extends JDialog {
             txtAddress.setSelectionEnd(txtAddress.getText().length());
         }
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblBank)
-                                        .addComponent(lblAddress))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(txtAddress, 128, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(txtBank, 128, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnOK)
-                                .addContainerGap()));
-
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblBank)
-                                        .addComponent(txtBank, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblAddress)
-                                        .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addGap(18, 18, 18)
-                                .addComponent(btnOK)
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
-        pack();
+        JPanel content = GUI.panel("insets dialog", "[][128!]", "[][][18][]]");
+        content.add(lblBank);
+        content.add(txtBank, "growx, wrap");
+        content.add(lblAddress);
+        content.add(txtAddress, "growx, wrap");
+        content.add(btnOK, "span, align right");
+        return content;
     }
 
     private void clickBtnOK(ActionEvent e) {

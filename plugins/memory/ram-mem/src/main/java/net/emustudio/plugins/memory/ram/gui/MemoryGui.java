@@ -4,20 +4,18 @@ package net.emustudio.plugins.memory.ram.gui;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.ram.MemoryContextImpl;
 import net.emustudio.plugins.memory.ram.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.ram.gui.actions.EraseMemoryAction;
 import net.emustudio.plugins.memory.ram.gui.actions.LoadImageAction;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
+import java.awt.*;
 
-import java.awt.event.KeyEvent;
-
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_COMMON;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
-public class MemoryGui extends JDialog {
+public class MemoryGui extends DialogBase {
     private final JTable table;
 
     private final LoadImageAction loadImageAction;
@@ -38,37 +36,27 @@ public class MemoryGui extends JDialog {
         this.dumpMemoryAction = new DumpMemoryAction(dialogs, memory);
         this.eraseMemoryAction = new EraseMemoryAction(tableModel, memory);
 
-        initComponents();
-        setLocationRelativeTo(parent);
+        buildContent();
     }
 
-    private void initComponents() {
+    @Override
+    protected JComponent initializeComponents() {
         JToolBar toolBar = GUI.toolbar();
-        JPanel jPanel1 = new JPanel();
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
         toolBar.add(GUI.toolbarButton(loadImageAction));
         toolBar.add(GUI.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
         toolBar.add(GUI.toolbarButton(eraseMemoryAction));
 
-        jPanel1.setBorder(BorderFactory.createTitledBorder(null, "Tape content", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, FONT_COMMON));
+        table.setGridColor(SystemColor.control);
+        JScrollPane scrollPane = GUI.scrollable(table);
+        scrollPane.setPreferredSize(new Dimension(439, 456));
 
-        table.setGridColor(java.awt.SystemColor.control);
-        JScrollPane jScrollPane1 = GUI.scrollable(table);
+        JPanel panelContent = GUI.section("Tape content", "insets dialog", "[grow]", "[grow]");
+        panelContent.add(scrollPane, "grow");
 
-        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE));
-        jPanel1Layout.setVerticalGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel1Layout.createSequentialGroup().addContainerGap().addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 456, Short.MAX_VALUE)));
-
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(toolBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(jPanel1));
-        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jPanel1)));
-
-        pack();
+        JPanel content = GUI.panel("insets 0", "[grow]", "[]6[grow]");
+        content.add(toolBar, "growx, wrap");
+        content.add(panelContent, "grow");
+        return content;
     }
 }

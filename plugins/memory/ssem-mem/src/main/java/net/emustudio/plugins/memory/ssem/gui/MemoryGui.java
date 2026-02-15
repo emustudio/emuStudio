@@ -5,6 +5,7 @@ package net.emustudio.plugins.memory.ssem.gui;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.EraseMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.LoadImageAction;
@@ -12,9 +13,9 @@ import net.emustudio.plugins.memory.ssem.gui.table.MemoryTable;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
+import java.awt.*;
 
-public class MemoryGui extends JDialog {
+public class MemoryGui extends DialogBase {
     private final MemoryTableModel tableModel;
     private final JScrollPane scrollPane = new JScrollPane();
 
@@ -23,7 +24,7 @@ public class MemoryGui extends JDialog {
     private final EraseMemoryAction eraseMemoryAction;
 
     public MemoryGui(JFrame parent, MemoryContext<Byte> memory, ApplicationApi api) {
-        super(parent);
+        super(parent, "SSEM Memory (Williams–Kilburn Tube)", false);
 
         this.tableModel = new MemoryTableModel(memory);
         MemoryTable table = new MemoryTable(tableModel, scrollPane);
@@ -35,21 +36,15 @@ public class MemoryGui extends JDialog {
         this.dumpMemoryAction = new DumpMemoryAction(api, memory);
         this.eraseMemoryAction = new EraseMemoryAction(tableModel, memory);
 
-        initComponents();
-        setLocationRelativeTo(parent);
-
         scrollPane.setViewportView(table);
+        scrollPane.setPreferredSize(new Dimension(965, 455));
         memory.addMemoryListener(new MemoryListenerImpl());
+        buildContent();
     }
 
-    private void initComponents() {
+    @Override
+    protected JComponent initializeComponents() {
         JToolBar toolBar = new JToolBar();
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        setTitle("SSEM Memory (Williams–Kilburn Tube)");
-
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
         toolBar.add(GUI.toolbarButton(loadImageAction));
@@ -57,26 +52,13 @@ public class MemoryGui extends JDialog {
         toolBar.addSeparator();
         toolBar.add(GUI.toolbarButton(eraseMemoryAction));
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 965, Short.MAX_VALUE)
-                        .addComponent(toolBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE))
-        );
-
-        pack();
+        JPanel content = GUI.panel("insets 0", "[grow]", "[]6[grow]");
+        content.add(toolBar, "growx, wrap");
+        content.add(scrollPane, "grow");
+        return content;
     }
 
     private class MemoryListenerImpl implements MemoryContext.MemoryListener {
-
         @Override
         public void memoryContentChanged(int fromLocation, int toLocation) {
             tableModel.dataChangedAt(fromLocation, toLocation);
