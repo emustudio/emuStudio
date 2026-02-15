@@ -3,12 +3,12 @@
 package net.emustudio.plugins.cpu.brainduck.gui;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.cpu.brainduck.CpuImpl;
 import net.emustudio.plugins.cpu.brainduck.EmulatorEngine;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
@@ -17,13 +17,15 @@ public class StatusPanel extends JPanel {
     private final MemoryTableModel tableModel;
     private final Byte[] memory;
     private final EmulatorEngine cpu;
-    private JLabel lblLoopLevel;
-    private JLabel lblRunState;
-    private JLabel lblTime;
-    private JTable tblMemory;
-    private JTextField txtIP;
-    private JTextField txtMemP;
-    private JTextField txtP;
+
+    private final JLabel lblLoopLevel = new JLabel("0");
+    private final JLabel lblRunState = new JLabel("stopped (breakpoint)");
+    private final JLabel lblTime = new JLabel("0 ms");
+    private final JTable tblMemory = new JTable();
+    private final JTextField txtIP = readOnlyField("0");
+    private final JTextField txtMemP = readOnlyField("0");
+    private final JTextField txtP = readOnlyField("0");
+
     public StatusPanel(ByteMemoryContext memory, CpuImpl cpu) {
         this.memory = memory.getRawMemory()[0];
         this.cpu = cpu.getEngine();
@@ -38,218 +40,42 @@ public class StatusPanel extends JPanel {
     }
 
     private void initComponents() {
-        JPanel jPanel1 = new JPanel();
-        JLabel jLabel1 = new JLabel();
-        JLabel jLabel2 = new JLabel();
-        JLabel jLabel3 = new JLabel();
-        txtMemP = new JTextField();
-        txtP = new JTextField();
-        txtIP = new JTextField();
-        JLabel jLabel4 = new JLabel();
-        JLabel jLabel5 = new JLabel();
-        JLabel jLabel6 = new JLabel();
-        JSeparator jSeparator1 = new JSeparator();
-        JLabel jLabel7 = new JLabel();
-        lblTime = new JLabel();
-        JLabel jLabel8 = new JLabel();
-        lblLoopLevel = new JLabel();
-        JPanel jPanel2 = new JPanel();
-        lblRunState = new JLabel();
-        JPanel jPanel3 = new JPanel();
-        JScrollPane jScrollPane1 = new JScrollPane();
-        tblMemory = new JTable();
-
-        jPanel1.setBorder(BorderFactory.createTitledBorder("Internal state"));
-
-        jLabel1.setText("IP:");
-        jLabel2.setText("P:");
-        jLabel3.setText("*P:");
-
-        txtMemP.setEditable(false);
-        txtMemP.setFont(FONT_MONOSPACED);
-        txtMemP.setText("0");
-
-        txtP.setEditable(false);
-        txtP.setFont(FONT_MONOSPACED);
-        txtP.setText("0");
-
-        txtIP.setEditable(false);
-        txtIP.setFont(FONT_MONOSPACED);
-        txtIP.setText("0");
-
-        jLabel4.setText("h");
-        jLabel5.setText("h");
-        jLabel6.setText("h");
-
-        jLabel7.setText("Execution time:");
-
         lblTime.setFont(lblTime.getFont().deriveFont(lblTime.getFont().getStyle() | java.awt.Font.BOLD));
-        lblTime.setText("0 ms");
-
-        jLabel8.setText("Loop level:");
-
         lblLoopLevel.setFont(lblLoopLevel.getFont().deriveFont(lblLoopLevel.getFont().getStyle() | java.awt.Font.BOLD));
-        lblLoopLevel.setText("0");
 
-        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addComponent(jLabel3)
-                                                        .addComponent(jLabel2)
-                                                        .addComponent(jLabel1))
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addComponent(txtIP)
-                                                        .addComponent(txtP)
-                                                        .addComponent(txtMemP))
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                                .addComponent(jLabel4)
-                                                                .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                                                        .addComponent(jLabel5)
-                                                                        .addContainerGap()))
-                                                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                                                .addComponent(jLabel6)
-                                                                .addContainerGap())))
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addComponent(jSeparator1)
-                                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                                        .addComponent(jLabel7)
-                                                                        .addComponent(jLabel8))
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                                        .addComponent(lblLoopLevel)
-                                                                        .addComponent(lblTime))
-                                                                .addGap(0, 0, Short.MAX_VALUE)))
-                                                .addContainerGap())))
-        );
-        jPanel1Layout.setVerticalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel1)
-                                        .addComponent(txtIP, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel4))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel2)
-                                        .addComponent(txtP, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel5))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel3)
-                                        .addComponent(txtMemP, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel6))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel7)
-                                        .addComponent(lblTime))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel8)
-                                        .addComponent(lblLoopLevel)))
-        );
-
-        jPanel2.setBorder(BorderFactory.createTitledBorder("Run state"));
+        JPanel panelInternal = GUI.section("Internal state", "insets dialog", "[][grow]6[]", "[][][]6[][][]");
+        panelInternal.add(GUI.label("IP:"));
+        panelInternal.add(txtIP, "growx");
+        panelInternal.add(GUI.label("h"), "wrap");
+        panelInternal.add(GUI.label("P:"));
+        panelInternal.add(txtP, "growx");
+        panelInternal.add(GUI.label("h"), "wrap");
+        panelInternal.add(GUI.label("*P:"));
+        panelInternal.add(txtMemP, "growx");
+        panelInternal.add(GUI.label("h"), "wrap");
+        panelInternal.add(new JSeparator(), "span, growx, h 2!, wrap");
+        panelInternal.add(GUI.label("Execution time:"));
+        panelInternal.add(lblTime, "span, wrap");
+        panelInternal.add(GUI.label("Loop level:"));
+        panelInternal.add(lblLoopLevel, "span");
 
         lblRunState.setFont(FONT_MONOSPACED_BIG_BOLD);
         lblRunState.setForeground(CPU_RUN_STATE_COLOR);
         lblRunState.setHorizontalAlignment(SwingConstants.CENTER);
-        lblRunState.setText("stopped (breakpoint)");
 
-        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(lblRunState, GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(lblRunState)
-                                .addContainerGap(21, Short.MAX_VALUE))
-        );
-
-        jPanel3.setBorder(BorderFactory.createTitledBorder("Memory view"));
-
-        jScrollPane1.setBorder(null);
+        JPanel panelRunState = GUI.section("Run state", "insets dialog", "[grow]", "[]");
+        panelRunState.add(lblRunState, "growx");
 
         tblMemory.setFont(FONT_MONOSPACED);
-        tblMemory.setModel(new DefaultTableModel(
-                new Object[][]{
-                        {null, null, null, null, null}
-                },
-                new String[]{
-                        "00", "01", "02", "03", "04"
-                }
-        ) {
-            final Class[] types = new Class[]{
-                    java.lang.Byte.class, java.lang.Byte.class, java.lang.Byte.class, java.lang.Byte.class, java.lang.Byte.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types[columnIndex];
-            }
-        });
         tblMemory.setRowSelectionAllowed(false);
-        jScrollPane1.setViewportView(tblMemory);
 
-        GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(
-                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
+        JPanel panelMemory = GUI.section("Memory view", "insets dialog", "[grow]", "[grow]");
+        panelMemory.add(new JScrollPane(tblMemory), "grow");
 
-        GroupLayout layout = new GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(jPanel2, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        setLayout(new net.miginfocom.swing.MigLayout("insets dialog", "[grow]", "[][][]"));
+        add(panelInternal, "growx, wrap");
+        add(panelRunState, "growx, wrap");
+        add(panelMemory, "growx");
     }
 
     private class CPUStatusListener implements CPU.CPUListener {
@@ -302,6 +128,12 @@ public class StatusPanel extends JPanel {
                 tblMemory.repaint();
             }
         }
+    }
 
+    private static JTextField readOnlyField(String text) {
+        JTextField field = new JTextField(text);
+        field.setEditable(false);
+        field.setFont(FONT_MONOSPACED);
+        return field;
     }
 }

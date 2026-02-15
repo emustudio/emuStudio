@@ -22,6 +22,7 @@ repositories {
 
 dependencies {
   implementation libs.emuLib
+  implementation libs.migLayout
   implementation libs.slf4JApi
 
   testImplementation libs.cpuTestSuite
