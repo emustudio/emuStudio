@@ -14,8 +14,9 @@ repositories {
 
 dependencies {
   implementation libs.emuLib
-  implementation libs.slf4JApi
   implementation libs.jcipAnnotations
+  implementation libs.migLayout
+  implementation libs.slf4JApi
 
   memoryLib project(":plugins:memory:rasp-mem")
   deviceLib project(":plugins:device:abstract-tape")
