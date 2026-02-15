@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.application.gui.framework.EmuStudioUI.*;
 
 public class EditorPanel extends JPanel {
     private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
@@ -36,7 +36,7 @@ public class EditorPanel extends JPanel {
     private final ReplaceDialog replaceDialog;
     private final FindDialog findDialog;
 
-    private final JSplitPane splitSource = GUI.splitPane();
+    private final JSplitPane splitSource;
 
     public EditorPanel(JFrame parent, Dialogs dialogs, Editor editor, VirtualComputer computer, Runnable updateTitle,
                        Supplier<CPU.RunState> runState) {
@@ -47,13 +47,8 @@ public class EditorPanel extends JPanel {
         this.replaceDialog = new ReplaceDialog(parent, editor);
         this.findDialog = new FindDialog(parent, editor);
 
-        JTextArea compilerOutput = new JTextArea();
-        compilerOutput.setColumns(20);
+        JTextArea compilerOutput = GUI.textAreaCode(3, 20);
         compilerOutput.setEditable(false);
-        compilerOutput.setFont(FONT_MONOSPACED);
-        compilerOutput.setLineWrap(true);
-        compilerOutput.setRows(3);
-        compilerOutput.setWrapStyleWord(true);
 
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
         this.findAction = new FindAction(findDialog, replaceDialog);
@@ -64,18 +59,12 @@ public class EditorPanel extends JPanel {
                 computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
-        JScrollPane compilerPane = new JScrollPane();
-        compilerPane.setViewportView(compilerOutput);
+        JScrollPane compilerPane = GUI.scrollable(compilerOutput);
 
-        splitSource.setBorder(null);
-        splitSource.setOrientation(JSplitPane.VERTICAL_SPLIT);
+        splitSource = GUI.splitTopBottom(editor.getView(), compilerPane, 1.0);
         splitSource.setOneTouchExpandable(true);
-        splitSource.setResizeWeight(1.0);
-        splitSource.setLeftComponent(editor.getView());
-        splitSource.setRightComponent(compilerPane);
 
         JToolBar mainToolBar = setupMainToolbar();
-        mainToolBar.setRollover(true);
 
         setLayout(new net.miginfocom.swing.MigLayout("insets 0, fill", "[grow]", "[][grow]"));
         add(mainToolBar, "growx, wrap");
@@ -132,11 +121,7 @@ public class EditorPanel extends JPanel {
     }
 
     private JToolBar setupMainToolbar() {
-        JToolBar mainToolBar = new JToolBar();
-
-        mainToolBar.setFloatable(false);
-        mainToolBar.setBorderPainted(false);
-        mainToolBar.setRollover(true);
+        JToolBar mainToolBar = GUI.toolbar();
 
         mainToolBar.add(GUI.toolbarButton(newFileAction));
         mainToolBar.add(GUI.toolbarButton(openFileAction));
@@ -144,28 +129,28 @@ public class EditorPanel extends JPanel {
         mainToolBar.addSeparator();
         mainToolBar.add(GUI.toolbarButton(
                 RTextArea.getAction(RTextArea.UNDO_ACTION),
-                "/net/emustudio/application/gui/dialogs/edit-undo.png",
+                ICON_UNDO,
                 "Undo"
         ));
         mainToolBar.add(GUI.toolbarButton(
                 RTextArea.getAction(RTextArea.REDO_ACTION),
-                "/net/emustudio/application/gui/dialogs/edit-redo.png",
+                ICON_REDO,
                 "Redo"
         ));
         mainToolBar.addSeparator();
         mainToolBar.add(GUI.toolbarButton(
                 RTextArea.getAction(RTextArea.CUT_ACTION),
-                "/net/emustudio/application/gui/dialogs/edit-cut.png",
+                ICON_CUT,
                 "Cut selection"
         ));
         mainToolBar.add(GUI.toolbarButton(
                 RTextArea.getAction(RTextArea.COPY_ACTION),
-                "/net/emustudio/application/gui/dialogs/edit-copy.png",
+                ICON_COPY,
                 "Copy selection"
         ));
         mainToolBar.add(GUI.toolbarButton(
                 RTextArea.getAction(RTextArea.PASTE_ACTION),
-                "/net/emustudio/application/gui/dialogs/edit-paste.png",
+                ICON_PASTE,
                 "Paste from clipboard"
         ));
         mainToolBar.addSeparator();

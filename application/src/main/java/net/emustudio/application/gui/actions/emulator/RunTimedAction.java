@@ -11,17 +11,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_RUN_TIMED;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 
 public class RunTimedAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-play-time.png";
 
     private final EmulationController emulationController;
     private final Dialogs dialogs;
 
     public RunTimedAction(EmulationController emulationController, Dialogs dialogs) {
-        super("Run timed...", loadIcon(ICON_FILE));
+        super("Run timed...", loadIcon(ICON_RUN_TIMED));
         putValue(SHORT_DESCRIPTION, "Run \"timed\" emulation");
         this.emulationController = emulationController;
         this.dialogs = Objects.requireNonNull(dialogs);

@@ -10,16 +10,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_REPLACE;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class ReplaceAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/edit-find-replace.png";
-
     private final FindDialog findDialog;
     private final ReplaceDialog replaceDialog;
 
     public ReplaceAction(FindDialog findDialog, ReplaceDialog replaceDialog) {
-        super("Replace...", loadIcon(ICON_FILE));
+        super("Replace...", loadIcon(ICON_REPLACE));
         this.findDialog = Objects.requireNonNull(findDialog);
         this.replaceDialog = Objects.requireNonNull(replaceDialog);
 

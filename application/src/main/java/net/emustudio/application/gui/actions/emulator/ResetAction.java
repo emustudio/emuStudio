@@ -8,15 +8,15 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_RESET;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class ResetAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/reset.png";
 
     private final EmulationController emulationController;
 
     public ResetAction(EmulationController emulationController) {
-        super("Reset", loadIcon(ICON_FILE));
+        super("Reset", loadIcon(ICON_RESET));
         putValue(SHORT_DESCRIPTION, "Reset emulation");
         this.emulationController = emulationController;
     }

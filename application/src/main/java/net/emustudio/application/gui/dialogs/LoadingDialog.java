@@ -7,11 +7,10 @@ import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 
-import static net.emustudio.emulib.runtime.ui.GUI.label;
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_LOADING;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class LoadingDialog extends DialogBase {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/loading.gif";
 
     public LoadingDialog() {
         super((JFrame) null, "emuStudio", false);
@@ -21,14 +20,13 @@ public class LoadingDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.panelVertical();
+        JPanel panel = GUI.column();
 
-        JLabel lblLoading = new JLabel(loadIcon(ICON_FILE));
-        lblLoading.setFont(lblLoading.getFont().deriveFont(lblLoading.getFont().getStyle() | java.awt.Font.BOLD));
-        lblLoading.setText("Loading computer, please wait...");
+        JLabel lblLoading = GUI.labelBold("Loading computer, please wait...");
+        lblLoading.setIcon(loadIcon(ICON_LOADING));
 
         panel.add(lblLoading, "wrap, gapbottom 10");
-        panel.add(label("If you see some errors, please see the log file."), "wrap");
+        panel.add(GUI.label("If you see some errors, please see the log file."), "wrap");
 
         return panel;
     }

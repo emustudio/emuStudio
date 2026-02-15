@@ -4,14 +4,13 @@ package net.emustudio.application.gui.debugtable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
 import static net.emustudio.application.gui.debugtable.BooleanComponent.BOOLEAN_ICON;
 import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_ROW_EVEN;
 import static net.emustudio.emulib.runtime.ui.Constants.TABLE_COLOR_ROW_ODD;
 
-class BooleanCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
+class BooleanCellRenderer extends DefaultTableCellRenderer {
 
     public BooleanCellRenderer() {
         setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -23,13 +22,7 @@ class BooleanCellRenderer extends DefaultTableCellRenderer implements TableCellR
 
         setBackground((row % 2 == 0) ? TABLE_COLOR_ROW_ODD : TABLE_COLOR_ROW_EVEN);
         super.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
-
-        boolean isBreakpointSet = value != null && (Boolean) value;
-        if (isBreakpointSet) {
-            setIcon(BOOLEAN_ICON);
-        } else {
-            setIcon(null);
-        }
+        setIcon((value != null && (Boolean) value) ? BOOLEAN_ICON : null);
         return this;
     }
 }

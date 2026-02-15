@@ -11,10 +11,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_ADD;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class OpenComputerAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/list-add.png";
 
     private final Dialogs dialogs;
     private final JDialog parent;
@@ -23,7 +23,7 @@ public class OpenComputerAction extends AbstractAction {
 
     public OpenComputerAction(Dialogs dialogs, JDialog parent, JList<ComputerConfig> lstConfig,
                               Consumer<ComputerConfig> selectComputer) {
-        super("Create new computer...", loadIcon(ICON_FILE));
+        super("Create new computer...", loadIcon(ICON_ADD));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
         this.dialogs = Objects.requireNonNull(dialogs);
         this.parent = Objects.requireNonNull(parent);

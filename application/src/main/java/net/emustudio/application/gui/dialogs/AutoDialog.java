@@ -10,6 +10,7 @@ import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import javax.swing.*;
 import java.util.Objects;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_MOTHERBOARD;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 /**
@@ -17,7 +18,6 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
  * is running.
  */
 public class AutoDialog extends DialogBase {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/motherboard-icon.gif";
     private final VirtualComputer computer;
 
     private final JLabel lblAction = new JLabel();
@@ -33,11 +33,10 @@ public class AutoDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.panelVertical();
+        JPanel panel = GUI.column();
 
-        JLabel lblPerforming = new JLabel(loadIcon(ICON_FILE));
-        lblPerforming.setFont(lblPerforming.getFont().deriveFont(lblPerforming.getFont().getStyle() | java.awt.Font.BOLD));
-        lblPerforming.setText("Running automatic emulation, please wait...");
+        JLabel lblPerforming = GUI.labelBold("Running automatic emulation, please wait...");
+        lblPerforming.setIcon(loadIcon(ICON_MOTHERBOARD));
 
         lblAction.setText("Initializing...");
 

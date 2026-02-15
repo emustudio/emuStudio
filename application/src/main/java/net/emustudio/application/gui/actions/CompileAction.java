@@ -18,11 +18,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_COMPILER;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 
 public class CompileAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/compile.png";
 
     private final VirtualComputer computer;
     private final Dialogs dialogs;
@@ -33,7 +33,7 @@ public class CompileAction extends AbstractAction {
 
     public CompileAction(VirtualComputer computer, Dialogs dialogs, Editor editor, Supplier<CPU.RunState> runState,
                          JTextArea compilerOutput, Runnable updateTitle) {
-        super("Compile", loadIcon(ICON_FILE));
+        super("Compile", loadIcon(ICON_COMPILER));
 
         this.computer = Objects.requireNonNull(computer);
         this.dialogs = Objects.requireNonNull(dialogs);

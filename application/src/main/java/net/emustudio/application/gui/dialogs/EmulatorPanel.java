@@ -14,7 +14,6 @@ import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -28,12 +27,12 @@ public class EmulatorPanel extends JPanel {
     private final JPanel statusWindow = new JPanel();
     private final GroupLayout statusWindowLayout = new GroupLayout(statusWindow);
 
-    private final JToolBar toolDebug = new JToolBar();
+    private final JToolBar toolDebug = GUI.toolbar();
     private final JPanel panelPages;
     private final JScrollPane paneDebug;
 
     private final JList<String> lstDevices = new JList<>();
-    private final JSplitPane splitPerDebug = GUI.splitPane();
+    private final JSplitPane splitPerDebug;
 
     private final DebugTableModel debugTableModel;
     private final JTable debugTable;
@@ -63,11 +62,11 @@ public class EmulatorPanel extends JPanel {
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.debugTable = new DebugTableImpl(debugTableModel);
 
-        paneDebug = GUI.scrollPane(debugTable);
+        paneDebug = GUI.scrollable(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         debugTable.setFillsViewportHeight(true);
 
-        GUI.styleTable(debugTable);
+        GUI.style(debugTable);
 
         paneDebug.addComponentListener(new ComponentAdapter() {
             @Override
@@ -100,8 +99,7 @@ public class EmulatorPanel extends JPanel {
 
         panelPages = PagesPanel.create(debugTableModel, dialogs);
 
-        JPanel debuggerPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[][grow][]"));
-        debuggerPanel.setBorder(BorderFactory.createTitledBorder("Debugger"));
+        JPanel debuggerPanel = GUI.section("Debugger", "insets dialog", "[grow]", "[][grow][]");
         debuggerPanel.add(toolDebug, "growx, wrap");
         debuggerPanel.add(paneDebug, "grow, wrap");
         debuggerPanel.add(panelPages, "growx");
@@ -138,10 +136,9 @@ public class EmulatorPanel extends JPanel {
             }
         });
 
-        JPanel peripheralPanel = new JPanel(new MigLayout("insets dialog", "[grow]", "[grow][]"));
-        peripheralPanel.setBorder(BorderFactory.createTitledBorder("Peripheral devices"));
-        JScrollPane paneDevices = GUI.scrollPane(lstDevices);
-        GUI.styleList(lstDevices);
+        JPanel peripheralPanel = GUI.section("Peripheral devices", "insets dialog", "[grow]", "[grow][]");
+        JScrollPane paneDevices = GUI.scrollable(lstDevices);
+        GUI.style(lstDevices);
 
         JButton btnShowSettings = new JButton(showDeviceSettingsAction);
         JButton btnShowGUI = new JButton(showDeviceGuiAction);
@@ -150,25 +147,15 @@ public class EmulatorPanel extends JPanel {
         peripheralPanel.add(btnShowSettings, "split 2, sizegroup btns, tag ok");
         peripheralPanel.add(btnShowGUI, "sizegroup btns, tag cancel");
 
-        splitPerDebug.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        splitPerDebug = GUI.splitTopBottom(debuggerPanel, peripheralPanel, 1.0);
         splitPerDebug.setDividerLocation(500);
-        splitPerDebug.setOrientation(JSplitPane.VERTICAL_SPLIT);
         splitPerDebug.setAutoscrolls(true);
-        splitPerDebug.setContinuousLayout(true);
-        splitPerDebug.setResizeWeight(1.0);
-        splitPerDebug.setTopComponent(debuggerPanel);
-        splitPerDebug.setRightComponent(peripheralPanel);
 
-        JSplitPane splitLeftRight = GUI.splitPane();
-        splitLeftRight.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-        splitLeftRight.setContinuousLayout(true);
+        JSplitPane splitLeftRight = GUI.splitLeftRight(splitPerDebug, statusWindow, 1.0);
         splitLeftRight.setFocusable(false);
         splitLeftRight.setDividerLocation(1.0);
-        splitLeftRight.setResizeWeight(1.0);
-        splitLeftRight.setRightComponent(statusWindow);
-        splitLeftRight.setLeftComponent(splitPerDebug);
 
-        setLayout(new MigLayout("insets dialog, fill", "[grow]", "[grow]"));
+        setLayout(new net.miginfocom.swing.MigLayout("insets dialog, fill", "[grow]", "[grow]"));
         add(splitLeftRight, "grow");
 
         this.memoryListener = new MemoryContext.MemoryListener() {
@@ -230,10 +217,6 @@ public class EmulatorPanel extends JPanel {
     }
 
     private void setupDebugToolbar() {
-        toolDebug.setFloatable(false);
-        toolDebug.setRollover(true);
-        toolDebug.setBorderPainted(false);
-
         toolDebug.add(GUI.toolbarButton(resetAction));
         toolDebug.addSeparator();
         toolDebug.add(GUI.toolbarButton(jumpToBeginningAction));

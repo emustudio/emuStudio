@@ -8,15 +8,15 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Optional;
 
+import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_STOP;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class StopAction extends AbstractAction {
-    private final static String ICON_FILE = "/net/emustudio/application/gui/dialogs/go-stop.png";
 
     private final EmulationController emulationController;
 
     public StopAction(EmulationController emulationController) {
-        super("Stop", loadIcon(ICON_FILE));
+        super("Stop", loadIcon(ICON_STOP));
         putValue(SHORT_DESCRIPTION, "Stop emulation");
         this.emulationController = emulationController;
     }

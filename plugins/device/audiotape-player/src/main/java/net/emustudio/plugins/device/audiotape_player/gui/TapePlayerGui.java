@@ -6,20 +6,18 @@ import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.ShortenedString;
 import net.emustudio.emulib.runtime.ui.components.CachedComboBoxModel;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.device.audiotape_player.TapePlaybackController;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 // https://stackoverflow.com/questions/25010068/miglayout-push-vs-grow
-public class TapePlayerGui extends JDialog {
+public class TapePlayerGui extends DialogBase {
     private final static String FOLDER_OPEN_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/folder-open.png";
     private final static String PLAY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-playback-start.png";
     private final static String STOP_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-playback-stop.png";
@@ -27,49 +25,49 @@ public class TapePlayerGui extends JDialog {
     private final static String REFRESH_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/view-refresh.png";
     private final static String LOAD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/applications-multimedia.png";
 
-    private final JPanel panelTapeInfo = new JPanel();
+    private final JPanel panelTapeInfo = GUI.panel("", "[][grow]", "[][]");
     private final JButton btnBrowse;
-    private final JButton btnRefresh = new JButton("Refresh", getIcon(REFRESH_ICON));
-    private final JButton btnLoad = new JButton("Load", getIcon(LOAD_ICON));
+    private final JButton btnRefresh = new JButton("Refresh", GUI.loadIcon(REFRESH_ICON));
+    private final JButton btnLoad = new JButton("Load", GUI.loadIcon(LOAD_ICON));
     private final CachedComboBoxModel<ShortenedString<Path>> cmbDirsModel = new CachedComboBoxModel<>();
     private final JComboBox<ShortenedString<Path>> cmbDirs = new JComboBox<>(cmbDirsModel);
     private final TapesListModel lstTapesModel = new TapesListModel();
     private final JList<String> lstTapes = new JList<>(lstTapesModel);
-    private final JScrollPane scrollTapes = new JScrollPane(lstTapes);
+    private final JScrollPane scrollTapes = GUI.scrollable(lstTapes);
 
     private final AtomicReference<ShortenedString<Path>> loadedFileName = new AtomicReference<>();
 
-    private final JButton btnPlay = new JButton("Play", getIcon(PLAY_ICON));
-    private final JButton btnStop = new JButton("Stop", getIcon(STOP_ICON));
-    private final JButton btnEject = new JButton("Eject", getIcon(EJECT_ICON));
+    private final JButton btnPlay = new JButton("Play", GUI.loadIcon(PLAY_ICON));
+    private final JButton btnStop = new JButton("Stop", GUI.loadIcon(STOP_ICON));
+    private final JButton btnEject = new JButton("Eject", GUI.loadIcon(EJECT_ICON));
 
     private final JTextArea txtFileName = new JTextArea("N/A");
-    private final JLabel lblStatus = new JLabel("Stopped");
+    private final JLabel lblStatus = GUI.labelBold("Stopped");
 
-    private final JTextArea txtEvents = new JTextArea();
+    private final JTextArea txtEvents = GUI.textAreaReadOnly(0, 0);
 
     private final TapePlaybackController controller;
 
     public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller) {
-        super(parent, "Audio Tape Player");
+        super(parent, "Audio Tape Player", false);
         Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
 
-        btnBrowse = GUI.buttonBrowseDirectories(dialogs, "Select Directory", "Select", p -> {
+        btnBrowse = GUI.browseDirectories(dialogs, "Select Directory", "Select", p -> {
             ShortenedString<Path> ps = new ShortenedString<>(p, Path::toString);
             ps.deriveMaxStringLength(cmbDirs, cmbDirs.getWidth() - 36);
             cmbDirsModel.add(ps);
             cmbDirs.setSelectedIndex(0);
             cmbDirs.setMinimumSize(new Dimension(0, 0));
         });
-        btnBrowse.setIcon(getIcon(FOLDER_OPEN_ICON));
+        btnBrowse.setIcon(GUI.loadIcon(FOLDER_OPEN_ICON));
         btnBrowse.setText("");
         btnBrowse.setToolTipText("Select directory");
         btnBrowse.setFocusPainted(false);
 
-        initComponents();
         setupListeners();
         setCassetteState(controller.getState());
+        buildContent();
     }
 
     public void addProgramDetail(String program, String detail) {
@@ -201,59 +199,45 @@ public class TapePlayerGui extends JDialog {
         btnEject.addActionListener(e -> controller.stop(true));
     }
 
-    private void initComponents() {
-        JPanel panelAvailableTapes = new JPanel();
-        JPanel panelDirs = new JPanel();
-        JToolBar toolbarAvailableTapes = new JToolBar();
-        JPanel panelTape = new JPanel();
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, panelAvailableTapes, panelTape);
+    @Override
+    protected JComponent initializeComponents() {
+        JPanel panelAvailableTapes = GUI.section("Available tapes", "insets 2", "[grow]", "[][grow][]");
+        JPanel panelDirs = GUI.panel("fillx", "[fill, grow][]", "[]");
+        JToolBar toolbarAvailableTapes = GUI.toolbar();
+        JPanel panelTape = GUI.section("Audio Tape", "insets 2", "[grow]", "[][grow][]");
+        JSplitPane splitPane = GUI.splitLeftRight(panelAvailableTapes, panelTape, 0.3);
 
-        JLabel lblFileNameLabel = new JLabel("File name:");
-        JLabel lblStatusLabel = new JLabel("Status:");
+        JLabel lblFileNameLabel = GUI.label("File name:");
+        JLabel lblStatusLabel = GUI.label("Status:");
 
-        txtEvents.setEditable(false);
-        JScrollPane scrollEvents = new JScrollPane(txtEvents);
-        JToolBar toolbarTape = new JToolBar();
+        JScrollPane scrollEvents = GUI.scrollable(txtEvents);
+        JToolBar toolbarTape = GUI.toolbar();
         JPanel hSpacer1 = new JPanel(null);
         JPanel hSpacer2 = new JPanel(null);
 
-        Container contentPane = getContentPane();
-        contentPane.setLayout(new MigLayout("insets dialog, fill", "[fill]", "[fill]"));
-
         splitPane.setDividerLocation(250);
-        splitPane.setResizeWeight(0.3);
-        splitPane.setDividerLocation(0.3);
 
         cmbDirs.setMinimumSize(new Dimension(0, 0));
-        panelDirs.setLayout(new MigLayout("fillx", "[fill, grow][]", "[]"));
         panelDirs.add(cmbDirs, "cell 0 0");
-        JToolBar btnBrowseToolBar = new JToolBar();
+        JToolBar btnBrowseToolBar = GUI.toolbar();
         btnBrowseToolBar.add(btnBrowse);
-        btnBrowseToolBar.setFloatable(false);
         panelDirs.add(btnBrowseToolBar, "cell 1 0");
 
         toolbarAvailableTapes.add(btnRefresh);
         toolbarAvailableTapes.add(hSpacer2);
         toolbarAvailableTapes.add(btnLoad);
-        toolbarAvailableTapes.setFloatable(false);
 
         lstTapes.setCellRenderer(new TapesListRenderer());
 
-        panelAvailableTapes.setBorder(new TitledBorder("Available tapes"));
-        panelAvailableTapes.setLayout(new MigLayout("insets 2", "[grow]", "[][grow][]"));
         panelAvailableTapes.add(panelDirs, "cell 0 0, growx");
         panelAvailableTapes.add(scrollTapes, "cell 0 1, grow");
         panelAvailableTapes.add(toolbarAvailableTapes, "cell 0 2, growx");
-        splitPane.setLeftComponent(panelAvailableTapes);
 
         toolbarTape.add(btnPlay);
         toolbarTape.add(btnStop);
         toolbarTape.addSeparator();
         toolbarTape.add(hSpacer1);
         toolbarTape.add(btnEject);
-        toolbarTape.setFloatable(false);
-
-        lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getStyle() | Font.BOLD));
 
         txtFileName.setEditable(false);
         txtFileName.setLineWrap(true);
@@ -261,29 +245,17 @@ public class TapePlayerGui extends JDialog {
         txtFileName.setBackground(UIManager.getColor("Panel.background"));
         lblStatus.setMinimumSize(new Dimension(0, 0));
 
-        panelTapeInfo.setLayout(new MigLayout("", "[][grow]", "[][]"));
         panelTapeInfo.add(lblFileNameLabel, "cell 0 0, alignx right");
         panelTapeInfo.add(txtFileName, "cell 1 0, growx");
         panelTapeInfo.add(lblStatusLabel, "cell 0 1, alignx right");
         panelTapeInfo.add(lblStatus, "cell 1 1, growx");
 
-        panelTape.setBorder(new TitledBorder("Audio Tape"));
-        panelTape.setLayout(new MigLayout("insets 2", "[grow]", "[][grow][]"));
         panelTape.add(panelTapeInfo, "cell 0 0, growx");
         panelTape.add(scrollEvents, "cell 0 1, grow");
         panelTape.add(toolbarTape, "cell 0 2, growx");
-        splitPane.setRightComponent(panelTape);
 
-        contentPane.add(splitPane, "push, grow");
-
-        pack();
-        setLocationRelativeTo(getOwner());
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-    }
-
-    private ImageIcon getIcon(String resource) {
-        URL url = getClass().getResource(resource);
-        return url == null ? null : new ImageIcon(url);
+        JPanel contentPanel = GUI.panel("insets dialog, fill", "[fill]", "[fill]");
+        contentPanel.add(splitPane, "push, grow");
+        return contentPanel;
     }
 }
