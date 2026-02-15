@@ -6,6 +6,8 @@ import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.RangeTree;
@@ -16,14 +18,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
+import java.awt.*;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
 
-public class SettingsDialog extends JDialog {
+public class SettingsDialog extends DialogBase {
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
 
     private final MemoryContextImpl context;
@@ -32,31 +34,32 @@ public class SettingsDialog extends JDialog {
     private final FileImagesModel imagesModel;
     private final ROMmodel romModel;
     private final Dialogs dialogs;
-    private JCheckBox chkApplyROMatStartup;
-    private JTable tblImages;
-    private JTable tblROM;
-    private JTextField txtBanksCount;
-    private JTextField txtCommonBoundary;
+    private final JCheckBox chkApplyROMatStartup = new JCheckBox("Apply at startup");
+    private final JTable tblImages = new JTable();
+    private final JTable tblROM = new JTable();
+    private final JTextField txtBanksCount = new JTextField("0");
+    private final JTextField txtCommonBoundary = new JTextField("0x0000");
 
     public SettingsDialog(JDialog parent, MemoryImpl memory, MemoryContextImpl context, MemoryTable tblMem,
                           PluginSettings settings, Dialogs dialogs) {
-        super(parent, true);
+        super(parent, "Memory Settings", true);
 
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
         this.tblMem = Objects.requireNonNull(tblMem);
         this.dialogs = Objects.requireNonNull(dialogs);
 
-        initComponents();
-        super.setLocationRelativeTo(parent);
-
         loadSettings(settings);
 
         imagesModel = new FileImagesModel(settings, dialogs);
         tblImages.setModel(imagesModel);
+        tblImages.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         this.romModel = new ROMmodel(this.context);
         tblROM.setModel(romModel);
+        tblROM.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        buildContent();
     }
 
     private void loadSettings(PluginSettings settings) {
@@ -68,226 +71,68 @@ public class SettingsDialog extends JDialog {
         }
     }
 
-    private void initComponents() {
-        JPanel jPanel1 = new JPanel();
-        JScrollPane jScrollPane1 = new JScrollPane();
-        tblROM = new JTable();
-        JButton btnAddRange = new JButton();
-        JButton btnRemoveRange = new JButton();
-        chkApplyROMatStartup = new JCheckBox();
-        JPanel jPanel3 = new JPanel();
-        JLabel jLabel6 = new JLabel();
-        txtBanksCount = new JTextField();
-        JLabel jLabel7 = new JLabel();
-        txtCommonBoundary = new JTextField();
-        JSeparator jSeparator2 = new JSeparator();
-        JLabel jLabel8 = new JLabel();
-        JLabel jLabel9 = new JLabel();
-        JLabel jLabel10 = new JLabel();
-        JLabel jLabel1 = new JLabel();
-        JPanel jPanel2 = new JPanel();
-        JScrollPane jScrollPane2 = new JScrollPane();
-        tblImages = new JTable();
-        JButton btnAddImage = new JButton();
-        JButton btnRemoveImage = new JButton();
-        JButton btnLoadNow = new JButton();
-        JButton btnOK = new JButton();
+    @Override
+    protected JComponent initializeComponents() {
+        // Bank-switching section
+        JLabel lblDescription = new JLabel(
+                "<html>Memory banks are different locations of memory wired in a way they share the addresses. Common area is shared across all banks. ");
+        lblDescription.setHorizontalAlignment(SwingConstants.LEFT);
+        lblDescription.setVerticalAlignment(SwingConstants.TOP);
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        JPanel panelBanks = GUI.section("Bank-switching", "insets dialog", "[][grow]", "");
+        panelBanks.add(GUI.label("Banks count:"));
+        panelBanks.add(txtBanksCount, "growx, wrap");
+        panelBanks.add(GUI.label("Common boundary:"));
+        panelBanks.add(txtCommonBoundary, "growx, wrap");
+        panelBanks.add(new JSeparator(), "span, growx, h 2!, wrap");
+        panelBanks.add(lblDescription, "span, h 64!, growx, wrap");
+        panelBanks.add(new JLabel("<html>Banks are accessible from <strong>[0..Common]</strong>."), "span, wrap");
+        panelBanks.add(new JLabel("<html>Common area starts from <strong>[Common..memory end]</strong>."), "span, wrap");
+        panelBanks.add(new JLabel("<html><strong>NOTE:</strong> Changes will be visible after restart."), "span, gaptop 12");
 
-        setTitle("Memory Settings");
-
-        jPanel1.setBorder(BorderFactory.createTitledBorder("ROM areas"));
-
-        tblROM.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane1.setViewportView(tblROM);
-
-        btnAddRange.setText("Add");
+        // ROM areas section
+        JButton btnAddRange = new JButton("Add");
         btnAddRange.addActionListener(this::btnAddRangeActionPerformed);
-
-        btnRemoveRange.setText("Remove");
+        JButton btnRemoveRange = new JButton("Remove");
         btnRemoveRange.addActionListener(this::btnRemoveRangeActionPerformed);
 
-        chkApplyROMatStartup.setText("Apply at startup");
+        JPanel panelROM = GUI.section("ROM areas", "insets dialog", "[grow]", "[116!][][grow][]");
+        panelROM.add(new JScrollPane(tblROM), "grow, wrap");
+        panelROM.add(btnRemoveRange, "split 2, align right");
+        panelROM.add(btnAddRange, "wrap");
+        panelROM.add(new JPanel(), "grow, wrap");
+        panelROM.add(chkApplyROMatStartup);
 
-        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addComponent(chkApplyROMatStartup)
-                                                .addGap(0, 0, Short.MAX_VALUE))
-                                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                                .addGap(0, 0, Short.MAX_VALUE)
-                                                .addComponent(btnRemoveRange)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(btnAddRange))
-                                        .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 116, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(btnAddRange)
-                                        .addComponent(btnRemoveRange))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(chkApplyROMatStartup)
-                                .addContainerGap())
-        );
+        // Files to load at startup section
+        JScrollPane scrollImages = new JScrollPane(tblImages);
+        scrollImages.setPreferredSize(new Dimension(498, 117));
 
-        jPanel3.setBorder(BorderFactory.createTitledBorder("Bank-switching"));
-
-        jLabel6.setText("Banks count:");
-        txtBanksCount.setText("0");
-
-        jLabel7.setText("Common boundary:");
-        txtCommonBoundary.setText("0x0000");
-
-        jLabel8.setHorizontalAlignment(SwingConstants.LEFT);
-        jLabel8.setText("<html>Memory banks are different locations of memory wired in a way they share the addresses. Common area is shared across all banks. ");
-        jLabel8.setVerticalAlignment(SwingConstants.TOP);
-
-        jLabel9.setText("<html>Banks are accessible from <strong>[0..Common]</strong>.");
-        jLabel10.setText("<html>Common area starts from <strong>[Common..memory end]</strong>.");
-        jLabel1.setText("<html><strong>NOTE:</strong> Changes will be visible after restart.");
-
-        GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                                        .addComponent(jLabel8, GroupLayout.Alignment.LEADING, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                                        .addComponent(jSeparator2, GroupLayout.Alignment.LEADING)
-                                                        .addGroup(GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
-                                                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                                        .addComponent(jLabel6)
-                                                                        .addComponent(jLabel7))
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                                        .addComponent(txtBanksCount)
-                                                                        .addComponent(txtCommonBoundary))))
-                                                .addContainerGap())
-                                        .addGroup(jPanel3Layout.createSequentialGroup()
-                                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addComponent(jLabel9, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(jLabel10, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(jLabel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                                .addGap(0, 0, Short.MAX_VALUE))))
-        );
-        jPanel3Layout.setVerticalGroup(
-                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel6)
-                                        .addComponent(txtBanksCount, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel7)
-                                        .addComponent(txtCommonBoundary, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, 2, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel8, GroupLayout.PREFERRED_SIZE, 64, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel9, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel10, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(jLabel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jPanel2.setBorder(BorderFactory.createTitledBorder("Files to load at startup"));
-
-        tblImages.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane2.setViewportView(tblImages);
-
-        btnAddImage.setText("Add");
+        JButton btnAddImage = new JButton("Add");
         btnAddImage.addActionListener(this::btnAddImageActionPerformed);
-
-        btnRemoveImage.setText("Remove");
+        JButton btnRemoveImage = new JButton("Remove");
         btnRemoveImage.addActionListener(this::btnRemoveImageActionPerformed);
-
-        btnLoadNow.setText("Load now");
+        JButton btnLoadNow = new JButton("Load now");
         btnLoadNow.addActionListener(this::btnLoadNowActionPerformed);
 
-        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 498, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(btnLoadNow, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(btnRemoveImage, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(btnAddImage, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
-                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(jPanel2Layout.createSequentialGroup()
-                                                .addComponent(btnAddImage)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(btnRemoveImage)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnLoadNow))
-                                        .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 117, GroupLayout.PREFERRED_SIZE))
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        JPanel btnPanel = GUI.panel("insets 0", "[grow]", "[][][unrel][]");
+        btnPanel.add(btnAddImage, "growx, wrap");
+        btnPanel.add(btnRemoveImage, "growx, wrap");
+        btnPanel.add(btnLoadNow, "growx");
 
-        btnOK.setText("OK");
+        JPanel panelImages = GUI.section("Files to load at startup", "insets dialog", "[grow]unrel[]", "[]");
+        panelImages.add(scrollImages, "grow");
+        panelImages.add(btnPanel, "top");
+
+        // OK button
+        JButton btnOK = new JButton("OK");
         btnOK.addActionListener(this::btnOKActionPerformed);
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                                .addGap(0, 0, Short.MAX_VALUE)
-                                                .addComponent(btnOK, GroupLayout.PREFERRED_SIZE, 99, GroupLayout.PREFERRED_SIZE)))
-                                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnOK)
-                                .addContainerGap())
-        );
-
-        pack();
+        JPanel content = GUI.panel("insets dialog", "[340!]6[grow]", "[]6[]6[]");
+        content.add(panelBanks, "grow");
+        content.add(panelROM, "grow, wrap");
+        content.add(panelImages, "span, growx, wrap");
+        content.add(btnOK, "span, w 99!, align right");
+        return content;
     }
 
     private void btnAddRangeActionPerformed(java.awt.event.ActionEvent evt) {

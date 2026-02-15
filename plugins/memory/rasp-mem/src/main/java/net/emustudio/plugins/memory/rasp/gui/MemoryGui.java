@@ -4,18 +4,19 @@ package net.emustudio.plugins.memory.rasp.gui;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import net.emustudio.plugins.memory.rasp.gui.actions.DumpMemoryAction;
 import net.emustudio.plugins.memory.rasp.gui.actions.EraseMemoryAction;
 import net.emustudio.plugins.memory.rasp.gui.actions.LoadImageAction;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
+import java.awt.*;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
-public class MemoryGui extends JDialog {
+public class MemoryGui extends DialogBase {
     private final JTable table;
 
     private final LoadImageAction loadImageAction;
@@ -23,7 +24,7 @@ public class MemoryGui extends JDialog {
     private final EraseMemoryAction eraseMemoryAction;
 
     public MemoryGui(JFrame parent, MemoryContextImpl context, ApplicationApi api) {
-        super(parent, false);
+        super(parent, "RASP Memory", false);
 
         MemoryContextImpl memory = Objects.requireNonNull(context);
         RaspTableModel tableModel = new RaspTableModel(memory);
@@ -37,30 +38,26 @@ public class MemoryGui extends JDialog {
         this.dumpMemoryAction = new DumpMemoryAction(api.getDialogs(), context, api::getProgramLocation);
         this.eraseMemoryAction = new EraseMemoryAction(tableModel, context);
 
-        initComponents();
-        setLocationRelativeTo(parent);
+        buildContent();
     }
 
-    private void initComponents() {
-        JScrollPane jScrollPane1 = new JScrollPane();
-        JToolBar toolBar = new JToolBar();
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        setTitle("RASP Memory");
+    @Override
+    protected JComponent initializeComponents() {
+        JScrollPane scrollPane = new JScrollPane();
 
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 memoryTableMouseClicked(evt);
             }
         });
-        jScrollPane1.setViewportView(table);
+        scrollPane.setViewportView(table);
         if (table.getColumnModel().getColumnCount() > 1) {
             table.getColumnModel().getColumn(0).setResizable(false);
             table.getColumnModel().getColumn(1).setResizable(false);
         }
+        scrollPane.setPreferredSize(new Dimension(265, 491));
 
+        JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
         toolBar.add(GUI.toolbarButton(loadImageAction));
@@ -68,22 +65,10 @@ public class MemoryGui extends JDialog {
         toolBar.addSeparator();
         toolBar.add(GUI.toolbarButton(eraseMemoryAction));
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(toolBar, GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
-                        .addComponent(jScrollPane1, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 491, Short.MAX_VALUE))
-        );
-
-        pack();
+        JPanel content = GUI.panel("insets 0", "[grow]", "[]6[grow]");
+        content.add(toolBar, "growx, wrap");
+        content.add(scrollPane, "grow");
+        return content;
     }
 
     /**
@@ -95,7 +80,6 @@ public class MemoryGui extends JDialog {
      */
     private void memoryTableMouseClicked(java.awt.event.MouseEvent evt) {
         int row = table.rowAtPoint(evt.getPoint());
-        //check if double-click
         if (evt.getClickCount() == 2) {
             table.editCellAt(row, 1);
         }
