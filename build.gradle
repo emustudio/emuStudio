@@ -11,7 +11,7 @@ ext.versions = [
 
 ext.libs = [
         emuLib           : "net.emustudio:emulib:12.1.0-SNAPSHOT",
-        cpuTestSuite     : "net.emustudio:cpu-testsuite_12.1:1.2.0-SNAPSHOT",
+        cpuTestSuite     : "net.emustudio:cpu-testsuite_12:1.2.1-SNAPSHOT",
 
         migLayout        : "com.miglayout:miglayout-swing:11.1",
         flatLaf          : "com.formdev:flatlaf:${versions.flatlaf}:no-natives",
