@@ -4,31 +4,34 @@ package net.emustudio.plugins.device.vt100.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.device.vt100.TerminalSettings;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.Objects;
-import javax.swing.*;
-import javax.swing.GroupLayout;
-import javax.swing.LayoutStyle;
-import javax.swing.border.*;
 
 
-public class SettingsDialog extends JDialog {
+public class SettingsDialog extends DialogBase {
     private final TerminalSettings settings;
     private final Dialogs dialogs;
+    private final JTextField txtInputFile = new JTextField();
+    private final JTextField txtOutputFile = new JTextField();
+    private final JTextField txtColumns = new JTextField();
+    private final JTextField txtRows = new JTextField();
+    private final JSpinner spnInputDelay = new JSpinner();
 
     public SettingsDialog(JFrame parent, TerminalSettings settings, Dialogs dialogs) {
-        super(parent, true);
+        super(parent, "VT100 Terminal Settings", true);
 
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
-        initComponents();
 
+        setResizable(false);
         readSettings();
+        buildContent();
     }
 
     private void readSettings() {
@@ -39,163 +42,55 @@ public class SettingsDialog extends JDialog {
         spnInputDelay.setValue(settings.getInputReadDelayMillis());
     }
 
-    private void initComponents() {
-        JPanel panelRedirectIO = new JPanel();
-        JLabel lblInputFile = new JLabel("Input file:");
-        JLabel lblOutputFile = new JLabel("Output file:");
-        JLabel lblRedirectIoNote = new JLabel("In No GUI mode, input/output will be redirected to files.");
-        JLabel lblInputDelay = new JLabel("Input delay:");
-        JLabel lblMs = new JLabel("ms");
-        JPanel panelSize = new JPanel();
-        JLabel lblColumns = new JLabel("Columns:");
-        JLabel lblRows = new JLabel("Rows:");
-        JLabel lblSizeNote = new JLabel("Terminal size changes will clear current content.");
+    @Override
+    protected JComponent initializeComponents() {
+        spnInputDelay.setModel(new SpinnerNumberModel(0, 0, null, 100));
 
-        setTitle("VT100 Terminal Settings");
-        setModal(true);
-        Container contentPane = getContentPane();
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        setResizable(false);
-
-        btnSave.addActionListener(this::btnSaveActionPerformed);
-        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
-        btnSave.setDefaultCapable(true);
-
-        btnRowsDefault.addActionListener(e -> txtRows.setText(String.valueOf(TerminalSettings.DEFAULT_ROWS)));
+        // Terminal size section
+        JButton btnColumnsDefault = new JButton("Set default");
+        JButton btnRowsDefault = new JButton("Set default");
         btnColumnsDefault.addActionListener(e -> txtColumns.setText(String.valueOf(TerminalSettings.DEFAULT_COLUMNS)));
+        btnRowsDefault.addActionListener(e -> txtRows.setText(String.valueOf(TerminalSettings.DEFAULT_ROWS)));
 
-        panelRedirectIO.setBorder(new TitledBorder(null, "Redirect I/O", TitledBorder.LEADING, TitledBorder.DEFAULT_POSITION,
-                new Font("sansserif", Font.BOLD, 13)));
+        JPanel panelSize = GUI.section("Terminal size", "insets dialog", "[][64!][]", "[][][]");
+        panelSize.add(GUI.label("Terminal size changes will clear current content."), "span, wrap");
+        panelSize.add(GUI.label("Columns:"));
+        panelSize.add(txtColumns, "growx");
+        panelSize.add(btnColumnsDefault, "wrap");
+        panelSize.add(GUI.label("Rows:"));
+        panelSize.add(txtRows, "growx");
+        panelSize.add(btnRowsDefault, "wrap");
 
-        panelSize.setBorder(new TitledBorder(null, "Terminal size", TitledBorder.LEADING, TitledBorder.DEFAULT_POSITION,
-                new Font("sansserif", Font.BOLD, 13)));
+        // Redirect I/O section
+        JButton btnBrowseInputFile = GUI.browseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFile.setText(p.toString()));
+        JButton btnBrowseOutputFile = GUI.browseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFile.setText(p.toString()));
 
-        GroupLayout panelSizeLayout = new GroupLayout(panelSize);
-        panelSize.setLayout(panelSizeLayout);
-        panelSizeLayout.setHorizontalGroup(
-                panelSizeLayout.createParallelGroup()
-                        .addGroup(panelSizeLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(panelSizeLayout.createParallelGroup()
-                                        .addGroup(panelSizeLayout.createSequentialGroup()
-                                                .addGroup(panelSizeLayout.createParallelGroup()
-                                                        .addComponent(lblColumns)
-                                                        .addComponent(lblRows))
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addGroup(panelSizeLayout.createParallelGroup()
-                                                        .addGroup(panelSizeLayout.createSequentialGroup()
-                                                                .addComponent(txtRows, GroupLayout.PREFERRED_SIZE, 64, GroupLayout.PREFERRED_SIZE)
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(btnRowsDefault))
-                                                        .addGroup(panelSizeLayout.createSequentialGroup()
-                                                                .addComponent(txtColumns, GroupLayout.PREFERRED_SIZE, 64, GroupLayout.PREFERRED_SIZE)
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(btnColumnsDefault))))
-                                        .addComponent(lblSizeNote))
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        panelSizeLayout.setVerticalGroup(
-                panelSizeLayout.createParallelGroup()
-                        .addGroup(panelSizeLayout.createSequentialGroup()
-                                .addComponent(lblSizeNote)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelSizeLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblColumns)
-                                        .addComponent(txtColumns, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(btnColumnsDefault))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelSizeLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblRows)
-                                        .addComponent(txtRows, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(btnRowsDefault))
-                                .addContainerGap(19, Short.MAX_VALUE))
-        );
+        JPanel panelRedirectIO = GUI.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");
+        panelRedirectIO.add(GUI.label("In No GUI mode, input/output will be redirected to files."), "span, h 30!, wrap");
+        panelRedirectIO.add(GUI.label("Input file:"));
+        panelRedirectIO.add(txtInputFile, "growx");
+        panelRedirectIO.add(btnBrowseInputFile, "wrap");
+        panelRedirectIO.add(GUI.label("Output file:"));
+        panelRedirectIO.add(txtOutputFile, "growx");
+        panelRedirectIO.add(btnBrowseOutputFile, "wrap");
+        panelRedirectIO.add(GUI.label("Input delay:"));
+        panelRedirectIO.add(spnInputDelay, "split 2, w 64!");
+        panelRedirectIO.add(GUI.label("ms"), "wrap");
 
-        GroupLayout panelIOLayout = new GroupLayout(panelRedirectIO);
-        panelRedirectIO.setLayout(panelIOLayout);
-        panelIOLayout.setHorizontalGroup(
-                panelIOLayout.createParallelGroup()
-                        .addGroup(panelIOLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(panelIOLayout.createParallelGroup()
-                                        .addComponent(lblRedirectIoNote)
-                                        .addGroup(panelIOLayout.createSequentialGroup()
-                                                .addGroup(panelIOLayout.createParallelGroup()
-                                                        .addComponent(lblInputFile)
-                                                        .addComponent(lblOutputFile)
-                                                        .addComponent(lblInputDelay))
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addGroup(panelIOLayout.createParallelGroup()
-                                                        .addGroup(panelIOLayout.createSequentialGroup()
-                                                                .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, 64, GroupLayout.PREFERRED_SIZE)
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(lblMs))
-                                                        .addGroup(panelIOLayout.createSequentialGroup()
-                                                                .addGroup(panelIOLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                                                        .addComponent(txtInputFile, GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
-                                                                        .addComponent(txtOutputFile))
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addGroup(panelIOLayout.createParallelGroup()
-                                                                        .addComponent(btnBrowseInputFile)
-                                                                        .addComponent(btnBrowseOutputFile))))))
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        panelIOLayout.setVerticalGroup(
-                panelIOLayout.createParallelGroup()
-                        .addGroup(GroupLayout.Alignment.TRAILING, panelIOLayout.createSequentialGroup()
-                                .addComponent(lblRedirectIoNote, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGroup(panelIOLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblInputFile)
-                                        .addComponent(txtInputFile, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(btnBrowseInputFile))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelIOLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblOutputFile)
-                                        .addComponent(txtOutputFile, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(btnBrowseOutputFile))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelIOLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblInputDelay)
-                                        .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(lblMs))
-                                .addContainerGap())
-        );
+        // Save button
+        JButton btnSave = new JButton("Save");
+        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
+        btnSave.addActionListener(this::btnSaveActionPerformed);
 
-        GroupLayout contentPaneLayout = new GroupLayout(contentPane);
-        contentPane.setLayout(contentPaneLayout);
-        contentPaneLayout.setHorizontalGroup(
-                contentPaneLayout.createParallelGroup()
-                        .addGroup(contentPaneLayout.createSequentialGroup()
-                                .addGroup(contentPaneLayout.createParallelGroup()
-                                        .addGroup(GroupLayout.Alignment.TRAILING, contentPaneLayout.createSequentialGroup()
-                                                .addContainerGap()
-                                                .addComponent(panelSize, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                        .addGroup(GroupLayout.Alignment.TRAILING, contentPaneLayout.createSequentialGroup()
-                                                .addContainerGap()
-                                                .addComponent(panelRedirectIO, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                        .addGroup(GroupLayout.Alignment.TRAILING, contentPaneLayout.createSequentialGroup()
-                                                .addGap(0, 0, Short.MAX_VALUE)
-                                                .addComponent(btnSave, GroupLayout.PREFERRED_SIZE, 82, GroupLayout.PREFERRED_SIZE)))
-                                .addContainerGap())
-        );
-        contentPaneLayout.setVerticalGroup(
-                contentPaneLayout.createParallelGroup()
-                        .addGroup(contentPaneLayout.createSequentialGroup()
-                                .addComponent(panelSize, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(panelRedirectIO, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnSave)
-                                .addContainerGap())
-        );
-        pack();
-        setLocationRelativeTo(getOwner());
+        JPanel content = GUI.panel("insets dialog", "[grow]", "[][][]");
+        content.add(panelSize, "growx, wrap");
+        content.add(panelRedirectIO, "growx, wrap");
+        content.add(btnSave, "align right");
+
+        return content;
     }
 
-    private void btnSaveActionPerformed(ActionEvent evt) {
+    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
         if (txtInputFile.getText().trim().equals(txtOutputFile.getText().trim())) {
             dialogs.showError("Input and output file names cannot point to the same file");
             txtInputFile.grabFocus();
@@ -227,15 +122,4 @@ public class SettingsDialog extends JDialog {
         settings.write();
         dispose();
     }
-
-    private final JButton btnSave = new JButton("Save");
-    private final JTextField txtInputFile = new JTextField();
-    private final JTextField txtOutputFile = new JTextField();
-    private final JTextField txtColumns = new JTextField();
-    private final JTextField txtRows = new JTextField();
-    private final JButton btnBrowseInputFile = new JButton("Browse...");
-    private final JButton btnBrowseOutputFile = new JButton("Browse...");
-    private final JButton btnRowsDefault = new JButton("Set default");
-    private final JButton btnColumnsDefault = new JButton("Set default");
-    private final JSpinner spnInputDelay = new JSpinner();
 }

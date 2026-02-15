@@ -3,18 +3,19 @@
 package net.emustudio.plugins.device.abstracttape.gui;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.device.abstracttape.AbstractTapeContextImpl;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 
-public class TapeGui extends JDialog {
+public class TapeGui extends DialogBase {
     private static final String ICON_ADD_FIRST = "/net/emustudio/plugins/device/abstracttape/gui/go-up.png";
     private static final String ICON_ADD_LAST = "/net/emustudio/plugins/device/abstracttape/gui/go-down.png";
 
@@ -22,23 +23,21 @@ public class TapeGui extends JDialog {
     private final AbstractTapeContextImpl tapeContext;
     private final TapeModel listModel;
 
-    private NiceButton btnAddFirst;
-    private NiceButton btnAddLast;
-    private NiceButton btnRemove;
-    private NiceButton btnEdit;
-    private NiceButton btnClear;
+    private JButton btnAddFirst;
+    private JButton btnAddLast;
+    private JButton btnRemove;
+    private JButton btnEdit;
+    private JButton btnClear;
     private JList<String> lstTape;
 
     public TapeGui(JFrame parent, String title, AbstractTapeContextImpl tapeContext, boolean alwaysOnTop, Dialogs dialogs) {
-        super(parent);
+        super(parent, title, false);
         this.tapeContext = Objects.requireNonNull(tapeContext);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.listModel = new TapeModel(tapeContext);
 
-        initComponents();
-        setTitle(title);
         setAlwaysOnTop(alwaysOnTop);
-        setLocationRelativeTo(parent);
+        buildContent();
 
         tapeContext.setListener(() -> {
             listModel.fireChange();
@@ -47,7 +46,6 @@ public class TapeGui extends JDialog {
 
         changeEditable();
     }
-
 
     private void changeEditable() {
         boolean b = tapeContext.getEditable();
@@ -58,22 +56,18 @@ public class TapeGui extends JDialog {
         btnClear.setEnabled(b);
     }
 
-    private void initComponents() {
-        JScrollPane scrollTape = new JScrollPane();
+    @Override
+    protected JComponent initializeComponents() {
         lstTape = new JList<>(listModel);
-        btnAddFirst = new NiceButton("Add symbol", loadIcon(ICON_ADD_FIRST));
-        btnAddLast = new NiceButton("Add symbol", loadIcon(ICON_ADD_LAST));
-        btnRemove = new NiceButton("Remove symbol");
-        btnEdit = new NiceButton("Edit symbol");
-        btnClear = new NiceButton("Clear tape");
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
         lstTape.setFont(FONT_MONOSPACED);
         lstTape.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         lstTape.setCellRenderer(new TapeCellRenderer(tapeContext));
-        scrollTape.setViewportView(lstTape);
+
+        btnAddFirst = new JButton("Add symbol", loadIcon(ICON_ADD_FIRST));
+        btnAddLast = new JButton("Add symbol", loadIcon(ICON_ADD_LAST));
+        btnRemove = new JButton("Remove symbol");
+        btnEdit = new JButton("Edit symbol");
+        btnClear = new JButton("Clear tape");
 
         btnAddFirst.addActionListener(e -> dialogs
                 .readString("Symbol value:", "Add symbol (on top)")
@@ -118,34 +112,14 @@ public class TapeGui extends JDialog {
         });
         btnClear.addActionListener(e -> tapeContext.clear());
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                .addComponent(btnEdit, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnClear, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnRemove, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnAddLast, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnAddFirst, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(scrollTape, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
-                        ).addContainerGap());
-        layout.setVerticalGroup(
-                layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(btnAddFirst)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(scrollTape, GroupLayout.PREFERRED_SIZE, 200, Short.MAX_VALUE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnAddLast)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnRemove)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnEdit)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnClear)
-                        .addContainerGap());
-        pack();
+        JPanel content = GUI.panel("insets dialog", "[148!,grow]", "[][200:200:,grow][][][][][]");
+        content.add(btnAddFirst, "growx, wrap");
+        content.add(new JScrollPane(lstTape), "grow, wrap");
+        content.add(btnAddLast, "growx, wrap");
+        content.add(btnRemove, "growx, gaptop 10, wrap");
+        content.add(btnEdit, "growx, wrap");
+        content.add(btnClear, "growx, wrap");
+
+        return content;
     }
 }
