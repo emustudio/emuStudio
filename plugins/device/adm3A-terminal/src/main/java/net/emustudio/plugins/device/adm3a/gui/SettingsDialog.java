@@ -3,11 +3,12 @@
 package net.emustudio.plugins.device.adm3a.gui;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.device.adm3a.TerminalSettings;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -16,7 +17,7 @@ import java.util.Optional;
 import static net.emustudio.plugins.device.adm3a.TerminalSettings.DEFAULT_INPUT_FILE_NAME;
 import static net.emustudio.plugins.device.adm3a.TerminalSettings.DEFAULT_OUTPUT_FILE_NAME;
 
-public class SettingsDialog extends JDialog {
+public class SettingsDialog extends DialogBase {
     private final TerminalSettings settings;
     private final TerminalWindow window;
     private final Dialogs dialogs;
@@ -28,16 +29,14 @@ public class SettingsDialog extends JDialog {
     private final JComboBox<Integer> cmbFont = new JComboBox<>(new Integer[]{0, 1});
 
     public SettingsDialog(JFrame parent, TerminalSettings settings, TerminalWindow window, Dialogs dialogs) {
-        super(parent, true);
+        super(parent, "LSI ADM-3A Settings", true);
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.settings = Objects.requireNonNull(settings);
         this.window = window;
 
-        initComponents();
-
         readSettings();
-        setLocationRelativeTo(parent);
+        buildContent();
     }
 
     private void readSettings() {
@@ -59,153 +58,46 @@ public class SettingsDialog extends JDialog {
         settings.write();
     }
 
-    private void initComponents() {
-        JPanel panelRedirectIO = new JPanel();
-        JLabel lblInputFileName = new JLabel("Input file name:");
-        JButton btnInputBrowse = new JButton("Browse...");
-        JLabel lblOutputFileName = new JLabel("Output file name:");
-        JButton btnOutputBrowse = new JButton("Browse...");
-        JLabel lblNote = new JLabel("Note: I/O redirection will be used only in case of No GUI mode.");
-        JLabel lblInputDelay = new JLabel("Input delay:");
-        JLabel lblMs = new JLabel("ms");
-        JPanel panelTerminal = new JPanel();
-        JButton btnSave = new JButton("Save");
-        JLabel lblFont = new JLabel("Font");
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        setTitle("LSI ADM-3A Settings");
-
-        panelRedirectIO.setBorder(BorderFactory.createTitledBorder(
-                null, "Redirect I/O", 0, 0,
-                lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
-        ));
-
+    @Override
+    protected JComponent initializeComponents() {
         cmbFont.setRenderer(new DisplayFontJComboRenderer());
         cmbFont.setSelectedIndex(settings.getFont().ordinal());
-
         spnInputDelay.setModel(new SpinnerNumberModel(0, 0, null, 100));
 
-        btnSave.addActionListener(this::btnSaveActionPerformed);
+        JButton btnInputBrowse = GUI.browseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFileName.setText(p.toString()));
+        JButton btnOutputBrowse = GUI.browseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFileName.setText(p.toString()));
+
+        // Redirect I/O section
+        JPanel panelRedirectIO = GUI.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");
+        panelRedirectIO.add(GUI.label("Input file name:"));
+        panelRedirectIO.add(txtInputFileName, "growx");
+        panelRedirectIO.add(btnInputBrowse, "wrap");
+        panelRedirectIO.add(GUI.label("Output file name:"));
+        panelRedirectIO.add(txtOutputFileName, "growx");
+        panelRedirectIO.add(btnOutputBrowse, "wrap");
+        panelRedirectIO.add(GUI.label("Input delay:"));
+        panelRedirectIO.add(spnInputDelay, "split 2, w 73!");
+        panelRedirectIO.add(GUI.label("ms"), "wrap");
+        panelRedirectIO.add(GUI.label("Note: I/O redirection will be used only in case of No GUI mode."), "span, wrap");
+
+        // Terminal section
+        JPanel panelTerminal = GUI.section("Terminal", "insets dialog", "[][grow]", "[][][]");
+        panelTerminal.add(GUI.label("Font"));
+        panelTerminal.add(cmbFont, "growx, wrap");
+        panelTerminal.add(chkHalfDuplex, "span, wrap");
+        panelTerminal.add(chkAlwaysOnTop, "span, wrap");
+
+        // Save button
+        JButton btnSave = new JButton("Save");
         btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
-        btnSave.setDefaultCapable(true);
+        btnSave.addActionListener(this::btnSaveActionPerformed);
 
-        GroupLayout layoutRedirectIO = new GroupLayout(panelRedirectIO);
-        panelRedirectIO.setLayout(layoutRedirectIO);
-        layoutRedirectIO.setHorizontalGroup(
-                layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layoutRedirectIO.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblNote)
-                                        .addGroup(layoutRedirectIO.createSequentialGroup()
-                                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                                .addComponent(lblInputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(lblOutputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
-                                                        .addComponent(lblInputDelay))
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addGroup(layoutRedirectIO.createSequentialGroup()
-                                                                .addComponent(txtOutputFileName, GroupLayout.PREFERRED_SIZE, 241, Short.MAX_VALUE)
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(btnOutputBrowse))
-                                                        .addGroup(GroupLayout.Alignment.TRAILING, layoutRedirectIO.createSequentialGroup()
-                                                                .addComponent(txtInputFileName, GroupLayout.PREFERRED_SIZE, 241, Short.MAX_VALUE)
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(btnInputBrowse))
-                                                        .addGroup(layoutRedirectIO.createSequentialGroup()
-                                                                .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, 73, GroupLayout.PREFERRED_SIZE)
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(lblMs)))))
-                                .addContainerGap())
-        );
-        layoutRedirectIO.setVerticalGroup(
-                layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, layoutRedirectIO.createSequentialGroup()
-                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblInputFileName)
-                                        .addComponent(txtInputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(btnInputBrowse))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblOutputFileName)
-                                        .addComponent(txtOutputFileName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(btnOutputBrowse))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layoutRedirectIO.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblInputDelay)
-                                        .addComponent(spnInputDelay, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(lblMs))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
-                                .addComponent(lblNote))
-        );
+        JPanel content = GUI.panel("insets dialog", "[grow]", "[][][][]");
+        content.add(panelRedirectIO, "growx, wrap");
+        content.add(panelTerminal, "growx, wrap");
+        content.add(btnSave, "align right");
 
-        panelTerminal.setBorder(BorderFactory.createTitledBorder(
-                null, "Terminal", 0, 0,
-                lblInputFileName.getFont().deriveFont(lblInputFileName.getFont().getStyle() | Font.BOLD)
-        ));
-
-        GroupLayout layoutTerminal = new GroupLayout(panelTerminal);
-        panelTerminal.setLayout(layoutTerminal);
-        layoutTerminal.setHorizontalGroup(
-                layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layoutTerminal.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(layoutTerminal.createSequentialGroup()
-                                                .addComponent(lblFont)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(cmbFont))
-                                        .addComponent(chkHalfDuplex)
-                                        .addComponent(chkAlwaysOnTop))
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        layoutTerminal.setVerticalGroup(
-                layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layoutTerminal.createSequentialGroup()
-                                .addGroup(layoutTerminal.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblFont)
-                                        .addComponent(cmbFont))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkHalfDuplex)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkAlwaysOnTop)
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(panelRedirectIO, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                .addContainerGap())
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(panelTerminal, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                .addContainerGap())))
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnSave, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addGap(18, 18, 18)
-                                .addComponent(panelRedirectIO, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(panelTerminal, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnSave)
-                                .addContainerGap())
-        );
-
-        pack();
+        return content;
     }
 
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {

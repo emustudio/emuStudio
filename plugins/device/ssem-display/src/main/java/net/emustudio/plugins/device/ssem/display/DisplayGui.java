@@ -3,27 +3,25 @@
 package net.emustudio.plugins.device.ssem.display;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.util.Objects;
 
-class DisplayGui extends JDialog {
+class DisplayGui extends DialogBase {
     private final MemoryContext<Byte> memory;
     private final DisplayPanel displayPanel;
-    private final JScrollPane scrollPane = new JScrollPane();
 
     DisplayGui(JFrame parent, MemoryContext<Byte> memory, DisplayPanel displayPanel) {
-        super(parent);
+        super(parent, "SSEM CRT Display", false);
 
         this.memory = Objects.requireNonNull(memory);
         this.displayPanel = Objects.requireNonNull(displayPanel);
 
-        initComponents();
-        setLocationRelativeTo(parent);
-
-        scrollPane.setViewportView(displayPanel);
         displayPanel.reset(memory);
         initListener();
+        buildContent();
     }
 
     private void initListener() {
@@ -48,27 +46,10 @@ class DisplayGui extends JDialog {
         });
     }
 
-    private void initComponents() {
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("SSEM CRT Display");
-
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 432, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
-
-        pack();
+    @Override
+    protected JComponent initializeComponents() {
+        JPanel content = GUI.panel("insets dialog", "[432:432:,grow]", "[416:416:,grow]");
+        content.add(new JScrollPane(displayPanel), "grow");
+        return content;
     }
 }

@@ -31,7 +31,7 @@ public class TapeCellRenderer extends DefaultListCellRenderer {
             }
 
             String s = tapeContext.getSymbolAt(index).map(TapeSymbol::toString).orElse("");
-            if (s.equals("")) {
+            if (s.isEmpty()) {
                 setForeground(Color.DARK_GRAY);
             } else {
                 setForeground(Color.BLACK);

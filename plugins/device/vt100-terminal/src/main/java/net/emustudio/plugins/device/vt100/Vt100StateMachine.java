@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 /**
  * VT100 state machine
  * <p>
- * https://vt100.net/emu/dec_ansi_parser
+ * <a href="https://vt100.net/emu/dec_ansi_parser">dec_ansi_parser</a>
  */
 public class Vt100StateMachine {
     interface Vt100State {
@@ -23,7 +23,7 @@ public class Vt100StateMachine {
          * changing the cursor position, suspending or resuming communications or changing the shift states in effect.
          * There are no parameters to this action.
          * <p>
-         * https://vt100.net/docs/vt220-rm/chapter4.html
+         * <a href="https://vt100.net/docs/vt220-rm/chapter4.html">chapter4</a>
          *
          * @param data
          */

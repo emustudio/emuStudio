@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.vt100.gui;
 
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.device.vt100.interaction.DisplayImpl;
 import net.emustudio.plugins.device.vt100.interaction.KeyboardGui;
 
@@ -22,6 +23,8 @@ public class TerminalWindow extends JDialog {
 
     private final DisplayCanvas canvas;
     private final KeyboardGui keyboard;
+    private final JLabel lblStatusIcon = new JLabel();
+    private final JButton btnASCII = new JButton();
 
     public TerminalWindow(JFrame parent, DisplayImpl display, Dialogs dialogs, KeyboardGui keyboard) {
         super(parent);
@@ -57,8 +60,6 @@ public class TerminalWindow extends JDialog {
     }
 
     private void initComponents() {
-        JPanel panelStatus = new JPanel();
-
         setTitle("VT100 Terminal");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         canvas.setBounds(0, 0, 900, 700);
@@ -67,7 +68,6 @@ public class TerminalWindow extends JDialog {
         lblStatusIcon.setToolTipText("Input not requested");
         lblStatusIcon.setVerticalAlignment(SwingConstants.TOP);
 
-        btnASCII.setFont(btnASCII.getFont());
         btnASCII.setIcon(loadIcon("/net/emustudio/plugins/device/vt100/16_ascii.png"));
         btnASCII.setToolTipText("Input by ASCII code");
         btnASCII.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
@@ -75,38 +75,15 @@ public class TerminalWindow extends JDialog {
         btnASCII.setVerticalAlignment(SwingConstants.TOP);
         btnASCII.addActionListener(this::btnASCIIActionPerformed);
 
-        GroupLayout panelStatusLayout = new GroupLayout(panelStatus);
-        panelStatus.setLayout(panelStatusLayout);
-        panelStatusLayout.setHorizontalGroup(
-                panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelStatusLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(lblStatusIcon, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnASCII)
-                                .addContainerGap(900, Short.MAX_VALUE))
-        );
-        panelStatusLayout.setVerticalGroup(
-                panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(lblStatusIcon, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnASCII, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
-        );
+        JPanel panelStatus = GUI.panel("insets 2 6 2 6", "[20!]6[]push", "[24!]");
+        panelStatus.add(lblStatusIcon);
+        panelStatus.add(btnASCII);
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(panelStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(canvas)
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addComponent(canvas, GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(panelStatus, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-        );
+        JPanel content = GUI.panel("insets 0", "[grow]", "[grow]0[]");
+        content.add(canvas, "grow, wrap");
+        content.add(panelStatus, "growx");
 
+        setContentPane(content);
         pack();
     }
 
@@ -127,7 +104,4 @@ public class TerminalWindow extends JDialog {
                     }
                 });
     }
-
-    private final JLabel lblStatusIcon = new JLabel();
-    private final JButton btnASCII = new JButton();
 }

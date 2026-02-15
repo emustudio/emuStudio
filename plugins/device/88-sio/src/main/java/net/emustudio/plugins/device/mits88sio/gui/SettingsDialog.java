@@ -3,29 +3,22 @@
 package net.emustudio.plugins.device.mits88sio.gui;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.device.mits88sio.SioUnitSettings;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.util.Collection;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
-public class SettingsDialog extends JDialog {
+public class SettingsDialog extends DialogBase {
     private final Dialogs dialogs;
-
     private final SioUnitSettings settings;
     private final PortListModel statusPortsModel = new PortListModel();
     private final PortListModel dataPortsModel = new PortListModel();
-    private final JButton btnDataAdd = new JButton("Add");
-    private final JButton btnDataDefaults = new JButton("Set default");
-    private final JButton btnDataRemove = new JButton("Remove");
-    private final JButton btnInterruptDefaults = new JButton("Set default");
-    private final JButton btnSave = new JButton("Save");
-    private final JButton btnStatusAdd = new JButton("Add");
-    private final JButton btnStatusDefaults = new JButton("Set default");
-    private final JButton btnStatusRemove = new JButton("Remove");
     private final JCheckBox chkAnsiMode = new JCheckBox("ANSI mode (clear output bit 8)");
     private final JCheckBox chkInterruptsSupported = new JCheckBox("Interrupts supported");
     private final JCheckBox chkToUpperCase = new JCheckBox("Convert input to upper-case");
@@ -36,20 +29,18 @@ public class SettingsDialog extends JDialog {
     private final JComboBox<SioUnitSettings.MAP_CHAR> cmbMapDel = new JComboBox<>(new DefaultComboBoxModel<>(
             SioUnitSettings.MAP_CHAR.values()
     ));
-    private final JList<String> lstDataPorts = new JList<>();
-    private final JList<String> lstStatusPorts = new JList<>();
     private final JSpinner spnInputInterrupt = new JSpinner(new SpinnerNumberModel(0, 0, 7, 1));
     private final JSpinner spnOutputInterrupt = new JSpinner(new SpinnerNumberModel(0, 0, 7, 1));
 
     public SettingsDialog(JFrame parent, SioUnitSettings settings, Dialogs dialogs) {
-        super(parent, true);
+        super(parent, "88-SIO Settings", true);
 
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
 
-        initComponents();
-        setLocationRelativeTo(parent);
+        setResizable(false);
         readSettings();
+        buildContent();
     }
 
     private void readSettings() {
@@ -61,271 +52,101 @@ public class SettingsDialog extends JDialog {
         spnInputInterrupt.setValue(settings.getInputInterruptVector());
         spnOutputInterrupt.setValue(settings.getOutputInterruptVector());
         chkInterruptsSupported.setSelected(settings.getInterruptsSupported());
-
-        statusPortsModel.clear();
-        statusPortsModel.addAll(settings.getStatusPorts());
-
-        dataPortsModel.clear();
-        dataPortsModel.addAll(settings.getDataPorts());
+        statusPortsModel.setAll(settings.getStatusPorts());
+        dataPortsModel.setAll(settings.getDataPorts());
     }
 
-    private void setDefaultStatusPorts() {
-        statusPortsModel.clear();
-        statusPortsModel.addAll(settings.getDefaultStatusPorts());
-    }
+    @Override
+    protected JComponent initializeComponents() {
+        // Tab 1: General settings
+        JPanel panelSettings = GUI.panel("insets dialog", "[grow]", "[][][][18][][18][][][grow]");
+        panelSettings.add(chkTtyMode, "wrap");
+        panelSettings.add(chkAnsiMode, "wrap");
+        panelSettings.add(chkToUpperCase, "gaptop 18, wrap");
+        panelSettings.add(GUI.label("Map DEL char to:"), "gaptop 18, split 2");
+        panelSettings.add(cmbMapDel, "w 157!, wrap");
+        panelSettings.add(GUI.label("Map BACKSPACE char to:"), "split 2");
+        panelSettings.add(cmbMapBs, "w 157!, wrap");
 
-    private void setDefaultDataPorts() {
-        dataPortsModel.clear();
-        dataPortsModel.addAll(settings.getDefaultDataPorts());
-    }
+        // Tab 2: Connection with CPU
+        JList<String> lstStatusPorts = new JList<>(statusPortsModel);
+        JList<String> lstDataPorts = new JList<>(dataPortsModel);
 
-    private void initComponents() {
+        JPanel panelCpu = GUI.panel("insets dialog", "[grow][grow]", "[][grow]");
+        panelCpu.add(GUI.label("<html>88-SIO has two ports/channels: Status channel and Data channel.  Attach these channels to CPU ports (possibly to multiple ports). Be aware of possible CPU-port conflicts."), "span, growx, h 63!, wrap");
+        panelCpu.add(createPortChannelSection("Status channel ports", lstStatusPorts, statusPortsModel, "status", "data", dataPortsModel, settings::getDefaultStatusPorts), "grow");
+        panelCpu.add(createPortChannelSection("Data channel ports", lstDataPorts, dataPortsModel, "data", "status", statusPortsModel, settings::getDefaultDataPorts), "grow");
+
+        // Tab 3: Interrupts
+        JButton btnInterruptDefaults = new JButton("Set default");
+        btnInterruptDefaults.addActionListener(e -> {
+            spnInputInterrupt.setValue(0);
+            spnOutputInterrupt.setValue(0);
+            chkInterruptsSupported.setSelected(false);
+        });
+
+        JPanel panelInterrupts = GUI.panel("insets dialog", "[grow]", "[][][][][][grow][]");
+        panelInterrupts.add(GUI.label("<html>88-SIO can support input and output interrupts. Input interrupt is triggered when 88-SIO received data from connected device. Output interrupt is triggered when 88-SIO receives data from CPU."), "growx, h 63!, wrap");
+        panelInterrupts.add(chkInterruptsSupported, "gaptop 18, wrap");
+        panelInterrupts.add(GUI.label("Input interrupt vector:"), "split 2");
+        panelInterrupts.add(spnInputInterrupt, "wrap");
+        panelInterrupts.add(GUI.label("Output interrupt vector:"), "split 2");
+        panelInterrupts.add(spnOutputInterrupt, "wrap");
+        panelInterrupts.add(new JPanel(), "grow, wrap");
+        panelInterrupts.add(btnInterruptDefaults, "align right");
+
+        // Tabbed pane
         JTabbedPane tabbedPane = new JTabbedPane();
-        JPanel panelSettings = new JPanel();
-        JLabel lblMapDel = new JLabel("Map DEL char to:");
-        JLabel lblMapBs = new JLabel("Map BACKSPACE char to:");
-        JPanel panelCpu = new JPanel();
-        JLabel lblCpuNote = new JLabel("<html>88-SIO has two ports/channels: Status channel and Data channel.  Attach these channels to CPU ports (possibly to multiple ports). Be aware of possible CPU-port conflicts.");
-        JPanel panelStatusChannel = new JPanel();
-        JScrollPane srlStatus = new JScrollPane();
-        JPanel panelDataChannel = new JPanel();
-        JScrollPane srlData = new JScrollPane();
-        JPanel panelInterrupts = new JPanel();
-        JLabel lblInputInterrupt = new JLabel("Input interrupt vector:");
-        JLabel lblOutputInterrupt = new JLabel("Output interrupt vector:");
-        JLabel lblInterruptsNote = new JLabel("<html>88-SIO can support input and output interrupts. Input interrupt is triggered when 88-SIO received data from connected device. Output interrupt is triggered when 88-SIO receives data from CPU.");
-
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("88-SIO Settings");
-        setResizable(false);
-        rootPane.registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        cmbMapBs.setEditable(false);
-        cmbMapDel.setEditable(false);
-
-        GroupLayout panelSettingsLayout = new GroupLayout(panelSettings);
-        panelSettings.setLayout(panelSettingsLayout);
-        panelSettingsLayout.setHorizontalGroup(
-                panelSettingsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelSettingsLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(panelSettingsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(chkTtyMode)
-                                        .addComponent(chkAnsiMode)
-                                        .addComponent(chkToUpperCase)
-                                        .addGroup(panelSettingsLayout.createSequentialGroup()
-                                                .addGroup(panelSettingsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addComponent(lblMapDel)
-                                                        .addComponent(lblMapBs))
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addGroup(panelSettingsLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                                        .addComponent(cmbMapDel, 0, 157, Short.MAX_VALUE)
-                                                        .addComponent(cmbMapBs, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                                .addContainerGap(128, Short.MAX_VALUE))
-        );
-        panelSettingsLayout.setVerticalGroup(
-                panelSettingsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelSettingsLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(chkTtyMode)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkAnsiMode)
-                                .addGap(18, 18, 18)
-                                .addComponent(chkToUpperCase)
-                                .addGap(18, 18, 18)
-                                .addGroup(panelSettingsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblMapDel)
-                                        .addComponent(cmbMapDel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelSettingsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(cmbMapBs, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(lblMapBs))
-                                .addContainerGap(57, Short.MAX_VALUE))
-        );
-
         tabbedPane.addTab("General settings", panelSettings);
-
-        panelStatusChannel.setBorder(BorderFactory.createTitledBorder("Status channel ports"));
-
-        lstStatusPorts.setFont(FONT_MONOSPACED);
-        lstStatusPorts.setModel(statusPortsModel);
-        lstStatusPorts.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        srlStatus.setViewportView(lstStatusPorts);
-
-        GroupLayout panelStatusChannelLayout = new GroupLayout(panelStatusChannel);
-        panelStatusChannel.setLayout(panelStatusChannelLayout);
-        panelStatusChannelLayout.setHorizontalGroup(
-                panelStatusChannelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelStatusChannelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(srlStatus, GroupLayout.PREFERRED_SIZE, 67, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
-                                .addGroup(panelStatusChannelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(btnStatusAdd, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(btnStatusRemove, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(btnStatusDefaults, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
-        panelStatusChannelLayout.setVerticalGroup(
-                panelStatusChannelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelStatusChannelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(panelStatusChannelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(srlStatus, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                        .addGroup(panelStatusChannelLayout.createSequentialGroup()
-                                                .addComponent(btnStatusAdd)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(btnStatusRemove)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
-                                                .addComponent(btnStatusDefaults)))
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        panelDataChannel.setBorder(BorderFactory.createTitledBorder("Data channel ports"));
-
-        lstDataPorts.setFont(FONT_MONOSPACED);
-        lstDataPorts.setModel(dataPortsModel);
-        lstDataPorts.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        srlData.setViewportView(lstDataPorts);
-
-        GroupLayout panelDataChannelLayout = new GroupLayout(panelDataChannel);
-        panelDataChannel.setLayout(panelDataChannelLayout);
-        panelDataChannelLayout.setHorizontalGroup(
-                panelDataChannelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelDataChannelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(srlData, GroupLayout.PREFERRED_SIZE, 66, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGroup(panelDataChannelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(btnDataRemove, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(btnDataAdd, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(btnDataDefaults, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
-        panelDataChannelLayout.setVerticalGroup(
-                panelDataChannelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelDataChannelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(panelDataChannelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(srlData, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                        .addGroup(panelDataChannelLayout.createSequentialGroup()
-                                                .addComponent(btnDataAdd)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(btnDataRemove)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
-                                                .addComponent(btnDataDefaults)))
-                                .addContainerGap())
-        );
-
-        GroupLayout panelCpuLayout = new GroupLayout(panelCpu);
-        panelCpu.setLayout(panelCpuLayout);
-        panelCpuLayout.setHorizontalGroup(
-                panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelCpuLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(panelCpuLayout.createSequentialGroup()
-                                                .addComponent(lblCpuNote, GroupLayout.PREFERRED_SIZE, 438, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(0, 0, Short.MAX_VALUE))
-                                        .addGroup(panelCpuLayout.createSequentialGroup()
-                                                .addComponent(panelStatusChannel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(panelDataChannel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                                .addContainerGap())
-        );
-        panelCpuLayout.setVerticalGroup(
-                panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelCpuLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(lblCpuNote, GroupLayout.PREFERRED_SIZE, 63, GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addGroup(panelCpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(panelStatusChannel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(panelDataChannel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
         tabbedPane.addTab("Connection with CPU", panelCpu);
-
-        GroupLayout panelInterruptsLayout = new GroupLayout(panelInterrupts);
-        panelInterrupts.setLayout(panelInterruptsLayout);
-        panelInterruptsLayout.setHorizontalGroup(
-                panelInterruptsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(panelInterruptsLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(panelInterruptsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(lblInterruptsNote, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                        .addGroup(GroupLayout.Alignment.TRAILING, panelInterruptsLayout.createSequentialGroup()
-                                                .addGap(0, 0, Short.MAX_VALUE)
-                                                .addComponent(btnInterruptDefaults))
-                                        .addGroup(panelInterruptsLayout.createSequentialGroup()
-                                                .addGroup(panelInterruptsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                        .addComponent(chkInterruptsSupported)
-                                                        .addGroup(panelInterruptsLayout.createSequentialGroup()
-                                                                .addGroup(panelInterruptsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                                        .addComponent(lblInputInterrupt)
-                                                                        .addComponent(lblOutputInterrupt))
-                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addGroup(panelInterruptsLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                                                        .addComponent(spnInputInterrupt, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                                        .addComponent(spnOutputInterrupt, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))))
-                                                .addGap(0, 225, Short.MAX_VALUE)))
-                                .addContainerGap())
-        );
-        panelInterruptsLayout.setVerticalGroup(
-                panelInterruptsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, panelInterruptsLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(lblInterruptsNote, GroupLayout.PREFERRED_SIZE, 63, GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(chkInterruptsSupported)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelInterruptsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblInputInterrupt)
-                                        .addComponent(spnInputInterrupt, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelInterruptsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblOutputInterrupt)
-                                        .addComponent(spnOutputInterrupt, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
-                                .addComponent(btnInterruptDefaults)
-                                .addContainerGap())
-        );
-
         tabbedPane.addTab("Interrupts", panelInterrupts);
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(btnSave)
-                                .addContainerGap())
-                        .addComponent(tabbedPane)
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(tabbedPane)
-                                .addGap(12, 12, 12)
-                                .addComponent(btnSave)
-                                .addContainerGap())
-        );
-
-        btnStatusAdd.addActionListener(e -> addPort("status", "data", statusPortsModel, dataPortsModel));
-        btnStatusRemove.addActionListener(e -> removePort("status", lstStatusPorts, statusPortsModel));
-        btnStatusDefaults.addActionListener(e -> setDefaultStatusPorts());
-
-        btnDataAdd.addActionListener(e -> addPort("data", "status", dataPortsModel, statusPortsModel));
-        btnDataRemove.addActionListener(e -> removePort("data", lstDataPorts, dataPortsModel));
-        btnDataDefaults.addActionListener(e -> setDefaultDataPorts());
-
+        // Save button
+        JButton btnSave = new JButton("Save");
         btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
-        btnSave.addActionListener(this::btnSaveActionPerformed);
+        btnSave.addActionListener(e -> {
+            settings.setStatusPorts(statusPortsModel.getAll());
+            settings.setDataPorts(dataPortsModel.getAll());
+            settings.setClearInputBit8(chkTtyMode.isSelected());
+            settings.setClearOutputBit8(chkAnsiMode.isSelected());
+            settings.setInputToUpperCase(chkToUpperCase.isSelected());
+            settings.setMapBackspaceChar(cmbMapBs.getItemAt(cmbMapBs.getSelectedIndex()));
+            settings.setMapDeleteChar(cmbMapDel.getItemAt(cmbMapDel.getSelectedIndex()));
+            settings.setInterruptsSupported(chkInterruptsSupported.isSelected());
+            settings.setInputInterruptVector(((Number) spnInputInterrupt.getValue()).intValue());
+            settings.setOutputInterruptVector(((Number) spnOutputInterrupt.getValue()).intValue());
+            dispose();
+        });
 
-        pack();
+        JPanel content = GUI.panel("insets dialog", "[grow]", "[grow][]");
+        content.add(tabbedPane, "grow, w 460!, wrap");
+        content.add(btnSave, "align right");
+        return content;
+    }
+
+    private JPanel createPortChannelSection(String title, JList<String> list, PortListModel model,
+                                            String nameAdd, String nameCheck, PortListModel checkModel,
+                                            java.util.function.Supplier<Collection<Integer>> defaultPorts) {
+        list.setFont(FONT_MONOSPACED);
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JButton btnAdd = new JButton("Add");
+        JButton btnRemove = new JButton("Remove");
+        JButton btnDefaults = new JButton("Set default");
+        btnAdd.addActionListener(e -> addPort(nameAdd, nameCheck, model, checkModel));
+        btnRemove.addActionListener(e -> removePort(nameAdd, list, model));
+        btnDefaults.addActionListener(e -> model.setAll(defaultPorts.get()));
+
+        JPanel buttons = GUI.panel("insets 0, flowy", "[grow]", "[][][grow][]");
+        buttons.add(btnAdd, "growx");
+        buttons.add(btnRemove, "growx");
+        buttons.add(new JPanel(), "grow");
+        buttons.add(btnDefaults, "growx");
+
+        JPanel section = GUI.section(title, "insets dialog", "[67!,grow][grow]", "[grow]");
+        section.add(new JScrollPane(list), "grow");
+        section.add(buttons, "grow");
+        return section;
     }
 
     private void addPort(String nameAdd, String nameCheck, PortListModel portModelAdd, PortListModel portModelCheck) {
@@ -351,50 +172,5 @@ public class SettingsDialog extends JDialog {
         } else {
             portModel.removeAt(i);
         }
-    }
-
-    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
-        int inputInterruptVector;
-        int outputInterruptVector;
-        try {
-            inputInterruptVector = ((Number) spnInputInterrupt.getValue()).intValue();
-        } catch (NumberFormatException e) {
-            dialogs.showError("Could not parse input interrupt vector", "88-SIO Settings");
-            spnInputInterrupt.grabFocus();
-            return;
-        }
-        try {
-            outputInterruptVector = ((Number) spnOutputInterrupt.getValue()).intValue();
-        } catch (NumberFormatException e) {
-            dialogs.showError("Could not parse interrupt vector", "88-SIO Settings");
-            spnOutputInterrupt.grabFocus();
-            return;
-        }
-        if (inputInterruptVector < 0 || inputInterruptVector > 7) {
-            dialogs.showError("Allowed range of input interrupt vector is 0-7");
-            spnInputInterrupt.grabFocus();
-            return;
-        }
-        if (outputInterruptVector < 0 || outputInterruptVector > 7) {
-            dialogs.showError("Allowed range of output interrupt vector is 0-7");
-            spnOutputInterrupt.grabFocus();
-            return;
-        }
-
-        settings.setStatusPorts(statusPortsModel.getAll());
-        settings.setDataPorts(dataPortsModel.getAll());
-
-        settings.setClearInputBit8(chkTtyMode.isSelected());
-        settings.setClearOutputBit8(chkAnsiMode.isSelected());
-        settings.setInputToUpperCase(chkToUpperCase.isSelected());
-
-        settings.setMapBackspaceChar(cmbMapBs.getItemAt(cmbMapBs.getSelectedIndex()));
-        settings.setMapDeleteChar(cmbMapDel.getItemAt(cmbMapDel.getSelectedIndex()));
-
-        settings.setInterruptsSupported(chkInterruptsSupported.isSelected());
-        settings.setInputInterruptVector(inputInterruptVector);
-        settings.setOutputInterruptVector(outputInterruptVector);
-
-        dispose();
     }
 }

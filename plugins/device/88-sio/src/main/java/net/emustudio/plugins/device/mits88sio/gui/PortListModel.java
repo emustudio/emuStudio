@@ -26,6 +26,12 @@ public class PortListModel extends AbstractListModel<String> {
         fireContentsChanged(this, 0, this.ports.size() - 1);
     }
 
+    public void setAll(Collection<Integer> ports) {
+        this.ports.clear();
+        this.ports.addAll(ports);
+        fireContentsChanged(this, 0, this.ports.size() - 1);
+    }
+
     public List<Integer> getAll() {
         return Collections.unmodifiableList(ports);
     }

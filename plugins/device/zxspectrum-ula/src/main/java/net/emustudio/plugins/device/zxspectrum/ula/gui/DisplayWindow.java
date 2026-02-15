@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import javax.swing.*;
@@ -20,7 +21,6 @@ public class DisplayWindow extends JDialog {
 
     private final DisplayCanvas canvas;
     private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(0);
-    private final JPanel statusBar = new JPanel();
 
     public DisplayWindow(JFrame parent, ULA ula) {
         super(parent);
@@ -56,39 +56,28 @@ public class DisplayWindow extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         canvas.setBounds(MARGIN, MARGIN, BOUND_X, BOUND_Y);
 
-        statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.X_AXIS));
-        statusBar.setBorder(new BevelBorder(BevelBorder.LOWERED));
-
         JLabel lblOpacity = new JLabel("Keyboard opacity:");
-        lblOpacity.setHorizontalAlignment(SwingConstants.LEFT);
-        statusBar.add(lblOpacity);
-
-        JSlider sliderOpacity = new JSlider();
-        sliderOpacity.setMinimum(0);
-        sliderOpacity.setMaximum(100);
-        sliderOpacity.setValue(keyboardCanvas.getAlpha());
-        statusBar.add(sliderOpacity);
-
         JLabel lblOpacityPercent = new JLabel(keyboardCanvas.getAlpha() + "%");
-        statusBar.add(lblOpacityPercent);
+
+        JSlider sliderOpacity = new JSlider(0, 100, keyboardCanvas.getAlpha());
         sliderOpacity.addChangeListener(e -> {
             int value = sliderOpacity.getValue();
             keyboardCanvas.setAlpha(value);
             lblOpacityPercent.setText(value + "%");
         });
 
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(canvas)
-                        .addComponent(statusBar, GroupLayout.DEFAULT_SIZE, 400, 400)); // TODO: gap?
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addComponent(canvas, GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(statusBar, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)));
+        JPanel statusBar = new JPanel();
+        statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.X_AXIS));
+        statusBar.setBorder(new BevelBorder(BevelBorder.LOWERED));
+        statusBar.add(lblOpacity);
+        statusBar.add(sliderOpacity);
+        statusBar.add(lblOpacityPercent);
+
+        JPanel content = GUI.panel("insets 0", "[grow]", "[grow]0[46!]");
+        content.add(canvas, "grow, wrap");
+        content.add(statusBar, "growx");
+
+        setContentPane(content);
         pack();
     }
 
