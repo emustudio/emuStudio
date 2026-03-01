@@ -25,4 +25,24 @@ public interface ContextZ80 extends Context8080 {
      * @param tStates number of t-states (machine cycles) to add
      */
     void addCycles(long tStates);
+
+    /**
+     * Sets the duration (in T-states) for which the INT signal remains active after signalInterrupt() is called.
+     * <p>
+     * When set to a positive value, the interrupt model switches from edge-triggered (one-shot, default)
+     * to level-triggered. The INT signal will persist for the specified number of T-states, allowing
+     * the interrupt to be taken even if interrupts are re-enabled (EI) after the signal was initially asserted.
+     * <p>
+     * For ZX Spectrum 48K, this should be set to 32 T-states.
+     *
+     * @param tStates duration in T-states (0 = edge-triggered/default behavior)
+     */
+    default void setInterruptDuration(int tStates) {
+    }
+
+    /**
+     * Clears any pending maskable interrupt.
+     */
+    default void clearInterrupt() {
+    }
 }

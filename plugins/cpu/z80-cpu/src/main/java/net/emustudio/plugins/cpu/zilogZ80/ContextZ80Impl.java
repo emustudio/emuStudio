@@ -102,6 +102,16 @@ public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ
     }
 
     @Override
+    public void setInterruptDuration(int tStates) {
+        engine.setInterruptDuration(tStates);
+    }
+
+    @Override
+    public void clearInterrupt() {
+        engine.clearMaskableInterrupt();
+    }
+
+    @Override
     public boolean passedCyclesSupported() {
         return true;
     }

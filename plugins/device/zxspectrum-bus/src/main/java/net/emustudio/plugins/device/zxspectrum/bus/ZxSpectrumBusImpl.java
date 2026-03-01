@@ -99,6 +99,9 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         this.cpu = Objects.requireNonNull(cpu);
         this.memory = Objects.requireNonNull(memory);
 
+        // ZX Spectrum ULA holds INT low for 32 T-states at each frame boundary
+        cpu.setInterruptDuration(32);
+
         for (Map.Entry<Integer, Context8080.CpuPortDevice> attachment : deferredAttachments.entrySet()) {
             if (!cpu.attachDevice(attachment.getKey(), new ContendedDeviceProxy(attachment.getValue()))) {
                 throw new RuntimeException("Could not attach device " + attachment.getValue().getName() + " to CPU");
