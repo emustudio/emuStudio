@@ -212,7 +212,9 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
             // DF = 5  1101 1111
             // BF = 6  1011 1111
             // 7F = 7  0111 1111
-            result &= keymap[keyLine];
+            if (keyLine < keymap.length) {
+                result &= keymap[keyLine];
+            }
         }
 
         // LINE IN?
@@ -243,7 +245,6 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
             return false;
         }
         BiConsumer<Byte, Byte> keySet = pressed ? this::andKeyMap : this::orKeyMap;
-        BiConsumer<Byte, Byte> keyUnset = pressed ? this::orKeyMap : this::andKeyMap;
 
         // shift / alt / ctrl are visible in modifiersEx only if pressed = true
         boolean symShift = (e.getModifiersEx() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0;
@@ -253,26 +254,27 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         if (command != null) {
             if (command[2] == 1 || (command[2] == -1 && shift)) {
                 keySet.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
-            } else if (command[2] == 0 || !shift) {
-                keyUnset.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
+            } else if (pressed && (command[2] == 0 || !shift)) {
+                // Only deactivate SHIFT on press, never on release
+                // (on release, keyUnset = andKeyMap which would incorrectly press SHIFT)
+                orKeyMap(KEY_SHIFT[0], KEY_SHIFT[1]);
             }
             if (command[3] == 1 || (command[3] == -1 && symShift)) {
                 keySet.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
-            } else if (command[3] == 0 || !symShift) {
-                keyUnset.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+            } else if (pressed && (command[3] == 0 || !symShift)) {
+                orKeyMap(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
             }
-            // TODO: shift/symshift are toggling for some reason
             keySet.accept(command[0], command[1]);
         } else {
             if (shift) {
                 keySet.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
-            } else {
-                keyUnset.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
+            } else if (pressed) {
+                orKeyMap(KEY_SHIFT[0], KEY_SHIFT[1]);
             }
             if (symShift) {
                 keySet.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
-            } else {
-                keyUnset.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+            } else if (pressed) {
+                orKeyMap(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
             }
         }
         return true;
