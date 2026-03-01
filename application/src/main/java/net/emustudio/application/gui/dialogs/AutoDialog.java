@@ -20,7 +20,7 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 public class AutoDialog extends DialogBase {
     private final VirtualComputer computer;
 
-    private final JLabel lblAction = new JLabel();
+    private final JLabel lblAction = GUI.label("Initializing...");
     private final JButton btnStop = new JButton("Stop");
 
     public AutoDialog(VirtualComputer computer) {
@@ -37,8 +37,6 @@ public class AutoDialog extends DialogBase {
 
         JLabel lblPerforming = GUI.labelBold("Running automatic emulation, please wait...");
         lblPerforming.setIcon(loadIcon(ICON_MOTHERBOARD));
-
-        lblAction.setText("Initializing...");
 
         btnStop.addActionListener(e -> computer.getCPU().ifPresent(CPU::stop));
         btnStop.setEnabled(false);
