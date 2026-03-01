@@ -2481,7 +2481,7 @@ public class EmulatorEngine implements CpuEngine {
                 | TABLE_XY[decB]
                 | PARITY_TABLE[(tmp & 7) ^ decB];
         Q = flags;
-        memptr = (bc + 1) & 0xFFFF;
+        memptr = (bc - 1) & 0xFFFF;
         advanceCycles(3);
     }
 
@@ -2508,7 +2508,7 @@ public class EmulatorEngine implements CpuEngine {
                 | TABLE_XY[decB]
                 | PARITY_TABLE[(tmp & 7) ^ decB];
         Q = flags;
-        memptr = (bc + 1) & 0xFFFF;
+        memptr = (bc - 1) & 0xFFFF;
 
         if (decB == 0) {
             return;
