@@ -2,14 +2,17 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.gui;
 
+import net.emustudio.emulib.runtime.ui.GUI;
+
 import javax.swing.*;
 import java.awt.*;
 
-import static net.emustudio.plugins.device.adm3a.gui.GuiUtilsAdm3A.loadFont;
 
 public class DisplayFontJComboRenderer extends JLabel implements ListCellRenderer<Integer> {
-    private final Font originalFont = loadFont(DisplayFont.FONT_ORIGINAL);
-    private final Font modernFont = loadFont(DisplayFont.FONT_MODERN);
+    private final Font originalFont = GUI.loadFontResource(
+            DisplayFont.FONT_ORIGINAL.path, DisplayFontJComboRenderer.class, DisplayFont.FONT_ORIGINAL.fontSize);
+    private final Font modernFont = GUI.loadFontResource(
+            DisplayFont.FONT_MODERN.path, DisplayFontJComboRenderer.class, DisplayFont.FONT_MODERN.fontSize);
 
     public DisplayFontJComboRenderer() {
         setOpaque(true);

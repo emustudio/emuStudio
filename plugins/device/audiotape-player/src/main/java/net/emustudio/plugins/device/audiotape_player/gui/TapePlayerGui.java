@@ -33,7 +33,7 @@ public class TapePlayerGui extends DialogBase {
     private final JComboBox<ShortenedString<Path>> cmbDirs = new JComboBox<>(cmbDirsModel);
     private final TapesListModel lstTapesModel = new TapesListModel();
     private final JList<String> lstTapes = new JList<>(lstTapesModel);
-    private final JScrollPane scrollTapes = GUI.scrollable(lstTapes);
+    private final JScrollPane scrollTapes = GUI.scrollPane(lstTapes);
 
     private final AtomicReference<ShortenedString<Path>> loadedFileName = new AtomicReference<>();
 
@@ -53,7 +53,7 @@ public class TapePlayerGui extends DialogBase {
         Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
 
-        btnBrowse = GUI.browseDirectories(dialogs, "Select Directory", "Select", p -> {
+        btnBrowse = GUI.buttonBrowseDirectories(dialogs, "Select Directory", "Select", p -> {
             ShortenedString<Path> ps = new ShortenedString<>(p, Path::toString);
             ps.deriveMaxStringLength(cmbDirs, cmbDirs.getWidth() - 36);
             cmbDirsModel.add(ps);
@@ -203,15 +203,15 @@ public class TapePlayerGui extends DialogBase {
     protected JComponent initializeComponents() {
         JPanel panelAvailableTapes = GUI.section("Available tapes", "insets 2", "[grow]", "[][grow][]");
         JPanel panelDirs = GUI.panel("fillx", "[fill, grow][]", "[]");
-        JToolBar toolbarAvailableTapes = GUI.toolbar();
+        JToolBar toolbarAvailableTapes = GUI.toolBar();
         JPanel panelTape = GUI.section("Audio Tape", "insets 2", "[grow]", "[][grow][]");
-        JSplitPane splitPane = GUI.splitLeftRight(panelAvailableTapes, panelTape, 0.3);
+        JSplitPane splitPane = GUI.splitPaneLeftToRight(panelAvailableTapes, panelTape, 0.3);
 
         JLabel lblFileNameLabel = GUI.label("File name:");
         JLabel lblStatusLabel = GUI.label("Status:");
 
-        JScrollPane scrollEvents = GUI.scrollable(txtEvents);
-        JToolBar toolbarTape = GUI.toolbar();
+        JScrollPane scrollEvents = GUI.scrollPane(txtEvents);
+        JToolBar toolbarTape = GUI.toolBar();
         JPanel hSpacer1 = new JPanel(null);
         JPanel hSpacer2 = new JPanel(null);
 
@@ -219,7 +219,7 @@ public class TapePlayerGui extends DialogBase {
 
         cmbDirs.setMinimumSize(new Dimension(0, 0));
         panelDirs.add(cmbDirs, "cell 0 0");
-        JToolBar btnBrowseToolBar = GUI.toolbar();
+        JToolBar btnBrowseToolBar = GUI.toolBar();
         btnBrowseToolBar.add(btnBrowse);
         panelDirs.add(btnBrowseToolBar, "cell 1 0");
 

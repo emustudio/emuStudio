@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import static net.emustudio.application.gui.framework.EmuStudioUI.*;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 public class EditorPanel extends JPanel {
     private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
@@ -47,8 +48,8 @@ public class EditorPanel extends JPanel {
         this.replaceDialog = new ReplaceDialog(parent, editor);
         this.findDialog = new FindDialog(parent, editor);
 
-        JTextArea compilerOutput = GUI.textAreaCode(3, 20);
-        compilerOutput.setEditable(false);
+        JTextArea compilerOutput = GUI.textAreaReadOnly(3, 20);
+        compilerOutput.setFont(FONT_MONOSPACED);
 
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
         this.findAction = new FindAction(findDialog, replaceDialog);
@@ -59,9 +60,9 @@ public class EditorPanel extends JPanel {
                 computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
-        JScrollPane compilerPane = GUI.scrollable(compilerOutput);
+        JScrollPane compilerPane = GUI.scrollPane(compilerOutput);
 
-        splitSource = GUI.splitTopBottom(editor.getView(), compilerPane, 1.0);
+        splitSource = GUI.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
         splitSource.setOneTouchExpandable(true);
 
         JToolBar mainToolBar = setupMainToolbar();
@@ -121,7 +122,7 @@ public class EditorPanel extends JPanel {
     }
 
     private JToolBar setupMainToolbar() {
-        JToolBar mainToolBar = GUI.toolbar();
+        JToolBar mainToolBar = GUI.toolBar();
 
         mainToolBar.add(GUI.toolbarButton(newFileAction));
         mainToolBar.add(GUI.toolbarButton(openFileAction));

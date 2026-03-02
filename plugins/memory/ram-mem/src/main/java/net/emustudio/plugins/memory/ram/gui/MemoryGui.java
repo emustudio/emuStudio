@@ -41,14 +41,14 @@ public class MemoryGui extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JToolBar toolBar = GUI.toolbar();
+        JToolBar toolBar = GUI.toolBar();
         toolBar.add(GUI.toolbarButton(loadImageAction));
         toolBar.add(GUI.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
         toolBar.add(GUI.toolbarButton(eraseMemoryAction));
 
         table.setGridColor(SystemColor.control);
-        JScrollPane scrollPane = GUI.scrollable(table);
+        JScrollPane scrollPane = GUI.scrollPane(table);
         scrollPane.setPreferredSize(new Dimension(439, 456));
 
         JPanel panelContent = GUI.section("Tape content", "insets dialog", "[grow]", "[grow]");

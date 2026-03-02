@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.gui;
 
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.device.adm3a.api.Display;
 
 import javax.swing.*;
@@ -12,7 +13,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.RenderingHints.*;
-import static net.emustudio.plugins.device.adm3a.gui.GuiUtilsAdm3A.loadFont;
 
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     private static final Color FOREGROUND = new Color(255, 255, 255);
@@ -66,7 +66,8 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     public synchronized void setDisplayFont(DisplayFont font) {
         // setting font must be atomic
-        setFont(loadFont(font));
+
+        setFont(GUI.loadFontResource(font.path, DisplayCanvas.class, font.fontSize));
         this.displayFont = Objects.requireNonNull(font);
     }
 

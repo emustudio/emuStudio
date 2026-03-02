@@ -120,7 +120,7 @@ public class MemoryGui extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JToolBar toolBar = GUI.toolbar();
+        JToolBar toolBar = GUI.toolBar();
         toolBar.add(GUI.toolbarButton(loadImageAction));
         toolBar.add(GUI.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
@@ -168,7 +168,7 @@ public class MemoryGui extends DialogBase {
         paneMemory.setViewportView(table);
         paneMemory.setMinimumSize(new Dimension(768, 300));
 
-        JSplitPane splitPane = GUI.splitTopBottom(paneMemory, bottomPanel, 1.0);
+        JSplitPane splitPane = GUI.splitPaneTopToBottom(paneMemory, bottomPanel, 1.0);
         splitPane.setDividerLocation(390);
 
         JPanel content = GUI.panel("insets 0", "[grow]", "[]6[grow]");

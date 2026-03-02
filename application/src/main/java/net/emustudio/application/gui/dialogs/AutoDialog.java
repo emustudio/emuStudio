@@ -33,7 +33,7 @@ public class AutoDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.column();
+        JPanel panel = GUI.panelHorizontal();
 
         JLabel lblPerforming = GUI.labelBold("Running automatic emulation, please wait...");
         lblPerforming.setIcon(loadIcon(ICON_MOTHERBOARD));

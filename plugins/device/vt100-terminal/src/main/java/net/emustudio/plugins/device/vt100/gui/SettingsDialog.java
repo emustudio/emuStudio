@@ -62,8 +62,8 @@ public class SettingsDialog extends DialogBase {
         panelSize.add(btnRowsDefault, "wrap");
 
         // Redirect I/O section
-        JButton btnBrowseInputFile = GUI.browseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFile.setText(p.toString()));
-        JButton btnBrowseOutputFile = GUI.browseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFile.setText(p.toString()));
+        JButton btnBrowseInputFile = GUI.buttonBrowseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFile.setText(p.toString()));
+        JButton btnBrowseOutputFile = GUI.buttonBrowseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFile.setText(p.toString()));
 
         JPanel panelRedirectIO = GUI.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");
         panelRedirectIO.add(GUI.label("In No GUI mode, input/output will be redirected to files."), "span, h 30!, wrap");

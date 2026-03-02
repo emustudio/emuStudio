@@ -79,13 +79,13 @@ public class OpenComputerDialog extends DialogBase {
     @Override
     protected JComponent initializeComponents() {
         JSplitPane splitConfig = GUI.splitPane();
-        JToolBar toolConfig = GUI.toolbarVertical();
+        JToolBar toolConfig = GUI.toolBarVertical();
         ToolbarButton btnAdd = GUI.toolbarButton(addNewComputerAction);
         ToolbarButton btnDelete = GUI.toolbarButton(deleteComputerAction);
         ToolbarButton btnEdit = GUI.toolbarButton(editComputerAction);
         ToolbarButton btnRename = GUI.toolbarButton(renameComputerAction);
         ToolbarButton btnSaveSchemaImage = GUI.toolbarButton(saveSchemaAction);
-        JScrollPane scrollPreview = GUI.scrollable(preview);
+        JScrollPane scrollPreview = GUI.scrollPane(preview);
         JButton btnClose = new JButton();
         JLabel lblLogo = EmuStudioUI.createLogoJLabel();
 
@@ -97,8 +97,9 @@ public class OpenComputerDialog extends DialogBase {
         lstConfig.addListSelectionListener(this::lstConfigValueChanged);
         lstConfig.registerKeyboardAction(openComputerAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        JScrollPane configScrollPane = GUI.scrollableBordered(lstConfig);
-        GUI.style(lstConfig);
+        JScrollPane configScrollPane = GUI.scrollPane(lstConfig);
+        configScrollPane.setBorder(BorderFactory.createTitledBorder("Virtual computers"));
+        GUI.styleList(lstConfig);
 
         toolConfig.add(btnAdd);
         toolConfig.add(btnDelete);
@@ -128,7 +129,8 @@ public class OpenComputerDialog extends DialogBase {
         headerPanel.add(lblLogo);
         headerPanel.add(textPanel, "grow");
 
-        JButton btnOpen = GUI.buttonPrimary("Open computer", openComputerAction);
+        JButton btnOpen = GUI.button("Open computer", openComputerAction);
+        GUI.buttonMakePrimary(btnOpen);
 
         btnClose.setText("Exit");
         btnClose.addActionListener(this::btnCloseActionPerformed);

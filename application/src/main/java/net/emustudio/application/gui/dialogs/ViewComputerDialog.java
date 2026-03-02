@@ -110,36 +110,42 @@ public class ViewComputerDialog extends DialogBase {
         });
 
         // Info tab toolbar
-        JToolBar infoToolbar = GUI.toolbarVertical();
+        JToolBar infoToolbar = GUI.toolBarVertical();
 
-        JToggleButton btnCompiler = GUI.toggle(ICON_COMPILER, "Compiler information", false,
-                computer.getCompiler().isPresent(), () -> {
-                    lblSelectDevice.setVisible(false);
-                    cmbDevice.setVisible(false);
-                    showPluginInfo(computer.getCompiler(), computer.getComputerConfig().getCompiler());
-                });
+        JToggleButton btnCompiler = GUI.toolbarToggleButton(e -> {
+            lblSelectDevice.setVisible(false);
+            cmbDevice.setVisible(false);
+            showPluginInfo(computer.getCompiler(), computer.getComputerConfig().getCompiler());
+        }, ICON_COMPILER, "Compiler information");
+        btnCompiler.setEnabled(computer.getCompiler().isPresent());
+        btnCompiler.setSelected(false);
+
         pluginButtonGroup.add(btnCompiler);
         infoToolbar.add(btnCompiler);
 
-        JToggleButton btnCPU = GUI.toggle(ICON_CPU, "CPU information", true, true, () -> {
+        JToggleButton btnCPU = GUI.toolbarToggleButton(e -> {
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
             showPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
-        });
+        }, ICON_CPU, "CPU information");
+        btnCPU.setEnabled(computer.getCPU().isPresent());
+        btnCPU.setSelected(true);
+
         pluginButtonGroup.add(btnCPU);
         infoToolbar.add(btnCPU);
 
-        JToggleButton btnMemory = GUI.toggle(ICON_MEMORY, "Memory information", false,
-                computer.getMemory().isPresent(), () -> {
+        JToggleButton btnMemory = GUI.toolbarToggleButton(e -> {
                     lblSelectDevice.setVisible(false);
                     cmbDevice.setVisible(false);
                     showPluginInfo(computer.getMemory(), computer.getComputerConfig().getMemory());
-                });
+                }, ICON_MEMORY, "Memory information");
+        btnMemory.setEnabled(computer.getMemory().isPresent());
+        btnMemory.setSelected(false);
+
         pluginButtonGroup.add(btnMemory);
         infoToolbar.add(btnMemory);
 
-        JToggleButton btnDevice = GUI.toggle(ICON_DEVICE, "Devices information", false,
-                !devices.isEmpty(), () -> {
+        JToggleButton btnDevice = GUI.toolbarToggleButton(e -> {
                     lblSelectDevice.setVisible(true);
                     cmbDevice.setVisible(true);
                     if (cmbDevice.getItemCount() > 0) {
@@ -148,12 +154,15 @@ public class ViewComputerDialog extends DialogBase {
                         cmbDevice.setEnabled(false);
                         showPluginInfo(Optional.empty(), Optional.empty());
                     }
-                });
+                }, ICON_DEVICE, "Devices information");
+        btnDevice.setEnabled(!devices.isEmpty());
+        btnDevice.setSelected(false);
+
         pluginButtonGroup.add(btnDevice);
         infoToolbar.add(btnDevice);
 
         JPanel descriptionPanel = GUI.section("Short description", "insets dialog", "[grow]", "[grow]");
-        descriptionPanel.add(GUI.scrollable(txtDescription), "grow");
+        descriptionPanel.add(GUI.scrollPane(txtDescription), "grow");
 
         JPanel infoPanel = GUI.panel("insets dialog", "[grow]", "[][][][][][grow]");
         infoPanel.add(lblSelectDevice, "split 2");
@@ -169,12 +178,12 @@ public class ViewComputerDialog extends DialogBase {
         infoTab.add(infoPanel, "grow");
 
         // Schema tab
-        JToolBar schemaToolbar = GUI.toolbarVertical();
+        JToolBar schemaToolbar = GUI.toolBarVertical();
 
-        JButton btnSave = GUI.buttonIcon(ICON_SAVE, "Save schema image", e -> panelSchema.saveSchemaImage());
+        JButton btnSave = GUI.button(ICON_SAVE, "Save schema image", panelSchema::saveSchemaImage);
         schemaToolbar.add(btnSave);
 
-        JScrollPane scrollPane = GUI.scrollable(panelSchema);
+        JScrollPane scrollPane = GUI.scrollPane(panelSchema);
 
         JPanel schemaTab = GUI.panel("insets dialog", "[][grow]", "[grow]");
         schemaTab.add(schemaToolbar, "grow");
