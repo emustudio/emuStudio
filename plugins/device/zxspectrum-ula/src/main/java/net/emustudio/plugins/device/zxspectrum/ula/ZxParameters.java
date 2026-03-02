@@ -14,6 +14,9 @@ public class ZxParameters {
     public static final int SCREEN_IMAGE_WIDTH = 2 * BORDER_WIDTH + SCREEN_WIDTH * 8;
     public static final int SCREEN_IMAGE_HEIGHT = PRE_SCREEN_LINES + SCREEN_HEIGHT + POST_SCREEN_LINES;
 
+    // The ULA holds the INT signal low for 32 T-states at each frame boundary.
+    public static final int INT_DURATION = 32;
+
     // The Spectrum's 'FLASH' effect is also produced by the ULA: Every 16 frames, the ink and paper of all flashing
     // bytes is swapped; ie a normal to inverted to normal cycle takes 32 frames, which is (good as) 0.64 seconds.
     public static final int VIDEO_FLASH_FRAME = 15;

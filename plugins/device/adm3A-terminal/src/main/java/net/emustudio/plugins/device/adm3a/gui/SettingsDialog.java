@@ -64,8 +64,8 @@ public class SettingsDialog extends DialogBase {
         cmbFont.setSelectedIndex(settings.getFont().ordinal());
         spnInputDelay.setModel(new SpinnerNumberModel(0, 0, null, 100));
 
-        JButton btnInputBrowse = GUI.browseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFileName.setText(p.toString()));
-        JButton btnOutputBrowse = GUI.browseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFileName.setText(p.toString()));
+        JButton btnInputBrowse = GUI.buttonBrowseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFileName.setText(p.toString()));
+        JButton btnOutputBrowse = GUI.buttonBrowseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFileName.setText(p.toString()));
 
         // Redirect I/O section
         JPanel panelRedirectIO = GUI.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");

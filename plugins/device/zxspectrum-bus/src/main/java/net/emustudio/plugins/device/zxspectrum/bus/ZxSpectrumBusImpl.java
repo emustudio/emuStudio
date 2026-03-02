@@ -62,27 +62,23 @@ import java.util.*;
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
     private static final long FRAME_CYCLES = (64 + 192 + 56) * LINE_CYCLES;  // 69888
 
-    // from 14335 to 14463, then 96 tstates pause to reach "end of line", then repeat.
+    // First contended T-state after interrupt. Each screen line has 128 contended T-states + 96 non-contended.
+    private static final long FIRST_CONTENDED = 14335;
     private final static Map<Long, Integer> CONTENTION_MAP = new HashMap<>();
 
     static {
-        // border contention
-        for (long i = 14335; i <= 14463; i += 8) {
-            CONTENTION_MAP.put(i, 6);
-            CONTENTION_MAP.put(i + 1, 5);
-            CONTENTION_MAP.put(i + 2, 4);
-            CONTENTION_MAP.put(i + 3, 3);
-            CONTENTION_MAP.put(i + 4, 2);
-            CONTENTION_MAP.put(i + 5, 1);
-        }
-        // screen contention
-        for (long i = 14559; i <= LINE_CYCLES * 192; i += 8) {
-            CONTENTION_MAP.put(i, 6);
-            CONTENTION_MAP.put(i + 1, 5);
-            CONTENTION_MAP.put(i + 2, 4);
-            CONTENTION_MAP.put(i + 3, 3);
-            CONTENTION_MAP.put(i + 4, 2);
-            CONTENTION_MAP.put(i + 5, 1);
+        // 192 screen lines, each with 128 T-states of contention (16 repetitions of 6,5,4,3,2,1,0,0)
+        // followed by 96 T-states of no contention (border/retrace).
+        for (int line = 0; line < 192; line++) {
+            long lineStart = FIRST_CONTENDED + line * LINE_CYCLES;
+            for (long j = 0; j < 128; j += 8) {
+                CONTENTION_MAP.put(lineStart + j, 6);
+                CONTENTION_MAP.put(lineStart + j + 1, 5);
+                CONTENTION_MAP.put(lineStart + j + 2, 4);
+                CONTENTION_MAP.put(lineStart + j + 3, 3);
+                CONTENTION_MAP.put(lineStart + j + 4, 2);
+                CONTENTION_MAP.put(lineStart + j + 5, 1);
+            }
         }
     }
 
@@ -137,6 +133,11 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     @Override
     public void signalInterrupt(byte[] data) {
         cpu.signalInterrupt(data);
+    }
+
+    @Override
+    public void clearInterrupt() {
+        cpu.clearInterrupt();
     }
 
     @Override

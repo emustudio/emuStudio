@@ -5,11 +5,11 @@ package net.emustudio.application;
 
 import java.awt.*;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadFont;
+import static net.emustudio.emulib.runtime.ui.GUI.loadFontResource;
 
 public class Constants {
 
-    public static final Font FONT_CODE = loadFont(
+    public static final Font FONT_CODE = loadFontResource(
             "/net/emustudio/application/gui/FiraCode-Regular.ttf", Constants.class, 13);
 
     public static final Color DEBUGTABLE_COLOR_CURRENT_INSTRUCTION = Color.RED;

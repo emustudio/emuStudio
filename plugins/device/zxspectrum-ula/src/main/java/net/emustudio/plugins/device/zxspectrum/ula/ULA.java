@@ -169,6 +169,10 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         flashFramesCount = (flashFramesCount + 1) % (VIDEO_FLASH_FRAME + 1);
     }
 
+    public void clearInterrupt() {
+        bus.clearInterrupt();
+    }
+
     public void readScreen() {
         for (int y = 0; y < SCREEN_HEIGHT; y++) {
             readLine(y);

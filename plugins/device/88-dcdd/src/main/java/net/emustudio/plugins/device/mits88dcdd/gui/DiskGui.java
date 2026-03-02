@@ -23,7 +23,8 @@ public class DiskGui extends DialogBase {
     private final JLabel lblTrack = createMonospacedLabel("0");
     private final JLabel lblPort1Status = createMonospacedLabel(DriveParameters.port1StatusString(Drive.DEAD_DRIVE));
     private final JLabel lblPort2Status = createMonospacedLabel(DriveParameters.port2StatusString(Drive.SECTOR0));
-    private final JTextArea txtMountedImage = GUI.textAreaReadOnly(5, 20);
+    private final JTextArea txtMountedImage = GUI.textAreaReadOnly(5,20);
+
     private final DriveButton[] driveButtons = new DriveButton[]{
             new DriveButton("A", () -> updateDriveInfo(0)),
             new DriveButton("B", () -> updateDriveInfo(1)),
@@ -129,7 +130,7 @@ public class DiskGui extends DialogBase {
         txtMountedImage.setBackground(UIManager.getDefaults().getColor("TextField.disabledBackground"));
 
         JPanel panelImage = GUI.section("Mounted image", "insets dialog, fill", "[grow]", "[grow]");
-        panelImage.add(GUI.scrollable(txtMountedImage), "grow");
+        panelImage.add(GUI.scrollPane(txtMountedImage), "grow");
 
         // Main layout
         JPanel content = GUI.panel("insets dialog, fill", "[grow]", "[][][grow]");

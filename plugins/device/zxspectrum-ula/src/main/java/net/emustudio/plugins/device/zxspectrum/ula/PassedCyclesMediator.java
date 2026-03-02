@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus.LINE_CYCLES;
 import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
+import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.INT_DURATION;
 
 /**
  * Triggers actions based on passed CPU cycles.
@@ -30,6 +31,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
     private long frameCycles = 0;
     private long lineCycles = 0;
     private int lastLinePainted = 0;
+    private boolean interruptActive = false;
 
     private volatile DisplayCanvas canvas; // Use volatile instead of AtomicReference for better performance
     private final ULA ula;
@@ -59,9 +61,17 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
             lastLinePainted = 0;
             ula.onNextFrame();
             frameCycles = frameCycles % FRAME_CYCLES;
+            interruptActive = true;
             if (canvas != null) {
                 canvas.runPaintCycle(); // expensive operation
             }
+        }
+        // ULA releases INT after INT_DURATION T-states from frame boundary.
+        // Use > (not >=) because the Z80 samples INT at the END of each instruction.
+        // The clear must not take effect until AFTER the last active T-state.
+        if (interruptActive && frameCycles > INT_DURATION) {
+            ula.clearInterrupt();
+            interruptActive = false;
         }
     }
 }

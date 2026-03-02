@@ -84,6 +84,7 @@ allprojects {
 
 subprojects {
   repositories {
+    mavenLocal()
     maven {
       name = 'Central Portal Snapshots'
       url = 'https://central.sonatype.com/repository/maven-snapshots/'

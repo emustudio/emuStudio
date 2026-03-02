@@ -67,8 +67,7 @@ public class EmulatorEngine implements CpuEngine {
 
     // Level-triggered interrupt support (for devices like ZX Spectrum ULA that hold INT low for N T-states)
     private volatile byte[] levelInterrupt = null;
-    private int levelInterruptCountdown = 0;
-    private int interruptDuration = 0; // 0 = edge-triggered (queue), >0 = level-triggered
+    private int interruptDuration = 0; // 0 = edge-triggered (queue), >0 = level-triggered (external control)
 
     public byte interruptMode = 0;
     private boolean interruptSkip; // when EI enabled, skip next instruction interrupt
@@ -127,7 +126,6 @@ public class EmulatorEngine implements CpuEngine {
         if (currentRunState == RunState.STATE_RUNNING) {
             if (interruptDuration > 0) {
                 levelInterrupt = data;
-                levelInterruptCountdown = interruptDuration;
             } else {
                 pendingInterrupts.add(data);
             }
@@ -136,7 +134,6 @@ public class EmulatorEngine implements CpuEngine {
 
     public void clearMaskableInterrupt() {
         levelInterrupt = null;
-        levelInterruptCountdown = 0;
     }
 
     public void setInterruptDuration(int tStates) {
@@ -164,7 +161,6 @@ public class EmulatorEngine implements CpuEngine {
         PC = startPos;
         pendingInterrupts.clear();
         levelInterrupt = null;
-        levelInterruptCountdown = 0;
         currentRunState = RunState.STATE_STOPPED_BREAK;
     }
 
@@ -207,13 +203,6 @@ public class EmulatorEngine implements CpuEngine {
         preciseRunner.addExecutedCycles(cycles);
         for (int i = 0; i < cycles; i++) {
             context.passedCycles(1); // make it precise to the bones
-            // Decrement level-triggered interrupt countdown
-            if (levelInterruptCountdown > 0) {
-                levelInterruptCountdown--;
-                if (levelInterruptCountdown == 0) {
-                    levelInterrupt = null;
-                }
-            }
         }
     }
 
@@ -320,8 +309,6 @@ public class EmulatorEngine implements CpuEngine {
         byte[] dataBus;
         if (interruptDuration > 0) {
             dataBus = levelInterrupt;
-            levelInterrupt = null;
-            levelInterruptCountdown = 0;
         } else {
             dataBus = pendingInterrupts.poll();
         }
@@ -365,8 +352,8 @@ public class EmulatorEngine implements CpuEngine {
                 memptr = PC;
                 break;
             case 2:
-                // IM2: 7T (INT ack M1 with 2 extra wait states) + 3T (push PCH) + 3T (push PCL)
-                //      + 3T (read vector L) + 3T (read vector H) = 19T
+                // IM2: 7T (INT ack M1 cycle, 4T + 2 extra wait states + 1T internal)
+                //      + 3T (push PCH) + 3T (push PCL) + 3T (read vector L) + 3T (read vector H) = 19T
                 advanceCycles(19);
                 if (dataBus != null && dataBus.length > 0) {
                     SP = (SP - 2) & 0xFFFF;

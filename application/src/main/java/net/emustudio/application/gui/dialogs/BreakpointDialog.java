@@ -39,7 +39,7 @@ public class BreakpointDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.column();
+        JPanel panel = GUI.panelHorizontal();
 
         panel.add(GUI.label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
 

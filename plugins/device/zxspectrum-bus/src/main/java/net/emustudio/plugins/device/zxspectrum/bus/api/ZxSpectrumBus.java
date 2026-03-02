@@ -42,6 +42,11 @@ public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> 
     void signalInterrupt(byte[] data);
 
     /**
+     * Clears (releases) the maskable interrupt signal to the CPU.
+     */
+    void clearInterrupt();
+
+    /**
      * Read data from memory, a non-contended variant.
      * <p>
      * Under the hood it uses existing byte-memory. The reason for this method is the default readMemory() applies

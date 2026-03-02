@@ -27,7 +27,7 @@ public class EmulatorPanel extends JPanel {
     private final JPanel statusWindow = new JPanel();
     private final GroupLayout statusWindowLayout = new GroupLayout(statusWindow);
 
-    private final JToolBar toolDebug = GUI.toolbar();
+    private final JToolBar toolDebug = GUI.toolBar();
     private final JPanel panelPages;
     private final JScrollPane paneDebug;
 
@@ -62,11 +62,11 @@ public class EmulatorPanel extends JPanel {
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.debugTable = new DebugTableImpl(debugTableModel);
 
-        paneDebug = GUI.scrollable(debugTable);
+        paneDebug = GUI.scrollPane(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         debugTable.setFillsViewportHeight(true);
 
-        GUI.style(debugTable);
+        GUI.styleTable(debugTable);
 
         paneDebug.addComponentListener(new ComponentAdapter() {
             @Override
@@ -137,8 +137,8 @@ public class EmulatorPanel extends JPanel {
         });
 
         JPanel peripheralPanel = GUI.section("Peripheral devices", "insets dialog", "[grow]", "[grow][]");
-        JScrollPane paneDevices = GUI.scrollable(lstDevices);
-        GUI.style(lstDevices);
+        JScrollPane paneDevices = GUI.scrollPane(lstDevices);
+        GUI.styleList(lstDevices);
 
         JButton btnShowSettings = new JButton(showDeviceSettingsAction);
         JButton btnShowGUI = new JButton(showDeviceGuiAction);
@@ -147,11 +147,11 @@ public class EmulatorPanel extends JPanel {
         peripheralPanel.add(btnShowSettings, "split 2, sizegroup btns, tag ok");
         peripheralPanel.add(btnShowGUI, "sizegroup btns, tag cancel");
 
-        splitPerDebug = GUI.splitTopBottom(debuggerPanel, peripheralPanel, 1.0);
+        splitPerDebug = GUI.splitPaneTopToBottom(debuggerPanel, peripheralPanel, 1.0);
         splitPerDebug.setDividerLocation(500);
         splitPerDebug.setAutoscrolls(true);
 
-        JSplitPane splitLeftRight = GUI.splitLeftRight(splitPerDebug, statusWindow, 1.0);
+        JSplitPane splitLeftRight = GUI.splitPaneLeftToRight(splitPerDebug, statusWindow, 1.0);
         splitLeftRight.setFocusable(false);
         splitLeftRight.setDividerLocation(1.0);
 
