@@ -66,10 +66,8 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
                 canvas.runPaintCycle(); // expensive operation
             }
         }
-        // ULA releases INT after INT_DURATION T-states from frame boundary.
-        // Use > (not >=) because the Z80 samples INT at the END of each instruction.
-        // The clear must not take effect until AFTER the last active T-state.
-        if (interruptActive && frameCycles > INT_DURATION) {
+        // ULA releases INT exactly INT_DURATION T-states after frame boundary.
+        if (interruptActive && frameCycles >= INT_DURATION) {
             ula.clearInterrupt();
             interruptActive = false;
         }
