@@ -218,6 +218,26 @@ public class ControlTest extends InstructionsTest {
     }
 
     @Test
+    public void testLongDdFdPrefixBlockDoesNotOverflowStack() {
+        final int prefixes = 12000;
+
+        cpuRunnerImpl.ensureProgramSize(prefixes + 3);
+        for (int i = 0; i < prefixes; i++) {
+            cpuRunnerImpl.setByte(i, (i % 2 == 0) ? 0xDD : 0xFD);
+        }
+        cpuRunnerImpl.setByte(prefixes, 0x21);
+        cpuRunnerImpl.setByte(prefixes + 1, 0x34);
+        cpuRunnerImpl.setByte(prefixes + 2, 0x12);
+        cpuRunnerImpl.reset();
+
+        cpuRunnerImpl.step();
+
+        cpuVerifierImpl.checkIX(0);
+        cpuVerifierImpl.checkIY(0x1234);
+        cpuVerifierImpl.checkPC(prefixes + 3);
+    }
+
+    @Test
     public void testNOP() {
         cpuRunnerImpl.setProgram(0x00);
         cpuRunnerImpl.reset();
