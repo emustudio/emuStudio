@@ -257,7 +257,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void DD_DISPATCH() throws Throwable {
-        DISPATCH(DISPATCH_TABLE_DD);
+        PREFIX_DISPATCH(DISPATCH_TABLE_DD);
     }
 
     void DD_CB_DISPATCH() throws Throwable {
@@ -269,7 +269,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void FD_DISPATCH() throws Throwable {
-        DISPATCH(DISPATCH_TABLE_FD);
+        PREFIX_DISPATCH(DISPATCH_TABLE_FD);
     }
 
     void FD_CB_DISPATCH() throws Throwable {
@@ -285,6 +285,30 @@ public class EmulatorEngine implements CpuEngine {
         MethodHandle instr = table[lastOpcode];
         if (instr != null) {
             instr.invokeExact(this);
+        }
+    }
+
+    private void PREFIX_DISPATCH(MethodHandle[] table) throws Throwable {
+        while (true) {
+            lastOpcode = memory.read(PC) & 0xFF;
+            PC = (PC + 1) & 0xFFFF;
+            incrementR();
+            advanceCycles(4);
+
+            if (lastOpcode == 0xDD) {
+                table = DISPATCH_TABLE_DD;
+                continue;
+            }
+            if (lastOpcode == 0xFD) {
+                table = DISPATCH_TABLE_FD;
+                continue;
+            }
+
+            MethodHandle instr = table[lastOpcode];
+            if (instr != null) {
+                instr.invokeExact(this);
+            }
+            return;
         }
     }
 
