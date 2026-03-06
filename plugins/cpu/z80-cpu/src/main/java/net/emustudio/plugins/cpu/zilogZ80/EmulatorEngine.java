@@ -1937,9 +1937,7 @@ public class EmulatorEngine implements CpuEngine {
         // https://www.smspower.org/forums/2511-LDILDIRLDDLDDRCRCInZEXALL
         // interrupts are not allowed until after the *next* instruction after EI.
         // This is used to prevent interrupts from occurring between an EI/RETI pair used at the end of interrupt handlers.
-        if (!IFF[0]) {
-            interruptSkip = true;
-        }
+        interruptSkip = true;
         IFF[0] = IFF[1] = true;
     }
 

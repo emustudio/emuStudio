@@ -8,6 +8,8 @@ import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 
 public class ControlTest extends InstructionsTest {
@@ -23,6 +25,27 @@ public class ControlTest extends InstructionsTest {
 
         cpuRunnerImpl.step();
         cpuVerifierImpl.checkInterruptsAreDisabled(0);
+    }
+
+    @Test
+    public void testRepeatedEiExtendsInterruptSkipWindow() {
+        cpuRunnerImpl.setProgram(0xFB, 0xFB, 0x00, 0x00);
+        cpuRunnerImpl.reset();
+        cpuRunnerImpl.setIntMode((byte) 1);
+        cpu.getEngine().setInterruptDuration(32);
+        setLevelInterrupt(cpu.getEngine(), new byte[]{0});
+
+        cpuRunnerImpl.step(); // EI
+        cpuVerifierImpl.checkPC(1);
+
+        cpuRunnerImpl.step(); // EI
+        cpuVerifierImpl.checkPC(2);
+
+        cpuRunnerImpl.step(); // NOP, interrupt still must be skipped here
+        cpuVerifierImpl.checkPC(3);
+
+        cpuRunnerImpl.step(); // now interrupt may be accepted before executing opcode at 0x38
+        cpuVerifierImpl.checkPC(0x39);
     }
 
     @Test
@@ -269,6 +292,16 @@ public class ControlTest extends InstructionsTest {
         cpuRunnerImpl.step();
 
         cpuVerifierImpl.checkIntMode(intModeCheck);
+    }
+
+    private static void setLevelInterrupt(EmulatorEngine engine, byte[] data) {
+        try {
+            Field levelInterrupt = EmulatorEngine.class.getDeclaredField("levelInterrupt");
+            levelInterrupt.setAccessible(true);
+            levelInterrupt.set(engine, data);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("Unable to prepare level interrupt for test", e);
+        }
     }
 
     @Test
