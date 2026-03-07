@@ -1,6 +1,5 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
@@ -24,27 +23,9 @@ dependencies {
   testImplementation libs.slf4JSimple
 }
 
-jar {
-  archiveVersion = ''
-  manifest {
-    attributes manifestAttributes('')
-  }
-}
-
-processResources {
-  filesMatching("**/*.properties") {
-    filter ReplaceTokens, tokens: [
-            "project.version": project.version,
-            "today.year"     : new Date().format("yyyy")
-    ]
-  }
-}
-
-compileJava.options.encoding = 'UTF-8'
-compileTestJava.options.encoding = 'UTF-8'
-javadoc.options.encoding = 'UTF-8'
-
 edigen {
   decoderName = 'net.emustudio.plugins.cpu.brainduck.gui.DecoderImpl'
   disassemblerName = 'net.emustudio.plugins.cpu.brainduck.gui.DisassemblerImpl'
 }
+
+apply from: "$rootDir/gradle/conventions/java-conventions.gradle"

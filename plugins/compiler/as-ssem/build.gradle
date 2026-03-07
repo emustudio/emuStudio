@@ -1,12 +1,16 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
   id 'idea'
   id 'antlr'
   id 'com.adarshr.test-logger' version '4.0.0'
+}
+
+ext {
+  moduleMainClass = 'net.emustudio.plugins.compiler.ssem.Runner'
+  antlrPackage = 'net.emustudio.plugins.compiler.ssem'
 }
 
 dependencies {
@@ -23,57 +27,4 @@ dependencies {
   testImplementation libs.slf4JSimple
 }
 
-generateGrammarSource {
-  maxHeapSize = "128m"
-  arguments += ['-package', 'net.emustudio.plugins.compiler.ssem', '-visitor', '-no-listener']
-  outputDirectory = file("${buildDir}/generated-src/antlr/main/net/emustudio/plugins/compiler/ssem")
-}
-compileJava.dependsOn generateGrammarSource
-
-sourceSets {
-  generated {
-    java.srcDir "${buildDir}/generated-src/antlr/main"
-  }
-  main {
-    java.srcDirs = [
-            'src/main/java', "${buildDir}/generated-src/antlr/main"
-    ]
-  }
-}
-compileJava.source sourceSets.generated.java, sourceSets.main.java
-
-idea {
-  module {
-    sourceDirs += file("build/generated-src/antlr")
-  }
-}
-
-jar {
-  archiveVersion = ''
-  manifest {
-    attributes manifestAttributes('net.emustudio.plugins.compiler.ssem.Runner')
-  }
-}
-
-processResources {
-  filesMatching("**/*.properties") {
-    filter ReplaceTokens, tokens: [
-            "project.version": project.version,
-            "today.year"     : new Date().format("yyyy")
-    ]
-  }
-}
-
-compileJava.options.encoding = 'UTF-8'
-compileTestJava.options.encoding = 'UTF-8'
-javadoc.options.encoding = 'UTF-8'
-
-copy {
-  from('src/main/examples')
-  into "$buildDir/libs/examples"
-}
-
-copy {
-  from('src/main/scripts')
-  into "$buildDir/libs/scripts"
-}
+apply from: "$rootDir/gradle/conventions/antlr-compiler-conventions.gradle"
