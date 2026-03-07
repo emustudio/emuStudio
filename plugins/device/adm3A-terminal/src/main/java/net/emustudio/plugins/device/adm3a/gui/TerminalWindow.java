@@ -15,13 +15,17 @@ public class TerminalWindow extends JDialog {
     private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";
     private static final String CLEAR_SCREEN_ICON = "/net/emustudio/plugins/device/adm3a/gui/clear.png";
     private static final String ROLL_LINE_ICON = "/net/emustudio/plugins/device/adm3a/gui/roll.png";
+    private static final Rectangle DEFAULT_CANVAS_BOUNDS = new Rectangle(150, 170, 725, 530);
+    private static final int CANVAS_RIGHT_PADDING = 3;
 
     private final Display display;
     private final DisplayCanvas canvas;
+    private volatile DisplayFont displayFont;
 
     public TerminalWindow(JFrame parent, Display display, DisplayFont font) {
         super(parent);
         this.display = Objects.requireNonNull(display);
+        this.displayFont = Objects.requireNonNull(font);
         this.canvas = new DisplayCanvas(font, display);
 
         initComponents();
@@ -49,7 +53,10 @@ public class TerminalWindow extends JDialog {
     }
 
     public void setDisplayFont(DisplayFont displayFont) {
+        this.displayFont = Objects.requireNonNull(displayFont);
         canvas.setDisplayFont(displayFont);
+        updateCanvasBounds();
+        canvas.repaint();
     }
 
     private void initComponents() {
@@ -60,8 +67,7 @@ public class TerminalWindow extends JDialog {
         setTitle("LSI ADM-3A");
         setResizable(false);
 
-        // 14pt original font: 9px 1 glyph
-        canvas.setBounds(150, 170, 725, 530);
+        updateCanvasBounds();
 
         lblBack.setLocation(0, 0);
         lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 16));
@@ -103,5 +109,17 @@ public class TerminalWindow extends JDialog {
         pane.setPreferredSize(new Dimension(backgroundImage.getIconWidth(), backgroundImage.getIconHeight()));
 
         pack();
+    }
+
+    static Rectangle computeCanvasBounds(DisplayFont displayFont, int columns, int cellWidth) {
+        int width = displayFont.xCursorOffset + (columns * cellWidth) + CANVAS_RIGHT_PADDING;
+        int centerX = DEFAULT_CANVAS_BOUNDS.x + (DEFAULT_CANVAS_BOUNDS.width / 2);
+        int x = centerX - (width / 2);
+        return new Rectangle(x, DEFAULT_CANVAS_BOUNDS.y, width, DEFAULT_CANVAS_BOUNDS.height);
+    }
+
+    private void updateCanvasBounds() {
+        int cellWidth = canvas.getFontMetrics(canvas.getFont()).charWidth('W');
+        canvas.setBounds(computeCanvasBounds(displayFont, display.getColumns(), cellWidth));
     }
 }
