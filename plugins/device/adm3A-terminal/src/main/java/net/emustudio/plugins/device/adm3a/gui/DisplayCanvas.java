@@ -7,7 +7,6 @@ import net.emustudio.plugins.device.adm3a.api.Display;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferStrategy;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -100,11 +99,11 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         int lineHeight = graphics.getFontMetrics().getHeight() + displayFont.yLineHeightMultiplierOffset;
                         graphics.setColor(FOREGROUND);
                         graphics.setRenderingHint(KEY_RENDERING, VALUE_RENDER_QUALITY);
-                        graphics.setRenderingHint(KEY_FRACTIONALMETRICS, VALUE_FRACTIONALMETRICS_ON);
+                        graphics.setRenderingHint(KEY_FRACTIONALMETRICS, displayFont.fractionalMetrics);
                         graphics.setRenderingHint(KEY_INTERPOLATION, VALUE_INTERPOLATION_BICUBIC);
                         graphics.setRenderingHint(KEY_COLOR_RENDERING, VALUE_COLOR_RENDER_QUALITY);
-                        graphics.setRenderingHint(KEY_TEXT_ANTIALIASING, VALUE_TEXT_ANTIALIAS_ON);
-                        graphics.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
+                        graphics.setRenderingHint(KEY_TEXT_ANTIALIASING, displayFont.textAntiAliasing);
+                        graphics.setRenderingHint(KEY_ANTIALIASING, displayFont.antiAliasing);
                         graphics.setRenderingHint(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
                         for (int y = 0; y < display.getRows(); y++) {
                             graphics.drawChars(
@@ -129,12 +128,13 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             graphics.setXORMode(BACKGROUND);
             graphics.setColor(FOREGROUND);
 
-            Rectangle2D fontRectangle = getFont().getMaxCharBounds(graphics.getFontMetrics().getFontRenderContext());
+            FontMetrics fontMetrics = graphics.getFontMetrics();
+            int cellWidth = fontMetrics.charWidth('W');
 
-            int x = displayFont.xCursorOffset + (int) (cursorPoint.x * fontRectangle.getWidth());
+            int x = displayFont.xCursorOffset + (cursorPoint.x * cellWidth);
             int y = displayFont.yCursorOffset + (cursorPoint.y * lineHeight);
 
-            graphics.fillRect(x, y, (int) fontRectangle.getWidth(), (int) fontRectangle.getHeight() + displayFont.yCursorExtend);
+            graphics.fillRect(x, y, cellWidth, fontMetrics.getHeight() + displayFont.yCursorExtend);
             graphics.setPaintMode();
         }
     }
