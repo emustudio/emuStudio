@@ -1,0 +1,27 @@
+/* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
+import org.apache.tools.ant.filters.ReplaceTokens
+
+jar {
+  archiveVersion = ''
+  manifest {
+    attributes manifestAttributes(project.findProperty('moduleMainClass') ?: '')
+  }
+}
+
+processResources {
+  filesMatching("**/*.properties") {
+    filter ReplaceTokens, tokens: [
+            "project.version": project.version,
+            "today.year"     : new Date().format("yyyy")
+    ]
+  }
+}
+
+tasks.withType(JavaCompile).configureEach {
+  options.encoding = 'UTF-8'
+}
+
+tasks.withType(Javadoc).configureEach {
+  options.encoding = 'UTF-8'
+}

@@ -1,11 +1,12 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
   id 'java'
   id 'com.adarshr.test-logger' version '4.0.0'
 }
+
+ext.moduleMainClass = 'net.emustudio.plugins.device.mits88dcdd.cmdline.Runner'
 
 dependencies {
   implementation libs.emuLib
@@ -22,34 +23,17 @@ dependencies {
   testImplementation libs.slf4JSimple
 }
 
-jar {
-  archiveVersion = ''
-  manifest {
-    attributes manifestAttributes('net.emustudio.plugins.device.mits88dcdd.cmdline.Runner')
-  }
-}
-
-processResources {
-  filesMatching("**/*.properties") {
-    filter ReplaceTokens, tokens: [
-            "project.version": project.version,
-            "today.year"     : new Date().format("yyyy")
-    ]
-  }
-}
+apply from: "$rootDir/gradle/conventions/java-conventions.gradle"
 
 compileJava {
-  options.encoding = 'UTF-8'
   options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
-
-compileTestJava.options.encoding = 'UTF-8'
-javadoc.options.encoding = 'UTF-8'
 
 copy {
   from('src/main/scripts')
   into "$buildDir/libs/scripts"
 }
+
 copy {
   from('src/main/files')
   into "$buildDir/libs/files"
