@@ -39,7 +39,9 @@ public class DeviceImpl extends AbstractDevice {
         this.ula = new ULA(bus);
         this.passedCyclesMediator = new PassedCyclesMediator(ula);
         bus.addPassedCyclesListener(passedCyclesMediator);
-        bus.attachDevice(0xFE, ula);
+        for (int port = 0; port < 0x100; port += 2) {
+            bus.attachDevice(port, ula);
+        }
     }
 
     @Override

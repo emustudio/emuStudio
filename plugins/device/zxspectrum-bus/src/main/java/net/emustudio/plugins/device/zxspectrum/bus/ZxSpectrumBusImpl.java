@@ -60,18 +60,24 @@ import java.util.*;
  */
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
-    private static final long FRAME_CYCLES = (64 + 192 + 56) * LINE_CYCLES;  // 69888
+    private static final int IO_PORTS = 0x100;
+    private static final int SCREEN_HEIGHT = 192;
+    private static final int SCREEN_WIDTH_BYTES = 32;
+    private static final int SCREEN_FETCH_CYCLES = SCREEN_WIDTH_BYTES * 4; // 128
+    private static final int IO_READ_SAMPLE_OFFSET = 3;
+    private static final long FRAME_CYCLES = (64 + SCREEN_HEIGHT + 56) * LINE_CYCLES;  // 69888
 
     // First contended T-state after interrupt. Each screen line has 128 contended T-states + 96 non-contended.
     private static final long FIRST_CONTENDED = 14335;
+    private static final long FIRST_FLOATING_BUS = FIRST_CONTENDED + 3; // 14338 on 48K
     private final static Map<Long, Integer> CONTENTION_MAP = new HashMap<>();
 
     static {
         // 192 screen lines, each with 128 T-states of contention (16 repetitions of 6,5,4,3,2,1,0,0)
         // followed by 96 T-states of no contention (border/retrace).
-        for (int line = 0; line < 192; line++) {
+        for (int line = 0; line < SCREEN_HEIGHT; line++) {
             long lineStart = FIRST_CONTENDED + line * LINE_CYCLES;
-            for (long j = 0; j < 128; j += 8) {
+            for (long j = 0; j < SCREEN_FETCH_CYCLES; j += 8) {
                 CONTENTION_MAP.put(lineStart + j, 6);
                 CONTENTION_MAP.put(lineStart + j + 1, 5);
                 CONTENTION_MAP.put(lineStart + j + 2, 4);
@@ -88,6 +94,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     private long frameCycles;
 
+    private final Context8080.CpuPortDevice[] attachedDevices = new Context8080.CpuPortDevice[IO_PORTS];
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
     private final Set<CPUContext.PassedCyclesListener> deferredListeners = new HashSet<>();
 
@@ -98,10 +105,10 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         // ZX Spectrum ULA holds INT low for 32 T-states at each frame boundary
         cpu.setInterruptDuration(32);
 
+        attachPortDispatchers();
+
         for (Map.Entry<Integer, Context8080.CpuPortDevice> attachment : deferredAttachments.entrySet()) {
-            if (!cpu.attachDevice(attachment.getKey(), new ContendedDeviceProxy(attachment.getValue()))) {
-                throw new RuntimeException("Could not attach device " + attachment.getValue().getName() + " to CPU");
-            }
+            registerDevice(attachment.getKey(), attachment.getValue());
         }
         for (CPUContext.PassedCyclesListener listener : deferredListeners) {
             cpu.addPassedCyclesListener(listener);
@@ -115,13 +122,15 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public void attachDevice(int port, Context8080.CpuPortDevice device) {
+        Context8080.CpuPortDevice checked = Objects.requireNonNull(device);
+        int lowPort = port & 0xFF;
         if (cpu == null) {
-            deferredAttachments.put(port, device);
-        } else {
-            // TODO: contended device proxy if needed
-            if (!cpu.attachDevice(port, new ContendedDeviceProxy(device))) {
-                throw new RuntimeException("Could not attach device " + device.getName() + " to CPU");
+            Context8080.CpuPortDevice old = deferredAttachments.putIfAbsent(lowPort, checked);
+            if (old != null) {
+                throw new RuntimeException("Could not attach device " + checked.getName() + " to CPU; port already taken by " + old.getName());
             }
+        } else {
+            registerDevice(lowPort, checked);
         }
     }
 
@@ -229,7 +238,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     private void contendMemory(int location) {
         if (location >= 0x4000 && location <= 0x7FFF) {
-            Integer cycles = CONTENTION_MAP.get(frameCycles);
+            Integer cycles = contentionDelayAt(frameCycles);
             if (cycles != null) {
                 cpu.addCycles(cycles);
             }
@@ -249,29 +258,29 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             // after this, CPU adds 4 cycles for I/O.
             if ((portAddress & 1) == 0) {
                 //        Yes     |  Reset  | C:1, C:3
-                Integer cycles = CONTENTION_MAP.get(frameCycles); // at C:1
+                Integer cycles = contentionDelayAt(frameCycles); // at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
-                cycles = CONTENTION_MAP.get(frameCycles + 1); // after C:1
+                cycles = contentionDelayAt(frameCycles + 1); // after C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
             } else {
                 //        Yes     |   Set   | C:1, C:1, C:1, C:1
-                Integer cycles = CONTENTION_MAP.get(frameCycles); // at C:1
+                Integer cycles = contentionDelayAt(frameCycles); // at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
-                cycles = CONTENTION_MAP.get(frameCycles + 1); // 2x at C:1
+                cycles = contentionDelayAt(frameCycles + 1); // 2x at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
-                cycles = CONTENTION_MAP.get(frameCycles + 2); // 3x at C:1
+                cycles = contentionDelayAt(frameCycles + 2); // 3x at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
-                cycles = CONTENTION_MAP.get(frameCycles + 3); // after 3x at C:1
+                cycles = contentionDelayAt(frameCycles + 3); // after 3x at C:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
@@ -279,7 +288,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         } else {
             //         No     |  Reset  | N:1, C:3
             if ((portAddress & 1) == 0) {
-                Integer cycles = CONTENTION_MAP.get(frameCycles + 1); // after N:1
+                Integer cycles = contentionDelayAt(frameCycles + 1); // after N:1
                 if (cycles != null) {
                     cpu.addCycles(cycles);
                 }
@@ -287,33 +296,116 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         }
     }
 
+    private void registerDevice(int lowPort, Context8080.CpuPortDevice device) {
+        Context8080.CpuPortDevice old = attachedDevices[lowPort];
+        if (old != null) {
+            throw new RuntimeException("Could not attach device " + device.getName() + " to CPU; port already taken by " + old.getName());
+        }
+        attachedDevices[lowPort] = device;
+    }
+
+    private void attachPortDispatchers() {
+        for (int lowPort = 0; lowPort < IO_PORTS; lowPort++) {
+            if (!cpu.attachDevice(lowPort, new PortDispatcher(lowPort))) {
+                throw new RuntimeException("Could not attach ZX Spectrum bus dispatcher to CPU port " + lowPort);
+            }
+        }
+    }
+
+    private Integer contentionDelayAt(long cycle) {
+        long normalized = cycle % FRAME_CYCLES;
+        if (normalized < 0) {
+            normalized += FRAME_CYCLES;
+        }
+        return CONTENTION_MAP.get(normalized);
+    }
+
+    /**
+     * Reads the ZX Spectrum floating-bus value for a given frame-relative sample cycle.
+     * <p>
+     * During active ULA fetch phases, this returns the screen or attribute byte currently driven by the ULA.
+     * Outside the visible fetch window, the bus is treated as undriven and this returns {@code 0xFF}.
+     *
+     * @param sampleCycle frame-relative cycle at which IN contention samples the floating bus
+     * @return value observed on the floating bus at {@code sampleCycle}, or {@code 0xFF} when no ULA fetch is active
+     */
+    private byte readFloatingBus(long sampleCycle) {
+        long visibleCycles = sampleCycle - FIRST_FLOATING_BUS;
+        if (visibleCycles < 0) {
+            return (byte) 0xFF;
+        }
+
+        int line = (int) (visibleCycles / LINE_CYCLES);
+        if (line < 0 || line >= SCREEN_HEIGHT) {
+            return (byte) 0xFF;
+        }
+
+        int cycleInLine = (int) (visibleCycles % LINE_CYCLES);
+        if (cycleInLine >= SCREEN_FETCH_CYCLES) {
+            return (byte) 0xFF;
+        }
+
+        int column = (cycleInLine / 8) * 2;
+        int phase = cycleInLine & 7;
+        switch (phase) {
+            case 0:
+                return readScreenByte(line, column);
+            case 1:
+                return readAttributeByte(line, column);
+            case 2:
+                return readScreenByte(line, column + 1);
+            case 3:
+                return readAttributeByte(line, column + 1);
+            default:
+                return (byte) 0xFF;
+        }
+    }
+
+    private byte readScreenByte(int line, int column) {
+        int lineOffset = ((line & 0xC0) << 5) | ((line & 7) << 8) | ((line & 0x38) << 2);
+        return memory.read(0x4000 + lineOffset + column);
+    }
+
+    private byte readAttributeByte(int line, int column) {
+        int attributeOffset = ((line >>> 3) << 5) | column;
+        return memory.read(0x5800 + attributeOffset);
+    }
+
     @Override
     public void passedCycles(long tstates) {
         frameCycles = (frameCycles + tstates) % FRAME_CYCLES;
     }
 
-    private class ContendedDeviceProxy implements Context8080.CpuPortDevice {
-        private final Context8080.CpuPortDevice device;
+    private class PortDispatcher implements Context8080.CpuPortDevice {
+        private final int lowPort;
 
-        private ContendedDeviceProxy(Context8080.CpuPortDevice device) {
-            this.device = Objects.requireNonNull(device);
+        private PortDispatcher(int lowPort) {
+            this.lowPort = lowPort;
         }
 
         @Override
         public byte read(int portAddress) {
             contendedPort(portAddress);
-            return device.read(portAddress);
+            Context8080.CpuPortDevice device = attachedDevices[lowPort];
+            if (device != null) {
+                return device.read(portAddress);
+            }
+            long sampleCycle = (frameCycles + IO_READ_SAMPLE_OFFSET) % FRAME_CYCLES;
+            return readFloatingBus(sampleCycle);
         }
 
         @Override
         public void write(int portAddress, byte data) {
             contendedPort(portAddress);
-            device.write(portAddress, data);
+            Context8080.CpuPortDevice device = attachedDevices[lowPort];
+            if (device != null) {
+                device.write(portAddress, data);
+            }
         }
 
         @Override
         public String getName() {
-            return device.getName();
+            return "ZX-Spectrum bus port dispatcher";
         }
     }
 }

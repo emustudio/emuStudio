@@ -206,6 +206,15 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
+    private void contendNoMreq(int address, int cycles) {
+        int maskedAddress = address & 0xFFFF;
+        for (int i = 0; i < cycles; i++) {
+            // Touching memory delegates contention to the machine/bus implementation.
+            memory.read(maskedAddress);
+            advanceCycles(1);
+        }
+    }
+
     private void dispatch() throws Throwable {
         DispatchListener tmpListener = dispatchListener;
         if (tmpListener != null) {
@@ -2327,7 +2336,11 @@ public class EmulatorEngine implements CpuEngine {
 
         byte io = memory.read(hl--);
         advanceCycles(3);
-        memory.write(de--, io);
+        int deAddress = de;
+        memory.write(deAddress, io);
+        de = (de - 1) & 0xFFFF;
+        advanceCycles(3);
+        contendNoMreq(deAddress, 2);
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
@@ -2341,7 +2354,6 @@ public class EmulatorEngine implements CpuEngine {
         flags = (flags & FLAG_SZC) |
                 ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
         Q = flags;
-        advanceCycles(5);
     }
 
     void I_LDDR() {
@@ -2352,8 +2364,11 @@ public class EmulatorEngine implements CpuEngine {
 
         byte io = memory.read(hl--);
         advanceCycles(3);
-        memory.write(de--, io);
-        advanceCycles(5);
+        int deAddress = de;
+        memory.write(deAddress, io);
+        de = (de - 1) & 0xFFFF;
+        advanceCycles(3);
+        contendNoMreq(deAddress, 2);
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
@@ -2373,7 +2388,7 @@ public class EmulatorEngine implements CpuEngine {
             PC = (PC - 2) & 0xFFFF;
             memptr = (PC + 1) & 0xFFFF;
             flags = ((flags & (~FLAG_XY)) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
-            advanceCycles(5);
+            contendNoMreq(deAddress, 5);
         }
     }
 
@@ -2385,7 +2400,11 @@ public class EmulatorEngine implements CpuEngine {
 
         byte io = memory.read(hl++);
         advanceCycles(3);
-        memory.write(de++, io);
+        int deAddress = de;
+        memory.write(deAddress, io);
+        de = (de + 1) & 0xFFFF;
+        advanceCycles(3);
+        contendNoMreq(deAddress, 2);
 
         bc = (bc - 1) & 0xFFFF;
 
@@ -2401,7 +2420,6 @@ public class EmulatorEngine implements CpuEngine {
         flags = (flags & FLAG_SZC) |
                 ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
         Q = flags;
-        advanceCycles(5);
     }
 
     void I_LDIR() {
@@ -2412,8 +2430,11 @@ public class EmulatorEngine implements CpuEngine {
 
         byte io = memory.read(hl++);
         advanceCycles(3);
-        memory.write(de++, io);
-        advanceCycles(5);
+        int deAddress = de;
+        memory.write(deAddress, io);
+        de = (de + 1) & 0xFFFF;
+        advanceCycles(3);
+        contendNoMreq(deAddress, 2);
 
         bc = (bc - 1) & 0xFFFF;
 
@@ -2435,7 +2456,7 @@ public class EmulatorEngine implements CpuEngine {
             PC = (PC - 2) & 0xFFFF;
             memptr = (PC + 1) & 0xFFFF;
             flags = (flags & (~FLAG_XY) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
-            advanceCycles(5);
+            contendNoMreq(deAddress, 5);
         }
     }
 
