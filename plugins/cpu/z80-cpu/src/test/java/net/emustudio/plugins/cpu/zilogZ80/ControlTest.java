@@ -49,6 +49,31 @@ public class ControlTest extends InstructionsTest {
     }
 
     @Test
+    public void testIm2InterruptWithFloatingBusFfResumesFromInstructionAfterHalt() {
+        cpuRunnerImpl.setProgram(0x76, 0x00);
+        cpuRunnerImpl.reset();
+        cpuRunnerImpl.setIntMode((byte) 2);
+        cpuRunnerImpl.setI(0x28);
+        cpuRunnerImpl.enableIFF2();
+        cpu.getEngine().IFF[0] = true;
+        cpu.getEngine().setInterruptDuration(32);
+
+        cpuRunnerImpl.setByte(0x28FF, 0x5C);
+        cpuRunnerImpl.setByte(0x2900, 0x7E);
+        cpuRunnerImpl.setByte(0x7E5C, 0xED);
+        cpuRunnerImpl.setByte(0x7E5D, 0x4D);
+
+        cpuRunnerImpl.step();
+        cpuVerifierImpl.checkPC(0x0000);
+
+        setLevelInterrupt(cpu.getEngine(), new byte[]{(byte) 0xFF});
+
+        cpuRunnerImpl.step();
+        cpuVerifierImpl.checkPC(0x0001);
+        cpuVerifierImpl.checkRegisterPair(REG_SP, 0xFFFF);
+    }
+
+    @Test
     public void testJP__nn__AND__JP_cc__nn() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsMemoryAddressWord(0)
