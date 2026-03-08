@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
+import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardDispatcher;
 
 import java.awt.event.KeyEvent;
@@ -14,7 +15,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import static java.awt.event.KeyEvent.*;
-import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
+import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 
 /**
  * Uncommitted Logic Array (ULA).
@@ -66,11 +67,15 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private final static byte[] KEY_SYM_SHIFT = new byte[]{7, 2};
     private final static int[] LINE_OFFSETS = computeLineOffsets();
 
+    // The Spectrum's 'FLASH' effect is also produced by the ULA: Every 16 frames, the ink and paper of all flashing
+    // bytes is swapped; ie a normal to inverted to normal cycle takes 32 frames, which is (good as) 0.64 seconds.
+    public static final int VIDEO_FLASH_FRAME = 15;
+
     private final byte[] keymap = new byte[8]; // keyboard state
 
     // accessible from outside
-    public final byte[][] videoMemory = new byte[SCREEN_WIDTH][SCREEN_HEIGHT];
-    public final byte[][] attributeMemory = new byte[SCREEN_WIDTH][ATTRIBUTE_HEIGHT];
+    public final byte[][] videoMemory = new byte[ATTRIBUTES_WIDTH][SCREEN_HEIGHT_PIXELS];
+    public final byte[][] attributeMemory = new byte[ATTRIBUTES_WIDTH][ATTRIBUTE_HEIGHT];
 
     // maps host characters to ZX Spectrum key "commands"
     // Byte[] = {keymap index, "zero" value, shift, symshift}
@@ -146,19 +151,34 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private int flashFramesCount = 0;
 
     private final ZxSpectrumBus bus;
+    private final Beeper beeper;
 
     private int borderColor;
-    private boolean microphoneAndEarOut; // TODO: audio
+    private boolean microphoneAndEarOut;
 
     public ULA(ZxSpectrumBus bus) {
+        this(bus, Beeper.silent());
+    }
+
+    public ULA(ZxSpectrumBus bus, Beeper beeper) {
         this.bus = Objects.requireNonNull(bus);
+        this.beeper = Objects.requireNonNull(beeper);
         Arrays.fill(keymap, (byte) 0xBF);
     }
 
     public void reset() {
         borderColor = 7;
         microphoneAndEarOut = false;
+        beeper.reset();
         Arrays.fill(keymap, (byte) 0xBF);
+    }
+
+    public void passedCycles(long cycles) {
+        beeper.passedCycles(cycles);
+    }
+
+    public void close() {
+        beeper.close();
     }
 
     public void onNextFrame() {
@@ -174,13 +194,13 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     public void readScreen() {
-        for (int y = 0; y < SCREEN_HEIGHT; y++) {
+        for (int y = 0; y < SCREEN_HEIGHT_PIXELS; y++) {
             readLine(y);
         }
     }
 
     public void readLine(int y) {
-        for (int x = 0; x < SCREEN_WIDTH; x++) {
+        for (int x = 0; x < ATTRIBUTES_WIDTH; x++) {
             videoMemory[x][y] = bus.readMemoryNotContended(0x4000 + LINE_OFFSETS[y] + x);
             if (y < ATTRIBUTE_HEIGHT) {
                 int off = ((y >>> 3) << 8) | (((y & 0x07) << 5) | x);
@@ -201,12 +221,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
         byte result = (byte) 0xBF; // 1011 1111   // no EAR input
         if ((portAddress & 0xFE) == 0xFE) {
-            int keyLine = 0;
-            portAddress >>>= 8;
-            while ((portAddress & 1) != 0) {
-                portAddress >>>= 1;
-                keyLine++;
-            }
+            int lineMask = (portAddress >>> 8) & 0xFF;
 
             // FE = 0  1111 1110
             // FD = 1  1111 1101
@@ -216,8 +231,10 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
             // DF = 5  1101 1111
             // BF = 6  1011 1111
             // 7F = 7  0111 1111
-            if (keyLine < keymap.length) {
-                result &= keymap[keyLine];
+            for (int keyLine = 0; keyLine < keymap.length; keyLine++) {
+                if ((lineMask & (1 << keyLine)) == 0) {
+                    result &= keymap[keyLine];
+                }
             }
         }
 
@@ -230,6 +247,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         this.borderColor = data & 7;
         // the EAR and MIC sockets are connected only by resistors, so activating one activates the other
         microphoneAndEarOut = ((data & 0x10) == 0x10) || ((data & 0x8) == 0);
+        beeper.setLevel(microphoneAndEarOut);
     }
 
     @Override
@@ -306,8 +324,8 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
      * @return array of offsets
      */
     private static int[] computeLineOffsets() {
-        final int[] result = new int[SCREEN_HEIGHT];
-        for (int y = 0; y < SCREEN_HEIGHT; y++) {
+        final int[] result = new int[SCREEN_HEIGHT_PIXELS];
+        for (int y = 0; y < SCREEN_HEIGHT_PIXELS; y++) {
             result[y] = ((y & 0xC0) << 5) | ((y & 7) << 8) | ((y & 0x38) << 2);
         }
         return result;

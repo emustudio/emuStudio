@@ -10,14 +10,11 @@ import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 
-import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IMAGE_HEIGHT;
-import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.SCREEN_IMAGE_WIDTH;
-
 public class DisplayWindow extends JDialog {
     public final static int MARGIN = 30;
 
-    private final static int BOUND_X = (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_WIDTH + 2 * MARGIN);
-    private final static int BOUND_Y = (int) (DisplayCanvas.ZOOM * SCREEN_IMAGE_HEIGHT + 2 * MARGIN);
+    private final static int BOUND_X = (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_WIDTH + 2 * MARGIN);
+    private final static int BOUND_Y = (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_HEIGHT + 2 * MARGIN);
 
     private final DisplayCanvas canvas;
     private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(0);

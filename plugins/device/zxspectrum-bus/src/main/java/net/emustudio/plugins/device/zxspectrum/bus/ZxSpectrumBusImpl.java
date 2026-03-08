@@ -13,6 +13,8 @@ import net.jcip.annotations.NotThreadSafe;
 
 import java.util.*;
 
+import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
+
 /**
  * ZX Spectrum bus (for 48K ZX spectrum).
  * <p>
@@ -61,11 +63,8 @@ import java.util.*;
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
     private static final int IO_PORTS = 0x100;
-    private static final int SCREEN_HEIGHT = 192;
-    private static final int SCREEN_WIDTH_BYTES = 32;
-    private static final int SCREEN_FETCH_CYCLES = SCREEN_WIDTH_BYTES * 4; // 128
+    private static final int SCREEN_FETCH_CYCLES = ATTRIBUTES_WIDTH * 4; // 128
     private static final int IO_READ_SAMPLE_OFFSET = 3;
-    private static final long FRAME_CYCLES = (64 + SCREEN_HEIGHT + 56) * LINE_CYCLES;  // 69888
 
     // First contended T-state after interrupt. Each screen line has 128 contended T-states + 96 non-contended.
     private static final long FIRST_CONTENDED = 14335;
@@ -75,8 +74,8 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     static {
         // 192 screen lines, each with 128 T-states of contention (16 repetitions of 6,5,4,3,2,1,0,0)
         // followed by 96 T-states of no contention (border/retrace).
-        for (int line = 0; line < SCREEN_HEIGHT; line++) {
-            long lineStart = FIRST_CONTENDED + line * LINE_CYCLES;
+        for (int line = 0; line < SCREEN_HEIGHT_PIXELS; line++) {
+            long lineStart = FIRST_CONTENDED + line * DISPLAY_LINE_TSTATES;
             for (long j = 0; j < SCREEN_FETCH_CYCLES; j += 8) {
                 CONTENTION_MAP.put(lineStart + j, 6);
                 CONTENTION_MAP.put(lineStart + j + 1, 5);
@@ -103,7 +102,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         this.memory = Objects.requireNonNull(memory);
 
         // ZX Spectrum ULA holds INT low for 32 T-states at each frame boundary
-        cpu.setInterruptDuration(32);
+        cpu.setInterruptDuration(INTERRUPT_TSTATES);
 
         attachPortDispatchers();
 
@@ -313,9 +312,9 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     private Integer contentionDelayAt(long cycle) {
-        long normalized = cycle % FRAME_CYCLES;
+        long normalized = cycle % DISPLAY_FRAME_TSTATES;
         if (normalized < 0) {
-            normalized += FRAME_CYCLES;
+            normalized += DISPLAY_FRAME_TSTATES;
         }
         return CONTENTION_MAP.get(normalized);
     }
@@ -335,12 +334,12 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             return (byte) 0xFF;
         }
 
-        int line = (int) (visibleCycles / LINE_CYCLES);
-        if (line < 0 || line >= SCREEN_HEIGHT) {
+        int line = (int) (visibleCycles / DISPLAY_LINE_TSTATES);
+        if (line < 0 || line >= SCREEN_HEIGHT_PIXELS) {
             return (byte) 0xFF;
         }
 
-        int cycleInLine = (int) (visibleCycles % LINE_CYCLES);
+        int cycleInLine = (int) (visibleCycles % DISPLAY_LINE_TSTATES);
         if (cycleInLine >= SCREEN_FETCH_CYCLES) {
             return (byte) 0xFF;
         }
@@ -373,7 +372,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public void passedCycles(long tstates) {
-        frameCycles = (frameCycles + tstates) % FRAME_CYCLES;
+        frameCycles = (frameCycles + tstates) % DISPLAY_FRAME_TSTATES;
     }
 
     private class PortDispatcher implements Context8080.CpuPortDevice {
@@ -390,7 +389,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             if (device != null) {
                 return device.read(portAddress);
             }
-            long sampleCycle = (frameCycles + IO_READ_SAMPLE_OFFSET) % FRAME_CYCLES;
+            long sampleCycle = (frameCycles + IO_READ_SAMPLE_OFFSET) % DISPLAY_FRAME_TSTATES;
             return readFloatingBus(sampleCycle);
         }
 

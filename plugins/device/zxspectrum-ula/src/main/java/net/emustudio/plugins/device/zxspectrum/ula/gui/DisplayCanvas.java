@@ -11,11 +11,15 @@ import java.awt.image.DataBufferInt;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
+import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
 
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     public static final float ZOOM = 2f;
+    public static final int BORDER_WIDTH = 48; // pixels
+
+    public static final int SCREEN_IMAGE_WIDTH = 2 * BORDER_WIDTH + SCREEN_WIDTH_PIXELS;
+    public static final int SCREEN_IMAGE_HEIGHT = PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS + POST_SCREEN_LINES;
 
     private final BufferedImage screenImage = new BufferedImage(
             SCREEN_IMAGE_WIDTH, SCREEN_IMAGE_HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -71,7 +75,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     public void drawNextLine(int line) {
         int borderColor = COLOR_MAP[ula.getBorderColor()].getRGB();
-        if (line < PRE_SCREEN_LINES || line >= (PRE_SCREEN_LINES + SCREEN_HEIGHT)) {
+        if (line < PRE_SCREEN_LINES || line >= (PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS)) {
             for (int i = 0; i < SCREEN_IMAGE_WIDTH; i++) {
                 screenImageData[line * SCREEN_IMAGE_WIDTH + i] = borderColor;
             }
@@ -84,7 +88,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             int y = line - PRE_SCREEN_LINES;
             ula.readLine(y);
             int screenX = 0;
-            for (int byteX = 0; byteX < SCREEN_WIDTH; byteX++) {
+            for (int byteX = 0; byteX < ATTRIBUTES_WIDTH; byteX++) {
                 byte row = ula.videoMemory[byteX][y];
                 int attr = ula.attributeMemory[byteX][y / 8];
                 Color[] colorMap = ((attr & 0x40) == 0x40) ? BRIGHT_COLOR_MAP : COLOR_MAP;
@@ -105,7 +109,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 screenX += 8;
             }
             for (int i = 0; i < 2 * BORDER_WIDTH; i++) {
-                int offset = line * SCREEN_IMAGE_WIDTH + BORDER_WIDTH + SCREEN_WIDTH * 8 + i;
+                int offset = line * SCREEN_IMAGE_WIDTH + BORDER_WIDTH + SCREEN_WIDTH_PIXELS + i;
                 screenImageData[offset] = borderColor;
             }
         }

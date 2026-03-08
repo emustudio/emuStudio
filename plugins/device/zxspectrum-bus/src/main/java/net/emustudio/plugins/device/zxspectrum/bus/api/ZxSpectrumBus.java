@@ -16,7 +16,6 @@ import net.emustudio.plugins.cpu.intel8080.api.Context8080;
  */
 @PluginContext
 public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> {
-    long LINE_CYCLES = 224;
 
     /**
      * Attach a device on the bus.
