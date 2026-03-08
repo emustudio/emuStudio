@@ -62,7 +62,7 @@ import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
  * - I2 to I0 is the INK colour
  */
 public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyListener {
-    private final static byte[] RST_7 = new byte[0x38]; // works for IM1 and IM2 modes
+    private final static byte[] INTERRUPT_DATA = new byte[]{(byte) 0xFF};
     private final static byte[] KEY_SHIFT = new byte[]{0, 1};
     private final static byte[] KEY_SYM_SHIFT = new byte[]{7, 2};
     private final static int[] LINE_OFFSETS = computeLineOffsets();
@@ -154,7 +154,6 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private final Beeper beeper;
 
     private int borderColor;
-    private boolean microphoneAndEarOut;
 
     public ULA(ZxSpectrumBus bus) {
         this(bus, Beeper.silent());
@@ -168,7 +167,6 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     public void reset() {
         borderColor = 7;
-        microphoneAndEarOut = false;
         beeper.reset();
         Arrays.fill(keymap, (byte) 0xBF);
     }
@@ -182,7 +180,9 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     public void onNextFrame() {
-        bus.signalInterrupt(RST_7);
+        // On a 48K Spectrum the ULA does not place an IM 2 vector on the bus. The interrupt
+        // acknowledge cycle therefore sees the floating bus, which is 0xFF at the frame boundary.
+        bus.signalInterrupt(INTERRUPT_DATA);
         if (flashFramesCount == VIDEO_FLASH_FRAME) {
             videoFlash = !videoFlash;
         }
@@ -245,9 +245,9 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     @Override
     public void write(int portAddress, byte data) {
         this.borderColor = data & 7;
-        // the EAR and MIC sockets are connected only by resistors, so activating one activates the other
-        microphoneAndEarOut = ((data & 0x10) == 0x10) || ((data & 0x8) == 0);
-        beeper.setLevel(microphoneAndEarOut);
+        boolean earOut = (data & 0x10) != 0;
+        boolean microphoneOut = (data & 0x08) == 0;
+        beeper.setLevel(earOut, microphoneOut);
     }
 
     @Override

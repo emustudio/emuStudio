@@ -26,18 +26,21 @@ public class ULATest {
         RecordingBeeper beeper = new RecordingBeeper();
         ULA ula = new ULA(bus.bus(), beeper);
 
-        ula.write(0xFE, (byte) 0x10);
+        ula.write(0xFE, (byte) 0x18);
         ula.passedCycles(10);
 
-        ula.write(0xFE, (byte) 0x00);
+        ula.write(0xFE, (byte) 0x10);
         ula.passedCycles(10);
 
         ula.write(0xFE, (byte) 0x08);
         ula.passedCycles(10);
+
+        ula.write(0xFE, (byte) 0x00);
+        ula.passedCycles(10);
         ula.close();
 
-        assertEquals(List.of(Boolean.TRUE, Boolean.TRUE, Boolean.FALSE), beeper.levels);
-        assertEquals(30, beeper.cycles);
+        assertEquals(List.of(2, 3, 0, 1), beeper.levels);
+        assertEquals(40, beeper.cycles);
     }
 
     @Test
@@ -134,6 +137,18 @@ public class ULATest {
         assertEquals((VIDEO_FLASH_FRAME + 1) * 2, bus.interruptSignals);
     }
 
+    @Test
+    public void testFrameInterruptUsesFloatingBusValueForIm2Vectoring() {
+        MockBus bus = new MockBus();
+        ULA ula = new ULA(bus.bus());
+
+        ula.onNextFrame();
+
+        assertEquals(1, bus.interruptSignals);
+        assertEquals(1, bus.interruptData.size());
+        assertEquals(0xFF, bus.interruptData.get(0)[0] & 0xFF);
+    }
+
     private static KeyEvent keyPressed(int keyCode, int modifiersEx) {
         return new KeyEvent(new Canvas(), KeyEvent.KEY_PRESSED, 0, modifiersEx, keyCode, KeyEvent.CHAR_UNDEFINED);
     }
@@ -143,7 +158,7 @@ public class ULATest {
     }
 
     private static final class RecordingBeeper extends Beeper {
-        private final List<Boolean> levels = new ArrayList<>();
+        private final List<Integer> levels = new ArrayList<>();
         private long cycles;
 
         private RecordingBeeper() {
@@ -151,8 +166,8 @@ public class ULATest {
         }
 
         @Override
-        public void setLevel(boolean levelHigh) {
-            levels.add(levelHigh);
+        public void setLevel(boolean earOn, boolean micOn) {
+            levels.add((earOn ? 2 : 0) | (micOn ? 1 : 0));
         }
 
         @Override
@@ -164,6 +179,7 @@ public class ULATest {
     private static final class MockBus {
         private final byte[] memory = new byte[0x10000];
         private final ZxSpectrumBus bus = createNiceMock(ZxSpectrumBus.class);
+        private final List<byte[]> interruptData = new ArrayList<>();
         private byte lineIn;
         private int interruptSignals;
 
@@ -176,6 +192,8 @@ public class ULATest {
             bus.signalInterrupt(anyObject(byte[].class));
             expectLastCall().andAnswer(() -> {
                 interruptSignals++;
+                byte[] data = (byte[]) getCurrentArguments()[0];
+                interruptData.add(data.clone());
                 return null;
             }).anyTimes();
             replay(bus);
