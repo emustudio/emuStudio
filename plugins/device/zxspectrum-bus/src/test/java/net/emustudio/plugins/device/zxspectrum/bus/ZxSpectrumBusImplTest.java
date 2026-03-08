@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.DISPLAY_LINE_TSTATES;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -94,7 +95,7 @@ public class ZxSpectrumBusImplTest {
         assertEquals((byte) 0xFF, portDispatcher.read(0x00FF));
 
         // On the next raster line, the attribute byte is the same for the first eight pixel lines.
-        bus.passedCycles(ZxSpectrumBus.LINE_CYCLES - 4);
+        bus.passedCycles(DISPLAY_LINE_TSTATES - 4);
         assertEquals((byte) 0x9A, portDispatcher.read(0x00FF));
         bus.passedCycles(1);
         assertEquals((byte) 0x34, portDispatcher.read(0x00FF));
@@ -102,7 +103,6 @@ public class ZxSpectrumBusImplTest {
         verify(env.cpu, env.memory);
     }
 
-    @SuppressWarnings("unchecked")
     private TestEnvironment newTestEnvironment() {
         TestEnvironment env = new TestEnvironment();
 

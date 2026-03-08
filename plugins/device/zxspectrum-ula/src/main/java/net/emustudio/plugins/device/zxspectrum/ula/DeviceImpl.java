@@ -9,6 +9,7 @@ import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
+import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void initialize() throws PluginInitializationException {
         ZxSpectrumBus bus = applicationApi.getContextPool().getDeviceContext(pluginID, ZxSpectrumBus.class);
-        this.ula = new ULA(bus);
+        this.ula = new ULA(bus, Beeper.createDefault());
         this.passedCyclesMediator = new PassedCyclesMediator(ula);
         bus.addPassedCyclesListener(passedCyclesMediator);
         for (int port = 0; port < 0x100; port += 2) {
@@ -51,6 +52,10 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void destroy() {
+        if (ula != null) {
+            ula.close();
+            ula = null;
+        }
         if (guiIOset || gui != null) {
             gui.destroy();
             gui = null;

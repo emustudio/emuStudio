@@ -7,27 +7,43 @@ import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 
 import java.util.Objects;
 
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus.LINE_CYCLES;
-import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.*;
-import static net.emustudio.plugins.device.zxspectrum.ula.ZxParameters.INT_DURATION;
+import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 
 /**
- * Triggers actions based on passed CPU cycles.
- * <p>
- * For <a href="https://worldofspectrum.org/faq/reference/48kreference.htm">ZX Spectrum 48K</a> the actions are:
- * <p>
- * - 0: CPU interrupt
- * - 0 - 14336: first 64 lines. From those, at least 48 are border-lines, others are either border or vertical retraces
- * After an interrupt occurs, 64 line times (14336 T states; see below for exact timings) pass before
- * - 14337 - 57344: 192 screen lines are displayed
- * - 57345 - 69888: 56 border-lines are displayed
- * <p>
- * This means a frame is (64+192+56)*224=69888 T states long, which means that the CPU interrupt occurs
- * at 3.5MHz/69888=50.08 Hz.
+ * Converts CPU T-state notifications into ULA frame, line, paint, and interrupt events.
+ *
+ * <p>The ZX Spectrum 48K video timing is regular enough that the mediator can work purely from
+ * accumulated T-states:
+ * <ul>
+ * <li>one display line = {@code 224} T-states</li>
+ * <li>one frame = {@code (64 + 192 + 56) * 224 = 69888} T-states</li>
+ * <li>frame rate = {@code 3_500_000 / 69888 ~= 50.08 Hz}</li>
+ * <li>the ULA holds {@code /INT} low for {@code 32} T-states at each frame boundary</li>
+ * </ul>
+ *
+ * <p>Mechanically, each {@link #passedCycles(long)} call does four things in order:
+ * <ol>
+ * <li>forwards the same cycle count to {@link ULA#passedCycles(long)} so audio stays aligned with
+ * the CPU clock</li>
+ * <li>adds the cycles to {@code lineCycles} and {@code frameCycles}</li>
+ * <li>when a line boundary is crossed, draws the next line and keeps only the modulo remainder</li>
+ * <li>when a frame boundary is crossed, starts the next frame, requests a repaint, and later clears
+ * the interrupt exactly {@code INTERRUPT_TSTATES} after the boundary</li>
+ * </ol>
+ *
+ * <p>The modulo operations are the same idea as in fixed-point resampling: they preserve leftover
+ * partial-line and partial-frame time across callbacks so timing does not drift when instructions
+ * end between display boundaries.
+ *
+ * <p>References:
+ * <ul>
+ * <li><a href="https://worldofspectrum.org/faq/reference/48kreference.htm">World of Spectrum:
+ * 48K ZX Spectrum Technical Information</a></li>
+ * <li><a href="https://worldofspectrum.org/faq/reference/z80reference.htm">World of Spectrum:
+ * Z80 Technical Information</a></li>
+ * </ul>
  */
 public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
-    private static final long FRAME_CYCLES = (PRE_SCREEN_LINES + SCREEN_HEIGHT + POST_SCREEN_LINES) * LINE_CYCLES;  // 69888;
-
     private long frameCycles = 0;
     private long lineCycles = 0;
     private int lastLinePainted = 0;
@@ -44,30 +60,35 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
         this.canvas = canvas;
     }
 
+    /**
+     * Accumulates CPU time and dispatches any line, frame, or interrupt events whose thresholds
+     * were crossed by this batch.
+     */
     @Override
     public void passedCycles(long cycles) {
+        ula.passedCycles(cycles);
         frameCycles += cycles;
         lineCycles += cycles;
 
         // Draw completed lines in batch
         DisplayCanvas canvas = this.canvas; // Read volatile once
         if (canvas != null) {
-            if (lineCycles >= LINE_CYCLES) {
+            if (lineCycles >= DISPLAY_LINE_TSTATES) {
                 canvas.drawNextLine(lastLinePainted++);
             }
         }
-        lineCycles = lineCycles % LINE_CYCLES;
-        if (frameCycles >= FRAME_CYCLES) {
+        lineCycles = lineCycles % DISPLAY_LINE_TSTATES;
+        if (frameCycles >= DISPLAY_FRAME_TSTATES) {
             lastLinePainted = 0;
             ula.onNextFrame();
-            frameCycles = frameCycles % FRAME_CYCLES;
+            frameCycles = frameCycles % DISPLAY_FRAME_TSTATES;
             interruptActive = true;
             if (canvas != null) {
                 canvas.runPaintCycle(); // expensive operation
             }
         }
         // ULA releases INT exactly INT_DURATION T-states after frame boundary.
-        if (interruptActive && frameCycles >= INT_DURATION) {
+        if (interruptActive && frameCycles >= INTERRUPT_TSTATES) {
             ula.clearInterrupt();
             interruptActive = false;
         }

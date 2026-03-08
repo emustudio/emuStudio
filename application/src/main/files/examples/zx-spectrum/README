@@ -5,3 +5,7 @@ ZX Spectrum ROM and tape files can be found at:
 - https://wowroms.com/en/roms/list/zx+spectrum
 - https://mdfs.net/Software/Spectrum/ROMImages/
 
+Example sources:
+
+- `zx_audio.asm` ZX-spectrum definition for notes and frequencies.
+- `twinkle_beeper.asm` (assemble for 32768 / 8000H, then run with `RANDOMIZE USR 32768`)
