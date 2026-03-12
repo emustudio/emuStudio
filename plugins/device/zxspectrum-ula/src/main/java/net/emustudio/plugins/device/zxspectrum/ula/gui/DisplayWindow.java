@@ -25,13 +25,14 @@ public class DisplayWindow extends JDialog {
 
         initComponents();
         setLocationRelativeTo(parent);
-        canvas.start();
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowOpened(WindowEvent winEvt) {
+                canvas.ensureStarted();
                 canvas.redrawNow();
             }
 
             public void windowActivated(WindowEvent winEvt) {
+                canvas.ensureStarted();
                 canvas.redrawNow();
             }
         });

@@ -130,7 +130,6 @@ public class KeyboardCanvas extends JComponent implements KeyboardDispatcher.OnK
 
         symShift = (e.getModifiersEx() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0;
         shift = (e.getModifiersEx() & (KeyEvent.SHIFT_DOWN_MASK)) != 0;
-        repaint();
         return true;
     }
 
