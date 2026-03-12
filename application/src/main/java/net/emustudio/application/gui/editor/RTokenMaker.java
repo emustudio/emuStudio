@@ -55,8 +55,9 @@ public class RTokenMaker extends AbstractTokenMaker {
         int previousEnd = -1;
         int previousStartOffset = -1;
 
-        for (net.emustudio.emulib.plugins.compiler.Token token : lexer) {
+        while (lexer.hasNext()) {
             try {
+                net.emustudio.emulib.plugins.compiler.Token token = lexer.next();
                 int tokenMakerType = getTokenMakerType(token.getType());
 
                 int tokenStartIndex = token.getOffset();
