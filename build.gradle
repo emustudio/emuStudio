@@ -6,14 +6,14 @@ apply from: 'test_report.gradle'
 
 ext.versions = [
         slf4j: '2.0.17',
-        flatlaf: '3.5.2'
+        flatlaf: '3.7.1'
 ]
 
 ext.libs = [
         emuLib           : "net.emustudio:emulib:12.1.0-SNAPSHOT",
         cpuTestSuite     : "net.emustudio:cpu-testsuite_12:1.2.1-SNAPSHOT",
 
-        migLayout        : "com.miglayout:miglayout-swing:11.1",
+        migLayout        : "com.miglayout:miglayout-swing:11.4.3",
         flatLaf          : "com.formdev:flatlaf:${versions.flatlaf}:no-natives",
         flatLafExtras    : "com.formdev:flatlaf-extras:${versions.flatlaf}",
 
@@ -24,19 +24,19 @@ ext.libs = [
         slf4JApi         : "org.slf4j:slf4j-api:${versions.slf4j}",
         slf4JSimple      : "org.slf4j:slf4j-simple:${versions.slf4j}",
         slf4JNop         : "org.slf4j:slf4j-nop:${versions.slf4j}",
-        logback          : "ch.qos.logback:logback-classic:1.5.18",
+        logback          : "ch.qos.logback:logback-classic:1.5.32",
 
         picocli          : "info.picocli:picocli:4.7.7",
         picocliAnnotation: "info.picocli:picocli-codegen:4.7.7",
 
         tomlj            : "com.electronwill.night-config:toml:3.8.3",
 
-        editor           : "com.fifesoft:rsyntaxtextarea:3.6.0",
-        editorDialogs    : "com.fifesoft:rstaui:3.3.1",
+        editor           : "com.fifesoft:rsyntaxtextarea:3.6.2",
+        editorDialogs    : "com.fifesoft:rstaui:3.3.2",
 
         junit            : "junit:junit:4.13.2",
         easyMock         : "org.easymock:easymock:5.6.0",
-        mockito          : "org.mockito:mockito-core:5.18.0"
+        mockito          : "org.mockito:mockito-core:5.23.0"
 ]
 
 allprojects {
