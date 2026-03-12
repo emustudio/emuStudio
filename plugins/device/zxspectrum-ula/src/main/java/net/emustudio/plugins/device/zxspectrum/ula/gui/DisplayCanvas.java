@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
@@ -57,6 +58,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private final ULA ula;
     private final PaintCycle paintCycle = new PaintCycle();
     private final KeyboardCanvas keyboardCanvas;
+    private volatile Consumer<BufferedImage> frameListener;
 
     public DisplayCanvas(ULA ula, KeyboardCanvas keyboardCanvas) {
         this.ula = Objects.requireNonNull(ula);
@@ -92,6 +94,10 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     public void runPaintCycle() {
         paintCycle.run();
+    }
+
+    public void setFrameListener(Consumer<BufferedImage> frameListener) {
+        this.frameListener = frameListener;
     }
 
     public void drawNextLine(int line) {
@@ -186,6 +192,43 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         }
     }
 
+    public BufferedImage captureFrame() {
+        int width = Math.max(1, getWidth());
+        int height = Math.max(1, getHeight());
+        BufferedImage frame = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = frame.createGraphics();
+        try {
+            applyRenderingHints(graphics);
+            renderFrame(graphics);
+        } finally {
+            graphics.dispose();
+        }
+        return frame;
+    }
+
+    private void applyRenderingHints(Graphics2D graphics) {
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+        graphics.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
+    }
+
+    private void renderFrame(Graphics2D graphics) {
+        graphics.drawImage(
+                screenImage, MARGIN, MARGIN,
+                (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM), null
+        );
+
+        if (keyboardCanvas.getAlpha() > 0) {
+            Color color = graphics.getColor();
+            graphics.setColor(KEYBOARD_OVERLAY_COLOR);
+            graphics.translate(0, KeyboardCanvas.OVERLAY_TOP);
+            keyboardCanvas.paint(graphics);
+            graphics.setColor(color);
+            graphics.translate(0, -KeyboardCanvas.OVERLAY_TOP);
+        }
+    }
+
     public class PaintCycle implements Runnable {
         private BufferStrategy strategy;
 
@@ -207,30 +250,18 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 do {
                     do {
                         Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
-                        // Disable expensive rendering hints for maximum performance
-                        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-                        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-                        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-                        graphics.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
-
-                        graphics.drawImage(
-                                screenImage, MARGIN, MARGIN,
-                                (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM), null);
-
-                        // Only draw keyboard overlay if explicitly enabled (disabled by default for performance)
-                        if (keyboardCanvas.getAlpha() > 0) {
-                            Color color = graphics.getColor();
-                            graphics.setColor(KEYBOARD_OVERLAY_COLOR);
-                            graphics.translate(0, KeyboardCanvas.OVERLAY_TOP);
-                            keyboardCanvas.paint(graphics);
-                            graphics.setColor(color);
-                        }
-
+                        applyRenderingHints(graphics);
+                        renderFrame(graphics);
                         graphics.dispose();
 
                     } while (strategy.contentsRestored());
                     strategy.show();
                     Toolkit.getDefaultToolkit().sync();
+
+                    Consumer<BufferedImage> frameListener = DisplayCanvas.this.frameListener;
+                    if (frameListener != null) {
+                        frameListener.accept(captureFrame());
+                    }
                 } while (strategy.contentsLost());
             } catch (Exception ignored) {
                 repaint();

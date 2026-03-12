@@ -99,6 +99,41 @@ public class BeeperTest {
         assertFalse(containsNonZeroSample(sink.toShortArray()));
     }
 
+    @Test
+    public void testVolumePercentScalesAmplitude() {
+        RecordingSink fullSink = new RecordingSink();
+        Beeper fullVolume = new Beeper(fullSink, 1000, 120, 16);
+
+        fullVolume.setLevel(true);
+        fullVolume.passedCycles(120);
+        fullVolume.close();
+
+        RecordingSink halfSink = new RecordingSink();
+        Beeper halfVolume = new Beeper(halfSink, 1000, 120, 16);
+        halfVolume.setVolumePercent(50);
+        halfVolume.setLevel(true);
+        halfVolume.passedCycles(120);
+        halfVolume.close();
+
+        short fullAmplitude = firstNonZeroSample(fullSink.toShortArray());
+        short halfAmplitude = firstNonZeroSample(halfSink.toShortArray());
+
+        assertTrue(Math.abs((fullAmplitude / 2) - halfAmplitude) <= 1);
+    }
+
+    @Test
+    public void testZeroVolumeMutesTone() {
+        RecordingSink sink = new RecordingSink();
+        Beeper beeper = new Beeper(sink, 1000, 120, 16);
+
+        beeper.setVolumePercent(0);
+        beeper.setLevel(true);
+        beeper.passedCycles(120);
+        beeper.close();
+
+        assertFalse(containsNonZeroSample(sink.toShortArray()));
+    }
+
     private static boolean containsNonZeroSample(short[] samples) {
         for (short sample : samples) {
             if (sample != 0) {
@@ -131,6 +166,15 @@ public class BeeperTest {
             }
         }
         return false;
+    }
+
+    private static short firstNonZeroSample(short[] samples) {
+        for (short sample : samples) {
+            if (sample != 0) {
+                return sample;
+            }
+        }
+        return 0;
     }
 
     private static boolean playNote(Beeper beeper, boolean level, int frequencyHz, int durationMillis) {

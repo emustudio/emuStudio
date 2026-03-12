@@ -49,9 +49,10 @@ import java.nio.ByteOrder;
 public class Beeper implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Beeper.class);
 
-    static final int ZX_SPECTRUM_FREQUENCY = 3_500_000;
+    public static final int ZX_SPECTRUM_FREQUENCY = 3_500_000;
     static final int DEFAULT_SAMPLE_RATE = 48_000;
     private static final int DEFAULT_BATCH_FRAMES = 512;
+    private static final int DEFAULT_VOLUME = 100;
 
     public static final int CHANNELS = 2;
     private static final int BYTES_PER_SAMPLE = 2;
@@ -63,13 +64,15 @@ public class Beeper implements AutoCloseable {
     private static final double ISSUE_3_EAR_ONLY_VOLTAGE = 3.70;
     private static final short[] ISSUE_3_PCM_LEVELS = createIssue3PcmLevels();
 
-    private final AudioSink sink;
+    private final TeeAudioSink sink;
     private final int cpuFrequency;
     private final int sampleRate;
     private final ByteBuffer sampleBuffer;
 
     private short currentSampleValue;
+    private short rawSampleValue;
     private boolean audioStarted;
+    private volatile int volumePercent = DEFAULT_VOLUME;
     // Carries the fractional part of cycles -> samples conversion between calls.
     private long sampleTickRemainder;
 
@@ -95,7 +98,7 @@ public class Beeper implements AutoCloseable {
         if (sampleRate <= 0) {
             throw new IllegalArgumentException("Sample rate must be > 0");
         }
-        this.sink = sink;
+        this.sink = new TeeAudioSink(sink);
         this.cpuFrequency = cpuFrequency;
         this.sampleRate = sampleRate;
         this.sampleBuffer = ByteBuffer.allocate(batchFrames * FRAME_SIZE).order(ByteOrder.LITTLE_ENDIAN);
@@ -114,7 +117,25 @@ public class Beeper implements AutoCloseable {
      */
     public void setLevel(boolean earOn, boolean micOn) {
         audioStarted |= earOn || micOn;
-        currentSampleValue = audioStarted ? ISSUE_3_PCM_LEVELS[audioLevelIndex(earOn, micOn)] : 0;
+        rawSampleValue = audioStarted ? ISSUE_3_PCM_LEVELS[audioLevelIndex(earOn, micOn)] : 0;
+        currentSampleValue = scaleSample(rawSampleValue);
+    }
+
+    public int getSampleRate() {
+        return sampleRate;
+    }
+
+    public int getVolumePercent() {
+        return volumePercent;
+    }
+
+    public void setVolumePercent(int volumePercent) {
+        this.volumePercent = Math.max(0, Math.min(100, volumePercent));
+        currentSampleValue = scaleSample(rawSampleValue);
+    }
+
+    public void setRecordingSink(AudioSink recordingSink) {
+        sink.setSecondarySink(recordingSink);
     }
 
     /**
@@ -142,6 +163,7 @@ public class Beeper implements AutoCloseable {
      * Drops buffered PCM data and returns the beeper to a silent low level.
      */
     public void reset() {
+        rawSampleValue = 0;
         currentSampleValue = 0;
         audioStarted = false;
         sampleTickRemainder = 0;
@@ -170,6 +192,10 @@ public class Beeper implements AutoCloseable {
         }
         sink.write(sampleBuffer.array(), length);
         sampleBuffer.clear();
+    }
+
+    private short scaleSample(short sampleValue) {
+        return (short) ((sampleValue * volumePercent) / 100);
     }
 
     private static int audioLevelIndex(boolean earOn, boolean micOn) {

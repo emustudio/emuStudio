@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
+import net.emustudio.plugins.device.zxspectrum.ula.audio.AudioSink;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardDispatcher;
 
@@ -216,6 +217,22 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     public int getBorderColor() {
         return borderColor;
+    }
+
+    public int getAudioSampleRate() {
+        return beeper.getSampleRate();
+    }
+
+    public int getAudioVolumePercent() {
+        return beeper.getVolumePercent();
+    }
+
+    public void setAudioVolumePercent(int volumePercent) {
+        beeper.setVolumePercent(volumePercent);
+    }
+
+    public void setRecordingSink(AudioSink recordingSink) {
+        beeper.setRecordingSink(recordingSink);
     }
 
     @Override
