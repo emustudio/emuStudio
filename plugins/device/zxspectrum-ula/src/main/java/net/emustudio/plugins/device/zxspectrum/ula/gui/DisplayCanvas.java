@@ -63,7 +63,10 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         this.screenImageData = ((DataBufferInt) this.screenImage.getRaster().getDataBuffer()).getData();
     }
 
-    public void start() {
+    public void ensureStarted() {
+        if (!isDisplayable()) {
+            return;
+        }
         if (painting.compareAndSet(false, true)) {
             createBufferStrategy(2);
         }
@@ -156,7 +159,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         @Override
         public void run() {
             strategy = getBufferStrategy();
-            if (painting.get()) {
+            if (painting.get() && strategy != null) {
                 paint();
             }
         }
@@ -194,6 +197,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
                     } while (strategy.contentsRestored());
                     strategy.show();
+                    Toolkit.getDefaultToolkit().sync();
                 } while (strategy.contentsLost());
             } catch (Exception ignored) {
                 repaint();
