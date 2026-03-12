@@ -66,19 +66,23 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private final static byte[] KEY_SHIFT = new byte[]{0, 1};
     private final static byte[] KEY_SYM_SHIFT = new byte[]{7, 2};
     private final static int[] LINE_OFFSETS = computeLineOffsets();
+    private final static byte KEY_RELEASED_STATE = (byte) 0xBF;
+    private final static int HOST_SOURCE = 0x1;
+    private final static int OVERLAY_SOURCE = 0x2;
 
     // The Spectrum's 'FLASH' effect is also produced by the ULA: Every 16 frames, the ink and paper of all flashing
     // bytes is swapped; ie a normal to inverted to normal cycle takes 32 frames, which is (good as) 0.64 seconds.
     public static final int VIDEO_FLASH_FRAME = 15;
 
-    private final byte[] keymap = new byte[8]; // keyboard state
+    private final byte[] keymap = new byte[8]; // effective keyboard state from host and overlay input
+    private final short[] keySources = new short[8]; // two source bits per Spectrum key: host and overlay
 
     // accessible from outside
     public final byte[][] videoMemory = new byte[ATTRIBUTES_WIDTH][SCREEN_HEIGHT_PIXELS];
     public final byte[][] attributeMemory = new byte[ATTRIBUTES_WIDTH][ATTRIBUTE_HEIGHT];
 
     // maps host characters to ZX Spectrum key "commands"
-    // Byte[] = {keymap index, "zero" value, shift, symshift}
+    // Byte[] = {key line, key value, shift, symshift}
     private final static Map<Integer, Byte[]> CHAR_MAPPING = new HashMap<>();
 
     static {
@@ -162,13 +166,13 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     public ULA(ZxSpectrumBus bus, Beeper beeper) {
         this.bus = Objects.requireNonNull(bus);
         this.beeper = Objects.requireNonNull(beeper);
-        Arrays.fill(keymap, (byte) 0xBF);
+        resetKeyboard();
     }
 
     public void reset() {
         borderColor = 7;
         beeper.reset();
-        Arrays.fill(keymap, (byte) 0xBF);
+        resetKeyboard();
     }
 
     public void passedCycles(long cycles) {
@@ -266,7 +270,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         if (!pressed && e.getID() != KEY_RELEASED) {
             return false;
         }
-        BiConsumer<Byte, Byte> keySet = pressed ? this::andKeyMap : this::orKeyMap;
+        BiConsumer<Byte, Byte> keySet = pressed ? this::pressHostKey : this::releaseHostKey;
 
         // shift / alt / ctrl are visible in modifiersEx only if pressed = true
         boolean symShift = (e.getModifiersEx() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0;
@@ -278,36 +282,86 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
                 keySet.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
             } else if (pressed && (command[2] == 0 || !shift)) {
                 // Only deactivate SHIFT on press, never on release
-                // (on release, keyUnset = andKeyMap which would incorrectly press SHIFT)
-                orKeyMap(KEY_SHIFT[0], KEY_SHIFT[1]);
+                // (on release, the active host state should remain unchanged)
+                releaseHostKey(KEY_SHIFT[0], KEY_SHIFT[1]);
             }
             if (command[3] == 1 || (command[3] == -1 && symShift)) {
                 keySet.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
             } else if (pressed && (command[3] == 0 || !symShift)) {
-                orKeyMap(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+                releaseHostKey(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
             }
             keySet.accept(command[0], command[1]);
         } else {
             if (shift) {
                 keySet.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
             } else if (pressed) {
-                orKeyMap(KEY_SHIFT[0], KEY_SHIFT[1]);
+                releaseHostKey(KEY_SHIFT[0], KEY_SHIFT[1]);
             }
             if (symShift) {
                 keySet.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
             } else if (pressed) {
-                orKeyMap(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+                releaseHostKey(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
             }
         }
         return true;
     }
 
-    private void andKeyMap(byte key, byte value) {
-        keymap[key] &= (byte) ((~value) & 0xFF);
+    private void resetKeyboard() {
+        Arrays.fill(keymap, KEY_RELEASED_STATE);
+        Arrays.fill(keySources, (short) 0);
     }
 
-    private void orKeyMap(byte key, byte value) {
-        keymap[key] |= value;
+    private void pressHostKey(byte key, byte value) {
+        updateKeyState(key, value, HOST_SOURCE, true);
+    }
+
+    private void releaseHostKey(byte key, byte value) {
+        updateKeyState(key, value, HOST_SOURCE, false);
+    }
+
+    public void pressOverlayKey(byte key, byte value) {
+        updateKeyState(key, value, OVERLAY_SOURCE, true);
+    }
+
+    public void releaseOverlayKey(byte key, byte value) {
+        updateKeyState(key, value, OVERLAY_SOURCE, false);
+    }
+
+    public boolean isOverlayKeyPressed(byte key, byte value) {
+        return isPressedBySource(key, value, OVERLAY_SOURCE);
+    }
+
+    private boolean isPressedBySource(byte key, byte value, int source) {
+        int line = Byte.toUnsignedInt(key);
+        return (keySources[line] & keySourceMask(value, source)) != 0;
+    }
+
+    private void updateKeyState(byte key, byte value, int source, boolean pressed) {
+        int line = Byte.toUnsignedInt(key);
+        int sourceMask = keySourceMask(value, source);
+        int pressedMask = keyPressedMask(value);
+        int sources = keySources[line] & 0xFFFF;
+
+        sources = pressed ? (sources | sourceMask) : (sources & ~sourceMask);
+        keySources[line] = (short) sources;
+
+        if ((sources & pressedMask) != 0) {
+            keymap[line] &= (byte) ((~value) & 0xFF);
+        } else {
+            keymap[line] |= value;
+        }
+    }
+
+    private static int keyPressedMask(byte value) {
+        return 0x3 << keySourceShift(value);
+    }
+
+    private static int keySourceMask(byte value, int source) {
+        return source << keySourceShift(value);
+    }
+
+    private static int keySourceShift(byte value) {
+        return Integer.numberOfTrailingZeros(Byte.toUnsignedInt(value)) * 2;
     }
 
     /**
