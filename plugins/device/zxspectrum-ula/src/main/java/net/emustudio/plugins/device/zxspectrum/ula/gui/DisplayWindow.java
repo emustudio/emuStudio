@@ -17,10 +17,12 @@ public class DisplayWindow extends JDialog {
     private final static int BOUND_Y = (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_HEIGHT + 2 * MARGIN);
 
     private final DisplayCanvas canvas;
+    private final ULA ula;
     private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(0);
 
     public DisplayWindow(JFrame parent, ULA ula) {
         super(parent);
+        this.ula = ula;
         this.canvas = new DisplayCanvas(ula, keyboardCanvas);
 
         initComponents();
@@ -62,6 +64,11 @@ public class DisplayWindow extends JDialog {
             int value = sliderOpacity.getValue();
             keyboardCanvas.setAlpha(value);
             lblOpacityPercent.setText(value + "%");
+            if (keyboardCanvas.isInteractiveInvisible()) {
+                keyboardCanvas.releaseMouseKeys(ula);
+            }
+            canvas.ensureStarted();
+            canvas.runPaintCycle();
         });
 
         JPanel statusBar = new JPanel();

@@ -77,17 +77,37 @@ public class ULATest {
     }
 
     @Test
+    public void testOverlayKeysComposeWithHostKeyboardState() {
+        MockBus bus = new MockBus();
+        ULA ula = new ULA(bus.bus());
+
+        ula.pressOverlayKey((byte) 0, (byte) 1);
+        ula.onKeyEvent(keyPressed(KeyEvent.VK_Z, 0));
+        assertEquals(0xBC, ula.read(0xFEFE) & 0xFF);
+
+        ula.onKeyEvent(keyReleased(KeyEvent.VK_Z, 0));
+        assertEquals(0xBE, ula.read(0xFEFE) & 0xFF);
+        assertTrue(ula.isOverlayKeyPressed((byte) 0, (byte) 1));
+
+        ula.releaseOverlayKey((byte) 0, (byte) 1);
+        assertEquals(0xBF, ula.read(0xFEFE) & 0xFF);
+        assertFalse(ula.isOverlayKeyPressed((byte) 0, (byte) 1));
+    }
+
+    @Test
     public void testResetRestoresBorderColorAndKeyboardMatrix() {
         MockBus bus = new MockBus();
         ULA ula = new ULA(bus.bus());
 
         ula.write(0xFE, (byte) 0x02);
         ula.onKeyEvent(keyPressed(KeyEvent.VK_A, 0));
+        ula.pressOverlayKey((byte) 0, (byte) 1);
 
         ula.reset();
 
         assertEquals(7, ula.getBorderColor());
         assertEquals(0xBF, ula.read(0xFDFE) & 0xFF);
+        assertFalse(ula.isOverlayKeyPressed((byte) 0, (byte) 1));
     }
 
     @Test

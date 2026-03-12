@@ -5,6 +5,8 @@ package net.emustudio.plugins.device.zxspectrum.ula.gui;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -61,6 +63,22 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         this.keyboardCanvas = Objects.requireNonNull(keyboardCanvas);
         this.screenImage.setAccelerationPriority(1.0f);
         this.screenImageData = ((DataBufferInt) this.screenImage.getRaster().getDataBuffer()).getData();
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                handleOverlayMousePressed(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                handleOverlayMouseReleased();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                handleOverlayMouseReleased();
+            }
+        });
     }
 
     public void ensureStarted() {
@@ -150,7 +168,22 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     @Override
     public void close() {
+        keyboardCanvas.releaseMouseKeys(ula);
         painting.set(false);
+    }
+
+    private void handleOverlayMousePressed(MouseEvent e) {
+        if (keyboardCanvas.handleMousePressed(e.getX(), e.getY() - KeyboardCanvas.OVERLAY_TOP, ula)) {
+            ensureStarted();
+            runPaintCycle();
+        }
+    }
+
+    private void handleOverlayMouseReleased() {
+        if (keyboardCanvas.handleMouseReleased(ula)) {
+            ensureStarted();
+            runPaintCycle();
+        }
     }
 
     public class PaintCycle implements Runnable {
@@ -188,7 +221,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         if (keyboardCanvas.getAlpha() > 0) {
                             Color color = graphics.getColor();
                             graphics.setColor(KEYBOARD_OVERLAY_COLOR);
-                            graphics.translate(0, SCREEN_IMAGE_HEIGHT * ZOOM - KeyboardCanvas.KEYBOARD_HEIGHT + MARGIN);
+                            graphics.translate(0, KeyboardCanvas.OVERLAY_TOP);
                             keyboardCanvas.paint(graphics);
                             graphics.setColor(color);
                         }
