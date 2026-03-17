@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.zxspectrum.ula.audio;
 
 import org.junit.Test;
 
+import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.ZX_48K_CPU_FREQUENCY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -13,13 +14,17 @@ public class BeeperTest {
     private static final int[] NOTE_MILLIS = {120, 120, 120, 240};
     private static final int GAP_MILLIS = 20;
 
+    // With sampleRate=100, exactly 35_000 CPU cycles produce one PCM frame.
+    private static final int TEST_SAMPLE_RATE = 100;
+    private static final long CYCLES_PER_SAMPLE = ZX_48K_CPU_FREQUENCY / TEST_SAMPLE_RATE; // 35_000
+
     @Test
     public void testHighLevelProducesStereoSamples() {
-        RecordingSink sink = new RecordingSink();
-        Beeper beeper = new Beeper(sink, 1000, 120, 16);
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
 
         beeper.setLevel(true);
-        beeper.passedCycles(120);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.close();
 
         short[] samples = sink.toShortArray();
@@ -29,14 +34,14 @@ public class BeeperTest {
 
     @Test
     public void testLevelChangesAreResampledIntoSamples() {
-        RecordingSink sink = new RecordingSink();
-        Beeper beeper = new Beeper(sink, 1000, 100, 16);
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
 
-        beeper.passedCycles(10);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.setLevel(true);
-        beeper.passedCycles(10);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.setLevel(false);
-        beeper.passedCycles(10);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.close();
 
         short[] samples = sink.toShortArray();
@@ -51,10 +56,10 @@ public class BeeperTest {
 
     @Test
     public void testLowLevelProducesSilence() {
-        RecordingSink sink = new RecordingSink();
-        Beeper beeper = new Beeper(sink, 1000, 120, 16);
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
 
-        beeper.passedCycles(120);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.close();
 
         assertFalse(containsNonZeroSample(sink.toShortArray()));
@@ -62,8 +67,8 @@ public class BeeperTest {
 
     @Test
     public void testMelodyRecordedSinkContainsPositiveAndNegativeSamples() {
-        RecordingSink sink = new RecordingSink();
-        Beeper beeper = new Beeper(sink, Beeper.ZX_SPECTRUM_FREQUENCY, Beeper.DEFAULT_SAMPLE_RATE, 512);
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Beeper beeper = new Beeper(sink, Beeper.DEFAULT_SAMPLE_RATE);
         boolean level = false;
 
         for (int i = 0; i < MELODY_HZ.length; i++) {
@@ -84,16 +89,16 @@ public class BeeperTest {
 
     @Test
     public void testResetSilencesPendingTone() {
-        RecordingSink sink = new RecordingSink();
-        Beeper beeper = new Beeper(sink, 1000, 120, 16);
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
 
-        beeper.passedCycles(10);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.setLevel(true);
-        beeper.passedCycles(10);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.setLevel(false);
-        beeper.passedCycles(60);
+        beeper.passedCycles(CYCLES_PER_SAMPLE * 6);
         beeper.reset();
-        beeper.passedCycles(120);
+        beeper.passedCycles(CYCLES_PER_SAMPLE * 12);
         beeper.close();
 
         assertFalse(containsNonZeroSample(sink.toShortArray()));
@@ -101,18 +106,18 @@ public class BeeperTest {
 
     @Test
     public void testVolumePercentScalesAmplitude() {
-        RecordingSink fullSink = new RecordingSink();
-        Beeper fullVolume = new Beeper(fullSink, 1000, 120, 16);
+        RecordingAudioSink fullSink = new RecordingAudioSink();
+        Beeper fullVolume = new Beeper(fullSink, TEST_SAMPLE_RATE);
 
         fullVolume.setLevel(true);
-        fullVolume.passedCycles(120);
+        fullVolume.passedCycles(CYCLES_PER_SAMPLE);
         fullVolume.close();
 
-        RecordingSink halfSink = new RecordingSink();
-        Beeper halfVolume = new Beeper(halfSink, 1000, 120, 16);
+        RecordingAudioSink halfSink = new RecordingAudioSink();
+        Beeper halfVolume = new Beeper(halfSink, TEST_SAMPLE_RATE);
         halfVolume.setVolumePercent(50);
         halfVolume.setLevel(true);
-        halfVolume.passedCycles(120);
+        halfVolume.passedCycles(CYCLES_PER_SAMPLE);
         halfVolume.close();
 
         short fullAmplitude = firstNonZeroSample(fullSink.toShortArray());
@@ -123,12 +128,12 @@ public class BeeperTest {
 
     @Test
     public void testZeroVolumeMutesTone() {
-        RecordingSink sink = new RecordingSink();
-        Beeper beeper = new Beeper(sink, 1000, 120, 16);
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
 
         beeper.setVolumePercent(0);
         beeper.setLevel(true);
-        beeper.passedCycles(120);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.close();
 
         assertFalse(containsNonZeroSample(sink.toShortArray()));
@@ -179,7 +184,7 @@ public class BeeperTest {
 
     private static boolean playNote(Beeper beeper, boolean level, int frequencyHz, int durationMillis) {
         long noteCycles = toCycles(durationMillis);
-        long halfPeriodCycles = Math.max(1L, Math.round(Beeper.ZX_SPECTRUM_FREQUENCY / (frequencyHz * 2.0)));
+        long halfPeriodCycles = Math.max(1L, Math.round(ZX_48K_CPU_FREQUENCY / (frequencyHz * 2.0)));
         long playedCycles = 0;
 
         while (playedCycles < noteCycles) {
@@ -194,6 +199,6 @@ public class BeeperTest {
     }
 
     private static long toCycles(int durationMillis) {
-        return Math.round(Beeper.ZX_SPECTRUM_FREQUENCY * (durationMillis / 1000.0));
+        return Math.round(ZX_48K_CPU_FREQUENCY * (durationMillis / 1000.0));
     }
 }

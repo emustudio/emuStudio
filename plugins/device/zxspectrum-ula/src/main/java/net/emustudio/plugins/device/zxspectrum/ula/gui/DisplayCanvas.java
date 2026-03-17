@@ -7,22 +7,25 @@ import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
+import static net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardCanvas.KEYBOARD_HEIGHT;
 
+/**
+ * Canvas responsible for rendering the ZX Spectrum screen and handling mouse interactions for the keyboard overlay.
+ */
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     public static final float ZOOM = 2f;
     public static final int BORDER_WIDTH = 48; // pixels
 
     public static final int SCREEN_IMAGE_WIDTH = 2 * BORDER_WIDTH + SCREEN_WIDTH_PIXELS;
     public static final int SCREEN_IMAGE_HEIGHT = PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS + POST_SCREEN_LINES;
+    public static final int KEYBOARD_TOP = (int) (ZOOM * SCREEN_IMAGE_HEIGHT - KEYBOARD_HEIGHT + MARGIN);
 
     private final BufferedImage screenImage = new BufferedImage(
             SCREEN_IMAGE_WIDTH, SCREEN_IMAGE_HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -30,13 +33,13 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     private static final Color[] COLOR_MAP = new Color[]{
             new Color(0, 0, 0),  // black
-            new Color(0, 0, 0xEE), // blue
-            new Color(0xEE, 0, 0), // red
-            new Color(0xEE, 0, 0xEE), // magenta
-            new Color(0, 0xEE, 0), // green
-            new Color(0, 0xEE, 0xEE), // cyan
-            new Color(0xEE, 0xEE, 0), // yellow
-            new Color(0xEE, 0xEE, 0xEE) // white
+            new Color(0, 0, 0xD8), // blue
+            new Color(0xD8, 0, 0), // red
+            new Color(0xD8, 0, 0xD8), // magenta
+            new Color(0, 0xD8, 0), // green
+            new Color(0, 0xD8, 0xD8), // cyan
+            new Color(0xD8, 0xD8, 0), // yellow
+            new Color(0xD8, 0xD8, 0xD8) // white
     };
 
     private static final Color[] BRIGHT_COLOR_MAP = new Color[]{
@@ -50,15 +53,17 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             new Color(0xFF, 0xFF, 0xFF) // white
     };
 
-    private static final Color KEYBOARD_OVERLAY_COLOR = new Color(0, 0, 0, 127); // Cache the color
+    private static final Color KEYBOARD_OVERLAY_COLOR = new Color(0, 0, 0, 127);
 
-    private final AtomicBoolean painting = new AtomicBoolean(false);
-    private volatile Dimension size = new Dimension(0, 0);
+    private volatile Dimension size = new Dimension(
+            (int) (ZOOM * SCREEN_IMAGE_WIDTH + 2 * MARGIN),
+            (int) (ZOOM * SCREEN_IMAGE_HEIGHT + 2 * MARGIN)
+    );
 
     private final ULA ula;
-    private final PaintCycle paintCycle = new PaintCycle();
     private final KeyboardCanvas keyboardCanvas;
     private volatile Consumer<BufferedImage> frameListener;
+    private volatile BufferedImage backBuffer;
 
     public DisplayCanvas(ULA ula, KeyboardCanvas keyboardCanvas) {
         this.ula = Objects.requireNonNull(ula);
@@ -81,19 +86,6 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 handleOverlayMouseReleased();
             }
         });
-    }
-
-    public void ensureStarted() {
-        if (!isDisplayable()) {
-            return;
-        }
-        if (painting.compareAndSet(false, true)) {
-            createBufferStrategy(2);
-        }
-    }
-
-    public void runPaintCycle() {
-        paintCycle.run();
     }
 
     public void setFrameListener(Consumer<BufferedImage> frameListener) {
@@ -147,7 +139,39 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
             drawNextLine(i);
         }
-        paintCycle.run();
+        repaint();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        int w = getWidth();
+        int h = getHeight();
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+
+        BufferedImage buffer = ensureBackBuffer(w, h);
+        Graphics2D g2d = buffer.createGraphics();
+        try {
+            renderFrame(g2d);
+        } finally {
+            g2d.dispose();
+        }
+        g.drawImage(buffer, 0, 0, null);
+
+        Consumer<BufferedImage> listener = frameListener;
+        if (listener != null) {
+            BufferedImage frame = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            Graphics2D fg = frame.createGraphics();
+            fg.drawImage(buffer, 0, 0, null);
+            fg.dispose();
+            listener.accept(frame);
+        }
+    }
+
+    @Override
+    public void update(Graphics g) {
+        paint(g);
     }
 
     @Override
@@ -175,45 +199,35 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     @Override
     public void close() {
         keyboardCanvas.releaseMouseKeys(ula);
-        painting.set(false);
+    }
+
+    private BufferedImage ensureBackBuffer(int width, int height) {
+        BufferedImage buffer = backBuffer;
+        if (buffer == null || buffer.getWidth() != width || buffer.getHeight() != height) {
+            buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            backBuffer = buffer;
+        }
+        return buffer;
     }
 
     private void handleOverlayMousePressed(MouseEvent e) {
-        if (keyboardCanvas.handleMousePressed(e.getX(), e.getY() - KeyboardCanvas.OVERLAY_TOP, ula)) {
-            ensureStarted();
-            runPaintCycle();
+        if (keyboardCanvas.handleMousePressed(e.getX(), e.getY() - KEYBOARD_TOP, ula)) {
+            repaint();
         }
     }
 
     private void handleOverlayMouseReleased() {
         if (keyboardCanvas.handleMouseReleased(ula)) {
-            ensureStarted();
-            runPaintCycle();
+            repaint();
         }
     }
 
-    public BufferedImage captureFrame() {
-        int width = Math.max(1, getWidth());
-        int height = Math.max(1, getHeight());
-        BufferedImage frame = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D graphics = frame.createGraphics();
-        try {
-            applyRenderingHints(graphics);
-            renderFrame(graphics);
-        } finally {
-            graphics.dispose();
-        }
-        return frame;
-    }
-
-    private void applyRenderingHints(Graphics2D graphics) {
+    private void renderFrame(Graphics2D graphics) {
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
         graphics.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
-    }
 
-    private void renderFrame(Graphics2D graphics) {
         graphics.drawImage(
                 screenImage, MARGIN, MARGIN,
                 (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM), null
@@ -222,50 +236,10 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         if (keyboardCanvas.getAlpha() > 0) {
             Color color = graphics.getColor();
             graphics.setColor(KEYBOARD_OVERLAY_COLOR);
-            graphics.translate(0, KeyboardCanvas.OVERLAY_TOP);
+            graphics.translate(0, KEYBOARD_TOP);
             keyboardCanvas.paint(graphics);
             graphics.setColor(color);
-            graphics.translate(0, -KeyboardCanvas.OVERLAY_TOP);
-        }
-    }
-
-    public class PaintCycle implements Runnable {
-        private BufferStrategy strategy;
-
-        @Override
-        public void run() {
-            strategy = getBufferStrategy();
-            if (painting.get() && strategy != null) {
-                paint();
-            }
-        }
-
-        protected void paint() {
-            // The buffers in a buffer strategy are usually type VolatileImage, they may become lost.
-            // VolatileImage differs from other Image variants in that if possible, VolatileImage is stored in
-            // Video RAM. This means that instead of keeping the image in the system memory with everything else,
-            // it is kept on the memory local to the graphics card. This allows for much faster drawing-to and
-            // copying-from operations.
-            try {
-                do {
-                    do {
-                        Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
-                        applyRenderingHints(graphics);
-                        renderFrame(graphics);
-                        graphics.dispose();
-
-                    } while (strategy.contentsRestored());
-                    strategy.show();
-                    Toolkit.getDefaultToolkit().sync();
-
-                    Consumer<BufferedImage> frameListener = DisplayCanvas.this.frameListener;
-                    if (frameListener != null) {
-                        frameListener.accept(captureFrame());
-                    }
-                } while (strategy.contentsLost());
-            } catch (Exception ignored) {
-                repaint();
-            }
+            graphics.translate(0, -KEYBOARD_TOP);
         }
     }
 }

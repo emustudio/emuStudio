@@ -10,6 +10,8 @@ dependencies {
   implementation libs.emuLib
   implementation libs.slf4JApi
   implementation libs.jcipAnnotations
+  implementation libs.jcodec
+  implementation libs.jcodecJavase
   cpuLib project(":plugins:cpu:8080-cpu")
   deviceLib project(":plugins:device:zxspectrum-bus")
 

@@ -84,7 +84,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
             frameCycles = frameCycles % DISPLAY_FRAME_TSTATES;
             interruptActive = true;
             if (canvas != null) {
-                canvas.runPaintCycle(); // expensive operation
+                canvas.repaint();
             }
         }
         // ULA releases INT exactly INT_DURATION T-states after frame boundary.

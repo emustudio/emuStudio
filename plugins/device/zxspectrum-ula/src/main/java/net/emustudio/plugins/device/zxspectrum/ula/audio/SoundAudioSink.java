@@ -1,4 +1,8 @@
+/* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.audio;
+
+import net.jcip.annotations.ThreadSafe;
 
 import javax.sound.sampled.*;
 import java.util.Arrays;
@@ -6,14 +10,17 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static net.emustudio.plugins.device.zxspectrum.ula.Constants.*;
+
 /**
- * {@link AudioSink} implementation that forwards PCM batches to a Java Sound
- * {@link SourceDataLine}.
+ * {@link AudioSink} implementation that forwards PCM batches to a Java Sound {@link SourceDataLine}.
+ * It's a one-time usable sink that opens the line on construction and closes it on {@link #close()}. Once it is closed,
+ * it won't accept any new samples.
  *
  * <p>{@link SourceDataLine#write(byte[], int, int)} may block until the mixer has room for more
  * frames. Emulator timing must not block on the host audio device, so this sink copies each beeper
  * batch into a bounded queue and lets a dedicated daemon thread perform the blocking writes. The
- * queue is intentionally lossy: when it is full, the oldest chunk is discarded so audio stays close
+ * queue is intentionally lossy: when it is full, the latest chunk is discarded so audio stays close
  * to real time instead of building unbounded latency.
  *
  * <p>The line format is 16-bit signed stereo PCM, little-endian:
@@ -33,53 +40,66 @@ import java.util.concurrent.TimeUnit;
  * AudioFormat</a></li>
  * </ul>
  */
-final class SoundOutputSink implements AudioSink {
+@ThreadSafe
+final class SoundAudioSink implements AudioSink {
     private static final int QUEUE_CAPACITY = 32;
-    private static final long QUEUE_POLL_TIMEOUT_MS = 10;
 
     private final SourceDataLine line;
     private final BlockingQueue<byte[]> queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-    private final Thread writerThread;
+    private final Thread worker;
+    private volatile boolean accepting = true;
 
-    SoundOutputSink(int sampleRate, int batchFrames) throws LineUnavailableException {
-        AudioFormat format = new AudioFormat(sampleRate, 16, Beeper.CHANNELS, true, false);
+    SoundAudioSink(int sampleRate) throws LineUnavailableException {
+        AudioFormat format = new AudioFormat(
+                sampleRate,
+                Beeper.BYTES_PER_SAMPLE * 8,
+                Beeper.CHANNELS,
+                true,
+                false);
         DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
         this.line = (SourceDataLine) AudioSystem.getLine(info);
-        int lineBufferSize = Math.max(batchFrames * Beeper.FRAME_SIZE * 16, sampleRate * Beeper.FRAME_SIZE / 2);
+
+        // The line buffer must be large enough to avoid underruns while the writer thread drains the queue.
+        // We pick the larger of two heuristics (both in bytes):
+        //   - 16 × one batch:  batchFrames * FRAME_SIZE * 16  – keeps ~16 batches in the mixer buffer
+        //   - half a second:   sampleRate  * FRAME_SIZE / 2   – guarantees a minimum duration of buffered audio
+        int lineBufferSize = Math.max(
+                AUDIO_DEFAULT_BATCH_FRAMES * Beeper.FRAME_SIZE * 16, sampleRate * Beeper.FRAME_SIZE / 2);
         this.line.open(format, lineBufferSize);
         this.line.start();
-        this.writerThread = new Thread(this::drainQueue, "ZX-Spectrum-48K-SoundOutputSink");
-        this.writerThread.setDaemon(true);
-        this.writerThread.start();
+        this.worker = new Thread(this::drainQueue, THREAD_NAME_PREFIX + "SoundOutputSink");
+        this.worker.setDaemon(true);
+        this.worker.start();
     }
 
     @Override
-    public void write(byte[] samples, int length) {
-        byte[] chunk = Arrays.copyOf(samples, length);
-        if (!queue.offer(chunk)) {
-            queue.poll();
-            queue.offer(chunk);
+    public void accept(byte[] pcmSamples, int length) {
+        if (accepting) {
+            byte[] chunk = Arrays.copyOf(pcmSamples, length);
+            queue.offer(chunk); // ignore result
         }
     }
 
     @Override
-    public void flush() {
+    public void flushAudio() {
         queue.clear();
         line.flush();
     }
 
     @Override
     public void close() {
-        writerThread.interrupt();
+        accepting = false;
+        worker.interrupt();
         queue.clear();
         line.stop();
         line.flush();
         try {
-            writerThread.join(QUEUE_POLL_TIMEOUT_MS * 2);
+            worker.join(QUEUE_POLL_TIMEOUT_MS * 2);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            line.close();
         }
-        line.close();
     }
 
     private void drainQueue() {

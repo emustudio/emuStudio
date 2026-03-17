@@ -34,6 +34,9 @@ ext.libs = [
         editor           : "com.fifesoft:rsyntaxtextarea:3.6.2",
         editorDialogs    : "com.fifesoft:rstaui:3.3.2",
 
+        jcodec           : "org.jcodec:jcodec:0.2.3",
+        jcodecJavase     : "org.jcodec:jcodec-javase:0.2.3",
+
         junit            : "junit:junit:4.13.2",
         easyMock         : "org.easymock:easymock:5.6.0",
         mockito          : "org.mockito:mockito-core:5.23.0"

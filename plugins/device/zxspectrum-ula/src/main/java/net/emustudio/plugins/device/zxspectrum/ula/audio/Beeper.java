@@ -9,6 +9,9 @@ import javax.sound.sampled.LineUnavailableException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.ZX_48K_CPU_FREQUENCY;
+import static net.emustudio.plugins.device.zxspectrum.ula.Constants.AUDIO_DEFAULT_BATCH_FRAMES;
+
 /**
  * Resamples the ZX Spectrum's EAR/MIC output line into host PCM audio.
  *
@@ -34,7 +37,7 @@ import java.nio.ByteOrder;
  * <p>Each generated frame writes the same signed 16-bit amplitude to left and right channels. The
  * amplitudes are derived once from the Issue 3 voltage table by centering the analog range around
  * its midpoint and scaling it into 16-bit PCM. The backing {@link ByteBuffer} is little-endian to
- * match the Java Sound format created by {@link SoundOutputSink}.
+ * match the Java Sound format created by {@link SoundAudioSink}.
  *
  * <p>References:
  * <ul>
@@ -49,13 +52,13 @@ import java.nio.ByteOrder;
 public class Beeper implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Beeper.class);
 
-    public static final int ZX_SPECTRUM_FREQUENCY = 3_500_000;
-    static final int DEFAULT_SAMPLE_RATE = 48_000;
-    private static final int DEFAULT_BATCH_FRAMES = 512;
+    // Average output sample period at 48 kHz = 3,500,000 / 48,000 ≈ 72.9 CPU cycles per sample
+    public static final int DEFAULT_SAMPLE_RATE = 48_000;
+
     private static final int DEFAULT_VOLUME = 100;
 
     public static final int CHANNELS = 2;
-    private static final int BYTES_PER_SAMPLE = 2;
+    public static final int BYTES_PER_SAMPLE = 2;
     public static final int FRAME_SIZE = CHANNELS * BYTES_PER_SAMPLE;
     private static final int MAX_SAMPLE_AMPLITUDE = (int) (Short.MAX_VALUE * 0.70);
     private static final double ISSUE_3_MIC_ONLY_VOLTAGE = 0.34;
@@ -65,7 +68,6 @@ public class Beeper implements AutoCloseable {
     private static final short[] ISSUE_3_PCM_LEVELS = createIssue3PcmLevels();
 
     private final TeeAudioSink sink;
-    private final int cpuFrequency;
     private final int sampleRate;
     private final ByteBuffer sampleBuffer;
 
@@ -78,9 +80,7 @@ public class Beeper implements AutoCloseable {
 
     public static Beeper createDefault() {
         try {
-            return new Beeper(
-                    new SoundOutputSink(DEFAULT_SAMPLE_RATE, DEFAULT_BATCH_FRAMES),
-                    ZX_SPECTRUM_FREQUENCY, DEFAULT_SAMPLE_RATE, DEFAULT_BATCH_FRAMES);
+            return new Beeper(new SoundAudioSink(DEFAULT_SAMPLE_RATE), DEFAULT_SAMPLE_RATE);
         } catch (LineUnavailableException | IllegalArgumentException e) {
             LOGGER.warn("ZX Spectrum tone output is unavailable; continuing without sound", e);
             return silent();
@@ -88,20 +88,16 @@ public class Beeper implements AutoCloseable {
     }
 
     public static Beeper silent() {
-        return new Beeper(AudioSink.NULL, ZX_SPECTRUM_FREQUENCY, DEFAULT_SAMPLE_RATE, DEFAULT_BATCH_FRAMES);
+        return new Beeper(AudioSink.NULL, DEFAULT_SAMPLE_RATE);
     }
 
-    public Beeper(AudioSink sink, int cpuFrequency, int sampleRate, int batchFrames) {
-        if (cpuFrequency <= 0) {
-            throw new IllegalArgumentException("CPU frequency must be > 0");
-        }
+    public Beeper(AudioSink sink, int sampleRate) {
         if (sampleRate <= 0) {
             throw new IllegalArgumentException("Sample rate must be > 0");
         }
         this.sink = new TeeAudioSink(sink);
-        this.cpuFrequency = cpuFrequency;
         this.sampleRate = sampleRate;
-        this.sampleBuffer = ByteBuffer.allocate(batchFrames * FRAME_SIZE).order(ByteOrder.LITTLE_ENDIAN);
+        this.sampleBuffer = ByteBuffer.allocate(AUDIO_DEFAULT_BATCH_FRAMES * FRAME_SIZE).order(ByteOrder.LITTLE_ENDIAN);
     }
 
     public void setLevel(boolean levelHigh) {
@@ -151,8 +147,8 @@ public class Beeper implements AutoCloseable {
         }
 
         sampleTickRemainder += cycles * sampleRate;
-        long samplesToGenerate = sampleTickRemainder / cpuFrequency;
-        sampleTickRemainder %= cpuFrequency;
+        long samplesToGenerate = sampleTickRemainder / ZX_48K_CPU_FREQUENCY;
+        sampleTickRemainder %= ZX_48K_CPU_FREQUENCY;
 
         for (long i = 0; i < samplesToGenerate; i++) {
             writeSample(currentSampleValue);
@@ -168,7 +164,7 @@ public class Beeper implements AutoCloseable {
         audioStarted = false;
         sampleTickRemainder = 0;
         sampleBuffer.clear();
-        sink.flush();
+        sink.flushAudio();
     }
 
     @Override
@@ -190,7 +186,7 @@ public class Beeper implements AutoCloseable {
         if (length == 0) {
             return;
         }
-        sink.write(sampleBuffer.array(), length);
+        sink.accept(sampleBuffer.array(), length);
         sampleBuffer.clear();
     }
 

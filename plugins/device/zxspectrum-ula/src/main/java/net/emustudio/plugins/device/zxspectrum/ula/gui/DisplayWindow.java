@@ -4,11 +4,12 @@ package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
+import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.AudioSink;
-import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
-import net.emustudio.plugins.device.zxspectrum.ula.recording.DisplayRecordingSession;
+import net.emustudio.plugins.device.zxspectrum.ula.recording.RecordingSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,48 +17,43 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
+import static javax.swing.Action.SHORT_DESCRIPTION;
+import static javax.swing.Action.SMALL_ICON;
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.DISPLAY_FRAME_TSTATES;
+import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.ZX_48K_CPU_FREQUENCY;
 
-public class DisplayWindow extends JDialog {
+public class DisplayWindow extends DialogBase {
     public final static int MARGIN = 30;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DisplayWindow.class);
-    private static final FileExtensionsFilter AVI_FILTER = new FileExtensionsFilter("AVI video", "avi");
+    private static final FileExtensionsFilter MP4_FILTER = new FileExtensionsFilter("MP4 video", "mp4");
 
-    private final static int BOUND_X = (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_WIDTH + 2 * MARGIN);
-    private final static int BOUND_Y = (int) (DisplayCanvas.ZOOM * DisplayCanvas.SCREEN_IMAGE_HEIGHT + 2 * MARGIN);
 
     private final DisplayCanvas canvas;
     private final ULA ula;
     private final Dialogs dialogs;
     private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(0);
-    private final JButton btnRecord = createToolbarButton(ToolbarIcons.record(), "Start AVI recording");
+    private ToolbarButton btnRecord;
 
-    private DisplayRecordingSession recordingSession;
+    private RecordingSession recordingSession;
     private Path lastRecordingDirectory = Path.of(System.getProperty("user.dir"));
 
     public DisplayWindow(JFrame parent, ULA ula, Dialogs dialogs) {
-        super(parent);
+        super(parent, "ZX Spectrum48K", false);
         this.ula = Objects.requireNonNull(ula);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.canvas = new DisplayCanvas(ula, keyboardCanvas);
 
-        initComponents();
-        setLocationRelativeTo(parent);
+        buildContent();
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowOpened(WindowEvent winEvt) {
-                canvas.ensureStarted();
-                canvas.redrawNow();
-            }
-
-            public void windowActivated(WindowEvent winEvt) {
-                canvas.ensureStarted();
                 canvas.redrawNow();
             }
 
@@ -80,10 +76,8 @@ public class DisplayWindow extends JDialog {
         dispose();
     }
 
-    private void initComponents() {
-        setTitle("ZX Spectrum48K");
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        canvas.setBounds(MARGIN, MARGIN, BOUND_X, BOUND_Y);
+    @Override
+    protected JComponent initializeComponents() {
 
         JPopupMenu keyboardPopup = createVerticalSliderPopup(
                 "Keyboard",
@@ -91,10 +85,9 @@ public class DisplayWindow extends JDialog {
                 value -> {
                     keyboardCanvas.setAlpha(value);
                     if (keyboardCanvas.isInteractiveInvisible()) {
-                        keyboardCanvas.releaseMouseKeys(ula);
-                    }
-                    canvas.ensureStarted();
-                    canvas.runPaintCycle();
+                    keyboardCanvas.releaseMouseKeys(ula);
+                }
+                canvas.repaint();
                 }
         );
         JPopupMenu volumePopup = createVerticalSliderPopup(
@@ -103,13 +96,13 @@ public class DisplayWindow extends JDialog {
                 ula::setAudioVolumePercent
         );
 
-        JButton btnKeyboard = createToolbarButton(ToolbarIcons.keyboard(), "Keyboard opacity");
-        btnKeyboard.addActionListener(e -> togglePopup(btnKeyboard, keyboardPopup, volumePopup));
-
-        JButton btnVolume = createToolbarButton(ToolbarIcons.volume(), "Beeper volume");
-        btnVolume.addActionListener(e -> togglePopup(btnVolume, volumePopup, keyboardPopup));
-
-        btnRecord.addActionListener(e -> {
+        ToolbarButton btnKeyboard = createToolbarButton(ToolbarIcons.keyboard(), "Keyboard opacity", e ->
+                togglePopup((AbstractButton) e.getSource(), keyboardPopup, volumePopup)
+        );
+        ToolbarButton btnVolume = createToolbarButton(ToolbarIcons.volume(), "Beeper volume", e ->
+                togglePopup((AbstractButton) e.getSource(), volumePopup, keyboardPopup)
+        );
+        btnRecord = createToolbarButton(ToolbarIcons.record(), "Start video recording", e -> {
             keyboardPopup.setVisible(false);
             volumePopup.setVisible(false);
             if (recordingSession == null) {
@@ -124,16 +117,14 @@ public class DisplayWindow extends JDialog {
         toolbar.add(btnVolume);
         toolbar.add(btnRecord);
 
-        JPanel bottomBar = new JPanel(new BorderLayout());
+        JPanel bottomBar = GUI.panel("insets 0", "[pref!]push", "[]");
         bottomBar.setBorder(new BevelBorder(BevelBorder.LOWERED));
-        bottomBar.add(toolbar, BorderLayout.WEST);
+        bottomBar.add(toolbar);
 
         JPanel content = GUI.panel("insets 0", "[grow]", "[grow]0[40!]");
         content.add(canvas, "grow, wrap");
         content.add(bottomBar, "growx");
-
-        setContentPane(content);
-        pack();
+        return content;
     }
 
     public DisplayCanvas getCanvas() {
@@ -142,20 +133,18 @@ public class DisplayWindow extends JDialog {
 
     private void startRecording() {
         try {
-            canvas.ensureStarted();
-            DisplayRecordingSession session = new DisplayRecordingSession(
+            RecordingSession session = new RecordingSession(
                     Math.max(1, canvas.getWidth()),
                     Math.max(1, canvas.getHeight()),
                     DISPLAY_FRAME_TSTATES,
-                    Beeper.ZX_SPECTRUM_FREQUENCY,
+                    ZX_48K_CPU_FREQUENCY,
                     ula.getAudioSampleRate()
             );
             recordingSession = session;
             canvas.setFrameListener(session);
             ula.setRecordingSink(session);
-            session.accept(canvas.captureFrame());
             btnRecord.setIcon(ToolbarIcons.stop());
-            btnRecord.setToolTipText("Stop recording and save AVI");
+            btnRecord.setToolTipText("Stop recording and save video");
         } catch (IOException e) {
             LOGGER.error("Could not start ZX Spectrum recording", e);
             dialogs.showError("Could not start recording. Please see log file for details.", "Recording");
@@ -163,7 +152,7 @@ public class DisplayWindow extends JDialog {
     }
 
     private void stopRecording(boolean saveToFile) {
-        DisplayRecordingSession session = recordingSession;
+        RecordingSession session = recordingSession;
         if (session == null) {
             return;
         }
@@ -172,33 +161,22 @@ public class DisplayWindow extends JDialog {
         canvas.setFrameListener(null);
         ula.setRecordingSink(AudioSink.NULL);
         btnRecord.setIcon(ToolbarIcons.record());
-        btnRecord.setToolTipText("Start AVI recording");
+        btnRecord.setToolTipText("Start video recording");
+
+        Optional<Path> selectedFile = saveToFile ? dialogs.chooseFile(
+                "Save recording", "Save", lastRecordingDirectory, true, MP4_FILTER
+        ) : Optional.empty();
 
         try {
-            if (!saveToFile) {
-                session.discard();
-                return;
-            }
-
-            Optional<Path> selectedFile = dialogs.chooseFile(
-                    "Save recording", "Save", lastRecordingDirectory, true, AVI_FILTER
-            );
+            session.stop(selectedFile);
             if (selectedFile.isPresent()) {
-                Path target = session.moveTo(selectedFile.get());
-                if (target.getParent() != null) {
-                    lastRecordingDirectory = target.getParent();
+                Path parent = selectedFile.get().getParent();
+                if (parent != null) {
+                    lastRecordingDirectory = parent;
                 }
-            } else {
-                session.discard();
-                dialogs.showInfo("Recording discarded.", "Recording");
             }
         } catch (IOException e) {
             LOGGER.error("Could not finish ZX Spectrum recording", e);
-            try {
-                session.discard();
-            } catch (IOException discardError) {
-                LOGGER.warn("Could not delete temporary ZX Spectrum recording", discardError);
-            }
             dialogs.showError("Could not save recording. Please see log file for details.", "Recording");
         }
     }
@@ -207,8 +185,11 @@ public class DisplayWindow extends JDialog {
         JSlider slider = new JSlider(JSlider.VERTICAL, 0, 100, initialValue);
         slider.setFocusable(false);
 
-        JLabel valueLabel = new JLabel(initialValue + "%", SwingConstants.CENTER);
-        valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel titleLabel = GUI.label(title);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JLabel valueLabel = GUI.label(initialValue + "%");
+        valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         ChangeListener changeListener = e -> {
             int value = slider.getValue();
@@ -217,32 +198,29 @@ public class DisplayWindow extends JDialog {
         };
         slider.addChangeListener(changeListener);
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-
-        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panel.add(titleLabel);
-        panel.add(Box.createVerticalStrut(6));
-        panel.add(slider);
-        panel.add(Box.createVerticalStrut(6));
-        panel.add(valueLabel);
+        JPanel panel = GUI.panel("insets 8", "[grow]", "[]6[grow]6[]");
+        panel.add(titleLabel, "growx, wrap");
+        panel.add(slider, "align center, wrap");
+        panel.add(valueLabel, "growx");
 
         JPopupMenu popup = new JPopupMenu();
         popup.add(panel);
         return popup;
     }
 
-    private JButton createToolbarButton(Icon icon, String tooltip) {
-        JButton button = new JButton(icon);
-        button.setFocusable(false);
-        button.setToolTipText(tooltip);
-        button.putClientProperty("JButton.buttonType", "toolbar");
-        return button;
+    private ToolbarButton createToolbarButton(Icon icon, String tooltip, java.util.function.Consumer<ActionEvent> action) {
+        Action toolbarAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                action.accept(e);
+            }
+        };
+        toolbarAction.putValue(SMALL_ICON, icon);
+        toolbarAction.putValue(SHORT_DESCRIPTION, tooltip);
+        return GUI.toolbarButton(toolbarAction);
     }
 
-    private void togglePopup(JButton button, JPopupMenu popup, JPopupMenu otherPopup) {
+    private void togglePopup(AbstractButton button, JPopupMenu popup, JPopupMenu otherPopup) {
         if (otherPopup.isVisible()) {
             otherPopup.setVisible(false);
         }

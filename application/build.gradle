@@ -25,6 +25,8 @@ dependencies {
 
   extraLibs libs.editor
   extraLibs libs.editorDialogs
+  extraLibs libs.jcodec
+  extraLibs libs.jcodecJavase
   extraLibs libs.picocli
   annotationProcessor libs.picocliAnnotation
   extraLibs libs.tomlj
