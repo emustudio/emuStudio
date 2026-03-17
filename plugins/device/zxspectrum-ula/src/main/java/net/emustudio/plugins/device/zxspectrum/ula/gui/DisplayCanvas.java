@@ -73,17 +73,23 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                handleOverlayMousePressed(e);
+                if (keyboardCanvas.handleMousePressed(e.getX(), e.getY() - KEYBOARD_TOP, ula)) {
+                    repaint();
+                }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                handleOverlayMouseReleased();
+                if (keyboardCanvas.handleMouseReleased(ula)) {
+                    repaint();
+                }
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                handleOverlayMouseReleased();
+                if (keyboardCanvas.handleMouseReleased(ula)) {
+                    repaint();
+                }
             }
         });
     }
@@ -92,6 +98,34 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         this.frameListener = frameListener;
     }
 
+    /**
+     * Renders a single raster line into the {@link #screenImageData} pixel buffer.
+     *
+     * <p>The screen image is laid out as a 1-D array of RGB ints, {@code SCREEN_IMAGE_WIDTH} pixels wide and
+     * {@code SCREEN_IMAGE_HEIGHT} lines tall. Lines are numbered {@code 0 .. SCREEN_IMAGE_HEIGHT - 1} and
+     * divided into three vertical zones:
+     *
+     * <pre>
+     *   line 0 .. PRE_SCREEN_LINES-1                              → upper border (solid border color)
+     *   line PRE_SCREEN_LINES .. PRE_SCREEN_LINES+SCREEN_HEIGHT-1 → active area  (left border + bitmap + right border)
+     *   line PRE_SCREEN_LINES+SCREEN_HEIGHT .. end                 → lower border (solid border color)
+     * </pre>
+     *
+     * <p><b>Border lines</b> (upper / lower): every pixel in the row is filled with the current ULA border color.
+     * Upper-border lines also extend an extra {@code BORDER_WIDTH} pixels to compensate for array alignment.
+     *
+     * <p><b>Active-area lines</b>: the ULA's {@code readLine(y)} is called to populate
+     * {@code videoMemory[][]} and {@code attributeMemory[][]}. Then each byte column (0..31) is decoded:
+     * <ul>
+     *   <li>8 pixels are extracted from the bitmap byte (MSB first).</li>
+     *   <li>The attribute byte selects ink/paper color, brightness palette, and flash state.</li>
+     *   <li>When the flash flag is set and the ULA flash clock is active, ink and paper are swapped.</li>
+     * </ul>
+     * After the 256-pixel bitmap, both left and right border regions ({@code 2 × BORDER_WIDTH} pixels) are
+     * filled with the border color.
+     *
+     * @param line raster line index (0-based, covering borders and active area)
+     */
     public void drawNextLine(int line) {
         int borderColor = COLOR_MAP[ula.getBorderColor()].getRGB();
         if (line < PRE_SCREEN_LINES || line >= (PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS)) {
@@ -210,23 +244,14 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         return buffer;
     }
 
-    private void handleOverlayMousePressed(MouseEvent e) {
-        if (keyboardCanvas.handleMousePressed(e.getX(), e.getY() - KEYBOARD_TOP, ula)) {
-            repaint();
-        }
-    }
-
-    private void handleOverlayMouseReleased() {
-        if (keyboardCanvas.handleMouseReleased(ula)) {
-            repaint();
-        }
-    }
-
     private void renderFrame(Graphics2D graphics) {
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
         graphics.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
+
+        graphics.setColor(new Color(0xD8, 0xD8, 0xD8));
+        graphics.fillRect(0, 0, getWidth(), getHeight());
 
         graphics.drawImage(
                 screenImage, MARGIN, MARGIN,
