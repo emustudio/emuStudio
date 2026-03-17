@@ -72,4 +72,9 @@ public class ZxParameters {
      * Number of CPU cycles (T-states) that the ULA holds the INT signal low at each frame boundary.
      */
     public static final int INTERRUPT_TSTATES = 32;
+
+    /**
+     * ZX-Spectrum 48K CPU frequency in HZ
+     */
+    public static final int ZX_48K_CPU_FREQUENCY = 3_500_000;
 }

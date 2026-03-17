@@ -13,6 +13,8 @@ import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow;
 
 import javax.swing.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -77,11 +79,19 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (!guiIOset) {
-                this.gui = new DisplayWindow(parent, ula);
+                this.gui = new DisplayWindow(parent, ula, applicationApi.getDialogs());
+                this.gui.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        passedCyclesMediator.setCanvas(null);
+                        gui = null;
+                        guiIOset = false;
+                    }
+                });
                 passedCyclesMediator.setCanvas(gui.getCanvas());
                 guiIOset = true;
-                this.gui.setVisible(true);
             }
+            this.gui.setVisible(true);
         }
     }
 

@@ -77,21 +77,24 @@ public class ULATest {
     }
 
     @Test
-    public void testOverlayKeysComposeWithHostKeyboardState() {
+    public void testKeysComposeRegardlessOfSource() {
         MockBus bus = new MockBus();
         ULA ula = new ULA(bus.bus());
 
-        ula.pressOverlayKey((byte) 0, (byte) 1);
-        ula.onKeyEvent(keyPressed(KeyEvent.VK_Z, 0));
-        assertEquals(0xBC, ula.read(0xFEFE) & 0xFF);
+        // Press SHIFT via direct API (overlay click) and Z via host keyboard WITH shift held
+        ula.pressKey((byte) 0, (byte) 1);
+        ula.onKeyEvent(keyPressed(KeyEvent.VK_Z, KeyEvent.SHIFT_DOWN_MASK));
+        assertEquals(0xBC, ula.read(0xFEFE) & 0xFF); // SHIFT + Z
 
-        ula.onKeyEvent(keyReleased(KeyEvent.VK_Z, 0));
-        assertEquals(0xBE, ula.read(0xFEFE) & 0xFF);
-        assertTrue(ula.isOverlayKeyPressed((byte) 0, (byte) 1));
+        // Release Z (shift still held on host)
+        ula.onKeyEvent(keyReleased(KeyEvent.VK_Z, KeyEvent.SHIFT_DOWN_MASK));
+        assertEquals(0xBE, ula.read(0xFEFE) & 0xFF); // only SHIFT
+        assertTrue(ula.isKeyPressed((byte) 0, (byte) 1));
 
-        ula.releaseOverlayKey((byte) 0, (byte) 1);
+        // Release SHIFT from direct API (overlay) — releases regardless of source
+        ula.releaseKey((byte) 0, (byte) 1);
         assertEquals(0xBF, ula.read(0xFEFE) & 0xFF);
-        assertFalse(ula.isOverlayKeyPressed((byte) 0, (byte) 1));
+        assertFalse(ula.isKeyPressed((byte) 0, (byte) 1));
     }
 
     @Test
@@ -101,13 +104,13 @@ public class ULATest {
 
         ula.write(0xFE, (byte) 0x02);
         ula.onKeyEvent(keyPressed(KeyEvent.VK_A, 0));
-        ula.pressOverlayKey((byte) 0, (byte) 1);
+        ula.pressKey((byte) 0, (byte) 1);
 
         ula.reset();
 
         assertEquals(7, ula.getBorderColor());
         assertEquals(0xBF, ula.read(0xFDFE) & 0xFF);
-        assertFalse(ula.isOverlayKeyPressed((byte) 0, (byte) 1));
+        assertFalse(ula.isKeyPressed((byte) 0, (byte) 1));
     }
 
     @Test
@@ -182,7 +185,7 @@ public class ULATest {
         private long cycles;
 
         private RecordingBeeper() {
-            super(AudioSink.NULL, 1200, 120, 16);
+            super(AudioSink.NULL, 120);
         }
 
         @Override

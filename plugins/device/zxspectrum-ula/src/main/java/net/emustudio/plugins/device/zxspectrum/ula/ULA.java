@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
+import net.emustudio.plugins.device.zxspectrum.ula.audio.AudioSink;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardDispatcher;
 
@@ -12,7 +13,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 
 import static java.awt.event.KeyEvent.*;
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
@@ -67,15 +67,12 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private final static byte[] KEY_SYM_SHIFT = new byte[]{7, 2};
     private final static int[] LINE_OFFSETS = computeLineOffsets();
     private final static byte KEY_RELEASED_STATE = (byte) 0xBF;
-    private final static int HOST_SOURCE = 0x1;
-    private final static int OVERLAY_SOURCE = 0x2;
 
     // The Spectrum's 'FLASH' effect is also produced by the ULA: Every 16 frames, the ink and paper of all flashing
     // bytes is swapped; ie a normal to inverted to normal cycle takes 32 frames, which is (good as) 0.64 seconds.
     public static final int VIDEO_FLASH_FRAME = 15;
 
-    private final byte[] keymap = new byte[8]; // effective keyboard state from host and overlay input
-    private final short[] keySources = new short[8]; // two source bits per Spectrum key: host and overlay
+    private final byte[] keymap = new byte[8]; // effective keyboard state
 
     // accessible from outside
     public final byte[][] videoMemory = new byte[ATTRIBUTES_WIDTH][SCREEN_HEIGHT_PIXELS];
@@ -218,6 +215,22 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         return borderColor;
     }
 
+    public int getAudioSampleRate() {
+        return beeper.getSampleRate();
+    }
+
+    public int getAudioVolumePercent() {
+        return beeper.getVolumePercent();
+    }
+
+    public void setAudioVolumePercent(int volumePercent) {
+        beeper.setVolumePercent(volumePercent);
+    }
+
+    public void setRecordingSink(AudioSink recordingSink) {
+        beeper.setRecordingSink(recordingSink);
+    }
+
     @Override
     public byte read(int portAddress) {
         // A zero in one of the five lowest bits means that the corresponding key is pressed.
@@ -268,9 +281,9 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     public boolean onKeyEvent(KeyEvent e) {
         boolean pressed = e.getID() == KEY_PRESSED;
         if (!pressed && e.getID() != KEY_RELEASED) {
+            // we accept only key pressed & released events, nothing else.
             return false;
         }
-        BiConsumer<Byte, Byte> keySet = pressed ? this::pressHostKey : this::releaseHostKey;
 
         // shift / alt / ctrl are visible in modifiersEx only if pressed = true
         boolean symShift = (e.getModifiersEx() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0;
@@ -278,29 +291,38 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
         Byte[] command = CHAR_MAPPING.get(e.getKeyCode());
         if (command != null) {
-            if (command[2] == 1 || (command[2] == -1 && shift)) {
-                keySet.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
-            } else if (pressed && (command[2] == 0 || !shift)) {
-                // Only deactivate SHIFT on press, never on release
-                // (on release, the active host state should remain unchanged)
-                releaseHostKey(KEY_SHIFT[0], KEY_SHIFT[1]);
+            if (pressed) {
+                if (command[2] == 1 || (command[2] == -1 && shift)) {
+                    pressKey(KEY_SHIFT[0], KEY_SHIFT[1]);
+                } else if (command[2] == 0 || !shift) {
+                    releaseKey(KEY_SHIFT[0], KEY_SHIFT[1]);
+                }
+                if (command[3] == 1 || (command[3] == -1 && symShift)) {
+                    pressKey(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+                } else if (command[3] == 0 || !symShift) {
+                    releaseKey(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+                }
+                pressKey(command[0], command[1]);
+            } else {
+                // On release: only release modifiers that were forced by the command
+                if (command[2] == 1) {
+                    releaseKey(KEY_SHIFT[0], KEY_SHIFT[1]);
+                }
+                if (command[3] == 1) {
+                    releaseKey(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+                }
+                releaseKey(command[0], command[1]);
             }
-            if (command[3] == 1 || (command[3] == -1 && symShift)) {
-                keySet.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
-            } else if (pressed && (command[3] == 0 || !symShift)) {
-                releaseHostKey(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
-            }
-            keySet.accept(command[0], command[1]);
         } else {
             if (shift) {
-                keySet.accept(KEY_SHIFT[0], KEY_SHIFT[1]);
-            } else if (pressed) {
-                releaseHostKey(KEY_SHIFT[0], KEY_SHIFT[1]);
+                pressKey(KEY_SHIFT[0], KEY_SHIFT[1]);
+            } else {
+                releaseKey(KEY_SHIFT[0], KEY_SHIFT[1]);
             }
             if (symShift) {
-                keySet.accept(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
-            } else if (pressed) {
-                releaseHostKey(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+                pressKey(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
+            } else {
+                releaseKey(KEY_SYM_SHIFT[0], KEY_SYM_SHIFT[1]);
             }
         }
         return true;
@@ -308,60 +330,21 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     private void resetKeyboard() {
         Arrays.fill(keymap, KEY_RELEASED_STATE);
-        Arrays.fill(keySources, (short) 0);
     }
 
-    private void pressHostKey(byte key, byte value) {
-        updateKeyState(key, value, HOST_SOURCE, true);
-    }
-
-    private void releaseHostKey(byte key, byte value) {
-        updateKeyState(key, value, HOST_SOURCE, false);
-    }
-
-    public void pressOverlayKey(byte key, byte value) {
-        updateKeyState(key, value, OVERLAY_SOURCE, true);
-    }
-
-    public void releaseOverlayKey(byte key, byte value) {
-        updateKeyState(key, value, OVERLAY_SOURCE, false);
-    }
-
-    public boolean isOverlayKeyPressed(byte key, byte value) {
-        return isPressedBySource(key, value, OVERLAY_SOURCE);
-    }
-
-    private boolean isPressedBySource(byte key, byte value, int source) {
+    public void pressKey(byte key, byte value) {
         int line = Byte.toUnsignedInt(key);
-        return (keySources[line] & keySourceMask(value, source)) != 0;
+        keymap[line] &= (byte) ((~value) & 0xFF);
     }
 
-    private void updateKeyState(byte key, byte value, int source, boolean pressed) {
+    public void releaseKey(byte key, byte value) {
         int line = Byte.toUnsignedInt(key);
-        int sourceMask = keySourceMask(value, source);
-        int pressedMask = keyPressedMask(value);
-        int sources = keySources[line] & 0xFFFF;
-
-        sources = pressed ? (sources | sourceMask) : (sources & ~sourceMask);
-        keySources[line] = (short) sources;
-
-        if ((sources & pressedMask) != 0) {
-            keymap[line] &= (byte) ((~value) & 0xFF);
-        } else {
-            keymap[line] |= value;
-        }
+        keymap[line] |= value;
     }
 
-    private static int keyPressedMask(byte value) {
-        return 0x3 << keySourceShift(value);
-    }
-
-    private static int keySourceMask(byte value, int source) {
-        return source << keySourceShift(value);
-    }
-
-    private static int keySourceShift(byte value) {
-        return Integer.numberOfTrailingZeros(Byte.toUnsignedInt(value)) * 2;
+    public boolean isKeyPressed(byte key, byte value) {
+        int line = Byte.toUnsignedInt(key);
+        return (keymap[line] & value) == 0;
     }
 
     /**

@@ -7,21 +7,25 @@ import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
+import static net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardCanvas.KEYBOARD_HEIGHT;
 
+/**
+ * Canvas responsible for rendering the ZX Spectrum screen and handling mouse interactions for the keyboard overlay.
+ */
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     public static final float ZOOM = 2f;
     public static final int BORDER_WIDTH = 48; // pixels
 
     public static final int SCREEN_IMAGE_WIDTH = 2 * BORDER_WIDTH + SCREEN_WIDTH_PIXELS;
     public static final int SCREEN_IMAGE_HEIGHT = PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS + POST_SCREEN_LINES;
+    public static final int KEYBOARD_TOP = (int) (ZOOM * SCREEN_IMAGE_HEIGHT - KEYBOARD_HEIGHT + MARGIN);
 
     private final BufferedImage screenImage = new BufferedImage(
             SCREEN_IMAGE_WIDTH, SCREEN_IMAGE_HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -29,13 +33,13 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     private static final Color[] COLOR_MAP = new Color[]{
             new Color(0, 0, 0),  // black
-            new Color(0, 0, 0xEE), // blue
-            new Color(0xEE, 0, 0), // red
-            new Color(0xEE, 0, 0xEE), // magenta
-            new Color(0, 0xEE, 0), // green
-            new Color(0, 0xEE, 0xEE), // cyan
-            new Color(0xEE, 0xEE, 0), // yellow
-            new Color(0xEE, 0xEE, 0xEE) // white
+            new Color(0, 0, 0xD8), // blue
+            new Color(0xD8, 0, 0), // red
+            new Color(0xD8, 0, 0xD8), // magenta
+            new Color(0, 0xD8, 0), // green
+            new Color(0, 0xD8, 0xD8), // cyan
+            new Color(0xD8, 0xD8, 0), // yellow
+            new Color(0xD8, 0xD8, 0xD8) // white
     };
 
     private static final Color[] BRIGHT_COLOR_MAP = new Color[]{
@@ -49,14 +53,17 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
             new Color(0xFF, 0xFF, 0xFF) // white
     };
 
-    private static final Color KEYBOARD_OVERLAY_COLOR = new Color(0, 0, 0, 127); // Cache the color
+    private static final Color KEYBOARD_OVERLAY_COLOR = new Color(0, 0, 0, 127);
 
-    private final AtomicBoolean painting = new AtomicBoolean(false);
-    private volatile Dimension size = new Dimension(0, 0);
+    private volatile Dimension size = new Dimension(
+            (int) (ZOOM * SCREEN_IMAGE_WIDTH + 2 * MARGIN),
+            (int) (ZOOM * SCREEN_IMAGE_HEIGHT + 2 * MARGIN)
+    );
 
     private final ULA ula;
-    private final PaintCycle paintCycle = new PaintCycle();
     private final KeyboardCanvas keyboardCanvas;
+    private volatile Consumer<BufferedImage> frameListener;
+    private volatile BufferedImage backBuffer;
 
     public DisplayCanvas(ULA ula, KeyboardCanvas keyboardCanvas) {
         this.ula = Objects.requireNonNull(ula);
@@ -66,34 +73,59 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                handleOverlayMousePressed(e);
+                if (keyboardCanvas.handleMousePressed(e.getX(), e.getY() - KEYBOARD_TOP, ula)) {
+                    repaint();
+                }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                handleOverlayMouseReleased();
+                if (keyboardCanvas.handleMouseReleased(ula)) {
+                    repaint();
+                }
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                handleOverlayMouseReleased();
+                if (keyboardCanvas.handleMouseReleased(ula)) {
+                    repaint();
+                }
             }
         });
     }
 
-    public void ensureStarted() {
-        if (!isDisplayable()) {
-            return;
-        }
-        if (painting.compareAndSet(false, true)) {
-            createBufferStrategy(2);
-        }
+    public void setFrameListener(Consumer<BufferedImage> frameListener) {
+        this.frameListener = frameListener;
     }
 
-    public void runPaintCycle() {
-        paintCycle.run();
-    }
-
+    /**
+     * Renders a single raster line into the {@link #screenImageData} pixel buffer.
+     *
+     * <p>The screen image is laid out as a 1-D array of RGB ints, {@code SCREEN_IMAGE_WIDTH} pixels wide and
+     * {@code SCREEN_IMAGE_HEIGHT} lines tall. Lines are numbered {@code 0 .. SCREEN_IMAGE_HEIGHT - 1} and
+     * divided into three vertical zones:
+     *
+     * <pre>
+     *   line 0 .. PRE_SCREEN_LINES-1                              → upper border (solid border color)
+     *   line PRE_SCREEN_LINES .. PRE_SCREEN_LINES+SCREEN_HEIGHT-1 → active area  (left border + bitmap + right border)
+     *   line PRE_SCREEN_LINES+SCREEN_HEIGHT .. end                 → lower border (solid border color)
+     * </pre>
+     *
+     * <p><b>Border lines</b> (upper / lower): every pixel in the row is filled with the current ULA border color.
+     * Upper-border lines also extend an extra {@code BORDER_WIDTH} pixels to compensate for array alignment.
+     *
+     * <p><b>Active-area lines</b>: the ULA's {@code readLine(y)} is called to populate
+     * {@code videoMemory[][]} and {@code attributeMemory[][]}. Then each byte column (0..31) is decoded:
+     * <ul>
+     *   <li>8 pixels are extracted from the bitmap byte (MSB first).</li>
+     *   <li>The attribute byte selects ink/paper color, brightness palette, and flash state.</li>
+     *   <li>When the flash flag is set and the ULA flash clock is active, ink and paper are swapped.</li>
+     * </ul>
+     * After the 256-pixel bitmap, both left and right border regions ({@code 2 × BORDER_WIDTH} pixels) are
+     * filled with the border color.
+     *
+     * @param line raster line index (0-based, covering borders and active area)
+     */
     public void drawNextLine(int line) {
         int borderColor = COLOR_MAP[ula.getBorderColor()].getRGB();
         if (line < PRE_SCREEN_LINES || line >= (PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS)) {
@@ -141,7 +173,39 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
             drawNextLine(i);
         }
-        paintCycle.run();
+        repaint();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        int w = getWidth();
+        int h = getHeight();
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+
+        BufferedImage buffer = ensureBackBuffer(w, h);
+        Graphics2D g2d = buffer.createGraphics();
+        try {
+            renderFrame(g2d);
+        } finally {
+            g2d.dispose();
+        }
+        g.drawImage(buffer, 0, 0, null);
+
+        Consumer<BufferedImage> listener = frameListener;
+        if (listener != null) {
+            BufferedImage frame = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            Graphics2D fg = frame.createGraphics();
+            fg.drawImage(buffer, 0, 0, null);
+            fg.dispose();
+            listener.accept(frame);
+        }
+    }
+
+    @Override
+    public void update(Graphics g) {
+        paint(g);
     }
 
     @Override
@@ -169,72 +233,38 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     @Override
     public void close() {
         keyboardCanvas.releaseMouseKeys(ula);
-        painting.set(false);
     }
 
-    private void handleOverlayMousePressed(MouseEvent e) {
-        if (keyboardCanvas.handleMousePressed(e.getX(), e.getY() - KeyboardCanvas.OVERLAY_TOP, ula)) {
-            ensureStarted();
-            runPaintCycle();
+    private BufferedImage ensureBackBuffer(int width, int height) {
+        BufferedImage buffer = backBuffer;
+        if (buffer == null || buffer.getWidth() != width || buffer.getHeight() != height) {
+            buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            backBuffer = buffer;
         }
+        return buffer;
     }
 
-    private void handleOverlayMouseReleased() {
-        if (keyboardCanvas.handleMouseReleased(ula)) {
-            ensureStarted();
-            runPaintCycle();
-        }
-    }
+    private void renderFrame(Graphics2D graphics) {
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+        graphics.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 
-    public class PaintCycle implements Runnable {
-        private BufferStrategy strategy;
+        graphics.setColor(new Color(0xD8, 0xD8, 0xD8));
+        graphics.fillRect(0, 0, getWidth(), getHeight());
 
-        @Override
-        public void run() {
-            strategy = getBufferStrategy();
-            if (painting.get() && strategy != null) {
-                paint();
-            }
-        }
+        graphics.drawImage(
+                screenImage, MARGIN, MARGIN,
+                (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM), null
+        );
 
-        protected void paint() {
-            // The buffers in a buffer strategy are usually type VolatileImage, they may become lost.
-            // VolatileImage differs from other Image variants in that if possible, VolatileImage is stored in
-            // Video RAM. This means that instead of keeping the image in the system memory with everything else,
-            // it is kept on the memory local to the graphics card. This allows for much faster drawing-to and
-            // copying-from operations.
-            try {
-                do {
-                    do {
-                        Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
-                        // Disable expensive rendering hints for maximum performance
-                        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-                        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-                        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-                        graphics.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
-
-                        graphics.drawImage(
-                                screenImage, MARGIN, MARGIN,
-                                (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM), null);
-
-                        // Only draw keyboard overlay if explicitly enabled (disabled by default for performance)
-                        if (keyboardCanvas.getAlpha() > 0) {
-                            Color color = graphics.getColor();
-                            graphics.setColor(KEYBOARD_OVERLAY_COLOR);
-                            graphics.translate(0, KeyboardCanvas.OVERLAY_TOP);
-                            keyboardCanvas.paint(graphics);
-                            graphics.setColor(color);
-                        }
-
-                        graphics.dispose();
-
-                    } while (strategy.contentsRestored());
-                    strategy.show();
-                    Toolkit.getDefaultToolkit().sync();
-                } while (strategy.contentsLost());
-            } catch (Exception ignored) {
-                repaint();
-            }
+        if (keyboardCanvas.getAlpha() > 0) {
+            Color color = graphics.getColor();
+            graphics.setColor(KEYBOARD_OVERLAY_COLOR);
+            graphics.translate(0, KEYBOARD_TOP);
+            keyboardCanvas.paint(graphics);
+            graphics.setColor(color);
+            graphics.translate(0, -KEYBOARD_TOP);
         }
     }
 }
