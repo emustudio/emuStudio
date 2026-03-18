@@ -189,7 +189,7 @@ public class ULATest {
         }
 
         @Override
-        public void setLevel(boolean earOn, boolean micOn) {
+        public void setLevel(boolean earOn, boolean micOn, boolean tapeIn) {
             levels.add((earOn ? 2 : 0) | (micOn ? 1 : 0));
         }
 
