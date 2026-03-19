@@ -180,6 +180,16 @@ public class Beeper implements AutoCloseable {
     }
 
     /**
+     * Flushes any buffered PCM samples to both sinks (live output and recording).
+     *
+     * <p>Call this before disconnecting the recording sink to ensure no audio data is lost
+     * at the tail end of a recording.
+     */
+    public void flushRecordingBuffer() {
+        rwl.lockWrite(this::flushSamples);
+    }
+
+    /**
      * Converts elapsed CPU T-states into host PCM frames.
      *
      * <p>This method does not emit one audio frame per call. It emits

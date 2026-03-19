@@ -117,8 +117,6 @@ final class SoundAudioSink implements AudioSink {
                 line.write(chunk, 0, chunk.length);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-            } finally {
-                line.drain();
             }
         }
     }

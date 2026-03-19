@@ -159,6 +159,7 @@ public class DisplayWindow extends DialogBase {
 
         recordingSession = null;
         canvas.setFrameListener(null);
+        ula.flushRecordingBuffer();
         ula.setRecordingSink(AudioSink.NULL);
         btnRecord.setIcon(ToolbarIcons.record());
         btnRecord.setToolTipText("Start video recording");

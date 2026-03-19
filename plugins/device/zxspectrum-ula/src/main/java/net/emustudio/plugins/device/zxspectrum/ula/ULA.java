@@ -156,6 +156,12 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     private int borderColor;
 
+    // Tracks the current EAR/MIC output state written by the CPU, so that the tape input
+    // signal can be continuously mixed into the beeper alongside the port-driven output.
+    private boolean lastEarOut;
+    private boolean lastMicOut;
+    private boolean lastTapeIn;
+
     public ULA(ZxSpectrumBus bus) {
         this(bus, Beeper.silent());
     }
@@ -168,11 +174,22 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     public void reset() {
         borderColor = 7;
+        lastEarOut = false;
+        lastMicOut = false;
+        lastTapeIn = false;
         beeper.reset();
         resetKeyboard();
     }
 
     public void passedCycles(long cycles) {
+        // On real hardware the tape EAR input is analog-mixed into the speaker output through
+        // the ULA.  Emulate this by sampling the bus data (tape signal) and updating the beeper
+        // whenever the tape level changes.
+        boolean tapeIn = (bus.readData() & 1) != 0;
+        if (tapeIn != lastTapeIn) {
+            lastTapeIn = tapeIn;
+            beeper.setLevel(lastEarOut, lastMicOut, lastTapeIn);
+        }
         beeper.passedCycles(cycles);
     }
 
@@ -231,6 +248,14 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         beeper.setRecordingSink(recordingSink);
     }
 
+    /**
+     * Flushes any buffered audio to both the live output and the recording sink.
+     * Must be called before disconnecting the recording sink.
+     */
+    public void flushRecordingBuffer() {
+        beeper.flushRecordingBuffer();
+    }
+
     @Override
     public byte read(int portAddress) {
         // A zero in one of the five lowest bits means that the corresponding key is pressed.
@@ -262,9 +287,9 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     @Override
     public void write(int portAddress, byte data) {
         this.borderColor = data & 7;
-        boolean earOut = (data & 0x10) != 0;
-        boolean microphoneOut = (data & 0x08) == 0;
-        beeper.setLevel(earOut, microphoneOut);
+        lastEarOut = (data & 0x10) != 0;
+        lastMicOut = (data & 0x08) == 0;
+        beeper.setLevel(lastEarOut, lastMicOut, lastTapeIn);
     }
 
     @Override
