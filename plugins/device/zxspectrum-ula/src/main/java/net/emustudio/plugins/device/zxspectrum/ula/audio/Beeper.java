@@ -74,7 +74,12 @@ public class Beeper implements AutoCloseable {
     // centered at the midpoint (2.02V) and scaled to MAX_SAMPLE_AMPLITUDE.
     private static final short[] ISSUE_3_PCM_LEVELS = createIssue3PcmLevels();
 
-    private final TeeAudioSink sink;
+    // Live output sink (host audio).  Never null.
+    private final AudioSink primarySink;
+    // Optional recording sink, swapped atomically when recording starts/stops.
+    // Defaults to AudioSink.NULL which silently discards all calls.
+    private volatile AudioSink recordingSink = AudioSink.NULL;
+
     private final int sampleRate;
     @GuardedBy("rwl")
     private final ByteBuffer sampleBuffer;
@@ -112,7 +117,7 @@ public class Beeper implements AutoCloseable {
         if (sampleRate <= 0) {
             throw new IllegalArgumentException("Sample rate must be > 0");
         }
-        this.sink = new TeeAudioSink(sink);
+        this.primarySink = java.util.Objects.requireNonNull(sink);
         this.sampleRate = sampleRate;
         this.sampleBuffer = ByteBuffer.allocate(AUDIO_DEFAULT_BATCH_FRAMES * FRAME_SIZE).order(ByteOrder.LITTLE_ENDIAN);
     }
@@ -166,7 +171,7 @@ public class Beeper implements AutoCloseable {
     }
 
     public void setRecordingSink(AudioSink recordingSink) {
-        sink.setSecondarySink(recordingSink);
+        this.recordingSink = java.util.Objects.requireNonNull(recordingSink);
     }
 
     /**
@@ -213,13 +218,15 @@ public class Beeper implements AutoCloseable {
             sampleTickRemainder = 0;
             sampleBuffer.clear();
         });
-        sink.flushAudio();
+        primarySink.flushAudio();
+        recordingSink.flushAudio();
     }
 
     @Override
     public void close() {
         rwl.lockWrite(this::flushSamples);
-        sink.close();
+        primarySink.close();
+        recordingSink.close();
     }
 
     private void writeSample(short sampleValue) {
@@ -235,7 +242,9 @@ public class Beeper implements AutoCloseable {
         if (length == 0) {
             return;
         }
-        sink.accept(sampleBuffer.array(), length);
+        byte[] array = sampleBuffer.array();
+        primarySink.accept(array, length);
+        recordingSink.accept(array, length);
         sampleBuffer.clear();
     }
 

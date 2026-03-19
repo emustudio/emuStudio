@@ -411,7 +411,7 @@ public class BeeperTest {
     }
 
     @Test
-    public void testFlushDoesNotAffectRecordingSink() {
+    public void testResetFlushesAllSinksUniformly() {
         RecordingAudioSink primary = new RecordingAudioSink();
         RecordingAudioSink recording = new RecordingAudioSink();
         Beeper beeper = new Beeper(primary, TEST_SAMPLE_RATE);
@@ -419,13 +419,15 @@ public class BeeperTest {
 
         beeper.setLevel(true, false, false);
         beeper.passedCycles(CYCLES_PER_SAMPLE * AUDIO_DEFAULT_BATCH_FRAMES);
-        // Recording should have data from the batch flush
-        short[] recordingBefore = recording.toShortArray();
-        assertTrue(recordingBefore.length > 0);
+        // Both sinks should have data from the batch flush
+        assertTrue(primary.toShortArray().length > 0);
+        assertTrue(recording.toShortArray().length > 0);
 
         beeper.reset();
-        // Primary is flushed (cleared), but recording keeps its data
-        assertEquals(recordingBefore.length, recording.toShortArray().length);
+        // Both sinks are flushed — each sink decides what "flush" means via the AudioSink interface.
+        // RecordingAudioSink.flushAudio() resets its size to 0, same as SoundAudioSink would clear its queue.
+        assertEquals(0, primary.toShortArray().length);
+        assertEquals(0, recording.toShortArray().length);
 
         beeper.close();
     }
