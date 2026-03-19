@@ -144,7 +144,7 @@ public class Beeper implements AutoCloseable {
         // Tape input does not drive the speaker on real hardware, but mixing it in at
         // reduced amplitude reproduces the familiar loading sounds heard through the TV speaker.
         if (tapeIn) {
-            pcm = (short) Math.min(Short.MAX_VALUE, pcm + (MAX_SAMPLE_AMPLITUDE / 4));
+            pcm = (short) Math.min(Short.MAX_VALUE, pcm + (MAX_SAMPLE_AMPLITUDE / 10));
         }
 
         short finalPcm = pcm;
