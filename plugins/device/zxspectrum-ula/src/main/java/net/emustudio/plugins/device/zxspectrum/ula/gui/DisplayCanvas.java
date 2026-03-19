@@ -153,7 +153,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 for (int i = 0; i < 8; i++) {
                     boolean bit = ((row << i) & 0x80) == 0x80;
                     int color;
-                    if (ula.videoFlash && flash) {
+                    if (ula.videoFlash.get() && flash) {
                         color = (bit ? colorMap[(attr >>> 3) & 7] : colorMap[attr & 7]).getRGB();
                     } else {
                         color = (bit ? colorMap[attr & 7] : colorMap[(attr >>> 3) & 7]).getRGB();

@@ -144,19 +144,19 @@ public class ULATest {
             ula.onNextFrame();
         }
 
-        assertFalse(ula.videoFlash);
+        assertFalse(ula.videoFlash.get());
         assertEquals(VIDEO_FLASH_FRAME, bus.interruptSignals);
 
         ula.onNextFrame();
 
-        assertTrue(ula.videoFlash);
+        assertTrue(ula.videoFlash.get());
         assertEquals(VIDEO_FLASH_FRAME + 1, bus.interruptSignals);
 
         for (int i = 0; i < VIDEO_FLASH_FRAME + 1; i++) {
             ula.onNextFrame();
         }
 
-        assertFalse(ula.videoFlash);
+        assertFalse(ula.videoFlash.get());
         assertEquals((VIDEO_FLASH_FRAME + 1) * 2, bus.interruptSignals);
     }
 
