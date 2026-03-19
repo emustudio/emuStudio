@@ -150,16 +150,6 @@ public class Beeper implements AutoCloseable {
         });
     }
 
-    /**
-     * Convenience overload that sets the EAR/MIC output with no tape input.
-     *
-     * @param earOn true if EAR bit is on (bit 4 = 1), false if off (bit 4 = 0)
-     * @param micOn true if MIC bit is on (bit 3 = 0), false if off (bit 3 = 1)
-     */
-    public void setLevel(boolean earOn, boolean micOn) {
-        setLevel(earOn, micOn, false);
-    }
-
     public int getSampleRate() {
         return sampleRate;
     }
