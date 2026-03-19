@@ -8,6 +8,7 @@ import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 import java.util.Objects;
 
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
+import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCREEN_IMAGE_HEIGHT;
 
 /**
  * Converts CPU T-state notifications into ULA frame, line, paint, and interrupt events.
@@ -35,6 +36,10 @@ import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
  * partial-line and partial-frame time across callbacks so timing does not drift when instructions
  * end between display boundaries.
  *
+ * <p>Not thread-safe – called only from the CPU execution thread.  Memory-contention side-effects
+ * from non-CPU readers (e.g. the disassembler on the AWT thread) are blocked at the source by
+ * {@code EmulatorEngine.addExecutedCyclesPerTimeSlice}, so no concurrent calls reach this class.
+ *
  * <p>References:
  * <ul>
  * <li><a href="https://worldofspectrum.org/faq/reference/48kreference.htm">World of Spectrum:
@@ -49,7 +54,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
     private int lastLinePainted = 0;
     private boolean interruptActive = false;
 
-    private volatile DisplayCanvas canvas; // Use volatile instead of AtomicReference for better performance
+    private volatile DisplayCanvas canvas;
     private final ULA ula;
 
     public PassedCyclesMediator(ULA ula) {
@@ -58,6 +63,19 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
 
     public void setCanvas(DisplayCanvas canvas) {
         this.canvas = canvas;
+    }
+
+    /**
+     * Resets all internal timing state to the beginning of a new frame.
+     * <p>
+     * Call this when the device is reset so that residual cycle counts from a previous emulation
+     * run cannot push {@code lastLinePainted} past the valid line range.
+     */
+    public void reset() {
+        frameCycles = 0;
+        lineCycles = 0;
+        lastLinePainted = 0;
+        interruptActive = false;
     }
 
     /**
@@ -73,7 +91,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
         // Draw completed lines in batch
         DisplayCanvas canvas = this.canvas; // Read volatile once
         if (canvas != null) {
-            if (lineCycles >= DISPLAY_LINE_TSTATES) {
+            if (lineCycles >= DISPLAY_LINE_TSTATES && lastLinePainted < SCREEN_IMAGE_HEIGHT) {
                 canvas.drawNextLine(lastLinePainted++);
             }
         }
@@ -82,6 +100,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
             lastLinePainted = 0;
             ula.onNextFrame();
             frameCycles = frameCycles % DISPLAY_FRAME_TSTATES;
+            lineCycles = 0; // keep line timing in sync with frame timing
             interruptActive = true;
             if (canvas != null) {
                 canvas.repaint();

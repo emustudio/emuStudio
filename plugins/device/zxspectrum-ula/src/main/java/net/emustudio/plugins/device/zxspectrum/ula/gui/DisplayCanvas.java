@@ -127,6 +127,9 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
      * @param line raster line index (0-based, covering borders and active area)
      */
     public void drawNextLine(int line) {
+        if (line < 0 || line >= SCREEN_IMAGE_HEIGHT) {
+            return;
+        }
         int borderColor = COLOR_MAP[ula.getBorderColor()].getRGB();
         if (line < PRE_SCREEN_LINES || line >= (PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS)) {
             for (int i = 0; i < SCREEN_IMAGE_WIDTH; i++) {
