@@ -66,8 +66,8 @@ public class Beeper implements AutoCloseable {
     public static final int FRAME_SIZE = CHANNELS * BYTES_PER_SAMPLE;
 
     // Peak PCM amplitude used when mapping hardware voltages to 16-bit signed samples.
-    // Set to 70% of Short.MAX_VALUE to leave headroom and avoid harsh clipping distortion.
-    private static final int MAX_SAMPLE_AMPLITUDE = (int) (Short.MAX_VALUE * 0.70);
+    // Set to 40% of Short.MAX_VALUE to leave headroom and avoid harsh clipping distortion and so the sound isn't too loud.
+    private static final int MAX_SAMPLE_AMPLITUDE = (int) (Short.MAX_VALUE * 0.40);
 
     // Precomputed Issue 3 PCM levels indexed by (earOn ? 2 : 0) | (micOn ? 1 : 0).
     // Derived from the four hardware voltage levels: 0.34V, 0.66V, 3.56V, 3.70V,
@@ -78,10 +78,10 @@ public class Beeper implements AutoCloseable {
     private final int sampleRate;
     @GuardedBy("rwl")
     private final ByteBuffer sampleBuffer;
-    // Guards all access to sampleBuffer and sampleTickRemainder. Required because the AWT
-    // EventQueue thread can reach passedCycles() through the disassembler's contended memory
-    // reads (ZxSpectrumBusImpl.read → contendMemory → cpu.addCycles → passedCycles) while the
-    // CPU thread is also calling passedCycles() during normal instruction execution.
+    // Guards all access to sampleBuffer, sampleTickRemainder, and the sample-level fields.
+    // Required because the CPU thread drives passedCycles()/setLevel() during emulation while
+    // the AWT thread can call setVolumePercent(), setRecordingSink(), flushRecordingBuffer(),
+    // reset() and close() from the GUI at any time.
     private final ReadWriteLockSupport rwl = new ReadWriteLockSupport();
 
     @GuardedBy("rwl")

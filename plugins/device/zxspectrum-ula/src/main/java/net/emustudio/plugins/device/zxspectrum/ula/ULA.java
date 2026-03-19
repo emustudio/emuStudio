@@ -73,6 +73,8 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     public static final int VIDEO_FLASH_FRAME = 15;
 
     private final byte[] keymap = new byte[8]; // effective keyboard state
+    // Guards keymap[]. Written by AWT thread (keyboard/mouse events), read by CPU thread (port reads).
+    private final Object keymapLock = new Object();
 
     // accessible from outside
     public final byte[][] videoMemory = new byte[ATTRIBUTES_WIDTH][SCREEN_HEIGHT_PIXELS];
@@ -148,13 +150,15 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         CHAR_MAPPING.put(VK_DELETE, new Byte[]{4, 1, 1, 0}); // delete
     }
 
-    public boolean videoFlash = false;
+    // Written by CPU thread (onNextFrame), read by AWT thread (drawNextLine via redrawNow / paint)
+    public volatile boolean videoFlash = false;
     private int flashFramesCount = 0;
 
     private final ZxSpectrumBus bus;
     private final Beeper beeper;
 
-    private int borderColor;
+    // Written by CPU thread (write), read by AWT thread (getBorderColor from paint)
+    private volatile int borderColor;
 
     // Tracks the current EAR/MIC output state written by the CPU, so that the tape input
     // signal can be continuously mixed into the beeper alongside the port-driven output.
@@ -273,9 +277,11 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
             // DF = 5  1101 1111
             // BF = 6  1011 1111
             // 7F = 7  0111 1111
-            for (int keyLine = 0; keyLine < keymap.length; keyLine++) {
-                if ((lineMask & (1 << keyLine)) == 0) {
-                    result &= keymap[keyLine];
+            synchronized (keymapLock) {
+                for (int keyLine = 0; keyLine < keymap.length; keyLine++) {
+                    if ((lineMask & (1 << keyLine)) == 0) {
+                        result &= keymap[keyLine];
+                    }
                 }
             }
         }
@@ -354,22 +360,30 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     private void resetKeyboard() {
-        Arrays.fill(keymap, KEY_RELEASED_STATE);
+        synchronized (keymapLock) {
+            Arrays.fill(keymap, KEY_RELEASED_STATE);
+        }
     }
 
     public void pressKey(byte key, byte value) {
         int line = Byte.toUnsignedInt(key);
-        keymap[line] &= (byte) ((~value) & 0xFF);
+        synchronized (keymapLock) {
+            keymap[line] &= (byte) ((~value) & 0xFF);
+        }
     }
 
     public void releaseKey(byte key, byte value) {
         int line = Byte.toUnsignedInt(key);
-        keymap[line] |= value;
+        synchronized (keymapLock) {
+            keymap[line] |= value;
+        }
     }
 
     public boolean isKeyPressed(byte key, byte value) {
         int line = Byte.toUnsignedInt(key);
-        return (keymap[line] & value) == 0;
+        synchronized (keymapLock) {
+            return (keymap[line] & value) == 0;
+        }
     }
 
     /**
