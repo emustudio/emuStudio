@@ -430,8 +430,105 @@ public class BeeperTest {
         beeper.close();
     }
 
-    // --- Stereo correctness ---
+    // --- Tape input ---
 
+    @Test
+    public void testTapeInputStartsAudio() {
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
+
+        // tapeIn=true should start audio even when earOn=false, micOn=false
+        beeper.setLevel(false, false, true);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
+        beeper.close();
+
+        assertTrue("tapeIn should start audio", containsNonZero(sink.toShortArray()));
+    }
+
+    @Test
+    public void testTapeInputAddsAmplitude() {
+        short withoutTape = sampleForLevelWithTape(true, false, false);
+        short withTape = sampleForLevelWithTape(true, false, true);
+
+        assertTrue("Tape input should add amplitude", withTape > withoutTape);
+    }
+
+    @Test
+    public void testTapeInputAloneProducesPositiveSample() {
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
+
+        beeper.setLevel(false, false, true); // only tape in
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
+        beeper.close();
+
+        short[] samples = sink.toShortArray();
+        assertTrue("Tape input alone should produce non-zero audio", containsNonZero(samples));
+    }
+
+    // --- flushRecordingBuffer ---
+
+    @Test
+    public void testFlushRecordingBufferForcesPartialBatchToSinks() {
+        RecordingAudioSink primary = new RecordingAudioSink();
+        RecordingAudioSink recording = new RecordingAudioSink();
+        Beeper beeper = new Beeper(primary, TEST_SAMPLE_RATE);
+        beeper.setRecordingSink(recording);
+
+        beeper.setLevel(true, false, false);
+        // Generate fewer samples than AUDIO_DEFAULT_BATCH_FRAMES (partial batch, not auto-flushed)
+        beeper.passedCycles(CYCLES_PER_SAMPLE * 3);
+
+        // Before flush: recording may not have data yet (buffered in Beeper)
+        int recordingBefore = recording.toShortArray().length;
+
+        beeper.flushRecordingBuffer();
+
+        // After flush: recording must have all 3 stereo frames = 6 shorts
+        short[] afterFlush = recording.toShortArray();
+        assertTrue("flushRecordingBuffer should push buffered data to recording sink",
+                afterFlush.length >= recordingBefore);
+        assertEquals(6, afterFlush.length);
+
+        beeper.close();
+    }
+
+    @Test
+    public void testFlushRecordingBufferWhenEmptyDoesNotThrow() {
+        Beeper beeper = new Beeper(AudioSink.NULL, TEST_SAMPLE_RATE);
+        // Nothing buffered yet — should not throw
+        beeper.flushRecordingBuffer();
+        beeper.close();
+    }
+
+    // --- setRecordingSink ---
+
+    @Test(expected = NullPointerException.class)
+    public void testSetRecordingSinkRejectsNull() {
+        Beeper beeper = new Beeper(AudioSink.NULL, TEST_SAMPLE_RATE);
+        beeper.setRecordingSink(null);
+    }
+
+    @Test
+    public void testSetRecordingSinkToNullSinkDisconnectsRecording() {
+        RecordingAudioSink primary = new RecordingAudioSink();
+        RecordingAudioSink recording = new RecordingAudioSink();
+        Beeper beeper = new Beeper(primary, TEST_SAMPLE_RATE);
+        beeper.setRecordingSink(recording);
+
+        beeper.setLevel(true, false, false);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
+        beeper.flushRecordingBuffer();
+        int recordingLengthBefore = recording.toShortArray().length;
+
+        // Disconnect recording sink
+        beeper.setRecordingSink(AudioSink.NULL);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
+        beeper.close();
+
+        // Recording should not have received the second batch
+        assertEquals(recordingLengthBefore, recording.toShortArray().length);
+    }
     @Test
     public void testAllFramesAreStereoPaired() {
         RecordingAudioSink sink = new RecordingAudioSink();
@@ -484,6 +581,16 @@ public class BeeperTest {
         Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
         beeper.setLevel(true, false, false); // ensure audioStarted=true
         beeper.setLevel(earOn, micOn, false);
+        beeper.passedCycles(CYCLES_PER_SAMPLE);
+        beeper.close();
+        return sink.toShortArray()[0];
+    }
+
+    private short sampleForLevelWithTape(boolean earOn, boolean micOn, boolean tapeIn) {
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
+        beeper.setLevel(true, false, false); // ensure audioStarted=true
+        beeper.setLevel(earOn, micOn, tapeIn);
         beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.close();
         return sink.toShortArray()[0];
