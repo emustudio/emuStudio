@@ -8,19 +8,23 @@ import net.jcip.annotations.NotThreadSafe;
 import org.fife.ui.rsyntaxtextarea.AbstractTokenMaker;
 import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rsyntaxtextarea.TokenMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.text.Segment;
 import java.util.Objects;
 
 @NotThreadSafe
 public class RTokenMaker extends AbstractTokenMaker {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RTokenMaker.class);
+
     private final LexicalAnalyzer lexer;
 
     public RTokenMaker(Compiler compiler) {
         this.lexer = compiler.createLexer();
     }
 
-    private static int getTokenMakerType(int emuStudioTokenType) {
+    static int getTokenMakerType(int emuStudioTokenType) {
         switch (emuStudioTokenType) {
             case net.emustudio.emulib.plugins.compiler.Token.RESERVED:
                 return Token.RESERVED_WORD;
@@ -51,20 +55,42 @@ public class RTokenMaker extends AbstractTokenMaker {
     @Override
     public Token getTokenList(Segment text, int initialTokenType, int startOffset) {
         resetTokenList();
-        lexer.reset((Objects.requireNonNull(text).toString()));
+        try {
+            lexer.reset(Objects.requireNonNull(text).toString());
+        } catch (Exception ex) {
+            LOGGER.error("Could not reset lexer", ex);
+            addNullToken();
+            return firstToken;
+        }
+
         int previousEnd = -1;
         int previousStartOffset = -1;
 
         while (lexer.hasNext()) {
+            net.emustudio.emulib.plugins.compiler.Token token;
             try {
-                net.emustudio.emulib.plugins.compiler.Token token = lexer.next();
+                token = lexer.next();
+            } catch (Exception ex) {
+                // If the lexer itself throws, we cannot trust its state — stop iterating
+                // to avoid a potential infinite loop that would freeze the EDT.
+                LOGGER.error("Lexer threw during tokenization", ex);
+                break;
+            }
+
+            try {
+                // Skip EOF — we terminate the list with addNullToken() after the loop
+                if (token.getType() == net.emustudio.emulib.plugins.compiler.Token.EOF) {
+                    break;
+                }
+
                 int tokenMakerType = getTokenMakerType(token.getType());
 
                 int tokenStartIndex = token.getOffset();
-                int tokenLength = token.getText().length() - 1;
-                if (token.getType() == net.emustudio.emulib.plugins.compiler.Token.EOF) {
-                    tokenLength = 0;
+                String tokenText = token.getText();
+                if (tokenText == null || tokenText.isEmpty()) {
+                    continue; // skip zero-length tokens to prevent end < start
                 }
+                int tokenLength = tokenText.length() - 1;
 
                 int start = text.offset + tokenStartIndex;
                 int end = text.offset + tokenStartIndex + tokenLength;
@@ -84,9 +110,10 @@ public class RTokenMaker extends AbstractTokenMaker {
 
                 addToken(text, start, end, tokenMakerType, tokenStartOffset);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                LOGGER.error("Could not process token", ex);
             }
         }
+        addNullToken();
         return firstToken;
     }
 

@@ -70,6 +70,12 @@ public class DisplayWindow extends DialogBase {
         keyboardDispatcher.addOnKeyListener(ula);
     }
 
+    @Override
+    protected boolean shouldCloseOnEscape() {
+        // ESC is used for the emulated ZX Spectrum keyboard, not for closing the window
+        return false;
+    }
+
     public void destroy() {
         stopRecording(false);
         canvas.close();
@@ -159,26 +165,43 @@ public class DisplayWindow extends DialogBase {
 
         recordingSession = null;
         canvas.setFrameListener(null);
+        ula.flushRecordingBuffer();
         ula.setRecordingSink(AudioSink.NULL);
-        btnRecord.setIcon(ToolbarIcons.record());
         btnRecord.setToolTipText("Start video recording");
 
         Optional<Path> selectedFile = saveToFile ? dialogs.chooseFile(
                 "Save recording", "Save", lastRecordingDirectory, true, MP4_FILTER
         ) : Optional.empty();
 
-        try {
-            session.stop(selectedFile);
-            if (selectedFile.isPresent()) {
-                Path parent = selectedFile.get().getParent();
-                if (parent != null) {
-                    lastRecordingDirectory = parent;
+        // Video export (encoding + audio muxing) is CPU-intensive and must not run on the EDT,
+        // otherwise the ULA display freezes and the UI becomes unresponsive until the export finishes.
+        btnRecord.setEnabled(false);
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                session.stop(selectedFile);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                btnRecord.setEnabled(true);
+                btnRecord.setIcon(ToolbarIcons.record());
+                try {
+                    get(); // propagate any exception from doInBackground
+                    if (selectedFile.isPresent()) {
+                        Path parent = selectedFile.get().getParent();
+                        if (parent != null) {
+                            lastRecordingDirectory = parent;
+                        }
+                    }
+                } catch (Exception e) {
+                    Throwable cause = (e instanceof java.util.concurrent.ExecutionException) ? e.getCause() : e;
+                    LOGGER.error("Could not finish ZX Spectrum recording", cause);
+                    dialogs.showError("Could not save recording. Please see log file for details.", "Recording");
                 }
             }
-        } catch (IOException e) {
-            LOGGER.error("Could not finish ZX Spectrum recording", e);
-            dialogs.showError("Could not save recording. Please see log file for details.", "Recording");
-        }
+        }.execute();
     }
 
     private JPopupMenu createVerticalSliderPopup(String title, int initialValue, java.util.function.IntConsumer onChange) {

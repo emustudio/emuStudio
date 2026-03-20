@@ -80,6 +80,12 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     }
 
     @Override
+    protected boolean shouldCloseOnEscape() {
+        // ESC is used for canceling drawing operations in the schema editor
+        return false;
+    }
+
+    @Override
     public void keyTyped(KeyEvent e) {
     }
 

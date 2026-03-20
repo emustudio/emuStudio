@@ -50,6 +50,7 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void reset() {
         ula.reset();
+        passedCyclesMediator.reset();
     }
 
     @Override

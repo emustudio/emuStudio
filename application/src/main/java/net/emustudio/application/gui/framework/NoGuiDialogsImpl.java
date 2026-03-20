@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.framework;
 
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +11,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-public class NoGuiDialogsImpl implements ExtendedDialogs {
+public class NoGuiDialogsImpl implements Dialogs {
     public final static String INPUT_MESSAGE = "Please insert a value";
     private final static Logger LOGGER = LoggerFactory.getLogger(NoGuiDialogsImpl.class);
 

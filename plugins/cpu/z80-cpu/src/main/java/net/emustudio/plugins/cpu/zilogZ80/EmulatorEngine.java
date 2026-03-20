@@ -77,6 +77,11 @@ public class EmulatorEngine implements CpuEngine {
 
     private volatile DispatchListener dispatchListener;
 
+    // True only while an instruction (or interrupt) is being dispatched.
+    // Prevents memory-contention side effects (cpu.addCycles → passedCycles) when memory is read
+    // outside instruction execution, e.g. by the disassembler on the AWT thread.
+    private boolean dispatching = false;
+
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
@@ -119,7 +124,9 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     public void addExecutedCyclesPerTimeSlice(long cycles) {
-        advanceCycles(cycles);
+        if (dispatching) {
+            advanceCycles(cycles);
+        }
     }
 
     public void requestMaskableInterrupt(byte[] data) {
@@ -221,6 +228,7 @@ public class EmulatorEngine implements CpuEngine {
             tmpListener.beforeDispatch();
         }
 
+        dispatching = true;
         try {
             lastQ = Q;
             Q = 0;
@@ -255,6 +263,7 @@ public class EmulatorEngine implements CpuEngine {
             }
             DISPATCH(DISPATCH_TABLE);
         } finally {
+            dispatching = false;
             if (tmpListener != null) {
                 tmpListener.afterDispatch();
             }

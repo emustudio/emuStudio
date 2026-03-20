@@ -66,6 +66,11 @@ final class SoundAudioSink implements AudioSink {
         int lineBufferSize = Math.max(
                 AUDIO_DEFAULT_BATCH_FRAMES * Beeper.FRAME_SIZE * 16, sampleRate * Beeper.FRAME_SIZE / 2);
         this.line.open(format, lineBufferSize);
+
+        byte[] empty = new byte[lineBufferSize];
+        Arrays.fill(empty, (byte) 0xFF);
+        this.line.write(empty, 0, empty.length);  // Make initial sound "quiet"
+
         this.line.start();
         this.worker = new Thread(this::drainQueue, THREAD_NAME_PREFIX + "SoundOutputSink");
         this.worker.setDaemon(true);
@@ -91,13 +96,13 @@ final class SoundAudioSink implements AudioSink {
         accepting = false;
         worker.interrupt();
         queue.clear();
-        line.stop();
-        line.flush();
         try {
             worker.join(QUEUE_POLL_TIMEOUT_MS * 2);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
+            line.stop();
+            line.flush();
             line.close();
         }
     }
