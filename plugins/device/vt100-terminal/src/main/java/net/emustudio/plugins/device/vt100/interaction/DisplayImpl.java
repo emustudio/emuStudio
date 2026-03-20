@@ -3,6 +3,7 @@
 package net.emustudio.plugins.device.vt100.interaction;
 
 import net.emustudio.plugins.device.vt100.TerminalSettings;
+import net.emustudio.plugins.device.vt100.VideoAttribute;
 import net.emustudio.plugins.device.vt100.Vt100StateMachine;
 import net.emustudio.plugins.device.vt100.api.Display;
 import net.jcip.annotations.ThreadSafe;
@@ -25,6 +26,7 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
     private final static Logger LOGGER = LoggerFactory.getLogger(DisplayImpl.class);
 
     public char[] videoMemory;
+    public int[] attributeMemory;
 
     private final TerminalSettings settings;
     private final Cursor cursor;
@@ -32,12 +34,15 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
 
     private final FileWriter outputWriter;
     private final AtomicReference<Point> savedCursorPosition = new AtomicReference<>(new Point());
+    private volatile int currentAttribute = VideoAttribute.DEFAULT;
+    private int savedAttribute = VideoAttribute.DEFAULT;
 
     public DisplayImpl(Cursor cursor, TerminalSettings settings) {
         this.settings = Objects.requireNonNull(settings);
         this.cursor = Objects.requireNonNull(cursor);
         Rectangle rect = cursor.getRect();
         this.videoMemory = new char[rect.height * rect.width];
+        this.attributeMemory = new int[rect.height * rect.width];
 
         fillWithSpaces();
         this.vt100 = new Vt100StateMachine(this);
@@ -57,12 +62,14 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
 
     @Override
     public void reset() {
+        currentAttribute = VideoAttribute.DEFAULT;
         clearScreen();
     }
 
     public synchronized void setSize(int columns, int rows) {
         this.cursor.setSize(columns, rows);
         this.videoMemory = new char[rows * columns];
+        this.attributeMemory = new int[rows * columns];
     }
 
     @Override
@@ -94,7 +101,12 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
 
     @Override
     public char[] getVideoMemory() {
-        return videoMemory; // I should be punished for this
+        return videoMemory;
+    }
+
+    @Override
+    public int[] getAttributeMemory() {
+        return attributeMemory;
     }
 
     public void clearScreen() {
@@ -106,9 +118,13 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
     public void rollUp() {
         Rectangle rect = cursor.getRect();
         synchronized (this) {
-            System.arraycopy(videoMemory, rect.width, videoMemory, 0, rect.width * rect.height - rect.width);
-            for (int i = rect.width * rect.height - rect.width; i < (rect.width * rect.height); i++) {
+            int lineSize = rect.width;
+            int totalSize = lineSize * rect.height;
+            System.arraycopy(videoMemory, lineSize, videoMemory, 0, totalSize - lineSize);
+            System.arraycopy(attributeMemory, lineSize, attributeMemory, 0, totalSize - lineSize);
+            for (int i = totalSize - lineSize; i < totalSize; i++) {
                 videoMemory[i] = ' ';
+                attributeMemory[i] = VideoAttribute.DEFAULT;
             }
         }
     }
@@ -117,9 +133,13 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
     public void rollDown() {
         Rectangle rect = cursor.getRect();
         synchronized (this) {
-            System.arraycopy(videoMemory, 0, videoMemory, rect.width, rect.width * rect.height - rect.width);
-            for (int i = 0; i < rect.width; i++) {
+            int lineSize = rect.width;
+            int totalSize = lineSize * rect.height;
+            System.arraycopy(videoMemory, 0, videoMemory, lineSize, totalSize - lineSize);
+            System.arraycopy(attributeMemory, 0, attributeMemory, lineSize, totalSize - lineSize);
+            for (int i = 0; i < lineSize; i++) {
                 videoMemory[i] = ' ';
+                attributeMemory[i] = VideoAttribute.DEFAULT;
             }
         }
     }
@@ -146,154 +166,104 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
                 cursor.moveBackwards();
                 break;
             case 9: // Horizontal tabulation, 0/9
-                // Moves cursor to next tab stop, or to right margin if there are no more tab stops. Does not cause autowrap.
                 cursor.moveForwards(4);
                 break;
             case 0x0A: // Line feed, 0/10
             case 0x0B: // Vertical tabulation, 0/11
             case 0x0C: // Form feed, 0/12
-                // Causes a linefeed or a new line operation, depending on the setting of new line mode.
                 cursor.moveDown();
                 cursor.carriageReturn(); // simulate CR/LF
                 break;
             case 0x0D: // Carriage return, 0/13
-                // 	Moves cursor to left margin on current line.
                 cursor.carriageReturn();
                 break;
             case 0x0E: // Shift out (Lock shift G1), 0/14
-                // Invokes G1 character set into GL. G1 is designated by a select-character-set (SCS) sequence.
             case 0x0F: // Shift in (Lock shift G0), 0/15
-                // Invoke G0 character set into GL. G0 is designated by a select-character-set sequence (SCS).
-            case 0x11: // Device Control 1
-                // Also referred to as XON. If XOFF support is enabled, DC1 clears DC3 (XOFF), causing the terminal
-                // to continue transmitting characters (keyboard unlocks) unless KAM mode is currently set.
-            case 0x13: // Device Control 3
-                // Also referred to as XOFF. If XOFF support is enabled, DC3 causes the terminal to stop transmitting
-                // characters until a DC1 control character is received.
+            case 0x11: // Device Control 1 (XON)
+            case 0x13: // Device Control 3 (XOFF)
                 break;
             case 0x18: // Cancel
             case 0x1B: // Escape
-                // Processed as escape sequence introducer. Terminates any escape, control or device control sequence
-                // which is in progress.
-                // If received during an escape or control sequence, terminates and cancels the sequence. No error
-                // character is displayed. If received during a device control string, the DCS is terminated and no
-                // error character is displayed.
                 vt100.cancel();
                 break;
             case 0x1A: // Substitute
-                // If received during escape or control sequence, terminates and cancels the sequence. Causes a reverse
-                // question mark to be displayed. If received during a device control sequence, the DCS is terminated
-                // and reverse question mark is displayed.
                 vt100.cancel();
                 write("¿");
                 break;
             case 0x1F: // US 1/15
             case 0x7F: // DEL 7/15
                 break;
-            case 0x84: // Index
-                // 	Moves cursor down one line in same column. If cursor is at bottom margin, screen performs a scroll up.
-                // https://vt100.net/docs/vt220-rm/chapter4.html
+            // C1 8-bit control codes (now correctly dispatched via execute)
+            case 0x84: // Index (IND)
                 cursor.moveDownRolling(this);
                 break;
-            case 0x85: // Next line
-                // 	Moves cursor to first position on next line. If cursor is at bottom margin, screen performs a scroll up.
+            case 0x85: // Next line (NEL)
                 cursor.moveDownRolling(this);
                 cursor.carriageReturn();
                 break;
-            case 0x88: // Horizontal tab set
-                // 	Sets one horizontal tab stop at the column where the cursor is.
+            case 0x88: // Horizontal tab set (HTS)
                 print('\t');
                 break;
-            case 0x8D: // Reverse index
-                // 	Moves cursor up one line in same column. If cursor is at top margin, screen performs a scroll down.
+            case 0x8D: // Reverse index (RI)
                 cursor.moveUpRolling(this);
                 break;
         }
-        // missing: 0,1,2,3,4,6,0x12,0x14,0x15,0x16,0x17
-
-        // data >= 0 && data <= 0x17 || data == 0x19 || data >= 0x1C && data <= 0x1F
     }
 
     @Override
     public void print(int data) {
         Rectangle rect = cursor.getRect();
         synchronized (this) {
-            videoMemory[rect.y * rect.width + rect.x] = (char) data;
+            int offset = rect.y * rect.width + rect.x;
+            videoMemory[offset] = (char) data;
+            attributeMemory[offset] = currentAttribute;
         }
         cursor.moveForwardsRolling(this);
     }
 
     @Override
     public void escDispatch(int data, List<Integer> collected) {
-        //data >= 0x30 && data <= 0x4F || data >= 0x51 && data <= 0x57 || data >= 0x60 && data <= 0x7E ||
-        //                    data == 0x59 || data == 0x5A || data == 0x5C
-        // data >= 0x30 && data <= 0x7E
-
         switch (data) {
             case 0x44: // Index (IND)
-                // IND is an 8-bit control character (8/4). It can be expressed as an escape sequence for a
-                // 7-bit environment. IND moves the cursor down one line in the same column. If the cursor is at the
-                // bottom margin, the screen performs a scroll-up.
                 cursor.moveDownRolling(this);
                 break;
             case 0x4D: // Reverse Index (RI)
-                // RI is an 8-bit control character (8/13). It can be expressed as an escape sequence for a
-                // 7-bit environment. RI moves the cursor up one line in the same column. If the cursor is at the top
-                // margin, the screen performs a scroll-down.
                 cursor.moveUpRolling(this);
                 break;
             case 0x45: // Next Line (NEL)
-                // NEL is an 8-bit control character (8/5). It can be expressed as an escape sequence for a
-                // 7-bit environment. NEL moves the cursor to the first position on the next line. If the cursor is at
-                // the bottom margin, the screen performs a scroll-up.
                 cursor.moveDownRolling(this);
                 cursor.carriageReturn();
                 break;
-            case 0x37: // Save Cursor (DECSC)
-                // Saves the following in terminal memory.
-                // - cursor position
-                // - graphic rendition
-                // - character set shift state
-                // - state of wrap flag
-                // - state of origin mode
-                // - state of selective erase
+            case 0x37: // Save Cursor (DECSC) - also saves graphic rendition
                 savedCursorPosition.set(cursor.getRect().getLocation());
+                savedAttribute = currentAttribute;
                 break;
             case 0x38: // Restore Cursor (DECRC)
-                // Restores the states described for (DECSC) above. If none of these characteristics were saved, the
-                // cursor moves to home position; origin mode is reset; no character attributes are assigned; and the
-                // default character set mapping is established.
                 Point point = savedCursorPosition.get();
                 cursor.move(point);
+                currentAttribute = savedAttribute;
                 break;
         }
     }
 
     @Override
     public void csiDispatch(int data, List<Integer> collected, List<Integer> params) {
-        // data >= 0x40 && data <= 0x7E
         switch (data) {
-            case 0x41: // Cursor Up
-                // Moves the cursor up Pn lines in the same column. The cursor stops at the top margin.
-                cursor.moveUp(params.get(0));
+            case 0x41: // Cursor Up (CUU)
+                cursor.moveUp(param(params, 0, 1));
                 break;
-            case 0x42: // Cursor Down
-                // Moves the cursor down Pn lines in the same column. The cursor stops at the bottom margin.
-                cursor.moveDown(params.get(0));
+            case 0x42: // Cursor Down (CUD)
+                cursor.moveDown(param(params, 0, 1));
                 break;
-            case 0x43: // Cursor Forward
-                // Moves the cursor right Pn columns. The cursor stops at the right margin.
-                cursor.moveForwards(params.get(0));
+            case 0x43: // Cursor Forward (CUF)
+                cursor.moveForwards(param(params, 0, 1));
                 break;
-            case 0x44: // Cursor Backward
-                // Moves the cursor left Pn columns. The cursor stops at the left margin.
-                cursor.moveBackwards(params.get(0));
+            case 0x44: // Cursor Backward (CUB)
+                cursor.moveBackwards(param(params, 0, 1));
                 break;
-            case 0x48: // Cursor Position
-            case 0x66: // Horizontal And Vertical Position
-                // Moves the cursor to line Pl, column Pc. The numbering of the lines and columns depends on the state
-                // (set/reset) of origin mode (DECOM). Digital recommends using CUP instead of HVP.
-                if (params.size() == 0) {
+            case 0x48: // Cursor Position (CUP)
+            case 0x66: // Horizontal And Vertical Position (HVP)
+                if (params.isEmpty()) {
                     cursor.move(0, 0);
                 } else if (params.size() == 1) {
                     cursor.move(0, params.get(0));
@@ -301,86 +271,282 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
                     cursor.move(params.get(1), params.get(0));
                 }
                 break;
-            case 0x4C: // Insert Line (IL)
-                // Inserts Pn lines at the cursor. If fewer than Pn lines remain from the current line to the end of
-                // the scrolling region, the number of lines inserted is the lesser number. Lines within the scrolling
-                // region at and below the cursor move down. Lines moved past the bottom margin are lost. The cursor is
-                // reset to the first column. This sequence is ignored when the cursor is outside the scrolling region.
-                // TODO
-                break;
-            case 0x4D: // Delete Line (DL)
-                // Deletes Pn lines starting at the line with the cursor. If fewer than Pn lines remain from the current
-                // line to the end of the scrolling region, the number of lines deleted is the lesser number. As lines
-                // are deleted, lines within the scrolling region and below the cursor move up, and blank lines are
-                // added at the bottom of the scrolling region. The cursor is reset to the first column. This sequence
-                // is ignored when the cursor is outside the scrolling region.
-                // TODO
-                break;
-            case 0x40: // Insert Characters (ICH) (VT200 mode only)
-                // Insert Pn blank characters at the cursor position, with the character attributes set to normal.
-                // The cursor does not move and remains at the beginning of the inserted blank characters. A parameter
-                // of 0 or 1 inserts one blank character. Data on the line is shifted forward as in character insertion.
-                // TODO
-                break;
-            case 0x50: // Delete Character (DCH)
-                // Deletes Pn characters starting with the character at the cursor position. When a character is deleted,
-                // all characters to the right of the cursor move to the left. This creates a space character at the
-                // right margin for each character deleted. Character attributes move with the characters. The spaces
-                // created at the end of the line have all their character attributes off.
-                // TODO
-                break;
-            case 0x58: // Erase Character (ECH) (VT200 mode only)
-                // Erases characters at the cursor position and the next Pn-1 characters. A parameter of 0 or 1 erases
-                // a single character. Character attributes are set to normal. No reformatting of data on the line
-                // occurs. The cursor remains in the same position.
-                // TODO
+            case 0x4A: // Erase in Display (ED)
+                eraseInDisplay(param(params, 0, 0));
                 break;
             case 0x4B: // Erase in Line (EL)
-                // 9/11 4/11: Erases from the cursor to the end of the line, including the cursor position. Line
-                // attribute is not affected.
-                // 9/11 3/0  4/11: Same as above.
-                // 9/11 3/1  4/11: Erases from the beginning of the line to the cursor, including the cursor position.
-                // Line attribute is not affected.
-                // 9/11 3/2  4/11: Erases the complete line.
-
-                //Selective Erase In Line (DECSEL) (VT200 move only)
-                // 9/11 3/15 4/11: Erases all erasable characters (DECSCA) from the cursor to the end of the line. Does
-                // not affect video line attributes or video character attributes (SGR).
-                // 9/11 3/15 3/0 4/11: Same as above.
-                // 9/11 3/15 3/1 4/11: Erases all erasable characters (DECSCA) from the beginning of the line to and
-                // including the cursor position. Does not affect video line attributes or video character attributes.
-                // 9/11 3/15 3/2 4/11: Erases all erasable characters (DECSCA) on the line. Does not affect video line
-                // attributes or video character attributes.
-
-                // TODO
+                eraseInLine(param(params, 0, 0));
                 break;
-            case 0x4A: // Erase in Display (ED)
-                // 9/11 4/10: Erases from the cursor to the end of the screen, including the cursor position. Line
-                // attribute becomes single-height, single-width for all completely erased lines.
-                // 9/11 3/0  4/10: Same as above.
-                // 9/11 3/1  4/10: Erases from the beginning of the screen to the cursor, including the cursor position.
-                // Line attribute becomes single-height, single-width for all completely erased lines.
-                // 9/11 3/2  4/10: Erases the complete display. All lines are erased and changed to single-width.
-                // The cursor does not move.
-
-                // Selective Erase In Display (DECSED) (VT200 mode only)
-                // 9/11 3/15 4/10: Erases all erasable characters (DECSCA) from and including the cursor to the end of
-                // the screen. Does not affect video line attributes or video character attributes (SGR).
-                // 9/11 3/15 3/0 4/10: Same as above.
-                // 9/11 3/15 3/1 4/10: Erases all erasable characters (DECSCA) from the beginning of the screen to and
-                // including the cursor. Does not affect video line attributes or video character attributes (SGR).
-                // 9/11 3/15 3/2 4/10: Erases all erasable characters (DECSCA) in the entire display. Does not affect
-                // video character attributes or video line attributes (SGR).
-                // TODO
+            case 0x4C: // Insert Line (IL)
+                insertLines(param(params, 0, 1));
+                break;
+            case 0x4D: // Delete Line (DL)
+                deleteLines(param(params, 0, 1));
+                break;
+            case 0x40: // Insert Characters (ICH)
+                insertCharacters(param(params, 0, 1));
+                break;
+            case 0x50: // Delete Character (DCH)
+                deleteCharacters(param(params, 0, 1));
+                break;
+            case 0x58: // Erase Character (ECH)
+                eraseCharacters(param(params, 0, 1));
+                break;
+            case 0x6D: // Select Graphic Rendition (SGR)
+                selectGraphicRendition(params);
                 break;
             case 0x72: // Set Top and Bottom Margins (DECSTBM)
-                // This sequence selects top and bottom margins defining the scrolling region.
-                // CSI  Pt  ;   Pb   r
-                // TODO
+                // TODO: scrolling region support
                 break;
-
         }
     }
+
+    // ========== SGR (Select Graphic Rendition) ==========
+
+    private void selectGraphicRendition(List<Integer> params) {
+        if (params.isEmpty()) {
+            currentAttribute = VideoAttribute.DEFAULT;
+            return;
+        }
+        for (int i = 0; i < params.size(); i++) {
+            int p = params.get(i);
+            switch (p) {
+                case 0: // Reset
+                    currentAttribute = VideoAttribute.DEFAULT;
+                    break;
+                case 1: // Bold
+                    currentAttribute = VideoAttribute.withBold(currentAttribute, true);
+                    break;
+                case 2: // Dim/Faint
+                    currentAttribute = VideoAttribute.withDim(currentAttribute, true);
+                    break;
+                case 3: // Italic
+                    currentAttribute = VideoAttribute.withItalic(currentAttribute, true);
+                    break;
+                case 4: // Underline
+                    currentAttribute = VideoAttribute.withUnderline(currentAttribute, true);
+                    break;
+                case 5: // Blink (slow)
+                case 6: // Blink (rapid) - treated same as slow
+                    currentAttribute = VideoAttribute.withBlink(currentAttribute, true);
+                    break;
+                case 7: // Inverse/Reverse
+                    currentAttribute = VideoAttribute.withInverse(currentAttribute, true);
+                    break;
+                case 8: // Hidden/Invisible
+                    currentAttribute = VideoAttribute.withHidden(currentAttribute, true);
+                    break;
+                case 9: // Strikethrough
+                    currentAttribute = VideoAttribute.withStrikethrough(currentAttribute, true);
+                    break;
+                case 22: // Normal intensity (not bold, not dim)
+                    currentAttribute = VideoAttribute.withBold(currentAttribute, false);
+                    currentAttribute = VideoAttribute.withDim(currentAttribute, false);
+                    break;
+                case 23: // Not italic
+                    currentAttribute = VideoAttribute.withItalic(currentAttribute, false);
+                    break;
+                case 24: // Not underlined
+                    currentAttribute = VideoAttribute.withUnderline(currentAttribute, false);
+                    break;
+                case 25: // Not blinking
+                    currentAttribute = VideoAttribute.withBlink(currentAttribute, false);
+                    break;
+                case 27: // Not reversed
+                    currentAttribute = VideoAttribute.withInverse(currentAttribute, false);
+                    break;
+                case 28: // Not hidden
+                    currentAttribute = VideoAttribute.withHidden(currentAttribute, false);
+                    break;
+                case 29: // Not strikethrough
+                    currentAttribute = VideoAttribute.withStrikethrough(currentAttribute, false);
+                    break;
+                case 30: case 31: case 32: case 33:
+                case 34: case 35: case 36: case 37: // Standard foreground colors
+                    currentAttribute = VideoAttribute.withFg(currentAttribute, p - 30);
+                    break;
+                case 38: // Extended foreground color
+                    i = handleExtendedColor(params, i, true);
+                    break;
+                case 39: // Default foreground
+                    currentAttribute = VideoAttribute.withFg(currentAttribute, VideoAttribute.DEFAULT_FG);
+                    break;
+                case 40: case 41: case 42: case 43:
+                case 44: case 45: case 46: case 47: // Standard background colors
+                    currentAttribute = VideoAttribute.withBg(currentAttribute, p - 40);
+                    break;
+                case 48: // Extended background color
+                    i = handleExtendedColor(params, i, false);
+                    break;
+                case 49: // Default background
+                    currentAttribute = VideoAttribute.withBg(currentAttribute, VideoAttribute.DEFAULT_BG);
+                    break;
+                case 90: case 91: case 92: case 93:
+                case 94: case 95: case 96: case 97: // Bright foreground colors
+                    currentAttribute = VideoAttribute.withFg(currentAttribute, p - 90 + 8);
+                    break;
+                case 100: case 101: case 102: case 103:
+                case 104: case 105: case 106: case 107: // Bright background colors
+                    currentAttribute = VideoAttribute.withBg(currentAttribute, p - 100 + 8);
+                    break;
+                default:
+                    // Unknown SGR parameter, ignore
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Handle extended color sequences: 38;5;n (256-color) or 38;2;r;g;b (truecolor).
+     * Returns the new parameter index after consuming sub-parameters.
+     */
+    private int handleExtendedColor(List<Integer> params, int i, boolean foreground) {
+        if (i + 1 < params.size()) {
+            int mode = params.get(i + 1);
+            if (mode == 5 && i + 2 < params.size()) {
+                // 256-color: 38;5;n or 48;5;n
+                int colorIndex = params.get(i + 2);
+                if (colorIndex >= 0 && colorIndex <= 15) {
+                    if (foreground) {
+                        currentAttribute = VideoAttribute.withFg(currentAttribute, colorIndex);
+                    } else {
+                        currentAttribute = VideoAttribute.withBg(currentAttribute, colorIndex);
+                    }
+                }
+                // Colors 16-255 not supported in 16-color palette, silently ignore
+                return i + 2;
+            } else if (mode == 2 && i + 4 < params.size()) {
+                // Truecolor: 38;2;r;g;b - not supported, skip params
+                return i + 4;
+            }
+        }
+        return i;
+    }
+
+    // ========== Erase operations ==========
+
+    private void eraseInDisplay(int mode) {
+        Rectangle rect = cursor.getRect();
+        synchronized (this) {
+            int cursorOffset = rect.y * rect.width + rect.x;
+            int totalSize = rect.width * rect.height;
+            switch (mode) {
+                case 0: // Erase from cursor to end of screen
+                    eraseRange(cursorOffset, totalSize);
+                    break;
+                case 1: // Erase from beginning of screen to cursor
+                    eraseRange(0, cursorOffset + 1);
+                    break;
+                case 2: // Erase entire screen
+                    eraseRange(0, totalSize);
+                    break;
+            }
+        }
+    }
+
+    private void eraseInLine(int mode) {
+        Rectangle rect = cursor.getRect();
+        synchronized (this) {
+            int lineStart = rect.y * rect.width;
+            int lineEnd = lineStart + rect.width;
+            switch (mode) {
+                case 0: // Erase from cursor to end of line
+                    eraseRange(lineStart + rect.x, lineEnd);
+                    break;
+                case 1: // Erase from beginning of line to cursor
+                    eraseRange(lineStart, lineStart + rect.x + 1);
+                    break;
+                case 2: // Erase entire line
+                    eraseRange(lineStart, lineEnd);
+                    break;
+            }
+        }
+    }
+
+    private void eraseCharacters(int count) {
+        Rectangle rect = cursor.getRect();
+        synchronized (this) {
+            int offset = rect.y * rect.width + rect.x;
+            int lineEnd = (rect.y + 1) * rect.width;
+            int end = Math.min(offset + count, lineEnd);
+            eraseRange(offset, end);
+        }
+    }
+
+    private void eraseRange(int from, int to) {
+        for (int i = from; i < to; i++) {
+            videoMemory[i] = ' ';
+            attributeMemory[i] = VideoAttribute.DEFAULT;
+        }
+    }
+
+    // ========== Insert/Delete operations ==========
+
+    private void insertLines(int count) {
+        Rectangle rect = cursor.getRect();
+        synchronized (this) {
+            int lineStart = rect.y * rect.width;
+            int totalSize = rect.width * rect.height;
+            int shiftSize = totalSize - lineStart - count * rect.width;
+            if (shiftSize > 0) {
+                System.arraycopy(videoMemory, lineStart, videoMemory, lineStart + count * rect.width, shiftSize);
+                System.arraycopy(attributeMemory, lineStart, attributeMemory, lineStart + count * rect.width, shiftSize);
+            }
+            eraseRange(lineStart, Math.min(lineStart + count * rect.width, totalSize));
+        }
+        cursor.carriageReturn();
+    }
+
+    private void deleteLines(int count) {
+        Rectangle rect = cursor.getRect();
+        synchronized (this) {
+            int lineStart = rect.y * rect.width;
+            int totalSize = rect.width * rect.height;
+            int srcStart = lineStart + count * rect.width;
+            if (srcStart < totalSize) {
+                int shiftSize = totalSize - srcStart;
+                System.arraycopy(videoMemory, srcStart, videoMemory, lineStart, shiftSize);
+                System.arraycopy(attributeMemory, srcStart, attributeMemory, lineStart, shiftSize);
+                eraseRange(totalSize - count * rect.width, totalSize);
+            } else {
+                eraseRange(lineStart, totalSize);
+            }
+        }
+        cursor.carriageReturn();
+    }
+
+    private void insertCharacters(int count) {
+        Rectangle rect = cursor.getRect();
+        synchronized (this) {
+            int offset = rect.y * rect.width + rect.x;
+            int lineEnd = (rect.y + 1) * rect.width;
+            int shiftSize = lineEnd - offset - count;
+            if (shiftSize > 0) {
+                System.arraycopy(videoMemory, offset, videoMemory, offset + count, shiftSize);
+                System.arraycopy(attributeMemory, offset, attributeMemory, offset + count, shiftSize);
+            }
+            eraseRange(offset, Math.min(offset + count, lineEnd));
+        }
+    }
+
+    private void deleteCharacters(int count) {
+        Rectangle rect = cursor.getRect();
+        synchronized (this) {
+            int offset = rect.y * rect.width + rect.x;
+            int lineEnd = (rect.y + 1) * rect.width;
+            int srcStart = offset + count;
+            if (srcStart < lineEnd) {
+                int shiftSize = lineEnd - srcStart;
+                System.arraycopy(videoMemory, srcStart, videoMemory, offset, shiftSize);
+                System.arraycopy(attributeMemory, srcStart, attributeMemory, offset, shiftSize);
+                eraseRange(lineEnd - count, lineEnd);
+            } else {
+                eraseRange(offset, lineEnd);
+            }
+        }
+    }
+
+    // ========== DCS / OSC stubs ==========
 
     @Override
     public Consumer<Integer> hook(int data, List<Integer> collected, List<Integer> params) {
@@ -389,7 +555,6 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
 
     @Override
     public void unhook(int data) {
-
     }
 
     @Override
@@ -399,9 +564,27 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
 
     @Override
     public void oscEnd(int data) {
-
     }
 
+    // ========== Helpers ==========
+
+    /**
+     * Get a parameter value with a default if the index is out of bounds.
+     */
+    private static int param(List<Integer> params, int index, int defaultValue) {
+        if (index < params.size()) {
+            int value = params.get(index);
+            return value == 0 ? defaultValue : value; // 0 is treated as default for most commands
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Get current SGR attribute (for testing).
+     */
+    public int getCurrentAttribute() {
+        return currentAttribute;
+    }
 
     private void write(String string) {
         string.chars().forEach(vt100::accept);
@@ -409,6 +592,7 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
 
     private synchronized void fillWithSpaces() {
         Arrays.fill(videoMemory, ' ');
+        Arrays.fill(attributeMemory, VideoAttribute.DEFAULT);
     }
 
 

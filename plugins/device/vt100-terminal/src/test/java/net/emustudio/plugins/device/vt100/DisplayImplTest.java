@@ -358,26 +358,30 @@ public class DisplayImplTest {
     }
 
     // ========== 8-bit C1 control tests ==========
-    // Note: 0x80-0x8F are routed through the state machine's print() dispatch, not execute().
-    // The 7-bit ESC equivalents (ESC D, ESC E, ESC M) use escDispatch and are tested above.
+    // C1 controls (0x80-0x8F) are now correctly dispatched via execute() by the state machine
 
     @Test
-    public void testC1_0x84_IsPrintedAsCharacter() {
-        // 0x84 in 0x80-0x8F range goes through print(), printed as character
+    public void testC1_0x84_Index() {
+        // 0x84 = Index - moves cursor down one line (executed as C1 control)
         display.write((byte) 0x84);
-        assertEquals((char) 0x84, display.getVideoMemory()[0]);
+        assertEquals(new Point(0, 1), display.getCursorPoint());
     }
 
     @Test
-    public void testC1_0x85_IsPrintedAsCharacter() {
+    public void testC1_0x85_NextLine() {
+        display.write((byte) 'X');
+        // 0x85 = NEL - moves to first position on next line
         display.write((byte) 0x85);
-        assertEquals((char) 0x85, display.getVideoMemory()[0]);
+        assertEquals(new Point(0, 1), display.getCursorPoint());
     }
 
     @Test
-    public void testC1_0x8D_IsPrintedAsCharacter() {
+    public void testC1_0x8D_ReverseIndex() {
+        // First move down
+        display.write((byte) 0x84);
+        // Then reverse index
         display.write((byte) 0x8D);
-        assertEquals((char) 0x8D, display.getVideoMemory()[0]);
+        assertEquals(new Point(0, 0), display.getCursorPoint());
     }
 
     // ========== Cancel / substitute during escape ==========
@@ -461,6 +465,427 @@ public class DisplayImplTest {
         display.write((byte) 0x08); // BS
         display.write((byte) 'B');
         assertEquals('B', display.getVideoMemory()[0]);
+    }
+
+    // ========== Attribute memory ==========
+
+    @Test
+    public void testAttributeMemoryNotNull() {
+        assertNotNull(display.getAttributeMemory());
+        assertEquals(DEFAULT_COLUMNS * DEFAULT_ROWS, display.getAttributeMemory().length);
+    }
+
+    @Test
+    public void testAttributeMemoryInitiallyDefault() {
+        for (int attr : display.getAttributeMemory()) {
+            assertEquals(VideoAttribute.DEFAULT, attr);
+        }
+    }
+
+    @Test
+    public void testPrintStoresCurrentAttribute() {
+        display.write((byte) 'A');
+        assertEquals(VideoAttribute.DEFAULT, display.getAttributeMemory()[0]);
+    }
+
+    // ========== SGR (Select Graphic Rendition) ==========
+
+    private void writeSgr(int... params) {
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B); // CSI
+        for (int i = 0; i < params.length; i++) {
+            if (i > 0) display.write((byte) ';');
+            String s = String.valueOf(params[i]);
+            for (char c : s.toCharArray()) display.write((byte) c);
+        }
+        display.write((byte) 'm'); // SGR final char
+    }
+
+    @Test
+    public void testSgrReset() {
+        writeSgr(1); // bold
+        writeSgr(0); // reset
+        assertEquals(VideoAttribute.DEFAULT, display.getCurrentAttribute());
+    }
+
+    @Test
+    public void testSgrBold() {
+        writeSgr(1);
+        assertTrue(VideoAttribute.isBold(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrDim() {
+        writeSgr(2);
+        assertTrue(VideoAttribute.isDim(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrItalic() {
+        writeSgr(3);
+        assertTrue(VideoAttribute.isItalic(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrUnderline() {
+        writeSgr(4);
+        assertTrue(VideoAttribute.isUnderline(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrBlink() {
+        writeSgr(5);
+        assertTrue(VideoAttribute.isBlink(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrInverse() {
+        writeSgr(7);
+        assertTrue(VideoAttribute.isInverse(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrHidden() {
+        writeSgr(8);
+        assertTrue(VideoAttribute.isHidden(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrStrikethrough() {
+        writeSgr(9);
+        assertTrue(VideoAttribute.isStrikethrough(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrNormalIntensity() {
+        writeSgr(1); // bold
+        writeSgr(22); // normal intensity
+        assertFalse(VideoAttribute.isBold(display.getCurrentAttribute()));
+        assertFalse(VideoAttribute.isDim(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrNotItalic() {
+        writeSgr(3);
+        writeSgr(23);
+        assertFalse(VideoAttribute.isItalic(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrNotUnderlined() {
+        writeSgr(4);
+        writeSgr(24);
+        assertFalse(VideoAttribute.isUnderline(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrNotBlinking() {
+        writeSgr(5);
+        writeSgr(25);
+        assertFalse(VideoAttribute.isBlink(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrNotReversed() {
+        writeSgr(7);
+        writeSgr(27);
+        assertFalse(VideoAttribute.isInverse(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrNotHidden() {
+        writeSgr(8);
+        writeSgr(28);
+        assertFalse(VideoAttribute.isHidden(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrForegroundRed() {
+        writeSgr(31); // red foreground
+        assertEquals(1, VideoAttribute.getFg(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrForegroundGreen() {
+        writeSgr(32); // green foreground
+        assertEquals(2, VideoAttribute.getFg(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrBackgroundBlue() {
+        writeSgr(44); // blue background
+        assertEquals(4, VideoAttribute.getBg(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrDefaultForeground() {
+        writeSgr(31); // red
+        writeSgr(39); // default fg
+        assertEquals(VideoAttribute.DEFAULT_FG, VideoAttribute.getFg(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrDefaultBackground() {
+        writeSgr(44); // blue bg
+        writeSgr(49); // default bg
+        assertEquals(VideoAttribute.DEFAULT_BG, VideoAttribute.getBg(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrBrightForeground() {
+        writeSgr(91); // bright red foreground
+        assertEquals(9, VideoAttribute.getFg(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrBrightBackground() {
+        writeSgr(104); // bright blue background
+        assertEquals(12, VideoAttribute.getBg(display.getCurrentAttribute()));
+    }
+
+    @Test
+    public void testSgrMultipleParamsInOneSequence() {
+        // CSI 1;31;44 m = bold + red fg + blue bg
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '1');
+        display.write((byte) ';');
+        display.write((byte) '3');
+        display.write((byte) '1');
+        display.write((byte) ';');
+        display.write((byte) '4');
+        display.write((byte) '4');
+        display.write((byte) 'm');
+        int attr = display.getCurrentAttribute();
+        assertTrue(VideoAttribute.isBold(attr));
+        assertEquals(1, VideoAttribute.getFg(attr));
+        assertEquals(4, VideoAttribute.getBg(attr));
+    }
+
+    @Test
+    public void testSgrAppliedToCharacter() {
+        writeSgr(31); // red foreground
+        display.write((byte) 'R');
+        int attr = display.getAttributeMemory()[0];
+        assertEquals(1, VideoAttribute.getFg(attr));
+    }
+
+    @Test
+    public void testSgrNoParamResets() {
+        writeSgr(1); // bold
+        // CSI m with no params = reset
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) 'm');
+        assertEquals(VideoAttribute.DEFAULT, display.getCurrentAttribute());
+    }
+
+    @Test
+    public void testSgrPreservedAcrossCharacters() {
+        writeSgr(31); // red fg
+        display.write((byte) 'A');
+        display.write((byte) 'B');
+        assertEquals(1, VideoAttribute.getFg(display.getAttributeMemory()[0]));
+        assertEquals(1, VideoAttribute.getFg(display.getAttributeMemory()[1]));
+    }
+
+    @Test
+    public void testSgrExtendedColor256() {
+        // CSI 38;5;9 m = extended foreground color 9 (bright red)
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        for (byte b : "38;5;9".getBytes()) display.write(b);
+        display.write((byte) 'm');
+        assertEquals(9, VideoAttribute.getFg(display.getCurrentAttribute()));
+    }
+
+    // ========== Erase in Display (ED) ==========
+
+    @Test
+    public void testEraseInDisplayFromCursorToEnd() {
+        // Fill line 0
+        for (int i = 0; i < DEFAULT_COLUMNS; i++) display.write((byte) 'A');
+        // Fill line 1
+        for (int i = 0; i < DEFAULT_COLUMNS; i++) display.write((byte) 'B');
+        // Move to position column 5, row 0 (0-based CUP)
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '0');
+        display.write((byte) ';');
+        display.write((byte) '5');
+        display.write((byte) 'H');
+        // ED 0 = erase from cursor to end of screen
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) 'J');
+        // First 5 chars on line 0 should still be 'A'
+        for (int i = 0; i < 5; i++) {
+            assertEquals('A', display.getVideoMemory()[i]);
+        }
+        // Position 5 onwards should be spaces
+        assertEquals(' ', display.getVideoMemory()[5]);
+        // Line 1 should be erased
+        assertEquals(' ', display.getVideoMemory()[DEFAULT_COLUMNS]);
+    }
+
+    @Test
+    public void testEraseInDisplayFromBeginningToCursor() {
+        for (int i = 0; i < DEFAULT_COLUMNS; i++) display.write((byte) 'A');
+        // Move to column 5, row 0
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '0');
+        display.write((byte) ';');
+        display.write((byte) '5');
+        display.write((byte) 'H');
+        // ED 1 = erase from beginning to cursor
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '1');
+        display.write((byte) 'J');
+        // Positions 0-5 should be spaces
+        for (int i = 0; i <= 5; i++) {
+            assertEquals(' ', display.getVideoMemory()[i]);
+        }
+        // Position 6 onwards should still be 'A'
+        assertEquals('A', display.getVideoMemory()[6]);
+    }
+
+    @Test
+    public void testEraseInDisplayEntire() {
+        for (int i = 0; i < 10; i++) display.write((byte) 'X');
+        // ED 2 = erase entire screen
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '2');
+        display.write((byte) 'J');
+        for (char c : display.getVideoMemory()) {
+            assertEquals(' ', c);
+        }
+    }
+
+    // ========== Erase in Line (EL) ==========
+
+    @Test
+    public void testEraseInLineFromCursorToEnd() {
+        for (int i = 0; i < 10; i++) display.write((byte) 'A');
+        // Move to column 5, row 0 (0-based)
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '0');
+        display.write((byte) ';');
+        display.write((byte) '5');
+        display.write((byte) 'H');
+        // EL 0 = erase from cursor to end of line
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) 'K');
+        for (int i = 0; i < 5; i++) assertEquals('A', display.getVideoMemory()[i]);
+        for (int i = 5; i < DEFAULT_COLUMNS; i++) assertEquals(' ', display.getVideoMemory()[i]);
+    }
+
+    @Test
+    public void testEraseInLineFromBeginningToCursor() {
+        for (int i = 0; i < 10; i++) display.write((byte) 'A');
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '0');
+        display.write((byte) ';');
+        display.write((byte) '5');
+        display.write((byte) 'H');
+        // EL 1
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '1');
+        display.write((byte) 'K');
+        for (int i = 0; i <= 5; i++) assertEquals(' ', display.getVideoMemory()[i]);
+        assertEquals('A', display.getVideoMemory()[6]);
+    }
+
+    @Test
+    public void testEraseInLineEntire() {
+        for (int i = 0; i < 10; i++) display.write((byte) 'A');
+        // Move to column 3, row 0 (0-based)
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '0');
+        display.write((byte) ';');
+        display.write((byte) '3');
+        display.write((byte) 'H');
+        // EL 2 = erase entire line
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '2');
+        display.write((byte) 'K');
+        for (int i = 0; i < DEFAULT_COLUMNS; i++) assertEquals(' ', display.getVideoMemory()[i]);
+    }
+
+    // ========== CSI with no params uses defaults ==========
+
+    @Test
+    public void testCsiCursorUpNoParam() {
+        // Move down 3, then CSI A (no params = move up 1)
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) '3');
+        display.write((byte) 'B');
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) 'A');
+        assertEquals(2, display.getCursorPoint().y);
+    }
+
+    @Test
+    public void testCsiCursorDownNoParam() {
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) 'B');
+        assertEquals(1, display.getCursorPoint().y);
+    }
+
+    @Test
+    public void testCsiCursorForwardNoParam() {
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) 'C');
+        assertEquals(1, display.getCursorPoint().x);
+    }
+
+    @Test
+    public void testCsiCursorBackwardNoParam() {
+        display.write((byte) 'X');
+        display.write((byte) 'Y');
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) 'D');
+        assertEquals(1, display.getCursorPoint().x);
+    }
+
+    // ========== DECSC/DECRC saves/restores attribute ==========
+
+    @Test
+    public void testSaveCursorAlsoSavesAttribute() {
+        writeSgr(31); // red fg
+        int savedAttr = display.getCurrentAttribute();
+        // ESC 7 = save cursor
+        display.write((byte) 0x1B);
+        display.write((byte) '7');
+        // Change attribute
+        writeSgr(0); // reset
+        assertNotEquals(savedAttr, display.getCurrentAttribute());
+        // ESC 8 = restore cursor
+        display.write((byte) 0x1B);
+        display.write((byte) '8');
+        assertEquals(savedAttr, display.getCurrentAttribute());
+    }
+
+    // ========== Reset clears attribute ==========
+
+    @Test
+    public void testResetClearsCurrentAttribute() {
+        writeSgr(1, 31, 44); // bold + red fg + blue bg
+        display.reset();
+        assertEquals(VideoAttribute.DEFAULT, display.getCurrentAttribute());
     }
 }
 

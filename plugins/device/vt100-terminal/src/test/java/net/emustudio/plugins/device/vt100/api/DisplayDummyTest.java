@@ -44,6 +44,11 @@ public class DisplayDummyTest {
     }
 
     @Test
+    public void testDummyGetAttributeMemoryReturnsEmpty() {
+        assertEquals(0, Display.DUMMY.getAttributeMemory().length);
+    }
+
+    @Test
     public void testDummyRollUpDoesNotThrow() {
         Display.DUMMY.rollUp();
     }

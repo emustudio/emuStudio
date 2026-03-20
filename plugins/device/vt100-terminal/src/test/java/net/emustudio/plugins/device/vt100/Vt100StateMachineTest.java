@@ -38,10 +38,10 @@ public class Vt100StateMachineTest {
     }
 
     @Test
-    public void testDeleteCallsPrint() {
+    public void testDeleteIsIgnoredInGround() {
         sm.accept(0x7F);
-        assertEquals(1, dispatcher.prints.size());
-        assertEquals(0x7F, (int) dispatcher.prints.get(0));
+        assertEquals(0, dispatcher.prints.size());
+        assertEquals(0, dispatcher.executes.size());
     }
 
     @Test
@@ -238,11 +238,12 @@ public class Vt100StateMachineTest {
     }
 
     @Test
-    public void testC1ControlCharactersPrint() {
-        // 0x80-0x8F should call print and return to GROUND
+    public void testC1ControlCharactersExecute() {
+        // 0x80-0x8F should call execute and return to GROUND
         sm.accept(0x80);
-        assertEquals(1, dispatcher.prints.size());
-        assertEquals(0x80, (int) dispatcher.prints.get(0));
+        assertEquals(1, dispatcher.executes.size());
+        assertEquals(0x80, (int) dispatcher.executes.get(0));
+        assertEquals(0, dispatcher.prints.size());
     }
 
     @Test
@@ -261,9 +262,7 @@ public class Vt100StateMachineTest {
     public void testC1DcsEntry() {
         // 0x90 transitions to DCS_ENTRY
         sm.accept(0x90);
-        sm.accept(0x40); // final char -> transitions to DCS_PASSTHROUGH
-        // hook is called when next data arrives in DCS_PASSTHROUGH
-        sm.accept(0x30); // data in passthrough -> hook called
+        sm.accept(0x40); // final char -> transitions to DCS_PASSTHROUGH; hook() called on entry
         assertEquals(1, dispatcher.hooks.size());
     }
 
@@ -393,8 +392,7 @@ public class Vt100StateMachineTest {
         // ESC P enters DCS_ENTRY
         sm.accept(0x1B);
         sm.accept(0x50); // 'P' -> DCS_ENTRY
-        sm.accept(0x40); // final char -> transitions to DCS_PASSTHROUGH
-        sm.accept(0x30); // data in passthrough -> hook called
+        sm.accept(0x40); // final char -> transitions to DCS_PASSTHROUGH; hook() called on entry
         assertEquals(1, dispatcher.hooks.size());
     }
 
@@ -405,8 +403,7 @@ public class Vt100StateMachineTest {
         sm.accept('1');
         sm.accept(';');
         sm.accept('2');
-        sm.accept(0x40); // final -> transitions to DCS_PASSTHROUGH
-        sm.accept(0x30); // data in passthrough -> hook called
+        sm.accept(0x40); // final -> transitions to DCS_PASSTHROUGH; hook() called on entry
         assertEquals(1, dispatcher.hooks.size());
     }
 
@@ -424,8 +421,7 @@ public class Vt100StateMachineTest {
         sm.accept(0x1B);
         sm.accept(0x50);
         sm.accept(0x20); // intermediate
-        sm.accept(0x40); // final -> transitions to DCS_PASSTHROUGH
-        sm.accept(0x30); // data in passthrough -> hook called
+        sm.accept(0x40); // final -> transitions to DCS_PASSTHROUGH; hook() called on entry
         assertEquals(1, dispatcher.hooks.size());
     }
 
@@ -443,13 +439,16 @@ public class Vt100StateMachineTest {
 
     @Test
     public void testOscStringFromEsc() {
-        // ESC ] enters OSC_STRING
+        // ESC ] enters OSC_STRING; oscStart() called once on entry
         sm.accept(0x1B);
-        sm.accept(0x5D); // ']'
-        sm.accept('2');  // data in OSC_STRING -> oscStart called
-        sm.accept(0x9C); // ST terminator - handled by top-level onData(), not by OSC_STRING
-        // oscStart was called once for '2' only; 0x9C is intercepted before reaching the state
+        sm.accept(0x5D); // ']' -> OSC_STRING; oscStart called here
         assertEquals(1, dispatcher.oscStarts.size());
+        // Data in OSC_STRING is passed to the stored handler (no additional oscStart calls)
+        sm.accept('2');
+        assertEquals(1, dispatcher.oscStarts.size());
+        // 0x9C terminates and calls oscEnd
+        sm.accept(0x9C);
+        assertEquals(1, dispatcher.oscEnds.size());
         // Back in ground
         sm.accept('A');
         assertEquals(1, dispatcher.prints.size());
@@ -526,8 +525,7 @@ public class Vt100StateMachineTest {
         sm.accept(0x50);
         sm.accept(0x20); // intermediate
         sm.accept(0x21); // another intermediate
-        sm.accept(0x40); // final -> transitions to DCS_PASSTHROUGH
-        sm.accept(0x30); // data in passthrough -> hook called
+        sm.accept(0x40); // final -> transitions to DCS_PASSTHROUGH; hook() called on entry
         assertEquals(1, dispatcher.hooks.size());
     }
 
@@ -542,6 +540,156 @@ public class Vt100StateMachineTest {
     }
 
     // ========== Recording dispatcher ==========
+
+    // ========== DCS lifecycle tests ==========
+
+    @Test
+    public void testDcsHookCalledOnceOnEntry() {
+        sm.accept(0x1B);
+        sm.accept(0x50);
+        sm.accept(0x40); // -> DCS_PASSTHROUGH, hook called
+        sm.accept(0x30); // data in passthrough (uses stored handler, no extra hook call)
+        sm.accept(0x31); // more data
+        assertEquals(1, dispatcher.hooks.size()); // hook called exactly once
+    }
+
+    @Test
+    public void testDcsUnhookCalledOnExit() {
+        sm.accept(0x1B);
+        sm.accept(0x50);
+        sm.accept(0x40); // -> DCS_PASSTHROUGH
+        sm.accept(0x9C); // ST -> GROUND (exit from DCS_PASSTHROUGH)
+        assertEquals(1, dispatcher.unhooks.size());
+    }
+
+    @Test
+    public void testDcsUnhookCalledOnCancelExit() {
+        sm.accept(0x1B);
+        sm.accept(0x50);
+        sm.accept(0x40); // -> DCS_PASSTHROUGH
+        sm.accept(0x18); // CAN -> GROUND
+        assertEquals(1, dispatcher.unhooks.size());
+    }
+
+    @Test
+    public void testDcsUnhookCalledOnEscExit() {
+        sm.accept(0x1B);
+        sm.accept(0x50);
+        sm.accept(0x40); // -> DCS_PASSTHROUGH
+        sm.accept(0x1B); // ESC -> ESCAPE state (exits DCS_PASSTHROUGH)
+        assertEquals(1, dispatcher.unhooks.size());
+    }
+
+    // ========== OSC lifecycle tests ==========
+
+    @Test
+    public void testOscStartCalledOnceOnEntry() {
+        sm.accept(0x1B);
+        sm.accept(0x5D); // -> OSC_STRING, oscStart called
+        sm.accept('0');   // data (uses stored handler)
+        sm.accept(';');   // more data
+        assertEquals(1, dispatcher.oscStarts.size()); // oscStart called exactly once
+    }
+
+    @Test
+    public void testOscEndCalledOnExit() {
+        sm.accept(0x1B);
+        sm.accept(0x5D); // -> OSC_STRING
+        sm.accept(0x9C); // ST -> GROUND
+        assertEquals(1, dispatcher.oscEnds.size());
+    }
+
+    @Test
+    public void testOscEndCalledOnCancelExit() {
+        sm.accept(0x1B);
+        sm.accept(0x5D); // -> OSC_STRING
+        sm.accept(0x18); // CAN -> GROUND
+        assertEquals(1, dispatcher.oscEnds.size());
+    }
+
+    @Test
+    public void testCancelInDcsPassthroughCallsUnhook() {
+        sm.accept(0x1B);
+        sm.accept(0x50);
+        sm.accept(0x40); // -> DCS_PASSTHROUGH
+        sm.cancel();
+        assertEquals(1, dispatcher.unhooks.size());
+    }
+
+    @Test
+    public void testCancelInOscStringCallsOscEnd() {
+        sm.accept(0x1B);
+        sm.accept(0x5D); // -> OSC_STRING
+        sm.cancel();
+        assertEquals(1, dispatcher.oscEnds.size());
+    }
+
+    // ========== parseParams edge cases ==========
+
+    @Test
+    public void testCsiWithLeadingSemicolon() {
+        // CSI ; 5 H → params should be [0, 5]
+        sm.accept(0x1B);
+        sm.accept(0x5B);
+        sm.accept(';');
+        sm.accept('5');
+        sm.accept('H');
+        assertEquals(1, dispatcher.csiDispatches.size());
+        assertEquals(List.of(0, 5), dispatcher.csiDispatches.get(0).params);
+    }
+
+    @Test
+    public void testCsiWithConsecutiveSemicolons() {
+        // CSI 1 ;; 3 H → params should be [1, 0, 3]
+        sm.accept(0x1B);
+        sm.accept(0x5B);
+        sm.accept('1');
+        sm.accept(';');
+        sm.accept(';');
+        sm.accept('3');
+        sm.accept('H');
+        assertEquals(1, dispatcher.csiDispatches.size());
+        assertEquals(List.of(1, 0, 3), dispatcher.csiDispatches.get(0).params);
+    }
+
+    // ========== C1 controls call execute ==========
+
+    @Test
+    public void testC1_0x84_CallsExecute() {
+        sm.accept(0x84);
+        assertEquals(1, dispatcher.executes.size());
+        assertEquals(0x84, (int) dispatcher.executes.get(0));
+    }
+
+    @Test
+    public void testC1_0x8D_CallsExecute() {
+        sm.accept(0x8D);
+        assertEquals(1, dispatcher.executes.size());
+        assertEquals(0x8D, (int) dispatcher.executes.get(0));
+    }
+
+    @Test
+    public void testC1_0x91_0x97_CallExecute() {
+        sm.accept(0x91);
+        sm.accept(0x97);
+        assertEquals(2, dispatcher.executes.size());
+        assertEquals(0x91, (int) dispatcher.executes.get(0));
+        assertEquals(0x97, (int) dispatcher.executes.get(1));
+    }
+
+    @Test
+    public void testC1_0x99_CallsExecute() {
+        sm.accept(0x99);
+        assertEquals(1, dispatcher.executes.size());
+        assertEquals(0x99, (int) dispatcher.executes.get(0));
+    }
+
+    @Test
+    public void testC1_0x9A_CallsExecute() {
+        sm.accept(0x9A);
+        assertEquals(1, dispatcher.executes.size());
+        assertEquals(0x9A, (int) dispatcher.executes.get(0));
+    }
 
     private static class RecordingDispatcher implements Vt100StateMachine.Vt100Dispatcher {
         final List<Integer> executes = new ArrayList<>();
