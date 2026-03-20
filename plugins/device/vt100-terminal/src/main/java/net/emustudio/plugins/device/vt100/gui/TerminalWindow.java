@@ -5,6 +5,7 @@ package net.emustudio.plugins.device.vt100.gui;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.device.vt100.interaction.DisplayImpl;
 import net.emustudio.plugins.device.vt100.interaction.KeyboardGui;
 
@@ -13,13 +14,10 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.plugins.device.vt100.gui.Constants.*;
 
-public class TerminalWindow extends JDialog {
+public class TerminalWindow extends DialogBase {
     private final Dialogs dialogs;
-
-    private final ImageIcon blueIcon; // not waiting for input
-    private final ImageIcon redIcon; // waiting for input
 
     private final DisplayCanvas canvas;
     private final KeyboardGui keyboard;
@@ -27,27 +25,25 @@ public class TerminalWindow extends JDialog {
     private final JButton btnASCII = new JButton();
 
     public TerminalWindow(JFrame parent, DisplayImpl display, Dialogs dialogs, KeyboardGui keyboard) {
-        super(parent);
+        super(parent, "VT100 Terminal", false);
         this.canvas = new DisplayCanvas(display);
         this.keyboard = Objects.requireNonNull(keyboard);
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.blueIcon = loadIcon("/net/emustudio/plugins/device/vt100/16_circle_blue.png");
-        this.redIcon = loadIcon("/net/emustudio/plugins/device/vt100/16_circle_red.png");
-
-        initComponents();
-        setLocationRelativeTo(parent);
 
         keyboard.addInputRequestHandler(inputRequested -> {
             if (inputRequested) {
-                lblStatusIcon.setIcon(redIcon);
+                lblStatusIcon.setIcon(RED_ICON);
                 lblStatusIcon.setToolTipText("Input requested from keyboard");
                 btnASCII.setEnabled(true);
             } else {
-                lblStatusIcon.setIcon(blueIcon);
+                lblStatusIcon.setIcon(BLUE_ICON);
                 lblStatusIcon.setToolTipText("Input not requested");
                 btnASCII.setEnabled(false);
             }
         });
+
+        buildContent();
+        setLocationRelativeTo(parent);
     }
 
     public void startPainting() {
@@ -59,16 +55,20 @@ public class TerminalWindow extends JDialog {
         this.dispose();
     }
 
-    private void initComponents() {
-        setTitle("VT100 Terminal");
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    @Override
+    protected boolean shouldCloseOnEscape() {
+        return false;
+    }
+
+    @Override
+    protected JComponent initializeComponents() {
         canvas.setBounds(0, 0, 900, 700);
 
-        lblStatusIcon.setIcon(blueIcon);
+        lblStatusIcon.setIcon(BLUE_ICON);
         lblStatusIcon.setToolTipText("Input not requested");
         lblStatusIcon.setVerticalAlignment(SwingConstants.TOP);
 
-        btnASCII.setIcon(loadIcon("/net/emustudio/plugins/device/vt100/16_ascii.png"));
+        btnASCII.setIcon(ASCII_ICON);
         btnASCII.setToolTipText("Input by ASCII code");
         btnASCII.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         btnASCII.setEnabled(false);
@@ -83,8 +83,7 @@ public class TerminalWindow extends JDialog {
         content.add(canvas, "grow, wrap");
         content.add(panelStatus, "growx");
 
-        setContentPane(content);
-        pack();
+        return content;
     }
 
     private void btnASCIIActionPerformed(java.awt.event.ActionEvent evt) {

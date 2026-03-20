@@ -62,7 +62,7 @@ public class DeviceImpl extends AbstractDevice {
         try {
             applicationApi.getContextPool().register(pluginID, context, DeviceContext.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
-            LOGGER.error("Could not register BrainTerminal context", e);
+            LOGGER.error("Could not register VT100-terminal context", e);
             applicationApi.getDialogs().showError("Could not register VT100-terminal. Please see log file for more details.", getTitle());
         }
     }

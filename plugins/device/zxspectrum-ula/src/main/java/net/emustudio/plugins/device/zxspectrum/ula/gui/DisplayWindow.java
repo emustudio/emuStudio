@@ -70,6 +70,12 @@ public class DisplayWindow extends DialogBase {
         keyboardDispatcher.addOnKeyListener(ula);
     }
 
+    @Override
+    protected boolean shouldCloseOnEscape() {
+        // ESC is used for the emulated ZX Spectrum keyboard, not for closing the window
+        return false;
+    }
+
     public void destroy() {
         stopRecording(false);
         canvas.close();

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.framework;
 
+import net.emustudio.application.gui.dialogs.InputDialog;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
@@ -57,10 +58,8 @@ public class GuiDialogsImpl implements ExtendedDialogs {
 
     @Override
     public Optional<Integer> readInteger(String message, String title, int initial) {
-        Object inputValue = JOptionPane.showInputDialog(
-                parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
-        );
-        return Optional.ofNullable(inputValue).map(String::valueOf).map(radixUtils::parseRadix);
+        return InputDialog.showInputDialog(parent, message, title, initial)
+                .map(radixUtils::parseRadix);
     }
 
     @Override
@@ -75,10 +74,7 @@ public class GuiDialogsImpl implements ExtendedDialogs {
 
     @Override
     public Optional<String> readString(String message, String title, String initial) {
-        Object inputValue = JOptionPane.showInputDialog(
-                parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
-        );
-        return Optional.ofNullable(inputValue).map(String::valueOf);
+        return InputDialog.showInputDialog(parent, message, title, initial);
     }
 
     @Override
@@ -93,10 +89,8 @@ public class GuiDialogsImpl implements ExtendedDialogs {
 
     @Override
     public Optional<Double> readDouble(String message, String title, double initial) {
-        Object inputValue = JOptionPane.showInputDialog(
-                parent, message, title, JOptionPane.QUESTION_MESSAGE, null, null, initial
-        );
-        return Optional.ofNullable(inputValue).map(String::valueOf).map(Double::parseDouble);
+        return InputDialog.showInputDialog(parent, message, title, initial)
+                .map(Double::parseDouble);
     }
 
     @Override
@@ -135,6 +129,7 @@ public class GuiDialogsImpl implements ExtendedDialogs {
     public Optional<Path> chooseFile(String title, String approveButtonText, Path baseDirectory,
                                      boolean appendMissingExtension, FileExtensionsFilter... filters) {
 
+        UIManager.put("FileChooser.readOnly", Boolean.TRUE);
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(title);
         fileChooser.setAcceptAllFileFilterUsed(false);
@@ -203,6 +198,7 @@ public class GuiDialogsImpl implements ExtendedDialogs {
 
     @Override
     public Optional<Path> chooseDirectory(String title, String approveButtonText, Path baseDirectory) {
+        UIManager.put("FileChooser.readOnly", Boolean.TRUE);
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(title);
         fileChooser.setAcceptAllFileFilterUsed(false);
