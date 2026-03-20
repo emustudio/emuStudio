@@ -17,13 +17,14 @@ import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.DIALOG_TITLE;
 
 public class DiskGui extends DialogBase {
+    private final GUI gui;
     private final DriveCollection drives;
     private final JLabel lblOffset = createMonospacedLabel("0");
     private final JLabel lblSector = createMonospacedLabel("0");
     private final JLabel lblTrack = createMonospacedLabel("0");
     private final JLabel lblPort1Status = createMonospacedLabel(DriveParameters.port1StatusString(Drive.DEAD_DRIVE));
     private final JLabel lblPort2Status = createMonospacedLabel(DriveParameters.port2StatusString(Drive.SECTOR0));
-    private final JTextArea txtMountedImage = GUI.textAreaReadOnly(5,20);
+    private JTextArea txtMountedImage;
 
     private final DriveButton[] driveButtons = new DriveButton[]{
             new DriveButton("A", () -> updateDriveInfo(0)),
@@ -44,8 +45,10 @@ public class DiskGui extends DialogBase {
             new DriveButton("P", () -> updateDriveInfo(15)),
     };
 
-    public DiskGui(JFrame parent, DriveCollection drives) {
+    public DiskGui(JFrame parent, DriveCollection drives, GUI gui) {
         super(parent, DIALOG_TITLE, false);
+        this.gui = gui;
+        this.txtMountedImage = gui.textAreaReadOnly(5, 20);
         this.drives = Objects.requireNonNull(drives);
 
         setResizable(false);
@@ -101,7 +104,7 @@ public class DiskGui extends DialogBase {
         }
 
         // Disk selection - 2 rows of 8 drive buttons
-        JPanel panelDiskSelection = GUI.section("Disk selection", "insets dialog", "[][][][][][][][]", "[][]");
+        JPanel panelDiskSelection = gui.section("Disk selection", "insets dialog", "[][][][][][][][]", "[][]");
         for (int i = 0; i < 8; i++) {
             panelDiskSelection.add(driveButtons[i], i == 7 ? "wrap" : "");
         }
@@ -110,30 +113,30 @@ public class DiskGui extends DialogBase {
         }
 
         // Flags and settings
-        JPanel panelFlags = GUI.section("Flags and settings", "insets dialog", "[][grow]", "[][]");
-        panelFlags.add(GUI.label("Port 1:"));
+        JPanel panelFlags = gui.section("Flags and settings", "insets dialog", "[][grow]", "[][]");
+        panelFlags.add(gui.label("Port 1:"));
         panelFlags.add(lblPort1Status, "wrap");
-        panelFlags.add(GUI.label("Port 2:"));
+        panelFlags.add(gui.label("Port 2:"));
         panelFlags.add(lblPort2Status);
 
         // Position
-        JPanel panelPosition = GUI.section("Position", "insets dialog", "[][grow]", "[][][]");
-        panelPosition.add(GUI.label("Track:"));
+        JPanel panelPosition = gui.section("Position", "insets dialog", "[][grow]", "[][][]");
+        panelPosition.add(gui.label("Track:"));
         panelPosition.add(lblTrack, "wrap");
-        panelPosition.add(GUI.label("Sector:"));
+        panelPosition.add(gui.label("Sector:"));
         panelPosition.add(lblSector, "wrap");
-        panelPosition.add(GUI.label("Offset:"));
+        panelPosition.add(gui.label("Offset:"));
         panelPosition.add(lblOffset);
 
         // Mounted image
         txtMountedImage.setFont(FONT_MONOSPACED);
         txtMountedImage.setBackground(UIManager.getDefaults().getColor("TextField.disabledBackground"));
 
-        JPanel panelImage = GUI.section("Mounted image", "insets dialog, fill", "[grow]", "[grow]");
-        panelImage.add(GUI.scrollPane(txtMountedImage), "grow");
+        JPanel panelImage = gui.section("Mounted image", "insets dialog, fill", "[grow]", "[grow]");
+        panelImage.add(gui.scrollPane(txtMountedImage), "grow");
 
         // Main layout
-        JPanel content = GUI.panel("insets dialog, fill", "[grow]", "[][][grow]");
+        JPanel content = gui.panel("insets dialog, fill", "[grow]", "[][][grow]");
         content.add(panelDiskSelection, "growx, wrap");
         content.add(panelFlags, "split 2, grow");
         content.add(panelPosition, "grow, wrap");

@@ -14,6 +14,7 @@ import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.GUIProvider;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -27,7 +28,7 @@ public class EmulatorPanel extends JPanel {
     private final JPanel statusWindow = new JPanel();
     private final GroupLayout statusWindowLayout = new GroupLayout(statusWindow);
 
-    private final JToolBar toolDebug = GUI.toolBar();
+    private final JToolBar toolDebug = GUIProvider.getGUI().toolBar();
     private final JPanel panelPages;
     private final JScrollPane paneDebug;
 
@@ -62,11 +63,11 @@ public class EmulatorPanel extends JPanel {
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.debugTable = new DebugTableImpl(debugTableModel);
 
-        paneDebug = GUI.scrollPane(debugTable);
+        paneDebug = GUIProvider.getGUI().scrollPane(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         debugTable.setFillsViewportHeight(true);
 
-        GUI.styleTable(debugTable);
+        GUIProvider.getGUI().styleTable(debugTable);
 
         paneDebug.addComponentListener(new ComponentAdapter() {
             @Override
@@ -99,7 +100,7 @@ public class EmulatorPanel extends JPanel {
 
         panelPages = PagesPanel.create(debugTableModel, dialogs);
 
-        JPanel debuggerPanel = GUI.section("Debugger", "insets dialog", "[grow]", "[][grow][]");
+        JPanel debuggerPanel = GUIProvider.getGUI().section("Debugger", "insets dialog", "[grow]", "[][grow][]");
         debuggerPanel.add(toolDebug, "growx, wrap");
         debuggerPanel.add(paneDebug, "grow, wrap");
         debuggerPanel.add(panelPages, "growx");
@@ -136,9 +137,9 @@ public class EmulatorPanel extends JPanel {
             }
         });
 
-        JPanel peripheralPanel = GUI.section("Peripheral devices", "insets dialog", "[grow]", "[grow][]");
-        JScrollPane paneDevices = GUI.scrollPane(lstDevices);
-        GUI.styleList(lstDevices);
+        JPanel peripheralPanel = GUIProvider.getGUI().section("Peripheral devices", "insets dialog", "[grow]", "[grow][]");
+        JScrollPane paneDevices = GUIProvider.getGUI().scrollPane(lstDevices);
+        GUIProvider.getGUI().styleList(lstDevices);
 
         JButton btnShowSettings = new JButton(showDeviceSettingsAction);
         JButton btnShowGUI = new JButton(showDeviceGuiAction);
@@ -147,11 +148,11 @@ public class EmulatorPanel extends JPanel {
         peripheralPanel.add(btnShowSettings, "split 2, sizegroup btns, tag ok");
         peripheralPanel.add(btnShowGUI, "sizegroup btns, tag cancel");
 
-        splitPerDebug = GUI.splitPaneTopToBottom(debuggerPanel, peripheralPanel, 1.0);
+        splitPerDebug = GUIProvider.getGUI().splitPaneTopToBottom(debuggerPanel, peripheralPanel, 1.0);
         splitPerDebug.setDividerLocation(500);
         splitPerDebug.setAutoscrolls(true);
 
-        JSplitPane splitLeftRight = GUI.splitPaneLeftToRight(splitPerDebug, statusWindow, 1.0);
+        JSplitPane splitLeftRight = GUIProvider.getGUI().splitPaneLeftToRight(splitPerDebug, statusWindow, 1.0);
         splitLeftRight.setFocusable(false);
         splitLeftRight.setDividerLocation(1.0);
 
@@ -217,21 +218,21 @@ public class EmulatorPanel extends JPanel {
     }
 
     private void setupDebugToolbar() {
-        toolDebug.add(GUI.toolbarButton(resetAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(resetAction));
         toolDebug.addSeparator();
-        toolDebug.add(GUI.toolbarButton(jumpToBeginningAction));
-        toolDebug.add(GUI.toolbarButton(stepBackAction));
-        toolDebug.add(GUI.toolbarButton(stopAction));
-        toolDebug.add(GUI.toolbarButton(pauseAction));
-        toolDebug.add(GUI.toolbarButton(runAction));
-        toolDebug.add(GUI.toolbarButton(runTimedAction));
-        toolDebug.add(GUI.toolbarButton(stepAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(jumpToBeginningAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(stepBackAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(stopAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(pauseAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(runAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(runTimedAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(stepAction));
         toolDebug.addSeparator();
-        toolDebug.add(GUI.toolbarButton(jumpAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(jumpAction));
         toolDebug.addSeparator();
-        toolDebug.add(GUI.toolbarButton(breakpointAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(breakpointAction));
         toolDebug.addSeparator();
-        toolDebug.add(GUI.toolbarButton(showMemoryAction));
+        toolDebug.add(GUIProvider.getGUI().toolbarButton(showMemoryAction));
     }
 
     private void refreshDebugTable() {

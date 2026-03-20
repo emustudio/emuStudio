@@ -15,6 +15,7 @@ import java.util.Objects;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 public class SettingsDialog extends DialogBase {
+    private final GUI gui;
     private final Dialogs dialogs;
     private final SioUnitSettings settings;
     private final PortListModel statusPortsModel = new PortListModel();
@@ -32,8 +33,9 @@ public class SettingsDialog extends DialogBase {
     private final JSpinner spnInputInterrupt = new JSpinner(new SpinnerNumberModel(0, 0, 7, 1));
     private final JSpinner spnOutputInterrupt = new JSpinner(new SpinnerNumberModel(0, 0, 7, 1));
 
-    public SettingsDialog(JFrame parent, SioUnitSettings settings, Dialogs dialogs) {
+    public SettingsDialog(JFrame parent, SioUnitSettings settings, Dialogs dialogs, GUI gui) {
         super(parent, "88-SIO Settings", true);
+        this.gui = gui;
 
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -59,21 +61,21 @@ public class SettingsDialog extends DialogBase {
     @Override
     protected JComponent initializeComponents() {
         // Tab 1: General settings
-        JPanel panelSettings = GUI.panel("insets dialog", "[grow]", "[][][][18][][18][][][grow]");
+        JPanel panelSettings = gui.panel("insets dialog", "[grow]", "[][][][18][][18][][][grow]");
         panelSettings.add(chkTtyMode, "wrap");
         panelSettings.add(chkAnsiMode, "wrap");
         panelSettings.add(chkToUpperCase, "gaptop 18, wrap");
-        panelSettings.add(GUI.label("Map DEL char to:"), "gaptop 18, split 2");
+        panelSettings.add(gui.label("Map DEL char to:"), "gaptop 18, split 2");
         panelSettings.add(cmbMapDel, "w 157!, wrap");
-        panelSettings.add(GUI.label("Map BACKSPACE char to:"), "split 2");
+        panelSettings.add(gui.label("Map BACKSPACE char to:"), "split 2");
         panelSettings.add(cmbMapBs, "w 157!, wrap");
 
         // Tab 2: Connection with CPU
         JList<String> lstStatusPorts = new JList<>(statusPortsModel);
         JList<String> lstDataPorts = new JList<>(dataPortsModel);
 
-        JPanel panelCpu = GUI.panel("insets dialog", "[grow][grow]", "[][grow]");
-        panelCpu.add(GUI.label("<html>88-SIO has two ports/channels: Status channel and Data channel.  Attach these channels to CPU ports (possibly to multiple ports). Be aware of possible CPU-port conflicts."), "span, growx, h 63!, wrap");
+        JPanel panelCpu = gui.panel("insets dialog", "[grow][grow]", "[][grow]");
+        panelCpu.add(gui.label("<html>88-SIO has two ports/channels: Status channel and Data channel.  Attach these channels to CPU ports (possibly to multiple ports). Be aware of possible CPU-port conflicts."), "span, growx, h 63!, wrap");
         panelCpu.add(createPortChannelSection("Status channel ports", lstStatusPorts, statusPortsModel, "status", "data", dataPortsModel, settings::getDefaultStatusPorts), "grow");
         panelCpu.add(createPortChannelSection("Data channel ports", lstDataPorts, dataPortsModel, "data", "status", statusPortsModel, settings::getDefaultDataPorts), "grow");
 
@@ -85,12 +87,12 @@ public class SettingsDialog extends DialogBase {
             chkInterruptsSupported.setSelected(false);
         });
 
-        JPanel panelInterrupts = GUI.panel("insets dialog", "[grow]", "[][][][][][grow][]");
-        panelInterrupts.add(GUI.label("<html>88-SIO can support input and output interrupts. Input interrupt is triggered when 88-SIO received data from connected device. Output interrupt is triggered when 88-SIO receives data from CPU."), "growx, h 63!, wrap");
+        JPanel panelInterrupts = gui.panel("insets dialog", "[grow]", "[][][][][][grow][]");
+        panelInterrupts.add(gui.label("<html>88-SIO can support input and output interrupts. Input interrupt is triggered when 88-SIO received data from connected device. Output interrupt is triggered when 88-SIO receives data from CPU."), "growx, h 63!, wrap");
         panelInterrupts.add(chkInterruptsSupported, "gaptop 18, wrap");
-        panelInterrupts.add(GUI.label("Input interrupt vector:"), "split 2");
+        panelInterrupts.add(gui.label("Input interrupt vector:"), "split 2");
         panelInterrupts.add(spnInputInterrupt, "wrap");
-        panelInterrupts.add(GUI.label("Output interrupt vector:"), "split 2");
+        panelInterrupts.add(gui.label("Output interrupt vector:"), "split 2");
         panelInterrupts.add(spnOutputInterrupt, "wrap");
         panelInterrupts.add(new JPanel(), "grow, wrap");
         panelInterrupts.add(btnInterruptDefaults, "align right");
@@ -118,7 +120,7 @@ public class SettingsDialog extends DialogBase {
             dispose();
         });
 
-        JPanel content = GUI.panel("insets dialog", "[grow]", "[grow][]");
+        JPanel content = gui.panel("insets dialog", "[grow]", "[grow][]");
         content.add(tabbedPane, "grow, w 460!, wrap");
         content.add(btnSave, "align right");
         return content;
@@ -137,13 +139,13 @@ public class SettingsDialog extends DialogBase {
         btnRemove.addActionListener(e -> removePort(nameAdd, list, model));
         btnDefaults.addActionListener(e -> model.setAll(defaultPorts.get()));
 
-        JPanel buttons = GUI.panel("insets 0, flowy", "[grow]", "[][][grow][]");
+        JPanel buttons = gui.panel("insets 0, flowy", "[grow]", "[][][grow][]");
         buttons.add(btnAdd, "growx");
         buttons.add(btnRemove, "growx");
         buttons.add(new JPanel(), "grow");
         buttons.add(btnDefaults, "growx");
 
-        JPanel section = GUI.section(title, "insets dialog", "[67!,grow][grow]", "[grow]");
+        JPanel section = gui.section(title, "insets dialog", "[67!,grow][grow]", "[grow]");
         section.add(new JScrollPane(list), "grow");
         section.add(buttons, "grow");
         return section;

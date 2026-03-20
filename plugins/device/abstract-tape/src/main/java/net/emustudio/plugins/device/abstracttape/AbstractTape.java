@@ -86,7 +86,7 @@ public class AbstractTape extends AbstractDevice {
         if (guiSupported) {
             if (gui == null) {
                 boolean alwaysOnTop = settings.getBoolean("alwaysOnTop", false);
-                gui = new TapeGui(parent, getTitle(), context, alwaysOnTop, applicationApi.getDialogs());
+                gui = new TapeGui(parent, getTitle(), context, alwaysOnTop, applicationApi.getDialogs(), applicationApi.getGUI());
             }
             gui.setVisible(true);
         }
@@ -130,7 +130,7 @@ public class AbstractTape extends AbstractDevice {
     @Override
     public void showSettings(JFrame parent) {
         if (guiSupported) {
-            new SettingsDialog(parent, settings, applicationApi.getDialogs(), gui, guiTitle).setVisible(true);
+            new SettingsDialog(parent, settings, applicationApi.getDialogs(), gui, guiTitle, applicationApi.getGUI()).setVisible(true);
         }
     }
 

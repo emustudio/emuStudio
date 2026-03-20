@@ -10,11 +10,13 @@ import javax.swing.*;
 import java.util.Objects;
 
 class DisplayGui extends DialogBase {
+    private final GUI gui;
     private final MemoryContext<Byte> memory;
     private final DisplayPanel displayPanel;
 
-    DisplayGui(JFrame parent, MemoryContext<Byte> memory, DisplayPanel displayPanel) {
+    DisplayGui(JFrame parent, MemoryContext<Byte> memory, DisplayPanel displayPanel, GUI gui) {
         super(parent, "SSEM CRT Display", false);
+        this.gui = gui;
 
         this.memory = Objects.requireNonNull(memory);
         this.displayPanel = Objects.requireNonNull(displayPanel);
@@ -48,7 +50,7 @@ class DisplayGui extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel content = GUI.panel("insets dialog", "[432:432:,grow]", "[416:416:,grow]");
+        JPanel content = gui.panel("insets dialog", "[432:432:,grow]", "[416:416:,grow]");
         content.add(new JScrollPane(displayPanel), "grow");
         return content;
     }

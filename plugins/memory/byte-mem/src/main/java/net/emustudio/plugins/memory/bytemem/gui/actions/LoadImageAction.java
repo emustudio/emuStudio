@@ -3,6 +3,7 @@
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.SelectBankAddressDialog;
 import net.emustudio.plugins.memory.bytemem.loaders.Loader;
@@ -25,15 +26,17 @@ public class LoadImageAction extends AbstractAction {
     private final ByteMemoryContext context;
     private final JDialog parent;
     private final Runnable repaint;
+    private final GUI gui;
     private Path recentOpenPath;
 
-    public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint) {
+    public LoadImageAction(Dialogs dialogs, ByteMemoryContext context, JDialog parent, Runnable repaint, GUI gui) {
         super("Load image file...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.context = Objects.requireNonNull(context);
         this.parent = Objects.requireNonNull(parent);
         this.repaint = Objects.requireNonNull(repaint);
+        this.gui = gui;
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         putValue(SHORT_DESCRIPTION, "Load image file...");
@@ -67,7 +70,7 @@ public class LoadImageAction extends AbstractAction {
 
         if (hasMultipleBanks || canSelectAddress) {
             SelectBankAddressDialog dialog = new SelectBankAddressDialog(
-                    parent, hasMultipleBanks, canSelectAddress, dialogs);
+                    parent, hasMultipleBanks, canSelectAddress, dialogs, gui);
             dialog.setVisible(true);
 
             if (dialog.isOk()) {

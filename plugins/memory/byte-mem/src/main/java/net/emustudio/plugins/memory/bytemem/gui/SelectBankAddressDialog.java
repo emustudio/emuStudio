@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 
 public class SelectBankAddressDialog extends DialogBase {
+    private final GUI gui;
     private final RadixUtils ru = RadixUtils.getInstance();
     private final Dialogs dialogs;
     private final boolean selectBank;
@@ -22,8 +23,9 @@ public class SelectBankAddressDialog extends DialogBase {
     private int address;
     private boolean okPressed;
 
-    public SelectBankAddressDialog(JDialog parent, boolean selectBank, boolean selectAddress, Dialogs dialogs) {
+    public SelectBankAddressDialog(JDialog parent, boolean selectBank, boolean selectAddress, Dialogs dialogs, GUI gui) {
         super(parent, "Select address", true);
+        this.gui = gui;
         this.selectBank = selectBank;
         this.selectAddress = selectAddress;
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -45,8 +47,8 @@ public class SelectBankAddressDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JLabel lblBank = GUI.label("Memory bank:");
-        JLabel lblAddress = GUI.label("Address:");
+        JLabel lblBank = gui.label("Memory bank:");
+        JLabel lblAddress = gui.label("Address:");
         JButton btnOK = new JButton("OK");
         btnOK.setDefaultCapable(true);
         btnOK.addActionListener(this::clickBtnOK);
@@ -64,7 +66,7 @@ public class SelectBankAddressDialog extends DialogBase {
             txtAddress.setSelectionEnd(txtAddress.getText().length());
         }
 
-        JPanel content = GUI.panel("insets dialog", "[][128!]", "[][][18][]]");
+        JPanel content = gui.panel("insets dialog", "[][128!]", "[][][18][]]");
         content.add(lblBank);
         content.add(txtBank, "growx, wrap");
         content.add(lblAddress);

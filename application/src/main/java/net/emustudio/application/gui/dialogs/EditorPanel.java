@@ -9,6 +9,7 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.GUIProvider;
 import org.fife.rsta.ui.search.FindDialog;
 import org.fife.rsta.ui.search.ReplaceDialog;
 import org.fife.ui.rtextarea.RTextArea;
@@ -48,7 +49,7 @@ public class EditorPanel extends JPanel {
         this.replaceDialog = new ReplaceDialog(parent, editor);
         this.findDialog = new FindDialog(parent, editor);
 
-        JTextArea compilerOutput = GUI.textAreaReadOnly(3, 20);
+        JTextArea compilerOutput = GUIProvider.getGUI().textAreaReadOnly(3, 20);
         compilerOutput.setFont(FONT_MONOSPACED);
 
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
@@ -60,9 +61,9 @@ public class EditorPanel extends JPanel {
                 computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
-        JScrollPane compilerPane = GUI.scrollPane(compilerOutput);
+        JScrollPane compilerPane = GUIProvider.getGUI().scrollPane(compilerOutput);
 
-        splitSource = GUI.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
+        splitSource = GUIProvider.getGUI().splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
         splitSource.setOneTouchExpandable(true);
 
         JToolBar mainToolBar = setupMainToolbar();
@@ -122,43 +123,43 @@ public class EditorPanel extends JPanel {
     }
 
     private JToolBar setupMainToolbar() {
-        JToolBar mainToolBar = GUI.toolBar();
+        JToolBar mainToolBar = GUIProvider.getGUI().toolBar();
 
-        mainToolBar.add(GUI.toolbarButton(newFileAction));
-        mainToolBar.add(GUI.toolbarButton(openFileAction));
-        mainToolBar.add(GUI.toolbarButton(saveFileAction));
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(newFileAction));
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(openFileAction));
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(saveFileAction));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
                 RTextArea.getAction(RTextArea.UNDO_ACTION),
                 ICON_UNDO,
                 "Undo"
         ));
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
                 RTextArea.getAction(RTextArea.REDO_ACTION),
                 ICON_REDO,
                 "Redo"
         ));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
                 RTextArea.getAction(RTextArea.CUT_ACTION),
                 ICON_CUT,
                 "Cut selection"
         ));
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
                 RTextArea.getAction(RTextArea.COPY_ACTION),
                 ICON_COPY,
                 "Copy selection"
         ));
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
                 RTextArea.getAction(RTextArea.PASTE_ACTION),
                 ICON_PASTE,
                 "Paste from clipboard"
         ));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUI.toolbarButton(findAction));
-        mainToolBar.add(GUI.toolbarButton(replaceAction));
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(findAction));
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(replaceAction));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUI.toolbarButton(compileAction));
+        mainToolBar.add(GUIProvider.getGUI().toolbarButton(compileAction));
 
         return mainToolBar;
     }

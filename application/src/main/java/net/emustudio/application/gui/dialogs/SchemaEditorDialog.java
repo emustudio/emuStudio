@@ -9,8 +9,8 @@ import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.settings.CannotUpdateSettingException;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.GUIProvider;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,51 +114,51 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     protected JComponent initializeComponents() {
 
         groupDraw = new ButtonGroup();
-        JToolBar toolDraw = GUI.toolBar();
-        ToolbarButton btnSave = GUI.toolbarButton(
+        JToolBar toolDraw = GUIProvider.getGUI().toolBar();
+        JButton btnSave = GUIProvider.getGUI().toolbarButton(
                 this::btnSaveActionPerformed,
                 ICON_SAVE,
                 "Save & Close"
         );
         JToolBar.Separator separator1 = new JToolBar.Separator();
-        btnCompiler = GUI.toolbarToggleButton(
+        btnCompiler = GUIProvider.getGUI().toolbarToggleButton(
                 this::btnCompilerActionPerformed,
                 this::btnCompilerItemStateChanged,
                 ICON_COMPILER,
                 "Set compiler"
         );
-        btnCPU = GUI.toolbarToggleButton(
+        btnCPU = GUIProvider.getGUI().toolbarToggleButton(
                 this::btnCPUActionPerformed,
                 this::btnCPUItemStateChanged,
                 ICON_CPU,
                 "Set CPU"
         );
-        btnRAM = GUI.toolbarToggleButton(
+        btnRAM = GUIProvider.getGUI().toolbarToggleButton(
                 this::btnRAMActionPerformed,
                 this::btnRAMItemStateChanged,
                 ICON_MEMORY,
                 "Set operating memory"
         );
-        btnDevice = GUI.toolbarToggleButton(
+        btnDevice = GUIProvider.getGUI().toolbarToggleButton(
                 this::btnDeviceActionPerformed,
                 this::btnDeviceItemStateChanged,
                 ICON_DEVICE,
                 "Add device"
         );
         JToolBar.Separator separator2 = new JToolBar.Separator();
-        btnLine = GUI.toolbarToggleButton(
+        btnLine = GUIProvider.getGUI().toolbarToggleButton(
                 this::btnLineActionPerformed,
                 this::btnLineItemStateChanged,
                 ICON_CONNECTION,
                 "Add connection"
         );
-        btnBidirection = GUI.toolbarToggleButton(
+        btnBidirection = GUIProvider.getGUI().toolbarToggleButton(
                 this::btnBidirectionActionPerformed,
                 ICON_BIDIRECTION,
                 "Bidirectional connection"
         );
         JToolBar.Separator separator3 = new JToolBar.Separator();
-        btnDelete = GUI.toolbarToggleButton(
+        btnDelete = GUIProvider.getGUI().toolbarToggleButton(
                 this::btnDeleteActionPerformed,
                 this::btnDeleteItemStateChanged,
                 ICON_DELETE,
@@ -167,7 +167,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         JToolBar.Separator separator4 = new JToolBar.Separator();
         cmbPlugin = new JComboBox<>();
         JToolBar.Separator separator5 = new JToolBar.Separator();
-        btnUseGrid = GUI.toolbarToggleButton(
+        btnUseGrid = GUIProvider.getGUI().toolbarToggleButton(
                 this::btnUseGridActionPerformed,
                 ICON_GRID,
                 "Set/unset using grid"
@@ -215,7 +215,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         sliderGridGap.setValue(30);
         sliderGridGap.addChangeListener(this::sliderGridGapStateChanged);
 
-        JPanel mainPanel = GUI.panel("insets dialog", "[grow][]", "[][grow]");
+        JPanel mainPanel = GUIProvider.getGUI().panel("insets dialog", "[grow][]", "[][grow]");
         mainPanel.add(toolDraw, "growx, span, wrap");
         mainPanel.add(scrollScheme, "grow");
         mainPanel.add(sliderGridGap, "w 31!, growy");

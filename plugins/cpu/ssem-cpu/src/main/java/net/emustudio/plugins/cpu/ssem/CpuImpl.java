@@ -89,7 +89,10 @@ public class CpuImpl extends AbstractCPU {
             ));
         }
 
-        return new CpuPanel(this, engine, memory);
+        if (applicationApi.getGUI() == null) {
+            return null;
+        }
+        return new CpuPanel(this, engine, memory, applicationApi.getGUI());
     }
 
     @Override

@@ -125,7 +125,7 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void showSettings(JFrame parent) {
         if (isShowSettingsSupported()) {
-            new SettingsDialog(parent, terminalSettings, applicationApi.getDialogs()).setVisible(true);
+            new SettingsDialog(parent, terminalSettings, applicationApi.getDialogs(), applicationApi.getGUI()).setVisible(true);
         }
     }
 
@@ -139,7 +139,7 @@ public class DeviceImpl extends AbstractDevice {
         if (guiIOset) {
             terminalGUI.setVisible(true);
         } else if (terminalSettings.isGuiSupported()) {
-            terminalGUI = new TerminalWindow(parent, display, applicationApi.getDialogs(), (KeyboardGui) keyboard);
+            terminalGUI = new TerminalWindow(parent, display, applicationApi.getDialogs(), (KeyboardGui) keyboard, applicationApi.getGUI());
             GUI.addKeyListenerRecursively(terminalGUI, (KeyboardGui) keyboard);
             terminalGUI.startPainting();
             guiIOset = true;

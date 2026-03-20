@@ -80,7 +80,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (!guiIOset) {
-                this.gui = new DisplayWindow(parent, ula, applicationApi.getDialogs());
+                this.gui = new DisplayWindow(parent, ula, applicationApi.getDialogs(), applicationApi.getGUI());
                 this.gui.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosed(WindowEvent e) {

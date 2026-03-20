@@ -6,7 +6,6 @@ import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
-import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.AudioSink;
 import net.emustudio.plugins.device.zxspectrum.ula.recording.RecordingSession;
@@ -30,6 +29,7 @@ import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.DISPL
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.ZX_48K_CPU_FREQUENCY;
 
 public class DisplayWindow extends DialogBase {
+    private final GUI gui;
     public final static int MARGIN = 30;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DisplayWindow.class);
@@ -40,13 +40,14 @@ public class DisplayWindow extends DialogBase {
     private final ULA ula;
     private final Dialogs dialogs;
     private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(0);
-    private ToolbarButton btnRecord;
+    private JButton btnRecord;
 
     private RecordingSession recordingSession;
     private Path lastRecordingDirectory = Path.of(System.getProperty("user.dir"));
 
-    public DisplayWindow(JFrame parent, ULA ula, Dialogs dialogs) {
+    public DisplayWindow(JFrame parent, ULA ula, Dialogs dialogs, GUI gui) {
         super(parent, "ZX Spectrum48K", false);
+        this.gui = gui;
         this.ula = Objects.requireNonNull(ula);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.canvas = new DisplayCanvas(ula, keyboardCanvas);
@@ -102,10 +103,10 @@ public class DisplayWindow extends DialogBase {
                 ula::setAudioVolumePercent
         );
 
-        ToolbarButton btnKeyboard = createToolbarButton(ToolbarIcons.keyboard(), "Keyboard opacity", e ->
+        JButton btnKeyboard = createToolbarButton(ToolbarIcons.keyboard(), "Keyboard opacity", e ->
                 togglePopup((AbstractButton) e.getSource(), keyboardPopup, volumePopup)
         );
-        ToolbarButton btnVolume = createToolbarButton(ToolbarIcons.volume(), "Beeper volume", e ->
+        JButton btnVolume = createToolbarButton(ToolbarIcons.volume(), "Beeper volume", e ->
                 togglePopup((AbstractButton) e.getSource(), volumePopup, keyboardPopup)
         );
         btnRecord = createToolbarButton(ToolbarIcons.record(), "Start video recording", e -> {
@@ -118,16 +119,16 @@ public class DisplayWindow extends DialogBase {
             }
         });
 
-        JToolBar toolbar = GUI.toolBar();
+        JToolBar toolbar = gui.toolBar();
         toolbar.add(btnKeyboard);
         toolbar.add(btnVolume);
         toolbar.add(btnRecord);
 
-        JPanel bottomBar = GUI.panel("insets 0", "[pref!]push", "[]");
+        JPanel bottomBar = gui.panel("insets 0", "[pref!]push", "[]");
         bottomBar.setBorder(new BevelBorder(BevelBorder.LOWERED));
         bottomBar.add(toolbar);
 
-        JPanel content = GUI.panel("insets 0", "[grow]", "[grow]0[40!]");
+        JPanel content = gui.panel("insets 0", "[grow]", "[grow]0[40!]");
         content.add(canvas, "grow, wrap");
         content.add(bottomBar, "growx");
         return content;
@@ -208,10 +209,10 @@ public class DisplayWindow extends DialogBase {
         JSlider slider = new JSlider(JSlider.VERTICAL, 0, 100, initialValue);
         slider.setFocusable(false);
 
-        JLabel titleLabel = GUI.label(title);
+        JLabel titleLabel = gui.label(title);
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JLabel valueLabel = GUI.label(initialValue + "%");
+        JLabel valueLabel = gui.label(initialValue + "%");
         valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         ChangeListener changeListener = e -> {
@@ -221,7 +222,7 @@ public class DisplayWindow extends DialogBase {
         };
         slider.addChangeListener(changeListener);
 
-        JPanel panel = GUI.panel("insets 8", "[grow]", "[]6[grow]6[]");
+        JPanel panel = gui.panel("insets 8", "[grow]", "[]6[grow]6[]");
         panel.add(titleLabel, "growx, wrap");
         panel.add(slider, "align center, wrap");
         panel.add(valueLabel, "growx");
@@ -231,7 +232,7 @@ public class DisplayWindow extends DialogBase {
         return popup;
     }
 
-    private ToolbarButton createToolbarButton(Icon icon, String tooltip, java.util.function.Consumer<ActionEvent> action) {
+    private JButton createToolbarButton(Icon icon, String tooltip, java.util.function.Consumer<ActionEvent> action) {
         Action toolbarAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -240,7 +241,7 @@ public class DisplayWindow extends DialogBase {
         };
         toolbarAction.putValue(SMALL_ICON, icon);
         toolbarAction.putValue(SHORT_DESCRIPTION, tooltip);
-        return GUI.toolbarButton(toolbarAction);
+        return gui.toolbarButton(toolbarAction);
     }
 
     private void togglePopup(AbstractButton button, JPopupMenu popup, JPopupMenu otherPopup) {

@@ -15,6 +15,7 @@ import java.util.Objects;
 
 
 public class SettingsDialog extends DialogBase {
+    private final GUI gui;
     private final TerminalSettings settings;
     private final Dialogs dialogs;
     private final JTextField txtInputFile = new JTextField();
@@ -23,8 +24,9 @@ public class SettingsDialog extends DialogBase {
     private final JTextField txtRows = new JTextField();
     private final JSpinner spnInputDelay = new JSpinner();
 
-    public SettingsDialog(JFrame parent, TerminalSettings settings, Dialogs dialogs) {
+    public SettingsDialog(JFrame parent, TerminalSettings settings, Dialogs dialogs, GUI gui) {
         super(parent, "VT100 Terminal Settings", true);
+        this.gui = gui;
 
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -52,37 +54,37 @@ public class SettingsDialog extends DialogBase {
         btnColumnsDefault.addActionListener(e -> txtColumns.setText(String.valueOf(TerminalSettings.DEFAULT_COLUMNS)));
         btnRowsDefault.addActionListener(e -> txtRows.setText(String.valueOf(TerminalSettings.DEFAULT_ROWS)));
 
-        JPanel panelSize = GUI.section("Terminal size", "insets dialog", "[][64!][]", "[][][]");
-        panelSize.add(GUI.label("Terminal size changes will clear current content."), "span, wrap");
-        panelSize.add(GUI.label("Columns:"));
+        JPanel panelSize = gui.section("Terminal size", "insets dialog", "[][64!][]", "[][][]");
+        panelSize.add(gui.label("Terminal size changes will clear current content."), "span, wrap");
+        panelSize.add(gui.label("Columns:"));
         panelSize.add(txtColumns, "growx");
         panelSize.add(btnColumnsDefault, "wrap");
-        panelSize.add(GUI.label("Rows:"));
+        panelSize.add(gui.label("Rows:"));
         panelSize.add(txtRows, "growx");
         panelSize.add(btnRowsDefault, "wrap");
 
         // Redirect I/O section
-        JButton btnBrowseInputFile = GUI.buttonBrowseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFile.setText(p.toString()));
-        JButton btnBrowseOutputFile = GUI.buttonBrowseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFile.setText(p.toString()));
+        JButton btnBrowseInputFile = gui.buttonBrowseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFile.setText(p.toString()));
+        JButton btnBrowseOutputFile = gui.buttonBrowseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFile.setText(p.toString()));
 
-        JPanel panelRedirectIO = GUI.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");
-        panelRedirectIO.add(GUI.label("In No GUI mode, input/output will be redirected to files."), "span, h 30!, wrap");
-        panelRedirectIO.add(GUI.label("Input file:"));
+        JPanel panelRedirectIO = gui.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");
+        panelRedirectIO.add(gui.label("In No GUI mode, input/output will be redirected to files."), "span, h 30!, wrap");
+        panelRedirectIO.add(gui.label("Input file:"));
         panelRedirectIO.add(txtInputFile, "growx");
         panelRedirectIO.add(btnBrowseInputFile, "wrap");
-        panelRedirectIO.add(GUI.label("Output file:"));
+        panelRedirectIO.add(gui.label("Output file:"));
         panelRedirectIO.add(txtOutputFile, "growx");
         panelRedirectIO.add(btnBrowseOutputFile, "wrap");
-        panelRedirectIO.add(GUI.label("Input delay:"));
+        panelRedirectIO.add(gui.label("Input delay:"));
         panelRedirectIO.add(spnInputDelay, "split 2, w 64!");
-        panelRedirectIO.add(GUI.label("ms"), "wrap");
+        panelRedirectIO.add(gui.label("ms"), "wrap");
 
         // Save button
         JButton btnSave = new JButton("Save");
         btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
         btnSave.addActionListener(this::btnSaveActionPerformed);
 
-        JPanel content = GUI.panel("insets dialog", "[grow]", "[][][]");
+        JPanel content = gui.panel("insets dialog", "[grow]", "[][][]");
         content.add(panelSize, "growx, wrap");
         content.add(panelRedirectIO, "growx, wrap");
         content.add(btnSave, "align right");

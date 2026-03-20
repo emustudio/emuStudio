@@ -9,10 +9,12 @@ import net.emustudio.plugins.cpu.brainduck.EmulatorEngine;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import javax.swing.*;
+import java.awt.*;
 
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
+    private final GUI gui;
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();
     private final MemoryTableModel tableModel;
     private final Byte[] memory;
@@ -26,7 +28,8 @@ public class StatusPanel extends JPanel {
     private final JTextField txtMemP = readOnlyField("0");
     private final JTextField txtP = readOnlyField("0");
 
-    public StatusPanel(ByteMemoryContext memory, CpuImpl cpu) {
+    public StatusPanel(ByteMemoryContext memory, CpuImpl cpu, GUI gui) {
+        this.gui = gui;
         this.memory = memory.getRawMemory()[0];
         this.cpu = cpu.getEngine();
         this.tableModel = new MemoryTableModel(this.memory);
@@ -43,39 +46,41 @@ public class StatusPanel extends JPanel {
         lblTime.setFont(lblTime.getFont().deriveFont(lblTime.getFont().getStyle() | java.awt.Font.BOLD));
         lblLoopLevel.setFont(lblLoopLevel.getFont().deriveFont(lblLoopLevel.getFont().getStyle() | java.awt.Font.BOLD));
 
-        JPanel panelInternal = GUI.section("Internal state", "insets dialog", "[][grow]6[]", "[][][]6[][][]");
-        panelInternal.add(GUI.label("IP:"));
+        JPanel panelInternal = gui.section("Internal state", "insets dialog", "[][grow]6[]", "[][][]6[][][]");
+        panelInternal.add(gui.label("IP:"));
         panelInternal.add(txtIP, "growx");
-        panelInternal.add(GUI.label("h"), "wrap");
-        panelInternal.add(GUI.label("P:"));
+        panelInternal.add(gui.label("h"), "wrap");
+        panelInternal.add(gui.label("P:"));
         panelInternal.add(txtP, "growx");
-        panelInternal.add(GUI.label("h"), "wrap");
-        panelInternal.add(GUI.label("*P:"));
+        panelInternal.add(gui.label("h"), "wrap");
+        panelInternal.add(gui.label("*P:"));
         panelInternal.add(txtMemP, "growx");
-        panelInternal.add(GUI.label("h"), "wrap");
+        panelInternal.add(gui.label("h"), "wrap");
         panelInternal.add(new JSeparator(), "span, growx, h 2!, wrap");
-        panelInternal.add(GUI.label("Execution time:"));
+        panelInternal.add(gui.label("Execution time:"));
         panelInternal.add(lblTime, "span, wrap");
-        panelInternal.add(GUI.label("Loop level:"));
+        panelInternal.add(gui.label("Loop level:"));
         panelInternal.add(lblLoopLevel, "span");
 
         lblRunState.setFont(FONT_MONOSPACED_BIG_BOLD);
         lblRunState.setForeground(CPU_RUN_STATE_COLOR);
         lblRunState.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JPanel panelRunState = GUI.section("Run state", "insets dialog", "[grow]", "[]");
+        JPanel panelRunState = gui.section("Run state", "insets dialog", "[grow]", "[]");
         panelRunState.add(lblRunState, "growx");
 
         tblMemory.setFont(FONT_MONOSPACED);
         tblMemory.setRowSelectionAllowed(false);
 
-        JPanel panelMemory = GUI.section("Memory view", "insets dialog", "[grow]", "[grow]");
+        JPanel panelMemory = gui.section("Memory view", "insets dialog", "[grow]", "[grow]");
         panelMemory.add(new JScrollPane(tblMemory), "grow");
 
-        setLayout(new net.miginfocom.swing.MigLayout("insets dialog", "[grow]", "[][][]"));
-        add(panelInternal, "growx, wrap");
-        add(panelRunState, "growx, wrap");
-        add(panelMemory, "growx");
+        setLayout(new BorderLayout());
+        JPanel content = gui.panel("insets dialog", "[grow]", "[][][]");
+        content.add(panelInternal, "growx, wrap");
+        content.add(panelRunState, "growx, wrap");
+        content.add(panelMemory, "growx");
+        add(content, BorderLayout.CENTER);
     }
 
     private class CPUStatusListener implements CPU.CPUListener {

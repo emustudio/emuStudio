@@ -3,6 +3,7 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.ApplicationApiImpl;
+import net.emustudio.application.gui.GUIProvider;
 import net.emustudio.application.gui.framework.GuiDialogsImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
@@ -53,7 +54,7 @@ public class Utils {
             ContextPoolImpl contextPool,
             DebugTableModelImpl debugTableModel
     ) throws InvalidPluginException, IOException, PluginInitializationException {
-        ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs);
+        ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs, GUIProvider.getGUI());
 
         VirtualComputer computer = VirtualComputer.create(computerConfig, applicationApi, appConfig);
         computer.initialize(contextPool);

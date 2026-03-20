@@ -5,6 +5,7 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.GUIProvider;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
@@ -39,14 +40,14 @@ public class BreakpointDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.panelHorizontal();
+        JPanel panel = GUIProvider.getGUI().panelHorizontal();
 
-        panel.add(GUI.label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
+        panel.add(GUIProvider.getGUI().label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
 
         txtAddress = new JTextField("0", 20);
         panel.add(txtAddress, "growx, wrap, gapbottom 10");
 
-        JPanel buttonPanel = GUI.panel("insets dialog", "[grow, right]", "[]");
+        JPanel buttonPanel = GUIProvider.getGUI().panel("insets dialog", "[grow, right]", "[]");
         JButton btnUnset = new JButton("Unset");
         btnUnset.addActionListener(e -> btnUnsetActionPerformed());
         JButton btnSet = new JButton("Set");

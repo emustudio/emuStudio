@@ -9,17 +9,20 @@ import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 
 import javax.swing.*;
+import java.awt.*;
 
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class RamStatusPanel extends JPanel {
+    private final GUI gui;
     private final JLabel lblStatus = new JLabel("breakpoint");
     private final JTextField txtIP = readOnlyField("0");
     private final JTextField txtInput = readOnlyField("N/A");
     private final JTextField txtOutput = readOnlyField("N/A");
     private final JTextField txtR0 = readOnlyField("0");
 
-    public RamStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output) {
+    public RamStatusPanel(final CpuImpl cpu, AbstractTapeContext input, AbstractTapeContext output, GUI gui) {
+        this.gui = gui;
         initComponents();
 
         cpu.addCPUListener(new CPU.CPUListener() {
@@ -44,29 +47,31 @@ public class RamStatusPanel extends JPanel {
     }
 
     private void initComponents() {
-        JPanel panelInternalState = GUI.section("Internal state", "insets dialog", "[][grow]", "[][]");
-        panelInternalState.add(GUI.label("R0"));
+        JPanel panelInternalState = gui.section("Internal state", "insets dialog", "[][grow]", "[][]");
+        panelInternalState.add(gui.label("R0"));
         panelInternalState.add(txtR0, "growx, wrap");
-        panelInternalState.add(GUI.label("IP"));
+        panelInternalState.add(gui.label("IP"));
         panelInternalState.add(txtIP, "growx");
 
-        JPanel panelIO = GUI.section("Input / output", "insets dialog", "[][grow]", "[][]");
-        panelIO.add(GUI.label("Next Input:"));
+        JPanel panelIO = gui.section("Input / output", "insets dialog", "[][grow]", "[][]");
+        panelIO.add(gui.label("Next Input:"));
         panelIO.add(txtInput, "growx, wrap");
-        panelIO.add(GUI.label("Last Output:"));
+        panelIO.add(gui.label("Last Output:"));
         panelIO.add(txtOutput, "growx");
 
         lblStatus.setFont(FONT_MONOSPACED_BIG_BOLD);
         lblStatus.setForeground(CPU_RUN_STATE_COLOR);
         lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JPanel panelRunState = GUI.section("Run state", "insets dialog", "[grow]", "[]");
+        JPanel panelRunState = gui.section("Run state", "insets dialog", "[grow]", "[]");
         panelRunState.add(lblStatus, "growx");
 
-        setLayout(new net.miginfocom.swing.MigLayout("insets dialog", "[grow]", "[][][]"));
-        add(panelInternalState, "growx, wrap");
-        add(panelIO, "growx, wrap");
-        add(panelRunState, "growx");
+        setLayout(new BorderLayout());
+        JPanel content = gui.panel("insets dialog", "[grow]", "[][][]");
+        content.add(panelInternalState, "growx, wrap");
+        content.add(panelIO, "growx, wrap");
+        content.add(panelRunState, "growx");
+        add(content, BorderLayout.CENTER);
     }
 
     private static JTextField readOnlyField(String text) {

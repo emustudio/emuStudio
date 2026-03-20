@@ -18,6 +18,7 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.GUIProvider;
 import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
@@ -139,37 +140,37 @@ public class StudioFrame extends JFrame {
         JMenu mnuHelp = new JMenu();
 
         mnuFile.setText("File");
-        mnuFile.add(GUI.menuItem(editorPanel.getNewFileAction()));
-        mnuFile.add(GUI.menuItem(editorPanel.getOpenFileAction()));
+        mnuFile.add(GUIProvider.getGUI().menuItem(editorPanel.getNewFileAction()));
+        mnuFile.add(GUIProvider.getGUI().menuItem(editorPanel.getOpenFileAction()));
         mnuFile.addSeparator();
-        mnuFile.add(GUI.menuItem(editorPanel.getSaveFileAction()));
+        mnuFile.add(GUIProvider.getGUI().menuItem(editorPanel.getSaveFileAction()));
         mnuFile.add(saveFileAsAction);
         mnuFile.addSeparator();
-        mnuFile.add(GUI.menuItem(exitAction));
+        mnuFile.add(GUIProvider.getGUI().menuItem(exitAction));
         mainMenuBar.add(mnuFile);
 
         mnuEdit.setText("Edit");
-        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
-        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
+        mnuEdit.add(GUIProvider.getGUI().menuItem(RTextArea.getAction(RTextArea.UNDO_ACTION)));
+        mnuEdit.add(GUIProvider.getGUI().menuItem(RTextArea.getAction(RTextArea.REDO_ACTION)));
         mnuEdit.addSeparator();
-        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
-        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
-        mnuEdit.add(GUI.menuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
+        mnuEdit.add(GUIProvider.getGUI().menuItem(RTextArea.getAction(RTextArea.CUT_ACTION)));
+        mnuEdit.add(GUIProvider.getGUI().menuItem(RTextArea.getAction(RTextArea.COPY_ACTION)));
+        mnuEdit.add(GUIProvider.getGUI().menuItem(RTextArea.getAction(RTextArea.PASTE_ACTION)));
         mnuEdit.addSeparator();
-        mnuEdit.add(GUI.menuItem(editorPanel.getFindAction()));
-        mnuEdit.add(GUI.menuItem(editorPanel.getReplaceAction()));
-        mnuEdit.add(GUI.menuItem(findNextAction));
-        mnuEdit.add(GUI.menuItem(findPreviousAction));
+        mnuEdit.add(GUIProvider.getGUI().menuItem(editorPanel.getFindAction()));
+        mnuEdit.add(GUIProvider.getGUI().menuItem(editorPanel.getReplaceAction()));
+        mnuEdit.add(GUIProvider.getGUI().menuItem(findNextAction));
+        mnuEdit.add(GUIProvider.getGUI().menuItem(findPreviousAction));
         mainMenuBar.add(mnuEdit);
 
         mnuProject.setText("Project");
-        mnuProject.add(GUI.menuItem(editorPanel.getCompileAction()));
-        mnuProject.add(GUI.menuItem(viewComputerAction));
-        mnuProject.add(GUI.menuItem(compilerSettingsAction));
+        mnuProject.add(GUIProvider.getGUI().menuItem(editorPanel.getCompileAction()));
+        mnuProject.add(GUIProvider.getGUI().menuItem(viewComputerAction));
+        mnuProject.add(GUIProvider.getGUI().menuItem(compilerSettingsAction));
         mainMenuBar.add(mnuProject);
 
         mnuHelp.setText("Help");
-        mnuHelp.add(GUI.menuItem(aboutAction));
+        mnuHelp.add(GUIProvider.getGUI().menuItem(aboutAction));
         mainMenuBar.add(mnuHelp);
         return mainMenuBar;
     }

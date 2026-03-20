@@ -4,6 +4,8 @@ package net.emustudio.plugins.memory.bytemem.gui.actions;
 
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
+
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
 import net.emustudio.plugins.memory.bytemem.MemoryImpl;
 import net.emustudio.plugins.memory.bytemem.gui.SettingsDialog;
@@ -23,9 +25,10 @@ public class SettingsAction extends AbstractAction {
     private final MemoryImpl memory;
     private final MemoryTable table;
     private final PluginSettings settings;
+    private final GUI gui;
 
     public SettingsAction(Dialogs dialogs, JDialog parent, MemoryImpl memory, MemoryContextImpl context,
-                          MemoryTable table, PluginSettings settings) {
+                          MemoryTable table, PluginSettings settings, GUI gui) {
         super("Erase memory", loadIcon(ICON_FILE));
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
@@ -33,10 +36,11 @@ public class SettingsAction extends AbstractAction {
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.parent = Objects.requireNonNull(parent);
+        this.gui = gui;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new SettingsDialog(parent, memory, context, table, settings, dialogs).setVisible(true);
+        new SettingsDialog(parent, memory, context, table, settings, dialogs, gui).setVisible(true);
     }
 }

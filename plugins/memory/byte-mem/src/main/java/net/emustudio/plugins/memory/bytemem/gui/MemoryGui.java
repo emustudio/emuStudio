@@ -20,11 +20,12 @@ import static javax.swing.Action.SHORT_DESCRIPTION;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 
 public class MemoryGui extends DialogBase {
+    private final GUI gui;
 
     private final MemoryTable table;
     private final MemoryTableModel tableModel;
     private final JLabel lblBanksCount = new JLabel("0");
-    private final JLabel lblPageCount = GUI.labelBold("0");
+    private JLabel lblPageCount;
     private final JScrollPane paneMemory = new JScrollPane();
     private final JSpinner spnBank = new JSpinner();
     private final JSpinner spnPage = new JSpinner();
@@ -43,8 +44,10 @@ public class MemoryGui extends DialogBase {
     private final EraseMemoryAction eraseMemoryAction;
     private final SettingsAction settingsAction;
 
-    public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs) {
+    public MemoryGui(JFrame parent, MemoryImpl memory, MemoryContextImpl context, PluginSettings settings, Dialogs dialogs, GUI gui) {
         super(parent, "Byte Operating Memory", false);
+        this.gui = gui;
+        this.lblPageCount = gui.labelBold("0");
 
         Objects.requireNonNull(context);
         Objects.requireNonNull(memory);
@@ -57,11 +60,11 @@ public class MemoryGui extends DialogBase {
         this.loadImageAction = new LoadImageAction(dialogs, context, this, () -> {
             table.revalidate();
             table.repaint();
-        });
+        }, gui);
         this.dumpMemoryAction = new DumpMemoryAction(dialogs, context);
         this.gotoAddressAction = new GotoAddressAction(dialogs, context, this::setPageFromAddress);
         this.findSequenceAction = new FindSequenceAction(dialogs, this::setPageFromAddress, tableModel,
-                this::getCurrentAddress, this);
+                this::getCurrentAddress, this, gui);
 
         AsciiModeAction asciiModeAction = new AsciiModeAction(tableModel, btnAsciiMode);
         btnAsciiMode.setAction(asciiModeAction);
@@ -70,7 +73,7 @@ public class MemoryGui extends DialogBase {
         btnAsciiMode.setFocusable(false);
 
         this.eraseMemoryAction = new EraseMemoryAction(tableModel, context);
-        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings);
+        this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui);
 
         tableModel.addTableModelListener(e -> spnPage.getModel().setValue(tableModel.getPage()));
         lblPageCount.setText(String.valueOf(tableModel.getPageCount()));
@@ -120,58 +123,58 @@ public class MemoryGui extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JToolBar toolBar = GUI.toolBar();
-        toolBar.add(GUI.toolbarButton(loadImageAction));
-        toolBar.add(GUI.toolbarButton(dumpMemoryAction));
+        JToolBar toolBar = gui.toolBar();
+        toolBar.add(gui.toolbarButton(loadImageAction));
+        toolBar.add(gui.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
-        toolBar.add(GUI.toolbarButton(gotoAddressAction));
-        toolBar.add(GUI.toolbarButton(findSequenceAction));
+        toolBar.add(gui.toolbarButton(gotoAddressAction));
+        toolBar.add(gui.toolbarButton(findSequenceAction));
         toolBar.addSeparator();
         toolBar.add(btnAsciiMode);
         toolBar.addSeparator();
-        toolBar.add(GUI.toolbarButton(eraseMemoryAction));
+        toolBar.add(gui.toolbarButton(eraseMemoryAction));
         toolBar.addSeparator();
-        toolBar.add(GUI.toolbarButton(settingsAction));
+        toolBar.add(gui.toolbarButton(settingsAction));
 
         // Memory control section
-        JPanel panelControl = GUI.section("Memory control", "insets dialog", "[]6[75!]6[]6[]54[]6[75!]6[]6[]push", "[]");
-        panelControl.add(GUI.label("Page number:"));
+        JPanel panelControl = gui.section("Memory control", "insets dialog", "[]6[75!]6[]6[]54[]6[75!]6[]6[]push", "[]");
+        panelControl.add(gui.label("Page number:"));
         panelControl.add(spnPage);
-        panelControl.add(GUI.label("/"));
+        panelControl.add(gui.label("/"));
         panelControl.add(lblPageCount);
-        panelControl.add(GUI.label("Memory bank:"));
+        panelControl.add(gui.label("Memory bank:"));
         panelControl.add(spnBank);
-        panelControl.add(GUI.label("/"));
+        panelControl.add(gui.label("/"));
         panelControl.add(lblBanksCount);
 
         // Selected value section
-        JPanel panelValue = GUI.section("Selected value", "insets dialog", "[][80!]20[][80!][][80!][]", "[][]");
-        panelValue.add(GUI.label("Address:"));
+        JPanel panelValue = gui.section("Selected value", "insets dialog", "[][80!]20[][80!][][80!][]", "[][]");
+        panelValue.add(gui.label("Address:"));
         panelValue.add(txtAddress);
-        panelValue.add(GUI.label("Value:"));
+        panelValue.add(gui.label("Value:"));
         panelValue.add(txtValueDec);
-        panelValue.add(GUI.label("(dec)"));
+        panelValue.add(gui.label("(dec)"));
         panelValue.add(txtValueOct);
-        panelValue.add(GUI.label("(oct)"), "wrap");
-        panelValue.add(GUI.label("Symbol:"));
+        panelValue.add(gui.label("(oct)"), "wrap");
+        panelValue.add(gui.label("Symbol:"));
         panelValue.add(txtChar);
-        panelValue.add(GUI.label(""));
+        panelValue.add(gui.label(""));
         panelValue.add(txtValueHex);
-        panelValue.add(GUI.label("(hex)"));
+        panelValue.add(gui.label("(hex)"));
         panelValue.add(txtValueBin);
-        panelValue.add(GUI.label("(bin)"));
+        panelValue.add(gui.label("(bin)"));
 
-        JPanel bottomPanel = GUI.panel("insets dialog", "[grow]", "[]6[]");
+        JPanel bottomPanel = gui.panel("insets dialog", "[grow]", "[]6[]");
         bottomPanel.add(panelControl, "growx, wrap");
         bottomPanel.add(panelValue, "growx");
 
         paneMemory.setViewportView(table);
         paneMemory.setMinimumSize(new Dimension(768, 300));
 
-        JSplitPane splitPane = GUI.splitPaneTopToBottom(paneMemory, bottomPanel, 1.0);
+        JSplitPane splitPane = gui.splitPaneTopToBottom(paneMemory, bottomPanel, 1.0);
         splitPane.setDividerLocation(390);
 
-        JPanel content = GUI.panel("insets 0", "[grow]", "[]6[grow]");
+        JPanel content = gui.panel("insets 0", "[grow]", "[]6[grow]");
         content.add(toolBar, "growx, wrap");
         content.add(splitPane, "grow");
 

@@ -12,6 +12,7 @@ import javax.swing.*;
 import java.util.function.Consumer;
 
 public class FindSequenceDialog extends DialogBase {
+    private final GUI gui;
     private final PerformFindSequenceAction performFindSequenceAction;
     private final JRadioButton radioCurrentPage = new JRadioButton();
     private final JRadioButton radioPlainText = new JRadioButton();
@@ -19,8 +20,9 @@ public class FindSequenceDialog extends DialogBase {
     private final JTextField txtSequence = new JTextField();
 
     public FindSequenceDialog(Dialogs dialogs, JDialog parent, MemoryTableModel tableModel, int currentAddress,
-                              Consumer<Integer> setFoundAddress) {
+                              Consumer<Integer> setFoundAddress, GUI gui) {
         super(parent, "Find sequence", true);
+        this.gui = gui;
 
         this.performFindSequenceAction = new PerformFindSequenceAction(
                 dialogs, this::dispose, tableModel, setFoundAddress, radioCurrentPage::isSelected,
@@ -54,17 +56,17 @@ public class FindSequenceDialog extends DialogBase {
         radioSpecificPosition.setText("Specific position:");
         txtPosition.setText("0");
 
-        JPanel panelSequence = GUI.section("Sequence to find", "insets dialog", "[grow]", "[25!]unrel[][]");
+        JPanel panelSequence = gui.section("Sequence to find", "insets dialog", "[grow]", "[25!]unrel[][]");
         panelSequence.add(txtSequence, "growx, wrap");
         panelSequence.add(radioPlainText, "wrap");
         panelSequence.add(radioBytes);
 
-        JPanel panelPosition = GUI.section("Start position", "insets dialog", "[grow]", "[][][25!]");
+        JPanel panelPosition = gui.section("Start position", "insets dialog", "[grow]", "[][][25!]");
         panelPosition.add(radioCurrentPage, "wrap");
         panelPosition.add(radioSpecificPosition, "wrap");
         panelPosition.add(txtPosition, "gapleft 21, growx");
 
-        JPanel content = GUI.panel("insets dialog", "[grow]", "[]6[]unrel[]");
+        JPanel content = gui.panel("insets dialog", "[grow]", "[]6[]unrel[]");
         content.add(panelSequence, "growx, wrap");
         content.add(panelPosition, "growx, wrap");
         content.add(btnFind, "w 92!, align right");

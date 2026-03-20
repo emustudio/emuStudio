@@ -86,7 +86,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (!guiIOset) {
-                this.gui = new TapePlayerGui(parent, applicationApi.getDialogs(), controller);
+                this.gui = new TapePlayerGui(parent, applicationApi.getDialogs(), controller, applicationApi.getGUI());
                 guiIOset = true;
                 this.cassetteListener.setGui(gui);
             }

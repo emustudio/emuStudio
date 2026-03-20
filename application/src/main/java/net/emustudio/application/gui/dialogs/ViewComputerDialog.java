@@ -11,6 +11,7 @@ import net.emustudio.emulib.plugins.Plugin;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.GUIProvider;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,17 +83,17 @@ public class ViewComputerDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        lblComputerName = GUI.labelTitle("computer_name");
+        lblComputerName = GUIProvider.getGUI().labelTitle("computer_name");
         lblComputerName.setHorizontalAlignment(SwingConstants.CENTER);
 
-        lblSelectDevice = GUI.label("Select device:");
+        lblSelectDevice = GUIProvider.getGUI().label("Select device:");
         cmbDevice = new JComboBox<>();
-        lblName = GUI.labelBold("");
-        lblFileName = GUI.label("");
-        lblVersion = GUI.label("");
-        lblCopyright = GUI.label("");
+        lblName = GUIProvider.getGUI().labelBold("");
+        lblFileName = GUIProvider.getGUI().label("");
+        lblVersion = GUIProvider.getGUI().label("");
+        lblCopyright = GUIProvider.getGUI().label("");
 
-        txtDescription = GUI.textAreaReadOnly(5, 20);
+        txtDescription = GUIProvider.getGUI().textAreaReadOnly(5, 20);
 
         cmbDevice.addActionListener(e -> {
             int index = cmbDevice.getSelectedIndex();
@@ -110,9 +111,9 @@ public class ViewComputerDialog extends DialogBase {
         });
 
         // Info tab toolbar
-        JToolBar infoToolbar = GUI.toolBarVertical();
+        JToolBar infoToolbar = GUIProvider.getGUI().toolBarVertical();
 
-        JToggleButton btnCompiler = GUI.toolbarToggleButton(e -> {
+        JToggleButton btnCompiler = GUIProvider.getGUI().toolbarToggleButton(e -> {
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
             showPluginInfo(computer.getCompiler(), computer.getComputerConfig().getCompiler());
@@ -123,7 +124,7 @@ public class ViewComputerDialog extends DialogBase {
         pluginButtonGroup.add(btnCompiler);
         infoToolbar.add(btnCompiler);
 
-        JToggleButton btnCPU = GUI.toolbarToggleButton(e -> {
+        JToggleButton btnCPU = GUIProvider.getGUI().toolbarToggleButton(e -> {
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
             showPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
@@ -134,7 +135,7 @@ public class ViewComputerDialog extends DialogBase {
         pluginButtonGroup.add(btnCPU);
         infoToolbar.add(btnCPU);
 
-        JToggleButton btnMemory = GUI.toolbarToggleButton(e -> {
+        JToggleButton btnMemory = GUIProvider.getGUI().toolbarToggleButton(e -> {
                     lblSelectDevice.setVisible(false);
                     cmbDevice.setVisible(false);
                     showPluginInfo(computer.getMemory(), computer.getComputerConfig().getMemory());
@@ -145,7 +146,7 @@ public class ViewComputerDialog extends DialogBase {
         pluginButtonGroup.add(btnMemory);
         infoToolbar.add(btnMemory);
 
-        JToggleButton btnDevice = GUI.toolbarToggleButton(e -> {
+        JToggleButton btnDevice = GUIProvider.getGUI().toolbarToggleButton(e -> {
                     lblSelectDevice.setVisible(true);
                     cmbDevice.setVisible(true);
                     if (cmbDevice.getItemCount() > 0) {
@@ -161,10 +162,10 @@ public class ViewComputerDialog extends DialogBase {
         pluginButtonGroup.add(btnDevice);
         infoToolbar.add(btnDevice);
 
-        JPanel descriptionPanel = GUI.section("Short description", "insets dialog", "[grow]", "[grow]");
-        descriptionPanel.add(GUI.scrollPane(txtDescription), "grow");
+        JPanel descriptionPanel = GUIProvider.getGUI().section("Short description", "insets dialog", "[grow]", "[grow]");
+        descriptionPanel.add(GUIProvider.getGUI().scrollPane(txtDescription), "grow");
 
-        JPanel infoPanel = GUI.panel("insets dialog", "[grow]", "[][][][][][grow]");
+        JPanel infoPanel = GUIProvider.getGUI().panel("insets dialog", "[grow]", "[][][][][][grow]");
         infoPanel.add(lblSelectDevice, "split 2");
         infoPanel.add(cmbDevice, "grow, wrap");
         infoPanel.add(lblName, "wrap");
@@ -173,19 +174,19 @@ public class ViewComputerDialog extends DialogBase {
         infoPanel.add(lblCopyright, "wrap");
         infoPanel.add(descriptionPanel, "grow");
 
-        JPanel infoTab = GUI.panel("insets dialog", "[][grow]", "[grow]");
+        JPanel infoTab = GUIProvider.getGUI().panel("insets dialog", "[][grow]", "[grow]");
         infoTab.add(infoToolbar, "grow");
         infoTab.add(infoPanel, "grow");
 
         // Schema tab
-        JToolBar schemaToolbar = GUI.toolBarVertical();
+        JToolBar schemaToolbar = GUIProvider.getGUI().toolBarVertical();
 
-        JButton btnSave = GUI.button(ICON_SAVE, "Save schema image", panelSchema::saveSchemaImage);
+        JButton btnSave = GUIProvider.getGUI().button(ICON_SAVE, "Save schema image", panelSchema::saveSchemaImage);
         schemaToolbar.add(btnSave);
 
-        JScrollPane scrollPane = GUI.scrollPane(panelSchema);
+        JScrollPane scrollPane = GUIProvider.getGUI().scrollPane(panelSchema);
 
-        JPanel schemaTab = GUI.panel("insets dialog", "[][grow]", "[grow]");
+        JPanel schemaTab = GUIProvider.getGUI().panel("insets dialog", "[][grow]", "[grow]");
         schemaTab.add(schemaToolbar, "grow");
         schemaTab.add(scrollPane, "grow");
 
@@ -194,7 +195,7 @@ public class ViewComputerDialog extends DialogBase {
         tabbedPane.addTab("Computer info", infoTab);
         tabbedPane.addTab("Abstract schema", schemaTab);
 
-        JPanel mainPanel = GUI.panel("insets dialog", "[grow]", "[][grow]");
+        JPanel mainPanel = GUIProvider.getGUI().panel("insets dialog", "[grow]", "[][grow]");
         mainPanel.add(lblComputerName, "growx, wrap");
         mainPanel.add(tabbedPane, "grow");
         return mainPanel;

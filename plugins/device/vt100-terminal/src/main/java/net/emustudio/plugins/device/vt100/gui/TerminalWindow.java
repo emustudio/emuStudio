@@ -17,6 +17,7 @@ import java.util.StringTokenizer;
 import static net.emustudio.plugins.device.vt100.gui.Constants.*;
 
 public class TerminalWindow extends DialogBase {
+    private final GUI gui;
     private final Dialogs dialogs;
 
     private final DisplayCanvas canvas;
@@ -24,8 +25,9 @@ public class TerminalWindow extends DialogBase {
     private final JLabel lblStatusIcon = new JLabel();
     private final JButton btnASCII = new JButton();
 
-    public TerminalWindow(JFrame parent, DisplayImpl display, Dialogs dialogs, KeyboardGui keyboard) {
+    public TerminalWindow(JFrame parent, DisplayImpl display, Dialogs dialogs, KeyboardGui keyboard, GUI gui) {
         super(parent, "VT100 Terminal", false);
+        this.gui = gui;
         this.canvas = new DisplayCanvas(display);
         this.keyboard = Objects.requireNonNull(keyboard);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -75,11 +77,11 @@ public class TerminalWindow extends DialogBase {
         btnASCII.setVerticalAlignment(SwingConstants.TOP);
         btnASCII.addActionListener(this::btnASCIIActionPerformed);
 
-        JPanel panelStatus = GUI.panel("insets 2 6 2 6", "[20!]6[]push", "[24!]");
+        JPanel panelStatus = gui.panel("insets 2 6 2 6", "[20!]6[]push", "[24!]");
         panelStatus.add(lblStatusIcon);
         panelStatus.add(btnASCII);
 
-        JPanel content = GUI.panel("insets 0", "[grow]", "[grow]0[]");
+        JPanel content = gui.panel("insets 0", "[grow]", "[grow]0[]");
         content.add(canvas, "grow, wrap");
         content.add(panelStatus, "growx");
 

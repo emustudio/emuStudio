@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.GUIProvider;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
@@ -28,8 +29,8 @@ public class InputDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.panel("insets dialog", "[grow]", "[]6[]6[]");
-        panel.add(GUI.label(message), "wrap, gapbottom 5");
+        JPanel panel = GUIProvider.getGUI().panel("insets dialog", "[grow]", "[]6[]6[]");
+        panel.add(GUIProvider.getGUI().label(message), "wrap, gapbottom 5");
         panel.add(txtInput, "growx, wrap, gapbottom 10");
 
         JButton btnOk = new JButton("OK");
@@ -41,7 +42,7 @@ public class InputDialog extends DialogBase {
         btnCancel.addActionListener(e -> dispose());
         getRootPane().setDefaultButton(btnOk);
 
-        JPanel buttonPanel = GUI.panel("insets 0", "push[][]", "[]");
+        JPanel buttonPanel = GUIProvider.getGUI().panel("insets 0", "push[][]", "[]");
         buttonPanel.add(btnCancel);
         buttonPanel.add(btnOk);
         panel.add(buttonPanel, "growx, align right");

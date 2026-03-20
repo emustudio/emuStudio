@@ -10,12 +10,14 @@ import net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine;
 import net.emustudio.plugins.cpu.zilogZ80.InstructionPrinter;
 
 import javax.swing.*;
+import java.awt.*;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class StatusPanel extends JPanel {
+    private final GUI gui;
     private final CpuImpl cpu;
     private final Context8080 context;
     private final FlagsModel flagModel1;
@@ -65,7 +67,8 @@ public class StatusPanel extends JPanel {
     private final JSpinner spnFrequency;
     private final JCheckBox chkPrintInstructions = new JCheckBox("Dump instructions history");
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions, GUI gui) {
+        this.gui = gui;
         this.cpu = cpu;
         this.context = context;
         this.flagModel1 = new FlagsModel(0, cpu.getEngine());
@@ -165,36 +168,38 @@ public class StatusPanel extends JPanel {
                 txtA2, txtF2, txtB2, txtC2, txtBC2, txtD2, txtE2, txtDE2, txtH2, txtL2, txtHL2, tblFlags2));
 
         // Extra registers: PC IX I / SP IY R
-        JPanel panelExtra = GUI.panel("insets dialog", "[]6[66!]10[]6[66!]10[]6[66!]", "[][]");
-        panelExtra.add(GUI.labelBold("PC"));
+        JPanel panelExtra = gui.panel("insets dialog", "[]6[66!]10[]6[66!]10[]6[66!]", "[][]");
+        panelExtra.add(gui.labelBold("PC"));
         panelExtra.add(txtPC, "growx");
-        panelExtra.add(GUI.labelBold("IX"));
+        panelExtra.add(gui.labelBold("IX"));
         panelExtra.add(txtIX, "growx");
-        panelExtra.add(GUI.labelBold("I"));
+        panelExtra.add(gui.labelBold("I"));
         panelExtra.add(txtI, "growx, wrap");
-        panelExtra.add(GUI.labelBold("SP"));
+        panelExtra.add(gui.labelBold("SP"));
         panelExtra.add(txtSP, "growx");
-        panelExtra.add(GUI.labelBold("IY"));
+        panelExtra.add(gui.labelBold("IY"));
         panelExtra.add(txtIY, "growx");
-        panelExtra.add(GUI.labelBold("R"));
+        panelExtra.add(gui.labelBold("R"));
         panelExtra.add(txtR, "growx");
 
         // Run control
-        JPanel panelRun = GUI.section("Run control", "insets dialog", "[]6[]6[]push[]", "[]6[]6[]6[]12[]");
+        JPanel panelRun = gui.section("Run control", "insets dialog", "[]6[]6[]push[]", "[]6[]6[]6[]12[]");
         panelRun.add(lblRunState, "span, wrap");
         panelRun.add(new JSeparator(), "span, growx, wrap");
-        panelRun.add(GUI.label("CPU Frequency:"));
+        panelRun.add(gui.label("CPU Frequency:"));
         panelRun.add(spnFrequency, "w 91!");
-        panelRun.add(GUI.labelBold("kHz"), "wrap");
-        panelRun.add(GUI.label("Runtime frequency:"));
+        panelRun.add(gui.labelBold("kHz"), "wrap");
+        panelRun.add(gui.label("Runtime frequency:"));
         panelRun.add(lblFrequency, "span, wrap");
         chkPrintInstructions.addActionListener(this::chkPrintInstructionsActionPerformed);
         panelRun.add(chkPrintInstructions, "span");
 
-        setLayout(new net.miginfocom.swing.MigLayout("insets dialog", "[grow]", "[][][]"));
-        add(tabbedPane, "growx, wrap");
-        add(panelExtra, "growx, wrap");
-        add(panelRun, "growx");
+        setLayout(new BorderLayout());
+        JPanel content = gui.panel("insets dialog", "[grow]", "[][][]");
+        content.add(tabbedPane, "growx, wrap");
+        content.add(panelExtra, "growx, wrap");
+        content.add(panelRun, "growx");
+        add(content, BorderLayout.CENTER);
     }
 
     private JPanel createRegisterSetPanel(
@@ -204,35 +209,35 @@ public class StatusPanel extends JPanel {
             JTextField txtH, JTextField txtL, JTextField txtHL,
             JTable tblFlags) {
 
-        JPanel panel = GUI.panel("insets dialog", "[]6[66!]6[]6[66!]6[]6[66!]", "[][][][]6[]6[54!]");
+        JPanel panel = gui.panel("insets dialog", "[]6[66!]6[]6[66!]6[]6[66!]", "[][][][]6[]6[54!]");
 
-        panel.add(GUI.labelBold("A"));
+        panel.add(gui.labelBold("A"));
         panel.add(txtA, "growx");
-        panel.add(GUI.labelBold("F"));
+        panel.add(gui.labelBold("F"));
         panel.add(txtF, "growx, wrap");
 
-        panel.add(GUI.labelBold("B"));
+        panel.add(gui.labelBold("B"));
         panel.add(txtB, "growx");
-        panel.add(GUI.labelBold("C"));
+        panel.add(gui.labelBold("C"));
         panel.add(txtC, "growx");
-        panel.add(GUI.labelBold("BC"));
+        panel.add(gui.labelBold("BC"));
         panel.add(txtBC, "growx, wrap");
 
-        panel.add(GUI.labelBold("D"));
+        panel.add(gui.labelBold("D"));
         panel.add(txtD, "growx");
-        panel.add(GUI.labelBold("E"));
+        panel.add(gui.labelBold("E"));
         panel.add(txtE, "growx");
-        panel.add(GUI.labelBold("DE"));
+        panel.add(gui.labelBold("DE"));
         panel.add(txtDE, "growx, wrap");
 
-        panel.add(GUI.labelBold("H"));
+        panel.add(gui.labelBold("H"));
         panel.add(txtH, "growx");
-        panel.add(GUI.labelBold("L"));
+        panel.add(gui.labelBold("L"));
         panel.add(txtL, "growx");
-        panel.add(GUI.labelBold("HL"));
+        panel.add(gui.labelBold("HL"));
         panel.add(txtHL, "growx, wrap");
 
-        panel.add(GUI.label("Flags:"), "span, wrap");
+        panel.add(gui.label("Flags:"), "span, wrap");
 
         tblFlags.setRowSelectionAllowed(false);
         JScrollPane scrollPane = new JScrollPane(tblFlags);

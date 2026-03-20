@@ -16,6 +16,7 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 
 public class TapeGui extends DialogBase {
+    private final GUI gui;
     private static final String ICON_ADD_FIRST = "/net/emustudio/plugins/device/abstracttape/gui/go-up.png";
     private static final String ICON_ADD_LAST = "/net/emustudio/plugins/device/abstracttape/gui/go-down.png";
 
@@ -30,8 +31,9 @@ public class TapeGui extends DialogBase {
     private JButton btnClear;
     private JList<String> lstTape;
 
-    public TapeGui(JFrame parent, String title, AbstractTapeContextImpl tapeContext, boolean alwaysOnTop, Dialogs dialogs) {
+    public TapeGui(JFrame parent, String title, AbstractTapeContextImpl tapeContext, boolean alwaysOnTop, Dialogs dialogs, GUI gui) {
         super(parent, title, false);
+        this.gui = gui;
         this.tapeContext = Objects.requireNonNull(tapeContext);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.listModel = new TapeModel(tapeContext);
@@ -112,7 +114,7 @@ public class TapeGui extends DialogBase {
         });
         btnClear.addActionListener(e -> tapeContext.clear());
 
-        JPanel content = GUI.panel("insets dialog", "[148!,grow]", "[][200:200:,grow][][][][][]");
+        JPanel content = gui.panel("insets dialog", "[148!,grow]", "[][200:200:,grow][][][][][]");
         content.add(btnAddFirst, "growx, wrap");
         content.add(new JScrollPane(lstTape), "grow, wrap");
         content.add(btnAddLast, "growx, wrap");

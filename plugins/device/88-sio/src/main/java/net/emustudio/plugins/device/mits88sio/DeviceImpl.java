@@ -107,7 +107,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (gui == null) {
-                gui = new SioGui(parent, uart);
+                gui = new SioGui(parent, uart, applicationApi.getGUI());
             }
             gui.setVisible(true);
         }
@@ -131,7 +131,7 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void showSettings(JFrame parent) {
         if (guiSupported) {
-            new SettingsDialog(parent, sioSettings, applicationApi.getDialogs()).setVisible(true);
+            new SettingsDialog(parent, sioSettings, applicationApi.getDialogs(), applicationApi.getGUI()).setVisible(true);
         }
     }
 

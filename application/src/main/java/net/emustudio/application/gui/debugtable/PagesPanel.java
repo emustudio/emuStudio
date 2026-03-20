@@ -2,9 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
+import net.emustudio.application.gui.GUIProvider;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -30,12 +30,13 @@ public class PagesPanel extends JPanel {
     }
 
     private void initComponents() {
-        ToolbarButton btnFirst = GUI.toolbarButton(evt -> debugTableModel.firstPage(), ICON_PAGE_FIRST, "Go to the first page");
-        ToolbarButton btnBackward = GUI.toolbarButton(evt -> debugTableModel.previousPage(), ICON_PAGE_BACK, "Go to the previous page");
-        ToolbarButton btnCurrentPage = GUI.toolbarButton(evt -> debugTableModel.currentPage(), ICON_PAGE_CURRENT, "Go to the current page");
-        ToolbarButton btnForward = GUI.toolbarButton(evt -> debugTableModel.nextPage(), ICON_PAGE_FORWARD, "Go to the next page");
-        ToolbarButton btnSeekBackward = GUI.toolbarButton(evt -> seekBackward(), ICON_PAGE_SEEK_BACKWARD, "Go to the current page");
-        ToolbarButton btnSeekForward = GUI.toolbarButton(evt -> seekForward(), ICON_PAGE_SEEK_FORWARD, "Go to the current page");
+        GUI gui = GUIProvider.getGUI();
+        JButton btnFirst = gui.toolbarButton(evt -> debugTableModel.firstPage(), ICON_PAGE_FIRST, "Go to the first page");
+        JButton btnBackward = gui.toolbarButton(evt -> debugTableModel.previousPage(), ICON_PAGE_BACK, "Go to the previous page");
+        JButton btnCurrentPage = gui.toolbarButton(evt -> debugTableModel.currentPage(), ICON_PAGE_CURRENT, "Go to the current page");
+        JButton btnForward = gui.toolbarButton(evt -> debugTableModel.nextPage(), ICON_PAGE_FORWARD, "Go to the next page");
+        JButton btnSeekBackward = gui.toolbarButton(evt -> seekBackward(), ICON_PAGE_SEEK_BACKWARD, "Go to the current page");
+        JButton btnSeekForward = gui.toolbarButton(evt -> seekForward(), ICON_PAGE_SEEK_FORWARD, "Go to the current page");
 
         GroupLayout pagesLayout = new GroupLayout(this);
         setLayout(pagesLayout);

@@ -66,7 +66,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (gui == null) {
-                gui = new DiskGui(parent, drives);
+                gui = new DiskGui(parent, drives, applicationApi.getGUI());
             }
             gui.setVisible(true);
         }
@@ -115,7 +115,7 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void showSettings(JFrame parent) {
         if (guiSupported) {
-            new SettingsDialog(parent, settings, drives, applicationApi.getDialogs()).setVisible(true);
+            new SettingsDialog(parent, settings, drives, applicationApi.getDialogs(), applicationApi.getGUI()).setVisible(true);
         }
     }
 
