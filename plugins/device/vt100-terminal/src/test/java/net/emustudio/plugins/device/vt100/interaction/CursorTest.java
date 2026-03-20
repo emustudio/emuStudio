@@ -150,4 +150,123 @@ public class CursorTest {
         cursor.carriageReturn();
         assertEquals(new Point(0, 0), cursor.getRect().getLocation());
     }
+
+    // ========== Additional tests ==========
+
+    @Test
+    public void testMoveDown() {
+        cursor.moveDown();
+        assertEquals(new Point(0, 1), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveDownMultipleLines() {
+        cursor.moveDown(5);
+        assertEquals(new Point(0, 5), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveDownOutOfBounds() {
+        cursor.moveDown(DEFAULT_ROWS + 10);
+        assertEquals(new Point(0, DEFAULT_ROWS - 1), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveUpRolling() {
+        Display display = mock(Display.class);
+        display.rollDown();
+        expectLastCall().once();
+        replay(display);
+
+        // At row 0, moveUpRolling should trigger rollDown
+        cursor.moveUpRolling(display);
+        assertEquals(new Point(0, 0), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveUpRollingNoRolling() {
+        Display display = mock(Display.class);
+        replay(display);
+
+        cursor.move(0, 5);
+        cursor.moveUpRolling(display);
+        assertEquals(new Point(0, 4), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveForwardsMultiple() {
+        cursor.moveForwards(10);
+        assertEquals(new Point(10, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveForwardsMultipleOutOfBounds() {
+        cursor.moveForwards(DEFAULT_COLUMNS + 10);
+        assertEquals(new Point(DEFAULT_COLUMNS - 1, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveBackwardsMultiple() {
+        cursor.move(10, 0);
+        cursor.moveBackwards(5);
+        assertEquals(new Point(5, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveBackwardsMultipleOutOfBounds() {
+        cursor.move(3, 0);
+        cursor.moveBackwards(10);
+        assertEquals(new Point(0, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testSetSize() {
+        cursor.setSize(40, 12);
+        Rectangle rect = cursor.getRect();
+        assertEquals(40, rect.width);
+        assertEquals(12, rect.height);
+    }
+
+    @Test
+    public void testMovePoint() {
+        Point p = new Point(5, 3);
+        cursor.move(p);
+        assertEquals(new Point(5, 3), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveUpMultipleLinesLimitedToZero() {
+        cursor.move(0, 2);
+        cursor.moveUp(10);
+        assertEquals(new Point(0, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveDownExactlyToLastRow() {
+        cursor.moveDown(DEFAULT_ROWS - 1);
+        assertEquals(new Point(0, DEFAULT_ROWS - 1), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveForwardsRollingMultipleTimes() {
+        Display display = mock(Display.class);
+        replay(display);
+
+        for (int i = 0; i < 5; i++) {
+            cursor.moveForwardsRolling(display);
+        }
+        assertEquals(new Point(5, 0), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testGetRectReturnsCorrectDimensions() {
+        Rectangle rect = cursor.getRect();
+        assertEquals(DEFAULT_COLUMNS, rect.width);
+        assertEquals(DEFAULT_ROWS, rect.height);
+        assertEquals(0, rect.x);
+        assertEquals(0, rect.y);
+    }
 }

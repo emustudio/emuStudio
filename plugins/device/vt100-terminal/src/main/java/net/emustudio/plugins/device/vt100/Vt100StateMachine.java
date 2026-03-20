@@ -10,6 +10,7 @@ import java.util.function.Consumer;
  * VT100 state machine
  * <p>
  * <a href="https://vt100.net/emu/dec_ansi_parser">dec_ansi_parser</a>
+ * <a href="https://graphcomp.com/info/specs/ansi_col.html">ansi_col</a>
  */
 public class Vt100StateMachine {
     interface Vt100State {
