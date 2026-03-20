@@ -3,7 +3,7 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.ApplicationApiImpl;
-import net.emustudio.application.gui.framework.ExtendedDialogs;
+import net.emustudio.application.gui.framework.GuiDialogsImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
@@ -17,6 +17,7 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
@@ -48,7 +49,7 @@ public class Utils {
     public static VirtualComputer loadComputer(
             AppSettings appConfig,
             ComputerConfig computerConfig,
-            ExtendedDialogs dialogs,
+            Dialogs dialogs,
             ContextPoolImpl contextPool,
             DebugTableModelImpl debugTableModel
     ) throws InvalidPluginException, IOException, PluginInitializationException {
@@ -64,7 +65,7 @@ public class Utils {
     }
 
     public static Optional<ComputerConfig> loadComputerConfigFromGui(
-            AppSettings appSettings, ExtendedDialogs dialogs
+            AppSettings appSettings, GuiDialogsImpl dialogs
     ) {
         final AtomicReference<ComputerConfig> computerConfig = new AtomicReference<>();
         OpenComputerDialog dialog = new OpenComputerDialog(appSettings, dialogs, computerConfig::set);
@@ -81,7 +82,7 @@ public class Utils {
     }
 
     @SuppressWarnings("unchecked")
-    public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, ExtendedDialogs dialogs,
+    public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, GuiDialogsImpl dialogs,
                                       DebugTableModel debugTableModel, ContextPool contextPool, Optional<Path> inputFile) {
         MemoryContext<?> memoryContext = null;
         try {

@@ -4,7 +4,6 @@ package net.emustudio.application.cmdline;
 
 import net.emustudio.application.emulation.Automation;
 import net.emustudio.application.gui.framework.EmuStudioUI;
-import net.emustudio.application.gui.framework.ExtendedDialogs;
 import net.emustudio.application.gui.framework.GuiDialogsImpl;
 import net.emustudio.application.gui.framework.NoGuiDialogsImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
@@ -14,6 +13,7 @@ import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -44,17 +44,19 @@ public class AutomationCommand implements Runnable {
 
     @Override
     public void run() {
-        ExtendedDialogs dialogs = new NoGuiDialogsImpl();
+        Dialogs dialogs = new NoGuiDialogsImpl();
+        GuiDialogsImpl guiDialogs = null;
         try {
             AppSettings appConfig = loadAppSettings(gui, true);
             if (gui) {
                 EmuStudioUI.initialize(appConfig);
-                dialogs = new GuiDialogsImpl();
+                guiDialogs = new GuiDialogsImpl();
+                dialogs = guiDialogs;
             }
 
             Optional<ComputerConfig> computerConfigOpt = (runner.exclusive != null) ?
                     runner.exclusive.loadConfiguration() :
-                    (gui ? loadComputerConfigFromGui(appConfig, dialogs) : Optional.empty());
+                    (gui ? loadComputerConfigFromGui(appConfig, guiDialogs) : Optional.empty());
 
             if (computerConfigOpt.isEmpty()) {
                 dialogs.showError("Virtual computer must be selected!");
