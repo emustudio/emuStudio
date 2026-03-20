@@ -861,6 +861,132 @@ public class DisplayImplTest {
         assertEquals(1, display.getCursorPoint().x);
     }
 
+    // ========== DECSTBM (Set Top and Bottom Margins) ==========
+
+    /**
+     * Helper to send CSI Pt ; Pb r (DECSTBM).
+     */
+    private void writeDecstbm(int top, int bottom) {
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        for (char c : String.valueOf(top).toCharArray()) display.write((byte) c);
+        display.write((byte) ';');
+        for (char c : String.valueOf(bottom).toCharArray()) display.write((byte) c);
+        display.write((byte) 'r');
+    }
+
+    @Test
+    public void testDecstbmMovesCursorHome() {
+        // Move cursor somewhere first
+        display.write((byte) 'X');
+        display.write((byte) 'Y');
+        assertNotEquals(new Point(0, 0), display.getCursorPoint());
+
+        // DECSTBM should reset cursor to home
+        writeDecstbm(1, DEFAULT_ROWS);
+        assertEquals(new Point(0, 0), display.getCursorPoint());
+    }
+
+    @Test
+    public void testDecstbmNoParamsResetsRegion() {
+        // CSI r with no params should reset scrolling region to full screen
+        display.write((byte) 0x1B);
+        display.write((byte) 0x5B);
+        display.write((byte) 'r');
+        assertEquals(new Point(0, 0), display.getCursorPoint());
+    }
+
+    @Test
+    public void testDecstbmRollUpDirectlyOnlyAffectsRegion() {
+        // Set scrolling region to rows 2-4 (1-based) = rows 1-3 (0-based)
+        writeDecstbm(2, 4);
+
+        // Directly fill column 0 of rows 0-4 with distinct chars
+        display.videoMemory[0] = 'A';                       // row 0
+        display.videoMemory[DEFAULT_COLUMNS] = 'B';         // row 1
+        display.videoMemory[2 * DEFAULT_COLUMNS] = 'C';     // row 2
+        display.videoMemory[3 * DEFAULT_COLUMNS] = 'D';     // row 3
+        display.videoMemory[4 * DEFAULT_COLUMNS] = 'E';     // row 4
+
+        display.rollUp();
+
+        assertEquals('A', display.videoMemory[0]);
+        assertEquals('C', display.videoMemory[DEFAULT_COLUMNS]);
+        assertEquals('D', display.videoMemory[2 * DEFAULT_COLUMNS]);
+        assertEquals(' ', display.videoMemory[3 * DEFAULT_COLUMNS]);
+        assertEquals('E', display.videoMemory[4 * DEFAULT_COLUMNS]);
+    }
+
+    @Test
+    public void testDecstbmScrollUpOnlyAffectsRegion() {
+        // Set scrolling region to rows 2-4 (1-based) = rows 1-3 (0-based)
+        writeDecstbm(2, 4);
+
+        // Directly fill column 0 of rows 0-4 with distinct chars
+        display.videoMemory[0] = 'A';                       // row 0
+        display.videoMemory[DEFAULT_COLUMNS] = 'B';         // row 1
+        display.videoMemory[2 * DEFAULT_COLUMNS] = 'C';     // row 2
+        display.videoMemory[3 * DEFAULT_COLUMNS] = 'D';     // row 3
+        display.videoMemory[4 * DEFAULT_COLUMNS] = 'E';     // row 4
+
+        // Move cursor to scrollBottom (row 3, 0-based)
+        cursor.move(0, 3);
+
+        // Line feed at bottom of scrolling region triggers rollUp within region
+        display.write((byte) 0x0A); // LF
+
+        assertEquals('A', display.videoMemory[0]);
+        assertEquals('C', display.videoMemory[DEFAULT_COLUMNS]);
+        assertEquals('D', display.videoMemory[2 * DEFAULT_COLUMNS]);
+        assertEquals(' ', display.videoMemory[3 * DEFAULT_COLUMNS]);
+        assertEquals('E', display.videoMemory[4 * DEFAULT_COLUMNS]);
+    }
+
+
+    @Test
+    public void testDecstbmScrollDownOnlyAffectsRegion() {
+        // Directly fill column 0 of rows 0-4 with distinct chars
+        display.videoMemory[0] = 'A';                       // row 0
+        display.videoMemory[DEFAULT_COLUMNS] = 'B';         // row 1
+        display.videoMemory[2 * DEFAULT_COLUMNS] = 'C';     // row 2
+        display.videoMemory[3 * DEFAULT_COLUMNS] = 'D';     // row 3
+        display.videoMemory[4 * DEFAULT_COLUMNS] = 'E';     // row 4
+
+        // Set scrolling region to rows 2-4 (1-based) = rows 1-3 (0-based)
+        writeDecstbm(2, 4);
+
+        // Move cursor to scrollTop (row 1, 0-based)
+        cursor.move(0, 1);
+
+        // Reverse index (ESC M) at top of scrolling region triggers rollDown within region
+        display.write((byte) 0x1B);
+        display.write((byte) 0x4D);
+
+        // Row 0 (outside region) should be unchanged: 'A'
+        assertEquals('A', display.videoMemory[0]);
+        // Row 1 (scrollTop) should be cleared to space (new blank line scrolled in)
+        assertEquals(' ', display.videoMemory[DEFAULT_COLUMNS]);
+        // Row 2 should now contain what was in row 1 (old scrollTop): 'B'
+        assertEquals('B', display.videoMemory[2 * DEFAULT_COLUMNS]);
+        // Row 3 should now contain what was in row 2: 'C'
+        assertEquals('C', display.videoMemory[3 * DEFAULT_COLUMNS]);
+        // Row 4 (outside region) should be unchanged: 'E'
+        assertEquals('E', display.videoMemory[4 * DEFAULT_COLUMNS]);
+    }
+
+    @Test
+    public void testDecstbmInvalidTopGreaterThanBottomIsIgnored() {
+        // Setting top >= bottom should be ignored (region unchanged)
+        writeDecstbm(10, 5);
+        // Cursor still goes home
+        assertEquals(new Point(0, 0), display.getCursorPoint());
+
+        // Put a char at last row to verify full-screen scrolling region is intact
+        cursor.move(0, DEFAULT_ROWS - 1);
+        display.write((byte) 'Z');
+        assertEquals('Z', display.videoMemory[(DEFAULT_ROWS - 1) * DEFAULT_COLUMNS]);
+    }
+
     // ========== DECSC/DECRC saves/restores attribute ==========
 
     @Test

@@ -117,12 +117,15 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
     @Override
     public void rollUp() {
         Rectangle rect = cursor.getRect();
+        int scrollTop = cursor.getScrollTop();
+        int scrollBottom = cursor.getScrollBottom();
         synchronized (this) {
             int lineSize = rect.width;
-            int totalSize = lineSize * rect.height;
-            System.arraycopy(videoMemory, lineSize, videoMemory, 0, totalSize - lineSize);
-            System.arraycopy(attributeMemory, lineSize, attributeMemory, 0, totalSize - lineSize);
-            for (int i = totalSize - lineSize; i < totalSize; i++) {
+            int regionStart = scrollTop * lineSize;
+            int regionEnd = (scrollBottom + 1) * lineSize;
+            System.arraycopy(videoMemory, regionStart + lineSize, videoMemory, regionStart, regionEnd - regionStart - lineSize);
+            System.arraycopy(attributeMemory, regionStart + lineSize, attributeMemory, regionStart, regionEnd - regionStart - lineSize);
+            for (int i = regionEnd - lineSize; i < regionEnd; i++) {
                 videoMemory[i] = ' ';
                 attributeMemory[i] = VideoAttribute.DEFAULT;
             }
@@ -132,12 +135,15 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
     @Override
     public void rollDown() {
         Rectangle rect = cursor.getRect();
+        int scrollTop = cursor.getScrollTop();
+        int scrollBottom = cursor.getScrollBottom();
         synchronized (this) {
             int lineSize = rect.width;
-            int totalSize = lineSize * rect.height;
-            System.arraycopy(videoMemory, 0, videoMemory, lineSize, totalSize - lineSize);
-            System.arraycopy(attributeMemory, 0, attributeMemory, lineSize, totalSize - lineSize);
-            for (int i = 0; i < lineSize; i++) {
+            int regionStart = scrollTop * lineSize;
+            int regionEnd = (scrollBottom + 1) * lineSize;
+            System.arraycopy(videoMemory, regionStart, videoMemory, regionStart + lineSize, regionEnd - regionStart - lineSize);
+            System.arraycopy(attributeMemory, regionStart, attributeMemory, regionStart + lineSize, regionEnd - regionStart - lineSize);
+            for (int i = regionStart; i < regionStart + lineSize; i++) {
                 videoMemory[i] = ' ';
                 attributeMemory[i] = VideoAttribute.DEFAULT;
             }
@@ -171,7 +177,7 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
             case 0x0A: // Line feed, 0/10
             case 0x0B: // Vertical tabulation, 0/11
             case 0x0C: // Form feed, 0/12
-                cursor.moveDown();
+                cursor.moveDownRolling(this);
                 cursor.carriageReturn(); // simulate CR/LF
                 break;
             case 0x0D: // Carriage return, 0/13
@@ -296,7 +302,12 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
                 selectGraphicRendition(params);
                 break;
             case 0x72: // Set Top and Bottom Margins (DECSTBM)
-                // TODO: scrolling region support
+                // CSI Pt ; Pb r
+                // Pt = top margin (1-based, default 1), Pb = bottom margin (1-based, default last row)
+                // Sets the scrolling region; cursor moves to home position.
+                int top = param(params, 0, 1);
+                int bottom = param(params, 1, getRows());
+                cursor.setScrollingRegion(top - 1, bottom - 1);
                 break;
         }
     }

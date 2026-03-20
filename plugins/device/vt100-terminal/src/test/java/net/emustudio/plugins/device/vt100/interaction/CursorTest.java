@@ -269,4 +269,124 @@ public class CursorTest {
         assertEquals(0, rect.x);
         assertEquals(0, rect.y);
     }
+
+    // ========== Scrolling region (DECSTBM) tests ==========
+
+    @Test
+    public void testDefaultScrollingRegion() {
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(DEFAULT_ROWS - 1, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetScrollingRegion() {
+        cursor.setScrollingRegion(2, 10);
+        assertEquals(2, cursor.getScrollTop());
+        assertEquals(10, cursor.getScrollBottom());
+        // Cursor should be moved to home
+        assertEquals(new Point(0, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testSetScrollingRegionClampsNegativeTop() {
+        cursor.setScrollingRegion(-5, 10);
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(10, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetScrollingRegionClampsBottomBeyondRows() {
+        cursor.setScrollingRegion(2, DEFAULT_ROWS + 10);
+        assertEquals(2, cursor.getScrollTop());
+        assertEquals(DEFAULT_ROWS - 1, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetScrollingRegionIgnoredWhenTopEqualsBottom() {
+        cursor.setScrollingRegion(5, 5);
+        // Should remain default
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(DEFAULT_ROWS - 1, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetScrollingRegionIgnoredWhenTopGreaterThanBottom() {
+        cursor.setScrollingRegion(10, 5);
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(DEFAULT_ROWS - 1, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetSizeResetsScrollingRegion() {
+        cursor.setScrollingRegion(2, 10);
+        cursor.setSize(40, 12);
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(11, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testMoveDownRollingRespectsScrollBottom() {
+        Display display = mock(Display.class);
+        display.rollUp();
+        expectLastCall().once();
+        replay(display);
+
+        cursor.setScrollingRegion(2, 5);
+        cursor.move(0, 5); // at scrollBottom
+        cursor.moveDownRolling(display);
+        assertEquals(new Point(0, 5), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveDownRollingNoRollWhenAboveScrollBottom() {
+        Display display = mock(Display.class);
+        replay(display);
+
+        cursor.setScrollingRegion(2, 10);
+        cursor.move(0, 5); // above scrollBottom
+        cursor.moveDownRolling(display);
+        assertEquals(new Point(0, 6), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveUpRollingRespectsScrollTop() {
+        Display display = mock(Display.class);
+        display.rollDown();
+        expectLastCall().once();
+        replay(display);
+
+        cursor.setScrollingRegion(3, 10);
+        cursor.move(0, 3); // at scrollTop
+        cursor.moveUpRolling(display);
+        assertEquals(new Point(0, 3), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveUpRollingNoRollWhenBelowScrollTop() {
+        Display display = mock(Display.class);
+        replay(display);
+
+        cursor.setScrollingRegion(3, 10);
+        cursor.move(0, 5); // below scrollTop
+        cursor.moveUpRolling(display);
+        assertEquals(new Point(0, 4), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveForwardsRollingRespectsScrollBottom() {
+        Display display = mock(Display.class);
+        display.rollUp();
+        expectLastCall().once();
+        replay(display);
+
+        cursor.setScrollingRegion(0, 5);
+        cursor.move(DEFAULT_COLUMNS - 1, 5); // last column, scrollBottom row
+        cursor.moveForwardsRolling(display);
+        assertEquals(new Point(0, 5), cursor.getRect().getLocation());
+        verify(display);
+    }
 }
