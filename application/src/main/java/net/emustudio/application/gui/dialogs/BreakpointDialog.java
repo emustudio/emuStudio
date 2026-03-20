@@ -5,7 +5,6 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.application.gui.GUIProvider;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
@@ -17,15 +16,17 @@ import java.util.Objects;
  */
 public class BreakpointDialog extends DialogBase {
     private final Dialogs dialogs;
+    private final GUI gui;
 
     private int address = -1; // if adr == -1 then it means cancel
     private boolean set = false;
     private JTextField txtAddress;
 
-    public BreakpointDialog(JFrame parent, Dialogs dialogs) {
+    public BreakpointDialog(JFrame parent, Dialogs dialogs, GUI gui) {
         super(parent, "Set/unset breakpoint", true);
 
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.gui = Objects.requireNonNull(gui);
         setResizable(false);
         buildContent();
     }
@@ -40,14 +41,14 @@ public class BreakpointDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUIProvider.getGUI().panelHorizontal();
+        JPanel panel = gui.panelHorizontal();
 
-        panel.add(GUIProvider.getGUI().label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
+        panel.add(gui.label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
 
         txtAddress = new JTextField("0", 20);
         panel.add(txtAddress, "growx, wrap, gapbottom 10");
 
-        JPanel buttonPanel = GUIProvider.getGUI().panel("insets dialog", "[grow, right]", "[]");
+        JPanel buttonPanel = gui.panel("insets dialog", "[grow, right]", "[]");
         JButton btnUnset = new JButton("Unset");
         btnUnset.addActionListener(e -> btnUnsetActionPerformed());
         JButton btnSet = new JButton("Set");

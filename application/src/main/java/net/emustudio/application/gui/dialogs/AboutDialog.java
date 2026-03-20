@@ -5,37 +5,39 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.application.gui.GUIProvider;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 import static net.emustudio.application.Resources.getCopyright;
 import static net.emustudio.application.Resources.getVersion;
 
 public class AboutDialog extends DialogBase {
+    private final GUI gui;
 
-    public AboutDialog(JFrame parent) {
+    public AboutDialog(JFrame parent, GUI gui) {
         super(parent, "About emuStudio", true);
+        this.gui = Objects.requireNonNull(gui);
         buildContent();
     }
 
     @Override
     protected JComponent initializeComponents() {
         // Main panel with horizontal layout
-        JPanel mainPanel = GUIProvider.getGUI().panel("insets 10", "[][grow]", "[]");
+        JPanel mainPanel = gui.panel("insets 10", "[][grow]", "[]");
         JLabel lblLogo = EmuStudioUI.createLogoJLabel();
 
         // Info panel
-        JPanel infoPanel = GUIProvider.getGUI().panel("insets 10", "[grow]", "[]");
-        infoPanel.add(GUIProvider.getGUI().labelTitle("emuStudio"), "wrap, gapbottom 10");
-        infoPanel.add(GUIProvider.getGUI().label(getCopyright()), "wrap, gapbottom 10");
+        JPanel infoPanel = gui.panel("insets 10", "[grow]", "[]");
+        infoPanel.add(gui.labelTitle("emuStudio"), "wrap, gapbottom 10");
+        infoPanel.add(gui.label(getCopyright()), "wrap, gapbottom 10");
 
-        infoPanel.add(GUIProvider.getGUI().label("Version: "), "split 2");
-        infoPanel.add(GUIProvider.getGUI().labelBold(getVersion()), "wrap, gapbottom 10");
+        infoPanel.add(gui.label("Version: "), "split 2");
+        infoPanel.add(gui.labelBold(getVersion()), "wrap, gapbottom 10");
 
-        JLabel licenseInfo = GUIProvider.getGUI().label(
+        JLabel licenseInfo = gui.label(
                 "<html><p>This program comes with ABSOLUTELY NO WARRANTY. " +
                         "This is free software, and you are welcome to redistribute it " +
                         "under certain conditions; for details see " +

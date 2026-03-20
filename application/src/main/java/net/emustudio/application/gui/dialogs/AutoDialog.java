@@ -5,7 +5,6 @@ package net.emustudio.application.gui.dialogs;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.application.gui.GUIProvider;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
@@ -20,13 +19,16 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
  */
 public class AutoDialog extends DialogBase {
     private final VirtualComputer computer;
+    private final GUI gui;
 
-    private final JLabel lblAction = GUIProvider.getGUI().label("Initializing...");
+    private final JLabel lblAction;
     private final JButton btnStop = new JButton("Stop");
 
-    public AutoDialog(VirtualComputer computer) {
+    public AutoDialog(VirtualComputer computer, GUI gui) {
         super((JFrame) null, "Automatic Emulation", false);
         this.computer = Objects.requireNonNull(computer);
+        this.gui = gui;
+        this.lblAction = gui.label("Initializing...");
         setResizable(false);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         buildContent();
@@ -34,9 +36,9 @@ public class AutoDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUIProvider.getGUI().panelHorizontal();
+        JPanel panel = gui.panelHorizontal();
 
-        JLabel lblPerforming = GUIProvider.getGUI().labelBold("Running automatic emulation, please wait...");
+        JLabel lblPerforming = gui.labelBold("Running automatic emulation, please wait...");
         lblPerforming.setIcon(loadIcon(ICON_MOTHERBOARD));
 
         btnStop.addActionListener(e -> computer.getCPU().ifPresent(CPU::stop));

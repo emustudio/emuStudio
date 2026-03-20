@@ -12,6 +12,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.helpers.Unchecked;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ public class Automation implements Runnable {
     private volatile CPU.RunState resultState;
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
-                      Dialogs dialogs, int waitForFinishMillis, Optional<Integer> programLocation) throws AutomationException {
+                      Dialogs dialogs, int waitForFinishMillis, Optional<Integer> programLocation, GUI gui) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -56,7 +57,7 @@ public class Automation implements Runnable {
         }
 
         if (!appSettings.noGUI) {
-            progressGUI = new AutoDialog(computer);
+            progressGUI = new AutoDialog(computer, gui);
         }
     }
 

@@ -3,6 +3,7 @@
 package net.emustudio.application.gui;
 
 import net.emustudio.application.gui.components.BrowseButton;
+import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -241,6 +242,11 @@ public class GUIImpl implements GUI {
         JPanel panel = new JPanel(new MigLayout(layoutConstraints, colConstraints, rowConstraints));
         panel.setBorder(BorderFactory.createTitledBorder(title));
         return panel;
+    }
+
+    @Override
+    public javax.swing.border.Border fadingBorder(int thickness, Color color) {
+        return new FadingBorder(thickness, color);
     }
 }
 

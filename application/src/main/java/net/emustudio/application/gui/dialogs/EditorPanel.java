@@ -9,7 +9,6 @@ import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.application.gui.GUIProvider;
 import org.fife.rsta.ui.search.FindDialog;
 import org.fife.rsta.ui.search.ReplaceDialog;
 import org.fife.ui.rtextarea.RTextArea;
@@ -27,6 +26,7 @@ public class EditorPanel extends JPanel {
 
     private final Editor editor;
     private final Dialogs dialogs;
+    private final GUI gui;
 
     private final FindAction findAction;
     private final ReplaceAction replaceAction;
@@ -41,15 +41,16 @@ public class EditorPanel extends JPanel {
     private final JSplitPane splitSource;
 
     public EditorPanel(JFrame parent, Dialogs dialogs, Editor editor, VirtualComputer computer, Runnable updateTitle,
-                       Supplier<CPU.RunState> runState) {
+                       Supplier<CPU.RunState> runState, GUI gui) {
 
         this.editor = Objects.requireNonNull(editor);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.gui = Objects.requireNonNull(gui);
 
         this.replaceDialog = new ReplaceDialog(parent, editor);
         this.findDialog = new FindDialog(parent, editor);
 
-        JTextArea compilerOutput = GUIProvider.getGUI().textAreaReadOnly(3, 20);
+        JTextArea compilerOutput = gui.textAreaReadOnly(3, 20);
         compilerOutput.setFont(FONT_MONOSPACED);
 
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
@@ -61,9 +62,9 @@ public class EditorPanel extends JPanel {
                 computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
-        JScrollPane compilerPane = GUIProvider.getGUI().scrollPane(compilerOutput);
+        JScrollPane compilerPane = gui.scrollPane(compilerOutput);
 
-        splitSource = GUIProvider.getGUI().splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
+        splitSource = gui.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
         splitSource.setOneTouchExpandable(true);
 
         JToolBar mainToolBar = setupMainToolbar();
@@ -123,43 +124,43 @@ public class EditorPanel extends JPanel {
     }
 
     private JToolBar setupMainToolbar() {
-        JToolBar mainToolBar = GUIProvider.getGUI().toolBar();
+        JToolBar mainToolBar = gui.toolBar();
 
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(newFileAction));
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(openFileAction));
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(saveFileAction));
+        mainToolBar.add(gui.toolbarButton(newFileAction));
+        mainToolBar.add(gui.toolbarButton(openFileAction));
+        mainToolBar.add(gui.toolbarButton(saveFileAction));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.UNDO_ACTION),
                 ICON_UNDO,
                 "Undo"
         ));
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.REDO_ACTION),
                 ICON_REDO,
                 "Redo"
         ));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.CUT_ACTION),
                 ICON_CUT,
                 "Cut selection"
         ));
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.COPY_ACTION),
                 ICON_COPY,
                 "Copy selection"
         ));
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.PASTE_ACTION),
                 ICON_PASTE,
                 "Paste from clipboard"
         ));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(findAction));
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(replaceAction));
+        mainToolBar.add(gui.toolbarButton(findAction));
+        mainToolBar.add(gui.toolbarButton(replaceAction));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUIProvider.getGUI().toolbarButton(compileAction));
+        mainToolBar.add(gui.toolbarButton(compileAction));
 
         return mainToolBar;
     }

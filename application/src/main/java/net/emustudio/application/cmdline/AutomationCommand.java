@@ -3,6 +3,7 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.emulation.Automation;
+import net.emustudio.application.gui.GUIImpl;
 import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.framework.GuiDialogsImpl;
 import net.emustudio.application.gui.framework.NoGuiDialogsImpl;
@@ -14,6 +15,7 @@ import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -46,17 +48,19 @@ public class AutomationCommand implements Runnable {
     public void run() {
         Dialogs dialogs = new NoGuiDialogsImpl();
         GuiDialogsImpl guiDialogs = null;
+        GUI gui = null;
         try {
-            AppSettings appConfig = loadAppSettings(gui, true);
-            if (gui) {
+            AppSettings appConfig = loadAppSettings(this.gui, true);
+            if (this.gui) {
                 EmuStudioUI.initialize(appConfig);
-                guiDialogs = new GuiDialogsImpl();
+                gui = new GUIImpl();
+                guiDialogs = new GuiDialogsImpl(gui);
                 dialogs = guiDialogs;
             }
 
             Optional<ComputerConfig> computerConfigOpt = (runner.exclusive != null) ?
                     runner.exclusive.loadConfiguration() :
-                    (gui ? loadComputerConfigFromGui(appConfig, guiDialogs) : Optional.empty());
+                    (this.gui ? loadComputerConfigFromGui(appConfig, guiDialogs, gui) : Optional.empty());
 
             if (computerConfigOpt.isEmpty()) {
                 dialogs.showError("Virtual computer must be selected!");
@@ -66,12 +70,12 @@ public class AutomationCommand implements Runnable {
 
             ComputerConfig computerConfig = computerConfigOpt.get();
 
-            Optional<LoadingDialog> splash = gui ? Optional.of(showSplashScreen()) : Optional.empty();
+            Optional<LoadingDialog> splash = this.gui ? Optional.of(showSplashScreen(gui)) : Optional.empty();
 
             ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
             DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
             try (VirtualComputer computer = loadComputer(
-                    appConfig, computerConfig, dialogs, contextPool, debugTableModel
+                    appConfig, computerConfig, dialogs, contextPool, debugTableModel, gui
             )) {
                 Optional<Integer> programLocation = this.programLocation.equals("-1") ? Optional.empty() :
                         Optional.of(RadixUtils.getInstance().parseRadix(this.programLocation));
@@ -81,12 +85,13 @@ public class AutomationCommand implements Runnable {
                         appConfig,
                         dialogs,
                         waitForFinishMillis,
-                        programLocation
+                        programLocation,
+                        gui
                 );
                 splash.ifPresent(Window::dispose);
                 automation.run();
             }
-            if (!gui) {
+            if (!this.gui) {
                 // Let GUI live!
                 System.exit(0);
             }
