@@ -18,6 +18,7 @@ import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
@@ -51,9 +52,10 @@ public class Utils {
             ComputerConfig computerConfig,
             Dialogs dialogs,
             ContextPoolImpl contextPool,
-            DebugTableModelImpl debugTableModel
+            DebugTableModelImpl debugTableModel,
+            GUI gui
     ) throws InvalidPluginException, IOException, PluginInitializationException {
-        ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs);
+        ApplicationApi applicationApi = new ApplicationApiImpl(debugTableModel, contextPool, dialogs, gui);
 
         VirtualComputer computer = VirtualComputer.create(computerConfig, applicationApi, appConfig);
         computer.initialize(contextPool);
@@ -65,25 +67,25 @@ public class Utils {
     }
 
     public static Optional<ComputerConfig> loadComputerConfigFromGui(
-            AppSettings appSettings, GuiDialogsImpl dialogs
+            AppSettings appSettings, GuiDialogsImpl dialogs, GUI gui
     ) {
         final AtomicReference<ComputerConfig> computerConfig = new AtomicReference<>();
-        OpenComputerDialog dialog = new OpenComputerDialog(appSettings, dialogs, computerConfig::set);
+        OpenComputerDialog dialog = new OpenComputerDialog(appSettings, dialogs, computerConfig::set, gui);
         dialogs.setParent(dialog);
         dialog.setVisible(true);
         dialogs.setParent(null);
         return Optional.ofNullable(computerConfig.get());
     }
 
-    public static LoadingDialog showSplashScreen() {
-        LoadingDialog splash = new LoadingDialog();
+    public static LoadingDialog showSplashScreen(GUI gui) {
+        LoadingDialog splash = new LoadingDialog(gui);
         splash.setVisible(true);
         return splash;
     }
 
     @SuppressWarnings("unchecked")
     public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, GuiDialogsImpl dialogs,
-                                      DebugTableModel debugTableModel, ContextPool contextPool, Optional<Path> inputFile) {
+                                      DebugTableModel debugTableModel, ContextPool contextPool, Optional<Path> inputFile, GUI gui) {
         MemoryContext<?> memoryContext = null;
         try {
             memoryContext = contextPool.getMemoryContext(EMUSTUDIO_ID, MemoryContext.class);
@@ -92,7 +94,7 @@ public class Utils {
         }
 
         StudioFrame mainWindow = new StudioFrame(
-                computer, appSettings, dialogs, debugTableModel, memoryContext, inputFile
+                computer, appSettings, dialogs, debugTableModel, memoryContext, inputFile, gui
         );
 
         dialogs.setParent(mainWindow);

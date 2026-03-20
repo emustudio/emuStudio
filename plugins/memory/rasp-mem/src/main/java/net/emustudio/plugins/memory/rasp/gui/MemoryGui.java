@@ -17,14 +17,16 @@ import java.util.Objects;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 public class MemoryGui extends DialogBase {
+    private final GUI gui;
     private final JTable table;
 
     private final LoadImageAction loadImageAction;
     private final DumpMemoryAction dumpMemoryAction;
     private final EraseMemoryAction eraseMemoryAction;
 
-    public MemoryGui(JFrame parent, MemoryContextImpl context, ApplicationApi api) {
+    public MemoryGui(JFrame parent, MemoryContextImpl context, ApplicationApi api, GUI gui) {
         super(parent, "RASP Memory", false);
+        this.gui = gui;
 
         MemoryContextImpl memory = Objects.requireNonNull(context);
         RaspTableModel tableModel = new RaspTableModel(memory);
@@ -60,12 +62,12 @@ public class MemoryGui extends DialogBase {
         JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
-        toolBar.add(GUI.toolbarButton(loadImageAction));
-        toolBar.add(GUI.toolbarButton(dumpMemoryAction));
+        toolBar.add(gui.toolbarButton(loadImageAction));
+        toolBar.add(gui.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
-        toolBar.add(GUI.toolbarButton(eraseMemoryAction));
+        toolBar.add(gui.toolbarButton(eraseMemoryAction));
 
-        JPanel content = GUI.panel("insets 0", "[grow]", "[]6[grow]");
+        JPanel content = gui.panel("insets 0", "[grow]", "[]6[grow]");
         content.add(toolBar, "growx, wrap");
         content.add(scrollPane, "grow");
         return content;

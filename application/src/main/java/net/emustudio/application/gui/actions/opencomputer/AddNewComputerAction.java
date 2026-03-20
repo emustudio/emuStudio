@@ -8,6 +8,7 @@ import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.helpers.Unchecked;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +30,9 @@ public class AddNewComputerAction extends AbstractAction {
     private final AppSettings appSettings;
     private final Runnable update;
     private final JDialog parent;
+    private final GUI gui;
 
-    public AddNewComputerAction(Dialogs dialogs, AppSettings appSettings, Runnable update, JDialog parent) {
+    public AddNewComputerAction(Dialogs dialogs, AppSettings appSettings, Runnable update, JDialog parent, GUI gui) {
         super("Create new computer...", loadIcon(ICON_ADD));
         putValue(SHORT_DESCRIPTION, getValue(Action.NAME));
 
@@ -38,6 +40,7 @@ public class AddNewComputerAction extends AbstractAction {
         this.appSettings = Objects.requireNonNull(appSettings);
         this.update = Objects.requireNonNull(update);
         this.parent = Objects.requireNonNull(parent);
+        this.gui = Objects.requireNonNull(gui);
     }
 
     @Override
@@ -54,7 +57,7 @@ public class AddNewComputerAction extends AbstractAction {
                                     () -> {
                                         ComputerConfig newComputer = Unchecked.call(() -> createConfiguration(name));
                                         Schema schema = new Schema(newComputer, appSettings);
-                                        SchemaEditorDialog di = new SchemaEditorDialog(parent, schema, dialogs);
+                                        SchemaEditorDialog di = new SchemaEditorDialog(parent, schema, dialogs, gui);
                                         di.setVisible(true);
                                         update.run();
                                     }

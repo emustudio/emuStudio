@@ -11,7 +11,6 @@ import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
-import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +38,7 @@ public class OpenComputerDialog extends DialogBase {
     private final SchemaPreviewPanel preview;
     private final AppSettings appSettings;
     private final Dialogs dialogs;
+    private final GUI gui;
 
     private final AddNewComputerAction addNewComputerAction;
     private final DeleteComputerAction deleteComputerAction;
@@ -49,16 +49,17 @@ public class OpenComputerDialog extends DialogBase {
 
     private final JList<ComputerConfig> lstConfig = new JList<>();
 
-    public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs, Consumer<ComputerConfig> selectComputer) {
+    public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs, Consumer<ComputerConfig> selectComputer, GUI gui) {
         super((java.awt.Frame) null, "emuStudio - Open virtual computer", true);
         this.configurationsModel = new ConfigurationsListModel();
         this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.gui = Objects.requireNonNull(gui);
         this.preview = new SchemaPreviewPanel(null, dialogs);
 
-        addNewComputerAction = new AddNewComputerAction(dialogs, appSettings, this::update, this);
+        addNewComputerAction = new AddNewComputerAction(dialogs, appSettings, this::update, this, gui);
         deleteComputerAction = new DeleteComputerAction(dialogs, this::update, lstConfig);
-        editComputerAction = new EditComputerAction(dialogs, appSettings, this::update, this, lstConfig);
+        editComputerAction = new EditComputerAction(dialogs, appSettings, this::update, this, lstConfig, gui);
         openComputerAction = new OpenComputerAction(dialogs, this, lstConfig, selectComputer);
         renameComputerAction = new RenameComputerAction(dialogs, this::update, lstConfig);
         saveSchemaAction = new SaveSchemaAction(preview);
@@ -78,14 +79,14 @@ public class OpenComputerDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JSplitPane splitConfig = GUI.splitPane();
-        JToolBar toolConfig = GUI.toolBarVertical();
-        ToolbarButton btnAdd = GUI.toolbarButton(addNewComputerAction);
-        ToolbarButton btnDelete = GUI.toolbarButton(deleteComputerAction);
-        ToolbarButton btnEdit = GUI.toolbarButton(editComputerAction);
-        ToolbarButton btnRename = GUI.toolbarButton(renameComputerAction);
-        ToolbarButton btnSaveSchemaImage = GUI.toolbarButton(saveSchemaAction);
-        JScrollPane scrollPreview = GUI.scrollPane(preview);
+        JSplitPane splitConfig = gui.splitPane();
+        JToolBar toolConfig = gui.toolBarVertical();
+        JButton btnAdd = gui.toolbarButton(addNewComputerAction);
+        JButton btnDelete = gui.toolbarButton(deleteComputerAction);
+        JButton btnEdit = gui.toolbarButton(editComputerAction);
+        JButton btnRename = gui.toolbarButton(renameComputerAction);
+        JButton btnSaveSchemaImage = gui.toolbarButton(saveSchemaAction);
+        JScrollPane scrollPreview = gui.scrollPane(preview);
         JButton btnClose = new JButton();
         JLabel lblLogo = EmuStudioUI.createLogoJLabel();
 
@@ -97,9 +98,9 @@ public class OpenComputerDialog extends DialogBase {
         lstConfig.addListSelectionListener(this::lstConfigValueChanged);
         lstConfig.registerKeyboardAction(openComputerAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        JScrollPane configScrollPane = GUI.scrollPane(lstConfig);
+        JScrollPane configScrollPane = gui.scrollPane(lstConfig);
         configScrollPane.setBorder(BorderFactory.createTitledBorder("Virtual computers"));
-        GUI.styleList(lstConfig);
+        gui.styleList(lstConfig);
 
         toolConfig.add(btnAdd);
         toolConfig.add(btnDelete);
@@ -107,7 +108,7 @@ public class OpenComputerDialog extends DialogBase {
         toolConfig.add(btnRename);
         toolConfig.add(btnSaveSchemaImage);
 
-        JPanel panelConfig = GUI.panel("insets 0, fill", "[][grow]", "[grow]");
+        JPanel panelConfig = gui.panel("insets 0, fill", "[][grow]", "[grow]");
         panelConfig.add(toolConfig, "growy");
         panelConfig.add(configScrollPane, "grow");
 
@@ -115,22 +116,22 @@ public class OpenComputerDialog extends DialogBase {
         splitConfig.setLeftComponent(panelConfig);
         splitConfig.setRightComponent(scrollPreview);
 
-        JLabel lblIntroduction = GUI.labelPadded("<html><h1>Welcome to emuStudio!</h1><i>Version:" + getVersion() + "</i>", 5, 10, 5, 10);
+        JLabel lblIntroduction = gui.labelPadded("<html><h1>Welcome to emuStudio!</h1><i>Version:" + getVersion() + "</i>", 5, 10, 5, 10);
 
-        JLabel lblPlease = GUI.labelPadded("Please select computer you wish to emulate:", 5, 10, 5, 10);
+        JLabel lblPlease = gui.labelPadded("Please select computer you wish to emulate:", 5, 10, 5, 10);
 
         // Create a vertical panel for introduction and selection prompt
-        JPanel textPanel = GUI.panel("insets 0, flowy, fill", "[grow]", "[]0[grow]");
+        JPanel textPanel = gui.panel("insets 0, flowy, fill", "[grow]", "[]0[grow]");
         textPanel.add(lblIntroduction);
         textPanel.add(lblPlease);
 
         // Create header panel with logo and introduction
-        JPanel headerPanel = GUI.panel("insets 15", "[]10[grow]", "[grow]");
+        JPanel headerPanel = gui.panel("insets 15", "[]10[grow]", "[grow]");
         headerPanel.add(lblLogo);
         headerPanel.add(textPanel, "grow");
 
-        JButton btnOpen = GUI.button("Open computer", openComputerAction);
-        GUI.buttonMakePrimary(btnOpen);
+        JButton btnOpen = gui.button("Open computer", openComputerAction);
+        gui.buttonMakePrimary(btnOpen);
 
         btnClose.setText("Exit");
         btnClose.addActionListener(this::btnCloseActionPerformed);
@@ -138,17 +139,17 @@ public class OpenComputerDialog extends DialogBase {
         SwingUtilities.invokeLater(() -> splitConfig.setDividerLocation(270));
 
         // Center Panel: Header + SplitPane
-        JPanel centerPanel = GUI.panel("insets 0, fill", "[grow]", "[]0[grow]");
+        JPanel centerPanel = gui.panel("insets 0, fill", "[grow]", "[]0[grow]");
         centerPanel.add(headerPanel, "growx, wrap");
         centerPanel.add(splitConfig, "grow");
 
         // Buttons Panel: Bottom Right
-        JPanel buttonsPanel = GUI.panel("insets 5 10 10 10, fillx", "[grow][][]", "[]");
+        JPanel buttonsPanel = gui.panel("insets 5 10 10 10, fillx", "[grow][][]", "[]");
         buttonsPanel.add(btnOpen, "align right, skip 1, split 2, tag ok, wmin 100");
         buttonsPanel.add(btnClose, "tag cancel, wmin 80");
 
         // Root Container to hold both centers
-        JPanel root = GUI.panel("fill, insets 0", "[grow]", "[grow]0[]");
+        JPanel root = gui.panel("fill, insets 0", "[grow]", "[grow]0[]");
 
         root.add(centerPanel, "grow, push, wrap");
         root.add(buttonsPanel, "growx");

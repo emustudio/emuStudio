@@ -18,6 +18,7 @@ import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexStrin
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatWordHexString;
 
 public class StatusPanel extends JPanel {
+    private final GUI gui;
     private final CpuImpl cpu;
     private final EmulatorEngine engine;
     private final Context8080 context;
@@ -44,7 +45,8 @@ public class StatusPanel extends JPanel {
 
     private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions) {
+    public StatusPanel(CpuImpl cpu, Context8080 context, boolean dumpInstructions, GUI gui) {
+        this.gui = gui;
         this.cpu = cpu;
         this.context = context;
         this.engine = cpu.getEngine();
@@ -114,38 +116,38 @@ public class StatusPanel extends JPanel {
         });
 
         // Registers panel
-        JPanel paneRegisters = GUI.panel("insets dialog", "[][grow]6[][grow]6[][grow]", "[][][][][][]6[][grow]");
-        paneRegisters.add(GUI.labelBold("B"));
+        JPanel paneRegisters = gui.panel("insets dialog", "[][grow]6[][grow]6[][grow]", "[][][][][][]6[][grow]");
+        paneRegisters.add(gui.labelBold("B"));
         paneRegisters.add(txtRegB, "growx");
-        paneRegisters.add(GUI.labelBold("C"));
+        paneRegisters.add(gui.labelBold("C"));
         paneRegisters.add(txtRegC, "growx");
-        paneRegisters.add(GUI.labelBold("BC"));
+        paneRegisters.add(gui.labelBold("BC"));
         paneRegisters.add(txtRegBC, "growx, wrap");
-        paneRegisters.add(GUI.labelBold("D"));
+        paneRegisters.add(gui.labelBold("D"));
         paneRegisters.add(txtRegD, "growx");
-        paneRegisters.add(GUI.labelBold("E"));
+        paneRegisters.add(gui.labelBold("E"));
         paneRegisters.add(txtRegE, "growx");
-        paneRegisters.add(GUI.labelBold("DE"));
+        paneRegisters.add(gui.labelBold("DE"));
         paneRegisters.add(txtRegDE, "growx, wrap");
-        paneRegisters.add(GUI.labelBold("H"));
+        paneRegisters.add(gui.labelBold("H"));
         paneRegisters.add(txtRegH, "growx");
-        paneRegisters.add(GUI.labelBold("L"));
+        paneRegisters.add(gui.labelBold("L"));
         paneRegisters.add(txtRegL, "growx");
-        paneRegisters.add(GUI.labelBold("HL"));
+        paneRegisters.add(gui.labelBold("HL"));
         paneRegisters.add(txtRegHL, "growx, wrap");
-        paneRegisters.add(GUI.labelBold("A"));
+        paneRegisters.add(gui.labelBold("A"));
         paneRegisters.add(txtRegA, "growx");
-        paneRegisters.add(GUI.labelBold("F"));
+        paneRegisters.add(gui.labelBold("F"));
         paneRegisters.add(txtFlags, "growx");
-        paneRegisters.add(GUI.labelBold("PC"));
+        paneRegisters.add(gui.labelBold("PC"));
         paneRegisters.add(txtRegPC, "growx, wrap");
         paneRegisters.add(new JLabel());
         paneRegisters.add(new JLabel());
         paneRegisters.add(new JLabel());
         paneRegisters.add(new JLabel());
-        paneRegisters.add(GUI.labelBold("SP"));
+        paneRegisters.add(gui.labelBold("SP"));
         paneRegisters.add(txtRegSP, "growx, wrap");
-        paneRegisters.add(GUI.label("Flags (F):"), "span, wrap");
+        paneRegisters.add(gui.label("Flags (F):"), "span, wrap");
         paneRegisters.add(tblFlags, "span, growx");
 
         // Run control panel
@@ -158,20 +160,22 @@ public class StatusPanel extends JPanel {
         lblRun.setForeground(new Color(0, 102, 0));
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | Font.BOLD));
 
-        JPanel panelRun = GUI.section("Run control", "insets dialog", "[]6[grow]6[]", "[][][][]");
+        JPanel panelRun = gui.section("Run control", "insets dialog", "[]6[grow]6[]", "[][][][]");
         panelRun.add(lblRun, "span, wrap");
-        panelRun.add(GUI.label("CPU frequency:"));
+        panelRun.add(gui.label("CPU frequency:"));
         panelRun.add(spnFrequency, "growx");
-        panelRun.add(GUI.labelBold("kHz"), "wrap");
-        panelRun.add(GUI.label("Runtime frequency:"));
+        panelRun.add(gui.labelBold("kHz"), "wrap");
+        panelRun.add(gui.label("Runtime frequency:"));
         panelRun.add(lblFrequency, "span, wrap");
         panelRun.add(chkPrintInstructions, "span");
 
         // Main layout
         setBorder(null);
-        setLayout(new net.miginfocom.swing.MigLayout("insets 0", "[grow]", "[]6[]"));
-        add(paneRegisters, "growx, wrap");
-        add(panelRun, "growx");
+        setLayout(new BorderLayout());
+        JPanel content = gui.panel("insets 0", "[grow]", "[]6[]");
+        content.add(paneRegisters, "growx, wrap");
+        content.add(panelRun, "growx");
+        add(content, BorderLayout.CENTER);
     }
 
     private static JTextField regField(String text) {

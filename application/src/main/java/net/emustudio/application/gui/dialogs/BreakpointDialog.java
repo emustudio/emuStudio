@@ -16,15 +16,17 @@ import java.util.Objects;
  */
 public class BreakpointDialog extends DialogBase {
     private final Dialogs dialogs;
+    private final GUI gui;
 
     private int address = -1; // if adr == -1 then it means cancel
     private boolean set = false;
     private JTextField txtAddress;
 
-    public BreakpointDialog(JFrame parent, Dialogs dialogs) {
+    public BreakpointDialog(JFrame parent, Dialogs dialogs, GUI gui) {
         super(parent, "Set/unset breakpoint", true);
 
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.gui = Objects.requireNonNull(gui);
         setResizable(false);
         buildContent();
     }
@@ -39,14 +41,14 @@ public class BreakpointDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.panelHorizontal();
+        JPanel panel = gui.panelHorizontal();
 
-        panel.add(GUI.label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
+        panel.add(gui.label("Set/unset breakpoint to address:"), "wrap, gapbottom 5");
 
         txtAddress = new JTextField("0", 20);
         panel.add(txtAddress, "growx, wrap, gapbottom 10");
 
-        JPanel buttonPanel = GUI.panel("insets dialog", "[grow, right]", "[]");
+        JPanel buttonPanel = gui.panel("insets dialog", "[grow, right]", "[]");
         JButton btnUnset = new JButton("Unset");
         btnUnset.addActionListener(e -> btnUnsetActionPerformed());
         JButton btnSet = new JButton("Set");

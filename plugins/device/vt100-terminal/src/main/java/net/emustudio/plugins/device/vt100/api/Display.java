@@ -47,6 +47,11 @@ public interface Display extends AutoCloseable {
         }
 
         @Override
+        public int[] getAttributeMemory() {
+            return new int[0];
+        }
+
+        @Override
         public void rollUp() {
         }
 
@@ -64,6 +69,15 @@ public interface Display extends AutoCloseable {
     Point getCursorPoint();
 
     char[] getVideoMemory();
+
+    /**
+     * Returns per-cell attribute memory. Each element is a packed attribute int
+     * as defined by {@link net.emustudio.plugins.device.vt100.VideoAttribute}.
+     * The array is parallel to {@link #getVideoMemory()}.
+     *
+     * @return packed attribute array
+     */
+    int[] getAttributeMemory();
 
     void rollUp();
 

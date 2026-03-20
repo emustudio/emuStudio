@@ -4,7 +4,6 @@ package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
-import net.emustudio.emulib.runtime.ui.components.ToolbarButton;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -15,27 +14,29 @@ public class PagesPanel extends JPanel {
 
     private final Dialogs dialogs;
     private final DebugTableModel debugTableModel;
+    private final GUI gui;
     private int pageSeekLastValue = 10;
 
-    private PagesPanel(DebugTableModel debugTableModel, Dialogs dialogs) {
+    private PagesPanel(DebugTableModel debugTableModel, Dialogs dialogs, GUI gui) {
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.gui = Objects.requireNonNull(gui);
     }
 
-    public static PagesPanel create(DebugTableModel debugTableModel, Dialogs dialogs) {
-        PagesPanel pagesPanel = new PagesPanel(debugTableModel, dialogs);
+    public static PagesPanel create(DebugTableModel debugTableModel, Dialogs dialogs, GUI gui) {
+        PagesPanel pagesPanel = new PagesPanel(debugTableModel, dialogs, gui);
         pagesPanel.initComponents();
 
         return pagesPanel;
     }
 
     private void initComponents() {
-        ToolbarButton btnFirst = GUI.toolbarButton(evt -> debugTableModel.firstPage(), ICON_PAGE_FIRST, "Go to the first page");
-        ToolbarButton btnBackward = GUI.toolbarButton(evt -> debugTableModel.previousPage(), ICON_PAGE_BACK, "Go to the previous page");
-        ToolbarButton btnCurrentPage = GUI.toolbarButton(evt -> debugTableModel.currentPage(), ICON_PAGE_CURRENT, "Go to the current page");
-        ToolbarButton btnForward = GUI.toolbarButton(evt -> debugTableModel.nextPage(), ICON_PAGE_FORWARD, "Go to the next page");
-        ToolbarButton btnSeekBackward = GUI.toolbarButton(evt -> seekBackward(), ICON_PAGE_SEEK_BACKWARD, "Go to the current page");
-        ToolbarButton btnSeekForward = GUI.toolbarButton(evt -> seekForward(), ICON_PAGE_SEEK_FORWARD, "Go to the current page");
+        JButton btnFirst = gui.toolbarButton(evt -> debugTableModel.firstPage(), ICON_PAGE_FIRST, "Go to the first page");
+        JButton btnBackward = gui.toolbarButton(evt -> debugTableModel.previousPage(), ICON_PAGE_BACK, "Go to the previous page");
+        JButton btnCurrentPage = gui.toolbarButton(evt -> debugTableModel.currentPage(), ICON_PAGE_CURRENT, "Go to the current page");
+        JButton btnForward = gui.toolbarButton(evt -> debugTableModel.nextPage(), ICON_PAGE_FORWARD, "Go to the next page");
+        JButton btnSeekBackward = gui.toolbarButton(evt -> seekBackward(), ICON_PAGE_SEEK_BACKWARD, "Go to the current page");
+        JButton btnSeekForward = gui.toolbarButton(evt -> seekForward(), ICON_PAGE_SEEK_FORWARD, "Go to the current page");
 
         GroupLayout pagesLayout = new GroupLayout(this);
         setLayout(pagesLayout);

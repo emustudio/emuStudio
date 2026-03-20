@@ -16,14 +16,16 @@ import java.awt.*;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 public class MemoryGui extends DialogBase {
+    private final GUI gui;
     private final JTable table;
 
     private final LoadImageAction loadImageAction;
     private final DumpMemoryAction dumpMemoryAction;
     private final EraseMemoryAction eraseMemoryAction;
 
-    public MemoryGui(JFrame parent, MemoryContextImpl memory, Dialogs dialogs) {
+    public MemoryGui(JFrame parent, MemoryContextImpl memory, Dialogs dialogs, GUI gui) {
         super(parent, "Program memory", false);
+        this.gui = gui;
 
         RamTableModel tableModel = new RamTableModel(memory);
         this.table = new JTable(tableModel);
@@ -41,20 +43,20 @@ public class MemoryGui extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
-        JToolBar toolBar = GUI.toolBar();
-        toolBar.add(GUI.toolbarButton(loadImageAction));
-        toolBar.add(GUI.toolbarButton(dumpMemoryAction));
+        JToolBar toolBar = gui.toolBar();
+        toolBar.add(gui.toolbarButton(loadImageAction));
+        toolBar.add(gui.toolbarButton(dumpMemoryAction));
         toolBar.addSeparator();
-        toolBar.add(GUI.toolbarButton(eraseMemoryAction));
+        toolBar.add(gui.toolbarButton(eraseMemoryAction));
 
         table.setGridColor(SystemColor.control);
-        JScrollPane scrollPane = GUI.scrollPane(table);
+        JScrollPane scrollPane = gui.scrollPane(table);
         scrollPane.setPreferredSize(new Dimension(439, 456));
 
-        JPanel panelContent = GUI.section("Tape content", "insets dialog", "[grow]", "[grow]");
+        JPanel panelContent = gui.section("Tape content", "insets dialog", "[grow]", "[grow]");
         panelContent.add(scrollPane, "grow");
 
-        JPanel content = GUI.panel("insets 0", "[grow]", "[]6[grow]");
+        JPanel content = gui.panel("insets 0", "[grow]", "[]6[grow]");
         content.add(toolBar, "growx, wrap");
         content.add(panelContent, "grow");
         return content;

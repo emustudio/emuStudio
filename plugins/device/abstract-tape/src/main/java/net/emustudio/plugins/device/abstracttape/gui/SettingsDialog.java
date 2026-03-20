@@ -15,6 +15,7 @@ import java.awt.*;
 import java.util.Objects;
 
 public class SettingsDialog extends DialogBase {
+    private final GUI uiFactory;
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
 
     private final PluginSettings settings;
@@ -23,8 +24,9 @@ public class SettingsDialog extends DialogBase {
     private final JCheckBox chkAlwaysOnTop = new JCheckBox("Always on top");
     private final JCheckBox chkShowAtStartup = new JCheckBox("Show GUI at startup");
 
-    public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeGui gui, String title) {
+    public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeGui gui, String title, GUI uiFactory) {
         super(parent, title + " settings", true);
+        this.uiFactory = uiFactory;
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.gui = gui;
@@ -58,7 +60,7 @@ public class SettingsDialog extends DialogBase {
             dispose();
         });
 
-        JPanel content = GUI.panel("insets dialog", "[grow]", "[][][grow][]");
+        JPanel content = uiFactory.panel("insets dialog", "[grow]", "[][][grow][]");
         content.add(chkAlwaysOnTop, "wrap");
         content.add(chkShowAtStartup, "wrap");
         content.add(new JPanel(), "grow, wrap");

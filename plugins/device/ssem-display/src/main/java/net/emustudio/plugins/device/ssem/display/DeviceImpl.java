@@ -57,7 +57,7 @@ public class DeviceImpl extends AbstractDevice {
     public void showGUI(JFrame parent) {
         if (guiSupported) {
             if (display == null) {
-                display = new DisplayGui(parent, memory, displayPanel);
+                display = new DisplayGui(parent, memory, displayPanel, applicationApi.getGUI());
             }
             display.setVisible(true);
         }

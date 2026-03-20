@@ -18,6 +18,7 @@ import static net.emustudio.plugins.device.adm3a.TerminalSettings.DEFAULT_INPUT_
 import static net.emustudio.plugins.device.adm3a.TerminalSettings.DEFAULT_OUTPUT_FILE_NAME;
 
 public class SettingsDialog extends DialogBase {
+    private final GUI gui;
     private final TerminalSettings settings;
     private final TerminalWindow window;
     private final Dialogs dialogs;
@@ -28,8 +29,9 @@ public class SettingsDialog extends DialogBase {
     private final JTextField txtOutputFileName = new JTextField(DEFAULT_OUTPUT_FILE_NAME);
     private final JComboBox<Integer> cmbFont = new JComboBox<>(new Integer[]{0, 1});
 
-    public SettingsDialog(JFrame parent, TerminalSettings settings, TerminalWindow window, Dialogs dialogs) {
+    public SettingsDialog(JFrame parent, TerminalSettings settings, TerminalWindow window, Dialogs dialogs, GUI gui) {
         super(parent, "LSI ADM-3A Settings", true);
+        this.gui = gui;
 
         this.dialogs = Objects.requireNonNull(dialogs);
         this.settings = Objects.requireNonNull(settings);
@@ -64,25 +66,25 @@ public class SettingsDialog extends DialogBase {
         cmbFont.setSelectedIndex(settings.getFont().ordinal());
         spnInputDelay.setModel(new SpinnerNumberModel(0, 0, null, 100));
 
-        JButton btnInputBrowse = GUI.buttonBrowseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFileName.setText(p.toString()));
-        JButton btnOutputBrowse = GUI.buttonBrowseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFileName.setText(p.toString()));
+        JButton btnInputBrowse = gui.buttonBrowseFiles(dialogs, "Select input file", "Select", false, p -> txtInputFileName.setText(p.toString()));
+        JButton btnOutputBrowse = gui.buttonBrowseFiles(dialogs, "Select output file", "Select", false, p -> txtOutputFileName.setText(p.toString()));
 
         // Redirect I/O section
-        JPanel panelRedirectIO = GUI.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");
-        panelRedirectIO.add(GUI.label("Input file name:"));
+        JPanel panelRedirectIO = gui.section("Redirect I/O", "insets dialog", "[][grow][]", "[][][][]");
+        panelRedirectIO.add(gui.label("Input file name:"));
         panelRedirectIO.add(txtInputFileName, "growx");
         panelRedirectIO.add(btnInputBrowse, "wrap");
-        panelRedirectIO.add(GUI.label("Output file name:"));
+        panelRedirectIO.add(gui.label("Output file name:"));
         panelRedirectIO.add(txtOutputFileName, "growx");
         panelRedirectIO.add(btnOutputBrowse, "wrap");
-        panelRedirectIO.add(GUI.label("Input delay:"));
+        panelRedirectIO.add(gui.label("Input delay:"));
         panelRedirectIO.add(spnInputDelay, "split 2, w 73!");
-        panelRedirectIO.add(GUI.label("ms"), "wrap");
-        panelRedirectIO.add(GUI.label("Note: I/O redirection will be used only in case of No GUI mode."), "span, wrap");
+        panelRedirectIO.add(gui.label("ms"), "wrap");
+        panelRedirectIO.add(gui.label("Note: I/O redirection will be used only in case of No GUI mode."), "span, wrap");
 
         // Terminal section
-        JPanel panelTerminal = GUI.section("Terminal", "insets dialog", "[][grow]", "[][][]");
-        panelTerminal.add(GUI.label("Font"));
+        JPanel panelTerminal = gui.section("Terminal", "insets dialog", "[][grow]", "[][][]");
+        panelTerminal.add(gui.label("Font"));
         panelTerminal.add(cmbFont, "growx, wrap");
         panelTerminal.add(chkHalfDuplex, "span, wrap");
         panelTerminal.add(chkAlwaysOnTop, "span, wrap");
@@ -92,7 +94,7 @@ public class SettingsDialog extends DialogBase {
         btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
         btnSave.addActionListener(this::btnSaveActionPerformed);
 
-        JPanel content = GUI.panel("insets dialog", "[grow]", "[][][][]");
+        JPanel content = gui.panel("insets dialog", "[grow]", "[][][][]");
         content.add(panelRedirectIO, "growx, wrap");
         content.add(panelTerminal, "growx, wrap");
         content.add(btnSave, "align right");

@@ -9,32 +9,35 @@ import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 import static net.emustudio.application.Resources.getCopyright;
 import static net.emustudio.application.Resources.getVersion;
 
 public class AboutDialog extends DialogBase {
+    private final GUI gui;
 
-    public AboutDialog(JFrame parent) {
+    public AboutDialog(JFrame parent, GUI gui) {
         super(parent, "About emuStudio", true);
+        this.gui = Objects.requireNonNull(gui);
         buildContent();
     }
 
     @Override
     protected JComponent initializeComponents() {
         // Main panel with horizontal layout
-        JPanel mainPanel = GUI.panel("insets 10", "[][grow]", "[]");
+        JPanel mainPanel = gui.panel("insets 10", "[][grow]", "[]");
         JLabel lblLogo = EmuStudioUI.createLogoJLabel();
 
         // Info panel
-        JPanel infoPanel = GUI.panel("insets 10", "[grow]", "[]");
-        infoPanel.add(GUI.labelTitle("emuStudio"), "wrap, gapbottom 10");
-        infoPanel.add(GUI.label(getCopyright()), "wrap, gapbottom 10");
+        JPanel infoPanel = gui.panel("insets 10", "[grow]", "[]");
+        infoPanel.add(gui.labelTitle("emuStudio"), "wrap, gapbottom 10");
+        infoPanel.add(gui.label(getCopyright()), "wrap, gapbottom 10");
 
-        infoPanel.add(GUI.label("Version: "), "split 2");
-        infoPanel.add(GUI.labelBold(getVersion()), "wrap, gapbottom 10");
+        infoPanel.add(gui.label("Version: "), "split 2");
+        infoPanel.add(gui.labelBold(getVersion()), "wrap, gapbottom 10");
 
-        JLabel licenseInfo = GUI.label(
+        JLabel licenseInfo = gui.label(
                 "<html><p>This program comes with ABSOLUTELY NO WARRANTY. " +
                         "This is free software, and you are welcome to redistribute it " +
                         "under certain conditions; for details see " +

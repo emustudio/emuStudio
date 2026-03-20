@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.adm3a.gui;
 
+import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.device.adm3a.api.Display;
 
 import javax.swing.*;
@@ -11,7 +12,7 @@ import java.util.Objects;
 import static java.awt.FlowLayout.LEFT;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
-public class TerminalWindow extends JDialog {
+public class TerminalWindow extends DialogBase {
     private static final String BACKGROUND_IMAGE = "/net/emustudio/plugins/device/adm3a/gui/display.png";
     private static final String CLEAR_SCREEN_ICON = "/net/emustudio/plugins/device/adm3a/gui/clear.png";
     private static final String ROLL_LINE_ICON = "/net/emustudio/plugins/device/adm3a/gui/roll.png";
@@ -23,14 +24,13 @@ public class TerminalWindow extends JDialog {
     private volatile DisplayFont displayFont;
 
     public TerminalWindow(JFrame parent, Display display, DisplayFont font) {
-        super(parent);
+        super(parent, "LSI ADM-3A", false);
         this.display = Objects.requireNonNull(display);
         this.displayFont = Objects.requireNonNull(font);
         this.canvas = new DisplayCanvas(font, display);
 
-        initComponents();
-        setVisible(false);
-        setLocationRelativeTo(parent);
+        setResizable(false);
+        buildContent();
     }
 
     public void startPainting() {
@@ -43,8 +43,8 @@ public class TerminalWindow extends JDialog {
     }
 
     public void destroy() {
-        this.dispose();
         this.canvas.close();
+        this.dispose();
     }
 
     public void rollLine() {
@@ -59,23 +59,26 @@ public class TerminalWindow extends JDialog {
         canvas.repaint();
     }
 
-    private void initComponents() {
-        JLabel lblBack = new JLabel();
-        Icon backgroundImage = loadIcon(BACKGROUND_IMAGE);
+    @Override
+    protected boolean shouldCloseOnEscape() {
+        return false;
+    }
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("LSI ADM-3A");
-        setResizable(false);
+    @Override
+    protected JComponent initializeComponents() {
+        Icon backgroundImage = loadIcon(BACKGROUND_IMAGE);
+        int bgWidth = backgroundImage.getIconWidth();
+        int bgHeight = backgroundImage.getIconHeight();
 
         updateCanvasBounds();
 
-        lblBack.setLocation(0, 0);
+        JLabel lblBack = new JLabel();
         lblBack.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 16));
         lblBack.setIcon(backgroundImage);
         lblBack.setFocusable(false);
         lblBack.setOpaque(true);
         lblBack.setBackground(Color.BLACK);
-        lblBack.setBounds(0, 0, backgroundImage.getIconWidth(), backgroundImage.getIconHeight());
+        lblBack.setBounds(0, 0, bgWidth, bgHeight);
         lblBack.setDoubleBuffered(true);
 
         JButton btnClear = new JButton(loadIcon(CLEAR_SCREEN_ICON));
@@ -91,24 +94,22 @@ public class TerminalWindow extends JDialog {
         JPanel panelControl = new JPanel();
         panelControl.setBorder(null);
         panelControl.setOpaque(false);
-
-        FlowLayout panelLayout = new FlowLayout(LEFT);
-        panelControl.setLayout(panelLayout);
+        panelControl.setLayout(new FlowLayout(LEFT));
         panelControl.setBounds(0, 790, 150, 70);
 
         panelControl.add(btnClear);
         panelControl.add(btnRoll);
 
-        Container pane = getContentPane();
-        pane.setBackground(Color.BLACK);
-        pane.setLayout(null);
+        JLayeredPane layeredPane = new JLayeredPane();
+        layeredPane.setBackground(Color.BLACK);
+        layeredPane.setOpaque(true);
+        layeredPane.setPreferredSize(new Dimension(bgWidth, bgHeight));
 
-        pane.add(panelControl);
-        pane.add(canvas);
-        pane.add(lblBack);
-        pane.setPreferredSize(new Dimension(backgroundImage.getIconWidth(), backgroundImage.getIconHeight()));
+        layeredPane.add(lblBack, JLayeredPane.DEFAULT_LAYER);
+        layeredPane.add(canvas, JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(panelControl, JLayeredPane.PALETTE_LAYER);
 
-        pack();
+        return layeredPane;
     }
 
     static Rectangle computeCanvasBounds(DisplayFont displayFont, int columns, int cellWidth) {

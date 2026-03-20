@@ -24,10 +24,10 @@ import java.util.Optional;
 public class EmulatorPanel extends JPanel {
     private final static int MIN_PERIPHERAL_PANEL_HEIGHT = 100;
 
+    private final GUI gui;
     private final JPanel statusWindow = new JPanel();
     private final GroupLayout statusWindowLayout = new GroupLayout(statusWindow);
-
-    private final JToolBar toolDebug = GUI.toolBar();
+    private final JToolBar toolDebug;
     private final JPanel panelPages;
     private final JScrollPane paneDebug;
 
@@ -57,16 +57,18 @@ public class EmulatorPanel extends JPanel {
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
 
     public EmulatorPanel(JFrame parent, VirtualComputer computer, DebugTableModel debugTableModel, Dialogs dialogs,
-                         EmulationController emulationController, MemoryContext<?> memoryContext) {
+                         EmulationController emulationController, MemoryContext<?> memoryContext, GUI gui) {
+        this.gui = Objects.requireNonNull(gui);
         this.memoryContext = memoryContext;
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.debugTable = new DebugTableImpl(debugTableModel);
+        this.toolDebug = gui.toolBar();
 
-        paneDebug = GUI.scrollPane(debugTable);
+        paneDebug = gui.scrollPane(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         debugTable.setFillsViewportHeight(true);
 
-        GUI.styleTable(debugTable);
+        gui.styleTable(debugTable);
 
         paneDebug.addComponentListener(new ComponentAdapter() {
             @Override
@@ -89,7 +91,7 @@ public class EmulatorPanel extends JPanel {
         this.runTimedAction = new RunTimedAction(emulationController, dialogs);
         this.stepAction = new StepAction(emulationController);
         this.jumpAction = new JumpAction(computer, dialogs, this::refreshDebugTable);
-        this.breakpointAction = new BreakpointAction(parent, computer, dialogs, this::refreshDebugTable);
+        this.breakpointAction = new BreakpointAction(parent, computer, dialogs, this::refreshDebugTable, gui);
         this.showMemoryAction = new ShowMemoryAction(parent, computer, dialogs);
 
         showMemoryAction.setEnabled(computer.getMemory().filter(Memory::isShowSettingsSupported).isPresent());
@@ -97,9 +99,9 @@ public class EmulatorPanel extends JPanel {
 
         setupDebugToolbar();
 
-        panelPages = PagesPanel.create(debugTableModel, dialogs);
+        panelPages = PagesPanel.create(debugTableModel, dialogs, gui);
 
-        JPanel debuggerPanel = GUI.section("Debugger", "insets dialog", "[grow]", "[][grow][]");
+        JPanel debuggerPanel = gui.section("Debugger", "insets dialog", "[grow]", "[][grow][]");
         debuggerPanel.add(toolDebug, "growx, wrap");
         debuggerPanel.add(paneDebug, "grow, wrap");
         debuggerPanel.add(panelPages, "growx");
@@ -136,9 +138,9 @@ public class EmulatorPanel extends JPanel {
             }
         });
 
-        JPanel peripheralPanel = GUI.section("Peripheral devices", "insets dialog", "[grow]", "[grow][]");
-        JScrollPane paneDevices = GUI.scrollPane(lstDevices);
-        GUI.styleList(lstDevices);
+        JPanel peripheralPanel = gui.section("Peripheral devices", "insets dialog", "[grow]", "[grow][]");
+        JScrollPane paneDevices = gui.scrollPane(lstDevices);
+        gui.styleList(lstDevices);
 
         JButton btnShowSettings = new JButton(showDeviceSettingsAction);
         JButton btnShowGUI = new JButton(showDeviceGuiAction);
@@ -147,11 +149,11 @@ public class EmulatorPanel extends JPanel {
         peripheralPanel.add(btnShowSettings, "split 2, sizegroup btns, tag ok");
         peripheralPanel.add(btnShowGUI, "sizegroup btns, tag cancel");
 
-        splitPerDebug = GUI.splitPaneTopToBottom(debuggerPanel, peripheralPanel, 1.0);
+        splitPerDebug = gui.splitPaneTopToBottom(debuggerPanel, peripheralPanel, 1.0);
         splitPerDebug.setDividerLocation(500);
         splitPerDebug.setAutoscrolls(true);
 
-        JSplitPane splitLeftRight = GUI.splitPaneLeftToRight(splitPerDebug, statusWindow, 1.0);
+        JSplitPane splitLeftRight = gui.splitPaneLeftToRight(splitPerDebug, statusWindow, 1.0);
         splitLeftRight.setFocusable(false);
         splitLeftRight.setDividerLocation(1.0);
 
@@ -217,21 +219,21 @@ public class EmulatorPanel extends JPanel {
     }
 
     private void setupDebugToolbar() {
-        toolDebug.add(GUI.toolbarButton(resetAction));
+        toolDebug.add(gui.toolbarButton(resetAction));
         toolDebug.addSeparator();
-        toolDebug.add(GUI.toolbarButton(jumpToBeginningAction));
-        toolDebug.add(GUI.toolbarButton(stepBackAction));
-        toolDebug.add(GUI.toolbarButton(stopAction));
-        toolDebug.add(GUI.toolbarButton(pauseAction));
-        toolDebug.add(GUI.toolbarButton(runAction));
-        toolDebug.add(GUI.toolbarButton(runTimedAction));
-        toolDebug.add(GUI.toolbarButton(stepAction));
+        toolDebug.add(gui.toolbarButton(jumpToBeginningAction));
+        toolDebug.add(gui.toolbarButton(stepBackAction));
+        toolDebug.add(gui.toolbarButton(stopAction));
+        toolDebug.add(gui.toolbarButton(pauseAction));
+        toolDebug.add(gui.toolbarButton(runAction));
+        toolDebug.add(gui.toolbarButton(runTimedAction));
+        toolDebug.add(gui.toolbarButton(stepAction));
         toolDebug.addSeparator();
-        toolDebug.add(GUI.toolbarButton(jumpAction));
+        toolDebug.add(gui.toolbarButton(jumpAction));
         toolDebug.addSeparator();
-        toolDebug.add(GUI.toolbarButton(breakpointAction));
+        toolDebug.add(gui.toolbarButton(breakpointAction));
         toolDebug.addSeparator();
-        toolDebug.add(GUI.toolbarButton(showMemoryAction));
+        toolDebug.add(gui.toolbarButton(showMemoryAction));
     }
 
     private void refreshDebugTable() {

@@ -150,4 +150,243 @@ public class CursorTest {
         cursor.carriageReturn();
         assertEquals(new Point(0, 0), cursor.getRect().getLocation());
     }
+
+    // ========== Additional tests ==========
+
+    @Test
+    public void testMoveDown() {
+        cursor.moveDown();
+        assertEquals(new Point(0, 1), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveDownMultipleLines() {
+        cursor.moveDown(5);
+        assertEquals(new Point(0, 5), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveDownOutOfBounds() {
+        cursor.moveDown(DEFAULT_ROWS + 10);
+        assertEquals(new Point(0, DEFAULT_ROWS - 1), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveUpRolling() {
+        Display display = mock(Display.class);
+        display.rollDown();
+        expectLastCall().once();
+        replay(display);
+
+        // At row 0, moveUpRolling should trigger rollDown
+        cursor.moveUpRolling(display);
+        assertEquals(new Point(0, 0), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveUpRollingNoRolling() {
+        Display display = mock(Display.class);
+        replay(display);
+
+        cursor.move(0, 5);
+        cursor.moveUpRolling(display);
+        assertEquals(new Point(0, 4), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveForwardsMultiple() {
+        cursor.moveForwards(10);
+        assertEquals(new Point(10, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveForwardsMultipleOutOfBounds() {
+        cursor.moveForwards(DEFAULT_COLUMNS + 10);
+        assertEquals(new Point(DEFAULT_COLUMNS - 1, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveBackwardsMultiple() {
+        cursor.move(10, 0);
+        cursor.moveBackwards(5);
+        assertEquals(new Point(5, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveBackwardsMultipleOutOfBounds() {
+        cursor.move(3, 0);
+        cursor.moveBackwards(10);
+        assertEquals(new Point(0, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testSetSize() {
+        cursor.setSize(40, 12);
+        Rectangle rect = cursor.getRect();
+        assertEquals(40, rect.width);
+        assertEquals(12, rect.height);
+    }
+
+    @Test
+    public void testMovePoint() {
+        Point p = new Point(5, 3);
+        cursor.move(p);
+        assertEquals(new Point(5, 3), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveUpMultipleLinesLimitedToZero() {
+        cursor.move(0, 2);
+        cursor.moveUp(10);
+        assertEquals(new Point(0, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveDownExactlyToLastRow() {
+        cursor.moveDown(DEFAULT_ROWS - 1);
+        assertEquals(new Point(0, DEFAULT_ROWS - 1), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testMoveForwardsRollingMultipleTimes() {
+        Display display = mock(Display.class);
+        replay(display);
+
+        for (int i = 0; i < 5; i++) {
+            cursor.moveForwardsRolling(display);
+        }
+        assertEquals(new Point(5, 0), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testGetRectReturnsCorrectDimensions() {
+        Rectangle rect = cursor.getRect();
+        assertEquals(DEFAULT_COLUMNS, rect.width);
+        assertEquals(DEFAULT_ROWS, rect.height);
+        assertEquals(0, rect.x);
+        assertEquals(0, rect.y);
+    }
+
+    // ========== Scrolling region (DECSTBM) tests ==========
+
+    @Test
+    public void testDefaultScrollingRegion() {
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(DEFAULT_ROWS - 1, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetScrollingRegion() {
+        cursor.setScrollingRegion(2, 10);
+        assertEquals(2, cursor.getScrollTop());
+        assertEquals(10, cursor.getScrollBottom());
+        // Cursor should be moved to home
+        assertEquals(new Point(0, 0), cursor.getRect().getLocation());
+    }
+
+    @Test
+    public void testSetScrollingRegionClampsNegativeTop() {
+        cursor.setScrollingRegion(-5, 10);
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(10, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetScrollingRegionClampsBottomBeyondRows() {
+        cursor.setScrollingRegion(2, DEFAULT_ROWS + 10);
+        assertEquals(2, cursor.getScrollTop());
+        assertEquals(DEFAULT_ROWS - 1, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetScrollingRegionIgnoredWhenTopEqualsBottom() {
+        cursor.setScrollingRegion(5, 5);
+        // Should remain default
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(DEFAULT_ROWS - 1, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetScrollingRegionIgnoredWhenTopGreaterThanBottom() {
+        cursor.setScrollingRegion(10, 5);
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(DEFAULT_ROWS - 1, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testSetSizeResetsScrollingRegion() {
+        cursor.setScrollingRegion(2, 10);
+        cursor.setSize(40, 12);
+        assertEquals(0, cursor.getScrollTop());
+        assertEquals(11, cursor.getScrollBottom());
+    }
+
+    @Test
+    public void testMoveDownRollingRespectsScrollBottom() {
+        Display display = mock(Display.class);
+        display.rollUp();
+        expectLastCall().once();
+        replay(display);
+
+        cursor.setScrollingRegion(2, 5);
+        cursor.move(0, 5); // at scrollBottom
+        cursor.moveDownRolling(display);
+        assertEquals(new Point(0, 5), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveDownRollingNoRollWhenAboveScrollBottom() {
+        Display display = mock(Display.class);
+        replay(display);
+
+        cursor.setScrollingRegion(2, 10);
+        cursor.move(0, 5); // above scrollBottom
+        cursor.moveDownRolling(display);
+        assertEquals(new Point(0, 6), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveUpRollingRespectsScrollTop() {
+        Display display = mock(Display.class);
+        display.rollDown();
+        expectLastCall().once();
+        replay(display);
+
+        cursor.setScrollingRegion(3, 10);
+        cursor.move(0, 3); // at scrollTop
+        cursor.moveUpRolling(display);
+        assertEquals(new Point(0, 3), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveUpRollingNoRollWhenBelowScrollTop() {
+        Display display = mock(Display.class);
+        replay(display);
+
+        cursor.setScrollingRegion(3, 10);
+        cursor.move(0, 5); // below scrollTop
+        cursor.moveUpRolling(display);
+        assertEquals(new Point(0, 4), cursor.getRect().getLocation());
+        verify(display);
+    }
+
+    @Test
+    public void testMoveForwardsRollingRespectsScrollBottom() {
+        Display display = mock(Display.class);
+        display.rollUp();
+        expectLastCall().once();
+        replay(display);
+
+        cursor.setScrollingRegion(0, 5);
+        cursor.move(DEFAULT_COLUMNS - 1, 5); // last column, scrollBottom row
+        cursor.moveForwardsRolling(display);
+        assertEquals(new Point(0, 5), cursor.getRect().getLocation());
+        verify(display);
+    }
 }

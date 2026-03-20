@@ -94,7 +94,10 @@ public class CpuImpl extends AbstractCPU {
             }
             debugTableInitialized = true;
         }
-        return new RamStatusPanel(this, context.getInputTape(), context.getOutputTape());
+        if (applicationApi.getGUI() == null) {
+            return null;
+        }
+        return new RamStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI());
     }
 
     @Override

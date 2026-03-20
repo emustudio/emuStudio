@@ -27,4 +27,44 @@ public class DeviceChannelTest {
 
         verify(uart);
     }
+
+    @Test
+    public void testWriteWithNullUartDoesNotThrow() {
+        UART.DeviceChannel channel = new UART.DeviceChannel();
+        channel.writeData((byte) 10); // should not throw
+    }
+
+    @Test
+    public void testGetDataTypeReturnsByteClass() {
+        assertEquals(Byte.class, new UART.DeviceChannel().getDataType());
+    }
+
+    @Test
+    public void testReadAlwaysReturnsZeroEvenAfterWrite() {
+        UART uart = niceMock(UART.class);
+        replay(uart);
+
+        UART.DeviceChannel channel = new UART.DeviceChannel();
+        channel.setUART(uart);
+        channel.writeData((byte) 42);
+        assertEquals(0, (byte) channel.readData());
+    }
+
+    @Test
+    public void testSetUartToNullAfterSetting() {
+        UART uart = mock(UART.class);
+        uart.receiveFromDevice(eq((byte) 10));
+        expectLastCall().once();
+        replay(uart);
+
+        UART.DeviceChannel channel = new UART.DeviceChannel();
+        channel.setUART(uart);
+        channel.writeData((byte) 10);
+
+        // set to null - should not throw on further writes
+        channel.setUART(null);
+        channel.writeData((byte) 20);
+
+        verify(uart);
+    }
 }

@@ -3,6 +3,7 @@
 package net.emustudio.plugins.memory.bytemem.gui.actions;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.gui.FindSequenceDialog;
 import net.emustudio.plugins.memory.bytemem.gui.table.MemoryTableModel;
 
@@ -24,9 +25,10 @@ public class FindSequenceAction extends AbstractAction {
     private final MemoryTableModel tableModel;
     private final Supplier<Integer> getCurrentAddress;
     private final JDialog parent;
+    private final GUI gui;
 
     public FindSequenceAction(Dialogs dialogs, Consumer<Integer> setPageFromAddress, MemoryTableModel tableModel,
-                              Supplier<Integer> getCurrentAddress, JDialog parent) {
+                              Supplier<Integer> getCurrentAddress, JDialog parent, GUI gui) {
         super("Find sequence...", loadIcon(ICON_FILE));
 
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -34,6 +36,7 @@ public class FindSequenceAction extends AbstractAction {
         this.tableModel = Objects.requireNonNull(tableModel);
         this.getCurrentAddress = Objects.requireNonNull(getCurrentAddress);
         this.parent = Objects.requireNonNull(parent);
+        this.gui = gui;
 
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
         putValue(SHORT_DESCRIPTION, "Find sequence...");
@@ -44,7 +47,7 @@ public class FindSequenceAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         AtomicInteger foundAddress = new AtomicInteger(-1);
         FindSequenceDialog dialog = new FindSequenceDialog(
-                dialogs, parent, tableModel, getCurrentAddress.get(), foundAddress::set
+                dialogs, parent, tableModel, getCurrentAddress.get(), foundAddress::set, gui
         );
 
         dialog.setVisible(true);

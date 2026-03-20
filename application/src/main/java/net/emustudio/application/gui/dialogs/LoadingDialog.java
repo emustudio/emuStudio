@@ -11,22 +11,24 @@ import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_LOADING;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class LoadingDialog extends DialogBase {
+    private final GUI gui;
 
-    public LoadingDialog() {
+    public LoadingDialog(GUI gui) {
         super((JFrame) null, "emuStudio", false);
+        this.gui = gui;
         setResizable(false);
         buildContent();
     }
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.panelHorizontal();
+        JPanel panel = gui.panelHorizontal();
 
-        JLabel lblLoading = GUI.labelBold("Loading computer, please wait...");
+        JLabel lblLoading = gui.labelBold("Loading computer, please wait...");
         lblLoading.setIcon(loadIcon(ICON_LOADING));
 
         panel.add(lblLoading, "wrap, gapbottom 10");
-        panel.add(GUI.label("If you see some errors, please see the log file."), "wrap");
+        panel.add(gui.label("If you see some errors, please see the log file."), "wrap");
 
         return panel;
     }

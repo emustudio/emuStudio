@@ -78,7 +78,9 @@ public class CpuImpl extends AbstractCPU {
         context.setCpu(engine);
         disassembler = initializer.getDisassembler();
         context.addPassedCyclesListener(frequencyCalculator);
-        statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions());
+        if (applicationApi.getGUI() != null) {
+            statusPanel = new StatusPanel(this, context, initializer.shouldDumpInstructions(), applicationApi.getGUI());
+        }
     }
 
     public FrequencyCalculator getFrequencyCalculator() {

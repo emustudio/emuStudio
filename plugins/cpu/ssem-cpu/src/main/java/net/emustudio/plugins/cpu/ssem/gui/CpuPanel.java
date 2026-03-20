@@ -9,12 +9,14 @@ import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.cpu.ssem.EmulatorEngine;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
 
 public class CpuPanel extends JPanel {
+    private final GUI gui;
     private final EmulatorEngine engine;
     private final MemoryContext<Byte> memory;
 
@@ -36,7 +38,8 @@ public class CpuPanel extends JPanel {
     private final JTextField txtMLine = readOnlyField("0");
     private final JTextField txtDecMLine = readOnlyField("0");
 
-    public CpuPanel(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory) {
+    public CpuPanel(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory, GUI gui) {
+        this.gui = gui;
         this.engine = Objects.requireNonNull(engine);
         this.memory = Objects.requireNonNull(memory);
 
@@ -51,42 +54,44 @@ public class CpuPanel extends JPanel {
         lblSpeed.setFont(FONT_MONOSPACED);
 
         // Run control
-        JPanel panelRun = GUI.section("Run control", "insets dialog", "[grow]push[]6[]", "[]");
+        JPanel panelRun = gui.section("Run control", "insets dialog", "[grow]push[]6[]", "[]");
         panelRun.add(lblRunState);
         panelRun.add(lblSpeed);
-        panelRun.add(GUI.labelBold("ins/s"));
+        panelRun.add(gui.labelBold("ins/s"));
 
         // Columns: label, hex, dec, binary
         // Registers
-        JPanel panelRegs = GUI.section("Registers", "insets dialog", "[]6[80!]6[80!]6[grow]", "[][]");
-        panelRegs.add(GUI.label("A"));
+        JPanel panelRegs = gui.section("Registers", "insets dialog", "[]6[80!]6[80!]6[grow]", "[][]");
+        panelRegs.add(gui.label("A"));
         panelRegs.add(txtA, "growx");
         panelRegs.add(txtDecA, "growx");
         panelRegs.add(txtBinA, "growx, wrap");
-        panelRegs.add(GUI.label("CI"));
+        panelRegs.add(gui.label("CI"));
         panelRegs.add(txtCI, "growx");
         panelRegs.add(txtDecCI, "growx");
         panelRegs.add(txtBinCI, "growx");
 
         // Memory snippet
-        JPanel panelMem = GUI.section("Memory snippet", "insets dialog", "[]6[80!]6[80!]6[grow]", "[][][]");
-        panelMem.add(GUI.label("M[CI]"));
+        JPanel panelMem = gui.section("Memory snippet", "insets dialog", "[]6[80!]6[80!]6[grow]", "[][][]");
+        panelMem.add(gui.label("M[CI]"));
         panelMem.add(txtMCI, "growx");
         panelMem.add(txtDecMCI, "growx");
         panelMem.add(txtBinMCI, "growx, wrap");
-        panelMem.add(GUI.label("line"));
+        panelMem.add(gui.label("line"));
         panelMem.add(txtLine, "growx");
         panelMem.add(txtDecLine, "growx");
         panelMem.add(txtBinLine, "growx, wrap");
-        panelMem.add(GUI.label("M[line]"));
+        panelMem.add(gui.label("M[line]"));
         panelMem.add(txtMLine, "growx");
         panelMem.add(txtDecMLine, "growx");
         panelMem.add(txtBinMLine, "growx");
 
-        setLayout(new net.miginfocom.swing.MigLayout("insets dialog", "[grow]", "[][][]"));
-        add(panelRegs, "growx, wrap");
-        add(panelMem, "growx, wrap");
-        add(panelRun, "growx");
+        setLayout(new BorderLayout());
+        JPanel content = gui.panel("insets dialog", "[grow]", "[][][]");
+        content.add(panelRegs, "growx, wrap");
+        content.add(panelMem, "growx, wrap");
+        content.add(panelRun, "growx");
+        add(content, BorderLayout.CENTER);
     }
 
     private final class Updater implements CPU.CPUListener {

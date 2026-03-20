@@ -11,6 +11,7 @@ import java.awt.*;
 import java.util.Objects;
 
 public class SioGui extends DialogBase {
+    private final GUI gui;
     private final static Font FONT_BOLD_14 = new Font("sansserif", Font.BOLD, 14);
     private final static Font FONT_MONOSPACED_BOLD_14 = new Font("Monospaced", Font.BOLD, 14);
 
@@ -22,8 +23,9 @@ public class SioGui extends DialogBase {
     private final JLabel lblStatusLong = new JLabel(". . . . . . . .");
     private final JTextField txtAttachedDevice = new JTextField();
 
-    public SioGui(JFrame parent, UART uart) {
+    public SioGui(JFrame parent, UART uart, GUI gui) {
         super(parent, "MITS 88-SIO", false);
+        this.gui = gui;
 
         this.uart = Objects.requireNonNull(uart);
         setResizable(false);
@@ -69,7 +71,7 @@ public class SioGui extends DialogBase {
         txtAttachedDevice.setEditable(false);
         txtAttachedDevice.setFont(FONT_BOLD_14);
 
-        JPanel panelAttachedDevice = GUI.section("Attached device", "insets dialog, fill", "[grow]", "[]");
+        JPanel panelAttachedDevice = gui.section("Attached device", "insets dialog, fill", "[grow]", "[]");
         panelAttachedDevice.add(txtAttachedDevice, "growx, h 43!");
 
         // Control channel section
@@ -77,31 +79,31 @@ public class SioGui extends DialogBase {
         lblStatusLong.setHorizontalAlignment(SwingConstants.CENTER);
         lblStatusLong.setBorder(BorderFactory.createEtchedBorder());
 
-        JPanel panelControl = GUI.section("Control channel", "insets dialog", "[grow]", "[][pref!][][][][][][]");
-        panelControl.add(GUI.label("<html>Control channel shows intermal status of 88-SIO."), "growx, h 46!, wrap");
+        JPanel panelControl = gui.section("Control channel", "insets dialog", "[grow]", "[][pref!][][][][][][]");
+        panelControl.add(gui.label("<html>Control channel shows intermal status of 88-SIO."), "growx, h 46!, wrap");
         panelControl.add(lblStatusLong, "growx, h 33!, wrap");
 
-        panelControl.add(GUI.label("Hex value:"), "split 2");
+        panelControl.add(gui.label("Hex value:"), "split 2");
         panelControl.add(lblStatus, "wrap");
 
         panelControl.add(new JSeparator(), "growx, wrap");
 
-        JLabel lblR = GUI.labelBold("R");
-        JLabel lblD = GUI.labelBold("D");
-        JLabel lblO = GUI.labelBold("O");
-        JLabel lblX = GUI.labelBold("X");
-        JLabel lblI = GUI.labelBold("I");
+        JLabel lblR = gui.labelBold("R");
+        JLabel lblD = gui.labelBold("D");
+        JLabel lblO = gui.labelBold("O");
+        JLabel lblX = gui.labelBold("X");
+        JLabel lblI = gui.labelBold("I");
 
         panelControl.add(lblR, "split 2");
-        panelControl.add(GUI.label("Output device ready"), "wrap");
+        panelControl.add(gui.label("Output device ready"), "wrap");
         panelControl.add(lblD, "split 2");
-        panelControl.add(GUI.label("Data available"), "wrap");
+        panelControl.add(gui.label("Data available"), "wrap");
         panelControl.add(lblO, "split 2");
-        panelControl.add(GUI.label("Data overflow"), "wrap");
+        panelControl.add(gui.label("Data overflow"), "wrap");
         panelControl.add(lblX, "split 2");
-        panelControl.add(GUI.label("Data sent to x-mitter"), "wrap");
+        panelControl.add(gui.label("Data sent to x-mitter"), "wrap");
         panelControl.add(lblI, "split 2");
-        panelControl.add(GUI.label("Input device ready"));
+        panelControl.add(gui.label("Input device ready"));
 
         // Data buffer section
         lblDataAscii.setFont(FONT_BOLD_14);
@@ -111,16 +113,16 @@ public class SioGui extends DialogBase {
         btnClearBuffer.setDefaultCapable(false);
         btnClearBuffer.addActionListener(e -> uart.readBuffer());
 
-        JPanel panelData = GUI.section("Data buffer", "insets dialog", "[grow]", "[][pref!][][grow][]");
-        panelData.add(GUI.label("<html>Data buffer is an internal buffer to be read by CPU."), "growx, h 46!, wrap");
+        JPanel panelData = gui.section("Data buffer", "insets dialog", "[grow]", "[][pref!][][grow][]");
+        panelData.add(gui.label("<html>Data buffer is an internal buffer to be read by CPU."), "growx, h 46!, wrap");
         panelData.add(lblDataAscii, "growx, h 33!, wrap");
-        panelData.add(GUI.label("Hex value:"), "split 2");
+        panelData.add(gui.label("Hex value:"), "split 2");
         panelData.add(lblData, "wrap");
         panelData.add(new JPanel(), "grow, wrap"); // spacer
         panelData.add(btnClearBuffer, "align right");
 
         // Main layout
-        JPanel content = GUI.panel("insets dialog", "[grow][grow]", "[][grow]");
+        JPanel content = gui.panel("insets dialog", "[grow][grow]", "[][grow]");
         content.add(panelAttachedDevice, "span, growx, wrap");
         content.add(panelControl, "grow");
         content.add(panelData, "grow");

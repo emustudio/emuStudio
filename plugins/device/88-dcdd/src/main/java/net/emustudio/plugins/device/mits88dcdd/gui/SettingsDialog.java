@@ -32,6 +32,7 @@ import static net.emustudio.plugins.device.mits88dcdd.DiskSettings.*;
 import static net.emustudio.plugins.device.mits88dcdd.gui.Constants.*;
 
 public class SettingsDialog extends DialogBase {
+    private final GUI gui;
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
 
     private final Dialogs dialogs;
@@ -56,8 +57,9 @@ public class SettingsDialog extends DialogBase {
     private final JTextField txtSectorsPerTrack = new JTextField(String.valueOf(DiskSettings.DEFAULT_SECTORS_PER_TRACK));
     private int currentDriveIndex = 0;
 
-    public SettingsDialog(JFrame parent, DiskSettings settings, DriveCollection drives, Dialogs dialogs) {
+    public SettingsDialog(JFrame parent, DiskSettings settings, DriveCollection drives, Dialogs dialogs, GUI gui) {
         super(parent, "88-DCDD Settings", true);
+        this.gui = gui;
 
         this.settings = Objects.requireNonNull(settings);
         this.drives = Objects.requireNonNull(drives);
@@ -180,8 +182,8 @@ public class SettingsDialog extends DialogBase {
         // === Drive settings tab ===
 
         // Drive selection: 2 rows of 8 buttons
-        JPanel panelDriveSelection = GUI.panel("insets dialog", "[][][][][][][][]", "[][]");
-        panelDriveSelection.add(GUI.label("Drive:"), "span 1 2");
+        JPanel panelDriveSelection = gui.panel("insets dialog", "[][][][][][][][]", "[][]");
+        panelDriveSelection.add(gui.label("Drive:"), "span 1 2");
         for (int i = 0; i < 8; i++) {
             panelDriveSelection.add(driveButtons.get(i), i == 7 ? "wrap" : "");
         }
@@ -191,51 +193,51 @@ public class SettingsDialog extends DialogBase {
         }
 
         // Image file
-        JPanel panelImage = GUI.panel("insets dialog", "[][grow]", "[][]");
-        panelImage.add(GUI.label("Image:"));
+        JPanel panelImage = gui.panel("insets dialog", "[][grow]", "[][]");
+        panelImage.add(gui.label("Image:"));
         panelImage.add(txtImageFile, "growx, wrap");
         panelImage.add(btnBrowse, "skip 1, split 3");
         panelImage.add(btnMountUnmount);
         panelImage.add(btnUnmountAll, "push, align right");
 
         // Parameters section
-        JPanel panelParameters = GUI.section("Parameters", "insets dialog", "[][grow][][]", "[][]");
-        panelParameters.add(GUI.label("Sectors per track:"));
+        JPanel panelParameters = gui.section("Parameters", "insets dialog", "[][grow][][]", "[][]");
+        panelParameters.add(gui.label("Sectors per track:"));
         panelParameters.add(txtSectorsPerTrack, "growx, wrap");
-        panelParameters.add(GUI.label("Sector size:"));
+        panelParameters.add(gui.label("Sector size:"));
         panelParameters.add(txtSectorSize, "growx");
-        panelParameters.add(GUI.label("bytes"));
+        panelParameters.add(gui.label("bytes"));
         panelParameters.add(btnDriveDefault);
 
-        JPanel panelDrive = GUI.panel("insets dialog", "[grow]", "[][][grow]");
+        JPanel panelDrive = gui.panel("insets dialog", "[grow]", "[][][grow]");
         panelDrive.add(panelDriveSelection, "growx, wrap");
         panelDrive.add(panelImage, "growx, wrap");
         panelDrive.add(panelParameters, "growx");
 
         // === CPU tab ===
-        JPanel panelCpu = GUI.panel("insets dialog", "[][fill][][]", "[][][][]20[][][]");
-        panelCpu.add(GUI.label("Set CPU ports and interrupt vector used by this device."), "span, wrap");
+        JPanel panelCpu = gui.panel("insets dialog", "[][fill][][]", "[][][][]20[][][]");
+        panelCpu.add(gui.label("Set CPU ports and interrupt vector used by this device."), "span, wrap");
 
-        panelCpu.add(GUI.label("Port 1:"));
+        panelCpu.add(gui.label("Port 1:"));
         panelCpu.add(txtPort1);
-        panelCpu.add(GUI.label("(IN: Get flags"));
-        panelCpu.add(GUI.label("OUT: Select/unselect drive)"), "wrap");
+        panelCpu.add(gui.label("(IN: Get flags"));
+        panelCpu.add(gui.label("OUT: Select/unselect drive)"), "wrap");
 
-        panelCpu.add(GUI.label("Port 2:"));
+        panelCpu.add(gui.label("Port 2:"));
         panelCpu.add(txtPort2);
-        panelCpu.add(GUI.label("(IN: Current sector"));
-        panelCpu.add(GUI.label("OUT: Set flags)"), "wrap");
+        panelCpu.add(gui.label("(IN: Current sector"));
+        panelCpu.add(gui.label("OUT: Set flags)"), "wrap");
 
-        panelCpu.add(GUI.label("Port 3:"));
+        panelCpu.add(gui.label("Port 3:"));
         panelCpu.add(txtPort3);
-        panelCpu.add(GUI.label("(IN: Read data"));
-        panelCpu.add(GUI.label("OUT: Write data)"), "wrap");
+        panelCpu.add(gui.label("(IN: Read data"));
+        panelCpu.add(gui.label("OUT: Write data)"), "wrap");
 
         panelCpu.add(chkInterruptsSupported, "span, wrap");
 
-        panelCpu.add(GUI.label("Interrupt vector:"));
+        panelCpu.add(gui.label("Interrupt vector:"));
         panelCpu.add(spnInterruptVector);
-        panelCpu.add(GUI.label("(range 0-7)"), "wrap");
+        panelCpu.add(gui.label("(range 0-7)"), "wrap");
 
         panelCpu.add(btnCpuDefault, "span, align right");
 
@@ -317,7 +319,7 @@ public class SettingsDialog extends DialogBase {
         setupTextField(txtSectorSize, (dsui, value) -> dsui.sectorSize = value);
 
         // Main content: tabbed pane + save button
-        JPanel content = GUI.panel("insets 0, fill", "[grow]", "[grow][]");
+        JPanel content = gui.panel("insets 0, fill", "[grow]", "[grow][]");
         content.add(tabbedPane, "grow, wrap");
         content.add(btnSave, "align right, gapright 6, gapbottom 6");
         return content;

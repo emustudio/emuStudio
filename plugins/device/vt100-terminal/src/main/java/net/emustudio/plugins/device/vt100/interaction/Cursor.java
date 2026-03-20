@@ -14,16 +14,60 @@ public class Cursor {
     private volatile int columns;
     private volatile int rows;
 
+    // Scrolling region margins (0-based, inclusive)
+    private volatile int scrollTop;
+    private volatile int scrollBottom;
+
     private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
 
     public Cursor(int columns, int rows) {
         this.columns = columns;
         this.rows = rows;
+        this.scrollTop = 0;
+        this.scrollBottom = rows - 1;
     }
 
     public synchronized void setSize(int columns, int rows) {
         this.columns = columns;
         this.rows = rows;
+        this.scrollTop = 0;
+        this.scrollBottom = rows - 1;
+    }
+
+    /**
+     * Sets the scrolling region (DECSTBM).
+     * Both top and bottom are 0-based row indices, inclusive.
+     * The cursor is moved to the home position after this call.
+     *
+     * @param top    top margin (0-based, inclusive)
+     * @param bottom bottom margin (0-based, inclusive)
+     */
+    public synchronized void setScrollingRegion(int top, int bottom) {
+        if (top < 0) {
+            top = 0;
+        }
+        if (bottom >= rows) {
+            bottom = rows - 1;
+        }
+        if (top < bottom) {
+            this.scrollTop = top;
+            this.scrollBottom = bottom;
+        }
+        home();
+    }
+
+    /**
+     * Returns the top margin of the scrolling region (0-based).
+     */
+    public int getScrollTop() {
+        return scrollTop;
+    }
+
+    /**
+     * Returns the bottom margin of the scrolling region (0-based).
+     */
+    public int getScrollBottom() {
+        return scrollBottom;
     }
 
     public void home() {
@@ -55,11 +99,11 @@ public class Cursor {
     }
 
     public void moveForwardsRolling(Display display) {
-        int tmpRows;
+        int tmpScrollBottom;
         int tmpColumns;
 
         synchronized (this) {
-            tmpRows = rows - 1;
+            tmpScrollBottom = scrollBottom;
             tmpColumns = columns - 1;
         }
 
@@ -70,10 +114,10 @@ public class Cursor {
             if (newPoint.x > tmpColumns) {
                 newPoint.x = 0;
                 newPoint.y++;
-                // automatic line rolling
-                if (newPoint.y > tmpRows) {
+                // automatic line rolling within scrolling region
+                if (newPoint.y > tmpScrollBottom) {
                     display.rollUp();
-                    newPoint.y = tmpRows;
+                    newPoint.y = tmpScrollBottom;
                 }
             }
             return newPoint;
@@ -121,12 +165,14 @@ public class Cursor {
 
 
     public void moveUpRolling(Display display) {
+        int tmpScrollTop = scrollTop;
+
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
 
-            if (newPoint.y > 0) {
+            if (newPoint.y > tmpScrollTop) {
                 newPoint.y--;
-            } else {
+            } else if (newPoint.y == tmpScrollTop) {
                 display.rollDown();
             }
             return newPoint;
@@ -147,15 +193,15 @@ public class Cursor {
     }
 
     public void moveDownRolling(Display display) {
-        int tmpRows;
+        int tmpScrollBottom;
         synchronized (this) {
-            tmpRows = rows - 1;
+            tmpScrollBottom = scrollBottom;
         }
 
         setCursorPoint(oldPoint -> {
             Point newPoint = new Point(oldPoint);
 
-            if (newPoint.y == tmpRows) {
+            if (newPoint.y == tmpScrollBottom) {
                 display.rollUp();
             } else {
                 newPoint.y++;

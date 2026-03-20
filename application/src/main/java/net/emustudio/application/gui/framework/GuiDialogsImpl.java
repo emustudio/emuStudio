@@ -5,6 +5,7 @@ package net.emustudio.application.gui.framework;
 import net.emustudio.application.gui.dialogs.InputDialog;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 
 import javax.swing.*;
@@ -20,7 +21,12 @@ import java.util.stream.Collectors;
 
 public class GuiDialogsImpl implements Dialogs {
     private final RadixUtils radixUtils = RadixUtils.getInstance();
+    private final GUI gui;
     private Component parent;
+
+    public GuiDialogsImpl(GUI gui) {
+        this.gui = java.util.Objects.requireNonNull(gui);
+    }
 
     public void setParent(Component parent) {
         this.parent = parent;
@@ -58,7 +64,7 @@ public class GuiDialogsImpl implements Dialogs {
 
     @Override
     public Optional<Integer> readInteger(String message, String title, int initial) {
-        return InputDialog.showInputDialog(parent, message, title, initial)
+        return InputDialog.showInputDialog(parent, message, title, initial, gui)
                 .map(radixUtils::parseRadix);
     }
 
@@ -74,7 +80,7 @@ public class GuiDialogsImpl implements Dialogs {
 
     @Override
     public Optional<String> readString(String message, String title, String initial) {
-        return InputDialog.showInputDialog(parent, message, title, initial);
+        return InputDialog.showInputDialog(parent, message, title, initial, gui);
     }
 
     @Override
@@ -89,7 +95,7 @@ public class GuiDialogsImpl implements Dialogs {
 
     @Override
     public Optional<Double> readDouble(String message, String title, double initial) {
-        return InputDialog.showInputDialog(parent, message, title, initial)
+        return InputDialog.showInputDialog(parent, message, title, initial, gui)
                 .map(Double::parseDouble);
     }
 

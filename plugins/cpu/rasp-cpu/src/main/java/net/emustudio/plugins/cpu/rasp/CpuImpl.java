@@ -82,7 +82,10 @@ public class CpuImpl extends AbstractCPU {
             debugTableInitialized = true;
         }
         if (gui == null) {
-            gui = new RaspStatusPanel(this, context.getInputTape(), context.getOutputTape());
+            if (applicationApi.getGUI() == null) {
+                return null;
+            }
+            gui = new RaspStatusPanel(this, context.getInputTape(), context.getOutputTape(), applicationApi.getGUI());
         }
         return gui;
     }

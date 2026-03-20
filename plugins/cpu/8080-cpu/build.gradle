@@ -10,7 +10,6 @@ plugins {
 dependencies {
   implementation libs.emuLib
   implementation libs.jcipAnnotations
-  implementation libs.migLayout
   implementation libs.slf4JApi
 
   testImplementation libs.cpuTestSuite

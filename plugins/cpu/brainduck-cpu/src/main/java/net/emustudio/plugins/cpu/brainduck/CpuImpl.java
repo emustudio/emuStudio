@@ -89,7 +89,10 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public JPanel getStatusPanel() {
-        return new StatusPanel(memory, this);
+        if (applicationApi.getGUI() == null) {
+            return null;
+        }
+        return new StatusPanel(memory, this, applicationApi.getGUI());
     }
 
 

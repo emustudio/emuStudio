@@ -3,6 +3,7 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.Resources;
+import net.emustudio.application.gui.GUIImpl;
 import net.emustudio.application.gui.framework.EmuStudioUI;
 import net.emustudio.application.gui.framework.GuiDialogsImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
@@ -12,6 +13,7 @@ import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.ConfigFiles;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
+import net.emustudio.emulib.runtime.ui.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -81,10 +83,11 @@ public class Runner implements Runnable {
             try {
                 AppSettings appConfig = loadAppSettings(true, false);
                 EmuStudioUI.initialize(appConfig);
-                GuiDialogsImpl dialogs = new GuiDialogsImpl();
+                GUI gui = new GUIImpl();
+                GuiDialogsImpl dialogs = new GuiDialogsImpl(gui);
                 Optional<ComputerConfig> computerConfigOpt = (exclusive != null) ?
                         exclusive.loadConfiguration() :
-                        loadComputerConfigFromGui(appConfig, dialogs);
+                        loadComputerConfigFromGui(appConfig, dialogs, gui);
 
                 if (computerConfigOpt.isEmpty()) {
                     System.err.println("Virtual computer must be selected!");
@@ -93,16 +96,16 @@ public class Runner implements Runnable {
 
                 ComputerConfig computerConfig = computerConfigOpt.get();
 
-                LoadingDialog splash = showSplashScreen();
+                LoadingDialog splash = showSplashScreen(gui);
                 ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
                 DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
                 VirtualComputer computer = loadComputer(
-                        appConfig, computerConfig, dialogs, contextPool, debugTableModel
+                        appConfig, computerConfig, dialogs, contextPool, debugTableModel, gui
                 );
                 splash.dispose();
 
                 showMainWindow(
-                        computer, appConfig, dialogs, debugTableModel, contextPool, Optional.ofNullable(inputFile)
+                        computer, appConfig, dialogs, debugTableModel, contextPool, Optional.ofNullable(inputFile), gui
                 );
             } catch (Exception e) {
                 LOGGER.error("Unexpected error", e);

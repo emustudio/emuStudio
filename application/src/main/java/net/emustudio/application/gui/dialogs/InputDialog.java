@@ -15,21 +15,23 @@ import java.util.Optional;
 public class InputDialog extends DialogBase {
     private final String message;
     private final JTextField txtInput;
+    private final GUI gui;
     private String result;
 
-    private InputDialog(Component parent, String message, String title, Object initialValue) {
+    private InputDialog(Component parent, String message, String title, Object initialValue, GUI gui) {
         super(parent instanceof Frame ? (Frame) parent : (Frame) SwingUtilities.getAncestorOfClass(Frame.class, parent),
                 title, true);
         this.message = message;
         this.txtInput = new JTextField(String.valueOf(initialValue), 20);
+        this.gui = gui;
         setResizable(false);
         buildContent();
     }
 
     @Override
     protected JComponent initializeComponents() {
-        JPanel panel = GUI.panel("insets dialog", "[grow]", "[]6[]6[]");
-        panel.add(GUI.label(message), "wrap, gapbottom 5");
+        JPanel panel = gui.panel("insets dialog", "[grow]", "[]6[]6[]");
+        panel.add(gui.label(message), "wrap, gapbottom 5");
         panel.add(txtInput, "growx, wrap, gapbottom 10");
 
         JButton btnOk = new JButton("OK");
@@ -41,7 +43,7 @@ public class InputDialog extends DialogBase {
         btnCancel.addActionListener(e -> dispose());
         getRootPane().setDefaultButton(btnOk);
 
-        JPanel buttonPanel = GUI.panel("insets 0", "push[][]", "[]");
+        JPanel buttonPanel = gui.panel("insets 0", "push[][]", "[]");
         buttonPanel.add(btnCancel);
         buttonPanel.add(btnOk);
         panel.add(buttonPanel, "growx, align right");
@@ -53,8 +55,8 @@ public class InputDialog extends DialogBase {
     /**
      * Shows an input dialog and returns the user's input, or empty if cancelled/ESC.
      */
-    public static Optional<String> showInputDialog(Component parent, String message, String title, Object initialValue) {
-        InputDialog dialog = new InputDialog(parent, message, title, initialValue);
+    public static Optional<String> showInputDialog(Component parent, String message, String title, Object initialValue, GUI gui) {
+        InputDialog dialog = new InputDialog(parent, message, title, initialValue, gui);
         dialog.setVisible(true);
         return Optional.ofNullable(dialog.result);
     }

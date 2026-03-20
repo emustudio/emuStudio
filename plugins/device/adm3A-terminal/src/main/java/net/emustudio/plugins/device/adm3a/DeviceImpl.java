@@ -160,7 +160,7 @@ public class DeviceImpl extends AbstractDevice implements TerminalSettings.Chang
     @Override
     public void showSettings(JFrame parent) {
         if (isShowSettingsSupported()) {
-            new SettingsDialog(parent, terminalSettings, terminalGUI, applicationApi.getDialogs()).setVisible(true);
+            new SettingsDialog(parent, terminalSettings, terminalGUI, applicationApi.getDialogs(), applicationApi.getGUI()).setVisible(true);
         }
     }
 

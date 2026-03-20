@@ -26,6 +26,7 @@ public class EditorPanel extends JPanel {
 
     private final Editor editor;
     private final Dialogs dialogs;
+    private final GUI gui;
 
     private final FindAction findAction;
     private final ReplaceAction replaceAction;
@@ -40,15 +41,16 @@ public class EditorPanel extends JPanel {
     private final JSplitPane splitSource;
 
     public EditorPanel(JFrame parent, Dialogs dialogs, Editor editor, VirtualComputer computer, Runnable updateTitle,
-                       Supplier<CPU.RunState> runState) {
+                       Supplier<CPU.RunState> runState, GUI gui) {
 
         this.editor = Objects.requireNonNull(editor);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.gui = Objects.requireNonNull(gui);
 
         this.replaceDialog = new ReplaceDialog(parent, editor);
         this.findDialog = new FindDialog(parent, editor);
 
-        JTextArea compilerOutput = GUI.textAreaReadOnly(3, 20);
+        JTextArea compilerOutput = gui.textAreaReadOnly(3, 20);
         compilerOutput.setFont(FONT_MONOSPACED);
 
         this.saveFileAction = new SaveFileAction(editor, updateTitle);
@@ -60,9 +62,9 @@ public class EditorPanel extends JPanel {
                 computer, dialogs, editor, runState, compilerOutput, updateTitle
         );
 
-        JScrollPane compilerPane = GUI.scrollPane(compilerOutput);
+        JScrollPane compilerPane = gui.scrollPane(compilerOutput);
 
-        splitSource = GUI.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
+        splitSource = gui.splitPaneTopToBottom(editor.getView(), compilerPane, 1.0);
         splitSource.setOneTouchExpandable(true);
 
         JToolBar mainToolBar = setupMainToolbar();
@@ -122,43 +124,43 @@ public class EditorPanel extends JPanel {
     }
 
     private JToolBar setupMainToolbar() {
-        JToolBar mainToolBar = GUI.toolBar();
+        JToolBar mainToolBar = gui.toolBar();
 
-        mainToolBar.add(GUI.toolbarButton(newFileAction));
-        mainToolBar.add(GUI.toolbarButton(openFileAction));
-        mainToolBar.add(GUI.toolbarButton(saveFileAction));
+        mainToolBar.add(gui.toolbarButton(newFileAction));
+        mainToolBar.add(gui.toolbarButton(openFileAction));
+        mainToolBar.add(gui.toolbarButton(saveFileAction));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.UNDO_ACTION),
                 ICON_UNDO,
                 "Undo"
         ));
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.REDO_ACTION),
                 ICON_REDO,
                 "Redo"
         ));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.CUT_ACTION),
                 ICON_CUT,
                 "Cut selection"
         ));
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.COPY_ACTION),
                 ICON_COPY,
                 "Copy selection"
         ));
-        mainToolBar.add(GUI.toolbarButton(
+        mainToolBar.add(gui.toolbarButton(
                 RTextArea.getAction(RTextArea.PASTE_ACTION),
                 ICON_PASTE,
                 "Paste from clipboard"
         ));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUI.toolbarButton(findAction));
-        mainToolBar.add(GUI.toolbarButton(replaceAction));
+        mainToolBar.add(gui.toolbarButton(findAction));
+        mainToolBar.add(gui.toolbarButton(replaceAction));
         mainToolBar.addSeparator();
-        mainToolBar.add(GUI.toolbarButton(compileAction));
+        mainToolBar.add(gui.toolbarButton(compileAction));
 
         return mainToolBar;
     }

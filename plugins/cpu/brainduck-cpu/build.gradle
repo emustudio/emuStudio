@@ -13,7 +13,6 @@ repositories {
 
 dependencies {
   implementation libs.emuLib
-  implementation libs.migLayout
   implementation libs.slf4JApi
   memoryLib project(":plugins:memory:byte-mem")
 

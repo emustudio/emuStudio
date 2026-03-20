@@ -26,6 +26,7 @@ import java.util.Optional;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
 
 public class SettingsDialog extends DialogBase {
+    private final GUI gui;
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
 
     private final MemoryContextImpl context;
@@ -41,8 +42,9 @@ public class SettingsDialog extends DialogBase {
     private final JTextField txtCommonBoundary = new JTextField("0x0000");
 
     public SettingsDialog(JDialog parent, MemoryImpl memory, MemoryContextImpl context, MemoryTable tblMem,
-                          PluginSettings settings, Dialogs dialogs) {
+                          PluginSettings settings, Dialogs dialogs, GUI gui) {
         super(parent, "Memory Settings", true);
+        this.gui = gui;
 
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
@@ -79,10 +81,10 @@ public class SettingsDialog extends DialogBase {
         lblDescription.setHorizontalAlignment(SwingConstants.LEFT);
         lblDescription.setVerticalAlignment(SwingConstants.TOP);
 
-        JPanel panelBanks = GUI.section("Bank-switching", "insets dialog", "[][grow]", "");
-        panelBanks.add(GUI.label("Banks count:"));
+        JPanel panelBanks = gui.section("Bank-switching", "insets dialog", "[][grow]", "");
+        panelBanks.add(gui.label("Banks count:"));
         panelBanks.add(txtBanksCount, "growx, wrap");
-        panelBanks.add(GUI.label("Common boundary:"));
+        panelBanks.add(gui.label("Common boundary:"));
         panelBanks.add(txtCommonBoundary, "growx, wrap");
         panelBanks.add(new JSeparator(), "span, growx, h 2!, wrap");
         panelBanks.add(lblDescription, "span, h 64!, growx, wrap");
@@ -96,7 +98,7 @@ public class SettingsDialog extends DialogBase {
         JButton btnRemoveRange = new JButton("Remove");
         btnRemoveRange.addActionListener(this::btnRemoveRangeActionPerformed);
 
-        JPanel panelROM = GUI.section("ROM areas", "insets dialog", "[grow]", "[116!][][grow][]");
+        JPanel panelROM = gui.section("ROM areas", "insets dialog", "[grow]", "[116!][][grow][]");
         panelROM.add(new JScrollPane(tblROM), "grow, wrap");
         panelROM.add(btnRemoveRange, "split 2, align right");
         panelROM.add(btnAddRange, "wrap");
@@ -114,12 +116,12 @@ public class SettingsDialog extends DialogBase {
         JButton btnLoadNow = new JButton("Load now");
         btnLoadNow.addActionListener(this::btnLoadNowActionPerformed);
 
-        JPanel btnPanel = GUI.panel("insets 0", "[grow]", "[][][unrel][]");
+        JPanel btnPanel = gui.panel("insets 0", "[grow]", "[][][unrel][]");
         btnPanel.add(btnAddImage, "growx, wrap");
         btnPanel.add(btnRemoveImage, "growx, wrap");
         btnPanel.add(btnLoadNow, "growx");
 
-        JPanel panelImages = GUI.section("Files to load at startup", "insets dialog", "[grow]unrel[]", "[]");
+        JPanel panelImages = gui.section("Files to load at startup", "insets dialog", "[grow]unrel[]", "[]");
         panelImages.add(scrollImages, "grow");
         panelImages.add(btnPanel, "top");
 
@@ -127,7 +129,7 @@ public class SettingsDialog extends DialogBase {
         JButton btnOK = new JButton("OK");
         btnOK.addActionListener(this::btnOKActionPerformed);
 
-        JPanel content = GUI.panel("insets dialog", "[340!]6[grow]", "[]6[]6[]");
+        JPanel content = gui.panel("insets dialog", "[340!]6[grow]", "[]6[]6[]");
         content.add(panelBanks, "grow");
         content.add(panelROM, "grow, wrap");
         content.add(panelImages, "span, growx, wrap");
@@ -233,7 +235,7 @@ public class SettingsDialog extends DialogBase {
 
             if (!isHex || hasBanks) {
                 SelectBankAddressDialog dialog = new SelectBankAddressDialog(
-                        this, hasBanks, !isHex, dialogs
+                        this, hasBanks, !isHex, dialogs, gui
                 );
                 dialog.setVisible(true);
                 ok = dialog.isOk();
