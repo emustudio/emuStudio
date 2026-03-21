@@ -26,10 +26,10 @@ public class SetClockCPM3 implements Command {
     @Override
     public void write(byte data, Control control) {
         if (setClockCPM3Pos == 0) {
-            setClockCPM3Adr = data;
+            setClockCPM3Adr = data & 0xFF;
             setClockCPM3Pos = 1;
         } else {
-            setClockCPM3Adr |= (data << 8);
+            setClockCPM3Adr |= ((data & 0xFF) << 8);
             setClockCPM3(control.getMemory());
             setClockCPM3Pos = 0;
             control.clearCommand();

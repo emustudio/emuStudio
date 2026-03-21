@@ -17,14 +17,26 @@ public class GetCPUClockFrequency implements Command {
     @Override
     public byte read(Control control) {
         byte result;
-        if (getClockFrequencyPos == 0) {
-            cpuFreq.set(control.getCpu().getCPUFrequency());
-            result = (byte) (cpuFreq.get() & 0xff);
-            getClockFrequencyPos = 1;
-        } else {
-            result = (byte) ((cpuFreq.get() >> 8) & 0xff);
-            getClockFrequencyPos = 0;
-            control.clearCommand();
+        switch (getClockFrequencyPos) {
+            case 0:
+                cpuFreq.set(control.getCpu().getCPUFrequency());
+                result = (byte) (cpuFreq.get() & 0xff);
+                getClockFrequencyPos = 1;
+                break;
+            case 1:
+                result = (byte) ((cpuFreq.get() >> 8) & 0xff);
+                getClockFrequencyPos = 2;
+                break;
+            case 2:
+                result = (byte) ((cpuFreq.get() >> 16) & 0xff);
+                getClockFrequencyPos = 3;
+                break;
+            case 3:
+            default:
+                result = (byte) ((cpuFreq.get() >> 24) & 0xff);
+                getClockFrequencyPos = 0;
+                control.clearCommand();
+                break;
         }
         return result;
     }

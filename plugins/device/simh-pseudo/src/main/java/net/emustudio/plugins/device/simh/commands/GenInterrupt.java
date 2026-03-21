@@ -9,6 +9,11 @@ public class GenInterrupt implements Command {
     private int genInterruptVec = 0; // stores interrupt vector
 
     @Override
+    public void reset(Control control) {
+        genInterruptPos = 0;
+    }
+
+    @Override
     public void write(byte data, Control control) {
         if (genInterruptPos == 0) {
             genInterruptVec = data; // interrupt vector is not used.

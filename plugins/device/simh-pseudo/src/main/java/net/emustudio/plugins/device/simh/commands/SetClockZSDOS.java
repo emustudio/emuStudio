@@ -24,10 +24,10 @@ public class SetClockZSDOS implements Command {
     @Override
     public void write(byte data, Control control) {
         if (setClockZSDOSPos == 0) {
-            setClockZSDOSAdr = data;
+            setClockZSDOSAdr = data & 0xFF;
             setClockZSDOSPos = 1;
         } else {
-            setClockZSDOSAdr |= (data << 8);
+            setClockZSDOSAdr |= ((data & 0xFF) << 8);
             setClockZSDOS(control.getMemory());
             setClockZSDOSPos = 0;
             control.clearCommand();

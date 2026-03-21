@@ -10,4 +10,9 @@ public class SetBankSelect implements Command {
         control.getMemory().selectBank(data);
         control.clearCommand();
     }
+
+    @Override
+    public void start(Control control) {
+        control.clearReadCommand();
+    }
 }
