@@ -1,93 +1,117 @@
-# ![emuStudio logo](resources/logo-white.png "emuStudio logo") Welcome to emuStudio
+# ![emuStudio logo](resources/logo-white.png "emuStudio logo") emuStudio
 
 ![emuStudio Build](https://github.com/emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-[emuStudio](https://www.emustudio.net/) is a desktop application used for computer emulation and writing programs
-for emulated computers. It extensible; it encourages developers to write their own computer emulators.
+[emuStudio](https://www.emustudio.net/) is a modular desktop application for emulating historic and teaching-oriented computers and for writing, loading, and debugging programs for them. It is built around a plugin model, so compilers, CPUs, memories, and devices can be combined into complete virtual computers or extended with new plugins.
 
-The main goal of emuStudio is to support the "compile-load-emulate" workflow, aiming at students or anyone to help to
-learn about older but important computers or even abstract machines.
+The project is designed around a "compile, load, emulate" workflow and is used both as a learning tool and as a base for emulator development. Emulated computers are called "virtual computers". Often they are full system, feature-rich and cycle-accurate emulators, capable of running original games or software.
 
-emuStudio is very appropriate for use at schools, e.g. when students are doing first steps in assembler, or when they
-are taught about computer history. For example, emuStudio is used at
-the [Technical University of Košice](http://www.fei.tuke.sk/en)
-since 2007.
+emuStudio is very appropriate for use at schools as teaching tool. For example, emuStudio is used at the [Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
 
-## Available emulators
+## What is included
 
-* [MITS Altair8800](https://www.emustudio.net/documentation/user/altair8800/)
+- Swing desktop application with computer schema editor, debugger, and source editor
+- CLI entry point for launching configured virtual computers and running automation
+- Official compiler, CPU, memory, and device plugins
+- Bundled computer configurations and example files shipped with the distribution
 
-* [Manchester SSEM](https://www.emustudio.net/documentation/user/ssem/)
+### Bundled virtual computers
 
-* [Random Access Machine (RAM)](https://www.emustudio.net/documentation/user/ram/)
+- [MITS Altair 8800](https://www.emustudio.net/documentation/user/altair8800/)
+- [Manchester SSEM](https://www.emustudio.net/documentation/user/ssem/)
+- [Random Access Machine (RAM)](https://www.emustudio.net/documentation/user/ram/)
+- [Random Access Stored Program (RASP)](https://www.emustudio.net/documentation/user/rasp/)
+- [BrainDuck](https://www.emustudio.net/documentation/user/brainduck/), a Brainfuck-oriented teaching machine
+- ZX Spectrum 48K (in development, not included in releases yet)
 
-* [Random Access Stored Program (RASP)](https://www.emustudio.net/documentation/user/rasp/)
-
-* [BrainDuck (brainfuck interpreter)](https://www.emustudio.net/documentation/user/brainduck/)
-
-## BIG THANKS
-
-emuStudio was written based on existing emulators, sites and existing documentation of real hardware. For example:
-
-Projects:
-- [simh](http://simh.trailing-edge.com/) project, which was the main inspiration for Altair8800 computer
-- [MAME](https://www.mamedev.org/) project, which helped with resolving a lot of bugs in a correct implementation of
-  some 8080 and Z80 CPU instructions
-
-Sites:
-- [David Sharp's SSEM site](https://www.davidsharp.com/baby/), main inspiration for SSEM implementation
-- [Esolang's BrainFuck site](https://esolangs.org/wiki/Brainfuck), main inspiration for Brainfuck implementation
-- [DeRamp Altair](https://deramp.com/altair.html), more inspiration for Altair8800
-- [Altair Clone](https://altairclone.com/), more inspiration for Altair8800
-- [Study of techniques for emulation programming](http://www.xsim.com/papers/Bario.2001.emubook.pdf), emulation techniques classic
-- [8080 instruction table](https://tobiasvl.github.io/optable/intel-8080/classic)
-
-Discord:
-- [Discord Emulation Development](https://discord.com/channels/465585922579103744/channel-browser)
+Bundled configuration files live in [`application/src/main/files/config`](application/src/main/files/config).
 
 ## Getting started
 
-At first, either compile or [download](https://www.emustudio.net/download/) emuStudio.
-The prerequisite is to have installed **Java, at least version 11**
-(download [here](https://www.oracle.com/java/technologies/javase-downloads.html)).
+At first, download a packaged release from <https://www.emustudio.net/download/>.
 
-Then, unzip the tar/zip file (`emuStudio-xxx.zip`) and run it using command:
+Prerequisite is to have:
+- Java 11 or newer
+- Linux, Windows or Mac 
 
-- On Linux / Mac
+After unpacking the release package, start emuStudio with:
 
+- Linux, Mac: `./emuStudio`
+- Windows: `emuStudio.bat`
+
+Useful CLI entry points:
+
+```bash
+./emuStudio --help
+./emuStudio --computers-list
+./emuStudio automation --help
 ```
-> ./emuStudio
+
+## Building and contributing
+
+Build the full project:
+
+```bash
+./gradlew build
 ```
 
-- On Windows:
+Run the desktop application directly from source:
 
+```bash
+./gradlew :application:run
 ```
-> emuStudio.bat
+
+Create a distributable archive:
+
+```bash
+./gradlew :application:distZip
+./gradlew :application:distTar
 ```
 
-NOTE: Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
+Distribution archives are written to `application/build/distributions/`.
 
-For more information, please read [user documentation](https://www.emustudio.net/documentation/user/introduction/).
+### Repository layout
 
-## Contributing
-
-Anyone can contribute. Before start, please read
-[developer documentation](https://www.emustudio.net/documentation/developer/introduction/),
-which includes information like:
-
-- Which tools to use and how to set up the environment
-- How to compile emuStudio and prepare local releases
-- Which git branch to use
-- Code architecture, naming conventions, best practices
+- [`application/`](application) contains the desktop application, CLI entry point, and distribution packaging
+- [`plugins/compiler/`](plugins/compiler) contains compiler and assembler plugins
+- [`plugins/cpu/`](plugins/cpu) contains CPU emulators
+- [`plugins/memory/`](plugins/memory) contains memory implementations
+- [`plugins/device/`](plugins/device) contains terminals, storage, display, and bus devices
+- [`application/src/main/files/examples/`](application/src/main/files/examples) contains example assets bundled with releases
 
 ### Related projects
 
-There exist some additional projects, which are used by emuStudio, useful for contributors:
+There are several related projects used by emuStudio that contributors should be familiar with:
 
-- [emuLib](https://github.com/emustudio/emuLib) - a shared runtime library
-- [Edigen](https://github.com/emustudio/edigen) - instruction decoder and disassembler generator
-- [Edigen Gradle plugin](https://github.com/emustudio/edigen-gradle-plugin) - Edigen Gradle plugin
-- [CPU testing suite](https://github.com/emustudio/cpu-testsuite) - a JUnit-based test suite for comfortable testing of CPU
-  plugins
-- [emuStudio website](https://github.com/emustudio/emustudio.github.io) - emuStudio website
+- [emuLib](https://github.com/emustudio/emuLib), shared runtime library (defines plugins API, common data structures, and utilities)
+- [Edigen](https://github.com/emustudio/edigen), instruction decoder and disassembler generator (used for CPU plugins)
+- [Edigen Gradle plugin](https://github.com/emustudio/edigen-gradle-plugin)
+- [CPU testing suite](https://github.com/emustudio/cpu-testsuite), framework for writing and running CPU instruction tests
+- [emuStudio website](https://github.com/emustudio/emustudio.github.io), source for the project website and user/developer documentation
+
+## Documentation
+
+- User documentation: <https://www.emustudio.net/documentation/user/introduction/>
+- Contributing guide: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- Developer documentation: <https://emustudio.github.io/documentation/developer/getting_started/contributing>
+- Release notes: [`RELEASES.md`](RELEASES.md)
+- Plugin-specific notes: README files inside individual plugin directories
+
+## Acknowledgements
+
+emuStudio builds on documentation, research, and emulator work from projects and communities such as:
+
+- [simh](http://simh.trailing-edge.com/)
+- [MAME](https://www.mamedev.org/)
+- [David Sharp's SSEM site](https://www.davidsharp.com/baby/)
+- [Esolang's Brainfuck site](https://esolangs.org/wiki/Brainfuck)
+- [DeRamp Altair](https://deramp.com/altair.html)
+- [Altair Clone](https://altairclone.com/)
+- [Study of techniques for emulation programming](http://www.xsim.com/papers/Bario.2001.emubook.pdf)
+- [Intel 8080 instruction table](https://tobiasvl.github.io/optable/intel-8080/classic)
+- [ZX-Poly emulator](https://github.com/raydac/zxpoly)
+- [Patrik Rak's z80 test suite](https://github.com/raxoft/z80test)
+- [ZXSpectrum Next tests](https://github.com/MrKWatkins/ZXSpectrumNextTests/tree/develop)
+
+...and many more! Thanks to all the emulator developers, documenters, and researchers who have shared their work and made projects like emuStudio possible.
