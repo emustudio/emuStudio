@@ -936,4 +936,41 @@ public class AssemblerZ80Test extends AbstractCompilerTest {
                 0xFD, 0xE5
         );
     }
+
+    @Test
+    public void testCallForwardAndJrBackwardToSameLabel() {
+        // Regression: when call (forward ref) and jr (backward ref) reference
+        // the same label, the jr operand must be 1 byte (not 2).
+        // Previously, the shared Evaluated object had its sizeBytes mutated
+        // from 1 to 2 by the call resolution, causing jr to emit an extra byte.
+        compile(
+                "call myproc\n" +
+                        "halt\n" +
+                        "myproc: ld a, (hl)\n" +
+                        "or a\n" +
+                        "ret z\n" +
+                        "inc hl\n" +
+                        "jr myproc\n" +
+                        "done: nop\n"
+        );
+
+        assertProgram(
+                // call myproc → CD 04 00
+                0xCD, 0x04, 0x00,
+                // halt → 76
+                0x76,
+                // myproc: ld a,(hl) → 7E
+                0x7E,
+                // or a → B7
+                0xB7,
+                // ret z → C8
+                0xC8,
+                // inc hl → 23
+                0x23,
+                // jr myproc → 18 FA (offset = 0x04 - 0x0A = -6)
+                0x18, 0xFA,
+                // done: nop → 00 (must be at 0x0A, no stray 0xFF)
+                0x00
+        );
+    }
 }
