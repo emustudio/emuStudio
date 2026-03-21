@@ -199,7 +199,7 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
             case 0x1F: // US 1/15
             case 0x7F: // DEL 7/15
                 break;
-            // C1 8-bit control codes (now correctly dispatched via execute)
+            // C1 8-bit control codes
             case 0x84: // Index (IND)
                 cursor.moveDownRolling(this);
                 break;
