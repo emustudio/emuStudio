@@ -15,10 +15,10 @@ public class SetTimerInterruptAdr implements Command {
     @Override
     public void write(byte data, Control control) {
         if (setTimerInterruptAdrPos == 0) {
-            timerInterruptHandler = data;
+            timerInterruptHandler = data & 0xFF;
             setTimerInterruptAdrPos = 1;
         } else {
-            timerInterruptHandler |= (data << 8);
+            timerInterruptHandler |= ((data & 0xFF) << 8);
             setTimerInterruptAdrPos = 0;
             control.clearCommand();
         }

@@ -7,6 +7,7 @@ public class GetHostOSPathSeparator implements Command {
 
     @Override
     public byte read(Control control) {
+        control.clearCommand();
         return (byte) GetHostFilenames.hostPathSeparator;
     }
 

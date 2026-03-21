@@ -16,13 +16,25 @@ public class ReadStopWatch implements Command {
     @Override
     public byte read(Control control) {
         byte result;
-        if (getStopWatchDeltaPos == 0) {
-            result = (byte) (stopWatchDelta & 0xff);
-            getStopWatchDeltaPos = 1;
-        } else {
-            result = (byte) ((stopWatchDelta >> 8) & 0xff);
-            getStopWatchDeltaPos = 0;
-            control.clearCommand();
+        switch (getStopWatchDeltaPos) {
+            case 0:
+                result = (byte) (stopWatchDelta & 0xff);
+                getStopWatchDeltaPos = 1;
+                break;
+            case 1:
+                result = (byte) ((stopWatchDelta >> 8) & 0xff);
+                getStopWatchDeltaPos = 2;
+                break;
+            case 2:
+                result = (byte) ((stopWatchDelta >> 16) & 0xff);
+                getStopWatchDeltaPos = 3;
+                break;
+            case 3:
+            default:
+                result = (byte) ((stopWatchDelta >> 24) & 0xff);
+                getStopWatchDeltaPos = 0;
+                control.clearCommand();
+                break;
         }
         return result;
     }

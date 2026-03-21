@@ -15,13 +15,25 @@ public class SetCPUClockFrequency implements Command {
 
     @Override
     public void write(byte data, Control control) {
-        if (setClockFrequencyPos == 0) {
-            newClockFrequency = data & 0xFF;
-            setClockFrequencyPos = 1;
-        } else {
-            control.getCpu().setCPUFrequency(((data << 8) & 0xFF00) | newClockFrequency);
-            setClockFrequencyPos = 0;
-            control.clearCommand();
+        switch (setClockFrequencyPos) {
+            case 0:
+                newClockFrequency = data & 0xFF;
+                setClockFrequencyPos = 1;
+                break;
+            case 1:
+                newClockFrequency |= (data & 0xFF) << 8;
+                setClockFrequencyPos = 2;
+                break;
+            case 2:
+                newClockFrequency |= (data & 0xFF) << 16;
+                setClockFrequencyPos = 3;
+                break;
+            case 3:
+                newClockFrequency |= (data & 0xFF) << 24;
+                control.getCpu().setCPUFrequency(newClockFrequency);
+                setClockFrequencyPos = 0;
+                control.clearCommand();
+                break;
         }
     }
 
