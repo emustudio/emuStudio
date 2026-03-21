@@ -73,8 +73,8 @@ public class CpmPlusPassword implements CpmEntry {
         for (; i < 8; i++) {
             fileNameBytes[i] = 0x20; // space
         }
-        for (; i < fileExt.length(); i++) {
-            fileNameBytes[i] = (byte) (fileExt.charAt(i) & 0x7F);
+        for (; i < 8 + fileExt.length(); i++) {
+            fileNameBytes[i] = (byte) (fileExt.charAt(i - 8) & 0x7F);
         }
         for (; i < 11; i++) {
             fileNameBytes[i] = 0x20; // space

@@ -69,7 +69,7 @@ public class CpmFormat {
         // 1 1 1 1 0 0 0 0  0 0 0 0 0 0 0 0
 
         List<Integer> dblocks = new ArrayList<>();
-        int tmpAl01 = ((dpb.al0 << 8) | (dpb.al1)) & 0xFF00;
+        int tmpAl01 = ((dpb.al0 << 8) | dpb.al1) & 0xFFFF;
         for (int i = 0; i < 16; i++) {
             if ((tmpAl01 & 1) == 1) {
                 dblocks.add(15 - i);
@@ -85,7 +85,7 @@ public class CpmFormat {
         this.blockPointersCount = RAW_BLOCK_POINTERS_COUNT / (blockPointerIsWord ? 2 : 1);
         this.sectorSize = sectorSize;
 
-        this.tracks = dpb.drm * blockSize / (dpb.spt * RECORD_SIZE);
+        this.tracks = (dpb.dsm + 1) * blockSize / (dpb.spt * RECORD_SIZE) + dpb.ofs;
         this.bcInterpretsAsUnused = bcInterpretsAsUnused;
     }
 

@@ -6,10 +6,14 @@ import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.plugins.device.vt100.interaction.Cursor;
 import net.emustudio.plugins.device.vt100.interaction.DisplayImpl;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.awt.*;
+import java.io.IOException;
 
 import static net.emustudio.plugins.device.vt100.TerminalSettings.DEFAULT_COLUMNS;
 import static net.emustudio.plugins.device.vt100.TerminalSettings.DEFAULT_ROWS;
@@ -18,11 +22,14 @@ import static org.junit.Assert.*;
 
 public class DisplayImplTest {
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private DisplayImpl display;
     private Cursor cursor;
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         Dialogs dialogs = createNiceMock(Dialogs.class);
         replay(dialogs);
         PluginSettings pluginSettings = createNiceMock(PluginSettings.class);
@@ -32,8 +39,16 @@ public class DisplayImplTest {
         replay(pluginSettings);
 
         TerminalSettings settings = new TerminalSettings(pluginSettings, dialogs);
+        settings.setOutputPath(temporaryFolder.newFile(TerminalSettings.DEFAULT_OUTPUT_FILE_NAME).toPath());
         this.cursor = new Cursor(DEFAULT_COLUMNS, DEFAULT_ROWS);
         this.display = new DisplayImpl(cursor, settings);
+    }
+
+    @After
+    public void tearDown() {
+        if (display != null) {
+            display.close();
+        }
     }
 
     // ========== Basic display properties ==========
@@ -1014,4 +1029,3 @@ public class DisplayImplTest {
         assertEquals(VideoAttribute.DEFAULT, display.getCurrentAttribute());
     }
 }
-

@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.mits88dcdd.cpmfs.entry;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class DateStamp {
     public final static LocalDate FIRST_DAY = LocalDate.of(1978, 1, 1);
@@ -20,6 +21,27 @@ public class DateStamp {
         this.hour = hour;
         this.minute = minute;
         this.dateTime = FIRST_DAY.plusDays(days).atTime(hour, minute);
+    }
+
+    /**
+     * Creates a DateStamp from the current system date and time.
+     *
+     * @return DateStamp representing current date/time in CP/M format
+     */
+    public static DateStamp now() {
+        LocalDateTime now = LocalDateTime.now();
+        int days = (int) ChronoUnit.DAYS.between(FIRST_DAY, now.toLocalDate());
+        return new DateStamp(days, now.getHour(), now.getMinute());
+    }
+
+    /**
+     * Creates a DateStamp with only the date portion (hour and minute set to 0).
+     * Used by NATIVE format where creation timestamp has only the date.
+     *
+     * @return DateStamp with only date portion
+     */
+    public DateStamp dateOnly() {
+        return new DateStamp(days, 0, 0);
     }
 
     @Override

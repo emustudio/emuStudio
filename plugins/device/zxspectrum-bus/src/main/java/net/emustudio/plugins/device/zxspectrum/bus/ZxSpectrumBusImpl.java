@@ -18,7 +18,10 @@ import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 /**
  * ZX Spectrum bus (for 48K ZX spectrum).
  * <p>
- * Adds memory & I/O port contention.
+ * - Adds memory & I/O port contention
+ * - Adds "floating bus" behavior
+ * - Sets CPU interrupt request to last 32 t-states
+ * <p>It is implemented as memory context, because "bus" behavior is also reading/writing data on specific address.
  * <p>
  * <a href="https://sinclair.wiki.zxnet.co.uk/wiki/Contended_memory#Timing_differences">ZX Spectrum48 timing</a>
  * On the 16K and 48K models of ZX Spectrum, the memory from 0x4000 to 0x7fff is contended. If the contended
@@ -64,7 +67,6 @@ import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
     private static final int IO_PORTS = 0x100;
     private static final int SCREEN_FETCH_CYCLES = ATTRIBUTES_WIDTH * 4; // 128
-    private static final int IO_READ_SAMPLE_OFFSET = 3;
 
     // First contended T-state after interrupt. Each screen line has 128 contended T-states + 96 non-contended.
     private static final long FIRST_CONTENDED = 14335;
@@ -244,57 +246,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         }
     }
 
-    private void contendedPort(int portAddress) {
-        //    High byte   |         |
-        //    in 40 - 7F? | Low bit | Contention pattern
-        //    ------------+---------+-------------------
-        //         No     |  Reset  | N:1, C:3
-        //         No     |   Set   | N:4
-        //        Yes     |  Reset  | C:1, C:3
-        //        Yes     |   Set   | C:1, C:1, C:1, C:1
-
-        if (portAddress >= 0x4000 && portAddress <= 0x7FFF) {
-            // after this, CPU adds 4 cycles for I/O.
-            if ((portAddress & 1) == 0) {
-                //        Yes     |  Reset  | C:1, C:3
-                Integer cycles = contentionDelayAt(frameCycles); // at C:1
-                if (cycles != null) {
-                    cpu.addCycles(cycles);
-                }
-                cycles = contentionDelayAt(frameCycles + 1); // after C:1
-                if (cycles != null) {
-                    cpu.addCycles(cycles);
-                }
-            } else {
-                //        Yes     |   Set   | C:1, C:1, C:1, C:1
-                Integer cycles = contentionDelayAt(frameCycles); // at C:1
-                if (cycles != null) {
-                    cpu.addCycles(cycles);
-                }
-                cycles = contentionDelayAt(frameCycles + 1); // 2x at C:1
-                if (cycles != null) {
-                    cpu.addCycles(cycles);
-                }
-                cycles = contentionDelayAt(frameCycles + 2); // 3x at C:1
-                if (cycles != null) {
-                    cpu.addCycles(cycles);
-                }
-                cycles = contentionDelayAt(frameCycles + 3); // after 3x at C:1
-                if (cycles != null) {
-                    cpu.addCycles(cycles);
-                }
-            }
-        } else {
-            //         No     |  Reset  | N:1, C:3
-            if ((portAddress & 1) == 0) {
-                Integer cycles = contentionDelayAt(frameCycles + 1); // after N:1
-                if (cycles != null) {
-                    cpu.addCycles(cycles);
-                }
-            }
-        }
-    }
-
     private void registerDevice(int lowPort, Context8080.CpuPortDevice device) {
         Context8080.CpuPortDevice old = attachedDevices[lowPort];
         if (old != null) {
@@ -319,63 +270,24 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         return CONTENTION_MAP.get(normalized);
     }
 
-    /**
-     * Reads the ZX Spectrum floating-bus value for a given frame-relative sample cycle.
-     * <p>
-     * During active ULA fetch phases, this returns the screen or attribute byte currently driven by the ULA.
-     * Outside the visible fetch window, the bus is treated as undriven and this returns {@code 0xFF}.
-     *
-     * @param sampleCycle frame-relative cycle at which IN contention samples the floating bus
-     * @return value observed on the floating bus at {@code sampleCycle}, or {@code 0xFF} when no ULA fetch is active
-     */
-    private byte readFloatingBus(long sampleCycle) {
-        long visibleCycles = sampleCycle - FIRST_FLOATING_BUS;
-        if (visibleCycles < 0) {
-            return (byte) 0xFF;
-        }
-
-        int line = (int) (visibleCycles / DISPLAY_LINE_TSTATES);
-        if (line < 0 || line >= SCREEN_HEIGHT_PIXELS) {
-            return (byte) 0xFF;
-        }
-
-        int cycleInLine = (int) (visibleCycles % DISPLAY_LINE_TSTATES);
-        if (cycleInLine >= SCREEN_FETCH_CYCLES) {
-            return (byte) 0xFF;
-        }
-
-        int column = (cycleInLine / 8) * 2;
-        int phase = cycleInLine & 7;
-        switch (phase) {
-            case 0:
-                return readScreenByte(line, column);
-            case 1:
-                return readAttributeByte(line, column);
-            case 2:
-                return readScreenByte(line, column + 1);
-            case 3:
-                return readAttributeByte(line, column + 1);
-            default:
-                return (byte) 0xFF;
-        }
-    }
-
-    private byte readScreenByte(int line, int column) {
-        int lineOffset = ((line & 0xC0) << 5) | ((line & 7) << 8) | ((line & 0x38) << 2);
-        return memory.read(0x4000 + lineOffset + column);
-    }
-
-    private byte readAttributeByte(int line, int column) {
-        int attributeOffset = ((line >>> 3) << 5) | column;
-        return memory.read(0x5800 + attributeOffset);
-    }
-
     @Override
     public void passedCycles(long tstates) {
         frameCycles = (frameCycles + tstates) % DISPLAY_FRAME_TSTATES;
     }
 
+    /**
+     * Handles all I/O accesses whose low address byte matches {@code lowPort}.
+     * <p>
+     * The CPU API exposes one device slot per low byte, so this bus installs one dispatcher for each value from
+     * {@code 0x00} to {@code 0xFF}. The dispatcher still receives the original 16-bit {@code portAddress}, applies
+     * the Spectrum contention rules for that full address, then either forwards the access to the registered device
+     * or models an unclaimed port: floating-bus on reads, ignored writes on writes.
+     */
     private class PortDispatcher implements Context8080.CpuPortDevice {
+        // Floating-bus reads observe the ULA value on the last T-state of the 4T I/O read cycle.
+        // By the time readIO() reaches this bus dispatcher, frameCycles already points at the start of that cycle,
+        // so sampling the ULA fetch position requires a +3 T-state offset.
+        private static final int IO_READ_SAMPLE_OFFSET = 3;
         private final int lowPort;
 
         private PortDispatcher(int lowPort) {
@@ -405,6 +317,113 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         @Override
         public String getName() {
             return "ZX-Spectrum bus port dispatcher";
+        }
+
+        private void contendedPort(int portAddress) {
+            //    High byte   |         |
+            //    in 40 - 7F? | Low bit | Contention pattern
+            //    ------------+---------+-------------------
+            //         No     |  Reset  | N:1, C:3
+            //         No     |   Set   | N:4
+            //        Yes     |  Reset  | C:1, C:3
+            //        Yes     |   Set   | C:1, C:1, C:1, C:1
+
+            if (portAddress >= 0x4000 && portAddress <= 0x7FFF) {
+                // after this, CPU adds 4 cycles for I/O.
+                if ((portAddress & 1) == 0) {
+                    //        Yes     |  Reset  | C:1, C:3
+                    Integer cycles = contentionDelayAt(frameCycles); // at C:1
+                    if (cycles != null) {
+                        cpu.addCycles(cycles);
+                    }
+                    cycles = contentionDelayAt(frameCycles + 1); // after C:1
+                    if (cycles != null) {
+                        cpu.addCycles(cycles);
+                    }
+                } else {
+                    //        Yes     |   Set   | C:1, C:1, C:1, C:1
+                    Integer cycles = contentionDelayAt(frameCycles); // at C:1
+                    if (cycles != null) {
+                        cpu.addCycles(cycles);
+                    }
+                    cycles = contentionDelayAt(frameCycles + 1); // 2x at C:1
+                    if (cycles != null) {
+                        cpu.addCycles(cycles);
+                    }
+                    cycles = contentionDelayAt(frameCycles + 2); // 3x at C:1
+                    if (cycles != null) {
+                        cpu.addCycles(cycles);
+                    }
+                    cycles = contentionDelayAt(frameCycles + 3); // after 3x at C:1
+                    if (cycles != null) {
+                        cpu.addCycles(cycles);
+                    }
+                }
+            } else {
+                //         No     |  Reset  | N:1, C:3
+                if ((portAddress & 1) == 0) {
+                    Integer cycles = contentionDelayAt(frameCycles + 1); // after N:1
+                    if (cycles != null) {
+                        cpu.addCycles(cycles);
+                    }
+                }
+            }
+        }
+
+
+        /**
+         * Reads the ZX Spectrum floating-bus value for a given frame-relative sample cycle.
+         * <p>
+         * During active ULA fetch phases, this returns the screen or attribute byte currently driven by the ULA.
+         * Outside the visible fetch window, the bus is treated as undriven and this returns {@code 0xFF}.
+         *
+         * @param sampleCycle frame-relative cycle at which IN contention samples the floating bus
+         * @return value observed on the floating bus at {@code sampleCycle}, or {@code 0xFF} when no ULA fetch is active
+         */
+        private byte readFloatingBus(long sampleCycle) {
+            long visibleCycles = sampleCycle - FIRST_FLOATING_BUS;
+            if (visibleCycles < 0) {
+                return (byte) 0xFF;
+            }
+
+            int line = (int) (visibleCycles / DISPLAY_LINE_TSTATES);
+            if (line < 0 || line >= SCREEN_HEIGHT_PIXELS) {
+                return (byte) 0xFF;
+            }
+
+            int cycleInLine = (int) (visibleCycles % DISPLAY_LINE_TSTATES);
+            if (cycleInLine >= SCREEN_FETCH_CYCLES) {
+                return (byte) 0xFF;
+            }
+
+            int column = (cycleInLine / 8) * 2;
+            int phase = cycleInLine & 7;
+            switch (phase) {
+                case 0:
+                    return readScreenByte(line, column);
+                case 1:
+                    return readAttributeByte(line, column);
+                case 2:
+                    return readScreenByte(line, column + 1);
+                case 3:
+                    return readAttributeByte(line, column + 1);
+                default:
+                    return (byte) 0xFF;
+            }
+        }
+
+        private byte readScreenByte(int line, int column) {
+            int lineOffset = ((line & 0xC0) << 5) | ((line & 7) << 8) | ((line & 0x38) << 2);
+
+            // non-contended read
+            return memory.read(0x4000 + lineOffset + column);
+        }
+
+        private byte readAttributeByte(int line, int column) {
+            int attributeOffset = ((line >>> 3) << 5) | column;
+
+            // non-contended read
+            return memory.read(0x5800 + attributeOffset);
         }
     }
 }

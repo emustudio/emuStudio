@@ -6,23 +6,38 @@ import net.emustudio.plugins.device.adm3a.TerminalSettings;
 import net.emustudio.plugins.device.adm3a.TerminalSettingsTestHelper;
 
 import java.awt.*;
+import java.io.IOException;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static net.emustudio.plugins.device.adm3a.DeviceImpl.DEFAULT_COLUMNS;
 import static net.emustudio.plugins.device.adm3a.DeviceImpl.DEFAULT_ROWS;
 import static org.junit.Assert.*;
 
 public class DisplayImplTest {
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private DisplayImpl display;
     private Cursor cursor;
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         cursor = new Cursor(DEFAULT_COLUMNS, DEFAULT_ROWS);
         TerminalSettings settings = TerminalSettingsTestHelper.createNoGuiSettings();
+        settings.setOutputPath(temporaryFolder.newFile(TerminalSettings.DEFAULT_OUTPUT_FILE_NAME).toPath());
         display = new DisplayImpl(cursor, settings);
+    }
+
+    @After
+    public void tearDown() {
+        if (display != null) {
+            display.close();
+        }
     }
 
     @Test

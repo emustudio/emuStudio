@@ -11,7 +11,7 @@ emuStudio is very appropriate for use at schools as teaching tool. For example, 
 
 ## What is included
 
-- Swing desktop application with computer schema editor, debugger, and source editor
+- Desktop application with computer schema editor, source code editor and emulation debugger
 - CLI entry point for launching configured virtual computers and running automation
 - Official compiler, CPU, memory, and device plugins
 - Bundled computer configurations and example files shipped with the distribution

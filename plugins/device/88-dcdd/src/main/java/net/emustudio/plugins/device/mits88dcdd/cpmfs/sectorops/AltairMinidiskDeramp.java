@@ -9,9 +9,7 @@ import java.nio.ByteBuffer;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZE;
 
 /**
- * https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%203.0/BIOS.ASM
- * <p>
- * Altair 5.25" floppy disk (from deramp.com)
+ * Altair 5.25" floppy disk (from deramp.com, <a href="https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%203.0/BIOS.ASM">BIOS.ASM</a>)
  * <p>
  * Tracks 0-5 are formatted as "System Tracks" (regardless of how they are actually used). Sectors on these tracks are
  * formatted as follows:
@@ -47,7 +45,8 @@ public class AltairMinidiskDeramp implements SectorOps {
         record.position(0);
 
         int checksum = 0;
-        for (int i = 0; i < record.remaining(); i++) {
+        int count = record.remaining();
+        for (int i = 0; i < count; i++) {
             checksum = (checksum + record.get()) & 0xFF;
         }
         record.flip();

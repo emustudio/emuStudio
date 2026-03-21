@@ -29,16 +29,20 @@ import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.DISPL
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.ZX_48K_CPU_FREQUENCY;
 
 public class DisplayWindow extends DialogBase {
-    private final GUI gui;
+    private final static ImageIcon KEYBOARD_ICON = GUI.loadIcon("toolbar-keyboard.png");
+    private final static ImageIcon VOLUME_ICON = GUI.loadIcon("toolbar-volume.png");
+    private final static ImageIcon RECORD_ICON = GUI.loadIcon("toolbar-record.png");
+    private final static ImageIcon STOP_RECORDING_ICON = GUI.loadIcon("toolbar-stop.png");
+
     public final static int MARGIN = 30;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DisplayWindow.class);
     private static final FileExtensionsFilter MP4_FILTER = new FileExtensionsFilter("MP4 video", "mp4");
 
-
     private final DisplayCanvas canvas;
     private final ULA ula;
     private final Dialogs dialogs;
+    private final GUI gui;
     private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(0);
     private JButton btnRecord;
 
@@ -103,13 +107,13 @@ public class DisplayWindow extends DialogBase {
                 ula::setAudioVolumePercent
         );
 
-        JButton btnKeyboard = createToolbarButton(ToolbarIcons.keyboard(), "Keyboard opacity", e ->
+        JButton btnKeyboard = createToolbarButton(KEYBOARD_ICON, "Keyboard opacity", e ->
                 togglePopup((AbstractButton) e.getSource(), keyboardPopup, volumePopup)
         );
-        JButton btnVolume = createToolbarButton(ToolbarIcons.volume(), "Beeper volume", e ->
+        JButton btnVolume = createToolbarButton(VOLUME_ICON, "Beeper volume", e ->
                 togglePopup((AbstractButton) e.getSource(), volumePopup, keyboardPopup)
         );
-        btnRecord = createToolbarButton(ToolbarIcons.record(), "Start video recording", e -> {
+        btnRecord = createToolbarButton(RECORD_ICON, "Start video recording", e -> {
             keyboardPopup.setVisible(false);
             volumePopup.setVisible(false);
             if (recordingSession == null) {
@@ -150,7 +154,7 @@ public class DisplayWindow extends DialogBase {
             recordingSession = session;
             canvas.setFrameListener(session);
             ula.setRecordingSink(session);
-            btnRecord.setIcon(ToolbarIcons.stop());
+            btnRecord.setIcon(STOP_RECORDING_ICON);
             btnRecord.setToolTipText("Stop recording and save video");
         } catch (IOException e) {
             LOGGER.error("Could not start ZX Spectrum recording", e);
@@ -187,7 +191,7 @@ public class DisplayWindow extends DialogBase {
             @Override
             protected void done() {
                 btnRecord.setEnabled(true);
-                btnRecord.setIcon(ToolbarIcons.record());
+                btnRecord.setIcon(RECORD_ICON);
                 try {
                     get(); // propagate any exception from doInBackground
                     if (selectedFile.isPresent()) {

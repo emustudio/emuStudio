@@ -102,7 +102,7 @@ public class CpmFile implements CpmEntry {
         this.entryNumber = ((32 * s2) + ex) / (exm + 1);
         this.bc = bc;
         this.rc = rc;
-        this.numberOfRecords = USE_EX_LSB ? ((ex & 1) << 8 + (rc & 0xFF)) : (rc & 0xFF);
+        this.numberOfRecords = USE_EX_LSB ? (((ex & 1) << 8) + (rc & 0xFF)) : ((ex & exm) * 128 + (rc & 0xFF));
     }
 
     private CpmFile(byte status, String fileName, String fileExt, int flags,
@@ -126,7 +126,7 @@ public class CpmFile implements CpmEntry {
         this.bc = bc;
         this.rc = rc;
         // if ex goes: 01 03 05 06  (odd, odd.. even)
-        this.numberOfRecords = USE_EX_LSB ? ((ex & 1) << 8 + (rc & 0xFF)) : (rc & 0xFF);
+        this.numberOfRecords = USE_EX_LSB ? (((ex & 1) << 8) + (rc & 0xFF)) : ((ex & exm) * 128 + (rc & 0xFF));
     }
 
     public static CpmFile fromEntry(ByteBuffer entry, byte exm) {
@@ -135,13 +135,13 @@ public class CpmFile implements CpmEntry {
         byte[] fileNameBytes = new byte[11];
         entry.get(fileNameBytes);
 
-        int WR = (fileNameBytes[FLAG_WHEEL_REQUIRED] & 0x80) == 0x80 ? FLAG_WHEEL_REQUIRED : 0;
-        int PF = (fileNameBytes[FLAG_PUBLIC_FILE] & 0x80) == 0x80 ? FLAG_PUBLIC_FILE : 0;
-        int DS = (fileNameBytes[FLAG_DATE_STAMP] & 0x80) == 0x80 ? FLAG_DATE_STAMP : 0;
-        int WP = (fileNameBytes[FLAG_WHEEL_PROTECT] & 0x80) == 0x80 ? FLAG_WHEEL_PROTECT : 0;
-        int RO = (fileNameBytes[FLAG_READ_ONLY] & 0x80) == 0x80 ? FLAG_READ_ONLY : 0;
-        int IN = (fileNameBytes[FLAG_INVISIBLE] & 0x80) == 0x80 ? FLAG_INVISIBLE : 0;
-        int AR = (fileNameBytes[FLAG_ARCHIVED] & 0x80) == 0x80 ? FLAG_ARCHIVED : 0;
+        int WR = (fileNameBytes[FLAG_WHEEL_REQUIRED] & 0x80) == 0x80 ? (1 << FLAG_WHEEL_REQUIRED) : 0;
+        int PF = (fileNameBytes[FLAG_PUBLIC_FILE] & 0x80) == 0x80 ? (1 << FLAG_PUBLIC_FILE) : 0;
+        int DS = (fileNameBytes[FLAG_DATE_STAMP] & 0x80) == 0x80 ? (1 << FLAG_DATE_STAMP) : 0;
+        int WP = (fileNameBytes[FLAG_WHEEL_PROTECT] & 0x80) == 0x80 ? (1 << FLAG_WHEEL_PROTECT) : 0;
+        int RO = (fileNameBytes[FLAG_READ_ONLY] & 0x80) == 0x80 ? (1 << FLAG_READ_ONLY) : 0;
+        int IN = (fileNameBytes[FLAG_INVISIBLE] & 0x80) == 0x80 ? (1 << FLAG_INVISIBLE) : 0;
+        int AR = (fileNameBytes[FLAG_ARCHIVED] & 0x80) == 0x80 ? (1 << FLAG_ARCHIVED) : 0;
 
         int flags = WR | PF | DS | WP | RO | IN | AR;
 
@@ -197,15 +197,15 @@ public class CpmFile implements CpmEntry {
         for (; i < 8; i++) {
             fileNameBytes[i] = 0x20; // space
         }
-        for (; i < fileExt.length(); i++) {
-            fileNameBytes[i] = (byte) (fileExt.charAt(i) & 0x7F);
+        for (; i < 8 + fileExt.length(); i++) {
+            fileNameBytes[i] = (byte) (fileExt.charAt(i - 8) & 0x7F);
         }
         for (; i < 11; i++) {
             fileNameBytes[i] = 0x20; // space
         }
 
         for (i = 0; i < fileNameBytes.length; i++) {
-            fileNameBytes[i] |= ((flags & i) == 1 ? 0x80 : 0);
+            fileNameBytes[i] |= ((flags & (1 << i)) != 0 ? 0x80 : 0);
         }
         entry.put(fileNameBytes);
 

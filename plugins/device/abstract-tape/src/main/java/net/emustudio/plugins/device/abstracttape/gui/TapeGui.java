@@ -16,11 +16,11 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 
 public class TapeGui extends DialogBase {
-    private final GUI gui;
     private static final String ICON_ADD_FIRST = "/net/emustudio/plugins/device/abstracttape/gui/go-up.png";
     private static final String ICON_ADD_LAST = "/net/emustudio/plugins/device/abstracttape/gui/go-down.png";
 
     private final Dialogs dialogs;
+    private final GUI gui;
     private final AbstractTapeContextImpl tapeContext;
     private final TapeModel listModel;
 
@@ -33,7 +33,7 @@ public class TapeGui extends DialogBase {
 
     public TapeGui(JFrame parent, String title, AbstractTapeContextImpl tapeContext, boolean alwaysOnTop, Dialogs dialogs, GUI gui) {
         super(parent, title, false);
-        this.gui = gui;
+        this.gui = Objects.requireNonNull(gui);
         this.tapeContext = Objects.requireNonNull(tapeContext);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.listModel = new TapeModel(tapeContext);
