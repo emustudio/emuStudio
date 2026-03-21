@@ -185,4 +185,54 @@ public class InstrRegTest extends AbstractCompilerTest {
                 0xBF, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE
         );
     }
+
+    @Test
+    public void testDisplacementWithMinus() {
+        // ld a, (ix - 5) should be equivalent to ld a, (ix + (-5))
+        // DD 7E FB  (0xFB = -5 as signed byte)
+        compile("ld a, (ix - 5)");
+        assertProgram(0xDD, 0x7E, 0xFB);
+    }
+
+    @Test
+    public void testDisplacementWithMinusIY() {
+        // ld a, (iy - 3) -> FD 7E FD (0xFD = -3 as signed byte)
+        compile("ld a, (iy - 3)");
+        assertProgram(0xFD, 0x7E, 0xFD);
+    }
+
+    @Test
+    public void testDisplacementWithMinusInc() {
+        // inc (ix - 1) -> DD 34 FF
+        compile("inc (ix - 1)");
+        assertProgram(0xDD, 0x34, 0xFF);
+    }
+
+    @Test
+    public void testDisplacementWithMinusRlc() {
+        // rlc (ix - 2) -> DD CB FE 06
+        compile("rlc (ix - 2)");
+        assertProgram(0xDD, 0xCB, 0xFE, 0x06);
+    }
+
+    @Test
+    public void testDisplacementWithMinusLdStore() {
+        // ld (iy - 10), b -> FD 70 F6
+        compile("ld (iy - 10), b");
+        assertProgram(0xFD, 0x70, 0xF6);
+    }
+
+    @Test
+    public void testDisplacementWithMinusLdImmediate() {
+        // ld (ix - 4), 0x42 -> DD 36 FC 42
+        compile("ld (ix - 4), 42h");
+        assertProgram(0xDD, 0x36, 0xFC, 0x42);
+    }
+
+    @Test
+    public void testDisplacementWithPlusStillWorks() {
+        // ld a, (ix + 5) should still work
+        compile("ld a, (ix + 5)");
+        assertProgram(0xDD, 0x7E, 0x05);
+    }
 }
