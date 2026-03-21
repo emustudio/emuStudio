@@ -103,14 +103,14 @@ OPCODE_SUB: S U B;
 OPCODE_XOR: X O R;
 
 mode CONDITION;
-COND_C:  C   ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
-COND_NC: N C ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
-COND_Z:  Z   ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
-COND_NZ: N Z ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
-COND_M:  M   ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
-COND_PE: P E ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
-COND_PO: P O ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
-COND_P:  P   ({(_input.LA(1) == -1) || (" ,\t\f\n\r;#/'\"()[]{}!=-+*<>\\%^&|$.".indexOf((char)_input.LA(1)) != -1) }?) -> popMode;
+COND_C:  C   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_NC: N C ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_Z:  Z   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_NZ: N Z ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_M:  M   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_PE: P E ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_PO: P O ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_P:  P   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
 COND_WS: [ \t\f]+ -> channel(HIDDEN);
 ERROR_COND: () -> popMode,skip;
 
