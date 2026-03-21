@@ -338,7 +338,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
     }
 
     private void evalExpr(Node node) {
-        latestEval = node.eval(getCurrentAddress(), env);
+        // Defensive copy: env may return the same Evaluated object for different references to the same label.
+        // Without copying, setMaxValue on one reference (e.g. from CALL with sizeBytes=2) would mutate the
+        // object already attached as a child of another instruction (e.g. JR with sizeBytes=1).
+        latestEval = node.eval(getCurrentAddress(), env).map(e -> (Evaluated) e.copy());
         latestEval.ifPresent(e -> node.getMaxValue().ifPresent(e::setMaxValue));
         latestEval.ifPresentOrElse(
                 e -> node.remove().ifPresent(p -> p.addChild(e)),
