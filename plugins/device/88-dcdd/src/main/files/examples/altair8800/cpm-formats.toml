@@ -118,3 +118,28 @@ al0 = 0xC0
 al1 = 0
 ofs = 2
 
+
+# Altair 5.25" minidisk for DeRamp CP/M 2.2
+#
+# The Altair minidisk has 35 tracks, 16 sectors/track, 137 byte sectors.
+# System tracks: 0-3, data tracks: 4-34
+#
+# minidisk.dsk   https://deramp.com/downloads/altair/software/5_inch_minidisk/
+[[format]]
+id = 'cpm2-altair-minidisk-deramp'
+sectorSize = 137
+sectorSkew = 1
+sectorOps = 'altair-minidisk-deramp'
+bcInterpretsAsUnused = false
+dateFormat = 'NOT_USED'
+
+[format.dpb]
+driveSpt = 16
+spt = 16
+bsh = 3
+# or blm = 7
+dsm = 58       # max block number (59 blocks of 1K bytes; (35-4)*16*128/1024 - 1)
+drm = 31       # max directory entry number (32 entries)
+al0 = 0x80
+al1 = 0
+ofs = 4

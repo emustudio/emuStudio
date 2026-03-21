@@ -11,8 +11,8 @@ import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 
@@ -65,21 +65,17 @@ public class Cpmfs {
         }
 
         CpmFileSystem cpmfs = cpmfs();
-        StringWriter content = new StringWriter();
+        byte[] content;
         if (srcInCpm) {
-            content.append(cpmfs.readFile(realSrc));
+            content = cpmfs.readFileBytes(realSrc);
         } else {
-            try (Reader reader = Files.newBufferedReader(new File(realSrc).toPath(), StandardCharsets.UTF_8)) {
-                reader.transferTo(content);
-            }
+            content = Files.readAllBytes(Path.of(realSrc));
         }
 
         if (dstInCpm) {
-            cpmfs.writeFile(realDst, content.toString());
+            cpmfs.writeFileBytes(realDst, content);
         } else {
-            try (Writer writer = new FileWriter(realDst)) {
-                writer.write(content.toString());
-            }
+            Files.write(Path.of(realDst), content);
         }
     }
 

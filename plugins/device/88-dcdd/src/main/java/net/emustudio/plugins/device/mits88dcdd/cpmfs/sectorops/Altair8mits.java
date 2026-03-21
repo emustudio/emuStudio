@@ -69,7 +69,8 @@ public class Altair8mits implements SectorOps {
 
         record.flip();
         int checksum = 0;
-        for (int i = 0; i < record.remaining(); i++) {
+        int count = record.remaining();
+        for (int i = 0; i < count; i++) {
             checksum = (checksum + record.get()) & 0xFF;
         }
         sector.put((byte) 0xFF); // stop byte

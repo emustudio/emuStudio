@@ -47,7 +47,8 @@ public class Altair8deramp implements SectorOps {
         record.position(0);
 
         int checksum = 0;
-        for (int i = 0; i < record.remaining(); i++) {
+        int count = record.remaining();
+        for (int i = 0; i < count; i++) {
             checksum = (checksum + record.get()) & 0xFF;
         }
         record.flip();

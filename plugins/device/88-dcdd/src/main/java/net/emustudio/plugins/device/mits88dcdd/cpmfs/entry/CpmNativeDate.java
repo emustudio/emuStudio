@@ -139,7 +139,7 @@ public class CpmNativeDate implements CpmEntry {
 
     private static DateStamp[] parseNativeFile(ByteBuffer entry) {
         DateStamp create = new DateStamp(
-                (entry.get() | (entry.get() << 8)) & 0xFF,
+                ((entry.get() & 0xFF) | ((entry.get() & 0xFF) << 8)),
                 0, 0
         );
         DateStamp modify = parseDateStamp(entry);
@@ -157,7 +157,7 @@ public class CpmNativeDate implements CpmEntry {
 
     private static DateStamp parseDateStamp(ByteBuffer entry) {
         return new DateStamp(
-                (entry.get() | (entry.get() << 8)) & 0xFF,
+                ((entry.get() & 0xFF) | ((entry.get() & 0xFF) << 8)),
                 bcd2bin(entry.get() & 0xFF),
                 bcd2bin(entry.get() & 0xFF)
         );
