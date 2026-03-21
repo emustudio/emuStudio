@@ -15,21 +15,21 @@ import java.awt.*;
 import java.util.Objects;
 
 public class SettingsDialog extends DialogBase {
-    private final GUI uiFactory;
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsDialog.class);
 
     private final PluginSettings settings;
     private final Dialogs dialogs;
-    private final TapeGui gui;
+    private final GUI gui;
+    private final TapeGui tapeGui;
     private final JCheckBox chkAlwaysOnTop = new JCheckBox("Always on top");
     private final JCheckBox chkShowAtStartup = new JCheckBox("Show GUI at startup");
 
-    public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeGui gui, String title, GUI uiFactory) {
+    public SettingsDialog(JFrame parent, PluginSettings settings, Dialogs dialogs, TapeGui tapeGui, String title, GUI gui) {
         super(parent, title + " settings", true);
-        this.uiFactory = uiFactory;
+        this.gui = Objects.requireNonNull(gui);
         this.settings = Objects.requireNonNull(settings);
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.gui = gui;
+        this.tapeGui = tapeGui;
 
         setResizable(false);
 
@@ -42,8 +42,8 @@ public class SettingsDialog extends DialogBase {
     @Override
     protected JComponent initializeComponents() {
         chkAlwaysOnTop.addActionListener(e -> {
-            if (gui != null) {
-                gui.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
+            if (tapeGui != null) {
+                tapeGui.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
             }
         });
 
@@ -60,7 +60,7 @@ public class SettingsDialog extends DialogBase {
             dispose();
         });
 
-        JPanel content = uiFactory.panel("insets dialog", "[grow]", "[][][grow][]");
+        JPanel content = gui.panel("insets dialog", "[grow]", "[][][grow][]");
         content.add(chkAlwaysOnTop, "wrap");
         content.add(chkShowAtStartup, "wrap");
         content.add(new JPanel(), "grow, wrap");
