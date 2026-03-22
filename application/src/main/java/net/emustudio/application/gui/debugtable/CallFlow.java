@@ -27,11 +27,11 @@ class CallFlow {
         this.disassembler = Objects.requireNonNull(disassembler);
     }
 
-    void updateCache(int currentLocation) {
+    synchronized void updateCache(int currentLocation) {
         try {
             int nextPosition = disassembler.getNextInstructionPosition(currentLocation);
             updateLongestInstructionSize(currentLocation, nextPosition);
-            
+
             Integer prev = flowGraph.get(currentLocation);
             if (prev != null && prev != nextPosition) {
                 // jump over previous instruction chain until we get to the last one
@@ -68,7 +68,7 @@ class CallFlow {
      * @param consumer  action which will be taken for each found instruction, including start location.
      * @return the greatest instruction location (lastKnownFrom) satisfying lastKnownFrom < to
      */
-    int traverseUpTo(int knownFrom, int to, Consumer<Integer> consumer) {
+    synchronized int traverseUpTo(int knownFrom, int to, Consumer<Integer> consumer) {
         if (knownFrom > to) {
             throw new IllegalArgumentException("from > to!");
         }
@@ -84,11 +84,14 @@ class CallFlow {
                 break;
             }
             updateLongestInstructionSize(lastKnownFrom, knownFrom);
+            if (lastKnownFrom == knownFrom) {
+                break;
+            }
         } while (knownFrom < to);
         return (knownFrom == to) ? knownFrom : lastKnownFrom;
     }
 
-    void traverseForInstructionCount(int knownFrom, int count, Consumer<Integer> consumer) {
+    synchronized void traverseForInstructionCount(int knownFrom, int count, Consumer<Integer> consumer) {
         for (int i = 0; i < count; i++) {
             int lastKnownFrom = knownFrom;
 
@@ -105,21 +108,21 @@ class CallFlow {
         }
     }
 
-    void traverseBackForInstructionCount(int knownFrom, int count, Consumer<Integer> consumer) {
+    synchronized void traverseBackForInstructionCount(int knownFrom, int count, Consumer<Integer> consumer) {
         for (int i = 0; i < count; i++) {
             Integer previousLocation = flowGraph.lowerKey(knownFrom);
             if (previousLocation == null) {
                 break;
             }
 
-            int lastKnownFrom = knownFrom;
+            int nextOfPrevious;
             try {
-                knownFrom = disassembler.getNextInstructionPosition(previousLocation);
+                nextOfPrevious = disassembler.getNextInstructionPosition(previousLocation);
             } catch (IndexOutOfBoundsException e) {
                 break;
             }
-            updateLongestInstructionSize(lastKnownFrom, knownFrom);
-            consumer.accept(knownFrom);
+            updateLongestInstructionSize(previousLocation, nextOfPrevious);
+            consumer.accept(previousLocation);
             knownFrom = previousLocation;
         }
     }
@@ -135,7 +138,7 @@ class CallFlow {
         return knownLocations.isEmpty() ? unknownLocation : knownLocations.firstKey();
     }
 
-    List<Integer> getLocations(int from, int to) {
+    synchronized List<Integer> getLocations(int from, int to) {
         if (from > to) {
             throw new IllegalArgumentException("From (" + from + ") > to (" + to + ") !");
         }
@@ -209,7 +212,7 @@ class CallFlow {
         return locations;
     }
 
-    void flushCache(int fromLocationInclusive, int toLocationExclusive) {
+    synchronized void flushCache(int fromLocationInclusive, int toLocationExclusive) {
         flowGraph.subMap(fromLocationInclusive, toLocationExclusive).clear();
     }
 
