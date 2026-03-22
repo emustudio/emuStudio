@@ -3,7 +3,9 @@
 package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.DisassembledInstruction;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
+import net.emustudio.emulib.plugins.cpu.InvalidInstructionException;
 import net.emustudio.emulib.runtime.ui.debugger.*;
 
 import javax.swing.event.TableModelEvent;
@@ -16,14 +18,17 @@ public class DebugTableModelImpl extends DebugTableModel {
     private DebuggerColumn<?>[] columns = new DebuggerColumn[0];
     private CPU cpu;
     private PaginatingDisassembler ida;
+    private DisassemblyCache disassemblyCache;
 
     public DebugTableModelImpl() {
     }
 
     public void setCPU(CPU cpu, Supplier<Integer> getMemorySize) {
         this.cpu = Objects.requireNonNull(cpu);
-        CallFlow callFlow = new CallFlow(cpu.getDisassembler());
+        Disassembler disassembler = cpu.getDisassembler();
+        CallFlow callFlow = new CallFlow(disassembler);
         this.ida = new PaginatingDisassembler(callFlow, getMemorySize);
+        this.disassemblyCache = new DisassemblyCache(disassembler);
         setDefaultColumns();
     }
 
@@ -123,7 +128,11 @@ public class DebugTableModelImpl extends DebugTableModel {
     public Object getValueAt(int rowIndex, int columnIndex) {
         if (ida == null) return null;
         int location = ida.rowToLocation(cpu.getInstructionLocation(), rowIndex);
-        return (location != -1) ? columns[columnIndex].getValue(location) : null;
+        if (location == -1) {
+            return getEmptyValue(columns[columnIndex]);
+        }
+
+        return getColumnValue(columns[columnIndex], location);
     }
 
     @Override
@@ -143,7 +152,11 @@ public class DebugTableModelImpl extends DebugTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columns[columnIndex].isEditable();
+        if (ida == null || !columns[columnIndex].isEditable()) {
+            return false;
+        }
+
+        return ida.rowToLocation(cpu.getInstructionLocation(), rowIndex) != -1;
     }
 
     @Override
@@ -155,6 +168,9 @@ public class DebugTableModelImpl extends DebugTableModel {
     public void memoryChanged(int from, int to) {
         if (ida != null) {
             ida.flushCache(from, to + 1);
+        }
+        if (disassemblyCache != null) {
+            disassemblyCache.clear();
         }
         fireTableDataChanged();
     }
@@ -198,5 +214,34 @@ public class DebugTableModelImpl extends DebugTableModel {
     public void setDebuggerColumns(List<DebuggerColumn<?>> columns) {
         this.columns = columns.toArray(new DebuggerColumn[0]);
         fireTableStructureChanged();
+    }
+
+    @Override
+    public void executionStateChanged() {
+        if (disassemblyCache != null) {
+            disassemblyCache.clear();
+        }
+    }
+
+    private Object getColumnValue(DebuggerColumn<?> column, int location) {
+        if (!(column instanceof MnemoColumn) && !(column instanceof OpcodeColumn)) {
+            return column.getValue(location);
+        }
+
+        try {
+            DisassembledInstruction instruction = disassemblyCache.get(location);
+            if (column instanceof MnemoColumn) {
+                return instruction.getMnemo();
+            }
+            return instruction.getOpCode();
+        } catch (InvalidInstructionException e) {
+            return (column instanceof MnemoColumn) ? "[invalid]" : "";
+        } catch (IndexOutOfBoundsException e) {
+            return (column instanceof MnemoColumn) ? "[incomplete]" : "";
+        }
+    }
+
+    private Object getEmptyValue(DebuggerColumn<?> column) {
+        return (column.getClassType() == Boolean.class) ? Boolean.FALSE : null;
     }
 }

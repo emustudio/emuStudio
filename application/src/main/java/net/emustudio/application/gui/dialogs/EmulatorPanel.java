@@ -244,6 +244,7 @@ public class EmulatorPanel extends JPanel {
 
 
     private void setStateNotRunning(CPU.RunState state, boolean timedRunning) {
+        debugTableModel.executionStateChanged();
         pauseAction.setEnabled(false);
         stepBackAction.setEnabled(true);
         jumpToBeginningAction.setEnabled(true);

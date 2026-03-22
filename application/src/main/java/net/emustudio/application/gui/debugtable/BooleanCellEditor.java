@@ -49,7 +49,8 @@ public class BooleanCellEditor extends AbstractCellEditor implements TableCellEd
 
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-        boolean state = isMouseEvent != (boolean) value;
+        boolean currentValue = Boolean.TRUE.equals(value);
+        boolean state = isMouseEvent != currentValue;
         component.setValue(state);
         component.setOpaque(isSelected);
         component.setBackground((row % 2 == 0) ? TABLE_COLOR_ROW_ODD : TABLE_COLOR_ROW_EVEN);
