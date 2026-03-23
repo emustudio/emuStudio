@@ -21,8 +21,8 @@ public class DisassemblerTest {
         });
 
         DisassembledInstruction instr = disassembler.disassemble(0);
-        assertEquals("LDN 25", instr.getMnemo());
-        assertEquals("9B E2 FC 3F", instr.getOpCode());
+        assertEquals("LDN 25", instr.mnemo);
+        assertEquals("9B E2 FC 3F", instr.opCode);
     }
 
     @Test
@@ -33,7 +33,7 @@ public class DisassemblerTest {
         });
 
         DisassembledInstruction instr = disassembler.disassemble(4);
-        assertEquals("STO 22", instr.getMnemo());
-        assertEquals("68 06 00 00", instr.getOpCode());
+        assertEquals("STO 22", instr.mnemo);
+        assertEquals("68 06 00 00", instr.opCode);
     }
 }

@@ -423,7 +423,7 @@ public class DisassemblerTest {
 
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < memoryStub.getSize(); i = disassembler.getNextInstructionPosition(i)) {
-            builder.append(disassembler.disassemble(i).getMnemo());
+            builder.append(disassembler.disassemble(i).mnemo);
         }
         String result = builder.toString();
         assertEquals(
@@ -824,6 +824,6 @@ public class DisassemblerTest {
                 0xED, 0xB0
         });
         DecodedInstruction instr = decoder.decode(0);
-        assertEquals(2, instr.getLength());
+        assertEquals(2, instr.image.length);
     }
 }

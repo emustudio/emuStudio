@@ -65,8 +65,8 @@ public class EmulatorEngine {
     CPU.RunState step() {
         try {
             DecodedInstruction instruction = decoder.decode(CI.addAndGet(4));
-            int lineAddress = Optional.ofNullable(instruction.getBits(LINE)).orElse(emptyBits).reverseBits().number * 4;
-            int opcode = instruction.getImage()[1] & 7;
+            int lineAddress = Optional.ofNullable(instruction.bits[LINE]).orElse(emptyBits).reverseBits().number * 4;
+            int opcode = instruction.image[1] & 7;
 
             Method instr = DISPATCH_TABLE[opcode];
             if (instr == null) {

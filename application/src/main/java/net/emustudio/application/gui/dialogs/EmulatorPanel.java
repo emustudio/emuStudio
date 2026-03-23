@@ -25,8 +25,7 @@ public class EmulatorPanel extends JPanel {
     private final static int MIN_PERIPHERAL_PANEL_HEIGHT = 100;
 
     private final GUI gui;
-    private final JPanel statusWindow = new JPanel();
-    private final GroupLayout statusWindowLayout = new GroupLayout(statusWindow);
+    private final JPanel statusWindow;
     private final JToolBar toolDebug;
     private final JPanel panelPages;
     private final JScrollPane paneDebug;
@@ -61,6 +60,7 @@ public class EmulatorPanel extends JPanel {
         this.gui = Objects.requireNonNull(gui);
         this.memoryContext = memoryContext;
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
+        this.statusWindow = gui.section("Status", "insets 0, fill", "[grow]", "[grow]");
         this.debugTable = new DebugTableImpl(debugTableModel);
         this.toolDebug = gui.toolBar();
 
@@ -76,9 +76,6 @@ public class EmulatorPanel extends JPanel {
                 debugTable.dispatchEvent(e); // Debug table is not shrinking, just expanding...
             }
         });
-
-        statusWindow.setBorder(BorderFactory.createTitledBorder("Status"));
-        statusWindow.setLayout(statusWindowLayout);
 
         computer.getCPU().flatMap(cpu -> Optional.ofNullable(cpu.getStatusPanel())).ifPresent(this::setStatusPanel);
 
@@ -214,8 +211,10 @@ public class EmulatorPanel extends JPanel {
 
 
     private void setStatusPanel(JPanel statusPanel) {
-        statusWindowLayout.setHorizontalGroup(statusWindowLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(statusPanel));
-        statusWindowLayout.setVerticalGroup(statusWindowLayout.createSequentialGroup().addComponent(statusPanel));
+        statusWindow.removeAll();
+        statusWindow.add(statusPanel, "grow");
+        statusWindow.revalidate();
+        statusWindow.repaint();
     }
 
     private void setupDebugToolbar() {

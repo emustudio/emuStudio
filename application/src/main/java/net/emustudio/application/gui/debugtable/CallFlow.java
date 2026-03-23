@@ -11,9 +11,12 @@ import java.util.*;
 import java.util.function.Consumer;
 
 /**
- * Call flow.
+ * Caches decoded instruction flow for the debug table.
  * <p>
- * Directed set of graphs, possibly with cycles.
+ * The cache stores, for each known instruction location, the location of the next instruction as reported by the
+ * {@link Disassembler}. The resulting graph can contain disconnected segments and cycles. Callers can use the cached
+ * edges to traverse forward, walk back through already known locations, or reconstruct instruction start locations for
+ * a visible address range.
  */
 @ThreadSafe
 class CallFlow {
@@ -23,10 +26,25 @@ class CallFlow {
     private final NavigableMap<Integer, Integer> flowGraph = new TreeMap<>(); // location -> next location
     private int longestInstructionSize = 1;
 
+    /**
+     * Creates an empty call-flow cache backed by the supplied disassembler.
+     *
+     * @param disassembler source of instruction boundaries
+     * @throws NullPointerException if {@code disassembler} is {@code null}
+     */
     CallFlow(Disassembler disassembler) {
         this.disassembler = Objects.requireNonNull(disassembler);
     }
 
+    /**
+     * Refreshes the cached successor for one decoded instruction.
+     * <p>
+     * If the instruction now points to a different next location than before, any cached linear chain that is no
+     * longer reachable from {@code currentLocation} is discarded. This keeps the cache consistent when the underlying
+     * code changes, for example after self-modifying code.
+     *
+     * @param currentLocation instruction location to decode
+     */
     synchronized void updateCache(int currentLocation) {
         try {
             int nextPosition = disassembler.getNextInstructionPosition(currentLocation);
@@ -59,14 +77,16 @@ class CallFlow {
     }
 
     /**
-     * Will traverse instructions "knownFrom" (inclusive) up to "to" (exclusive).
+     * Traverses instruction starts from {@code knownFrom} toward {@code to}.
      * <p>
-     * The "knownFrom" has to be <= "to".
+     * The traversal includes {@code knownFrom} and stops before passing {@code to}, when the disassembler reports the
+     * end of available data, or when a zero-length instruction would cause no forward progress.
      *
-     * @param knownFrom start location, inclusive.
-     * @param to        stop location, exclusive.
-     * @param consumer  action which will be taken for each found instruction, including start location.
-     * @return the greatest instruction location (lastKnownFrom) satisfying lastKnownFrom < to
+     * @param knownFrom first instruction location to report, inclusive
+     * @param to stop location, exclusive
+     * @param consumer action invoked for each visited instruction location, including {@code knownFrom}
+     * @return {@code to} when it is reached exactly; otherwise the last visited instruction location below {@code to}
+     * @throws IllegalArgumentException if {@code knownFrom > to}
      */
     synchronized int traverseUpTo(int knownFrom, int to, Consumer<Integer> consumer) {
         if (knownFrom > to) {
@@ -91,6 +111,13 @@ class CallFlow {
         return (knownFrom == to) ? knownFrom : lastKnownFrom;
     }
 
+    /**
+     * Traverses forward by at most {@code count} instructions starting after {@code knownFrom}.
+     *
+     * @param knownFrom already known instruction location used as the starting point
+     * @param count maximum number of forward steps to perform
+     * @param consumer action invoked for each newly reached instruction location
+     */
     synchronized void traverseForInstructionCount(int knownFrom, int count, Consumer<Integer> consumer) {
         for (int i = 0; i < count; i++) {
             int lastKnownFrom = knownFrom;
@@ -108,6 +135,16 @@ class CallFlow {
         }
     }
 
+    /**
+     * Traverses backward through cached instruction locations.
+     * <p>
+     * Only locations already present in the cache can be visited. For each step, the closest cached location lower
+     * than the current one is emitted.
+     *
+     * @param knownFrom instruction location from which to start looking backward
+     * @param count maximum number of cached predecessors to visit
+     * @param consumer action invoked for each visited predecessor location
+     */
     synchronized void traverseBackForInstructionCount(int knownFrom, int count, Consumer<Integer> consumer) {
         for (int i = 0; i < count; i++) {
             Integer previousLocation = flowGraph.lowerKey(knownFrom);
@@ -127,6 +164,13 @@ class CallFlow {
         }
     }
 
+    /**
+     * Finds the best location from which to resume decoding before an interval with missing cache entries.
+     *
+     * @param unknownLocation first location whose predecessor is not yet known
+     * @param knownLocations cached locations already present in the requested interval
+     * @return the earliest location from which the interval can be reconstructed
+     */
     private int findGreatestPreviousLocation(int unknownLocation, SortedMap<Integer, Integer> knownLocations) {
         if (knownLocations.isEmpty() || knownLocations.firstKey() > unknownLocation) {
             Integer previousKnownLocation = flowGraph.lowerKey(unknownLocation);
@@ -138,6 +182,18 @@ class CallFlow {
         return knownLocations.isEmpty() ? unknownLocation : knownLocations.firstKey();
     }
 
+    /**
+     * Returns instruction start locations relevant to the inclusive address interval {@code [from, to]}.
+     * <p>
+     * The result is sorted in ascending order. When the interval starts in the middle of a known instruction, the
+     * returned list can include the closest preceding instruction start needed to cover that address. Negative
+     * {@code from} values are clamped to zero; a negative {@code to} yields an empty list.
+     *
+     * @param from lower bound of the requested address interval, inclusive
+     * @param to upper bound of the requested address interval, inclusive
+     * @return sorted instruction start locations covering the requested interval as far as decoding allows
+     * @throws IllegalArgumentException if {@code from > to}
+     */
     synchronized List<Integer> getLocations(int from, int to) {
         if (from > to) {
             throw new IllegalArgumentException("From (" + from + ") > to (" + to + ") !");
@@ -212,10 +268,21 @@ class CallFlow {
         return locations;
     }
 
+    /**
+     * Removes cached instruction-flow edges whose start location lies in the specified half-open interval.
+     *
+     * @param fromLocationInclusive lower bound of the cache entries to remove, inclusive
+     * @param toLocationExclusive upper bound of the cache entries to remove, exclusive
+     */
     synchronized void flushCache(int fromLocationInclusive, int toLocationExclusive) {
         flowGraph.subMap(fromLocationInclusive, toLocationExclusive).clear();
     }
 
+    /**
+     * Returns the largest instruction size seen while decoding so far.
+     *
+     * @return maximum observed difference between an instruction location and its successor
+     */
     int getLongestInstructionSize() {
         return longestInstructionSize;
     }

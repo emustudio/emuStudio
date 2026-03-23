@@ -68,7 +68,7 @@ public class EmulatorEngine implements CpuEngine {
         Arrays.fill(regs, 0);
         SP = 0;
         flags = 2; //0000 0010b
-        PC = startPos;
+        PC = normalizeAddress(startPos);
         INTE = false;
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
     }
@@ -780,5 +780,9 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_A] |= getreg(lastOpcode & 0x07);
         flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 4;
+    }
+
+    private int normalizeAddress(int address) {
+        return (address < 0) ? 0 : (address & 0xFFFF);
     }
 }

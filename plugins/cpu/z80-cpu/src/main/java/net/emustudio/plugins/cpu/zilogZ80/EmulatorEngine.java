@@ -165,7 +165,7 @@ public class EmulatorEngine implements CpuEngine {
         IFF[0] = false;
         IFF[1] = false;
         pendingNonMaskableInterrupt.set(false);
-        PC = startPos;
+        PC = normalizeAddress(startPos);
         pendingInterrupts.clear();
         levelInterrupt = null;
         currentRunState = RunState.STATE_STOPPED_BREAK;
@@ -4267,5 +4267,9 @@ public class EmulatorEngine implements CpuEngine {
         IY = ((IY & 0xFF00) | (memory.read(PC) & 0xFF)) & 0xFFFF;
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
+    }
+
+    private int normalizeAddress(int address) {
+        return (address < 0) ? 0 : (address & 0xFFFF);
     }
 }

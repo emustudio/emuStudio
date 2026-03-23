@@ -13,12 +13,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.LongSupplier;
 
 @ThreadSafe
 public class InstructionPrinter implements DispatchListener {
     private final Disassembler disassembler;
     private final EmulatorEngine emulatorEngine;
     private final PrintStream writer;
+    private final LongSupplier timeSource;
 
     private final List<Integer> cache = new CopyOnWriteArrayList<>();
     private final AtomicInteger numberOfMatch = new AtomicInteger();
@@ -27,54 +29,55 @@ public class InstructionPrinter implements DispatchListener {
     private volatile long creationTimeStamp;
 
     public InstructionPrinter(Disassembler disassembler, EmulatorEngine emulatorEngine, boolean useCache, PrintStream writer) {
+        this(disassembler, emulatorEngine, useCache, writer, System::currentTimeMillis);
+    }
+
+    InstructionPrinter(Disassembler disassembler, EmulatorEngine emulatorEngine, boolean useCache, PrintStream writer,
+                       LongSupplier timeSource) {
         this.disassembler = Objects.requireNonNull(disassembler);
         this.emulatorEngine = Objects.requireNonNull(emulatorEngine);
         this.writer = Objects.requireNonNull(writer);
         this.useCache = useCache;
+        this.timeSource = Objects.requireNonNull(timeSource);
     }
 
     @Override
     public void beforeDispatch() {
-        long timeStamp = System.currentTimeMillis() - creationTimeStamp;
-
-        if (creationTimeStamp == 0) {
-            creationTimeStamp = timeStamp;
-            timeStamp = 0;
+        int pc = emulatorEngine.PC;
+        long timeStamp = getTimeStamp();
+        if (!isValidAddress(pc)) {
+            writer.printf("%04d | Invalid instruction at %04X%n", timeStamp, pc & 0xFFFF);
+            return;
         }
         try {
-            DisassembledInstruction instr = disassembler.disassemble(emulatorEngine.PC);
+            DisassembledInstruction instr = disassembler.disassemble(pc);
 
-            if (useCache && !cache.contains(emulatorEngine.PC)) {
+            if (useCache && !cache.contains(pc)) {
                 if (numberOfMatch.get() != 0) {
-                    writer.println(String.format("%04d | Block from %04X to %04X; count=%d",
-                            timeStamp, matchPC, emulatorEngine.PC, numberOfMatch.get())
-                    );
-                } else {
-                    matchPC = emulatorEngine.PC;
+                    writer.printf("%04d | Block from %04X to %04X; count=%d%n",
+                            timeStamp, matchPC, pc, numberOfMatch.get());
                 }
                 numberOfMatch.set(0);
-                cache.add(emulatorEngine.PC);
+                matchPC = pc;
+                cache.add(pc);
             } else if (useCache) {
                 numberOfMatch.incrementAndGet();
             }
 
             if (numberOfMatch.get() <= 1) {
-                writer.print(String.format("%04d | PC=%04x | %12s | %10s ",
-                        timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
-                );
+                writer.printf("%04d | PC=%04x | %12s | %10s ", timeStamp, instr.address, instr.mnemo, instr.opCode);
             }
 
-        } catch (InvalidInstructionException e) {
-            writer.println(String.format("%04d | Invalid instruction at %04X", timeStamp, emulatorEngine.PC));
+        } catch (InvalidInstructionException | IndexOutOfBoundsException e) {
+            writer.printf("%04d | Invalid instruction at %04X%n", timeStamp, pc);
         }
     }
 
     @Override
     public void afterDispatch() {
         if (numberOfMatch.get() <= 1) {
-            writer.println(String.format("|| regs=%s | flags=%s | SP=%04x | PC=%04x",
-                    regsToString(), intToFlags(emulatorEngine.flags), emulatorEngine.SP, emulatorEngine.PC)
-            );
+            writer.printf("|| regs=%s | flags=%s | SP=%04x | PC=%04x%n",
+                    regsToString(), intToFlags(emulatorEngine.flags), emulatorEngine.SP, emulatorEngine.PC);
         }
     }
 
@@ -114,5 +117,18 @@ public class InstructionPrinter implements DispatchListener {
             flagsString += " ";
         }
         return flagsString;
+    }
+
+    private long getTimeStamp() {
+        long now = timeSource.getAsLong();
+        if (creationTimeStamp == 0) {
+            creationTimeStamp = now;
+            return 0;
+        }
+        return now - creationTimeStamp;
+    }
+
+    private boolean isValidAddress(int address) {
+        return address >= 0 && address <= 0xFFFF;
     }
 }
