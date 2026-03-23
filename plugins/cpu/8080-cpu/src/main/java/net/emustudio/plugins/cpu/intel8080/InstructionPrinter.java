@@ -46,9 +46,8 @@ public class InstructionPrinter implements DispatchListener {
 
             if (useCache && !cache.contains(emulatorEngine.PC)) {
                 if (numberOfMatch.get() != 0) {
-                    writer.println(String.format("%04d | Block from %04X to %04X; count=%d",
-                            timeStamp, matchPC, emulatorEngine.PC, numberOfMatch.get())
-                    );
+                    writer.printf("%04d | Block from %04X to %04X; count=%d%n",
+                            timeStamp, matchPC, emulatorEngine.PC, numberOfMatch.get());
                 } else {
                     matchPC = emulatorEngine.PC;
                 }
@@ -59,22 +58,19 @@ public class InstructionPrinter implements DispatchListener {
             }
 
             if (numberOfMatch.get() <= 1) {
-                writer.print(String.format("%04d | PC=%04x | %12s | %10s ",
-                        timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
-                );
+                writer.printf("%04d | PC=%04x | %12s | %10s ", timeStamp, instr.address, instr.mnemo, instr.opCode);
             }
 
         } catch (InvalidInstructionException e) {
-            writer.println(String.format("%04d | Invalid instruction at %04X", timeStamp, emulatorEngine.PC));
+            writer.printf("%04d | Invalid instruction at %04X%n", timeStamp, emulatorEngine.PC);
         }
     }
 
     @Override
     public void afterDispatch() {
         if (numberOfMatch.get() <= 1) {
-            writer.println(String.format("|| regs=%s | flags=%s | SP=%04x | PC=%04x",
-                    regsToString(), intToFlags(emulatorEngine.flags), emulatorEngine.SP, emulatorEngine.PC)
-            );
+            writer.printf("|| regs=%s | flags=%s | SP=%04x | PC=%04x%n",
+                    regsToString(), intToFlags(emulatorEngine.flags), emulatorEngine.SP, emulatorEngine.PC);
         }
     }
 
