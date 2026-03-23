@@ -4,6 +4,7 @@ package net.emustudio.application.gui.debugtable;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -38,34 +39,16 @@ public class PagesPanel extends JPanel {
         JButton btnSeekBackward = gui.toolbarButton(evt -> seekBackward(), ICON_PAGE_SEEK_BACKWARD, "Go to the current page");
         JButton btnSeekForward = gui.toolbarButton(evt -> seekForward(), ICON_PAGE_SEEK_FORWARD, "Go to the current page");
 
-        GroupLayout pagesLayout = new GroupLayout(this);
-        setLayout(pagesLayout);
-        pagesLayout.setHorizontalGroup(
-                pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addGroup(pagesLayout.createSequentialGroup()
-                                .addComponent(btnFirst)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnSeekBackward)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnBackward)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnCurrentPage)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnForward)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnSeekForward))
-        );
-        pagesLayout.setVerticalGroup(
-                pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addGroup(pagesLayout.createSequentialGroup()
-                                .addGroup(pagesLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                                        .addComponent(btnSeekBackward)
-                                        .addComponent(btnBackward)
-                                        .addComponent(btnFirst)
-                                        .addComponent(btnCurrentPage)
-                                        .addComponent(btnSeekForward)
-                                        .addComponent(btnForward)))
-        );
+        JPanel buttonPanel = gui.panel("insets 0, center", "[]0[]0[]0[]0[]0[]", "[]");
+        buttonPanel.add(btnFirst);
+        buttonPanel.add(btnSeekBackward);
+        buttonPanel.add(btnBackward);
+        buttonPanel.add(btnCurrentPage);
+        buttonPanel.add(btnForward);
+        buttonPanel.add(btnSeekForward);
+
+        setLayout(new MigLayout("insets 0, fillx", "[grow]", "[]"));
+        add(buttonPanel, "center");
     }
 
     private void seekBackward() {
