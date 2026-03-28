@@ -95,7 +95,7 @@ public class Schema {
     public void removeElement(Element element) {
         removeIncidentLines(element);
         if (element instanceof CompilerElement) {
-            cpuElement = null;
+            compilerElement = null;
         } else if (element instanceof CpuElement) {
             cpuElement = null;
         } else if (element instanceof MemoryElement) {

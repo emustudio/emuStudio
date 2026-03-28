@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.debugtable;
 
+import net.emustudio.application.gui.AbstractSwingTest;
 import org.junit.Test;
 
 import javax.swing.JTable;
@@ -10,15 +11,17 @@ import java.awt.event.MouseEvent;
 
 import static org.junit.Assert.assertNotNull;
 
-public class BooleanCellEditorTest {
+public class BooleanCellEditorTest extends AbstractSwingTest {
 
     @Test
     public void nullCellValueDoesNotThrowWhenEditorStarts() {
-        JTable table = new JTable(1, 1);
-        BooleanCellEditor editor = new BooleanCellEditor();
+        Component component = onEdt(() -> {
+            JTable table = new JTable(1, 1);
+            BooleanCellEditor editor = new BooleanCellEditor();
 
-        editor.isCellEditable(new MouseEvent(table, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false));
-        Component component = editor.getTableCellEditorComponent(table, null, false, 0, 0);
+            editor.isCellEditable(new MouseEvent(table, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false));
+            return editor.getTableCellEditorComponent(table, null, false, 0, 0);
+        });
 
         assertNotNull(component);
     }

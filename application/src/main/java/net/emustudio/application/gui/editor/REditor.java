@@ -25,8 +25,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
@@ -92,7 +94,7 @@ public class REditor implements Editor {
 
         textPane.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyTyped(KeyEvent e) {
+            public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     clearMarkedOccurences();
                 }
@@ -101,12 +103,8 @@ public class REditor implements Editor {
         setupSyntaxTheme();
 
         if (compiler != null) {
-            fileExtensions = compiler.getSourceFileExtensions();
-            RTokenMakerWrapper unusedButUseful = new RTokenMakerWrapper(compiler);
-
-            AbstractTokenMakerFactory atmf = (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
-            atmf.putMapping("text/emustudio", RTokenMakerWrapper.class.getName());
-            textPane.setSyntaxEditingStyle("text/emustudio");
+            fileExtensions = List.copyOf(compiler.getSourceFileExtensions());
+            ((RSyntaxDocument) textPane.getDocument()).setSyntaxStyle(new RTokenMaker(compiler));
         } else {
             fileExtensions = Collections.emptyList();
         }
@@ -172,16 +170,7 @@ public class REditor implements Editor {
 
     @Override
     public boolean saveFileAs() {
-        List<FileExtensionsFilter> filters = fileExtensions.stream()
-                .map(FileExtensionsFilter::new).collect(Collectors.toList());
-
-        File currentDirectory = Optional
-                .ofNullable(textPane.getFileFullPath())
-                .filter(p -> !isnew)
-                .map(File::new)
-                .orElse(new File(System.getProperty("user.dir")));
-
-        Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", currentDirectory.toPath(), true, filters);
+        Optional<Path> savedPath = dialogs.chooseFile("Save file", "Save", getCurrentBaseDirectory(), true, saveFilters());
         if (savedPath.isPresent()) {
             try {
                 textPane.saveAs(FileLocation.create(savedPath.get().toFile()));
@@ -197,23 +186,8 @@ public class REditor implements Editor {
 
     @Override
     public boolean openFile() {
-        List<FileExtensionsFilter> filters = new ArrayList<>();
-        List<String> sourceExtensions = fileExtensions.stream()
-                .map(FileExtension::getExtension)
-                .collect(Collectors.toList());
-
-        if (!sourceExtensions.isEmpty()) {
-            filters.add(new FileExtensionsFilter("All source files", sourceExtensions));
-        }
-
-        File currentDirectory = Optional
-                .ofNullable(textPane.getFileFullPath())
-                .filter(p -> !isnew)
-                .map(File::new)
-                .orElse(new File(System.getProperty("user.dir")));
-
         Optional<Path> openedFile = dialogs.chooseFile(
-                "Open a file", "Open", currentDirectory.toPath(), false, filters
+                "Open a file", "Open", getCurrentBaseDirectory(), false, openFilters()
         );
         return openedFile.map(this::openFile).orElse(false);
     }
@@ -290,6 +264,29 @@ public class REditor implements Editor {
             context.setSearchForward(false);
             return SearchEngine.find(textPane, context).wasFound();
         });
+    }
+
+    private Path getCurrentBaseDirectory() {
+        return Optional.ofNullable(textPane.getFileFullPath())
+                .filter(path -> !isnew)
+                .map(Path::of)
+                .map(Path::getParent)
+                .orElseGet(() -> Path.of(System.getProperty("user.dir")));
+    }
+
+    private List<FileExtensionsFilter> saveFilters() {
+        return fileExtensions.stream().map(FileExtensionsFilter::new).collect(Collectors.toList());
+    }
+
+    private List<FileExtensionsFilter> openFilters() {
+        List<String> sourceExtensions = fileExtensions.stream()
+                .map(FileExtension::getExtension)
+                .collect(Collectors.toList());
+
+        if (sourceExtensions.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return List.of(new FileExtensionsFilter("All source files", sourceExtensions));
     }
 
     private void setupSyntaxTheme() {

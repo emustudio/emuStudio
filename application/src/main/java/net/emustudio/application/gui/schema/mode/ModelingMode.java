@@ -102,7 +102,6 @@ class ModelingMode extends AbstractMode {
                 }
                 schema.removeElement(drawingModel.tmpElem1);
                 drawingModel.tmpElem1 = null;
-                panel.fireToolWasUsed();
             } else if (drawingModel.selectedLine != null) {
                 // if the mouse is released upon a point outside the selLine, nothing is done.
                 if (drawingModel.selectedLine != schema.findCrossingLine(clickPoint)) {
@@ -111,20 +110,15 @@ class ModelingMode extends AbstractMode {
                 }
                 schema.removeConnectionLine(drawingModel.selectedLine);
                 drawingModel.selectedLine = null;
-                panel.fireToolWasUsed();
             }
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_COMPILER) {
             schema.setCompilerElement(clickPoint, drawingModel.pluginFileName);
-            panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_CPU) {
             schema.setCpuElement(clickPoint, drawingModel.pluginFileName);
-            panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_MEMORY) {
             schema.setMemoryElement(clickPoint, drawingModel.pluginFileName);
-            panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_DEVICE) {
             schema.addDeviceElement(clickPoint, drawingModel.pluginFileName);
-            panel.fireToolWasUsed();
         } else if (drawingModel.drawTool == DrawingPanel.Tool.TOOL_CONNECTION) {
             sketchLastPoint = null;
             Element element = schema.getCrossingElement(clickPoint);

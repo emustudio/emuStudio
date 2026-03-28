@@ -5,12 +5,16 @@ package net.emustudio.application.gui.debugtable;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static net.emustudio.application.gui.debugtable.MockHelper.*;
 import static net.emustudio.application.gui.debugtable.PaginatingDisassembler.INSTR_PER_PAGE;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class PaginatingDisassemblerTest {
     private CallFlow callFlow;
@@ -18,6 +22,87 @@ public class PaginatingDisassemblerTest {
     @Test(expected = NullPointerException.class)
     public void testCreateInstanceNullDisassemblerThrows() {
         new PaginatingDisassembler(null, () -> 0);
+    }
+
+    @Test
+    public void testInstructionsPerPageCurrentRowAndCurrentInstructionMarkerCanChange() {
+        callFlow = mock(CallFlow.class);
+        when(callFlow.getLongestInstructionSize()).thenReturn(2);
+
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+
+        assertEquals(INSTR_PER_PAGE, asm.getInstructionsPerPage());
+        asm.setInstructionsPerPage(9);
+        assertEquals(9, asm.getInstructionsPerPage());
+        assertEquals(4, asm.getCurrentInstructionRow());
+        assertTrue(asm.isRowAtCurrentInstruction(4));
+        assertFalse(asm.isRowAtCurrentInstruction(3));
+    }
+
+    @Test
+    public void testPageCurrentReturnsToPageZero() {
+        CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+
+        asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
+        asm.pageNext();
+        assertEquals(1, asm.getPageIndex());
+
+        asm.pageCurrent();
+
+        assertEquals(0, asm.getPageIndex());
+    }
+
+    @Test
+    public void testFlushCacheAddsInclusiveUpperBoundOffset() {
+        callFlow = mock(CallFlow.class);
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+
+        asm.flushCache(2, 6);
+
+        verify(callFlow).flushCache(2, 7);
+    }
+
+    @Test
+    public void testRowAboveHalfReturnsMinusOneForEmptyMemory() {
+        callFlow = mock(CallFlow.class);
+        when(callFlow.getLongestInstructionSize()).thenReturn(1);
+
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> 0);
+
+        assertEquals(-1, asm.rowToLocation(0, INSTR_PER_HALF_PAGE + 1));
+        verify(callFlow).updateCache(0);
+    }
+
+    @Test
+    public void testRowAboveHalfReturnsMinusOneWhenNoInstructionsAreKnown() {
+        callFlow = mock(CallFlow.class);
+        when(callFlow.getLongestInstructionSize()).thenReturn(1);
+        when(callFlow.getLocations(0, 5)).thenReturn(Collections.emptyList());
+
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> 6);
+
+        assertEquals(-1, asm.rowToLocation(0, INSTR_PER_HALF_PAGE + 1));
+    }
+
+    @Test
+    public void testCachedNextAndPreviousPagesCanBeReused() {
+        CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, () -> MEMORY_SIZE);
+
+        asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
+        asm.pageNext();
+        asm.pagePrevious();
+        asm.pageNext();
+        assertEquals(1, asm.getPageIndex());
+
+        PaginatingDisassembler previousAsm = makeDisassemblerWithFixedSizedInstructions(
+                CURRENT_INSTR, -1, 1, false
+        );
+        assertEquals(-1, previousAsm.getPageIndex());
+        previousAsm.pageNext();
+        previousAsm.pagePrevious();
+        assertEquals(-1, previousAsm.getPageIndex());
     }
 
     @Test
