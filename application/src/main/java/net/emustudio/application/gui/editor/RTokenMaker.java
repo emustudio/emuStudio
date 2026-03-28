@@ -21,7 +21,7 @@ public class RTokenMaker extends AbstractTokenMaker {
     private final LexicalAnalyzer lexer;
 
     public RTokenMaker(Compiler compiler) {
-        this.lexer = compiler.createLexer();
+        this.lexer = Objects.requireNonNull(compiler).createLexer();
     }
 
     static int getTokenMakerType(int emuStudioTokenType) {
@@ -48,21 +48,24 @@ public class RTokenMaker extends AbstractTokenMaker {
                 return Token.ERROR_IDENTIFIER;
             case net.emustudio.emulib.plugins.compiler.Token.EOF:
                 return Token.NULL;
+            default:
+                return Token.WHITESPACE;
         }
-        return Token.WHITESPACE;
     }
 
     @Override
     public Token getTokenList(Segment text, int initialTokenType, int startOffset) {
         resetTokenList();
+        Segment segment = Objects.requireNonNull(text);
         try {
-            lexer.reset(Objects.requireNonNull(text).toString());
+            lexer.reset(segment.count == 0 ? "" : new String(segment.array, segment.offset, segment.count));
         } catch (Exception ex) {
             LOGGER.error("Could not reset lexer", ex);
             addNullToken();
             return firstToken;
         }
 
+        int textOffset = segment.offset;
         int previousEnd = -1;
         int previousStartOffset = -1;
 
@@ -92,23 +95,21 @@ public class RTokenMaker extends AbstractTokenMaker {
                 }
                 int tokenLength = tokenText.length() - 1;
 
-                int start = text.offset + tokenStartIndex;
-                int end = text.offset + tokenStartIndex + tokenLength;
+                int start = textOffset + tokenStartIndex;
+                int end = start + tokenLength;
                 int tokenStartOffset = startOffset + tokenStartIndex;
 
                 if (previousEnd == -1 && tokenStartIndex != 0) {
                     // we have a gap in the beginning! Let's treat this gap as ERROR
-                    addToken(text, text.offset, start - 1, Token.ERROR_CHAR, startOffset);
+                    addToken(segment, textOffset, start - 1, Token.ERROR_CHAR, startOffset);
                 } else if (previousEnd != -1 && start != (previousEnd + 1)) {
                     // we have a gap in the middle! Let's treat this gap as ERROR
-                    addToken(
-                            text, previousEnd + 1, start - 1, Token.ERROR_CHAR, previousStartOffset + 1
-                    );
+                    addToken(segment, previousEnd + 1, start - 1, Token.ERROR_CHAR, previousStartOffset + 1);
                 }
                 previousEnd = end;
                 previousStartOffset = tokenStartOffset;
 
-                addToken(text, start, end, tokenMakerType, tokenStartOffset);
+                addToken(segment, start, end, tokenMakerType, tokenStartOffset);
             } catch (Exception ex) {
                 LOGGER.error("Could not process token", ex);
             }

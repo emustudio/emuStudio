@@ -37,6 +37,7 @@ ext.libs = [
         jcodec           : "org.jcodec:jcodec:0.2.3",
         jcodecJavase     : "org.jcodec:jcodec-javase:0.2.3",
 
+        cacioTta         : "com.github.caciocavallosilano:cacio-tta:1.11.1",
         junit            : "junit:junit:4.13.2",
         easyMock         : "org.easymock:easymock:5.6.0",
         mockito          : "org.mockito:mockito-core:5.23.0"

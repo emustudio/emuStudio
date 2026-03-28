@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat
 
 plugins {
   id 'application'
+  id 'jacoco'
 }
 
 configurations {
@@ -68,6 +69,11 @@ dependencies {
   providedRuntime project(":plugins:device:zxspectrum-ula")
   providedRuntime project(":plugins:device:audiotape-player")
 
+  testImplementation(libs.cacioTta) {
+    exclude group: 'org.assertj', module: 'assertj-swing-junit'
+    exclude group: 'org.junit.jupiter', module: 'junit-jupiter'
+    exclude group: 'org.junit.jupiter', module: 'junit-jupiter-engine'
+  }
   testImplementation libs.junit
   testImplementation libs.easyMock
   testImplementation libs.mockito
@@ -245,4 +251,30 @@ distributions {
       }
     }
   }
+}
+
+test {
+  systemProperty 'java.awt.headless', 'false'
+  systemProperty 'awt.toolkit', 'com.github.caciocavallosilano.cacio.ctc.CTCToolkit'
+  systemProperty 'java.awt.graphicsenv', 'com.github.caciocavallosilano.cacio.ctc.CTCGraphicsEnvironment'
+  systemProperty 'cacio.managed.screensize', '1600x1200'
+  jvmArgs([
+          '--add-exports=java.desktop/java.awt=ALL-UNNAMED',
+          '--add-exports=java.desktop/java.awt.peer=ALL-UNNAMED',
+          '--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED',
+          '--add-exports=java.desktop/sun.java2d=ALL-UNNAMED',
+          '--add-exports=java.desktop/java.awt.dnd.peer=ALL-UNNAMED',
+          '--add-exports=java.desktop/sun.awt=ALL-UNNAMED',
+          '--add-exports=java.desktop/sun.awt.event=ALL-UNNAMED',
+          '--add-exports=java.desktop/sun.awt.datatransfer=ALL-UNNAMED',
+          '--add-exports=java.base/sun.security.action=ALL-UNNAMED',
+          '--add-opens=java.base/java.util=ALL-UNNAMED',
+          '--add-opens=java.desktop/java.awt=ALL-UNNAMED',
+          '--add-opens=java.desktop/sun.java2d=ALL-UNNAMED',
+          '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED'
+  ])
+  finalizedBy jacocoTestReport // report is always generated after tests run
+}
+jacocoTestReport {
+  dependsOn test // tests are required to run before generating the report
 }
