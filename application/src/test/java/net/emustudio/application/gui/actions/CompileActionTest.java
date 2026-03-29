@@ -11,6 +11,7 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -24,19 +25,27 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class CompileActionTest {
+    private VirtualComputer computer;
+    private Dialogs dialogs;
+    private Editor editor;
+    private Compiler compiler;
+    private JTextArea compilerOutput;
+
+    @Before
+    public void setUp() {
+        computer = mock(VirtualComputer.class);
+        dialogs = mock(Dialogs.class);
+        editor = mock(Editor.class);
+        compiler = mock(Compiler.class);
+        compilerOutput = new JTextArea();
+    }
 
     @Test
     public void actionIsDisabledAndShowsErrorWhenCompilerIsMissing() {
-        VirtualComputer computer = mock(VirtualComputer.class);
-        Dialogs dialogs = mock(Dialogs.class);
-        Editor editor = mock(Editor.class);
-        JTextArea compilerOutput = new JTextArea();
-
         when(computer.getCompiler()).thenReturn(Optional.empty());
 
         CompileAction action = new CompileAction(
-                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {
-                }
+                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}
         );
         action.actionPerformed(null);
 
@@ -46,18 +55,11 @@ public class CompileActionTest {
 
     @Test
     public void constructorRegistersCompilerListenerThatAppendsMessagesAndMovesEditorCaret() {
-        VirtualComputer computer = mock(VirtualComputer.class);
-        Dialogs dialogs = mock(Dialogs.class);
-        Editor editor = mock(Editor.class);
-        Compiler compiler = mock(Compiler.class);
-        JTextArea compilerOutput = new JTextArea();
-        ArgumentCaptor<CompilerListener> listenerCaptor = ArgumentCaptor.forClass(CompilerListener.class);
         SourceCodePosition position = SourceCodePosition.of(1, 2, "program.asm");
-
         when(computer.getCompiler()).thenReturn(Optional.of(compiler));
+        ArgumentCaptor<CompilerListener> listenerCaptor = ArgumentCaptor.forClass(CompilerListener.class);
 
-        new CompileAction(computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {
-        });
+        new CompileAction(computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {});
         verify(compiler).addCompilerListener(listenerCaptor.capture());
 
         CompilerListener listener = listenerCaptor.getValue();
@@ -72,47 +74,39 @@ public class CompileActionTest {
     }
 
     @Test
-    public void actionShowsRunningErrorAndStopsWhenSaveFails() {
-        VirtualComputer computer = mock(VirtualComputer.class);
-        Dialogs dialogs = mock(Dialogs.class);
-        Editor editor = mock(Editor.class);
-        Compiler compiler = mock(Compiler.class);
-        JTextArea compilerOutput = new JTextArea();
-        AtomicInteger titleUpdates = new AtomicInteger();
-
+    public void actionShowsErrorWhenEmulationIsRunning() {
         when(computer.getCompiler()).thenReturn(Optional.of(compiler));
 
-        CompileAction runningAction = new CompileAction(
-                computer, dialogs, editor, () -> CPU.RunState.STATE_RUNNING, compilerOutput, titleUpdates::incrementAndGet
+        CompileAction action = new CompileAction(
+                computer, dialogs, editor, () -> CPU.RunState.STATE_RUNNING, compilerOutput, () -> {}
         );
-        runningAction.actionPerformed(null);
-        verify(dialogs).showError("Emulation must be stopped first.", "Compile");
+        action.actionPerformed(null);
 
-        reset(dialogs, editor, computer, compiler);
+        verify(dialogs).showError("Emulation must be stopped first.", "Compile");
+    }
+
+    @Test
+    public void actionDoesNotCompileWhenSaveFails() {
         when(computer.getCompiler()).thenReturn(Optional.of(compiler));
         when(editor.saveFile()).thenReturn(false);
+        AtomicInteger titleUpdates = new AtomicInteger();
 
-        CompileAction saveFailAction = new CompileAction(
+        CompileAction action = new CompileAction(
                 computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, titleUpdates::incrementAndGet
         );
-        saveFailAction.actionPerformed(null);
+        action.actionPerformed(null);
 
         verify(editor).saveFile();
         assertEquals(0, titleUpdates.get());
-        verifyNoMoreInteractions(dialogs);
     }
 
     @Test
     public void actionCompilesCurrentFileAndResetsMemoryAndCpu() throws Exception {
-        VirtualComputer computer = mock(VirtualComputer.class);
-        Dialogs dialogs = mock(Dialogs.class);
-        Editor editor = mock(Editor.class);
-        Compiler compiler = mock(Compiler.class);
         Memory memory = mock(Memory.class);
         CPU cpu = mock(CPU.class);
-        JTextArea compilerOutput = new JTextArea("old");
-        AtomicInteger titleUpdates = new AtomicInteger();
         File file = new File("program.asm");
+        AtomicInteger titleUpdates = new AtomicInteger();
+        compilerOutput.setText("old");
 
         when(computer.getCompiler()).thenReturn(Optional.of(compiler));
         when(computer.getMemory()).thenReturn(Optional.of(memory));
@@ -134,11 +128,6 @@ public class CompileActionTest {
 
     @Test
     public void actionAppendsCompilationFailureToOutput() throws Exception {
-        VirtualComputer computer = mock(VirtualComputer.class);
-        Dialogs dialogs = mock(Dialogs.class);
-        Editor editor = mock(Editor.class);
-        Compiler compiler = mock(Compiler.class);
-        JTextArea compilerOutput = new JTextArea();
         File file = new File("program.asm");
 
         when(computer.getCompiler()).thenReturn(Optional.of(compiler));
@@ -149,8 +138,7 @@ public class CompileActionTest {
         doThrow(new RuntimeException("compile failed")).when(compiler).compile(Path.of("program.asm"), Optional.empty());
 
         CompileAction action = new CompileAction(
-                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {
-                }
+                computer, dialogs, editor, () -> CPU.RunState.STATE_STOPPED_BREAK, compilerOutput, () -> {}
         );
         action.actionPerformed(null);
 

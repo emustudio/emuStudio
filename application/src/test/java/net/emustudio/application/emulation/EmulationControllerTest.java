@@ -6,7 +6,6 @@ import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.Disassembler;
 import net.emustudio.emulib.plugins.device.Device;
-import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import org.junit.Before;
@@ -20,9 +19,10 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class EmulationControllerTest {
     private CPUStub cpuStub;
@@ -45,7 +45,6 @@ public class EmulationControllerTest {
         assertNull(listener.runState);
     }
 
-
     @Test(timeout = 1000)
     public void testStartIsExecutedWhenRunStateIsBreakpoint() throws Exception {
         EmulationController controller = createPlainEmulationController();
@@ -57,7 +56,6 @@ public class EmulationControllerTest {
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, listener.runState);
     }
 
-
     @Test
     public void textStopIsNotExecutedWhenRunStateIsStopped() {
         EmulationController controller = createPlainEmulationController();
@@ -65,7 +63,6 @@ public class EmulationControllerTest {
         controller.stop();
         assertNull(listener.runState);
     }
-
 
     @Test(timeout = 1000)
     public void testStopIsNotExecutedWhenRunStateIsStoppedBadInstr() throws Exception {
@@ -171,15 +168,8 @@ public class EmulationControllerTest {
 
     @Test(timeout = 1000)
     public void testResetCallsDevicesReset() throws Exception {
-        Device dev1 = createMock(Device.class);
-        dev1.reset();
-        expectLastCall().once();
-
-        Device dev2 = createMock(Device.class);
-        dev2.reset();
-        expectLastCall().once();
-
-        replay(dev1, dev2);
+        Device dev1 = mock(Device.class);
+        Device dev2 = mock(Device.class);
 
         EmulationController controller = new EmulationController(
                 cpuStub, null, Arrays.asList(dev1, dev2)
@@ -190,13 +180,13 @@ public class EmulationControllerTest {
         Thread.sleep(300);
 
         assertEquals(1, cpuStub.resetCalled.get());
-        verify(dev1, dev2);
+        verify(dev1).reset();
+        verify(dev2).reset();
     }
 
     @Test(expected = RejectedExecutionException.class)
     public void testAfterCloseCannotCallStart() {
         EmulationController controller = createPlainEmulationController();
-
         controller.close();
         controller.start();
     }
@@ -204,7 +194,6 @@ public class EmulationControllerTest {
     @Test(expected = RejectedExecutionException.class)
     public void testAfterCloseCannotCallStep() {
         EmulationController controller = createPlainEmulationController();
-
         controller.close();
         controller.step();
     }
@@ -212,7 +201,6 @@ public class EmulationControllerTest {
     @Test(expected = RejectedExecutionException.class)
     public void testAfterCloseCannotCallStepWithTimeout() {
         EmulationController controller = createPlainEmulationController();
-
         controller.close();
         controller.step(10, TimeUnit.MILLISECONDS);
     }
@@ -220,7 +208,6 @@ public class EmulationControllerTest {
     @Test(expected = RejectedExecutionException.class)
     public void testAfterCloseCannotCallStop() {
         EmulationController controller = createPlainEmulationController();
-
         controller.close();
         controller.stop();
     }
@@ -228,7 +215,6 @@ public class EmulationControllerTest {
     @Test(expected = RejectedExecutionException.class)
     public void testAfterCloseCannotCallReset() {
         EmulationController controller = createPlainEmulationController();
-
         controller.close();
         controller.reset();
     }
@@ -248,7 +234,6 @@ public class EmulationControllerTest {
         assertEquals(CPU.RunState.STATE_STOPPED_BREAK, listener.runState);
     }
 
-
     private static class CPUStub extends AbstractCPU {
         private final AtomicInteger stepCalled = new AtomicInteger();
         private final AtomicInteger callCalled = new AtomicInteger();
@@ -259,12 +244,11 @@ public class EmulationControllerTest {
         private RunState stepReturnState = RunState.STATE_STOPPED_BREAK;
 
         public CPUStub() {
-            super(0L, createNiceMock(ApplicationApi.class), createNiceMock(PluginSettings.class));
+            super(0L, mock(ApplicationApi.class), mock(PluginSettings.class));
         }
 
         @Override
         protected void destroyInternal() {
-
         }
 
         @Override
@@ -295,7 +279,11 @@ public class EmulationControllerTest {
 
         @Override
         public void initialize() {
+        }
 
+        @Override
+        public String getTitle() {
+            return null;
         }
 
         @Override

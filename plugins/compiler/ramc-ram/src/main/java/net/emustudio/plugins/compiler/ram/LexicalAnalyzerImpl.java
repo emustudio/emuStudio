@@ -5,9 +5,12 @@ package net.emustudio.plugins.compiler.ram;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.UnbufferedCharStream;
 
+import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.Objects;
 
 import static net.emustudio.plugins.compiler.ram.RAMLexer.*;
@@ -93,7 +96,12 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
 
     @Override
     public void reset(String source) {
-        lexer.setInputStream(CharStreams.fromString(source));
+        lexer.setInputStream(new UnbufferedCharStream(new StringReader(source)));
+    }
+
+    @Override
+    public void reset(char[] array, int offset, int length) {
+        lexer.setInputStream(new UnbufferedCharStream(new CharArrayReader(array, offset, length)));
     }
 
     private int convertLexerTokenType(int tokenType) {

@@ -170,8 +170,8 @@ public class CallFlowTest {
 
     @Test
     public void testSelfModificationKnownFromKnownUntilTo() {
-        DisassemblerStub disasm = makeDisassembler();
-        CallFlow callFlow = makeCallFlow(disasm, 2, 4);
+        int[] disasm = defaultDisassembly();
+        CallFlow callFlow = makeCallFlow(makeDisassembler(disasm), 2, 4);
         modify(callFlow, disasm, 2, 6);
 
         List<Integer> locations = callFlow.getLocations(2, 8);
@@ -181,8 +181,8 @@ public class CallFlowTest {
 
     @Test
     public void testSelfModificationPreviousKnownFromPreviousKnownUntilTo() {
-        DisassemblerStub disasm = makeDisassembler();
-        CallFlow callFlow = makeCallFlow(disasm, 2, 4);
+        int[] disasm = defaultDisassembly();
+        CallFlow callFlow = makeCallFlow(makeDisassembler(disasm), 2, 4);
         modify(callFlow, disasm, 2, 6);
 
         List<Integer> locations = callFlow.getLocations(3, 8);
@@ -192,8 +192,8 @@ public class CallFlowTest {
 
     @Test
     public void testSelfModificationAfterKnownFromPreviousKnownUntilTo() {
-        DisassemblerStub disasm = makeDisassembler();
-        CallFlow callFlow = makeCallFlow(disasm, 2, 4);
+        int[] disasm = defaultDisassembly();
+        CallFlow callFlow = makeCallFlow(makeDisassembler(disasm), 2, 4);
         modify(callFlow, disasm, 2, 6);
 
         List<Integer> locations = callFlow.getLocations(1, 8);
@@ -203,8 +203,8 @@ public class CallFlowTest {
 
     @Test
     public void testSelfModificationKnownFromEmptyUntilTo() {
-        DisassemblerStub disasm = makeDisassembler();
-        CallFlow callFlow = makeCallFlow(disasm, 2);
+        int[] disasm = defaultDisassembly();
+        CallFlow callFlow = makeCallFlow(makeDisassembler(disasm), 2);
         modify(callFlow, disasm, 2, 6);
 
         List<Integer> locations = callFlow.getLocations(2, 8);
@@ -214,8 +214,8 @@ public class CallFlowTest {
 
     @Test
     public void testSelfModificationKnownFromKnownUntilToLonger() {
-        DisassemblerStub disasm = makeDisassembler();
-        CallFlow callFlow = makeCallFlow(disasm, 2, 4, 5, 8);
+        int[] disasm = defaultDisassembly();
+        CallFlow callFlow = makeCallFlow(makeDisassembler(disasm), 2, 4, 5, 8);
         modify(callFlow, disasm, 2, 6);
 
         List<Integer> locations = callFlow.getLocations(2, 8);
@@ -225,9 +225,9 @@ public class CallFlowTest {
 
     @Test
     public void testInvalidLocationBetweenFromAndTo() {
-        DisassemblerStub disasm = makeDisassembler();
-        disasm.set(1, 10);
-        CallFlow callFlow = makeCallFlow(disasm, 0, 6);
+        int[] disasm = defaultDisassembly();
+        disasm[1] = 10;
+        CallFlow callFlow = makeCallFlow(makeDisassembler(disasm), 0, 6);
 
         List<Integer> locations = callFlow.getLocations(0, 8);
 

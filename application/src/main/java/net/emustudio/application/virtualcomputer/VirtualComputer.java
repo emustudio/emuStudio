@@ -95,7 +95,8 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         return constructPlugins(pluginClasses, pluginConfigs, applicationApi, appSettings, computerConfig.getConfig()::save);
     }
 
-    private static Map<Long, PluginMeta> constructPlugins(
+    // package-private for testing
+    static Map<Long, PluginMeta> constructPlugins(
             List<Class<Plugin>> pluginClasses,
             List<PluginConfig> pluginConfigs,
             ApplicationApi applicationApi,
@@ -131,7 +132,8 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         return plugins;
     }
 
-    private static Plugin createPluginInstance(long pluginID, Class<? extends Plugin> mainClass, ApplicationApi applicationApi,
+    // package-private for testing
+    static Plugin createPluginInstance(long pluginID, Class<? extends Plugin> mainClass, ApplicationApi applicationApi,
                                                PluginSettings pluginSettings) throws InvalidPluginException {
         Objects.requireNonNull(mainClass);
         Objects.requireNonNull(applicationApi);

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static net.emustudio.application.gui.debugtable.PaginatingDisassembler.INSTR_PER_PAGE;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -34,23 +35,23 @@ class MockHelper {
     }
 
     static CallFlow makeCallFlow(int... updateLocations) {
-        return makeCallFlow(makeDisassembler(), updateLocations);
+        return makeCallFlow(makeDisassembler(defaultDisassembly()), updateLocations);
     }
 
     static CallFlow makeCallFlowStep(int... updateLocations) {
-        return makeCallFlow(makeDisassemblerStep(), updateLocations);
+        return makeCallFlow(makeDisassembler(defaultStepDisassembly()), updateLocations);
     }
 
-    static DisassemblerStub makeDisassembler() {
-        return new DisassemblerStub(10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+    static int[] defaultDisassembly() {
+        return new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     }
 
-    private static DisassemblerStub makeDisassemblerStep() {
-        return new DisassemblerStub(10, 2, -1, 4, -1, 6, -1, 8, -1, 10, -1);
+    static int[] defaultStepDisassembly() {
+        return new int[] {2, -1, 4, -1, 6, -1, 8, -1, 10, -1};
     }
 
-    static void modify(CallFlow callFlow, DisassemblerStub disasm, int location, int value) {
-        disasm.set(location, value);
+    static void modify(CallFlow callFlow, int[] nextPositions, int location, int value) {
+        nextPositions[location] = value;
         callFlow.updateCache(location);
     }
 
@@ -169,7 +170,7 @@ class MockHelper {
         return asm;
     }
 
-    static DisassemblerStub makeDisassembler(int memorySize, int step) {
+    static Disassembler makeDisassembler(int memorySize, int step) {
         int[] nextPositions = new int[memorySize];
         Arrays.fill(nextPositions, -1);
 
@@ -177,7 +178,28 @@ class MockHelper {
             nextPositions[i - step] = i;
         }
 
-        return new DisassemblerStub(memorySize, nextPositions);
+        return makeDisassembler(nextPositions);
     }
 
+    static Disassembler makeDisassembler(int[] nextPositions) {
+        Disassembler disassembler = mock(Disassembler.class);
+        when(disassembler.getNextInstructionPosition(anyInt())).thenAnswer(invocation -> {
+            int position = invocation.getArgument(0);
+            int nextPosition = nextPositions[position];
+            if (nextPosition == -1) {
+                throw new IndexOutOfBoundsException();
+            }
+            return nextPosition;
+        });
+        return disassembler;
+    }
+
+    static Disassembler makeDisassembler(int memorySize, int... nextPositions) {
+        if (memorySize < nextPositions.length) {
+            throw new IllegalArgumentException("Memory size < instruction.length");
+        }
+        int[] copy = new int[memorySize];
+        System.arraycopy(nextPositions, 0, copy, 0, nextPositions.length);
+        return makeDisassembler(copy);
+    }
 }
