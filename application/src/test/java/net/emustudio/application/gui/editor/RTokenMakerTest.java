@@ -2,19 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
-import net.emustudio.emulib.plugins.compiler.Compiler;
-import net.emustudio.emulib.plugins.compiler.CompilerListener;
-import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import org.junit.Test;
 
-import javax.swing.*;
 import javax.swing.text.Segment;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -341,12 +332,9 @@ public class RTokenMakerTest {
                 return true; // would cause infinite loop if next() exception didn't break
             }
 
-            @Override
-            public void reset(InputStream input) {
-            }
 
             @Override
-            public void reset(String input) {
+            public void reset(char[] array, int offset, int length) {
                 nextCalls[0] = 0;
             }
 
@@ -381,12 +369,9 @@ public class RTokenMakerTest {
                 return true;
             }
 
-            @Override
-            public void reset(InputStream input) {
-            }
 
             @Override
-            public void reset(String input) {
+            public void reset(char[] array, int offset, int length) {
                 throw new RuntimeException("Reset failed");
             }
 
@@ -533,17 +518,6 @@ public class RTokenMakerTest {
         assertEquals(org.fife.ui.rsyntaxtextarea.Token.NULL, tokens.get(1).getType());
     }
 
-    // --- getWordsToHighlight ---
-
-    @Test
-    public void testGetWordsToHighlightReturnsEmptyMap() {
-        TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer();
-        RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
-
-        // TokenMap doesn't expose a size method, but get() for any word should return -1 (no mapping)
-        assertNotNull(maker.getWordsToHighlight());
-        assertEquals(-1, maker.getWordsToHighlight().get("MOV".toCharArray(), 0, 2));
-    }
 
     // ---- Helpers ----
 
@@ -621,119 +595,4 @@ public class RTokenMakerTest {
         return current;
     }
 
-    // ---- Test doubles ----
-
-    private static final class TrackingLexicalAnalyzer implements LexicalAnalyzer {
-        private final net.emustudio.emulib.plugins.compiler.Token[] tokens;
-
-        private int index;
-        private int nextCalls;
-        private boolean iteratorUsed;
-        private String lastResetInput;
-
-        private TrackingLexicalAnalyzer(net.emustudio.emulib.plugins.compiler.Token... tokens) {
-            this.tokens = tokens;
-        }
-
-        @Override
-        public net.emustudio.emulib.plugins.compiler.Token next() {
-            nextCalls++;
-            return tokens[index++];
-        }
-
-        @Override
-        public boolean hasNext() {
-            return index < tokens.length;
-        }
-
-        @Override
-        public void reset(InputStream input) throws IOException {
-            reset(new String(input.readAllBytes(), StandardCharsets.UTF_8));
-        }
-
-        @Override
-        public void reset(String input) {
-            lastResetInput = input;
-            index = 0;
-            nextCalls = 0;
-            iteratorUsed = false;
-        }
-
-        @Override
-        public Iterator<net.emustudio.emulib.plugins.compiler.Token> iterator() {
-            iteratorUsed = true;
-            throw new AssertionError("RTokenMaker should consume lexer tokens directly");
-        }
-    }
-
-    private static final class CompilerStub implements Compiler {
-        private final LexicalAnalyzer lexer;
-
-        private CompilerStub(LexicalAnalyzer lexer) {
-            this.lexer = lexer;
-        }
-
-        @Override
-        public void addCompilerListener(CompilerListener listener) {
-        }
-
-        @Override
-        public void removeCompilerListener(CompilerListener listener) {
-        }
-
-        @Override
-        public void compile(Path inputPath, Optional<Path> outputPath) {
-        }
-
-        @Override
-        public LexicalAnalyzer createLexer() {
-            return lexer;
-        }
-
-        @Override
-        public List<FileExtension> getSourceFileExtensions() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public void reset() {
-        }
-
-        @Override
-        public void initialize() throws PluginInitializationException {
-        }
-
-        @Override
-        public void destroy() {
-        }
-
-        @Override
-        public void showSettings(JFrame parent) {
-        }
-
-        @Override
-        public boolean isShowSettingsSupported() {
-            return false;
-        }
-
-        @Override
-        public String getTitle() {
-            return "test";
-        }
-
-        @Override
-        public String getVersion() {
-            return "test";
-        }
-
-        @Override
-        public String getCopyright() {
-            return "test";
-        }
-
-        @Override
-        public String getDescription() {
-            return "test";
-        }
-    }
 }

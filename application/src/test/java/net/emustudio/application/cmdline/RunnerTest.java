@@ -9,13 +9,9 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.lang.reflect.Field;
-import java.nio.file.Path;
 import java.util.Optional;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class RunnerTest {
     @Rule
@@ -47,19 +43,9 @@ public class RunnerTest {
     @Test
     public void mainTracksWhetherSubcommandWasUsed() throws Exception {
         Runner.main(new String[]{"--help"});
-        assertFalse(readRunsSomeCommand());
+        assertFalse(Runner.runsSomeCommand);
 
         Runner.main(new String[]{"automation", "--help"});
-        assertTrue(readRunsSomeCommand());
-    }
-
-    private boolean readRunsSomeCommand() throws Exception {
-        Field field = Runner.class.getDeclaredField("runsSomeCommand");
-        field.setAccessible(true);
-        return field.getBoolean(null);
-    }
-
-    private static void assertEquals(String expected, String actual) {
-        org.junit.Assert.assertEquals(expected, actual);
+        assertTrue(Runner.runsSomeCommand);
     }
 }

@@ -19,17 +19,21 @@ import static org.mockito.Mockito.*;
 public class EditorActionsTest {
 
     @Test
-    public void findAndReplaceActionsToggleDialogVisibility() {
+    public void findActionHidesReplaceDialogAndShowsFindDialog() {
         FindDialog findDialog = mock(FindDialog.class);
         ReplaceDialog replaceDialog = mock(ReplaceDialog.class);
-
         when(replaceDialog.isVisible()).thenReturn(true);
+
         new FindAction(findDialog, replaceDialog).actionPerformed(null);
 
         verify(replaceDialog).setVisible(false);
         verify(findDialog).setVisible(true);
+    }
 
-        reset(findDialog, replaceDialog);
+    @Test
+    public void replaceActionHidesFindDialogAndShowsReplaceDialog() {
+        FindDialog findDialog = mock(FindDialog.class);
+        ReplaceDialog replaceDialog = mock(ReplaceDialog.class);
         when(findDialog.isVisible()).thenReturn(true);
 
         new ReplaceAction(findDialog, replaceDialog).actionPerformed(null);
@@ -39,94 +43,150 @@ public class EditorActionsTest {
     }
 
     @Test
-    public void findNextAndPreviousEitherContinueReportMissOrFallbackToFindDialog() {
+    public void findNextDoesNothingWhenTextIsFound() {
         Dialogs dialogs = mock(Dialogs.class);
         Action fallbackAction = mock(Action.class);
-        ActionEvent event = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "find");
+        Editor editor = mock(Editor.class);
+        when(editor.findNext()).thenReturn(Optional.of(true));
 
-        Editor nextFoundEditor = mock(Editor.class);
-        when(nextFoundEditor.findNext()).thenReturn(Optional.of(true));
-        new FindNextAction(nextFoundEditor, dialogs, fallbackAction).actionPerformed(event);
+        new FindNextAction(editor, dialogs, fallbackAction).actionPerformed(null);
+
         verifyNoInteractions(dialogs, fallbackAction);
+    }
 
-        Editor nextMissingEditor = mock(Editor.class);
-        when(nextMissingEditor.findNext()).thenReturn(Optional.of(false));
-        new FindNextAction(nextMissingEditor, dialogs, fallbackAction).actionPerformed(event);
+    @Test
+    public void findNextShowsInfoWhenTextNotFound() {
+        Dialogs dialogs = mock(Dialogs.class);
+        Editor editor = mock(Editor.class);
+        when(editor.findNext()).thenReturn(Optional.of(false));
+
+        new FindNextAction(editor, dialogs, mock(Action.class)).actionPerformed(null);
+
         verify(dialogs).showInfo("Text was not found", "Find next");
+    }
 
-        reset(dialogs, fallbackAction);
-        Editor nextFallbackEditor = mock(Editor.class);
-        when(nextFallbackEditor.findNext()).thenReturn(Optional.empty());
-        new FindNextAction(nextFallbackEditor, dialogs, fallbackAction).actionPerformed(event);
-        verify(fallbackAction).actionPerformed(event);
+    @Test
+    public void findNextFallsBackToFindDialogWhenNoSearch() {
+        Action fallbackAction = mock(Action.class);
+        Editor editor = mock(Editor.class);
+        ActionEvent event = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "find");
+        when(editor.findNext()).thenReturn(Optional.empty());
 
-        reset(dialogs, fallbackAction);
-        Editor previousFoundEditor = mock(Editor.class);
-        when(previousFoundEditor.findPrevious()).thenReturn(Optional.of(true));
-        new FindPreviousAction(previousFoundEditor, dialogs, fallbackAction).actionPerformed(event);
-        verifyNoInteractions(dialogs, fallbackAction);
+        new FindNextAction(editor, mock(Dialogs.class), fallbackAction).actionPerformed(event);
 
-        Editor previousMissingEditor = mock(Editor.class);
-        when(previousMissingEditor.findPrevious()).thenReturn(Optional.of(false));
-        new FindPreviousAction(previousMissingEditor, dialogs, fallbackAction).actionPerformed(event);
-        verify(dialogs).showInfo("Text was not found", "Find previous");
-
-        reset(dialogs, fallbackAction);
-        Editor previousFallbackEditor = mock(Editor.class);
-        when(previousFallbackEditor.findPrevious()).thenReturn(Optional.empty());
-        new FindPreviousAction(previousFallbackEditor, dialogs, fallbackAction).actionPerformed(event);
         verify(fallbackAction).actionPerformed(event);
     }
 
     @Test
-    public void newAndOpenActionsRequireConfirmationAndSuccessfulEditorOperation() {
+    public void findPreviousDoesNothingWhenTextIsFound() {
+        Dialogs dialogs = mock(Dialogs.class);
+        Action fallbackAction = mock(Action.class);
+        Editor editor = mock(Editor.class);
+        when(editor.findPrevious()).thenReturn(Optional.of(true));
+
+        new FindPreviousAction(editor, dialogs, fallbackAction).actionPerformed(null);
+
+        verifyNoInteractions(dialogs, fallbackAction);
+    }
+
+    @Test
+    public void findPreviousShowsInfoWhenTextNotFound() {
+        Dialogs dialogs = mock(Dialogs.class);
+        Editor editor = mock(Editor.class);
+        when(editor.findPrevious()).thenReturn(Optional.of(false));
+
+        new FindPreviousAction(editor, dialogs, mock(Action.class)).actionPerformed(null);
+
+        verify(dialogs).showInfo("Text was not found", "Find previous");
+    }
+
+    @Test
+    public void findPreviousFallsBackToFindDialogWhenNoSearch() {
+        Action fallbackAction = mock(Action.class);
+        Editor editor = mock(Editor.class);
+        ActionEvent event = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "find");
+        when(editor.findPrevious()).thenReturn(Optional.empty());
+
+        new FindPreviousAction(editor, mock(Dialogs.class), fallbackAction).actionPerformed(event);
+
+        verify(fallbackAction).actionPerformed(event);
+    }
+
+    @Test
+    public void newFileActionDoesNothingWhenNotConfirmed() {
         Editor editor = mock(Editor.class);
         JTextArea compilerOutput = new JTextArea("old output");
         AtomicInteger titleUpdates = new AtomicInteger();
 
-        NewFileAction newAction = new NewFileAction(() -> false, editor, compilerOutput, titleUpdates::incrementAndGet);
-        newAction.actionPerformed(null);
+        new NewFileAction(() -> false, editor, compilerOutput, titleUpdates::incrementAndGet).actionPerformed(null);
+
         verify(editor, never()).newFile();
         assertEquals("old output", compilerOutput.getText());
         assertEquals(0, titleUpdates.get());
-
-        NewFileAction confirmedNewAction = new NewFileAction(() -> true, editor, compilerOutput, titleUpdates::incrementAndGet);
-        confirmedNewAction.actionPerformed(null);
-        verify(editor).newFile();
-        assertEquals("", compilerOutput.getText());
-        assertEquals(1, titleUpdates.get());
-
-        compilerOutput.setText("compile me");
-        when(editor.openFile()).thenReturn(false, true);
-
-        OpenFileAction openAction = new OpenFileAction(() -> true, editor, compilerOutput, titleUpdates::incrementAndGet);
-        openAction.actionPerformed(null);
-        assertEquals("compile me", compilerOutput.getText());
-        assertEquals(1, titleUpdates.get());
-
-        openAction.actionPerformed(null);
-        assertEquals("", compilerOutput.getText());
-        assertEquals(2, titleUpdates.get());
-        verify(editor, times(2)).openFile();
     }
 
     @Test
-    public void saveActionsUpdateWindowTitleOnlyAfterSuccessfulSave() {
+    public void newFileActionCreatesNewFileAndClearsOutput() {
         Editor editor = mock(Editor.class);
+        JTextArea compilerOutput = new JTextArea("old output");
         AtomicInteger titleUpdates = new AtomicInteger();
 
+        new NewFileAction(() -> true, editor, compilerOutput, titleUpdates::incrementAndGet).actionPerformed(null);
+
+        verify(editor).newFile();
+        assertEquals("", compilerOutput.getText());
+        assertEquals(1, titleUpdates.get());
+    }
+
+    @Test
+    public void openFileActionDoesNotClearOutputWhenOpenFails() {
+        Editor editor = mock(Editor.class);
+        JTextArea compilerOutput = new JTextArea("compile me");
+        AtomicInteger titleUpdates = new AtomicInteger();
+        when(editor.openFile()).thenReturn(false);
+
+        new OpenFileAction(() -> true, editor, compilerOutput, titleUpdates::incrementAndGet).actionPerformed(null);
+
+        assertEquals("compile me", compilerOutput.getText());
+        assertEquals(0, titleUpdates.get());
+    }
+
+    @Test
+    public void openFileActionClearsOutputWhenOpenSucceeds() {
+        Editor editor = mock(Editor.class);
+        JTextArea compilerOutput = new JTextArea("compile me");
+        AtomicInteger titleUpdates = new AtomicInteger();
+        when(editor.openFile()).thenReturn(true);
+
+        new OpenFileAction(() -> true, editor, compilerOutput, titleUpdates::incrementAndGet).actionPerformed(null);
+
+        assertEquals("", compilerOutput.getText());
+        assertEquals(1, titleUpdates.get());
+    }
+
+    @Test
+    public void saveFileActionUpdatesTitleOnlyOnSuccess() {
+        Editor editor = mock(Editor.class);
+        AtomicInteger titleUpdates = new AtomicInteger();
         when(editor.saveFile()).thenReturn(false, true);
-        SaveFileAction saveAction = new SaveFileAction(editor, titleUpdates::incrementAndGet);
-        saveAction.actionPerformed(null);
-        saveAction.actionPerformed(null);
 
+        SaveFileAction action = new SaveFileAction(editor, titleUpdates::incrementAndGet);
+        action.actionPerformed(null); // returns false
+        action.actionPerformed(null); // returns true
+
+        assertEquals(1, titleUpdates.get());
+    }
+
+    @Test
+    public void saveFileAsActionUpdatesTitleOnlyOnSuccess() {
+        Editor editor = mock(Editor.class);
+        AtomicInteger titleUpdates = new AtomicInteger();
         when(editor.saveFileAs()).thenReturn(false, true);
-        SaveFileAsAction saveAsAction = new SaveFileAsAction(editor, titleUpdates::incrementAndGet);
-        saveAsAction.actionPerformed(null);
-        saveAsAction.actionPerformed(null);
 
-        assertEquals(2, titleUpdates.get());
-        verify(editor, times(2)).saveFile();
-        verify(editor, times(2)).saveFileAs();
+        SaveFileAsAction action = new SaveFileAsAction(editor, titleUpdates::incrementAndGet);
+        action.actionPerformed(null); // returns false
+        action.actionPerformed(null); // returns true
+
+        assertEquals(1, titleUpdates.get());
     }
 }

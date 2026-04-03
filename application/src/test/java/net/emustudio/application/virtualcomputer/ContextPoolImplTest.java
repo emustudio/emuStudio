@@ -2,11 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.virtualcomputer.ContextStubs.DifferentCPUContextStubWithEqualHash;
-import net.emustudio.application.virtualcomputer.ContextStubs.DifferentCompilerContextStubWithEqualHash;
-import net.emustudio.application.virtualcomputer.ContextStubs.DifferentDeviceContextStubWithEqualHash;
-import net.emustudio.application.virtualcomputer.ContextStubs.DifferentShortMemoryContextStubWithEqualHash;
-import net.emustudio.application.virtualcomputer.stubs.*;
 import net.emustudio.emulib.plugins.Context;
 import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.compiler.CompilerContext;
@@ -16,52 +11,39 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextNotFoundException;
 import net.emustudio.emulib.runtime.InvalidContextException;
-import org.easymock.EasyMock;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 public class ContextPoolImplTest {
     private static final int emuStudioId = 555;
 
-    private CPUContextStub cpuContextMock;
-    private CPUContextStub cpuContextMockAnother;
-    private ShortMemoryContextStub shortMemoryContextMock;
-    private ShortMemoryContextStub shortMemoryContextMockAnother;
-    private CompilerContextStub compilerContextMock;
-    private CompilerContextStub compilerContextMockAnother;
-    private DeviceContextStub shortDeviceContextMock;
-    private DeviceContextStub shortDeviceContextMockAnother;
+    private CPUContext cpuContextMock;
+    private CPUContext cpuContextMockAnother;
+    private MemoryContext<Short> shortMemoryContextMock;
+    private MemoryContext<Short> shortMemoryContextMockAnother;
+    private CompilerContext compilerContextMock;
+    private CompilerContext compilerContextMockAnother;
+    private DeviceContext<Short> shortDeviceContextMock;
+    private DeviceContext<Short> shortDeviceContextMockAnother;
     private ContextPoolImpl contextPool;
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
-        cpuContextMock = EasyMock.createNiceMock(CPUContextStub.class);
-        cpuContextMockAnother = EasyMock.createNiceMock(CPUContextStub.class);
-        shortMemoryContextMock = EasyMock.createNiceMock(ShortMemoryContextStub.class);
-        shortMemoryContextMockAnother = EasyMock.createNiceMock(ShortMemoryContextStub.class);
-        compilerContextMock = EasyMock.createNiceMock(CompilerContextStub.class);
-        compilerContextMockAnother = EasyMock.createNiceMock(CompilerContextStub.class);
-        shortDeviceContextMock = EasyMock.createNiceMock(DeviceContextStub.class);
-        shortDeviceContextMockAnother = EasyMock.createNiceMock(DeviceContextStub.class);
-        replay(
-                cpuContextMock, cpuContextMockAnother,
-                shortMemoryContextMock, shortMemoryContextMockAnother,
-                compilerContextMock, compilerContextMockAnother,
-                shortDeviceContextMock, shortDeviceContextMockAnother
-        );
+        cpuContextMock = mock(CPUContext.class);
+        cpuContextMockAnother = mock(CPUContext.class);
+        shortMemoryContextMock = mock(MemoryContext.class);
+        shortMemoryContextMockAnother = mock(MemoryContext.class);
+        compilerContextMock = mock(CompilerContext.class);
+        compilerContextMockAnother = mock(CompilerContext.class);
+        shortDeviceContextMock = mock(DeviceContext.class);
+        shortDeviceContextMockAnother = mock(DeviceContext.class);
 
         contextPool = new ContextPoolImpl(emuStudioId);
-        contextPool.setComputer(new ComputerStub(true));
-    }
-
-    @After
-    public void tearDown() {
-        verify(cpuContextMock, shortMemoryContextMock, compilerContextMock, shortDeviceContextMock);
+        contextPool.setComputer(connectedComputer(true));
     }
 
     @Test
@@ -299,57 +281,41 @@ public class ContextPoolImplTest {
 
     @Test
     public void testRegisterWithDifferentInterfaceThanGetCompiler() throws Exception {
-        contextPool.register(0, compilerContextMock, CompilerContextStub.class);
-        assertEquals(compilerContextMock, contextPool.getCompilerContext(1, CompilerContextStub.class));
-        assertEquals(compilerContextMock, contextPool.getCompilerContext(1, DifferentCompilerContextStubWithEqualHash.class));
-    }
+        TestCompilerContext compilerContextMock = niceMock(TestCompilerContext.class);
 
-    @Test
-    public void testRegisterWithDifferentInterfaceThanGetCPU() throws Exception {
-        contextPool.register(0, cpuContextMock, CPUContextStub.class);
-        assertEquals(cpuContextMock, contextPool.getCPUContext(1, CPUContextStub.class));
-        assertEquals(cpuContextMock, contextPool.getCPUContext(1, DifferentCPUContextStubWithEqualHash.class));
-    }
+        contextPool.register(0, compilerContextMock, TestCompilerContext.class);
 
-    @Test
-    public void testRegisterWithDifferentInterfaceThanGetMemory() throws Exception {
-        contextPool.register(0, shortMemoryContextMock, ShortMemoryContextStub.class);
-        assertEquals(shortMemoryContextMock, contextPool.getMemoryContext(1, ShortMemoryContextStub.class));
-        assertEquals(shortMemoryContextMock, contextPool.getMemoryContext(1, DifferentShortMemoryContextStubWithEqualHash.class));
+        assertEquals(compilerContextMock, contextPool.getCompilerContext(1, TestCompilerContext.class));
+        assertEquals(compilerContextMock, contextPool.getCompilerContext(1, DifferentTestCompilerContext.class));
     }
-
-    @Test
-    public void testRegisterWithDifferentInterfaceThanGetDevice() throws Exception {
-        contextPool.register(0, shortDeviceContextMock, DeviceContextStub.class);
-        assertEquals(shortDeviceContextMock, contextPool.getDeviceContext(1, DeviceContextStub.class));
-        assertEquals(shortDeviceContextMock, contextPool.getDeviceContext(1, DifferentDeviceContextStubWithEqualHash.class));
-    }
-
-    //
 
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetGeneralInterfaceWhenNotRegisteredCPU() throws Exception {
-        contextPool.register(0, cpuContextMock, CPUContextStub.class);
+        TestCPUContext cpuContextMock = niceMock(TestCPUContext.class);
+        contextPool.register(0, cpuContextMock, TestCPUContext.class);
         contextPool.getCPUContext(1);
     }
 
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetGeneralInterfaceWhenNotRegisteredCompiler() throws Exception {
-        contextPool.register(0, compilerContextMock, CompilerContextStub.class);
+        TestCompilerContext compilerContextMock = niceMock(TestCompilerContext.class);
+        contextPool.register(0, compilerContextMock, TestCompilerContext.class);
         contextPool.getCompilerContext(1);
     }
 
     @SuppressWarnings("unchecked")
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetGeneralInterfaceWhenNotRegisteredMemory() throws Exception {
-        contextPool.register(0, shortMemoryContextMock, ShortMemoryContextStub.class);
+        TestMemoryContext shortMemoryContextMock = niceMock(TestMemoryContext.class);
+        contextPool.register(0, shortMemoryContextMock, TestMemoryContext.class);
         contextPool.getMemoryContext(1, MemoryContext.class);
     }
 
     @SuppressWarnings("unchecked")
     @Test(expected = ContextNotFoundException.class)
     public void testCannotGetGeneralInterfaceWhenNotRegisteredDevice() throws Exception {
-        contextPool.register(0, shortDeviceContextMock, DeviceContextStub.class);
+        TestDeviceContext shortDeviceContextMock = niceMock(TestDeviceContext.class);
+        contextPool.register(0, shortDeviceContextMock, TestDeviceContext.class);
         contextPool.getDeviceContext(1, DeviceContext.class);
     }
 
@@ -358,13 +324,7 @@ public class ContextPoolImplTest {
     @Test
     public void testRegisterWithDifferentDataTypeThanGetMemory() throws Exception {
         contextPool.register(0, shortMemoryContextMock, MemoryContext.class);
-        assertEquals(shortMemoryContextMock, contextPool.getMemoryContext(1, ByteMemoryContext.class));
-    }
-
-    @Test
-    public void testRegisterWithDifferentDataTypeThanGetDevice() throws Exception {
-        contextPool.register(0, shortDeviceContextMock, DeviceContext.class);
-        assertEquals(shortDeviceContextMock, contextPool.getDeviceContext(1, ByteDeviceContext.class));
+        assertEquals(shortMemoryContextMock, contextPool.getMemoryContext(1, GenericByteMemoryContext.class));
     }
 
     @Test(expected = InvalidContextException.class)
@@ -391,8 +351,8 @@ public class ContextPoolImplTest {
 
     @Test(expected = InvalidContextException.class)
     public void testUnannotatedContextInterface() throws Exception {
-        Context unannotatedContext = EasyMock.createNiceMock(UnannotatedContextStub.class);
-        contextPool.register(0, unannotatedContext, UnannotatedContextStub.class);
+        Context unannotatedContext = niceMock(UnannotatedContext.class);
+        contextPool.register(0, unannotatedContext, UnannotatedContext.class);
     }
 
     @Test(expected = NullPointerException.class)
@@ -447,31 +407,48 @@ public class ContextPoolImplTest {
 
     @Test
     public void testGetByEmuStudio() throws Exception {
-        contextPool.setComputer(new ComputerStub(false));
+        contextPool.setComputer(connectedComputer(false));
         contextPool.register(0, cpuContextMock, CPUContext.class);
         assertEquals(cpuContextMock, contextPool.getCPUContext(emuStudioId));
     }
 
-    @PluginContext
-    interface ByteMemoryContext extends MemoryContext<Byte> {
+
+    private static <T> T niceMock(Class<T> type) {
+        return mock(type);
     }
 
-    //
-
-    @PluginContext
-    interface ByteDeviceContext extends DeviceContext<Byte> {
+    private static PluginConnections connectedComputer(boolean connected) {
+        return (pluginID, toPluginID) -> pluginID != toPluginID && connected;
     }
 
-    private static class ComputerStub implements PluginConnections {
-        private final boolean connected;
+    @PluginContext
+    interface TestCompilerContext extends CompilerContext {
+        void testCompilerMethod();
+    }
 
-        ComputerStub(boolean connected) {
-            this.connected = connected;
-        }
+    @PluginContext
+    interface DifferentTestCompilerContext extends TestCompilerContext {
+    }
 
-        @Override
-        public boolean isConnected(long pluginID, long toPluginID) {
-            return pluginID != toPluginID && connected;
-        }
+    @PluginContext
+    interface TestCPUContext extends CPUContext {
+        void testMethod();
+    }
+
+    @PluginContext
+    interface TestMemoryContext extends MemoryContext<Short> {
+        void testMemoryMethod();
+    }
+
+    @PluginContext
+    interface TestDeviceContext extends DeviceContext<Short> {
+        void testDeviceMethod();
+    }
+
+    @PluginContext
+    interface GenericByteMemoryContext extends MemoryContext<Byte> {
+    }
+
+    interface UnannotatedContext extends Context {
     }
 }

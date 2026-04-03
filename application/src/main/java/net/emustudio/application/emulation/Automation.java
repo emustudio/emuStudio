@@ -36,7 +36,7 @@ public class Automation implements Runnable {
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
     private final Optional<Integer> programLocation;
-    private AutoDialog progressGUI;
+    AutoDialog progressGUI; // package-private for testing
     private volatile CPU.RunState resultState;
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,

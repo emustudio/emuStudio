@@ -4,10 +4,10 @@ package net.emustudio.plugins.compiler.brainduck;
 
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
-import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.misc.Pair;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Objects;
 
 import static net.emustudio.plugins.compiler.brainduck.BraincLexer.*;
@@ -33,27 +33,12 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
 
     public LexicalAnalyzerImpl(BraincLexer lexer) {
         this.lexer = Objects.requireNonNull(lexer);
+        this.lexer.setTokenFactory(new EmuTokenFactory(tokenMap));
     }
 
     @Override
     public Token next() {
-        org.antlr.v4.runtime.Token token = lexer.nextToken();
-        return new Token() {
-            @Override
-            public int getType() {
-                return convertLexerTokenType(token.getType());
-            }
-
-            @Override
-            public int getOffset() {
-                return token.getStartIndex();
-            }
-
-            @Override
-            public String getText() {
-                return token.getText();
-            }
-        };
+        return (Token) lexer.nextToken();
     }
 
     @Override
@@ -62,19 +47,57 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
     }
 
     @Override
-    public void reset(InputStream inputStream) throws IOException {
-        lexer.setInputStream(CharStreams.fromStream(inputStream));
+    public void reset(char[] array, int offset, int length) {
+        lexer.setInputStream(CharStreams.fromString(new String(array, offset, length)));
     }
 
-    @Override
-    public void reset(String source) {
-        lexer.setInputStream(CharStreams.fromString(source));
-    }
-
-    private int convertLexerTokenType(int tokenType) {
-        if (tokenType == EOF) {
-            return Token.EOF;
+    static class EmuToken extends CommonToken implements Token {
+        EmuToken(Pair<TokenSource, CharStream> source, int type, int channel, int start, int stop) {
+            super(source, type, channel, start, stop);
         }
-        return tokenMap[tokenType];
+
+        EmuToken(int type, String text) {
+            super(type, text);
+        }
+
+        @Override
+        public int getOffset() {
+            return getStartIndex();
+        }
+    }
+
+    static class EmuTokenFactory implements TokenFactory<EmuToken> {
+        private final int[] tokenMap;
+
+        EmuTokenFactory(int[] tokenMap) {
+            this.tokenMap = tokenMap;
+        }
+
+        private int convertType(int antlrType) {
+            if (antlrType == org.antlr.v4.runtime.Token.EOF) {
+                return Token.EOF;
+            }
+            return tokenMap[antlrType];
+        }
+
+        @Override
+        public EmuToken create(
+                Pair<TokenSource, CharStream> source, int type, String text,
+                int channel, int start, int stop, int line, int charPositionInLine) {
+            EmuToken t = new EmuToken(source, convertType(type), channel, start, stop);
+            t.setLine(line);
+            t.setCharPositionInLine(charPositionInLine);
+            if (text != null) {
+                t.setText(text);
+            } else if (source.b != null) {
+                t.setText(source.b.getText(Interval.of(start, stop)));
+            }
+            return t;
+        }
+
+        @Override
+        public EmuToken create(int type, String text) {
+            return new EmuToken(convertType(type), text);
+        }
     }
 }

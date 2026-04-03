@@ -38,7 +38,7 @@ import static net.emustudio.application.settings.ConfigFiles.listConfigurationNa
 public class Runner implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
     // if a command is being run, default behavior is: do nothing
-    private static boolean runsSomeCommand;
+    static boolean runsSomeCommand; // package-private for testing
 
     @CommandLine.ArgGroup(heading = "Virtual computer%n")
     public Exclusive exclusive;

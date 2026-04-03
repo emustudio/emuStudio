@@ -2,10 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.virtualcomputer;
 
-import net.emustudio.application.virtualcomputer.stubs.CPUImplStub;
-import net.emustudio.application.virtualcomputer.stubs.CPUListenerStub;
-import net.emustudio.application.virtualcomputer.stubs.UnannotatedCPUStub;
 import net.emustudio.emulib.plugins.Plugin;
+import net.emustudio.emulib.plugins.cpu.AbstractCPU;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
@@ -25,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static net.emustudio.application.internal.Reflection.doesImplement;
-import static org.easymock.EasyMock.createNiceMock;
+import static org.mockito.Mockito.mock;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -51,27 +49,31 @@ public class PluginLoaderTest {
         return instance.loadPlugins(Collections.singletonList(toFile(BAD_PLUGIN_PATH)));
     }
 
+    @SuppressWarnings("unchecked")
+    private Class<Plugin> loadValidPlugin() throws Exception {
+        return (Class<Plugin>) Class.forName("dependencies.APluginDependsOnB");
+    }
+
     @Test(expected = InvalidPluginException.class)
     public void testLoadNotAPlugin() throws Exception {
         pluginLoader.loadPlugins(Collections.singletonList(toFile(NOT_A_PLUGIN_PATH)));
     }
 
     @Test
-    public void testDoesImplement() {
+    public void testDoesImplement() throws Exception {
         // test for nested interface
-        assertFalse(doesImplement(CPUListenerStub.class, Plugin.class));
-        // test for inherited interface
-        assertTrue(doesImplement(CPUImplStub.class, Plugin.class));
+        assertFalse(doesImplement(CPU.CPUListener.class, Plugin.class));
+        assertTrue(doesImplement(loadValidPlugin(), Plugin.class));
     }
 
     @Test
-    public void testCorrectTrustedPlugin() {
-        assertTrue(PluginLoader.trustedPlugin(CPUImplStub.class));
+    public void testCorrectTrustedPlugin() throws Exception {
+        assertTrue(PluginLoader.trustedPlugin(loadValidPlugin()));
     }
 
     @Test
     public void testTrustedPluginOnNotAPluginClassReturnsFalse() {
-        assertFalse(PluginLoader.trustedPlugin(CPUListenerStub.class));
+        assertFalse(PluginLoader.trustedPlugin(CPU.CPUListener.class));
     }
 
     @Test
@@ -81,7 +83,7 @@ public class PluginLoaderTest {
 
     @Test
     public void testTrustedPluginOnPluginClassWithoutAnnotation() {
-        assertFalse(PluginLoader.trustedPlugin(UnannotatedCPUStub.class));
+        assertFalse(PluginLoader.trustedPlugin(AbstractCPU.class));
     }
 
     @Test(expected = NullPointerException.class)
@@ -123,7 +125,7 @@ public class PluginLoaderTest {
 
         Constructor<Plugin> constructor = cl.getDeclaredConstructor(long.class, ApplicationApi.class, PluginSettings.class);
         cl.getDeclaredMethod("hi").invoke(constructor.newInstance(
-                0L, createNiceMock(ApplicationApi.class), createNiceMock(PluginSettings.class)
+                0L, mock(ApplicationApi.class), mock(PluginSettings.class)
         ));
     }
 }

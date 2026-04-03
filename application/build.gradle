@@ -75,7 +75,6 @@ dependencies {
     exclude group: 'org.junit.jupiter', module: 'junit-jupiter-engine'
   }
   testImplementation libs.junit
-  testImplementation libs.easyMock
   testImplementation libs.mockito
   testImplementation libs.slf4JSimple
 }
