@@ -11,13 +11,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
-public class NoGuiDialogsImplTest {
+public class NoDialogsGuiTest {
 
     @Test
     public void formatMessageAndChooserFallbacksUseExpectedDefaults() {
-        NoGuiDialogsImpl dialogs = new NoGuiDialogsImpl();
+        DialogsNoGui dialogs = new DialogsNoGui();
 
-        assertEquals("[Title] Message", NoGuiDialogsImpl.formatMessage("Title", "Message"));
+        assertEquals("[Title] Message", DialogsNoGui.formatMessage("Title", "Message"));
         assertFalse(dialogs.chooseFile("Open", "Open", true).isPresent());
         assertFalse(dialogs.chooseFile("Open", "Open", true, Collections.emptyList()).isPresent());
         assertFalse(dialogs.chooseFile("Open", "Open", Path.of("."), true).isPresent());
@@ -28,7 +28,7 @@ public class NoGuiDialogsImplTest {
 
     @Test
     public void interactiveMethodsThrowInNoGuiMode() {
-        NoGuiDialogsImpl dialogs = new NoGuiDialogsImpl();
+        DialogsNoGui dialogs = new DialogsNoGui();
 
         expectRuntimeException(new ThrowingRunnable() {
             @Override

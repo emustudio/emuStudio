@@ -19,12 +19,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class GuiDialogsImpl implements Dialogs {
+public class DialogsGui implements Dialogs {
     private final RadixUtils radixUtils = RadixUtils.getInstance();
     private final GUI gui;
     private Component parent;
 
-    public GuiDialogsImpl(GUI gui) {
+    public DialogsGui(GUI gui) {
         this.gui = java.util.Objects.requireNonNull(gui);
     }
 
@@ -54,7 +54,7 @@ public class GuiDialogsImpl implements Dialogs {
 
     @Override
     public Optional<Integer> readInteger(String message) {
-        return readInteger(message, NoGuiDialogsImpl.INPUT_MESSAGE);
+        return readInteger(message, DialogsNoGui.INPUT_MESSAGE);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class GuiDialogsImpl implements Dialogs {
 
     @Override
     public Optional<String> readString(String message) {
-        return readString(message, NoGuiDialogsImpl.INPUT_MESSAGE);
+        return readString(message, DialogsNoGui.INPUT_MESSAGE);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class GuiDialogsImpl implements Dialogs {
 
     @Override
     public Optional<Double> readDouble(String message) {
-        return readDouble(message, NoGuiDialogsImpl.INPUT_MESSAGE);
+        return readDouble(message, DialogsNoGui.INPUT_MESSAGE);
     }
 
     @Override

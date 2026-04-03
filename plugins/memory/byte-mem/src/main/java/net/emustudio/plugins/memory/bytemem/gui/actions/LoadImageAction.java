@@ -47,24 +47,25 @@ public class LoadImageAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         Path currentDirectory = Objects.requireNonNullElse(recentOpenPath, new File(System.getProperty("user.dir")).toPath());
         Optional<Path> imagePath = dialogs.chooseFile(
-                "Load image file", "Load", currentDirectory,
-                false, IMAGE_EXTENSION_FILTER);
+                "Load image file", "Load", currentDirectory, false, IMAGE_EXTENSION_FILTER);
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
             Loader loader = Loader.createLoader(path);
-            Loader.MemoryBank bank = askForMemoryBank(!loader.isMemoryAddressAware());
-            try {
-                loader.load(path, context, bank);
-                repaint.run();
-            } catch (Exception ex) {
-                dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");
+            Optional<Loader.MemoryBank> bank = askForMemoryBank(!loader.isMemoryAddressAware());
+            if (bank.isPresent()) {
+                try {
+                    loader.load(path, context, bank.get());
+                    repaint.run();
+                } catch (Exception ex) {
+                    dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");
 
-                ex.printStackTrace();
+                    ex.printStackTrace();
+                }
             }
         });
     }
 
-    private Loader.MemoryBank askForMemoryBank(boolean canSelectAddress) {
+    private Optional<Loader.MemoryBank> askForMemoryBank(boolean canSelectAddress) {
         boolean hasMultipleBanks = context.getBanksCount() > 1;
         Loader.MemoryBank bank = Loader.MemoryBank.of(0, 0);
 
@@ -74,9 +75,11 @@ public class LoadImageAction extends AbstractAction {
             dialog.setVisible(true);
 
             if (dialog.isOk()) {
-                bank = Loader.MemoryBank.of(dialog.getBank(), dialog.getAddress());
+                return Optional.of(Loader.MemoryBank.of(dialog.getBank(), dialog.getAddress()));
+            } else {
+                return Optional.empty();
             }
         }
-        return bank;
+        return Optional.of(bank);
     }
 }

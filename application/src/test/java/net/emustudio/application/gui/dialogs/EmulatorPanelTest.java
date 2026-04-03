@@ -4,7 +4,7 @@ package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.GUIImpl;
+import net.emustudio.application.gui.framework.GuiImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
@@ -55,7 +55,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 dialogs,
                 mock(EmulationController.class),
                 memoryContext,
-                new GUIImpl()
+                new GuiImpl()
         ));
 
         showInFrame(panel);
@@ -105,7 +105,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 dialogs,
                 emulationController,
                 memoryContext,
-                new GUIImpl()
+                new GuiImpl()
         ));
 
         showInFrame(panel);

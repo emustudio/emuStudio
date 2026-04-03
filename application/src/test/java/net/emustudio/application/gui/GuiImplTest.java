@@ -6,6 +6,7 @@ import net.emustudio.application.gui.components.BrowseButton;
 import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
+import net.emustudio.application.gui.framework.GuiImpl;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.miginfocom.swing.MigLayout;
@@ -17,7 +18,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +33,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class GUIImplTest {
+public class GuiImplTest {
 
     @Test
     public void toolbarFactoriesCreateConfiguredButtonsAndToggleButtons() {
-        GUIImpl gui = new GUIImpl();
+        GuiImpl gui = new GuiImpl();
         AtomicInteger actionCount = new AtomicInteger();
         AtomicInteger itemCount = new AtomicInteger();
 
@@ -79,7 +79,7 @@ public class GUIImplTest {
 
     @Test
     public void labelsButtonsAndTextFactoriesApplyExpectedStyling() {
-        GUIImpl gui = new GUIImpl();
+        GuiImpl gui = new GuiImpl();
         AtomicInteger clicks = new AtomicInteger();
 
         JLabel plain = gui.label("plain");
@@ -124,7 +124,7 @@ public class GUIImplTest {
 
     @Test
     public void browseButtonsReusePreviousSelectionAsBaseDirectory() {
-        GUIImpl gui = new GUIImpl();
+        GuiImpl gui = new GuiImpl();
         Dialogs dialogs = mock(Dialogs.class);
         List<Path> approvedPaths = new ArrayList<>();
         Path defaultBase = Path.of(System.getProperty("user.dir"));
@@ -153,7 +153,7 @@ public class GUIImplTest {
 
     @Test
     public void containerFactoriesAndStylingHelpersReturnConfiguredComponents() {
-        GUIImpl gui = new GUIImpl();
+        GuiImpl gui = new GuiImpl();
         JTable table = new JTable(2, 2);
         JList<String> list = new JList<>(new String[]{"a", "b"});
         JLabel left = new JLabel("left");

@@ -233,15 +233,56 @@ public class REditor implements Editor {
                 }
                 break;
             case REPLACE:
-                result = SearchEngine.replace(textPane, context);
+                result = replaceWithDeferredMarkAll(context);
                 if (!result.wasFound() || result.isWrapped()) {
                     UIManager.getLookAndFeel().provideErrorFeedback(textPane);
                 }
                 break;
             case REPLACE_ALL:
-                result = SearchEngine.replaceAll(textPane, context);
+                result = replaceAllWithDeferredMarkAll(context);
                 dialogs.showInfo(result.getCount() + " occurrences replaced.", "Replace all");
                 break;
+        }
+    }
+
+    /**
+     * Performs a single replace while suppressing the costly per-call mark-all
+     * highlighting that {@link SearchEngine#replace} triggers internally
+     * (two full-document scans per replace when {@code markAll} is enabled).
+     * A single {@link SearchEngine#markAll} pass is done once at the end.
+     */
+    private SearchResult replaceWithDeferredMarkAll(SearchContext context) {
+        boolean wantMarkAll = context.getMarkAll();
+        if (wantMarkAll) {
+            context.setMarkAll(false);
+        }
+        try {
+            return SearchEngine.replace(textPane, context);
+        } finally {
+            if (wantMarkAll) {
+                context.setMarkAll(true);
+                SearchEngine.markAll(textPane, context);
+            }
+        }
+    }
+
+    /**
+     * Same optimisation as {@link #replaceWithDeferredMarkAll} but for
+     * replace-all, which otherwise runs {@code markAllImpl} 2× per
+     * individual replacement (O(N²) for N matches).
+     */
+    private SearchResult replaceAllWithDeferredMarkAll(SearchContext context) {
+        boolean wantMarkAll = context.getMarkAll();
+        if (wantMarkAll) {
+            context.setMarkAll(false);
+        }
+        try {
+            return SearchEngine.replaceAll(textPane, context);
+        } finally {
+            if (wantMarkAll) {
+                context.setMarkAll(true);
+                SearchEngine.markAll(textPane, context);
+            }
         }
     }
 
@@ -254,6 +295,7 @@ public class REditor implements Editor {
     public Optional<Boolean> findNext() {
         return Optional.ofNullable(lastSearchedContext).map(context -> {
             context.setSearchForward(true);
+            context.setMarkAll(false);
             return SearchEngine.find(textPane, context).wasFound();
         });
     }
@@ -262,6 +304,7 @@ public class REditor implements Editor {
     public Optional<Boolean> findPrevious() {
         return Optional.ofNullable(lastSearchedContext).map(context -> {
             context.setSearchForward(false);
+            context.setMarkAll(false);
             return SearchEngine.find(textPane, context).wasFound();
         });
     }

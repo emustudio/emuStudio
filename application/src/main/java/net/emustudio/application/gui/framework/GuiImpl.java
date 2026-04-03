@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.application.gui;
+package net.emustudio.application.gui.framework;
 
 import net.emustudio.application.gui.components.BrowseButton;
 import net.emustudio.application.gui.components.FadingBorder;
@@ -24,7 +24,7 @@ import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 /**
  * Concrete implementation of the GUI interface using MigLayout for panel layouts.
  */
-public class GUIImpl implements GUI {
+public class GuiImpl implements GUI {
 
     @Override
     public JButton toolbarButton(Consumer<ActionEvent> action, String iconResource, String tooltipText) {

@@ -4,9 +4,9 @@ package net.emustudio.application.cmdline;
 
 import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.GUIImpl;
+import net.emustudio.application.gui.framework.GuiImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
-import net.emustudio.application.gui.framework.GuiDialogsImpl;
+import net.emustudio.application.gui.framework.DialogsGui;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import org.junit.Test;
@@ -23,7 +23,7 @@ public class UtilsTest extends AbstractSwingTest {
 
     @Test
     public void showSplashScreenDisplaysLoadingDialog() {
-        LoadingDialog splash = onEdt(() -> Utils.showSplashScreen(new GUIImpl()));
+        LoadingDialog splash = onEdt(() -> Utils.showSplashScreen(new GuiImpl()));
         showDialog(splash);
 
         assertTrue(onEdt(splash::isShowing));
@@ -32,10 +32,10 @@ public class UtilsTest extends AbstractSwingTest {
     @Test
     public void loadComputerConfigFromGuiReturnsEmptyWhenDialogIsClosedWithoutSelection() throws Exception {
         AppSettings appSettings = new AppSettings(Config.inMemory(), false, false);
-        GuiDialogsImpl dialogs = new GuiDialogsImpl(new GUIImpl());
+        DialogsGui dialogs = new DialogsGui(new GuiImpl());
 
         FutureTask<Optional<ComputerConfig>> task = new FutureTask<>(
-                () -> Utils.loadComputerConfigFromGui(appSettings, dialogs, new GUIImpl())
+                () -> Utils.loadComputerConfigFromGui(appSettings, dialogs, new GuiImpl())
         );
         Thread thread = new Thread(task, "load-computer-config-test");
         thread.setDaemon(true);

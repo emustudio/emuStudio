@@ -3,9 +3,9 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.Resources;
-import net.emustudio.application.gui.GUIImpl;
+import net.emustudio.application.gui.framework.GuiImpl;
 import net.emustudio.application.gui.framework.EmuStudioUI;
-import net.emustudio.application.gui.framework.GuiDialogsImpl;
+import net.emustudio.application.gui.framework.DialogsGui;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.settings.AppSettings;
@@ -83,8 +83,8 @@ public class Runner implements Runnable {
             try {
                 AppSettings appConfig = loadAppSettings(true, false);
                 EmuStudioUI.initialize(appConfig);
-                GUI gui = new GUIImpl();
-                GuiDialogsImpl dialogs = new GuiDialogsImpl(gui);
+                GUI gui = new GuiImpl();
+                DialogsGui dialogs = new DialogsGui(gui);
                 Optional<ComputerConfig> computerConfigOpt = (exclusive != null) ?
                         exclusive.loadConfiguration() :
                         loadComputerConfigFromGui(appConfig, dialogs, gui);

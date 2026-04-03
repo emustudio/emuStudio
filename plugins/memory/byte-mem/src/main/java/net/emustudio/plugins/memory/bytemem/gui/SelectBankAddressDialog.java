@@ -9,6 +9,8 @@ import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Objects;
 
 public class SelectBankAddressDialog extends DialogBase {
@@ -17,8 +19,8 @@ public class SelectBankAddressDialog extends DialogBase {
     private final Dialogs dialogs;
     private final boolean selectBank;
     private final boolean selectAddress;
-    private final JTextField txtBank = new JTextField("0");
-    private final JTextField txtAddress = new JTextField("0");
+    private final JTextField txtBank;
+    private final JTextField txtAddress;
     private int bank;
     private int address;
     private boolean okPressed;
@@ -26,11 +28,24 @@ public class SelectBankAddressDialog extends DialogBase {
     public SelectBankAddressDialog(JDialog parent, boolean selectBank, boolean selectAddress, Dialogs dialogs, GUI gui) {
         super(parent, "Select address", true);
         this.gui = gui;
+        this.txtBank = gui.textField("0");
+        this.txtAddress = gui.textField("0");
         this.selectBank = selectBank;
         this.selectAddress = selectAddress;
         this.dialogs = Objects.requireNonNull(dialogs);
         buildContent();
-        txtAddress.grabFocus();
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                toFront();
+                requestFocus();
+                if (selectAddress) {
+                    txtAddress.requestFocusInWindow();
+                } else if (selectBank) {
+                    txtBank.requestFocusInWindow();
+                }
+            }
+        });
     }
 
     public int getBank() {
@@ -62,11 +77,12 @@ public class SelectBankAddressDialog extends DialogBase {
             lblAddress.setEnabled(false);
             txtAddress.setEnabled(false);
         } else {
+            txtAddress.setEnabled(true);
             txtAddress.setSelectionStart(0);
             txtAddress.setSelectionEnd(txtAddress.getText().length());
         }
 
-        JPanel content = gui.panel("insets dialog", "[][128!]", "[][][18][]]");
+        JPanel content = gui.panel("insets dialog", "[][128!]", "[][]18[]");
         content.add(lblBank);
         content.add(txtBank, "growx, wrap");
         content.add(lblAddress);

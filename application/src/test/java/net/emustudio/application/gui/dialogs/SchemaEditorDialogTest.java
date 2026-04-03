@@ -5,7 +5,7 @@ package net.emustudio.application.gui.dialogs;
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.GUIImpl;
+import net.emustudio.application.gui.framework.GuiImpl;
 import net.emustudio.application.gui.schema.DrawingModel;
 import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.Schema;
@@ -230,7 +230,7 @@ public class SchemaEditorDialogTest extends AbstractSwingTest {
 
     private SchemaEditorDialog createDialog(Schema schema, Dialogs dialogs) {
         return onEdt(() -> {
-            SchemaEditorDialog dialog = new SchemaEditorDialog(new JDialog(), schema, dialogs, new GUIImpl());
+            SchemaEditorDialog dialog = new SchemaEditorDialog(new JDialog(), schema, dialogs, new GuiImpl());
             dialog.setModal(false);
             return dialog;
         });
