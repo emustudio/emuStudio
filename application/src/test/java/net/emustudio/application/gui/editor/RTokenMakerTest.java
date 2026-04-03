@@ -2,16 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.editor;
 
-import net.emustudio.emulib.plugins.compiler.FileExtension;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
-import org.antlr.v4.runtime.UnbufferedCharStream;
 import org.junit.Test;
 
-import javax.swing.*;
 import javax.swing.text.Segment;
-import java.io.CharArrayReader;
-import java.io.InputStream;
-import java.io.StringReader;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -338,14 +332,6 @@ public class RTokenMakerTest {
                 return true; // would cause infinite loop if next() exception didn't break
             }
 
-            @Override
-            public void reset(InputStream input) {
-            }
-
-            @Override
-            public void reset(String input) {
-                nextCalls[0] = 0;
-            }
 
             @Override
             public void reset(char[] array, int offset, int length) {
@@ -383,14 +369,6 @@ public class RTokenMakerTest {
                 return true;
             }
 
-            @Override
-            public void reset(InputStream input) {
-            }
-
-            @Override
-            public void reset(String input) {
-                throw new RuntimeException("Reset failed");
-            }
 
             @Override
             public void reset(char[] array, int offset, int length) {
@@ -540,17 +518,6 @@ public class RTokenMakerTest {
         assertEquals(org.fife.ui.rsyntaxtextarea.Token.NULL, tokens.get(1).getType());
     }
 
-    // --- getWordsToHighlight ---
-
-    @Test
-    public void testGetWordsToHighlightReturnsEmptyMap() {
-        TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer();
-        RTokenMaker maker = new RTokenMaker(new CompilerStub(lexer));
-
-        // TokenMap doesn't expose a size method, but get() for any word should return -1 (no mapping)
-        assertNotNull(maker.getWordsToHighlight());
-        assertEquals(-1, maker.getWordsToHighlight().get("MOV".toCharArray(), 0, 2));
-    }
 
     // ---- Helpers ----
 

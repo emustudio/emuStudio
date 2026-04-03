@@ -4,9 +4,6 @@ package net.emustudio.application.gui.editor;
 
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 final class TrackingLexicalAnalyzer implements LexicalAnalyzer {
@@ -32,18 +29,6 @@ final class TrackingLexicalAnalyzer implements LexicalAnalyzer {
         return index < tokens.length;
     }
 
-    @Override
-    public void reset(InputStream input) throws IOException {
-        reset(new String(input.readAllBytes(), StandardCharsets.UTF_8));
-    }
-
-    @Override
-    public void reset(String input) {
-        lastResetInput = input;
-        index = 0;
-        nextCalls = 0;
-        iteratorUsed = false;
-    }
 
     @Override
     public void reset(char[] array, int offset, int length) {

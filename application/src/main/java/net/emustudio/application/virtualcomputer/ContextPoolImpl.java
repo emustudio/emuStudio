@@ -48,7 +48,7 @@ public class ContextPoolImpl implements ContextPool {
 
         StringBuilder hash = new StringBuilder();
         for (Method method : contextMethods.toArray(new Method[0])) {
-            hash.append(method.getGenericReturnType().toString()).append(" ").append(method.getName()).append("(");
+            hash.append(method.getGenericReturnType()).append(" ").append(method.getName()).append("(");
             for (Class<?> param : method.getParameterTypes()) {
                 hash.append(param.getName()).append(",");
             }

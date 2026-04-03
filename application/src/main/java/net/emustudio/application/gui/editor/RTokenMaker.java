@@ -5,17 +5,26 @@ package net.emustudio.application.gui.editor;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.jcip.annotations.NotThreadSafe;
-import org.fife.ui.rsyntaxtextarea.AbstractTokenMaker;
 import org.fife.ui.rsyntaxtextarea.Token;
-import org.fife.ui.rsyntaxtextarea.TokenMap;
+import org.fife.ui.rsyntaxtextarea.TokenMakerBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.text.Segment;
 import java.util.Objects;
 
+/**
+ * RSyntaxTextArea TokenMaker that delegates tokenization to the compiler's
+ * {@link LexicalAnalyzer}.
+ * <p>
+ * Extends {@link TokenMakerBase} directly (instead of {@code AbstractTokenMaker})
+ * to avoid allocating an unused {@code TokenMap} on every construction.
+ * Uses {@link LexicalAnalyzer#reset(char[], int, int)} to feed the lexer
+ * the Segment's backing char array, converting it to a String that ANTLR's
+ * {@code CodePointCharStream} can tokenize with O(1) random access.
+ */
 @NotThreadSafe
-public class RTokenMaker extends AbstractTokenMaker {
+public class RTokenMaker extends TokenMakerBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(RTokenMaker.class);
 
     private final LexicalAnalyzer lexer;
@@ -56,16 +65,22 @@ public class RTokenMaker extends AbstractTokenMaker {
     @Override
     public Token getTokenList(Segment text, int initialTokenType, int startOffset) {
         resetTokenList();
-        Segment segment = Objects.requireNonNull(text);
+
+        char[] array = text.array;
+        int textOffset = text.offset;
+        int count = text.count;
+
         try {
-            lexer.reset(segment.count == 0 ? "" : new String(segment.array, segment.offset, segment.count));
+            // Feed the lexer the Segment's backing char[] — the implementation
+            // converts it to a String for ANTLR's CodePointCharStream which
+            // provides O(1) random access for efficient lexing.
+            lexer.reset(array, textOffset, count);
         } catch (Exception ex) {
             LOGGER.error("Could not reset lexer", ex);
             addNullToken();
             return firstToken;
         }
 
-        int textOffset = segment.offset;
         int previousEnd = -1;
         int previousStartOffset = -1;
 
@@ -81,12 +96,14 @@ public class RTokenMaker extends AbstractTokenMaker {
             }
 
             try {
+                int emuType = token.getType();
+
                 // Skip EOF — we terminate the list with addNullToken() after the loop
-                if (token.getType() == net.emustudio.emulib.plugins.compiler.Token.EOF) {
+                if (emuType == net.emustudio.emulib.plugins.compiler.Token.EOF) {
                     break;
                 }
 
-                int tokenMakerType = getTokenMakerType(token.getType());
+                int tokenMakerType = getTokenMakerType(emuType);
 
                 int tokenStartIndex = token.getOffset();
                 String tokenText = token.getText();
@@ -101,25 +118,20 @@ public class RTokenMaker extends AbstractTokenMaker {
 
                 if (previousEnd == -1 && tokenStartIndex != 0) {
                     // we have a gap in the beginning! Let's treat this gap as ERROR
-                    addToken(segment, textOffset, start - 1, Token.ERROR_CHAR, startOffset);
+                    addToken(array, textOffset, start - 1, Token.ERROR_CHAR, startOffset);
                 } else if (previousEnd != -1 && start != (previousEnd + 1)) {
                     // we have a gap in the middle! Let's treat this gap as ERROR
-                    addToken(segment, previousEnd + 1, start - 1, Token.ERROR_CHAR, previousStartOffset + 1);
+                    addToken(array, previousEnd + 1, start - 1, Token.ERROR_CHAR, previousStartOffset + 1);
                 }
                 previousEnd = end;
                 previousStartOffset = tokenStartOffset;
 
-                addToken(segment, start, end, tokenMakerType, tokenStartOffset);
+                addToken(array, start, end, tokenMakerType, tokenStartOffset);
             } catch (Exception ex) {
                 LOGGER.error("Could not process token", ex);
             }
         }
         addNullToken();
         return firstToken;
-    }
-
-    @Override
-    public TokenMap getWordsToHighlight() {
-        return new TokenMap();
     }
 }
