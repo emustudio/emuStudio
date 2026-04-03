@@ -46,4 +46,39 @@ public class RunnerTest {
     public void testCommandLinePrintVersion() {
         Runner.main("--version");
     }
+
+    @Test
+    public void testCommandLineShortHelp() {
+        Runner.main("-h");
+    }
+
+    @Test
+    public void testCommandLineShortVersion() {
+        Runner.main("-v");
+    }
+
+    @Test
+    public void testCommandLineShortOutput() throws Exception {
+        File sourceFile = folder.newFile();
+        Files.write(sourceFile.toPath(), ">".getBytes(), StandardOpenOption.WRITE);
+        File outputFile = folder.newFile();
+
+        Runner.main("-o", outputFile.getPath(), sourceFile.getPath());
+
+        List<String> lines = Files.readAllLines(outputFile.toPath());
+        assertEquals(2, lines.size());
+        assertEquals(":0100000001FE", lines.get(0));
+        assertEquals(":00000001FF", lines.get(1));
+    }
+
+    @Test
+    public void testCommandLineNoArguments() {
+        Runner.main();
+    }
+
+    @Test
+    public void testCommandLineOutputWithoutFile() {
+        // --output without a following filename and no input file
+        Runner.main("--output");
+    }
 }
