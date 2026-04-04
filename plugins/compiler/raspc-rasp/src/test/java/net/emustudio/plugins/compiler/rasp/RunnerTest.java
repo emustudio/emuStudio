@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.plugins.compiler.ram;
+package net.emustudio.plugins.compiler.rasp;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -68,3 +68,4 @@ public class RunnerTest {
         Runner.main();
     }
 }
+
