@@ -3,9 +3,9 @@
 ![emuStudio Build](https://github.com/emustudio/emuStudio/workflows/emuStudio%20Build/badge.svg)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-[emuStudio](https://www.emustudio.net/) is a modular desktop application for emulating historic and teaching-oriented computers and for writing, loading, and debugging programs for them. It is built around a plugin model, so compilers, CPUs, memories, and devices can be combined into complete virtual computers or extended with new plugins.
+[emuStudio](https://www.emustudio.net/) is a modular desktop application for emulating historic and teaching-oriented computers and for writing, loading, and debugging programs for them ("compile, load, emulate" workflow). It is built around a plugin model, so compilers, CPUs, memories, and devices can be combined into complete virtual computers.
 
-The project is designed around a "compile, load, emulate" workflow and is used both as a learning tool and as a base for emulator development. Emulated computers are called "virtual computers". Often they are full system, feature-rich and cycle-accurate emulators, capable of running original games or software.
+emuStudio is used both as a learning tool, but also as a base for emulator development, providing well-documented and rich SDK. Emulated computers are called "virtual computers". Often they are full system, feature-rich and cycle-accurate emulators, capable of running original games or software.
 
 emuStudio is very appropriate for use at schools as teaching tool. For example, emuStudio is used at the [Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
 
@@ -56,12 +56,6 @@ Build the full project:
 ./gradlew build
 ```
 
-Run the desktop application directly from source:
-
-```bash
-./gradlew :application:run
-```
-
 Create a distributable archive:
 
 ```bash
@@ -70,15 +64,6 @@ Create a distributable archive:
 ```
 
 Distribution archives are written to `application/build/distributions/`.
-
-### Repository layout
-
-- [`application/`](application) contains the desktop application, CLI entry point, and distribution packaging
-- [`plugins/compiler/`](plugins/compiler) contains compiler and assembler plugins
-- [`plugins/cpu/`](plugins/cpu) contains CPU emulators
-- [`plugins/memory/`](plugins/memory) contains memory implementations
-- [`plugins/device/`](plugins/device) contains terminals, storage, display, and bus devices
-- [`application/src/main/files/examples/`](application/src/main/files/examples) contains example assets bundled with releases
 
 ### Related projects
 
