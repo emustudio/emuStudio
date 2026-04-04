@@ -43,12 +43,12 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     private final DeviceContext<Byte> lineIn;
     private final AtomicReference<TapePlayerGui> gui = new AtomicReference<>();
 
-    private final NavigableMap<Integer, Runnable> loaderSchedule = new TreeMap<>();
-    private int currentTstates;
+    private final NavigableMap<Long, Runnable> loaderSchedule = new TreeMap<>();
+    private long currentTstates;
     private boolean pulseUp;
 
     private volatile boolean playing;
-    private int playingTstates;
+    private long playingTstates;
     private final CyclicBarrier barrier = new CyclicBarrier(2);
 
     public TapePlaybackImpl(DeviceContext<Byte> lineIn) {
@@ -196,7 +196,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     public void passedCycles(long tstates) {
         if (playing) {
             playingTstates += tstates;
-            Map.Entry<Integer, Runnable> entry = loaderSchedule.floorEntry(playingTstates);
+            Map.Entry<Long, Runnable> entry = loaderSchedule.floorEntry(playingTstates);
             if (entry != null) {
                 loaderSchedule.remove(entry.getKey());
                 entry.getValue().run();

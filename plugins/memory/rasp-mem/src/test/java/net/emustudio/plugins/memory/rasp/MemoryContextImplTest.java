@@ -292,18 +292,189 @@ public class MemoryContextImplTest {
         context.deserialize("/nonexistent/file.rasp", i -> {});
     }
 
-    // === Destroy tests ===
+    // === RaspMemoryContext default method tests ===
 
     @Test
-    public void testDestroy() {
-        context.write(0, 100);
-        context.setLabels(List.of(createLabel(0, "X")));
-        context.setInputs(List.of(1));
-        context.destroy();
+    public void testIsInstructionValidOpcode() {
+        assertTrue(context.isInstruction(1));  // READ
+        assertTrue(context.isInstruction(15)); // JMP
+        assertTrue(context.isInstruction(18)); // HALT
+    }
 
-        assertEquals(Integer.valueOf(0), context.read(0));
-        assertFalse(context.getLabel(0).isPresent());
-        assertTrue(context.getSnapshot().inputs.isEmpty());
+    @Test
+    public void testIsInstructionInvalidOpcode() {
+        assertFalse(context.isInstruction(0));
+        assertFalse(context.isInstruction(19));
+        assertFalse(context.isInstruction(-1));
+    }
+
+    @Test
+    public void testDisassembleMnemoValid() {
+        assertEquals(Optional.of("READ"), context.disassembleMnemo(1));
+        assertEquals(Optional.of("JMP"), context.disassembleMnemo(15));
+        assertEquals(Optional.of("HALT"), context.disassembleMnemo(18));
+    }
+
+    @Test
+    public void testDisassembleMnemoInvalid() {
+        assertEquals(Optional.empty(), context.disassembleMnemo(0));
+        assertEquals(Optional.empty(), context.disassembleMnemo(100));
+    }
+
+    // === RaspMemory tests ===
+
+    @Test
+    public void testRaspMemoryEmptyCollections() {
+        RaspMemoryContext.RaspMemory memory = new RaspMemoryContext.RaspMemory(
+                Collections.emptyList(), Collections.emptyMap(), Collections.emptyList()
+        );
+        assertTrue(memory.labels.isEmpty());
+        assertTrue(memory.programMemory.isEmpty());
+        assertTrue(memory.inputs.isEmpty());
+    }
+
+    @Test
+    public void testRaspMemoryIsImmutableLabels() {
+        RaspMemoryContext.RaspMemory memory = new RaspMemoryContext.RaspMemory(
+                List.of(createLabel(0, "X")), Map.of(0, 1), List.of(10)
+        );
+        try {
+            memory.labels.add(createLabel(1, "Y"));
+            fail("Expected UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testRaspMemoryIsImmutableProgramMemory() {
+        RaspMemoryContext.RaspMemory memory = new RaspMemoryContext.RaspMemory(
+                Collections.emptyList(), Map.of(0, 1), Collections.emptyList()
+        );
+        try {
+            memory.programMemory.put(1, 2);
+            fail("Expected UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testRaspMemoryIsImmutableInputs() {
+        RaspMemoryContext.RaspMemory memory = new RaspMemoryContext.RaspMemory(
+                Collections.emptyList(), Collections.emptyMap(), List.of(10)
+        );
+        try {
+            memory.inputs.add(20);
+            fail("Expected UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
+    }
+
+    // === Serialize edge cases ===
+
+    @Test
+    public void testSerializeEmptyMemory() throws Exception {
+        File file = tmpFolder.newFile("empty.rasp");
+        RaspMemoryContext.RaspMemory snapshot = context.getSnapshot();
+        RaspMemoryContext.serialize(file.toPath(), 0, snapshot);
+
+        // Deserialize and verify
+        MemoryContextAnnotations ann2 = createNiceMock(MemoryContextAnnotations.class);
+        replay(ann2);
+        MemoryContextImpl context2 = new MemoryContextImpl(ann2);
+        AtomicInteger programLocation = new AtomicInteger(-1);
+        context2.deserialize(file.getAbsolutePath(), programLocation::set);
+
+        assertEquals(0, programLocation.get());
+        assertEquals(0, context2.getSize());
+        assertTrue(context2.getSnapshot().labels.isEmpty());
+        assertTrue(context2.getSnapshot().inputs.isEmpty());
+
+        context2.destroy();
+    }
+
+    @Test
+    public void testSerializeWithNonZeroProgramLocation() throws Exception {
+        context.write(0, 42);
+        File file = tmpFolder.newFile("nonzero.rasp");
+        RaspMemoryContext.serialize(file.toPath(), 99, context.getSnapshot());
+
+        MemoryContextAnnotations ann2 = createNiceMock(MemoryContextAnnotations.class);
+        replay(ann2);
+        MemoryContextImpl context2 = new MemoryContextImpl(ann2);
+        AtomicInteger programLocation = new AtomicInteger(-1);
+        context2.deserialize(file.getAbsolutePath(), programLocation::set);
+
+        assertEquals(99, programLocation.get());
+        context2.destroy();
+    }
+
+    // === Write array overwriting existing addresses ===
+
+    @Test
+    public void testWriteArrayOverwriteExisting() {
+        context.write(5, 1);
+        context.write(6, 2);
+
+        Integer[] values = {10, 20};
+        context.write(5, values, 2);
+
+        assertEquals(Integer.valueOf(10), context.read(5));
+        assertEquals(Integer.valueOf(20), context.read(6));
+    }
+
+    // === Multiple labels ===
+
+    @Test
+    public void testSetMultipleLabels() {
+        context.setLabels(List.of(
+                createLabel(0, "A"),
+                createLabel(5, "B"),
+                createLabel(10, "C")
+        ));
+
+        assertEquals("A", context.getLabel(0).get().getLabel());
+        assertEquals("B", context.getLabel(5).get().getLabel());
+        assertEquals("C", context.getLabel(10).get().getLabel());
+        assertFalse(context.getLabel(3).isPresent());
+    }
+
+    // === Deserialize clears previous state ===
+
+    @Test
+    public void testDeserializeClearsPreviousState() throws Exception {
+        // Set up initial state
+        context.write(0, 999);
+        context.write(100, 888);
+        context.setLabels(List.of(createLabel(100, "OLD")));
+        context.setInputs(List.of(1, 2, 3, 4, 5));
+
+        // Create a new image with different data
+        MemoryContextAnnotations ann2 = createNiceMock(MemoryContextAnnotations.class);
+        replay(ann2);
+        MemoryContextImpl tempContext = new MemoryContextImpl(ann2);
+        tempContext.write(0, 42);
+        tempContext.setLabels(List.of(createLabel(0, "NEW")));
+        tempContext.setInputs(List.of(10));
+
+        File file = tmpFolder.newFile("replace.rasp");
+        RaspMemoryContext.serialize(file.toPath(), 3, tempContext.getSnapshot());
+        tempContext.destroy();
+
+        // Deserialize into original context
+        AtomicInteger programLocation = new AtomicInteger(-1);
+        context.deserialize(file.getAbsolutePath(), programLocation::set);
+
+        assertEquals(3, programLocation.get());
+        assertEquals(Integer.valueOf(42), context.read(0));
+        // Old data at address 100 should be gone
+        assertEquals(Integer.valueOf(0), context.read(100));
+        assertFalse(context.getLabel(100).isPresent());
+        assertTrue(context.getLabel(0).isPresent());
+        assertEquals("NEW", context.getLabel(0).get().getLabel());
+        assertEquals(List.of(10), context.getSnapshot().inputs);
     }
 
     // === Helper methods ===
@@ -322,4 +493,3 @@ public class MemoryContextImplTest {
         };
     }
 }
-
