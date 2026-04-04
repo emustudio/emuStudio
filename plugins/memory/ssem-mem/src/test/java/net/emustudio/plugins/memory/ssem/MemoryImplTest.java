@@ -4,8 +4,11 @@ package net.emustudio.plugins.memory.ssem;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -66,5 +69,78 @@ public class MemoryImplTest {
     @Test
     public void testGetVersionDoesNotReturnNull() {
         assertNotNull(memory.getVersion());
+    }
+
+    @Test
+    public void testGetCopyrightDoesNotReturnNull() {
+        assertNotNull(memory.getCopyright());
+    }
+
+    @Test
+    public void testGetDescriptionReturnsExpectedValue() {
+        assertEquals("Main store for SSEM machine", memory.getDescription());
+    }
+
+    @Test
+    public void testDestroyDoesNotThrow() {
+        memory.destroy();
+    }
+
+    @Test
+    public void testShowSettingsWithGuiNotSupportedDoesNothing() {
+        PluginSettings mockSettings = createNiceMock(PluginSettings.class);
+        expect(mockSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(true).anyTimes();
+        expect(mockSettings.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
+        replay(mockSettings);
+
+        ContextPool contextPool = createNiceMock(ContextPool.class);
+        replay(contextPool);
+
+        ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
+        replay(applicationApi);
+
+        MemoryImpl mem = new MemoryImpl(0L, applicationApi, mockSettings);
+        mem.showSettings(null); // should not throw or create GUI
+    }
+
+    @Test
+    public void testConstructorHandlesInvalidContextException() throws Exception {
+        ContextPool contextPool = createMock(ContextPool.class);
+        contextPool.register(eq(0L), anyObject(), same(MemoryContext.class));
+        expectLastCall().andThrow(new InvalidContextException("test error"));
+        replay(contextPool);
+
+        Dialogs dialogs = createNiceMock(Dialogs.class);
+        replay(dialogs);
+
+        ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
+        expect(applicationApi.getDialogs()).andReturn(dialogs).anyTimes();
+        replay(applicationApi);
+
+        // Should not throw - error is caught and logged
+        MemoryImpl mem = new MemoryImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        assertNotNull(mem);
+    }
+
+    @Test
+    public void testConstructorHandlesContextAlreadyRegisteredException() throws Exception {
+        ContextPool contextPool = createMock(ContextPool.class);
+        contextPool.register(eq(0L), anyObject(), same(MemoryContext.class));
+        expectLastCall().andThrow(new ContextAlreadyRegisteredException());
+        replay(contextPool);
+
+        Dialogs dialogs = createNiceMock(Dialogs.class);
+        replay(dialogs);
+
+        ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
+        expect(applicationApi.getDialogs()).andReturn(dialogs).anyTimes();
+        replay(applicationApi);
+
+        // Should not throw - error is caught and logged
+        MemoryImpl mem = new MemoryImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+        assertNotNull(mem);
     }
 }
