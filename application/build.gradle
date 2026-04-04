@@ -5,7 +5,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'application'
+  id 'application' // TODO: change for distribution
   id 'jacoco'
 }
 

@@ -38,7 +38,7 @@ import static net.emustudio.emulib.runtime.ui.Constants.FONT_DEFAULT_SIZE;
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
 
-    private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE, true);
+    private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE);
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
 
     private final Dialogs dialogs;
@@ -60,7 +60,6 @@ public class REditor implements Editor {
 
         textPane.setCodeFoldingEnabled(false);
         textPane.setEncoding(StandardCharsets.UTF_8.name());
-        textPane.setAnimateBracketMatching(true);
         textPane.setAutoIndentEnabled(true);
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
@@ -233,58 +232,18 @@ public class REditor implements Editor {
                 }
                 break;
             case REPLACE:
-                result = replaceWithDeferredMarkAll(context);
+                result = SearchEngine.replace(textPane, context);
                 if (!result.wasFound() || result.isWrapped()) {
                     UIManager.getLookAndFeel().provideErrorFeedback(textPane);
                 }
                 break;
             case REPLACE_ALL:
-                result = replaceAllWithDeferredMarkAll(context);
+                result = SearchEngine.replaceAll(textPane, context);
                 dialogs.showInfo(result.getCount() + " occurrences replaced.", "Replace all");
                 break;
         }
     }
 
-    /**
-     * Performs a single replace while suppressing the costly per-call mark-all
-     * highlighting that {@link SearchEngine#replace} triggers internally
-     * (two full-document scans per replace when {@code markAll} is enabled).
-     * A single {@link SearchEngine#markAll} pass is done once at the end.
-     */
-    private SearchResult replaceWithDeferredMarkAll(SearchContext context) {
-        boolean wantMarkAll = context.getMarkAll();
-        if (wantMarkAll) {
-            context.setMarkAll(false);
-        }
-        try {
-            return SearchEngine.replace(textPane, context);
-        } finally {
-            if (wantMarkAll) {
-                context.setMarkAll(true);
-                SearchEngine.markAll(textPane, context);
-            }
-        }
-    }
-
-    /**
-     * Same optimisation as {@link #replaceWithDeferredMarkAll} but for
-     * replace-all, which otherwise runs {@code markAllImpl} 2× per
-     * individual replacement (O(N²) for N matches).
-     */
-    private SearchResult replaceAllWithDeferredMarkAll(SearchContext context) {
-        boolean wantMarkAll = context.getMarkAll();
-        if (wantMarkAll) {
-            context.setMarkAll(false);
-        }
-        try {
-            return SearchEngine.replaceAll(textPane, context);
-        } finally {
-            if (wantMarkAll) {
-                context.setMarkAll(true);
-                SearchEngine.markAll(textPane, context);
-            }
-        }
-    }
 
     @Override
     public String getSelectedText() {

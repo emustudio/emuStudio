@@ -186,7 +186,7 @@ public class LexicalAnalyzerImpl implements LexicalAnalyzer {
 
     @Override
     public void reset(char[] array, int offset, int length) {
-        lexer.setInputStream(CharStreams.fromString(new String(array, offset, length)));
+        lexer.setInputStream(new CharArrayCharStream(array, offset, length));
     }
 
     static class EmuToken extends CommonToken implements Token {
