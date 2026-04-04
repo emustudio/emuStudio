@@ -4,6 +4,7 @@
 plugins {
   id 'java'
   id 'com.adarshr.test-logger' version '4.0.0'
+  id 'jacoco'
 }
 
 repositories {
@@ -26,3 +27,11 @@ dependencies {
 }
 
 apply from: "$rootDir/gradle/conventions/java-conventions.gradle"
+
+test {
+  finalizedBy jacocoTestReport // report is always generated after tests run
+}
+
+jacocoTestReport {
+  dependsOn test // tests are required to run before generating the report
+}

@@ -65,6 +65,27 @@ public class CpuImplTest {
         assertNotEquals("(unknown)", cpu.getCopyright());
     }
 
+    @Test
+    public void testGetDescription() {
+        assertNotNull(cpu.getDescription());
+        assertFalse(cpu.getDescription().isEmpty());
+    }
+
+    @Test
+    public void testSetInstructionLocationNegative() {
+        memory.setProgram(new byte[]{0});
+        cpu.reset();
+        assertFalse(cpu.setInstructionLocation(-1));
+    }
+
+    @Test
+    public void testSetInstructionLocationValid() {
+        memory.setProgram(new byte[]{0});
+        cpu.reset();
+        assertTrue(cpu.setInstructionLocation(5));
+        assertEquals(5, cpu.getInstructionLocation());
+    }
+
     private void setupEmulator(byte[] program, byte[] data, byte[] input) {
         memory.setProgram(Objects.requireNonNull(program));
         cpu.reset();

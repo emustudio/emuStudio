@@ -20,14 +20,14 @@ public class MemoryStub implements ByteMemoryContext {
         clear();
     }
 
-    void setProgram(byte[] program) {
+    public void setProgram(byte[] program) {
         clear();
         for (afterProgram = 0; afterProgram < program.length; afterProgram++) {
             memory[0][afterProgram] = program[afterProgram];
         }
     }
 
-    int getDataStart() {
+    public int getDataStart() {
         return afterProgram + 1;
     }
 
@@ -97,7 +97,7 @@ public class MemoryStub implements ByteMemoryContext {
 
     @Override
     public int getSize() {
-        return this.memory.length;
+        return this.memory[0].length;
     }
 
     @Override
@@ -121,7 +121,7 @@ public class MemoryStub implements ByteMemoryContext {
 
     @Override
     public Byte[] read(int memoryPosition, int count) {
-        int to = Math.min(this.memory.length, memoryPosition + count);
+        int to = Math.min(this.memory[0].length, memoryPosition + count);
         return Arrays.copyOfRange(this.memory[0], memoryPosition, to);
     }
 
