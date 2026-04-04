@@ -128,7 +128,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
 
         runOnEdt(() -> listenerCaptor.getValue().runStateChanged(CPU.RunState.STATE_RUNNING));
 
-        verify(memoryContext).removeMemoryListener(any());
+        verify(memoryContext, times(2)).removeMemoryListener(any());
         assertEquals(CPU.RunState.STATE_RUNNING, panel.getRunState());
         assertFalse(onEdt(runButton::isEnabled));
         assertTrue(onEdt(pauseButton::isEnabled));

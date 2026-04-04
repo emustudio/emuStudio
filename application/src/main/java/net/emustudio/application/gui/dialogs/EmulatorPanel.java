@@ -16,6 +16,7 @@ import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.Objects;
@@ -160,13 +161,17 @@ public class EmulatorPanel extends JPanel {
         this.memoryListener = new MemoryContext.MemoryListener() {
             @Override
             public void memoryContentChanged(int fromLocatiom, int toLocation) {
-                debugTableModel.memoryChanged(fromLocatiom, toLocation + 1);
-                refreshDebugTable();
+                runOnEdt(() -> {
+                    debugTableModel.memoryChanged(fromLocatiom, toLocation + 1);
+                    refreshDebugTable();
+                });
             }
 
             @Override
             public void memorySizeChanged() {
-                debugTableModel.memorySizeChanged(memoryContext == null ? 0 : memoryContext.getSize());
+                runOnEdt(() ->
+                        debugTableModel.memorySizeChanged(memoryContext == null ? 0 : memoryContext.getSize())
+                );
             }
         };
 
@@ -174,17 +179,19 @@ public class EmulatorPanel extends JPanel {
 
             @Override
             public void internalStateChanged() {
-                refreshDebugTable();
+                runOnEdt(() -> refreshDebugTable());
             }
 
             @Override
             public void runStateChanged(CPU.RunState state) {
                 runState = state;
-                if (state == CPU.RunState.STATE_RUNNING) {
-                    setStateRunning();
-                } else {
-                    setStateNotRunning(state, Optional.ofNullable(emulationController).filter(EmulationController::isTimedRunning).isPresent());
-                }
+                runOnEdt(() -> {
+                    if (state == CPU.RunState.STATE_RUNNING) {
+                        setStateRunning();
+                    } else {
+                        setStateNotRunning(state, Optional.ofNullable(emulationController).filter(EmulationController::isTimedRunning).isPresent());
+                    }
+                });
             }
         }));
 
@@ -193,6 +200,9 @@ public class EmulatorPanel extends JPanel {
     }
 
     public void resizeComponents(int height) {
+        if (height <= 0) {
+            return;
+        }
         double rowHeight = debugTable.getRowHeight();
         double additionalHeight = toolDebug.getHeight() + panelPages.getHeight() + 140;
         double heightTogether = additionalHeight + rowHeight * debugTableModel.getRowCount();
@@ -273,7 +283,10 @@ public class EmulatorPanel extends JPanel {
         }
         refreshDebugTable();
 
-        Optional.ofNullable(memoryContext).ifPresent(m -> m.addMemoryListener(memoryListener));
+        Optional.ofNullable(memoryContext).ifPresent(m -> {
+            m.removeMemoryListener(memoryListener);
+            m.addMemoryListener(memoryListener);
+        });
     }
 
     private void setStateRunning() {
@@ -290,5 +303,13 @@ public class EmulatorPanel extends JPanel {
         panelPages.setVisible(false);
 
         Optional.ofNullable(memoryContext).ifPresent(m -> m.removeMemoryListener(memoryListener));
+    }
+
+    private static void runOnEdt(Runnable action) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            action.run();
+        } else {
+            SwingUtilities.invokeLater(action);
+        }
     }
 }
