@@ -80,14 +80,14 @@ OPCODE_SUB: 'sub';
 OPCODE_XOR: 'xor';
 
 mode CONDITION;
-COND_C:  'c'    ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
-COND_NC: 'nc'   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
-COND_Z:  'z'    ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
-COND_NZ: 'nz'   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
-COND_M:  'm'    ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
-COND_PE: 'pe'   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
-COND_PO: 'po'   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
-COND_P:  'p'    ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_C:  'c'    ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@.".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_NC: 'nc'   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@.".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_Z:  'z'    ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@.".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_NZ: 'nz'   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@.".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_M:  'm'    ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@.".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_PE: 'pe'   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@.".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_PO: 'po'   ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@.".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
+COND_P:  'p'    ({_input.LA(1) == -1 || (!Character.isLetterOrDigit((char)_input.LA(1)) && "_?@.".indexOf((char)_input.LA(1)) == -1)}?) -> popMode;
 COND_WS: [ \t\f]+ -> channel(HIDDEN);
 ERROR_COND: () -> popMode,skip;
 
@@ -155,10 +155,10 @@ LIT_STRING_1: '\'' ~[']* '\'';
 LIT_STRING_2: '"' ~["]* '"';
 
 // other
-ID_IDENTIFIER: [a-z_?@] [a-z_?@0-9]*;
+ID_IDENTIFIER: [a-z_?@.] [a-z_?@.0-9]*;
 ID_LABEL: ID_IDENTIFIER ':';
 
-ERROR : ~([+* \t\f\r\n(),=/-]|'~'|'>'|'<'|'&'|'|'|'%'|'^')+;
+ERROR : ~([+:.* \t\f\r\n(),=/-]|'~'|'>'|'<'|'&'|'|'|'%'|'^')+ | ':' | '.';
 
 // separators - not requiring space inbetween
 SEP_LPAR: '(';

@@ -8,35 +8,36 @@
 ; Parameter Lines: 	31: initial value for the timing interval counter. See values in code below.
 ; Result Lines: 	(run-time display)
 
-00 BNUM 00000000000000000000000000000000
-01 BINS 10011011111000101111110000111111
-02 BINS 00111000100001100000000000000000
-03 BINS 00111000100000100000000000000000
-04 BINS 10111000100000010000000000000000
-05 BINS 10011000000001100000110000110000
-06 BINS 11111001110000100000000000000000
-07 BINS 11011000100000010000000000000000
-08 BINS 00000000100000110000000000000000
-09 BINS 01011001110000000011110000111100
-10 BINS 10100000000000100000000000000000
-11 BINS 11011010001000010000000000000000
-12 BINS 00111011011001100000000000000000
-13 BINS 00111010101000100000110000110000
-14 BINS 10100010001001100000000000000000
-15 BINS 10000000000000100000000000000000
-16 BINS 11011011111000010000000000000000
-17 BINS 00111011110001100011110000111100
-18 BINS 00111011111000100000000000000000
-19 BINS 10000000000001100000000000000000
-20 BINS 01111011110000010000000000000000
-21 BINS 00000010001000110000110000110000
-22 BINS 00000011110001110000000000000000
-23 BNUM 00000010010000000000000000000000
-24 BNUM 00000010001000000000000000000000
-25 BNUM 00000000000000001111110000111111
-26 BNUM 01100000000000000000000000000000
-27 BNUM 11111111111111111111111111111111
-29 BNUM 00000000000000000000001000111111
-30 BNUM 01111011111000101111110000111111
+00 BNUM 00000000000000000000000000000000  ; Zero word, used as a default/scratch value.
+01 LDN 25                                 ; ACC = -line25.
+02 STO 28                                 ; Save that value in scratch line 28.
+03 LDN 28                                 ; ACC = line25.
+04 SUB 29                                 ; ACC = line25 - line29: advance the display/control pattern.
+05 STO 25                                 ; Store the updated display/control word back to line 25.
+06 LDN 31                                 ; ACC = -timingCounter.
+07 SUB 27                                 ; ACC = timingCounter - 1.
+08 CMP                                    ; If the timer is negative, skip the next line.
+09 JMP 26                                 ; Otherwise branch via line 26 back into the timing loop.
+10 LDN 5                                  ; ACC = -line5.
+11 SUB 27                                 ; ACC = line5 - 1.
+12 STO 28                                 ; Save the decremented value in scratch line 28.
+13 LDN 28                                 ; ACC = updated line5 value.
+14 STO 5                                  ; Rewrite line 05, advancing another display/control word.
+15 LDN 1                                  ; ACC = -line1.
+16 SUB 27                                 ; ACC = line1 - 1.
+17 STO 28                                 ; Save the decremented value in scratch line 28.
+18 LDN 28                                 ; ACC = updated line1 value.
+19 STO 1                                  ; Rewrite line 01, advancing the top display/control word.
+20 SUB 30                                 ; Compare the updated line1 value against the stop threshold in line 30.
+21 CMP                                    ; If still negative, skip the halt and continue the animation/timer.
+22 STP                                    ; Stop when the display reaches the final "ready" state.
+23 BNUM 00000010010000000000000000000000  ; Static display/control word.
+24 BNUM 00000010001000000000000000000000  ; Static display/control word.
+25 BNUM 00000000000000001111110000111111  ; Display/control word updated by lines 01-05.
+26 BNUM 01100000000000000000000000000000  ; Encoded jump target used by line 09 to loop back to line 07.
+27 BNUM 11111111111111111111111111111111  ; Constant -1.
+28 BNUM 00000000000000000000000000000000  ; Scratch line used to hold decremented intermediate values.
+29 BNUM 00000000000000000000001000111111  ; Step constant subtracted from line 25.
+30 BNUM 01111011111000101111110000111111  ; Stop threshold used by line 20.
 ; 31 BNUM 00001011011000000000000000000001  -- timing counter for original machine
-31 BNUM 01000000000000000000000000000001  -- timing counter to speed up simulation
+31 BNUM 01000000000000000000000000000001  ; Faster simulation timing counter.

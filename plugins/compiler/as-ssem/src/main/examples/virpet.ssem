@@ -48,35 +48,35 @@
 ; 30	--*---
 ; 31	-*-*--
 
-0    NUM 0
-1    LDN 22
-2    SUB 27
-3    STO 25
-4    LDN 25
-5    STO 22
-6    CMP
-7    JMP 0
-8    LDN 23
-9    STO 31
-10   LDN 24
-11   STO 30
-12   LDN 0
-13   STO 22
-14   LDN 22
-15   CMP
-16   JRP 26
-17   LDN 23
-18   STO 30
-19   LDN 24
-20   STO 31
-21   JMP 0
-22   NUM 1000
-23   NUM -35651904
-24   NUM -29360256
-25   NUM 0
-26   NUM -3
-27   NUM -1
-28   NUM 20971648
-29   NUM 448
-30   NUM 35651904
-31   NUM 29360256
+0    NUM 0         ; Zero word, also used as the indirect jump target for restarting at line 1.
+1    LDN 22        ; ACC = -foodSupply.
+2    SUB 27        ; ACC = foodSupply - 1: consume one unit of food.
+3    STO 25        ; Save the decremented food value in scratch line 25.
+4    LDN 25        ; ACC = updated foodSupply.
+5    STO 22        ; Store the new food value back to line 22.
+6    CMP           ; If food is negative, skip the next line.
+7    JMP 0         ; Food still available: branch via line 0 back to line 1 and keep running.
+8    LDN 23        ; ACC = -happy/full image word.
+9    STO 31        ; Write it to display line 31.
+10   LDN 24        ; ACC = -happy/full companion image word.
+11   STO 30        ; Write it to display line 30.
+12   LDN 0         ; ACC = 0.
+13   STO 22        ; Reset food supply to 0 while waiting to be fed again.
+14   LDN 22        ; ACC = -foodSupply.
+15   CMP           ; If still negative, skip the next line.
+16   JRP 26        ; Relative branch by -3 to line 14: wait here until line 22 is changed manually.
+17   LDN 23        ; ACC = -happy/full image word.
+18   STO 30        ; Restore one display line for the fed/happy state.
+19   LDN 24        ; ACC = -happy/full companion image word.
+20   STO 31        ; Restore the other display line.
+21   JMP 0         ; Branch via line 0 back to the main feeding loop.
+22   NUM 1000      ; Food supply counter. The user can increase this manually to feed the pet.
+23   NUM -35651904 ; Encoded image word used for one happy/full display line.
+24   NUM -29360256 ; Encoded image word used for the other happy/full display line.
+25   NUM 0         ; Scratch line holding the decremented food value.
+26   NUM -3        ; Relative branch offset used by line 16 to loop back to line 14.
+27   NUM -1        ; Constant -1 for decrementing the food supply.
+28   NUM 20971648  ; Static display data for the pet graphics.
+29   NUM 448       ; Static display data for the pet graphics.
+30   NUM 35651904  ; Display line rewritten to show mood/fullness.
+31   NUM 29360256  ; Display line rewritten to show mood/fullness.

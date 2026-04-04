@@ -6,35 +6,35 @@
 ; Parameter Lines: 	-
 ; Result Lines: 	(run-time display)
 
-00 BNUM 00000110101001000100000100000100
-01 BINS 10011011111100100010000010001000
-02 BINS 10000010000101101000100001010000
-03 BINS 00000010000100110100001001100000
-04 BINS 11101011111100011010101010010100
-05 BINS 10000000110000010001000010101001
-06 BINS 10000001111000010000100100001100
-07 BINS 10000001111000010000011000000010
-08 BINS 10011000000001101000011001000001
-09 BINS 10101001111000100100100100000010
-10 BINS 00000001111000110011010010000100
-11 BINS 01101001111000010011000001001000
-12 BINS 11101001111000010100100000110000
-13 BINS 10101000110001101000010000110000
-14 BINS 10100001111000010000001001001000
-15 BINS 00010011111101100000000110000100
-16 BINS 00000111111110010000000010000010
-17 BINS 10000011111101101111111111111111
-18 BINS 10101001111000100110011001100110
-19 BINS 10101000110001101111111111111111
-20 BINS 00011000110000001111111111111111
-21 BNUM 01100000000000000000000000000000
-22 BNUM 11100000000000000000000000000000
-23 BNUM 11111111111111111111111111111111
-24 BNUM 00000000000000000000000000000000
-25 BNUM 00000000000000011111000000100000
-26 BNUM 00000000000000100000100001010000
-27 BNUM 00000000000000100010100000100000
-28 BNUM 00000001111110100000100000111000
-29 BNUM 00000010000000011111000000100000
-30 BNUM 00011110011110001000000000100000
-31 BNUM 00111111111111111110000001010000
+00 BNUM 00000110101001000100000100000100  ; Initial picture/control word used by the self-modifying animation.
+01 LDN 25                                 ; ACC = -line25.
+02 STO 1                                  ; Rewrite line 01 with the current image/control word.
+03 CMP                                    ; If ACC is negative, skip the next line.
+04 SUB 23                                 ; Apply the -1 constant when the compare does not skip.
+05 SUB 1                                  ; Subtract the newly written control word in line 01.
+06 SUB 1                                  ; Subtract line 01 again.
+07 SUB 1                                  ; Subtract line 01 a third time.
+08 STO 25                                 ; Store the updated picture/control word back to line 25.
+09 LDN 21                                 ; ACC = -line21.
+10 CMP                                    ; If ACC is negative, skip the next line.
+11 SUB 22                                 ; Otherwise subtract line 22.
+12 SUB 23                                 ; Subtract the -1 constant.
+13 STO 21                                 ; Update line 21 with the new control/state value.
+14 SUB 5                                  ; Combine the current state with line 05.
+15 STO 8                                  ; Rewrite line 08, another self-modifying animation step.
+16 SUB 0                                  ; Subtract line 00 to fold in the base image/control word.
+17 STO 1                                  ; Rewrite line 01 again with the new state.
+18 LDN 21                                 ; ACC = -line21.
+19 STO 21                                 ; Negate/toggle the state word in line 21.
+20 JMP 24                                 ; Branch via line 24 back to the start of the animation loop.
+21 BNUM 01100000000000000000000000000000  ; Constant/state word = 6.
+22 BNUM 11100000000000000000000000000000  ; Constant/state word = 7.
+23 BNUM 11111111111111111111111111111111  ; Constant -1.
+24 BNUM 00000000000000000000000000000000  ; Encoded jump target used by line 20 to restart at line 01.
+25 BNUM 00000000000000011111000000100000  ; Picture/control word manipulated by lines 01-08.
+26 BNUM 00000000000000100000100001010000  ; Static display data word.
+27 BNUM 00000000000000100010100000100000  ; Static display data word.
+28 BNUM 00000001111110100000100000111000  ; Static display data word.
+29 BNUM 00000010000000011111000000100000  ; Static display data word.
+30 BNUM 00011110011110001000000000100000  ; Static display data word.
+31 BNUM 00111111111111111110000001010000  ; Static display data word.

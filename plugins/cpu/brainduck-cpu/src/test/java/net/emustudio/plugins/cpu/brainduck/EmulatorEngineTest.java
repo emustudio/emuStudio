@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.brainduck;
 
+import net.emustudio.emulib.plugins.cpu.CPU;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -117,6 +118,156 @@ public class EmulatorEngineTest {
         engine.step(true);
 
         assertEquals(10, engine.P);
+    }
+
+    // --- New basic instruction tests ---
+
+    @Test
+    public void testStopInstruction() {
+        resetProgram(I_STOP);
+        replay(context);
+        engine.reset(0);
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.step(false));
+    }
+
+    @Test
+    public void testIncInstruction() {
+        resetProgram(I_INC, I_STOP);
+        replay(context);
+        engine.reset(0);
+        int initialP = engine.P;
+        engine.step(false); // >
+        assertEquals(initialP + 1, engine.P);
+    }
+
+    @Test
+    public void testDecInstruction() {
+        resetProgram(I_INC, I_DEC, I_STOP);
+        replay(context);
+        engine.reset(0);
+        int initialP = engine.P;
+        engine.step(false); // >
+        engine.step(false); // <
+        assertEquals(initialP, engine.P);
+    }
+
+    @Test
+    public void testDecBelowZeroReturnsAddrFallout() {
+        resetProgram(I_DEC, I_STOP);
+        replay(context);
+        engine.reset(0);
+        engine.P = 0;
+        assertEquals(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT, engine.step(false));
+    }
+
+    @Test
+    public void testIncvInstruction() {
+        resetProgram(I_INCV, I_STOP);
+        replay(context);
+        engine.reset(0);
+        memory.write(engine.P, (byte) 0);
+        engine.step(false); // +
+        assertEquals(1, memory.read(engine.P).byteValue());
+    }
+
+    @Test
+    public void testDecvInstruction() {
+        resetProgram(I_DECV, I_STOP);
+        replay(context);
+        engine.reset(0);
+        memory.write(engine.P, (byte) 5);
+        engine.step(false); // -
+        assertEquals(4, memory.read(engine.P).byteValue());
+    }
+
+    @Test
+    public void testPrintInstruction() {
+        resetProgram(I_PRINT, I_STOP);
+        replay(context);
+        engine.reset(0);
+        memory.write(engine.P, (byte) 65);
+        engine.step(false); // .
+        verify(context);
+    }
+
+    @Test
+    public void testReadInstruction() {
+        resetProgram(I_READ, I_STOP);
+        replay(context);
+        engine.reset(0);
+        engine.step(false); // ,
+        verify(context);
+    }
+
+    @Test
+    public void testLoopSkipsWhenZero() {
+        resetProgram(I_LOOP_START, I_INCV, I_LOOP_END, I_STOP);
+        replay(context);
+        engine.reset(0);
+        // P points to data area which is 0
+        memory.write(engine.P, (byte) 0);
+        engine.step(false); // [ - should skip to after ]
+        // IP should be after ]
+        assertEquals(3, engine.IP);
+    }
+
+    @Test
+    public void testLoopEntersWhenNonZero() {
+        resetProgram(I_LOOP_START, I_DECV, I_LOOP_END, I_STOP);
+        replay(context);
+        engine.reset(0);
+        memory.write(engine.P, (byte) 1);
+        engine.step(false); // [ - should enter loop
+        assertEquals(1, engine.IP);
+        assertEquals(1, engine.getLoopLevel());
+    }
+
+    @Test
+    public void testLoopEndJumpsBackWhenNonZero() {
+        resetProgram(I_LOOP_START, I_DECV, I_LOOP_END, I_STOP);
+        replay(context);
+        engine.reset(0);
+        memory.write(engine.P, (byte) 2);
+        engine.step(false); // [ - enter
+        engine.step(false); // - (value becomes 1)
+        engine.step(false); // ] - should jump back to [
+        assertEquals(0, engine.IP);
+    }
+
+    @Test
+    public void testInvalidInstruction() {
+        memory.write(0, (byte) 99);
+        replay(context);
+        engine = new EmulatorEngine(memory, context, profiler);
+        engine.IP = 0;
+        engine.P = 10;
+        assertEquals(CPU.RunState.STATE_STOPPED_BAD_INSTR, engine.step(false));
+    }
+
+    @Test
+    public void testGetLoopLevel() {
+        resetProgram(I_STOP);
+        replay(context);
+        engine.reset(0);
+        assertEquals(0, engine.getLoopLevel());
+    }
+
+    @Test
+    public void testGetP() {
+        resetProgram(I_STOP);
+        replay(context);
+        engine.reset(0);
+        engine.P = 42;
+        assertEquals(42, engine.getP());
+    }
+
+    @Test
+    public void testIncOverflow() {
+        resetProgram(I_INC, I_STOP);
+        replay(context);
+        engine.reset(0);
+        engine.P = memory.memory[0].length;
+        assertEquals(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT, engine.step(false));
     }
 
     private void checkProfilerCopyLoop(int nextIP, int[] factors, int[] relPositions) {

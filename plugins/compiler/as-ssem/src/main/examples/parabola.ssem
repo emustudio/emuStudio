@@ -5,34 +5,34 @@
 ; Parameter Lines: 	-
 ; Result Lines: 	(see description)
 
-01 LDN 29
-02 SUB 29
-03 STO 29
-04 CMP
-05 STP
-06 LDN 29
-07 STO 29
-08 LDN 22
-09 SUB 29
-10 STO 30
-11 LDN 30
-12 STO 22
-13 LDN 8
-14 SUB 28
-15 STO 30
-16 LDN 30
-17 STO 8
-18 SUB 27
-19 STO 12
-20 LDN 28
-21 SUB 26
-22 STO 28
-23 LDN 28
-24 STO 28
-25 JMP 31
-26 NUM 1
-27 NUM -8192
-28 NUM -6
-29 NUM 131072
-30 NUM 0
-31 NUM 0
+01 LDN 29    ; ACC = -line29.
+02 SUB 29    ; ACC = line29 - line29 = 0.
+03 STO 29    ; Clear line29; this is the loop termination counter/state.
+04 CMP       ; If ACC is negative, skip the halt. Here ACC is 0, so no skip.
+05 STP       ; Halt once the termination condition has been reached.
+06 LDN 29    ; ACC = -line29.
+07 STO 29    ; Store that updated state back to line29.
+08 LDN 22    ; ACC = -line22.
+09 SUB 29    ; ACC = line22 - line29.
+10 STO 30    ; Save the new Y/display value in scratch line30.
+11 LDN 30    ; ACC = -line30.
+12 STO 22    ; Update CRT/display line22 with the new plotted value.
+13 LDN 8     ; ACC = -line8.
+14 SUB 28    ; ACC = line8 - line28.
+15 STO 30    ; Save the updated difference-equation term in line30.
+16 LDN 30    ; ACC = -line30.
+17 STO 8     ; Rewrite line8 with the new coefficient/state.
+18 SUB 27    ; ACC = line30 - line27.
+19 STO 12    ; Rewrite line12, making the plotting code self-modify for the next point.
+20 LDN 28    ; ACC = -line28.
+21 SUB 26    ; ACC = line28 - 1.
+22 STO 28    ; Update the stepping value in line28.
+23 LDN 28    ; ACC = -line28.
+24 STO 28    ; Negate/store it back, completing the state update for the next loop.
+25 JMP 31    ; Branch via line31 back to the start of the loop.
+26 NUM 1     ; Constant 1.
+27 NUM -8192 ; Constant used to shift the self-modified display update.
+28 NUM -6    ; Difference-equation step value.
+29 NUM 131072; Loop/state word and initial value used by the termination test.
+30 NUM 0     ; Scratch line for intermediate values.
+31 NUM 0     ; Encoded jump target used by line25 to restart execution at line01.

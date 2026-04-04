@@ -135,10 +135,10 @@ LIT_STRING_1: '\'' ~[']* '\'';
 LIT_STRING_2: '"' ~["]* '"';
 
 // other
-ID_IDENTIFIER: [a-z_?@] [a-z_?@0-9]*;
+ID_IDENTIFIER: [a-z_?@.] [a-z_?@.0-9]*;
 ID_LABEL: ID_IDENTIFIER ':';
 
-ERROR : ~([+* \t\f\r\n(),=/-]|'~'|'>'|'<'|'&'|'|'|'%'|'^')+;
+ERROR : ~([+:.* \t\f\r\n(),=/-]|'~'|'>'|'<'|'&'|'|'|'%'|'^')+ | ':' | '.';
 
 // separators - not requiring space inbetween
 SEP_LPAR: '(';

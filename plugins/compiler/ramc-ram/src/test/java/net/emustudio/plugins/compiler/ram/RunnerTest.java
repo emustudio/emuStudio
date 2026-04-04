@@ -28,8 +28,24 @@ public class RunnerTest {
     }
 
     @Test
+    public void testCommandLineShortOption() throws Exception {
+        File sourceFile = folder.newFile();
+        Files.write(sourceFile.toPath(), "HALT".getBytes(), StandardOpenOption.WRITE);
+        File outputFile = folder.newFile();
+
+        Runner.main("-o", outputFile.getPath(), sourceFile.getPath());
+
+        assertTrue(Files.size(outputFile.toPath()) > 0);
+    }
+
+    @Test
     public void testCommandLinePrintHelp() {
         Runner.main("--help");
+    }
+
+    @Test
+    public void testCommandLinePrintHelpShort() {
+        Runner.main("-h");
     }
 
     @Test
@@ -42,4 +58,13 @@ public class RunnerTest {
         Runner.main("--version");
     }
 
+    @Test
+    public void testCommandLinePrintVersionShort() {
+        Runner.main("-v");
+    }
+
+    @Test
+    public void testCommandLineNoArgs() {
+        Runner.main();
+    }
 }

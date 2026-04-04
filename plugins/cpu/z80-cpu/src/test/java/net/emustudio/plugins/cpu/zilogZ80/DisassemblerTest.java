@@ -13,7 +13,7 @@ import net.emustudio.plugins.cpu.zilogZ80.gui.DisassemblerImpl;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class DisassemblerTest {
 
@@ -825,5 +825,755 @@ public class DisassemblerTest {
         });
         DecodedInstruction instr = decoder.decode(0);
         assertEquals(2, instr.image.length);
+    }
+
+    @Test
+    public void testDecoderCBPrefix() throws InvalidInstructionException {
+        // RLC B = CB 00
+        memoryStub.setMemory(new short[]{0xCB, 0x00});
+        DecodedInstruction instr = decoder.decode(0);
+        assertEquals(2, instr.image.length);
+    }
+
+    @Test
+    public void testDecoderCBPrefixBitInstruction() throws InvalidInstructionException {
+        // BIT 0, B = CB 40
+        memoryStub.setMemory(new short[]{0xCB, 0x40});
+        DecodedInstruction instr = decoder.decode(0);
+        assertEquals(2, instr.image.length);
+    }
+
+    @Test
+    public void testDecoderDDPrefix() throws InvalidInstructionException {
+        // LD IX, 1234h = DD 21 34 12
+        memoryStub.setMemory(new short[]{0xDD, 0x21, 0x34, 0x12});
+        DecodedInstruction instr = decoder.decode(0);
+        assertEquals(4, instr.image.length);
+    }
+
+    @Test
+    public void testDecoderFDPrefix() throws InvalidInstructionException {
+        // LD IY, 1234h = FD 21 34 12
+        memoryStub.setMemory(new short[]{0xFD, 0x21, 0x34, 0x12});
+        DecodedInstruction instr = decoder.decode(0);
+        assertEquals(4, instr.image.length);
+    }
+
+    @Test
+    public void testDecoderEDPrefixLdIA() throws InvalidInstructionException {
+        // LD I, A = ED 47
+        memoryStub.setMemory(new short[]{0xED, 0x47});
+        DecodedInstruction instr = decoder.decode(0);
+        assertEquals(2, instr.image.length);
+    }
+
+    @Test
+    public void testDecoderEDPrefixLdAI() throws InvalidInstructionException {
+        // LD A, I = ED 57
+        memoryStub.setMemory(new short[]{0xED, 0x57});
+        DecodedInstruction instr = decoder.decode(0);
+        assertEquals(2, instr.image.length);
+    }
+
+    @Test
+    public void testDecoderDDCBPrefix() throws InvalidInstructionException {
+        // RLC (IX+5) = DD CB 05 06
+        memoryStub.setMemory(new short[]{0xDD, 0xCB, 0x05, 0x06});
+        DecodedInstruction instr = decoder.decode(0);
+        assertEquals(4, instr.image.length);
+    }
+
+    @Test
+    public void testDecoderFDCBPrefix() throws InvalidInstructionException {
+        // RLC (IY+5) = FD CB 05 06
+        memoryStub.setMemory(new short[]{0xFD, 0xCB, 0x05, 0x06});
+        DecodedInstruction instr = decoder.decode(0);
+        assertEquals(4, instr.image.length);
+    }
+
+    @Test
+    public void testDecoderCacheHit() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0x00}); // NOP
+        DecodedInstruction first = decoder.decode(0);
+        DecodedInstruction second = decoder.decode(0);
+        assertSame(first, second);
+    }
+
+    @Test
+    public void testDecoderCacheInvalidation() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0x00, 0, 0}); // NOP
+        DecodedInstruction first = decoder.decode(0);
+        memoryStub.write(0, (byte) 0x76); // Change to HALT
+        DecodedInstruction second = decoder.decode(0);
+        assertNotSame(first, second);
+    }
+
+    @Test
+    public void testDecoderDifferentPositions() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{
+                0x00, // NOP at position 0
+                0x76  // HALT at position 1
+        });
+        DecodedInstruction nop = decoder.decode(0);
+        DecodedInstruction halt = decoder.decode(1);
+        assertEquals(1, nop.image.length);
+        assertEquals(1, halt.image.length);
+    }
+
+    @Test
+    public void testDisassembleCBPrefixRlcB() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xCB, 0x00});
+        assertEquals("rlc b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleDDPrefixLdIx() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x21, 0x34, 0x12});
+        assertEquals("ld ix, 1234h", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleFDPrefixLdIy() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x21, 0x34, 0x12});
+        assertEquals("ld iy, 1234h", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleEDPrefixLdIA() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x47});
+        assertEquals("ld i, a", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleEDPrefixLdAI() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x57});
+        assertEquals("ld a, i", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testGetNextInstructionPositionNop() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0x00}); // NOP = 1 byte
+        assertEquals(1, disassembler.getNextInstructionPosition(0));
+    }
+
+    @Test
+    public void testGetNextInstructionPositionLdIx() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x21, 0x34, 0x12}); // LD IX, nn = 4 bytes
+        assertEquals(4, disassembler.getNextInstructionPosition(0));
+    }
+
+    @Test
+    public void testGetNextInstructionPositionEdPrefix() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xB0}); // LDIR = 2 bytes
+        assertEquals(2, disassembler.getNextInstructionPosition(0));
+    }
+
+    @Test
+    public void testDisassembleTwiceSameAddress() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0x00}); // NOP
+        var first = disassembler.disassemble(0);
+        var second = disassembler.disassemble(0);
+        assertEquals(first.mnemo, second.mnemo);
+        assertEquals(first.opCode, second.opCode);
+    }
+
+    @Test
+    public void testDisassembleNeg() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x44});
+        assertEquals("neg", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleRetn() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x45});
+        assertEquals("retn", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleReti() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x4D});
+        assertEquals("reti", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleBitInstruction() throws InvalidInstructionException {
+        // BIT 0, B = CB 40
+        memoryStub.setMemory(new short[]{0xCB, 0x40});
+        assertEquals("bit 0, b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSetInstruction() throws InvalidInstructionException {
+        // SET 0, B = CB C0
+        memoryStub.setMemory(new short[]{0xCB, 0xC0});
+        assertEquals("set 0, b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleResInstruction() throws InvalidInstructionException {
+        // RES 0, B = CB 80
+        memoryStub.setMemory(new short[]{0xCB, 0x80});
+        assertEquals("res 0, b", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- ED prefix: interrupt modes ---
+
+    @Test
+    public void testDisassembleIM0() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x46});
+        assertEquals("im 0", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleIM1() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x56});
+        assertEquals("im 1", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleIM2() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x5E});
+        assertEquals("im 2", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- ED prefix: register pair arithmetic ---
+
+    @Test
+    public void testDisassembleSbcHL_BC() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x42});
+        assertEquals("sbc hl, bc", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAdcHL_BC() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x4A});
+        assertEquals("adc hl, bc", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSbcHL_DE() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x52});
+        assertEquals("sbc hl, de", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAdcHL_DE() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x5A});
+        assertEquals("adc hl, de", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSbcHL_HL() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x62});
+        assertEquals("sbc hl, hl", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAdcHL_HL() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x6A});
+        assertEquals("adc hl, hl", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSbcHL_SP() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x72});
+        assertEquals("sbc hl, sp", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAdcHL_SP() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x7A});
+        assertEquals("adc hl, sp", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- ED prefix: I/O and block ---
+
+    @Test
+    public void testDisassembleInB_C() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x40});
+        assertEquals("in b, (c)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleOutC_B() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x41});
+        assertEquals("out (c), b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLdRA() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x4F});
+        assertEquals("ld r, a", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLdAR() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x5F});
+        assertEquals("ld a, r", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleRRD() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x67});
+        assertEquals("rrd", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleRLD() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x6F});
+        assertEquals("rld", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLDI() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xA0});
+        assertEquals("ldi", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLDD() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xA8});
+        assertEquals("ldd", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleCPI() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xA1});
+        assertEquals("cpi", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleCPD() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xA9});
+        assertEquals("cpd", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleCPIR() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xB1});
+        assertEquals("cpir", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleCPDR() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xB9});
+        assertEquals("cpdr", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleINI() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xA2});
+        assertEquals("ini", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleIND() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xAA});
+        assertEquals("ind", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleINIR() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xB2});
+        assertEquals("inir", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleINDR() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xBA});
+        assertEquals("indr", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleOUTI() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xA3});
+        assertEquals("outi", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleOUTD() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xAB});
+        assertEquals("outd", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleOTIR() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xB3});
+        assertEquals("otir", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleOTDR() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xBB});
+        assertEquals("otdr", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLDDR() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0xB8});
+        assertEquals("lddr", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- ED prefix: 16-bit loads ---
+
+    @Test
+    public void testDisassembleLd_nn_BC() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x43, 0x34, 0x12});
+        assertEquals("ld (1234h), bc", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLdBC_nn() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x4B, 0x34, 0x12});
+        assertEquals("ld bc, (1234h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLd_nn_DE() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x53, 0x34, 0x12});
+        assertEquals("ld (1234h), de", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLdDE_nn() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x5B, 0x34, 0x12});
+        assertEquals("ld de, (1234h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLd_nn_SP() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x73, 0x34, 0x12});
+        assertEquals("ld (1234h), sp", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLdSP_nn() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x7B, 0x34, 0x12});
+        assertEquals("ld sp, (1234h)", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- DD prefix: IX memory operations ---
+
+    @Test
+    public void testDisassembleIncIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x34, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("inc (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleDecIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x35, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("dec (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLdIXd_n() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x36, 0x05, 0x42, 0, 0, 0, 0});
+        assertEquals("ld (ix+5h), 42h", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAddA_IXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x86, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("add a, (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSubIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x96, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("sub (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAndIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0xA6, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("and (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLd_IXd_B() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x70, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("ld (ix+5h), b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAddIX_BC() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x09});
+        assertEquals("add ix, bc", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAddIX_DE() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x19});
+        assertEquals("add ix, de", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAddIX_SP() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x39});
+        assertEquals("add ix, sp", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLd_nn_IX() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x22, 0x34, 0x12});
+        assertEquals("ld (1234h), ix", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLdIX_nn_indirect() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x2A, 0x34, 0x12});
+        assertEquals("ld ix, (1234h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleIncIX() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x23});
+        assertEquals("inc ix", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleDecIX() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0x2B});
+        assertEquals("dec ix", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- FD prefix: IY memory operations ---
+
+    @Test
+    public void testDisassembleIncIYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x34, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("inc (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleDecIYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x35, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("dec (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLdIYd_n() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x36, 0x05, 0x42, 0, 0, 0, 0});
+        assertEquals("ld (iy+5h), 42h", disassembler.disassemble(0).mnemo);
+    }
+
+
+    @Test
+    public void testDisassembleAddA_IYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x86, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("add a, (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSubIYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x96, 0x05, 0, 0, 0, 0, 0});
+        assertEquals("sub (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAddIY_BC() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x09});
+        assertEquals("add iy, bc", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAddIY_DE() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x19});
+        assertEquals("add iy, de", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleAddIY_SP() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x39});
+        assertEquals("add iy, sp", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLd_nn_IY() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x22, 0x34, 0x12});
+        assertEquals("ld (1234h), iy", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleLdIY_nn_indirect() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x2A, 0x34, 0x12});
+        assertEquals("ld iy, (1234h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleIncIY() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x23});
+        assertEquals("inc iy", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleDecIY() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0x2B});
+        assertEquals("dec iy", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- DD CB prefix: IX+d bit operations ---
+
+    @Test
+    public void testDisassembleBitIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0xCB, 0x05, 0x46, 0, 0, 0, 0});
+        assertEquals("bit 0, (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSetIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0xCB, 0x05, 0xC6, 0, 0, 0, 0});
+        assertEquals("set 0, (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleResIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0xCB, 0x05, 0x86, 0, 0, 0, 0});
+        assertEquals("res 0, (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleRRCIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0xCB, 0x05, 0x0E, 0, 0, 0, 0});
+        assertEquals("rrc (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSLAIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0xCB, 0x05, 0x26, 0, 0, 0, 0});
+        assertEquals("sla (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSRAIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0xCB, 0x05, 0x2E, 0, 0, 0, 0});
+        assertEquals("sra (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSRLIXd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xDD, 0xCB, 0x05, 0x3E, 0, 0, 0, 0});
+        assertEquals("srl (ix+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- FD CB prefix: IY+d bit operations ---
+
+    @Test
+    public void testDisassembleBitIYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0xCB, 0x05, 0x46, 0, 0, 0, 0});
+        assertEquals("bit 0, (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSetIYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0xCB, 0x05, 0xC6, 0, 0, 0, 0});
+        assertEquals("set 0, (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleResIYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0xCB, 0x05, 0x86, 0, 0, 0, 0});
+        assertEquals("res 0, (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleRRCIYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0xCB, 0x05, 0x0E, 0, 0, 0, 0});
+        assertEquals("rrc (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSLAIYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0xCB, 0x05, 0x26, 0, 0, 0, 0});
+        assertEquals("sla (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSRAIYd() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xFD, 0xCB, 0x05, 0x2E, 0, 0, 0, 0});
+        assertEquals("sra (iy+5h)", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- CB prefix: additional rotation/shift ---
+
+    @Test
+    public void testDisassembleRRCB() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xCB, 0x08});
+        assertEquals("rrc b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleRLB() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xCB, 0x10});
+        assertEquals("rl b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleRRB() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xCB, 0x18});
+        assertEquals("rr b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSLAB() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xCB, 0x20});
+        assertEquals("sla b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSRAB() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xCB, 0x28});
+        assertEquals("sra b", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleSRLB() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xCB, 0x38});
+        assertEquals("srl b", disassembler.disassemble(0).mnemo);
+    }
+
+    // --- ED prefix: in/out with flags ---
+
+    @Test
+    public void testDisassembleInC_C() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x48});
+        assertEquals("in c, (c)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleOutC_C() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x49});
+        assertEquals("out (c), c", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleInD_C() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x50});
+        assertEquals("in d, (c)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleOutC_D() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x51});
+        assertEquals("out (c), d", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleInH_C() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x60});
+        assertEquals("in h, (c)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleInA_C() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x78});
+        assertEquals("in a, (c)", disassembler.disassemble(0).mnemo);
+    }
+
+    @Test
+    public void testDisassembleOutC_A() throws InvalidInstructionException {
+        memoryStub.setMemory(new short[]{0xED, 0x79});
+        assertEquals("out (c), a", disassembler.disassemble(0).mnemo);
     }
 }
