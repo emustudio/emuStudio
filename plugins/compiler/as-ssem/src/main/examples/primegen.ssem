@@ -4,33 +4,33 @@
 ; Parameter Lines: 	-
 ; Result Lines: 	21: generated primes
 
-0000 JMP 24
-0001 LDN 21
-0002 STO 21
-0003 LDN 21
-0004 SUB 15
-0005 STO 21
-0006 LDN 15
-0007 STO 22
-0008 LDN 22
-0009 STO 22
-0010 LDN 22
-0011 SUB 15
-0012 STO 22
-0013 SUB 21
-0014 CMP
-0015 NUM -1
-0016 LDN 21
-0017 STO 23
-0018 LDN 23
-0019 SUB 22
-0020 JMP 0
-0021 NUM 1
-0024 NUM 7
-0025 CMP
-0026 JRP 0
-0027 STO 23
-0028 LDN 23
-0029 SUB 22
-0030 CMP
-0031 JMP 20
+0000 JMP 24   ; Indirect entry jump into the prime-generation loop.
+0001 LDN 21   ; ACC = -currentPrime.
+0002 STO 21   ; Store that value back to line21.
+0003 LDN 21   ; ACC = currentPrime.
+0004 SUB 15   ; ACC = currentPrime - (-1) = currentPrime + 1.
+0005 STO 21   ; Advance line21 to the next candidate value.
+0006 LDN 15   ; ACC = 1.
+0007 STO 22   ; Initialize line22 from the constant in line15.
+0008 LDN 22   ; ACC = -line22.
+0009 STO 22   ; Store it back, flipping the sign/state in line22.
+0010 LDN 22   ; ACC = line22.
+0011 SUB 15   ; ACC = line22 - (-1) = line22 + 1.
+0012 STO 22   ; Update line22; this is the running trial/divisor state.
+0013 SUB 21   ; Compare the updated line22 state against the current candidate in line21.
+0014 CMP      ; If the result is negative, skip the next line.
+0015 NUM -1   ; Constant -1.
+0016 LDN 21   ; ACC = -currentPrime.
+0017 STO 23   ; Save that value in scratch line23.
+0018 LDN 23   ; ACC = currentPrime.
+0019 SUB 22   ; ACC = currentPrime - line22.
+0020 JMP 0    ; Indirect branch via line0 back into the main loop/control path.
+0021 NUM 1    ; Current prime / candidate value, initialized to 1.
+0024 NUM 7    ; Encoded jump target used by line0 to enter the control block below.
+0025 CMP      ; If ACC is negative, skip the next line.
+0026 JRP 0    ; Relative branch via the value encoded at line0.
+0027 STO 23   ; Save ACC in scratch line23.
+0028 LDN 23   ; ACC = -scratch.
+0029 SUB 22   ; ACC = scratch - line22.
+0030 CMP      ; If the result is negative, skip the next line.
+0031 JMP 20   ; Indirect branch via line20 to continue the candidate-testing loop.

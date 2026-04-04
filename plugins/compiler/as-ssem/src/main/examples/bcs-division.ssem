@@ -10,35 +10,35 @@
 ; Result Lines: 	30: Quotient
 ;                   31: Remainder
 
-00 BNUM 00000000000000000000011110000000
-01 BINS 10111000000000100000010001000000
-02 BINS 11011000000001100000011110000000
-03 BINS 00111000000000100000010001000000
-04 BINS 01011000000001100000011110000000
-05 BINS 01011000000000100000000000000000
-06 BINS 10111000000000010000011111000000
-07 BINS 00111000000001100000000010000000
-08 BINS 00000000000000110000000010000000
-09 BINS 10011000000000000000010010000000
-10 BINS 11011000000000010000001100000000
-11 BINS 11111000000001100000000000000000
-12 BINS 00000000000001110000010000000000
-13 BINS 01111000000000100000010000000000
-14 BINS 00011000000000010000010000000000
-15 BINS 01111000000001100000010000000000
-16 BINS 01111000000000100000011111000000
-17 BINS 01111000000001100000000000000000
-18 BINS 11101000000000000000001111000000
-19 BNUM 00000000000000000000010000000000
-20 BNUM 00000000000000000000010000000000
-21 BNUM 00000000000000000000010000000000
-22 BNUM 00000000000000000000001111000000
-23 BNUM 01000000000000000000000000000000
-24 BNUM 10000000000000000000000000000000
-25 BNUM 00110000000000000000000000000000
-26 BNUM 00000000000000000000000000000000
-27 BNUM 00000000000000000000000000000000
-28 BNUM 01011001010000000000000000000000
-29 BNUM 01010100000000000000000000000000
-30 BNUM 00000000000000000000000000000000
-31 BNUM 00000000000000000000000000000000
+00 BNUM 00000000000000000000011110000000  ; Unused bootstrap/data word; execution begins at line 01.
+01 LDN 29                                 ; ACC = -divisor.
+02 STO 27                                 ; Store -divisor in scratch line 27.
+03 LDN 28                                 ; ACC = -dividend.
+04 STO 26                                 ; Store -dividend in scratch line 26.
+05 LDN 26                                 ; ACC = dividend.
+06 SUB 29                                 ; ACC = dividend - divisor.
+07 STO 28                                 ; Update dividend/remainder candidate.
+08 CMP                                    ; If result is negative, skip the next line.
+09 JMP 25                                 ; Non-negative: branch via the jump target encoded in line 25 to the finish block.
+10 SUB 27                                 ; Negative case: ACC = (dividend - divisor) - (-divisor) = current remainder.
+11 STO 31                                 ; Store remainder.
+12 STP                                    ; Halt: quotient is in line 30, remainder in line 31.
+13 LDN 30                                 ; ACC = -quotient.
+14 SUB 24                                 ; ACC = -quotient - 1.
+15 STO 30                                 ; Store the intermediate negative quotient.
+16 LDN 30                                 ; ACC = quotient + 1.
+17 STO 30                                 ; Store the updated positive quotient.
+18 JMP 23                                 ; Branch via the jump target encoded in line 23 to continue the division loop.
+19 BNUM 00000000000000000000010000000000  ; Spare constant/data word.
+20 BNUM 00000000000000000000010000000000  ; Spare constant/data word.
+21 BNUM 00000000000000000000010000000000  ; Spare constant/data word.
+22 BNUM 00000000000000000000001111000000  ; Spare constant/data word.
+23 BNUM 01000000000000000000000000000000  ; Encoded jump target used by line 18 to loop for another subtraction step.
+24 BNUM 10000000000000000000000000000000  ; Constant 1, used to increment the quotient.
+25 BNUM 00110000000000000000000000000000  ; Encoded jump target used by line 09 to branch to the finish block.
+26 BNUM 00000000000000000000000000000000  ; Scratch: holds -dividend.
+27 BNUM 00000000000000000000000000000000  ; Scratch: holds -divisor.
+28 BNUM 01011001010000000000000000000000  ; Input dividend = 666.
+29 BNUM 01010100000000000000000000000000  ; Input divisor = 42.
+30 BNUM 00000000000000000000000000000000  ; Output quotient (written during the loop).
+31 BNUM 00000000000000000000000000000000  ; Output remainder.
