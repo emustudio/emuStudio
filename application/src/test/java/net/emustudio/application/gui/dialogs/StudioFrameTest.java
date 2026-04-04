@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.GUIImpl;
+import net.emustudio.application.gui.framework.GuiImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
@@ -77,7 +77,7 @@ public class StudioFrameTest extends AbstractSwingTest {
                 createDebugTableModel(),
                 null,
                 fileName,
-                new GUIImpl()
+                new GuiImpl()
         ));
     }
 

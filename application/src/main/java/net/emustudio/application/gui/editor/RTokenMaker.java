@@ -20,8 +20,7 @@ import java.util.Objects;
  * Extends {@link TokenMakerBase} directly (instead of {@code AbstractTokenMaker})
  * to avoid allocating an unused {@code TokenMap} on every construction.
  * Uses {@link LexicalAnalyzer#reset(char[], int, int)} to feed the lexer
- * the Segment's backing char array, converting it to a String that ANTLR's
- * {@code CodePointCharStream} can tokenize with O(1) random access.
+ * the Segment's backing char array directly (zero-copy via {@code CharArrayCharStream}).
  */
 @NotThreadSafe
 public class RTokenMaker extends TokenMakerBase {
@@ -70,10 +69,15 @@ public class RTokenMaker extends TokenMakerBase {
         int textOffset = text.offset;
         int count = text.count;
 
+        // offsetShift translates array indices into document offsets:
+        //   documentOffset = arrayIndex + offsetShift
+        // This is the standard RSyntaxTextArea pattern (see AbstractJFlexTokenMaker).
+        int offsetShift = -textOffset + startOffset;
+
         try {
-            // Feed the lexer the Segment's backing char[] — the implementation
-            // converts it to a String for ANTLR's CodePointCharStream which
-            // provides O(1) random access for efficient lexing.
+            // Feed the lexer the Segment's backing char[] directly.
+            // The LexicalAnalyzer implementation wraps it in a zero-copy
+            // CharArrayCharStream (no String or CharBuffer allocation).
             lexer.reset(array, textOffset, count);
         } catch (Exception ex) {
             LOGGER.error("Could not reset lexer", ex);
@@ -82,7 +86,6 @@ public class RTokenMaker extends TokenMakerBase {
         }
 
         int previousEnd = -1;
-        int previousStartOffset = -1;
 
         while (lexer.hasNext()) {
             net.emustudio.emulib.plugins.compiler.Token token;
@@ -103,30 +106,24 @@ public class RTokenMaker extends TokenMakerBase {
                     break;
                 }
 
-                int tokenMakerType = getTokenMakerType(emuType);
-
-                int tokenStartIndex = token.getOffset();
                 String tokenText = token.getText();
                 if (tokenText == null || tokenText.isEmpty()) {
                     continue; // skip zero-length tokens to prevent end < start
                 }
-                int tokenLength = tokenText.length() - 1;
 
-                int start = textOffset + tokenStartIndex;
-                int end = start + tokenLength;
-                int tokenStartOffset = startOffset + tokenStartIndex;
+                int start = textOffset + token.getOffset();
+                int end = start + tokenText.length() - 1;
+                int tokenMakerType = getTokenMakerType(emuType);
 
-                if (previousEnd == -1 && tokenStartIndex != 0) {
-                    // we have a gap in the beginning! Let's treat this gap as ERROR
-                    addToken(array, textOffset, start - 1, Token.ERROR_CHAR, startOffset);
-                } else if (previousEnd != -1 && start != (previousEnd + 1)) {
-                    // we have a gap in the middle! Let's treat this gap as ERROR
-                    addToken(array, previousEnd + 1, start - 1, Token.ERROR_CHAR, previousStartOffset + 1);
+                // Fill gaps with ERROR tokens (same idea as JFlex's catch-all rules)
+                if (previousEnd == -1 && start != textOffset) {
+                    addToken(array, textOffset, start - 1, Token.ERROR_CHAR, textOffset + offsetShift);
+                } else if (previousEnd != -1 && start != previousEnd + 1) {
+                    addToken(array, previousEnd + 1, start - 1, Token.ERROR_CHAR, previousEnd + 1 + offsetShift);
                 }
                 previousEnd = end;
-                previousStartOffset = tokenStartOffset;
 
-                addToken(array, start, end, tokenMakerType, tokenStartOffset);
+                addToken(array, start, end, tokenMakerType, start + offsetShift);
             } catch (Exception ex) {
                 LOGGER.error("Could not process token", ex);
             }

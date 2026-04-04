@@ -3,7 +3,6 @@
 package net.emustudio.application.gui.framework;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.GUIImpl;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.junit.Rule;
@@ -20,13 +19,13 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class GuiDialogsImplTest extends AbstractSwingTest {
+public class DialogsGuiTest extends AbstractSwingTest {
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
     public void messageAndConfirmationDialogsReturnExpectedAnswers() throws Exception {
-        GuiDialogsImpl dialogs = new GuiDialogsImpl(new GUIImpl());
+        DialogsGui dialogs = new DialogsGui(new GuiImpl());
         dialogs.setParent(showFrame(onEdt(() -> new JFrame("parent"))));
 
         FutureTask<Void> errorTask = startDialogCall(() -> {
@@ -58,24 +57,24 @@ public class GuiDialogsImplTest extends AbstractSwingTest {
 
     @Test
     public void inputAndChooserDialogsReturnParsedValuesAndSelections() throws Exception {
-        GuiDialogsImpl dialogs = new GuiDialogsImpl(new GUIImpl());
+        DialogsGui dialogs = new DialogsGui(new GuiImpl());
         Path baseDirectory = temporaryFolder.newFolder("chooser").toPath();
         FileExtensionsFilter filter = new FileExtensionsFilter("Text", "txt");
 
         FutureTask<Optional<String>> stringTask = startDialogCall(() -> dialogs.readString("Name?"));
-        JDialog stringDialog = waitForWindow(JDialog.class, dialog -> NoGuiDialogsImpl.INPUT_MESSAGE.equals(dialog.getTitle()));
+        JDialog stringDialog = waitForWindow(JDialog.class, dialog -> DialogsNoGui.INPUT_MESSAGE.equals(dialog.getTitle()));
         setText(findComponent(stringDialog, JTextField.class, field -> true), "emu");
         triggerButton(findButton(stringDialog, "OK"));
         assertEquals(Optional.of("emu"), stringTask.get(5, TimeUnit.SECONDS));
 
         FutureTask<Optional<Integer>> integerTask = startDialogCall(() -> dialogs.readInteger("Value?"));
-        JDialog integerDialog = waitForWindow(JDialog.class, dialog -> NoGuiDialogsImpl.INPUT_MESSAGE.equals(dialog.getTitle()));
+        JDialog integerDialog = waitForWindow(JDialog.class, dialog -> DialogsNoGui.INPUT_MESSAGE.equals(dialog.getTitle()));
         setText(findComponent(integerDialog, JTextField.class, field -> true), "0x10");
         triggerButton(findButton(integerDialog, "OK"));
         assertEquals(Optional.of(16), integerTask.get(5, TimeUnit.SECONDS));
 
         FutureTask<Optional<Double>> doubleTask = startDialogCall(() -> dialogs.readDouble("Rate?"));
-        JDialog doubleDialog = waitForWindow(JDialog.class, dialog -> NoGuiDialogsImpl.INPUT_MESSAGE.equals(dialog.getTitle()));
+        JDialog doubleDialog = waitForWindow(JDialog.class, dialog -> DialogsNoGui.INPUT_MESSAGE.equals(dialog.getTitle()));
         setText(findComponent(doubleDialog, JTextField.class, field -> true), "12.5");
         triggerButton(findButton(doubleDialog, "OK"));
         assertEquals(12.5, doubleTask.get(5, TimeUnit.SECONDS).orElseThrow(AssertionError::new), 0.0);

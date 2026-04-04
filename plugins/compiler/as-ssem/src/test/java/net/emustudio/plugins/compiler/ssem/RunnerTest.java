@@ -37,8 +37,25 @@ public class RunnerTest {
     }
 
     @Test
+    public void testCommandLineShortOutput() throws Exception {
+        File sourceFile = folder.newFile();
+        Files.write(sourceFile.toPath(), "0 stp\n".getBytes(), StandardOpenOption.WRITE);
+        File outputFile = folder.newFile();
+
+        Runner.main("-o", outputFile.getPath(), sourceFile.getPath());
+
+        byte[] bytes = Files.readAllBytes(outputFile.toPath());
+        assertEquals(33 * 4, bytes.length);
+    }
+
+    @Test
     public void testCommandLinePrintHelp() {
         Runner.main("--help");
+    }
+
+    @Test
+    public void testCommandLinePrintHelpShort() {
+        Runner.main("-h");
     }
 
     @Test
@@ -49,5 +66,21 @@ public class RunnerTest {
     @Test
     public void testCommandLinePrintVersion() {
         Runner.main("--version");
+    }
+
+    @Test
+    public void testCommandLinePrintVersionShort() {
+        Runner.main("-v");
+    }
+
+    @Test
+    public void testCommandLineNoArguments() {
+        Runner.main();
+    }
+
+    @Test
+    public void testCommandLineOutputWithoutFileSpecified() {
+        // --output is the last argument, no output file follows, no input file either
+        Runner.main("--output");
     }
 }

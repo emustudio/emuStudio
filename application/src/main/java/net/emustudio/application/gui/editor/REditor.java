@@ -38,7 +38,7 @@ import static net.emustudio.emulib.runtime.ui.Constants.FONT_DEFAULT_SIZE;
 public class REditor implements Editor {
     private final static Logger LOGGER = LoggerFactory.getLogger(REditor.class);
 
-    private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE, true);
+    private final TextEditorPane textPane = new TextEditorPane(RTextArea.INSERT_MODE);
     private final RTextScrollPane scrollPane = new RTextScrollPane(textPane);
 
     private final Dialogs dialogs;
@@ -60,7 +60,6 @@ public class REditor implements Editor {
 
         textPane.setCodeFoldingEnabled(false);
         textPane.setEncoding(StandardCharsets.UTF_8.name());
-        textPane.setAnimateBracketMatching(true);
         textPane.setAutoIndentEnabled(true);
         textPane.setBracketMatchingEnabled(true);
         textPane.setAntiAliasingEnabled(true);
@@ -245,6 +244,7 @@ public class REditor implements Editor {
         }
     }
 
+
     @Override
     public String getSelectedText() {
         return textPane.getSelectedText();
@@ -254,6 +254,7 @@ public class REditor implements Editor {
     public Optional<Boolean> findNext() {
         return Optional.ofNullable(lastSearchedContext).map(context -> {
             context.setSearchForward(true);
+            context.setMarkAll(false);
             return SearchEngine.find(textPane, context).wasFound();
         });
     }
@@ -262,6 +263,7 @@ public class REditor implements Editor {
     public Optional<Boolean> findPrevious() {
         return Optional.ofNullable(lastSearchedContext).map(context -> {
             context.setSearchForward(false);
+            context.setMarkAll(false);
             return SearchEngine.find(textPane, context).wasFound();
         });
     }

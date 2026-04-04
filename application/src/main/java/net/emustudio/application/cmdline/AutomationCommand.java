@@ -3,10 +3,10 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.emulation.Automation;
-import net.emustudio.application.gui.GUIImpl;
+import net.emustudio.application.gui.framework.GuiImpl;
 import net.emustudio.application.gui.framework.EmuStudioUI;
-import net.emustudio.application.gui.framework.GuiDialogsImpl;
-import net.emustudio.application.gui.framework.NoGuiDialogsImpl;
+import net.emustudio.application.gui.framework.DialogsGui;
+import net.emustudio.application.gui.framework.DialogsNoGui;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
 import net.emustudio.application.settings.AppSettings;
@@ -46,15 +46,15 @@ public class AutomationCommand implements Runnable {
 
     @Override
     public void run() {
-        Dialogs dialogs = new NoGuiDialogsImpl();
-        GuiDialogsImpl guiDialogs = null;
+        Dialogs dialogs = new DialogsNoGui();
+        DialogsGui guiDialogs = null;
         GUI gui = null;
         try {
             AppSettings appConfig = loadAppSettings(this.gui, true);
             if (this.gui) {
                 EmuStudioUI.initialize(appConfig);
-                gui = new GUIImpl();
-                guiDialogs = new GuiDialogsImpl(gui);
+                gui = new GuiImpl();
+                guiDialogs = new DialogsGui(gui);
                 dialogs = guiDialogs;
             }
 

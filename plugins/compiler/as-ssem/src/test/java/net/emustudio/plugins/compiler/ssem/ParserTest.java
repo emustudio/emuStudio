@@ -158,4 +158,58 @@ public class ParserTest {
     public void testParseTwoInstructionsWithoutEol() {
         parseProgram("01 stp 02 stp");
     }
+
+    @Test
+    public void testParseHexLineNumberWithInstruction() {
+        Program program = parseProgram("0x01 LDN 5");
+        assertInstructions(program, new Utils.ParsedInstruction(1, SSEMParser.LDN, 5));
+    }
+
+    @Test(expected = CompileException.class)
+    public void testDuplicateStartLine() {
+        parseProgram("01 start\n02 start");
+    }
+
+    @Test(expected = CompileException.class)
+    public void testStartLineOutOfBounds() {
+        parseProgram("99 start");
+    }
+
+    @Test(expected = CompileException.class)
+    public void testDuplicateLineDefinition() {
+        parseProgram("01 ldn 5\n01 sub 3");
+    }
+
+    @Test(expected = CompileException.class)
+    public void testNegativeLineOutOfBounds() {
+        parseProgram("-1 stp");
+    }
+
+    @Test
+    public void testParseMultipleEOLs() {
+        Program program = parseProgram("01 stp\n\n\n02 cmp");
+        assertInstructions(
+                program,
+                new Utils.ParsedInstruction(1, SSEMParser.STP, 0),
+                new Utils.ParsedInstruction(2, SSEMParser.CMP, 0)
+        );
+    }
+
+    @Test
+    public void testParseWithHexOperand() {
+        Program program = parseProgram("01 jmp 0x0A");
+        assertInstructions(program, new Utils.ParsedInstruction(1, SSEMParser.JMP, 10));
+    }
+
+    @Test
+    public void testParseNegativeNumberWithNUM() {
+        Program program = parseProgram("01 NUM -100");
+        assertInstructions(program, new Utils.ParsedInstruction(1, SSEMLexer.NUM, -100));
+    }
+
+    @Test
+    public void testParseHexLineWithStart() {
+        Program program = parseProgram("0x05 start\n01 STP");
+        assertEquals(5, program.getStartLine());
+    }
 }

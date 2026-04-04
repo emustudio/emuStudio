@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.GUIImpl;
+import net.emustudio.application.gui.framework.GuiImpl;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -13,7 +13,7 @@ public class LoadingDialogTest extends AbstractSwingTest {
 
     @Test
     public void dialogShowsLoadingInstructions() {
-        LoadingDialog dialog = onEdt(() -> new LoadingDialog(new GUIImpl()));
+        LoadingDialog dialog = onEdt(() -> new LoadingDialog(new GuiImpl()));
 
         showDialog(dialog);
 

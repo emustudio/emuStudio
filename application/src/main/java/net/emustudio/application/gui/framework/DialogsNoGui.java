@@ -11,9 +11,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-public class NoGuiDialogsImpl implements Dialogs {
+public class DialogsNoGui implements Dialogs {
     public final static String INPUT_MESSAGE = "Please insert a value";
-    private final static Logger LOGGER = LoggerFactory.getLogger(NoGuiDialogsImpl.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(DialogsNoGui.class);
 
     public static String formatMessage(String title, String message) {
         return "[" + title + "] " + message;

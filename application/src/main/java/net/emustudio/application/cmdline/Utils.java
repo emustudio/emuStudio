@@ -3,7 +3,7 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.ApplicationApiImpl;
-import net.emustudio.application.gui.framework.GuiDialogsImpl;
+import net.emustudio.application.gui.framework.DialogsGui;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
@@ -67,7 +67,7 @@ public class Utils {
     }
 
     public static Optional<ComputerConfig> loadComputerConfigFromGui(
-            AppSettings appSettings, GuiDialogsImpl dialogs, GUI gui
+            AppSettings appSettings, DialogsGui dialogs, GUI gui
     ) {
         final AtomicReference<ComputerConfig> computerConfig = new AtomicReference<>();
         OpenComputerDialog dialog = new OpenComputerDialog(appSettings, dialogs, computerConfig::set, gui);
@@ -84,7 +84,7 @@ public class Utils {
     }
 
     @SuppressWarnings("unchecked")
-    public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, GuiDialogsImpl dialogs,
+    public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, DialogsGui dialogs,
                                       DebugTableModel debugTableModel, ContextPool contextPool, Optional<Path> inputFile, GUI gui) {
         MemoryContext<?> memoryContext = null;
         try {
