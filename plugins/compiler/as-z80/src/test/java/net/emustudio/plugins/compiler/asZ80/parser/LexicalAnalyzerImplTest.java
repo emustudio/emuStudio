@@ -205,7 +205,7 @@ public class LexicalAnalyzerImplTest {
         assertTokenTypesIgnoreCase("call pe(", OPCODE_CALL, COND_WS, COND_PE, SEP_LPAR, EOF);
         assertTokenTypesIgnoreCase("call pe)", OPCODE_CALL, COND_WS, COND_PE, SEP_RPAR, EOF);
         assertTokenTypesIgnoreCase("call pe,", OPCODE_CALL, COND_WS, COND_PE, SEP_COMMA, EOF);
-        assertTokenTypesIgnoreCase("call pe.", OPCODE_CALL, COND_WS, COND_PE, ERROR, EOF);
+        assertTokenTypesIgnoreCase("call pe.", OPCODE_CALL, COND_WS, ID_IDENTIFIER, EOF);
         assertTokenTypesIgnoreCase("call pe=", OPCODE_CALL, COND_WS, COND_PE, OP_EQUAL, EOF);
         assertTokenTypesIgnoreCase("call pe<", OPCODE_CALL, COND_WS, COND_PE, OP_LT, EOF);
         assertTokenTypesIgnoreCase("call pe&", OPCODE_CALL, COND_WS, COND_PE, OP_AND, EOF);
@@ -286,10 +286,36 @@ public class LexicalAnalyzerImplTest {
     }
 
     @Test
+    public void testDotIdentifier() {
+        assertTokenTypes(".g0", ID_IDENTIFIER, EOF);
+        assertTokenTypes(".label", ID_IDENTIFIER, EOF);
+        assertTokenTypes(".x0 .y1", ID_IDENTIFIER, WS, ID_IDENTIFIER, EOF);
+        assertTokenTypes(".", ID_IDENTIFIER, EOF);
+        assertTokenTypes("foo.bar", ID_IDENTIFIER, EOF);
+        assertTokenTypes("a.b.c", ID_IDENTIFIER, EOF);
+    }
+
+    @Test
     public void testLabel() {
         assertTokenTypes("u: @: ?: _:", ID_LABEL, WS, ID_LABEL, WS, ID_LABEL, WS, ID_LABEL, EOF);
         assertTokenTypes("a@: abc: ZZ_: H005:", ID_LABEL, WS, ID_LABEL, WS, ID_LABEL, WS, ID_LABEL, EOF);
         assertTokenTypes("a:", ID_LABEL, EOF);
+    }
+
+    @Test
+    public void testDotLabel() {
+        assertTokenTypes(".g0:", ID_LABEL, EOF);
+        assertTokenTypes(".label:", ID_LABEL, EOF);
+        assertTokenTypes(".x0: .y1:", ID_LABEL, WS, ID_LABEL, EOF);
+        assertTokenTypes("foo.bar:", ID_LABEL, EOF);
+        assertTokenTypes("a.b.c:", ID_LABEL, EOF);
+    }
+
+    @Test
+    public void testLabelNotFollowedBySpace() {
+        assertTokenTypes(".g0:ld", ID_LABEL, OPCODE_LD, EOF);
+        assertTokenTypes("abc:nop", ID_LABEL, OPCODE_NOP, EOF);
+        assertTokenTypes(".g0:ld a,0", ID_LABEL, OPCODE_LD, WS, REG_A, SEP_COMMA, LIT_NUMBER, EOF);
     }
 
     @Test
