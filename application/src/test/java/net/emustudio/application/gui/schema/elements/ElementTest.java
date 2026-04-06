@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.schema.elements;
 
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.gui.schema.SchemaTestSupport;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.SchemaPoint;

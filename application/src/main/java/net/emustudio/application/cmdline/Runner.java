@@ -3,8 +3,7 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.Resources;
-import net.emustudio.application.gui.framework.GuiImpl;
-import net.emustudio.application.gui.framework.EmuStudioUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.framework.DialogsGui;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
 import net.emustudio.application.gui.dialogs.LoadingDialog;
@@ -13,7 +12,6 @@ import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.ConfigFiles;
 import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
-import net.emustudio.emulib.runtime.ui.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -82,8 +80,8 @@ public class Runner implements Runnable {
         if (!runsSomeCommand) {
             try {
                 AppSettings appConfig = loadAppSettings(true, false);
-                EmuStudioUI.initialize(appConfig);
-                GUI gui = new GuiImpl();
+                EmuStudioGui gui = new EmuStudioGui();
+                gui.initialize(appConfig);
                 DialogsGui dialogs = new DialogsGui(gui);
                 Optional<ComputerConfig> computerConfigOpt = (exclusive != null) ?
                         exclusive.loadConfiguration() :

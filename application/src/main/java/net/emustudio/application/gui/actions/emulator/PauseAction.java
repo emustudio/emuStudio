@@ -9,7 +9,7 @@ import java.awt.event.ActionEvent;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_PAUSE;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_PAUSE;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class PauseAction extends AbstractAction {

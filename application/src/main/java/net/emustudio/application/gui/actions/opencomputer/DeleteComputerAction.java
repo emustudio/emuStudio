@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_REMOVE;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_REMOVE;
 import static net.emustudio.application.settings.ConfigFiles.removeConfiguration;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 

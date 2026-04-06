@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.GuiImpl;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -16,7 +16,7 @@ public class AboutDialogTest extends AbstractSwingTest {
     @Test
     public void dialogBuildsLogoAndVersionLabels() {
         AboutDialog dialog = onEdt(() -> {
-            AboutDialog result = new AboutDialog(new JFrame(), new GuiImpl());
+            AboutDialog result = new AboutDialog(new JFrame(), new EmuStudioGui());
             result.setModal(false);
             return result;
         });

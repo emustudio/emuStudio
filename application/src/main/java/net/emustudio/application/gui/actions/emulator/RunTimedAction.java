@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_RUN_TIMED;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_RUN_TIMED;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 

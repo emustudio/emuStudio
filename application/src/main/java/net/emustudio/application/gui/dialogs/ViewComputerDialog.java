@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.*;
+import static net.emustudio.application.gui.framework.EmuStudioGui.*;
 
 public class ViewComputerDialog extends DialogBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);

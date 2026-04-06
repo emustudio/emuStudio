@@ -3,14 +3,13 @@
 package net.emustudio.application.virtualcomputer;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.PluginConnection;
 import net.emustudio.application.virtualcomputer.VirtualComputer.PluginMeta;
 import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;

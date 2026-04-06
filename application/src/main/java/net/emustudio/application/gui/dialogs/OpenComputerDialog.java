@@ -3,13 +3,12 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.actions.opencomputer.*;
-import net.emustudio.application.gui.framework.EmuStudioUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaPreviewPanel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +37,7 @@ public class OpenComputerDialog extends DialogBase {
     private final SchemaPreviewPanel preview;
     private final AppSettings appSettings;
     private final Dialogs dialogs;
-    private final GUI gui;
+    private final EmuStudioGui gui;
 
     private final AddNewComputerAction addNewComputerAction;
     private final DeleteComputerAction deleteComputerAction;
@@ -49,7 +48,7 @@ public class OpenComputerDialog extends DialogBase {
 
     private final JList<ComputerConfig> lstConfig = new JList<>();
 
-    public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs, Consumer<ComputerConfig> selectComputer, GUI gui) {
+    public OpenComputerDialog(AppSettings appSettings, Dialogs dialogs, Consumer<ComputerConfig> selectComputer, EmuStudioGui gui) {
         super((java.awt.Frame) null, "emuStudio - Open virtual computer", true);
         this.configurationsModel = new ConfigurationsListModel();
         this.appSettings = Objects.requireNonNull(appSettings);
@@ -88,7 +87,7 @@ public class OpenComputerDialog extends DialogBase {
         JButton btnSaveSchemaImage = gui.toolbarButton(saveSchemaAction);
         JScrollPane scrollPreview = gui.scrollPane(preview);
         JButton btnClose = new JButton();
-        JLabel lblLogo = EmuStudioUI.createLogoJLabel();
+        JLabel lblLogo = gui.createLogoJLabel();
 
         lstConfig.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {

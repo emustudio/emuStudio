@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.GuiImpl;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
@@ -85,7 +85,7 @@ public class EditorPanelTest extends AbstractSwingTest {
                 () -> {
                 },
                 () -> CPU.RunState.STATE_STOPPED_BREAK,
-                new GuiImpl()
+                new EmuStudioGui()
         ));
     }
 

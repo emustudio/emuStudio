@@ -19,7 +19,7 @@
  */
 package net.emustudio.application.gui.schema;
 
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.gui.schema.elements.ConnectionLine;
 import net.emustudio.application.gui.schema.elements.Element;
 import net.emustudio.application.gui.schema.mode.ModeSelector;

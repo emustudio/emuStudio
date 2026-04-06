@@ -25,7 +25,7 @@ public class DialogsGuiTest extends AbstractSwingTest {
 
     @Test
     public void messageAndConfirmationDialogsReturnExpectedAnswers() throws Exception {
-        DialogsGui dialogs = new DialogsGui(new GuiImpl());
+        DialogsGui dialogs = new DialogsGui(new EmuStudioGui());
         dialogs.setParent(showFrame(onEdt(() -> new JFrame("parent"))));
 
         FutureTask<Void> errorTask = startDialogCall(() -> {
@@ -57,7 +57,7 @@ public class DialogsGuiTest extends AbstractSwingTest {
 
     @Test
     public void inputAndChooserDialogsReturnParsedValuesAndSelections() throws Exception {
-        DialogsGui dialogs = new DialogsGui(new GuiImpl());
+        DialogsGui dialogs = new DialogsGui(new EmuStudioGui());
         Path baseDirectory = temporaryFolder.newFolder("chooser").toPath();
         FileExtensionsFilter filter = new FileExtensionsFilter("Text", "txt");
 

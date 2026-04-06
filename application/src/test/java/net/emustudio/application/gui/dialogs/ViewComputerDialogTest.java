@@ -5,8 +5,8 @@ package net.emustudio.application.gui.dialogs;
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.GuiImpl;
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.framework.EmuStudioGui;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
@@ -79,7 +79,7 @@ public class ViewComputerDialogTest extends AbstractSwingTest {
     private ViewComputerDialog createDialog(VirtualComputer computer, AppSettings appSettings) {
         return onEdt(() -> {
             ViewComputerDialog dialog = new ViewComputerDialog(
-                    new JFrame(), computer, appSettings, mock(Dialogs.class), new GuiImpl()
+                    new JFrame(), computer, appSettings, mock(Dialogs.class), new EmuStudioGui()
             );
             dialog.setModal(false);
             return dialog;

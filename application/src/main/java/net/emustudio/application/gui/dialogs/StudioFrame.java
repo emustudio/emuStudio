@@ -13,6 +13,7 @@ import net.emustudio.application.gui.actions.editor.SaveFileAsAction;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.editor.Editor;
 import net.emustudio.application.gui.editor.REditor;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -26,7 +27,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_FAVICON;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_FAVICON;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 
@@ -52,7 +53,7 @@ public class StudioFrame extends JFrame {
 
 
     public StudioFrame(VirtualComputer computer, AppSettings appSettings, Dialogs dialogs,
-                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, Optional<Path> fileName, GUI gui) {
+                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, Optional<Path> fileName, EmuStudioGui gui) {
         Objects.requireNonNull(computer);
         this.gui = Objects.requireNonNull(gui);
 

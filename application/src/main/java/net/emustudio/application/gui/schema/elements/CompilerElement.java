@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.schema.elements;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 

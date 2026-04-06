@@ -3,8 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 
-import net.emustudio.application.gui.framework.EmuStudioUI;
-import net.emustudio.emulib.runtime.ui.GUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
@@ -15,9 +14,9 @@ import static net.emustudio.application.Resources.getCopyright;
 import static net.emustudio.application.Resources.getVersion;
 
 public class AboutDialog extends DialogBase {
-    private final GUI gui;
+    private final EmuStudioGui gui;
 
-    public AboutDialog(JFrame parent, GUI gui) {
+    public AboutDialog(JFrame parent, EmuStudioGui gui) {
         super(parent, "About emuStudio", true);
         this.gui = Objects.requireNonNull(gui);
         buildContent();
@@ -27,7 +26,7 @@ public class AboutDialog extends DialogBase {
     protected JComponent initializeComponents() {
         // Main panel with horizontal layout
         JPanel mainPanel = gui.panel("insets 10", "[][grow]", "[]");
-        JLabel lblLogo = EmuStudioUI.createLogoJLabel();
+        JLabel lblLogo = gui.createLogoJLabel();
 
         // Info panel
         JPanel infoPanel = gui.panel("insets 10", "[grow]", "[]");

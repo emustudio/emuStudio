@@ -3,8 +3,7 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.emulation.Automation;
-import net.emustudio.application.gui.framework.GuiImpl;
-import net.emustudio.application.gui.framework.EmuStudioUI;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.framework.DialogsGui;
 import net.emustudio.application.gui.framework.DialogsNoGui;
 import net.emustudio.application.gui.debugtable.DebugTableModelImpl;
@@ -15,7 +14,6 @@ import net.emustudio.application.virtualcomputer.ContextPoolImpl;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.runtime.helpers.RadixUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -48,12 +46,12 @@ public class AutomationCommand implements Runnable {
     public void run() {
         Dialogs dialogs = new DialogsNoGui();
         DialogsGui guiDialogs = null;
-        GUI gui = null;
         try {
             AppSettings appConfig = loadAppSettings(this.gui, true);
+            EmuStudioGui gui = null;
             if (this.gui) {
-                EmuStudioUI.initialize(appConfig);
-                gui = new GuiImpl();
+                gui = new EmuStudioGui();
+                gui.initialize(appConfig);
                 guiDialogs = new DialogsGui(gui);
                 dialogs = guiDialogs;
             }

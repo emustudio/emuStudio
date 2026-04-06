@@ -19,6 +19,10 @@ generateGrammarSource {
 
 compileJava.dependsOn generateGrammarSource
 
+tasks.matching { it.name == 'compileGeneratedJava' }.configureEach {
+  dependsOn generateGrammarSource
+}
+
 sourceSets {
   generated {
     java.srcDir "${buildDir}/generated-src/antlr/main"

@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_ADD;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_ADD;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class OpenComputerAction extends AbstractAction {

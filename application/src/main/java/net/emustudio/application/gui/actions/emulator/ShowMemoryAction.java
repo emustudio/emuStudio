@@ -10,7 +10,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_GRID;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_GRID;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class ShowMemoryAction extends AbstractAction {

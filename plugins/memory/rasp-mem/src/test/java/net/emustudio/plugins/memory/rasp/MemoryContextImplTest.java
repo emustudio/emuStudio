@@ -52,8 +52,6 @@ public class MemoryContextImplTest {
         assertEquals(Integer.class, context.getCellTypeClass());
     }
 
-    // === Read/Write tests ===
-
     @Test
     public void testReadDefaultsToZero() {
         assertEquals(Integer.valueOf(0), context.read(0));
@@ -123,8 +121,6 @@ public class MemoryContextImplTest {
         assertEquals(Integer.valueOf(0), context.read(2));
     }
 
-    // === Size tests ===
-
     @Test
     public void testGetSizeEmpty() {
         assertEquals(0, context.getSize());
@@ -143,8 +139,6 @@ public class MemoryContextImplTest {
         context.write(10, 3);
         assertEquals(20, context.getSize());
     }
-
-    // === Clear tests ===
 
     @Test
     public void testClear() {
@@ -175,8 +169,6 @@ public class MemoryContextImplTest {
         assertTrue(snapshot.inputs.isEmpty());
     }
 
-    // === Labels tests ===
-
     @Test
     public void testSetAndGetLabel() {
         List<RaspLabel> labels = List.of(createLabel(5, "LOOP"));
@@ -202,8 +194,6 @@ public class MemoryContextImplTest {
         assertTrue(context.getLabel(1).isPresent());
     }
 
-    // === Inputs tests ===
-
     @Test
     public void testSetInputs() {
         context.setInputs(List.of(10, 20, 30));
@@ -220,8 +210,6 @@ public class MemoryContextImplTest {
         RaspMemoryContext.RaspMemory snapshot = context.getSnapshot();
         assertEquals(List.of(3, 4, 5), snapshot.inputs);
     }
-
-    // === Snapshot tests ===
 
     @Test
     public void testGetSnapshot() {
@@ -249,8 +237,6 @@ public class MemoryContextImplTest {
         // Snapshot should still have old value
         assertEquals(Integer.valueOf(100), snapshot.programMemory.get(0));
     }
-
-    // === Serialize/Deserialize tests ===
 
     @Test
     public void testSerializeAndDeserialize() throws Exception {
@@ -292,8 +278,6 @@ public class MemoryContextImplTest {
         context.deserialize("/nonexistent/file.rasp", i -> {});
     }
 
-    // === RaspMemoryContext default method tests ===
-
     @Test
     public void testIsInstructionValidOpcode() {
         assertTrue(context.isInstruction(1));  // READ
@@ -320,8 +304,6 @@ public class MemoryContextImplTest {
         assertEquals(Optional.empty(), context.disassembleMnemo(0));
         assertEquals(Optional.empty(), context.disassembleMnemo(100));
     }
-
-    // === RaspMemory tests ===
 
     @Test
     public void testRaspMemoryEmptyCollections() {
@@ -372,8 +354,6 @@ public class MemoryContextImplTest {
         }
     }
 
-    // === Serialize edge cases ===
-
     @Test
     public void testSerializeEmptyMemory() throws Exception {
         File file = tmpFolder.newFile("empty.rasp");
@@ -411,8 +391,6 @@ public class MemoryContextImplTest {
         context2.destroy();
     }
 
-    // === Write array overwriting existing addresses ===
-
     @Test
     public void testWriteArrayOverwriteExisting() {
         context.write(5, 1);
@@ -424,8 +402,6 @@ public class MemoryContextImplTest {
         assertEquals(Integer.valueOf(10), context.read(5));
         assertEquals(Integer.valueOf(20), context.read(6));
     }
-
-    // === Multiple labels ===
 
     @Test
     public void testSetMultipleLabels() {
@@ -440,8 +416,6 @@ public class MemoryContextImplTest {
         assertEquals("C", context.getLabel(10).get().getLabel());
         assertFalse(context.getLabel(3).isPresent());
     }
-
-    // === Deserialize clears previous state ===
 
     @Test
     public void testDeserializeClearsPreviousState() throws Exception {
@@ -476,8 +450,6 @@ public class MemoryContextImplTest {
         assertEquals("NEW", context.getLabel(0).get().getLabel());
         assertEquals(List.of(10), context.getSnapshot().inputs);
     }
-
-    // === Helper methods ===
 
     private RaspLabel createLabel(int address, String label) {
         return new RaspLabel() {
