@@ -12,8 +12,6 @@ import static org.junit.Assert.*;
 
 public class RTokenMakerTest {
 
-    // --- getTokenList: lexer consumption ---
-
     @Test
     public void testConsumesLexerViaNextHasNextNotIterator() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
@@ -39,8 +37,6 @@ public class RTokenMakerTest {
 
         assertEquals("MOV A,B", lexer.lastResetInput);
     }
-
-    // --- getTokenList: null termination ---
 
     @Test
     public void testTokenListAlwaysEndsWithNullToken() {
@@ -80,8 +76,6 @@ public class RTokenMakerTest {
         assertNotNull("Must return a token list even with no lexer output", head);
         assertEquals(org.fife.ui.rsyntaxtextarea.Token.NULL, head.getType());
     }
-
-    // --- getTokenList: single token + type mapping ---
 
     @Test
     public void testReservedMapsToReservedWord() {
@@ -154,8 +148,6 @@ public class RTokenMakerTest {
         // Use a type that doesn't match any case in the switch (e.g. 0xFFFF)
         assertSingleTokenType("?", 0xFFFF, org.fife.ui.rsyntaxtextarea.Token.WHITESPACE);
     }
-
-    // --- getTokenList: multiple tokens ---
 
     @Test
     public void testMultipleTokensFormLinkedList() {
@@ -242,8 +234,6 @@ public class RTokenMakerTest {
         assertEquals(50, tokens.get(0).getOffset());
     }
 
-    // --- getTokenList: gap detection ---
-
     @Test
     public void testGapAtBeginningProducesErrorToken() {
         // Lexer reports first token starting at offset 2, but text starts at 0 → gap [0,1]
@@ -313,8 +303,6 @@ public class RTokenMakerTest {
             assertNotEquals("No error gap expected", org.fife.ui.rsyntaxtextarea.Token.ERROR_CHAR, t.getType());
         }
     }
-
-    // --- getTokenList: exception handling ---
 
     @Test
     public void testLexerNextExceptionBreaksLoopAndProducesNullTerminator() {
@@ -424,8 +412,6 @@ public class RTokenMakerTest {
         assertEquals(org.fife.ui.rsyntaxtextarea.Token.NULL, lastToken(head).getType());
     }
 
-    // --- getTokenList: edge cases ---
-
     @Test
     public void testEmptyTokenTextIsSkipped() {
         // A token with empty text should be skipped to prevent end < start corruption
@@ -468,8 +454,6 @@ public class RTokenMakerTest {
         assertEquals(org.fife.ui.rsyntaxtextarea.Token.NULL, tokens.get(1).getType());
     }
 
-    // --- getTokenList: repeated calls ---
-
     @Test
     public void testRepeatedCallsResetState() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
@@ -496,8 +480,6 @@ public class RTokenMakerTest {
         }
     }
 
-    // --- getTokenList: EOF does not appear as a real token ---
-
     @Test
     public void testEofTokenIsNotIncludedAsRealToken() {
         TrackingLexicalAnalyzer lexer = new TrackingLexicalAnalyzer(
@@ -518,8 +500,6 @@ public class RTokenMakerTest {
         assertEquals(org.fife.ui.rsyntaxtextarea.Token.NULL, tokens.get(1).getType());
     }
 
-
-    // ---- Helpers ----
 
     private static Segment segment(String text) {
         return new Segment(text.toCharArray(), 0, text.length());

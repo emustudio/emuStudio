@@ -111,8 +111,6 @@ public class UARTTest {
         verify(context);
     }
 
-    // --- New tests below ---
-
     @Test
     public void testReadBufferWhenEmptyReturnsZero() {
         UART uart = new UART(context, settings);

@@ -15,8 +15,6 @@ public class CompilerChecksTest {
 
     private static final SourceCodePosition POS = new SourceCodePosition(1, 0, "test.ssem");
 
-    // --- checkStartLineDefined ---
-
     @Test
     public void testCheckStartLineDefinedDoesNotThrowWhenNotDefined() {
         CompilerChecks.checkStartLineDefined(false, POS, 0);
@@ -27,8 +25,6 @@ public class CompilerChecksTest {
     public void testCheckStartLineDefinedThrowsWhenAlreadyDefined() {
         CompilerChecks.checkStartLineDefined(true, POS, 5);
     }
-
-    // --- checkLineOutOfBounds ---
 
     @Test
     public void testCheckLineOutOfBoundsAcceptsValidLine() {
@@ -47,8 +43,6 @@ public class CompilerChecksTest {
         CompilerChecks.checkLineOutOfBounds(POS, 32);
     }
 
-    // --- checkDuplicateLineDefinition ---
-
     @Test
     public void testCheckDuplicateLineDefinitionDoesNotThrowWhenNoDuplicate() {
         CompilerChecks.checkDuplicateLineDefinition(false, POS, 1);
@@ -59,8 +53,6 @@ public class CompilerChecksTest {
         CompilerChecks.checkDuplicateLineDefinition(true, POS, 1);
     }
 
-    // --- checkUnknownInstruction ---
-
     @Test
     public void testCheckUnknownInstructionDoesNotThrowWhenKnown() {
         CompilerChecks.checkUnknownInstruction(false, POS);
@@ -70,8 +62,6 @@ public class CompilerChecksTest {
     public void testCheckUnknownInstructionThrowsWhenUnknown() {
         CompilerChecks.checkUnknownInstruction(true, POS);
     }
-
-    // --- checkOperandOutOfBounds ---
 
     @Test
     public void testCheckOperandOutOfBoundsAcceptsValidOperand() {
@@ -100,8 +90,6 @@ public class CompilerChecksTest {
         // NUM can have operands out of 0-31 range
         CompilerChecks.checkOperandOutOfBounds(POS, SSEMLexer.NUM, 99999);
     }
-
-    // --- checkedParseNumber ---
 
     @Test
     public void testCheckedParseNumberSuccess() {

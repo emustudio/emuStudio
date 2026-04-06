@@ -23,8 +23,6 @@ public class AbstractTapeContextImplTest {
         context = new AbstractTapeContextImpl(lastTitle::set);
     }
 
-    // --- Initial state ---
-
     @Test
     public void testInitiallyEmpty() {
         assertTrue(context.isEmpty());
@@ -68,8 +66,6 @@ public class AbstractTapeContextImplTest {
         assertFalse(context.getShowPositions());
     }
 
-    // --- Accept types ---
-
     @Test
     public void testSetAcceptTypes() {
         context.setAcceptTypes(TapeSymbol.Type.NUMBER);
@@ -89,15 +85,11 @@ public class AbstractTapeContextImplTest {
         context.setSymbolAt(0, new TapeSymbol(42));
     }
 
-    // --- Title ---
-
     @Test
     public void testSetTitle() {
         context.setTitle("My Tape");
         assertEquals("My Tape", lastTitle.get());
     }
-
-    // --- Left bounded ---
 
     @Test
     public void testSetLeftBounded() {
@@ -105,15 +97,11 @@ public class AbstractTapeContextImplTest {
         assertTrue(context.isLeftBounded());
     }
 
-    // --- Editable ---
-
     @Test
     public void testSetEditable() {
         context.setEditable(false);
         assertFalse(context.getEditable());
     }
-
-    // --- Highlight ---
 
     @Test
     public void testSetHighlightHeadPosition() {
@@ -121,15 +109,11 @@ public class AbstractTapeContextImplTest {
         assertFalse(context.highlightCurrentPosition());
     }
 
-    // --- Show positions ---
-
     @Test
     public void testSetShowPositions() {
         context.setShowPositions(true);
         assertTrue(context.getShowPositions());
     }
-
-    // --- Move right ---
 
     @Test
     public void testMoveRight() {
@@ -144,8 +128,6 @@ public class AbstractTapeContextImplTest {
         context.moveRight();
         assertEquals(3, context.getHeadPosition());
     }
-
-    // --- Move left ---
 
     @Test
     public void testMoveLeftUnboundedFromZeroKeepsAtZero() {
@@ -187,8 +169,6 @@ public class AbstractTapeContextImplTest {
         assertEquals(0, context.getHeadPosition());
     }
 
-    // --- writeData / readData ---
-
     @Test
     public void testWriteAndReadData() {
         TapeSymbol symbol = new TapeSymbol(42);
@@ -207,8 +187,6 @@ public class AbstractTapeContextImplTest {
         context.moveLeft();
         assertEquals(new TapeSymbol(1), context.readData());
     }
-
-    // --- setSymbolAt / getSymbolAt ---
 
     @Test
     public void testSetAndGetSymbolAt() {
@@ -235,8 +213,6 @@ public class AbstractTapeContextImplTest {
         assertEquals(1, context.getSize());
     }
 
-    // --- removeSymbolAt ---
-
     @Test
     public void testRemoveSymbolAt() {
         context.setSymbolAt(0, new TapeSymbol(1));
@@ -255,8 +231,6 @@ public class AbstractTapeContextImplTest {
         context.removeSymbolAt(10); // no-op, should not throw
         assertTrue(context.isEmpty());
     }
-
-    // --- getSymbolAtIndex ---
 
     @Test
     public void testGetSymbolAtIndex() {
@@ -287,8 +261,6 @@ public class AbstractTapeContextImplTest {
         assertEquals(TapeSymbol.EMPTY, entry.getValue());
     }
 
-    // --- addFirst ---
-
     @Test
     public void testAddFirstOnUnboundedTape() {
         context.setSymbolAt(0, new TapeSymbol(1));
@@ -316,8 +288,6 @@ public class AbstractTapeContextImplTest {
         context.addFirst(new TapeSymbol("text"));
     }
 
-    // --- addLast ---
-
     @Test
     public void testAddLastOnEmptyTape() {
         context.addLast(new TapeSymbol(99));
@@ -341,8 +311,6 @@ public class AbstractTapeContextImplTest {
         context.addLast(new TapeSymbol(42));
     }
 
-    // --- clear ---
-
     @Test
     public void testClearResetsContentAndPosition() {
         context.setSymbolAt(0, new TapeSymbol(1));
@@ -354,8 +322,6 @@ public class AbstractTapeContextImplTest {
         assertEquals(0, context.getSize());
         assertEquals(0, context.getHeadPosition());
     }
-
-    // --- reset ---
 
     @Test
     public void testResetWithClearAtResetTrue() {
@@ -380,8 +346,6 @@ public class AbstractTapeContextImplTest {
         assertEquals(0, context.getHeadPosition());
     }
 
-    // --- getSize ---
-
     @Test
     public void testGetSizeAfterAddingSymbols() {
         context.setSymbolAt(0, new TapeSymbol(1));
@@ -396,8 +360,6 @@ public class AbstractTapeContextImplTest {
         context.removeSymbolAt(0);
         assertEquals(1, context.getSize());
     }
-
-    // --- Listener ---
 
     @Test
     public void testListenerNotifiedOnWriteData() {
@@ -486,8 +448,6 @@ public class AbstractTapeContextImplTest {
         context.setListener(null);
         context.writeData(new TapeSymbol(1)); // should not throw
     }
-
-    // --- Complex scenarios ---
 
     @Test
     public void testMultipleMovesAndWrites() {

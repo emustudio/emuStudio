@@ -199,8 +199,6 @@ public class VirtualComputerTest {
         );
     }
 
-    // --- Helpers ---
-
     private static PluginConfig pluginConfig(String id, PLUGIN_TYPE pluginType) {
         return PluginConfig.create(id, pluginType, id, "/tmp/" + id + ".jar", P.of(0, 0), Config.inMemory());
     }
@@ -230,8 +228,6 @@ public class VirtualComputerTest {
             this.meta = meta;
         }
     }
-
-    // --- Minimal plugin stubs for reflection-based construction ---
 
     public static final class TestCompilerPlugin implements Compiler {
         static long lastPluginId = -1;

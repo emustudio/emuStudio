@@ -24,8 +24,6 @@ public class KeyboardDispatcherTest {
         return new KeyboardDispatcher(() -> false);
     }
 
-    // --- addOnKeyListener ---
-
     @Test(expected = NullPointerException.class)
     public void testAddNullListenerThrowsNpe() {
         KeyboardDispatcher dispatcher = focused();
@@ -41,8 +39,6 @@ public class KeyboardDispatcherTest {
     public void testNullFocusCheckThrowsNpe() {
         new KeyboardDispatcher((KeyboardDispatcher.FocusCheck) null);
     }
-
-    // --- dispatchKeyEvent (with focused target window) ---
 
     @Test
     public void testEventIsForwardedToSingleListener() {
@@ -126,8 +122,6 @@ public class KeyboardDispatcherTest {
         assertFalse(result);
     }
 
-    // --- Window-scoped dispatch ---
-
     @Test
     public void testEventNotDispatchedWhenTargetNotFocused() {
         KeyboardDispatcher dispatcher = unfocused();
@@ -167,8 +161,6 @@ public class KeyboardDispatcherTest {
         assertEquals(1, listener.events.size());
     }
 
-    // --- close ---
-
     @Test
     public void testCloseRemovesAllListeners() {
         KeyboardDispatcher dispatcher = focused();
@@ -192,8 +184,6 @@ public class KeyboardDispatcherTest {
         dispatcher.dispatchKeyEvent(keyPressed(KeyEvent.VK_I));
         assertEquals(1, listener.events.size());
     }
-
-    // --- Helpers ---
 
     private static KeyEvent keyPressed(int keyCode) {
         return new KeyEvent(DUMMY, KeyEvent.KEY_PRESSED, 0, 0, keyCode, KeyEvent.CHAR_UNDEFINED);

@@ -13,8 +13,6 @@ public class BeeperTest {
     private static final int TEST_SAMPLE_RATE = 100;
     private static final long CYCLES_PER_SAMPLE = ZX_48K_CPU_FREQUENCY / TEST_SAMPLE_RATE; // 35_000
 
-    // --- Constructor ---
-
     @Test(expected = IllegalArgumentException.class)
     public void testConstructorRejectsZeroSampleRate() {
         new Beeper(AudioSink.NULL, 0);
@@ -30,15 +28,11 @@ public class BeeperTest {
         new Beeper(null, TEST_SAMPLE_RATE);
     }
 
-    // --- getSampleRate ---
-
     @Test
     public void testGetSampleRateReturnsConstructorValue() {
         Beeper beeper = new Beeper(AudioSink.NULL, 44_100);
         assertEquals(44_100, beeper.getSampleRate());
     }
-
-    // --- Factory methods ---
 
     @Test
     public void testSilentBeeperDoesNotThrow() {
@@ -47,8 +41,6 @@ public class BeeperTest {
         beeper.passedCycles(CYCLES_PER_SAMPLE);
         beeper.close();
     }
-
-    // --- setLevel + passedCycles ---
 
     @Test
     public void testHighLevelProducesNonZeroStereoSamples() {
@@ -115,8 +107,6 @@ public class BeeperTest {
         assertFalse("Audio should not start until first true level", containsNonZero(sink.toShortArray()));
     }
 
-    // --- setLevel weighted levels ---
-
     @Test
     public void testWeightedLevelOrdering() {
         // Issue 3 voltage levels: 0.34V (off/off) < 0.66V (off/on) < 3.56V (on/off) < 3.70V (on/on)
@@ -169,8 +159,6 @@ public class BeeperTest {
         // Issue 3 has four distinct voltage levels — EAR+MIC is slightly above EAR-only
         assertNotEquals(earOnly, bothOn);
     }
-
-    // --- passedCycles edge cases ---
 
     @Test
     public void testZeroCyclesProducesNoSamples() {
@@ -244,8 +232,6 @@ public class BeeperTest {
         assertEquals(10, sink.toShortArray().length);
     }
 
-    // --- Volume ---
-
     @Test
     public void testDefaultVolumeIs100() {
         Beeper beeper = new Beeper(AudioSink.NULL, TEST_SAMPLE_RATE);
@@ -306,8 +292,6 @@ public class BeeperTest {
                 Math.abs(samples[3]) < Math.abs(samples[0]) / 10);
     }
 
-    // --- Reset ---
-
     @Test
     public void testResetClearsPendingAudioAndReturnsSilence() {
         RecordingAudioSink sink = new RecordingAudioSink();
@@ -357,8 +341,6 @@ public class BeeperTest {
         assertTrue("setLevel(true) after reset should restart audio", containsNonZero(sink.toShortArray()));
     }
 
-    // --- Close / flushing ---
-
     @Test
     public void testCloseFlushesPartialBatch() {
         RecordingAudioSink sink = new RecordingAudioSink();
@@ -393,8 +375,6 @@ public class BeeperTest {
 
         beeper.close();
     }
-
-    // --- Recording sink ---
 
     @Test
     public void testRecordingSinkReceivesSameDataAsPrimary() {
@@ -432,8 +412,6 @@ public class BeeperTest {
         beeper.close();
     }
 
-    // --- Tape input ---
-
     @Test
     public void testTapeInputStartsAudio() {
         RecordingAudioSink sink = new RecordingAudioSink();
@@ -468,8 +446,6 @@ public class BeeperTest {
         assertTrue("Tape input alone should produce non-zero audio", containsNonZero(samples));
     }
 
-    // --- flushRecordingBuffer ---
-
     @Test
     public void testFlushRecordingBufferForcesPartialBatchToSinks() {
         RecordingAudioSink primary = new RecordingAudioSink();
@@ -503,8 +479,6 @@ public class BeeperTest {
         beeper.close();
     }
 
-    // --- setRecordingSink ---
-
     @Test(expected = NullPointerException.class)
     public void testSetRecordingSinkRejectsNull() {
         Beeper beeper = new Beeper(AudioSink.NULL, TEST_SAMPLE_RATE);
@@ -531,6 +505,7 @@ public class BeeperTest {
         // Recording should not have received the second batch
         assertEquals(recordingLengthBefore, recording.toShortArray().length);
     }
+
     @Test
     public void testAllFramesAreStereoPaired() {
         RecordingAudioSink sink = new RecordingAudioSink();
@@ -548,8 +523,6 @@ public class BeeperTest {
 
         assertStereoFrames(sink.toShortArray());
     }
-
-    // --- Melody integration test ---
 
     @Test
     public void testSquareWaveMelodyContainsBothPolarities() {
@@ -575,8 +548,6 @@ public class BeeperTest {
         assertTrue("Melody should contain negative samples", containsNegative(samples));
         assertStereoFrames(samples);
     }
-
-    // ---- Helpers ----
 
     private short sampleForLevel(boolean earOn, boolean micOn) {
         RecordingAudioSink sink = new RecordingAudioSink();

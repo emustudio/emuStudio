@@ -228,8 +228,6 @@ public class CompilerTest extends AbstractCompilerTest {
         assertTrue(sourceFile.getParentFile().toPath().resolve("test-ram.bram").toFile().exists());
     }
 
-    // --- New tests for increased coverage ---
-
     @Test
     public void testHexNumber1() throws Exception {
         compile("READ 0x0A");

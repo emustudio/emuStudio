@@ -143,8 +143,6 @@ public class CompilerTest extends AbstractCompilerTest {
         assertNotEquals("(unknown)", compiler.getCopyright());
     }
 
-    // --- New tests for increased coverage ---
-
     @Test
     public void testGetDescription() {
         assertNotNull(compiler.getDescription());

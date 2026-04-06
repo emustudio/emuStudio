@@ -172,8 +172,6 @@ public class ULATest {
         assertEquals(0xFF, bus.interruptData.get(0)[0] & 0xFF);
     }
 
-    // --- Border color ---
-
     @Test
     public void testWriteSetsBorderColorFromLowest3Bits() {
         MockBus bus = new MockBus();
@@ -198,8 +196,6 @@ public class ULATest {
         assertEquals(7, ula.getBorderColor());
     }
 
-    // --- clearInterrupt ---
-
     @Test
     public void testClearInterruptDelegatesToBus() {
         MockBus bus = new MockBus();
@@ -209,8 +205,6 @@ public class ULATest {
         ula.clearInterrupt();
         assertEquals(1, bus.interruptClears);
     }
-
-    // --- getName / toString ---
 
     @Test
     public void testGetNameReturnsULAIdentifier() {
@@ -227,8 +221,6 @@ public class ULATest {
 
         assertEquals("ZX-Spectrum48K ULA", ula.toString());
     }
-
-    // --- Tape input mixing ---
 
     @Test
     public void testPassedCyclesMixesTapeInputIntoBeeper() {
@@ -259,8 +251,6 @@ public class ULATest {
         assertEquals(0, beeper.tapeInValues.size());
     }
 
-    // --- Keyboard: KEY_TYPED ignored ---
-
     @Test
     public void testKeyTypedEventIsIgnored() {
         MockBus bus = new MockBus();
@@ -271,8 +261,6 @@ public class ULATest {
         boolean handled = ula.onKeyEvent(typed);
         assertFalse("KEY_TYPED should be ignored", handled);
     }
-
-    // --- Keyboard: Symbol shift (CTRL modifier) ---
 
     @Test
     public void testCtrlModifierPressesSymbolShift() {
@@ -292,8 +280,6 @@ public class ULATest {
         ula.onKeyEvent(keyPressed(KeyEvent.VK_Z, KeyEvent.ALT_DOWN_MASK));
         assertTrue(ula.isKeyPressed((byte) 7, (byte) 2));
     }
-
-    // --- Keyboard: Backspace/Delete -> SHIFT + 0 ---
 
     @Test
     public void testBackspaceMapsToShiftPlusZero() {
@@ -315,8 +301,6 @@ public class ULATest {
         assertTrue("SHIFT should be pressed", ula.isKeyPressed((byte) 0, (byte) 1));
         assertTrue("0 should be pressed", ula.isKeyPressed((byte) 4, (byte) 1));
     }
-
-    // --- Audio delegation ---
 
     @Test
     public void testGetAudioSampleRateDelegatesToBeeper() {
@@ -346,8 +330,6 @@ public class ULATest {
         assertEquals(42, ula.getAudioVolumePercent());
     }
 
-    // --- readLine ---
-
     @Test
     public void testReadLineSingleLinePopulatesVideoAndAttributeMemory() {
         MockBus bus = new MockBus();
@@ -364,8 +346,6 @@ public class ULATest {
         assertEquals((byte) 0x38, ula.attributeMemory[0][0]);
     }
 
-    // --- Port address filtering ---
-
     @Test
     public void testReadWithOddPortAddressReturnsDefault() {
         MockBus bus = new MockBus();
@@ -378,8 +358,6 @@ public class ULATest {
         assertEquals(0xBF, result);
     }
 
-    // --- Colon (sym shift + Z) ---
-
     @Test
     public void testColonKeyMapsToSymShiftPlusZ() {
         MockBus bus = new MockBus();
@@ -390,8 +368,6 @@ public class ULATest {
         assertTrue("SYM SHIFT should be pressed", ula.isKeyPressed((byte) 7, (byte) 2));
         assertTrue("Z should be pressed", ula.isKeyPressed((byte) 0, (byte) 2));
     }
-
-    // --- Enter ---
 
     @Test
     public void testEnterKeyMapsCorrectly() {
@@ -413,8 +389,6 @@ public class ULATest {
         assertFalse(ula.isKeyPressed((byte) 6, (byte) 1));
     }
 
-    // --- Space ---
-
     @Test
     public void testSpaceKeyMapsCorrectly() {
         MockBus bus = new MockBus();
@@ -424,8 +398,6 @@ public class ULATest {
         // Space = line 7, value 1
         assertTrue(ula.isKeyPressed((byte) 7, (byte) 1));
     }
-
-    // --- Unknown key with shift/symshift modifiers ---
 
     @Test
     public void testUnknownKeyWithShiftHeldPressesShiftInMatrix() {
@@ -453,8 +425,6 @@ public class ULATest {
         assertFalse(ula.isKeyPressed((byte) 0, (byte) 1));
         assertFalse(ula.isKeyPressed((byte) 7, (byte) 2));
     }
-
-    // --- EAR input bit in port read ---
 
     @Test
     public void testEarInputBitReflectsBusData() {

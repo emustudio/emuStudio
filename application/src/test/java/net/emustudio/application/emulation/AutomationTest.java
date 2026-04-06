@@ -151,8 +151,6 @@ public class AutomationTest {
         verify(progressDialog).dispose();
     }
 
-    // --- Helpers ---
-
     private void stubCompilation(CompilerMessage.MessageType messageType, String message) throws Exception {
         AtomicReference<CompilerListener> listener = new AtomicReference<>();
         doAnswer(inv -> { listener.set(inv.getArgument(0)); return null; })
