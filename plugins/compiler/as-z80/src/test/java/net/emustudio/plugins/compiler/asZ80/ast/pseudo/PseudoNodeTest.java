@@ -20,17 +20,17 @@ public class PseudoNodeTest {
     @Test
     public void testLabelEvalWithAddress() {
         PseudoLabel label = new PseudoLabel(POS, "loop");
-        Optional<Evaluated> result = label.eval(Optional.of(100), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(100, result.get().value);
-        assertTrue(result.get().isAddress);
+        Evaluated result = label.eval(100, new NameSpace());
+        assertNotNull(result);
+        assertEquals(100, result.value);
+        assertTrue(result.isAddress);
     }
 
     @Test
     public void testLabelEvalWithoutAddress() {
         PseudoLabel label = new PseudoLabel(POS, "loop");
-        Optional<Evaluated> result = label.eval(Optional.empty(), new NameSpace());
-        assertFalse(result.isPresent());
+        Evaluated result = label.eval(null, new NameSpace());
+        assertNull(result);
     }
 
     @Test

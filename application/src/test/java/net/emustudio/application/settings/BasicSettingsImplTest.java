@@ -7,6 +7,7 @@ import net.emustudio.emulib.runtime.settings.BasicSettings;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -58,7 +59,7 @@ public class BasicSettingsImplTest {
 
         assertEquals("fallback", settings.getString("missing", "fallback"));
         assertEquals(9, settings.getInt("missingInt", 9));
-        assertEquals(Arrays.asList("x"), settings.getArray("missingArray", Arrays.asList("x")));
+        assertEquals(List.of("x"), settings.getArray("missingArray", List.of("x")));
         assertTrue(settings.getSubSettings("nested").isPresent());
         assertEquals(Optional.of("hello"), settings.getSubSettings("nested").get().getString("message"));
         assertEquals(2, saveCalls.get());

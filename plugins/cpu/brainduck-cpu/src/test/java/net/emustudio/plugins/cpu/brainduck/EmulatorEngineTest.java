@@ -120,8 +120,6 @@ public class EmulatorEngineTest {
         assertEquals(10, engine.P);
     }
 
-    // --- New basic instruction tests ---
-
     @Test
     public void testStopInstruction() {
         resetProgram(I_STOP);

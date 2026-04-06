@@ -175,45 +175,45 @@ public class NodeTest {
     @Test
     public void testDefaultEvalReturnsEmpty() {
         DataDB node = new DataDB(POS);
-        assertFalse(node.eval(Optional.of(0), new NameSpace()).isPresent());
+        assertNull(node.eval(0, new NameSpace()));
     }
 
     @Test
     public void testSetMaxValue() {
         ExprNumber node = new ExprNumber(POS, 42);
         node.setMaxValue(0xFF);
-        assertTrue(node.getMaxValue().isPresent());
-        assertEquals(0xFF, node.getMaxValue().get().intValue());
-        assertTrue(node.getSizeBytes().isPresent());
-        assertEquals(1, node.getSizeBytes().get().intValue());
+        assertNotNull(node.getMaxValue());
+        assertEquals(0xFF, node.getMaxValue().intValue());
+        assertNotNull(node.getSizeBytes());
+        assertEquals(1, node.getSizeBytes().intValue());
     }
 
     @Test
     public void testSetMaxValue2Bytes() {
         ExprNumber node = new ExprNumber(POS, 42);
         node.setMaxValue(0xFFFF);
-        assertTrue(node.getMaxValue().isPresent());
-        assertEquals(0xFFFF, node.getMaxValue().get().intValue());
-        assertTrue(node.getSizeBytes().isPresent());
-        assertEquals(2, node.getSizeBytes().get().intValue());
+        assertNotNull(node.getMaxValue());
+        assertEquals(0xFFFF, node.getMaxValue().intValue());
+        assertNotNull(node.getSizeBytes());
+        assertEquals(2, node.getSizeBytes().intValue());
     }
 
     @Test
     public void testSetSizeBytes() {
         ExprNumber node = new ExprNumber(POS, 42);
         node.setSizeBytes(2);
-        assertTrue(node.getSizeBytes().isPresent());
-        assertEquals(2, node.getSizeBytes().get().intValue());
-        assertTrue(node.getMaxValue().isPresent());
-        assertEquals(0xFFFF, node.getMaxValue().get().intValue());
+        assertNotNull(node.getSizeBytes());
+        assertEquals(2, node.getSizeBytes().intValue());
+        assertNotNull(node.getMaxValue());
+        assertEquals(0xFFFF, node.getMaxValue().intValue());
     }
 
     @Test
     public void testSetSizeBytes1() {
         ExprNumber node = new ExprNumber(POS, 42);
         node.setSizeBytes(1);
-        assertEquals(1, node.getSizeBytes().get().intValue());
-        assertEquals(0xFF, node.getMaxValue().get().intValue());
+        assertEquals(1, node.getSizeBytes().intValue());
+        assertEquals(0xFF, node.getMaxValue().intValue());
     }
 
     @Test
@@ -227,7 +227,7 @@ public class NodeTest {
         assertEquals(parent.getClass(), copied.getClass());
         assertEquals(1, copied.getChildren().size());
         assertEquals(child, copied.getChild(0));
-        assertTrue(copied.getChild(0).getMaxValue().isPresent());
+        assertNotNull(copied.getChild(0).getMaxValue());
     }
 
     @Test
@@ -279,4 +279,3 @@ public class NodeTest {
         new DataDB(null);
     }
 }
-

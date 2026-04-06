@@ -3,14 +3,13 @@
 package net.emustudio.application.virtualcomputer;
 
 import com.electronwill.nightconfig.core.Config;
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.settings.PluginConfig;
 import net.emustudio.application.settings.PluginConnection;
 import net.emustudio.application.virtualcomputer.VirtualComputer.PluginMeta;
 import net.emustudio.emulib.plugins.Plugin;
-import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.compiler.Compiler;
 import net.emustudio.emulib.plugins.compiler.CompilerListener;
@@ -200,8 +199,6 @@ public class VirtualComputerTest {
         );
     }
 
-    // --- Helpers ---
-
     private static PluginConfig pluginConfig(String id, PLUGIN_TYPE pluginType) {
         return PluginConfig.create(id, pluginType, id, "/tmp/" + id + ".jar", P.of(0, 0), Config.inMemory());
     }
@@ -231,8 +228,6 @@ public class VirtualComputerTest {
             this.meta = meta;
         }
     }
-
-    // --- Minimal plugin stubs for reflection-based construction ---
 
     public static final class TestCompilerPlugin implements Compiler {
         static long lastPluginId = -1;

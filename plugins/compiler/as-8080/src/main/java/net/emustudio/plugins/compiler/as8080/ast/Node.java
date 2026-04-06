@@ -100,8 +100,8 @@ public abstract class Node {
         this.address = address;
     }
 
-    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return Optional.empty();
+    public Evaluated eval(Integer currentAddress, NameSpace env) {
+        return null;
     }
 
     public void accept(NodeVisitor visitor) {

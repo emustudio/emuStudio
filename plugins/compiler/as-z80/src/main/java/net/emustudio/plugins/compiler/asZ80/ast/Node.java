@@ -16,8 +16,8 @@ public abstract class Node {
     protected final List<Node> children = new ArrayList<>();
     protected Node parent;
     private int address;
-    private Optional<Integer> maxValue = Optional.empty();
-    private Optional<Integer> sizeBytes = Optional.empty();
+    private Integer maxValue ;
+    private Integer sizeBytes;
 
     public Node(SourceCodePosition position) {
         this.position = Objects.requireNonNull(position);
@@ -97,8 +97,8 @@ public abstract class Node {
         this.address = address;
     }
 
-    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return Optional.empty();
+    public Evaluated eval(Integer currentAddress, NameSpace env) {
+        return null;
     }
 
     public void accept(NodeVisitor visitor) {
@@ -117,7 +117,7 @@ public abstract class Node {
                 .append(Integer.toHexString(address))
                 .append("> ")
                 .append(toStringShallow())
-                .append(sizeBytes.map(s -> "(size=" + s + ")").orElse(""));
+                .append(sizeBytes != null ? "(size=" + sizeBytes + ")" : "");
 
         for (Node child : children) {
             builder.append("\n").append(child.toString(indent + 2));
@@ -133,7 +133,9 @@ public abstract class Node {
 
     public Node copy() {
         Node copied = mkCopy();
-        maxValue.ifPresent(copied::setMaxValue);
+        if (maxValue != null) {
+            copied.setMaxValue(maxValue);
+        }
         for (Node child : children) {
             copied.addChild(child.copy());
         }
@@ -146,18 +148,18 @@ public abstract class Node {
         return !(o == null || getClass() != o.getClass());
     }
 
-    public Optional<Integer> getMaxValue() {
+    public Integer getMaxValue() {
         return maxValue;
     }
 
     public Node setMaxValue(int maxValue) {
         int wasBits = (int) Math.floor(Math.log10(Math.abs(maxValue)) / Math.log10(2)) + 1;
-        this.sizeBytes = Optional.of((int) Math.ceil(wasBits / 8.0));
-        this.maxValue = Optional.of(maxValue);
+        this.sizeBytes = (int) Math.ceil(wasBits / 8.0);
+        this.maxValue = maxValue;
         return this;
     }
 
-    public Optional<Integer> getSizeBytes() {
+    public Integer getSizeBytes() {
         return sizeBytes;
     }
 
@@ -168,8 +170,8 @@ public abstract class Node {
             value |= 0xFF;
         }
 
-        this.sizeBytes = Optional.of(bytes);
-        this.maxValue = Optional.of(value);
+        this.sizeBytes = bytes;
+        this.maxValue = value;
         return this;
     }
 

@@ -66,8 +66,9 @@ public class Beeper implements AutoCloseable {
     public static final int FRAME_SIZE = CHANNELS * BYTES_PER_SAMPLE;
 
     // Peak PCM amplitude used when mapping hardware voltages to 16-bit signed samples.
-    // Set to 40% of Short.MAX_VALUE to leave headroom and avoid harsh clipping distortion and so the sound isn't too loud.
-    private static final int MAX_SAMPLE_AMPLITUDE = (int) (Short.MAX_VALUE * 0.40);
+    // Set to 10% of Short.MAX_VALUE — square waves are perceived as louder than sine waves at equal
+    // amplitude due to their rich harmonic content, so a low fraction keeps the beeper comfortable.
+    private static final int MAX_SAMPLE_AMPLITUDE = (int) (Short.MAX_VALUE * 0.10);
 
     // Precomputed Issue 3 PCM levels indexed by (earOn ? 2 : 0) | (micOn ? 1 : 0).
     // Derived from the four hardware voltage levels: 0.34V, 0.66V, 3.56V, 3.70V,
@@ -265,7 +266,7 @@ public class Beeper implements AutoCloseable {
      *   3     1    1     3.70 V
      * </pre>
      * These voltages are centered at their midpoint (2.02 V) and linearly scaled to
-     * {@link #MAX_SAMPLE_AMPLITUDE} so the full swing maps to ~70 % of the 16-bit signed range.
+     * {@link #MAX_SAMPLE_AMPLITUDE} so the full swing maps to ~10 % of the 16-bit signed range.
      *
      * @see <a href="https://worldofspectrum.org/faq/reference/48kreference.htm">48K reference</a>
      */

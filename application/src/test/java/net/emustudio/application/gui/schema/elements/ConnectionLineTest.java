@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.schema.elements;
 
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.gui.schema.SchemaTestSupport;
 import net.emustudio.application.settings.PluginConnection;
@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -22,7 +23,7 @@ public class ConnectionLineTest {
     public void pointManagementMovementAndConnectionConversionWork() {
         CompilerElement compiler = new CompilerElement(P.of(40, 50), "compiler", "compiler.jar");
         CpuElement cpu = new CpuElement(P.of(160, 50), "cpu", "cpu.jar");
-        ConnectionLine line = new ConnectionLine(compiler, cpu, Arrays.asList(P.of(100, 80)), true);
+        ConnectionLine line = new ConnectionLine(compiler, cpu, List.of(P.of(100, 80)), true);
         P point = line.getPoints().get(0);
 
         assertSame(point, line.findPoint(new Point(100, 80)));
@@ -55,15 +56,15 @@ public class ConnectionLineTest {
         PluginConnection connection = line.toPluginConnection();
         assertEquals(replacementCompiler.save().getPluginId(), connection.getFromPluginId());
         assertEquals(replacement.save().getPluginId(), connection.getToPluginId());
-        assertEquals(Arrays.asList(SchemaPoint.of(70, 60)), connection.getSchemaPoints());
+        assertEquals(List.of(SchemaPoint.of(70, 60)), connection.getSchemaPoints());
     }
 
     @Test
     public void crossingHelpersAndGeometryDetectionWorkForStraightAndBentLines() {
         CompilerElement compiler = new CompilerElement(P.of(40, 50), "compiler", "compiler.jar");
         CpuElement cpu = new CpuElement(P.of(160, 50), "cpu", "cpu.jar");
-        ConnectionLine straightLine = new ConnectionLine(compiler, cpu, Arrays.<P>asList(), false);
-        ConnectionLine bentLine = new ConnectionLine(compiler, cpu, Arrays.asList(P.of(100, 80)), true);
+        ConnectionLine straightLine = new ConnectionLine(compiler, cpu, List.<P>of(), false);
+        ConnectionLine bentLine = new ConnectionLine(compiler, cpu, List.of(P.of(100, 80)), true);
 
         assertTrue(ConnectionLine.isAreaCrossingPoint(new Point(0, 0), new Point(50, 50), new Point(25, 25)));
         assertTrue(ConnectionLine.isAreaCrossing(new Point(0, 0), new Point(100, 100), new Point(40, 0), new Point(60, 120)));

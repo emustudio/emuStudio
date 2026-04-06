@@ -35,17 +35,17 @@ public class Automation implements Runnable {
     private final AppSettings appSettings;
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
-    private final Optional<Integer> programLocation;
+    private final Integer programLocation;
     AutoDialog progressGUI; // package-private for testing
     private volatile CPU.RunState resultState;
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
-                      Dialogs dialogs, int waitForFinishMillis, Optional<Integer> programLocation, GUI gui) throws AutomationException {
+                      Dialogs dialogs, int waitForFinishMillis, Integer programLocation, GUI gui) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.waitForFinishMillis = waitForFinishMillis;
-        this.programLocation = Objects.requireNonNull(programLocation);
+        this.programLocation = programLocation;
 
         if (inputFile != null) {
             this.inputFile = Objects.requireNonNull(inputFile, "Input file must be defined").toFile();
@@ -75,17 +75,17 @@ public class Automation implements Runnable {
         }
 
         LOGGER.info("Starting emulation automation...");
-        LOGGER.info("Emulating computer: " + computer.getComputerConfig().getName());
+        LOGGER.info("Emulating computer: {}", computer.getComputerConfig().getName());
 
         computer.getCompiler().ifPresent(
-                compiler -> LOGGER.info("Compiler: " + compiler.getTitle() + ", version " + compiler.getVersion())
+                compiler -> LOGGER.info("Compiler: {}, version {}", compiler.getTitle(), compiler.getVersion())
         );
-        computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: " + cpu.getTitle() + ", version " + cpu.getVersion()));
+        computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: {}, version {}", cpu.getTitle(), cpu.getVersion()));
         computer.getMemory().ifPresent(memory -> {
-            LOGGER.info("Memory: " + memory.getTitle() + ", version " + memory.getVersion());
+            LOGGER.info("Memory: {}, version {}", memory.getTitle(), memory.getVersion());
         });
         computer.getDevices().forEach(
-                device -> LOGGER.info("Device: " + device.getTitle() + ", version " + device.getVersion())
+                device -> LOGGER.info("Device: {}, version {}", device.getTitle(), device.getVersion())
         );
 
         try {
@@ -95,10 +95,12 @@ public class Automation implements Runnable {
 
             computer.getCPU().ifPresent(cpu -> {
                 setProgress("Resetting CPU...", false);
-                programLocation.ifPresentOrElse(l -> {
-                    setProgress("Program start location: " + String.format("%04Xh", l), false);
-                    cpu.reset(l);
-                }, cpu::reset);
+                if (programLocation != null) {
+                    setProgress("Program start location: " + String.format("%04Xh", programLocation), false);
+                    cpu.reset(programLocation);
+                } else {
+                    cpu.reset();
+                }
                 autoEmulate(cpu);
             });
         } catch (Exception e) {
@@ -220,10 +222,10 @@ public class Automation implements Runnable {
                 LOGGER.info("Normal stop");
                 break;
             default:
-                LOGGER.error("Invalid state (" + resultState + ")");
+                LOGGER.error("Invalid state ({})", resultState);
                 break;
         }
-        LOGGER.info("Instruction location = " + String.format("0x%04X", cpu.getInstructionLocation()));
+        LOGGER.info("Instruction location = {}", String.format("0x%04X", cpu.getInstructionLocation()));
 
         setProgress("Emulation completed", false);
     }

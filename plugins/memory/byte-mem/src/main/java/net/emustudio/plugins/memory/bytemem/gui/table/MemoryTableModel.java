@@ -75,9 +75,7 @@ public class MemoryTableModel extends AbstractTableModel {
             memory.writeBank(address, (byte) (Integer.decode(String.valueOf(value)) & 0xFF), currentBank);
             fireTableCellUpdated(rowIndex, columnIndex);
         } catch (NumberFormatException e) {
-            LOGGER.error(
-                    "Could not set memory cell at address 0x" + Integer.toHexString(address) + " to value " + value, e
-            );
+            LOGGER.error("Could not set memory cell at address 0x{} to value {}", Integer.toHexString(address), value, e);
         }
     }
 

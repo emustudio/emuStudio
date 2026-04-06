@@ -10,7 +10,6 @@ import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.parseLabel;
 
@@ -27,8 +26,8 @@ public class PseudoLabel extends Node {
     }
 
     @Override
-    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return currentAddress.map(addr -> new Evaluated(position, addr, true));
+    public Evaluated eval(Integer currentAddress, NameSpace env) {
+        return currentAddress != null ? new Evaluated(position, currentAddress, true) : null;
     }
 
     @Override

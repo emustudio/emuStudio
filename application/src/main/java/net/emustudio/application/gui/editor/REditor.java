@@ -155,7 +155,7 @@ public class REditor implements Editor {
                 isnew = false;
                 return true;
             } catch (IOException e) {
-                LOGGER.error("Could not save file: " + fileSource.get().getPath(), e);
+                LOGGER.error("Could not save file: {}", fileSource.get().getPath(), e);
                 dialogs.showError("Cannot save current file. Please see log file for details.");
                 return false;
             }
@@ -176,7 +176,7 @@ public class REditor implements Editor {
                 isnew = false;
                 return true;
             } catch (IOException e) {
-                LOGGER.error("Could not save file: " + savedPath.get(), e);
+                LOGGER.error("Could not save file: {}", savedPath.get(), e);
                 dialogs.showError("Cannot save current file. Please see log file for details.");
             }
         }

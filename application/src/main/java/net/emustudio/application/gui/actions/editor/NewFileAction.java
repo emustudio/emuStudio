@@ -10,7 +10,7 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_NEW_FILE;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_NEW_FILE;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class NewFileAction extends AbstractAction {

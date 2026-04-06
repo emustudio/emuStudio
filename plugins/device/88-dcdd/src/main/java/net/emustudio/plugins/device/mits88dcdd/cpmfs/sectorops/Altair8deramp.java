@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFormat.RECORD_SIZE;
 
 /**
- * https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%203.0/BIOS.ASM
+ * <a href="https://deramp.com/downloads/altair/software/8_inch_floppy/CPM/CPM%203.0/BIOS.ASM">BIOS.ASM</a>
  * <p>
  * Altair 8" floppy disk (from deramp.com)
  * <p>
@@ -39,7 +39,6 @@ public class Altair8deramp implements SectorOps {
 
     //; Create Altair sector for system tracks 0-5 (mini disk 0-3)
     //; wDatTrk- Create Altair sector for tracks 6-76 (mindisk 4-34)
-
 
     @Override
     public ByteBuffer toSector(ByteBuffer record, Position position) {

@@ -7,7 +7,7 @@ import net.emustudio.emulib.runtime.ui.components.DialogBase;
 
 import javax.swing.*;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_LOADING;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_LOADING;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class LoadingDialog extends DialogBase {

@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_ADD;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_ADD;
 import static net.emustudio.application.settings.ConfigFiles.createConfiguration;
 import static net.emustudio.application.settings.ConfigFiles.loadConfiguration;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
@@ -63,7 +63,7 @@ public class AddNewComputerAction extends AbstractAction {
                                     }
                             );
                 } catch (IOException ex) {
-                    LOGGER.error("Could not load computer with name '" + name + "'", ex);
+                    LOGGER.error("Could not load computer with name '{}'", name, ex);
                     dialogs.showError("Could not load computer with name '" + name + "'. Please see log file for details.");
                 }
             }

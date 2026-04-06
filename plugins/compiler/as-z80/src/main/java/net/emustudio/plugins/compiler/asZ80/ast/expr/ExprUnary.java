@@ -11,7 +11,6 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
@@ -43,10 +42,9 @@ public class ExprUnary extends Node {
     }
 
     @Override
-    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return getChild(0)
-                .eval(currentAddress, env)
-                .map(childEval -> new Evaluated(position, operation.apply(childEval.value)));
+    public Evaluated eval(Integer currentAddress, NameSpace env) {
+        Evaluated childEval = getChild(0).eval(currentAddress, env);
+        return childEval != null ? new Evaluated(position, operation.apply(childEval.value)) : null;
     }
 
     @Override

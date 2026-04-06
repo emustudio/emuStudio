@@ -7,11 +7,16 @@ import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.ShortenedString;
 import net.emustudio.emulib.runtime.ui.components.CachedComboBoxModel;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
+import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.device.audiotape_player.TapePlaybackController;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,6 +30,8 @@ public class TapePlayerGui extends DialogBase {
     private final static String EJECT_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-eject.png";
     private final static String REFRESH_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/view-refresh.png";
     private final static String LOAD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/applications-multimedia.png";
+    private final static String SAVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/document-save.png";
+    private final static String COPY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/edit-copy.png";
 
     private final JPanel panelTapeInfo;
     private final JButton btnBrowse;
@@ -45,8 +52,10 @@ public class TapePlayerGui extends DialogBase {
     private final JTextArea txtFileName = new JTextArea("N/A");
     private final JLabel lblStatus;
 
-    private final JTextArea txtEvents;
+    private final TapeEventsTableModel eventsModel = new TapeEventsTableModel();
+    private final JTable tblEvents = new JTable(eventsModel);
 
+    private final Dialogs dialogs;
     private final TapePlaybackController controller;
 
     public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller, GUI gui) {
@@ -55,8 +64,7 @@ public class TapePlayerGui extends DialogBase {
         this.panelTapeInfo = gui.panel("", "[][grow]", "[][]");
         this.scrollTapes = gui.scrollPane(lstTapes);
         this.lblStatus = gui.labelBold("Stopped");
-        this.txtEvents = gui.textAreaReadOnly(0, 0);
-        Objects.requireNonNull(dialogs);
+        this.dialogs = Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
 
         btnBrowse = gui.buttonBrowseDirectories(dialogs, "Select Directory", "Select", p -> {
@@ -76,19 +84,86 @@ public class TapePlayerGui extends DialogBase {
         buildContent();
     }
 
-    public void addProgramDetail(String program, String detail) {
-        txtEvents.append("\n" + program + ": " + detail);
+    public void addProgramDetail(long tstate, String eventType, String details) {
+        SwingUtilities.invokeLater(() -> {
+            eventsModel.addRow(tstate, 0, eventType, details);
+            scrollToLastRow();
+        });
     }
 
-    public void addPulseInfo(String pulse) {
-        txtEvents.append("\n" + pulse);
+    public void addPulseRow(long tstate, int length, String eventType, String details) {
+        SwingUtilities.invokeLater(() -> {
+            eventsModel.addRow(tstate, length, eventType, details);
+            scrollToLastRow();
+        });
+    }
+
+    private void scrollToLastRow() {
+        int lastRow = tblEvents.getRowCount() - 1;
+        if (lastRow >= 0) {
+            tblEvents.scrollRectToVisible(tblEvents.getCellRect(lastRow, 0, true));
+        }
+    }
+
+    private void copySelectedRows() {
+        int[] selectedRows = tblEvents.getSelectedRows();
+        if (selectedRows.length == 0) {
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        int colCount = tblEvents.getColumnCount();
+        for (int row : selectedRows) {
+            for (int col = 0; col < colCount; col++) {
+                if (col > 0) {
+                    sb.append('\t');
+                }
+                Object value = tblEvents.getValueAt(row, col);
+                sb.append(value != null ? value.toString() : "");
+            }
+            sb.append('\n');
+        }
+        StringSelection selection = new StringSelection(sb.toString());
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
+    }
+
+    private void saveLogs(Path path) {
+        if (eventsModel.getRowCount() == 0) {
+            dialogs.showInfo("No log events to save.", "Save Logs");
+            return;
+        }
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+            int colCount = eventsModel.getColumnCount();
+            for (int col = 0; col < colCount; col++) {
+                if (col > 0) {
+                    writer.write('\t');
+                }
+                writer.write(eventsModel.getColumnName(col));
+            }
+            writer.newLine();
+            for (int row = 0; row < eventsModel.getRowCount(); row++) {
+                for (int col = 0; col < colCount; col++) {
+                    if (col > 0) {
+                        writer.write('\t');
+                    }
+                    Object value = eventsModel.getValueAt(row, col);
+                    writer.write(value != null ? value.toString() : "");
+                }
+                writer.newLine();
+            }
+        } catch (IOException ex) {
+            dialogs.showError("Could not save logs: " + ex.getMessage(), "Save Logs");
+        }
     }
 
     public void setCassetteState(TapePlaybackController.CassetteState state) {
+        SwingUtilities.invokeLater(() -> setCassetteStateImpl(state));
+    }
+
+    private void setCassetteStateImpl(TapePlaybackController.CassetteState state) {
         this.lblStatus.setText(state.name());
         switch (state) {
             case CLOSED:
-                txtEvents.setText("");
+                eventsModel.clear();
                 btnLoad.setEnabled(false);
                 btnStop.setEnabled(false);
                 btnPlay.setEnabled(false);
@@ -96,7 +171,7 @@ public class TapePlayerGui extends DialogBase {
                 break;
 
             case PLAYING:
-                txtEvents.setText("");
+                eventsModel.clear();
                 btnPlay.setEnabled(false);
                 btnLoad.setEnabled(false);
                 btnEject.setEnabled(true);
@@ -111,7 +186,7 @@ public class TapePlayerGui extends DialogBase {
                 break;
 
             case UNLOADED:
-                txtEvents.setText("");
+                eventsModel.clear();
                 btnStop.setEnabled(false);
                 btnPlay.setEnabled(false);
                 btnLoad.setEnabled(true);
@@ -216,7 +291,29 @@ public class TapePlayerGui extends DialogBase {
         JLabel lblFileNameLabel = gui.label("File name:");
         JLabel lblStatusLabel = gui.label("Status:");
 
-        JScrollPane scrollEvents = gui.scrollPane(txtEvents);
+        gui.styleTable(tblEvents);
+        tblEvents.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        tblEvents.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        tblEvents.getColumnModel().getColumn(0).setPreferredWidth(90);
+        tblEvents.getColumnModel().getColumn(1).setPreferredWidth(70);
+        tblEvents.getColumnModel().getColumn(2).setPreferredWidth(110);
+        tblEvents.getColumnModel().getColumn(3).setPreferredWidth(200);
+        tblEvents.getColumnModel().getColumn(3).setCellRenderer(new WordWrapCellRenderer());
+        tblEvents.setFillsViewportHeight(true);
+        tblEvents.setPreferredScrollableViewportSize(new Dimension(470, 200));
+
+
+        KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+        tblEvents.getInputMap(JComponent.WHEN_FOCUSED).put(copyKeyStroke, "copy");
+        tblEvents.getActionMap().put("copy", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                copySelectedRows();
+            }
+        });
+
+        JScrollPane scrollEvents = gui.scrollPane(tblEvents);
+        scrollEvents.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         JToolBar toolbarTape = gui.toolBar();
         JPanel hSpacer1 = new JPanel(null);
         JPanel hSpacer2 = new JPanel(null);
@@ -244,6 +341,24 @@ public class TapePlayerGui extends DialogBase {
         toolbarTape.addSeparator();
         toolbarTape.add(hSpacer1);
         toolbarTape.add(btnEject);
+        toolbarTape.addSeparator();
+
+        JButton btnCopyLogs = new JButton(GUI.loadIcon(COPY_ICON));
+        btnCopyLogs.setToolTipText("Copy selected rows");
+        btnCopyLogs.setFocusPainted(false);
+        btnCopyLogs.addActionListener(e -> copySelectedRows());
+        toolbarTape.add(btnCopyLogs);
+
+        JButton btnSaveLogs = gui.buttonBrowseFiles(
+                dialogs, "Save event logs", "Save", true,
+                this::saveLogs,
+                new FileExtensionsFilter("Tab-separated values", "tsv"),
+                new FileExtensionsFilter("Text file", "txt"));
+        btnSaveLogs.setIcon(GUI.loadIcon(SAVE_ICON));
+        btnSaveLogs.setText("");
+        btnSaveLogs.setToolTipText("Save logs");
+        btnSaveLogs.setFocusPainted(false);
+        toolbarTape.add(btnSaveLogs);
 
         txtFileName.setEditable(false);
         txtFileName.setLineWrap(true);
@@ -262,6 +377,8 @@ public class TapePlayerGui extends DialogBase {
 
         JPanel contentPanel = gui.panel("insets dialog, fill", "[fill]", "[fill]");
         contentPanel.add(splitPane, "push, grow");
+
+        setPreferredSize(new Dimension(800, 450));
         return contentPanel;
     }
 }

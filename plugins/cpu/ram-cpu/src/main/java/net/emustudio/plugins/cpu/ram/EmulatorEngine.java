@@ -6,6 +6,7 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
+import net.emustudio.plugins.memory.ram.api.RamLabel;
 import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RamValue;
 
@@ -83,30 +84,34 @@ public class EmulatorEngine {
             case DIV:
                 evaluateOperand(instruction).ifPresent(v -> arithmetic(v, (a, b) -> a / b));
                 break;
-            case JMP:
-                instruction
-                        .getLabel()
-                        .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
-                            throw new RuntimeException("Instruction operand contains non-numeric value: " + instruction);
-                        });
+            case JMP: {
+                RamLabel label = instruction.getLabel();
+                if (label != null) {
+                    IP.set(label.getAddress());
+                } else {
+                    throw new RuntimeException("Instruction operand contains non-numeric value: " + instruction);
+                }
                 break;
+            }
             case JZ: {
                 if (isEmpty(storageTape.getSymbolAt(0).orElse(TapeSymbol.EMPTY))) {
-                    instruction
-                            .getLabel()
-                            .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
-                                throw new RuntimeException("Instruction operand contains non-numeric value: " + instruction);
-                            });
+                    RamLabel label = instruction.getLabel();
+                    if (label != null) {
+                        IP.set(label.getAddress());
+                    } else {
+                        throw new RuntimeException("Instruction operand contains non-numeric value: " + instruction);
+                    }
                 }
                 break;
             }
             case JGTZ: {
                 if (getR0() > 0) {
-                    instruction
-                            .getLabel()
-                            .ifPresentOrElse(o -> IP.set(o.getAddress()), () -> {
-                                throw new RuntimeException("Instruction operand contains non-numeric value: " + instruction);
-                            });
+                    RamLabel label = instruction.getLabel();
+                    if (label != null) {
+                        IP.set(label.getAddress());
+                    } else {
+                        throw new RuntimeException("Instruction operand contains non-numeric value: " + instruction);
+                    }
                 }
                 break;
             }
@@ -140,29 +145,29 @@ public class EmulatorEngine {
     }
 
     private Optional<Integer> getRegisterNumber(RamInstruction instruction) {
-        Optional<RamValue> operand = instruction.getOperand();
+        RamValue operand = instruction.getOperand();
+        if (operand == null) return Optional.empty();
         switch (instruction.getDirection()) {
             case CONSTANT:
             case DIRECT:
-                return operand.map(RamValue::getNumberValue);
+                return Optional.of(operand.getNumberValue());
             case INDIRECT:
-                return operand.map(RamValue::getNumberValue)
-                        .flatMap(storageTape::getSymbolAt)
+                return storageTape.getSymbolAt(operand.getNumberValue())
                         .map(t -> t.number);
         }
         throw new RuntimeException("Unexpected direction: " + instruction.getDirection());
     }
 
     private Optional<TapeSymbol> evaluateOperand(RamInstruction instruction) {
-        Optional<RamValue> operand = instruction.getOperand();
+        RamValue operand = instruction.getOperand();
+        if (operand == null) return Optional.empty();
         switch (instruction.getDirection()) {
             case CONSTANT:
-                return operand.map(this::toSymbol);
+                return Optional.of(toSymbol(operand));
             case DIRECT:
-                return operand.map(RamValue::getNumberValue).flatMap(storageTape::getSymbolAt);
+                return storageTape.getSymbolAt(operand.getNumberValue());
             case INDIRECT:
-                return operand.map(RamValue::getNumberValue)
-                        .flatMap(storageTape::getSymbolAt)
+                return storageTape.getSymbolAt(operand.getNumberValue())
                         .map(t -> t.number)
                         .flatMap(storageTape::getSymbolAt);
         }

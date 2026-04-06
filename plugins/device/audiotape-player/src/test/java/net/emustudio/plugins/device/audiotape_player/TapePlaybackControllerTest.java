@@ -14,12 +14,11 @@ import static org.junit.Assert.assertEquals;
 
 public class TapePlaybackControllerTest {
 
-    private Loader.TapePlayback listener;
     private TapePlaybackController controller;
 
     @Before
     public void setUp() {
-        listener = niceMock(Loader.TapePlayback.class);
+        Loader.TapePlayback listener = niceMock(Loader.TapePlayback.class);
         replay(listener);
         controller = new TapePlaybackController(listener);
     }

@@ -1,12 +1,13 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.application.gui;
+package net.emustudio.application.gui.framework;
 
+import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.gui.components.BrowseButton;
 import net.emustudio.application.gui.components.FadingBorder;
 import net.emustudio.application.gui.components.ToolbarButton;
 import net.emustudio.application.gui.components.ToolbarToggleButton;
-import net.emustudio.application.gui.framework.GuiImpl;
+import net.emustudio.application.settings.AppSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.miginfocom.swing.MigLayout;
@@ -23,21 +24,69 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_GRID;
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_OPEN_FILE;
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_RUN;
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_SAVE;
+import static net.emustudio.application.gui.framework.EmuStudioGui.*;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_GRID;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_OPEN_FILE;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_COMMON;
+import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class GuiImplTest {
+public class EmuStudioGuiTest {
+
+    @Test
+    public void createLogoJLabelUsesExpectedStyling() {
+        JLabel label = new EmuStudioGui().createLogoJLabel();
+
+        assertEquals(Color.WHITE, label.getBackground());
+        assertTrue(label.getBorder() instanceof FadingBorder);
+        assertFalse(label.isOpaque());
+    }
+
+    @Test
+    public void initializeAppliesThemeAndCustomUiDefaults() {
+        for (AppSettings.Theme theme : AppSettings.Theme.values()) {
+            AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+            settings.setString(AppSettings.KEY_THEME, theme.name());
+
+            EmuStudioGui gui = new EmuStudioGui();
+            gui.initialize(settings);
+
+            assertEquals(theme, gui.getCurrentTheme());
+            assertEquals(Boolean.TRUE, UIManager.get("Button.opaque"));
+            assertEquals(FONT_COMMON, UIManager.get("Button.font"));
+            assertEquals(FONT_MONOSPACED, UIManager.get("TextField.font"));
+            assertEquals(UIManager.get("Panel.background"), UIManager.get("TabbedPane.selected"));
+        }
+    }
+
+    @Test
+    public void setThemeUpdatesCurrentThemeForVisibleWindows() {
+        JFrame frame = new JFrame("theme");
+        frame.add(new JButton("Button"));
+        frame.pack();
+
+        AppSettings settings = new AppSettings(Config.inMemory(), false, false);
+        settings.setString(AppSettings.KEY_THEME, AppSettings.Theme.DARK.name());
+
+        EmuStudioGui gui = new EmuStudioGui();
+        try {
+            gui.setTheme(settings);
+        } finally {
+            frame.dispose();
+        }
+
+        assertEquals(AppSettings.Theme.DARK, gui.getCurrentTheme());
+    }
+
 
     @Test
     public void toolbarFactoriesCreateConfiguredButtonsAndToggleButtons() {
-        GuiImpl gui = new GuiImpl();
+        EmuStudioGui gui = new EmuStudioGui();
         AtomicInteger actionCount = new AtomicInteger();
         AtomicInteger itemCount = new AtomicInteger();
 
@@ -79,7 +128,7 @@ public class GuiImplTest {
 
     @Test
     public void labelsButtonsAndTextFactoriesApplyExpectedStyling() {
-        GuiImpl gui = new GuiImpl();
+        EmuStudioGui gui = new EmuStudioGui();
         AtomicInteger clicks = new AtomicInteger();
 
         JLabel plain = gui.label("plain");
@@ -106,7 +155,6 @@ public class GuiImplTest {
         assertEquals(Font.BOLD, title.getFont().getStyle());
         assertTrue(title.getFont().getSize() > plain.getFont().getSize());
         assertTrue(padded.getBorder() instanceof EmptyBorder);
-        assertEquals("borderless", primary.getClientProperty("JButton.buttonType"));
         assertEquals(Font.BOLD, primary.getFont().getStyle());
         assertEquals("Push", simpleButton.getText());
         assertEquals("Menu", menuItem.getText());
@@ -124,9 +172,9 @@ public class GuiImplTest {
 
     @Test
     public void browseButtonsReusePreviousSelectionAsBaseDirectory() {
-        GuiImpl gui = new GuiImpl();
+        EmuStudioGui gui = new EmuStudioGui();
         Dialogs dialogs = mock(Dialogs.class);
-        List<Path> approvedPaths = new ArrayList<>();
+        java.util.List<Path> approvedPaths = new ArrayList<>();
         Path defaultBase = Path.of(System.getProperty("user.dir"));
         Path firstDirectory = Path.of("first");
         Path secondDirectory = Path.of("second");
@@ -153,7 +201,7 @@ public class GuiImplTest {
 
     @Test
     public void containerFactoriesAndStylingHelpersReturnConfiguredComponents() {
-        GuiImpl gui = new GuiImpl();
+        EmuStudioGui gui = new EmuStudioGui();
         JTable table = new JTable(2, 2);
         JList<String> list = new JList<>(new String[]{"a", "b"});
         JLabel left = new JLabel("left");

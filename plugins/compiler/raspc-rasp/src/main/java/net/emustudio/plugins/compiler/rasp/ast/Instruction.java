@@ -3,7 +3,6 @@
 package net.emustudio.plugins.compiler.rasp.ast;
 
 import java.util.Objects;
-import java.util.Optional;
 
 public class Instruction {
     public final int line;
@@ -11,14 +10,14 @@ public class Instruction {
 
     public final int address;
     public final int opcode;
-    public final Optional<Integer> operand;
-    public final Optional<String> id;
+    public final Integer operand;
+    public final String id;
 
-    public Instruction(int line, int column, int opcode, int address, Optional<Integer> operand) {
+    public Instruction(int line, int column, int opcode, int address, Integer operand) {
         this.opcode = opcode;
         this.address = address;
-        this.operand = Objects.requireNonNull(operand);
-        this.id = Optional.empty();
+        this.operand = operand;
+        this.id = null;
         this.line = line;
         this.column = column;
     }
@@ -26,13 +25,13 @@ public class Instruction {
     public Instruction(int line, int column, int opcode, int address, String id) {
         this.opcode = opcode;
         this.address = address;
-        this.operand = Optional.empty();
-        this.id = Optional.of(id);
+        this.operand = null;
+        this.id = id;
         this.line = line;
         this.column = column;
     }
 
-    public Instruction(int opcode, int address, Optional<Integer> operand) {
+    public Instruction(int opcode, int address, Integer operand) {
         this(0, 0, opcode, address, operand);
     }
 
@@ -45,7 +44,7 @@ public class Instruction {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Instruction that = (Instruction) o;
-        return address == that.address && opcode == that.opcode && operand.equals(that.operand);
+        return address == that.address && opcode == that.opcode && Objects.equals(operand, that.operand);
     }
 
     @Override

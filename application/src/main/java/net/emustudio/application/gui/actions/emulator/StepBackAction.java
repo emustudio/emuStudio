@@ -9,7 +9,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_STEP_BACK;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_STEP_BACK;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class StepBackAction extends AbstractAction {

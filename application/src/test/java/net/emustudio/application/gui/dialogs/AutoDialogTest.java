@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.GuiImpl;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import org.junit.Test;
@@ -24,7 +24,7 @@ public class AutoDialogTest extends AbstractSwingTest {
         CPU cpu = mock(CPU.class);
         when(computer.getCPU()).thenReturn(Optional.of(cpu));
 
-        AutoDialog dialog = onEdt(() -> new AutoDialog(computer, new GuiImpl()));
+        AutoDialog dialog = onEdt(() -> new AutoDialog(computer, new EmuStudioGui()));
 
         showDialog(dialog);
         JButton stopButton = findComponent(dialog, JButton.class, button -> "Stop".equals(button.getText()));

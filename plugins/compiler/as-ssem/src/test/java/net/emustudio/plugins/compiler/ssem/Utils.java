@@ -79,7 +79,7 @@ public class Utils {
         assertEquals(instructions.length, pinstr.size());
         for (ParsedInstruction instruction : instructions) {
             assertEquals(
-                    new Instruction(instruction.opcode, instruction.operand, new SourceCodePosition(0, 0, ""), Optional.empty()),
+                    new Instruction(instruction.opcode, instruction.operand, new SourceCodePosition(0, 0, ""), null),
                     pinstr.get(instruction.line)
             );
         }

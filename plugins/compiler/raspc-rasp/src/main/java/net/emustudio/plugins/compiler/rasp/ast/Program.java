@@ -40,16 +40,17 @@ public class Program {
         for (Instruction instruction : instructions) {
             check(instruction);
             compiled.put(instruction.address, instruction.opcode);
-            instruction.operand.ifPresent(o -> {
-                compiled.put(instruction.address + 1, o);
-            });
-            instruction.id.ifPresent(id -> {
-                Optional<Label> label = getLabel(id);
+            if (instruction.operand != null) {
+                compiled.put(instruction.address + 1, instruction.operand);
+            }
+
+            if (instruction.id != null) {
+                Optional<Label> label = getLabel(instruction.id);
                 if (label.isEmpty()) {
                     throw new CompileException(instruction.line, instruction.column, "Label is not defined");
                 }
                 compiled.put(instruction.address + 1, label.get().getAddress());
-            });
+            }
         }
         return compiled;
     }
@@ -79,10 +80,7 @@ public class Program {
 
     private void check(Instruction instruction) {
         if (nonNegative.contains(instruction.opcode)) {
-            Optional<Integer> error = instruction
-                    .operand
-                    .filter(op -> op < 0);
-            if (error.isPresent()) {
+            if (instruction.operand != null && instruction.operand < 0) {
                 throw new CompileException(instruction.line, instruction.column, "Register number cannot be negative");
             }
         }

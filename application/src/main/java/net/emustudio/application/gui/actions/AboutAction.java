@@ -3,6 +3,7 @@
 package net.emustudio.application.gui.actions;
 
 import net.emustudio.application.gui.dialogs.AboutDialog;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.runtime.ui.GUI;
 
 import javax.swing.*;
@@ -10,14 +11,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_FAVICON;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_FAVICON;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class AboutAction extends AbstractAction {
     private final JFrame parent;
-    private final GUI gui;
+    private final EmuStudioGui gui;
 
-    public AboutAction(JFrame parent, GUI gui) {
+    public AboutAction(JFrame parent, EmuStudioGui gui) {
         super("About...", loadIcon(ICON_FAVICON));
         this.parent = Objects.requireNonNull(parent);
         this.gui = Objects.requireNonNull(gui);

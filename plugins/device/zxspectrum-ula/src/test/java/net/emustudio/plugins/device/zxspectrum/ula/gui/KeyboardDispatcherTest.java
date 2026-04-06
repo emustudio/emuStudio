@@ -4,29 +4,45 @@ package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
 import org.junit.Test;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
 
 public class KeyboardDispatcherTest {
-    private static final Canvas DUMMY = new Canvas();
+    private static final JPanel DUMMY = new JPanel();
 
-    // --- addOnKeyListener ---
+    private KeyboardDispatcher focused() {
+        return new KeyboardDispatcher(() -> true);
+    }
+
+    private KeyboardDispatcher unfocused() {
+        return new KeyboardDispatcher(() -> false);
+    }
 
     @Test(expected = NullPointerException.class)
     public void testAddNullListenerThrowsNpe() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
         dispatcher.addOnKeyListener(null);
     }
 
-    // --- dispatchKeyEvent ---
+    @Test(expected = NullPointerException.class)
+    public void testNullTargetWindowThrowsNpe() {
+        new KeyboardDispatcher((Window) null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullFocusCheckThrowsNpe() {
+        new KeyboardDispatcher((KeyboardDispatcher.FocusCheck) null);
+    }
 
     @Test
     public void testEventIsForwardedToSingleListener() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
         RecordingListener listener = new RecordingListener(true);
         dispatcher.addOnKeyListener(listener);
 
@@ -39,7 +55,7 @@ public class KeyboardDispatcherTest {
 
     @Test
     public void testEventIsForwardedToMultipleListeners() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
         RecordingListener first = new RecordingListener(false);
         RecordingListener second = new RecordingListener(true);
         dispatcher.addOnKeyListener(first);
@@ -56,7 +72,7 @@ public class KeyboardDispatcherTest {
 
     @Test
     public void testEventNotConsumedWhenNoListenerHandlesIt() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
         RecordingListener listener = new RecordingListener(false);
         dispatcher.addOnKeyListener(listener);
 
@@ -69,7 +85,7 @@ public class KeyboardDispatcherTest {
 
     @Test
     public void testAlreadyConsumedEventIsNotDispatched() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
         RecordingListener listener = new RecordingListener(true);
         dispatcher.addOnKeyListener(listener);
 
@@ -82,7 +98,7 @@ public class KeyboardDispatcherTest {
 
     @Test
     public void testReturnsTrueWhenConsumed() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
         dispatcher.addOnKeyListener(new RecordingListener(true));
 
         boolean result = dispatcher.dispatchKeyEvent(keyPressed(KeyEvent.VK_E));
@@ -91,7 +107,7 @@ public class KeyboardDispatcherTest {
 
     @Test
     public void testReturnsFalseWhenNotConsumed() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
         dispatcher.addOnKeyListener(new RecordingListener(false));
 
         boolean result = dispatcher.dispatchKeyEvent(keyPressed(KeyEvent.VK_F));
@@ -100,17 +116,54 @@ public class KeyboardDispatcherTest {
 
     @Test
     public void testNoListenersDoesNotThrow() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
 
         boolean result = dispatcher.dispatchKeyEvent(keyPressed(KeyEvent.VK_G));
         assertFalse(result);
     }
 
-    // --- close ---
+    @Test
+    public void testEventNotDispatchedWhenTargetNotFocused() {
+        KeyboardDispatcher dispatcher = unfocused();
+        RecordingListener listener = new RecordingListener(true);
+        dispatcher.addOnKeyListener(listener);
+
+        KeyEvent event = keyPressed(KeyEvent.VK_ESCAPE);
+        boolean result = dispatcher.dispatchKeyEvent(event);
+
+        assertFalse("Should not dispatch when target is not focused", result);
+        assertFalse("Event should not be consumed", event.isConsumed());
+        assertEquals("Listener should not receive events", 0, listener.events.size());
+    }
+
+    @Test
+    public void testFocusChangeIsRespectedDynamically() {
+        AtomicBoolean focused = new AtomicBoolean(false);
+        KeyboardDispatcher dispatcher = new KeyboardDispatcher(focused::get);
+        RecordingListener listener = new RecordingListener(true);
+        dispatcher.addOnKeyListener(listener);
+
+        // Not focused — event should not be dispatched
+        KeyEvent event1 = keyPressed(KeyEvent.VK_A);
+        assertFalse(dispatcher.dispatchKeyEvent(event1));
+        assertEquals(0, listener.events.size());
+
+        // Now focused — event should be dispatched
+        focused.set(true);
+        KeyEvent event2 = keyPressed(KeyEvent.VK_A);
+        assertTrue(dispatcher.dispatchKeyEvent(event2));
+        assertEquals(1, listener.events.size());
+
+        // Unfocused again — event should not be dispatched
+        focused.set(false);
+        KeyEvent event3 = keyPressed(KeyEvent.VK_A);
+        assertFalse(dispatcher.dispatchKeyEvent(event3));
+        assertEquals(1, listener.events.size());
+    }
 
     @Test
     public void testCloseRemovesAllListeners() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
         RecordingListener listener = new RecordingListener(true);
         dispatcher.addOnKeyListener(listener);
 
@@ -122,7 +175,7 @@ public class KeyboardDispatcherTest {
 
     @Test
     public void testListenerCanBeAddedAfterClose() {
-        KeyboardDispatcher dispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher dispatcher = focused();
         dispatcher.close();
 
         RecordingListener listener = new RecordingListener(true);
@@ -131,8 +184,6 @@ public class KeyboardDispatcherTest {
         dispatcher.dispatchKeyEvent(keyPressed(KeyEvent.VK_I));
         assertEquals(1, listener.events.size());
     }
-
-    // --- Helpers ---
 
     private static KeyEvent keyPressed(int keyCode) {
         return new KeyEvent(DUMMY, KeyEvent.KEY_PRESSED, 0, 0, keyCode, KeyEvent.CHAR_UNDEFINED);
@@ -153,4 +204,3 @@ public class KeyboardDispatcherTest {
         }
     }
 }
-

@@ -57,7 +57,8 @@ public class GenerateCodeVisitor extends NodeVisitor {
         currentAddress = node.getAddress();
 
         hex.add(node.eval());
-        int instrSize = node.getSizeBytes().orElse(1);
+        Integer sb = node.getSizeBytes();
+        int instrSize = sb != null ? sb : 1;
         if (instrSize > 1) {
             expectedBytes = 0;
             visitChildren(node);
@@ -125,13 +126,14 @@ public class GenerateCodeVisitor extends NodeVisitor {
         } else if (expectedBytes == 2) {
             addWord(value);
         } else {
-            node.getSizeBytes().ifPresent(size -> {
+            Integer size = node.getSizeBytes();
+            if (size != null) {
                 if (size == 1) {
                     addByte(value);
                 } else if (size == 2) {
                     addWord(value);
                 }
-            });
+            }
         }
     }
 

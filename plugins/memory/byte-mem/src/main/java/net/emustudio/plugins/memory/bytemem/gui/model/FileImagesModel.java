@@ -42,7 +42,7 @@ public class FileImagesModel extends AbstractTableModel {
                     break;
                 }
             } catch (NumberFormatException e) {
-                LOGGER.error("Invalid number format of setting 'imageAddress" + i + "'", e);
+                LOGGER.error("Invalid number format of setting 'imageAddress{}'", i, e);
                 dialogs.showError(
                         "Invalid number format of setting 'imageAddress" + i + "'. Please see log file for more details"
                 );

@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.GuiImpl;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -51,7 +51,7 @@ public class InputDialogTest extends AbstractSwingTest {
         constructor.setAccessible(true);
 
         InputDialog dialog = onEdt(() -> constructor.newInstance(
-                parent, "Enter text", "Input", "initial", new GuiImpl()
+                parent, "Enter text", "Input", "initial", new EmuStudioGui()
         ));
         runOnEdt(() -> dialog.setModal(false));
         return dialog;

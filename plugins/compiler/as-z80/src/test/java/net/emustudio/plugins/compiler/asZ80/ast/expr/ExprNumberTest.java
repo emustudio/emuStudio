@@ -8,8 +8,6 @@ import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import org.junit.Test;
 
-import java.util.Optional;
-
 import static org.junit.Assert.*;
 
 public class ExprNumberTest {
@@ -18,25 +16,25 @@ public class ExprNumberTest {
     @Test
     public void testEval() {
         ExprNumber expr = new ExprNumber(POS, 42);
-        Optional<Evaluated> result = expr.eval(Optional.empty(), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(42, result.get().value);
+        Evaluated result = expr.eval(null, new NameSpace());
+        assertNotNull(result);
+        assertEquals(42, result.value);
     }
 
     @Test
     public void testEvalZero() {
         ExprNumber expr = new ExprNumber(POS, 0);
-        Optional<Evaluated> result = expr.eval(Optional.empty(), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(0, result.get().value);
+        Evaluated result = expr.eval(null, new NameSpace());
+        assertNotNull(result);
+        assertEquals(0, result.value);
     }
 
     @Test
     public void testEvalNegative() {
         ExprNumber expr = new ExprNumber(POS, -1);
-        Optional<Evaluated> result = expr.eval(Optional.empty(), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(-1, result.get().value);
+        Evaluated result = expr.eval(null, new NameSpace());
+        assertNotNull(result);
+        assertEquals(-1, result.value);
     }
 
     @Test
@@ -73,4 +71,3 @@ public class ExprNumberTest {
         assertEquals(original, copy);
     }
 }
-

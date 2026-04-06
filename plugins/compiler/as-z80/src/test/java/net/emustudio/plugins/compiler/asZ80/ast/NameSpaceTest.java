@@ -6,8 +6,6 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.CompileError;
 import org.junit.Test;
 
-import java.util.Optional;
-
 import static org.junit.Assert.*;
 
 public class NameSpaceTest {
@@ -17,33 +15,33 @@ public class NameSpaceTest {
     public void testPutAndGet() {
         NameSpace ns = new NameSpace();
         Evaluated eval = new Evaluated(POS, 42);
-        ns.put("x", Optional.of(eval));
-        Optional<Evaluated> result = ns.get("x");
-        assertTrue(result.isPresent());
-        assertEquals(42, result.get().value);
+        ns.put("x", eval);
+        Evaluated result = ns.get("x");
+        assertNotNull(result);
+        assertEquals(42, result.value);
     }
 
     @Test
     public void testGetUndefined() {
         NameSpace ns = new NameSpace();
-        Optional<Evaluated> result = ns.get("undefined");
-        assertFalse(result.isPresent());
+        Evaluated result = ns.get("undefined");
+        assertNull(result);
     }
 
     @Test
-    public void testPutEmptyOptional() {
+    public void testPutNull() {
         NameSpace ns = new NameSpace();
-        ns.put("x", Optional.empty());
-        Optional<Evaluated> result = ns.get("x");
-        assertFalse(result.isPresent());
+        ns.put("x", null);
+        Evaluated result = ns.get("x");
+        assertNull(result);
     }
 
     @Test
     public void testRemove() {
         NameSpace ns = new NameSpace();
-        ns.put("x", Optional.of(new Evaluated(POS, 42)));
+        ns.put("x", new Evaluated(POS, 42));
         ns.remove("x");
-        assertFalse(ns.get("x").isPresent());
+        assertNull(ns.get("x"));
     }
 
     @Test
@@ -107,9 +105,9 @@ public class NameSpaceTest {
     @Test
     public void testOverwriteDefinition() {
         NameSpace ns = new NameSpace();
-        ns.put("x", Optional.of(new Evaluated(POS, 1)));
-        ns.put("x", Optional.of(new Evaluated(POS, 2)));
-        assertEquals(2, ns.get("x").get().value);
+        ns.put("x", new Evaluated(POS, 1));
+        ns.put("x", new Evaluated(POS, 2));
+        assertEquals(2, ns.get("x").value);
     }
 
     // Simple concrete Node subclass for testing
@@ -124,4 +122,3 @@ public class NameSpaceTest {
         }
     }
 }
-

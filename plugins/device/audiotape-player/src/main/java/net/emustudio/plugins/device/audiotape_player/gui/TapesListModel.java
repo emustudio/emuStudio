@@ -60,7 +60,7 @@ public class TapesListModel extends DefaultListModel<String> {
                     .map(p -> new ShortenedString<>(p, pp -> pp.getFileName().toString()))
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            LOGGER.error("Could not load tape files from directory: " + directory, e);
+            LOGGER.error("Could not load tape files from directory: {}", directory, e);
         }
         return Collections.emptyList();
     }

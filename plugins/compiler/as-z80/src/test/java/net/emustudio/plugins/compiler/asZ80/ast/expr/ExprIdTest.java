@@ -8,8 +8,6 @@ import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import org.junit.Test;
 
-import java.util.Optional;
-
 import static org.junit.Assert.*;
 
 public class ExprIdTest {
@@ -18,28 +16,28 @@ public class ExprIdTest {
     @Test
     public void testEvalDefined() {
         NameSpace ns = new NameSpace();
-        ns.put("myvar", Optional.of(new Evaluated(POS, 42)));
+        ns.put("myvar", new Evaluated(POS, 42));
         ExprId expr = new ExprId(POS, "myvar");
-        Optional<Evaluated> result = expr.eval(Optional.empty(), ns);
-        assertTrue(result.isPresent());
-        assertEquals(42, result.get().value);
+        Evaluated result = expr.eval(null, ns);
+        assertNotNull(result);
+        assertEquals(42, result.value);
     }
 
     @Test
     public void testEvalUndefined() {
         ExprId expr = new ExprId(POS, "undefined");
-        Optional<Evaluated> result = expr.eval(Optional.empty(), new NameSpace());
-        assertFalse(result.isPresent());
+        Evaluated result = expr.eval(null, new NameSpace());
+        assertNull(result);
     }
 
     @Test
     public void testEvalCaseInsensitive() {
         NameSpace ns = new NameSpace();
-        ns.put("myvar", Optional.of(new Evaluated(POS, 10)));
+        ns.put("myvar", new Evaluated(POS, 10));
         ExprId expr = new ExprId(POS, "MYVAR");
-        Optional<Evaluated> result = expr.eval(Optional.empty(), ns);
-        assertTrue(result.isPresent());
-        assertEquals(10, result.get().value);
+        Evaluated result = expr.eval(null, ns);
+        assertNotNull(result);
+        assertEquals(10, result.value);
     }
 
     @Test
@@ -81,4 +79,3 @@ public class ExprIdTest {
         new ExprId(POS, null);
     }
 }
-

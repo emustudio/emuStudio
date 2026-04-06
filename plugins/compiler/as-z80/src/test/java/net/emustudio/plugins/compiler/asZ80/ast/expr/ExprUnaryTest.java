@@ -8,8 +8,6 @@ import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import org.junit.Test;
 
-import java.util.Optional;
-
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 import static org.junit.Assert.*;
 
@@ -20,44 +18,44 @@ public class ExprUnaryTest {
     public void testEvalUnaryAdd() {
         ExprUnary unary = new ExprUnary(POS, OP_ADD);
         unary.addChild(new ExprNumber(POS, 42));
-        Optional<Evaluated> result = unary.eval(Optional.empty(), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(42, result.get().value);
+        Evaluated result = unary.eval(null, new NameSpace());
+        assertNotNull(result);
+        assertEquals(42, result.value);
     }
 
     @Test
     public void testEvalUnarySubtract() {
         ExprUnary unary = new ExprUnary(POS, OP_SUBTRACT);
         unary.addChild(new ExprNumber(POS, 42));
-        Optional<Evaluated> result = unary.eval(Optional.empty(), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(-42, result.get().value);
+        Evaluated result = unary.eval(null, new NameSpace());
+        assertNotNull(result);
+        assertEquals(-42, result.value);
     }
 
     @Test
     public void testEvalUnaryNot() {
         ExprUnary unary = new ExprUnary(POS, OP_NOT);
         unary.addChild(new ExprNumber(POS, 0));
-        Optional<Evaluated> result = unary.eval(Optional.empty(), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(~0, result.get().value);
+        Evaluated result = unary.eval(null, new NameSpace());
+        assertNotNull(result);
+        assertEquals(~0, result.value);
     }
 
     @Test
     public void testEvalUnaryNot2() {
         ExprUnary unary = new ExprUnary(POS, OP_NOT_2);
         unary.addChild(new ExprNumber(POS, 0xFF));
-        Optional<Evaluated> result = unary.eval(Optional.empty(), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(~0xFF, result.get().value);
+        Evaluated result = unary.eval(null, new NameSpace());
+        assertNotNull(result);
+        assertEquals(~0xFF, result.value);
     }
 
     @Test
     public void testEvalWithUnresolvableChild() {
         ExprUnary unary = new ExprUnary(POS, OP_ADD);
         unary.addChild(new ExprId(POS, "undefined"));
-        Optional<Evaluated> result = unary.eval(Optional.empty(), new NameSpace());
-        assertFalse(result.isPresent());
+        Evaluated result = unary.eval(null, new NameSpace());
+        assertNull(result);
     }
 
     @Test(expected = NullPointerException.class)
@@ -99,4 +97,3 @@ public class ExprUnaryTest {
         assertEquals(original, copy);
     }
 }
-

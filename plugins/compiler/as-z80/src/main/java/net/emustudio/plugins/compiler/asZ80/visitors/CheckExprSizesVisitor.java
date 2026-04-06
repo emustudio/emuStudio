@@ -102,11 +102,12 @@ public class CheckExprSizesVisitor extends NodeVisitor {
                 error(expressionIsBiggerThanExpected(node, expectedBytes, wasBytes));
             }
         } else {
-            node.getMaxValue().ifPresent(maxValue -> {
+            Integer maxValue = node.getMaxValue();
+            if (maxValue != null) {
                 if (value > maxValue) {
                     error(valueOutOfBounds(node, 0, maxValue));
                 }
-            });
+            }
         }
     }
 }

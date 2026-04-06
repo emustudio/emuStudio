@@ -36,14 +36,10 @@ public class PluginSettingsImplTest {
         return new PluginSettingsImpl(pluginConfig, application, save);
     }
 
-    // --- Constructor ---
-
     @Test(expected = NullPointerException.class)
     public void constructorRejectsNullApplication() {
         new PluginSettingsImpl(Config.inMemory(), null, NOOP);
     }
-
-    // --- Prefixed key reads delegating to application ---
 
     @Test
     public void prefixedKeysDelegateToApplicationSettings() {
@@ -182,8 +178,6 @@ public class PluginSettingsImplTest {
 
         assertFalse(settings.contains(PREFIX + "nonexistent"));
     }
-
-    // --- Local key reads and writes ---
 
     @Test
     public void localKeysAreStoredLocallyAndTriggerSaveCallback() {
@@ -342,13 +336,11 @@ public class PluginSettingsImplTest {
     @Test
     public void localGetArrayDefaultWhenMissing() {
         PluginSettingsImpl settings = createSettings();
-        List<String> fallback = Arrays.asList("default");
+        List<String> fallback = List.of("default");
 
         assertEquals(Collections.emptyList(), settings.getArray("missing"));
         assertEquals(fallback, settings.getArray("missing", fallback));
     }
-
-    // --- Mutating prefixed keys is rejected ---
 
     @Test
     public void mutatingPrefixedKeysIsRejected() {

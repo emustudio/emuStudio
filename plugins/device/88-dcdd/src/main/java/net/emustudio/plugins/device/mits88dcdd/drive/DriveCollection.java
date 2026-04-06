@@ -26,9 +26,9 @@ public class DriveCollection implements Iterable<Drive> {
     private final DiskSettings settings;
     private final Dialogs dialogs;
 
-    private Optional<Integer> attachedCpuPort1 = Optional.empty();
-    private Optional<Integer> attachedCpuPort2 = Optional.empty();
-    private Optional<Integer> attachedCpuPort3 = Optional.empty();
+    private Integer attachedCpuPort1;
+    private Integer attachedCpuPort2;
+    private Integer attachedCpuPort3;
 
     private volatile int currentDrive;
 
@@ -91,27 +91,37 @@ public class DriveCollection implements Iterable<Drive> {
                     ": " + DIALOG_TITLE + " (port 1) can not be attached to default CPU port " + port1cpu
             );
         }
-        attachedCpuPort1 = Optional.of(port1cpu);
+        attachedCpuPort1 = port1cpu;
 
         if (!cpu.attachDevice(port2cpu, port2)) {
             throw new PluginInitializationException(
                     ": " + DIALOG_TITLE + " (port 2) can not be attached to default CPU port " + port2cpu
             );
         }
-        attachedCpuPort2 = Optional.of(port2cpu);
+        attachedCpuPort2 = port2cpu;
 
         if (!cpu.attachDevice(port3cpu, port3)) {
             throw new PluginInitializationException(
                     ": " + DIALOG_TITLE + " (port 3) can not be attached to default CPU port " + port3cpu
             );
         }
-        attachedCpuPort3 = Optional.of(port3cpu);
+        attachedCpuPort3 = port3cpu;
     }
 
     public void detach() {
-        attachedCpuPort1.ifPresent(cpu::detachDevice);
-        attachedCpuPort2.ifPresent(cpu::detachDevice);
-        attachedCpuPort3.ifPresent(cpu::detachDevice);
+        Integer tmp1 = attachedCpuPort1;
+        Integer tmp2 = attachedCpuPort2;
+        Integer tmp3 = attachedCpuPort3;
+
+        if (tmp1 != null) {
+            cpu.detachDevice(tmp1);
+        }
+        if (tmp2 != null) {
+            cpu.detachDevice(tmp2);
+        }
+        if (tmp3 != null) {
+            cpu.detachDevice(tmp3);
+        }
     }
 
     public void reset() {

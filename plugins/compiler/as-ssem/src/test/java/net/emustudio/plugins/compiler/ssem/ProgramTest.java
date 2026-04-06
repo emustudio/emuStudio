@@ -7,8 +7,6 @@ import net.emustudio.plugins.compiler.ssem.ast.Instruction;
 import net.emustudio.plugins.compiler.ssem.ast.Program;
 import org.junit.Test;
 
-import java.util.Optional;
-
 import static org.junit.Assert.*;
 
 public class ProgramTest {
@@ -27,8 +25,8 @@ public class ProgramTest {
     public void testToStringWithInstructions() {
         Program program = new Program();
         program.setStartLine(5, POS);
-        program.add(0, new Instruction(SSEMParser.LDN, 10, POS, Optional.of(POS)), POS);
-        program.add(1, new Instruction(SSEMParser.STP, 0, POS, Optional.empty()), POS);
+        program.add(0, new Instruction(SSEMParser.LDN, 10, POS, POS), POS);
+        program.add(1, new Instruction(SSEMParser.STP, 0, POS, null), POS);
 
         String result = program.toString();
         assertNotNull(result);
@@ -51,7 +49,7 @@ public class ProgramTest {
     @Test(expected = CompileException.class)
     public void testAddThrowsOnDuplicateLine() {
         Program program = new Program();
-        Instruction instr = new Instruction(SSEMParser.STP, 0, POS, Optional.empty());
+        Instruction instr = new Instruction(SSEMParser.STP, 0, POS, null);
         program.add(0, instr, POS);
         program.add(0, instr, POS);
     }
@@ -59,15 +57,15 @@ public class ProgramTest {
     @Test(expected = CompileException.class)
     public void testAddThrowsOnLineOutOfBounds() {
         Program program = new Program();
-        Instruction instr = new Instruction(SSEMParser.STP, 0, POS, Optional.empty());
+        Instruction instr = new Instruction(SSEMParser.STP, 0, POS, null);
         program.add(32, instr, POS);
     }
 
     @Test
     public void testForEach() {
         Program program = new Program();
-        program.add(0, new Instruction(SSEMParser.STP, 0, POS, Optional.empty()), POS);
-        program.add(1, new Instruction(SSEMParser.LDN, 5, POS, Optional.of(POS)), POS);
+        program.add(0, new Instruction(SSEMParser.STP, 0, POS, null), POS);
+        program.add(1, new Instruction(SSEMParser.LDN, 5, POS, POS), POS);
 
         int[] count = {0};
         program.forEach((line, instr) -> count[0]++);

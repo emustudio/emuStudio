@@ -76,7 +76,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
 
     @Override
     public void setFlags(int mask) {
-        cpu.getEngine().flags |= mask;
+        cpu.getEngine().flags |= (short) mask;
     }
 
     @Override

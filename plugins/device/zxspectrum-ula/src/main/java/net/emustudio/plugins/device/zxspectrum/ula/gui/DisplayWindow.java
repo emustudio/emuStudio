@@ -67,7 +67,7 @@ public class DisplayWindow extends DialogBase {
                 canvas.close();
             }
         });
-        KeyboardDispatcher keyboardDispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher keyboardDispatcher = new KeyboardDispatcher(this);
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(keyboardDispatcher);
 
@@ -184,7 +184,7 @@ public class DisplayWindow extends DialogBase {
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
-                session.stop(selectedFile);
+                session.stop(selectedFile.orElse(null));
                 return null;
             }
 

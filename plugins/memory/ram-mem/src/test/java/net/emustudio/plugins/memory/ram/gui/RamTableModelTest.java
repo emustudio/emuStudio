@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -107,8 +106,8 @@ public class RamTableModelTest {
         RamInstruction instr = createNiceMock(RamInstruction.class);
         expect(instr.getOpcode()).andReturn(RamInstruction.Opcode.LOAD).anyTimes();
         expect(instr.getDirection()).andReturn(RamInstruction.Direction.CONSTANT).anyTimes();
-        expect(instr.getOperand()).andReturn(Optional.of(operand)).anyTimes();
-        expect(instr.getLabel()).andReturn(Optional.empty()).anyTimes();
+        expect(instr.getOperand()).andReturn(operand).anyTimes();
+        expect(instr.getLabel()).andReturn(null).anyTimes();
         replay(instr);
 
         context.write(0, instr);
@@ -137,8 +136,8 @@ public class RamTableModelTest {
         RamInstruction instr = createNiceMock(RamInstruction.class);
         expect(instr.getOpcode()).andReturn(opcode).anyTimes();
         expect(instr.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
-        expect(instr.getOperand()).andReturn(Optional.empty()).anyTimes();
-        expect(instr.getLabel()).andReturn(Optional.empty()).anyTimes();
+        expect(instr.getOperand()).andReturn(null).anyTimes();
+        expect(instr.getLabel()).andReturn(null).anyTimes();
         replay(instr);
         return instr;
     }

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.schema.elements;
 
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.gui.schema.Schema;
 import net.emustudio.application.settings.PluginConnection;
 import net.emustudio.application.settings.SchemaPoint;
@@ -415,7 +415,7 @@ public class ConnectionLine {
      * If at least one intersection is found, then true is returned.
      * <p>
      * The algorithm is based on:
-     * http://stackoverflow.com/questions/4497841/optimal-algorithm-if-line-intersects-convex-polygon
+     * <a href="http://stackoverflow.com/questions/4497841/optimal-algorithm-if-line-intersects-convex-polygon">this algorithm</a>
      *
      * @param selectionStart the selection start point
      * @param selectionEnd   the selection end point

@@ -217,7 +217,7 @@ public class Drive {
                 track--;
                 if (track < 0) {
                     track = 0;
-                    port1status &= 0xBF; // head is on track 0
+                    port1status &= (byte) 0xBF; // head is on track 0
                 }
                 sector = 0;
                 sectorOffset = driveSettings.sectorSize;
@@ -251,8 +251,8 @@ public class Drive {
             if ((val & 0x80) != 0) {
                 // write sequence start
                 sectorOffset = 0;
-                port2status &= 0xFE; // SR0 = true
-                port1status &= 0xFE; // enter new write data on
+                port2status &= (byte) 0xFE; // SR0 = true
+                port1status &= (byte) 0xFE; // enter new write data on
             }
         });
         notifyParamsChanged();
@@ -283,7 +283,7 @@ public class Drive {
 
             if (sectorOffset == driveSettings.sectorSize) {
                 port1status |= 1; // ENWD off
-                port2status &= 0xFE; // SR0 = TRUE
+                port2status &= (byte) 0xFE; // SR0 = TRUE
                 return;
             }
 
@@ -321,7 +321,7 @@ public class Drive {
             } finally {
                 sectorOffset = (sectorOffset == driveSettings.sectorSize) ? 1 : (sectorOffset + 1);
                 if (sectorOffset == driveSettings.sectorSize) {
-                    port2status &= 0xFE;
+                    port2status &= (byte) 0xFE;
                 } else {
                     port2status |= 1;
                 }

@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.schema;
 
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.gui.schema.elements.CompilerElement;
 import net.emustudio.application.gui.schema.elements.ConnectionLine;
 import net.emustudio.application.gui.schema.elements.CpuElement;
@@ -42,7 +42,7 @@ public class SchemaTest {
 
             CompilerElement compiler = findElement(schema.getAllElements(), CompilerElement.class);
             CpuElement cpu = findElement(schema.getAllElements(), CpuElement.class);
-            schema.addConnectionLine(compiler, cpu, Arrays.asList(P.of(33, 44)), true);
+            schema.addConnectionLine(compiler, cpu, List.of(P.of(33, 44)), true);
             schema.save();
 
             PluginConfig compilerConfig = config.getCompiler().get();
@@ -55,7 +55,7 @@ public class SchemaTest {
             assertEquals(SchemaPoint.of(60, 10), cpuConfig.getSchemaPoint());
             assertEquals(SchemaPoint.of(80, 40), memoryConfig.getSchemaPoint());
             assertEquals(SchemaPoint.of(120, 80), deviceConfig.getSchemaPoint());
-            assertEquals(Arrays.asList(SchemaPoint.of(30, 40)), connection.getSchemaPoints());
+            assertEquals(List.of(SchemaPoint.of(30, 40)), connection.getSchemaPoints());
         }
     }
 
@@ -68,7 +68,7 @@ public class SchemaTest {
             schema.setCpuElement(new Point(100, 10), "cpu.jar");
             CompilerElement compiler = findElement(schema.getAllElements(), CompilerElement.class);
             CpuElement cpu = findElement(schema.getAllElements(), CpuElement.class);
-            schema.addConnectionLine(compiler, cpu, Arrays.asList(P.of(50, 10)), true);
+            schema.addConnectionLine(compiler, cpu, List.of(P.of(50, 10)), true);
 
             schema.selectAll();
             schema.deleteSelected();
@@ -106,7 +106,7 @@ public class SchemaTest {
             schema.setCpuElement(new Point(110, 90), "cpu.jar");
             CompilerElement compiler = findElement(schema.getAllElements(), CompilerElement.class);
             CpuElement cpu = findElement(schema.getAllElements(), CpuElement.class);
-            schema.addConnectionLine(compiler, cpu, Arrays.asList(P.of(60, 90)), false);
+            schema.addConnectionLine(compiler, cpu, List.of(P.of(60, 90)), false);
 
             List<ConnectionLine> lines = schema.getConnectionLines();
             assertTrue(schema.isConnected(compiler, cpu));
@@ -120,12 +120,12 @@ public class SchemaTest {
             config.setCompiler(SchemaTestSupport.pluginConfig("compiler-id", PLUGIN_TYPE.COMPILER, "compiler.jar", 13, 17));
             config.setCPU(SchemaTestSupport.pluginConfig("cpu-id", PLUGIN_TYPE.CPU, "cpu.jar", 56, 14));
             config.setMemory(SchemaTestSupport.pluginConfig("memory-id", PLUGIN_TYPE.MEMORY, "memory.jar", 84, 39));
-            config.setDevices(Arrays.asList(
+            config.setDevices(List.of(
                     SchemaTestSupport.pluginConfig("device-id", PLUGIN_TYPE.DEVICE, "device.jar", 117, 84)
             ));
             config.setConnections(Arrays.asList(
-                    PluginConnection.create("compiler-id", "cpu-id", true, Arrays.asList(SchemaPoint.of(23, 27))),
-                    PluginConnection.create("compiler-id", "missing-id", false, Arrays.asList(SchemaPoint.of(99, 99)))
+                    PluginConnection.create("compiler-id", "cpu-id", true, List.of(SchemaPoint.of(23, 27))),
+                    PluginConnection.create("compiler-id", "missing-id", false, List.of(SchemaPoint.of(99, 99)))
             ));
 
             Schema schema = new Schema(config, SchemaTestSupport.createAppSettings(true, 10));
@@ -158,7 +158,7 @@ public class SchemaTest {
             CpuElement cpu = findElement(schema.getAllElements(), CpuElement.class);
             measureAllElements(schema);
 
-            schema.addConnectionLine(compiler, cpu, Arrays.asList(P.of(90, 40)), false);
+            schema.addConnectionLine(compiler, cpu, List.of(P.of(90, 40)), false);
             ConnectionLine line = schema.getConnectionLines().get(0);
 
             schema.select(0, 0, 80, 80);
@@ -203,7 +203,7 @@ public class SchemaTest {
             schema.setCpuElement(new Point(160, 40), "cpu.jar");
             CompilerElement compiler = findElement(schema.getAllElements(), CompilerElement.class);
             CpuElement cpu = findElement(schema.getAllElements(), CpuElement.class);
-            schema.addConnectionLine(compiler, cpu, Arrays.asList(P.of(100, 40)), false);
+            schema.addConnectionLine(compiler, cpu, List.of(P.of(100, 40)), false);
 
             ConnectionLine line = schema.getConnectionLines().get(0);
             P point = line.getPoints().get(0);
@@ -236,8 +236,8 @@ public class SchemaTest {
             MemoryElement memory = findElement(schema.getAllElements(), MemoryElement.class);
             DeviceElement device = findElement(schema.getAllElements(), DeviceElement.class);
 
-            schema.addConnectionLine(compiler, cpu, Arrays.asList(P.of(70, 20)), true);
-            schema.addConnectionLine(cpu, memory, Arrays.asList(P.of(170, 20)), false);
+            schema.addConnectionLine(compiler, cpu, List.of(P.of(70, 20)), true);
+            schema.addConnectionLine(cpu, memory, List.of(P.of(170, 20)), false);
 
             schema.setCompilerElement(new Point(30, 30), "compiler-v2.jar");
             CompilerElement newCompiler = findElement(schema.getAllElements(), CompilerElement.class);
@@ -314,7 +314,7 @@ public class SchemaTest {
             DeviceElement device = findElement(schema.getAllElements(), DeviceElement.class);
             measureAllElements(schema);
 
-            schema.addConnectionLine(compiler, cpu, Arrays.asList(P.of(90, 30)), false);
+            schema.addConnectionLine(compiler, cpu, List.of(P.of(90, 30)), false);
 
             schema.moveElement(device, new Point(90, 30));
             assertPoint(device.getSchemaPoint(), 90, 100);

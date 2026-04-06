@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.*;
+import static net.emustudio.application.gui.framework.EmuStudioGui.*;
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
 
 public class EditorPanel extends JPanel {

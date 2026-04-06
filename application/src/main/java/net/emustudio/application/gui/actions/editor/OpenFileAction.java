@@ -11,7 +11,7 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static net.emustudio.application.gui.framework.EmuStudioUI.ICON_OPEN_FILE;
+import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_OPEN_FILE;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class OpenFileAction extends AbstractAction {

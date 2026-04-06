@@ -6,7 +6,7 @@ import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import net.emustudio.application.emulation.EmulationController;
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.GuiImpl;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
@@ -32,7 +32,7 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
 
     @Test
     public void aboutActionOpensAboutDialog() throws Exception {
-        AboutAction action = new AboutAction(showFrame(onEdt(() -> new JFrame("parent"))), new GuiImpl());
+        AboutAction action = new AboutAction(showFrame(onEdt(() -> new JFrame("parent"))), new EmuStudioGui());
 
         FutureTask<Void> task = startAction(action);
         JDialog dialog = waitForWindow(JDialog.class, window -> "About emuStudio".equals(window.getTitle()));
@@ -56,7 +56,7 @@ public class DialogAndExitActionsTest extends AbstractSwingTest {
                     computer,
                     mock(Dialogs.class),
                     new AppSettings(Config.inMemory(), false, false),
-                    new GuiImpl()
+                    new EmuStudioGui()
             );
 
             FutureTask<Void> task = startAction(action);

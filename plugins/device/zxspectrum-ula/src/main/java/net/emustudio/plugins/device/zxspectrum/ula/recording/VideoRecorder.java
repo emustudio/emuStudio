@@ -182,16 +182,15 @@ public final class VideoRecorder {
      *               saved to the given path. Video format will be guessed from the file extension.
      * @throws IOException when video contains no frames; could not create temp files; or unexpected error during encoding
      */
-    public void stop(Optional<Path> target) throws IOException {
-        Objects.requireNonNull(target);
+    public void stop(Path target) throws IOException {
         boolean wasAborted = recordingState == RECORDING_STATE.ABORTED;
-        closeRecording(target.isEmpty());
+        closeRecording(target == null);
         if (wasAborted) {
             throw new IOException("Recording was discarded after an earlier I/O error");
         }
-        if (target.isPresent()) {
+        if (target != null) {
             try {
-                exportVideo(target.get());
+                exportVideo(target);
             } finally {
                 deleteTempFiles();
             }

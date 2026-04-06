@@ -2,13 +2,11 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ram.ast;
 
-import net.emustudio.plugins.compiler.ram.SerializableOptional;
 import net.emustudio.plugins.memory.ram.api.RamInstruction;
 import net.emustudio.plugins.memory.ram.api.RamLabel;
 import net.emustudio.plugins.memory.ram.api.RamValue;
 
 import java.util.Objects;
-import java.util.Optional;
 
 public class Instruction implements RamInstruction {
     public final int line;
@@ -17,27 +15,27 @@ public class Instruction implements RamInstruction {
     private final int address;
     private final Opcode opcode;
     private final Direction direction;
-    private final SerializableOptional<RamValue> operand;
-    private SerializableOptional<RamLabel> label;
+    private final RamValue operand;
+    private RamLabel label;
 
     public Instruction(int line, int column, Opcode opcode, Direction direction,
-                       int address, Optional<RamValue> operand) {
+                       int address, RamValue operand) {
         this(line, column, opcode, direction, address, operand, null);
     }
 
     public Instruction(int line, int column, Opcode opcode, Direction direction,
-                       int address, Optional<RamValue> operand, RamLabel label) {
+                       int address, RamValue operand, RamLabel label) {
         this.opcode = opcode;
         this.direction = direction;
         this.address = address;
-        this.operand = SerializableOptional.fromOpt(Objects.requireNonNull(operand));
+        this.operand = operand;
         this.line = line;
         this.column = column;
-        this.label = SerializableOptional.ofNullable(label);
+        this.label = label;
     }
 
     public Instruction(Opcode opcode, Direction direction,
-                       int address, Optional<RamValue> operand, RamLabel label) {
+                       int address, RamValue operand, RamLabel label) {
         this(0, 0, opcode, direction, address, operand, label);
     }
 
@@ -52,8 +50,8 @@ public class Instruction implements RamInstruction {
     }
 
     @Override
-    public Optional<RamValue> getOperand() {
-        return operand.opt();
+    public RamValue getOperand() {
+        return operand;
     }
 
     @Override
@@ -62,12 +60,12 @@ public class Instruction implements RamInstruction {
     }
 
     @Override
-    public Optional<RamLabel> getLabel() {
-        return label.opt();
+    public RamLabel getLabel() {
+        return label;
     }
 
     public void setLabel(RamLabel label) {
-        this.label = SerializableOptional.ofNullable(label);
+        this.label = label;
     }
 
     @Override
@@ -80,8 +78,8 @@ public class Instruction implements RamInstruction {
         if (address != that.address) return false;
         if (opcode != that.opcode) return false;
         if (direction != that.direction) return false;
-        if (!operand.equals(that.operand)) return false;
-        return label.equals(that.label);
+        if (!Objects.equals(operand, that.operand)) return false;
+        return Objects.equals(label, that.label);
     }
 
     @Override
@@ -89,8 +87,8 @@ public class Instruction implements RamInstruction {
         int result = address;
         result = 31 * result + opcode.hashCode();
         result = 31 * result + direction.hashCode();
-        result = 31 * result + operand.hashCode();
-        result = 31 * result + label.hashCode();
+        result = 31 * result + (operand != null ? operand.hashCode() : 0);
+        result = 31 * result + (label != null ? label.hashCode() : 0);
         return result;
     }
 

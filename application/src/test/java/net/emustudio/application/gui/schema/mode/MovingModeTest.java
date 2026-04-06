@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.gui.schema.mode;
 
-import net.emustudio.application.gui.framework.P;
+import net.emustudio.application.gui.components.P;
 import net.emustudio.application.gui.schema.DrawingModel;
 import net.emustudio.application.gui.schema.DrawingPanel;
 import net.emustudio.application.gui.schema.Schema;
@@ -16,7 +16,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
-import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -296,7 +295,7 @@ public class MovingModeTest {
         ConnectionLine oldSelection = mock(ConnectionLine.class);
         ConnectionLine line = mock(ConnectionLine.class);
         P point = P.of(40, 50);
-        when(schema.getElementByBorderPoint(any(Point.class))).thenReturn(borderElement, null);
+        when(schema.getElementByBorderPoint(any(Point.class))).thenReturn(borderElement, (Element) null);
         when(borderElement.crossesBottomBorder(any(Point.class))).thenReturn(true);
         when(schema.getConnectionLines()).thenReturn(Collections.singletonList(line), Collections.emptyList());
         when(line.getPoints()).thenReturn(Collections.singletonList(point));

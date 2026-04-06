@@ -187,7 +187,7 @@ public class DisplayImpl implements Display, Cursor.LineRoller {
                 outputWriter.write((char) data);
                 outputWriter.flush();
             } catch (IOException e) {
-                LOGGER.error("Could not write to file: " + settings.getOutputPath(), e);
+                LOGGER.error("Could not write to file: {}", settings.getOutputPath(), e);
             }
         }
     }

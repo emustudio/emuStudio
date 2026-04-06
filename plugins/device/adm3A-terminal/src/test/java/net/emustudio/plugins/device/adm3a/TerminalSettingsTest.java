@@ -16,11 +16,10 @@ import static org.junit.Assert.*;
 public class TerminalSettingsTest {
 
     private TerminalSettings settings;
-    private PluginSettings pluginSettings;
 
     @Before
     public void setUp() {
-        pluginSettings = createNiceMock(PluginSettings.class);
+        PluginSettings pluginSettings = createNiceMock(PluginSettings.class);
         expect(pluginSettings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false)).andReturn(false).anyTimes();
         expect(pluginSettings.getBoolean(anyString(), anyBoolean())).andReturn(false).anyTimes();
         expect(pluginSettings.getString(anyString(), anyString())).andAnswer(() -> (String) getCurrentArguments()[1]).anyTimes();

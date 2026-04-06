@@ -12,7 +12,6 @@ import org.antlr.v4.runtime.Token;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.ram.ParsingUtils.*;
 import static net.emustudio.plugins.compiler.ram.RAMParser.*;
@@ -81,7 +80,7 @@ public class ProgramParser extends RAMParserBaseVisitor<Program> {
         }
 
         Instruction instruction = new Instruction(
-                op.getLine(), op.getCharPositionInLine(), opcode, direction, currentAddress++, Optional.ofNullable(operand)
+                op.getLine(), op.getCharPositionInLine(), opcode, direction, currentAddress++, operand
         );
         program.add(instruction);
         return program;

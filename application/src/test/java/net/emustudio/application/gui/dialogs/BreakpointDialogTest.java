@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.GuiImpl;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import org.junit.Test;
 
@@ -63,7 +63,7 @@ public class BreakpointDialogTest extends AbstractSwingTest {
 
     private BreakpointDialog createDialog(Dialogs dialogs) {
         return onEdt(() -> {
-            BreakpointDialog result = new BreakpointDialog(new JFrame(), dialogs, new GuiImpl());
+            BreakpointDialog result = new BreakpointDialog(new JFrame(), dialogs, new EmuStudioGui());
             result.setModal(false);
             return result;
         });

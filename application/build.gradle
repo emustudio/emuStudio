@@ -165,7 +165,6 @@ startScripts {
     windowsScriptFile.text = windowsScriptFile.text.replace('%APP_HOME%\\lib\\logback.xml', '.')
     unixScriptFile.text = unixScriptFile.text.replace('$APP_HOME/lib/logback.xml', '.')
 
-    // --- NEW: Wayland/Sway fix for AWT (XWayland) ---
     def unixText = unixScriptFile.text
     if (!unixText.contains('_JAVA_AWT_WM_NONREPARENTING')) {
       unixText = unixText.replaceFirst(

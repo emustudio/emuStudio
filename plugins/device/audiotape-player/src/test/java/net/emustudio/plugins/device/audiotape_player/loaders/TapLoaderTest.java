@@ -111,7 +111,7 @@ public class TapLoaderTest {
     @Test
     public void testLoadNumberArrayHeader() throws IOException {
         // id=1 is number array
-        int variable = ('C' << 8) | 0x00;
+        int variable = ('C' << 8);
         byte[] headerData = createHeaderData(1, "NumArray", 200, variable, 0);
         byte[] headerBlock = createTapBlock(0x00, headerData);
 
@@ -136,7 +136,7 @@ public class TapLoaderTest {
     @Test
     public void testLoadStringArrayHeader() throws IOException {
         // id=2 is string array
-        int variable = ('Z' << 8) | 0x00;
+        int variable = ('Z' << 8);
         byte[] headerData = createHeaderData(2, "StrArray", 300, variable, 0);
         byte[] headerBlock = createTapBlock(0x00, headerData);
 

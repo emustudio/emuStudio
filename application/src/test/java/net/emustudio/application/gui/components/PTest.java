@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.application.gui.framework;
+package net.emustudio.application.gui.components;
 
 import net.emustudio.application.settings.SchemaPoint;
 import org.junit.Test;

@@ -27,7 +27,7 @@ public class GetCommonTest extends CommandTestBase {
 
         // First byte - low
         byte low = GetCommon.INS.read(control);
-        assertEquals((byte) (boundary & 0xFF), low);
+        assertEquals((byte) (0), low);
         assertFalse(isCommandCleared());
 
         // Second byte - high

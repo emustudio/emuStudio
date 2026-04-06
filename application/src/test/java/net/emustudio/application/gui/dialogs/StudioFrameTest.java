@@ -3,7 +3,7 @@
 package net.emustudio.application.gui.dialogs;
 
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.GuiImpl;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
@@ -30,7 +30,7 @@ public class StudioFrameTest extends AbstractSwingTest {
 
     @Test
     public void frameBuildsTitleTabsAndMenus() {
-        StudioFrame frame = createFrame(Optional.empty());
+        StudioFrame frame = createFrame(null);
 
         showFrame(frame);
 
@@ -51,7 +51,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         Path sourceFile = temporaryFolder.newFile("program.asm").toPath();
         Files.writeString(sourceFile, "NOP");
 
-        StudioFrame frame = createFrame(Optional.of(sourceFile));
+        StudioFrame frame = createFrame(sourceFile);
 
         showFrame(frame);
 
@@ -59,7 +59,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         assertEquals("program.asm", onEdt(() -> tabs.getTitleAt(0)));
     }
 
-    private StudioFrame createFrame(Optional<Path> fileName) {
+    private StudioFrame createFrame(Path fileName) {
         VirtualComputer computer = mock(VirtualComputer.class);
         ComputerConfig computerConfig = mock(ComputerConfig.class);
 
@@ -77,7 +77,7 @@ public class StudioFrameTest extends AbstractSwingTest {
                 createDebugTableModel(),
                 null,
                 fileName,
-                new GuiImpl()
+                new EmuStudioGui()
         ));
     }
 

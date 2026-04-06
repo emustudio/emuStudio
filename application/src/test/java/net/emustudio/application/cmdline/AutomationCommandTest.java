@@ -36,8 +36,6 @@ public class AutomationCommandTest {
         return (T) field.get(obj);
     }
 
-    // --- Default values ---
-
     @Test
     public void defaultWaitForFinishMillisIsDontWait() throws Exception {
         AutomationCommand command = parseAutomationCommand("automation");
@@ -58,8 +56,6 @@ public class AutomationCommandTest {
         String programLocation = getField(command, "programLocation", String.class);
         assertEquals("-1", programLocation);
     }
-
-    // --- Wait max option ---
 
     @Test
     public void parsesShortWaitMaxOption() throws Exception {
@@ -82,8 +78,6 @@ public class AutomationCommandTest {
         assertEquals(0, waitForFinishMillis);
     }
 
-    // --- GUI option ---
-
     @Test
     public void parsesNoGuiOption() throws Exception {
         AutomationCommand command = parseAutomationCommand("automation", "--no-gui");
@@ -97,8 +91,6 @@ public class AutomationCommandTest {
         boolean gui = getField(command, "gui", Boolean.class);
         assertTrue(gui);
     }
-
-    // --- Program location option ---
 
     @Test
     public void parsesShortProgramLocationOption() throws Exception {
@@ -121,8 +113,6 @@ public class AutomationCommandTest {
         assertEquals("256", programLocation);
     }
 
-    // --- Command alias ---
-
     @Test
     public void autoAliasIsRecognized() {
         CommandLine.ParseResult result = cmdline.parseArgs("auto");
@@ -139,16 +129,12 @@ public class AutomationCommandTest {
         assertTrue(result.subcommand().commandSpec().userObject() instanceof AutomationCommand);
     }
 
-    // --- Parent command ---
-
     @Test
     public void parentCommandIsSetToRunner() throws Exception {
         AutomationCommand command = parseAutomationCommand("automation");
         Runner runner = getField(command, "runner", Runner.class);
         assertNotNull(runner);
     }
-
-    // --- Combined options ---
 
     @Test
     public void parsesMultipleOptions() throws Exception {

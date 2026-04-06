@@ -59,6 +59,10 @@ class KeyboardPainter {
         Color adjUsableButtonColor = adjustAlpha(USABLE_BUTTON_COLOR);
         Color adjOutlineColor = adjustAlpha(OUTLINE_COLOR);
 
+        // Fill keyboard background with white
+        g.setColor(adjustAlpha(Color.WHITE));
+        g.fill(keyboardOutline);
+
         g.setStroke(stroke);
         g.setColor(adjOutlineColor);
         g.draw(keyboardOutline);
@@ -106,7 +110,9 @@ class KeyboardPainter {
     }
 
     private Color adjustAlpha(Color color) {
-        return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+        // alpha is a percentage (0-100), convert to 0-255 range for Color
+        int a = Math.round(alpha * 255 / 100f);
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), Math.min(255, Math.max(0, a)));
     }
 
     private int labelX(KeyboardButton button, FontMetrics fontMetrics, String text) {

@@ -13,12 +13,11 @@ import static org.junit.Assert.*;
 
 public class MemoryTableTest {
 
-    private MemoryContextImpl context;
     private MemoryTableModel tableModel;
 
     @Before
     public void setUp() {
-        context = new MemoryContextImpl(new Annotations());
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
         tableModel = new MemoryTableModel(context);
     }
 

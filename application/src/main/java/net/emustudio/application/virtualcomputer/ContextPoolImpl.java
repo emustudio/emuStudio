@@ -134,14 +134,14 @@ public class ContextPoolImpl implements ContextPool {
                     "Context " + contextInterface + " is not found in registered contexts list."
             );
         }
-        LOGGER.debug("Matching context " + contextInterface + " from " + contextsByHash.size() + " option(s)");
+        LOGGER.debug("Matching context {} from {} option(s)", contextInterface, contextsByHash.size());
 
         // find context based on contextID
         int currentIndex = 0;
         for (Context context : contextsByHash) {
             if (pluginID == alwaysAllowedPluginId || hasPermission(pluginID, context)) {
                 if ((index == -1) || (currentIndex == index)) {
-                    LOGGER.debug("Found context with index " + currentIndex);
+                    LOGGER.debug("Found context with index {}", currentIndex);
                     return (T) context;
                 }
             }

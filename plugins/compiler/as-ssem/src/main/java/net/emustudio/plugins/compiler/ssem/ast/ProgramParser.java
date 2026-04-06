@@ -45,7 +45,9 @@ public class ProgramParser extends SSEMParserBaseVisitor<Program> {
                 } else {
                     program.add(
                             line,
-                            new Instruction(instrType, operand, Position.of(fileName, tokenInstr), tokenOperand.map(o -> Position.of(fileName, o))),
+                            new Instruction(
+                                    instrType, operand, Position.of(fileName, tokenInstr),
+                                    tokenOperand.map(o -> Position.of(fileName, o)).orElse(null)),
                             Position.of(fileName, ctx.linenumber)
                     );
                 }

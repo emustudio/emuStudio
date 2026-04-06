@@ -4,7 +4,7 @@ package net.emustudio.application.gui.dialogs;
 
 import com.electronwill.nightconfig.core.Config;
 import net.emustudio.application.gui.AbstractSwingTest;
-import net.emustudio.application.gui.framework.GuiImpl;
+import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.emulib.runtime.ui.Dialogs;
@@ -47,7 +47,7 @@ public class OpenComputerDialogTest extends AbstractSwingTest {
     private OpenComputerDialog createDialog(Dialogs dialogs, Consumer<ComputerConfig> selectComputer) {
         AppSettings appSettings = new AppSettings(Config.inMemory(), false, false);
         return onEdt(() -> {
-            OpenComputerDialog dialog = new OpenComputerDialog(appSettings, dialogs, selectComputer, new GuiImpl());
+            OpenComputerDialog dialog = new OpenComputerDialog(appSettings, dialogs, selectComputer, new EmuStudioGui());
             dialog.setModal(false);
             return dialog;
         });

@@ -163,8 +163,8 @@ public class CpuImplTest {
         RamInstruction haltInstr = createNiceMock(RamInstruction.class);
         expect(haltInstr.getOpcode()).andReturn(RamInstruction.Opcode.HALT).anyTimes();
         expect(haltInstr.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
-        expect(haltInstr.getOperand()).andReturn(Optional.empty()).anyTimes();
-        expect(haltInstr.getLabel()).andReturn(Optional.empty()).anyTimes();
+        expect(haltInstr.getOperand()).andReturn(null).anyTimes();
+        expect(haltInstr.getLabel()).andReturn(null).anyTimes();
         replay(haltInstr);
 
         expect(memory.read(0)).andReturn(haltInstr).anyTimes();
@@ -252,8 +252,8 @@ public class CpuImplTest {
         RamInstruction haltInstr = createNiceMock(RamInstruction.class);
         expect(haltInstr.getOpcode()).andReturn(RamInstruction.Opcode.HALT).anyTimes();
         expect(haltInstr.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
-        expect(haltInstr.getOperand()).andReturn(Optional.empty()).anyTimes();
-        expect(haltInstr.getLabel()).andReturn(Optional.empty()).anyTimes();
+        expect(haltInstr.getOperand()).andReturn(null).anyTimes();
+        expect(haltInstr.getLabel()).andReturn(null).anyTimes();
         replay(haltInstr);
 
         expect(memory.read(anyInt())).andReturn(haltInstr).anyTimes();
