@@ -6,6 +6,7 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +47,33 @@ public class TapePlaybackImplTest {
             playback.passedCycles(tstatesPerCall);
         }
         playThread.join(5000);
+    }
+
+    private Thread startPlaybackAsync() throws InterruptedException {
+        Thread playThread = new Thread(() -> playback.onFileEnd());
+        playThread.start();
+        Thread.sleep(50);
+        return playThread;
+    }
+
+    private int getLastReportedProgress() {
+        try {
+            Field field = TapePlaybackImpl.class.getDeclaredField("lastReportedProgress");
+            field.setAccessible(true);
+            return field.getInt(playback);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("Could not read lastReportedProgress", e);
+        }
+    }
+
+    private long getTotalPlayableTstates() {
+        try {
+            Field field = TapePlaybackImpl.class.getDeclaredField("totalPlayableTstates");
+            field.setAccessible(true);
+            return field.getLong(playback);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("Could not read totalPlayableTstates", e);
+        }
     }
 
     @Test(expected = NullPointerException.class)
@@ -182,6 +210,46 @@ public class TapePlaybackImplTest {
     @Test
     public void testSetGuiDoesNotThrow() {
         playback.setGui(null);
+    }
+
+    @Test
+    public void testPlaybackReportsProgressPercentage() throws InterruptedException {
+        playback.onFileStart();
+        playback.onBlockFlag(0x00);
+
+        Thread playThread = startPlaybackAsync();
+
+        playback.passedCycles(100_000);
+        assertTrue("Expected playback progress to advance from 0%", getLastReportedProgress() > 0);
+        assertTrue("Expected playback progress to stay below 100% mid-play", getLastReportedProgress() < 100);
+
+        for (int i = 0; i < 100; i++) {
+            playback.passedCycles(100_000);
+        }
+        playThread.join(5000);
+
+        assertEquals("Expected playback progress to end at 100%", 100, getLastReportedProgress());
+    }
+
+    @Test
+    public void testUnloadResetsPlaybackProgress() throws InterruptedException {
+        playback.onFileStart();
+        playback.onBlockFlag(0x00);
+
+        Thread playThread = startPlaybackAsync();
+
+        for (int i = 0; i < 100; i++) {
+            playback.passedCycles(100_000);
+        }
+        playThread.join(5000);
+
+        assertEquals(100, getLastReportedProgress());
+        assertTrue(getTotalPlayableTstates() > 0);
+
+        playback.onStateChange(TapePlaybackController.CassetteState.UNLOADED);
+
+        assertEquals(-1, getLastReportedProgress());
+        assertEquals(0, getTotalPlayableTstates());
     }
 
     @Test

@@ -68,6 +68,7 @@ dependencies {
   providedRuntime project(":plugins:device:zxspectrum-bus")
   providedRuntime project(":plugins:device:zxspectrum-ula")
   providedRuntime project(":plugins:device:audiotape-player")
+  providedRuntime project(":plugins:device:audio-ay3_8910-chip")
 
   testImplementation(libs.cacioTta) {
     exclude group: 'org.assertj', module: 'assertj-swing-junit'
@@ -226,6 +227,7 @@ distributions {
         from(output(":plugins:device:zxspectrum-bus"))
         from(output(":plugins:device:zxspectrum-ula"))
         from(output(":plugins:device:audiotape-player"))
+        from(output(":plugins:device:audio-ay3_8910-chip"))
       }
 
       // Examples

@@ -70,4 +70,6 @@ public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> 
     void addPassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener);
 
     void removePassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener);
+
+    int getCPUFrequency();
 }

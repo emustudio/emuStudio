@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 // https://stackoverflow.com/questions/25010068/miglayout-push-vs-grow
 public class TapePlayerGui extends DialogBase {
+    private static final String PLAYBACK_PROGRESS_NOT_AVAILABLE = "N/A";
+
     private final GUI gui;
     private final static String FOLDER_OPEN_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/folder-open.png";
     private final static String PLAY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-playback-start.png";
@@ -51,6 +53,7 @@ public class TapePlayerGui extends DialogBase {
 
     private final JTextArea txtFileName = new JTextArea("N/A");
     private final JLabel lblStatus;
+    private final JLabel lblPlaybackProgress;
 
     private final TapeEventsTableModel eventsModel = new TapeEventsTableModel();
     private final JTable tblEvents = new JTable(eventsModel);
@@ -61,9 +64,10 @@ public class TapePlayerGui extends DialogBase {
     public TapePlayerGui(JFrame parent, Dialogs dialogs, TapePlaybackController controller, GUI gui) {
         super(parent, "Audio Tape Player", false);
         this.gui = gui;
-        this.panelTapeInfo = gui.panel("", "[][grow]", "[][]");
+        this.panelTapeInfo = gui.panel("", "[][grow]", "[][][]");
         this.scrollTapes = gui.scrollPane(lstTapes);
         this.lblStatus = gui.labelBold("Stopped");
+        this.lblPlaybackProgress = gui.labelBold(PLAYBACK_PROGRESS_NOT_AVAILABLE);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
 
@@ -159,6 +163,14 @@ public class TapePlayerGui extends DialogBase {
         SwingUtilities.invokeLater(() -> setCassetteStateImpl(state));
     }
 
+    public void setPlaybackProgress(int percentage) {
+        SwingUtilities.invokeLater(() -> setPlaybackProgressImpl(percentage));
+    }
+
+    public void resetPlaybackProgress() {
+        SwingUtilities.invokeLater(this::resetPlaybackProgressImpl);
+    }
+
     private void setCassetteStateImpl(TapePlaybackController.CassetteState state) {
         this.lblStatus.setText(state.name());
         switch (state) {
@@ -168,6 +180,7 @@ public class TapePlayerGui extends DialogBase {
                 btnStop.setEnabled(false);
                 btnPlay.setEnabled(false);
                 btnEject.setEnabled(false);
+                resetPlaybackProgressImpl();
                 break;
 
             case PLAYING:
@@ -183,6 +196,9 @@ public class TapePlayerGui extends DialogBase {
                 btnLoad.setEnabled(true);
                 btnEject.setEnabled(true);
                 btnPlay.setEnabled(true);
+                if (PLAYBACK_PROGRESS_NOT_AVAILABLE.equals(lblPlaybackProgress.getText())) {
+                    setPlaybackProgressImpl(0);
+                }
                 break;
 
             case UNLOADED:
@@ -194,8 +210,17 @@ public class TapePlayerGui extends DialogBase {
                 loadedFileName.set(null);
                 txtFileName.setToolTipText("");
                 txtFileName.setText("N/A");
+                resetPlaybackProgressImpl();
                 break;
         }
+    }
+
+    private void setPlaybackProgressImpl(int percentage) {
+        lblPlaybackProgress.setText(Math.max(0, Math.min(100, percentage)) + " %");
+    }
+
+    private void resetPlaybackProgressImpl() {
+        lblPlaybackProgress.setText(PLAYBACK_PROGRESS_NOT_AVAILABLE);
     }
 
     @SuppressWarnings("unchecked")
@@ -273,9 +298,13 @@ public class TapePlayerGui extends DialogBase {
                 loadedFileName.set(ps);
                 ps.deriveMaxStringLength(panelTapeInfo);
                 txtFileName.setText(ps.getShortenedString());
+                setPlaybackProgress(0);
             }
         });
-        btnPlay.addActionListener(e -> controller.play());
+        btnPlay.addActionListener(e -> {
+            setPlaybackProgress(0);
+            controller.play();
+        });
         btnStop.addActionListener(e -> controller.stop(false));
         btnEject.addActionListener(e -> controller.stop(true));
     }
@@ -290,6 +319,7 @@ public class TapePlayerGui extends DialogBase {
 
         JLabel lblFileNameLabel = gui.label("File name:");
         JLabel lblStatusLabel = gui.label("Status:");
+        JLabel lblPlaybackProgressLabel = gui.label("Played:");
 
         gui.styleTable(tblEvents);
         tblEvents.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -365,11 +395,14 @@ public class TapePlayerGui extends DialogBase {
         txtFileName.setMinimumSize(new Dimension(0, 0));
         txtFileName.setBackground(UIManager.getColor("Panel.background"));
         lblStatus.setMinimumSize(new Dimension(0, 0));
+        lblPlaybackProgress.setMinimumSize(new Dimension(0, 0));
 
         panelTapeInfo.add(lblFileNameLabel, "cell 0 0, alignx right");
         panelTapeInfo.add(txtFileName, "cell 1 0, growx");
         panelTapeInfo.add(lblStatusLabel, "cell 0 1, alignx right");
         panelTapeInfo.add(lblStatus, "cell 1 1, growx");
+        panelTapeInfo.add(lblPlaybackProgressLabel, "cell 0 2, alignx right");
+        panelTapeInfo.add(lblPlaybackProgress, "cell 1 2, growx");
 
         panelTape.add(panelTapeInfo, "cell 0 0, growx");
         panelTape.add(scrollEvents, "cell 0 1, grow");

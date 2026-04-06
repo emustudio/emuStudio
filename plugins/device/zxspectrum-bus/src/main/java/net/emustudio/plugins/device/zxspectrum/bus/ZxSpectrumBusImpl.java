@@ -179,6 +179,14 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     @Override
+    public int getCPUFrequency() {
+        if (cpu == null) {
+            throw new IllegalStateException("ZX Spectrum bus is not initialized");
+        }
+        return cpu.getCPUFrequency();
+    }
+
+    @Override
     public Byte readData() {
         return busData;
     }

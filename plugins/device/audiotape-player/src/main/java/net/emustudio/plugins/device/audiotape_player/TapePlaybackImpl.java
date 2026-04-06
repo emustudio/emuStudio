@@ -51,6 +51,8 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
     private volatile boolean playing;
     private long playingTstates;
+    private volatile long totalPlayableTstates;
+    private volatile int lastReportedProgress = -1;
     private final CyclicBarrier barrier = new CyclicBarrier(2);
 
     public TapePlaybackImpl(DeviceContext<Byte> lineIn) {
@@ -59,6 +61,13 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
     public void setGui(TapePlayerGui gui) {
         this.gui.set(gui);
+        if (gui != null) {
+            if (lastReportedProgress >= 0) {
+                gui.setPlaybackProgress(lastReportedProgress);
+            } else {
+                gui.resetPlaybackProgress();
+            }
+        }
     }
 
     @Override
@@ -66,6 +75,8 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         loaderSchedule.clear();
         currentTstates = 1;
         pulseUp = false;
+        resetPlaybackMetrics();
+        updatePlaybackProgress(0);
         schedulePulse(PAUSE_PULSE_TSTATES, "PAUSE", "");
     }
 
@@ -139,6 +150,9 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
     @Override
     public void onFileEnd() {
+        totalPlayableTstates = Optional.ofNullable(loaderSchedule.lastEntry())
+                .map(Map.Entry::getKey)
+                .orElse(0L);
         barrier.reset();
         playPulses();
         try {
@@ -154,6 +168,10 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
     @Override
     public void onStateChange(TapePlaybackController.CassetteState state) {
+        if ((state == TapePlaybackController.CassetteState.UNLOADED)
+                || (state == TapePlaybackController.CassetteState.CLOSED)) {
+            resetPlaybackMetrics();
+        }
         Optional.ofNullable(gui.get()).ifPresent(g -> g.setCassetteState(state));
     }
 
@@ -408,6 +426,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
     private void playPulses() {
         playingTstates = 0;
+        updatePlaybackProgress(0);
         playing = true;
     }
 
@@ -415,12 +434,14 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     public void passedCycles(long tstates) {
         if (playing) {
             playingTstates += tstates;
+            updatePlaybackProgressFromCurrentPosition();
             Map.Entry<Long, Runnable> entry = loaderSchedule.floorEntry(playingTstates);
             if (entry != null) {
                 loaderSchedule.remove(entry.getKey());
                 entry.getValue().run();
             }
             if (loaderSchedule.isEmpty()) {
+                updatePlaybackProgress(100);
                 playing = false;
                 try {
                     barrier.await();
@@ -430,6 +451,31 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
                 }
             }
+        }
+    }
+
+    private void resetPlaybackMetrics() {
+        playing = false;
+        playingTstates = 0;
+        totalPlayableTstates = 0;
+        lastReportedProgress = -1;
+    }
+
+    private void updatePlaybackProgressFromCurrentPosition() {
+        long totalTstates = totalPlayableTstates;
+        if (totalTstates <= 0) {
+            return;
+        }
+        long playedTstates = Math.max(0, playingTstates);
+        int progress = (int) Math.min(100, (playedTstates * 100) / totalTstates);
+        updatePlaybackProgress(progress);
+    }
+
+    private void updatePlaybackProgress(int progress) {
+        int clampedProgress = Math.max(0, Math.min(100, progress));
+        if (lastReportedProgress != clampedProgress) {
+            lastReportedProgress = clampedProgress;
+            Optional.ofNullable(gui.get()).ifPresent(g -> g.setPlaybackProgress(clampedProgress));
         }
     }
 }
