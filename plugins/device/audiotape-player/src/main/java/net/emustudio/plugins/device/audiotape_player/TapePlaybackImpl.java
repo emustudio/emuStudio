@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * Tape playback.
@@ -39,6 +40,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     private final static int DATA_LEADER_PULSE_COUNT = 3223;
     private final static int DATA_PULSE_ONE_TSTATES = 1710;
     private final static int DATA_PULSE_ZERO_TSTATES = 855;
+    private final static int TSTATES_PER_MS = 3500; // ZX Spectrum 48K runs at 3.5 MHz
 
     private final DeviceContext<Byte> lineIn;
     private final AtomicReference<TapePlayerGui> gui = new AtomicReference<>();
@@ -155,6 +157,182 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         Optional.ofNullable(gui.get()).ifPresent(g -> g.setCassetteState(state));
     }
 
+    // ==================== TZX-specific callbacks ====================
+
+    @Override
+    public void onTurboSpeedData(int pilotPulseLen, int sync1PulseLen, int sync2PulseLen,
+                                 int zeroBitPulseLen, int oneBitPulseLen, int pilotToneCount,
+                                 int usedBitsInLastByte, int pauseAfterMs, byte[] data) {
+        // Pilot tone
+        String eventType = "PILOT";
+        String details = "turbo, " + pilotToneCount + " pulses";
+        for (int i = 0; i < pilotToneCount; i++) {
+            schedulePulse(pilotPulseLen, eventType, details);
+            eventType = "";
+            details = "";
+        }
+
+        // Sync pulses
+        schedulePulse(sync1PulseLen, "SYNC1", "turbo");
+        schedulePulse(sync2PulseLen, "SYNC2", "turbo");
+
+        // Data
+        String dataEvent = "TURBO DATA";
+        String dataDetails = String.format("length=0x%04X", data.length & 0xFFFF);
+        for (int i = 0; i < data.length; i++) {
+            int bits = (i == data.length - 1) ? usedBitsInLastByte : 8;
+            transmitBits(data[i] & 0xFF, zeroBitPulseLen, oneBitPulseLen, bits, dataEvent, dataDetails);
+            dataEvent = "";
+            dataDetails = "";
+        }
+
+        // Pause
+        if (pauseAfterMs > 0) {
+            schedulePulse(pauseAfterMs * TSTATES_PER_MS, "PAUSE", pauseAfterMs + " ms");
+        }
+    }
+
+    @Override
+    public void onPureTone(int pulseLength, int pulseCount) {
+        String eventType = "PURE TONE";
+        String details = pulseCount + " pulses, " + pulseLength + " T";
+        for (int i = 0; i < pulseCount; i++) {
+            schedulePulse(pulseLength, eventType, details);
+            eventType = "";
+            details = "";
+        }
+    }
+
+    @Override
+    public void onPulseSequence(int[] pulseLengths) {
+        String eventType = "PULSE SEQ";
+        String details = pulseLengths.length + " pulses";
+        for (int pulseLength : pulseLengths) {
+            schedulePulse(pulseLength, eventType, details);
+            eventType = "";
+            details = "";
+        }
+    }
+
+    @Override
+    public void onPureData(int zeroBitPulseLen, int oneBitPulseLen,
+                           int usedBitsInLastByte, int pauseAfterMs, byte[] data) {
+        String eventType = "PURE DATA";
+        String details = String.format("length=0x%04X", data.length & 0xFFFF);
+        for (int i = 0; i < data.length; i++) {
+            int bits = (i == data.length - 1) ? usedBitsInLastByte : 8;
+            transmitBits(data[i] & 0xFF, zeroBitPulseLen, oneBitPulseLen, bits, eventType, details);
+            eventType = "";
+            details = "";
+        }
+
+        if (pauseAfterMs > 0) {
+            schedulePulse(pauseAfterMs * TSTATES_PER_MS, "PAUSE", pauseAfterMs + " ms");
+        }
+    }
+
+    @Override
+    public void onDirectRecording(int tstatesPerSample, int pauseAfterMs,
+                                  int usedBitsInLastByte, byte[] samples) {
+        String eventType = "DIRECT REC";
+        String details = String.format("length=0x%04X, %d T/sample", samples.length & 0xFFFF, tstatesPerSample);
+        for (int i = 0; i < samples.length; i++) {
+            int bits = (i == samples.length - 1) ? usedBitsInLastByte : 8;
+            int mask = 0x80;
+            for (int b = 0; b < bits; b++) {
+                boolean high = (samples[i] & mask) != 0;
+                scheduleDirectSample(tstatesPerSample, high, eventType, details);
+                eventType = "";
+                details = "";
+                mask >>>= 1;
+            }
+        }
+
+        if (pauseAfterMs > 0) {
+            schedulePulse(pauseAfterMs * TSTATES_PER_MS, "PAUSE", pauseAfterMs + " ms");
+        }
+    }
+
+    @Override
+    public void onCswRecording(int pauseAfterMs, int sampleRate, int compressionType,
+                               long storedPulseCount, byte[] data) {
+        logProgramDetail("CSW REC", String.format(
+                "rate=%d Hz, compression=%d, pulses=%d (not yet fully supported)",
+                sampleRate, compressionType, storedPulseCount));
+    }
+
+    @Override
+    public void onGeneralizedData(int pauseAfterMs, byte[] data) {
+        logProgramDetail("GEN DATA", String.format(
+                "pause=%d ms, length=0x%04X (not yet fully supported)",
+                pauseAfterMs, data.length & 0xFFFF));
+    }
+
+    @Override
+    public void onPause(int durationMs) {
+        if (durationMs == 0) {
+            logProgramDetail("STOP TAPE", "Stop the tape (pause=0)");
+        } else {
+            schedulePulse(durationMs * TSTATES_PER_MS, "PAUSE", durationMs + " ms");
+        }
+    }
+
+    @Override
+    public void onGroupStart(String name) {
+        logProgramDetail("GROUP", name);
+    }
+
+    @Override
+    public void onGroupEnd() {
+        logProgramDetail("GROUP END", "");
+    }
+
+    @Override
+    public void onStopIfIn48KMode() {
+        logProgramDetail("STOP 48K", "Stop if in 48K mode");
+    }
+
+    @Override
+    public void onSetSignalLevel(int level) {
+        pulseUp = (level != 0);
+        logProgramDetail("SIGNAL", "level=" + level);
+    }
+
+    @Override
+    public void onTextDescription(String text) {
+        logProgramDetail("TEXT", text);
+    }
+
+    @Override
+    public void onMessage(String message, int displayTimeSeconds) {
+        logProgramDetail("MESSAGE", message + " (" + displayTimeSeconds + "s)");
+    }
+
+    @Override
+    public void onArchiveInfo(java.util.List<String[]> entries) {
+        String details = entries.stream()
+                .map(e -> e[0] + ": " + e[1])
+                .collect(Collectors.joining("; "));
+        logProgramDetail("ARCHIVE", details);
+    }
+
+    @Override
+    public void onHardwareInfo(java.util.List<int[]> entries) {
+        logProgramDetail("HARDWARE", entries.size() + " entries");
+    }
+
+    @Override
+    public void onCustomInfo(String id, byte[] data) {
+        logProgramDetail("CUSTOM", id + " (" + data.length + " bytes)");
+    }
+
+    @Override
+    public void onGlueBlock() {
+        logProgramDetail("GLUE", "");
+    }
+
+    // ==================== Private helpers ====================
+
     private void logPulse(long tstate, int length, String eventType, String details) {
         Optional.ofNullable(gui.get()).ifPresent(g -> g.addPulseRow(tstate, length, eventType, details));
     }
@@ -165,10 +343,25 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     }
 
     private void transmitByte(int data, String eventType, String details) {
-        int mask = 0x80; // 1000 0000
-        while (mask != 0) {
-            int pulseLength = ((data & mask) == 0) ? DATA_PULSE_ZERO_TSTATES : DATA_PULSE_ONE_TSTATES;
-            schedulePulse(pulseLength, eventType, details); // 2x according to https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface
+        transmitBits(data, DATA_PULSE_ZERO_TSTATES, DATA_PULSE_ONE_TSTATES, 8, eventType, details);
+    }
+
+    /**
+     * Transmit bits of a byte with configurable pulse lengths and bit count.
+     *
+     * @param data         byte value (bits read from MSB)
+     * @param zeroPulseLen T-states for zero bit pulse
+     * @param onePulseLen  T-states for one bit pulse
+     * @param bits         number of bits to transmit (1-8)
+     * @param eventType    event type for logging (first call only)
+     * @param details      event details for logging (first call only)
+     */
+    private void transmitBits(int data, int zeroPulseLen, int onePulseLen, int bits,
+                              String eventType, String details) {
+        int mask = 0x80; // start from MSB
+        for (int i = 0; i < bits; i++) {
+            int pulseLength = ((data & mask) == 0) ? zeroPulseLen : onePulseLen;
+            schedulePulse(pulseLength, eventType, details);
             schedulePulse(pulseLength, "", "");
             eventType = "";
             details = "";
@@ -194,6 +387,23 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         loaderSchedule.put(currentTstates, pulseUp ? one : zero);
         currentTstates += length;
         pulseUp = !pulseUp;
+    }
+
+    /**
+     * Schedule a direct sample (doesn't toggle pulse - uses the sample value directly).
+     */
+    private void scheduleDirectSample(int tstatesPerSample, boolean high,
+                                      String eventType, String details) {
+        final long tstate = currentTstates;
+        byte value = high ? (byte) 1 : (byte) 0;
+        loaderSchedule.put(currentTstates, () -> {
+            if (!eventType.isEmpty()) {
+                logPulse(tstate, tstatesPerSample, eventType, details);
+            }
+            lineIn.writeData(value);
+        });
+        currentTstates += tstatesPerSample;
+        pulseUp = high;
     }
 
     private void playPulses() {

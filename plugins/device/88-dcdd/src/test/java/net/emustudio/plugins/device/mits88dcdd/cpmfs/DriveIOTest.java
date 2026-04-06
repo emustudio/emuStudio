@@ -11,8 +11,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
@@ -33,7 +33,7 @@ public class DriveIOTest {
     public void setup() throws IOException {
         // Small format: bsh=3, dsm=59, drm=31, spt=16, ofs=2, sectorSize=128
         DiskParameterBlock dpb = DiskParameterBlock.fromBSH(16, 16, 3, 59, 31, 0x80, 0, 2);
-        cpmFormat = new CpmFormat("test", dpb, 128, Optional.of(1), Optional.empty(),
+        cpmFormat = new CpmFormat("test", dpb, 128, 1, Collections.emptyList(),
                 SectorOps.DUMMY, false, DateFormat.NOT_USED);
 
         imageFile = folder.newFile("test.dsk").toPath();

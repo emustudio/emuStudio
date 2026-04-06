@@ -75,8 +75,8 @@ public class AutomationCommand implements Runnable {
             try (VirtualComputer computer = loadComputer(
                     appConfig, computerConfig, dialogs, contextPool, debugTableModel, gui
             )) {
-                Optional<Integer> programLocation = this.programLocation.equals("-1") ? Optional.empty() :
-                        Optional.of(RadixUtils.getInstance().parseRadix(this.programLocation));
+                Integer programLocation = this.programLocation.equals("-1")
+                        ? null : RadixUtils.getInstance().parseRadix(this.programLocation);
 
                 Automation automation = new Automation(
                         computer, runner.inputFile,

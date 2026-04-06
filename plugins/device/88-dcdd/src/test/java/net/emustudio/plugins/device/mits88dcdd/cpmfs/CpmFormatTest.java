@@ -5,8 +5,8 @@ package net.emustudio.plugins.device.mits88dcdd.cpmfs;
 import net.emustudio.plugins.device.mits88dcdd.cpmfs.sectorops.SectorOps;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -15,21 +15,21 @@ public class CpmFormatTest {
     // CP/M 1.4 SIMH: bsh=3, dsm=242, drm=63, al0=0xC0, al1=0, ofs=2, spt=26
     private CpmFormat makeCpm1Format() {
         DiskParameterBlock dpb = DiskParameterBlock.fromBSH(32, 26, 3, 242, 63, 0xC0, 0, 2);
-        return new CpmFormat("cpm1-simh", dpb, 137, Optional.of(6), Optional.empty(),
+        return new CpmFormat("cpm1-simh", dpb, 137, 6, Collections.emptyList(),
                 SectorOps.DUMMY, false, DateFormat.NOT_USED);
     }
 
     // CP/M 3 SIMH: bsh=4, dsm=0x07F9, drm=0x03FF, al0=0xF0, al1=0, ofs=6, spt=32
     private CpmFormat makeCpm3Format() {
         DiskParameterBlock dpb = DiskParameterBlock.fromBSH(32, 32, 4, 0x07F9, 0x03FF, 0xF0, 0, 6);
-        return new CpmFormat("cpm3-simh", dpb, 137, Optional.of(17), Optional.empty(),
+        return new CpmFormat("cpm3-simh", dpb, 137, 17, Collections.emptyList(),
                 SectorOps.DUMMY, false, DateFormat.NOT_USED);
     }
 
     // CP/M 2 SIMH: bsh=3, dsm=254, drm=255, al0=0xFF, al1=0, ofs=6, spt=32
     private CpmFormat makeCpm2Format() {
         DiskParameterBlock dpb = DiskParameterBlock.fromBSH(32, 32, 3, 254, 255, 0xFF, 0, 6);
-        return new CpmFormat("cpm2-simh", dpb, 137, Optional.of(17), Optional.empty(),
+        return new CpmFormat("cpm2-simh", dpb, 137, 17, Collections.emptyList(),
                 SectorOps.DUMMY, false, DateFormat.NOT_USED);
     }
 
@@ -65,7 +65,7 @@ public class CpmFormatTest {
     public void testDirectoryBlocksAl1Included() {
         // al0=0x80, al1=0x01 => block 0 and block 15
         DiskParameterBlock dpb = DiskParameterBlock.fromBSH(32, 32, 3, 242, 63, 0x80, 0x01, 2);
-        CpmFormat fmt = new CpmFormat("test", dpb, 137, Optional.of(1), Optional.empty(),
+        CpmFormat fmt = new CpmFormat("test", dpb, 137, 1, Collections.emptyList(),
                 SectorOps.DUMMY, false, DateFormat.NOT_USED);
         assertTrue(fmt.directoryBlocks.contains(0));
         assertTrue(fmt.directoryBlocks.contains(15));
@@ -151,14 +151,14 @@ public class CpmFormatTest {
     @Test(expected = IllegalArgumentException.class)
     public void testSectorSkewAndTableCannotBothBePresent() {
         DiskParameterBlock dpb = DiskParameterBlock.fromBSH(32, 4, 3, 100, 63, 0xC0, 0, 2);
-        new CpmFormat("test", dpb, 137, Optional.of(6), Optional.of(List.of(0, 1, 2, 3)),
+        new CpmFormat("test", dpb, 137, 6, List.of(0, 1, 2, 3),
                 SectorOps.DUMMY, false, DateFormat.NOT_USED);
     }
 
     @Test
     public void testCustomSectorSkewTable() {
         DiskParameterBlock dpb = DiskParameterBlock.fromBSH(32, 4, 3, 100, 63, 0xC0, 0, 2);
-        CpmFormat fmt = new CpmFormat("test", dpb, 137, Optional.empty(), Optional.of(List.of(0, 2, 1, 3)),
+        CpmFormat fmt = new CpmFormat("test", dpb, 137, null, List.of(0, 2, 1, 3),
                 SectorOps.DUMMY, false, DateFormat.NOT_USED);
         assertArrayEquals(new int[]{0, 2, 1, 3}, fmt.sectorSkewTable);
     }

@@ -35,17 +35,17 @@ public class Automation implements Runnable {
     private final AppSettings appSettings;
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
-    private final Optional<Integer> programLocation;
+    private final Integer programLocation;
     AutoDialog progressGUI; // package-private for testing
     private volatile CPU.RunState resultState;
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
-                      Dialogs dialogs, int waitForFinishMillis, Optional<Integer> programLocation, GUI gui) throws AutomationException {
+                      Dialogs dialogs, int waitForFinishMillis, Integer programLocation, GUI gui) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.waitForFinishMillis = waitForFinishMillis;
-        this.programLocation = Objects.requireNonNull(programLocation);
+        this.programLocation = programLocation;
 
         if (inputFile != null) {
             this.inputFile = Objects.requireNonNull(inputFile, "Input file must be defined").toFile();
@@ -95,10 +95,12 @@ public class Automation implements Runnable {
 
             computer.getCPU().ifPresent(cpu -> {
                 setProgress("Resetting CPU...", false);
-                programLocation.ifPresentOrElse(l -> {
-                    setProgress("Program start location: " + String.format("%04Xh", l), false);
-                    cpu.reset(l);
-                }, cpu::reset);
+                if (programLocation != null) {
+                    setProgress("Program start location: " + String.format("%04Xh", programLocation), false);
+                    cpu.reset(programLocation);
+                } else {
+                    cpu.reset();
+                }
                 autoEmulate(cpu);
             });
         } catch (Exception e) {

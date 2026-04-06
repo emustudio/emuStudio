@@ -276,14 +276,6 @@ ij_java_wrap_comments = false
 ij_java_wrap_first_method_in_call_chain = false
 ij_java_wrap_long_lines = false
 
-[{*.bash,*.sh,*.zsh}]
-ij_shell_binary_ops_start_line = false
-ij_shell_keep_column_alignment_padding = false
-ij_shell_minify_program = false
-ij_shell_redirect_followed_by_space = false
-ij_shell_switch_cases_indented = false
-ij_shell_use_unix_line_separator = true
-
 [{*.markdown,*.md}]
 trim_trailing_whitespace = false
 ij_markdown_force_one_space_after_blockquote_symbol = true
