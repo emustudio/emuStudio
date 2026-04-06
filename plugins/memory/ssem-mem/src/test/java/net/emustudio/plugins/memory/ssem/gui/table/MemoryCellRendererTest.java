@@ -14,16 +14,14 @@ import static org.junit.Assert.*;
 
 public class MemoryCellRendererTest {
 
-    private MemoryContextImpl context;
-    private MemoryTableModel tableModel;
     private JScrollPane scrollPane;
     private MemoryCellRenderer renderer;
     private JTable table;
 
     @Before
     public void setUp() {
-        context = new MemoryContextImpl(new Annotations());
-        tableModel = new MemoryTableModel(context);
+        MemoryContextImpl context = new MemoryContextImpl(new Annotations());
+        MemoryTableModel tableModel = new MemoryTableModel(context);
         scrollPane = new JScrollPane();
         table = new JTable(tableModel);
         renderer = new MemoryCellRenderer(table.getTableHeader(), tableModel, scrollPane, table.getRowHeight());

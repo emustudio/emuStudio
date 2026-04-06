@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
-import static net.emustudio.plugins.device.mits88dcdd.cpmfs.CpmFileSystem.STATUS_UNUSED;
 import static org.junit.Assert.*;
 
 /**

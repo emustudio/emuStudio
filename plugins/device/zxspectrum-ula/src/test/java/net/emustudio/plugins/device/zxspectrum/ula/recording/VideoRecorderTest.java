@@ -18,7 +18,6 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import static net.emustudio.plugins.device.zxspectrum.ula.recording.VideoRecorder.TEMP_AUDIO_FILE_PREFIX;
 import static net.emustudio.plugins.device.zxspectrum.ula.recording.VideoRecorder.TEMP_VIDEO_FILE_PREFIX;
@@ -39,7 +38,7 @@ public class VideoRecorderTest {
         recorder.captureVideo(createFrame());
 
         Path output = temporaryFolder.newFile("capture.mp4").toPath();
-        recorder.stop(Optional.of(output));
+        recorder.stop(output);
 
         assertIsoBaseMediaFile(output, 0);
     }
@@ -52,7 +51,7 @@ public class VideoRecorderTest {
         recorder.captureAudio(audio);
 
         Path output = temporaryFolder.newFile("capture-with-audio.mp4").toPath();
-        recorder.stop(Optional.of(output));
+        recorder.stop(output);
 
         assertIsoBaseMediaFile(output, 1);
     }
@@ -64,7 +63,7 @@ public class VideoRecorderTest {
         recorder.captureVideo(createFrame(FRAME_SIZE + 1));
 
         Path output = temporaryFolder.newFile("discarded.mp4").toPath();
-        IOException error = assertThrows(IOException.class, () -> recorder.stop(Optional.of(output)));
+        IOException error = assertThrows(IOException.class, () -> recorder.stop(output));
 
         assertEquals("Recording was discarded after an earlier I/O error", error.getMessage());
     }
@@ -103,7 +102,7 @@ public class VideoRecorderTest {
     public void testStopWithEmptyOptionalDiscardsRecording() throws IOException {
         VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
         recorder.captureVideo(createFrame());
-        recorder.stop(Optional.empty());
+        recorder.stop(null);
         // no exception, recording silently discarded
     }
 
@@ -112,7 +111,7 @@ public class VideoRecorderTest {
         VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
         Path output = temporaryFolder.newFile("empty.mp4").toPath();
 
-        IOException error = assertThrows(IOException.class, () -> recorder.stop(Optional.of(output)));
+        IOException error = assertThrows(IOException.class, () -> recorder.stop(output));
         assertEquals("Recording contains no video frames", error.getMessage());
     }
 
@@ -124,7 +123,7 @@ public class VideoRecorderTest {
         }
 
         Path output = temporaryFolder.newFile("multi-frame.mp4").toPath();
-        recorder.stop(Optional.of(output));
+        recorder.stop(output);
 
         assertIsoBaseMediaFile(output, 0);
         assertTrue(Files.size(output) > 0);
@@ -139,7 +138,7 @@ public class VideoRecorderTest {
         }
 
         Path output = temporaryFolder.newFile("multi-av.mp4").toPath();
-        recorder.stop(Optional.of(output));
+        recorder.stop(output);
 
         assertIsoBaseMediaFile(output, 1);
     }
@@ -152,7 +151,7 @@ public class VideoRecorderTest {
         recorder.captureAudio(new byte[]{1, 2, 3});
 
         Path output = temporaryFolder.newFile("misaligned.mp4").toPath();
-        IOException error = assertThrows(IOException.class, () -> recorder.stop(Optional.of(output)));
+        IOException error = assertThrows(IOException.class, () -> recorder.stop(output));
         assertEquals("Recording was discarded after an earlier I/O error", error.getMessage());
     }
 
@@ -162,7 +161,7 @@ public class VideoRecorderTest {
         recorder.captureVideo(createFrame());
 
         Path output = temporaryFolder.newFile("after-stop.mp4").toPath();
-        recorder.stop(Optional.of(output));
+        recorder.stop(output);
 
         // These should be silently ignored — no exception
         recorder.captureVideo(createFrame());
@@ -175,11 +174,6 @@ public class VideoRecorderTest {
         assertThrows(NullPointerException.class, () -> recorder.captureAudio(null));
     }
 
-    @Test
-    public void testStopWithNullTargetThrowsNpe() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
-        assertThrows(NullPointerException.class, () -> recorder.stop(null));
-    }
 
     @Test
     public void testTempFilesAreCleanedUpAfterExport() throws IOException {
@@ -190,7 +184,7 @@ public class VideoRecorderTest {
         recorder.captureAudio(createAudioFrames(480));
 
         Path output = temporaryFolder.newFile("cleanup.mp4").toPath();
-        recorder.stop(Optional.of(output));
+        recorder.stop(output);
 
         assertTrue(Files.exists(output));
         assertEquals("Temp files should be cleaned up", before, countUlaTempFiles());
@@ -202,7 +196,7 @@ public class VideoRecorderTest {
 
         VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
         recorder.captureVideo(createFrame());
-        recorder.stop(Optional.empty());
+        recorder.stop(null);
 
         assertEquals("Temp files should be deleted on discard", before, countUlaTempFiles());
     }
@@ -215,7 +209,7 @@ public class VideoRecorderTest {
         Path output = temporaryFolder.getRoot().toPath().resolve("sub/dir/nested.mp4");
         assertFalse(Files.exists(output.getParent()));
 
-        recorder.stop(Optional.of(output));
+        recorder.stop(output);
 
         assertTrue(Files.exists(output));
         assertIsoBaseMediaFile(output, 0);

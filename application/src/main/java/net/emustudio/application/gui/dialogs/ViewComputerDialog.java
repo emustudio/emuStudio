@@ -19,7 +19,6 @@ import javax.swing.*;
 import java.awt.Dimension;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.*;
 
@@ -57,18 +56,16 @@ public class ViewComputerDialog extends DialogBase {
         // Select default info (CPU)
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        showPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
+        showPluginInfo(computer.getCPU().orElse(null), computer.getComputerConfig().getCPU().orElse(null));
     }
 
-    private <T extends Plugin> void showPluginInfo(Optional<T> plugin, Optional<PluginConfig> config) {
-        if (plugin.isPresent() && config.isPresent()) {
-            Plugin p = plugin.get();
-            PluginConfig c = config.get();
-            lblName.setText(p.getTitle());
-            lblVersion.setText(p.getVersion());
-            lblFileName.setText(c.getPluginFile());
-            lblCopyright.setText(p.getCopyright());
-            txtDescription.setText(p.getDescription());
+    private <T extends Plugin> void showPluginInfo(T plugin, PluginConfig config) {
+        if (plugin != null && config != null) {
+            lblName.setText(plugin.getTitle());
+            lblVersion.setText(plugin.getVersion());
+            lblFileName.setText(config.getPluginFile());
+            lblCopyright.setText(plugin.getCopyright());
+            txtDescription.setText(plugin.getDescription());
             lblCopyright.setVisible(true);
             lblVersion.setVisible(true);
             lblFileName.setVisible(true);
@@ -100,14 +97,14 @@ public class ViewComputerDialog extends DialogBase {
             int index = cmbDevice.getSelectedIndex();
             if (index >= 0 && index < devices.size()) {
                 try {
-                    showPluginInfo(Optional.of(devices.get(index)),
-                            Optional.of(computer.getComputerConfig().getDevices().get(index)));
+                    showPluginInfo(devices.get(index),
+                            computer.getComputerConfig().getDevices().get(index));
                 } catch (Exception ex) {
-                    showPluginInfo(Optional.empty(), Optional.empty());
+                    showPluginInfo(null, null);
                     LOGGER.error("Could not setup plugin information", ex);
                 }
             } else {
-                showPluginInfo(Optional.empty(), Optional.empty());
+                showPluginInfo(null, null);
             }
         });
 
@@ -117,7 +114,7 @@ public class ViewComputerDialog extends DialogBase {
         JToggleButton btnCompiler = gui.toolbarToggleButton(e -> {
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
-            showPluginInfo(computer.getCompiler(), computer.getComputerConfig().getCompiler());
+            showPluginInfo(computer.getCompiler().orElse(null), computer.getComputerConfig().getCompiler().orElse(null));
         }, ICON_COMPILER, "Compiler information");
         btnCompiler.setEnabled(computer.getCompiler().isPresent());
         btnCompiler.setSelected(false);
@@ -128,7 +125,7 @@ public class ViewComputerDialog extends DialogBase {
         JToggleButton btnCPU = gui.toolbarToggleButton(e -> {
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
-            showPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
+            showPluginInfo(computer.getCPU().orElse(null), computer.getComputerConfig().getCPU().orElse(null));
         }, ICON_CPU, "CPU information");
         btnCPU.setEnabled(computer.getCPU().isPresent());
         btnCPU.setSelected(true);
@@ -139,7 +136,7 @@ public class ViewComputerDialog extends DialogBase {
         JToggleButton btnMemory = gui.toolbarToggleButton(e -> {
                     lblSelectDevice.setVisible(false);
                     cmbDevice.setVisible(false);
-                    showPluginInfo(computer.getMemory(), computer.getComputerConfig().getMemory());
+                    showPluginInfo(computer.getMemory().orElse(null), computer.getComputerConfig().getMemory().orElse(null));
                 }, ICON_MEMORY, "Memory information");
         btnMemory.setEnabled(computer.getMemory().isPresent());
         btnMemory.setSelected(false);
@@ -154,7 +151,7 @@ public class ViewComputerDialog extends DialogBase {
                         cmbDevice.setSelectedIndex(0);
                     } else {
                         cmbDevice.setEnabled(false);
-                        showPluginInfo(Optional.empty(), Optional.empty());
+                        showPluginInfo(null, null);
                     }
                 }, ICON_DEVICE, "Devices information");
         btnDevice.setEnabled(!devices.isEmpty());

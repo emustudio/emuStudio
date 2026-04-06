@@ -9,12 +9,6 @@ import static org.junit.Assert.*;
 public class BreakpointTest {
 
     @Test
-    public void testBreakpointIsException() {
-        Breakpoint breakpoint = new Breakpoint();
-        assertTrue(breakpoint instanceof Exception);
-    }
-
-    @Test
     public void testBreakpointCanBeThrown() {
         try {
             throw new Breakpoint();

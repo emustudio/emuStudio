@@ -16,7 +16,7 @@ import java.util.Optional;
 
 public class TzxLoader implements Loader {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(TapLoader.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(TzxLoader.class);
 
     @Override
     public boolean isMemoryAddressAware() {

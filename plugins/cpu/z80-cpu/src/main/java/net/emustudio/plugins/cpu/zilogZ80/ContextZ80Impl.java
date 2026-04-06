@@ -45,7 +45,7 @@ public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ
     @Override
     public void detachDevice(int port) {
         if (devices.remove(port) != null) {
-            LOGGER.debug("Detached device from port " + port);
+            LOGGER.debug("Detached device from port {}", port);
         }
     }
 

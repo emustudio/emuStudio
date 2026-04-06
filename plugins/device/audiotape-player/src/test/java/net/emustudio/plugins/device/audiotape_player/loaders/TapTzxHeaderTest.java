@@ -24,7 +24,7 @@ public class TapTzxHeaderTest {
     @Test
     public void testGetVariable() {
         // variable char is stored in upper byte of parameter1
-        int parameter1 = ('B' << 8) | 0x00;
+        int parameter1 = ('B' << 8);
         TapTzxHeader header = new TapTzxHeader(1, "test      ", 100, parameter1, 0);
         assertEquals('B', header.getVariable());
     }

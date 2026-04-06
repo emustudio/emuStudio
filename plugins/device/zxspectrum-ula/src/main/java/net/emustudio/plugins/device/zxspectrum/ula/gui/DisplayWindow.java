@@ -184,7 +184,7 @@ public class DisplayWindow extends DialogBase {
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
-                session.stop(selectedFile);
+                session.stop(selectedFile.orElse(null));
                 return null;
             }
 

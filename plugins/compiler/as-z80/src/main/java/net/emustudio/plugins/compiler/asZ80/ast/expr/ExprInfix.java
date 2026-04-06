@@ -12,7 +12,6 @@ import org.antlr.v4.runtime.Token;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.BiFunction;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
@@ -61,20 +60,20 @@ public class ExprInfix extends Node {
     }
 
     @Override
-    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
+    public Evaluated eval(Integer currentAddress, NameSpace env) {
         Node leftChild = getChild(0);
         Node rightChild = getChild(1);
 
-        Optional<Evaluated> left = leftChild.eval(currentAddress, env);
-        Optional<Evaluated> right = rightChild.eval(currentAddress, env);
+        Evaluated left = leftChild.eval(currentAddress, env);
+        Evaluated right = rightChild.eval(currentAddress, env);
 
-        if (left.isPresent() && right.isPresent()) {
-            int l = left.get().value;
-            int r = right.get().value;
-            return Optional.of(new Evaluated(position, operation.apply(l, r)));
+        if (left != null && right != null) {
+            int l = left.value;
+            int r = right.value;
+            return new Evaluated(position, operation.apply(l, r));
         }
 
-        return Optional.empty();
+        return null;
     }
 
     @Override

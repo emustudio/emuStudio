@@ -113,7 +113,7 @@ public class TzxLoaderTest {
     public void testLoadNumberArrayHeader() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         writeTzxFileHeader(out);
-        int variable = ('D' << 8) | 0x00;
+        int variable = ('D' << 8);
         writeTzxHeaderBlock(out, 0x10, 500, 1, "NumArr", 200, variable, 0);
         File tzxFile = writeTzxFile(out.toByteArray());
 
@@ -137,7 +137,7 @@ public class TzxLoaderTest {
     public void testLoadStringArrayHeader() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         writeTzxFileHeader(out);
-        int variable = ('M' << 8) | 0x00;
+        int variable = ('M' << 8);
         writeTzxHeaderBlock(out, 0x10, 500, 2, "StrArr", 300, variable, 0);
         File tzxFile = writeTzxFile(out.toByteArray());
 
@@ -716,8 +716,7 @@ public class TzxLoaderTest {
         String title = "Test Game";
         String author = "J. Doe";
         // Entry: type(1) + len(1) + text
-        int entriesLength = 1 + (1 + 1 + title.length()) + (1 + 1 + author.length());
-        int blockLength = entriesLength;
+        int blockLength = 1 + (1 + 1 + title.length()) + (1 + 1 + author.length());
 
         ByteBuffer buf = ByteBuffer.allocate(1 + 2 + 1 + (1 + 1 + title.length()) + (1 + 1 + author.length()));
         buf.order(ByteOrder.LITTLE_ENDIAN);

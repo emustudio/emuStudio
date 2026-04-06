@@ -8,8 +8,6 @@ import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import org.junit.Test;
 
-import java.util.Optional;
-
 import static org.junit.Assert.*;
 
 public class ExprStringTest {
@@ -18,23 +16,23 @@ public class ExprStringTest {
     @Test
     public void testEvalSingleChar() {
         ExprString expr = new ExprString(POS, "A");
-        Optional<Evaluated> result = expr.eval(Optional.empty(), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals('A' & 0xFF, result.get().value);
+        Evaluated result = expr.eval(null, new NameSpace());
+        assertNotNull(result);
+        assertEquals('A' & 0xFF, result.value);
     }
 
     @Test
     public void testEvalMultiCharReturnsEmpty() {
         ExprString expr = new ExprString(POS, "AB");
-        Optional<Evaluated> result = expr.eval(Optional.empty(), new NameSpace());
-        assertFalse(result.isPresent());
+        Evaluated result = expr.eval(null, new NameSpace());
+        assertNull(result);
     }
 
     @Test
     public void testEvalEmptyStringReturnsEmpty() {
         ExprString expr = new ExprString(POS, "");
-        Optional<Evaluated> result = expr.eval(Optional.empty(), new NameSpace());
-        assertFalse(result.isPresent());
+        Evaluated result = expr.eval(null, new NameSpace());
+        assertNull(result);
     }
 
     @Test
@@ -76,4 +74,3 @@ public class ExprStringTest {
         new ExprString(POS, null);
     }
 }
-

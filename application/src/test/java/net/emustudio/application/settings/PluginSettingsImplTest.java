@@ -336,7 +336,7 @@ public class PluginSettingsImplTest {
     @Test
     public void localGetArrayDefaultWhenMissing() {
         PluginSettingsImpl settings = createSettings();
-        List<String> fallback = Arrays.asList("default");
+        List<String> fallback = List.of("default");
 
         assertEquals(Collections.emptyList(), settings.getArray("missing"));
         assertEquals(fallback, settings.getArray("missing", fallback));

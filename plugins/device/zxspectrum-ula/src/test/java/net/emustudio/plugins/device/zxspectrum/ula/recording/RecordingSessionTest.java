@@ -30,7 +30,7 @@ public class RecordingSessionTest {
         session.accept(createFrame());
 
         Path output = temporaryFolder.newFile("video.mp4").toPath();
-        session.stop(Optional.of(output));
+        session.stop(output);
 
         assertTrue(Files.exists(output));
         assertTrue(Files.size(output) > 0);
@@ -43,7 +43,7 @@ public class RecordingSessionTest {
         session.accept(createAudioFrames(960), 960 * Beeper.FRAME_SIZE);
 
         Path output = temporaryFolder.newFile("av.mp4").toPath();
-        session.stop(Optional.of(output));
+        session.stop(output);
 
         assertTrue(Files.exists(output));
         assertTrue(Files.size(output) > 0);
@@ -54,7 +54,7 @@ public class RecordingSessionTest {
         RecordingSession session = createSession();
         session.accept(createFrame());
 
-        session.stop(Optional.empty());
+        session.stop(null);
         // No exception, recording silently discarded
     }
 
@@ -65,7 +65,7 @@ public class RecordingSessionTest {
 
         // No frame captured, so saving should fail with "no video frames"
         Path output = temporaryFolder.newFile("empty.mp4").toPath();
-        assertThrows(IOException.class, () -> session.stop(Optional.of(output)));
+        assertThrows(IOException.class, () -> session.stop(output));
     }
 
     @Test
@@ -75,7 +75,7 @@ public class RecordingSessionTest {
         session.accept(new byte[0], 0);
 
         Path output = temporaryFolder.newFile("no-audio.mp4").toPath();
-        session.stop(Optional.of(output));
+        session.stop(output);
 
         assertTrue(Files.exists(output));
     }
@@ -85,7 +85,7 @@ public class RecordingSessionTest {
         RecordingSession session = createSession();
         session.accept(createFrame());
 
-        session.stop(Optional.empty());
+        session.stop(null);
 
         // These should be silently ignored (accepting = false)
         session.accept(createFrame());
@@ -100,7 +100,7 @@ public class RecordingSessionTest {
         }
 
         Path output = temporaryFolder.newFile("multi.mp4").toPath();
-        session.stop(Optional.of(output));
+        session.stop(output);
 
         assertTrue(Files.exists(output));
         assertTrue(Files.size(output) > 0);
@@ -119,7 +119,7 @@ public class RecordingSessionTest {
         java.util.Arrays.fill(audio, (byte) 0);
 
         Path output = temporaryFolder.newFile("copy-test.mp4").toPath();
-        session.stop(Optional.of(output));
+        session.stop(output);
 
         assertTrue(Files.exists(output));
     }

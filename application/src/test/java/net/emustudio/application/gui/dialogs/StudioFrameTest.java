@@ -30,7 +30,7 @@ public class StudioFrameTest extends AbstractSwingTest {
 
     @Test
     public void frameBuildsTitleTabsAndMenus() {
-        StudioFrame frame = createFrame(Optional.empty());
+        StudioFrame frame = createFrame(null);
 
         showFrame(frame);
 
@@ -51,7 +51,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         Path sourceFile = temporaryFolder.newFile("program.asm").toPath();
         Files.writeString(sourceFile, "NOP");
 
-        StudioFrame frame = createFrame(Optional.of(sourceFile));
+        StudioFrame frame = createFrame(sourceFile);
 
         showFrame(frame);
 
@@ -59,7 +59,7 @@ public class StudioFrameTest extends AbstractSwingTest {
         assertEquals("program.asm", onEdt(() -> tabs.getTitleAt(0)));
     }
 
-    private StudioFrame createFrame(Optional<Path> fileName) {
+    private StudioFrame createFrame(Path fileName) {
         VirtualComputer computer = mock(VirtualComputer.class);
         ComputerConfig computerConfig = mock(ComputerConfig.class);
 

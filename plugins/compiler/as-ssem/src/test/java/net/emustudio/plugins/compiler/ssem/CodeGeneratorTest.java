@@ -8,7 +8,6 @@ import net.emustudio.plugins.compiler.ssem.ast.Program;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -20,7 +19,7 @@ public class CodeGeneratorTest {
     public void testGenerateCodeWithBNUM() {
         Program program = new Program();
         // BNUM with binary number 100 = 4 in decimal
-        program.add(0, new Instruction(SSEMParser.BNUM, 4, POS, Optional.empty()), POS);
+        program.add(0, new Instruction(SSEMParser.BNUM, 4, POS, null), POS);
 
         CodeGenerator codeGenerator = new CodeGenerator();
         ByteBuffer code = codeGenerator.generateCode(program);
@@ -39,7 +38,7 @@ public class CodeGeneratorTest {
     public void testGenerateCodeWithNUM() {
         Program program = new Program();
         // NUM with decimal number
-        program.add(0, new Instruction(SSEMParser.NUM, 5, POS, Optional.empty()), POS);
+        program.add(0, new Instruction(SSEMParser.NUM, 5, POS, null), POS);
 
         CodeGenerator codeGenerator = new CodeGenerator();
         ByteBuffer code = codeGenerator.generateCode(program);
@@ -57,7 +56,7 @@ public class CodeGeneratorTest {
     @Test
     public void testGenerateCodeWithRegularInstruction() {
         Program program = new Program();
-        program.add(0, new Instruction(SSEMParser.STO, 22, POS, Optional.of(POS)), POS);
+        program.add(0, new Instruction(SSEMParser.STO, 22, POS, POS), POS);
 
         CodeGenerator codeGenerator = new CodeGenerator();
         ByteBuffer code = codeGenerator.generateCode(program);
@@ -75,7 +74,7 @@ public class CodeGeneratorTest {
     public void testGenerateCodeWithStartLine() {
         Program program = new Program();
         program.setStartLine(5, POS);
-        program.add(0, new Instruction(SSEMParser.STP, 0, POS, Optional.empty()), POS);
+        program.add(0, new Instruction(SSEMParser.STP, 0, POS, null), POS);
 
         CodeGenerator codeGenerator = new CodeGenerator();
         ByteBuffer code = codeGenerator.generateCode(program);
@@ -102,9 +101,9 @@ public class CodeGeneratorTest {
     @Test
     public void testGenerateCodeMultipleInstructions() {
         Program program = new Program();
-        program.add(0, new Instruction(SSEMParser.LDN, 10, POS, Optional.of(POS)), POS);
-        program.add(1, new Instruction(SSEMParser.SUB, 20, POS, Optional.of(POS)), POS);
-        program.add(2, new Instruction(SSEMParser.STP, 0, POS, Optional.empty()), POS);
+        program.add(0, new Instruction(SSEMParser.LDN, 10, POS, POS), POS);
+        program.add(1, new Instruction(SSEMParser.SUB, 20, POS, POS), POS);
+        program.add(2, new Instruction(SSEMParser.STP, 0, POS, null), POS);
 
         CodeGenerator codeGenerator = new CodeGenerator();
         ByteBuffer code = codeGenerator.generateCode(program);
@@ -118,7 +117,7 @@ public class CodeGeneratorTest {
         Program program = new Program();
         // Use a large binary number (32-bit value)
         long binaryValue = 3355443200L;
-        program.add(0, new Instruction(SSEMParser.BNUM, binaryValue, POS, Optional.empty()), POS);
+        program.add(0, new Instruction(SSEMParser.BNUM, binaryValue, POS, null), POS);
 
         CodeGenerator codeGenerator = new CodeGenerator();
         ByteBuffer code = codeGenerator.generateCode(program);

@@ -15,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,7 +53,7 @@ public class DebugTableModelImplTest {
     public void setDefaultColumnsWithoutCpuLeavesColumnsUntouched() {
         DebugTableModelImpl model = new DebugTableModelImpl();
         TestColumn<String> column = new TestColumn<>(String.class, "Label", false);
-        model.setDebuggerColumns(Arrays.asList(column));
+        model.setDebuggerColumns(List.of(column));
 
         model.setDefaultColumns();
 
@@ -133,7 +134,7 @@ public class DebugTableModelImplTest {
         DebugTableModelImpl model = new DebugTableModelImpl();
         TestColumn<String> mnemo = new TestColumn<>(String.class, "Mnemonic", true);
         mnemo.putValue(33, "nop");
-        model.setDebuggerColumns(Arrays.asList(mnemo));
+        model.setDebuggerColumns(List.of(mnemo));
 
         PaginatingDisassembler ida = mock(PaginatingDisassembler.class);
         CPU cpu = createCpu(false, 7);
@@ -161,7 +162,7 @@ public class DebugTableModelImplTest {
         DebugTableModelImpl model = new DebugTableModelImpl();
         TestColumn<String> column = new TestColumn<>(String.class, "Mnemonic", true);
         column.throwOnSet = cannotSetValueException("bad value");
-        model.setDebuggerColumns(Arrays.asList(column));
+        model.setDebuggerColumns(List.of(column));
 
         PaginatingDisassembler ida = mock(PaginatingDisassembler.class);
         CPU cpu = createCpu(false, 9);

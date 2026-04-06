@@ -57,11 +57,11 @@ public class SioUnitSettings {
         this.outputInterruptVector = settings.getInt(KEY_OUTPUT_INTERRUPT_VECTOR).orElse(7);
 
         if (inputInterruptVector < 0 || inputInterruptVector > 7) {
-            LOGGER.error("Invalid inputInterruptVector setting value: " + inputInterruptVector + "; setting to default (7)");
+            LOGGER.error("Invalid inputInterruptVector setting value: {}; setting to default (7)", inputInterruptVector);
             this.inputInterruptVector = 7;
         }
         if (outputInterruptVector < 0 || outputInterruptVector > 7) {
-            LOGGER.error("Invalid outputInterruptVector setting value: " + outputInterruptVector + "; setting to default (7)");
+            LOGGER.error("Invalid outputInterruptVector setting value: {}; setting to default (7)", outputInterruptVector);
             this.outputInterruptVector = 7;
         }
 

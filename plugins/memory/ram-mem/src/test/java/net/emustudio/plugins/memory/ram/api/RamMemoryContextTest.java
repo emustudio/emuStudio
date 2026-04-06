@@ -138,10 +138,10 @@ public class RamMemoryContextTest {
             public Direction getDirection() { return direction; }
 
             @Override
-            public Optional<RamValue> getOperand() { return Optional.ofNullable(operand); }
+            public RamValue getOperand() { return operand; }
 
             @Override
-            public Optional<RamLabel> getLabel() { return Optional.ofNullable(label); }
+            public RamLabel getLabel() { return label; }
         };
     }
 
@@ -149,8 +149,8 @@ public class RamMemoryContextTest {
         RamInstruction instr = createNiceMock(RamInstruction.class);
         expect(instr.getOpcode()).andReturn(opcode).anyTimes();
         expect(instr.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
-        expect(instr.getOperand()).andReturn(Optional.empty()).anyTimes();
-        expect(instr.getLabel()).andReturn(Optional.empty()).anyTimes();
+        expect(instr.getOperand()).andReturn(null).anyTimes();
+        expect(instr.getLabel()).andReturn(null).anyTimes();
         replay(instr);
         return instr;
     }

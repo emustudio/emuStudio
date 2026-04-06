@@ -8,8 +8,6 @@ import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import org.junit.Test;
 
-import java.util.Optional;
-
 import static org.junit.Assert.*;
 
 public class ExprCurrentAddressTest {
@@ -18,26 +16,26 @@ public class ExprCurrentAddressTest {
     @Test
     public void testEvalWithAddress() {
         ExprCurrentAddress expr = new ExprCurrentAddress(POS);
-        Optional<Evaluated> result = expr.eval(Optional.of(100), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(100, result.get().value);
-        assertTrue(result.get().isAddress);
+        Evaluated result = expr.eval(100, new NameSpace());
+        assertNotNull(result);
+        assertEquals(100, result.value);
+        assertTrue(result.isAddress);
     }
 
     @Test
     public void testEvalWithoutAddress() {
         ExprCurrentAddress expr = new ExprCurrentAddress(POS);
-        Optional<Evaluated> result = expr.eval(Optional.empty(), new NameSpace());
-        assertFalse(result.isPresent());
+        Evaluated result = expr.eval(null, new NameSpace());
+        assertNull(result);
     }
 
     @Test
     public void testEvalWithZeroAddress() {
         ExprCurrentAddress expr = new ExprCurrentAddress(POS);
-        Optional<Evaluated> result = expr.eval(Optional.of(0), new NameSpace());
-        assertTrue(result.isPresent());
-        assertEquals(0, result.get().value);
-        assertTrue(result.get().isAddress);
+        Evaluated result = expr.eval(0, new NameSpace());
+        assertNotNull(result);
+        assertEquals(0, result.value);
+        assertTrue(result.isAddress);
     }
 
     @Test
@@ -47,4 +45,3 @@ public class ExprCurrentAddressTest {
         assertTrue(copy instanceof ExprCurrentAddress);
     }
 }
-

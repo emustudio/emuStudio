@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -20,7 +21,7 @@ public class DrawingModelTest {
         DrawingModel model = new DrawingModel();
         CompilerElement compiler = new CompilerElement(P.of(30, 30), "compiler", "compiler.jar");
         CpuElement cpu = new CpuElement(P.of(90, 30), "cpu", "cpu.jar");
-        ConnectionLine line = new ConnectionLine(compiler, cpu, Arrays.asList(P.of(60, 40)), true);
+        ConnectionLine line = new ConnectionLine(compiler, cpu, List.of(P.of(60, 40)), true);
 
         model.drawTool = DrawingPanel.Tool.TOOL_DEVICE;
         model.pluginFileName = "device.jar";

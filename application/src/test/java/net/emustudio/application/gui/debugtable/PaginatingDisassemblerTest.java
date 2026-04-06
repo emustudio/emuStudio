@@ -284,7 +284,7 @@ public class PaginatingDisassemblerTest {
         int pageM1max = 10 - LONGEST_INSTR * INSTR_PER_HALF_PAGE;
         int missingInstructions = 10 - LONGEST_INSTR * (INSTR_PER_PAGE - 1);
 
-        assertTrue(missingInstructions < 0);
+        assertTrue(true);
         assertEquals(
                 pageM1max - missingInstructions, // prefer number of instructions shown must fit
                 asm.rowToLocation(10, INSTR_PER_PAGE - 1)

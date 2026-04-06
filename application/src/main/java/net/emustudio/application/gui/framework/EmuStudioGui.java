@@ -114,11 +114,11 @@ public class EmuStudioGui implements GUI {
             currentTheme = theme;
             customize();
         } catch (Exception e) {
-            LOGGER.error("Failed to initialize FlatLaf: " + e.getMessage(), e);
+            LOGGER.error("Failed to initialize FlatLaf: {}", e.getMessage(), e);
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ex) {
-                LOGGER.error("Failed to set look and feel after FlatLaf failure: " + e.getMessage(), e);
+                LOGGER.error("Failed to set look and feel after FlatLaf failure: {}", e.getMessage(), e);
             }
         }
     }

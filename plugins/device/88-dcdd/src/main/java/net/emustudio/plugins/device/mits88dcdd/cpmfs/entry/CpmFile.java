@@ -175,7 +175,7 @@ public class CpmFile implements CpmEntry {
         String result = fileName.trim();
 
         String ext = fileExt.trim();
-        if (!ext.equals("")) {
+        if (!ext.isEmpty()) {
             result += "." + ext;
         }
         return result;
@@ -205,7 +205,7 @@ public class CpmFile implements CpmEntry {
         }
 
         for (i = 0; i < fileNameBytes.length; i++) {
-            fileNameBytes[i] |= ((flags & (1 << i)) != 0 ? 0x80 : 0);
+            fileNameBytes[i] |= (flags & (1 << i)) != 0 ? (byte) 0x80 : 0;
         }
         entry.put(fileNameBytes);
 

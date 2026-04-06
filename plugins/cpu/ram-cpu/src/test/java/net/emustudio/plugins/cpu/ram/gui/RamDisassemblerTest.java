@@ -39,7 +39,7 @@ public class RamDisassemblerTest {
         RamInstruction halt = createNiceMock(RamInstruction.class);
         expect(halt.getOpcode()).andReturn(RamInstruction.Opcode.HALT).anyTimes();
         expect(halt.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
-        expect(halt.getOperand()).andReturn(Optional.empty()).anyTimes();
+        expect(halt.getOperand()).andReturn(null).anyTimes();
         replay(halt);
 
         expect(memory.read(0)).andReturn(halt).anyTimes();
@@ -60,7 +60,7 @@ public class RamDisassemblerTest {
         RamInstruction read = createNiceMock(RamInstruction.class);
         expect(read.getOpcode()).andReturn(RamInstruction.Opcode.READ).anyTimes();
         expect(read.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
-        expect(read.getOperand()).andReturn(Optional.of(value)).anyTimes();
+        expect(read.getOperand()).andReturn(value).anyTimes();
         replay(read);
 
         expect(memory.read(0)).andReturn(read).anyTimes();

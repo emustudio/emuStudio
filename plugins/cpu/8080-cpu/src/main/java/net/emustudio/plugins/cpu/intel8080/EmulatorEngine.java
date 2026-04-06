@@ -140,7 +140,7 @@ public class EmulatorEngine implements CpuEngine {
         try {
             lastOpcode = readByte(PC);
         } catch (NullPointerException e) {
-            LOGGER.error("NPE; PC=" + Integer.toHexString(PC), e);
+            LOGGER.error("NPE; PC={}", Integer.toHexString(PC), e);
             currentRunState = CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
             return 0;
         }

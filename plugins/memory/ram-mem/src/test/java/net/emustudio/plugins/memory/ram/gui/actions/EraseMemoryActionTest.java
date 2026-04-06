@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.awt.event.ActionEvent;
-import java.util.Optional;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -43,7 +42,7 @@ public class EraseMemoryActionTest {
     public void testEraseMemory() {
         RamInstruction instr = createNiceMock(RamInstruction.class);
         expect(instr.getOpcode()).andReturn(RamInstruction.Opcode.HALT).anyTimes();
-        expect(instr.getOperand()).andReturn(Optional.empty()).anyTimes();
+        expect(instr.getOperand()).andReturn(null).anyTimes();
         replay(instr);
 
         context.write(0, instr);

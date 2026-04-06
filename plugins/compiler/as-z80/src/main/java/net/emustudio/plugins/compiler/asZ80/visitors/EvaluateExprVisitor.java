@@ -40,7 +40,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     private int currentAddress = 0;
     private int sizeBytes = 0;
     private boolean doNotEvaluateCurrentAddress = false;
-    private Optional<Evaluated> latestEval;
+    private Evaluated latestEval;
     private Set<Node> needMorePassThings = new HashSet<>();
     private String currentMacroId;
 
@@ -103,10 +103,11 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.setAddress(currentAddress);
         sizeBytes = 0;
         visitChildren(node);
-        latestEval.ifPresentOrElse(
-                e -> currentAddress += e.value,
-                () -> doNotEvaluateCurrentAddress = true
-        );
+        if (latestEval != null) {
+            currentAddress += latestEval.value;
+        } else {
+            doNotEvaluateCurrentAddress = true;
+        }
     }
 
     @Override
@@ -115,8 +116,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
         visitChildren(node);
         env.put(normalizeId(node.id), latestEval);
 
-        // we don't need to re-evaluate the constant
-        latestEval.ifPresent(e -> node.remove());
+        if (latestEval != null) {
+            // we don't need to re-evaluate the constant
+            node.remove();
+        }
     }
 
     @Override
@@ -140,15 +143,14 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(PseudoLabel node) {
-        Optional<Evaluated> eval = node.eval(getCurrentAddress(), env);
+        Evaluated eval = node.eval(getCurrentAddress(), env);
         env.put(normalizeId(node.label), eval);
-        eval.ifPresentOrElse(
-                e -> {
-                    // we don't need to re-evaluate label
-                    node.exclude();
-                },
-                () -> needMorePassThings.add(node)
-        );
+        if (eval != null) {
+            // we don't need to re-evaluate label
+            node.exclude();
+        } else {
+            needMorePassThings.add(node);
+        }
         visitChildren(node);
     }
 
@@ -157,10 +159,11 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.setAddress(currentAddress);
         sizeBytes = 0;
         visitChildren(node);
-        latestEval.ifPresentOrElse(
-                e -> currentAddress = e.value,
-                () -> doNotEvaluateCurrentAddress = true
-        );
+        if (latestEval != null) {
+            currentAddress = latestEval.value;
+        } else {
+            doNotEvaluateCurrentAddress = true;
+        }
     }
 
     @Override
@@ -194,7 +197,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.setAddress(currentAddress);
         sizeBytes = 0;
         visitChildren(node);
-        node.getSizeBytes().ifPresent(s -> currentAddress += s);
+        Integer sb = node.getSizeBytes();
+        if (sb != null) {
+            currentAddress += sb;
+        }
     }
 
     @Override
@@ -202,7 +208,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.setAddress(currentAddress);
         sizeBytes = 0;
         visitChildren(node);
-        node.getSizeBytes().ifPresent(s -> currentAddress += s);
+        Integer sb = node.getSizeBytes();
+        if (sb != null) {
+            currentAddress += sb;
+        }
     }
 
     @Override
@@ -210,7 +219,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.setAddress(currentAddress);
         sizeBytes = 0;
         visitChildren(node);
-        node.getSizeBytes().ifPresent(s -> currentAddress += s);
+        Integer sb = node.getSizeBytes();
+        if (sb != null) {
+            currentAddress += sb;
+        }
     }
 
     @Override
@@ -218,7 +230,10 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.setAddress(currentAddress);
         sizeBytes = 0;
         visitChildren(node);
-        node.getSizeBytes().ifPresent(s -> currentAddress += s);
+        Integer sb = node.getSizeBytes();
+        if (sb != null) {
+            currentAddress += sb;
+        }
     }
 
     @Override
@@ -226,14 +241,17 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.setAddress(currentAddress);
         sizeBytes = 0;
         visitChildren(node);
-        node.getSizeBytes().ifPresent(s -> currentAddress += s);
+        Integer sb = node.getSizeBytes();
+        if (sb != null) {
+            currentAddress += sb;
+        }
     }
 
     @Override
     public void visit(PseudoMacroCall node) {
         // save old current macro, including its params
         String oldCurrentMacroId = currentMacroId;
-        Map<String, Optional<Evaluated>> oldMacroParams = new HashMap<>();
+        Map<String, Evaluated> oldMacroParams = new HashMap<>();
         if (oldCurrentMacroId != null) {
             for (String macroParameter : macroArguments.get(oldCurrentMacroId)) {
                 oldMacroParams.put(macroParameter, env.get(macroParameter));
@@ -270,7 +288,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
 
     @Override
     public void visit(Evaluated node) {
-        latestEval = Optional.of(node);
+        latestEval = node;
         currentAddress += sizeBytes;
     }
 
@@ -297,7 +315,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
     @Override
     public void visit(ExprId node) {
         evalExpr(node);
-        if (latestEval.isEmpty()) {
+        if (latestEval == null) {
             forwardReferences.add(normalizeId(node.id));
         }
     }
@@ -321,7 +339,16 @@ public class EvaluateExprVisitor extends NodeVisitor {
             parent.ifPresent(p -> p.addChild(evaluated));
             currentAddress += sizeBytes;
         } else {
-            int maxValue = node.getMaxValue().map(v -> Math.min(v, 0xFF)).orElse(0xFF);
+            Integer maxValue = node.getMaxValue();
+            if (maxValue != null) {
+                maxValue = Math.min(maxValue, 0xFF);
+                if (strLen > 1) {
+                    env.error(expressionIsBiggerThanExpected(node, 1, strLen));
+                }
+            } else {
+                maxValue = 0xFF;
+            }
+
             for (int i = 0; i < strLen; i++) {
                 Node evaluated = new Evaluated(node.position, node.string.charAt(i)).setMaxValue(maxValue);
                 parent.ifPresent(p -> p.addChild(evaluated));
@@ -333,20 +360,25 @@ public class EvaluateExprVisitor extends NodeVisitor {
         node.remove();
     }
 
-    private Optional<Integer> getCurrentAddress() {
-        return doNotEvaluateCurrentAddress ? Optional.empty() : Optional.of(currentAddress);
+    private Integer getCurrentAddress() {
+        return doNotEvaluateCurrentAddress ? null : currentAddress;
     }
 
     private void evalExpr(Node node) {
-        // Defensive copy: env may return the same Evaluated object for different references to the same label.
-        // Without copying, setMaxValue on one reference (e.g. from CALL with sizeBytes=2) would mutate the
-        // object already attached as a child of another instruction (e.g. JR with sizeBytes=1).
-        latestEval = node.eval(getCurrentAddress(), env).map(e -> (Evaluated) e.copy());
-        latestEval.ifPresent(e -> node.getMaxValue().ifPresent(e::setMaxValue));
-        latestEval.ifPresentOrElse(
-                e -> node.remove().ifPresent(p -> p.addChild(e)),
-                () -> needMorePassThings.add(node)
-        );
+        latestEval = node.eval(getCurrentAddress(), env);
+        if (latestEval != null) {
+            // Defensive copy: env may return the same Evaluated object for different references to the same label.
+            // Without copying, setMaxValue on one reference (e.g. from CALL with sizeBytes=2) would mutate the
+            // object already attached as a child of another instruction (e.g. JR with sizeBytes=1).
+            latestEval = (Evaluated) latestEval.copy();
+            Integer maxVal = node.getMaxValue();
+            if (maxVal != null) {
+                latestEval.setMaxValue(maxVal);
+            }
+            node.remove().ifPresent(p -> p.addChild(latestEval));
+        } else {
+            needMorePassThings.add(node);
+        }
         currentAddress += sizeBytes;
     }
 }

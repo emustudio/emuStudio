@@ -9,7 +9,6 @@ import net.emustudio.plugins.compiler.as8080.ast.Node;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 public class ExprNumber extends Node {
@@ -25,8 +24,8 @@ public class ExprNumber extends Node {
     }
 
     @Override
-    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return Optional.of(new Evaluated(position, number));
+    public Evaluated eval(Integer currentAddress, NameSpace env) {
+        return new Evaluated(position, number);
     }
 
     @Override

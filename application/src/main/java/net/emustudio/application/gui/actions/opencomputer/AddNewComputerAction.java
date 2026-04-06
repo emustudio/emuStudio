@@ -63,7 +63,7 @@ public class AddNewComputerAction extends AbstractAction {
                                     }
                             );
                 } catch (IOException ex) {
-                    LOGGER.error("Could not load computer with name '" + name + "'", ex);
+                    LOGGER.error("Could not load computer with name '{}'", name, ex);
                     dialogs.showError("Could not load computer with name '" + name + "'. Please see log file for details.");
                 }
             }

@@ -8,8 +8,6 @@ import net.emustudio.plugins.compiler.asZ80.ast.NameSpace;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 
-import java.util.Optional;
-
 public class ExprCurrentAddress extends Node {
 
     public ExprCurrentAddress(SourceCodePosition position) {
@@ -27,7 +25,7 @@ public class ExprCurrentAddress extends Node {
     }
 
     @Override
-    public Optional<Evaluated> eval(Optional<Integer> currentAddress, NameSpace env) {
-        return currentAddress.map(addr -> new Evaluated(position, addr, true));
+    public Evaluated eval(Integer currentAddress, NameSpace env) {
+        return currentAddress != null ? new Evaluated(position, currentAddress, true) : null;
     }
 }

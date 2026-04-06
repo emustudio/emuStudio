@@ -37,7 +37,7 @@ public class AppSettings extends BasicSettingsImpl {
     }
 
     public static AppSettings fromFile(Path file, boolean nogui, boolean auto) {
-        FileConfig config = FileConfig.builder(file).autosave().concurrent().sync().build();
+        FileConfig config = FileConfig.builder(file).autosave().sync().build();
         config.load();
         return new AppSettings(config, nogui, auto);
     }

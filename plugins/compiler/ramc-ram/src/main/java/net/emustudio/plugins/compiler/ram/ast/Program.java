@@ -43,23 +43,18 @@ public class Program {
 
     public void assignLabels() {
         for (Instruction instruction : instructions) {
-            instruction
-                    .getOperand()
-                    .filter(v -> v.getType() == RamValue.Type.ID)
-                    .map(RamValue::getStringValue)
-                    .flatMap(this::getLabel)
-                    .ifPresent(instruction::setLabel);
+            RamValue operand = instruction.getOperand();
+            if (operand != null && operand.getType() == RamValue.Type.ID) {
+                getLabel(operand.getStringValue()).ifPresent(instruction::setLabel);
+            }
         }
     }
 
     public void check() {
         for (Instruction instruction : instructions) {
             if (nonNegative.contains(instruction.getOpcode()) && directions.contains(instruction.getDirection())) {
-                Optional<RamValue> error = instruction
-                        .getOperand()
-                        .filter(op -> op.getType() == RamValue.Type.NUMBER)
-                        .filter(op -> op.getNumberValue() < 0);
-                if (error.isPresent()) {
+                RamValue operand = instruction.getOperand();
+                if (operand != null && operand.getType() == RamValue.Type.NUMBER && operand.getNumberValue() < 0) {
                     throw new CompileException(instruction.line, instruction.column, "Register number cannot be negative");
                 }
             }

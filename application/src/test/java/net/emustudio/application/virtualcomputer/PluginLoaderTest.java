@@ -101,7 +101,7 @@ public class PluginLoaderTest {
     }
 
     private File createJar(String className, String... dependsOn) throws IOException, URISyntaxException {
-        File file = temporaryFolder.newFile(className.replaceAll("/", ".").concat(".jar"));
+        File file = temporaryFolder.newFile(className.replace("/", ".").concat(".jar"));
         JarCreator jarCreator = new JarCreator();
 
         file.getParentFile().mkdirs();

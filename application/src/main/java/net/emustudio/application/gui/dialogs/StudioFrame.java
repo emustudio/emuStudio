@@ -53,7 +53,7 @@ public class StudioFrame extends JFrame {
 
 
     public StudioFrame(VirtualComputer computer, AppSettings appSettings, Dialogs dialogs,
-                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, Optional<Path> fileName, EmuStudioGui gui) {
+                       DebugTableModel debugTableModel, MemoryContext<?> memoryContext, Path fileName, EmuStudioGui gui) {
         Objects.requireNonNull(computer);
         this.gui = Objects.requireNonNull(gui);
 
@@ -95,7 +95,9 @@ public class StudioFrame extends JFrame {
                 resizeComponents();
             }
         });
-        fileName.ifPresent(editor::openFile);
+        if (fileName != null) {
+            editor.openFile(fileName);
+        }
         updateTitleOfSourceCodePanel();
         editor.grabFocus();
     }

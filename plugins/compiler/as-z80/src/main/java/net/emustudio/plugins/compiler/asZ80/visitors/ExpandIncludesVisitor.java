@@ -13,7 +13,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 
 import static net.emustudio.plugins.compiler.asZ80.CompileError.couldNotReadFile;
@@ -24,7 +23,7 @@ import static net.emustudio.plugins.compiler.asZ80.CompileError.infiniteLoopDete
  */
 public class ExpandIncludesVisitor extends NodeVisitor {
     private final Set<String> includedFiles;
-    private Optional<String> inputFileName = Optional.empty();
+    private String inputFileName;
 
     public ExpandIncludesVisitor() {
         this.includedFiles = Collections.emptySet();
@@ -36,7 +35,7 @@ public class ExpandIncludesVisitor extends NodeVisitor {
 
     @Override
     public void visit(Program node) {
-        this.inputFileName = Optional.ofNullable(node.position.fileName);
+        this.inputFileName = node.position.fileName;
         super.visit(node);
     }
 
@@ -77,14 +76,16 @@ public class ExpandIncludesVisitor extends NodeVisitor {
         String includeFileNameNormalized = includeFileName
                 .replace("/", File.separator)
                 .replace("\\", File.separator);
-        return inputFileName
-                .map(f -> f.replace("/", File.separator))
-                .map(f -> f.replace("\\", File.separator))
-                .map(File::new)
-                .map(File::getParentFile)
-                .map(File::toPath)
-                .map(p -> p.resolve(includeFileNameNormalized))
-                .map(Path::toString)
-                .orElse(includeFileNameNormalized);
+
+        if (inputFileName != null) {
+            String inputFixed = inputFileName.replace("/", File.separator).replace("\\", File.separator);
+            File parentFile = new File(inputFixed).getParentFile();
+            if (parentFile != null) {
+                return parentFile.toPath().resolve(includeFileNameNormalized).toString();
+            }
+            return includeFileNameNormalized;
+        } else {
+            return includeFileNameNormalized;
+        }
     }
 }

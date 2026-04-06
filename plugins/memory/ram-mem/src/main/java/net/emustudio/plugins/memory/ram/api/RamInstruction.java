@@ -4,7 +4,6 @@ package net.emustudio.plugins.memory.ram.api;
 
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * RAM instruction.
@@ -37,16 +36,16 @@ public interface RamInstruction extends Serializable {
      * Get operand of this RAM instruction, if it has any.
      * If the operand is a label, here will be the String representation of the label.
      *
-     * @return instruction operand if the instruction has any.
+     * @return instruction operand if the instruction has any. (nullable)
      */
-    Optional<RamValue> getOperand();
+    RamValue getOperand();
 
     /**
      * Get the label if the operand is a label.
      *
-     * @return label operand
+     * @return label operand (nullable)
      */
-    Optional<RamLabel> getLabel();
+    RamLabel getLabel();
 
     enum Opcode {
         READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT

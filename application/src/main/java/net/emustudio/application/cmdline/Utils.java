@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 
 public class Utils {
     public static final long EMUSTUDIO_ID = UUID.randomUUID().toString().hashCode();
-    private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 
     public static AppSettings loadAppSettings(boolean gui, boolean auto) throws IOException {
         Path configFile = Path.of("emuStudio.toml");
@@ -86,7 +86,7 @@ public class Utils {
 
     @SuppressWarnings("unchecked")
     public static void showMainWindow(VirtualComputer computer, AppSettings appSettings, DialogsGui dialogs,
-                                      DebugTableModel debugTableModel, ContextPool contextPool, Optional<Path> inputFile, EmuStudioGui gui) {
+                                      DebugTableModel debugTableModel, ContextPool contextPool, Path inputFile, EmuStudioGui gui) {
         MemoryContext<?> memoryContext = null;
         try {
             memoryContext = contextPool.getMemoryContext(EMUSTUDIO_ID, MemoryContext.class);

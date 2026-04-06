@@ -75,17 +75,17 @@ public class Automation implements Runnable {
         }
 
         LOGGER.info("Starting emulation automation...");
-        LOGGER.info("Emulating computer: " + computer.getComputerConfig().getName());
+        LOGGER.info("Emulating computer: {}", computer.getComputerConfig().getName());
 
         computer.getCompiler().ifPresent(
-                compiler -> LOGGER.info("Compiler: " + compiler.getTitle() + ", version " + compiler.getVersion())
+                compiler -> LOGGER.info("Compiler: {}, version {}", compiler.getTitle(), compiler.getVersion())
         );
-        computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: " + cpu.getTitle() + ", version " + cpu.getVersion()));
+        computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: {}, version {}", cpu.getTitle(), cpu.getVersion()));
         computer.getMemory().ifPresent(memory -> {
-            LOGGER.info("Memory: " + memory.getTitle() + ", version " + memory.getVersion());
+            LOGGER.info("Memory: {}, version {}", memory.getTitle(), memory.getVersion());
         });
         computer.getDevices().forEach(
-                device -> LOGGER.info("Device: " + device.getTitle() + ", version " + device.getVersion())
+                device -> LOGGER.info("Device: {}, version {}", device.getTitle(), device.getVersion())
         );
 
         try {
@@ -222,10 +222,10 @@ public class Automation implements Runnable {
                 LOGGER.info("Normal stop");
                 break;
             default:
-                LOGGER.error("Invalid state (" + resultState + ")");
+                LOGGER.error("Invalid state ({})", resultState);
                 break;
         }
-        LOGGER.info("Instruction location = " + String.format("0x%04X", cpu.getInstructionLocation()));
+        LOGGER.info("Instruction location = {}", String.format("0x%04X", cpu.getInstructionLocation()));
 
         setProgress("Emulation completed", false);
     }

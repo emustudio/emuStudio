@@ -255,7 +255,7 @@ public class SettingsDialog extends DialogBase {
                     dsui.image = txtImageFile.getText();
                     dsui.mounted = true;
                 } catch (IOException ex) {
-                    LOGGER.error("88-DCDD: Could not mount image: " + txtImageFile.getText(), ex);
+                    LOGGER.error("88-DCDD: Could not mount image: {}", txtImageFile.getText(), ex);
                     dialogs.showError("Could not mount image: " + ex.getMessage(), "Mount image");
                     txtImageFile.grabFocus();
                 }

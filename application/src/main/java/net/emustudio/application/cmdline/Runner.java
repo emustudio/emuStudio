@@ -103,7 +103,7 @@ public class Runner implements Runnable {
                 splash.dispose();
 
                 showMainWindow(
-                        computer, appConfig, dialogs, debugTableModel, contextPool, Optional.ofNullable(inputFile), gui
+                        computer, appConfig, dialogs, debugTableModel, contextPool, inputFile, gui
                 );
             } catch (Exception e) {
                 LOGGER.error("Unexpected error", e);

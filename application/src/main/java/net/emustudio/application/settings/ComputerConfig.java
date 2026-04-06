@@ -25,7 +25,7 @@ public class ComputerConfig implements Closeable {
     }
 
     public static ComputerConfig load(Path configurationFile) {
-        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
+        FileConfig config = FileConfig.builder(configurationFile).sync().autosave().build();
         config.load();
 
         return new ComputerConfig(config);
@@ -36,7 +36,7 @@ public class ComputerConfig implements Closeable {
             throw new IllegalArgumentException("Configuration already exists");
         }
         Files.createFile(configurationFile);
-        FileConfig config = FileConfig.builder(configurationFile).concurrent().sync().autosave().build();
+        FileConfig config = FileConfig.builder(configurationFile).sync().autosave().build();
         config.set("name", computerName);
 
         return new ComputerConfig(config);
@@ -113,11 +113,9 @@ public class ComputerConfig implements Closeable {
 
     public List<PluginConfig> getDevices() {
         Optional<List<Config>> devicesConfig = config.getOptional(PLUGIN_TYPE.DEVICE.name());
-        if (devicesConfig.isEmpty()) {
-            return Collections.emptyList();
-        } else {
-            return devicesConfig.get().stream().map(PluginConfig::new).collect(toList());
-        }
+        return devicesConfig
+                .map(configs -> configs.stream().map(PluginConfig::new).collect(toList()))
+                .orElse(Collections.emptyList());
     }
 
     public void setDevices(List<PluginConfig> devices) {

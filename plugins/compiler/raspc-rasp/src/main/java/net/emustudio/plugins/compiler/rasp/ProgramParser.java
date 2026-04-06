@@ -10,7 +10,6 @@ import org.antlr.v4.runtime.Token;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.rasp.ParsingUtils.*;
 import static net.emustudio.plugins.compiler.rasp.RASPParser.*;
@@ -81,7 +80,7 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
         int operand = parseNumber(ctx.n.n);
 
         Instruction instruction = new Instruction(
-                op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, Optional.of(operand)
+                op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, operand
         );
         currentAddress++;  // operand
         program.add(instruction);
@@ -95,7 +94,7 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
         int operand = parseNumber(ctx.n.n);
 
         Instruction instruction = new Instruction(
-                op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, Optional.of(operand)
+                op.getLine(), op.getCharPositionInLine(), opcode, currentAddress++, operand
         );
         currentAddress++;  // operand
         program.add(instruction);
@@ -119,7 +118,7 @@ public class ProgramParser extends RASPParserBaseVisitor<Program> {
     @Override
     public Program visitInstrNoOperand(InstrNoOperandContext ctx) {
         Instruction instruction = new Instruction(
-                ctx.op.getLine(), ctx.op.getCharPositionInLine(), HALT, currentAddress++, Optional.empty()
+                ctx.op.getLine(), ctx.op.getCharPositionInLine(), HALT, currentAddress++, (Integer) null
         );
         program.add(instruction);
         return program;

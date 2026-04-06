@@ -96,7 +96,7 @@ public class CpmPlusPassword implements CpmEntry {
         String result = fileName.trim();
 
         String ext = fileExt.trim();
-        if (!ext.equals("")) {
+        if (!ext.isEmpty()) {
             result += "." + ext;
         }
         return result;

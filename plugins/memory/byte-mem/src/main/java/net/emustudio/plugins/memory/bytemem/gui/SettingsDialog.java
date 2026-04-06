@@ -278,7 +278,7 @@ public class SettingsDialog extends DialogBase {
                 tblMem.getTableModel().fireTableDataChanged();
             } catch (Exception e) {
                 dialogs.showError("Could not load image: " + e.getMessage() + ". Please see log file for details.");
-                LOGGER.error("Could not load memory image " + imagePath, e);
+                LOGGER.error("Could not load memory image {}", imagePath, e);
             }
         }
     }

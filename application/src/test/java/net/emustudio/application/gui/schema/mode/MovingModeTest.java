@@ -295,7 +295,7 @@ public class MovingModeTest {
         ConnectionLine oldSelection = mock(ConnectionLine.class);
         ConnectionLine line = mock(ConnectionLine.class);
         P point = P.of(40, 50);
-        when(schema.getElementByBorderPoint(any(Point.class))).thenReturn(borderElement, null);
+        when(schema.getElementByBorderPoint(any(Point.class))).thenReturn(borderElement, (Element) null);
         when(borderElement.crossesBottomBorder(any(Point.class))).thenReturn(true);
         when(schema.getConnectionLines()).thenReturn(Collections.singletonList(line), Collections.emptyList());
         when(line.getPoints()).thenReturn(Collections.singletonList(point));

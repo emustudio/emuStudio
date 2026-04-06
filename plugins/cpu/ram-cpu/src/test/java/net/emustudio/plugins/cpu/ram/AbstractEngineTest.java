@@ -9,8 +9,6 @@ import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.api.RamValue;
 import org.junit.Before;
 
-import java.util.Optional;
-
 import static org.easymock.EasyMock.*;
 
 public abstract class AbstractEngineTest {
@@ -61,8 +59,8 @@ public abstract class AbstractEngineTest {
         RamInstruction instruction = createNiceMock(RamInstruction.class);
         expect(instruction.getOpcode()).andReturn(opcode).anyTimes();
         expect(instruction.getDirection()).andReturn(direction).anyTimes();
-        expect(instruction.getOperand()).andReturn(Optional.of(value(operand))).anyTimes();
-        expect(instruction.getLabel()).andReturn(Optional.empty()).anyTimes();
+        expect(instruction.getOperand()).andReturn(value(operand)).anyTimes();
+        expect(instruction.getLabel()).andReturn(null).anyTimes();
         replay(instruction);
         return instruction;
     }
@@ -71,8 +69,8 @@ public abstract class AbstractEngineTest {
         RamInstruction instruction = createNiceMock(RamInstruction.class);
         expect(instruction.getOpcode()).andReturn(opcode).anyTimes();
         expect(instruction.getDirection()).andReturn(direction).anyTimes();
-        expect(instruction.getOperand()).andReturn(Optional.of(value(operand))).anyTimes();
-        expect(instruction.getLabel()).andReturn(Optional.empty()).anyTimes();
+        expect(instruction.getOperand()).andReturn(value(operand)).anyTimes();
+        expect(instruction.getLabel()).andReturn(null).anyTimes();
         replay(instruction);
         return instruction;
     }
@@ -81,8 +79,8 @@ public abstract class AbstractEngineTest {
         RamInstruction instruction = createNiceMock(RamInstruction.class);
         expect(instruction.getOpcode()).andReturn(opcode).anyTimes();
         expect(instruction.getDirection()).andReturn(direction).anyTimes();
-        expect(instruction.getOperand()).andReturn(Optional.empty()).anyTimes();
-        expect(instruction.getLabel()).andReturn(Optional.empty()).anyTimes();
+        expect(instruction.getOperand()).andReturn(null).anyTimes();
+        expect(instruction.getLabel()).andReturn(null).anyTimes();
         replay(instruction);
         return instruction;
     }
@@ -91,7 +89,7 @@ public abstract class AbstractEngineTest {
         RamInstruction instruction = createNiceMock(RamInstruction.class);
         expect(instruction.getOpcode()).andReturn(opcode).anyTimes();
         expect(instruction.getDirection()).andReturn(RamInstruction.Direction.DIRECT).anyTimes();
-        expect(instruction.getLabel()).andReturn(Optional.of(label)).anyTimes();
+        expect(instruction.getLabel()).andReturn(label).anyTimes();
         replay(instruction);
         return instruction;
     }

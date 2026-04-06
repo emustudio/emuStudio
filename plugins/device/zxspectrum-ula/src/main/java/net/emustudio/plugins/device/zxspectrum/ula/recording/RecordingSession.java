@@ -9,8 +9,6 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
@@ -55,8 +53,7 @@ public final class RecordingSession implements Consumer<BufferedImage>, AudioSin
         queue.add(() -> recorder.captureAudio(copy));
     }
 
-    public void stop(Optional<Path> target) throws IOException {
-        Objects.requireNonNull(target);
+    public void stop(Path target) throws IOException {
         accepting = false;
         stopWorker();
         recorder.stop(target);

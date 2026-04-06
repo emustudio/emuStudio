@@ -99,7 +99,7 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void resetInternal(int adr) {
         engine.reset(adr);
-        LOGGER.debug("Register P was reset to " + engine.P);
+        LOGGER.debug("Register P was reset to {}", engine.P);
     }
 
     @Override

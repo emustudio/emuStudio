@@ -17,12 +17,12 @@ import net.emustudio.plugins.compiler.asZ80.ast.pseudo.*;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Optional;
 
 import static net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 import static net.emustudio.plugins.compiler.asZ80.CompileError.ERROR_AMBIGUOUS_EXPRESSION;
 import static net.emustudio.plugins.compiler.asZ80.Utils.assertTrees;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class EvaluateExprVisitorTest {
@@ -140,9 +140,9 @@ public class EvaluateExprVisitorTest {
 
         assertTrue(program.env().hasNoErrors());
 
-        Optional<Evaluated> label = program.env().get("label");
-        assertTrue(label.isPresent());
-        assertEquals(0, label.get().getAddress());
+        Evaluated label = program.env().get("label");
+        assertNotNull(label);
+        assertEquals(0, label.getAddress());
 
         assertTrees(
                 new Program("")
@@ -175,10 +175,10 @@ public class EvaluateExprVisitorTest {
 
         List<String> constants = List.of("one", "two", "three", "four", "five");
         for (String c : constants) {
-            Optional<Evaluated> constant = program.env().get(c);
-            assertTrue(constant.isPresent());
-            assertEquals(0, constant.get().getAddress());
-            assertEquals(0, constant.get().value);
+            Evaluated constant = program.env().get(c);
+            assertNotNull(constant);
+            assertEquals(0, constant.getAddress());
+            assertEquals(0, constant.value);
         }
     }
 

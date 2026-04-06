@@ -27,11 +27,5 @@ public class CompileExceptionTest {
         CompileException exception = new CompileException(0, 0, "error at start");
         assertEquals("line 0:0 error at start", exception.toString());
     }
-
-    @Test
-    public void testIsRuntimeException() {
-        CompileException exception = new CompileException(1, 1, "test");
-        assertTrue(exception instanceof RuntimeException);
-    }
 }
 

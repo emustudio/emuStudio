@@ -22,7 +22,6 @@ public class RTokenMakerWrapperTest {
 
         assertEquals(Token.RESERVED_WORD, token.getType());
         assertEquals("MOV", token.getLexeme());
-        assertTrue(wrapper instanceof RTokenMaker);
     }
 
     private static Segment segment(String text) {
