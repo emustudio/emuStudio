@@ -64,69 +64,75 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         loaderSchedule.clear();
         currentTstates = 1;
         pulseUp = false;
-        schedulePulse(PAUSE_PULSE_TSTATES, "PAUSE");
+        schedulePulse(PAUSE_PULSE_TSTATES, "PAUSE", "");
     }
 
     @Override
     public void onHeaderStart() {
-        String msg = "PILOT (header)";
+        String eventType = "PILOT";
+        String details = "header, " + HEADER_LEADER_PULSE_COUNT + " pulses";
         for (int i = 0; i < HEADER_LEADER_PULSE_COUNT; i++) {
-            schedulePulse(LEADER_PULSE_TSTATES, msg);
-            msg = "";
+            schedulePulse(LEADER_PULSE_TSTATES, eventType, details);
+            eventType = "";
+            details = "";
         }
-        schedulePulse(SYNC1_PULSE_TSTATES, "SYNC1");
-        schedulePulse(SYNC2_PULSE_TSTATES, "SYNC2");
+        schedulePulse(SYNC1_PULSE_TSTATES, "SYNC1", "");
+        schedulePulse(SYNC2_PULSE_TSTATES, "SYNC2", "");
     }
 
     @Override
     public void onDataStart() {
-        String msg = "PILOT (data)";
+        String eventType = "PILOT";
+        String details = "data, " + DATA_LEADER_PULSE_COUNT + " pulses";
         for (int i = 0; i < DATA_LEADER_PULSE_COUNT; i++) {
-            schedulePulse(LEADER_PULSE_TSTATES, msg);
-            msg = "";
+            schedulePulse(LEADER_PULSE_TSTATES, eventType, details);
+            eventType = "";
+            details = "";
         }
-        schedulePulse(SYNC1_PULSE_TSTATES, "SYNC1");
-        schedulePulse(SYNC2_PULSE_TSTATES, "SYNC2");
+        schedulePulse(SYNC1_PULSE_TSTATES, "SYNC1", "");
+        schedulePulse(SYNC2_PULSE_TSTATES, "SYNC2", "");
     }
 
     @Override
     public void onBlockFlag(int flag) {
-        transmitByte(flag, String.format("FLAG (0x%02X)", flag & 0xFF));
+        transmitByte(flag, "FLAG", String.format("0x%02X", flag & 0xFF));
     }
 
     @Override
     public void onProgram(String filename, int dataLength, int autoStart, int programLength) {
-        logProgramDetail(filename, "PROGRAM (start=" + autoStart + ", length=" + programLength + ")");
+        logProgramDetail("PROGRAM", filename + " (start=" + autoStart + ", length=" + programLength + ")");
     }
 
     @Override
     public void onNumberArray(String filename, int dataLength, char variable) {
-        logProgramDetail(filename, "NUMBER ARRAY (variable=" + variable + ")");
+        logProgramDetail("NUMBER ARRAY", filename + " (variable=" + variable + ")");
     }
 
     @Override
     public void onStringArray(String filename, int dataLength, char variable) {
-        logProgramDetail(filename, "STRING ARRAY (variable=" + variable + ")");
+        logProgramDetail("STRING ARRAY", filename + " (variable=" + variable + ")");
     }
 
     @Override
     public void onMemoryBlock(String filename, int dataLength, int startAddress) {
-        logProgramDetail(filename, "MEMORY BLOCK (start=" + startAddress + ")");
+        logProgramDetail("MEMORY BLOCK", filename + " (start=" + startAddress + ")");
     }
 
     @Override
     public void onBlockData(byte[] data) {
-        String msg = String.format("DATA (length=0x%04X)", data.length & 0xFFFF);
+        String eventType = "DATA";
+        String details = String.format("length=0x%04X", data.length & 0xFFFF);
         for (byte d : data) {
-            transmitByte(d & 0xFF, msg);
-            msg = "";
+            transmitByte(d & 0xFF, eventType, details);
+            eventType = "";
+            details = "";
         }
     }
 
     @Override
     public void onBlockChecksum(byte checksum) {
-        transmitByte(checksum & 0xFF, String.format("CHECKSUM (0x%02X)", checksum & 0xFF));
-        schedulePulse(SYNC3_PULSE_TSTATES, "SYNC3");
+        transmitByte(checksum & 0xFF, "CHECKSUM", String.format("0x%02X", checksum & 0xFF));
+        schedulePulse(SYNC3_PULSE_TSTATES, "SYNC3", "");
     }
 
     @Override
@@ -149,35 +155,38 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         Optional.ofNullable(gui.get()).ifPresent(g -> g.setCassetteState(state));
     }
 
-    private void logPulse(String message) {
-        Optional.ofNullable(gui.get()).ifPresent(g -> g.addPulseInfo(message));
+    private void logPulse(long tstate, int length, String eventType, String details) {
+        Optional.ofNullable(gui.get()).ifPresent(g -> g.addPulseRow(tstate, length, eventType, details));
     }
 
-    private void logProgramDetail(String program, String detail) {
-        Optional.ofNullable(gui.get()).ifPresent(g -> g.addProgramDetail(program, detail));
+    private void logProgramDetail(String eventType, String details) {
+        long tstate = currentTstates;
+        Optional.ofNullable(gui.get()).ifPresent(g -> g.addProgramDetail(tstate, eventType, details));
     }
 
-    private void transmitByte(int data, String msg) {
+    private void transmitByte(int data, String eventType, String details) {
         int mask = 0x80; // 1000 0000
         while (mask != 0) {
             int pulseLength = ((data & mask) == 0) ? DATA_PULSE_ZERO_TSTATES : DATA_PULSE_ONE_TSTATES;
-            schedulePulse(pulseLength, msg); // 2x according to https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface
-            schedulePulse(pulseLength, "");
-            msg = "";
+            schedulePulse(pulseLength, eventType, details); // 2x according to https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface
+            schedulePulse(pulseLength, "", "");
+            eventType = "";
+            details = "";
             mask >>>= 1;
         }
     }
 
-    private void schedulePulse(int length, String msg) {
+    private void schedulePulse(int length, String eventType, String details) {
+        final long tstate = currentTstates;
         Runnable one = () -> {
-            if (!msg.isEmpty()) {
-                logPulse(msg);
+            if (!eventType.isEmpty()) {
+                logPulse(tstate, length, eventType, details);
             }
             lineIn.writeData((byte) 1);
         };
         Runnable zero = () -> {
-            if (!msg.isEmpty()) {
-                logPulse(msg);
+            if (!eventType.isEmpty()) {
+                logPulse(tstate, length, eventType, details);
             }
             lineIn.writeData((byte) 0);
         };
