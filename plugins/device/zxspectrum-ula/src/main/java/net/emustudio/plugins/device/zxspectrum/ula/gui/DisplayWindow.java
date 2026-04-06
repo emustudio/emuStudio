@@ -67,7 +67,7 @@ public class DisplayWindow extends DialogBase {
                 canvas.close();
             }
         });
-        KeyboardDispatcher keyboardDispatcher = new KeyboardDispatcher();
+        KeyboardDispatcher keyboardDispatcher = new KeyboardDispatcher(this);
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(keyboardDispatcher);
 

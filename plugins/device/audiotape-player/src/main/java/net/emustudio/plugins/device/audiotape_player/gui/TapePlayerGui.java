@@ -302,10 +302,6 @@ public class TapePlayerGui extends DialogBase {
         tblEvents.setFillsViewportHeight(true);
         tblEvents.setPreferredScrollableViewportSize(new Dimension(470, 200));
 
-        // Remove JTable's default ESC binding ("cancel") so it doesn't consume the key event
-        // before DialogBase's ESC-to-close listener can handle it
-        tblEvents.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "none");
 
         KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
         tblEvents.getInputMap(JComponent.WHEN_FOCUSED).put(copyKeyStroke, "copy");
@@ -335,8 +331,6 @@ public class TapePlayerGui extends DialogBase {
         toolbarAvailableTapes.add(btnLoad);
 
         lstTapes.setCellRenderer(new TapesListRenderer());
-        lstTapes.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "none");
 
         panelAvailableTapes.add(panelDirs, "cell 0 0, growx");
         panelAvailableTapes.add(scrollTapes, "cell 0 1, grow");
