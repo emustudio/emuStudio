@@ -13,6 +13,7 @@ dependencies {
   implementation libs.jcipAnnotations
   implementation libs.jcodec
   implementation libs.jcodecJavase
+  cpuLib project(":plugins:cpu:z80-cpu")
   cpuLib project(":plugins:cpu:8080-cpu")
   deviceLib project(":plugins:device:zxspectrum-bus")
 

@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.ay38910;
 
+import net.emustudio.plugins.device.ay38910.audio.AudioSink;
 import net.emustudio.plugins.device.ay38910.audio.RecordingAudioSink;
 import org.junit.Test;
 
@@ -13,7 +14,7 @@ public class Ay38910ChipTest {
 
     @Test
     public void testRegisterWritesAreMaskedAndReadable() {
-        Ay38910Chip chip = Ay38910Chip.silent();
+        Ay38910Chip chip = silentChip();
 
         chip.write(Ay38910Chip.SELECT_REGISTER_PORT, (byte) 0x01);
         chip.write(Ay38910Chip.DATA_PORT, (byte) 0xFF);
@@ -25,7 +26,7 @@ public class Ay38910ChipTest {
     @Test
     public void testToneGenerationProducesPositiveAndNegativeSamples() {
         RecordingAudioSink sink = new RecordingAudioSink();
-        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE);
+        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_HZ);
 
         writeRegister(chip, 0, 0x20);
         writeRegister(chip, 1, 0x00);
@@ -43,7 +44,7 @@ public class Ay38910ChipTest {
     @Test
     public void testEnvelopeModeChangesAmplitudeOverTime() {
         RecordingAudioSink sink = new RecordingAudioSink();
-        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE);
+        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_HZ);
 
         writeRegister(chip, 0, 0x10);
         writeRegister(chip, 1, 0x00);
@@ -65,7 +66,7 @@ public class Ay38910ChipTest {
 
     @Test
     public void testWaveformBufferTracksGeneratedSamplesAndVolumeIsClamped() {
-        Ay38910Chip chip = Ay38910Chip.silent();
+        Ay38910Chip chip = silentChip();
 
         chip.setVolumePercent(150);
         assertEquals(100, chip.getVolumePercent());
@@ -83,6 +84,10 @@ public class Ay38910ChipTest {
     private static void writeRegister(Ay38910Chip chip, int register, int value) {
         chip.write(Ay38910Chip.SELECT_REGISTER_PORT, (byte) register);
         chip.write(Ay38910Chip.DATA_PORT, (byte) value);
+    }
+
+    private static Ay38910Chip silentChip() {
+        return new Ay38910Chip(AudioSink.NULL, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_HZ);
     }
 
     private static boolean hasPositive(short[] samples) {

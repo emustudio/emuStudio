@@ -78,7 +78,7 @@ public class BrainCPUContextImplTest {
     @Test
     public void testPassedCyclesSupported() {
         BrainCPUContextImpl context = new BrainCPUContextImpl();
-        assertFalse(context.passedCyclesSupported());
+        assertFalse(context.isPassedCyclesSupported());
     }
 
     @Test

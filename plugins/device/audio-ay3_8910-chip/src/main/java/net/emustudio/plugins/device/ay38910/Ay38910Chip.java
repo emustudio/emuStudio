@@ -5,15 +5,12 @@ package net.emustudio.plugins.device.ay38910;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.device.ay38910.audio.AudioSink;
-import net.emustudio.plugins.device.ay38910.audio.SoundAudioSink;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.sound.sampled.LineUnavailableException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.IntSupplier;
 
 /**
  * AY-3-8910 Programmable Sound Generator connected through ZX Spectrum style ports.
@@ -23,8 +20,6 @@ import java.util.Objects;
  * {@link CPUContext.PassedCyclesListener}, then resampled into host PCM audio at a fixed rate.
  */
 public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.PassedCyclesListener, AutoCloseable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Ay38910Chip.class);
-
     public static final int SELECT_REGISTER_PORT = 0xFFFD;
     public static final int DATA_PORT = 0xBFFD;
 
@@ -32,11 +27,11 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
     public static final int CHANNELS = 2;
     public static final int BYTES_PER_SAMPLE = 2;
     public static final int FRAME_SIZE = CHANNELS * BYTES_PER_SAMPLE;
+    public static final int AUDIO_DEFAULT_BATCH_FRAMES = 512;
 
     private static final int REGISTERS_COUNT = 16;
     private static final int DEFAULT_VOLUME = 100;
     private static final int MAX_SAMPLE_AMPLITUDE = (int) (Short.MAX_VALUE * 0.18);
-    private static final int DEFAULT_CPU_CLOCK_HZ = 3_500_000;
     private static final int WAVEFORM_SAMPLES = 2048;
 
     private static final int[] REGISTER_MASKS = {
@@ -76,29 +71,18 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
     private int volumePercent = DEFAULT_VOLUME;
     private int waveformWriteIndex;
     private boolean waveformBufferFilled;
-    private int cpuClockHz = DEFAULT_CPU_CLOCK_HZ;
+    private final IntSupplier cpuFrequencyKHzSupplier;
+    private int currentCpuClockHz;
 
-    public static Ay38910Chip createDefault() {
-        try {
-            return new Ay38910Chip(new SoundAudioSink(DEFAULT_SAMPLE_RATE), DEFAULT_SAMPLE_RATE);
-        } catch (LineUnavailableException | IllegalArgumentException e) {
-            LOGGER.warn("AY-3-8910 tone output is unavailable; continuing without sound", e);
-            return silent();
-        }
-    }
-
-    public static Ay38910Chip silent() {
-        return new Ay38910Chip(AudioSink.NULL, DEFAULT_SAMPLE_RATE);
-    }
-
-    Ay38910Chip(AudioSink sink, int sampleRate) {
+    public Ay38910Chip(AudioSink sink, int sampleRate, IntSupplier cpuFrequencyKHzSupplier) {
+        this.cpuFrequencyKHzSupplier = Objects.requireNonNull(cpuFrequencyKHzSupplier);
+        this.currentCpuClockHz = cpuFrequencyKHzSupplier.getAsInt();
         if (sampleRate <= 0) {
             throw new IllegalArgumentException("Sample rate must be > 0");
         }
         this.primarySink = Objects.requireNonNull(sink);
         this.sampleRate = sampleRate;
-        this.sampleBuffer = ByteBuffer.allocate(Constants.AUDIO_DEFAULT_BATCH_FRAMES * FRAME_SIZE)
-                .order(ByteOrder.LITTLE_ENDIAN);
+        this.sampleBuffer = ByteBuffer.allocate(AUDIO_DEFAULT_BATCH_FRAMES * FRAME_SIZE).order(ByteOrder.LITTLE_ENDIAN);
         reset();
     }
 
@@ -147,8 +131,8 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
             remaining -= step;
 
             samplePhase += step * sampleRate;
-            if (samplePhase >= cpuClockHz) {
-                samplePhase -= cpuClockHz;
+            if (samplePhase >= currentCpuClockHz) {
+                samplePhase -= currentCpuClockHz;
                 writeSample(mixSample());
             }
         }
@@ -173,10 +157,7 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
         waveformBufferFilled = false;
         sampleBuffer.clear();
         primarySink.flushAudio();
-    }
-
-    public synchronized int getSampleRate() {
-        return sampleRate;
+        this.currentCpuClockHz = cpuFrequencyKHzSupplier.getAsInt();
     }
 
     public synchronized int getVolumePercent() {
@@ -185,17 +166,6 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
 
     public synchronized void setVolumePercent(int volumePercent) {
         this.volumePercent = Math.max(0, Math.min(100, volumePercent));
-    }
-
-    synchronized void setCpuFrequencyKHz(int cpuFrequencyKHz) {
-        if (cpuFrequencyKHz <= 0) {
-            throw new IllegalArgumentException("CPU frequency must be > 0 kHz");
-        }
-        this.cpuClockHz = cpuFrequencyKHz * 1000;
-    }
-
-    synchronized int getCpuClockHz() {
-        return cpuClockHz;
     }
 
     public synchronized short[] copyRecentWaveform() {
@@ -222,7 +192,7 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
     }
 
     private long cyclesUntilNextSample() {
-        long remainingPhase = cpuClockHz - samplePhase;
+        long remainingPhase = currentCpuClockHz - samplePhase;
         return Math.max(1L, (remainingPhase + sampleRate - 1) / sampleRate);
     }
 

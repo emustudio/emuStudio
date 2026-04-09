@@ -122,7 +122,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
 
     @Override
-    public void attachDevice(int port, Context8080.CpuPortDevice device) {
+    public boolean attachDevice(int port, Context8080.CpuPortDevice device) {
         Context8080.CpuPortDevice checked = Objects.requireNonNull(device);
         int lowPort = port & 0xFF;
         if (cpu == null) {
@@ -133,11 +133,31 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         } else {
             registerDevice(lowPort, checked);
         }
+        return true;
+    }
+
+    @Override
+    public void detachDevice(int port) {
+        deferredAttachments.remove(port);
+        attachedDevices[port] = null;
+    }
+
+    @Override
+    public void setCPUFrequency(int freq) {
+        ContextZ80 cpu = this.cpu;
+        if (cpu != null) {
+            cpu.setCPUFrequency(freq);
+        }
     }
 
     @Override
     public void signalNonMaskableInterrupt() {
         cpu.signalNonMaskableInterrupt();
+    }
+
+    @Override
+    public void addCycles(long tStates) {
+        cpu.addCycles(tStates);
     }
 
     @Override
@@ -184,11 +204,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             throw new IllegalStateException("ZX Spectrum bus is not initialized");
         }
         return cpu.getCPUFrequency();
-    }
-
-    @Override
-    public boolean passedCyclesSupported() {
-        return true;
     }
 
     @Override
@@ -248,6 +263,15 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     @Override
     public MemoryContextAnnotations annotations() {
         return memory.annotations();
+    }
+
+    public void destroy() {
+        ContextZ80 tmp = cpu;
+        if (tmp != null) {
+            tmp.removePassedCyclesListener(this);
+        }
+        deferredAttachments.clear();
+        Arrays.fill(attachedDevices, null);
     }
 
     private void contendMemory(int location) {

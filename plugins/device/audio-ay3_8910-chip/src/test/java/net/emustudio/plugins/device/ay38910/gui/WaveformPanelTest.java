@@ -3,6 +3,7 @@
 package net.emustudio.plugins.device.ay38910.gui;
 
 import net.emustudio.plugins.device.ay38910.Ay38910Chip;
+import net.emustudio.plugins.device.ay38910.audio.AudioSink;
 import org.junit.Test;
 
 import java.awt.Graphics2D;
@@ -13,10 +14,11 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertTrue;
 
 public class WaveformPanelTest {
+    private static final int CPU_CLOCK_HZ = 3_500_000;
 
     @Test(timeout = 2_000)
     public void testPaintDoesNotBlockWhenChipStateIsLocked() throws Exception {
-        Ay38910Chip chip = Ay38910Chip.silent();
+        Ay38910Chip chip = new Ay38910Chip(AudioSink.NULL, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_HZ);
         WaveformPanel panel = new WaveformPanel(chip);
         panel.setSize(320, 160);
 

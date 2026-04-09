@@ -10,7 +10,6 @@ import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCREEN_IMAGE_HEIGHT;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class PassedCyclesMediatorTest {
 

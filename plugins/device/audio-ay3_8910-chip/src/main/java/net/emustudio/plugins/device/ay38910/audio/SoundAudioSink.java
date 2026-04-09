@@ -14,12 +14,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static net.emustudio.plugins.device.ay38910.Constants.AUDIO_DEFAULT_BATCH_FRAMES;
-import static net.emustudio.plugins.device.ay38910.Constants.QUEUE_POLL_TIMEOUT_MS;
 import static net.emustudio.plugins.device.ay38910.Constants.THREAD_NAME_PREFIX;
 
 public final class SoundAudioSink implements AudioSink {
     private static final int QUEUE_CAPACITY = 32;
+    private static final long QUEUE_POLL_TIMEOUT_MS = 10;
 
     private final SourceDataLine line;
     private final BlockingQueue<byte[]> queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
@@ -38,7 +37,7 @@ public final class SoundAudioSink implements AudioSink {
         this.line = (SourceDataLine) AudioSystem.getLine(info);
 
         int lineBufferSize = Math.max(
-                AUDIO_DEFAULT_BATCH_FRAMES * Ay38910Chip.FRAME_SIZE * 16,
+                Ay38910Chip.AUDIO_DEFAULT_BATCH_FRAMES * Ay38910Chip.FRAME_SIZE * 16,
                 sampleRate * Ay38910Chip.FRAME_SIZE / 2
         );
         this.line.open(format, lineBufferSize);

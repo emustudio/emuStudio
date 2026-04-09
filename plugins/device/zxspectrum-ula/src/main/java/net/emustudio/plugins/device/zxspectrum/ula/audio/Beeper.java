@@ -13,7 +13,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.ZX_48K_CPU_FREQUENCY;
-import static net.emustudio.plugins.device.zxspectrum.ula.Constants.AUDIO_DEFAULT_BATCH_FRAMES;
 
 /**
  * Resamples the ZX Spectrum's EAR/MIC output line into host PCM audio.
@@ -64,6 +63,7 @@ public class Beeper implements AutoCloseable {
     public static final int CHANNELS = 2;
     public static final int BYTES_PER_SAMPLE = 2;
     public static final int FRAME_SIZE = CHANNELS * BYTES_PER_SAMPLE;
+    public static final int AUDIO_DEFAULT_BATCH_FRAMES = 512;
 
     // Peak PCM amplitude used when mapping hardware voltages to 16-bit signed samples.
     // Set to 10% of Short.MAX_VALUE — square waves are perceived as louder than sine waves at equal
