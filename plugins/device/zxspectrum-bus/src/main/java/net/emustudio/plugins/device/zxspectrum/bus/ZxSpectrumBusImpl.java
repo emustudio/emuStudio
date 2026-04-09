@@ -187,6 +187,11 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     @Override
+    public boolean passedCyclesSupported() {
+        return true;
+    }
+
+    @Override
     public Byte readData() {
         return busData;
     }

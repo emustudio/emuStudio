@@ -15,7 +15,7 @@ import net.emustudio.plugins.cpu.intel8080.api.Context8080;
  * (devices are usually not connected to CPU directly).
  */
 @PluginContext
-public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> {
+public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte>, CPUContext {
 
     /**
      * Attach a device on the bus.
@@ -67,9 +67,4 @@ public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> 
      */
     void writeMemoryNotContended(int location, byte data);
 
-    void addPassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener);
-
-    void removePassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener);
-
-    int getCPUFrequency();
 }

@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
 /**
@@ -31,18 +32,19 @@ import java.util.stream.Collectors;
  * - <a href="https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface">Spectrum tape interface</a>
  */
 public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedCyclesListener {
+    private static final int DEFAULT_CPU_FREQUENCY_KHZ = 3500;
+    private static final int FILE_START_PAUSE_MS = 2000;
     private final static int LEADER_PULSE_TSTATES = 2168;
     private final static int SYNC1_PULSE_TSTATES = 667;
     private final static int SYNC2_PULSE_TSTATES = 735;
     private final static int SYNC3_PULSE_TSTATES = 954;
-    private final static int PAUSE_PULSE_TSTATES = 7000000;
     private final static int HEADER_LEADER_PULSE_COUNT = 8063;
     private final static int DATA_LEADER_PULSE_COUNT = 3223;
     private final static int DATA_PULSE_ONE_TSTATES = 1710;
     private final static int DATA_PULSE_ZERO_TSTATES = 855;
-    private final static int TSTATES_PER_MS = 3500; // ZX Spectrum 48K runs at 3.5 MHz
 
     private final DeviceContext<Byte> lineIn;
+    private final IntSupplier cpuFrequencyKHzSupplier;
     private final AtomicReference<TapePlayerGui> gui = new AtomicReference<>();
 
     private final NavigableMap<Long, Runnable> loaderSchedule = new TreeMap<>();
@@ -56,7 +58,12 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     private final CyclicBarrier barrier = new CyclicBarrier(2);
 
     public TapePlaybackImpl(DeviceContext<Byte> lineIn) {
+        this(lineIn, () -> DEFAULT_CPU_FREQUENCY_KHZ);
+    }
+
+    public TapePlaybackImpl(DeviceContext<Byte> lineIn, IntSupplier cpuFrequencyKHzSupplier) {
         this.lineIn = Objects.requireNonNull(lineIn);
+        this.cpuFrequencyKHzSupplier = Objects.requireNonNull(cpuFrequencyKHzSupplier);
     }
 
     public void setGui(TapePlayerGui gui) {
@@ -77,7 +84,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         pulseUp = false;
         resetPlaybackMetrics();
         updatePlaybackProgress(0);
-        schedulePulse(PAUSE_PULSE_TSTATES, "PAUSE", "");
+        schedulePulse(millisToTstates(FILE_START_PAUSE_MS), "PAUSE", "");
     }
 
     @Override
@@ -175,8 +182,6 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         Optional.ofNullable(gui.get()).ifPresent(g -> g.setCassetteState(state));
     }
 
-    // ==================== TZX-specific callbacks ====================
-
     @Override
     public void onTurboSpeedData(int pilotPulseLen, int sync1PulseLen, int sync2PulseLen,
                                  int zeroBitPulseLen, int oneBitPulseLen, int pilotToneCount,
@@ -206,7 +211,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
         // Pause
         if (pauseAfterMs > 0) {
-            schedulePulse(pauseAfterMs * TSTATES_PER_MS, "PAUSE", pauseAfterMs + " ms");
+            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms");
         }
     }
 
@@ -245,7 +250,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         }
 
         if (pauseAfterMs > 0) {
-            schedulePulse(pauseAfterMs * TSTATES_PER_MS, "PAUSE", pauseAfterMs + " ms");
+            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms");
         }
     }
 
@@ -267,7 +272,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         }
 
         if (pauseAfterMs > 0) {
-            schedulePulse(pauseAfterMs * TSTATES_PER_MS, "PAUSE", pauseAfterMs + " ms");
+            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms");
         }
     }
 
@@ -291,7 +296,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         if (durationMs == 0) {
             logProgramDetail("STOP TAPE", "Stop the tape (pause=0)");
         } else {
-            schedulePulse(durationMs * TSTATES_PER_MS, "PAUSE", durationMs + " ms");
+            schedulePulse(millisToTstates(durationMs), "PAUSE", durationMs + " ms");
         }
     }
 
@@ -348,8 +353,6 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     public void onGlueBlock() {
         logProgramDetail("GLUE", "");
     }
-
-    // ==================== Private helpers ====================
 
     private void logPulse(long tstate, int length, String eventType, String details) {
         Optional.ofNullable(gui.get()).ifPresent(g -> g.addPulseRow(tstate, length, eventType, details));
@@ -435,10 +438,10 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         if (playing) {
             playingTstates += tstates;
             updatePlaybackProgressFromCurrentPosition();
-            Map.Entry<Long, Runnable> entry = loaderSchedule.floorEntry(playingTstates);
-            if (entry != null) {
-                loaderSchedule.remove(entry.getKey());
-                entry.getValue().run();
+            Map.Entry<Long, Runnable> entry = loaderSchedule.firstEntry();
+            while ((entry != null) && (entry.getKey() <= playingTstates)) {
+                loaderSchedule.pollFirstEntry().getValue().run();
+                entry = loaderSchedule.firstEntry();
             }
             if (loaderSchedule.isEmpty()) {
                 updatePlaybackProgress(100);
@@ -477,5 +480,9 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
             lastReportedProgress = clampedProgress;
             Optional.ofNullable(gui.get()).ifPresent(g -> g.setPlaybackProgress(clampedProgress));
         }
+    }
+
+    private int millisToTstates(int durationMs) {
+        return Math.toIntExact((long) durationMs * Math.max(1, cpuFrequencyKHzSupplier.getAsInt()));
     }
 }

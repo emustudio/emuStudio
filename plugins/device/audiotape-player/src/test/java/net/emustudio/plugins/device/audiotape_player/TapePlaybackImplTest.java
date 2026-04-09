@@ -16,13 +16,14 @@ import static org.junit.Assert.*;
 public class TapePlaybackImplTest {
 
     private TapePlaybackImpl playback;
+    private DeviceContext<Byte> lineIn;
     private List<Byte> writtenData;
 
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         writtenData = new ArrayList<>();
-        DeviceContext<Byte> lineIn = mock(DeviceContext.class);
+        lineIn = mock(DeviceContext.class);
         lineIn.writeData(anyByte());
         expectLastCall().andAnswer(() -> {
             writtenData.add((Byte) getCurrentArguments()[0]);
@@ -76,6 +77,16 @@ public class TapePlaybackImplTest {
         }
     }
 
+    private long getCurrentTstates() {
+        try {
+            Field field = TapePlaybackImpl.class.getDeclaredField("currentTstates");
+            field.setAccessible(true);
+            return field.getLong(playback);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("Could not read currentTstates", e);
+        }
+    }
+
     @Test(expected = NullPointerException.class)
     public void testNullLineInThrows() {
         new TapePlaybackImpl(null);
@@ -92,6 +103,17 @@ public class TapePlaybackImplTest {
         playback.onFileStart();
         drainPulses(100, 100_000);
         assertFalse("Expected at least one pulse written to lineIn", writtenData.isEmpty());
+    }
+
+    @Test
+    public void testPauseDurationsUseConfiguredCpuFrequency() {
+        playback = new TapePlaybackImpl(lineIn, () -> 4000);
+
+        playback.onFileStart();
+        assertEquals(8_000_001L, getCurrentTstates());
+
+        playback.onPause(10);
+        assertEquals(8_040_001L, getCurrentTstates());
     }
 
     @Test
@@ -185,6 +207,21 @@ public class TapePlaybackImplTest {
         playback.onStateChange(TapePlaybackController.CassetteState.PLAYING);
         playback.onStateChange(TapePlaybackController.CassetteState.STOPPED);
         playback.onStateChange(TapePlaybackController.CassetteState.UNLOADED);
+    }
+
+    @Test
+    public void testTurboSpeedDataCompletesWhenCyclesJumpPastWholeBlock() throws InterruptedException {
+        playback.onFileStart();
+        playback.onTurboSpeedData(100, 200, 300, 400, 800, 2, 8, 1, new byte[]{(byte) 0xA5});
+
+        Thread playThread = startPlaybackAsync();
+
+        playback.passedCycles(Integer.MAX_VALUE);
+        playThread.join(1000);
+
+        assertFalse("Turbo playback should finish after draining all overdue pulses", playThread.isAlive());
+        assertEquals(22, writtenData.size());
+        assertEquals(100, getLastReportedProgress());
     }
 
     @Test
