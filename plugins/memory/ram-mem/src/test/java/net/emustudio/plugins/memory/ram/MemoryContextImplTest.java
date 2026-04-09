@@ -97,5 +97,4 @@ public class MemoryContextImplTest {
         assertEquals(0, memorySizeChanges.get());
         assertEquals(0, memoryChanges.get());
     }
-
 }
