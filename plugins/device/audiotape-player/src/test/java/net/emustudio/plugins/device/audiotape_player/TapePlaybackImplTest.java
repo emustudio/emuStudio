@@ -14,12 +14,12 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class TapePlaybackImplTest {
+    private static final int TEST_CPU_FREQUENCY_KHZ = 3500;
 
     private TapePlaybackImpl playback;
     private DeviceContext<Byte> lineIn;
     private List<Byte> writtenData;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         writtenData = new ArrayList<>();
@@ -32,7 +32,7 @@ public class TapePlaybackImplTest {
         expect(lineIn.getDataType()).andReturn(Byte.class).anyTimes();
         replay(lineIn);
 
-        playback = new TapePlaybackImpl(lineIn);
+        playback = new TapePlaybackImpl(lineIn, () -> TEST_CPU_FREQUENCY_KHZ);
     }
 
     /**
@@ -89,7 +89,7 @@ public class TapePlaybackImplTest {
 
     @Test(expected = NullPointerException.class)
     public void testNullLineInThrows() {
-        new TapePlaybackImpl(null);
+        new TapePlaybackImpl(null, () -> TEST_CPU_FREQUENCY_KHZ);
     }
 
     @Test
@@ -114,6 +114,79 @@ public class TapePlaybackImplTest {
 
         playback.onPause(10);
         assertEquals(8_040_001L, getCurrentTstates());
+    }
+
+
+    @Test
+    public void testPauseScalesLinearlyWithCpuFrequency() {
+        // Same tape semantics at two different CPU frequencies must scale ms-pauses proportionally.
+        TapePlaybackImpl at35 = new TapePlaybackImpl(lineIn, () -> 3500);
+        TapePlaybackImpl at70 = new TapePlaybackImpl(lineIn, () -> 7000);
+        at35.onFileStart();
+        at70.onFileStart();
+        long t35 = readCurrentTstates(at35);
+        long t70 = readCurrentTstates(at70);
+        // 2× the clock -> 2× the T-states for the same wall-clock pause
+        assertEquals((t35 - 1) * 2, t70 - 1);
+    }
+
+    @Test
+    public void testTurboPauseUsesConfiguredCpuFrequency() {
+        playback = new TapePlaybackImpl(lineIn, () -> 4000);
+        long before = getCurrentTstates();
+        // Single-byte turbo block, no pilot/data pulses worth checking, only the trailing pause.
+        // Pulse counts: 0 pilot pulses + sync1 + sync2 + 8 bits * 2 pulses = 18 schedule entries.
+        playback.onTurboSpeedData(100, 200, 300, 400, 800, 0, 8, 5, new byte[]{0x00});
+        long after = getCurrentTstates();
+        // 0 pilot + 200 + 300 + 8*2*400 (zero bits) + 5 ms * 4000 kHz = 6_900 + 20_000 = 26_900
+        assertEquals(before + 200 + 300 + 8 * 2 * 400 + 5 * 4000, after);
+    }
+
+    @Test
+    public void testPureDataPauseUsesConfiguredCpuFrequency() {
+        playback = new TapePlaybackImpl(lineIn, () -> 7000);
+        long before = getCurrentTstates();
+        playback.onPureData(400, 800, 8, 3, new byte[]{0x00}); // all zeros -> 16 pulses of 400
+        long after = getCurrentTstates();
+        assertEquals(before + 8 * 2 * 400 + 3 * 7000, after);
+    }
+
+    @Test
+    public void testDirectRecordingPauseUsesConfiguredCpuFrequency() {
+        playback = new TapePlaybackImpl(lineIn, () -> 7000);
+        long before = getCurrentTstates();
+        playback.onDirectRecording(2, 4, 8, new byte[]{(byte) 0x00});
+        long after = getCurrentTstates();
+        // 8 samples of 2 T-states + 4 ms * 7000 kHz
+        assertEquals(before + 8 * 2 + 4 * 7000, after);
+    }
+
+    @Test
+    public void testPassedCyclesDrainsAllOverdueEventsInSingleCall() throws InterruptedException {
+        // Schedule a dense burst of edges then advance the playback clock past the last edge in
+        // a single passedCycles() call. All edges must fire (regression: a previous version only
+        // drained one entry per callback, breaking TZX turbo blocks).
+        playback.onFileStart();
+        playback.onBlockData(new byte[]{(byte) 0xFF, 0x00, (byte) 0xA5});
+
+        Thread playThread = startPlaybackAsync();
+        playback.passedCycles(Integer.MAX_VALUE);
+        playThread.join(2000);
+
+        assertFalse("Playback should finish in one drain", playThread.isAlive());
+        // 1 PAUSE + 3 bytes * 16 pulses = 49 edges
+        assertEquals(49, writtenData.size());
+        assertEquals(100, getLastReportedProgress());
+    }
+
+    private long readCurrentTstates(TapePlaybackImpl target) {
+        try {
+            Field field = TapePlaybackImpl.class.getDeclaredField("currentTstates");
+            field.setAccessible(true);
+            return field.getLong(target);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
     }
 
     @Test

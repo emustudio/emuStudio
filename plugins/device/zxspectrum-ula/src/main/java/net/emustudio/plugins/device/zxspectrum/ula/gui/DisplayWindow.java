@@ -26,7 +26,6 @@ import java.util.Optional;
 import static javax.swing.Action.SHORT_DESCRIPTION;
 import static javax.swing.Action.SMALL_ICON;
 import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.DISPLAY_FRAME_TSTATES;
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.ZX_48K_CPU_FREQUENCY;
 
 public class DisplayWindow extends DialogBase {
     private final static ImageIcon KEYBOARD_ICON = GUI.loadIcon("toolbar-keyboard.png");
@@ -148,7 +147,10 @@ public class DisplayWindow extends DialogBase {
                     Math.max(1, canvas.getWidth()),
                     Math.max(1, canvas.getHeight()),
                     DISPLAY_FRAME_TSTATES,
-                    ZX_48K_CPU_FREQUENCY,
+                    // Sample CPU frequency at recording-start so the muxer's frame-rate metadata
+                    // matches the clock the user is currently running. RecordingSession expects an
+                    // int (T-states/sec); cast is safe for any sane Spectrum-class clock (<2 GHz).
+                    (int) Math.min(Integer.MAX_VALUE, ula.getCpuFrequencyHz()),
                     ula.getAudioSampleRate()
             );
             recordingSession = session;

@@ -5,28 +5,54 @@ package net.emustudio.plugins.device.zxspectrum.ula.audio;
 import org.junit.Test;
 
 import java.util.function.Consumer;
+import java.util.function.LongSupplier;
 
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.ZX_48K_CPU_FREQUENCY;
 import static net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper.AUDIO_DEFAULT_BATCH_FRAMES;
 import static org.junit.Assert.*;
 
 public class BeeperTest {
+    private static final long ZX_48K_CPU_FREQUENCY = 3_500_000L;
+    private static final LongSupplier CPU_FREQ = () -> ZX_48K_CPU_FREQUENCY;
     private static final int TEST_SAMPLE_RATE = 100;
     private static final long CYCLES_PER_SAMPLE = ZX_48K_CPU_FREQUENCY / TEST_SAMPLE_RATE;
 
     @Test
+    public void passedCyclesUsesSuppliedRuntimeCpuFrequency() {
+        // At twice the CPU frequency, the same elapsed cycle count must produce HALF the audio
+        // samples (because each host sample now corresponds to twice as many CPU cycles).
+        long[] freqHz = {ZX_48K_CPU_FREQUENCY};
+        RecordingAudioSink sink = new RecordingAudioSink();
+        try (Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE, () -> freqHz[0])) {
+            beeper.setLevel(true, false, false);
+            beeper.passedCycles(CYCLES_PER_SAMPLE * 10);
+            beeper.flushRecordingBuffer();
+            int baseline = sink.toShortArray().length;
+            assertEquals(20, baseline); // 10 stereo frames
+
+            // Switch to a 2× clock without recreating the Beeper.
+            freqHz[0] = ZX_48K_CPU_FREQUENCY * 2L;
+            beeper.passedCycles(CYCLES_PER_SAMPLE * 10);
+            beeper.flushRecordingBuffer();
+            int after = sink.toShortArray().length;
+            // 10 cycles-per-original-sample * 10 = 100 cycles; at 2× freq that yields 5 frames = 10 shorts
+            assertEquals(baseline + 10, after);
+        }
+    }
+
+
+    @Test
     public void constructorAndAccessorsValidateInputs() {
-        assertThrows(IllegalArgumentException.class, () -> new Beeper(AudioSink.NULL, 0));
-        assertThrows(IllegalArgumentException.class, () -> new Beeper(AudioSink.NULL, -1));
-        assertThrows(NullPointerException.class, () -> new Beeper(null, TEST_SAMPLE_RATE));
-        Beeper beeper = new Beeper(AudioSink.NULL, 44_100);
+        assertThrows(IllegalArgumentException.class, () -> new Beeper(AudioSink.NULL, 0, CPU_FREQ));
+        assertThrows(IllegalArgumentException.class, () -> new Beeper(AudioSink.NULL, -1, CPU_FREQ));
+        assertThrows(NullPointerException.class, () -> new Beeper(null, TEST_SAMPLE_RATE, CPU_FREQ));
+        Beeper beeper = new Beeper(AudioSink.NULL, 44_100, CPU_FREQ);
         assertEquals(44_100, beeper.getSampleRate());
         assertEquals(100, beeper.getVolumePercent());
         beeper.setVolumePercent(-50);
         assertEquals(0, beeper.getVolumePercent());
         beeper.setVolumePercent(200);
         assertEquals(100, beeper.getVolumePercent());
-        Beeper silent = Beeper.silent();
+        Beeper silent = Beeper.silent(CPU_FREQ);
         silent.setLevel(true, false, false);
         silent.passedCycles(CYCLES_PER_SAMPLE);
         silent.close();
@@ -117,7 +143,7 @@ public class BeeperTest {
     @Test
     public void resetAndFlushSemanticsPreserveExpectedAudioState() {
         assertFalse(containsNonZero(captureSink(sink -> {
-            Beeper b = new Beeper(sink, TEST_SAMPLE_RATE);
+            Beeper b = new Beeper(sink, TEST_SAMPLE_RATE, CPU_FREQ);
             b.setLevel(true, false, false);
             b.passedCycles(CYCLES_PER_SAMPLE);
             b.reset();
@@ -125,7 +151,7 @@ public class BeeperTest {
             b.close();
         })));
         assertFalse(containsNonZero(captureSink(sink -> {
-            Beeper b = new Beeper(sink, TEST_SAMPLE_RATE);
+            Beeper b = new Beeper(sink, TEST_SAMPLE_RATE, CPU_FREQ);
             b.setLevel(true, false, false);
             b.passedCycles(CYCLES_PER_SAMPLE);
             b.reset();
@@ -134,7 +160,7 @@ public class BeeperTest {
             b.close();
         })));
         assertTrue(containsNonZero(captureSink(sink -> {
-            Beeper b = new Beeper(sink, TEST_SAMPLE_RATE);
+            Beeper b = new Beeper(sink, TEST_SAMPLE_RATE, CPU_FREQ);
             b.setLevel(true, false, false);
             b.passedCycles(CYCLES_PER_SAMPLE);
             b.reset();
@@ -143,14 +169,14 @@ public class BeeperTest {
             b.close();
         })));
         RecordingAudioSink sink = new RecordingAudioSink();
-        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE);
+        Beeper beeper = new Beeper(sink, TEST_SAMPLE_RATE, CPU_FREQ);
         beeper.setLevel(true, false, false);
         beeper.passedCycles(CYCLES_PER_SAMPLE * 3);
         assertEquals(0, sink.toShortArray().length);
         beeper.close();
         assertEquals(6, sink.toShortArray().length);
         sink = new RecordingAudioSink();
-        beeper = new Beeper(sink, TEST_SAMPLE_RATE);
+        beeper = new Beeper(sink, TEST_SAMPLE_RATE, CPU_FREQ);
         beeper.setLevel(true, false, false);
         beeper.passedCycles(CYCLES_PER_SAMPLE * AUDIO_DEFAULT_BATCH_FRAMES);
         assertEquals(AUDIO_DEFAULT_BATCH_FRAMES * 2, sink.toShortArray().length);
@@ -160,7 +186,7 @@ public class BeeperTest {
     @Test
     public void recordingSinkLifecycleAndStereoOutputStayConsistent() {
         RecordingAudioSink primary = new RecordingAudioSink(), recording = new RecordingAudioSink();
-        Beeper beeper = new Beeper(primary, TEST_SAMPLE_RATE);
+        Beeper beeper = new Beeper(primary, TEST_SAMPLE_RATE, CPU_FREQ);
         beeper.setRecordingSink(recording);
         beeper.setLevel(true, false, false);
         beeper.passedCycles(CYCLES_PER_SAMPLE * 3);
@@ -173,7 +199,7 @@ public class BeeperTest {
         assertEquals(recorded, recording.toShortArray().length);
         primary = new RecordingAudioSink();
         recording = new RecordingAudioSink();
-        beeper = new Beeper(primary, TEST_SAMPLE_RATE);
+        beeper = new Beeper(primary, TEST_SAMPLE_RATE, CPU_FREQ);
         beeper.setRecordingSink(recording);
         beeper.setLevel(true, false, false);
         beeper.passedCycles(CYCLES_PER_SAMPLE * AUDIO_DEFAULT_BATCH_FRAMES);
@@ -184,7 +210,7 @@ public class BeeperTest {
         assertEquals(0, recording.toShortArray().length);
         beeper.flushRecordingBuffer();
         beeper.close();
-        assertThrows(NullPointerException.class, () -> new Beeper(AudioSink.NULL, TEST_SAMPLE_RATE).setRecordingSink(null));
+        assertThrows(NullPointerException.class, () -> new Beeper(AudioSink.NULL, TEST_SAMPLE_RATE, CPU_FREQ).setRecordingSink(null));
         assertStereoFrames(capture(BeeperTest::playPattern));
         short[] melody = capture(Beeper.DEFAULT_SAMPLE_RATE, BeeperTest::playMelody);
         assertTrue(containsPositive(melody));
@@ -249,7 +275,7 @@ public class BeeperTest {
 
     private static short[] capture(int rate, Consumer<Beeper> script) {
         RecordingAudioSink sink = new RecordingAudioSink();
-        try (Beeper beeper = new Beeper(sink, rate)) {
+        try (Beeper beeper = new Beeper(sink, rate, CPU_FREQ)) {
             script.accept(beeper);
         }
         return sink.toShortArray();

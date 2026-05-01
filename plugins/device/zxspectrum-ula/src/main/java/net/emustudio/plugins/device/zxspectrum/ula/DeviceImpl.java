@@ -39,7 +39,10 @@ public class DeviceImpl extends AbstractDevice {
     @Override
     public void initialize() throws PluginInitializationException {
         ZxSpectrumBus bus = applicationApi.getContextPool().getDeviceContext(pluginID, ZxSpectrumBus.class);
-        this.ula = new ULA(bus, Beeper.createDefault());
+        // Bus exposes CPU frequency in kHz (forwarded from CPUContext); convert to Hz for the Beeper
+        // sample-rate conversion math, and consult on every sample so a runtime clock change is
+        // immediately reflected in audio timing.
+        this.ula = new ULA(bus, Beeper.createDefault(() -> bus.getCPUFrequency() * 1000L));
         this.passedCyclesMediator = new PassedCyclesMediator(ula);
         bus.addPassedCyclesListener(passedCyclesMediator);
         for (int port = 0; port < 0x100; port += 2) {

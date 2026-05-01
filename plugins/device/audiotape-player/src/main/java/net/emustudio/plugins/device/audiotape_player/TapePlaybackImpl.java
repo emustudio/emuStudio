@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
  * - <a href="https://sinclair.wiki.zxnet.co.uk/wiki/Spectrum_tape_interface">Spectrum tape interface</a>
  */
 public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedCyclesListener {
-    private static final int DEFAULT_CPU_FREQUENCY_KHZ = 3500;
     private static final int FILE_START_PAUSE_MS = 2000;
     private final static int LEADER_PULSE_TSTATES = 2168;
     private final static int SYNC1_PULSE_TSTATES = 667;
@@ -57,10 +56,15 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     private volatile int lastReportedProgress = -1;
     private final CyclicBarrier barrier = new CyclicBarrier(2);
 
-    public TapePlaybackImpl(DeviceContext<Byte> lineIn) {
-        this(lineIn, () -> DEFAULT_CPU_FREQUENCY_KHZ);
-    }
 
+    /**
+     * @param lineIn                  device receiving the tape pulses (one byte per edge: 0 or 1)
+     * @param cpuFrequencyKHzSupplier returns the current CPU frequency in kHz; consulted on every
+     *                                ms-to-T-state conversion so that frequency changes at runtime
+     *                                are honoured. Pulse lengths defined by TAP/TZX in raw T-states
+     *                                are NOT scaled — tape file formats specify edges in T-states
+     *                                directly and the ROM loader counts T-states regardless of clock.
+     */
     public TapePlaybackImpl(DeviceContext<Byte> lineIn, IntSupplier cpuFrequencyKHzSupplier) {
         this.lineIn = Objects.requireNonNull(lineIn);
         this.cpuFrequencyKHzSupplier = Objects.requireNonNull(cpuFrequencyKHzSupplier);
