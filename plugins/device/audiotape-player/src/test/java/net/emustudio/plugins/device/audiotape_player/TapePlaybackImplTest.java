@@ -37,7 +37,8 @@ public class TapePlaybackImplTest {
 
     /**
      * Starts playback in a background thread and drains all scheduled pulses.
-     * passedCycles fires at most one pulse per call, so we need enough calls.
+     * Each passedCycles call drains all overdue entries, but we call in a loop
+     * to advance the playback clock gradually.
      */
     private void drainPulses(int callCount, int tstatesPerCall) throws InterruptedException {
         Thread playThread = new Thread(() -> playback.onFileEnd());
@@ -90,6 +91,11 @@ public class TapePlaybackImplTest {
     @Test(expected = NullPointerException.class)
     public void testNullLineInThrows() {
         new TapePlaybackImpl(null, () -> TEST_CPU_FREQUENCY_KHZ);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullFrequencySupplierThrows() {
+        new TapePlaybackImpl(lineIn, null);
     }
 
     @Test
@@ -425,5 +431,65 @@ public class TapePlaybackImplTest {
         drainPulses(100, 100_000);
 
         assertEquals(17, writtenData.size());
+    }
+
+    @Test
+    public void testOnPauseZeroDoesNotSchedulePulse() throws InterruptedException {
+        playback.onFileStart(); // 1 PAUSE pulse
+        long before = getCurrentTstates();
+        playback.onPause(0); // "stop the tape" — should NOT add a pulse
+        long after = getCurrentTstates();
+
+        assertEquals("Pause=0 must not advance T-state cursor", before, after);
+
+        drainPulses(100, 100_000);
+        // Only 1 PAUSE from onFileStart
+        assertEquals(1, writtenData.size());
+    }
+
+    @Test
+    public void testOnSetSignalLevelChangesPulsePolarity() throws InterruptedException {
+        playback.onFileStart(); // first pulse is 0 (pulseUp=false)
+        playback.onSetSignalLevel(1); // pulseUp=true
+
+        // Schedule two more pulses via block flag — first should be 1 (high), second 0 (low)
+        playback.onBlockFlag(0x00); // 8 zero bits = 16 pulses
+
+        drainPulses(100, 100_000);
+        // Pulse at index 0 = PAUSE (value 0, since pulseUp was false at onFileStart)
+        assertEquals((byte) 0, (byte) writtenData.get(0));
+        // After setSignalLevel(1), next pulse should be 1
+        assertEquals("After setSignalLevel(1), next pulse should be high",
+                (byte) 1, (byte) writtenData.get(1));
+    }
+
+    @Test
+    public void testOnPureToneSchedulesCorrectPulseCount() throws InterruptedException {
+        playback.onFileStart(); // 1 PAUSE pulse
+        playback.onPureTone(1000, 5); // 5 pulses of 1000 T-states
+
+        drainPulses(100, 100_000);
+        // 1 (PAUSE) + 5 (pure tone) = 6
+        assertEquals(6, writtenData.size());
+    }
+
+    @Test
+    public void testOnPulseSequenceSchedulesCorrectPulseCount() throws InterruptedException {
+        playback.onFileStart(); // 1 PAUSE pulse
+        playback.onPulseSequence(new int[]{500, 600, 700}); // 3 pulses
+
+        drainPulses(100, 100_000);
+        // 1 (PAUSE) + 3 (pulse sequence) = 4
+        assertEquals(4, writtenData.size());
+    }
+
+    @Test
+    public void testMillisToTstatesGuardsAgainstZeroFrequency() {
+        // Frequency supplier returning 0 should be treated as 1 (Math.max(1,...) guard)
+        playback = new TapePlaybackImpl(lineIn, () -> 0);
+        playback.onFileStart(); // uses millisToTstates(2000) internally
+        long tstates = getCurrentTstates();
+        // 2000 ms * max(1, 0) kHz = 2000 T-states + initial 1
+        assertEquals(2001L, tstates);
     }
 }
