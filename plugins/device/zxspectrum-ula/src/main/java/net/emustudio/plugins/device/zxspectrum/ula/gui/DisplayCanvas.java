@@ -21,22 +21,7 @@ import static net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardCanvas.KEY
  * Canvas responsible for rendering the ZX Spectrum screen and handling mouse interactions for the keyboard overlay.
  */
 public class DisplayCanvas extends Canvas implements AutoCloseable {
-    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
-    private static final int ATTRIBUTES_WIDTH = ZxSpectrumBus.ATTRIBUTES_WIDTH;
-    private static final int PRE_SCREEN_LINES = TIMING.preScreenLines;
-    private static final int POST_SCREEN_LINES = TIMING.postScreenLines;
-    private static final int SCREEN_WIDTH_PIXELS = ZxSpectrumBus.SCREEN_WIDTH_PIXELS;
-    private static final int SCREEN_HEIGHT_PIXELS = ZxSpectrumBus.SCREEN_HEIGHT_PIXELS;
     public static final float ZOOM = 2f;
-    public static final int BORDER_WIDTH = ZxSpectrumBus.BORDER_WIDTH_PIXELS;
-
-    public static final int SCREEN_IMAGE_WIDTH = 2 * BORDER_WIDTH + SCREEN_WIDTH_PIXELS;
-    public static final int SCREEN_IMAGE_HEIGHT = PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS + POST_SCREEN_LINES;
-    public static final int KEYBOARD_TOP = (int) (ZOOM * SCREEN_IMAGE_HEIGHT - KEYBOARD_HEIGHT + MARGIN);
-
-    private final BufferedImage screenImage = new BufferedImage(
-            SCREEN_IMAGE_WIDTH, SCREEN_IMAGE_HEIGHT, BufferedImage.TYPE_INT_RGB);
-    private final int[] screenImageData;
 
     private static final Color[] COLOR_MAP = new Color[]{
             new Color(0, 0, 0),  // black
@@ -62,25 +47,39 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     private static final Color KEYBOARD_OVERLAY_COLOR = new Color(0, 0, 0, 127);
 
-    private volatile Dimension size = new Dimension(
-            (int) (ZOOM * SCREEN_IMAGE_WIDTH + 2 * MARGIN),
-            (int) (ZOOM * SCREEN_IMAGE_HEIGHT + 2 * MARGIN)
-    );
+    private volatile Dimension size;
 
     private final ULA ula;
+    private final TimingProfile timing;
     private final KeyboardCanvas keyboardCanvas;
+    private final int borderWidth;
+    private final int screenImageWidth;
+    private final int screenImageHeight;
+    private final int keyboardTop;
+    private final BufferedImage screenImage;
+    private final int[] screenImageData;
     private volatile Consumer<BufferedImage> frameListener;
     private volatile BufferedImage backBuffer;
 
     public DisplayCanvas(ULA ula, KeyboardCanvas keyboardCanvas) {
         this.ula = Objects.requireNonNull(ula);
+        this.timing = ula.getProfile();
         this.keyboardCanvas = Objects.requireNonNull(keyboardCanvas);
+        this.borderWidth = ZxSpectrumBus.BORDER_WIDTH_PIXELS;
+        this.screenImageWidth = ZxSpectrumBus.SCREEN_WIDTH_PIXELS + 2 * ZxSpectrumBus.BORDER_WIDTH_PIXELS;
+        this.screenImageHeight = timing.frameLineCount;
+        this.keyboardTop = (int) (ZOOM * screenImageHeight - KEYBOARD_HEIGHT + MARGIN);
+        this.screenImage = new BufferedImage(screenImageWidth, screenImageHeight, BufferedImage.TYPE_INT_RGB);
         this.screenImage.setAccelerationPriority(1.0f);
         this.screenImageData = ((DataBufferInt) this.screenImage.getRaster().getDataBuffer()).getData();
+        this.size = new Dimension(
+                (int) (ZOOM * screenImageWidth + 2 * MARGIN),
+                (int) (ZOOM * screenImageHeight + 2 * MARGIN)
+        );
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (keyboardCanvas.handleMousePressed(e.getX(), e.getY() - KEYBOARD_TOP, ula)) {
+                if (keyboardCanvas.handleMousePressed(e.getX(), e.getY() - keyboardTop, ula)) {
                     repaint();
                 }
             }
@@ -108,14 +107,14 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     /**
      * Renders a single raster line into the {@link #screenImageData} pixel buffer.
      *
-     * <p>The screen image is laid out as a 1-D array of RGB ints, {@code SCREEN_IMAGE_WIDTH} pixels wide and
-     * {@code SCREEN_IMAGE_HEIGHT} lines tall. Lines are numbered {@code 0 .. SCREEN_IMAGE_HEIGHT - 1} and
-     * divided into three vertical zones:
+     * <p>The screen image is laid out as a 1-D array of RGB ints, {@code screenImageWidth} pixels wide and
+     * {@code screenImageHeight} lines tall. Lines are numbered {@code 0 .. screenImageHeight - 1} and divided
+     * into three vertical zones defined by the active timing profile:
      *
      * <pre>
-     *   line 0 .. PRE_SCREEN_LINES-1                              → upper border (solid border color)
-     *   line PRE_SCREEN_LINES .. PRE_SCREEN_LINES+SCREEN_HEIGHT-1 → active area  (left border + bitmap + right border)
-     *   line PRE_SCREEN_LINES+SCREEN_HEIGHT .. end                 → lower border (solid border color)
+     *   line 0 .. preScreenLines-1                               → upper border (solid border color)
+     *   line preScreenLines .. preScreenLines+screenHeightPixels-1 → active area  (left border + bitmap + right border)
+     *   line preScreenLines+screenHeightPixels .. end             → lower border (solid border color)
      * </pre>
      *
      * <p><b>Border lines</b> (upper / lower): every pixel in the row is filled with the current ULA border color.
@@ -128,30 +127,30 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
      *   <li>The attribute byte selects ink/paper color, brightness palette, and flash state.</li>
      *   <li>When the flash flag is set and the ULA flash clock is active, ink and paper are swapped.</li>
      * </ul>
-     * After the 256-pixel bitmap, both left and right border regions ({@code 2 × BORDER_WIDTH} pixels) are
+     * After the active bitmap area, both left and right border regions ({@code 2 × borderWidth} pixels) are
      * filled with the border color.
      *
      * @param line raster line index (0-based, covering borders and active area)
      */
     public void drawNextLine(int line) {
-        if (line < 0 || line >= SCREEN_IMAGE_HEIGHT) {
+        if (line < 0 || line >= screenImageHeight) {
             return;
         }
         int borderColor = COLOR_MAP[ula.getBorderColor()].getRGB();
-        if (line < PRE_SCREEN_LINES || line >= (PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS)) {
-            for (int i = 0; i < SCREEN_IMAGE_WIDTH; i++) {
-                screenImageData[line * SCREEN_IMAGE_WIDTH + i] = borderColor;
+        if (line < timing.preScreenLines || line >= (timing.preScreenLines + ZxSpectrumBus.SCREEN_HEIGHT_PIXELS)) {
+            for (int i = 0; i < screenImageWidth; i++) {
+                screenImageData[line * screenImageWidth + i] = borderColor;
             }
-            if (line < PRE_SCREEN_LINES) {
-                for (int i = SCREEN_IMAGE_WIDTH; i < SCREEN_IMAGE_WIDTH + BORDER_WIDTH; i++) {
-                    screenImageData[line * SCREEN_IMAGE_WIDTH + i] = borderColor;
+            if (line < timing.preScreenLines) {
+                for (int i = screenImageWidth; i < screenImageWidth + borderWidth; i++) {
+                    screenImageData[line * screenImageWidth + i] = borderColor;
                 }
             }
         } else {
-            int y = line - PRE_SCREEN_LINES;
+            int y = line - timing.preScreenLines;
             ula.readLine(y);
             int screenX = 0;
-            for (int byteX = 0; byteX < ATTRIBUTES_WIDTH; byteX++) {
+            for (int byteX = 0; byteX < ZxSpectrumBus.ATTRIBUTES_WIDTH; byteX++) {
                 byte row = ula.videoMemory[byteX][y];
                 int attr = ula.attributeMemory[byteX][y / 8];
                 Color[] colorMap = ((attr & 0x40) == 0x40) ? BRIGHT_COLOR_MAP : COLOR_MAP;
@@ -166,13 +165,13 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         color = (bit ? colorMap[attr & 7] : colorMap[(attr >>> 3) & 7]).getRGB();
                     }
 
-                    int offset = line * SCREEN_IMAGE_WIDTH + BORDER_WIDTH + screenX + i;
+                    int offset = line * screenImageWidth + borderWidth + screenX + i;
                     screenImageData[offset] = color;
                 }
                 screenX += 8;
             }
-            for (int i = 0; i < 2 * BORDER_WIDTH; i++) {
-                int offset = line * SCREEN_IMAGE_WIDTH + BORDER_WIDTH + SCREEN_WIDTH_PIXELS + i;
+            for (int i = 0; i < 2 * borderWidth; i++) {
+                int offset = line * screenImageWidth + borderWidth + ZxSpectrumBus.SCREEN_WIDTH_PIXELS + i;
                 screenImageData[offset] = borderColor;
             }
         }
@@ -180,7 +179,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     public void redrawNow() {
         ula.readScreen();
-        for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
+        for (int i = 0; i < screenImageHeight; i++) {
             drawNextLine(i);
         }
         repaint();
@@ -265,16 +264,16 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
         graphics.drawImage(
                 screenImage, MARGIN, MARGIN,
-                (int) (SCREEN_IMAGE_WIDTH * ZOOM), (int) (SCREEN_IMAGE_HEIGHT * ZOOM), null
+                (int) (screenImageWidth * ZOOM), (int) (screenImageHeight * ZOOM), null
         );
 
         if (keyboardCanvas.getAlpha() > 0) {
             Color color = graphics.getColor();
             graphics.setColor(KEYBOARD_OVERLAY_COLOR);
-            graphics.translate(0, KEYBOARD_TOP);
+            graphics.translate(0, keyboardTop);
             keyboardCanvas.paint(graphics);
             graphics.setColor(color);
-            graphics.translate(0, -KEYBOARD_TOP);
+            graphics.translate(0, -keyboardTop);
         }
     }
 }

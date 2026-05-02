@@ -69,7 +69,6 @@ import static java.awt.event.KeyEvent.*;
 public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyListener {
     private final static byte[] KEY_SHIFT = new byte[]{0, 1};
     private final static byte[] KEY_SYM_SHIFT = new byte[]{7, 2};
-    private final static int[] LINE_OFFSETS = computeLineOffsets();
     private final static byte KEY_RELEASED_STATE = (byte) 0xBF;
 
     @GuardedBy("keymapLock")
@@ -78,8 +77,8 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private final ReadWriteLockSupport keymapLock = new ReadWriteLockSupport();
 
     // accessible from outside
-    public final byte[][] videoMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.SCREEN_HEIGHT_PIXELS];
-    public final byte[][] attributeMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.ATTRIBUTE_HEIGHT];
+    public final byte[][] videoMemory;
+    public final byte[][] attributeMemory;
 
     // maps host characters to ZX Spectrum key "commands"
     // Byte[] = {key line, key value, shift, symshift}
@@ -159,7 +158,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private final ZxSpectrumBus bus;
     private final TimingProfile timing;
     private final Beeper beeper;
-    private final byte[] interruptData = new byte[]{(byte) ZxSpectrumBus.UNDRIVEN_BUS_DATA_BYTE};
+    private final byte[] interruptData;
 
     // Written by CPU thread (write), read by AWT thread (getBorderColor from paint)
     private volatile int borderColor;
@@ -179,6 +178,9 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         this.bus = Objects.requireNonNull(bus);
         this.timing = Objects.requireNonNull(bus.getProfile());
         this.beeper = Objects.requireNonNull(beeper);
+        this.videoMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.SCREEN_HEIGHT_PIXELS];
+        this.attributeMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.ATTRIBUTE_HEIGHT];
+        this.interruptData = new byte[]{(byte) ZxSpectrumBus.UNDRIVEN_BUS_DATA_BYTE};
         resetKeyboard();
     }
 
@@ -208,8 +210,8 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     public void onNextFrame() {
-        // On a 48K Spectrum the ULA does not place an IM 2 vector on the bus. The interrupt
-        // acknowledge cycle therefore sees the floating bus, which is 0xFF at the frame boundary.
+        // The active timing profile supplies the byte seen on the floating bus during interrupt
+        // acknowledge, so the bus can model profile-specific IM 2 behavior.
         bus.signalInterrupt(interruptData);
         if (flashFramesCount == ZxSpectrumBus.FLASH_SWAP_FRAME_COUNT - 1) {
             videoFlash.set(!videoFlash.get());
@@ -229,11 +231,9 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     public void readLine(int y) {
         for (int x = 0; x < ZxSpectrumBus.ATTRIBUTES_WIDTH; x++) {
-            videoMemory[x][y] = bus.readMemoryNotContended(ZxSpectrumBus.SCREEN_MEMORY_BASE + LINE_OFFSETS[y] + x);
+            videoMemory[x][y] = bus.readMemoryNotContended(timing.screenAddressAt(y, x));
             if (y < ZxSpectrumBus.ATTRIBUTE_HEIGHT) {
-                int off = ((y >>> 3) << 8) | (((y & 0x07) << 5) | x);
-                int attributeAddress = ZxSpectrumBus.ATTRIBUTE_MEMORY_BASE + off;
-                attributeMemory[x][y] = bus.readMemoryNotContended(attributeAddress);
+                attributeMemory[x][y] = bus.readMemoryNotContended(timing.attributeAddressAtRow(y, x));
             }
         }
     }
@@ -398,24 +398,4 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         return keymapLock.lockRead(() -> (keymap[line] & value) == 0);
     }
 
-    /**
-     * Computes address offsets for each line in the screen.
-     * <p>
-     * The Spectrum’s screen memory starts at 0x4000 so the most significant three bits of our address will always be 010.
-     * The 5 least significant bits will always be the X (column) address. The 8 bits from 5-12 represent the pixel Y:
-     * <p>
-     * 15	14	13	12	11	10	9	8	7	6	5	4	3	2	1	0
-     * 0	1	0	Y7	Y6	Y2	Y1	Y0	Y5	Y4	Y3	X4	X3	X2	X1	X0
-     * <p>
-     * This method sets all X bits to 0, and then sets the Y bits according to the line number.
-     *
-     * @return array of offsets
-     */
-    private static int[] computeLineOffsets() {
-        final int[] result = new int[ZxSpectrumBus.SCREEN_HEIGHT_PIXELS];
-        for (int y = 0; y < ZxSpectrumBus.SCREEN_HEIGHT_PIXELS; y++) {
-            result[y] = ((y & 0xC0) << 5) | ((y & 7) << 8) | ((y & 0x38) << 2);
-        }
-        return result;
-    }
 }

@@ -31,6 +31,7 @@ public enum TimingProfile {
     public final int firstContendedTstate;
     public final int floatingBusSampleOffsetTstates;
     public final List<Integer> contentionPattern;
+    public final int frameLineCount;
     public final int displayFrameTstates;
     public final int screenFetchCycles;
     public final long firstFloatingBusTstate;
@@ -58,8 +59,8 @@ public enum TimingProfile {
         this.contentionPattern = Arrays.stream(contentionPattern)
                 .boxed()
                 .collect(Collectors.toUnmodifiableList());
-        this.displayFrameTstates =
-                (preScreenLines + ZxSpectrumBus.SCREEN_HEIGHT_PIXELS + postScreenLines) * displayLineTstates;
+        this.frameLineCount = preScreenLines + ZxSpectrumBus.SCREEN_HEIGHT_PIXELS + postScreenLines;
+        this.displayFrameTstates = frameLineCount * displayLineTstates;
         this.screenFetchCycles = ZxSpectrumBus.ATTRIBUTES_WIDTH * 4;
         this.firstFloatingBusTstate = (long) firstContendedTstate + floatingBusSampleOffsetTstates;
         this.contentionDelays = buildContentionDelays();
@@ -130,5 +131,9 @@ public enum TimingProfile {
     public int attributeAddressAt(int line, int column) {
         int attributeOffset = ((line >>> 3) << 5) | column;
         return ZxSpectrumBus.ATTRIBUTE_MEMORY_BASE + attributeOffset;
+    }
+
+    public int attributeAddressAtRow(int row, int column) {
+        return attributeAddressAt(row << 3, column);
     }
 }

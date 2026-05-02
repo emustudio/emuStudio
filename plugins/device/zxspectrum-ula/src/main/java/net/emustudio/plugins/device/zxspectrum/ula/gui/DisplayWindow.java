@@ -41,7 +41,7 @@ public class DisplayWindow extends DialogBase {
     private final ULA ula;
     private final Dialogs dialogs;
     private final GUI gui;
-    private final KeyboardCanvas keyboardCanvas = new KeyboardCanvas(0);
+    private final KeyboardCanvas keyboardCanvas;
     private JButton btnRecord;
 
     private RecordingSession recordingSession;
@@ -52,6 +52,7 @@ public class DisplayWindow extends DialogBase {
         this.gui = gui;
         this.ula = Objects.requireNonNull(ula);
         this.dialogs = Objects.requireNonNull(dialogs);
+        this.keyboardCanvas = new KeyboardCanvas(ula.getProfile(), 0);
         this.canvas = new DisplayCanvas(ula, keyboardCanvas);
 
         buildContent();

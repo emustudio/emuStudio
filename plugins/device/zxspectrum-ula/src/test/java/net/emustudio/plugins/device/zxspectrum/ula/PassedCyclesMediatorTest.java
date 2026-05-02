@@ -7,7 +7,6 @@ import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 import org.junit.Test;
 
-import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCREEN_IMAGE_HEIGHT;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
@@ -70,8 +69,8 @@ public class PassedCyclesMediatorTest {
         TestULA ula = new TestULA();
         PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
         DisplayCanvas canvas = createStrictMock(DisplayCanvas.class);
-        // Expect exactly SCREEN_IMAGE_HEIGHT drawNextLine calls (lines 0..311)
-        for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
+        // Expect exactly one raster line draw per frame line.
+        for (int i = 0; i < TIMING.frameLineCount; i++) {
             canvas.drawNextLine(i);
             expectLastCall().once();
         }

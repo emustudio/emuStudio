@@ -64,11 +64,12 @@ import java.util.*;
  */
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
-    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
-    private static final int DISPLAY_LINE_TSTATES = TIMING.displayLineTstates;
-    private static final int DISPLAY_FRAME_TSTATES = TIMING.displayFrameTstates;
     private static final int IO_PORTS = 0x100;
-    private static final long FIRST_FLOATING_BUS = TIMING.firstFloatingBusTstate;
+
+    private final TimingProfile timing;
+    private final int displayLineTstates;
+    private final int displayFrameTstates;
+    private final long firstFloatingBusTstate;
 
     private ContextZ80 cpu;
     private MemoryContext<Byte> memory;
@@ -80,12 +81,23 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     private final Map<Integer, Context8080.CpuPortDevice> deferredAttachments = new HashMap<>();
     private final Set<CPUContext.PassedCyclesListener> deferredListeners = new HashSet<>();
 
+    public ZxSpectrumBusImpl() {
+        this(TimingProfile.ZX_SPECTRUM_48K);
+    }
+
+    ZxSpectrumBusImpl(TimingProfile timing) {
+        this.timing = Objects.requireNonNull(timing);
+        this.displayLineTstates = timing.displayLineTstates;
+        this.displayFrameTstates = timing.displayFrameTstates;
+        this.firstFloatingBusTstate = timing.firstFloatingBusTstate;
+    }
+
     public void initialize(ContextZ80 cpu, MemoryContext<Byte> memory) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memory = Objects.requireNonNull(memory);
 
         // ZX Spectrum ULA holds INT low for 32 T-states at each frame boundary
-        cpu.setInterruptDuration(TIMING.interruptTstates);
+        cpu.setInterruptDuration(timing.interruptTstates);
 
         attachPortDispatchers();
 
@@ -103,7 +115,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public TimingProfile getProfile() {
-        return TIMING;
+        return timing;
     }
 
     @Override
@@ -268,8 +280,8 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     private void applyMemoryContention(int location) {
-        if (TIMING.isContendedMemoryAddress(location)) {
-            int cycles = TIMING.contentionDelayAt(frameCycles);
+        if (timing.isContendedMemoryAddress(location)) {
+            int cycles = timing.contentionDelayAt(frameCycles);
             if (cycles > 0) {
                 cpu.addCycles(cycles);
             }
@@ -294,7 +306,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public void passedCycles(long tstates) {
-        frameCycles = (frameCycles + tstates) % DISPLAY_FRAME_TSTATES;
+        frameCycles = (frameCycles + tstates) % displayFrameTstates;
     }
 
     /**
@@ -323,7 +335,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             if (device != null) {
                 return device.read(portAddress);
             }
-            long sampleCycle = (frameCycles + IO_READ_SAMPLE_OFFSET) % DISPLAY_FRAME_TSTATES;
+            long sampleCycle = (frameCycles + IO_READ_SAMPLE_OFFSET) % displayFrameTstates;
             return readFloatingBus(sampleCycle);
         }
 
@@ -342,7 +354,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         }
 
         private void applyPortContention(int portAddress) {
-            int cycles = TIMING.portContentionDelay(frameCycles, portAddress);
+            int cycles = timing.portContentionDelay(frameCycles, portAddress);
             if (cycles > 0) {
                 cpu.addCycles(cycles);
             }
@@ -359,25 +371,25 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
          * @return value observed on the floating bus at {@code sampleCycle}, or {@code 0xFF} when no ULA fetch is active
          */
         private byte readFloatingBus(long sampleCycle) {
-            long visibleCycles = sampleCycle - FIRST_FLOATING_BUS;
+            long visibleCycles = sampleCycle - firstFloatingBusTstate;
             if (visibleCycles < 0) {
                 return (byte) UNDRIVEN_BUS_DATA_BYTE;
             }
 
-            int line = (int) (visibleCycles / DISPLAY_LINE_TSTATES);
+            int line = (int) (visibleCycles / displayLineTstates);
             if (line < 0 || line >= SCREEN_HEIGHT_PIXELS) {
                 return (byte) UNDRIVEN_BUS_DATA_BYTE;
             }
 
-            int cycleInLine = (int) (visibleCycles % DISPLAY_LINE_TSTATES);
-            if (!TIMING.isFloatingBusDrivenAtCycle(cycleInLine)) {
+            int cycleInLine = (int) (visibleCycles % displayLineTstates);
+            if (!timing.isFloatingBusDrivenAtCycle(cycleInLine)) {
                 return (byte) UNDRIVEN_BUS_DATA_BYTE;
             }
 
-            int column = TIMING.floatingBusColumnAt(cycleInLine);
-            int floatingBusAddress = TIMING.isFloatingBusAttributePhase(cycleInLine)
-                    ? TIMING.attributeAddressAt(line, column)
-                    : TIMING.screenAddressAt(line, column);
+            int column = timing.floatingBusColumnAt(cycleInLine);
+            int floatingBusAddress = timing.isFloatingBusAttributePhase(cycleInLine)
+                    ? timing.attributeAddressAt(line, column)
+                    : timing.screenAddressAt(line, column);
 
             return memory.read(floatingBusAddress);
         }

@@ -8,18 +8,15 @@ import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 
 import java.util.Objects;
 
-import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCREEN_IMAGE_HEIGHT;
-
 /**
  * Converts CPU T-state notifications into ULA frame, line, paint, and interrupt events.
  *
- * <p>The ZX Spectrum 48K video timing is regular enough that the mediator can work purely from
+ * <p>The active {@link TimingProfile} is regular enough that the mediator can work purely from
  * accumulated T-states:
  * <ul>
- * <li>one display line = {@code 224} T-states</li>
- * <li>one frame = {@code (64 + 192 + 56) * 224 = 69888} T-states</li>
- * <li>frame rate = {@code 3_500_000 / 69888 ~= 50.08 Hz}</li>
- * <li>the ULA holds {@code /INT} low for {@code 32} T-states at each frame boundary</li>
+ * <li>one display line = {@code timing.displayLineTstates}</li>
+ * <li>one frame = {@code timing.displayFrameTstates}</li>
+ * <li>the ULA holds {@code /INT} low for {@code timing.interruptTstates} T-states</li>
  * </ul>
  *
  * <p>Mechanically, each {@link #passedCycles(long)} call does four things in order:
@@ -29,7 +26,7 @@ import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCRE
  * <li>adds the cycles to {@code lineCycles} and {@code frameCycles}</li>
  * <li>when a line boundary is crossed, draws the next line and keeps only the modulo remainder</li>
  * <li>when a frame boundary is crossed, starts the next frame, requests a repaint, and later clears
- * the interrupt exactly {@code INTERRUPT_TSTATES} after the boundary</li>
+ * the interrupt exactly {@code timing.interruptTstates} after the boundary</li>
  * </ol>
  *
  * <p>The modulo operations are the same idea as in fixed-point resampling: they preserve leftover
@@ -43,7 +40,7 @@ import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCRE
  * <p>References:
  * <ul>
  * <li><a href="https://worldofspectrum.org/faq/reference/48kreference.htm">World of Spectrum:
- * 48K ZX Spectrum Technical Information</a></li>
+ * ZX Spectrum timing reference</a></li>
  * <li><a href="https://worldofspectrum.org/faq/reference/z80reference.htm">World of Spectrum:
  * Z80 Technical Information</a></li>
  * </ul>
@@ -93,7 +90,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
         // Draw completed lines in batch
         DisplayCanvas canvas = this.canvas; // Read volatile once
         if (canvas != null) {
-            if (lineCycles >= timing.displayLineTstates && lastLinePainted < SCREEN_IMAGE_HEIGHT) {
+            if (lineCycles >= timing.displayLineTstates && lastLinePainted < timing.frameLineCount) {
                 canvas.drawNextLine(lastLinePainted++);
             }
         }
