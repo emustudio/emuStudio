@@ -218,10 +218,9 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     private void passiveMemoryCycles(int address, int cycles) {
+        advanceCycles(cycles);
         if (passiveMemoryCycleContext != null) {
             passiveMemoryCycleContext.passiveMemoryCycles(address & 0xFFFF, cycles);
-        } else {
-            advanceCycles(cycles);
         }
     }
 

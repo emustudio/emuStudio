@@ -185,7 +185,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         int maskedLocation = location & 0xFFFF;
         for (int i = 0; i < cycles; i++) {
             applyMemoryContention(maskedLocation);
-            cpu.addCycles(1);
         }
     }
 
