@@ -68,7 +68,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     private static final int DISPLAY_LINE_TSTATES = TIMING.displayLineTstates;
     private static final int DISPLAY_FRAME_TSTATES = TIMING.displayFrameTstates;
     private static final int IO_PORTS = 0x100;
-    private static final int SCREEN_FETCH_CYCLES = TIMING.screenFetchCycles;
     private static final long FIRST_FLOATING_BUS = TIMING.firstFloatingBusTstate;
 
     private ContextZ80 cpu;
@@ -319,7 +318,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
         @Override
         public byte read(int portAddress) {
-            contendedPort(portAddress);
+            applyPortContention(portAddress);
             Context8080.CpuPortDevice device = attachedDevices[lowPort];
             if (device != null) {
                 return device.read(portAddress);
@@ -330,7 +329,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
         @Override
         public void write(int portAddress, byte data) {
-            contendedPort(portAddress);
+            applyPortContention(portAddress);
             Context8080.CpuPortDevice device = attachedDevices[lowPort];
             if (device != null) {
                 device.write(portAddress, data);
@@ -342,7 +341,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             return "ZX-Spectrum Bus";
         }
 
-        private void contendedPort(int portAddress) {
+        private void applyPortContention(int portAddress) {
             int cycles = TIMING.portContentionDelay(frameCycles, portAddress);
             if (cycles > 0) {
                 cpu.addCycles(cycles);
@@ -371,38 +370,16 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             }
 
             int cycleInLine = (int) (visibleCycles % DISPLAY_LINE_TSTATES);
-            if (cycleInLine >= SCREEN_FETCH_CYCLES) {
+            if (!TIMING.isFloatingBusDrivenAtCycle(cycleInLine)) {
                 return (byte) UNDRIVEN_BUS_DATA_BYTE;
             }
 
-            int column = (cycleInLine / 8) * 2;
-            int phase = cycleInLine & 7;
-            switch (phase) {
-                case 0:
-                    return readScreenByte(line, column);
-                case 1:
-                    return readAttributeByte(line, column);
-                case 2:
-                    return readScreenByte(line, column + 1);
-                case 3:
-                    return readAttributeByte(line, column + 1);
-                default:
-                    return (byte) UNDRIVEN_BUS_DATA_BYTE;
-            }
-        }
+            int column = TIMING.floatingBusColumnAt(cycleInLine);
+            int floatingBusAddress = TIMING.isFloatingBusAttributePhase(cycleInLine)
+                    ? TIMING.attributeAddressAt(line, column)
+                    : TIMING.screenAddressAt(line, column);
 
-        private byte readScreenByte(int line, int column) {
-            int lineOffset = ((line & 0xC0) << 5) | ((line & 7) << 8) | ((line & 0x38) << 2);
-
-            // non-contended read
-            return memory.read(SCREEN_MEMORY_BASE + lineOffset + column);
-        }
-
-        private byte readAttributeByte(int line, int column) {
-            int attributeOffset = ((line >>> 3) << 5) | column;
-
-            // non-contended read
-            return memory.read(ATTRIBUTE_MEMORY_BASE + attributeOffset);
+            return memory.read(floatingBusAddress);
         }
     }
 }

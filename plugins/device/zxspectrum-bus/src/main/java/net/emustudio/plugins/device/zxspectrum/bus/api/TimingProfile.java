@@ -93,6 +93,18 @@ public enum TimingProfile {
         return 0;
     }
 
+    public boolean isFloatingBusDrivenAtCycle(int cycleInLine) {
+        return cycleInLine >= 0 && cycleInLine < screenFetchCycles && (cycleInLine & 7) < 4;
+    }
+
+    public boolean isFloatingBusAttributePhase(int cycleInLine) {
+        return (cycleInLine & 1) == 1;
+    }
+
+    public int floatingBusColumnAt(int cycleInLine) {
+        return (cycleInLine / 8) * 2 + ((cycleInLine & 2) >>> 1);
+    }
+
     private int[] buildContentionDelays() {
         int[] contentionDelays = new int[displayFrameTstates];
         int patternSize = contentionPattern.size();
@@ -108,5 +120,15 @@ public enum TimingProfile {
         }
 
         return contentionDelays;
+    }
+
+    public int screenAddressAt(int line, int column) {
+        int lineOffset = ((line & 0xC0) << 5) | ((line & 7) << 8) | ((line & 0x38) << 2);
+        return ZxSpectrumBus.SCREEN_MEMORY_BASE + lineOffset + column;
+    }
+
+    public int attributeAddressAt(int line, int column) {
+        int attributeOffset = ((line >>> 3) << 5) | column;
+        return ZxSpectrumBus.ATTRIBUTE_MEMORY_BASE + attributeOffset;
     }
 }
