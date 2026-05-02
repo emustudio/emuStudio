@@ -146,26 +146,39 @@ public enum TimingProfile {
      *
      * <p>The rules match the 48K ULA behaviour:
      * <ul>
-     * <li>contended odd ports sample four consecutive contention slots</li>
-     * <li>contended even ports sample two slots</li>
-     * <li>non-contended even ports still incur one delayed slot</li>
+     * <li>contended odd ports apply up to four successive per-T-state delays</li>
+     * <li>contended even ports apply one delay before T1 and one before T2</li>
+     * <li>non-contended even ports still incur one delayed slot before T2</li>
      * <li>non-contended odd ports do not stall</li>
      * </ul>
      */
     public int portContentionDelay(long frameCycle, int portAddress) {
-        if (isContendedMemoryAddress(portAddress)) {
-            if ((portAddress & 1) == 0) {
-                return contentionDelayAt(frameCycle) + contentionDelayAt(frameCycle + 1);
-            }
-            return contentionDelayAt(frameCycle)
-                    + contentionDelayAt(frameCycle + 1)
-                    + contentionDelayAt(frameCycle + 2)
-                    + contentionDelayAt(frameCycle + 3);
+        long cycle = frameCycle;
+        int delay = 0;
+        boolean contendedHighByte = isContendedMemoryAddress(portAddress);
+
+        if (contendedHighByte) {
+            int currentDelay = contentionDelayAt(cycle);
+            delay += currentDelay;
+            cycle += currentDelay;
         }
+
+        cycle++; // T1
+
         if ((portAddress & 1) == 0) {
-            return contentionDelayAt(frameCycle + 1);
+            return delay + contentionDelayAt(cycle);
         }
-        return 0;
+
+        if (!contendedHighByte) {
+            return 0;
+        }
+
+        for (int i = 0; i < 3; i++) {
+            int currentDelay = contentionDelayAt(cycle);
+            delay += currentDelay;
+            cycle += currentDelay + 1;
+        }
+        return delay;
     }
 
     /**

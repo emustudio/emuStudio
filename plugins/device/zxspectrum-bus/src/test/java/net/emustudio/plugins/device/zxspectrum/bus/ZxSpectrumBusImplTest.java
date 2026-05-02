@@ -67,11 +67,12 @@ public class ZxSpectrumBusImplTest {
         ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
         bus.initialize(env.cpu, env.memory);
 
+        env.memoryValues.put(0x4000, (byte) 0x12);
         bus.passedCycles(FIRST_CONTENDED);
         byte value = env.cpuPortDispatchers.get(0xFF).read(0x40FF);
 
         assertEquals((byte) 0xFF, value);
-        assertEquals(18L, env.addedCycles.get());
+        assertEquals(12L, env.addedCycles.get());
 
         verify(env.cpu, env.memory);
     }
@@ -455,8 +456,8 @@ public class ZxSpectrumBusImplTest {
         // Port 0x40FE: high byte 0x40 (contended), low bit 0 (even)
         env.cpuPortDispatchers.get(0xFE).read(0x40FE);
 
-        // C:1 at FIRST_CONTENDED = 6, then C:3 at FIRST_CONTENDED+1 = 5 => total 11
-        assertEquals(11L, env.addedCycles.get());
+        // C:1 at FIRST_CONTENDED = 6, then three base I/O T-states resume at 14342 without more delay.
+        assertEquals(6L, env.addedCycles.get());
         verify(env.cpu, env.memory);
     }
 
@@ -471,8 +472,8 @@ public class ZxSpectrumBusImplTest {
         // Port 0x40FF: high byte 0x40 (contended), low bit 1 (odd)
         env.cpuPortDispatchers.get(0xFF).read(0x40FF);
 
-        // C:1 at 14335=6, at 14336=5, at 14337=4, at 14338=3 => total 18
-        assertEquals(18L, env.addedCycles.get());
+        // Wait states advance the frame clock, so the four C:1 samples land at 14335, 14342, 14343, 14350.
+        assertEquals(12L, env.addedCycles.get());
         verify(env.cpu, env.memory);
     }
 
@@ -899,7 +900,7 @@ public class ZxSpectrumBusImplTest {
         // Contended port write: high byte 0x40 (contended), low bit 0 (even) -> C:1, C:3
         env.cpuPortDispatchers.get(0xFE).write(0x40FE, (byte) 0x00);
 
-        assertEquals(11L, env.addedCycles.get());
+        assertEquals(6L, env.addedCycles.get());
         verify(env.cpu, env.memory);
     }
 

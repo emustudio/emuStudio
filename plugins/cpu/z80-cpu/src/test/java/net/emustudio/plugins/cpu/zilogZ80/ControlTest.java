@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
+import static org.junit.Assert.assertEquals;
 
 public class ControlTest extends InstructionsTest {
 
@@ -119,9 +120,9 @@ public class ControlTest extends InstructionsTest {
         engine.reset(0x0000);
         engine.step();
 
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0001));
-        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0001));
-        org.junit.Assert.assertEquals(0x0002, engine.PC);
+        assertEquals(1, memory.getReadCount(0x0001));
+        assertEquals(5, memory.getPassiveCycleCount(0x0001));
+        assertEquals(0x0002, engine.PC);
     }
 
     @Test
@@ -137,9 +138,9 @@ public class ControlTest extends InstructionsTest {
         engine.I = 0x40;
         engine.step();
 
-        org.junit.Assert.assertEquals(0, memory.getReadCount(0x4001));
-        org.junit.Assert.assertEquals(2, memory.getPassiveCycleCount(0x4001));
-        org.junit.Assert.assertEquals(0x0001, (engine.regs[REG_B] << 8) | engine.regs[REG_C]);
+        assertEquals(0, memory.getReadCount(0x4001));
+        assertEquals(2, memory.getPassiveCycleCount(0x4001));
+        assertEquals(0x0001, (engine.regs[REG_B] << 8) | engine.regs[REG_C]);
     }
 
     @Test
@@ -158,10 +159,10 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0002));
-        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0002));
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
-        org.junit.Assert.assertEquals(0x5A, engine.regs[REG_A]);
+        assertEquals(1, memory.getReadCount(0x0002));
+        assertEquals(5, memory.getPassiveCycleCount(0x0002));
+        assertEquals(1, memory.getReadCount(0x4000));
+        assertEquals(0x5A, engine.regs[REG_A]);
     }
 
     @Test
@@ -180,10 +181,10 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0002));
-        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0002));
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
-        org.junit.Assert.assertEquals(0x5A, engine.regs[REG_H]);
+        assertEquals(1, memory.getReadCount(0x0002));
+        assertEquals(5, memory.getPassiveCycleCount(0x0002));
+        assertEquals(1, memory.getReadCount(0x4000));
+        assertEquals(0x5A, engine.regs[REG_H]);
     }
 
     @Test
@@ -203,10 +204,10 @@ public class ControlTest extends InstructionsTest {
         engine.regs[REG_A] = 0x10;
         engine.step();
 
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0002));
-        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0002));
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
-        org.junit.Assert.assertEquals(0x15, engine.regs[REG_A]);
+        assertEquals(1, memory.getReadCount(0x0002));
+        assertEquals(5, memory.getPassiveCycleCount(0x0002));
+        assertEquals(1, memory.getReadCount(0x4000));
+        assertEquals(0x15, engine.regs[REG_A]);
     }
 
     @Test
@@ -225,11 +226,11 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0002));
-        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0002));
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
-        org.junit.Assert.assertEquals(1, memory.getPassiveCycleCount(0x4000));
-        org.junit.Assert.assertEquals(0x06, memory.read(0x4000) & 0xFF);
+        assertEquals(1, memory.getReadCount(0x0002));
+        assertEquals(5, memory.getPassiveCycleCount(0x0002));
+        assertEquals(1, memory.getReadCount(0x4000));
+        assertEquals(1, memory.getPassiveCycleCount(0x4000));
+        assertEquals(0x06, memory.read(0x4000) & 0xFF);
     }
 
     @Test
@@ -248,9 +249,9 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0003));
-        org.junit.Assert.assertEquals(2, memory.getPassiveCycleCount(0x0003));
-        org.junit.Assert.assertEquals(0x34, memory.read(0x4000) & 0xFF);
+        assertEquals(1, memory.getReadCount(0x0003));
+        assertEquals(2, memory.getPassiveCycleCount(0x0003));
+        assertEquals(0x34, memory.read(0x4000) & 0xFF);
     }
 
     @Test
@@ -270,10 +271,10 @@ public class ControlTest extends InstructionsTest {
         engine.regs[REG_A] = 0x34;
         engine.step();
 
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
-        org.junit.Assert.assertEquals(4, memory.getPassiveCycleCount(0x4000));
-        org.junit.Assert.assertEquals(0x24, memory.read(0x4000) & 0xFF);
-        org.junit.Assert.assertEquals(0x31, engine.regs[REG_A]);
+        assertEquals(1, memory.getReadCount(0x4000));
+        assertEquals(4, memory.getPassiveCycleCount(0x4000));
+        assertEquals(0x24, memory.read(0x4000) & 0xFF);
+        assertEquals(0x31, engine.regs[REG_A]);
     }
 
     @Test
@@ -293,11 +294,11 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(0x02, engine.R);
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0003));
-        org.junit.Assert.assertEquals(2, memory.getPassiveCycleCount(0x0003));
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
-        org.junit.Assert.assertEquals(1, memory.getPassiveCycleCount(0x4000));
+        assertEquals(0x02, engine.R);
+        assertEquals(1, memory.getReadCount(0x0003));
+        assertEquals(2, memory.getPassiveCycleCount(0x0003));
+        assertEquals(1, memory.getReadCount(0x4000));
+        assertEquals(1, memory.getPassiveCycleCount(0x4000));
     }
 
     @Test
@@ -317,11 +318,11 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0003));
-        org.junit.Assert.assertEquals(2, memory.getPassiveCycleCount(0x0003));
-        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
-        org.junit.Assert.assertEquals(1, memory.getPassiveCycleCount(0x4000));
-        org.junit.Assert.assertEquals(0xFE, memory.read(0x4000) & 0xFF);
+        assertEquals(1, memory.getReadCount(0x0003));
+        assertEquals(2, memory.getPassiveCycleCount(0x0003));
+        assertEquals(1, memory.getReadCount(0x4000));
+        assertEquals(1, memory.getPassiveCycleCount(0x4000));
+        assertEquals(0xFE, memory.read(0x4000) & 0xFF);
     }
 
     @Test
