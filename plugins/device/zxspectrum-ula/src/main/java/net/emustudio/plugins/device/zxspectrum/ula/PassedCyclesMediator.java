@@ -55,9 +55,9 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
     private final ULA ula;
     private final TimingProfile timing;
 
-    public PassedCyclesMediator(ULA ula) {
+    public PassedCyclesMediator(ULA ula, TimingProfile timing) {
         this.ula = Objects.requireNonNull(ula);
-        this.timing = ula.getProfile();
+        this.timing = Objects.requireNonNull(timing);
     }
 
     public void setCanvas(DisplayCanvas canvas) {

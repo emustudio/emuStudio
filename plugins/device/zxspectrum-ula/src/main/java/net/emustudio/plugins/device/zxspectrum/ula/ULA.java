@@ -22,48 +22,61 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.awt.event.KeyEvent.*;
 
 /**
- * Uncommitted Logic Array (ULA).
- * <p>
- * References:
- * - <a href="https://worldofspectrum.org/faq/reference/48kreference.htm">ZX-Spctrum 48K Technical Reference</a>
- * - <a href="http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/screen-memory-layout">Screen Memory layout</a>
+ * Emulates the ZX Spectrum ULA.
  *
- * <p>
- * The ULA component in emuStudio is a "mediator" of interaction between host and emulator. That means, it handles:
- * - keyboard
- * - audio
- * - video (maps RAM to video/attribute memory, video flash, border color)
- * <p>
- * From the ZX Spectrum point of view, it represents the port 0xFE (254).
- * <p>
- * Port 0xFE write:
+ * <p>In emuStudio, this class owns the parts of the machine normally exposed through port
+ * {@code 0xFE} plus the ULA-driven video and frame side effects. It:
+ * <ul>
+ * <li>maps host keyboard events onto the 8-line Spectrum keyboard matrix</li>
+ * <li>tracks border colour and the EAR/MIC output bits written by the CPU</li>
+ * <li>mixes the tape EAR input from {@link ZxSpectrumBus#readData()} into the beeper output</li>
+ * <li>reads bitmap and attribute bytes from RAM using the active {@link TimingProfile}</li>
+ * <li>signals frame interrupts and toggles FLASH state at frame boundaries</li>
+ * </ul>
+ *
+ * <p>Port {@code 0xFE} write layout:
+ * <pre>
  * 7   6   5   4   3   2   1   0
  * +-------------------------------+
  * |   |   |   | E | M |   Border  |
  * +-------------------------------+
- * <p>
- * Keyboard matrix:
- * - on host SHIFT + letter/number = ZX "shift" + letter / number
- * - on host CTRL + letter/number = ZX symbol "shift" + letter/number
- * - on host plain letter/number = ZX letter/number
- * <p>
- * Port 0xFE read (bit 0 to bit 4 inclusive):
- * 0xfefe  SHIFT, Z, X, C, V            0xeffe  0, 9, 8, 7, 6
- * 0xfdfe  A, S, D, F, G                0xdffe  P, O, I, U, Y
- * 0xfbfe  Q, W, E, R, T                0xbffe  ENTER, L, K, J, H
- * 0xf7fe  1, 2, 3, 4, 5                0x7ffe  SPACE, SYM SHIFT, M, N, B
- * <p>
- * The colour attribute data overlays the monochrome bitmap data and is arranged in a linear fashion from left to right,
- * top to bottom. Each attribute byte colours is 8x8 character on the screen and is encoded as follows:
- * <p>
+ * </pre>
+ *
+ * <p>Keyboard reads return the AND of all selected key lines and copy the tape EAR input into
+ * bit 6. Key-line selection on reads:
+ * <pre>
+ * 0xFEFE  SHIFT, Z, X, C, V      0xEFFE  0, 9, 8, 7, 6
+ * 0xFDFE  A, S, D, F, G          0xDFFE  P, O, I, U, Y
+ * 0xFBFE  Q, W, E, R, T          0xBFFE  ENTER, L, K, J, H
+ * 0xF7FE  1, 2, 3, 4, 5          0x7FFE  SPACE, SYM SHIFT, M, N, B
+ * </pre>
+ *
+ * <p>Host keyboard mapping rules:
+ * <ul>
+ * <li>host Shift + letter/number = ZX Shift + letter/number</li>
+ * <li>host Ctrl/Alt + letter/number = ZX Symbol Shift + letter/number</li>
+ * <li>plain host letter/number = plain ZX letter/number</li>
+ * </ul>
+ *
+ * <p>Screen attributes overlay the monochrome bitmap. Each attribute byte describes one
+ * {@code 8x8} character cell:
+ * <pre>
  * 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
  * F | B | P2| P1| P0| I2| I1| I0|
  * +-------------------------------+
- * <p>
- * - F sets the attribute FLASH mode
- * - B sets the attribute BRIGHTNESS mode
- * - P2 to P0 is the PAPER colour
- * - I2 to I0 is the INK colour
+ * </pre>
+ * <ul>
+ * <li>F = FLASH</li>
+ * <li>B = BRIGHT</li>
+ * <li>P2..P0 = PAPER colour</li>
+ * <li>I2..I0 = INK colour</li>
+ * </ul>
+ *
+ * <p>References:
+ * <ul>
+ * <li><a href="https://worldofspectrum.org/faq/reference/48kreference.htm">ZX Spectrum 48K Technical Reference</a></li>
+ * <li><a href="http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/screen-memory-layout">Screen memory layout</a></li>
+ * </ul>
  */
 @ThreadSafe
 public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyListener {
@@ -236,10 +249,6 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
                 attributeMemory[x][y] = bus.readMemoryNotContended(timing.attributeAddressAtRow(y, x));
             }
         }
-    }
-
-    public TimingProfile getProfile() {
-        return timing;
     }
 
     public int getBorderColor() {

@@ -6,6 +6,7 @@ import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.AudioSink;
 import net.emustudio.plugins.device.zxspectrum.ula.recording.RecordingSession;
@@ -39,6 +40,7 @@ public class DisplayWindow extends DialogBase {
 
     private final DisplayCanvas canvas;
     private final ULA ula;
+    private final TimingProfile timing;
     private final Dialogs dialogs;
     private final GUI gui;
     private final KeyboardCanvas keyboardCanvas;
@@ -47,13 +49,14 @@ public class DisplayWindow extends DialogBase {
     private RecordingSession recordingSession;
     private Path lastRecordingDirectory = Path.of(System.getProperty("user.dir"));
 
-    public DisplayWindow(JFrame parent, ULA ula, Dialogs dialogs, GUI gui) {
-        super(parent, "ZX Spectrum48K", false);
+    public DisplayWindow(JFrame parent, ULA ula, TimingProfile timing, Dialogs dialogs, GUI gui) {
+        super(parent, "ZX Spectrum", false);
         this.gui = gui;
         this.ula = Objects.requireNonNull(ula);
+        this.timing = Objects.requireNonNull(timing);
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.keyboardCanvas = new KeyboardCanvas(ula.getProfile(), 0);
-        this.canvas = new DisplayCanvas(ula, keyboardCanvas);
+        this.keyboardCanvas = new KeyboardCanvas(timing, 0);
+        this.canvas = new DisplayCanvas(ula, timing, keyboardCanvas);
 
         buildContent();
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -146,7 +149,7 @@ public class DisplayWindow extends DialogBase {
             RecordingSession session = new RecordingSession(
                     Math.max(1, canvas.getWidth()),
                     Math.max(1, canvas.getHeight()),
-                    ula.getProfile().displayFrameTstates,
+                    timing.displayFrameTstates,
                     // Sample CPU frequency at recording-start so the muxer's frame-rate metadata
                     // matches the clock the user is currently running. RecordingSession expects an
                     // int (T-states/sec); cast is safe for any sane Spectrum-class clock (<2 GHz).

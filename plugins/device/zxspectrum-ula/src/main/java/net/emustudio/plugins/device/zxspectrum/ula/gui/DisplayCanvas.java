@@ -61,9 +61,9 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private volatile Consumer<BufferedImage> frameListener;
     private volatile BufferedImage backBuffer;
 
-    public DisplayCanvas(ULA ula, KeyboardCanvas keyboardCanvas) {
+    public DisplayCanvas(ULA ula, TimingProfile timing, KeyboardCanvas keyboardCanvas) {
         this.ula = Objects.requireNonNull(ula);
-        this.timing = ula.getProfile();
+        this.timing = Objects.requireNonNull(timing);
         this.keyboardCanvas = Objects.requireNonNull(keyboardCanvas);
         this.borderWidth = ZxSpectrumBus.BORDER_WIDTH_PIXELS;
         this.screenImageWidth = ZxSpectrumBus.SCREEN_WIDTH_PIXELS + 2 * ZxSpectrumBus.BORDER_WIDTH_PIXELS;
