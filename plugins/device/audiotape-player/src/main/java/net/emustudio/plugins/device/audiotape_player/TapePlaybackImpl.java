@@ -56,7 +56,6 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     private volatile long totalPlayableTstates;
     private volatile int lastReportedProgress = -1;
     private final CyclicBarrier barrier = new CyclicBarrier(2);
-    private int lastLineValue;
 
 
     /**
@@ -89,7 +88,6 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         currentTstates = 1;
         pulseUp = false;
         lastIntervalNeedsClosingEdge = false;
-        lastLineValue = 0;
         resetPlaybackMetrics();
         updatePlaybackProgress(0);
         schedulePulse(millisToTstates(FILE_START_PAUSE_MS), "PAUSE", "", false);
@@ -407,13 +405,13 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
             if (!eventType.isEmpty()) {
                 logPulse(tstate, length, eventType, details);
             }
-            writeLineValue(tstate, (byte) 1, eventType, details);
+            writeLineValue((byte) 1);
         };
         Runnable zero = () -> {
             if (!eventType.isEmpty()) {
                 logPulse(tstate, length, eventType, details);
             }
-            writeLineValue(tstate, (byte) 0, eventType, details);
+            writeLineValue((byte) 0);
         };
 
         loaderSchedule.put(currentTstates, pulseUp ? one : zero);
@@ -433,7 +431,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
             if (!eventType.isEmpty()) {
                 logPulse(tstate, tstatesPerSample, eventType, details);
             }
-            writeLineValue(tstate, value, eventType, details);
+            writeLineValue(value);
         });
         currentTstates += tstatesPerSample;
         pulseUp = high;
@@ -495,9 +493,8 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         }
     }
 
-    private void writeLineValue(long tstate, byte value, String eventType, String details) {
+    private void writeLineValue(byte value) {
         lineIn.writeData(value);
-        lastLineValue = value & 1;
     }
 
     private void ensureClosingEdgeAtFileEnd() {
@@ -505,9 +502,8 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
             return;
         }
 
-        final long tstate = currentTstates;
         final byte value = pulseUp ? (byte) 1 : (byte) 0;
-        loaderSchedule.put(currentTstates, () -> writeLineValue(tstate, value, "", ""));
+        loaderSchedule.put(currentTstates, () -> writeLineValue(value));
         lastIntervalNeedsClosingEdge = false;
     }
 
