@@ -6,6 +6,7 @@ import net.emustudio.cpu.testsuite.Generator;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
+import net.emustudio.plugins.cpu.zilogZ80.api.PassiveMemoryCycleContext;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
 import org.junit.Test;
@@ -118,7 +119,8 @@ public class ControlTest extends InstructionsTest {
         engine.reset(0x0000);
         engine.step();
 
-        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0001));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0001));
+        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0001));
         org.junit.Assert.assertEquals(0x0002, engine.PC);
     }
 
@@ -135,7 +137,8 @@ public class ControlTest extends InstructionsTest {
         engine.I = 0x40;
         engine.step();
 
-        org.junit.Assert.assertEquals(2, memory.getReadCount(0x4001));
+        org.junit.Assert.assertEquals(0, memory.getReadCount(0x4001));
+        org.junit.Assert.assertEquals(2, memory.getPassiveCycleCount(0x4001));
         org.junit.Assert.assertEquals(0x0001, (engine.regs[REG_B] << 8) | engine.regs[REG_C]);
     }
 
@@ -155,7 +158,8 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0002));
         org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
         org.junit.Assert.assertEquals(0x5A, engine.regs[REG_A]);
     }
@@ -176,7 +180,8 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0002));
         org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
         org.junit.Assert.assertEquals(0x5A, engine.regs[REG_H]);
     }
@@ -198,7 +203,8 @@ public class ControlTest extends InstructionsTest {
         engine.regs[REG_A] = 0x10;
         engine.step();
 
-        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0002));
         org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
         org.junit.Assert.assertEquals(0x15, engine.regs[REG_A]);
     }
@@ -219,8 +225,10 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0002));
-        org.junit.Assert.assertEquals(2, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(5, memory.getPassiveCycleCount(0x0002));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(1, memory.getPassiveCycleCount(0x4000));
         org.junit.Assert.assertEquals(0x06, memory.read(0x4000) & 0xFF);
     }
 
@@ -240,7 +248,8 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(3, memory.getReadCount(0x0003));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0003));
+        org.junit.Assert.assertEquals(2, memory.getPassiveCycleCount(0x0003));
         org.junit.Assert.assertEquals(0x34, memory.read(0x4000) & 0xFF);
     }
 
@@ -261,7 +270,8 @@ public class ControlTest extends InstructionsTest {
         engine.regs[REG_A] = 0x34;
         engine.step();
 
-        org.junit.Assert.assertEquals(5, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(4, memory.getPassiveCycleCount(0x4000));
         org.junit.Assert.assertEquals(0x24, memory.read(0x4000) & 0xFF);
         org.junit.Assert.assertEquals(0x31, engine.regs[REG_A]);
     }
@@ -284,8 +294,10 @@ public class ControlTest extends InstructionsTest {
         engine.step();
 
         org.junit.Assert.assertEquals(0x02, engine.R);
-        org.junit.Assert.assertEquals(3, memory.getReadCount(0x0003));
-        org.junit.Assert.assertEquals(2, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0003));
+        org.junit.Assert.assertEquals(2, memory.getPassiveCycleCount(0x0003));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(1, memory.getPassiveCycleCount(0x4000));
     }
 
     @Test
@@ -305,8 +317,10 @@ public class ControlTest extends InstructionsTest {
         engine.IX = 0x4000;
         engine.step();
 
-        org.junit.Assert.assertEquals(3, memory.getReadCount(0x0003));
-        org.junit.Assert.assertEquals(2, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x0003));
+        org.junit.Assert.assertEquals(2, memory.getPassiveCycleCount(0x0003));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(1, memory.getPassiveCycleCount(0x4000));
         org.junit.Assert.assertEquals(0xFE, memory.read(0x4000) & 0xFF);
     }
 
@@ -693,9 +707,10 @@ public class ControlTest extends InstructionsTest {
         );
     }
 
-    private static final class CountingMemory extends AbstractMemoryContext<Byte> {
+    private static final class CountingMemory extends AbstractMemoryContext<Byte> implements PassiveMemoryCycleContext {
         private final byte[] data = new byte[0x10000];
         private final Map<Integer, Integer> readCounts = new HashMap<>();
+        private final Map<Integer, Integer> passiveCycleCounts = new HashMap<>();
 
         @Override
         public Byte read(int location) {
@@ -726,6 +741,11 @@ public class ControlTest extends InstructionsTest {
         }
 
         @Override
+        public void passiveMemoryCycles(int address, int cycles) {
+            passiveCycleCounts.merge(address & 0xFFFF, cycles, Integer::sum);
+        }
+
+        @Override
         public Class<Byte> getCellTypeClass() {
             return Byte.class;
         }
@@ -734,6 +754,7 @@ public class ControlTest extends InstructionsTest {
         public void clear() {
             Arrays.fill(data, (byte) 0);
             readCounts.clear();
+            passiveCycleCounts.clear();
         }
 
         @Override
@@ -748,6 +769,10 @@ public class ControlTest extends InstructionsTest {
 
         int getReadCount(int location) {
             return readCounts.getOrDefault(location & 0xFFFF, 0);
+        }
+
+        int getPassiveCycleCount(int location) {
+            return passiveCycleCounts.getOrDefault(location & 0xFFFF, 0);
         }
     }
 }

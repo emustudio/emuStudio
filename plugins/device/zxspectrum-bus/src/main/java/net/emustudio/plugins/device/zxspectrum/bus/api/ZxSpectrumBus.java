@@ -6,6 +6,7 @@ import net.emustudio.emulib.plugins.annotations.PluginContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
+import net.emustudio.plugins.cpu.zilogZ80.api.PassiveMemoryCycleContext;
 
 /**
  * ZX Spectrum bus.
@@ -14,7 +15,7 @@ import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
  * (devices are usually not connected to CPU directly).
  */
 @PluginContext
-public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte>, ContextZ80 {
+public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte>, ContextZ80, PassiveMemoryCycleContext {
 
     default boolean isInterruptSupported() {
         return true;

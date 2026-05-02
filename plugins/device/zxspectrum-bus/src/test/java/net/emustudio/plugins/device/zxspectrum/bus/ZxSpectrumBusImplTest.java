@@ -239,6 +239,32 @@ public class ZxSpectrumBusImplTest {
     }
 
     @Test
+    public void testPassiveContendedMemoryCycleAddsBaseCycleAndDelay() {
+        TestEnvironment env = newTestEnvironment();
+        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+        bus.initialize(env.cpu, env.memory);
+
+        bus.passedCycles(FIRST_CONTENDED);
+        bus.passiveMemoryCycles(0x4000, 1);
+
+        assertEquals(7L, env.addedCycles.get());
+        verify(env.cpu, env.memory);
+    }
+
+    @Test
+    public void testPassiveNonContendedMemoryCyclesAddOnlyBaseCycles() {
+        TestEnvironment env = newTestEnvironment();
+        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+        bus.initialize(env.cpu, env.memory);
+
+        bus.passedCycles(FIRST_CONTENDED);
+        bus.passiveMemoryCycles(0x0000, 5);
+
+        assertEquals(5L, env.addedCycles.get());
+        verify(env.cpu, env.memory);
+    }
+
+    @Test
     public void testMemoryContentionDelayDecreasesAcrossPattern() {
         // Pattern: 6,5,4,3,2,1,0,0 repeating every 8 cycles
         TestEnvironment env = newTestEnvironment();

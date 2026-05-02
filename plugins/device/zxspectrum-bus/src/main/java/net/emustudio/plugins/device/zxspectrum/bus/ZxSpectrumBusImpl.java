@@ -181,6 +181,15 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     @Override
+    public void passiveMemoryCycles(int location, int cycles) {
+        int maskedLocation = location & 0xFFFF;
+        for (int i = 0; i < cycles; i++) {
+            applyMemoryContention(maskedLocation);
+            cpu.addCycles(1);
+        }
+    }
+
+    @Override
     public void addPassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener) {
         if (cpu == null) {
             deferredListeners.add(passedCyclesListener);
@@ -218,25 +227,25 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public Byte read(int location) {
-        contendMemory(location);
+        applyMemoryContention(location);
         return memory.read(location);
     }
 
     @Override
     public Byte[] read(int location, int count) {
-        contendMemory(location);
+        applyMemoryContention(location);
         return memory.read(location, count);
     }
 
     @Override
     public void write(int location, Byte data) {
-        contendMemory(location);
+        applyMemoryContention(location);
         memory.write(location, data);
     }
 
     @Override
     public void write(int location, Byte[] data, int count) {
-        contendMemory(location);
+        applyMemoryContention(location);
         memory.write(location, data, count);
     }
 
@@ -274,7 +283,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         Arrays.fill(attachedDevices, null);
     }
 
-    private void contendMemory(int location) {
+    private void applyMemoryContention(int location) {
         if (location >= 0x4000 && location <= 0x7FFF) {
             Integer cycles = contentionDelayAt(frameCycles);
             if (cycles != null) {
