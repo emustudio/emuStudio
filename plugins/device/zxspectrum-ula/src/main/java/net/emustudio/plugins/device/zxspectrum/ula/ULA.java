@@ -175,7 +175,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private volatile boolean lastTapeIn;
 
     public ULA(ZxSpectrumBus bus) {
-        this(bus, Beeper.silent());
+        this(bus, Beeper.silent(() -> bus.getCPUFrequency() * 1000L));
     }
 
     public ULA(ZxSpectrumBus bus, Beeper beeper) {
@@ -246,6 +246,14 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     public int getAudioSampleRate() {
         return beeper.getSampleRate();
+    }
+
+    /**
+     * @return the current CPU frequency in Hz, sampled from the bus on every call so that any
+     * runtime change to the CPU clock is reflected in derived timings (audio/video recording).
+     */
+    public long getCpuFrequencyHz() {
+        return bus.getCPUFrequency() * 1000L;
     }
 
     public int getAudioVolumePercent() {

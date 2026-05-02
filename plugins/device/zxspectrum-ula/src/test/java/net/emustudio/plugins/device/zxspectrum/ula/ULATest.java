@@ -305,7 +305,7 @@ public class ULATest {
     @Test
     public void testGetAudioSampleRateDelegatesToBeeper() {
         MockBus bus = new MockBus();
-        Beeper beeper = new Beeper(AudioSink.NULL, 22_050);
+        Beeper beeper = new Beeper(AudioSink.NULL, 22_050, () -> 3_500_000L);
         ULA ula = new ULA(bus.bus(), beeper);
 
         assertEquals(22_050, ula.getAudioSampleRate());
@@ -314,7 +314,7 @@ public class ULATest {
     @Test
     public void testGetAudioVolumePercentDelegatesToBeeper() {
         MockBus bus = new MockBus();
-        Beeper beeper = new Beeper(AudioSink.NULL, 100);
+        Beeper beeper = new Beeper(AudioSink.NULL, 100, () -> 3_500_000L);
         ULA ula = new ULA(bus.bus(), beeper);
 
         assertEquals(100, ula.getAudioVolumePercent());
@@ -323,7 +323,7 @@ public class ULATest {
     @Test
     public void testSetAudioVolumePercentDelegatesToBeeper() {
         MockBus bus = new MockBus();
-        Beeper beeper = new Beeper(AudioSink.NULL, 100);
+        Beeper beeper = new Beeper(AudioSink.NULL, 100, () -> 3_500_000L);
         ULA ula = new ULA(bus.bus(), beeper);
 
         ula.setAudioVolumePercent(42);
@@ -452,7 +452,7 @@ public class ULATest {
         private long cycles;
 
         private RecordingBeeper() {
-            super(AudioSink.NULL, 120);
+            super(AudioSink.NULL, 120, () -> 3_500_000L);
         }
 
         @Override

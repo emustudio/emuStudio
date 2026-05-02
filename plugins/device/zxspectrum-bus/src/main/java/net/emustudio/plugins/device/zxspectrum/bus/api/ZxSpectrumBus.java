@@ -3,10 +3,9 @@
 package net.emustudio.plugins.device.zxspectrum.bus.api;
 
 import net.emustudio.emulib.plugins.annotations.PluginContext;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 
 /**
  * ZX Spectrum bus.
@@ -15,35 +14,15 @@ import net.emustudio.plugins.cpu.intel8080.api.Context8080;
  * (devices are usually not connected to CPU directly).
  */
 @PluginContext
-public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> {
+public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte>, ContextZ80 {
 
-    /**
-     * Attach a device on the bus.
-     * <p>
-     * Under the hood, it will be attached to the CPU on given port. If the port adheres to contention,
-     * device access will be contended.
-     *
-     * @param port   CPU port where the device should be attached
-     * @param device the device
-     */
-    void attachDevice(int port, Context8080.CpuPortDevice device);
+    default boolean isInterruptSupported() {
+        return true;
+    }
 
-    /**
-     * Signals a NMI to the CPU
-     */
-    void signalNonMaskableInterrupt();
-
-    /**
-     * Signals an interrupt to the CPU
-     *
-     * @param data interrupt data
-     */
-    void signalInterrupt(byte[] data);
-
-    /**
-     * Clears (releases) the maskable interrupt signal to the CPU.
-     */
-    void clearInterrupt();
+    default boolean isPassedCyclesSupported() {
+        return true;
+    }
 
     /**
      * Read data from memory, a non-contended variant.
@@ -67,7 +46,4 @@ public interface ZxSpectrumBus extends DeviceContext<Byte>, MemoryContext<Byte> 
      */
     void writeMemoryNotContended(int location, byte data);
 
-    void addPassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener);
-
-    void removePassedCyclesListener(CPUContext.PassedCyclesListener passedCyclesListener);
 }

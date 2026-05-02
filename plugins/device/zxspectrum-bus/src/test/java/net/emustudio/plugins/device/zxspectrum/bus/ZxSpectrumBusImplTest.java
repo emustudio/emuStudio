@@ -103,6 +103,37 @@ public class ZxSpectrumBusImplTest {
         verify(env.cpu, env.memory);
     }
 
+    @Test
+    public void testBusExposesConfiguredCpuFrequency() {
+        TestEnvironment env = new TestEnvironment();
+
+        ContextZ80 cpu = createStrictMock(ContextZ80.class);
+        cpu.setInterruptDuration(32);
+        expectLastCall().once();
+        expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andAnswer(() -> {
+            Object[] args = getCurrentArguments();
+            env.cpuPortDispatchers.put((Integer) args[0], (Context8080.CpuPortDevice) args[1]);
+            return true;
+        }).times(256);
+        cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
+        expectLastCall().once();
+        expect(cpu.getCPUFrequency()).andReturn(3500).once();
+
+        MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
+
+        replay(cpu, memory);
+
+        env.cpu = cpu;
+        env.memory = memory;
+
+        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+        bus.initialize(env.cpu, env.memory);
+
+        assertEquals(3500, bus.getCPUFrequency());
+
+        verify(env.cpu, env.memory);
+    }
+
     // ========== Memory contention tests ==========
 
     @Test

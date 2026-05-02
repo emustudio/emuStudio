@@ -328,9 +328,16 @@ public class TzxLoader implements Loader {
         int flagByte = buffer.get() & 0xFF;
 
         if (flagByte < 0x80) {
+            // Header: 17 bytes between flag and checksum. Parse for metadata, then emit as
+            // pulses so the ROM loader actually receives the header payload (was previously
+            // dropped, breaking LOAD "" for any TZX with a real BASIC header block).
+            byte[] headerData = new byte[17];
+            buffer.get(headerData);
+            TapTzxHeader header = TapTzxHeader.parse(ByteBuffer.wrap(headerData).order(ByteOrder.LITTLE_ENDIAN));
+            byte checksum = buffer.get();
+
             listener.onHeaderStart();
             listener.onBlockFlag(flagByte);
-            TapTzxHeader header = TapTzxHeader.parse(buffer);
             switch (header.id) {
                 case 0:
                     listener.onProgram(header.fileName, header.dataLength, header.parameter1, header.parameter2);
@@ -347,7 +354,7 @@ public class TzxLoader implements Loader {
                 default:
                     LOGGER.warn("TZX: Unknown header ID: {}", header.id);
             }
-            byte checksum = buffer.get();
+            listener.onBlockData(headerData);
             listener.onBlockChecksum(checksum);
         } else {
             byte[] data = new byte[blockLength - 2]; // subtract flag and checksum

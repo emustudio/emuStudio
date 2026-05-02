@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.cpu.rasp;
 
-import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.plugins.device.abstracttape.api.AbstractTapeContext;
 import net.emustudio.plugins.device.abstracttape.api.TapeSymbol;
@@ -149,7 +148,7 @@ public class RaspCpuContextImplTest {
     @Test
     public void testPassedCyclesNotSupported() {
         RaspCpuContextImpl context = new RaspCpuContextImpl();
-        assertFalse(context.passedCyclesSupported());
+        assertFalse(context.isPassedCyclesSupported());
     }
 
     @Test

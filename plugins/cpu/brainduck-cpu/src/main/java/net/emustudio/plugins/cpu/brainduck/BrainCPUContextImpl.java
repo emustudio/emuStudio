@@ -55,7 +55,7 @@ class BrainCPUContextImpl implements BrainCPUContext {
     }
 
     @Override
-    public boolean passedCyclesSupported() {
+    public boolean isPassedCyclesSupported() {
         return false;
     }
 

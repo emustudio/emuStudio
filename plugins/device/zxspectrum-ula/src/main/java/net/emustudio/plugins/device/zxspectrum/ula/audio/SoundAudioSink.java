@@ -64,7 +64,7 @@ final class SoundAudioSink implements AudioSink {
         //   - 16 × one batch:  batchFrames * FRAME_SIZE * 16  – keeps ~16 batches in the mixer buffer
         //   - half a second:   sampleRate  * FRAME_SIZE / 2   – guarantees a minimum duration of buffered audio
         int lineBufferSize = Math.max(
-                AUDIO_DEFAULT_BATCH_FRAMES * Beeper.FRAME_SIZE * 16, sampleRate * Beeper.FRAME_SIZE / 2);
+                Beeper.AUDIO_DEFAULT_BATCH_FRAMES * Beeper.FRAME_SIZE * 16, sampleRate * Beeper.FRAME_SIZE / 2);
         this.line.open(format, lineBufferSize);
 
         byte[] empty = new byte[lineBufferSize];

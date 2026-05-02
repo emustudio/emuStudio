@@ -9,3 +9,4 @@ Example sources:
 
 - `zx_audio.asm` standalone ZX Spectrum ROM `BEEP` melody demo (assemble for 32768 / 8000H, then run with `RANDOMIZE USR 32768`).
 - `twinkle_beeper.asm` (assemble for 32768 / 8000H, then run with `RANDOMIZE USR 32768`)
+- `ay_ode_to_joy.asm` AY-3-8910 three-voice demo for `ZxSpectrum48KAY.toml` (assemble for 32768 / 8000H, then run with `RANDOMIZE USR 32768`)

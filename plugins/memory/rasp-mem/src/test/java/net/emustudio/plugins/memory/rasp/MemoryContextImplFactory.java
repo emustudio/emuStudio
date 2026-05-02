@@ -18,9 +18,5 @@ public class MemoryContextImplFactory {
         replay(annotations);
         return new MemoryContextImpl(annotations);
     }
-
-    public static MemoryContextImpl create(MemoryContextAnnotations annotations) {
-        return new MemoryContextImpl(annotations);
-    }
 }
 

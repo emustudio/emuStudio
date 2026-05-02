@@ -63,7 +63,7 @@ public class RamCpuContextImpl implements RamCpuContext {
     }
 
     @Override
-    public boolean passedCyclesSupported() {
+    public boolean isPassedCyclesSupported() {
         return false;
     }
 

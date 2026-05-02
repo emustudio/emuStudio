@@ -5,6 +5,7 @@ package net.emustudio.plugins.device.zxspectrum.bus;
 import net.emustudio.emulib.plugins.PluginInitializationException;
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.device.AbstractDevice;
 import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
@@ -13,6 +14,7 @@ import net.emustudio.emulib.runtime.ContextAlreadyRegisteredException;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.InvalidContextException;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import org.slf4j.Logger;
@@ -47,6 +49,9 @@ public class DeviceImpl extends AbstractDevice {
             contextPool.register(pluginID, bus, ZxSpectrumBus.class);
             contextPool.register(pluginID, bus, MemoryContext.class);
             contextPool.register(pluginID, bus, DeviceContext.class);
+            contextPool.register(pluginID, bus, ContextZ80.class);
+            contextPool.register(pluginID, bus, CPUContext.class);
+            contextPool.register(pluginID, bus, Context8080.class);
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             LOGGER.error("Could not register zx-spectrum bus context", e);
             applicationApi.getDialogs().showError(
@@ -79,7 +84,7 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void destroy() {
-
+        this.bus.destroy();
     }
 
     @Override

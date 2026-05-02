@@ -75,7 +75,7 @@ public class Context8080Impl extends AbstractCPUContext implements Context8080 {
     }
 
     @Override
-    public boolean passedCyclesSupported() {
+    public boolean isPassedCyclesSupported() {
         return true;
     }
 

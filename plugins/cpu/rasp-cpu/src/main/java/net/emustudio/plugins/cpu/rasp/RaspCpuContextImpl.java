@@ -49,7 +49,7 @@ public class RaspCpuContextImpl implements RaspCpuContext {
     }
 
     @Override
-    public boolean passedCyclesSupported() {
+    public boolean isPassedCyclesSupported() {
         return false;
     }
 

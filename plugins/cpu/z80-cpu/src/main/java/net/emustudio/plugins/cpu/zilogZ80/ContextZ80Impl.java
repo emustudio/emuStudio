@@ -112,7 +112,7 @@ public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ
     }
 
     @Override
-    public boolean passedCyclesSupported() {
+    public boolean isPassedCyclesSupported() {
         return true;
     }
 }

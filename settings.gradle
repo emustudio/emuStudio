@@ -40,9 +40,9 @@ include ':plugins:device:ssem-display'
 include ':plugins:device:zxspectrum-bus'
 include ':plugins:device:zxspectrum-ula'
 include ':plugins:device:audiotape-player'
+include ':plugins:device:audio-ay3_8910-chip'
 
 include ':plugins:memory:ram-mem'
 include ':plugins:memory:rasp-mem'
 include ':plugins:memory:ssem-mem'
 include ':plugins:memory:byte-mem'
-

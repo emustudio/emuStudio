@@ -98,6 +98,7 @@ public class TzxLoaderTest {
         playback.onHeaderStart();
         playback.onBlockFlag(0);
         playback.onProgram(eq("TestProg  "), eq(100), eq(10), eq(50));
+        playback.onBlockData(anyObject(byte[].class));
         playback.onBlockChecksum(anyByte());
         playback.onPause(1000);
         playback.onFileEnd();
@@ -122,6 +123,7 @@ public class TzxLoaderTest {
         playback.onHeaderStart();
         playback.onBlockFlag(0);
         playback.onNumberArray(eq("NumArr    "), eq(200), eq('D'));
+        playback.onBlockData(anyObject(byte[].class));
         playback.onBlockChecksum(anyByte());
         playback.onPause(500);
         playback.onFileEnd();
@@ -146,6 +148,7 @@ public class TzxLoaderTest {
         playback.onHeaderStart();
         playback.onBlockFlag(0);
         playback.onStringArray(eq("StrArr    "), eq(300), eq('M'));
+        playback.onBlockData(anyObject(byte[].class));
         playback.onBlockChecksum(anyByte());
         playback.onPause(500);
         playback.onFileEnd();
@@ -169,6 +172,7 @@ public class TzxLoaderTest {
         playback.onHeaderStart();
         playback.onBlockFlag(0);
         playback.onMemoryBlock(eq("MemBlock  "), eq(512), eq(32768));
+        playback.onBlockData(anyObject(byte[].class));
         playback.onBlockChecksum(anyByte());
         playback.onPause(500);
         playback.onFileEnd();
@@ -262,6 +266,7 @@ public class TzxLoaderTest {
         playback.onHeaderStart();
         playback.onBlockFlag(0);
         playback.onProgram(eq("Program   "), eq(100), eq(10), eq(50));
+        playback.onBlockData(anyObject(byte[].class));
         playback.onBlockChecksum(anyByte());
         playback.onPause(500);
         // Data block
@@ -1026,6 +1031,50 @@ public class TzxLoaderTest {
         replay(playback);
 
         TzxLoader loader = new TzxLoader(tzxFile.toPath());
+        loader.load(playback);
+
+        verify(playback);
+    }
+
+    // ==================== Real-world TZX file regression ====================
+
+    /**
+     * Regression test for loading a real TZX file (timing_tests-48k_v1.0.tzx).
+     * Tape inventory: header (flag=0, len=19) + data (flag=0xFF, len=1000) + 3 turbo blocks.
+     * Previously the header path dropped the 17 header bytes, breaking LOAD "" on the ROM.
+     */
+    @Test
+    public void testLoadTimingTestsTzx() throws IOException {
+        java.nio.file.Path tape = java.nio.file.Paths.get("..", "..", "..", "timing_tests-48k_v1.0.tzx");
+        if (!java.nio.file.Files.exists(tape)) {
+            // not running from repo root layout; skip
+            return;
+        }
+
+        Loader.TapePlayback playback = createStrictMock(Loader.TapePlayback.class);
+        playback.onFileStart();
+        // Block 0: standard header
+        playback.onHeaderStart();
+        playback.onBlockFlag(0);
+        playback.onProgram(anyString(), anyInt(), anyInt(), anyInt());
+        playback.onBlockData(anyObject(byte[].class));
+        playback.onBlockChecksum(anyByte());
+        // Block 1: standard data (no pause - it's 0)
+        playback.onDataStart();
+        playback.onBlockFlag(255);
+        playback.onBlockData(anyObject(byte[].class));
+        playback.onBlockChecksum(anyByte());
+        // Blocks 2-4: turbo data
+        playback.onTurboSpeedData(eq(2168), eq(667), eq(667), eq(855), eq(1710),
+                eq(1614), eq(8), eq(0), anyObject(byte[].class));
+        playback.onTurboSpeedData(eq(2168), eq(667), eq(667), eq(855), eq(1710),
+                eq(1614), eq(8), eq(0), anyObject(byte[].class));
+        playback.onTurboSpeedData(eq(2168), eq(667), eq(667), eq(855), eq(1710),
+                eq(1614), eq(8), eq(0), anyObject(byte[].class));
+        playback.onFileEnd();
+        replay(playback);
+
+        TzxLoader loader = new TzxLoader(tape);
         loader.load(playback);
 
         verify(playback);

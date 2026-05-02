@@ -183,7 +183,7 @@ public class RamCpuContextImplTest {
     public void testPassedCyclesNotSupported() {
         replay(contextPool);
         RamCpuContextImpl context = new RamCpuContextImpl(contextPool);
-        assertFalse(context.passedCyclesSupported());
+        assertFalse(context.isPassedCyclesSupported());
     }
 
     @Test

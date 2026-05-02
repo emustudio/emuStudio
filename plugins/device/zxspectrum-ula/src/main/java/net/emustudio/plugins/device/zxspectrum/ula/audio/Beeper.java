@@ -11,9 +11,8 @@ import org.slf4j.LoggerFactory;
 import javax.sound.sampled.LineUnavailableException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.function.LongSupplier;
 
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.ZX_48K_CPU_FREQUENCY;
-import static net.emustudio.plugins.device.zxspectrum.ula.Constants.AUDIO_DEFAULT_BATCH_FRAMES;
 
 /**
  * Resamples the ZX Spectrum's EAR/MIC output line into host PCM audio.
@@ -64,6 +63,7 @@ public class Beeper implements AutoCloseable {
     public static final int CHANNELS = 2;
     public static final int BYTES_PER_SAMPLE = 2;
     public static final int FRAME_SIZE = CHANNELS * BYTES_PER_SAMPLE;
+    public static final int AUDIO_DEFAULT_BATCH_FRAMES = 512;
 
     // Peak PCM amplitude used when mapping hardware voltages to 16-bit signed samples.
     // Set to 10% of Short.MAX_VALUE — square waves are perceived as louder than sine waves at equal
@@ -82,6 +82,7 @@ public class Beeper implements AutoCloseable {
     private volatile AudioSink recordingSink = AudioSink.NULL;
 
     private final int sampleRate;
+    private final LongSupplier cpuFrequencyHzSupplier;
     @GuardedBy("rwl")
     private final ByteBuffer sampleBuffer;
     // Guards all access to sampleBuffer, sampleTickRemainder, and the sample-level fields.
@@ -101,25 +102,27 @@ public class Beeper implements AutoCloseable {
     @GuardedBy("rwl")
     private long sampleTickRemainder;
 
-    public static Beeper createDefault() {
+    public static Beeper createDefault(LongSupplier cpuFrequencyHzSupplier) {
         try {
-            return new Beeper(new SoundAudioSink(DEFAULT_SAMPLE_RATE), DEFAULT_SAMPLE_RATE);
+            return new Beeper(new SoundAudioSink(DEFAULT_SAMPLE_RATE), DEFAULT_SAMPLE_RATE, cpuFrequencyHzSupplier);
         } catch (LineUnavailableException | IllegalArgumentException e) {
             LOGGER.warn("ZX Spectrum tone output is unavailable; continuing without sound", e);
-            return silent();
+            return silent(cpuFrequencyHzSupplier);
         }
     }
 
-    public static Beeper silent() {
-        return new Beeper(AudioSink.NULL, DEFAULT_SAMPLE_RATE);
+    public static Beeper silent(LongSupplier cpuFrequencyHzSupplier) {
+        return new Beeper(AudioSink.NULL, DEFAULT_SAMPLE_RATE, cpuFrequencyHzSupplier);
     }
 
-    public Beeper(AudioSink sink, int sampleRate) {
+
+    public Beeper(AudioSink sink, int sampleRate, LongSupplier cpuFrequencyHzSupplier) {
         if (sampleRate <= 0) {
             throw new IllegalArgumentException("Sample rate must be > 0");
         }
         this.primarySink = java.util.Objects.requireNonNull(sink);
         this.sampleRate = sampleRate;
+        this.cpuFrequencyHzSupplier = java.util.Objects.requireNonNull(cpuFrequencyHzSupplier);
         this.sampleBuffer = ByteBuffer.allocate(AUDIO_DEFAULT_BATCH_FRAMES * FRAME_SIZE).order(ByteOrder.LITTLE_ENDIAN);
     }
 
@@ -199,8 +202,9 @@ public class Beeper implements AutoCloseable {
 
         rwl.lockWrite(() -> {
             sampleTickRemainder += cycles * sampleRate;
-            long samplesToGenerate = sampleTickRemainder / ZX_48K_CPU_FREQUENCY;
-            sampleTickRemainder %= ZX_48K_CPU_FREQUENCY;
+            long cpuFrequency = Math.max(1L, cpuFrequencyHzSupplier.getAsLong());
+            long samplesToGenerate = sampleTickRemainder / cpuFrequency;
+            sampleTickRemainder %= cpuFrequency;
 
             for (long i = 0; i < samplesToGenerate; i++) {
                 writeSample(currentSampleValue);

@@ -12,7 +12,6 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.device.audiotape_player.gui.TapePlayerGui;
-import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 
 import javax.swing.*;
 import java.util.MissingResourceException;
@@ -41,19 +40,13 @@ public class DeviceImpl extends AbstractDevice {
         ContextPool contextPool = applicationApi.getContextPool();
 
         // a cassette player needs a device to which it will write at its own pace
-        try {
-            CPUContext cpu = contextPool.getCPUContext(pluginID);
-            DeviceContext<Byte> lineIn = contextPool.getDeviceContext(pluginID, DeviceContext.class);
-            if (lineIn.getDataType() != Byte.class) {
-                throw new PluginInitializationException("Could not find line-in device");
-            }
-            this.cassetteListener = new TapePlaybackImpl(lineIn);
-            cpu.addPassedCyclesListener(this.cassetteListener);
-        } catch (PluginInitializationException ignored) {
-            ZxSpectrumBus bus = contextPool.getDeviceContext(pluginID, ZxSpectrumBus.class);
-            this.cassetteListener = new TapePlaybackImpl(bus);
-            bus.addPassedCyclesListener(this.cassetteListener);
+        CPUContext cpu = contextPool.getCPUContext(pluginID);
+        DeviceContext<Byte> lineIn = contextPool.getDeviceContext(pluginID, DeviceContext.class);
+        if (lineIn.getDataType() != Byte.class) {
+            throw new PluginInitializationException("Could not find line-in device");
         }
+        this.cassetteListener = new TapePlaybackImpl(lineIn, cpu::getCPUFrequency);
+        cpu.addPassedCyclesListener(this.cassetteListener);
         this.controller = new TapePlaybackController(cassetteListener);
     }
 
@@ -119,7 +112,6 @@ public class DeviceImpl extends AbstractDevice {
     public boolean isAutomationSupported() {
         return true;
     }
-
 
     private Optional<ResourceBundle> getResourceBundle() {
         try {
