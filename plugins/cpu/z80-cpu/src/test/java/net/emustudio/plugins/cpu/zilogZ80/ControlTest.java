@@ -4,9 +4,9 @@ package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.cpu.testsuite.Generator;
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
-import net.emustudio.plugins.cpu.zilogZ80.api.PassiveMemoryCycleContext;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
 import org.junit.Test;
@@ -707,7 +707,7 @@ public class ControlTest extends InstructionsTest {
         );
     }
 
-    private static final class CountingMemory extends AbstractMemoryContext<Byte> implements PassiveMemoryCycleContext {
+    private static final class CountingMemory extends AbstractMemoryContext<Byte> implements CPUContext.PassedCyclesListener {
         private final byte[] data = new byte[0x10000];
         private final Map<Integer, Integer> readCounts = new HashMap<>();
         private final Map<Integer, Integer> passiveCycleCounts = new HashMap<>();
@@ -741,7 +741,11 @@ public class ControlTest extends InstructionsTest {
         }
 
         @Override
-        public void passiveMemoryCycles(int address, int cycles) {
+        public void passedCycles(long cyclesDelta) {
+        }
+
+        @Override
+        public void passedCycles(int address, int cycles) {
             passiveCycleCounts.merge(address & 0xFFFF, cycles, Integer::sum);
         }
 

@@ -5,11 +5,11 @@ package net.emustudio.plugins.cpu.zilogZ80;
 import net.emustudio.emulib.plugins.cpu.AccurateFrequencyRunner;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPU.RunState;
+import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.helpers.SleepUtils;
 import net.emustudio.plugins.cpu.intel8080.api.CpuEngine;
 import net.emustudio.plugins.cpu.intel8080.api.DispatchListener;
-import net.emustudio.plugins.cpu.zilogZ80.api.PassiveMemoryCycleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +46,7 @@ public class EmulatorEngine implements CpuEngine {
 
     private final ContextZ80Impl context;
     private final MemoryContext<Byte> memory;
-    private final PassiveMemoryCycleContext passiveMemoryCycleContext;
+    private final CPUContext.PassedCyclesListener passiveMemoryCycleListener;
     private final AccurateFrequencyRunner preciseRunner = new AccurateFrequencyRunner();
 
     public final int[] regs = new int[8];
@@ -86,8 +86,8 @@ public class EmulatorEngine implements CpuEngine {
     public EmulatorEngine(MemoryContext<Byte> memory, ContextZ80Impl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
-        this.passiveMemoryCycleContext = (memory instanceof PassiveMemoryCycleContext)
-                ? (PassiveMemoryCycleContext) memory
+        this.passiveMemoryCycleListener = (memory instanceof CPUContext.PassedCyclesListener)
+                ? (CPUContext.PassedCyclesListener) memory
                 : null;
         LOGGER.info("Sleep precision: " + SleepUtils.SLEEP_PRECISION + " nanoseconds.");
     }
@@ -217,23 +217,23 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    private void passiveMemoryCycles(int address, int cycles) {
+    private void passedCycles(int address, int cycles) {
         int maskedAddress = address & 0xFFFF;
         for (int i = 0; i < cycles; i++) {
-            if (passiveMemoryCycleContext != null) {
-                passiveMemoryCycleContext.passiveMemoryCycles(maskedAddress, 1);
+            if (passiveMemoryCycleListener != null) {
+                passiveMemoryCycleListener.passedCycles(maskedAddress, 1);
             }
             advanceCycles(1);
         }
     }
 
     private void passiveRefreshCycles(int cycles) {
-        passiveMemoryCycles((I << 8) | R, cycles);
+        passedCycles((I << 8) | R, cycles);
     }
 
     private void advanceMemoryReadWithPassiveCycle(int address) {
         advanceCycles(3);
-        passiveMemoryCycles(address, 1);
+        passedCycles(address, 1);
     }
 
     private int readIndexedValue(int xy) {
@@ -241,7 +241,7 @@ public class EmulatorEngine implements CpuEngine {
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(displacementAddress, 5);
+        passedCycles(displacementAddress, 5);
         int address = (xy + disp) & 0xFFFF;
         memptr = address;
         int value = memory.read(address) & 0xFF;
@@ -369,7 +369,7 @@ public class EmulatorEngine implements CpuEngine {
         lastOpcode = memory.read(PC) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(opcodeAddress, 2);
+        passedCycles(opcodeAddress, 2);
 
         MethodHandle instr = table[lastOpcode];
         if (instr != null) {
@@ -748,7 +748,7 @@ public class EmulatorEngine implements CpuEngine {
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(displacementAddress, 5);
+        passedCycles(displacementAddress, 5);
         int address = (special + disp) & 0xFFFF;
         int value = memory.read(address) & 0xFF;
         memptr = address;
@@ -824,7 +824,7 @@ public class EmulatorEngine implements CpuEngine {
         byte number = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(immediateAddress, 2);
+        passedCycles(immediateAddress, 2);
         int address = (special + disp) & 0xFFFF;
         memptr = address;
         memory.write(address, number);
@@ -1772,7 +1772,7 @@ public class EmulatorEngine implements CpuEngine {
         advanceCycles(3);
         regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
         if (regs[REG_B] != 0) {
-            passiveMemoryCycles(branchBase, 5);
+            passedCycles(branchBase, 5);
             PC = (PC + addr) & 0xFFFF;
             memptr = PC;
         }
@@ -2175,7 +2175,7 @@ public class EmulatorEngine implements CpuEngine {
         memptr = (hl + 1) & 0xFFFF;
         int value = memory.read(hl);
         advanceCycles(3);
-        passiveMemoryCycles(hl, 4);
+        passedCycles(hl, 4);
         regs[REG_A] = ((regs[REG_A] & 0xF0) | (value & 0x0F));
         value = ((value >>> 4) & 0x0F) | (regA << 4);
         memory.write(hl, (byte) (value & 0xff));
@@ -2189,7 +2189,7 @@ public class EmulatorEngine implements CpuEngine {
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         int value = memory.read(hl);
         advanceCycles(3);
-        passiveMemoryCycles(hl, 4);
+        passedCycles(hl, 4);
         memptr = (hl + 1) & 0xFFFF;
         int tmp1 = (value >>> 4) & 0x0F;
         value = ((value << 4) & 0xF0) | (regs[REG_A] & 0x0F);
@@ -2344,7 +2344,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(deAddress, io);
         de = (de - 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(deAddress, 2);
+        passedCycles(deAddress, 2);
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
@@ -2372,7 +2372,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(deAddress, io);
         de = (de - 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(deAddress, 2);
+        passedCycles(deAddress, 2);
 
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
@@ -2392,7 +2392,7 @@ public class EmulatorEngine implements CpuEngine {
             PC = (PC - 2) & 0xFFFF;
             memptr = (PC + 1) & 0xFFFF;
             flags = ((flags & (~FLAG_XY)) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
-            passiveMemoryCycles(deAddress, 5);
+            passedCycles(deAddress, 5);
         }
     }
 
@@ -2408,7 +2408,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(deAddress, io);
         de = (de + 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(deAddress, 2);
+        passedCycles(deAddress, 2);
 
         bc = (bc - 1) & 0xFFFF;
 
@@ -2438,7 +2438,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(deAddress, io);
         de = (de + 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(deAddress, 2);
+        passedCycles(deAddress, 2);
 
         bc = (bc - 1) & 0xFFFF;
 
@@ -2460,7 +2460,7 @@ public class EmulatorEngine implements CpuEngine {
             PC = (PC - 2) & 0xFFFF;
             memptr = (PC + 1) & 0xFFFF;
             flags = (flags & (~FLAG_XY) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
-            passiveMemoryCycles(deAddress, 5);
+            passedCycles(deAddress, 5);
         }
     }
 
@@ -2890,7 +2890,7 @@ public class EmulatorEngine implements CpuEngine {
         advanceCycles(3);
 
         if (getCC1((lastOpcode >>> 3) & 3)) {
-            passiveMemoryCycles(branchBase, 5);
+            passedCycles(branchBase, 5);
             PC = (PC + offset) & 0xFFFF;
             memptr = PC;
         }
@@ -2902,7 +2902,7 @@ public class EmulatorEngine implements CpuEngine {
         int branchBase = PC;
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(branchBase, 5);
+        passedCycles(branchBase, 5);
         PC = (PC + (byte) addr) & 0xFFFF;
         memptr = PC;
     }
@@ -2970,7 +2970,7 @@ public class EmulatorEngine implements CpuEngine {
 
         int tmp1 = (lastOpcode >>> 3) & 7;
         if ((flags & CONDITION[tmp1]) == CONDITION_VALUES[tmp1]) {
-            passiveMemoryCycles((PC - 1) & 0xFFFF, 1);
+            passedCycles((PC - 1) & 0xFFFF, 1);
             SP = (SP - 2) & 0xffff;
 
             memory.write((SP + 1) & 0xFFFF, (byte) (PC >>> 8));
@@ -3024,7 +3024,7 @@ public class EmulatorEngine implements CpuEngine {
         advanceCycles(3);
         addr = ((memory.read((PC + 1) & 0xFFFF) << 8) | addr) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles((PC + 1) & 0xFFFF, 1);
+        passedCycles((PC + 1) & 0xFFFF, 1);
 
         PC = (PC + 2) & 0xFFFF;
         SP = (SP - 2) & 0xffff;
@@ -3610,7 +3610,7 @@ public class EmulatorEngine implements CpuEngine {
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(displacementAddress, 5);
+        passedCycles(displacementAddress, 5);
         int address = (xy + disp) & 0xFFFF;
         memptr = address;
         memory.write(address, (byte) value);
@@ -3893,7 +3893,7 @@ public class EmulatorEngine implements CpuEngine {
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
-        passiveMemoryCycles(displacementAddress, 5);
+        passedCycles(displacementAddress, 5);
         int address = (special + disp) & 0xFFFF;
         int value = memory.read(address) & 0xFF;
         memptr = address;

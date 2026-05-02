@@ -8,12 +8,11 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.util.*;
-
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 
 /**
  * ZX Spectrum bus (for 48K ZX spectrum).
@@ -65,29 +64,12 @@ import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
  */
 @NotThreadSafe
 public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements ZxSpectrumBus, CPUContext.PassedCyclesListener {
+    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
+    private static final int DISPLAY_LINE_TSTATES = TIMING.displayLineTstates;
+    private static final int DISPLAY_FRAME_TSTATES = TIMING.displayFrameTstates;
     private static final int IO_PORTS = 0x100;
-    private static final int SCREEN_FETCH_CYCLES = ATTRIBUTES_WIDTH * 4; // 128
-
-    // First contended T-state after interrupt. Each screen line has 128 contended T-states + 96 non-contended.
-    private static final long FIRST_CONTENDED = 14335;
-    private static final long FIRST_FLOATING_BUS = FIRST_CONTENDED + 3; // 14338 on 48K
-    private final static Map<Long, Integer> CONTENTION_MAP = new HashMap<>();
-
-    static {
-        // 192 screen lines, each with 128 T-states of contention (16 repetitions of 6,5,4,3,2,1,0,0)
-        // followed by 96 T-states of no contention (border/retrace).
-        for (int line = 0; line < SCREEN_HEIGHT_PIXELS; line++) {
-            long lineStart = FIRST_CONTENDED + line * DISPLAY_LINE_TSTATES;
-            for (long j = 0; j < SCREEN_FETCH_CYCLES; j += 8) {
-                CONTENTION_MAP.put(lineStart + j, 6);
-                CONTENTION_MAP.put(lineStart + j + 1, 5);
-                CONTENTION_MAP.put(lineStart + j + 2, 4);
-                CONTENTION_MAP.put(lineStart + j + 3, 3);
-                CONTENTION_MAP.put(lineStart + j + 4, 2);
-                CONTENTION_MAP.put(lineStart + j + 5, 1);
-            }
-        }
-    }
+    private static final int SCREEN_FETCH_CYCLES = TIMING.screenFetchCycles;
+    private static final long FIRST_FLOATING_BUS = TIMING.firstFloatingBusTstate;
 
     private ContextZ80 cpu;
     private MemoryContext<Byte> memory;
@@ -104,7 +86,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         this.memory = Objects.requireNonNull(memory);
 
         // ZX Spectrum ULA holds INT low for 32 T-states at each frame boundary
-        cpu.setInterruptDuration(INTERRUPT_TSTATES);
+        cpu.setInterruptDuration(TIMING.interruptTstates);
 
         attachPortDispatchers();
 
@@ -120,6 +102,10 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         deferredListeners.clear();
     }
 
+    @Override
+    public TimingProfile getProfile() {
+        return TIMING;
+    }
 
     @Override
     public boolean attachDevice(int port, Context8080.CpuPortDevice device) {
@@ -181,7 +167,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     @Override
-    public void passiveMemoryCycles(int location, int cycles) {
+    public void passedCycles(int location, int cycles) {
         int maskedLocation = location & 0xFFFF;
         for (int i = 0; i < cycles; i++) {
             applyMemoryContention(maskedLocation);
@@ -283,9 +269,9 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     }
 
     private void applyMemoryContention(int location) {
-        if (location >= 0x4000 && location <= 0x7FFF) {
-            Integer cycles = contentionDelayAt(frameCycles);
-            if (cycles != null) {
+        if (TIMING.isContendedMemoryAddress(location)) {
+            int cycles = TIMING.contentionDelayAt(frameCycles);
+            if (cycles > 0) {
                 cpu.addCycles(cycles);
             }
         }
@@ -305,14 +291,6 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
                 throw new RuntimeException("Could not attach ZX Spectrum bus dispatcher to CPU port " + lowPort);
             }
         }
-    }
-
-    private Integer contentionDelayAt(long cycle) {
-        long normalized = cycle % DISPLAY_FRAME_TSTATES;
-        if (normalized < 0) {
-            normalized += DISPLAY_FRAME_TSTATES;
-        }
-        return CONTENTION_MAP.get(normalized);
     }
 
     @Override
@@ -365,53 +343,9 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         }
 
         private void contendedPort(int portAddress) {
-            //    High byte   |         |
-            //    in 40 - 7F? | Low bit | Contention pattern
-            //    ------------+---------+-------------------
-            //         No     |  Reset  | N:1, C:3
-            //         No     |   Set   | N:4
-            //        Yes     |  Reset  | C:1, C:3
-            //        Yes     |   Set   | C:1, C:1, C:1, C:1
-
-            if (portAddress >= 0x4000 && portAddress <= 0x7FFF) {
-                // after this, CPU adds 4 cycles for I/O.
-                if ((portAddress & 1) == 0) {
-                    //        Yes     |  Reset  | C:1, C:3
-                    Integer cycles = contentionDelayAt(frameCycles); // at C:1
-                    if (cycles != null) {
-                        cpu.addCycles(cycles);
-                    }
-                    cycles = contentionDelayAt(frameCycles + 1); // after C:1
-                    if (cycles != null) {
-                        cpu.addCycles(cycles);
-                    }
-                } else {
-                    //        Yes     |   Set   | C:1, C:1, C:1, C:1
-                    Integer cycles = contentionDelayAt(frameCycles); // at C:1
-                    if (cycles != null) {
-                        cpu.addCycles(cycles);
-                    }
-                    cycles = contentionDelayAt(frameCycles + 1); // 2x at C:1
-                    if (cycles != null) {
-                        cpu.addCycles(cycles);
-                    }
-                    cycles = contentionDelayAt(frameCycles + 2); // 3x at C:1
-                    if (cycles != null) {
-                        cpu.addCycles(cycles);
-                    }
-                    cycles = contentionDelayAt(frameCycles + 3); // after 3x at C:1
-                    if (cycles != null) {
-                        cpu.addCycles(cycles);
-                    }
-                }
-            } else {
-                //         No     |  Reset  | N:1, C:3
-                if ((portAddress & 1) == 0) {
-                    Integer cycles = contentionDelayAt(frameCycles + 1); // after N:1
-                    if (cycles != null) {
-                        cpu.addCycles(cycles);
-                    }
-                }
+            int cycles = TIMING.portContentionDelay(frameCycles, portAddress);
+            if (cycles > 0) {
+                cpu.addCycles(cycles);
             }
         }
 
@@ -428,17 +362,17 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
         private byte readFloatingBus(long sampleCycle) {
             long visibleCycles = sampleCycle - FIRST_FLOATING_BUS;
             if (visibleCycles < 0) {
-                return (byte) 0xFF;
+                return (byte) UNDRIVEN_BUS_DATA_BYTE;
             }
 
             int line = (int) (visibleCycles / DISPLAY_LINE_TSTATES);
             if (line < 0 || line >= SCREEN_HEIGHT_PIXELS) {
-                return (byte) 0xFF;
+                return (byte) UNDRIVEN_BUS_DATA_BYTE;
             }
 
             int cycleInLine = (int) (visibleCycles % DISPLAY_LINE_TSTATES);
             if (cycleInLine >= SCREEN_FETCH_CYCLES) {
-                return (byte) 0xFF;
+                return (byte) UNDRIVEN_BUS_DATA_BYTE;
             }
 
             int column = (cycleInLine / 8) * 2;
@@ -453,7 +387,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
                 case 3:
                     return readAttributeByte(line, column + 1);
                 default:
-                    return (byte) 0xFF;
+                    return (byte) UNDRIVEN_BUS_DATA_BYTE;
             }
         }
 
@@ -461,14 +395,14 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             int lineOffset = ((line & 0xC0) << 5) | ((line & 7) << 8) | ((line & 0x38) << 2);
 
             // non-contended read
-            return memory.read(0x4000 + lineOffset + column);
+            return memory.read(SCREEN_MEMORY_BASE + lineOffset + column);
         }
 
         private byte readAttributeByte(int line, int column) {
             int attributeOffset = ((line >>> 3) << 5) | column;
 
             // non-contended read
-            return memory.read(0x5800 + attributeOffset);
+            return memory.read(ATTRIBUTE_MEMORY_BASE + attributeOffset);
         }
     }
 }
