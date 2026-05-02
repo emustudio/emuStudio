@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula;
 
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.AudioSink;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
@@ -12,13 +13,14 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.emustudio.plugins.device.zxspectrum.ula.ULA.VIDEO_FLASH_FRAME;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ULATest {
+    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
+    private static final long ZX_48K_CPU_FREQUENCY = 3_500_000L;
 
     @Test
     public void testPortFeSpeakerLevelUsesEarAndMicBits() {
@@ -139,25 +141,26 @@ public class ULATest {
     public void testFrameInterruptAndFlashToggleAreDrivenByNextFrame() {
         MockBus bus = new MockBus();
         ULA ula = new ULA(bus.bus());
+        int videoFlashFrame = ZxSpectrumBus.FLASH_SWAP_FRAME_COUNT - 1;
 
-        for (int i = 0; i < VIDEO_FLASH_FRAME; i++) {
+        for (int i = 0; i < videoFlashFrame; i++) {
             ula.onNextFrame();
         }
 
         assertFalse(ula.videoFlash.get());
-        assertEquals(VIDEO_FLASH_FRAME, bus.interruptSignals);
+        assertEquals(videoFlashFrame, bus.interruptSignals);
 
         ula.onNextFrame();
 
         assertTrue(ula.videoFlash.get());
-        assertEquals(VIDEO_FLASH_FRAME + 1, bus.interruptSignals);
+        assertEquals(videoFlashFrame + 1, bus.interruptSignals);
 
-        for (int i = 0; i < VIDEO_FLASH_FRAME + 1; i++) {
+        for (int i = 0; i < videoFlashFrame + 1; i++) {
             ula.onNextFrame();
         }
 
         assertFalse(ula.videoFlash.get());
-        assertEquals((VIDEO_FLASH_FRAME + 1) * 2, bus.interruptSignals);
+        assertEquals((videoFlashFrame + 1) * 2, bus.interruptSignals);
     }
 
     @Test
@@ -305,7 +308,7 @@ public class ULATest {
     @Test
     public void testGetAudioSampleRateDelegatesToBeeper() {
         MockBus bus = new MockBus();
-        Beeper beeper = new Beeper(AudioSink.NULL, 22_050, () -> 3_500_000L);
+        Beeper beeper = new Beeper(AudioSink.NULL, 22_050, () -> ZX_48K_CPU_FREQUENCY);
         ULA ula = new ULA(bus.bus(), beeper);
 
         assertEquals(22_050, ula.getAudioSampleRate());
@@ -314,7 +317,7 @@ public class ULATest {
     @Test
     public void testGetAudioVolumePercentDelegatesToBeeper() {
         MockBus bus = new MockBus();
-        Beeper beeper = new Beeper(AudioSink.NULL, 100, () -> 3_500_000L);
+        Beeper beeper = new Beeper(AudioSink.NULL, 100, () -> ZX_48K_CPU_FREQUENCY);
         ULA ula = new ULA(bus.bus(), beeper);
 
         assertEquals(100, ula.getAudioVolumePercent());
@@ -323,7 +326,7 @@ public class ULATest {
     @Test
     public void testSetAudioVolumePercentDelegatesToBeeper() {
         MockBus bus = new MockBus();
-        Beeper beeper = new Beeper(AudioSink.NULL, 100, () -> 3_500_000L);
+        Beeper beeper = new Beeper(AudioSink.NULL, 100, () -> ZX_48K_CPU_FREQUENCY);
         ULA ula = new ULA(bus.bus(), beeper);
 
         ula.setAudioVolumePercent(42);
@@ -452,7 +455,7 @@ public class ULATest {
         private long cycles;
 
         private RecordingBeeper() {
-            super(AudioSink.NULL, 120, () -> 3_500_000L);
+            super(AudioSink.NULL, 120, () -> ZX_48K_CPU_FREQUENCY);
         }
 
         @Override
@@ -476,6 +479,7 @@ public class ULATest {
         private int interruptClears;
 
         private MockBus() {
+            expect(bus.getProfile()).andStubReturn(TIMING);
             expect(bus.readData()).andStubAnswer(() -> lineIn);
             expect(bus.readMemoryNotContended(anyInt())).andStubAnswer(() -> {
                 int address = (int) getCurrentArguments()[0];

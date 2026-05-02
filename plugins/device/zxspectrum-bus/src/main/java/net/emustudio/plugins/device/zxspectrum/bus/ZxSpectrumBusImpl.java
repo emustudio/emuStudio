@@ -339,7 +339,7 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
         @Override
         public String getName() {
-            return "ZX-Spectrum bus port dispatcher";
+            return "ZX-Spectrum Bus";
         }
 
         private void contendedPort(int portAddress) {

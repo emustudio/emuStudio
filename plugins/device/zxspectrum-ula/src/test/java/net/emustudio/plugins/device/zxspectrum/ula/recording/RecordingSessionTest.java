@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.recording;
 
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,6 +20,8 @@ import java.util.Optional;
 import static org.junit.Assert.*;
 
 public class RecordingSessionTest {
+    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
+    private static final int ZX_48K_CPU_FREQUENCY = 3_500_000;
     private static final int FRAME_SIZE = 32;
 
     @Rule
@@ -125,7 +128,13 @@ public class RecordingSessionTest {
     }
 
     private RecordingSession createSession() throws IOException {
-        return new RecordingSession(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        return new RecordingSession(
+                FRAME_SIZE,
+                FRAME_SIZE,
+                TIMING.displayFrameTstates,
+                ZX_48K_CPU_FREQUENCY,
+                Beeper.DEFAULT_SAMPLE_RATE
+        );
     }
 
     private static BufferedImage createFrame() {
@@ -147,4 +156,3 @@ public class RecordingSessionTest {
         return buffer.array();
     }
 }
-

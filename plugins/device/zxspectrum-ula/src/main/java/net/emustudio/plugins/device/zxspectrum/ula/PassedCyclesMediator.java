@@ -3,11 +3,11 @@
 package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.emulib.plugins.cpu.CPUContext;
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 
 import java.util.Objects;
 
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCREEN_IMAGE_HEIGHT;
 
 /**
@@ -56,9 +56,11 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
 
     private volatile DisplayCanvas canvas;
     private final ULA ula;
+    private final TimingProfile timing;
 
     public PassedCyclesMediator(ULA ula) {
         this.ula = Objects.requireNonNull(ula);
+        this.timing = ula.getProfile();
     }
 
     public void setCanvas(DisplayCanvas canvas) {
@@ -91,15 +93,15 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
         // Draw completed lines in batch
         DisplayCanvas canvas = this.canvas; // Read volatile once
         if (canvas != null) {
-            if (lineCycles >= DISPLAY_LINE_TSTATES && lastLinePainted < SCREEN_IMAGE_HEIGHT) {
+            if (lineCycles >= timing.displayLineTstates && lastLinePainted < SCREEN_IMAGE_HEIGHT) {
                 canvas.drawNextLine(lastLinePainted++);
             }
         }
-        lineCycles = lineCycles % DISPLAY_LINE_TSTATES;
-        if (frameCycles >= DISPLAY_FRAME_TSTATES) {
+        lineCycles = lineCycles % timing.displayLineTstates;
+        if (frameCycles >= timing.displayFrameTstates) {
             lastLinePainted = 0;
             ula.onNextFrame();
-            frameCycles = frameCycles % DISPLAY_FRAME_TSTATES;
+            frameCycles = frameCycles % timing.displayFrameTstates;
             lineCycles = 0; // keep line timing in sync with frame timing
             interruptActive = true;
             if (canvas != null) {
@@ -107,7 +109,7 @@ public class PassedCyclesMediator implements CPUContext.PassedCyclesListener {
             }
         }
         // ULA releases INT exactly INT_DURATION T-states after frame boundary.
-        if (interruptActive && frameCycles >= INTERRUPT_TSTATES) {
+        if (interruptActive && frameCycles >= timing.interruptTstates) {
             ula.clearInterrupt();
             interruptActive = false;
         }

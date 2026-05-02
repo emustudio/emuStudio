@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import java.awt.*;
@@ -12,7 +14,6 @@ import java.awt.image.DataBufferInt;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardCanvas.KEYBOARD_HEIGHT;
 
@@ -20,8 +21,14 @@ import static net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardCanvas.KEY
  * Canvas responsible for rendering the ZX Spectrum screen and handling mouse interactions for the keyboard overlay.
  */
 public class DisplayCanvas extends Canvas implements AutoCloseable {
+    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
+    private static final int ATTRIBUTES_WIDTH = ZxSpectrumBus.ATTRIBUTES_WIDTH;
+    private static final int PRE_SCREEN_LINES = TIMING.preScreenLines;
+    private static final int POST_SCREEN_LINES = TIMING.postScreenLines;
+    private static final int SCREEN_WIDTH_PIXELS = ZxSpectrumBus.SCREEN_WIDTH_PIXELS;
+    private static final int SCREEN_HEIGHT_PIXELS = ZxSpectrumBus.SCREEN_HEIGHT_PIXELS;
     public static final float ZOOM = 2f;
-    public static final int BORDER_WIDTH = 48; // pixels
+    public static final int BORDER_WIDTH = ZxSpectrumBus.BORDER_WIDTH_PIXELS;
 
     public static final int SCREEN_IMAGE_WIDTH = 2 * BORDER_WIDTH + SCREEN_WIDTH_PIXELS;
     public static final int SCREEN_IMAGE_HEIGHT = PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS + POST_SCREEN_LINES;

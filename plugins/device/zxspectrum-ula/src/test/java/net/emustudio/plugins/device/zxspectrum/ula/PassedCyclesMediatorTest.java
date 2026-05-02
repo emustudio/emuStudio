@@ -3,22 +3,26 @@
 package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 import org.junit.Test;
 
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCREEN_IMAGE_HEIGHT;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public class PassedCyclesMediatorTest {
+    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
+    private static final int DISPLAY_LINE_TSTATES = TIMING.displayLineTstates;
+    private static final int DISPLAY_FRAME_TSTATES = TIMING.displayFrameTstates;
+    private static final int INTERRUPT_TSTATES = TIMING.interruptTstates;
 
     @Test
     public void testInterruptIsClearedAfterExact32TStates() {
         TestULA ula = new TestULA();
         PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
 
-        long frameCycles = (long) (PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS + POST_SCREEN_LINES) * DISPLAY_LINE_TSTATES;
+        long frameCycles = TIMING.displayFrameTstates;
         for (long i = 0; i < frameCycles; i++) {
             mediator.passedCycles(1);
         }
@@ -237,6 +241,7 @@ public class PassedCyclesMediatorTest {
 
         private static ZxSpectrumBus newMockBus() {
             ZxSpectrumBus bus = createNiceMock(ZxSpectrumBus.class);
+            expect(bus.getProfile()).andStubReturn(TIMING);
             replay(bus);
             return bus;
         }

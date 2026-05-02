@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.emulib.runtime.helpers.ReadWriteLockSupport;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.AudioSink;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
@@ -19,7 +20,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.event.KeyEvent.*;
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 
 /**
  * Uncommitted Logic Array (ULA).
@@ -67,15 +67,10 @@ import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
  */
 @ThreadSafe
 public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyListener {
-    private final static byte[] INTERRUPT_DATA = new byte[]{(byte) 0xFF};
     private final static byte[] KEY_SHIFT = new byte[]{0, 1};
     private final static byte[] KEY_SYM_SHIFT = new byte[]{7, 2};
     private final static int[] LINE_OFFSETS = computeLineOffsets();
     private final static byte KEY_RELEASED_STATE = (byte) 0xBF;
-
-    // The Spectrum's 'FLASH' effect is also produced by the ULA: Every 16 frames, the ink and paper of all flashing
-    // bytes is swapped; ie a normal to inverted to normal cycle takes 32 frames, which is (good as) 0.64 seconds.
-    public static final int VIDEO_FLASH_FRAME = 15;
 
     @GuardedBy("keymapLock")
     private final byte[] keymap = new byte[8]; // effective keyboard state
@@ -83,8 +78,8 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private final ReadWriteLockSupport keymapLock = new ReadWriteLockSupport();
 
     // accessible from outside
-    public final byte[][] videoMemory = new byte[ATTRIBUTES_WIDTH][SCREEN_HEIGHT_PIXELS];
-    public final byte[][] attributeMemory = new byte[ATTRIBUTES_WIDTH][ATTRIBUTE_HEIGHT];
+    public final byte[][] videoMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.SCREEN_HEIGHT_PIXELS];
+    public final byte[][] attributeMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.ATTRIBUTE_HEIGHT];
 
     // maps host characters to ZX Spectrum key "commands"
     // Byte[] = {key line, key value, shift, symshift}
@@ -162,7 +157,9 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private int flashFramesCount = 0;
 
     private final ZxSpectrumBus bus;
+    private final TimingProfile timing;
     private final Beeper beeper;
+    private final byte[] interruptData = new byte[]{(byte) ZxSpectrumBus.UNDRIVEN_BUS_DATA_BYTE};
 
     // Written by CPU thread (write), read by AWT thread (getBorderColor from paint)
     private volatile int borderColor;
@@ -180,12 +177,13 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     public ULA(ZxSpectrumBus bus, Beeper beeper) {
         this.bus = Objects.requireNonNull(bus);
+        this.timing = Objects.requireNonNull(bus.getProfile());
         this.beeper = Objects.requireNonNull(beeper);
         resetKeyboard();
     }
 
     public void reset() {
-        borderColor = 7;
+        borderColor = ZxSpectrumBus.DEFAULT_BORDER_COLOR;
         lastEarOut = false;
         lastMicOut = false;
         lastTapeIn = false;
@@ -212,11 +210,11 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     public void onNextFrame() {
         // On a 48K Spectrum the ULA does not place an IM 2 vector on the bus. The interrupt
         // acknowledge cycle therefore sees the floating bus, which is 0xFF at the frame boundary.
-        bus.signalInterrupt(INTERRUPT_DATA);
-        if (flashFramesCount == VIDEO_FLASH_FRAME) {
+        bus.signalInterrupt(interruptData);
+        if (flashFramesCount == ZxSpectrumBus.FLASH_SWAP_FRAME_COUNT - 1) {
             videoFlash.set(!videoFlash.get());
         }
-        flashFramesCount = (flashFramesCount + 1) % (VIDEO_FLASH_FRAME + 1);
+        flashFramesCount = (flashFramesCount + 1) % ZxSpectrumBus.FLASH_SWAP_FRAME_COUNT;
     }
 
     public void clearInterrupt() {
@@ -224,20 +222,24 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     public void readScreen() {
-        for (int y = 0; y < SCREEN_HEIGHT_PIXELS; y++) {
+        for (int y = 0; y < ZxSpectrumBus.SCREEN_HEIGHT_PIXELS; y++) {
             readLine(y);
         }
     }
 
     public void readLine(int y) {
-        for (int x = 0; x < ATTRIBUTES_WIDTH; x++) {
-            videoMemory[x][y] = bus.readMemoryNotContended(0x4000 + LINE_OFFSETS[y] + x);
-            if (y < ATTRIBUTE_HEIGHT) {
+        for (int x = 0; x < ZxSpectrumBus.ATTRIBUTES_WIDTH; x++) {
+            videoMemory[x][y] = bus.readMemoryNotContended(ZxSpectrumBus.SCREEN_MEMORY_BASE + LINE_OFFSETS[y] + x);
+            if (y < ZxSpectrumBus.ATTRIBUTE_HEIGHT) {
                 int off = ((y >>> 3) << 8) | (((y & 0x07) << 5) | x);
-                int attributeAddress = 0x5800 + off;
+                int attributeAddress = ZxSpectrumBus.ATTRIBUTE_MEMORY_BASE + off;
                 attributeMemory[x][y] = bus.readMemoryNotContended(attributeAddress);
             }
         }
+    }
+
+    public TimingProfile getProfile() {
+        return timing;
     }
 
     public int getBorderColor() {
@@ -282,7 +284,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         // If more than one address line is made low, the result is the logical AND of all single inputs
 
         byte result = (byte) 0xBF; // 1011 1111   // no EAR input
-        if ((portAddress & 0xFE) == 0xFE) {
+        if ((portAddress & ZxSpectrumBus.ULA_PORT_ADDRESS) == ZxSpectrumBus.ULA_PORT_ADDRESS) {
             int lineMask = (portAddress >>> 8) & 0xFF;
 
             // FE = 0  1111 1110
@@ -410,8 +412,8 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
      * @return array of offsets
      */
     private static int[] computeLineOffsets() {
-        final int[] result = new int[SCREEN_HEIGHT_PIXELS];
-        for (int y = 0; y < SCREEN_HEIGHT_PIXELS; y++) {
+        final int[] result = new int[ZxSpectrumBus.SCREEN_HEIGHT_PIXELS];
+        for (int y = 0; y < ZxSpectrumBus.SCREEN_HEIGHT_PIXELS; y++) {
             result[y] = ((y & 0xC0) << 5) | ((y & 7) << 8) | ((y & 0x38) << 2);
         }
         return result;
