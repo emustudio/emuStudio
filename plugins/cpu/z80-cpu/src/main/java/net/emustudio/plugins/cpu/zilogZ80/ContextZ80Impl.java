@@ -62,10 +62,7 @@ public final class ContextZ80Impl extends AbstractCPUContext implements ContextZ
 
     byte readIO(int portAddress) {
         CpuPortDevice device = devices.get(portAddress & 0xFF);
-        if (device != null) {
-            return device.read(portAddress);
-        }
-        return NO_DATA;
+        return (device == null) ? NO_DATA : device.read(portAddress);
     }
 
     @Override

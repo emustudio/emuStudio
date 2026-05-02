@@ -4,11 +4,16 @@ package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.cpu.testsuite.Generator;
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 
@@ -71,6 +76,238 @@ public class ControlTest extends InstructionsTest {
         cpuRunnerImpl.step();
         cpuVerifierImpl.checkPC(0x0001);
         cpuVerifierImpl.checkRegisterPair(REG_SP, 0xFFFF);
+    }
+
+    @Test
+    public void testIm2InterruptAcknowledgeIncrementsRefreshRegister() {
+        cpuRunnerImpl.setProgram(0x76, 0x00);
+        cpuRunnerImpl.reset();
+        cpuRunnerImpl.setIntMode((byte) 2);
+        cpuRunnerImpl.setI(0x28);
+        cpuRunnerImpl.setR(0x7F);
+        cpuRunnerImpl.enableIFF2();
+        cpu.getEngine().IFF[0] = true;
+        cpu.getEngine().setInterruptDuration(32);
+
+        cpuRunnerImpl.setByte(0x28FF, 0x5C);
+        cpuRunnerImpl.setByte(0x2900, 0x7E);
+        cpuRunnerImpl.setByte(0x7E5C, 0xED);
+        cpuRunnerImpl.setByte(0x7E5D, 0x5F);
+
+        cpuRunnerImpl.step();
+        cpuVerifierImpl.checkR(0x00);
+
+        setLevelInterrupt(cpu.getEngine(), new byte[]{(byte) 0xFF});
+
+        cpuRunnerImpl.step();
+        cpuVerifierImpl.checkRegister(REG_A, 0x03);
+        cpuVerifierImpl.checkR(0x03);
+        cpuVerifierImpl.checkPC(0x7E5E);
+    }
+
+    @Test
+    public void testTakenJrAddsFiveHiddenCyclesAtDisplacementAddress() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0x18);
+        memory.write(0x0001, (byte) 0x00);
+
+        engine.reset(0x0000);
+        engine.step();
+
+        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0001));
+        org.junit.Assert.assertEquals(0x0002, engine.PC);
+    }
+
+    @Test
+    public void testIncBcAddsTwoHiddenRefreshCycles() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0x03);
+
+        engine.reset(0x0000);
+        engine.I = 0x40;
+        engine.step();
+
+        org.junit.Assert.assertEquals(2, memory.getReadCount(0x4001));
+        org.junit.Assert.assertEquals(0x0001, (engine.regs[REG_B] << 8) | engine.regs[REG_C]);
+    }
+
+    @Test
+    public void testIndexedLoadAddsFiveHiddenCyclesAtDisplacementAddress() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0xDD);
+        memory.write(0x0001, (byte) 0x7E);
+        memory.write(0x0002, (byte) 0x00);
+        memory.write(0x4000, (byte) 0x5A);
+
+        engine.reset(0x0000);
+        engine.IX = 0x4000;
+        engine.step();
+
+        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(0x5A, engine.regs[REG_A]);
+    }
+
+    @Test
+    public void testIndexedHLoadAddsFiveHiddenCyclesAtDisplacementAddress() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0xDD);
+        memory.write(0x0001, (byte) 0x66);
+        memory.write(0x0002, (byte) 0x00);
+        memory.write(0x4000, (byte) 0x5A);
+
+        engine.reset(0x0000);
+        engine.IX = 0x4000;
+        engine.step();
+
+        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(0x5A, engine.regs[REG_H]);
+    }
+
+    @Test
+    public void testIndexedAddAddsFiveHiddenCyclesAtDisplacementAddress() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0xDD);
+        memory.write(0x0001, (byte) 0x86);
+        memory.write(0x0002, (byte) 0x00);
+        memory.write(0x4000, (byte) 0x05);
+
+        engine.reset(0x0000);
+        engine.IX = 0x4000;
+        engine.regs[REG_A] = 0x10;
+        engine.step();
+
+        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(1, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(0x15, engine.regs[REG_A]);
+    }
+
+    @Test
+    public void testIndexedIncAddsHiddenCyclesAtDisplacementAndIndexedAddress() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0xDD);
+        memory.write(0x0001, (byte) 0x34);
+        memory.write(0x0002, (byte) 0x00);
+        memory.write(0x4000, (byte) 0x05);
+
+        engine.reset(0x0000);
+        engine.IX = 0x4000;
+        engine.step();
+
+        org.junit.Assert.assertEquals(6, memory.getReadCount(0x0002));
+        org.junit.Assert.assertEquals(2, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(0x06, memory.read(0x4000) & 0xFF);
+    }
+
+    @Test
+    public void testIndexedImmediateStoreAddsTwoHiddenCyclesAtImmediateAddress() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0xDD);
+        memory.write(0x0001, (byte) 0x36);
+        memory.write(0x0002, (byte) 0x00);
+        memory.write(0x0003, (byte) 0x34);
+
+        engine.reset(0x0000);
+        engine.IX = 0x4000;
+        engine.step();
+
+        org.junit.Assert.assertEquals(3, memory.getReadCount(0x0003));
+        org.junit.Assert.assertEquals(0x34, memory.read(0x4000) & 0xFF);
+    }
+
+    @Test
+    public void testRldAddsFourHiddenCyclesAtHlAddress() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0xED);
+        memory.write(0x0001, (byte) 0x6F);
+        memory.write(0x4000, (byte) 0x12);
+
+        engine.reset(0x0000);
+        engine.regs[REG_H] = 0x40;
+        engine.regs[REG_L] = 0x00;
+        engine.regs[REG_A] = 0x34;
+        engine.step();
+
+        org.junit.Assert.assertEquals(5, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(0x24, memory.read(0x4000) & 0xFF);
+        org.junit.Assert.assertEquals(0x31, engine.regs[REG_A]);
+    }
+
+    @Test
+    public void testIndexedCbOpcodeFetchDoesNotIncrementRefreshRegister() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0xDD);
+        memory.write(0x0001, (byte) 0xCB);
+        memory.write(0x0002, (byte) 0x00);
+        memory.write(0x0003, (byte) 0x46);
+        memory.write(0x4000, (byte) 0x01);
+
+        engine.reset(0x0000);
+        engine.IX = 0x4000;
+        engine.step();
+
+        org.junit.Assert.assertEquals(0x02, engine.R);
+        org.junit.Assert.assertEquals(3, memory.getReadCount(0x0003));
+        org.junit.Assert.assertEquals(2, memory.getReadCount(0x4000));
+    }
+
+    @Test
+    public void testIndexedResAddsHiddenCycleAtIndexedAddress() throws Exception {
+        CountingMemory memory = new CountingMemory();
+        ContextZ80Impl context = new ContextZ80Impl();
+        EmulatorEngine engine = new EmulatorEngine(memory, context);
+        context.setEngine(engine);
+
+        memory.write(0x0000, (byte) 0xDD);
+        memory.write(0x0001, (byte) 0xCB);
+        memory.write(0x0002, (byte) 0x00);
+        memory.write(0x0003, (byte) 0x86);
+        memory.write(0x4000, (byte) 0xFF);
+
+        engine.reset(0x0000);
+        engine.IX = 0x4000;
+        engine.step();
+
+        org.junit.Assert.assertEquals(3, memory.getReadCount(0x0003));
+        org.junit.Assert.assertEquals(2, memory.getReadCount(0x4000));
+        org.junit.Assert.assertEquals(0xFE, memory.read(0x4000) & 0xFF);
     }
 
     @Test
@@ -456,4 +693,61 @@ public class ControlTest extends InstructionsTest {
         );
     }
 
+    private static final class CountingMemory extends AbstractMemoryContext<Byte> {
+        private final byte[] data = new byte[0x10000];
+        private final Map<Integer, Integer> readCounts = new HashMap<>();
+
+        @Override
+        public Byte read(int location) {
+            int masked = location & 0xFFFF;
+            readCounts.merge(masked, 1, Integer::sum);
+            return data[masked];
+        }
+
+        @Override
+        public Byte[] read(int location, int count) {
+            Byte[] values = new Byte[count];
+            for (int i = 0; i < count; i++) {
+                values[i] = read(location + i);
+            }
+            return values;
+        }
+
+        @Override
+        public void write(int location, Byte value) {
+            data[location & 0xFFFF] = value;
+        }
+
+        @Override
+        public void write(int location, Byte[] values, int count) {
+            for (int i = 0; i < count; i++) {
+                write(location + i, values[i]);
+            }
+        }
+
+        @Override
+        public Class<Byte> getCellTypeClass() {
+            return Byte.class;
+        }
+
+        @Override
+        public void clear() {
+            Arrays.fill(data, (byte) 0);
+            readCounts.clear();
+        }
+
+        @Override
+        public int getSize() {
+            return data.length;
+        }
+
+        @Override
+        public MemoryContextAnnotations annotations() {
+            return null;
+        }
+
+        int getReadCount(int location) {
+            return readCounts.getOrDefault(location & 0xFFFF, 0);
+        }
+    }
 }

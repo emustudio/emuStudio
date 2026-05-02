@@ -56,7 +56,8 @@ public class InstructionPrinter implements DispatchListener {
 
             if (useCache && !cache.contains(pc)) {
                 if (numberOfMatch.get() != 0) {
-                    writer.printf("%04d | Block from %04X to %04X; count=%d%n", timeStamp, matchPC, pc, numberOfMatch.get());
+                    writer.printf("%04d | Block from %04X to %04X; count=%d%n",
+                            timeStamp, matchPC, pc, numberOfMatch.get());
                 }
                 numberOfMatch.set(0);
                 matchPC = pc;
@@ -66,7 +67,8 @@ public class InstructionPrinter implements DispatchListener {
             }
 
             if (numberOfMatch.get() <= 1) {
-                writer.printf("%04d | PC=%04x | %15s | %10s ", timeStamp, instr.address, instr.mnemo, instr.opCode);
+                writer.printf("%04d | PC=%04x | %15s | %10s ",
+                        timeStamp, instr.address, instr.mnemo, instr.opCode);
             }
         } catch (InvalidInstructionException | IndexOutOfBoundsException e) {
             writer.printf("%04d | Invalid instruction at %04X%n", timeStamp, pc);
@@ -81,7 +83,8 @@ public class InstructionPrinter implements DispatchListener {
                     emulatorEngine.IFF[0] ? 1 : 0,
                     emulatorEngine.I, emulatorEngine.R,
                     intToFlags(emulatorEngine.flags),
-                    emulatorEngine.SP, emulatorEngine.PC);
+                    emulatorEngine.SP, emulatorEngine.PC
+            );
         }
     }
 

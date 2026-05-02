@@ -222,6 +222,28 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
+    private void contendRefresh(int cycles) {
+        contendNoMreq((I << 8) | R, cycles);
+    }
+
+    private void advanceMemoryReadWithHiddenCycle(int address) {
+        advanceCycles(3);
+        contendNoMreq(address, 1);
+    }
+
+    private int readIndexedValue(int xy) {
+        int displacementAddress = PC;
+        byte disp = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        advanceCycles(3);
+        contendNoMreq(displacementAddress, 5);
+        int address = (xy + disp) & 0xFFFF;
+        memptr = address;
+        int value = memory.read(address) & 0xFF;
+        advanceCycles(3);
+        return value;
+    }
+
     private void dispatch() throws Throwable {
         DispatchListener tmpListener = dispatchListener;
         if (tmpListener != null) {
@@ -233,6 +255,8 @@ public class EmulatorEngine implements CpuEngine {
             lastQ = Q;
             Q = 0;
             if (pendingNonMaskableInterrupt.getAndSet(false)) {
+                // NMI acknowledge is an M1 cycle and advances the refresh register.
+                incrementR();
                 if (memory.read(PC) == 0x76) {
                     // jump over HALT - this is probably wrong
                     writeWord((SP - 2) & 0xFFFF, (PC + 1) & 0xFFFF);
@@ -279,7 +303,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void DD_CB_DISPATCH() throws Throwable {
-        SPECIAL_CB_DISPATCH(DISPATCH_TABLE_DD_CB);
+        SPECIAL_CB_DISPATCH(DISPATCH_TABLE_DD_CB, IX);
     }
 
     void ED_DISPATCH() throws Throwable {
@@ -291,7 +315,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void FD_CB_DISPATCH() throws Throwable {
-        SPECIAL_CB_DISPATCH(DISPATCH_TABLE_FD_CB);
+        SPECIAL_CB_DISPATCH(DISPATCH_TABLE_FD_CB, IY);
     }
 
     private void DISPATCH(MethodHandle[] table) throws Throwable {
@@ -330,16 +354,17 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    void SPECIAL_CB_DISPATCH(MethodHandle[] table) throws Throwable {
+    void SPECIAL_CB_DISPATCH(MethodHandle[] table, int special) throws Throwable {
         // pc:4,pc+1:4,pc+2:3,pc+3:3,pc+3:1 x 2
         byte operand = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
 
+        int opcodeAddress = PC;
         lastOpcode = memory.read(PC) & 0xFF;
         PC = (PC + 1) & 0xFFFF;
-        incrementR();
-        advanceCycles(5);
+        advanceCycles(3);
+        contendNoMreq(opcodeAddress, 2);
 
         MethodHandle instr = table[lastOpcode];
         if (instr != null) {
@@ -382,6 +407,8 @@ public class EmulatorEngine implements CpuEngine {
                 }
                 break;
             case 1:
+                // IM 1 acknowledge is an M1 cycle and advances the refresh register.
+                incrementR();
                 advanceCycles(12);
                 if (memory.read(PC) == 0x76) {
                     // jump over HALT
@@ -394,6 +421,8 @@ public class EmulatorEngine implements CpuEngine {
                 memptr = PC;
                 break;
             case 2:
+                // IM 2 acknowledge is an M1 cycle and advances the refresh register.
+                incrementR();
                 // IM2: 7T (INT ack M1 cycle, 4T + 2 extra wait states + 1T internal)
                 //      + 3T (push PCH) + 3T (push PCL) + 3T (read vector L) + 3T (read vector H) = 19T
                 advanceCycles(19);
@@ -522,17 +551,17 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_INC_SP() {
         SP = (SP + 1) & 0xFFFF;
-        advanceCycles(2);
+        contendRefresh(2);
     }
 
     void I_INC_IX() {
         IX = (IX + 1) & 0xFFFF;
-        advanceCycles(2);
+        contendRefresh(2);
     }
 
     void I_INC_IY() {
         IY = (IY + 1) & 0xFFFF;
-        advanceCycles(2);
+        contendRefresh(2);
     }
 
     void I_INC_RP(int low, int high, int value) {
@@ -540,7 +569,7 @@ public class EmulatorEngine implements CpuEngine {
         int result = (value + 1) & 0xFFFF;
         regs[high] = result >>> 8;
         regs[low] = result & 0xFF;
-        advanceCycles(2);
+        contendRefresh(2);
     }
 
     void I_INC_B() {
@@ -618,17 +647,17 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_DEC_SP() {
         SP = (SP - 1) & 0xFFFF;
-        advanceCycles(2);
+        contendRefresh(2);
     }
 
     void I_DEC_IX() {
         IX = (IX - 1) & 0xFFFF;
-        advanceCycles(2);
+        contendRefresh(2);
     }
 
     void I_DEC_IY() {
         IY = (IY - 1) & 0xFFFF;
-        advanceCycles(2);
+        contendRefresh(2);
     }
 
     void I_DEC_RP(int low, int high, int value) {
@@ -636,7 +665,7 @@ public class EmulatorEngine implements CpuEngine {
         value = (value - 1) & 0xFFFF;
         regs[high] = value >>> 8;
         regs[low] = value & 0xFF;
-        advanceCycles(2);
+        contendRefresh(2);
     }
 
     void I_DEC_B() {
@@ -710,13 +739,15 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_DEC_REF_II_N(int special) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3,ii+n:1,ii+n(write):3
+        int displacementAddress = PC;
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
+        advanceCycles(3);
+        contendNoMreq(displacementAddress, 5);
         int address = (special + disp) & 0xFFFF;
         int value = memory.read(address) & 0xFF;
         memptr = address;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(address);
 
         int sum = (value - 1) & 0x1FF;
         int sumByte = sum & 0xFF;
@@ -784,9 +815,11 @@ public class EmulatorEngine implements CpuEngine {
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
 
+        int immediateAddress = PC;
         byte number = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        advanceCycles(5);
+        advanceCycles(3);
+        contendNoMreq(immediateAddress, 2);
         int address = (special + disp) & 0xFFFF;
         memptr = address;
         memory.write(address, number);
@@ -846,20 +879,20 @@ public class EmulatorEngine implements CpuEngine {
         int res = I_ADD_SRC_RP((regs[REG_H] << 8) | regs[REG_L], rp);
         regs[REG_H] = (res >>> 8) & 0xFF;
         regs[REG_L] = res & 0xFF;
-        advanceCycles(7);
+        contendRefresh(7);
     }
 
     void I_ADD_IX_RP(int rp) {
         // pc:4,pc+1:11
         memptr = (IX + 1) & 0xFFFF;
         IX = I_ADD_SRC_RP2(IX, rp);
-        advanceCycles(7);
+        contendRefresh(7);
     }
 
     void I_ADD_IY_RP(int rp) {
         memptr = (IY + 1) & 0xFFFF;
         IY = I_ADD_SRC_RP2(IY, rp);
-        advanceCycles(7);
+        contendRefresh(7);
     }
 
     int I_ADD_SRC_RP(int src, int rp) {
@@ -944,6 +977,7 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_PUSH_IX() {
         // pc:5,sp-1:3,sp-2:3
+        contendRefresh(1);
         SP = (SP - 2) & 0xFFFF;
         memory.write((SP + 1) & 0xFFFF, (byte) (IX >>> 8));
         advanceCycles(3);
@@ -953,6 +987,7 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_PUSH_IY() {
         // pc:5,sp-1:3,sp-2:3
+        contendRefresh(1);
         SP = (SP - 2) & 0xFFFF;
         memory.write((SP + 1) & 0xFFFF, (byte) (IY >>> 8));
         advanceCycles(3);
@@ -962,7 +997,7 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_PUSH_RP(int value) {
         // pc:5,sp-1:3,sp-2:3
-        advanceCycles(1);
+        contendRefresh(1);
         SP = (SP - 2) & 0xffff;
         memory.write((SP + 1) & 0xFFFF, (byte) (value >>> 8));
         advanceCycles(3);
@@ -972,7 +1007,7 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_RET_CC() {
         //pc:5,[sp:3,sp+1:3]
-        advanceCycles(1);
+        contendRefresh(1);
         int cc = (lastOpcode >>> 3) & 7;
         if ((flags & CONDITION[cc]) == CONDITION_VALUES[cc]) {
             int tmp = memory.read(SP) & 0xFF;
@@ -987,7 +1022,7 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_RST() {
         // pc:5,sp-1:3,sp-2:3
-        advanceCycles(1);
+        contendRefresh(1);
         SP = (SP - 1) & 0xFFFF;
         memory.write(SP, (byte) (PC >>> 8));
         advanceCycles(3);
@@ -1070,17 +1105,11 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_ADD_A_REF_XY_D(int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
-        int address = (xy + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
+        int value = readIndexedValue(xy);
         int oldA = regs[REG_A];
         int sum = (oldA + value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
-        advanceCycles(3);
     }
 
 
@@ -1153,17 +1182,11 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_ADC_A_REF_XY_D(int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
-        int address = (xy + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
+        int value = readIndexedValue(xy);
         int oldA = regs[REG_A];
         int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
-        advanceCycles(3);
     }
 
     void I_SUB_B() {
@@ -1235,17 +1258,11 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_SUB_REF_XY_D(int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
-        int address = (xy + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
+        int value = readIndexedValue(xy);
         int oldA = regs[REG_A];
         int sum = (oldA - value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
         flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
-        advanceCycles(3);
     }
 
     void I_SBC_A_B() {
@@ -1317,17 +1334,11 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_SBC_A_REF_XY_D(int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
-        int address = (xy + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
+        int value = readIndexedValue(xy);
         int oldA = regs[REG_A];
         int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
         flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
-        advanceCycles(3);
     }
 
     void I_AND_B() {
@@ -1405,15 +1416,9 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_AND_REF_XY_D(int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
-        int address = (xy + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
+        int value = readIndexedValue(xy);
         regs[REG_A] = (regs[REG_A] & value) & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | FLAG_H | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        advanceCycles(3);
     }
 
     void I_XOR_B() {
@@ -1491,15 +1496,9 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_XOR_REF_XY_D(int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
-        int address = (xy + disp) & 0xFFFF;
-        memptr = address;
-        byte value = memory.read(address);
+        int value = readIndexedValue(xy);
         regs[REG_A] = ((regs[REG_A] ^ value) & 0xff);
         flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        advanceCycles(3);
     }
 
     void I_OR_B() {
@@ -1568,15 +1567,9 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_OR_REF_XY_D(int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
-        int address = (xy + disp) & 0xFFFF;
-        memptr = address;
-        byte value = memory.read(address);
+        int value = readIndexedValue(xy);
         regs[REG_A] = ((regs[REG_A] | value) & 0xff);
         flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
-        advanceCycles(3);
     }
 
     void I_CP_B() {
@@ -1648,16 +1641,10 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_CP_REF_XY_D(int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
-        int address = (xy + disp) & 0xFFFF;
-        memptr = address;
-        int value = memory.read(address) & 0xFF;
+        int value = readIndexedValue(xy);
         int sum = (regs[REG_A] - value) & 0x1FF;
         int result = sum & 0xFF;
         flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ regs[REG_A]]) | TABLE_XY[value];
-        advanceCycles(3);
     }
 
     void I_ADD_A_N() {
@@ -1773,15 +1760,16 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_DJNZ() {
         // pc:5,pc+1:3,[pc+1:1 x 5]
-        advanceCycles(1);
+        contendRefresh(1);
         byte addr = memory.read(PC);
+        int branchBase = PC;
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
         regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
         if (regs[REG_B] != 0) {
+            contendNoMreq(branchBase, 5);
             PC = (PC + addr) & 0xFFFF;
             memptr = PC;
-            advanceCycles(5);
         }
     }
 
@@ -2066,7 +2054,7 @@ public class EmulatorEngine implements CpuEngine {
 
         regs[REG_H] = (res >>> 8) & 0xFF;
         regs[REG_L] = res & 0xFF;
-        advanceCycles(7);
+        contendRefresh(7);
     }
 
     void I_ADC_HL_BC() {
@@ -2100,7 +2088,7 @@ public class EmulatorEngine implements CpuEngine {
 
         regs[REG_H] = (res >>> 8) & 0xFF;
         regs[REG_L] = (res & 0xFF);
-        advanceCycles(7);
+        contendRefresh(7);
     }
 
     void I_NEG() {
@@ -2181,7 +2169,8 @@ public class EmulatorEngine implements CpuEngine {
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         memptr = (hl + 1) & 0xFFFF;
         int value = memory.read(hl);
-        advanceCycles(7);
+        advanceCycles(3);
+        contendNoMreq(hl, 4);
         regs[REG_A] = ((regs[REG_A] & 0xF0) | (value & 0x0F));
         value = ((value >>> 4) & 0x0F) | (regA << 4);
         memory.write(hl, (byte) (value & 0xff));
@@ -2194,7 +2183,8 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:4,hl:3,hl:1 x 4,hl(write):3
         int hl = (regs[REG_H] << 8) | regs[REG_L];
         int value = memory.read(hl);
-        advanceCycles(7);
+        advanceCycles(3);
+        contendNoMreq(hl, 4);
         memptr = (hl + 1) & 0xFFFF;
         int tmp1 = (value >>> 4) & 0x0F;
         value = ((value << 4) & 0xF0) | (regs[REG_A] & 0x0F);
@@ -2890,22 +2880,26 @@ public class EmulatorEngine implements CpuEngine {
     void I_JR_CC_N() {
         // pc:4,pc+1:3,[pc+1:1 x 5]
         byte offset = memory.read(PC);
+        int branchBase = PC;
         PC = (PC + 1) & 0xFFFF;
         advanceCycles(3);
 
         if (getCC1((lastOpcode >>> 3) & 3)) {
+            contendNoMreq(branchBase, 5);
             PC = (PC + offset) & 0xFFFF;
             memptr = PC;
-            advanceCycles(5);
         }
     }
 
     void I_JR_N() {
         // pc:4,pc+1:3,[pc+1:1 x 5]
         int addr = memory.read(PC);
-        PC = (PC + 1 + (byte) addr) & 0xFFFF;
+        int branchBase = PC;
+        PC = (PC + 1) & 0xFFFF;
+        advanceCycles(3);
+        contendNoMreq(branchBase, 5);
+        PC = (PC + (byte) addr) & 0xFFFF;
         memptr = PC;
-        advanceCycles(8);
     }
 
     void I_OUT_REF_N_A() {
@@ -2965,12 +2959,13 @@ public class EmulatorEngine implements CpuEngine {
         advanceCycles(3);
         addr = ((memory.read(PC) << 8) | addr) & 0xFFFF;
         PC = (PC + 1) & 0xFFFF;
-        advanceCycles(4);
+        advanceCycles(3);
 
         memptr = addr;
 
         int tmp1 = (lastOpcode >>> 3) & 7;
         if ((flags & CONDITION[tmp1]) == CONDITION_VALUES[tmp1]) {
+            contendNoMreq((PC - 1) & 0xFFFF, 1);
             SP = (SP - 2) & 0xffff;
 
             memory.write((SP + 1) & 0xFFFF, (byte) (PC >>> 8));
@@ -3023,7 +3018,8 @@ public class EmulatorEngine implements CpuEngine {
         int addr = memory.read(PC) & 0xFF;
         advanceCycles(3);
         addr = ((memory.read((PC + 1) & 0xFFFF) << 8) | addr) & 0xFFFF;
-        advanceCycles(4);
+        advanceCycles(3);
+        contendNoMreq((PC + 1) & 0xFFFF, 1);
 
         PC = (PC + 2) & 0xFFFF;
         SP = (SP - 2) & 0xffff;
@@ -3342,23 +3338,11 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_LD_H_REF_IX_D() {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(3);
-        int address = (IX + disp) & 0xFFFF;
-        memptr = address;
-        regs[REG_H] = (memory.read(address) & 0xFF);
-        advanceCycles(8);
+        regs[REG_H] = readIndexedValue(IX);
     }
 
     void I_LD_H_REF_IY_D() {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(3);
-        int address = (IY + disp) & 0xFFFF;
-        memptr = address;
-        regs[REG_H] = (memory.read(address) & 0xFF);
-        advanceCycles(8);
+        regs[REG_H] = readIndexedValue(IY);
     }
 
     void I_LD_L_B() {
@@ -3416,13 +3400,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_LD_L_REF_IX_D() {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(3);
-        int address = (IX + disp) & 0xFFFF;
-        memptr = address;
-        regs[REG_L] = (memory.read(address) & 0xFF);
-        advanceCycles(8);
+        regs[REG_L] = readIndexedValue(IX);
     }
 
     void I_LD_IXL_A() {
@@ -3457,13 +3435,7 @@ public class EmulatorEngine implements CpuEngine {
     }
 
     void I_LD_L_REF_IY_D() {
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(3);
-        int address = (IY + disp) & 0xFFFF;
-        memptr = address;
-        regs[REG_L] = (memory.read(address) & 0xFF);
-        advanceCycles(8);
+        regs[REG_L] = readIndexedValue(IY);
     }
 
     void I_LD_A_B() {
@@ -3568,13 +3540,7 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_LD_R_REF_XY_D(int reg, int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
-        byte disp = memory.read(PC);
-        PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
-        int address = (xy + disp) & 0xFFFF;
-        memptr = address;
-        regs[reg] = memory.read(address) & 0xFF;
-        advanceCycles(3);
+        regs[reg] = readIndexedValue(xy);
     }
 
     void I_LD_REF_IX_D_B() {
@@ -3635,9 +3601,11 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_LD_REF_XY_D_R(int value, int xy) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3
+        int displacementAddress = PC;
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
+        advanceCycles(3);
+        contendNoMreq(displacementAddress, 5);
         int address = (xy + disp) & 0xFFFF;
         memptr = address;
         memory.write(address, (byte) value);
@@ -3916,13 +3884,15 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_INC_REF_II_N(int special) {
         // pc:4,pc+1:4,pc+2:3,pc+2:1 x 5,ii+n:3,ii+n:1,ii+n(write):3
+        int displacementAddress = PC;
         byte disp = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        advanceCycles(8);
+        advanceCycles(3);
+        contendNoMreq(displacementAddress, 5);
         int address = (special + disp) & 0xFFFF;
         int value = memory.read(address) & 0xFF;
         memptr = address;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(address);
 
         int sum = (value + 1) & 0x1FF;
         int sumByte = sum & 0xFF;
@@ -3994,7 +3964,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xFFFF;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
 
         int c = ((addrValue & 0x80) != 0) ? FLAG_C : 0;
         int res = ((addrValue << 1) | (addrValue >>> 7)) & 0xFF;
@@ -4018,7 +3988,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xffff;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
 
         int c = addrValue & 1;
         int res = (((addrValue >>> 1) & 0x7F) | (c << 7)) & 0xFF;
@@ -4042,7 +4012,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xffff;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
 
         int c = (addrValue >>> 7) & 1;
         int res = ((((addrValue << 1) & 0xFF) | flags & FLAG_C) & 0xFF);
@@ -4066,7 +4036,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xFFFF;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
 
         int c = addrValue & 1;
         int res = ((((addrValue >> 1) & 0xFF) | (flags & FLAG_C) << 7) & 0xFF);
@@ -4090,7 +4060,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xFFFF;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
 
         int c = (addrValue >>> 7) & 1;
         int res = (addrValue << 1) & 0xFE;
@@ -4114,7 +4084,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xFFFF;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
 
         int c = addrValue & 1;
         int res = (addrValue >> 1) & 0xFF | (addrValue & 0x80);
@@ -4138,7 +4108,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xFFFF;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
 
         int c = ((addrValue & 0x80) != 0) ? FLAG_C : 0;
         int res = ((addrValue << 1) | 0x01) & 0xFF;
@@ -4163,7 +4133,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xFFFF;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
 
         int c = ((addrValue & 0x01) != 0) ? FLAG_C : 0;
         int res = (addrValue >>> 1) & 0xFF;
@@ -4198,7 +4168,7 @@ public class EmulatorEngine implements CpuEngine {
         if (bit == 7) {
             flags |= ((result == 0x80) ? FLAG_S : 0);
         }
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(address);
     }
 
     void I_RES_N_REF_IX_N_R(byte operand) {
@@ -4214,7 +4184,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xFFFF;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
         int res = (addrValue & (~(1 << bitNumber)));
         memory.write(addr, (byte) (res & 0xff));
         // regs[6] is unused, so it's ok
@@ -4235,7 +4205,7 @@ public class EmulatorEngine implements CpuEngine {
         int addr = (special + operand) & 0xFFFF;
         memptr = addr;
         int addrValue = memory.read(addr) & 0xFF;
-        advanceCycles(4);
+        advanceMemoryReadWithHiddenCycle(addr);
 
         int res = (addrValue | (1 << bitNumber)) & 0xFF;
         memory.write(addr, (byte) res);
