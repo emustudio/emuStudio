@@ -760,6 +760,7 @@ public class EmulatorEngine implements CpuEngine {
         int sumByte = sum & 0xFF;
 
         flags = TABLE_SUB[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | TABLE_XY[sumByte];
+        Q = flags;
         memory.write(address, (byte) sumByte);
         advanceCycles(3);
     }
@@ -893,12 +894,14 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:11
         memptr = (IX + 1) & 0xFFFF;
         IX = I_ADD_SRC_RP2(IX, rp);
+        Q = flags;
         passiveRefreshCycles(7);
     }
 
     void I_ADD_IY_RP(int rp) {
         memptr = (IY + 1) & 0xFFFF;
         IY = I_ADD_SRC_RP2(IY, rp);
+        Q = flags;
         passiveRefreshCycles(7);
     }
 
@@ -1117,6 +1120,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (oldA + value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
+        Q = flags;
     }
 
 
@@ -1194,6 +1198,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (oldA + value + (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | (TABLE_CHP[sum ^ value ^ oldA]) | TABLE_XY[regs[REG_A]];
+        Q = flags;
     }
 
     void I_SUB_B() {
@@ -1270,6 +1275,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (oldA - value) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
         flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
+        Q = flags;
     }
 
     void I_SBC_A_B() {
@@ -1346,6 +1352,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (oldA - value - (flags & FLAG_C)) & 0x1FF;
         regs[REG_A] = sum & 0xFF;
         flags = TABLE_SUB[regs[REG_A]] | TABLE_CHP[sum ^ value ^ oldA] | TABLE_XY[regs[REG_A]];
+        Q = flags;
     }
 
     void I_AND_B() {
@@ -1426,6 +1433,7 @@ public class EmulatorEngine implements CpuEngine {
         int value = readIndexedValue(xy);
         regs[REG_A] = (regs[REG_A] & value) & 0xFF;
         flags = TABLE_SZ[regs[REG_A]] | FLAG_H | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
+        Q = flags;
     }
 
     void I_XOR_B() {
@@ -1506,6 +1514,7 @@ public class EmulatorEngine implements CpuEngine {
         int value = readIndexedValue(xy);
         regs[REG_A] = ((regs[REG_A] ^ value) & 0xff);
         flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
+        Q = flags;
     }
 
     void I_OR_B() {
@@ -1577,6 +1586,7 @@ public class EmulatorEngine implements CpuEngine {
         int value = readIndexedValue(xy);
         regs[REG_A] = ((regs[REG_A] | value) & 0xff);
         flags = TABLE_SZ[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | TABLE_XY[regs[REG_A]];
+        Q = flags;
     }
 
     void I_CP_B() {
@@ -1652,6 +1662,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (regs[REG_A] - value) & 0x1FF;
         int result = sum & 0xFF;
         flags = TABLE_SUB[result] | (TABLE_CHP[sum ^ value ^ regs[REG_A]]) | TABLE_XY[value];
+        Q = flags;
     }
 
     void I_ADD_A_N() {
@@ -2271,6 +2282,7 @@ public class EmulatorEngine implements CpuEngine {
             PC = (PC - 2) & 0xFFFF;
             memptr = (PC + 1) & 0xFFFF;
             flags = ((flags & (~FLAG_XY)) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
+            Q = flags;
             advanceCycles(5);
         }
     }
@@ -2355,7 +2367,7 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_B] = (bc >>> 8) & 0xFF;
         regs[REG_C] = bc & 0xFF;
 
-        int result = regs[REG_A] + io;
+        int result = regs[REG_A] + (io & 0xFF);
 
         flags = (flags & FLAG_SZC) |
                 ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
@@ -2383,7 +2395,7 @@ public class EmulatorEngine implements CpuEngine {
         regs[REG_B] = (bc >>> 8) & 0xFF;
         regs[REG_C] = bc & 0xFF;
 
-        int result = regs[REG_A] + io;
+        int result = regs[REG_A] + (io & 0xFF);
 
         flags = (flags & FLAG_SZC) |
                 ((result << 4) & FLAG_Y) | (result & FLAG_X) | (bc != 0 ? FLAG_PV : 0);
@@ -2394,6 +2406,7 @@ public class EmulatorEngine implements CpuEngine {
             PC = (PC - 2) & 0xFFFF;
             memptr = (PC + 1) & 0xFFFF;
             flags = ((flags & (~FLAG_XY)) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
+            Q = flags;
             passedCycles(deAddress, 5);
         }
     }
@@ -2462,6 +2475,7 @@ public class EmulatorEngine implements CpuEngine {
             PC = (PC - 2) & 0xFFFF;
             memptr = (PC + 1) & 0xFFFF;
             flags = (flags & (~FLAG_XY) | ((PC >>> 8) & FLAG_XY)) & 0xFF;
+            Q = flags;
             passedCycles(deAddress, 5);
         }
     }
@@ -2538,6 +2552,7 @@ public class EmulatorEngine implements CpuEngine {
             flagP = flagP ^ PARITY_TABLE[decB & 0x07] ^ FLAG_PV;
         }
         flags = ((flags & ~(FLAG_PV | FLAG_H)) | flagP | flagH) & 0xFF;
+        Q = flags;
         advanceCycles(5);
     }
 
@@ -2613,6 +2628,7 @@ public class EmulatorEngine implements CpuEngine {
             flagP = flagP ^ PARITY_TABLE[decB & 0x07] ^ FLAG_PV;
         }
         flags = ((flags & ~(FLAG_PV | FLAG_H)) | flagP | flagH) & 0xFF;
+        Q = flags;
         advanceCycles(5);
     }
 
@@ -3904,6 +3920,7 @@ public class EmulatorEngine implements CpuEngine {
         int sum = (value + 1) & 0x1FF;
         int sumByte = sum & 0xFF;
         flags = TABLE_SZ[sumByte] | (TABLE_HP[sum ^ 1 ^ value]) | (flags & FLAG_C) | TABLE_XY[sumByte];
+        Q = flags;
 
         memory.write(address, (byte) sumByte);
         advanceCycles(3);
@@ -3977,6 +3994,7 @@ public class EmulatorEngine implements CpuEngine {
         int res = ((addrValue << 1) | (addrValue >>> 7)) & 0xFF;
         memory.write(addr, (byte) res);
         flags = TABLE_SZ[res] | PARITY_TABLE[res] | c | TABLE_XY[res];
+        Q = flags;
 
         // regs[6] is unused, so it's ok
         regs[lastOpcode & 7] = res & 0xFF;
@@ -4001,6 +4019,7 @@ public class EmulatorEngine implements CpuEngine {
         int res = (((addrValue >>> 1) & 0x7F) | (c << 7)) & 0xFF;
         memory.write(addr, (byte) (res & 0xFF));
         flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | TABLE_XY[res];
+        Q = flags;
 
         // regs[6] is unused, so it's ok
         regs[lastOpcode & 7] = res & 0xFF;
@@ -4026,6 +4045,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(addr, (byte) (res & 0xFF));
 
         flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | TABLE_XY[res];
+        Q = flags;
         // regs[6] is unused, so it's ok
         regs[lastOpcode & 7] = res & 0xFF;
         advanceCycles(3);
@@ -4050,6 +4070,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(addr, (byte) (res & 0xFF));
 
         flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | TABLE_XY[res];
+        Q = flags;
         // regs[6] is unused, so it's ok
         regs[lastOpcode & 7] = res & 0xFF;
         advanceCycles(3);
@@ -4073,6 +4094,7 @@ public class EmulatorEngine implements CpuEngine {
         int res = (addrValue << 1) & 0xFE;
         memory.write(addr, (byte) res);
         flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | TABLE_XY[res];
+        Q = flags;
 
         // regs[6] is unused, so it's ok
         regs[lastOpcode & 7] = res & 0xFF;
@@ -4098,6 +4120,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(addr, (byte) res);
 
         flags = TABLE_SZ[res] | EmulatorTables.PARITY_TABLE[res] | c | TABLE_XY[res];
+        Q = flags;
         // regs[6] is unused, so it's ok
         regs[lastOpcode & 7] = res & 0xFF;
         advanceCycles(3);
@@ -4122,6 +4145,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(addr, (byte) res);
 
         flags = TABLE_SZ[res] | PARITY_TABLE[res] | c | TABLE_XY[res];
+        Q = flags;
 
         // regs[6] is unused, so it's ok
         regs[lastOpcode & 7] = res;
@@ -4147,6 +4171,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.write(addr, (byte) res);
 
         flags = TABLE_SZ[res] | PARITY_TABLE[res] | c | TABLE_XY[res];
+        Q = flags;
         // regs[6] is unused, so it's ok to set it
         regs[lastOpcode & 7] = res;
         advanceCycles(3);
@@ -4175,6 +4200,7 @@ public class EmulatorEngine implements CpuEngine {
         if (bit == 7) {
             flags |= ((result == 0x80) ? FLAG_S : 0);
         }
+        Q = flags;
         advanceMemoryReadWithPassiveCycle(address);
     }
 
