@@ -58,14 +58,17 @@ public class PluginLoader {
     public List<Class<Plugin>> loadPlugins(List<File> pluginFiles) throws IOException {
         Objects.requireNonNull(pluginFiles);
 
-        final Set<URL> urlsToLoad = new HashSet<>();
+        final Map<String, URL> urlsToLoad = new LinkedHashMap<>();
         for (File pluginFile : pluginFiles) {
-            urlsToLoad.add(pluginFile.toURI().toURL());
-            urlsToLoad.addAll(findDependencies(pluginFile));
+            addUrl(urlsToLoad, pluginFile.toURI().toURL());
+            for (URL dependency : findDependencies(pluginFile)) {
+                addUrl(urlsToLoad, dependency);
+            }
         }
 
         LOGGER.debug("Loading {} plugins", urlsToLoad.size());
-        URLClassLoader pluginsClassLoader = new URLClassLoader(urlsToLoad.toArray(new URL[0]));
+        //noinspection resource
+        URLClassLoader pluginsClassLoader = new URLClassLoader(urlsToLoad.values().toArray(new URL[0]));
 
         try {
             return pluginFiles.stream()
@@ -74,11 +77,16 @@ public class PluginLoader {
                     .collect(toList());
         } catch (Exception e) {
             // Those can be "sneaky" thrown
+            //noinspection ConstantValue
             if ((e instanceof InvalidPluginException) || (e instanceof IOException)) {
                 throw e;
             }
             throw new IOException(e);
         }
+    }
+
+    private void addUrl(Map<String, URL> urlsToLoad, URL url) {
+        urlsToLoad.putIfAbsent(url.toExternalForm(), url);
     }
 
     private List<URL> findDependencies(File pluginFile) throws IOException {

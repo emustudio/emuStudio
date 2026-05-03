@@ -52,8 +52,6 @@ public class CreateLineVisitor extends As8080ParserBaseVisitor<Node> {
         return CreateVisitors.instr(sourceFileName);
     }
 
-    ;
-
     private CreateDataVisitor dataVisitor() {
         return CreateVisitors.data(sourceFileName);
     }

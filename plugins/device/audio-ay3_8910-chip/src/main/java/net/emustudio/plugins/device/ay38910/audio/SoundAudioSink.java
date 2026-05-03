@@ -55,7 +55,9 @@ public final class SoundAudioSink implements AudioSink {
     @Override
     public void accept(byte[] pcmSamples, int length) {
         if (accepting) {
-            queue.offer(Arrays.copyOf(pcmSamples, length));
+            if (!queue.offer(Arrays.copyOf(pcmSamples, length))) {
+                // Drop the newest chunk when the queue is full to keep latency bounded.
+            }
         }
     }
 

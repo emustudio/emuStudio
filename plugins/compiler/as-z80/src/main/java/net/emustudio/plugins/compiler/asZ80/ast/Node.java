@@ -50,6 +50,7 @@ public abstract class Node {
         return List.copyOf(children);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends Node> Optional<T> collectChild(Class<T> cl) {
         for (Node child : children) {
             if (cl.isInstance(child)) {

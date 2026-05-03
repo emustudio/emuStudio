@@ -7,6 +7,8 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -22,6 +24,7 @@ import java.util.Optional;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadImageAction.class);
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ssem/gui/document-open.png";
     private final ApplicationApi api;
     private final Dialogs dialogs;
@@ -65,8 +68,7 @@ public class LoadImageAction extends AbstractAction {
                 repaint.run();
             } catch (Exception ex) {
                 dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");
-
-                ex.printStackTrace();
+                LOGGER.error("Could not load image file '{}'", path, ex);
             }
         });
     }

@@ -28,7 +28,6 @@ import java.util.function.Consumer;
 
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 import static net.emustudio.emulib.runtime.ui.Constants.*;
-import static net.emustudio.emulib.runtime.ui.Constants.FONT_COMMON;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 /**
@@ -455,4 +454,3 @@ public class EmuStudioGui implements GUI {
         return new FadingBorder(thickness, color);
     }
 }
-

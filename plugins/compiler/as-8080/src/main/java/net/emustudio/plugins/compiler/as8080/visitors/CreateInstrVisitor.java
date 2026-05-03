@@ -66,5 +66,5 @@ public class CreateInstrVisitor extends As8080ParserBaseVisitor<Node> {
 
     private CreateExprVisitor exprVisitor() {
         return CreateVisitors.expr(sourceFileName);
-    };
+    }
 }

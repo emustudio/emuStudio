@@ -19,6 +19,7 @@ import javax.swing.*;
 import java.awt.Dimension;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.*;
 
@@ -56,10 +57,14 @@ public class ViewComputerDialog extends DialogBase {
         // Select default info (CPU)
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        showPluginInfo(computer.getCPU().orElse(null), computer.getComputerConfig().getCPU().orElse(null));
+        showOptionalPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
     }
 
-    private <T extends Plugin> void showPluginInfo(T plugin, PluginConfig config) {
+    private void showOptionalPluginInfo(Optional<? extends Plugin> plugin, Optional<PluginConfig> config) {
+        showPluginInfo(plugin.orElse(null), config.orElse(null));
+    }
+
+    private void showPluginInfo(Plugin plugin, PluginConfig config) {
         if (plugin != null && config != null) {
             lblName.setText(plugin.getTitle());
             lblVersion.setText(plugin.getVersion());
@@ -114,7 +119,7 @@ public class ViewComputerDialog extends DialogBase {
         JToggleButton btnCompiler = gui.toolbarToggleButton(e -> {
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
-            showPluginInfo(computer.getCompiler().orElse(null), computer.getComputerConfig().getCompiler().orElse(null));
+            showOptionalPluginInfo(computer.getCompiler(), computer.getComputerConfig().getCompiler());
         }, ICON_COMPILER, "Compiler information");
         btnCompiler.setEnabled(computer.getCompiler().isPresent());
         btnCompiler.setSelected(false);
@@ -125,7 +130,7 @@ public class ViewComputerDialog extends DialogBase {
         JToggleButton btnCPU = gui.toolbarToggleButton(e -> {
             lblSelectDevice.setVisible(false);
             cmbDevice.setVisible(false);
-            showPluginInfo(computer.getCPU().orElse(null), computer.getComputerConfig().getCPU().orElse(null));
+            showOptionalPluginInfo(computer.getCPU(), computer.getComputerConfig().getCPU());
         }, ICON_CPU, "CPU information");
         btnCPU.setEnabled(computer.getCPU().isPresent());
         btnCPU.setSelected(true);
@@ -136,7 +141,7 @@ public class ViewComputerDialog extends DialogBase {
         JToggleButton btnMemory = gui.toolbarToggleButton(e -> {
                     lblSelectDevice.setVisible(false);
                     cmbDevice.setVisible(false);
-                    showPluginInfo(computer.getMemory().orElse(null), computer.getComputerConfig().getMemory().orElse(null));
+                    showOptionalPluginInfo(computer.getMemory(), computer.getComputerConfig().getMemory());
                 }, ICON_MEMORY, "Memory information");
         btnMemory.setEnabled(computer.getMemory().isPresent());
         btnMemory.setSelected(false);

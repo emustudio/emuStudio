@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.ByteBuffer;
@@ -159,7 +158,9 @@ public class SSEMCompiler extends AbstractCompiler {
     private void writeToFile(ByteBuffer code, Path outputPath) throws IOException {
         code.rewind();
         try (FileOutputStream fos = new FileOutputStream(outputPath.toFile(), false)) {
-            fos.getChannel().write(code);
+            while (code.hasRemaining()) {
+                fos.getChannel().write(code);
+            }
         }
     }
 

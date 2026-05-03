@@ -7,6 +7,8 @@ import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 import net.emustudio.plugins.memory.bytemem.gui.SelectBankAddressDialog;
 import net.emustudio.plugins.memory.bytemem.loaders.Loader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -21,6 +23,7 @@ import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 import static net.emustudio.plugins.memory.bytemem.gui.Constants.IMAGE_EXTENSION_FILTER;
 
 public class LoadImageAction extends AbstractAction {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadImageAction.class);
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/bytemem/gui/document-open.png";
     private final Dialogs dialogs;
     private final ByteMemoryContext context;
@@ -58,8 +61,7 @@ public class LoadImageAction extends AbstractAction {
                     repaint.run();
                 } catch (Exception ex) {
                     dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");
-
-                    ex.printStackTrace();
+                    LOGGER.error("Could not load image file '{}'", path, ex);
                 }
             }
         });

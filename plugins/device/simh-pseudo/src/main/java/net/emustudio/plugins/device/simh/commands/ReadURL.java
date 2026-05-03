@@ -2,6 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.simh.commands;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -9,6 +12,7 @@ import java.net.URLConnection;
 import java.util.Arrays;
 
 public class ReadURL implements Command {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReadURL.class);
     public final static ReadURL INS = new ReadURL();
 
     private final static int URL_MAX_LENGTH = 1024;
@@ -88,14 +92,14 @@ public class ReadURL implements Command {
             urlConnection.setConnectTimeout(10_000);
             urlConnection.setReadTimeout(10_000);
 
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                content.append(line).append("\n");
+            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
             }
-            bufferedReader.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Could not read URL '{}'", theUrl, e);
             return "Could not read from URL: " + theUrl + " due to: " + e.getMessage();
         }
         return content.toString();

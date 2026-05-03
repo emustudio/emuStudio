@@ -5,6 +5,8 @@ package net.emustudio.plugins.memory.ram.gui.actions;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.memory.ram.MemoryContextImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -18,6 +20,7 @@ import java.util.Optional;
 import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class LoadImageAction extends AbstractAction {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadImageAction.class);
     private final static String ICON_FILE = "/net/emustudio/plugins/memory/ram/gui/document-open.png";
     private final Dialogs dialogs;
     private final MemoryContextImpl context;
@@ -49,8 +52,7 @@ public class LoadImageAction extends AbstractAction {
                 repaint.run();
             } catch (Exception ex) {
                 dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");
-
-                ex.printStackTrace();
+                LOGGER.error("Could not load image file '{}'", path, ex);
             }
         });
     }

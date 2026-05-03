@@ -161,7 +161,7 @@ public class CpuImpl extends AbstractCPU {
         try {
             return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.cpu.intel8080.version"));
         } catch (MissingResourceException e) {
-            e.printStackTrace();
+            LOGGER.warn("Could not load Intel 8080 version resource bundle", e);
             return Optional.empty();
         }
     }

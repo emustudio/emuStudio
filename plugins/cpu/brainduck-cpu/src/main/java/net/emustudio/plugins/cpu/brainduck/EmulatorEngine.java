@@ -122,7 +122,8 @@ public class EmulatorEngine {
                 }
                 break;
             case I_COPY_AND_CLEAR: // [>+<-] or [>-<-] or [<+>-] or [<->-] or [-] or combinations
-                for (Profiler.CopyLoop copyLoop : operation.copyLoops) {
+                Profiler.CachedOperation copyLoopOperation = Objects.requireNonNull(operation);
+                for (Profiler.CopyLoop copyLoop : copyLoopOperation.copyLoops) {
                     if (copyLoop.specialOP == I_PRINT) {
                         context.writeToDevice(rawMemory[P]);
                     } else if (copyLoop.specialOP == I_READ) {
@@ -134,7 +135,8 @@ public class EmulatorEngine {
                 rawMemory[P] = 0;
                 break;
             case I_SCANLOOP: // [<] or [>] or combinations
-                for (; rawMemory[P] != 0; P += operation.argument) ;
+                int scanStep = Objects.requireNonNull(operation).argument;
+                for (; rawMemory[P] != 0; P += scanStep) ;
                 break;
             default: /* invalid instruction */
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;
