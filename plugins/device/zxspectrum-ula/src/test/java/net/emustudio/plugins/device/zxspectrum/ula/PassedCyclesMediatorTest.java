@@ -3,22 +3,25 @@
 package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas;
 import org.junit.Test;
 
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
-import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCREEN_IMAGE_HEIGHT;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public class PassedCyclesMediatorTest {
+    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
+    private static final int DISPLAY_LINE_TSTATES = TIMING.displayLineTstates;
+    private static final int DISPLAY_FRAME_TSTATES = TIMING.displayFrameTstates;
+    private static final int INTERRUPT_TSTATES = TIMING.interruptTstates;
 
     @Test
     public void testInterruptIsClearedAfterExact32TStates() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
 
-        long frameCycles = (long) (PRE_SCREEN_LINES + SCREEN_HEIGHT_PIXELS + POST_SCREEN_LINES) * DISPLAY_LINE_TSTATES;
+        long frameCycles = TIMING.displayFrameTstates;
         for (long i = 0; i < frameCycles; i++) {
             mediator.passedCycles(1);
         }
@@ -39,7 +42,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testNullCanvasDoesNotThrowDuringPassedCycles() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
         // canvas is null by default — should not throw
         mediator.passedCycles(DISPLAY_LINE_TSTATES);
     }
@@ -47,7 +50,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testLineDrawnOnCanvasAtLineBoundary() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
         DisplayCanvas canvas = createNiceMock(DisplayCanvas.class);
         // Expect drawNextLine(0) to be called once for the first line boundary
         canvas.drawNextLine(0);
@@ -64,10 +67,10 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testNoLinesDrawnBeyondScreenImageHeight() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
         DisplayCanvas canvas = createStrictMock(DisplayCanvas.class);
-        // Expect exactly SCREEN_IMAGE_HEIGHT drawNextLine calls (lines 0..311)
-        for (int i = 0; i < SCREEN_IMAGE_HEIGHT; i++) {
+        // Expect exactly one raster line draw per frame line.
+        for (int i = 0; i < TIMING.frameLineCount; i++) {
             canvas.drawNextLine(i);
             expectLastCall().once();
         }
@@ -87,7 +90,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testFrameBoundaryTriggersOnNextFrameAndRepaint() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
         DisplayCanvas canvas = createNiceMock(DisplayCanvas.class);
         canvas.repaint();
         expectLastCall().once();
@@ -104,7 +107,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testMultipleFramesCycleCorrectly() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
 
         // Run 3 full frames
         for (int frame = 0; frame < 3; frame++) {
@@ -129,7 +132,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testResetClearsAllInternalState() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
 
         // Accumulate half a frame
         long halfFrame = DISPLAY_FRAME_TSTATES / 2;
@@ -148,7 +151,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testBulkCyclesStillDrawLinesAndFrame() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
 
         // Pass a whole frame in a single bulk call
         mediator.passedCycles(DISPLAY_FRAME_TSTATES);
@@ -160,7 +163,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testAudioCyclesAlwaysForwardedEvenWithoutCanvas() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
         // No canvas set
 
         mediator.passedCycles(12345);
@@ -171,7 +174,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testSetCanvasToNullStopsDrawing() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
         DisplayCanvas canvas = createNiceMock(DisplayCanvas.class);
         replay(canvas);
 
@@ -185,7 +188,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testInterruptNotClearedBeforeThreshold() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
 
         // One full frame
         mediator.passedCycles(DISPLAY_FRAME_TSTATES);
@@ -204,7 +207,7 @@ public class PassedCyclesMediatorTest {
     @Test
     public void testInterruptNotActivatedUntilFrameBoundary() {
         TestULA ula = new TestULA();
-        PassedCyclesMediator mediator = new PassedCyclesMediator(ula);
+        PassedCyclesMediator mediator = new PassedCyclesMediator(ula, TIMING);
 
         // Pass INTERRUPT_TSTATES cycles without a frame boundary — interrupt should not fire
         mediator.passedCycles(INTERRUPT_TSTATES);
@@ -237,6 +240,7 @@ public class PassedCyclesMediatorTest {
 
         private static ZxSpectrumBus newMockBus() {
             ZxSpectrumBus bus = createNiceMock(ZxSpectrumBus.class);
+            expect(bus.getProfile()).andStubReturn(TIMING);
             replay(bus);
             return bus;
         }

@@ -49,6 +49,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     private final NavigableMap<Long, Runnable> loaderSchedule = new TreeMap<>();
     private long currentTstates;
     private boolean pulseUp;
+    private boolean lastIntervalNeedsClosingEdge;
 
     private volatile boolean playing;
     private long playingTstates;
@@ -86,9 +87,10 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         loaderSchedule.clear();
         currentTstates = 1;
         pulseUp = false;
+        lastIntervalNeedsClosingEdge = false;
         resetPlaybackMetrics();
         updatePlaybackProgress(0);
-        schedulePulse(millisToTstates(FILE_START_PAUSE_MS), "PAUSE", "");
+        schedulePulse(millisToTstates(FILE_START_PAUSE_MS), "PAUSE", "", false);
     }
 
     @Override
@@ -161,9 +163,8 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
     @Override
     public void onFileEnd() {
-        totalPlayableTstates = Optional.ofNullable(loaderSchedule.lastEntry())
-                .map(Map.Entry::getKey)
-                .orElse(0L);
+        ensureClosingEdgeAtFileEnd();
+        totalPlayableTstates = loaderSchedule.isEmpty() ? 0L : currentTstates;
         barrier.reset();
         playPulses();
         try {
@@ -215,7 +216,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
         // Pause
         if (pauseAfterMs > 0) {
-            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms");
+            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms", false);
         }
     }
 
@@ -254,7 +255,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         }
 
         if (pauseAfterMs > 0) {
-            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms");
+            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms", false);
         }
     }
 
@@ -276,7 +277,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         }
 
         if (pauseAfterMs > 0) {
-            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms");
+            schedulePulse(millisToTstates(pauseAfterMs), "PAUSE", pauseAfterMs + " ms", false);
         }
     }
 
@@ -300,7 +301,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         if (durationMs == 0) {
             logProgramDetail("STOP TAPE", "Stop the tape (pause=0)");
         } else {
-            schedulePulse(millisToTstates(durationMs), "PAUSE", durationMs + " ms");
+            schedulePulse(millisToTstates(durationMs), "PAUSE", durationMs + " ms", false);
         }
     }
 
@@ -395,23 +396,28 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     }
 
     private void schedulePulse(int length, String eventType, String details) {
+        schedulePulse(length, eventType, details, true);
+    }
+
+    private void schedulePulse(int length, String eventType, String details, boolean needsClosingEdge) {
         final long tstate = currentTstates;
         Runnable one = () -> {
             if (!eventType.isEmpty()) {
                 logPulse(tstate, length, eventType, details);
             }
-            lineIn.writeData((byte) 1);
+            writeLineValue((byte) 1);
         };
         Runnable zero = () -> {
             if (!eventType.isEmpty()) {
                 logPulse(tstate, length, eventType, details);
             }
-            lineIn.writeData((byte) 0);
+            writeLineValue((byte) 0);
         };
 
         loaderSchedule.put(currentTstates, pulseUp ? one : zero);
         currentTstates += length;
         pulseUp = !pulseUp;
+        lastIntervalNeedsClosingEdge = needsClosingEdge;
     }
 
     /**
@@ -425,10 +431,11 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
             if (!eventType.isEmpty()) {
                 logPulse(tstate, tstatesPerSample, eventType, details);
             }
-            lineIn.writeData(value);
+            writeLineValue(value);
         });
         currentTstates += tstatesPerSample;
         pulseUp = high;
+        lastIntervalNeedsClosingEdge = false;
     }
 
     private void playPulses() {
@@ -447,7 +454,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
                 loaderSchedule.pollFirstEntry().getValue().run();
                 entry = loaderSchedule.firstEntry();
             }
-            if (loaderSchedule.isEmpty()) {
+            if (loaderSchedule.isEmpty() && playingTstates >= totalPlayableTstates) {
                 updatePlaybackProgress(100);
                 playing = false;
                 try {
@@ -484,6 +491,20 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
             lastReportedProgress = clampedProgress;
             Optional.ofNullable(gui.get()).ifPresent(g -> g.setPlaybackProgress(clampedProgress));
         }
+    }
+
+    private void writeLineValue(byte value) {
+        lineIn.writeData(value);
+    }
+
+    private void ensureClosingEdgeAtFileEnd() {
+        if (!lastIntervalNeedsClosingEdge || loaderSchedule.isEmpty()) {
+            return;
+        }
+
+        final byte value = pulseUp ? (byte) 1 : (byte) 0;
+        loaderSchedule.put(currentTstates, () -> writeLineValue(value));
+        lastIntervalNeedsClosingEdge = false;
     }
 
     private int millisToTstates(int durationMs) {

@@ -3,7 +3,6 @@
 package net.emustudio.plugins.device.adm3a.api;
 
 import net.emustudio.emulib.plugins.device.DeviceContext;
-import net.emustudio.plugins.device.adm3a.TerminalSettings;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.Objects;

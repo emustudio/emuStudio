@@ -14,7 +14,6 @@ import static org.junit.Assert.*;
 public class FlagsModelTest {
     private EmulatorEngine engine;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
@@ -218,4 +217,3 @@ public class FlagsModelTest {
         assertEquals(0, model.getValueAt(0, 5)); // C
     }
 }
-

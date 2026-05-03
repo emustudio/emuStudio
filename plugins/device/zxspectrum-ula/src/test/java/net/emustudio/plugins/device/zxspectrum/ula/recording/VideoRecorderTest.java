@@ -2,6 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.recording;
 
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
@@ -27,14 +28,26 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class VideoRecorderTest {
+    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
+    private static final int ZX_48K_CPU_FREQUENCY = 3_500_000;
     private static final int FRAME_SIZE = 32;
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+    private static VideoRecorder newRecorder() throws IOException {
+        return new VideoRecorder(
+                FRAME_SIZE,
+                FRAME_SIZE,
+                TIMING.displayFrameTstates,
+                ZX_48K_CPU_FREQUENCY,
+                Beeper.DEFAULT_SAMPLE_RATE
+        );
+    }
+
     @Test
     public void testExportsMp4WhenSavingAsMp4() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         recorder.captureVideo(createFrame());
 
         Path output = temporaryFolder.newFile("capture.mp4").toPath();
@@ -45,7 +58,7 @@ public class VideoRecorderTest {
 
     @Test
     public void testExportsAudioTrackWhenAudioWasRecorded() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         recorder.captureVideo(createFrame());
         byte[] audio = createAudioFrames(960);
         recorder.captureAudio(audio);
@@ -58,7 +71,7 @@ public class VideoRecorderTest {
 
     @Test
     public void testDiscardsRecordingImmediatelyAfterIoError() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         recorder.captureVideo(createFrame(FRAME_SIZE));
         recorder.captureVideo(createFrame(FRAME_SIZE + 1));
 
@@ -71,36 +84,41 @@ public class VideoRecorderTest {
     @Test
     public void testConstructorRejectsZeroWidth() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VideoRecorder(0, FRAME_SIZE, 69_888, 3_500_000, 48_000));
+                () -> new VideoRecorder(0, FRAME_SIZE, TIMING.displayFrameTstates,
+                        ZX_48K_CPU_FREQUENCY, Beeper.DEFAULT_SAMPLE_RATE));
     }
 
     @Test
     public void testConstructorRejectsNegativeHeight() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VideoRecorder(FRAME_SIZE, -1, 69_888, 3_500_000, 48_000));
+                () -> new VideoRecorder(FRAME_SIZE, -1, TIMING.displayFrameTstates,
+                        ZX_48K_CPU_FREQUENCY, Beeper.DEFAULT_SAMPLE_RATE));
     }
 
     @Test
     public void testConstructorRejectsZeroVideoScale() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 0, 3_500_000, 48_000));
+                () -> new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 0,
+                        ZX_48K_CPU_FREQUENCY, Beeper.DEFAULT_SAMPLE_RATE));
     }
 
     @Test
     public void testConstructorRejectsNegativeVideoRate() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, -1, 48_000));
+                () -> new VideoRecorder(FRAME_SIZE, FRAME_SIZE, TIMING.displayFrameTstates,
+                        -1, Beeper.DEFAULT_SAMPLE_RATE));
     }
 
     @Test
     public void testConstructorRejectsZeroAudioSampleRate() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 0));
+                () -> new VideoRecorder(FRAME_SIZE, FRAME_SIZE, TIMING.displayFrameTstates,
+                        ZX_48K_CPU_FREQUENCY, 0));
     }
 
     @Test
     public void testStopWithEmptyOptionalDiscardsRecording() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         recorder.captureVideo(createFrame());
         recorder.stop(null);
         // no exception, recording silently discarded
@@ -108,7 +126,7 @@ public class VideoRecorderTest {
 
     @Test
     public void testStopWithNoVideoFramesThrows() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         Path output = temporaryFolder.newFile("empty.mp4").toPath();
 
         IOException error = assertThrows(IOException.class, () -> recorder.stop(output));
@@ -117,7 +135,7 @@ public class VideoRecorderTest {
 
     @Test
     public void testMultipleVideoFramesProduceValidMp4() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         for (int i = 0; i < 5; i++) {
             recorder.captureVideo(createFrame());
         }
@@ -131,7 +149,7 @@ public class VideoRecorderTest {
 
     @Test
     public void testMultipleVideoFramesWithAudioProduceValidMp4() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         for (int i = 0; i < 3; i++) {
             recorder.captureVideo(createFrame());
             recorder.captureAudio(createAudioFrames(480));
@@ -145,7 +163,7 @@ public class VideoRecorderTest {
 
     @Test
     public void testMisalignedAudioAbortsRecording() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         recorder.captureVideo(createFrame());
         // 3 bytes is not a whole PCM frame (frame size = 4 bytes)
         recorder.captureAudio(new byte[]{1, 2, 3});
@@ -157,7 +175,7 @@ public class VideoRecorderTest {
 
     @Test
     public void testCaptureVideoAfterStopIsIgnored() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         recorder.captureVideo(createFrame());
 
         Path output = temporaryFolder.newFile("after-stop.mp4").toPath();
@@ -170,7 +188,7 @@ public class VideoRecorderTest {
 
     @Test
     public void testCaptureAudioWithNullThrowsNpe() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         assertThrows(NullPointerException.class, () -> recorder.captureAudio(null));
     }
 
@@ -179,7 +197,7 @@ public class VideoRecorderTest {
     public void testTempFilesAreCleanedUpAfterExport() throws IOException {
         long before = countUlaTempFiles();
 
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         recorder.captureVideo(createFrame());
         recorder.captureAudio(createAudioFrames(480));
 
@@ -194,7 +212,7 @@ public class VideoRecorderTest {
     public void testDiscardDeletesTempFiles() throws IOException {
         long before = countUlaTempFiles();
 
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         recorder.captureVideo(createFrame());
         recorder.stop(null);
 
@@ -203,7 +221,7 @@ public class VideoRecorderTest {
 
     @Test
     public void testExportCreatesParentDirectories() throws IOException {
-        VideoRecorder recorder = new VideoRecorder(FRAME_SIZE, FRAME_SIZE, 69_888, 3_500_000, 48_000);
+        VideoRecorder recorder = newRecorder();
         recorder.captureVideo(createFrame());
 
         Path output = temporaryFolder.getRoot().toPath().resolve("sub/dir/nested.mp4");

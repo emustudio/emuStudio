@@ -400,12 +400,12 @@ public class ParseInstrTest {
                 .addChild(new ExprCurrentAddress(POSITION))
                 .addChild(new ExprNumber(POSITION, 5));
 
-        forStringCaseVariations(instrPrefix, prefixVariation -> {
+        forStringCaseVariations(instrPrefix, prefixVariation ->
             forStringCaseVariations(instrPostfix, postfixVariation -> {
                 Program program = parseProgram(prefixVariation + " $ + 5" + postfixVariation);
                 assertTrees(new Program("").addChild(new InstrXD(POSITION, instrType, prefix, x, y, z).addChild(expr)), program);
-            });
-        });
+            })
+        );
     }
 
     private void assertInstrXDExprExpr(String instrPrefix, int prefix) {

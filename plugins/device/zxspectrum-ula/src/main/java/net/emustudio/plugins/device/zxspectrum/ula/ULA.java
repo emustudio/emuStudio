@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.zxspectrum.ula;
 
 import net.emustudio.emulib.runtime.helpers.ReadWriteLockSupport;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
 import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.AudioSink;
 import net.emustudio.plugins.device.zxspectrum.ula.audio.Beeper;
@@ -19,63 +20,69 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.event.KeyEvent.*;
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 
 /**
- * Uncommitted Logic Array (ULA).
- * <p>
- * References:
- * - <a href="https://worldofspectrum.org/faq/reference/48kreference.htm">ZX-Spctrum 48K Technical Reference</a>
- * - <a href="http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/screen-memory-layout">Screen Memory layout</a>
+ * Emulates the ZX Spectrum ULA.
  *
- * <p>
- * The ULA component in emuStudio is a "mediator" of interaction between host and emulator. That means, it handles:
- * - keyboard
- * - audio
- * - video (maps RAM to video/attribute memory, video flash, border color)
- * <p>
- * From the ZX Spectrum point of view, it represents the port 0xFE (254).
- * <p>
- * Port 0xFE write:
+ * <p>In emuStudio, this class owns the parts of the machine normally exposed through port
+ * {@code 0xFE} plus the ULA-driven video and frame side effects. It:
+ * <ul>
+ * <li>maps host keyboard events onto the 8-line Spectrum keyboard matrix</li>
+ * <li>tracks border colour and the EAR/MIC output bits written by the CPU</li>
+ * <li>mixes the tape EAR input from {@link ZxSpectrumBus#readData()} into the beeper output</li>
+ * <li>reads bitmap and attribute bytes from RAM using the active {@link TimingProfile}</li>
+ * <li>signals frame interrupts and toggles FLASH state at frame boundaries</li>
+ * </ul>
+ *
+ * <p>Port {@code 0xFE} write layout:
+ * <pre>
  * 7   6   5   4   3   2   1   0
  * +-------------------------------+
  * |   |   |   | E | M |   Border  |
  * +-------------------------------+
- * <p>
- * Keyboard matrix:
- * - on host SHIFT + letter/number = ZX "shift" + letter / number
- * - on host CTRL + letter/number = ZX symbol "shift" + letter/number
- * - on host plain letter/number = ZX letter/number
- * <p>
- * Port 0xFE read (bit 0 to bit 4 inclusive):
- * 0xfefe  SHIFT, Z, X, C, V            0xeffe  0, 9, 8, 7, 6
- * 0xfdfe  A, S, D, F, G                0xdffe  P, O, I, U, Y
- * 0xfbfe  Q, W, E, R, T                0xbffe  ENTER, L, K, J, H
- * 0xf7fe  1, 2, 3, 4, 5                0x7ffe  SPACE, SYM SHIFT, M, N, B
- * <p>
- * The colour attribute data overlays the monochrome bitmap data and is arranged in a linear fashion from left to right,
- * top to bottom. Each attribute byte colours is 8x8 character on the screen and is encoded as follows:
- * <p>
+ * </pre>
+ *
+ * <p>Keyboard reads return the AND of all selected key lines and copy the tape EAR input into
+ * bit 6. Key-line selection on reads:
+ * <pre>
+ * 0xFEFE  SHIFT, Z, X, C, V      0xEFFE  0, 9, 8, 7, 6
+ * 0xFDFE  A, S, D, F, G          0xDFFE  P, O, I, U, Y
+ * 0xFBFE  Q, W, E, R, T          0xBFFE  ENTER, L, K, J, H
+ * 0xF7FE  1, 2, 3, 4, 5          0x7FFE  SPACE, SYM SHIFT, M, N, B
+ * </pre>
+ *
+ * <p>Host keyboard mapping rules:
+ * <ul>
+ * <li>host Shift + letter/number = ZX Shift + letter/number</li>
+ * <li>host Ctrl/Alt + letter/number = ZX Symbol Shift + letter/number</li>
+ * <li>plain host letter/number = plain ZX letter/number</li>
+ * </ul>
+ *
+ * <p>Screen attributes overlay the monochrome bitmap. Each attribute byte describes one
+ * {@code 8x8} character cell:
+ * <pre>
  * 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
  * F | B | P2| P1| P0| I2| I1| I0|
  * +-------------------------------+
- * <p>
- * - F sets the attribute FLASH mode
- * - B sets the attribute BRIGHTNESS mode
- * - P2 to P0 is the PAPER colour
- * - I2 to I0 is the INK colour
+ * </pre>
+ * <ul>
+ * <li>F = FLASH</li>
+ * <li>B = BRIGHT</li>
+ * <li>P2..P0 = PAPER colour</li>
+ * <li>I2..I0 = INK colour</li>
+ * </ul>
+ *
+ * <p>References:
+ * <ul>
+ * <li><a href="https://worldofspectrum.org/faq/reference/48kreference.htm">ZX Spectrum 48K Technical Reference</a></li>
+ * <li><a href="http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/screen-memory-layout">Screen memory layout</a></li>
+ * </ul>
  */
 @ThreadSafe
 public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyListener {
-    private final static byte[] INTERRUPT_DATA = new byte[]{(byte) 0xFF};
     private final static byte[] KEY_SHIFT = new byte[]{0, 1};
     private final static byte[] KEY_SYM_SHIFT = new byte[]{7, 2};
-    private final static int[] LINE_OFFSETS = computeLineOffsets();
     private final static byte KEY_RELEASED_STATE = (byte) 0xBF;
-
-    // The Spectrum's 'FLASH' effect is also produced by the ULA: Every 16 frames, the ink and paper of all flashing
-    // bytes is swapped; ie a normal to inverted to normal cycle takes 32 frames, which is (good as) 0.64 seconds.
-    public static final int VIDEO_FLASH_FRAME = 15;
 
     @GuardedBy("keymapLock")
     private final byte[] keymap = new byte[8]; // effective keyboard state
@@ -83,8 +90,8 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private final ReadWriteLockSupport keymapLock = new ReadWriteLockSupport();
 
     // accessible from outside
-    public final byte[][] videoMemory = new byte[ATTRIBUTES_WIDTH][SCREEN_HEIGHT_PIXELS];
-    public final byte[][] attributeMemory = new byte[ATTRIBUTES_WIDTH][ATTRIBUTE_HEIGHT];
+    public final byte[][] videoMemory;
+    public final byte[][] attributeMemory;
 
     // maps host characters to ZX Spectrum key "commands"
     // Byte[] = {key line, key value, shift, symshift}
@@ -162,7 +169,9 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     private int flashFramesCount = 0;
 
     private final ZxSpectrumBus bus;
+    private final TimingProfile timing;
     private final Beeper beeper;
+    private final byte[] interruptData;
 
     // Written by CPU thread (write), read by AWT thread (getBorderColor from paint)
     private volatile int borderColor;
@@ -180,12 +189,16 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
 
     public ULA(ZxSpectrumBus bus, Beeper beeper) {
         this.bus = Objects.requireNonNull(bus);
+        this.timing = Objects.requireNonNull(bus.getProfile());
         this.beeper = Objects.requireNonNull(beeper);
+        this.videoMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.SCREEN_HEIGHT_PIXELS];
+        this.attributeMemory = new byte[ZxSpectrumBus.ATTRIBUTES_WIDTH][ZxSpectrumBus.ATTRIBUTE_HEIGHT];
+        this.interruptData = new byte[]{(byte) ZxSpectrumBus.UNDRIVEN_BUS_DATA_BYTE};
         resetKeyboard();
     }
 
     public void reset() {
-        borderColor = 7;
+        borderColor = ZxSpectrumBus.DEFAULT_BORDER_COLOR;
         lastEarOut = false;
         lastMicOut = false;
         lastTapeIn = false;
@@ -210,13 +223,13 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     public void onNextFrame() {
-        // On a 48K Spectrum the ULA does not place an IM 2 vector on the bus. The interrupt
-        // acknowledge cycle therefore sees the floating bus, which is 0xFF at the frame boundary.
-        bus.signalInterrupt(INTERRUPT_DATA);
-        if (flashFramesCount == VIDEO_FLASH_FRAME) {
+        // The active timing profile supplies the byte seen on the floating bus during interrupt
+        // acknowledge, so the bus can model profile-specific IM 2 behavior.
+        bus.signalInterrupt(interruptData);
+        if (flashFramesCount == ZxSpectrumBus.FLASH_SWAP_FRAME_COUNT - 1) {
             videoFlash.set(!videoFlash.get());
         }
-        flashFramesCount = (flashFramesCount + 1) % (VIDEO_FLASH_FRAME + 1);
+        flashFramesCount = (flashFramesCount + 1) % ZxSpectrumBus.FLASH_SWAP_FRAME_COUNT;
     }
 
     public void clearInterrupt() {
@@ -224,18 +237,16 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
     }
 
     public void readScreen() {
-        for (int y = 0; y < SCREEN_HEIGHT_PIXELS; y++) {
+        for (int y = 0; y < ZxSpectrumBus.SCREEN_HEIGHT_PIXELS; y++) {
             readLine(y);
         }
     }
 
     public void readLine(int y) {
-        for (int x = 0; x < ATTRIBUTES_WIDTH; x++) {
-            videoMemory[x][y] = bus.readMemoryNotContended(0x4000 + LINE_OFFSETS[y] + x);
-            if (y < ATTRIBUTE_HEIGHT) {
-                int off = ((y >>> 3) << 8) | (((y & 0x07) << 5) | x);
-                int attributeAddress = 0x5800 + off;
-                attributeMemory[x][y] = bus.readMemoryNotContended(attributeAddress);
+        for (int x = 0; x < ZxSpectrumBus.ATTRIBUTES_WIDTH; x++) {
+            videoMemory[x][y] = bus.readMemoryNotContended(timing.screenAddressAt(y, x));
+            if (y < ZxSpectrumBus.ATTRIBUTE_HEIGHT) {
+                attributeMemory[x][y] = bus.readMemoryNotContended(timing.attributeAddressAtRow(y, x));
             }
         }
     }
@@ -282,7 +293,7 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         // If more than one address line is made low, the result is the logical AND of all single inputs
 
         byte result = (byte) 0xBF; // 1011 1111   // no EAR input
-        if ((portAddress & 0xFE) == 0xFE) {
+        if ((portAddress & ZxSpectrumBus.ULA_PORT_ADDRESS) == ZxSpectrumBus.ULA_PORT_ADDRESS) {
             int lineMask = (portAddress >>> 8) & 0xFF;
 
             // FE = 0  1111 1110
@@ -396,24 +407,4 @@ public class ULA implements Context8080.CpuPortDevice, KeyboardDispatcher.OnKeyL
         return keymapLock.lockRead(() -> (keymap[line] & value) == 0);
     }
 
-    /**
-     * Computes address offsets for each line in the screen.
-     * <p>
-     * The Spectrum’s screen memory starts at 0x4000 so the most significant three bits of our address will always be 010.
-     * The 5 least significant bits will always be the X (column) address. The 8 bits from 5-12 represent the pixel Y:
-     * <p>
-     * 15	14	13	12	11	10	9	8	7	6	5	4	3	2	1	0
-     * 0	1	0	Y7	Y6	Y2	Y1	Y0	Y5	Y4	Y3	X4	X3	X2	X1	X0
-     * <p>
-     * This method sets all X bits to 0, and then sets the Y bits according to the line number.
-     *
-     * @return array of offsets
-     */
-    private static int[] computeLineOffsets() {
-        final int[] result = new int[SCREEN_HEIGHT_PIXELS];
-        for (int y = 0; y < SCREEN_HEIGHT_PIXELS; y++) {
-            result[y] = ((y & 0xC0) << 5) | ((y & 7) << 8) | ((y & 0x38) << 2);
-        }
-        return result;
-    }
 }

@@ -16,7 +16,6 @@ import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.Objects;

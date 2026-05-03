@@ -140,4 +140,33 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         runner.verifyAfterTest(verifier);
         return this;
     }
+
+    /** See {@link IntegerTestBuilder#verifyCycles(int)}. */
+    public ByteTestBuilder verifyCycles(int expectedCycles) {
+        runner.injectFirst((tmpRunner, first) -> tmpRunner.clearCycles());
+        runner.verifyAfterTest(context -> cpuVerifier.checkCycles(expectedCycles));
+        return this;
+    }
+
+    public ByteTestBuilder verifyCycles(Function<RunnerContext<Byte>, Integer> operator) {
+        runner.injectFirst((tmpRunner, first) -> tmpRunner.clearCycles());
+        runner.verifyAfterTest(context -> cpuVerifier.checkCycles(operator.apply(context)));
+        return this;
+    }
+
+    public ByteTestBuilder verifyMemptr(int expectedMemptr) {
+        runner.verifyAfterTest(context -> cpuVerifier.checkMemptr(expectedMemptr));
+        return this;
+    }
+
+    public ByteTestBuilder verifyMemptr(Function<RunnerContext<Byte>, Integer> operator) {
+        lastOperation = Objects.requireNonNull(operator);
+        runner.verifyAfterTest(context -> cpuVerifier.checkMemptr(operator.apply(context)));
+        return this;
+    }
+
+    public ByteTestBuilder verifyR(int expectedR) {
+        runner.verifyAfterTest(context -> cpuVerifier.checkR(expectedR & 0x7F));
+        return this;
+    }
 }

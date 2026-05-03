@@ -18,7 +18,6 @@ public class FlagsModelTest {
     private EmulatorEngine engine;
     private FlagsModel flagsModel;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
@@ -137,4 +136,3 @@ public class FlagsModelTest {
         new FlagsModel(null);
     }
 }
-

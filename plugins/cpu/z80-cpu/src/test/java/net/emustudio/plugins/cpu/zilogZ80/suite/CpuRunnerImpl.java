@@ -3,7 +3,6 @@
 package net.emustudio.plugins.cpu.zilogZ80.suite;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
-import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
 import net.emustudio.plugins.cpu.zilogZ80.FakeByteDevice;
 
@@ -15,10 +14,30 @@ import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 
 public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     private final List<FakeByteDevice> devices;
+    private final TimingMemoryStub memory;
 
-    public CpuRunnerImpl(CpuImpl cpu, ByteMemoryStub memoryStub, List<FakeByteDevice> devices) {
+    public CpuRunnerImpl(CpuImpl cpu, TimingMemoryStub memoryStub, List<FakeByteDevice> devices) {
         super(cpu, memoryStub);
+        this.memory = memoryStub;
         this.devices = List.copyOf(Objects.requireNonNull(devices));
+    }
+
+    public TimingMemoryStub getMemory() {
+        return memory;
+    }
+
+    public void clearCycles() {
+        memory.clearCounters();
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        memory.clearCounters();
+    }
+
+    public void setMemptr(int value) {
+        cpu.getEngine().memptr = value & 0xFFFF;
     }
 
     @Override

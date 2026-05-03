@@ -10,7 +10,6 @@ import net.emustudio.plugins.device.mits88dcdd.drive.DriveListener;
 import net.emustudio.plugins.device.mits88dcdd.drive.DriveParameters;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;

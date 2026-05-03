@@ -2,8 +2,9 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.vt100;
 
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -251,9 +252,6 @@ public class Vt100StateMachine {
                 break;
             case 0x18:
             case 0x1A:
-                dispatcher.execute(data);
-                newState = GROUND;
-                break;
             case 0x99:
             case 0x9A:
                 dispatcher.execute(data);

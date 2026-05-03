@@ -221,7 +221,6 @@ public class REditor implements Editor {
 
         lastSearchedContext = context.clone();
         switch (type) {
-            default:
             case MARK_ALL:
                 SearchEngine.markAll(textPane, context);
                 break;
@@ -240,6 +239,8 @@ public class REditor implements Editor {
             case REPLACE_ALL:
                 result = SearchEngine.replaceAll(textPane, context);
                 dialogs.showInfo(result.getCount() + " occurrences replaced.", "Replace all");
+                break;
+            default:
                 break;
         }
     }

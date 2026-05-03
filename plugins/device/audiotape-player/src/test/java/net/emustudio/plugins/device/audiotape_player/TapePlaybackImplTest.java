@@ -112,6 +112,34 @@ public class TapePlaybackImplTest {
     }
 
     @Test
+    public void testPulseOnlyPlaybackAddsClosingEdgeAtFileEnd() throws InterruptedException {
+        playback.onFileStart();
+        playback.onPulseSequence(new int[]{500});
+
+        drainPulses(100, 100_000);
+
+        assertEquals(3, writtenData.size());
+    }
+
+    @Test
+    public void testPlaybackWaitsForTrailingPauseToExpire() throws InterruptedException {
+        playback = new TapePlaybackImpl(lineIn, () -> 1);
+        playback.onFileStart();
+
+        Thread playThread = startPlaybackAsync();
+        long totalTstates = getCurrentTstates();
+
+        playback.passedCycles(totalTstates - 1);
+        assertTrue(playThread.isAlive());
+
+        playback.passedCycles(1);
+        playThread.join(1000);
+
+        assertFalse(playThread.isAlive());
+        assertEquals(totalTstates, getTotalPlayableTstates());
+    }
+
+    @Test
     public void testPauseDurationsUseConfiguredCpuFrequency() {
         playback = new TapePlaybackImpl(lineIn, () -> 4000);
 
@@ -180,8 +208,8 @@ public class TapePlaybackImplTest {
         playThread.join(2000);
 
         assertFalse("Playback should finish in one drain", playThread.isAlive());
-        // 1 PAUSE + 3 bytes * 16 pulses = 49 edges
-        assertEquals(49, writtenData.size());
+        // 1 PAUSE + 3 bytes * 16 pulses + EOF closing edge = 50 edges
+        assertEquals(50, writtenData.size());
         assertEquals(100, getLastReportedProgress());
     }
 
@@ -227,8 +255,8 @@ public class TapePlaybackImplTest {
 
         drainPulses(100, 100_000);
 
-        // 1 (PAUSE) + 16 (data byte) = 17 pulses
-        assertEquals(17, writtenData.size());
+        // 1 (PAUSE) + 16 (data byte) + EOF closing edge = 18 pulses
+        assertEquals(18, writtenData.size());
     }
 
     @Test
@@ -238,8 +266,8 @@ public class TapePlaybackImplTest {
 
         drainPulses(100, 100_000);
 
-        // 1 (PAUSE) + 16 (checksum byte) + 1 (SYNC3) = 18 pulses
-        assertEquals(18, writtenData.size());
+        // 1 (PAUSE) + 16 (checksum byte) + 1 (SYNC3) + EOF closing edge = 19 pulses
+        assertEquals(19, writtenData.size());
     }
 
     @Test
@@ -250,8 +278,8 @@ public class TapePlaybackImplTest {
         // Need 8066 pulse-firing calls + ~2334 dead calls (7M / 3000) = ~10400 total
         drainPulses(11000, 3000);
 
-        // 1 (PAUSE) + 8065 (header pilot + syncs) = 8066
-        assertEquals(8066, writtenData.size());
+        // 1 (PAUSE) + 8065 (header pilot + syncs) + EOF closing edge = 8067
+        assertEquals(8067, writtenData.size());
     }
 
     @Test
@@ -262,8 +290,8 @@ public class TapePlaybackImplTest {
         // Need 3226 pulse-firing calls + ~1750 dead calls (7M / 4000) = ~4976 total
         drainPulses(6000, 4000);
 
-        // 1 (PAUSE) + 3225 (data pilot + syncs) = 3226
-        assertEquals(3226, writtenData.size());
+        // 1 (PAUSE) + 3225 (data pilot + syncs) + EOF closing edge = 3227
+        assertEquals(3227, writtenData.size());
     }
 
     @Test
@@ -387,7 +415,7 @@ public class TapePlaybackImplTest {
 
         drainPulses(100, 100_000);
 
-        assertEquals(17, writtenData.size()); // 1 PAUSE + 16 data pulses
+        assertEquals(18, writtenData.size()); // 1 PAUSE + 16 data pulses + EOF closing edge
     }
 
     @Test
@@ -398,7 +426,7 @@ public class TapePlaybackImplTest {
 
         drainPulses(100, 100_000);
 
-        assertEquals(17, writtenData.size()); // 1 PAUSE + 16 data pulses
+        assertEquals(18, writtenData.size()); // 1 PAUSE + 16 data pulses + EOF closing edge
     }
 
     @Test
@@ -408,8 +436,8 @@ public class TapePlaybackImplTest {
 
         drainPulses(200, 100_000);
 
-        // 1 (PAUSE) + 48 (3 bytes) = 49
-        assertEquals(49, writtenData.size());
+        // 1 (PAUSE) + 48 (3 bytes) + EOF closing edge = 50
+        assertEquals(50, writtenData.size());
     }
 
     @Test
@@ -419,8 +447,8 @@ public class TapePlaybackImplTest {
 
         drainPulses(100, 100_000);
 
-        // 1 (PAUSE) + 16 (flag byte) = 17
-        assertEquals(17, writtenData.size());
+        // 1 (PAUSE) + 16 (flag byte) + EOF closing edge = 18
+        assertEquals(18, writtenData.size());
     }
 
     @Test
@@ -430,7 +458,7 @@ public class TapePlaybackImplTest {
 
         drainPulses(100, 100_000);
 
-        assertEquals(17, writtenData.size());
+        assertEquals(18, writtenData.size());
     }
 
     @Test
@@ -469,8 +497,8 @@ public class TapePlaybackImplTest {
         playback.onPureTone(1000, 5); // 5 pulses of 1000 T-states
 
         drainPulses(100, 100_000);
-        // 1 (PAUSE) + 5 (pure tone) = 6
-        assertEquals(6, writtenData.size());
+        // 1 (PAUSE) + 5 (pure tone) + EOF closing edge = 7
+        assertEquals(7, writtenData.size());
     }
 
     @Test
@@ -479,8 +507,8 @@ public class TapePlaybackImplTest {
         playback.onPulseSequence(new int[]{500, 600, 700}); // 3 pulses
 
         drainPulses(100, 100_000);
-        // 1 (PAUSE) + 3 (pulse sequence) = 4
-        assertEquals(4, writtenData.size());
+        // 1 (PAUSE) + 3 (pulse sequence) + EOF closing edge = 5
+        assertEquals(5, writtenData.size());
     }
 
     @Test

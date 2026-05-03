@@ -10,7 +10,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 ext.testsResults = [] // Container for tests summaries
 
 allprojects { project ->
-    tasks.withType(Test) { testTask ->
+    tasks.withType(Test).configureEach { testTask ->
 
         testTask.testLogging { logging ->
             events TestLogEvent.FAILED,

@@ -59,7 +59,7 @@ public class CreateDataVisitor extends As8080ParserBaseVisitor<Node> {
 
     private CreateExprVisitor exprVisitor() {
         return CreateVisitors.expr(sourceFileName);
-    };
+    }
     private CreateInstrVisitor instrVisitor() {
         return CreateVisitors.instr(sourceFileName);
     }

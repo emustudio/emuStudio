@@ -11,9 +11,9 @@ import java.io.Serializable;
 public interface RamValue extends Serializable {
 
     /**
-     * Whether this value is an integer number
+     * Get this value type.
      *
-     * @return true if the value is a number
+     * @return value type
      */
     Type getType();
 

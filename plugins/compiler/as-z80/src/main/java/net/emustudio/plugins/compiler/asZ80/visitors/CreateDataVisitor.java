@@ -60,9 +60,9 @@ public class CreateDataVisitor extends AsZ80ParserBaseVisitor<Node> {
 
     private CreateExprVisitor exprVisitor() {
         return CreateVisitors.expr(sourceFileName);
-    };
+    }
 
     private CreateInstrVisitor instrVisitor() {
         return CreateVisitors.instr(sourceFileName);
-    };
+    }
 }

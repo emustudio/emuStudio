@@ -12,7 +12,6 @@ import static org.junit.Assert.*;
 public class CpmUtilsTest {
     private MemoryContext<Byte> memory;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         memory = createNiceMock(MemoryContext.class);
@@ -78,4 +77,3 @@ public class CpmUtilsTest {
         assertEquals(0, CpmUtils.cpmCommandLine[2]);
     }
 }
-

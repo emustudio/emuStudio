@@ -7,20 +7,29 @@ import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.api.ContextZ80;
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static net.emustudio.plugins.device.zxspectrum.bus.api.ZxParameters.*;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class ZxSpectrumBusImplTest {
-    private static final long FIRST_CONTENDED = 14335;
-    private static final long FIRST_FLOATING_BUS = 14338;
+    private static final TimingProfile TIMING = TimingProfile.ZX_SPECTRUM_48K;
+    private static final int DEFAULT_CPU_FREQUENCY_KHZ = 3500;
+    private static final int SCREEN_HEIGHT_PIXELS = ZxSpectrumBus.SCREEN_HEIGHT_PIXELS;
+    private static final int DISPLAY_LINE_TSTATES = TIMING.displayLineTstates;
+    private static final int DISPLAY_FRAME_TSTATES = TIMING.displayFrameTstates;
+    private static final int INTERRUPT_TSTATES = TIMING.interruptTstates;
+    private static final long FIRST_CONTENDED = TIMING.firstContendedTstate;
+    private static final long FIRST_FLOATING_BUS = TIMING.firstFloatingBusTstate;
 
     @Test
     public void testAllCpuPortsAreDispatchedAndDeferredDeviceIsRouted() {
@@ -60,11 +69,30 @@ public class ZxSpectrumBusImplTest {
         ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
         bus.initialize(env.cpu, env.memory);
 
+        env.memoryValues.put(0x4000, (byte) 0x12);
         bus.passedCycles(FIRST_CONTENDED);
         byte value = env.cpuPortDispatchers.get(0xFF).read(0x40FF);
 
         assertEquals((byte) 0xFF, value);
-        assertEquals(18L, env.addedCycles.get());
+        assertEquals(12L, env.addedCycles.get());
+
+        verify(env.cpu, env.memory);
+    }
+
+    @Test
+    public void testContendedInDoesNotDoubleCountWaitStatesWhenSamplingFloatingBus() {
+        TestEnvironment env = newTestEnvironment();
+        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+        bus.initialize(env.cpu, env.memory);
+
+        // With real cpu.addCycles() propagation, a buggy implementation would sample at
+        // FIRST_CONTENDED + 12 + 3 + 12 and see the later driven byte at 0x4006.
+        env.memoryValues.put(0x4006, (byte) 0x66);
+        bus.passedCycles(FIRST_CONTENDED);
+        byte value = env.cpuPortDispatchers.get(0xFF).read(0x40FF);
+
+        assertEquals((byte) 0xFF, value);
+        assertEquals(12L, env.addedCycles.get());
 
         verify(env.cpu, env.memory);
     }
@@ -108,7 +136,7 @@ public class ZxSpectrumBusImplTest {
         TestEnvironment env = new TestEnvironment();
 
         ContextZ80 cpu = createStrictMock(ContextZ80.class);
-        cpu.setInterruptDuration(32);
+        cpu.setInterruptDuration(INTERRUPT_TSTATES);
         expectLastCall().once();
         expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andAnswer(() -> {
             Object[] args = getCurrentArguments();
@@ -117,7 +145,7 @@ public class ZxSpectrumBusImplTest {
         }).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
         expectLastCall().once();
-        expect(cpu.getCPUFrequency()).andReturn(3500).once();
+        expect(cpu.getCPUFrequency()).andReturn(DEFAULT_CPU_FREQUENCY_KHZ).once();
 
         MemoryContext<Byte> memory = createNiceMock(MemoryContext.class);
 
@@ -129,7 +157,7 @@ public class ZxSpectrumBusImplTest {
         ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
         bus.initialize(env.cpu, env.memory);
 
-        assertEquals(3500, bus.getCPUFrequency());
+        assertEquals(DEFAULT_CPU_FREQUENCY_KHZ, bus.getCPUFrequency());
 
         verify(env.cpu, env.memory);
     }
@@ -239,60 +267,47 @@ public class ZxSpectrumBusImplTest {
     }
 
     @Test
-    public void testMemoryContentionDelayDecreasesAcrossPattern() {
-        // Pattern: 6,5,4,3,2,1,0,0 repeating every 8 cycles
+    public void testPassiveContendedMemoryCycleAddsOnlyDelay() {
         TestEnvironment env = newTestEnvironment();
         ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
         bus.initialize(env.cpu, env.memory);
 
-        // First contended cycle -> delay 6
         bus.passedCycles(FIRST_CONTENDED);
-        bus.read(0x4000);
+        bus.passedCycles(0x4000, 1);
+
         assertEquals(6L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+1 -> delay 5
-        bus.read(0x4000);
-        assertEquals(5L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+2 -> delay 4
-        bus.read(0x4000);
-        assertEquals(4L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+3 -> delay 3
-        bus.read(0x4000);
-        assertEquals(3L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+4 -> delay 2
-        bus.read(0x4000);
-        assertEquals(2L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+5 -> delay 1
-        bus.read(0x4000);
-        assertEquals(1L, env.addedCycles.get());
-
-        // FIRST_CONTENDED+6 and +7 have no delay
-        env.addedCycles.set(0);
-        bus.passedCycles(1);
-        bus.read(0x4000);
-        assertEquals(0L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1);
-        bus.read(0x4000);
-        assertEquals(0L, env.addedCycles.get());
-
-        // Next group starts at FIRST_CONTENDED+8 -> delay 6 again
-        env.addedCycles.set(0);
-        bus.passedCycles(1);
-        bus.read(0x4000);
-        assertEquals(6L, env.addedCycles.get());
-
         verify(env.cpu, env.memory);
+    }
+
+    @Test
+    public void testPassiveNonContendedMemoryCyclesAddNoDelay() {
+        TestEnvironment env = newTestEnvironment();
+        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+        bus.initialize(env.cpu, env.memory);
+
+        bus.passedCycles(FIRST_CONTENDED);
+        bus.passedCycles(0x0000, 5);
+
+        assertEquals(0L, env.addedCycles.get());
+        verify(env.cpu, env.memory);
+    }
+
+    @Test
+    public void testMemoryContentionDelayDecreasesAcrossPattern() {
+        // Pattern: 6,5,4,3,2,1,0,0 repeating every 8 cycles
+        long[] expectedDelays = {6, 5, 4, 3, 2, 1, 0, 0, 6};
+
+        for (int offset = 0; offset < expectedDelays.length; offset++) {
+            TestEnvironment env = newTestEnvironment();
+            ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+            bus.initialize(env.cpu, env.memory);
+
+            bus.passedCycles(FIRST_CONTENDED + offset);
+            bus.read(0x4000);
+
+            assertEquals(expectedDelays[offset], env.addedCycles.get());
+            verify(env.cpu, env.memory);
+        }
     }
 
     // ========== Non-contended memory access tests ==========
@@ -348,7 +363,7 @@ public class ZxSpectrumBusImplTest {
     @Test
     public void testSignalNonMaskableInterruptDelegatesToCpu() {
         ContextZ80 cpu = createStrictMock(ContextZ80.class);
-        cpu.setInterruptDuration(32);
+        cpu.setInterruptDuration(INTERRUPT_TSTATES);
         expectLastCall().once();
         expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andReturn(true).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
@@ -370,7 +385,7 @@ public class ZxSpectrumBusImplTest {
     public void testSignalInterruptDelegatesToCpu() {
         byte[] interruptData = new byte[]{(byte) 0xFF};
         ContextZ80 cpu = createStrictMock(ContextZ80.class);
-        cpu.setInterruptDuration(32);
+        cpu.setInterruptDuration(INTERRUPT_TSTATES);
         expectLastCall().once();
         expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andReturn(true).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
@@ -391,7 +406,7 @@ public class ZxSpectrumBusImplTest {
     @Test
     public void testClearInterruptDelegatesToCpu() {
         ContextZ80 cpu = createStrictMock(ContextZ80.class);
-        cpu.setInterruptDuration(32);
+        cpu.setInterruptDuration(INTERRUPT_TSTATES);
         expectLastCall().once();
         expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andReturn(true).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
@@ -422,8 +437,8 @@ public class ZxSpectrumBusImplTest {
         // Port 0x40FE: high byte 0x40 (contended), low bit 0 (even)
         env.cpuPortDispatchers.get(0xFE).read(0x40FE);
 
-        // C:1 at FIRST_CONTENDED = 6, then C:3 at FIRST_CONTENDED+1 = 5 => total 11
-        assertEquals(11L, env.addedCycles.get());
+        // C:1 at FIRST_CONTENDED = 6, then three base I/O T-states resume at 14342 without more delay.
+        assertEquals(6L, env.addedCycles.get());
         verify(env.cpu, env.memory);
     }
 
@@ -438,8 +453,8 @@ public class ZxSpectrumBusImplTest {
         // Port 0x40FF: high byte 0x40 (contended), low bit 1 (odd)
         env.cpuPortDispatchers.get(0xFF).read(0x40FF);
 
-        // C:1 at 14335=6, at 14336=5, at 14337=4, at 14338=3 => total 18
-        assertEquals(18L, env.addedCycles.get());
+        // Wait states advance the frame clock, so the four C:1 samples land at 14335, 14342, 14343, 14350.
+        assertEquals(12L, env.addedCycles.get());
         verify(env.cpu, env.memory);
     }
 
@@ -654,7 +669,7 @@ public class ZxSpectrumBusImplTest {
         CPUContext.PassedCyclesListener listener = (cycles) -> {};
 
         ContextZ80 cpu = createStrictMock(ContextZ80.class);
-        cpu.setInterruptDuration(32);
+        cpu.setInterruptDuration(INTERRUPT_TSTATES);
         expectLastCall().once();
         expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andReturn(true).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
@@ -677,7 +692,7 @@ public class ZxSpectrumBusImplTest {
         CPUContext.PassedCyclesListener listener = (cycles) -> {};
 
         ContextZ80 cpu = createStrictMock(ContextZ80.class);
-        cpu.setInterruptDuration(32);
+        cpu.setInterruptDuration(INTERRUPT_TSTATES);
         expectLastCall().once();
         expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andReturn(true).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
@@ -866,7 +881,7 @@ public class ZxSpectrumBusImplTest {
         // Contended port write: high byte 0x40 (contended), low bit 0 (even) -> C:1, C:3
         env.cpuPortDispatchers.get(0xFE).write(0x40FE, (byte) 0x00);
 
-        assertEquals(11L, env.addedCycles.get());
+        assertEquals(6L, env.addedCycles.get());
         verify(env.cpu, env.memory);
     }
 
@@ -908,7 +923,7 @@ public class ZxSpectrumBusImplTest {
         TestEnvironment env = new TestEnvironment();
 
         ContextZ80 cpu = createStrictMock(ContextZ80.class);
-        cpu.setInterruptDuration(32);
+        cpu.setInterruptDuration(INTERRUPT_TSTATES);
         expectLastCall().once();
         expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andAnswer(() -> {
             Object[] args = getCurrentArguments();
@@ -916,10 +931,17 @@ public class ZxSpectrumBusImplTest {
             return true;
         }).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
-        expectLastCall().once();
+        expectLastCall().andAnswer(() -> {
+            env.passedCyclesListeners.add((CPUContext.PassedCyclesListener) getCurrentArguments()[0]);
+            return null;
+        }).once();
         cpu.addCycles(anyLong());
         expectLastCall().andAnswer(() -> {
-            env.addedCycles.addAndGet((Long) getCurrentArguments()[0]);
+            long cycles = (Long) getCurrentArguments()[0];
+            env.addedCycles.addAndGet(cycles);
+            for (CPUContext.PassedCyclesListener listener : env.passedCyclesListeners) {
+                listener.passedCycles(cycles);
+            }
             return null;
         }).anyTimes();
 
@@ -940,7 +962,7 @@ public class ZxSpectrumBusImplTest {
         TestEnvironment env = new TestEnvironment();
 
         ContextZ80 cpu = createStrictMock(ContextZ80.class);
-        cpu.setInterruptDuration(32);
+        cpu.setInterruptDuration(INTERRUPT_TSTATES);
         expectLastCall().once();
         expect(cpu.attachDevice(anyInt(), anyObject(Context8080.CpuPortDevice.class))).andAnswer(() -> {
             Object[] args = getCurrentArguments();
@@ -948,10 +970,17 @@ public class ZxSpectrumBusImplTest {
             return true;
         }).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
-        expectLastCall().times(expectedListenerCalls);
+        expectLastCall().andAnswer(() -> {
+            env.passedCyclesListeners.add((CPUContext.PassedCyclesListener) getCurrentArguments()[0]);
+            return null;
+        }).times(expectedListenerCalls);
         cpu.addCycles(anyLong());
         expectLastCall().andAnswer(() -> {
-            env.addedCycles.addAndGet((Long) getCurrentArguments()[0]);
+            long cycles = (Long) getCurrentArguments()[0];
+            env.addedCycles.addAndGet(cycles);
+            for (CPUContext.PassedCyclesListener listener : env.passedCyclesListeners) {
+                listener.passedCycles(cycles);
+            }
             return null;
         }).anyTimes();
 
@@ -971,6 +1000,7 @@ public class ZxSpectrumBusImplTest {
     private static class TestEnvironment {
         private final Map<Integer, Context8080.CpuPortDevice> cpuPortDispatchers = new HashMap<>();
         private final Map<Integer, Byte> memoryValues = new HashMap<>();
+        private final Set<CPUContext.PassedCyclesListener> passedCyclesListeners = new LinkedHashSet<>();
         private final AtomicLong addedCycles = new AtomicLong();
 
         private ContextZ80 cpu;

@@ -2,6 +2,8 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.device.zxspectrum.ula.gui;
 
+import net.emustudio.plugins.device.zxspectrum.bus.api.TimingProfile;
+import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import net.emustudio.plugins.device.zxspectrum.ula.ULA;
 
 import java.awt.*;
@@ -12,7 +14,6 @@ import java.util.Set;
 
 import static java.awt.event.KeyEvent.KEY_PRESSED;
 import static java.awt.event.KeyEvent.KEY_RELEASED;
-import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.SCREEN_IMAGE_WIDTH;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayCanvas.ZOOM;
 import static net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow.MARGIN;
 
@@ -41,8 +42,6 @@ public class KeyboardCanvas extends Canvas implements KeyboardDispatcher.OnKeyLi
     public static final int KEYBOARD_WIDTH = 13 * bwS + bsw + 10 + 10; // longest row
     public static final int KEYBOARD_HEIGHT = 5 * bhS + 2 * margin - s;
 
-    private static final int X_OUTER = (int) ((ZOOM * SCREEN_IMAGE_WIDTH + 2 * MARGIN - KEYBOARD_WIDTH) / 2.0);
-    private static final int X_INNER = X_OUTER + margin;
     private static final int Y_INNER = margin;
 
     private static final int Y_ROW_1 = Y_INNER + bhS;
@@ -51,93 +50,24 @@ public class KeyboardCanvas extends Canvas implements KeyboardDispatcher.OnKeyLi
     private static final int Y_ROW_4 = Y_INNER + 4 * bhS;
     private static final int SHIFT_KEY_ID = keyId((byte) 0, (byte) 1);
     private static final int SYM_SHIFT_KEY_ID = keyId((byte) 7, (byte) 2);
-    private static final Shape KEYBOARD_OUTLINE = roundButton(X_OUTER, -STROKE_WIDTH, KEYBOARD_WIDTH, KEYBOARD_HEIGHT);
-
-    private static final KeyboardButton[] BUTTONS = new KeyboardButton[]{
-            // Row 0: Number row
-            dec(col(0), Y_INNER),
-            key(col(1), Y_INNER, 3, 1, "1", "EDIT", "!"),
-            key(col(2), Y_INNER, 3, 2, "2", "CAPSL", "@"),
-            key(col(3), Y_INNER, 3, 4, "3", "TRUE V.", "#"),
-            key(col(4), Y_INNER, 3, 8, "4", "INV.V", "$"),
-            key(col(5), Y_INNER, 3, 16, "5", "⇦", "%"),
-            key(col(6), Y_INNER, 4, 16, "6", "⇩", "&"),
-            key(col(7), Y_INNER, 4, 8, "7", "⇧", "'"),
-            key(col(8), Y_INNER, 4, 4, "8", "⇨", "("),
-            key(col(9), Y_INNER, 4, 2, "9", "GRAPH", ")"),
-            key(col(10), Y_INNER, 4, 1, "0", "DELETE", "_"),
-            dec(col(11), Y_INNER),
-            dec(col(12), Y_INNER),
-            dec(col(13), Y_INNER, bsw),
-
-            // Row 1: QWERTY row
-            dec(X_INNER, Y_ROW_1, tabw),
-            key(tabCol(0), Y_ROW_1, 2, 1, "PLOT", "Q", "<="),
-            key(tabCol(1), Y_ROW_1, 2, 2, "DRAW", "W", "<>"),
-            key(tabCol(2), Y_ROW_1, 2, 4, "REM", "E", ">="),
-            key(tabCol(3), Y_ROW_1, 2, 8, "RUN", "R", "<"),
-            key(tabCol(4), Y_ROW_1, 2, 16, "RAND", "T", ">"),
-            key(tabCol(5), Y_ROW_1, 5, 16, "RETURN", "Y", "AND"),
-            key(tabCol(6), Y_ROW_1, 5, 8, "IF", "U", "OR"),
-            key(tabCol(7), Y_ROW_1, 5, 4, "INPUT", "I", "AT"),
-            key(tabCol(8), Y_ROW_1, 5, 2, "POKE", "O", ";"),
-            key(tabCol(9), Y_ROW_1, 5, 1, "PRINT", "P", "\""),
-            dec(tabCol(10), Y_ROW_1),
-            dec(tabCol(11), Y_ROW_1),
-            key(enterPolygon(), 6, 1, "↵", "↵", "↵"),
-
-            // Row 2: ASDF row
-            dec(X_INNER, Y_ROW_2, bsw),
-            key(capsCol(0), Y_ROW_2, 1, 1, "NEW", "A", "STOP"),
-            key(capsCol(1), Y_ROW_2, 1, 2, "SAVE", "S", "NOT"),
-            key(capsCol(2), Y_ROW_2, 1, 4, "DIM", "D", "STEP"),
-            key(capsCol(3), Y_ROW_2, 1, 8, "FOR", "F", "TO"),
-            key(capsCol(4), Y_ROW_2, 1, 16, "GOTO", "G", "THEN"),
-            key(capsCol(5), Y_ROW_2, 6, 16, "GOSUB", "H", "↑"),
-            key(capsCol(6), Y_ROW_2, 6, 8, "LOAD", "J", "-"),
-            key(capsCol(7), Y_ROW_2, 6, 4, "LIST", "K", "+"),
-            key(capsCol(8), Y_ROW_2, 6, 2, "LET", "L", "="),
-            dec(capsCol(9), Y_ROW_2),
-            dec(capsCol(10), Y_ROW_2),
-            dec(capsCol(11), Y_ROW_2),
-
-            // Row 3: ZXCV row
-            toggleKey(X_INNER, Y_ROW_3, lshiftw, 0, 1, "SHIFT"),
-            dec(shiftCol(0), Y_ROW_3),
-            key(shiftCol(1), Y_ROW_3, 0, 2, "COPY", "Z", ":"),
-            key(shiftCol(2), Y_ROW_3, 0, 4, "CLEAR", "X", "£"),
-            key(shiftCol(3), Y_ROW_3, 0, 8, "CONT", "C", "?"),
-            key(shiftCol(4), Y_ROW_3, 0, 16, "CLS", "V", "/"),
-            key(shiftCol(5), Y_ROW_3, 7, 16, "BORDER", "B", "*"),
-            key(shiftCol(6), Y_ROW_3, 7, 8, "NEXT", "N", ","),
-            key(shiftCol(7), Y_ROW_3, 7, 4, "PAUSE", "M", "."),
-            dec(shiftCol(8), Y_ROW_3),
-            dec(shiftCol(9), Y_ROW_3),
-            dec(shiftCol(10), Y_ROW_3),
-            toggleKey(shiftCol(11), Y_ROW_3, rshiftw, 0, 1, "SHIFT"),
-
-            // Row 4: Bottom row
-            toggleKey(X_INNER, Y_ROW_4, tabw, 7, 2, "SYM"),
-            dec(X_INNER + tabw + s, Y_ROW_4),
-            dec(X_INNER + tabw + bw + 2 * s, Y_ROW_4, tabw),
-            key(X_INNER + 2 * tabw + bw + 4 * s, Y_ROW_4, brakew, 7, 1),
-            dec(X_INNER + 2 * tabw + bw + brakew + 6 * s, Y_ROW_4, tabw),
-            toggleKey(X_INNER + 3 * tabw + bw + brakew + 7 * s, Y_ROW_4, bw, 7, 2, "SYM"),
-            dec(X_INNER + 3 * tabw + 2 * bw + brakew + 8 * s, Y_ROW_4),
-            dec(X_INNER + 3 * tabw + 3 * bw + brakew + 9 * s, Y_ROW_4, tabw)
-    };
     private int alpha;
 
     private final Set<Integer> activeMouseKeys = new HashSet<>();
     private final KeyboardPainter painter;
+    private final KeyboardButton[] buttons;
 
     private boolean hostSymShift = false;
     private boolean hostShift = false;
     private KeyboardButton pressedMouseButton = null;
 
-    public KeyboardCanvas(int alpha) {
+    public KeyboardCanvas(TimingProfile timing, int alpha) {
         this.alpha = alpha;
-        this.painter = new KeyboardPainter(alpha, BUTTONS, KEYBOARD_OUTLINE, activeMouseKeys);
+        int xOuter = (int) ((ZOOM * (ZxSpectrumBus.SCREEN_WIDTH_PIXELS + 2 * ZxSpectrumBus.BORDER_WIDTH_PIXELS)
+                + 2 * MARGIN - KEYBOARD_WIDTH) / 2.0);
+        int xInner = xOuter + margin;
+        Shape keyboardOutline = roundButton(xOuter, -STROKE_WIDTH, KEYBOARD_WIDTH, KEYBOARD_HEIGHT);
+        this.buttons = createButtons(xInner);
+        this.painter = new KeyboardPainter(alpha, buttons, keyboardOutline, activeMouseKeys);
     }
 
     @Override
@@ -217,7 +147,7 @@ public class KeyboardCanvas extends Canvas implements KeyboardDispatcher.OnKeyLi
 
     public void releaseMouseKeys(ULA ula) {
         pressedMouseButton = null;
-        for (KeyboardButton button : BUTTONS) {
+        for (KeyboardButton button : buttons) {
             if (button.interactive && activeMouseKeys.remove(button.keyId)) {
                 ula.releaseKey(button.keyLine, button.keyValue);
             }
@@ -233,7 +163,7 @@ public class KeyboardCanvas extends Canvas implements KeyboardDispatcher.OnKeyLi
     }
 
     private KeyboardButton findButton(int x, int y) {
-        for (KeyboardButton button : BUTTONS) {
+        for (KeyboardButton button : buttons) {
             if (button.interactive && button.shape.contains(x, y)) {
                 return button;
             }
@@ -253,8 +183,8 @@ public class KeyboardCanvas extends Canvas implements KeyboardDispatcher.OnKeyLi
         return new RoundRectangle2D.Double(x, y, width, height, arc, arc);
     }
 
-    private static Shape enterPolygon() {
-        int x0 = X_INNER + 12 * bwS + tabw + s;
+    private static Shape enterPolygon(int xInner) {
+        int x0 = xInner + 12 * bwS + tabw + s;
         int y0 = Y_ROW_1;
         return new Polygon(
                 new int[]{x0, x0 + tabw - 2 * s, x0 + tabw - 2 * s, x0 + 2 * s, x0 + 2 * s, x0},
@@ -263,11 +193,87 @@ public class KeyboardCanvas extends Canvas implements KeyboardDispatcher.OnKeyLi
         );
     }
 
+    private static KeyboardButton[] createButtons(int xInner) {
+        return new KeyboardButton[]{
+                // Row 0: Number row
+                dec(col(xInner, 0), Y_INNER),
+                key(col(xInner, 1), Y_INNER, 3, 1, "1", "EDIT", "!"),
+                key(col(xInner, 2), Y_INNER, 3, 2, "2", "CAPSL", "@"),
+                key(col(xInner, 3), Y_INNER, 3, 4, "3", "TRUE V.", "#"),
+                key(col(xInner, 4), Y_INNER, 3, 8, "4", "INV.V", "$"),
+                key(col(xInner, 5), Y_INNER, 3, 16, "5", "⇦", "%"),
+                key(col(xInner, 6), Y_INNER, 4, 16, "6", "⇩", "&"),
+                key(col(xInner, 7), Y_INNER, 4, 8, "7", "⇧", "'"),
+                key(col(xInner, 8), Y_INNER, 4, 4, "8", "⇨", "("),
+                key(col(xInner, 9), Y_INNER, 4, 2, "9", "GRAPH", ")"),
+                key(col(xInner, 10), Y_INNER, 4, 1, "0", "DELETE", "_"),
+                dec(col(xInner, 11), Y_INNER),
+                dec(col(xInner, 12), Y_INNER),
+                dec(col(xInner, 13), Y_INNER, bsw),
+
+                // Row 1: QWERTY row
+                dec(xInner, Y_ROW_1, tabw),
+                key(tabCol(xInner, 0), Y_ROW_1, 2, 1, "PLOT", "Q", "<="),
+                key(tabCol(xInner, 1), Y_ROW_1, 2, 2, "DRAW", "W", "<>"),
+                key(tabCol(xInner, 2), Y_ROW_1, 2, 4, "REM", "E", ">="),
+                key(tabCol(xInner, 3), Y_ROW_1, 2, 8, "RUN", "R", "<"),
+                key(tabCol(xInner, 4), Y_ROW_1, 2, 16, "RAND", "T", ">"),
+                key(tabCol(xInner, 5), Y_ROW_1, 5, 16, "RETURN", "Y", "AND"),
+                key(tabCol(xInner, 6), Y_ROW_1, 5, 8, "IF", "U", "OR"),
+                key(tabCol(xInner, 7), Y_ROW_1, 5, 4, "INPUT", "I", "AT"),
+                key(tabCol(xInner, 8), Y_ROW_1, 5, 2, "POKE", "O", ";"),
+                key(tabCol(xInner, 9), Y_ROW_1, 5, 1, "PRINT", "P", "\""),
+                dec(tabCol(xInner, 10), Y_ROW_1),
+                dec(tabCol(xInner, 11), Y_ROW_1),
+                key(enterPolygon(xInner), 6, 1, "↵", "↵", "↵"),
+
+                // Row 2: ASDF row
+                dec(xInner, Y_ROW_2, bsw),
+                key(capsCol(xInner, 0), Y_ROW_2, 1, 1, "NEW", "A", "STOP"),
+                key(capsCol(xInner, 1), Y_ROW_2, 1, 2, "SAVE", "S", "NOT"),
+                key(capsCol(xInner, 2), Y_ROW_2, 1, 4, "DIM", "D", "STEP"),
+                key(capsCol(xInner, 3), Y_ROW_2, 1, 8, "FOR", "F", "TO"),
+                key(capsCol(xInner, 4), Y_ROW_2, 1, 16, "GOTO", "G", "THEN"),
+                key(capsCol(xInner, 5), Y_ROW_2, 6, 16, "GOSUB", "H", "↑"),
+                key(capsCol(xInner, 6), Y_ROW_2, 6, 8, "LOAD", "J", "-"),
+                key(capsCol(xInner, 7), Y_ROW_2, 6, 4, "LIST", "K", "+"),
+                key(capsCol(xInner, 8), Y_ROW_2, 6, 2, "LET", "L", "="),
+                dec(capsCol(xInner, 9), Y_ROW_2),
+                dec(capsCol(xInner, 10), Y_ROW_2),
+                dec(capsCol(xInner, 11), Y_ROW_2),
+
+                // Row 3: ZXCV row
+                toggleKey(xInner, Y_ROW_3, lshiftw, 0, 1, "SHIFT"),
+                dec(shiftCol(xInner, 0), Y_ROW_3),
+                key(shiftCol(xInner, 1), Y_ROW_3, 0, 2, "COPY", "Z", ":"),
+                key(shiftCol(xInner, 2), Y_ROW_3, 0, 4, "CLEAR", "X", "£"),
+                key(shiftCol(xInner, 3), Y_ROW_3, 0, 8, "CONT", "C", "?"),
+                key(shiftCol(xInner, 4), Y_ROW_3, 0, 16, "CLS", "V", "/"),
+                key(shiftCol(xInner, 5), Y_ROW_3, 7, 16, "BORDER", "B", "*"),
+                key(shiftCol(xInner, 6), Y_ROW_3, 7, 8, "NEXT", "N", ","),
+                key(shiftCol(xInner, 7), Y_ROW_3, 7, 4, "PAUSE", "M", "."),
+                dec(shiftCol(xInner, 8), Y_ROW_3),
+                dec(shiftCol(xInner, 9), Y_ROW_3),
+                dec(shiftCol(xInner, 10), Y_ROW_3),
+                toggleKey(shiftCol(xInner, 11), Y_ROW_3, rshiftw, 0, 1, "SHIFT"),
+
+                // Row 4: Bottom row
+                toggleKey(xInner, Y_ROW_4, tabw, 7, 2, "SYM"),
+                dec(xInner + tabw + s, Y_ROW_4),
+                dec(xInner + tabw + bw + 2 * s, Y_ROW_4, tabw),
+                key(xInner + 2 * tabw + bw + 4 * s, Y_ROW_4, brakew, 7, 1),
+                dec(xInner + 2 * tabw + bw + brakew + 6 * s, Y_ROW_4, tabw),
+                toggleKey(xInner + 3 * tabw + bw + brakew + 7 * s, Y_ROW_4, bw, 7, 2, "SYM"),
+                dec(xInner + 3 * tabw + 2 * bw + brakew + 8 * s, Y_ROW_4),
+                dec(xInner + 3 * tabw + 3 * bw + brakew + 9 * s, Y_ROW_4, tabw)
+        };
+    }
+
     // Column x-position helpers for each row layout
-    private static int col(int n) { return X_INNER + n * bwS; }
-    private static int tabCol(int n) { return X_INNER + tabw + s + n * bwS; }
-    private static int capsCol(int n) { return X_INNER + bsw + s + n * bwS; }
-    private static int shiftCol(int n) { return X_INNER + lshiftw + s + n * bwS; }
+    private static int col(int xInner, int n) { return xInner + n * bwS; }
+    private static int tabCol(int xInner, int n) { return xInner + tabw + s + n * bwS; }
+    private static int capsCol(int xInner, int n) { return xInner + bsw + s + n * bwS; }
+    private static int shiftCol(int xInner, int n) { return xInner + lshiftw + s + n * bwS; }
 
     // Button factory methods
     private static KeyboardButton dec(int x, int y) {

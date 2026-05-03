@@ -10,7 +10,6 @@ import static org.junit.Assert.*;
 
 public class BrainCPUContextImplTest {
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testWriteToDeviceWithAttachedDevice() {
         BrainCPUContextImpl context = new BrainCPUContextImpl();
@@ -30,7 +29,6 @@ public class BrainCPUContextImplTest {
         context.writeToDevice((byte) 42); // should not throw
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testReadFromDeviceWithAttachedDevice() {
         BrainCPUContextImpl context = new BrainCPUContextImpl();
@@ -49,7 +47,6 @@ public class BrainCPUContextImplTest {
         assertEquals(0, context.readFromDevice());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testReadFromDeviceReturnsNull() {
         BrainCPUContextImpl context = new BrainCPUContextImpl();
@@ -62,7 +59,6 @@ public class BrainCPUContextImplTest {
         verify(device);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testDetachDevice() {
         BrainCPUContextImpl context = new BrainCPUContextImpl();
@@ -89,7 +85,6 @@ public class BrainCPUContextImplTest {
         context.removePassedCyclesListener(cycles -> {});
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testWriteAfterDetach() {
         BrainCPUContextImpl context = new BrainCPUContextImpl();
@@ -101,4 +96,3 @@ public class BrainCPUContextImplTest {
         context.writeToDevice((byte) 42); // should not throw
     }
 }
-

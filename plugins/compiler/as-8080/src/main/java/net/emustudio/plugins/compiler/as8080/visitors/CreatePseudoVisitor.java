@@ -102,7 +102,7 @@ public class CreatePseudoVisitor extends As8080ParserBaseVisitor<Node> {
 
     private CreateExprVisitor exprVisitor() {
         return CreateVisitors.expr(sourceFileName);
-    };
+    }
     private CreateLineVisitor lineVisitor() {
         return CreateVisitors.line(sourceFileName);
     }

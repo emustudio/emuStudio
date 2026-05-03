@@ -23,9 +23,7 @@ public abstract class AbstractSwingTest {
     public void tearDownWindows() {
         runOnEdt(() -> {
             for (Window window : windows) {
-                if (window != null) {
-                    window.dispose();
-                }
+                window.dispose();
             }
             windows.clear();
         });
