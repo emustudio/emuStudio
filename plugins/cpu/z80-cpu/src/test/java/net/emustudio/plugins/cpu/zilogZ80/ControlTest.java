@@ -3,20 +3,32 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.cpu.testsuite.Generator;
+import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.cpu.CPUContext;
-import net.emustudio.emulib.plugins.memory.AbstractMemoryContext;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
+import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ContextPool;
+import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
+import net.emustudio.plugins.cpu.zilogZ80.suite.CpuRunnerImpl;
+import net.emustudio.plugins.cpu.zilogZ80.suite.CpuVerifierImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public class ControlTest extends InstructionsTest {
@@ -108,221 +120,246 @@ public class ControlTest extends InstructionsTest {
     }
 
     @Test
+    public void testIm0CallInterruptAcknowledgeIncrementsRefreshRegister() {
+        cpuRunnerImpl.setProgram(0x00);
+        cpuRunnerImpl.reset();
+        cpuRunnerImpl.setIntMode((byte) 0);
+        cpuRunnerImpl.setR(0x7F);
+        cpuRunnerImpl.enableIFF2();
+        cpu.getEngine().IFF[0] = true;
+        cpu.getEngine().setInterruptDuration(32);
+        cpuRunnerImpl.setByte(0x1234, 0x00);
+
+        setLevelInterrupt(cpu.getEngine(), new byte[]{(byte) 0xCD, 0x34, 0x12});
+
+        cpuRunnerImpl.step();
+        cpuVerifierImpl.checkR(0x01);
+        cpuVerifierImpl.checkPC(0x1235);
+        cpuVerifierImpl.checkRegisterPair(REG_SP, 0xFFFD);
+    }
+
+    @Test
     public void testTakenJrAddsFiveHiddenCyclesAtDisplacementAddress() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing reference: JR e is 12 T-states and consumes the signed displacement byte right after the opcode.
+        // https://www.z80.info/z80flag.htm
+        // https://z80.info/decoding.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .verifyPC(context -> (context.PC + context.first + 2) & 0xFFFF)
+                    .verify(context -> assertReadAndPassiveCycles(env.memory, 0x0001, 1, 5));
 
-        memory.write(0x0000, (byte) 0x18);
-        memory.write(0x0001, (byte) 0x00);
-
-        engine.reset(0x0000);
-        engine.step();
-
-        assertEquals(1, memory.getReadCount(0x0001));
-        assertEquals(5, memory.getPassiveCycleCount(0x0001));
-        assertEquals(0x0002, engine.PC);
+            Generator.forSome8bitUnary(
+                    test.runWithFirstOperand(0x18)
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
     public void testIncBcAddsTwoHiddenRefreshCycles() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing reference: INC rr is 6 T-states, with the last 2 T-states spent in refresh/internal cycles.
+        // https://www.z80.info/z80flag.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .verify(context -> {
+                        env.cpuVerifier.checkRegisterPair(REG_PAIR_BC, 0x0001);
+                        assertReadAndPassiveCycles(env.memory, (unsigned(context.first) << 8) | 0x0001, 0, 2);
+                    });
 
-        memory.write(0x0000, (byte) 0x03);
-
-        engine.reset(0x0000);
-        engine.I = 0x40;
-        engine.step();
-
-        assertEquals(0, memory.getReadCount(0x4001));
-        assertEquals(2, memory.getPassiveCycleCount(0x4001));
-        assertEquals(0x0001, (engine.regs[REG_B] << 8) | engine.regs[REG_C]);
+            Generator.forSome8bitUnary(
+                    test.run(0x03)
+                            .injectFirst((runner, value) -> {
+                                runner.setI(unsigned(value));
+                                runner.setR(0);
+                            })
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
     public void testIndexedLoadAddsFiveHiddenCyclesAtDisplacementAddress() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing reference: LD r,(IX+d) is a 19 T-state indexed load with an explicit displacement phase.
+        // https://www.z80.info/z80flag.htm
+        // https://z80.info/decoding.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .setIX(0x4000)
+                    .verifyRegister(REG_A, context -> unsigned(context.second))
+                    .verify(context -> {
+                        assertReadAndPassiveCycles(env.memory, 0x0002, 1, 5);
+                        assertEquals(1, env.memory.getReadCount(indexedAddress(0x4000, context.first)));
+                    });
 
-        memory.write(0x0000, (byte) 0xDD);
-        memory.write(0x0001, (byte) 0x7E);
-        memory.write(0x0002, (byte) 0x00);
-        memory.write(0x4000, (byte) 0x5A);
-
-        engine.reset(0x0000);
-        engine.IX = 0x4000;
-        engine.step();
-
-        assertEquals(1, memory.getReadCount(0x0002));
-        assertEquals(5, memory.getPassiveCycleCount(0x0002));
-        assertEquals(1, memory.getReadCount(0x4000));
-        assertEquals(0x5A, engine.regs[REG_A]);
+            Generator.forSome8bitBinary(
+                    test.runWithFirstOperand(0xDD, 0x7E)
+                            .injectTwoOperands((runner, displacement, value) ->
+                                    runner.setByte(indexedAddress(0x4000, displacement), unsigned(value)))
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
     public void testIndexedHLoadAddsFiveHiddenCyclesAtDisplacementAddress() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing reference: LD H,(IX+d) follows the same 19 T-state indexed timing as other LD r,(IX+d) forms.
+        // https://www.z80.info/z80flag.htm
+        // https://z80.info/decoding.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .setIX(0x4000)
+                    .verifyRegister(REG_H, context -> unsigned(context.second))
+                    .verify(context -> {
+                        assertReadAndPassiveCycles(env.memory, 0x0002, 1, 5);
+                        assertEquals(1, env.memory.getReadCount(indexedAddress(0x4000, context.first)));
+                    });
 
-        memory.write(0x0000, (byte) 0xDD);
-        memory.write(0x0001, (byte) 0x66);
-        memory.write(0x0002, (byte) 0x00);
-        memory.write(0x4000, (byte) 0x5A);
-
-        engine.reset(0x0000);
-        engine.IX = 0x4000;
-        engine.step();
-
-        assertEquals(1, memory.getReadCount(0x0002));
-        assertEquals(5, memory.getPassiveCycleCount(0x0002));
-        assertEquals(1, memory.getReadCount(0x4000));
-        assertEquals(0x5A, engine.regs[REG_H]);
+            Generator.forSome8bitBinary(
+                    test.runWithFirstOperand(0xDD, 0x66)
+                            .injectTwoOperands((runner, displacement, value) ->
+                                    runner.setByte(indexedAddress(0x4000, displacement), unsigned(value)))
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
     public void testIndexedAddAddsFiveHiddenCyclesAtDisplacementAddress() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing reference: ADD A,(IX+d) is a 19 T-state indexed ALU read with a 5 T-state displacement phase.
+        // https://www.z80.info/z80flag.htm
+        // https://z80.info/decoding.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .setIX(0x4000)
+                    .setRegister(REG_A, 0x10)
+                    .verifyRegister(REG_A, context -> (0x10 + unsigned(context.second)) & 0xFF)
+                    .verify(context -> {
+                        assertReadAndPassiveCycles(env.memory, 0x0002, 1, 5);
+                        assertEquals(1, env.memory.getReadCount(indexedAddress(0x4000, context.first)));
+                    });
 
-        memory.write(0x0000, (byte) 0xDD);
-        memory.write(0x0001, (byte) 0x86);
-        memory.write(0x0002, (byte) 0x00);
-        memory.write(0x4000, (byte) 0x05);
-
-        engine.reset(0x0000);
-        engine.IX = 0x4000;
-        engine.regs[REG_A] = 0x10;
-        engine.step();
-
-        assertEquals(1, memory.getReadCount(0x0002));
-        assertEquals(5, memory.getPassiveCycleCount(0x0002));
-        assertEquals(1, memory.getReadCount(0x4000));
-        assertEquals(0x15, engine.regs[REG_A]);
+            Generator.forSome8bitBinary(
+                    test.runWithFirstOperand(0xDD, 0x86)
+                            .injectTwoOperands((runner, displacement, value) ->
+                                    runner.setByte(indexedAddress(0x4000, displacement), unsigned(value)))
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
     public void testIndexedIncAddsHiddenCyclesAtDisplacementAndIndexedAddress() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing reference: INC (IX+d) is a 23 T-state indexed read-modify-write with both displacement and memory phases.
+        // https://www.z80.info/z80flag.htm
+        // https://z80.info/decoding.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .setIX(0x4000)
+                    .verify(context -> {
+                        int indexedAddress = indexedAddress(0x4000, context.first);
+                        assertReadAndPassiveCycles(env.memory, 0x0002, 1, 5);
+                        assertReadAndPassiveCycles(env.memory, indexedAddress, 1, 1);
+                    })
+                    .verifyByte(context -> indexedAddress(0x4000, context.first),
+                            context -> (unsigned(context.second) + 1) & 0xFF);
 
-        memory.write(0x0000, (byte) 0xDD);
-        memory.write(0x0001, (byte) 0x34);
-        memory.write(0x0002, (byte) 0x00);
-        memory.write(0x4000, (byte) 0x05);
-
-        engine.reset(0x0000);
-        engine.IX = 0x4000;
-        engine.step();
-
-        assertEquals(1, memory.getReadCount(0x0002));
-        assertEquals(5, memory.getPassiveCycleCount(0x0002));
-        assertEquals(1, memory.getReadCount(0x4000));
-        assertEquals(1, memory.getPassiveCycleCount(0x4000));
-        assertEquals(0x06, memory.read(0x4000) & 0xFF);
+            Generator.forSome8bitBinary(
+                    test.runWithFirstOperand(0xDD, 0x34)
+                            .injectTwoOperands((runner, displacement, value) ->
+                                    runner.setByte(indexedAddress(0x4000, displacement), unsigned(value)))
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
     public void testIndexedImmediateStoreAddsTwoHiddenCyclesAtImmediateAddress() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing reference: LD (IX+d),n is a 19 T-state indexed store and pays the extra 2 T-states on the immediate byte.
+        // https://www.z80.info/z80flag.htm
+        // https://z80.info/decoding.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .setIX(0x4000)
+                    .verify(context -> assertReadAndPassiveCycles(env.memory, 0x0003, 1, 2))
+                    .verifyByte(context -> indexedAddress(0x4000, context.first), context -> unsigned(context.second));
 
-        memory.write(0x0000, (byte) 0xDD);
-        memory.write(0x0001, (byte) 0x36);
-        memory.write(0x0002, (byte) 0x00);
-        memory.write(0x0003, (byte) 0x34);
-
-        engine.reset(0x0000);
-        engine.IX = 0x4000;
-        engine.step();
-
-        assertEquals(1, memory.getReadCount(0x0003));
-        assertEquals(2, memory.getPassiveCycleCount(0x0003));
-        assertEquals(0x34, memory.read(0x4000) & 0xFF);
+            Generator.forSome8bitBinary(
+                    test.runWithFirstOperand(0xDD, 0x36)
+                            .injectSecond((runner, value) -> runner.setByte(0x0003, unsigned(value)))
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
     public void testRldAddsFourHiddenCyclesAtHlAddress() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing reference: RLD is an 18 T-state nibble-rotate instruction with extra cycles on the HL memory access.
+        // https://www.z80.info/z80flag.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .firstIsRegister(REG_A)
+                    .setPair(REG_PAIR_HL, 0x4000)
+                    .verify(context -> assertReadAndPassiveCycles(env.memory, 0x4000, 1, 4))
+                    .verifyRegister(REG_A,
+                            context -> (unsigned(context.first) & 0xF0) | ((unsigned(context.second) >>> 4) & 0x0F))
+                    .verifyByte(0x4000,
+                            context -> ((unsigned(context.second) << 4) & 0xF0) | (unsigned(context.first) & 0x0F));
 
-        memory.write(0x0000, (byte) 0xED);
-        memory.write(0x0001, (byte) 0x6F);
-        memory.write(0x4000, (byte) 0x12);
-
-        engine.reset(0x0000);
-        engine.regs[REG_H] = 0x40;
-        engine.regs[REG_L] = 0x00;
-        engine.regs[REG_A] = 0x34;
-        engine.step();
-
-        assertEquals(1, memory.getReadCount(0x4000));
-        assertEquals(4, memory.getPassiveCycleCount(0x4000));
-        assertEquals(0x24, memory.read(0x4000) & 0xFF);
-        assertEquals(0x31, engine.regs[REG_A]);
+            Generator.forSome8bitBinary(
+                    test.run(0xED, 0x6F)
+                            .injectSecond((runner, value) -> runner.setByte(0x4000, unsigned(value)))
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
     public void testIndexedCbOpcodeFetchDoesNotIncrementRefreshRegister() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing/reference quirk: DDCB/FDCB instructions still increment R by 2, not 3, despite the extra opcode fetch.
+        // https://z80.info/z80info.htm
+        // Timing reference for BIT b,(IX+d): https://www.z80.info/z80flag.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .setIX(0x4000)
+                    .verifyRegisterR(context -> 0x02)
+                    .verify(context -> {
+                        int indexedAddress = indexedAddress(0x4000, context.first);
+                        assertReadAndPassiveCycles(env.memory, 0x0003, 1, 2);
+                        assertReadAndPassiveCycles(env.memory, indexedAddress, 1, 1);
+                    });
 
-        memory.write(0x0000, (byte) 0xDD);
-        memory.write(0x0001, (byte) 0xCB);
-        memory.write(0x0002, (byte) 0x00);
-        memory.write(0x0003, (byte) 0x46);
-        memory.write(0x4000, (byte) 0x01);
-
-        engine.reset(0x0000);
-        engine.IX = 0x4000;
-        engine.step();
-
-        assertEquals(0x02, engine.R);
-        assertEquals(1, memory.getReadCount(0x0003));
-        assertEquals(2, memory.getPassiveCycleCount(0x0003));
-        assertEquals(1, memory.getReadCount(0x4000));
-        assertEquals(1, memory.getPassiveCycleCount(0x4000));
+            Generator.forSome8bitBinary(
+                    test.runWithFirst8bitOperandWithOpcodeAfter(0x46, 0xDD, 0xCB)
+                            .injectTwoOperands((runner, displacement, value) ->
+                                    runner.setByte(indexedAddress(0x4000, displacement), unsigned(value)))
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
     public void testIndexedResAddsHiddenCycleAtIndexedAddress() throws Exception {
-        CountingMemory memory = new CountingMemory();
-        ContextZ80Impl context = new ContextZ80Impl();
-        EmulatorEngine engine = new EmulatorEngine(memory, context);
-        context.setEngine(engine);
+        // Timing/reference: indexed CB RES uses the DDCB/FDCB format and the indexed memory phase is 1 passive T-state.
+        // https://www.z80.info/z80undoc.htm
+        // https://www.z80.info/z80flag.htm
+        try (CountingTestEnvironment env = newCountingTestEnvironment()) {
+            ByteTestBuilder test = new ByteTestBuilder(env.cpuRunner, env.cpuVerifier)
+                    .setIX(0x4000)
+                    .verify(context -> {
+                        int indexedAddress = indexedAddress(0x4000, context.first);
+                        assertReadAndPassiveCycles(env.memory, 0x0003, 1, 2);
+                        assertReadAndPassiveCycles(env.memory, indexedAddress, 1, 1);
+                    })
+                    .verifyByte(context -> indexedAddress(0x4000, context.first),
+                            context -> unsigned(context.second) & 0xFE);
 
-        memory.write(0x0000, (byte) 0xDD);
-        memory.write(0x0001, (byte) 0xCB);
-        memory.write(0x0002, (byte) 0x00);
-        memory.write(0x0003, (byte) 0x86);
-        memory.write(0x4000, (byte) 0xFF);
-
-        engine.reset(0x0000);
-        engine.IX = 0x4000;
-        engine.step();
-
-        assertEquals(1, memory.getReadCount(0x0003));
-        assertEquals(2, memory.getPassiveCycleCount(0x0003));
-        assertEquals(1, memory.getReadCount(0x4000));
-        assertEquals(1, memory.getPassiveCycleCount(0x4000));
-        assertEquals(0xFE, memory.read(0x4000) & 0xFF);
+            Generator.forSome8bitBinary(
+                    test.runWithFirst8bitOperandWithOpcodeAfter(0x86, 0xDD, 0xCB)
+                            .injectTwoOperands((runner, displacement, value) ->
+                                    runner.setByte(indexedAddress(0x4000, displacement), unsigned(value)))
+                            .injectNoOperand(runner -> env.memory.clearCounters())
+            );
+        }
     }
 
     @Test
@@ -708,16 +745,88 @@ public class ControlTest extends InstructionsTest {
         );
     }
 
-    private static final class CountingMemory extends AbstractMemoryContext<Byte> implements CPUContext.PassedCyclesListener {
-        private final byte[] data = new byte[0x10000];
+    private static int indexedAddress(int base, Number displacement) {
+        return (base + displacement.byteValue()) & 0xFFFF;
+    }
+
+    private static int unsigned(Number value) {
+        return value.intValue() & 0xFF;
+    }
+
+    private static void assertReadAndPassiveCycles(CountingByteMemoryStub memory, int address, int expectedReadCount,
+                                                   int expectedPassiveCycles) {
+        assertEquals(expectedReadCount, memory.getReadCount(address));
+        assertEquals(expectedPassiveCycles, memory.getPassiveCycleCount(address));
+    }
+
+    private CountingTestEnvironment newCountingTestEnvironment() throws Exception {
+        CountingByteMemoryStub memory = new CountingByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        Capture<Context8080> cpuContext = Capture.newInstance();
+        ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
+        expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
+        contextPool.register(anyLong(), capture(cpuContext), same(Context8080.class));
+        expectLastCall().anyTimes();
+        replay(contextPool);
+
+        ApplicationApi applicationApi = createNiceMock(ApplicationApi.class);
+        expect(applicationApi.getContextPool()).andReturn(contextPool).anyTimes();
+        replay(applicationApi);
+
+        CpuImpl cpu = new CpuImpl(0L, applicationApi, PluginSettings.UNAVAILABLE);
+
+        if (!cpuContext.hasCaptured()) {
+            throw new AssertionError("CPU context was not captured for counting test environment");
+        }
+
+        List<FakeByteDevice> devices = new ArrayList<>();
+        for (int i = 0; i < 256; i++) {
+            FakeByteDevice device = new FakeByteDevice();
+            devices.add(device);
+            cpuContext.getValue().attachDevice(i, device);
+        }
+
+        cpu.initialize();
+        return new CountingTestEnvironment(
+                cpu,
+                memory,
+                new CpuRunnerImpl(cpu, memory, devices),
+                new CpuVerifierImpl(cpu, memory, devices)
+        );
+    }
+
+    private static final class CountingTestEnvironment implements AutoCloseable {
+        private final CpuImpl cpu;
+        private final CountingByteMemoryStub memory;
+        private final CpuRunnerImpl cpuRunner;
+        private final CpuVerifierImpl cpuVerifier;
+
+        private CountingTestEnvironment(CpuImpl cpu, CountingByteMemoryStub memory, CpuRunnerImpl cpuRunner,
+                                        CpuVerifierImpl cpuVerifier) {
+            this.cpu = cpu;
+            this.memory = memory;
+            this.cpuRunner = cpuRunner;
+            this.cpuVerifier = cpuVerifier;
+        }
+
+        @Override
+        public void close() {
+            cpu.destroy();
+        }
+    }
+
+    private static final class CountingByteMemoryStub extends ByteMemoryStub implements CPUContext.PassedCyclesListener {
         private final Map<Integer, Integer> readCounts = new HashMap<>();
         private final Map<Integer, Integer> passiveCycleCounts = new HashMap<>();
+
+        private CountingByteMemoryStub(int wordReadingStrategy) {
+            super(wordReadingStrategy);
+        }
 
         @Override
         public Byte read(int location) {
             int masked = location & 0xFFFF;
             readCounts.merge(masked, 1, Integer::sum);
-            return data[masked];
+            return super.read(masked);
         }
 
         @Override
@@ -731,7 +840,7 @@ public class ControlTest extends InstructionsTest {
 
         @Override
         public void write(int location, Byte value) {
-            data[location & 0xFFFF] = value;
+            super.write(location & 0xFFFF, value);
         }
 
         @Override
@@ -757,14 +866,13 @@ public class ControlTest extends InstructionsTest {
 
         @Override
         public void clear() {
-            Arrays.fill(data, (byte) 0);
-            readCounts.clear();
-            passiveCycleCounts.clear();
+            super.clear();
+            clearCounters();
         }
 
-        @Override
-        public int getSize() {
-            return data.length;
+        private void clearCounters() {
+            readCounts.clear();
+            passiveCycleCounts.clear();
         }
 
         @Override

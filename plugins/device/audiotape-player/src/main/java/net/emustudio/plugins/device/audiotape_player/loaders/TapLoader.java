@@ -55,7 +55,11 @@ public class TapLoader implements Loader {
                 controlChecksum ^= (d & 0xFF);
             }
             if ((checksum & 0xFF) != (controlChecksum & 0xFF)) {
-                LOGGER.error(String.format("Tape checksum is wrong: expected=%02X != %02X", checksum & 0xFF, controlChecksum & 0xFF));
+                LOGGER.error(
+                        "Tape checksum is wrong: expected={} != {}",
+                        String.format("%02X", checksum & 0xFF),
+                        String.format("%02X", controlChecksum & 0xFF)
+                );
             }
 
             if (flagByte < 0x80) {
@@ -75,7 +79,7 @@ public class TapLoader implements Loader {
                         playback.onMemoryBlock(header.fileName, header.dataLength, header.parameter1);
                         break;
                     default:
-                        LOGGER.warn("TAP: Unknown header ID: " + header.id);
+                        LOGGER.warn("TAP: Unknown header ID: {}", header.id);
                 }
             } else {
                 playback.onDataStart();

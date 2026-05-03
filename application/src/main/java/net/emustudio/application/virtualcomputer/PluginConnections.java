@@ -18,7 +18,7 @@ public interface PluginConnections {
      * can obtain and use contexts registered by <code>pluginB</code> in the context pool.
      * <p>
      * Connections can be one-directional. In case of bi-directional connection, the following must hold:
-     *
+     * <p>
      * <code>
      * isConnected(pluginA, pluginB) == isConnected(pluginB, pluginA) == true
      * </code>

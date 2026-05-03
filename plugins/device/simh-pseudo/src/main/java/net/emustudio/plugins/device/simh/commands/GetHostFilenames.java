@@ -96,9 +96,7 @@ public class GetHostFilenames implements Command {
             String pattern = parts[parts.length - 1];
 
             try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(basePath, pattern)) {
-                dirStream.forEach(p -> {
-                    nameListHead = new NameNode(p.getFileName().toString().toCharArray(), nameListHead);
-                });
+                dirStream.forEach(p -> nameListHead = new NameNode(p.getFileName().toString().toCharArray(), nameListHead));
             } catch (IOException e) {
                 LOGGER.error("SIMH: Could not list host files", e);
                 deleteNameList();

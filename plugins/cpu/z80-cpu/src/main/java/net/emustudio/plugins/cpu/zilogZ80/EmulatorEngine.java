@@ -89,7 +89,7 @@ public class EmulatorEngine implements CpuEngine {
         this.passiveMemoryCycleListener = (memory instanceof CPUContext.PassedCyclesListener)
                 ? (CPUContext.PassedCyclesListener) memory
                 : null;
-        LOGGER.info("Sleep precision: " + SleepUtils.SLEEP_PRECISION + " nanoseconds.");
+        LOGGER.info("Sleep precision: {} nanoseconds.", SleepUtils.SLEEP_PRECISION);
     }
 
     @SuppressWarnings("unused")
@@ -388,6 +388,8 @@ public class EmulatorEngine implements CpuEngine {
         IFF[0] = IFF[1] = false;
         switch (interruptMode) {
             case 0:
+                // IM 0 acknowledge is an M1 cycle and advances the refresh register.
+                incrementR();
                 advanceCycles(11);
                 RunState old_runstate = currentRunState;
                 if (dataBus != null && dataBus.length > 0) {

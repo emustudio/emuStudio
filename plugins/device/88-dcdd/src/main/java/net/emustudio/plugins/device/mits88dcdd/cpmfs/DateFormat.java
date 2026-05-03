@@ -26,7 +26,7 @@ public enum DateFormat {
      * 21 C1 C1 C1 C1 M1 M1 M1 M1 00 00 C2 C2 C2 C2 M2
      * M2 M2 M2 00 00 C3 C3 C3 C3 M3 M3 M3 M3 00 00 00
      * <p>
-     * https://manpages.debian.org/testing/cpmtools/cpm.5.en.html
+     * <a href="https://manpages.debian.org/testing/cpmtools/cpm.5.en.html">cpm(5)</a>
      * <p>
      * A time stamp consists of two dates: Creation and modification date (the latter being recorded when the file is
      * closed). CP/M Plus further allows optionally to record the access instead of creation date as first time stamp.

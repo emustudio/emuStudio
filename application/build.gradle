@@ -127,11 +127,11 @@ processResources {
   }
 }
 
-task copyTestResources(type: Copy) {
+def copyTestResources = tasks.register('copyTestResources', Copy) {
   from "${projectDir}/src/test/resources"
   into "${buildDir}/classes/java/test/"
 }
-processTestResources.dependsOn copyTestResources
+processTestResources.dependsOn(copyTestResources)
 
 
 def output(String name) {

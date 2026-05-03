@@ -12,7 +12,9 @@ import net.emustudio.plugins.device.zxspectrum.bus.api.ZxSpectrumBus;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -68,6 +70,24 @@ public class ZxSpectrumBusImplTest {
         bus.initialize(env.cpu, env.memory);
 
         env.memoryValues.put(0x4000, (byte) 0x12);
+        bus.passedCycles(FIRST_CONTENDED);
+        byte value = env.cpuPortDispatchers.get(0xFF).read(0x40FF);
+
+        assertEquals((byte) 0xFF, value);
+        assertEquals(12L, env.addedCycles.get());
+
+        verify(env.cpu, env.memory);
+    }
+
+    @Test
+    public void testContendedInDoesNotDoubleCountWaitStatesWhenSamplingFloatingBus() {
+        TestEnvironment env = newTestEnvironment();
+        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+        bus.initialize(env.cpu, env.memory);
+
+        // With real cpu.addCycles() propagation, a buggy implementation would sample at
+        // FIRST_CONTENDED + 12 + 3 + 12 and see the later driven byte at 0x4006.
+        env.memoryValues.put(0x4006, (byte) 0x66);
         bus.passedCycles(FIRST_CONTENDED);
         byte value = env.cpuPortDispatchers.get(0xFF).read(0x40FF);
 
@@ -275,58 +295,19 @@ public class ZxSpectrumBusImplTest {
     @Test
     public void testMemoryContentionDelayDecreasesAcrossPattern() {
         // Pattern: 6,5,4,3,2,1,0,0 repeating every 8 cycles
-        TestEnvironment env = newTestEnvironment();
-        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
-        bus.initialize(env.cpu, env.memory);
+        long[] expectedDelays = {6, 5, 4, 3, 2, 1, 0, 0, 6};
 
-        // First contended cycle -> delay 6
-        bus.passedCycles(FIRST_CONTENDED);
-        bus.read(0x4000);
-        assertEquals(6L, env.addedCycles.get());
+        for (int offset = 0; offset < expectedDelays.length; offset++) {
+            TestEnvironment env = newTestEnvironment();
+            ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+            bus.initialize(env.cpu, env.memory);
 
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+1 -> delay 5
-        bus.read(0x4000);
-        assertEquals(5L, env.addedCycles.get());
+            bus.passedCycles(FIRST_CONTENDED + offset);
+            bus.read(0x4000);
 
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+2 -> delay 4
-        bus.read(0x4000);
-        assertEquals(4L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+3 -> delay 3
-        bus.read(0x4000);
-        assertEquals(3L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+4 -> delay 2
-        bus.read(0x4000);
-        assertEquals(2L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1); // FIRST_CONTENDED+5 -> delay 1
-        bus.read(0x4000);
-        assertEquals(1L, env.addedCycles.get());
-
-        // FIRST_CONTENDED+6 and +7 have no delay
-        env.addedCycles.set(0);
-        bus.passedCycles(1);
-        bus.read(0x4000);
-        assertEquals(0L, env.addedCycles.get());
-
-        env.addedCycles.set(0);
-        bus.passedCycles(1);
-        bus.read(0x4000);
-        assertEquals(0L, env.addedCycles.get());
-
-        // Next group starts at FIRST_CONTENDED+8 -> delay 6 again
-        env.addedCycles.set(0);
-        bus.passedCycles(1);
-        bus.read(0x4000);
-        assertEquals(6L, env.addedCycles.get());
-
-        verify(env.cpu, env.memory);
+            assertEquals(expectedDelays[offset], env.addedCycles.get());
+            verify(env.cpu, env.memory);
+        }
     }
 
     // ========== Non-contended memory access tests ==========
@@ -950,10 +931,17 @@ public class ZxSpectrumBusImplTest {
             return true;
         }).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
-        expectLastCall().once();
+        expectLastCall().andAnswer(() -> {
+            env.passedCyclesListeners.add((CPUContext.PassedCyclesListener) getCurrentArguments()[0]);
+            return null;
+        }).once();
         cpu.addCycles(anyLong());
         expectLastCall().andAnswer(() -> {
-            env.addedCycles.addAndGet((Long) getCurrentArguments()[0]);
+            long cycles = (Long) getCurrentArguments()[0];
+            env.addedCycles.addAndGet(cycles);
+            for (CPUContext.PassedCyclesListener listener : env.passedCyclesListeners) {
+                listener.passedCycles(cycles);
+            }
             return null;
         }).anyTimes();
 
@@ -982,10 +970,17 @@ public class ZxSpectrumBusImplTest {
             return true;
         }).times(256);
         cpu.addPassedCyclesListener(anyObject(CPUContext.PassedCyclesListener.class));
-        expectLastCall().times(expectedListenerCalls);
+        expectLastCall().andAnswer(() -> {
+            env.passedCyclesListeners.add((CPUContext.PassedCyclesListener) getCurrentArguments()[0]);
+            return null;
+        }).times(expectedListenerCalls);
         cpu.addCycles(anyLong());
         expectLastCall().andAnswer(() -> {
-            env.addedCycles.addAndGet((Long) getCurrentArguments()[0]);
+            long cycles = (Long) getCurrentArguments()[0];
+            env.addedCycles.addAndGet(cycles);
+            for (CPUContext.PassedCyclesListener listener : env.passedCyclesListeners) {
+                listener.passedCycles(cycles);
+            }
             return null;
         }).anyTimes();
 
@@ -1005,6 +1000,7 @@ public class ZxSpectrumBusImplTest {
     private static class TestEnvironment {
         private final Map<Integer, Context8080.CpuPortDevice> cpuPortDispatchers = new HashMap<>();
         private final Map<Integer, Byte> memoryValues = new HashMap<>();
+        private final Set<CPUContext.PassedCyclesListener> passedCyclesListeners = new LinkedHashSet<>();
         private final AtomicLong addedCycles = new AtomicLong();
 
         private ContextZ80 cpu;

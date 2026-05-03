@@ -330,12 +330,14 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
         @Override
         public byte read(int portAddress) {
-            int contentionDelay = applyPortContention(portAddress);
+            applyPortContention(portAddress);
             Context8080.CpuPortDevice device = attachedDevices[lowPort];
             if (device != null) {
                 return device.read(portAddress);
             }
-            long sampleCycle = (frameCycles + IO_READ_SAMPLE_OFFSET + contentionDelay) % displayFrameTstates;
+            // applyPortContention() advances frameCycles through cpu.addCycles(), so sample from
+            // the already-delayed clock position instead of adding the same wait states twice.
+            long sampleCycle = (frameCycles + IO_READ_SAMPLE_OFFSET) % displayFrameTstates;
             return readFloatingBus(sampleCycle);
         }
 
@@ -353,12 +355,11 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
             return "ZX-Spectrum Bus";
         }
 
-        private int applyPortContention(int portAddress) {
+        private void applyPortContention(int portAddress) {
             int cycles = timing.portContentionDelay(frameCycles, portAddress);
             if (cycles > 0) {
                 cpu.addCycles(cycles);
             }
-            return cycles;
         }
 
 

@@ -71,7 +71,6 @@ public class PagesPanelTest {
 
     private void stubGui(GUI gui) {
         doAnswer(invocation -> {
-            @SuppressWarnings("unchecked")
             Consumer<ActionEvent> action = invocation.getArgument(0);
             String icon = invocation.getArgument(1);
             String tooltip = invocation.getArgument(2);

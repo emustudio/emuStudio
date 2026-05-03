@@ -81,17 +81,13 @@ public class Automation implements Runnable {
                 compiler -> LOGGER.info("Compiler: {}, version {}", compiler.getTitle(), compiler.getVersion())
         );
         computer.getCPU().ifPresent(cpu -> LOGGER.info("CPU: {}, version {}", cpu.getTitle(), cpu.getVersion()));
-        computer.getMemory().ifPresent(memory -> {
-            LOGGER.info("Memory: {}, version {}", memory.getTitle(), memory.getVersion());
-        });
+        computer.getMemory().ifPresent(memory -> LOGGER.info("Memory: {}, version {}", memory.getTitle(), memory.getVersion()));
         computer.getDevices().forEach(
                 device -> LOGGER.info("Device: {}, version {}", device.getTitle(), device.getVersion())
         );
 
         try {
-            computer.getCompiler().ifPresent(compiler -> {
-                Unchecked.run(() -> autoCompile(compiler));
-            });
+            computer.getCompiler().ifPresent(compiler -> Unchecked.run(() -> autoCompile(compiler)));
 
             computer.getCPU().ifPresent(cpu -> {
                 setProgress("Resetting CPU...", false);
