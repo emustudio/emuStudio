@@ -47,6 +47,18 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
+    public IntegerTestBuilder firstIsIX_or_IY(boolean iy) {
+        return iy ? firstIsIY() : firstIsIX();
+    }
+
+    public IntegerTestBuilder secondIsIX_or_IY(boolean iy) {
+        return iy ? secondIsIY() : secondIsIX();
+    }
+
+    public IntegerTestBuilder verifyIX_or_IY(boolean iy, Function<RunnerContext<Integer>, Integer> operator) {
+        return iy ? verifyIY(operator) : verifyIX(operator);
+    }
+
     public IntegerTestBuilder firstIsPSW() {
         runner.injectFirst(new MemoryExpand<>(), new RegisterPairPSW(3));
         return this;
@@ -211,6 +223,39 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
     public IntegerTestBuilder verifyDeviceWhenFirst8LSBisPort(Function<RunnerContext<Integer>, Integer> operation) {
         lastOperation = Objects.requireNonNull(operation);
         runner.verifyAfterTest(context -> cpuVerifier.checkDeviceValue(context.first & 0xFF, operation.apply(context)));
+        return this;
+    }
+
+    /**
+     * Verifies the total T-state cycle count consumed by a single CPU step.
+     * Adds an injector that resets the per-test cycle counter just before the step runs, plus a
+     * verifier that asserts the expected cycles after the step completes.
+     */
+    public IntegerTestBuilder verifyCycles(int expectedCycles) {
+        runner.injectFirst((tmpRunner, first) -> tmpRunner.clearCycles());
+        runner.verifyAfterTest(context -> cpuVerifier.checkCycles(expectedCycles));
+        return this;
+    }
+
+    public IntegerTestBuilder verifyCycles(Function<RunnerContext<Integer>, Integer> operator) {
+        runner.injectFirst((tmpRunner, first) -> tmpRunner.clearCycles());
+        runner.verifyAfterTest(context -> cpuVerifier.checkCycles(operator.apply(context)));
+        return this;
+    }
+
+    public IntegerTestBuilder verifyMemptr(int expectedMemptr) {
+        runner.verifyAfterTest(context -> cpuVerifier.checkMemptr(expectedMemptr));
+        return this;
+    }
+
+    public IntegerTestBuilder verifyMemptr(Function<RunnerContext<Integer>, Integer> operator) {
+        lastOperation = Objects.requireNonNull(operator);
+        runner.verifyAfterTest(context -> cpuVerifier.checkMemptr(operator.apply(context)));
+        return this;
+    }
+
+    public IntegerTestBuilder verifyR(int expectedR) {
+        runner.verifyAfterTest(context -> cpuVerifier.checkR(expectedR & 0x7F));
         return this;
     }
 

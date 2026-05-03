@@ -3,7 +3,6 @@
 package net.emustudio.plugins.cpu.zilogZ80.suite;
 
 import net.emustudio.cpu.testsuite.CpuVerifier;
-import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.plugins.cpu.zilogZ80.CpuImpl;
 import net.emustudio.plugins.cpu.zilogZ80.FakeByteDevice;
 
@@ -15,12 +14,30 @@ import static org.junit.Assert.*;
 
 public class CpuVerifierImpl extends CpuVerifier {
     private final CpuImpl cpu;
+    private final TimingMemoryStub memory;
     private final List<FakeByteDevice> devices;
 
-    public CpuVerifierImpl(CpuImpl cpu, ByteMemoryStub memoryStub, List<FakeByteDevice> devices) {
+    public CpuVerifierImpl(CpuImpl cpu, TimingMemoryStub memoryStub, List<FakeByteDevice> devices) {
         super(memoryStub);
         this.cpu = Objects.requireNonNull(cpu);
+        this.memory = Objects.requireNonNull(memoryStub);
         this.devices = List.copyOf(Objects.requireNonNull(devices));
+    }
+
+    public void checkCycles(long expected) {
+        long actual = memory.getTotalCycles();
+        assertEquals(
+                String.format("Expected cycles=%d, but was %d (PC=%04x)", expected, actual, cpu.getEngine().PC),
+                expected, actual
+        );
+    }
+
+    public void checkMemptr(int expected) {
+        int actual = cpu.getEngine().memptr & 0xFFFF;
+        assertEquals(
+                String.format("Expected MEMPTR=%04x, but was %04x", expected & 0xFFFF, actual),
+                expected & 0xFFFF, actual
+        );
     }
 
     public static String intToFlags(int flags) {

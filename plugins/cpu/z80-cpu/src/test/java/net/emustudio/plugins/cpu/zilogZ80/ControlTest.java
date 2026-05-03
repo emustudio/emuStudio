@@ -3,11 +3,8 @@
 package net.emustudio.plugins.cpu.zilogZ80;
 
 import net.emustudio.cpu.testsuite.Generator;
-import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.plugins.cpu.CPUContext;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
@@ -17,15 +14,14 @@ import net.emustudio.plugins.cpu.zilogZ80.suite.ByteTestBuilder;
 import net.emustudio.plugins.cpu.zilogZ80.suite.CpuRunnerImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.CpuVerifierImpl;
 import net.emustudio.plugins.cpu.zilogZ80.suite.IntegerTestBuilder;
+import net.emustudio.plugins.cpu.zilogZ80.suite.TimingMemoryStub;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static net.emustudio.plugins.cpu.zilogZ80.EmulatorEngine.*;
 import static org.easymock.EasyMock.*;
@@ -753,14 +749,14 @@ public class ControlTest extends InstructionsTest {
         return value.intValue() & 0xFF;
     }
 
-    private static void assertReadAndPassiveCycles(CountingByteMemoryStub memory, int address, int expectedReadCount,
+    private static void assertReadAndPassiveCycles(TimingMemoryStub memory, int address, int expectedReadCount,
                                                    int expectedPassiveCycles) {
         assertEquals(expectedReadCount, memory.getReadCount(address));
         assertEquals(expectedPassiveCycles, memory.getPassiveCycleCount(address));
     }
 
     private CountingTestEnvironment newCountingTestEnvironment() throws Exception {
-        CountingByteMemoryStub memory = new CountingByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        TimingMemoryStub memory = new TimingMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         Capture<Context8080> cpuContext = Capture.newInstance();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
@@ -784,6 +780,7 @@ public class ControlTest extends InstructionsTest {
             devices.add(device);
             cpuContext.getValue().attachDevice(i, device);
         }
+        cpuContext.getValue().addPassedCyclesListener(memory);
 
         cpu.initialize();
         return new CountingTestEnvironment(
@@ -796,11 +793,11 @@ public class ControlTest extends InstructionsTest {
 
     private static final class CountingTestEnvironment implements AutoCloseable {
         private final CpuImpl cpu;
-        private final CountingByteMemoryStub memory;
+        private final TimingMemoryStub memory;
         private final CpuRunnerImpl cpuRunner;
         private final CpuVerifierImpl cpuVerifier;
 
-        private CountingTestEnvironment(CpuImpl cpu, CountingByteMemoryStub memory, CpuRunnerImpl cpuRunner,
+        private CountingTestEnvironment(CpuImpl cpu, TimingMemoryStub memory, CpuRunnerImpl cpuRunner,
                                         CpuVerifierImpl cpuVerifier) {
             this.cpu = cpu;
             this.memory = memory;
@@ -811,81 +808,6 @@ public class ControlTest extends InstructionsTest {
         @Override
         public void close() {
             cpu.destroy();
-        }
-    }
-
-    private static final class CountingByteMemoryStub extends ByteMemoryStub implements CPUContext.PassedCyclesListener {
-        private final Map<Integer, Integer> readCounts = new HashMap<>();
-        private final Map<Integer, Integer> passiveCycleCounts = new HashMap<>();
-
-        private CountingByteMemoryStub(int wordReadingStrategy) {
-            super(wordReadingStrategy);
-        }
-
-        @Override
-        public Byte read(int location) {
-            int masked = location & 0xFFFF;
-            readCounts.merge(masked, 1, Integer::sum);
-            return super.read(masked);
-        }
-
-        @Override
-        public Byte[] read(int location, int count) {
-            Byte[] values = new Byte[count];
-            for (int i = 0; i < count; i++) {
-                values[i] = read(location + i);
-            }
-            return values;
-        }
-
-        @Override
-        public void write(int location, Byte value) {
-            super.write(location & 0xFFFF, value);
-        }
-
-        @Override
-        public void write(int location, Byte[] values, int count) {
-            for (int i = 0; i < count; i++) {
-                write(location + i, values[i]);
-            }
-        }
-
-        @Override
-        public void passedCycles(long cyclesDelta) {
-        }
-
-        @Override
-        public void passedCycles(int address, int cycles) {
-            passiveCycleCounts.merge(address & 0xFFFF, cycles, Integer::sum);
-        }
-
-        @Override
-        public Class<Byte> getCellTypeClass() {
-            return Byte.class;
-        }
-
-        @Override
-        public void clear() {
-            super.clear();
-            clearCounters();
-        }
-
-        private void clearCounters() {
-            readCounts.clear();
-            passiveCycleCounts.clear();
-        }
-
-        @Override
-        public MemoryContextAnnotations annotations() {
-            return null;
-        }
-
-        int getReadCount(int location) {
-            return readCounts.getOrDefault(location & 0xFFFF, 0);
-        }
-
-        int getPassiveCycleCount(int location) {
-            return passiveCycleCounts.getOrDefault(location & 0xFFFF, 0);
         }
     }
 }

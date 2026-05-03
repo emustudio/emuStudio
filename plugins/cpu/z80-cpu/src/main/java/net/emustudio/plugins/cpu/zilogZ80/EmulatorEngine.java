@@ -1066,12 +1066,10 @@ public class EmulatorEngine implements CpuEngine {
 
     void I_ADD_A_IXH() {
         I_ADD_A(IX >>> 8);
-        advanceCycles(4);
     }
 
     void I_ADD_A_IYH() {
         I_ADD_A(IY >>> 8);
-        advanceCycles(4);
     }
 
     void I_ADD_A_L() {
