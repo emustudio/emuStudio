@@ -2482,13 +2482,13 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:5,IO,hl:3
         advanceCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
-        int bc = (regs[REG_B] << 8) | regs[REG_C];
-        byte io = context.readIO(bc);
+        int decB = (regs[REG_B] - 1) & 0xFF;
+        regs[REG_B] = decB;
+        int portAddress = (decB << 8) | regs[REG_C];
+        byte io = context.readIO(portAddress);
         advanceCycles(4);
         memory.write(hl++, io);
 
-        int decB = (regs[REG_B] - 1) & 0xFF;
-        regs[REG_B] = decB;
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
 
@@ -2500,7 +2500,7 @@ public class EmulatorEngine implements CpuEngine {
                 | TABLE_XY[decB]
                 | PARITY_TABLE[(tmp & 7) ^ decB];
         Q = flags;
-        memptr = (bc + 1) & 0xFFFF;
+        memptr = (portAddress + 1) & 0xFFFF;
         advanceCycles(3);
     }
 
@@ -2508,14 +2508,14 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:5,IO,hl:3,[hl:1 x 5]
         advanceCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
-        int bc = (regs[REG_B] << 8) | regs[REG_C];
-        byte io = context.readIO(bc);
+        int decB = (regs[REG_B] - 1) & 0xFF;
+        regs[REG_B] = decB;
+        int portAddress = (decB << 8) | regs[REG_C];
+        byte io = context.readIO(portAddress);
         advanceCycles(4);
         memory.write(hl++, io);
         advanceCycles(3);
 
-        int decB = (regs[REG_B] - 1) & 0xFF;
-        regs[REG_B] = decB;
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
 
@@ -2527,7 +2527,7 @@ public class EmulatorEngine implements CpuEngine {
                 | TABLE_XY[decB]
                 | PARITY_TABLE[(tmp & 7) ^ decB];
         Q = flags;
-        memptr = (bc + 1) & 0xFFFF;
+        memptr = (portAddress + 1) & 0xFFFF;
 
         if (decB == 0) {
             return;
@@ -2558,13 +2558,13 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:5,IO,hl:3
         advanceCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
-        int bc = (regs[REG_B] << 8) | regs[REG_C];
-        byte io = context.readIO(bc);
+        int decB = (regs[REG_B] - 1) & 0xFF;
+        regs[REG_B] = decB;
+        int portAddress = (decB << 8) | regs[REG_C];
+        byte io = context.readIO(portAddress);
         advanceCycles(4);
         memory.write(hl--, io);
 
-        int decB = (regs[REG_B] - 1) & 0xFF;
-        regs[REG_B] = decB;
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
 
@@ -2576,7 +2576,7 @@ public class EmulatorEngine implements CpuEngine {
                 | TABLE_XY[decB]
                 | PARITY_TABLE[(tmp & 7) ^ decB];
         Q = flags;
-        memptr = (bc - 1) & 0xFFFF;
+        memptr = (portAddress - 1) & 0xFFFF;
         advanceCycles(3);
     }
 
@@ -2584,14 +2584,14 @@ public class EmulatorEngine implements CpuEngine {
         // pc:4,pc+1:5,IO,hl:3,[hl:1 x 5]
         advanceCycles(1);
         int hl = (regs[REG_H] << 8) | regs[REG_L];
-        int bc = (regs[REG_B] << 8) | regs[REG_C];
-        byte io = context.readIO(bc);
+        int decB = (regs[REG_B] - 1) & 0xFF;
+        regs[REG_B] = decB;
+        int portAddress = (decB << 8) | regs[REG_C];
+        byte io = context.readIO(portAddress);
         advanceCycles(4);
         memory.write(hl--, io);
         advanceCycles(3);
 
-        int decB = (regs[REG_B] - 1) & 0xFF;
-        regs[REG_B] = decB;
         regs[REG_H] = (hl >>> 8) & 0xFF;
         regs[REG_L] = hl & 0xFF;
 
@@ -2603,7 +2603,7 @@ public class EmulatorEngine implements CpuEngine {
                 | TABLE_XY[decB]
                 | PARITY_TABLE[(tmp & 7) ^ decB];
         Q = flags;
-        memptr = (bc - 1) & 0xFFFF;
+        memptr = (portAddress - 1) & 0xFFFF;
 
         if (decB == 0) {
             return;
