@@ -7,17 +7,22 @@ assignees: ''
 
 ---
 
-**What is your question?**
-What would you like to ask about?
+**Context**
+What are you trying to do in emuStudio? Mention the module/plugin/computer involved.
 
-**What environment do you have?**
-Java version, operating system you use, etc.
+**What you tried**
+Commands, configuration snippets, docs followed, and what happened instead.
 
-**What computer configuration do you use?**
-E.g. MITS Altair 8800; custom; etc.
+**Environment**
 
-**How you run emuStudio?**
-GUI or command line (if so, please send the exact command line).
+- emuStudio version / commit:
+- Java version:
+- OS:
+- Computer configuration:
+- GUI or command line:
+
+**Question**
+What exactly do you need help with?
 
 **Additional context**
-Add any other context or screenshots.
+Logs, screenshots, sample config/files, or links to docs/specs.

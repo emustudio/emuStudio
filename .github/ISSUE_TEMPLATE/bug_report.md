@@ -7,35 +7,33 @@ assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**Problem**
+What is wrong? Include the observed behavior or exact error.
 
-**To Reproduce**
+**Context**
+What were you doing, which module/plugin/computer is affected, and why does it matter?
+
+**Minimal reproducer**
 Steps to reproduce the behavior:
 
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+1. Open/load/run '...'
+2. Do '....'
+3. Observe '....'
 
 **Expected behavior**
-A clear and concise description of what you expected to happen.
+What should happen instead?
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Impact**
+Why does this bug matter? Does it block a workflow, break emulation, or corrupt output?
 
-**Desktop (please complete the following information):**
+**Environment**
 
-- OS: [e.g. iOS]
-- Browser [e.g. chrome, safari]
-- Version [e.g. 22]
+- emuStudio version / commit:
+- Java version:
+- OS:
+- Affected module/plugin:
+- Computer configuration:
+- GUI or command line:
 
-**Smartphone (please complete the following information):**
-
-- Device: [e.g. iPhone6]
-- OS: [e.g. iOS8.1]
-- Browser [e.g. stock browser, safari]
-- Version [e.g. 22]
-
-**Additional context**
-Add any other context about the problem here.
+**References / additional context**
+Logs, screenshots, sample files/config, specs, or related issues.
