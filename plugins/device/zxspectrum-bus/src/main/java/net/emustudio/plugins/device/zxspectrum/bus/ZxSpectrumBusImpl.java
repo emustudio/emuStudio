@@ -73,7 +73,11 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     private ContextZ80 cpu;
     private MemoryContext<Byte> memory;
-    private volatile byte busData; // data on the bus
+    // Last tape bit driven onto the bus by the cassette player.
+    private volatile byte busData;
+    // True only while the tape deck actively drives EAR. When false, port 0xFE bit 6 must read
+    // idle low without injecting another tape edge into the timing stream.
+    private volatile boolean tapeEarLineDriven;
 
     private long frameCycles;
 
@@ -95,6 +99,8 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
     public void initialize(ContextZ80 cpu, MemoryContext<Byte> memory) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memory = Objects.requireNonNull(memory);
+        this.busData = 0;
+        this.tapeEarLineDriven = false;
 
         // ZX Spectrum ULA holds INT low for 32 T-states at each frame boundary
         cpu.setInterruptDuration(timing.interruptTstates);
@@ -213,12 +219,17 @@ public class ZxSpectrumBusImpl extends AbstractMemoryContext<Byte> implements Zx
 
     @Override
     public Byte readData() {
-        return busData;
+        return tapeEarLineDriven ? busData : (byte) 0;
     }
 
     @Override
     public void writeData(Byte data) {
         this.busData = data;
+        this.tapeEarLineDriven = true;
+    }
+
+    public void releaseTapeEarLine() {
+        this.tapeEarLineDriven = false;
     }
 
     @Override

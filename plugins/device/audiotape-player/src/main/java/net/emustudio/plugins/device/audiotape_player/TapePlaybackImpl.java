@@ -50,6 +50,9 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     private long currentTstates;
     private boolean pulseUp;
     private boolean lastIntervalNeedsClosingEdge;
+    // Last value driven onto the EAR line. Needed as a generic fallback when the playback target
+    // is not the Spectrum bus and the line must be explicitly driven low on stop/unload.
+    private byte lastLineValue;
 
     private volatile boolean playing;
     private long playingTstates;
@@ -88,6 +91,7 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
         currentTstates = 1;
         pulseUp = false;
         lastIntervalNeedsClosingEdge = false;
+        releaseEarLine();
         resetPlaybackMetrics();
         updatePlaybackProgress(0);
         schedulePulse(millisToTstates(FILE_START_PAUSE_MS), "PAUSE", "", false);
@@ -180,9 +184,15 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
 
     @Override
     public void onStateChange(TapePlaybackController.CassetteState state) {
-        if ((state == TapePlaybackController.CassetteState.UNLOADED)
+        if (state == TapePlaybackController.CassetteState.STOPPED) {
+            // Release the line only after the controller reports STOPPED so the final closing
+            // edge remains visible through the end of playback without synthesizing an extra
+            // writeData(0) pulse on the timing path.
+            releaseEarLine();
+        } else if ((state == TapePlaybackController.CassetteState.UNLOADED)
                 || (state == TapePlaybackController.CassetteState.CLOSED)) {
             resetPlaybackMetrics();
+            releaseEarLine();
         }
         Optional.ofNullable(gui.get()).ifPresent(g -> g.setCassetteState(state));
     }
@@ -494,7 +504,27 @@ public class TapePlaybackImpl implements Loader.TapePlayback, CPUContext.PassedC
     }
 
     private void writeLineValue(byte value) {
+        lastLineValue = value;
         lineIn.writeData(value);
+    }
+
+    private void releaseEarLine() {
+        if (invokeOptionalZeroArgVoidMethod("releaseTapeEarLine")) {
+            lastLineValue = 0;
+        } else if (lastLineValue != 0) {
+            writeLineValue((byte) 0);
+        }
+    }
+
+    private boolean invokeOptionalZeroArgVoidMethod(String methodName) {
+        try {
+            lineIn.getClass().getMethod(methodName).invoke(lineIn);
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Could not invoke " + methodName + " on tape line target", e);
+        }
     }
 
     private void ensureClosingEdgeAtFileEnd() {

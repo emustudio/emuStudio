@@ -358,7 +358,17 @@ public class ZxSpectrumBusImplTest {
         assertEquals((byte) 0xFF, (byte) bus.readData());
     }
 
-    // ========== Interrupt delegation tests ==========
+    @Test
+    public void testReleaseTapeEarLineMakesBusReadIdleLow() {
+        ZxSpectrumBusImpl bus = new ZxSpectrumBusImpl();
+
+        bus.writeData((byte) 0x01);
+        assertEquals((byte) 0x01, (byte) bus.readData());
+
+        bus.releaseTapeEarLine();
+
+        assertEquals((byte) 0x00, (byte) bus.readData());
+    }
 
     @Test
     public void testSignalNonMaskableInterruptDelegatesToCpu() {
