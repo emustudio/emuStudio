@@ -7,14 +7,18 @@ assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**Context**
+Describe current behavior, affected module/plugin/computer, and any useful background.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**Motivation**
+Why is this needed? What use case, limitation, or workflow does it address?
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**High-Level Steps**
+If you already have an implementation direction in mind, outline it here.
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+1. ...
+2. ...
+3. ...
+
+**References / related issues**
+Specs, screenshots, examples, related issues, or external links.
