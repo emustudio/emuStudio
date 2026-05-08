@@ -49,6 +49,7 @@ public class TapePlaybackImplTest {
             playback.passedCycles(tstatesPerCall);
         }
         playThread.join(5000);
+        playback.passedCycles(1);
     }
 
     private Thread startPlaybackAsync() throws InterruptedException {
@@ -206,9 +207,10 @@ public class TapePlaybackImplTest {
         Thread playThread = startPlaybackAsync();
         playback.passedCycles(Integer.MAX_VALUE);
         playThread.join(2000);
+        playback.passedCycles(1);
 
         assertFalse("Playback should finish in one drain", playThread.isAlive());
-        // 1 PAUSE + 3 bytes * 16 pulses + EOF closing edge = 50 edges
+        // 1 PAUSE + 3 bytes * 16 pulses + EOF closing edge (=1) = 50
         assertEquals(50, writtenData.size());
         assertEquals(100, getLastReportedProgress());
     }
@@ -255,7 +257,7 @@ public class TapePlaybackImplTest {
 
         drainPulses(100, 100_000);
 
-        // 1 (PAUSE) + 16 (data byte) + EOF closing edge = 18 pulses
+        // 1 (PAUSE) + 16 (data byte) + EOF closing edge (=1) = 18
         assertEquals(18, writtenData.size());
     }
 
@@ -327,6 +329,8 @@ public class TapePlaybackImplTest {
         playThread.join(1000);
 
         assertFalse("Turbo playback should finish after draining all overdue pulses", playThread.isAlive());
+        playback.passedCycles(1);
+        // 1 PAUSE + 2 pilot + sync1 + sync2 + 16 data + 1 trailing pause (last=1)
         assertEquals(22, writtenData.size());
         assertEquals(100, getLastReportedProgress());
     }
@@ -436,7 +440,7 @@ public class TapePlaybackImplTest {
 
         drainPulses(200, 100_000);
 
-        // 1 (PAUSE) + 48 (3 bytes) + EOF closing edge = 50
+        // 1 (PAUSE) + 48 (3 bytes) + EOF closing edge (=1) = 50
         assertEquals(50, writtenData.size());
     }
 
@@ -447,7 +451,7 @@ public class TapePlaybackImplTest {
 
         drainPulses(100, 100_000);
 
-        // 1 (PAUSE) + 16 (flag byte) + EOF closing edge = 18
+        // 1 (PAUSE) + 16 (flag byte) + EOF closing edge (=1) = 18
         assertEquals(18, writtenData.size());
     }
 
@@ -519,5 +523,63 @@ public class TapePlaybackImplTest {
         long tstates = getCurrentTstates();
         // 2000 ms * max(1, 0) kHz = 2000 T-states + initial 1
         assertEquals(2001L, tstates);
+    }
+
+    @Test
+    public void testSpectrumBusReleasesEarLineOnStoppedState() throws InterruptedException {
+        RecordingLineIn spectrumBus = new RecordingLineIn();
+        playback = new TapePlaybackImpl(spectrumBus, () -> 1);
+        playback.onFileStart();
+        playback.onBlockData(new byte[]{(byte) 0xFF}); // final closing edge drives line high
+        long totalTstates = getCurrentTstates();
+
+        Thread playThread = startPlaybackAsync();
+        playback.passedCycles(totalTstates);
+        playThread.join(1000);
+
+        assertFalse("Playback should finish once all scheduled T-states have elapsed", playThread.isAlive());
+        assertEquals("Final closing edge must stay visible until controller reports STOPPED",
+                (byte) 1, (byte) spectrumBus.readData());
+
+        playback.onStateChange(TapePlaybackController.CassetteState.STOPPED);
+
+        assertEquals("STOPPED must release the Spectrum EAR line to idle low",
+                (byte) 0, (byte) spectrumBus.readData());
+    }
+
+    @Test
+    public void testEarLineNotReclearedWhenAlreadyZero() throws InterruptedException {
+        // If the closing edge already left the line low, no extra write must be emitted.
+        playback.onFileStart();
+        playback.onPulseSequence(new int[]{500}); // pause(0) + pulse(1) + closing(0)
+        drainPulses(100, 100_000);
+
+        assertEquals(3, writtenData.size());
+        assertEquals((byte) 0, (byte) writtenData.get(writtenData.size() - 1));
+    }
+
+    private static final class RecordingLineIn implements DeviceContext<Byte> {
+        private byte value;
+        private boolean released = true;
+
+        @Override
+        public Byte readData() {
+            return released ? (byte) 0 : value;
+        }
+
+        @Override
+        public void writeData(Byte value) {
+            this.value = value;
+            this.released = false;
+        }
+
+        @Override
+        public Class<Byte> getDataType() {
+            return Byte.class;
+        }
+
+        public void releaseTapeEarLine() {
+            this.released = true;
+        }
     }
 }
