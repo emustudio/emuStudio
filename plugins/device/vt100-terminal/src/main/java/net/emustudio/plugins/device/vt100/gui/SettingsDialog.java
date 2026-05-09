@@ -49,8 +49,8 @@ public class SettingsDialog extends DialogBase {
         spnInputDelay.setModel(new SpinnerNumberModel(0, 0, null, 100));
 
         // Terminal size section
-        JButton btnColumnsDefault = new JButton("Set default");
-        JButton btnRowsDefault = new JButton("Set default");
+        JButton btnColumnsDefault = gui.button("Set default");
+        JButton btnRowsDefault = gui.button("Set default");
         btnColumnsDefault.addActionListener(e -> txtColumns.setText(String.valueOf(TerminalSettings.DEFAULT_COLUMNS)));
         btnRowsDefault.addActionListener(e -> txtRows.setText(String.valueOf(TerminalSettings.DEFAULT_ROWS)));
 
@@ -80,8 +80,8 @@ public class SettingsDialog extends DialogBase {
         panelRedirectIO.add(gui.label("ms"), "wrap");
 
         // Save button
-        JButton btnSave = new JButton("Save");
-        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
+        JButton btnSave = gui.button("Save");
+        gui.buttonMakePrimary(btnSave);
         btnSave.addActionListener(this::btnSaveActionPerformed);
 
         JPanel content = gui.panel("insets dialog", "[grow]", "[][][]");

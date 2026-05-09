@@ -80,7 +80,7 @@ public class SettingsDialog extends DialogBase {
         panelCpu.add(createPortChannelSection("Data channel ports", lstDataPorts, dataPortsModel, "data", "status", statusPortsModel, settings::getDefaultDataPorts), "grow");
 
         // Tab 3: Interrupts
-        JButton btnInterruptDefaults = new JButton("Set default");
+        JButton btnInterruptDefaults = gui.button("Set default");
         btnInterruptDefaults.addActionListener(e -> {
             spnInputInterrupt.setValue(0);
             spnOutputInterrupt.setValue(0);
@@ -104,8 +104,8 @@ public class SettingsDialog extends DialogBase {
         tabbedPane.addTab("Interrupts", panelInterrupts);
 
         // Save button
-        JButton btnSave = new JButton("Save");
-        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
+        JButton btnSave = gui.button("Save");
+        gui.buttonMakePrimary(btnSave);
         btnSave.addActionListener(e -> {
             settings.setStatusPorts(statusPortsModel.getAll());
             settings.setDataPorts(dataPortsModel.getAll());
@@ -132,9 +132,9 @@ public class SettingsDialog extends DialogBase {
         list.setFont(FONT_MONOSPACED);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        JButton btnAdd = new JButton("Add");
-        JButton btnRemove = new JButton("Remove");
-        JButton btnDefaults = new JButton("Set default");
+        JButton btnAdd = gui.button("Add");
+        JButton btnRemove = gui.button("Remove");
+        JButton btnDefaults = gui.button("Set default");
         btnAdd.addActionListener(e -> addPort(nameAdd, nameCheck, model, checkModel));
         btnRemove.addActionListener(e -> removePort(nameAdd, list, model));
         btnDefaults.addActionListener(e -> model.setAll(defaultPorts.get()));
@@ -146,7 +146,7 @@ public class SettingsDialog extends DialogBase {
         buttons.add(btnDefaults, "growx");
 
         JPanel section = gui.section(title, "insets dialog", "[67!,grow][grow]", "[grow]");
-        section.add(new JScrollPane(list), "grow");
+        section.add(gui.scrollPane(list), "grow");
         section.add(buttons, "grow");
         return section;
     }
