@@ -30,8 +30,7 @@ public class DeviceImpl extends AbstractDevice {
     private TapePlayerGui gui;
     private TapePlaybackController controller;
     private TapePlaybackImpl cassetteListener;
-    private AutomationRunner automationRunner;
-    private Thread automationThread;
+    private AutomationController automationController;
     private JFrame parentFrame;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
@@ -65,20 +64,14 @@ public class DeviceImpl extends AbstractDevice {
     public void reset() {
         this.controller.reset();
         if (automaticEmulation && !guiSupported) {
-            List<String> storedEvents = settings.getArray(SettingsDialog.SETTINGS_KEY_EVENTS);
-            List<AutomationEvent> events = AutomationEvent.deserializeAll(storedEvents);
-            if (!events.isEmpty()) {
-                automationRunner = new AutomationRunner(controller, events);
-                automationThread = new Thread(automationRunner, "audiotape-automation");
-                automationThread.setDaemon(true);
-            }
+            automationController = new AutomationController(controller);
         }
     }
 
     @Override
     public void destroy() {
-        if (automationRunner != null) {
-            automationRunner.cancel();
+        if (automationController != null) {
+            automationController.close();
         }
         this.controller.close();
         if (guiIOset || gui != null) {
@@ -112,14 +105,17 @@ public class DeviceImpl extends AbstractDevice {
             }
             this.gui.setVisible(true);
 
-            // Start automation if runner is ready
-            if (automationRunner != null && automationThread != null && !automationThread.isAlive()) {
-                gui.setAutomationRunner(automationRunner);
-                automationThread.start();
+            // Start automation if controller is ready
+            if (automationController != null && !automationController.isPlaying()) {
+                List<String> storedEvents = settings.getArray(SettingsDialog.SETTINGS_KEY_EVENTS);
+                List<AutomationEvent> events = AutomationEvent.deserializeAll(storedEvents);
+                automationController.play(events);
             }
-        } else if (automationRunner != null && automationThread != null && !automationThread.isAlive()) {
+        } else if (automationController != null && !automationController.isPlaying()) {
             // No GUI - just start automation
-            automationThread.start();
+            List<String> storedEvents = settings.getArray(SettingsDialog.SETTINGS_KEY_EVENTS);
+            List<AutomationEvent> events = AutomationEvent.deserializeAll(storedEvents);
+            automationController.play(events);
         }
     }
 

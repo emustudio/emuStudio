@@ -24,7 +24,6 @@ class TimelinePanel extends JTable {
         this.model = new EventTableModel(events);
         setModel(model);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        setRowHeight(25);
         setShowGrid(false);
         setIntercellSpacing(new Dimension(0, 0));
         setFillsViewportHeight(true);
@@ -32,6 +31,7 @@ class TimelinePanel extends JTable {
 
         getColumnModel().getColumn(0).setMaxWidth(40);
         getColumnModel().getColumn(0).setMinWidth(30);
+        getColumnModel().getColumn(1).setCellRenderer(new WordWrapCellRenderer());
     }
 
     void refresh() {

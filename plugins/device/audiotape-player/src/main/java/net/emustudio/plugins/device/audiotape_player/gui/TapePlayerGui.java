@@ -11,7 +11,7 @@ import net.emustudio.emulib.runtime.ui.components.CachedComboBoxModel;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.device.audiotape_player.AutomationEvent;
-import net.emustudio.plugins.device.audiotape_player.AutomationRunner;
+import net.emustudio.plugins.device.audiotape_player.AutomationController;
 import net.emustudio.plugins.device.audiotape_player.TapePlaybackController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 // https://stackoverflow.com/questions/25010068/miglayout-push-vs-grow
-public class TapePlayerGui extends DialogBase {
+public class TapePlayerGui extends DialogBase implements AutomationController.AutomationListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapePlayerGui.class);
     private static final String PLAYBACK_PROGRESS_NOT_AVAILABLE = "N/A";
 
@@ -46,6 +46,10 @@ public class TapePlayerGui extends DialogBase {
     private final static String SAVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/events-save.png";
     private final static String COPY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/events-copy.png";
     private final static String RESET_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/reset.png";
+    private final static String AUTO_ADD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-add.png";
+    private final static String AUTO_REMOVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-remove.png";
+    private final static String AUTO_MOVE_UP_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-move-up.png";
+    private final static String AUTO_MOVE_DOWN_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/auto-move-down.png";
 
     private final JPanel panelTapeInfo;
     private final JButton btnBrowse;
@@ -62,6 +66,10 @@ public class TapePlayerGui extends DialogBase {
     private final JButton btnPlay = new JButton("Play", GUI.loadIcon(PLAY_ICON));
     private final JButton btnStop = new JButton("Stop", GUI.loadIcon(STOP_ICON));
     private final JButton btnEject = new JButton("Eject", GUI.loadIcon(EJECT_ICON));
+    private final JButton btnAutoAdd = new JButton(GUI.loadIcon(AUTO_ADD_ICON));
+    private final JButton btnAutoRemove = new JButton(GUI.loadIcon(AUTO_REMOVE_ICON));
+    private final JButton btnAutoMoveUp = new JButton(GUI.loadIcon(AUTO_MOVE_UP_ICON));
+    private final JButton btnAutoMoveDown = new JButton(GUI.loadIcon(AUTO_MOVE_DOWN_ICON));
 
     private final JTextArea txtFileName = new JTextArea("N/A");
     private final JLabel lblStatus;
@@ -74,12 +82,11 @@ public class TapePlayerGui extends DialogBase {
     private final TapePlaybackController controller;
     private final PluginSettings settings;
 
+    private final AutomationController automation;
     private final List<AutomationEvent> automationEvents = new ArrayList<>();
     private final TimelinePanel timelinePanel;
     private final JScrollPane timelineScrollPane;
     private volatile int activeTimelineIndex = -1;
-    private volatile AutomationRunner automationRunner;
-    private Thread automationThread;
     private JButton btnAutoPlay;
     private JButton btnAutoStop;
     private JButton btnAutoReset;
@@ -94,6 +101,8 @@ public class TapePlayerGui extends DialogBase {
         this.dialogs = Objects.requireNonNull(dialogs);
         this.controller = Objects.requireNonNull(controller);
         this.settings = Objects.requireNonNull(settings);
+        this.automation = new AutomationController(controller);
+        this.automation.setListener(this);
 
         this.timelinePanel = new TimelinePanel(automationEvents);
         this.timelineScrollPane = new JScrollPane(timelinePanel);
@@ -269,31 +278,6 @@ public class TapePlayerGui extends DialogBase {
         }
     }
 
-    public void setAutomationRunner(AutomationRunner runner) {
-        this.automationRunner = runner;
-        runner.setEventIndexListener(this::onTimelineEventChanged);
-        SwingUtilities.invokeLater(() -> {
-            automationEvents.clear();
-            automationEvents.addAll(runner.getEvents());
-            refreshTimeline();
-            updateAutoButtons(true);
-        });
-    }
-
-    private void onTimelineEventChanged(int index) {
-        activeTimelineIndex = index;
-        SwingUtilities.invokeLater(() -> {
-            timelinePanel.setActiveIndex(index);
-            if (index >= 0 && index < automationEvents.size()) {
-                timelinePanel.scrollRectToVisible(timelinePanel.getCellRect(index, 0, true));
-            }
-            if (index >= automationEvents.size()) {
-                updateAutoButtons(false);
-            }
-        });
-    }
-
-
     private void refreshTimeline() {
         timelinePanel.refresh();
         timelinePanel.revalidate();
@@ -301,28 +285,16 @@ public class TapePlayerGui extends DialogBase {
     }
 
     private void startAutomation() {
-        if (automationRunner != null && !automationRunner.isCancelled()) {
-            return;
+        if (!automation.isPlaying()) {
+            activeTimelineIndex = -1;
+            timelinePanel.clearSelection();
+            updateAutoButtons(true);
+            automation.play(automationEvents); // indexes must match.. (during playing we shouldn't allow updating events)
         }
-        if (automationEvents.isEmpty()) {
-            dialogs.showInfo("No automation events to run.", "Automation");
-            return;
-        }
-        activeTimelineIndex = -1;
-        timelinePanel.clearSelection();
-        automationRunner = new AutomationRunner(controller, new ArrayList<>(automationEvents));
-        automationRunner.setEventIndexListener(this::onTimelineEventChanged);
-        automationThread = new Thread(automationRunner, "audiotape-automation");
-        automationThread.setDaemon(true);
-        automationThread.start();
-        updateAutoButtons(true);
     }
 
     private void stopAutomation() {
-        if (automationRunner != null) {
-            automationRunner.cancel();
-            automationRunner = null;
-        }
+        automation.stop();
         updateAutoButtons(false);
     }
 
@@ -338,6 +310,10 @@ public class TapePlayerGui extends DialogBase {
         btnAutoPlay.setEnabled(!running);
         btnAutoStop.setEnabled(running);
         btnAutoReset.setEnabled(!running);
+        btnAutoAdd.setEnabled(!running);
+        btnAutoRemove.setEnabled(!running);
+        btnAutoMoveUp.setEnabled(!running);
+        btnAutoMoveDown.setEnabled(!running);
     }
 
     private void addAutomationEvent(AutomationEvent.Type type) {
@@ -609,30 +585,26 @@ public class TapePlayerGui extends DialogBase {
         cmbEventType.setMaximumSize(new Dimension(120, 28));
         toolbar.add(cmbEventType);
 
-        JButton btnAdd = new JButton("+");
-        btnAdd.setToolTipText("Add event");
-        btnAdd.addActionListener(e -> {
+        btnAutoAdd.setToolTipText("Add event");
+        btnAutoAdd.addActionListener(e -> {
             AutomationEvent.Type type = (AutomationEvent.Type) cmbEventType.getSelectedItem();
             if (type != null) {
                 addAutomationEvent(type);
             }
         });
-        toolbar.add(btnAdd);
+        toolbar.add(btnAutoAdd);
 
-        JButton btnRemove = new JButton("-");
-        btnRemove.setToolTipText("Remove event");
-        btnRemove.addActionListener(e -> removeAutomationEvent());
-        toolbar.add(btnRemove);
+        btnAutoRemove.setToolTipText("Remove event");
+        btnAutoRemove.addActionListener(e -> removeAutomationEvent());
+        toolbar.add(btnAutoRemove);
 
-        JButton btnMoveUp = new JButton("↑");
-        btnMoveUp.setToolTipText("Move event up");
-        btnMoveUp.addActionListener(e -> moveAutomationEventUp());
-        toolbar.add(btnMoveUp);
+        btnAutoMoveUp.setToolTipText("Move event up");
+        btnAutoMoveUp.addActionListener(e -> moveAutomationEventUp());
+        toolbar.add(btnAutoMoveUp);
 
-        JButton btnMoveDown = new JButton("↓");
-        btnMoveDown.setToolTipText("Move event down");
-        btnMoveDown.addActionListener(e -> moveAutomationEventDown());
-        toolbar.add(btnMoveDown);
+        btnAutoMoveDown.setToolTipText("Move event down");
+        btnAutoMoveDown.addActionListener(e -> moveAutomationEventDown());
+        toolbar.add(btnAutoMoveDown);
 
         toolbar.addSeparator();
         toolbar.add(new JPanel(null)); // spacer
@@ -652,5 +624,26 @@ public class TapePlayerGui extends DialogBase {
 
         panel.add(toolbar, "cell 0 1, growx");
         return panel;
+    }
+
+    @Override
+    public void stateChanged(AutomationController.State state) {
+        if (state == AutomationController.State.STOPPED || state == AutomationController.State.CLOSED) {
+            SwingUtilities.invokeLater(() -> updateAutoButtons(false));
+        }
+    }
+
+    @Override
+    public void currentIndexChanged(int index) {
+        activeTimelineIndex = index;
+        SwingUtilities.invokeLater(() -> {
+            timelinePanel.setActiveIndex(index);
+            if (index >= 0 && index < automationEvents.size()) {
+                timelinePanel.scrollRectToVisible(timelinePanel.getCellRect(index, 0, true));
+            }
+            if (index >= automationEvents.size()) {
+                updateAutoButtons(false);
+            }
+        });
     }
 }
