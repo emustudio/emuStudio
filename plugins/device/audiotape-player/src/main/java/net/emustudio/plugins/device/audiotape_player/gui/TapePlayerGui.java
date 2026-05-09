@@ -37,14 +37,15 @@ public class TapePlayerGui extends DialogBase {
     private static final String PLAYBACK_PROGRESS_NOT_AVAILABLE = "N/A";
 
     private final GUI gui;
-    private final static String FOLDER_OPEN_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/folder-open.png";
-    private final static String PLAY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-playback-start.png";
-    private final static String STOP_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-playback-stop.png";
-    private final static String EJECT_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/media-eject.png";
-    private final static String REFRESH_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/view-refresh.png";
-    private final static String LOAD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/applications-multimedia.png";
-    private final static String SAVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/document-save.png";
-    private final static String COPY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/edit-copy.png";
+    private final static String BROWSE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/browse.png";
+    private final static String PLAY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/play.png";
+    private final static String STOP_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/stop.png";
+    private final static String EJECT_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/tape-eject.png";
+    private final static String REFRESH_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/refresh.png";
+    private final static String LOAD_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/load.png";
+    private final static String SAVE_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/events-save.png";
+    private final static String COPY_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/events-copy.png";
+    private final static String RESET_ICON = "/net/emustudio/plugins/device/audiotape_player/gui/reset.png";
 
     private final JPanel panelTapeInfo;
     private final JButton btnBrowse;
@@ -94,7 +95,7 @@ public class TapePlayerGui extends DialogBase {
         this.controller = Objects.requireNonNull(controller);
         this.settings = Objects.requireNonNull(settings);
 
-        this.timelinePanel = new TimelinePanel(automationEvents, () -> activeTimelineIndex);
+        this.timelinePanel = new TimelinePanel(automationEvents);
         this.timelineScrollPane = new JScrollPane(timelinePanel);
         timelineScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         timelineScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -107,7 +108,7 @@ public class TapePlayerGui extends DialogBase {
             cmbDirs.setSelectedIndex(0);
             cmbDirs.setMinimumSize(new Dimension(0, 0));
         });
-        btnBrowse.setIcon(GUI.loadIcon(FOLDER_OPEN_ICON));
+        btnBrowse.setIcon(GUI.loadIcon(BROWSE_ICON));
         btnBrowse.setText("");
         btnBrowse.setToolTipText("Select directory");
         btnBrowse.setFocusPainted(false);
@@ -282,23 +283,19 @@ public class TapePlayerGui extends DialogBase {
     private void onTimelineEventChanged(int index) {
         activeTimelineIndex = index;
         SwingUtilities.invokeLater(() -> {
-            timelinePanel.revalidate();
-            timelinePanel.repaint();
-            scrollToActiveTimelineEvent();
+            timelinePanel.setActiveIndex(index);
+            if (index >= 0 && index < automationEvents.size()) {
+                timelinePanel.scrollRectToVisible(timelinePanel.getCellRect(index, 0, true));
+            }
             if (index >= automationEvents.size()) {
                 updateAutoButtons(false);
             }
         });
     }
 
-    private void scrollToActiveTimelineEvent() {
-        int viewHeight = timelineScrollPane.getViewport().getExtentSize().height;
-        int centerY = activeTimelineIndex * TimelinePanel.EVENT_ROW_HEIGHT + TimelinePanel.EVENT_ROW_HEIGHT / 2;
-        int scrollY = Math.max(0, centerY - viewHeight / 2);
-        timelineScrollPane.getViewport().setViewPosition(new Point(0, scrollY));
-    }
 
     private void refreshTimeline() {
+        timelinePanel.refresh();
         timelinePanel.revalidate();
         timelinePanel.repaint();
     }
@@ -312,7 +309,7 @@ public class TapePlayerGui extends DialogBase {
             return;
         }
         activeTimelineIndex = -1;
-        timelinePanel.selectedIndex = -1;
+        timelinePanel.clearSelection();
         automationRunner = new AutomationRunner(controller, new ArrayList<>(automationEvents));
         automationRunner.setEventIndexListener(this::onTimelineEventChanged);
         automationThread = new Thread(automationRunner, "audiotape-automation");
@@ -332,7 +329,8 @@ public class TapePlayerGui extends DialogBase {
     private void resetAutomation() {
         stopAutomation();
         activeTimelineIndex = -1;
-        timelinePanel.selectedIndex = -1;
+        timelinePanel.setActiveIndex(-1);
+        timelinePanel.clearSelection();
         refreshTimeline();
     }
 
@@ -367,10 +365,10 @@ public class TapePlayerGui extends DialogBase {
     }
 
     private void removeAutomationEvent() {
-        int index = timelinePanel.selectedIndex;
+        int index = timelinePanel.getSelectedRow();
         if (index >= 0 && index < automationEvents.size()) {
             automationEvents.remove(index);
-            timelinePanel.selectedIndex = -1;
+            timelinePanel.clearSelection();
         } else if (!automationEvents.isEmpty()) {
             automationEvents.remove(automationEvents.size() - 1);
         }
@@ -379,20 +377,20 @@ public class TapePlayerGui extends DialogBase {
     }
 
     private void moveAutomationEventUp() {
-        int index = timelinePanel.selectedIndex;
+        int index = timelinePanel.getSelectedRow();
         if (index > 0 && index < automationEvents.size()) {
             Collections.swap(automationEvents, index, index - 1);
-            timelinePanel.selectedIndex = index - 1;
+            timelinePanel.setRowSelectionInterval(index - 1, index - 1);
             saveAutomationEvents();
             refreshTimeline();
         }
     }
 
     private void moveAutomationEventDown() {
-        int index = timelinePanel.selectedIndex;
+        int index = timelinePanel.getSelectedRow();
         if (index >= 0 && index < automationEvents.size() - 1) {
             Collections.swap(automationEvents, index, index + 1);
-            timelinePanel.selectedIndex = index + 1;
+            timelinePanel.setRowSelectionInterval(index + 1, index + 1);
             saveAutomationEvents();
             refreshTimeline();
         }
@@ -648,7 +646,7 @@ public class TapePlayerGui extends DialogBase {
         btnAutoStop.addActionListener(e -> stopAutomation());
         toolbar.add(btnAutoStop);
 
-        btnAutoReset = new JButton("Reset");
+        btnAutoReset = new JButton("Reset", GUI.loadIcon(RESET_ICON));
         btnAutoReset.addActionListener(e -> resetAutomation());
         toolbar.add(btnAutoReset);
 
