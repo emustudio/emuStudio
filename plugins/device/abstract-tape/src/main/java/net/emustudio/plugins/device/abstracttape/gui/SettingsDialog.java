@@ -47,8 +47,8 @@ public class SettingsDialog extends DialogBase {
             }
         });
 
-        JButton btnSave = new JButton("Save");
-        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
+        JButton btnSave = gui.button("Save");
+        gui.buttonMakePrimary(btnSave);
         btnSave.addActionListener(e -> {
             try {
                 settings.setBoolean("alwaysOnTop", chkAlwaysOnTop.isSelected());

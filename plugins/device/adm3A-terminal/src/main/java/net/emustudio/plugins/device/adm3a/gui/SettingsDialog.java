@@ -90,8 +90,8 @@ public class SettingsDialog extends DialogBase {
         panelTerminal.add(chkAlwaysOnTop, "span, wrap");
 
         // Save button
-        JButton btnSave = new JButton("Save");
-        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
+        JButton btnSave = gui.button("Save");
+        gui.buttonMakePrimary(btnSave);
         btnSave.addActionListener(this::btnSaveActionPerformed);
 
         JPanel content = gui.panel("insets dialog", "[grow]", "[][][][]");

@@ -42,13 +42,8 @@ public class SettingsDialog extends DialogBase {
     private final List<DriveSettingsUI> driveSettingsUI = new ArrayList<>();
     private final List<JToggleButton> driveButtons = new ArrayList<>();
     private final JToggleButton btnMountUnmount = new JToggleButton("Mount");
-    private final JButton btnUnmountAll = new JButton("Unmount all");
-    private final JButton btnSave = new JButton("Save");
-    private final JButton btnBrowse = new JButton("Browse...");
     private final JCheckBox chkInterruptsSupported = new JCheckBox("Interrupts supported");
     private final JSpinner spnInterruptVector = new JSpinner(new SpinnerNumberModel(0, 0, 7, 1));
-    private final JButton btnCpuDefault = new JButton("Set default");
-    private final JButton btnDriveDefault = new JButton("Set default");
     private final JTextField txtImageFile = new JTextField();
     private final JTextField txtPort1 = new JTextField(String.format("0x%02X", DEFAULT_CPU_PORT1));
     private final JTextField txtPort2 = new JTextField(String.format("0x%02X", DEFAULT_CPU_PORT2));
@@ -174,6 +169,12 @@ public class SettingsDialog extends DialogBase {
 
     @Override
     protected JComponent initializeComponents() {
+        JButton btnBrowse = gui.button("Browse...");
+        JButton btnUnmountAll = gui.button("Unmount all");
+        JButton btnDriveDefault = gui.button("Set default");
+        JButton btnCpuDefault = gui.button("Set default");
+        JButton btnSave = gui.button("Save");
+
         ButtonGroup buttonGroup = new ButtonGroup();
         for (int i = 0; i < driveButtons.size(); i++) {
             setupDriveButton(buttonGroup, driveButtons.get(i), i);
@@ -290,7 +291,7 @@ public class SettingsDialog extends DialogBase {
         });
 
         rootPane.setDefaultButton(btnSave);
-        btnSave.setFont(btnSave.getFont().deriveFont(Font.BOLD));
+        gui.buttonMakePrimary(btnSave);
         btnSave.addActionListener(e -> {
             try {
                 saveSettings();

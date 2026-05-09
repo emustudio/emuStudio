@@ -11,9 +11,11 @@ import net.emustudio.emulib.plugins.device.DeviceContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
+import net.emustudio.plugins.device.audiotape_player.gui.SettingsDialog;
 import net.emustudio.plugins.device.audiotape_player.gui.TapePlayerGui;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -22,16 +24,21 @@ import java.util.ResourceBundle;
 public class DeviceImpl extends AbstractDevice {
 
     private final boolean guiSupported;
+    private final boolean automaticEmulation;
     private boolean guiIOset = false;
 
     private TapePlayerGui gui;
     private TapePlaybackController controller;
     private TapePlaybackImpl cassetteListener;
+    private AutomationRunner automationRunner;
+    private Thread automationThread;
+    private JFrame parentFrame;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
 
         this.guiSupported = !settings.getBoolean(PluginSettings.EMUSTUDIO_NO_GUI, false);
+        this.automaticEmulation = settings.getBoolean(PluginSettings.EMUSTUDIO_AUTO, false);
     }
 
     @SuppressWarnings("unchecked")
@@ -48,15 +55,31 @@ public class DeviceImpl extends AbstractDevice {
         this.cassetteListener = new TapePlaybackImpl(lineIn, cpu::getCPUFrequency);
         cpu.addPassedCyclesListener(this.cassetteListener);
         this.controller = new TapePlaybackController(cassetteListener);
+
+        if (guiSupported && settings.getBoolean(SettingsDialog.SETTINGS_KEY_SHOW_GUI_AT_STARTUP, false)) {
+            showGUI(null);
+        }
     }
 
     @Override
     public void reset() {
         this.controller.reset();
+        if (automaticEmulation && !guiSupported) {
+            List<String> storedEvents = settings.getArray(SettingsDialog.SETTINGS_KEY_EVENTS);
+            List<AutomationEvent> events = AutomationEvent.deserializeAll(storedEvents);
+            if (!events.isEmpty()) {
+                automationRunner = new AutomationRunner(controller, events);
+                automationThread = new Thread(automationRunner, "audiotape-automation");
+                automationThread.setDaemon(true);
+            }
+        }
     }
 
     @Override
     public void destroy() {
+        if (automationRunner != null) {
+            automationRunner.cancel();
+        }
         this.controller.close();
         if (guiIOset || gui != null) {
             gui = null;
@@ -67,23 +90,36 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void showSettings(JFrame jFrame) {
-        // we don't have settings GUI
+        if (guiSupported) {
+            new SettingsDialog(jFrame, settings, applicationApi.getDialogs(), applicationApi.getGUI())
+                    .setVisible(true);
+        }
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        return false;
+        return guiSupported;
     }
 
     @Override
     public void showGUI(JFrame parent) {
+        this.parentFrame = parent;
         if (guiSupported) {
             if (!guiIOset) {
-                this.gui = new TapePlayerGui(parent, applicationApi.getDialogs(), controller, applicationApi.getGUI());
+                this.gui = new TapePlayerGui(parent, applicationApi.getDialogs(), controller, settings, applicationApi.getGUI());
                 guiIOset = true;
                 this.cassetteListener.setGui(gui);
             }
             this.gui.setVisible(true);
+
+            // Start automation if runner is ready
+            if (automationRunner != null && automationThread != null && !automationThread.isAlive()) {
+                gui.setAutomationRunner(automationRunner);
+                automationThread.start();
+            }
+        } else if (automationRunner != null && automationThread != null && !automationThread.isAlive()) {
+            // No GUI - just start automation
+            automationThread.start();
         }
     }
 

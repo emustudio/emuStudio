@@ -76,7 +76,7 @@ public class SettingsDialog extends DialogBase {
     @Override
     protected JComponent initializeComponents() {
         // Bank-switching section
-        JLabel lblDescription = new JLabel(
+        JLabel lblDescription = gui.label(
                 "<html>Memory banks are different locations of memory wired in a way they share the addresses. Common area is shared across all banks. ");
         lblDescription.setHorizontalAlignment(SwingConstants.LEFT);
         lblDescription.setVerticalAlignment(SwingConstants.TOP);
@@ -88,32 +88,32 @@ public class SettingsDialog extends DialogBase {
         panelBanks.add(txtCommonBoundary, "growx, wrap");
         panelBanks.add(new JSeparator(), "span, growx, h 2!, wrap");
         panelBanks.add(lblDescription, "span, h 64!, growx, wrap");
-        panelBanks.add(new JLabel("<html>Banks are accessible from <strong>[0..Common]</strong>."), "span, wrap");
-        panelBanks.add(new JLabel("<html>Common area starts from <strong>[Common..memory end]</strong>."), "span, wrap");
-        panelBanks.add(new JLabel("<html><strong>NOTE:</strong> Changes will be visible after restart."), "span, gaptop 12");
+        panelBanks.add(gui.label("<html>Banks are accessible from <strong>[0..Common]</strong>."), "span, wrap");
+        panelBanks.add(gui.label("<html>Common area starts from <strong>[Common..memory end]</strong>."), "span, wrap");
+        panelBanks.add(gui.label("<html><strong>NOTE:</strong> Changes will be visible after restart."), "span, gaptop 12");
 
         // ROM areas section
-        JButton btnAddRange = new JButton("Add");
+        JButton btnAddRange = gui.button("Add");
         btnAddRange.addActionListener(this::btnAddRangeActionPerformed);
-        JButton btnRemoveRange = new JButton("Remove");
+        JButton btnRemoveRange = gui.button("Remove");
         btnRemoveRange.addActionListener(this::btnRemoveRangeActionPerformed);
 
         JPanel panelROM = gui.section("ROM areas", "insets dialog", "[grow]", "[116!][][grow][]");
-        panelROM.add(new JScrollPane(tblROM), "grow, wrap");
+        panelROM.add(gui.scrollPane(tblROM), "grow, wrap");
         panelROM.add(btnRemoveRange, "split 2, align right");
         panelROM.add(btnAddRange, "wrap");
         panelROM.add(new JPanel(), "grow, wrap");
         panelROM.add(chkApplyROMatStartup);
 
         // Files to load at startup section
-        JScrollPane scrollImages = new JScrollPane(tblImages);
+        JScrollPane scrollImages = gui.scrollPane(tblImages);
         scrollImages.setPreferredSize(new Dimension(498, 117));
 
-        JButton btnAddImage = new JButton("Add");
+        JButton btnAddImage = gui.button("Add");
         btnAddImage.addActionListener(this::btnAddImageActionPerformed);
-        JButton btnRemoveImage = new JButton("Remove");
+        JButton btnRemoveImage = gui.button("Remove");
         btnRemoveImage.addActionListener(this::btnRemoveImageActionPerformed);
-        JButton btnLoadNow = new JButton("Load now");
+        JButton btnLoadNow = gui.button("Load now");
         btnLoadNow.addActionListener(this::btnLoadNowActionPerformed);
 
         JPanel btnPanel = gui.panel("insets 0", "[grow]", "[][][unrel][]");
@@ -126,7 +126,7 @@ public class SettingsDialog extends DialogBase {
         panelImages.add(btnPanel, "top");
 
         // OK button
-        JButton btnOK = new JButton("OK");
+        JButton btnOK = gui.button("OK");
         btnOK.addActionListener(this::btnOKActionPerformed);
 
         JPanel content = gui.panel("insets dialog", "[340!]6[grow]", "[]6[]6[]");
