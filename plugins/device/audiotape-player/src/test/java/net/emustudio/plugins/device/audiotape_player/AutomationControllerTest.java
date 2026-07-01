@@ -321,6 +321,37 @@ public class AutomationControllerTest {
     }
 
     @Test
+    public void testStopWithoutListenerDoesNotThrow() {
+        TapePlaybackController tc = niceMock(TapePlaybackController.class);
+        replay(tc);
+        AutomationController headless = new AutomationController(tc);
+        headless.stop();
+        headless.close();
+    }
+
+    @Test
+    public void testCloseWithoutListenerDoesNotThrow() {
+        TapePlaybackController tc = niceMock(TapePlaybackController.class);
+        replay(tc);
+        AutomationController headless = new AutomationController(tc);
+        headless.close();
+    }
+
+    @Test
+    public void testPlayWithoutListenerCompletes() throws InterruptedException {
+        TapePlaybackController tc = niceMock(TapePlaybackController.class);
+        replay(tc);
+        try (AutomationController headless = new AutomationController(tc)) {
+            headless.play(Collections.emptyList());
+            long deadline = System.currentTimeMillis() + 5000;
+            while (headless.isPlaying() && System.currentTimeMillis() < deadline) {
+                Thread.sleep(10);
+            }
+            assertFalse(headless.isPlaying());
+        }
+    }
+
+    @Test
     public void testPlayWhileAlreadyPlayingIsIgnored() throws InterruptedException {
         CountDownLatch started = new CountDownLatch(1);
         controller.setListener(new AutomationController.AutomationListener() {

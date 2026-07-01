@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.*;
 
@@ -191,6 +190,10 @@ public class AutomationController implements AutoCloseable {
     }
 
     private void notifyStateChange() {
-        Optional.ofNullable(stateNotifications.poll()).ifPresent(listener::stateChanged);
+        State notification = stateNotifications.poll();
+        AutomationListener tmpListener = listener;
+        if (notification != null && tmpListener != null) {
+            tmpListener.stateChanged(notification);
+        }
     }
 }
