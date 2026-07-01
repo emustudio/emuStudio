@@ -148,3 +148,6 @@ gradle-app.setting
 
 # Local History for Visual Studio Code
 .history/
+
+# Generated architecture documentation (./gradlew doc)
+docs/output/

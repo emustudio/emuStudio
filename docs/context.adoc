@@ -1,0 +1,83 @@
+= C4 Level 1 — System Context
+:toc: left
+:icons: font
+:sectanchors:
+
+xref:index.adoc[← Back to overview]
+
+The *System Context* diagram shows emuStudio as a single black box, the people
+who use it and the external systems it depends on.
+
+== Diagram
+
+[plantuml,c4-context,svg]
+----
+@startuml
+!include <C4/C4_Context>
+
+title System Context — emuStudio
+
+Person(student, "Student / Learner", "Writes, compiles, loads and debugs programs for emulated computers; explores how historic machines work")
+Person(educator, "Educator", "Uses emuStudio as a teaching tool for computer architecture and assembly programming")
+Person(developer, "Emulator / Plugin Developer", "Builds new compilers, CPUs, memories and devices, or whole virtual computers, using the SDK")
+
+System(emustudio, "emuStudio", "Modular desktop platform for emulating historic and teaching computers (compile, load, emulate)")
+
+System_Ext(filesystem, "Host File System", "Source files, virtual-computer configurations (TOML), application settings, output files and plugin JARs")
+System_Ext(hostio, "Host I/O (Screen, Keyboard, Audio)", "Terminal and graphical output, user input, and sound output for audio devices")
+System_Ext(emulib, "emuLib SDK", "Shared plugin API, runtime services and UI helpers (sibling library)")
+
+Rel(student, emustudio, "Edits, compiles, runs and debugs programs", "GUI / CLI")
+Rel(educator, emustudio, "Demonstrates & assigns exercises", "GUI")
+Rel(developer, emustudio, "Extends with plugins & virtual computers", "emuLib SDK")
+
+Rel(emustudio, filesystem, "Reads source & config, writes output & settings")
+Rel(emustudio, hostio, "Renders output, reads input, plays audio")
+Rel_Back(emustudio, emulib, "Provides plugin API & runtime services to")
+
+SHOW_LEGEND()
+@enduml
+----
+
+== Actors
+
+Student / Learner:: The primary end user. Loads a bundled virtual computer
+(for example the MITS Altair 8800 or the Manchester SSEM), writes assembly or
+high-level source, compiles it, loads it into memory and runs or single-steps
+the emulation using the debugger.
+
+Educator:: Uses emuStudio in the classroom as a teaching aid for computer
+architecture, assembly language and the fetch–decode–execute cycle.
+
+Emulator / Plugin Developer:: Extends the platform. Writes new plugins
+(compiler, CPU, memory, device) against the emuLib API, or composes existing
+plugins into new virtual computers. May also run emuStudio headlessly for
+automated test/verification.
+
+== External systems
+
+Host File System:: Holds everything emuStudio reads and writes: user source
+code, per–virtual-computer configuration files (TOML), global application
+settings, plugin JARs (`compiler/`, `cpu/`, `memory/`, `device/`) and device
+output files.
+
+Host I/O (Screen, Keyboard, Audio):: The operating-system facilities that
+plugins ultimately drive — terminal/graphical windows, keyboard input, and
+sound output used by audio devices (audiotape player, AY-3-8910 chip).
+
+emuLib SDK:: The shared library that defines the plugin contracts
+(`Plugin`, `Compiler`, `CPU`, `Memory`, `Device`), the runtime services
+(`ApplicationApi`, `ContextPool`) and UI helpers. It is maintained in the
+sibling `emuLib` repository and consumed by both the application and every
+plugin.
+
+== Key interactions
+
+* A user selects a virtual computer, edits source, and drives the
+  *compile → load → emulate* workflow through the GUI or the CLI.
+* emuStudio loads the plugins referenced by the chosen configuration, wires
+  them together and runs the emulation.
+* Developers plug new capabilities in by dropping additional plugin JARs and a
+  matching configuration into the distribution.
+
+Continue to xref:containers.adoc[Level 2 — Containers].

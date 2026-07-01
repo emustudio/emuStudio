@@ -2,6 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 import java.text.SimpleDateFormat
 
+plugins {
+  id 'org.asciidoctor.jvm.convert' version '4.0.4'
+}
+
 apply from: 'test_report.gradle'
 
 ext.versions = [
@@ -96,3 +100,42 @@ subprojects {
     mavenCentral()
   }
 }
+
+// Architecture documentation (C4 model, AsciiDoc -> HTML)
+repositories {
+  mavenCentral()
+}
+
+asciidoctorj {
+  modules {
+    diagram.use() // enables PlantUML/C4 diagrams via asciidoctor-diagram
+  }
+}
+
+tasks.register('doc', org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+  group = 'documentation'
+  description = 'Generates HTML of the docs/ AsciiDoc documents into docs/output/'
+
+  baseDirFollowsSourceDir()
+  sourceDir file('docs')
+  sources {
+    include '*.adoc'
+  }
+  outputDir file('docs/output')
+
+  outputOptions {
+    backends 'html5'
+    separateOutputDirs = false
+  }
+
+  attributes(
+      'toc'              : 'left',
+      'icons'            : 'font',
+      'source-highlighter': 'rouge',
+      'sectanchors'      : '',
+      'docdate'          : new Date().format('yyyy-MM-dd'),
+      'imagesdir'        : 'images',
+      'imagesoutdir'     : file('docs/output/images')
+  )
+}
+
