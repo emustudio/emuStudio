@@ -5,12 +5,14 @@
 - Main locations in this repository: `application`, `plugins/compiler`, `plugins/cpu`, `plugins/memory`, `plugins/device`, and `application/src/main/files/config`.
 
 ## Sibling Repositories
-- `/home/vbmacher/projects/emustudio/emuLib`: shared plugin API, runtime services, shared UI helpers, and reusable utilities.
-- `/home/vbmacher/projects/emustudio/edigen`: decoder/disassembler generator from `.eds` specifications.
-- `/home/vbmacher/projects/emustudio/emuStudio`: desktop application, bundled plugins, virtual computers, configs, and packaging.
-- `/home/vbmacher/projects/emustudio/emustudio.github.io`: website, user documentation, developer documentation, and release-facing pages.
-- `/home/vbmacher/projects/emustudio/edigen-gradle-plugin`: Gradle task and DSL integration for Edigen source generation.
-- `/home/vbmacher/projects/emustudio/cpu-testsuite`: shared CPU instruction test framework and reusable verification helpers.
+- [emuLib](https://github.com/emustudio/emuLib): shared plugin API, runtime services, shared UI helpers, and reusable utilities.
+- [edigen](https://github.com/emustudio/edigen): decoder/disassembler generator from `.eds` specifications.
+- [emuStudio](https://github.com/emustudio/emuStudio): desktop application, bundled plugins, virtual computers, configs, and packaging.
+- [emustudio.github.io](https://github.com/emustudio/emustudio.github.io): website, user documentation, developer documentation, and release-facing pages.
+- [edigen-gradle-plugin](https://github.com/emustudio/edigen-gradle-plugin): Gradle task and DSL integration for Edigen source generation.
+- [cpu-testsuite](https://github.com/emustudio/cpu-testsuite): shared CPU instruction test framework and reusable verification helpers.
+
+When a task calls for checking or updating a sibling repository, first look for it as a local checkout (typically alongside this repository). If it is present locally, work with it there. If it is not present locally, do not guess its location or assume changes were made; report that the repository is not available locally and continue with what can be done in this repository.
 
 ## When To Update Which Repository
 - Desktop app behavior, CLI behavior, plugin wiring, bundled virtual computers, bundled configs, or packaging: update `emuStudio`.
