@@ -1,0 +1,167 @@
+= C4 Level 4 — Code
+:toc: left
+:icons: font
+:sectanchors:
+
+xref:index.adoc[← Back to overview]
+
+The *Code* level illustrates how a couple of the key responsibilities are
+realized in classes. C4 recommends keeping this level selective, so it focuses on
+the two contracts that make the platform extensible: *plugin loading /
+construction* and *plugin communication via contexts*.
+
+== The plugin contract and type hierarchy
+
+Every plugin implements the emuLib `Plugin` interface (or one of its four
+specializations) and is annotated with `@PluginRoot`. The application discovers
+that root class, then instantiates it through a fixed three-argument
+constructor.
+
+[plantuml,c4-code-plugin-model,svg]
+----
+@startuml
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "emuLib (SDK)" {
+    interface Plugin {
+        +initialize()
+        +reset()
+        +destroy()
+        +getTitle() : String
+        +getVersion() : String
+        +isAutomationSupported() : boolean
+    }
+    interface Compiler
+    interface CPU
+    interface Memory
+    interface Device
+
+    Plugin <|-- Compiler
+    Plugin <|-- CPU
+    Plugin <|-- Memory
+    Plugin <|-- Device
+
+    interface ApplicationApi {
+        +getContextPool() : ContextPool
+        +getDialogs() : Dialogs
+        +getGUI() : GUI
+        +getDebuggerTable() : DebuggerTable
+    }
+    interface ContextPool {
+        +register(pluginId, context, type)
+        +getContext(pluginId, type) : Context
+    }
+
+    annotation PluginRoot
+}
+
+package "emuStudio application" {
+    class VirtualComputer {
+        +create(config, api, settings) : VirtualComputer
+        -constructPlugins(...) : Map<Long, PluginMeta>
+        -createPluginInstance(id, class, api, settings) : Plugin
+        +initialize(contextPool)
+        +isConnected(a, b) : boolean
+        +getCompiler()/getCPU()/getMemory()/getDevices()
+    }
+    class PluginLoader {
+        +loadPlugins(files) : List<Class<Plugin>>
+        -trustedPlugin(class) : boolean
+    }
+    class ContextPoolImpl
+    class ApplicationApiImpl
+    class "VirtualComputer.PluginMeta" as PluginMeta {
+        +pluginInstance : Plugin
+        +pluginConfig : PluginConfig
+        +pluginSettings : PluginSettings
+    }
+}
+
+VirtualComputer --> PluginLoader : uses
+VirtualComputer --> PluginMeta : holds *
+PluginMeta --> Plugin : instance
+VirtualComputer ..> ApplicationApi : passes to plugins
+ApplicationApiImpl ..|> ApplicationApi
+ContextPoolImpl ..|> ContextPool
+PluginLoader ..> PluginRoot : requires on root class
+Plugin ..> ApplicationApi : receives (constructor)
+@enduml
+----
+
+The construction contract (as enforced in `VirtualComputer.createPluginInstance`)
+is a single constructor with the signature:
+
+[source,java]
+----
+@PluginRoot(type = PLUGIN_TYPE.CPU, title = "…")
+public SamplePlugin(long pluginId, ApplicationApi emustudio, PluginSettings settings) { … }
+----
+
+`PluginLoader.trustedPlugin(...)` accepts a class only if it is not an interface,
+is annotated with `@PluginRoot`, and implements `Plugin`. `VirtualComputer` then
+additionally checks that the class implements the interface matching its declared
+`PLUGIN_TYPE` before instantiating it.
+
+== Loading and initializing a virtual computer
+
+The following sequence traces the code path from the launcher to a running
+machine.
+
+[plantuml,c4-code-load-sequence,svg]
+----
+@startuml
+autonumber
+actor User
+participant "Runner" as Runner
+participant "VirtualComputer" as VC
+participant "PluginLoader" as PL
+participant "Plugin\n(root class)" as Plugin
+participant "ContextPoolImpl" as CP
+
+User -> Runner : select configuration
+Runner -> VC : create(config, applicationApi, appSettings)
+VC -> PL : loadPlugins(jarFiles)
+PL -> PL : findMainClass() + trustedPlugin()
+PL --> VC : List<Class<Plugin>>
+
+loop for each plugin (compiler, CPU, memory, devices)
+    VC -> VC : check type implements PLUGIN_TYPE interface
+    VC -> Plugin : new (pluginId, applicationApi, pluginSettings)
+    Plugin --> VC : instance (wrapped in PluginMeta)
+end
+
+Runner -> VC : initialize(contextPool)
+VC -> CP : setComputer(this)
+loop order: compiler -> memory -> CPU -> devices
+    VC -> Plugin : initialize()
+    Plugin -> CP : register/getContext(...)
+    CP -> VC : isConnected(pluginA, pluginB)
+    VC --> CP : true / false
+end
+@enduml
+----
+
+=== Why the order and the connection check matter
+
+* Plugins are initialized *compiler → memory → CPU → devices* so that, by the
+  time a plugin asks for another plugin's context, that context has already been
+  registered.
+* Plugins must not fetch contexts in their constructor — only in
+  `initialize()` — precisely because registration order is fixed and earlier
+  plugins may not have published their contexts yet.
+* Before the `ContextPool` hands one plugin a context owned by another, it calls
+  `VirtualComputer.isConnected(a, b)`, which consults the *connections* declared
+  in the TOML configuration. This is what makes wiring explicit and prevents
+  accidental coupling between plugins.
+
+== Emulation control at the code level
+
+For interactive runs, `EmulationController` funnels every CPU operation through a
+single-threaded executor and synchronizes each state transition with a
+`CountDownLatch`, updating its view of `CPU.RunState` from a `CPUListener`
+callback. Automation instead attaches its own `CPUListener`, calls
+`cpu.execute()` directly and waits for a terminal run state before reporting the
+outcome.
+
+xref:index.adoc[← Back to overview] · xref:components.adoc[← Components]

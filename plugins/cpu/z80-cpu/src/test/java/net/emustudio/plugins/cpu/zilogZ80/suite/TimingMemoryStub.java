@@ -81,8 +81,14 @@ public class TimingMemoryStub extends ByteMemoryStub implements CPUContext.Passe
     }
 
     public void clearCounters() {
-        readCounts.clear();
-        passiveCycleCounts.clear();
+        // AbstractMemoryStub's constructor calls the overridable clear(), which reaches here before
+        // this subclass's map fields are initialized, so guard against null during construction.
+        if (readCounts != null) {
+            readCounts.clear();
+        }
+        if (passiveCycleCounts != null) {
+            passiveCycleCounts.clear();
+        }
         totalCycles = 0;
     }
 

@@ -1,0 +1,144 @@
+= C4 Level 3 — Components
+:toc: left
+:icons: font
+:sectanchors:
+
+xref:index.adoc[← Back to overview]
+
+The *Component* diagram opens up the application process and shows the major
+components (roughly, groups of related classes with a clear responsibility) and
+how a virtual computer is loaded, wired and run.
+
+== Diagram
+
+[plantuml,c4-component,svg]
+----
+@startuml
+!include <C4/C4_Component>
+
+title Components — emuStudio application
+
+Person(user, "User")
+
+System_Boundary(app, "emuStudio application") {
+
+    Component(runner, "Runner", "picocli command", "Entry point: parses args, chooses GUI vs. automation, selects a configuration")
+    Component(automationCmd, "AutomationCommand", "picocli subcommand", "Headless run of a configuration for a given input file")
+
+    Component(configFiles, "ConfigFiles / Settings", "TOML (night-config)", "Reads/writes ComputerConfig, PluginConfig, connections and AppSettings")
+
+    Component(virtualComputer, "VirtualComputer", "Java", "Holds the plugins of one machine by type; enforces connections; exposes compiler/CPU/memory/devices; initializes & resets them")
+    Component(pluginLoader, "PluginLoader", "Java, URLClassLoader", "Finds each plugin's @PluginRoot main class in its JAR and its declared dependencies")
+    Component(contextPool, "ContextPool", "Java", "Registry of plugin contexts; hands out contexts only between connected plugins")
+    Component(appApi, "ApplicationApi", "Java", "Facade given to every plugin: context pool, dialogs, GUI, debugger table, program location")
+
+    Component(emuController, "EmulationController", "Java, single-thread executor", "run / step / timed-step / pause / stop / reset; tracks CPU RunState")
+    Component(automation, "Automation", "Java", "compile → reset → execute → collect result state; logs outcome")
+
+    Component(guiMain, "EmuStudioGui (main window)", "Swing, FlatLaf", "Main window, toolbars, look & feel; implements emuLib GUI service")
+    Component(schema, "Schema Editor", "Swing", "Draw/inspect the virtual computer as connected elements")
+    Component(editor, "Source Editor", "RSyntaxTextArea", "Edit & compile source code")
+    Component(debugger, "Debugger", "Swing", "Debug table / disassembly, breakpoints, step controls")
+    Component(dialogs, "Dialogs", "Swing", "Implements emuLib Dialogs service (messages, prompts, file choosers)")
+}
+
+Container(plugins, "Plugins", "JARs", "Compiler / CPU / Memory / Device")
+System_Ext(emulib, "emuLib", "Plugin API & runtime contracts")
+System_Ext(fs, "Host File System", "Config, source, output")
+
+Rel(user, runner, "Starts", "CLI")
+Rel(user, guiMain, "Uses", "GUI")
+
+Rel(runner, configFiles, "Lists & loads configurations")
+Rel(runner, automationCmd, "Delegates automation to")
+Rel(runner, guiMain, "Builds & shows (interactive mode)")
+Rel(automationCmd, automation, "Runs")
+
+Rel(runner, virtualComputer, "Creates via VirtualComputer.create()")
+Rel(virtualComputer, pluginLoader, "Loads plugin main classes with")
+Rel(virtualComputer, configFiles, "Reads plugin list, settings & connections from")
+Rel(pluginLoader, plugins, "Reads JARs & resolves classes")
+Rel(virtualComputer, plugins, "Instantiates (pluginId, ApplicationApi, PluginSettings)")
+
+Rel(virtualComputer, appApi, "Passes to each plugin")
+Rel(appApi, contextPool, "Exposes")
+Rel(appApi, dialogs, "Exposes")
+Rel(appApi, guiMain, "Exposes")
+Rel(plugins, contextPool, "Register & fetch contexts", "via ApplicationApi")
+Rel(contextPool, virtualComputer, "Checks isConnected() before sharing a context")
+
+Rel(guiMain, schema, "Hosts")
+Rel(guiMain, editor, "Hosts")
+Rel(guiMain, debugger, "Hosts")
+Rel(guiMain, emuController, "Controls emulation via")
+Rel(automation, emuController, "Drives CPU without a controller (direct execute)")
+Rel(emuController, plugins, "cpu.execute()/step()/reset(); memory.reset(); device.reset()")
+
+Rel(configFiles, fs, "TOML read/write")
+Rel(plugins, emulib, "Implement API")
+
+@enduml
+----
+
+== Components
+
+Runner:: The picocli command that boots the platform. It lists configurations,
+resolves the selected virtual computer (by name/index/file or via a GUI
+chooser), builds the `ContextPool`, loads the `VirtualComputer` and either shows
+the main window or hands off to automation.
+
+AutomationCommand / Automation:: The headless path. `AutomationCommand` is the
+`automation` subcommand; `Automation` performs the unattended sequence — compile
+the input file, reset the CPU (optionally at a start address), execute, wait for
+completion and log the resulting CPU run state.
+
+ConfigFiles / Settings:: Reads and writes the TOML configuration and settings
+model — `ComputerConfig` (a machine and its `PluginConfig` entries plus
+`connections`) and `AppSettings` (global options). Backed by the night-config
+TOML library.
+
+VirtualComputer:: The heart of Level 3. It groups a machine's plugins by type
+(`COMPILER`, `MEMORY`, `CPU`, `DEVICE`), constructs them, initializes them in a
+fixed order and resets them. It also implements `PluginConnections#isConnected`,
+the authority the context pool consults before letting two plugins share a
+context.
+
+PluginLoader:: Loads plugin JARs into a dedicated `URLClassLoader` (including
+each JAR's declared `Class-Path` dependencies), scans the classes and returns
+the single *trusted* main class — the one that is annotated `@PluginRoot` and
+implements the `Plugin` contract.
+
+ContextPool:: The mediator through which plugins communicate. Plugins *register*
+the contexts they provide and *request* the contexts they need; the pool matches
+them by an interface hash and only shares a context between plugins that are
+connected in the current configuration (emuStudio itself is always allowed).
+
+ApplicationApi:: The facade handed to every plugin at construction time. It
+exposes the `ContextPool`, the `Dialogs` and `GUI` services, the `DebuggerTable`
+and the current program location — the plugin's whole view of the host.
+
+EmulationController:: Serializes all CPU control onto a single worker thread and
+mirrors the CPU's `RunState`. It offers start, single-step, timed-step, pause,
+stop and reset, coordinating each transition with the CPU via a latch. Used by
+the interactive debugger.
+
+GUI (EmuStudioGui, Schema editor, Source editor, Debugger, Dialogs):: The Swing
+front end. The main window hosts the three work areas and provides the emuLib
+`GUI` and `Dialogs` services that plugins may use to render settings dialogs and
+messages.
+
+== How a virtual computer comes to life
+
+. `Runner` selects a `ComputerConfig` and creates a `ContextPool`.
+. `VirtualComputer.create()` asks `PluginLoader` to load the plugin JARs and
+  find each `@PluginRoot` main class.
+. Each plugin is constructed by reflection with `(pluginId, ApplicationApi,
+  PluginSettings)`.
+. `initialize()` is called per plugin in the order *compiler → memory → CPU →
+  devices*; during initialization plugins publish and look up contexts in the
+  `ContextPool`.
+. The GUI (or `Automation`) then drives emulation through
+  `EmulationController` (or a direct `cpu.execute()`), with the context pool
+  enforcing the configured connections throughout.
+
+Continue to xref:code.adoc[Level 4 — Code].

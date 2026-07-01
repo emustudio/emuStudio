@@ -1,0 +1,74 @@
+= emuStudio Architecture Documentation
+:author: emuStudio project
+:revdate: {docdate}
+:toc: left
+:icons: font
+:sectanchors:
+:experimental:
+
+This is the architecture documentation of *emuStudio* — a modular desktop
+platform and framework for emulating historic and teaching-oriented computers,
+built around the *compile, load, emulate* workflow.
+
+The documentation follows the https://c4model.com[C4 model], which describes a
+software system at four increasing levels of detail:
+
+[cols="1,3,3",options="header"]
+|===
+| Level | Question it answers | Document
+
+| 1. System Context
+| How does emuStudio fit into the world? Who uses it and what does it talk to?
+| xref:context.adoc[System Context]
+
+| 2. Containers
+| What are the high-level runnable/deployable parts and how do they interact?
+| xref:containers.adoc[Containers]
+
+| 3. Components
+| What are the major building blocks inside the application and how are they wired?
+| xref:components.adoc[Components]
+
+| 4. Code
+| How are the key responsibilities realized in code (classes and contracts)?
+| xref:code.adoc[Code]
+|===
+
+== What emuStudio is
+
+emuStudio is a Java desktop application with a command-line launcher. Emulated
+machines are called *virtual computers* and are assembled from four kinds of
+*plugins*:
+
+* *Compiler* — translates source code into machine code / memory image.
+* *CPU* — executes instructions (often cycle-accurate).
+* *Memory* — stores the program and data.
+* *Device* — peripherals such as terminals, tapes, disks and sound chips.
+
+Plugins are packaged as JAR files, discovered and loaded dynamically at
+runtime, and are wired together according to a *virtual computer configuration*
+(a TOML file). Plugins never call each other directly; they communicate through
+*contexts* published in a shared *context pool*, and only along connections
+declared in the configuration.
+
+The plugin API, shared runtime services and UI helpers live in a separate
+library, *emuLib*, which every plugin and the application depend on.
+
+== How to regenerate this documentation
+
+The sources are AsciiDoc files in the `docs/` folder. To render them to HTML:
+
+[source,bash]
+----
+./gradlew doc
+----
+
+The generated site is written to `docs/output/` (open `docs/output/index.html`).
+
+== Scope
+
+This documentation covers the `emuStudio` repository: the desktop application,
+the CLI launcher, the bundled official plugins and the virtual-computer
+configurations shipped with the distribution. Sibling repositories
+(`emuLib`, `edigen`, `cpu-testsuite`, `edigen-gradle-plugin`) are shown as
+external dependencies where relevant.

@@ -1,0 +1,116 @@
+= C4 Level 2 — Containers
+:toc: left
+:icons: font
+:sectanchors:
+
+xref:index.adoc[← Back to overview]
+
+The *Container* diagram zooms into emuStudio and shows the high-level parts that
+make up the running system, the technologies they use and how they collaborate.
+In C4, a _container_ is a separately runnable/deployable unit or a well-isolated
+runtime boundary — here: the launcher process, the desktop UI, the emulation
+runtime, the dynamically-loaded plugins and the configuration store.
+
+== Diagram
+
+[plantuml,c4-container,svg]
+----
+@startuml
+!include <C4/C4_Container>
+
+title Containers — emuStudio
+
+Person(user, "User", "Student, educator or developer")
+
+System_Boundary(emustudio, "emuStudio") {
+    Container(cli, "CLI Launcher", "Java, picocli", "Parses command-line arguments; lists computers; starts the GUI or headless automation")
+    Container(gui, "Desktop Application (GUI)", "Java, Swing, FlatLaf, MigLayout", "Schema editor, source-code editor and emulation debugger")
+    Container(runtime, "Virtual Computer Runtime", "Java", "Loads plugin JARs, constructs & initializes plugins, mediates plugin communication via the context pool")
+    Container(engine, "Emulation Engine", "Java", "Drives the CPU (run / step / pause / stop / reset); runs headless automation")
+    Container(plugins, "Plugins", "Java JARs (Compiler / CPU / Memory / Device)", "The building blocks of a virtual computer; loaded dynamically at runtime")
+    ContainerDb(config, "Configuration & Settings", "TOML files", "Per-virtual-computer configuration, connections and global application settings")
+}
+
+System_Ext(emulib, "emuLib", "Java library", "Plugin API, ApplicationApi, ContextPool, UI helpers")
+System_Ext(fs, "Host File System", "Source & output files")
+System_Ext(hostio, "Host I/O", "Screen, keyboard, audio")
+
+Rel(user, cli, "Runs", "shell")
+Rel(user, gui, "Interacts with", "keyboard/mouse")
+
+Rel(cli, gui, "Launches (interactive mode)")
+Rel(cli, engine, "Launches (automation mode)")
+Rel(cli, config, "Lists & loads configurations")
+
+Rel(gui, runtime, "Loads the selected virtual computer via")
+Rel(gui, engine, "Controls emulation via")
+Rel(runtime, plugins, "Discovers, loads & instantiates")
+Rel(runtime, config, "Reads plugin wiring & settings from")
+Rel(engine, plugins, "Executes CPU & resets memory/devices")
+
+Rel(plugins, emulib, "Implement API & publish/consume contexts", "in-JVM")
+Rel(runtime, emulib, "Provides ApplicationApi & ContextPool", "in-JVM")
+Rel(plugins, hostio, "Render output / read input / play audio")
+Rel(engine, fs, "Reads source, writes output (automation)")
+
+@enduml
+----
+
+== Containers
+
+CLI Launcher (`net.emustudio.application.cmdline.Runner`)::
+The application entry point, built with *picocli*. It parses arguments, can list
+the available virtual computers, and selects a configuration by name, index or
+file. Without a subcommand it starts the interactive GUI; with the `automation`
+subcommand it runs a headless (or minimal-GUI) emulation.
+
+Desktop Application (GUI)::
+A *Swing* UI themed with *FlatLaf* and laid out with *MigLayout*. It hosts the
+three main work areas — the *schema editor* (draw/inspect the virtual computer),
+the *source-code editor* (RSyntaxTextArea), and the *emulation debugger*
+(disassembly / debug table with breakpoints). It also implements the emuLib
+`GUI` and `Dialogs` services offered to plugins.
+
+Virtual Computer Runtime::
+Turns a configuration into a live machine. It resolves the plugin JARs, loads
+them in a dedicated class loader, constructs each plugin via reflection, and
+provides the `ApplicationApi` and `ContextPool` through which plugins publish
+and consume *contexts*. It also enforces which plugins may talk to each other,
+based on the declared connections.
+
+Emulation Engine::
+Owns the emulation lifecycle. `EmulationController` drives the CPU on a single
+worker thread (start, step, timed-step, pause, stop, reset) and tracks the CPU
+run state; `Automation` performs the unattended *compile → reset → execute →
+report* flow used in headless runs.
+
+Plugins::
+The interchangeable parts of a virtual computer, shipped as JARs in the
+`compiler/`, `cpu/`, `memory/` and `device/` folders of the distribution. Each
+plugin implements one of the emuLib plugin interfaces and is annotated so the
+runtime can discover its root class. The distribution bundles the official
+compilers, CPUs, memories and devices for all supported machines.
+
+Configuration & Settings::
+*TOML* files. Each virtual computer has a configuration file describing its
+plugins (type, JAR path, per-plugin settings, schema coordinates) and the
+*connections* between them. A separate file holds global application settings.
+
+== External dependencies
+
+* *emuLib* — the shared API/runtime library, loaded into the same JVM.
+* *Host File System* — source, configuration, settings and output files.
+* *Host I/O* — screen, keyboard and audio driven by device plugins.
+
+== Notable design points
+
+* *Dynamic loading*: plugins are ordinary JARs discovered at runtime, not
+  compile-time dependencies of the application, which keeps the platform open
+  and extensible.
+* *Indirect communication*: plugins interact only through contexts in the
+  context pool, gated by the configuration's connections — never by direct
+  references.
+* *Two run modes*: the same runtime backs both the interactive GUI and the
+  headless automation used for testing and batch runs.
+
+Continue to xref:components.adoc[Level 3 — Components].
