@@ -36,7 +36,7 @@ public class PluginLoader {
      * @param pluginClass the main class of the plugin
      * @return true if the class meets plugin requirements; false otherwise
      */
-    static boolean trustedPlugin(Class<?> pluginClass) {
+    static boolean isLoadablePlugin(Class<?> pluginClass) {
         Objects.requireNonNull(pluginClass);
 
         return !pluginClass.isInterface() &&
@@ -52,10 +52,10 @@ public class PluginLoader {
      * The plugins are loaded into separate class loader.
      *
      * @param pluginFiles plugin files.
-     * @return List of plugins main classes
+     * @return loaded plugins with shared class loader ownership
      * @throws IOException if other error happens
      */
-    public List<Class<Plugin>> loadPlugins(List<File> pluginFiles) throws IOException {
+    public LoadResult loadPlugins(List<File> pluginFiles) throws IOException {
         Objects.requireNonNull(pluginFiles);
 
         final Map<String, URL> urlsToLoad = new LinkedHashMap<>();
@@ -67,15 +67,20 @@ public class PluginLoader {
         }
 
         LOGGER.debug("Loading {} plugins", urlsToLoad.size());
-        //noinspection resource
         URLClassLoader pluginsClassLoader = new URLClassLoader(urlsToLoad.values().toArray(new URL[0]));
 
         try {
-            return pluginFiles.stream()
-                    .map(this::findClassesInJAR)
-                    .map(l -> findMainClass(pluginsClassLoader, l))
-                    .collect(toList());
+            Map<File, Class<Plugin>> pluginClasses = new LinkedHashMap<>();
+            for (File pluginFile : pluginFiles) {
+                pluginClasses.put(pluginFile, findMainClass(pluginsClassLoader, findClassesInJAR(pluginFile)));
+            }
+            return new LoadResult(pluginsClassLoader, pluginClasses);
         } catch (Exception e) {
+            try {
+                pluginsClassLoader.close();
+            } catch (IOException closeError) {
+                e.addSuppressed(closeError);
+            }
             // Those can be "sneaky" thrown
             //noinspection ConstantValue
             if ((e instanceof InvalidPluginException) || (e instanceof IOException)) {
@@ -133,7 +138,7 @@ public class PluginLoader {
             try {
                 Class<?> definedClass = classLoader.loadClass(className);
 
-                if (definedClass != null && trustedPlugin(definedClass)) {
+                if (definedClass != null && isLoadablePlugin(definedClass)) {
                     return (Class<Plugin>) definedClass;
                 }
             } catch (ClassNotFoundException | NoClassDefFoundError e) {
@@ -163,5 +168,23 @@ public class PluginLoader {
         }
         classFileName = classFileName.replace("\\\\", "/").replace('/', '.');
         return classFileName.replace(File.separatorChar, '.');
+    }
+
+    public static final class LoadResult {
+        private final URLClassLoader classLoader;
+        private final Map<File, Class<Plugin>> pluginClasses;
+
+        private LoadResult(URLClassLoader classLoader, Map<File, Class<Plugin>> pluginClasses) {
+            this.classLoader = Objects.requireNonNull(classLoader);
+            this.pluginClasses = Collections.unmodifiableMap(new LinkedHashMap<>(pluginClasses));
+        }
+
+        public URLClassLoader getClassLoader() {
+            return classLoader;
+        }
+
+        public Map<File, Class<Plugin>> getPluginClasses() {
+            return pluginClasses;
+        }
     }
 }

@@ -18,8 +18,14 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Callable;
 
 import static net.emustudio.application.cmdline.Utils.*;
 import static net.emustudio.application.settings.ConfigFiles.listConfigurationNames;
@@ -30,13 +36,19 @@ import static net.emustudio.application.settings.ConfigFiles.listConfigurationNa
         mixinStandardHelpOptions = true,
         versionProvider = Runner.VersionProvider.class,
         description = "Universal emulation platform and framework",
-        scope = CommandLine.ScopeType.INHERIT,
         subcommands = {AutomationCommand.class}
 )
-public class Runner implements Runnable {
+public class Runner implements Callable<Integer> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
-    // if a command is being run, default behavior is: do nothing
-    static boolean runsSomeCommand; // package-private for testing
+    private static final Set<String> PARENT_OPTIONS_WITH_VALUE = new HashSet<>(Arrays.asList(
+            "-i", "--input-file",
+            "-cn", "--computer-name",
+            "-cf", "--computer-file",
+            "-ci", "--computer-index"
+    ));
+    private static final Set<String> PARENT_FLAGS = new HashSet<>(Arrays.asList(
+            "-cl", "--computers-list"
+    ));
 
     @CommandLine.ArgGroup(heading = "Virtual computer%n")
     public Exclusive exclusive;
@@ -48,23 +60,73 @@ public class Runner implements Runnable {
     private boolean listConfigs;
 
     public static void main(String[] args) {
-        CommandLine cmdline = new CommandLine(new Runner());
-        cmdline.registerConverter(Path.class, Path::of);
-        cmdline.getCommandSpec().parser().collectErrors(true);
-
-        CommandLine.ParseResult result = cmdline.parseArgs(args);
-        runsSomeCommand = result.hasSubcommand();
-
-        try {
-            cmdline.execute(args);
-        } catch (Exception e) {
-            result.errors().forEach(System.err::println);
-            System.exit(1);
+        int exitCode = executeArgs(args);
+        if (exitCode != 0) {
+            System.exit(exitCode);
         }
     }
 
+    static int executeArgs(String... args) {
+        return createCommandLine(new Runner()).execute(normalizeArgs(args));
+    }
+
+    static CommandLine createCommandLine(Runner runner) {
+        CommandLine cmdline = new CommandLine(runner);
+        cmdline.registerConverter(Path.class, Path::of);
+        return cmdline;
+    }
+
+    static String[] normalizeArgs(String... args) {
+        int subcommandIndex = findSubcommandIndex(args);
+        if (subcommandIndex < 0) {
+            return args;
+        }
+
+        List<String> parentArgs = new ArrayList<>(Arrays.asList(args).subList(0, subcommandIndex));
+        List<String> subcommandArgs = new ArrayList<>();
+        String subcommand = args[subcommandIndex];
+
+        for (int i = subcommandIndex + 1; i < args.length; i++) {
+            String arg = args[i];
+            if (isParentOptionWithValue(arg)) {
+                parentArgs.add(arg);
+                if (!arg.contains("=") && i + 1 < args.length) {
+                    parentArgs.add(args[++i]);
+                }
+            } else if (isParentFlag(arg)) {
+                parentArgs.add(arg);
+            } else {
+                subcommandArgs.add(arg);
+            }
+        }
+
+        List<String> normalized = new ArrayList<>(parentArgs.size() + subcommandArgs.size() + 1);
+        normalized.addAll(parentArgs);
+        normalized.add(subcommand);
+        normalized.addAll(subcommandArgs);
+        return normalized.toArray(new String[0]);
+    }
+
+    private static int findSubcommandIndex(String[] args) {
+        for (int i = 0; i < args.length; i++) {
+            if ("automation".equals(args[i]) || "auto".equals(args[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isParentOptionWithValue(String arg) {
+        return PARENT_OPTIONS_WITH_VALUE.contains(arg)
+                || PARENT_OPTIONS_WITH_VALUE.stream().anyMatch(option -> arg.startsWith(option + "="));
+    }
+
+    private static boolean isParentFlag(String arg) {
+        return PARENT_FLAGS.contains(arg);
+    }
+
     @Override
-    public void run() {
+    public Integer call() {
         if (listConfigs) {
             try {
                 AtomicInteger index = new AtomicInteger();
@@ -72,43 +134,42 @@ public class Runner implements Runnable {
                 listConfigurationNames().forEach(name -> System.out.println(index.getAndIncrement() + "\t" + name));
             } catch (IOException e) {
                 LOGGER.error("Could not list configuration names", e);
-                System.exit(1);
+                return 1;
             }
-            System.exit(0);
+            return 0;
         }
 
-        if (!runsSomeCommand) {
-            try {
-                AppSettings appConfig = loadAppSettings(true, false);
-                EmuStudioGui gui = new EmuStudioGui();
-                gui.initialize(appConfig);
-                DialogsGui dialogs = new DialogsGui(gui);
-                Optional<ComputerConfig> computerConfigOpt = (exclusive != null) ?
-                        exclusive.loadConfiguration() :
-                        loadComputerConfigFromGui(appConfig, dialogs, gui);
+        try {
+            AppSettings appConfig = loadAppSettings(true, false);
+            EmuStudioGui gui = new EmuStudioGui();
+            gui.initialize(appConfig);
+            DialogsGui dialogs = new DialogsGui(gui);
+            Optional<ComputerConfig> computerConfigOpt = (exclusive != null) ?
+                    exclusive.loadConfiguration() :
+                    loadComputerConfigFromGui(appConfig, dialogs, gui);
 
-                if (computerConfigOpt.isEmpty()) {
-                    System.err.println("Virtual computer must be selected!");
-                    System.exit(1);
-                }
-
-                ComputerConfig computerConfig = computerConfigOpt.get();
-
-                LoadingDialog splash = showSplashScreen(gui);
-                ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
-                DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
-                VirtualComputer computer = loadComputer(
-                        appConfig, computerConfig, dialogs, contextPool, debugTableModel, gui
-                );
-                splash.dispose();
-
-                showMainWindow(
-                        computer, appConfig, dialogs, debugTableModel, contextPool, inputFile, gui
-                );
-            } catch (Exception e) {
-                LOGGER.error("Unexpected error", e);
-                System.exit(1);
+            if (computerConfigOpt.isEmpty()) {
+                System.err.println("Virtual computer must be selected!");
+                return 1;
             }
+
+            ComputerConfig computerConfig = computerConfigOpt.get();
+
+            LoadingDialog splash = showSplashScreen(gui);
+            ContextPoolImpl contextPool = new ContextPoolImpl(EMUSTUDIO_ID);
+            DebugTableModelImpl debugTableModel = new DebugTableModelImpl();
+            VirtualComputer computer = loadComputer(
+                    appConfig, computerConfig, dialogs, contextPool, debugTableModel, gui
+            );
+            splash.dispose();
+
+            showMainWindow(
+                    computer, appConfig, dialogs, debugTableModel, contextPool, inputFile, gui
+            );
+            return 0;
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error", e);
+            return 1;
         }
     }
 
@@ -139,8 +200,7 @@ public class Runner implements Runnable {
                 if (optConfig.isPresent()) {
                     return optConfig;
                 }
-                System.err.println("Non-existing virtual computer: " + configFile);
-                System.exit(1);
+                throw new IOException("Non-existing virtual computer: " + configName);
             }
             if (configFile != null) {
                 return ConfigFiles.loadConfiguration(configFile);

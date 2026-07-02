@@ -1,0 +1,13 @@
+# ADR-0003: Context Interface Hashing
+
+## Status
+Accepted
+
+## Context
+Plugins from different class loaders need a stable way to decide whether two context interfaces describe the same contract.
+
+## Decision
+Compute a SHA-1 hash from each context interface method signature and use that hash as the compatibility key inside `ContextPoolImpl`.
+
+## Consequences
+Context matching stays class-loader independent and deterministic. Signature changes are breaking changes and must be coordinated across plugins.

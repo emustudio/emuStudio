@@ -46,7 +46,7 @@ public class PluginLoaderTest {
     }
 
     private Collection<Class<Plugin>> loadBadPlugin(PluginLoader instance) throws Exception {
-        return instance.loadPlugins(Collections.singletonList(toFile(BAD_PLUGIN_PATH)));
+        return instance.loadPlugins(Collections.singletonList(toFile(BAD_PLUGIN_PATH))).getPluginClasses().values();
     }
 
     @SuppressWarnings("unchecked")
@@ -67,23 +67,23 @@ public class PluginLoaderTest {
     }
 
     @Test
-    public void testCorrectTrustedPlugin() throws Exception {
-        assertTrue(PluginLoader.trustedPlugin(loadValidPlugin()));
+    public void testCorrectLoadablePlugin() throws Exception {
+        assertTrue(PluginLoader.isLoadablePlugin(loadValidPlugin()));
     }
 
     @Test
-    public void testTrustedPluginOnNotAPluginClassReturnsFalse() {
-        assertFalse(PluginLoader.trustedPlugin(CPU.CPUListener.class));
+    public void testLoadablePluginOnNotAPluginClassReturnsFalse() {
+        assertFalse(PluginLoader.isLoadablePlugin(CPU.CPUListener.class));
     }
 
     @Test
-    public void testTrustedPluginOnInterfaceReturnsFalse() {
-        assertFalse(PluginLoader.trustedPlugin(CPU.class));
+    public void testLoadablePluginOnInterfaceReturnsFalse() {
+        assertFalse(PluginLoader.isLoadablePlugin(CPU.class));
     }
 
     @Test
-    public void testTrustedPluginOnPluginClassWithoutAnnotation() {
-        assertFalse(PluginLoader.trustedPlugin(AbstractCPU.class));
+    public void testLoadablePluginOnPluginClassWithoutAnnotation() {
+        assertFalse(PluginLoader.isLoadablePlugin(AbstractCPU.class));
     }
 
     @Test(expected = NullPointerException.class)
@@ -121,7 +121,7 @@ public class PluginLoaderTest {
 
         // Since PluginLoader must share ClassLoader with current one, emuLib is preloaded automatically
         pluginLoader = new PluginLoader();
-        Class<Plugin> cl = pluginLoader.loadPlugins(List.of(plugin)).iterator().next();
+        Class<Plugin> cl = pluginLoader.loadPlugins(List.of(plugin)).getPluginClasses().values().iterator().next();
 
         Constructor<Plugin> constructor = cl.getDeclaredConstructor(long.class, ApplicationApi.class, PluginSettings.class);
         cl.getDeclaredMethod("hi").invoke(constructor.newInstance(

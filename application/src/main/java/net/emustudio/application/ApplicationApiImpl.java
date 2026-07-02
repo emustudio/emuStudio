@@ -22,7 +22,7 @@ public class ApplicationApiImpl implements ApplicationApi {
         this.debuggerTable = Objects.requireNonNull(debuggerTable);
         this.contextPool = Objects.requireNonNull(contextPool);
         this.dialogs = Objects.requireNonNull(dialogs);
-        this.gui = Objects.requireNonNull(gui);
+        this.gui = gui;
     }
 
     @Override

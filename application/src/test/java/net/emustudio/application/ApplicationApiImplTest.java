@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 
 public class ApplicationApiImplTest {
@@ -30,5 +31,17 @@ public class ApplicationApiImplTest {
 
         api.setProgramLocation(1234);
         assertEquals(1234, api.getProgramLocation());
+    }
+
+    @Test
+    public void guiMayBeNullInHeadlessMode() {
+        ApplicationApiImpl api = new ApplicationApiImpl(
+                mock(DebuggerTable.class),
+                mock(ContextPool.class),
+                mock(Dialogs.class),
+                null
+        );
+
+        assertNull(api.getGUI());
     }
 }

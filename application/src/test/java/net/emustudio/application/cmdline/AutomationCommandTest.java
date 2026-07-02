@@ -18,13 +18,11 @@ public class AutomationCommandTest {
 
     @Before
     public void setUp() {
-        cmdline = new CommandLine(new Runner());
-        cmdline.registerConverter(Path.class, Path::of);
-        cmdline.getCommandSpec().parser().collectErrors(true);
+        cmdline = Runner.createCommandLine(new Runner());
     }
 
     private AutomationCommand parseAutomationCommand(String... args) {
-        CommandLine.ParseResult result = cmdline.parseArgs(args);
+        CommandLine.ParseResult result = cmdline.parseArgs(Runner.normalizeArgs(args));
         assertTrue("Expected automation subcommand", result.hasSubcommand());
         return (AutomationCommand) result.subcommand().commandSpec().userObject();
     }
@@ -115,7 +113,7 @@ public class AutomationCommandTest {
 
     @Test
     public void autoAliasIsRecognized() {
-        CommandLine.ParseResult result = cmdline.parseArgs("auto");
+        CommandLine.ParseResult result = cmdline.parseArgs(Runner.normalizeArgs("auto"));
         assertTrue("Expected 'auto' to be recognized as automation subcommand", result.hasSubcommand());
         Object subcommand = result.subcommand().commandSpec().userObject();
         assertNotNull(subcommand);
@@ -124,7 +122,7 @@ public class AutomationCommandTest {
 
     @Test
     public void automationCommandNameIsRecognized() {
-        CommandLine.ParseResult result = cmdline.parseArgs("automation");
+        CommandLine.ParseResult result = cmdline.parseArgs(Runner.normalizeArgs("automation"));
         assertTrue(result.hasSubcommand());
         assertTrue(result.subcommand().commandSpec().userObject() instanceof AutomationCommand);
     }
@@ -148,7 +146,7 @@ public class AutomationCommandTest {
 
     @Test
     public void parsesInputFileFromParentCommand() throws Exception {
-        CommandLine.ParseResult result = cmdline.parseArgs("-i", "test.asm", "automation", "--no-gui");
+        CommandLine.ParseResult result = cmdline.parseArgs(Runner.normalizeArgs("-i", "test.asm", "automation", "--no-gui"));
         assertTrue(result.hasSubcommand());
 
         Runner runner = (Runner) result.commandSpec().userObject();
@@ -161,7 +159,7 @@ public class AutomationCommandTest {
 
     @Test
     public void parsesComputerNameWithAutomation() throws Exception {
-        CommandLine.ParseResult result = cmdline.parseArgs("-cn", "myComputer", "automation", "-w", "5000");
+        CommandLine.ParseResult result = cmdline.parseArgs(Runner.normalizeArgs("-cn", "myComputer", "automation", "-w", "5000"));
         assertTrue(result.hasSubcommand());
 
         Runner runner = (Runner) result.commandSpec().userObject();
@@ -173,8 +171,16 @@ public class AutomationCommandTest {
     }
 
     @Test
+    public void normalizesComputerNameAfterAutomationSubcommand() {
+        assertArrayEquals(
+                new String[]{"-cn", "myComputer", "automation", "--no-gui"},
+                Runner.normalizeArgs("automation", "--no-gui", "-cn", "myComputer")
+        );
+    }
+
+    @Test
     public void parsesComputerFileWithAutoAlias() throws Exception {
-        CommandLine.ParseResult result = cmdline.parseArgs("-cf", "/path/to/config.toml", "auto");
+        CommandLine.ParseResult result = cmdline.parseArgs(Runner.normalizeArgs("-cf", "/path/to/config.toml", "auto"));
         assertTrue(result.hasSubcommand());
 
         Runner runner = (Runner) result.commandSpec().userObject();

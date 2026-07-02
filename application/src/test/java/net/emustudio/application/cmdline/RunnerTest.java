@@ -12,6 +12,7 @@ import java.io.File;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
+import picocli.CommandLine;
 
 public class RunnerTest {
     @Rule
@@ -41,11 +42,21 @@ public class RunnerTest {
     }
 
     @Test
-    public void mainTracksWhetherSubcommandWasUsed() throws Exception {
-        Runner.main(new String[]{"--help"});
-        assertFalse(Runner.runsSomeCommand);
+    public void executeArgsReturnsSuccessForHelp() {
+        assertEquals(0, Runner.executeArgs("--help"));
+        assertEquals(0, Runner.executeArgs("automation", "--help"));
+    }
 
-        Runner.main(new String[]{"automation", "--help"});
-        assertTrue(Runner.runsSomeCommand);
+    @Test
+    public void commandLineParsesInheritedOptionsBeforeAndAfterSubcommand() {
+        CommandLine cmdline = Runner.createCommandLine(new Runner());
+
+        CommandLine.ParseResult before = cmdline.parseArgs(Runner.normalizeArgs("-cn", "BrainDuck", "automation", "--no-gui"));
+        assertTrue(before.hasSubcommand());
+        assertEquals("BrainDuck", ((Runner) before.commandSpec().userObject()).exclusive.configName);
+
+        CommandLine.ParseResult after = cmdline.parseArgs(Runner.normalizeArgs("automation", "--no-gui", "-cn", "BrainDuck"));
+        assertTrue(after.hasSubcommand());
+        assertEquals("BrainDuck", ((Runner) after.commandSpec().userObject()).exclusive.configName);
     }
 }

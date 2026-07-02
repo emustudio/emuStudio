@@ -28,16 +28,18 @@ public class RaspStatusPanel extends JPanel {
         cpu.addCPUListener(new CPU.CPUListener() {
             @Override
             public void runStateChanged(CPU.RunState state) {
-                lblStatus.setText(state.toString());
+                SwingUtilities.invokeLater(() -> lblStatus.setText(state.toString()));
             }
 
             @Override
             public void internalStateChanged() {
-                txtR0.setText(String.valueOf(cpu.getACC()));
-                txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
-                txtInput.setText(input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>"));
                 int outputPos = Math.max(0, output.getHeadPosition() - 1);
-                txtOutput.setText(output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>"));
+                SwingUtilities.invokeLater(() -> {
+                    txtR0.setText(String.valueOf(cpu.getACC()));
+                    txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
+                    txtInput.setText(input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>"));
+                    txtOutput.setText(output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>"));
+                });
             }
         });
     }

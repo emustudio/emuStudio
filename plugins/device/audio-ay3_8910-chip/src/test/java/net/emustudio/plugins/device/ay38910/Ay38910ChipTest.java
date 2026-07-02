@@ -10,7 +10,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class Ay38910ChipTest {
-    private static final int CPU_CLOCK_HZ = 3_500_000;
+    private static final int CPU_CLOCK_KHZ = 3_500;
+    private static final int CPU_CLOCK_HZ = CPU_CLOCK_KHZ * 1000;
 
     @Test
     public void testRegisterWritesAreMaskedAndReadable() {
@@ -20,13 +21,15 @@ public class Ay38910ChipTest {
         chip.write(Ay38910Chip.DATA_PORT, (byte) 0xFF);
 
         chip.write(Ay38910Chip.SELECT_REGISTER_PORT, (byte) 0x01);
-        assertEquals(0x0F, chip.read(Ay38910Chip.DATA_PORT) & 0xFF);
+        assertEquals(0x0F, chip.read(Ay38910Chip.SELECT_REGISTER_PORT) & 0xFF);
+        // The data port (0xBFFD) is write-only; reading it must not return the register value.
+        assertEquals(0xFF, chip.read(Ay38910Chip.DATA_PORT) & 0xFF);
     }
 
     @Test
     public void testToneGenerationProducesPositiveAndNegativeSamples() {
         RecordingAudioSink sink = new RecordingAudioSink();
-        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_HZ);
+        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_KHZ);
 
         writeRegister(chip, 0, 0x20);
         writeRegister(chip, 1, 0x00);
@@ -42,16 +45,34 @@ public class Ay38910ChipTest {
     }
 
     @Test
+    public void testSampleRateMatchesConfiguredOutputRate() {
+        RecordingAudioSink sink = new RecordingAudioSink();
+        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_KHZ);
+
+        writeRegister(chip, 0, 0x20);
+        writeRegister(chip, 7, 0b00111000);
+        writeRegister(chip, 8, 0x0F);
+
+        chip.passedCycles(CPU_CLOCK_HZ); // exactly one second of CPU cycles
+        chip.close();
+
+        int frames = sink.toShortArray().length / Ay38910Chip.CHANNELS;
+        int expected = Ay38910Chip.DEFAULT_SAMPLE_RATE;
+        assertTrue("Expected ~" + expected + " frames for one second but got " + frames,
+                Math.abs(frames - expected) <= expected / 100);
+    }
+
+    @Test
     public void testEnvelopeModeChangesAmplitudeOverTime() {
         RecordingAudioSink sink = new RecordingAudioSink();
-        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_HZ);
+        Ay38910Chip chip = new Ay38910Chip(sink, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_KHZ);
 
         writeRegister(chip, 0, 0x10);
         writeRegister(chip, 1, 0x00);
         writeRegister(chip, 7, 0b00111000);
         writeRegister(chip, 8, 0x10);
-        writeRegister(chip, 11, 0x01);
-        writeRegister(chip, 12, 0x00);
+        writeRegister(chip, 11, 0x00);
+        writeRegister(chip, 12, 0x06);
         writeRegister(chip, 13, 0x0D);
 
         chip.passedCycles(CPU_CLOCK_HZ / 5);
@@ -87,7 +108,7 @@ public class Ay38910ChipTest {
     }
 
     private static Ay38910Chip silentChip() {
-        return new Ay38910Chip(AudioSink.NULL, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_HZ);
+        return new Ay38910Chip(AudioSink.NULL, Ay38910Chip.DEFAULT_SAMPLE_RATE, () -> CPU_CLOCK_KHZ);
     }
 
     private static boolean hasPositive(short[] samples) {

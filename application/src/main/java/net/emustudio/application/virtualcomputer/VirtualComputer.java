@@ -45,12 +45,19 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
 
 
     private final ComputerConfig computerConfig;
+    private final AutoCloseable pluginClassLoader;
 
     private final Map<Long, PluginMeta> pluginsById = new HashMap<>();
     private final Map<PLUGIN_TYPE, List<PluginMeta>> pluginsByType = new HashMap<>();
+    private boolean destroyed;
 
     public VirtualComputer(ComputerConfig computerConfig, Map<Long, PluginMeta> plugins) {
+        this(computerConfig, plugins, null);
+    }
+
+    public VirtualComputer(ComputerConfig computerConfig, Map<Long, PluginMeta> plugins, AutoCloseable pluginClassLoader) {
         this.computerConfig = Objects.requireNonNull(computerConfig);
+        this.pluginClassLoader = pluginClassLoader;
         plugins.forEach((pluginId, pluginMeta) -> {
             pluginsById.put(pluginId, pluginMeta);
 
@@ -65,11 +72,11 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
 
     public static VirtualComputer create(ComputerConfig computerConfig, ApplicationApi applicationApi,
                                          AppSettings appSettings) throws IOException, InvalidPluginException {
-        Map<Long, PluginMeta> plugins = loadPlugins(computerConfig, applicationApi, appSettings);
-        return new VirtualComputer(computerConfig, plugins);
+        LoadedPlugins loadedPlugins = loadPlugins(computerConfig, applicationApi, appSettings);
+        return new VirtualComputer(computerConfig, loadedPlugins.plugins, loadedPlugins.pluginClassLoader);
     }
 
-    private static Map<Long, PluginMeta> loadPlugins(
+    private static LoadedPlugins loadPlugins(
             ComputerConfig computerConfig,
             ApplicationApi applicationApi,
             AppSettings appSettings
@@ -90,26 +97,34 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
         LOGGER.debug("Loading plugin files: {}", filesToLoad);
 
         PluginLoader pluginLoader = new PluginLoader();
-        List<Class<Plugin>> pluginClasses = pluginLoader.loadPlugins(filesToLoad);
+        PluginLoader.LoadResult loadResult = pluginLoader.loadPlugins(filesToLoad);
 
-        return constructPlugins(pluginClasses, pluginConfigs, applicationApi, appSettings, computerConfig.getConfig()::save);
+        Map<Long, PluginMeta> plugins = constructPlugins(
+                loadResult.getPluginClasses(), pluginConfigs, applicationApi, appSettings, computerConfig.getConfig()::save
+        );
+        return new LoadedPlugins(loadResult.getClassLoader(), plugins);
     }
 
     // package-private for testing
     static Map<Long, PluginMeta> constructPlugins(
-            List<Class<Plugin>> pluginClasses,
+            Map<File, Class<Plugin>> pluginClassesByFile,
             List<PluginConfig> pluginConfigs,
             ApplicationApi applicationApi,
             AppSettings appSettings,
             Runnable save
     ) throws InvalidPluginException {
+        if (pluginClassesByFile.size() != pluginConfigs.size()) {
+            throw new InvalidPluginException("Plugin class count does not match plugin configuration count");
+        }
 
-        Map<Long, PluginMeta> plugins = new HashMap<>();
+        Map<Long, PluginMeta> plugins = new LinkedHashMap<>();
         AtomicLong pluginIdCounter = new AtomicLong(1); // 0 is reserved for emuStudio
 
-        for (int i = 0; i < Math.min(pluginClasses.size(), pluginConfigs.size()); i++) {
-            Class<Plugin> pluginClass = pluginClasses.get(i);
-            PluginConfig pluginConfig = pluginConfigs.get(i);
+        for (PluginConfig pluginConfig : pluginConfigs) {
+            Class<Plugin> pluginClass = pluginClassesByFile.get(pluginConfig.getPluginPath().toFile());
+            if (pluginClass == null) {
+                throw new InvalidPluginException("Missing loaded plugin class for " + pluginConfig.getPluginPath());
+            }
             PluginSettings pluginSettings = new PluginSettingsImpl(
                     pluginConfig.getPluginSettings(), appSettings, save
             );
@@ -206,7 +221,47 @@ public class VirtualComputer implements PluginConnections, AutoCloseable {
 
     @Override
     public void close() {
+        if (destroyed) {
+            return;
+        }
+        destroyed = true;
+        List<PluginMeta> devices = new ArrayList<>(pluginsByType.getOrDefault(PLUGIN_TYPE.DEVICE, Collections.emptyList()));
+        Collections.reverse(devices);
+        devices.forEach(meta -> safeDestroy(meta.pluginInstance));
+        getCPU().ifPresent(this::safeDestroy);
+        getMemory().ifPresent(this::safeDestroy);
+        getCompiler().ifPresent(this::safeDestroy);
+        safeCloseClassLoader();
         computerConfig.close();
+    }
+
+    private void safeDestroy(Plugin plugin) {
+        try {
+            plugin.destroy();
+        } catch (Exception e) {
+            LOGGER.error("Plugin {} failed to destroy", plugin, e);
+        }
+    }
+
+    private void safeCloseClassLoader() {
+        if (pluginClassLoader == null) {
+            return;
+        }
+        try {
+            pluginClassLoader.close();
+        } catch (Exception e) {
+            LOGGER.error("Plugin class loader failed to close", e);
+        }
+    }
+
+    private static final class LoadedPlugins {
+        private final AutoCloseable pluginClassLoader;
+        private final Map<Long, PluginMeta> plugins;
+
+        private LoadedPlugins(AutoCloseable pluginClassLoader, Map<Long, PluginMeta> plugins) {
+            this.pluginClassLoader = pluginClassLoader;
+            this.plugins = plugins;
+        }
     }
 
     static class PluginMeta {

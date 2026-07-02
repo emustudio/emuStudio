@@ -3,6 +3,8 @@
 package net.emustudio.application.cmdline;
 
 import net.emustudio.application.emulation.Automation;
+import net.emustudio.application.emulation.EmulationProgress;
+import net.emustudio.application.gui.dialogs.AutoDialog;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.framework.DialogsGui;
 import net.emustudio.application.gui.framework.DialogsNoGui;
@@ -20,12 +22,14 @@ import picocli.CommandLine;
 
 import java.awt.*;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 
 import static net.emustudio.application.cmdline.Utils.*;
 
 @SuppressWarnings("unused")
-@CommandLine.Command(name = "automation", aliases = {"auto"}, description = "run emulation automation")
-public class AutomationCommand implements Runnable {
+@CommandLine.Command(name = "automation", aliases = {"auto"}, mixinStandardHelpOptions = true,
+        description = "run emulation automation")
+public class AutomationCommand implements Callable<Integer> {
     private static final Logger LOGGER = LoggerFactory.getLogger("automation");
 
     @CommandLine.ParentCommand
@@ -43,7 +47,7 @@ public class AutomationCommand implements Runnable {
 
 
     @Override
-    public void run() {
+    public Integer call() {
         Dialogs dialogs = new DialogsNoGui();
         DialogsGui guiDialogs = null;
         try {
@@ -63,7 +67,7 @@ public class AutomationCommand implements Runnable {
             if (computerConfigOpt.isEmpty()) {
                 dialogs.showError("Virtual computer must be selected!");
                 LOGGER.error("Virtual computer must be selected!");
-                System.exit(1);
+                return 1;
             }
 
             ComputerConfig computerConfig = computerConfigOpt.get();
@@ -77,6 +81,7 @@ public class AutomationCommand implements Runnable {
             )) {
                 Integer programLocation = this.programLocation.equals("-1")
                         ? null : RadixUtils.getInstance().parseRadix(this.programLocation);
+                EmulationProgress progress = this.gui ? new AutoDialog(computer, gui) : EmulationProgress.NONE;
 
                 Automation automation = new Automation(
                         computer, runner.inputFile,
@@ -84,19 +89,16 @@ public class AutomationCommand implements Runnable {
                         dialogs,
                         waitForFinishMillis,
                         programLocation,
-                        gui
+                        progress
                 );
                 splash.ifPresent(Window::dispose);
                 automation.run();
             }
-            if (!this.gui) {
-                // Let GUI live!
-                System.exit(0);
-            }
+            return 0;
         } catch (Exception e) {
             LOGGER.error("Unexpected error during automation", e);
             dialogs.showError("Unexpected error during automation. Please see log file for details.");
-            System.exit(1);
+            return 1;
         }
     }
 }

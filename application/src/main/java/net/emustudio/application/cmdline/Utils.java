@@ -30,12 +30,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public class Utils {
-    public static final long EMUSTUDIO_ID = UUID.randomUUID().toString().hashCode();
+    public static final long EMUSTUDIO_ID = 0L;
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 
     public static AppSettings loadAppSettings(boolean gui, boolean auto) throws IOException {

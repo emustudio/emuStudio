@@ -98,47 +98,49 @@ public class CpuPanel extends JPanel {
 
         @Override
         public void runStateChanged(CPU.RunState rs) {
-            lblRunState.setText(rs.toString().toUpperCase());
+            SwingUtilities.invokeLater(() -> lblRunState.setText(rs.toString().toUpperCase()));
         }
 
         @Override
         public void internalStateChanged() {
-            int acc = engine.Acc.get();
-            int ci = engine.CI.get();
+            SwingUtilities.invokeLater(() -> {
+                int acc = engine.Acc.get();
+                int ci = engine.CI.get();
 
-            txtA.setText(String.format("%08x", acc));
-            txtDecA.setText(String.format("%d", acc));
-            txtCI.setText(String.format("%08x", ci / 4));
-            txtDecCI.setText(String.format("%d", ci / 4));
-            txtBinA.setText(formatBinary(acc));
-            txtBinCI.setText(formatBinary(ci));
+                txtA.setText(String.format("%08x", acc));
+                txtDecA.setText(String.format("%d", acc));
+                txtCI.setText(String.format("%08x", ci / 4));
+                txtDecCI.setText(String.format("%d", ci / 4));
+                txtBinA.setText(formatBinary(acc));
+                txtBinCI.setText(formatBinary(ci));
 
-            try {
-                Byte[] mCI = memory.read(ci, 4);
-                byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
-                Byte[] mLine = memory.read(line * 4, 4);
+                try {
+                    Byte[] mCI = memory.read(ci, 4);
+                    byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
+                    Byte[] mLine = memory.read(line * 4, 4);
 
-                txtMCI.setText(String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
-                txtLine.setText(String.format("%02x", line));
-                txtMLine.setText(String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
+                    txtMCI.setText(String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
+                    txtLine.setText(String.format("%02x", line));
+                    txtMLine.setText(String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
 
-                txtDecMCI.setText(String.format("%d", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
-                txtDecLine.setText(String.format("%d", line));
-                txtDecMLine.setText(String.format("%d", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
+                    txtDecMCI.setText(String.format("%d", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
+                    txtDecLine.setText(String.format("%d", line));
+                    txtDecMLine.setText(String.format("%d", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
 
-                txtBinMCI.setText(formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN)));
-                txtBinLine.setText(formatBinary(line, 8));
-                txtBinMLine.setText(formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN)));
-            } catch (IndexOutOfBoundsException e) {
-                txtLine.setText("?");
-                txtDecLine.setText("?");
-                txtMCI.setText("?");
-                txtDecMCI.setText("?");
-                txtMLine.setText("?");
-                txtDecMLine.setText("?");
-                txtBinMCI.setText("?");
-                txtBinMLine.setText("?");
-            }
+                    txtBinMCI.setText(formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN)));
+                    txtBinLine.setText(formatBinary(line, 8));
+                    txtBinMLine.setText(formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN)));
+                } catch (IndexOutOfBoundsException e) {
+                    txtLine.setText("?");
+                    txtDecLine.setText("?");
+                    txtMCI.setText("?");
+                    txtDecMCI.setText("?");
+                    txtMLine.setText("?");
+                    txtDecMLine.setText("?");
+                    txtBinMCI.setText("?");
+                    txtBinMLine.setText("?");
+                }
+            });
         }
 
         private String formatBinary(int number) {

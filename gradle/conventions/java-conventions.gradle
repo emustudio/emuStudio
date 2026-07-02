@@ -2,6 +2,12 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 import org.apache.tools.ant.filters.ReplaceTokens
 
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(11)
+  }
+}
+
 jar {
   archiveVersion = ''
   manifest {

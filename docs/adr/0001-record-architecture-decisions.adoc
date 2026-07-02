@@ -1,0 +1,13 @@
+# ADR-0001: Record Architecture Decisions
+
+## Status
+Accepted
+
+## Context
+The project already carries durable architecture choices, but they were not recorded in `docs/adr` as required by `AGENTS.md`.
+
+## Decision
+Store short Architecture Decision Records in `docs/adr` using sequential `ADR-NNNN` files and the compact template required by the repository instructions.
+
+## Consequences
+Important design choices get a stable home. Future changes must update or supersede ADRs instead of relying on tribal knowledge.

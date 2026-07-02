@@ -88,50 +88,56 @@ public class StatusPanel extends JPanel {
 
         @Override
         public void runStateChanged(CPU.RunState state) {
-            switch (state) {
-                case STATE_RUNNING:
-                    lblRunState.setText("running");
-                    lblTime.setText("N/A");
-                    nanoStartTime = System.nanoTime();
-                    break;
-                case STATE_STOPPED_NORMAL:
-                    lblRunState.setText("stopped (normal)");
-                    break;
-                case STATE_STOPPED_BREAK:
-                    lblRunState.setText("breakpoint");
-                    break;
-                case STATE_STOPPED_ADDR_FALLOUT:
-                    lblRunState.setText("stopped (address fallout)");
-                    break;
-                case STATE_STOPPED_BAD_INSTR:
-                    lblRunState.setText("stopped (instruction fallout)");
-                    break;
-            }
             long tmpNanoTime = 0;
             if (state != CPU.RunState.STATE_RUNNING && nanoStartTime != 0) {
                 tmpNanoTime = System.nanoTime() - nanoStartTime;
                 nanoStartTime = 0;
             }
-            lblTime.setText(String.format("%.2f ms", (double) tmpNanoTime / 1000000.0));
+            final long elapsed = tmpNanoTime;
+            SwingUtilities.invokeLater(() -> {
+                switch (state) {
+                    case STATE_RUNNING:
+                        lblRunState.setText("running");
+                        lblTime.setText("N/A");
+                        break;
+                    case STATE_STOPPED_NORMAL:
+                        lblRunState.setText("stopped (normal)");
+                        break;
+                    case STATE_STOPPED_BREAK:
+                        lblRunState.setText("breakpoint");
+                        break;
+                    case STATE_STOPPED_ADDR_FALLOUT:
+                        lblRunState.setText("stopped (address fallout)");
+                        break;
+                    case STATE_STOPPED_BAD_INSTR:
+                        lblRunState.setText("stopped (instruction fallout)");
+                        break;
+                }
+                lblTime.setText(String.format("%.2f ms", (double) elapsed / 1000000.0));
+            });
+            if (state == CPU.RunState.STATE_RUNNING) {
+                nanoStartTime = System.nanoTime();
+            }
         }
 
         @Override
         public void internalStateChanged() {
             int P = cpu.getP();
-
-            txtP.setText(String.format("%04X", P));
-            txtIP.setText(String.format("%04X", cpu.IP));
-            lblLoopLevel.setText(String.valueOf(cpu.getLoopLevel()));
-            try {
-                txtMemP.setText(String.format("%02X", memory[P] & 0xFF));
-            } catch (ArrayIndexOutOfBoundsException e) {
-                txtMemP.setText("[unreachable]");
-            } finally {
-                tableModel.setP(P);
-                columnsRepainter.repaint(tblMemory);
-                tblMemory.revalidate();
-                tblMemory.repaint();
-            }
+            SwingUtilities.invokeLater(() -> {
+                txtP.setText(String.format("%04X", P));
+                txtIP.setText(String.format("%04X", cpu.IP));
+                lblLoopLevel.setText(String.valueOf(cpu.getLoopLevel()));
+                try {
+                    txtMemP.setText(String.format("%02X", memory[P] & 0xFF));
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    txtMemP.setText("[unreachable]");
+                } finally {
+                    tableModel.setP(P);
+                    columnsRepainter.repaint(tblMemory);
+                    tblMemory.revalidate();
+                    tblMemory.repaint();
+                }
+            });
         }
     }
 
