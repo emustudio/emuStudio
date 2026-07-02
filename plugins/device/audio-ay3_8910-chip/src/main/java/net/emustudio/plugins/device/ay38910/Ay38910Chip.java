@@ -76,7 +76,7 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
 
     public Ay38910Chip(AudioSink sink, int sampleRate, IntSupplier cpuFrequencyKHzSupplier) {
         this.cpuFrequencyKHzSupplier = Objects.requireNonNull(cpuFrequencyKHzSupplier);
-        this.currentCpuClockHz = cpuFrequencyKHzSupplier.getAsInt();
+        this.currentCpuClockHz = readCpuClockHz();
         if (sampleRate <= 0) {
             throw new IllegalArgumentException("Sample rate must be > 0");
         }
@@ -86,9 +86,16 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
         reset();
     }
 
+    private int readCpuClockHz() {
+        // CPUContext#getCPUFrequency() reports kHz; the resampler needs Hz to match the sample rate.
+        return Math.max(1, cpuFrequencyKHzSupplier.getAsInt()) * 1000;
+    }
+
     @Override
     public synchronized byte read(int portAddress) {
-        if (portAddress == DATA_PORT) {
+        // On ZX Spectrum wiring the selected register is read back from the address/latch port (0xFFFD),
+        // while 0xBFFD is write-only for register data.
+        if (portAddress == SELECT_REGISTER_PORT) {
             return (byte) registers[selectedRegister];
         }
         return (byte) 0xFF;
@@ -157,7 +164,7 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
         waveformBufferFilled = false;
         sampleBuffer.clear();
         primarySink.flushAudio();
-        this.currentCpuClockHz = cpuFrequencyKHzSupplier.getAsInt();
+        this.currentCpuClockHz = readCpuClockHz();
     }
 
     public synchronized int getVolumePercent() {
@@ -232,7 +239,10 @@ public class Ay38910Chip implements Context8080.CpuPortDevice, CPUContext.Passed
     }
 
     private void advanceEnvelope(long cpuCycles) {
-        long stepPeriod = 512L * Math.max(1, envelopePeriod());
+        // fE = clock / (256 * EP) for a full 16-step ramp, so one step takes 16*EP chip clocks.
+        // The chip is clocked at half the CPU rate (matching the 16*TP tone / 32*NP noise scaling),
+        // hence 32*EP CPU cycles per envelope step.
+        long stepPeriod = 32L * Math.max(1, envelopePeriod());
         envelopeCounter += cpuCycles;
         long steps = envelopeCounter / stepPeriod;
         if (steps == 0) {
