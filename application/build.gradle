@@ -90,6 +90,12 @@ application {
   executableDir = ''
 }
 
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(11)
+  }
+}
+
 compileJava {
   sourceSets.main.compileClasspath += configurations.providedRuntime
   options.encoding = 'UTF-8'
@@ -156,6 +162,35 @@ distZip {
 
 distTar {
   archiveVersion = ''
+}
+
+tasks.register('checkNoSnapshots') {
+  group = 'verification'
+  description = 'Fails release packaging when resolved dependencies still use SNAPSHOT versions.'
+
+  doLast {
+    def snapshotArtifacts = [] as Set
+    rootProject.allprojects.each { project ->
+      project.configurations.findAll { it.canBeResolved }.each { configuration ->
+        configuration.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+          def version = artifact.moduleVersion.id.version
+          if (version?.endsWith('SNAPSHOT')) {
+            snapshotArtifacts << "${project.path}:${configuration.name} -> ${artifact.moduleVersion.id.group}:${artifact.name}:${version}"
+          }
+        }
+      }
+    }
+
+    if (!snapshotArtifacts.isEmpty()) {
+      throw new GradleException("Snapshot dependencies in release path:\n" + snapshotArtifacts.sort().join('\n'))
+    }
+  }
+}
+
+tasks.register('releaseDist') {
+  group = 'distribution'
+  description = 'Builds release distributions after verifying no SNAPSHOT dependencies remain.'
+  dependsOn 'checkNoSnapshots', 'distZip', 'distTar'
 }
 
 startScripts {

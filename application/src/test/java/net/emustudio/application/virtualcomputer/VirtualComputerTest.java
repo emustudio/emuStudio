@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.mockito.InOrder;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -159,7 +160,8 @@ public class VirtualComputerTest {
         ApplicationApi applicationApi = mock(ApplicationApi.class);
 
         Map<Long, PluginMeta> result = VirtualComputer.constructPlugins(
-                List.of((Class<Plugin>) (Class<?>) TestCompilerPlugin.class),
+                pluginClassesByFile(List.of(pluginConfig("compiler", PLUGIN_TYPE.COMPILER)),
+                        List.of((Class<Plugin>) (Class<?>) TestCompilerPlugin.class)),
                 List.of(pluginConfig("compiler", PLUGIN_TYPE.COMPILER)),
                 applicationApi,
                 new AppSettings(Config.inMemory(), true, false),
@@ -177,8 +179,48 @@ public class VirtualComputerTest {
     @SuppressWarnings("unchecked")
     public void constructPluginsRejectsPluginThatDoesNotImplementExpectedInterface() {
         assertThrows(InvalidPluginException.class, () -> VirtualComputer.constructPlugins(
-                List.of((Class<Plugin>) (Class<?>) NotACompilerPlugin.class),
+                pluginClassesByFile(List.of(pluginConfig("compiler", PLUGIN_TYPE.COMPILER)),
+                        List.of((Class<Plugin>) (Class<?>) NotACompilerPlugin.class)),
                 List.of(pluginConfig("compiler", PLUGIN_TYPE.COMPILER)),
+                mock(ApplicationApi.class),
+                new AppSettings(Config.inMemory(), true, false),
+                () -> {}
+        ));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void constructPluginsPairsClassesByConfiguredPluginPath() throws Exception {
+        PluginConfig compilerConfig = pluginConfig("compiler", PLUGIN_TYPE.COMPILER);
+        PluginConfig memoryConfig = pluginConfig("memory", PLUGIN_TYPE.MEMORY);
+
+        Map<File, Class<Plugin>> pluginClasses = new LinkedHashMap<>();
+        pluginClasses.put(memoryConfig.getPluginPath().toFile(), (Class<Plugin>) (Class<?>) TestMemoryPlugin.class);
+        pluginClasses.put(compilerConfig.getPluginPath().toFile(), (Class<Plugin>) (Class<?>) TestCompilerPlugin.class);
+
+        Map<Long, PluginMeta> result = VirtualComputer.constructPlugins(
+                pluginClasses,
+                List.of(compilerConfig, memoryConfig),
+                mock(ApplicationApi.class),
+                new AppSettings(Config.inMemory(), true, false),
+                () -> {}
+        );
+
+        assertTrue(result.get(1L).pluginInstance instanceof TestCompilerPlugin);
+        assertTrue(result.get(2L).pluginInstance instanceof TestMemoryPlugin);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void constructPluginsRejectsMismatchedPluginCounts() {
+        PluginConfig compilerConfig = pluginConfig("compiler", PLUGIN_TYPE.COMPILER);
+        Map<File, Class<Plugin>> pluginClasses = new LinkedHashMap<>();
+        pluginClasses.put(compilerConfig.getPluginPath().toFile(), (Class<Plugin>) (Class<?>) TestCompilerPlugin.class);
+        pluginClasses.put(new File("/tmp/extra.jar"), (Class<Plugin>) (Class<?>) TestCompilerPlugin.class);
+
+        assertThrows(InvalidPluginException.class, () -> VirtualComputer.constructPlugins(
+                pluginClasses,
+                List.of(compilerConfig),
                 mock(ApplicationApi.class),
                 new AppSettings(Config.inMemory(), true, false),
                 () -> {}
@@ -199,8 +241,78 @@ public class VirtualComputerTest {
         );
     }
 
+    @Test
+    public void closeDestroysPluginsInReverseOrderAndClosesClassLoader() throws Exception {
+        Compiler compiler = mock(Compiler.class);
+        Memory memory = mock(Memory.class);
+        CPU cpu = mock(CPU.class);
+        Device d1 = mock(Device.class);
+        Device d2 = mock(Device.class);
+        AutoCloseable classLoader = mock(AutoCloseable.class);
+        ComputerConfig computerConfig = mock(ComputerConfig.class);
+
+        VirtualComputer vc = new VirtualComputer(computerConfig, plugins(
+                plugin(0L, pluginConfig("compiler", PLUGIN_TYPE.COMPILER), compiler),
+                plugin(1L, pluginConfig("memory", PLUGIN_TYPE.MEMORY), memory),
+                plugin(2L, pluginConfig("cpu", PLUGIN_TYPE.CPU), cpu),
+                plugin(3L, pluginConfig("device-1", PLUGIN_TYPE.DEVICE), d1),
+                plugin(4L, pluginConfig("device-2", PLUGIN_TYPE.DEVICE), d2)
+        ), classLoader);
+
+        vc.close();
+
+        InOrder inOrder = inOrder(d2, d1, cpu, memory, compiler, classLoader, computerConfig);
+        inOrder.verify(d2).destroy();
+        inOrder.verify(d1).destroy();
+        inOrder.verify(cpu).destroy();
+        inOrder.verify(memory).destroy();
+        inOrder.verify(compiler).destroy();
+        inOrder.verify(classLoader).close();
+        inOrder.verify(computerConfig).close();
+    }
+
+    @Test
+    public void closeContinuesAfterDestroyFailureAndIsIdempotent() throws Exception {
+        Compiler compiler = mock(Compiler.class);
+        Memory memory = mock(Memory.class);
+        CPU cpu = mock(CPU.class);
+        Device badDevice = mock(Device.class);
+        Device goodDevice = mock(Device.class);
+        AutoCloseable classLoader = mock(AutoCloseable.class);
+        ComputerConfig computerConfig = mock(ComputerConfig.class);
+        doThrow(new RuntimeException("boom")).when(badDevice).destroy();
+
+        VirtualComputer vc = new VirtualComputer(computerConfig, plugins(
+                plugin(0L, pluginConfig("compiler", PLUGIN_TYPE.COMPILER), compiler),
+                plugin(1L, pluginConfig("memory", PLUGIN_TYPE.MEMORY), memory),
+                plugin(2L, pluginConfig("cpu", PLUGIN_TYPE.CPU), cpu),
+                plugin(3L, pluginConfig("bad-device", PLUGIN_TYPE.DEVICE), badDevice),
+                plugin(4L, pluginConfig("good-device", PLUGIN_TYPE.DEVICE), goodDevice)
+        ), classLoader);
+
+        vc.close();
+        vc.close();
+
+        verify(goodDevice).destroy();
+        verify(badDevice).destroy();
+        verify(cpu).destroy();
+        verify(memory).destroy();
+        verify(compiler).destroy();
+        verify(classLoader).close();
+        verify(computerConfig).close();
+        verifyNoMoreInteractions(classLoader, computerConfig);
+    }
+
     private static PluginConfig pluginConfig(String id, PLUGIN_TYPE pluginType) {
         return PluginConfig.create(id, pluginType, id, "/tmp/" + id + ".jar", P.of(0, 0), Config.inMemory());
+    }
+
+    private static Map<File, Class<Plugin>> pluginClassesByFile(List<PluginConfig> pluginConfigs, List<Class<Plugin>> pluginClasses) {
+        Map<File, Class<Plugin>> result = new LinkedHashMap<>();
+        for (int i = 0; i < pluginConfigs.size() && i < pluginClasses.size(); i++) {
+            result.put(pluginConfigs.get(i).getPluginPath().toFile(), pluginClasses.get(i));
+        }
+        return result;
     }
 
     private static Map<Long, PluginMeta> plugins(PluginEntry... entries) {
@@ -270,6 +382,22 @@ public class VirtualComputerTest {
         @Override public String getVersion() { return "test"; }
         @Override public String getCopyright() { return "test"; }
         @Override public String getDescription() { return "test"; }
+    }
+
+    public static final class TestMemoryPlugin implements Memory {
+        public TestMemoryPlugin(long pluginId, ApplicationApi applicationApi, PluginSettings settings) {}
+
+        @Override public void reset() {}
+        @Override public void initialize() {}
+        @Override public void destroy() {}
+        @Override public void showSettings(JFrame parent) {}
+        @Override public boolean isShowSettingsSupported() { return false; }
+        @Override public net.emustudio.emulib.plugins.memory.annotations.MemoryAnnotations getAnnotations() { return null; }
+        @Override public int getSize() { return 0; }
+        @Override public String getTitle() { return "memory"; }
+        @Override public String getVersion() { return "memory"; }
+        @Override public String getCopyright() { return "memory"; }
+        @Override public String getDescription() { return "memory"; }
     }
 
     public static final class BrokenCompilerPlugin implements Compiler {

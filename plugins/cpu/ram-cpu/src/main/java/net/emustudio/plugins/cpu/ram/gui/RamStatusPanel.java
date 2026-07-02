@@ -28,7 +28,7 @@ public class RamStatusPanel extends JPanel {
         cpu.addCPUListener(new CPU.CPUListener() {
             @Override
             public void runStateChanged(CPU.RunState state) {
-                lblStatus.setText(state.toString());
+                SwingUtilities.invokeLater(() -> lblStatus.setText(state.toString()));
             }
 
             @Override
@@ -37,11 +37,14 @@ public class RamStatusPanel extends JPanel {
                 if (r0.isEmpty()) {
                     r0 = "<empty>";
                 }
-                txtR0.setText(r0);
-                txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
-                txtInput.setText(input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>"));
                 int outputPos = Math.max(0, output.getHeadPosition() - 1);
-                txtOutput.setText(output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>"));
+                String finalR0 = r0;
+                SwingUtilities.invokeLater(() -> {
+                    txtR0.setText(finalR0);
+                    txtIP.setText(String.format("%04d", cpu.getInstructionLocation()));
+                    txtInput.setText(input.getSymbolAt(input.getHeadPosition()).map(TapeSymbol::toString).orElse("<empty>"));
+                    txtOutput.setText(output.getSymbolAt(outputPos).map(TapeSymbol::toString).orElse("<empty>"));
+                });
             }
         });
     }

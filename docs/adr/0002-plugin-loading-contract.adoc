@@ -1,0 +1,13 @@
+# ADR-0002: Plugin Loading Contract
+
+## Status
+Accepted
+
+## Context
+emuStudio loads plugin JARs dynamically and must identify one valid root per configured plugin while keeping plugin dependencies isolated from application classes.
+
+## Decision
+Load each virtual computer through a dedicated `URLClassLoader`. Treat a class as loadable only when it is annotated with `@PluginRoot` and implements `Plugin`, then match loaded classes back to configured plugin JAR paths before instantiation.
+
+## Consequences
+Plugin discovery stays explicit and stable. Shutdown must close the per-computer class loader, and configuration mismatches now fail fast instead of being paired positionally.

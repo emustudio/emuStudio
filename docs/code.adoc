@@ -66,8 +66,8 @@ package "emuStudio application" {
         +getCompiler()/getCPU()/getMemory()/getDevices()
     }
     class PluginLoader {
-        +loadPlugins(files) : List<Class<Plugin>>
-        -trustedPlugin(class) : boolean
+        +loadPlugins(files) : LoadResult
+        -isLoadablePlugin(class) : boolean
     }
     class ContextPoolImpl
     class ApplicationApiImpl
@@ -98,7 +98,7 @@ is a single constructor with the signature:
 public SamplePlugin(long pluginId, ApplicationApi emustudio, PluginSettings settings) { … }
 ----
 
-`PluginLoader.trustedPlugin(...)` accepts a class only if it is not an interface,
+`PluginLoader.isLoadablePlugin(...)` accepts a class only if it is not an interface,
 is annotated with `@PluginRoot`, and implements `Plugin`. `VirtualComputer` then
 additionally checks that the class implements the interface matching its declared
 `PLUGIN_TYPE` before instantiating it.
@@ -122,8 +122,8 @@ participant "ContextPoolImpl" as CP
 User -> Runner : select configuration
 Runner -> VC : create(config, applicationApi, appSettings)
 VC -> PL : loadPlugins(jarFiles)
-PL -> PL : findMainClass() + trustedPlugin()
-PL --> VC : List<Class<Plugin>>
+PL -> PL : findMainClass() + isLoadablePlugin()
+PL --> VC : LoadResult(classLoader, classesByFile)
 
 loop for each plugin (compiler, CPU, memory, devices)
     VC -> VC : check type implements PLUGIN_TYPE interface

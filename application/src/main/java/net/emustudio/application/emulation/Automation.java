@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.application.emulation;
 
-import net.emustudio.application.gui.dialogs.AutoDialog;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.compiler.Compiler;
@@ -12,7 +11,6 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.runtime.helpers.Unchecked;
 import net.emustudio.emulib.runtime.ui.Dialogs;
-import net.emustudio.emulib.runtime.ui.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,16 +34,18 @@ public class Automation implements Runnable {
     private final Dialogs dialogs;
     private final int waitForFinishMillis;
     private final Integer programLocation;
-    AutoDialog progressGUI; // package-private for testing
+    private final EmulationProgress progress;
     private volatile CPU.RunState resultState;
 
     public Automation(VirtualComputer computer, Path inputFile, AppSettings appSettings,
-                      Dialogs dialogs, int waitForFinishMillis, Integer programLocation, GUI gui) throws AutomationException {
+                      Dialogs dialogs, int waitForFinishMillis, Integer programLocation,
+                      EmulationProgress progress) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.appSettings = Objects.requireNonNull(appSettings);
         this.dialogs = Objects.requireNonNull(dialogs);
         this.waitForFinishMillis = waitForFinishMillis;
         this.programLocation = programLocation;
+        this.progress = Objects.requireNonNull(progress);
 
         if (inputFile != null) {
             this.inputFile = Objects.requireNonNull(inputFile, "Input file must be defined").toFile();
@@ -54,10 +54,6 @@ public class Automation implements Runnable {
             }
         } else {
             this.inputFile = null;
-        }
-
-        if (!appSettings.noGUI) {
-            progressGUI = new AutoDialog(computer, gui);
         }
     }
 
@@ -70,9 +66,7 @@ public class Automation implements Runnable {
      */
     @Override
     public void run() {
-        if (progressGUI != null) {
-            progressGUI.setVisible(true);
-        }
+        progress.show();
 
         LOGGER.info("Starting emulation automation...");
         LOGGER.info("Emulating computer: {}", computer.getComputerConfig().getName());
@@ -103,18 +97,13 @@ public class Automation implements Runnable {
             LOGGER.error("Error during automation", e);
             dialogs.showError("Error during automation. Please consult log file for details.", "Emulation automation");
         } finally {
-            if (progressGUI != null) {
-                progressGUI.dispose();
-                progressGUI = null;
-            }
+            progress.dispose();
         }
     }
 
     private void setProgress(String msg, boolean stopEnabled) {
         LOGGER.info(msg);
-        if (progressGUI != null) {
-            progressGUI.setAction(msg, stopEnabled);
-        }
+        progress.setAction(msg, stopEnabled);
     }
 
     private void autoCompile(Compiler compiler) throws AutomationException {
@@ -192,11 +181,18 @@ public class Automation implements Runnable {
         cpu.execute();
 
         synchronized (resultStateLock) {
+            long deadline = (waitForFinishMillis == DONT_WAIT)
+                    ? Long.MAX_VALUE
+                    : System.currentTimeMillis() + waitForFinishMillis;
             try {
-                if (waitForFinishMillis == DONT_WAIT) {
-                    resultStateLock.wait();
-                } else {
-                    resultStateLock.wait(waitForFinishMillis);
+                while (resultState == CPU.RunState.STATE_RUNNING) {
+                    long remaining = (waitForFinishMillis == DONT_WAIT)
+                            ? 0
+                            : deadline - System.currentTimeMillis();
+                    if (waitForFinishMillis != DONT_WAIT && remaining <= 0) {
+                        break;
+                    }
+                    resultStateLock.wait(remaining);
                 }
             } catch (InterruptedException e) {
                 LOGGER.error("Emulation has been interrupted");

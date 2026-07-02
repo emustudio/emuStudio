@@ -1,0 +1,13 @@
+# ADR-0006: Plugin Lifecycle And ClassLoader Ownership
+
+## Status
+Accepted
+
+## Context
+Plugins may allocate threads, audio lines, and class-loader resources that outlive a run unless shutdown is explicit and ordered.
+
+## Decision
+`VirtualComputer.close()` is responsible for plugin shutdown. It destroys plugins in reverse initialization order, then closes the dedicated plugin class loader, then closes the configuration.
+
+## Consequences
+Shutdown becomes explicit and idempotent. Future reload or multi-computer flows can reuse the same lifecycle contract instead of relying on process exit.

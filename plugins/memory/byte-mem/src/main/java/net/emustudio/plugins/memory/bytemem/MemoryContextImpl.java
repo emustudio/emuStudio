@@ -17,9 +17,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
 
     private final RangeTree romRanges = new RangeTree();
     private final MemoryContextAnnotations annotations;
-    private Byte[][] mem = new Byte[1][0];
+    private volatile Byte[][] mem = new Byte[1][0];
     private int banksCount;
-    private int bankSelect = 0;
+    private volatile int bankSelect = 0;
     private int bankCommon = 0;
 
     protected MemoryContextImpl(MemoryContextAnnotations annotations) {

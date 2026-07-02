@@ -71,7 +71,9 @@ public class StatusPanel extends JPanel {
                 updateGUI();
             }
         });
-        cpu.getFrequencyCalculator().addListener(f -> lblFrequency.setText(String.format("%.2f kHz", f)));
+        cpu.getFrequencyCalculator().addListener(
+                f -> SwingUtilities.invokeLater(() -> lblFrequency.setText(String.format("%.2f kHz", f)))
+        );
         spnFrequency.addChangeListener(e -> {
             int i = (Integer) spnFrequency.getModel().getValue();
             try {
@@ -83,22 +85,24 @@ public class StatusPanel extends JPanel {
     }
 
     public void updateGUI() {
-        txtRegA.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_A]));
-        txtRegB.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_B]));
-        txtRegC.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_C]));
-        txtRegBC.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_B], (short) engine.regs[EmulatorEngine.REG_C]));
-        txtRegD.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_D]));
-        txtRegE.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_E]));
-        txtRegDE.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_D], (short) engine.regs[EmulatorEngine.REG_E]));
-        txtRegH.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_H]));
-        txtRegL.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_L]));
-        txtRegHL.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_H], (short) engine.regs[EmulatorEngine.REG_L]));
-        txtRegSP.setText(formatWordHexString(engine.SP));
-        txtRegPC.setText(formatWordHexString(engine.PC));
-        txtFlags.setText(formatByteHexString(engine.flags));
-        flagModel.fireTableDataChanged();
-        lblRun.setText(runState.toString());
-        spnFrequency.setEnabled(runState != RunState.STATE_RUNNING);
+        SwingUtilities.invokeLater(() -> {
+            txtRegA.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_A]));
+            txtRegB.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_B]));
+            txtRegC.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_C]));
+            txtRegBC.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_B], (short) engine.regs[EmulatorEngine.REG_C]));
+            txtRegD.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_D]));
+            txtRegE.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_E]));
+            txtRegDE.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_D], (short) engine.regs[EmulatorEngine.REG_E]));
+            txtRegH.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_H]));
+            txtRegL.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_L]));
+            txtRegHL.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_H], (short) engine.regs[EmulatorEngine.REG_L]));
+            txtRegSP.setText(formatWordHexString(engine.SP));
+            txtRegPC.setText(formatWordHexString(engine.PC));
+            txtFlags.setText(formatByteHexString(engine.flags));
+            flagModel.fireTableDataChanged();
+            lblRun.setText(runState.toString());
+            spnFrequency.setEnabled(runState != RunState.STATE_RUNNING);
+        });
     }
 
     private void initComponents() {

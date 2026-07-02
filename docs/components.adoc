@@ -105,8 +105,9 @@ context.
 
 PluginLoader:: Loads plugin JARs into a dedicated `URLClassLoader` (including
 each JAR's declared `Class-Path` dependencies), scans the classes and returns
-the single *trusted* main class — the one that is annotated `@PluginRoot` and
-implements the `Plugin` contract.
+the single loadable main class for each configured JAR — the one that is
+annotated `@PluginRoot` and implements the `Plugin` contract. The
+`VirtualComputer` owns that class loader and closes it during shutdown.
 
 ContextPool:: The mediator through which plugins communicate. Plugins *register*
 the contexts they provide and *request* the contexts they need; the pool matches

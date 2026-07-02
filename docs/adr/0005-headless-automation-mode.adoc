@@ -1,0 +1,13 @@
+# ADR-0005: Headless Automation Mode
+
+## Status
+Accepted
+
+## Context
+Automation must run without Swing while preserving the same plugin API used by interactive runs.
+
+## Decision
+Treat headless automation as a first-class mode. `ApplicationApi.getGUI()` may be `null`, and automation uses a no-op progress implementation instead of synthesizing GUI services.
+
+## Consequences
+Plugins can detect headless mode through the existing API contract. Runtime code must not assume GUI availability, and automation tests must cover `--no-gui`.

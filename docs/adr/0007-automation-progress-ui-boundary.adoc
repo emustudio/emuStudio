@@ -1,0 +1,13 @@
+# ADR-0007: Automation Progress UI Boundary
+
+## Status
+Accepted
+
+## Context
+Automation runtime logic needs progress reporting, but direct Swing dependencies in the emulation package break the intended runtime-to-UI boundary.
+
+## Decision
+Expose automation progress through an `EmulationProgress` port in the emulation package. GUI code implements that port with `AutoDialog`; headless mode uses a no-op implementation.
+
+## Consequences
+Runtime code no longer depends on Swing dialogs directly. New progress UIs can be added without changing emulation logic.

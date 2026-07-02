@@ -1,0 +1,13 @@
+# ADR-0004: Virtual Computer Project Format
+
+## Status
+Accepted
+
+## Context
+emuStudio composes a virtual computer from plugins, layout metadata, and explicit wiring rules that must be persisted in a portable project format.
+
+## Decision
+Represent virtual computers with TOML configuration files that declare compiler, CPU, memory, devices, plugin settings, and explicit connections between plugins.
+
+## Consequences
+Projects stay human-readable and source-control friendly. Loader, schema editor, and runtime wiring must remain compatible with the TOML model or ship migrations.
