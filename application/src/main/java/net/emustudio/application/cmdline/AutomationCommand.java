@@ -27,7 +27,8 @@ import java.util.concurrent.Callable;
 import static net.emustudio.application.cmdline.Utils.*;
 
 @SuppressWarnings("unused")
-@CommandLine.Command(name = "automation", aliases = {"auto"}, description = "run emulation automation")
+@CommandLine.Command(name = "automation", aliases = {"auto"}, mixinStandardHelpOptions = true,
+        description = "run emulation automation")
 public class AutomationCommand implements Callable<Integer> {
     private static final Logger LOGGER = LoggerFactory.getLogger("automation");
 

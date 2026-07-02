@@ -73,7 +73,6 @@ public class Runner implements Callable<Integer> {
     static CommandLine createCommandLine(Runner runner) {
         CommandLine cmdline = new CommandLine(runner);
         cmdline.registerConverter(Path.class, Path::of);
-        cmdline.getCommandSpec().parser().collectErrors(true);
         return cmdline;
     }
 
