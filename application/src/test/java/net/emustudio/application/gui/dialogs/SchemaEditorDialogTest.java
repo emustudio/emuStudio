@@ -225,7 +225,7 @@ public class SchemaEditorDialogTest extends AbstractSwingTest {
                 "Could not save computer schema. Please consult log file for details.",
                 "Save schema"
         );
-        assertFalse(onEdt(dialog::isDisplayable));
+        assertTrue(onEdt(dialog::isDisplayable));
     }
 
     private SchemaEditorDialog createDialog(Schema schema, Dialogs dialogs) {

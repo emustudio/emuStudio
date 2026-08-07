@@ -44,6 +44,7 @@ public class DisplayWindow extends DialogBase {
     private final Dialogs dialogs;
     private final GUI gui;
     private final KeyboardCanvas keyboardCanvas;
+    private final KeyboardDispatcher keyboardDispatcher;
     private JButton btnRecord;
 
     private RecordingSession recordingSession;
@@ -65,11 +66,10 @@ public class DisplayWindow extends DialogBase {
             }
 
             public void windowClosed(WindowEvent winEvt) {
-                stopRecording(false);
-                canvas.close();
+                closeResources();
             }
         });
-        KeyboardDispatcher keyboardDispatcher = new KeyboardDispatcher(this);
+        keyboardDispatcher = new KeyboardDispatcher(this);
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(keyboardDispatcher);
 
@@ -84,9 +84,15 @@ public class DisplayWindow extends DialogBase {
     }
 
     public void destroy() {
+        closeResources();
+        dispose();
+    }
+
+    private void closeResources() {
         stopRecording(false);
         canvas.close();
-        dispose();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(keyboardDispatcher);
+        keyboardDispatcher.close();
     }
 
     @Override

@@ -48,6 +48,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private static final Color KEYBOARD_OVERLAY_COLOR = new Color(0, 0, 0, 127);
 
     private volatile Dimension size;
+    private final Dimension minimumSize;
 
     private final ULA ula;
     private final TimingProfile timing;
@@ -76,6 +77,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 (int) (ZOOM * screenImageWidth + 2 * MARGIN),
                 (int) (ZOOM * screenImageHeight + 2 * MARGIN)
         );
+        this.minimumSize = new Dimension(size);
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -224,7 +226,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     @Override
     public Dimension getMinimumSize() {
-        return this.size;
+        return new Dimension(minimumSize);
     }
 
     @Override
