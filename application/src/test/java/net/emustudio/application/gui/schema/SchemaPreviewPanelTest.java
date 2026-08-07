@@ -51,8 +51,7 @@ public class SchemaPreviewPanelTest {
 
             panel.saveSchemaImage();
 
-            assertTrue(Files.exists(output));
-            assertTrue(Files.size(output) > 0);
+            assertTrue(waitForImage(output));
         }
     }
 
@@ -73,5 +72,15 @@ public class SchemaPreviewPanelTest {
             }
         }
         throw new AssertionError("Missing compiler element");
+    }
+
+    private boolean waitForImage(Path image) throws Exception {
+        for (int i = 0; i < 200; i++) {
+            if (Files.size(image) > 0) {
+                return true;
+            }
+            Thread.sleep(10);
+        }
+        return false;
     }
 }

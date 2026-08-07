@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.*;
 import static net.emustudio.application.settings.ConfigFiles.listPluginFiles;
@@ -38,6 +39,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     private final GUI gui;
 
     private final DrawingPanel panel;
+    private final AtomicInteger pluginLoadId = new AtomicInteger();
     private boolean buttonSelected = false;
     private JToggleButton btnBidirection;
     private JToggleButton btnCPU;
@@ -354,18 +356,37 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
     }
 
     private void resetComboWithPluginFiles(PLUGIN_TYPE pluginType) {
-        try {
-            List<String> pluginFiles = listPluginFiles(pluginType);
-            cmbPlugin.setModel(new PluginComboModel(pluginFiles));
-            selectFirstPlugin();
-        } catch (IOException e) {
-            LOGGER.error("Could not load CPU plugin files", e);
-            cmbPlugin.setModel(EMPTY_MODEL);
-        }
+        int loadId = pluginLoadId.incrementAndGet();
+        cmbPlugin.setModel(EMPTY_MODEL);
+        cmbPlugin.setEnabled(false);
+
+        new SwingWorker<List<String>, Void>() {
+            @Override
+            protected List<String> doInBackground() throws IOException {
+                return listPluginFiles(pluginType);
+            }
+
+            @Override
+            protected void done() {
+                if (loadId != pluginLoadId.get()) {
+                    return;
+                }
+                cmbPlugin.setEnabled(true);
+                try {
+                    cmbPlugin.setModel(new PluginComboModel(get()));
+                    selectFirstPlugin();
+                } catch (Exception e) {
+                    LOGGER.error("Could not load plugin files", e);
+                    cmbPlugin.setModel(EMPTY_MODEL);
+                }
+            }
+        }.execute();
     }
 
     private boolean checkUnsetDrawingTool() {
         if (buttonSelected) {
+            pluginLoadId.incrementAndGet();
+            cmbPlugin.setEnabled(true);
             cmbPlugin.setModel(EMPTY_MODEL);
             groupDraw.clearSelection();
             panel.setTool(Tool.TOOL_NOTHING, null);

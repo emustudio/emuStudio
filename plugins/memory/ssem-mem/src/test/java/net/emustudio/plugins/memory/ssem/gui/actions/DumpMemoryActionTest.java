@@ -12,6 +12,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import javax.swing.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,10 +36,11 @@ public class DumpMemoryActionTest {
     }
 
     @Test
-    public void testHumanReadableDump() throws IOException {
+    public void testHumanReadableDump() throws Exception {
         Path output = folder.newFolder().toPath().resolve("human-readable.txt");
         DumpMemoryAction action = new DumpMemoryAction(mockApi(output), prepareMemory());
         action.actionPerformed(null);
+        waitForCompletion(action);
 
         String content = new String(read(output).array());
         assertEquals("0x00, 0x01, 0x02, 0x03\n" +
@@ -76,10 +78,11 @@ public class DumpMemoryActionTest {
     }
 
     @Test
-    public void testBSSEM() throws IOException {
+    public void testBSSEM() throws Exception {
         Path output = folder.newFolder().toPath().resolve("binary.bsem");
         DumpMemoryAction action = new DumpMemoryAction(mockApi(output), prepareMemory());
         action.actionPerformed(null);
+        waitForCompletion(action);
 
         ByteBuffer data = read(output);
         assertEquals(PROGRAM_LOCATION, data.getInt() * 4);
@@ -127,5 +130,15 @@ public class DumpMemoryActionTest {
             mem.write(i, new Byte[] { (byte)i, (byte)(i+1), (byte)(i+2), (byte)(i+3) });
         }
         return mem;
+    }
+
+    private void waitForCompletion(Action action) throws InterruptedException {
+        for (int i = 0; i < 200; i++) {
+            if (action.isEnabled()) {
+                return;
+            }
+            Thread.sleep(10);
+        }
+        throw new AssertionError("Memory action did not complete");
     }
 }

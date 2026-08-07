@@ -269,6 +269,7 @@ public class SchemaEditorDialogTest extends AbstractSwingTest {
 
             triggerButton(button);
 
+            waitForPluginLoad(pluginCombo);
             assertEquals(1, onEdt(pluginCombo::getItemCount).intValue());
             assertEquals(displayName(pluginFile), onEdt(() -> String.valueOf(pluginCombo.getSelectedItem())));
             assertEquals(expectedTool, getDrawingModel(dialog).drawTool);
@@ -296,6 +297,16 @@ public class SchemaEditorDialogTest extends AbstractSwingTest {
 
     private boolean readButtonSelected(SchemaEditorDialog dialog) throws Exception {
         return getField(dialog, "buttonSelected", Boolean.class);
+    }
+
+    private void waitForPluginLoad(JComboBox<?> pluginCombo) throws Exception {
+        for (int i = 0; i < 200; i++) {
+            if (onEdt(pluginCombo::getItemCount) == 1) {
+                return;
+            }
+            Thread.sleep(10);
+        }
+        throw new AssertionError("Plugin list did not load");
     }
 
     private void setDrawingTool(SchemaEditorDialog dialog, DrawingPanel.Tool tool, String fileName) throws Exception {

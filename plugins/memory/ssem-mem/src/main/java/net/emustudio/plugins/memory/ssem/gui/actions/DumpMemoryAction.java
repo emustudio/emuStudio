@@ -49,27 +49,45 @@ public class DumpMemoryAction extends AbstractAction {
                 new FileExtensionsFilter("Binary dump", "bssem"));
 
         dumpPath.ifPresent(path -> {
-            try {
-                if (path.toString().toLowerCase(Locale.ENGLISH).endsWith(".txt")) {
-                    try (BufferedWriter out = new BufferedWriter(new FileWriter(path.toFile()))) {
-                        for (int i = 0; i < 32; i++) {
-                            Byte[] v = context.read(i * 4, 4);
-                            out.write(String.format("0x%02X, 0x%02X, 0x%02X, 0x%02X\n", v[0], v[1], v[2], v[3]));
-                        }
-                    }
-                } else {
-                    try (DataOutputStream ds = new DataOutputStream(new FileOutputStream(path.toFile()))) {
-                        int programLocation = api.getProgramLocation() / 4;
-                        ds.writeInt(programLocation);
-                        for (int i = 0; i < context.getSize(); i++) {
-                            ds.writeByte(context.read(i) & 0xff);
-                        }
+            setEnabled(false);
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws IOException {
+                    dump(path);
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    setEnabled(true);
+                    try {
+                        get();
+                    } catch (Exception ex) {
+                        Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                        LOGGER.error("Memory dump could not be created", cause);
+                        dialogs.showError("Memory dump could not be created: " + cause.getMessage() + ". Please see log file for more details.");
                     }
                 }
-            } catch (IOException ex) {
-                LOGGER.error("Memory dump could not be created", ex);
-                dialogs.showError("Memory dump could not be created: " + ex.getMessage() + ". Please see log file for more details.");
-            }
+            }.execute();
         });
+    }
+
+    private void dump(Path path) throws IOException {
+        if (path.toString().toLowerCase(Locale.ENGLISH).endsWith(".txt")) {
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(path.toFile()))) {
+                for (int i = 0; i < 32; i++) {
+                    Byte[] v = context.read(i * 4, 4);
+                    out.write(String.format("0x%02X, 0x%02X, 0x%02X, 0x%02X\n", v[0], v[1], v[2], v[3]));
+                }
+            }
+        } else {
+            try (DataOutputStream ds = new DataOutputStream(new FileOutputStream(path.toFile()))) {
+                int programLocation = api.getProgramLocation() / 4;
+                ds.writeInt(programLocation);
+                for (int i = 0; i < context.getSize(); i++) {
+                    ds.writeByte(context.read(i) & 0xff);
+                }
+            }
+        }
     }
 }
