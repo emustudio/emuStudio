@@ -52,24 +52,46 @@ public class LoadImageAction extends AbstractAction {
                 "Load image file", "Load", currentDirectory,
                 false, new FileExtensionsFilter("Memory image", "bssem"));
 
-        System.out.println(imagePath);
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
-            try {
-                try (FileInputStream stream = new FileInputStream(path.toFile())) {
-                    ByteBuffer code = ByteBuffer.wrap(stream.readAllBytes());
-                    int startLine = code.getInt();
-                    byte[] data = new byte[code.remaining()];
-                    code.get(data);
-
-                    api.setProgramLocation(startLine * 4);
-                    context.write(0, NumberUtils.nativeBytesToBytes(data));
+            setEnabled(false);
+            new SwingWorker<Image, Void>() {
+                @Override
+                protected Image doInBackground() throws Exception {
+                    try (FileInputStream stream = new FileInputStream(path.toFile())) {
+                        ByteBuffer code = ByteBuffer.wrap(stream.readAllBytes());
+                        int startLine = code.getInt();
+                        byte[] data = new byte[code.remaining()];
+                        code.get(data);
+                        return new Image(startLine, data);
+                    }
                 }
-                repaint.run();
-            } catch (Exception ex) {
-                dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");
-                LOGGER.error("Could not load image file '{}'", path, ex);
-            }
+
+                @Override
+                protected void done() {
+                    setEnabled(true);
+                    try {
+                        Image image = get();
+                        api.setProgramLocation(image.startLine * 4);
+                        context.write(0, NumberUtils.nativeBytesToBytes(image.data));
+                        repaint.run();
+                    } catch (Exception ex) {
+                        Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                        dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
+                        LOGGER.error("Could not load image file '{}'", path, cause);
+                    }
+                }
+            }.execute();
         });
+    }
+
+    private static class Image {
+        private final int startLine;
+        private final byte[] data;
+
+        private Image(int startLine, byte[] data) {
+            this.startLine = startLine;
+            this.data = data;
+        }
     }
 }

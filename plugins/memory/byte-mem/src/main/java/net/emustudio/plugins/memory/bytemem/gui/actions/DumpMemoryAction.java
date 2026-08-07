@@ -46,24 +46,42 @@ public class DumpMemoryAction extends AbstractAction {
                 new FileExtensionsFilter("Binary dump", "bin"));
 
         dumpPath.ifPresent(path -> {
-            try {
-                if (path.toString().toLowerCase(Locale.ENGLISH).endsWith(".txt")) {
-                    try (BufferedWriter out = new BufferedWriter(new FileWriter(path.toFile()))) {
-                        for (int i = 0; i < context.getSize(); i++) {
-                            out.write(String.format("%X:\t%02X\n", i, context.read(i)));
-                        }
-                    }
-                } else {
-                    try (DataOutputStream ds = new DataOutputStream(new FileOutputStream(path.toFile()))) {
-                        for (int i = 0; i < context.getSize(); i++) {
-                            ds.writeByte(context.read(i) & 0xff);
-                        }
+            setEnabled(false);
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws IOException {
+                    dump(path);
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    setEnabled(true);
+                    try {
+                        get();
+                    } catch (Exception ex) {
+                        Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                        LOGGER.error("Memory dump could not be created", cause);
+                        dialogs.showError("Memory dump could not be created: " + cause.getMessage() + ". Please see log file for more details.");
                     }
                 }
-            } catch (IOException ex) {
-                LOGGER.error("Memory dump could not be created", ex);
-                dialogs.showError("Memory dump could not be created: " + ex.getMessage() + ". Please see log file for more details.");
-            }
+            }.execute();
         });
+    }
+
+    private void dump(Path path) throws IOException {
+        if (path.toString().toLowerCase(Locale.ENGLISH).endsWith(".txt")) {
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(path.toFile()))) {
+                for (int i = 0; i < context.getSize(); i++) {
+                    out.write(String.format("%X:\t%02X\n", i, context.read(i)));
+                }
+            }
+        } else {
+            try (DataOutputStream ds = new DataOutputStream(new FileOutputStream(path.toFile()))) {
+                for (int i = 0; i < context.getSize(); i++) {
+                    ds.writeByte(context.read(i) & 0xff);
+                }
+            }
+        }
     }
 }

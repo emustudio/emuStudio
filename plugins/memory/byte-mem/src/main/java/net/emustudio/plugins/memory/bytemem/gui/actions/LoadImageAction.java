@@ -56,13 +56,27 @@ public class LoadImageAction extends AbstractAction {
             Loader loader = Loader.createLoader(path);
             Optional<Loader.MemoryBank> bank = askForMemoryBank(!loader.isMemoryAddressAware());
             if (bank.isPresent()) {
-                try {
-                    loader.load(path, context, bank.get());
-                    repaint.run();
-                } catch (Exception ex) {
-                    dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");
-                    LOGGER.error("Could not load image file '{}'", path, ex);
-                }
+                setEnabled(false);
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        loader.load(path, context, bank.get());
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        setEnabled(true);
+                        try {
+                            get();
+                            repaint.run();
+                        } catch (Exception ex) {
+                            Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                            dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
+                            LOGGER.error("Could not load image file '{}'", path, cause);
+                        }
+                    }
+                }.execute();
             }
         });
     }

@@ -9,6 +9,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import javax.swing.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -32,7 +33,7 @@ public class LoadImageActionTest {
     }
 
     @Test
-    public void testLoadBSSEM() throws IOException {
+    public void testLoadBSSEM() throws Exception {
         Path path = folder.newFolder().toPath().resolve("binary.bssem");
         write(path);
         MemoryContext<Byte> memory = createMock(MemoryContext.class);
@@ -54,8 +55,19 @@ public class LoadImageActionTest {
 
         LoadImageAction action = new LoadImageAction(mockApi(path), memory, repaint);
         action.actionPerformed(null);
+        waitForCompletion(action);
 
         verify(memory, repaint);
+    }
+
+    private void waitForCompletion(Action action) throws InterruptedException {
+        for (int i = 0; i < 200; i++) {
+            if (action.isEnabled()) {
+                return;
+            }
+            Thread.sleep(10);
+        }
+        throw new AssertionError("Memory action did not complete");
     }
 
 
