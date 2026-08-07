@@ -337,6 +337,7 @@ public class SchemaEditorDialog extends DialogBase implements KeyListener {
         } catch (CannotUpdateSettingException e) {
             LOGGER.error("Could not save computer schema", e);
             dialogs.showError("Could not save computer schema. Please consult log file for details.", "Save schema");
+            return;
         }
         dispose();
     }

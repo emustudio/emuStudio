@@ -103,43 +103,52 @@ public class CpuPanel extends JPanel {
 
         @Override
         public void internalStateChanged() {
-            SwingUtilities.invokeLater(() -> {
-                int acc = engine.Acc.get();
-                int ci = engine.CI.get();
+            final int acc = engine.Acc.get();
+            final int ci = engine.CI.get();
+            final String accHex = String.format("%08x", acc);
+            final String accDec = String.format("%d", acc);
+            final String ciHex = String.format("%08x", ci / 4);
+            final String ciDec = String.format("%d", ci / 4);
+            final String accBinary = formatBinary(acc);
+            final String ciBinary = formatBinary(ci);
+            final String[] memoryValues = new String[9];
 
-                txtA.setText(String.format("%08x", acc));
-                txtDecA.setText(String.format("%d", acc));
-                txtCI.setText(String.format("%08x", ci / 4));
-                txtDecCI.setText(String.format("%d", ci / 4));
-                txtBinA.setText(formatBinary(acc));
-                txtBinCI.setText(formatBinary(ci));
+            try {
+                Byte[] mCI = memory.read(ci, 4);
+                byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
+                Byte[] mLine = memory.read(line * 4, 4);
 
-                try {
-                    Byte[] mCI = memory.read(ci, 4);
-                    byte line = (byte) NumberUtils.reverseBits(mCI[0] & 0b11111000, 8);
-                    Byte[] mLine = memory.read(line * 4, 4);
-
-                    txtMCI.setText(String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
-                    txtLine.setText(String.format("%02x", line));
-                    txtMLine.setText(String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
-
-                    txtDecMCI.setText(String.format("%d", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
-                    txtDecLine.setText(String.format("%d", line));
-                    txtDecMLine.setText(String.format("%d", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
-
-                    txtBinMCI.setText(formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN)));
-                    txtBinLine.setText(formatBinary(line, 8));
-                    txtBinMLine.setText(formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN)));
-                } catch (IndexOutOfBoundsException e) {
-                    txtLine.setText("?");
-                    txtDecLine.setText("?");
-                    txtMCI.setText("?");
-                    txtDecMCI.setText("?");
-                    txtMLine.setText("?");
-                    txtDecMLine.setText("?");
-                    txtBinMCI.setText("?");
-                    txtBinMLine.setText("?");
+                memoryValues[0] = String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS));
+                memoryValues[1] = String.format("%02x", line);
+                memoryValues[2] = String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS));
+                memoryValues[3] = String.format("%d", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS));
+                memoryValues[4] = String.format("%d", line);
+                memoryValues[5] = String.format("%d", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS));
+                memoryValues[6] = formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN));
+                memoryValues[7] = formatBinary(line, 8);
+                memoryValues[8] = formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN));
+            } catch (IndexOutOfBoundsException e) {
+                for (int i = 0; i < memoryValues.length; i++) {
+                    memoryValues[i] = "?";
                 }
+            }
+
+            SwingUtilities.invokeLater(() -> {
+                txtA.setText(accHex);
+                txtDecA.setText(accDec);
+                txtCI.setText(ciHex);
+                txtDecCI.setText(ciDec);
+                txtBinA.setText(accBinary);
+                txtBinCI.setText(ciBinary);
+                txtMCI.setText(memoryValues[0]);
+                txtLine.setText(memoryValues[1]);
+                txtMLine.setText(memoryValues[2]);
+                txtDecMCI.setText(memoryValues[3]);
+                txtDecLine.setText(memoryValues[4]);
+                txtDecMLine.setText(memoryValues[5]);
+                txtBinMCI.setText(memoryValues[6]);
+                txtBinLine.setText(memoryValues[7]);
+                txtBinMLine.setText(memoryValues[8]);
             });
         }
 

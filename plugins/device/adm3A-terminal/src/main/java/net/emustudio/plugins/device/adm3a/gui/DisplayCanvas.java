@@ -4,6 +4,8 @@ package net.emustudio.plugins.device.adm3a.gui;
 
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.plugins.device.adm3a.api.Display;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.awt.RenderingHints.*;
 
 public class DisplayCanvas extends Canvas implements AutoCloseable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DisplayCanvas.class);
     private static final Color FOREGROUND = new Color(255, 255, 255);
     private static final Color BACKGROUND = Color.BLACK;
     private final Timer repaintTimer;
@@ -21,6 +24,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
     private final AtomicBoolean painting = new AtomicBoolean(false);
     private volatile DisplayFont displayFont;
     private volatile Dimension size = new Dimension(0, 0);
+    private volatile Dimension minimumSize = new Dimension(0, 0);
 
     public DisplayCanvas(DisplayFont displayFont, Display display) {
         this.display = Objects.requireNonNull(display);
@@ -48,19 +52,27 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     @Override
     public Dimension getMinimumSize() {
-        return this.size;
+        return new Dimension(minimumSize);
     }
 
     @Override
     public void setBounds(int x, int y, int width, int height) {
         super.setBounds(x, y, width, height);
-        this.size = getSize();
+        updateSize();
     }
 
     @Override
     public void setBounds(Rectangle r) {
         super.setBounds(r);
-        this.size = getSize();
+        updateSize();
+    }
+
+    private void updateSize() {
+        Dimension newSize = getSize();
+        if (minimumSize.width == 0 && minimumSize.height == 0) {
+            minimumSize = new Dimension(newSize);
+        }
+        size = newSize;
     }
 
     public synchronized void setDisplayFont(DisplayFont font) {
@@ -82,17 +94,18 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
         @Override
         public void run() {
             strategy = getBufferStrategy();
-            if (painting.get()) {
+            if (painting.get() && strategy != null) {
                 paint();
             }
         }
 
         protected void paint() {
             Dimension dimension = size;
+            Graphics2D graphics = null;
             try {
                 do {
                     do {
-                        Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
+                        graphics = (Graphics2D) strategy.getDrawGraphics();
                         graphics.setColor(BACKGROUND);
                         graphics.fillRect(0, 0, dimension.width, dimension.height);
 
@@ -115,10 +128,20 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         }
                         paintCursor(graphics, lineHeight);
                         graphics.dispose();
+                        graphics = null;
                     } while (strategy.contentsRestored());
                     strategy.show();
                 } while (strategy.contentsLost());
-            } catch (Exception ignored) {
+            } catch (IllegalStateException e) {
+                if (painting.get()) {
+                    LOGGER.warn("Could not paint ADM-3A display", e);
+                }
+            } catch (RuntimeException e) {
+                LOGGER.warn("Could not paint ADM-3A display", e);
+            } finally {
+                if (graphics != null) {
+                    graphics.dispose();
+                }
             }
         }
 
