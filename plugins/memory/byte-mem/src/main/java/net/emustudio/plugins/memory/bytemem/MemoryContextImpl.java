@@ -111,9 +111,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> implements By
     }
 
     public void write(int to, Byte[] values, int count) {
-        if (!romRanges.intersects(to, to + count)) {
+        if (!romRanges.intersects(to, to + count - 1)) {
             System.arraycopy(values, 0, mem[bank(to)], to, count);
-            notifyMemoryContentChanged(to, to + values.length);
+            notifyMemoryContentChanged(to, to + count - 1);
         }
     }
 

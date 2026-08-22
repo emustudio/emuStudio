@@ -58,12 +58,6 @@ public interface Loader {
         String extension = (index == -1) ?
                 "" : path.toString().substring(index + 1).toLowerCase(Locale.ENGLISH);
 
-        return IMAGE_LOADERS
-                .entrySet()
-                .stream()
-                .filter(l -> l.getKey().equals(extension))
-                .findFirst()
-                .map(Map.Entry::getValue)
-                .orElse(new BinaryLoader()); // unknown/no extension
+        return IMAGE_LOADERS.getOrDefault(extension, new BinaryLoader()); // unknown/no extension
     }
 }

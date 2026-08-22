@@ -35,7 +35,6 @@ public class MouseHandler extends MouseAdapter {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        super.mousePressed(e);
         updateMemoryValue.run();
     }
 }
