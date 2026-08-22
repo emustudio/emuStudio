@@ -124,8 +124,9 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 return false;
             }
 
-            videoMemory = newVideoMemory == null ? new char[0] : Arrays.copyOf(newVideoMemory, newVideoMemory.length);
-            attributeMemory = newAttributeMemory == null ? null : Arrays.copyOf(newAttributeMemory, newAttributeMemory.length);
+            // getVideoMemory/getAttributeMemory already return defensive copies
+            videoMemory = newVideoMemory == null ? new char[0] : newVideoMemory;
+            attributeMemory = newAttributeMemory;
             cursorPoint = new Point(newCursorPoint);
             dimension = new Dimension(newDimension);
             columns = newColumns;

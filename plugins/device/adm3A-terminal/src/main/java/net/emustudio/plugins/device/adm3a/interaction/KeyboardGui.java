@@ -17,64 +17,16 @@ public class KeyboardGui extends Keyboard implements ContainerListener, KeyListe
     private static final int[] CONTROL_KEYCODES_ALWAYS_ACTIVE = new int[256];
 
     static {
-        CONTROL_KEYCODES['@'] = 0;
-        CONTROL_KEYCODES['A'] = 1;
-        CONTROL_KEYCODES['B'] = 2;
-        CONTROL_KEYCODES['C'] = 3;
-        CONTROL_KEYCODES['D'] = 4;
-        CONTROL_KEYCODES['E'] = 5;
-        CONTROL_KEYCODES['F'] = 6;
-        CONTROL_KEYCODES['G'] = 7;
-        CONTROL_KEYCODES['H'] = 8;
-        CONTROL_KEYCODES['I'] = 9;
-        CONTROL_KEYCODES['J'] = 10;
-        CONTROL_KEYCODES['K'] = 11;
-        CONTROL_KEYCODES['L'] = 12;
-        CONTROL_KEYCODES['M'] = 13;
-        CONTROL_KEYCODES['N'] = 14;
-        CONTROL_KEYCODES['O'] = 15;
-        CONTROL_KEYCODES['P'] = 16;
-        CONTROL_KEYCODES['Q'] = 17;
-        CONTROL_KEYCODES['R'] = 18;
-        CONTROL_KEYCODES['S'] = 19;
-        CONTROL_KEYCODES['T'] = 20;
-        CONTROL_KEYCODES['U'] = 21;
-        CONTROL_KEYCODES['V'] = 22;
-        CONTROL_KEYCODES['W'] = 23;
-        CONTROL_KEYCODES['X'] = 24;
-        CONTROL_KEYCODES['Y'] = 25;
-        CONTROL_KEYCODES['Z'] = 26;
+        // Ctrl+A..Z (upper or lower case) → control codes 1..26
+        for (char c = 'A'; c <= 'Z'; c++) {
+            CONTROL_KEYCODES[c] = c - 'A' + 1;
+            CONTROL_KEYCODES[Character.toLowerCase(c)] = c - 'A' + 1;
+        }
         CONTROL_KEYCODES['['] = 27;
         CONTROL_KEYCODES['\\'] = 28;
         CONTROL_KEYCODES[']'] = 29;
         CONTROL_KEYCODES['^'] = 30;
         CONTROL_KEYCODES['-'] = 31;
-        CONTROL_KEYCODES['a'] = 1;
-        CONTROL_KEYCODES['b'] = 2;
-        CONTROL_KEYCODES['c'] = 3;
-        CONTROL_KEYCODES['d'] = 4;
-        CONTROL_KEYCODES['e'] = 5;
-        CONTROL_KEYCODES['f'] = 6;
-        CONTROL_KEYCODES['g'] = 7;
-        CONTROL_KEYCODES['h'] = 8;
-        CONTROL_KEYCODES['i'] = 9;
-        CONTROL_KEYCODES['j'] = 10;
-        CONTROL_KEYCODES['k'] = 11;
-        CONTROL_KEYCODES['l'] = 12;
-        CONTROL_KEYCODES['m'] = 13;
-        CONTROL_KEYCODES['n'] = 14;
-        CONTROL_KEYCODES['o'] = 15;
-        CONTROL_KEYCODES['p'] = 16;
-        CONTROL_KEYCODES['q'] = 17;
-        CONTROL_KEYCODES['r'] = 18;
-        CONTROL_KEYCODES['s'] = 19;
-        CONTROL_KEYCODES['t'] = 20;
-        CONTROL_KEYCODES['u'] = 21;
-        CONTROL_KEYCODES['v'] = 22;
-        CONTROL_KEYCODES['w'] = 23;
-        CONTROL_KEYCODES['x'] = 24;
-        CONTROL_KEYCODES['y'] = 25;
-        CONTROL_KEYCODES['z'] = 26;
 
         CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_DOWN] = 10;
         CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_UP] = 11;
