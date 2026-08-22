@@ -3,7 +3,7 @@
 package net.emustudio.plugins.compiler.asZ80.ast.pseudo;
 
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
-import net.emustudio.plugins.compiler.asZ80.ParsingUtils;
+import net.emustudio.plugins.compiler.shared.ParsingUtils;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;

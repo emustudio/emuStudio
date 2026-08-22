@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.plugins.compiler.ram;
+package net.emustudio.plugins.compiler.shared;
 
 import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.misc.Interval;

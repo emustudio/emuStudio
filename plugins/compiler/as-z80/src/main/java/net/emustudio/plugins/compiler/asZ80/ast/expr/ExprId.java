@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
 
-import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.normalizeId;
+import static net.emustudio.plugins.compiler.shared.ParsingUtils.normalizeId;
 
 public class ExprId extends Node {
     public final String id;

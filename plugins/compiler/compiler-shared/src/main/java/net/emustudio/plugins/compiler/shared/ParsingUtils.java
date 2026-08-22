@@ -1,12 +1,19 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.plugins.compiler.rasp;
+package net.emustudio.plugins.compiler.shared;
 
 import org.antlr.v4.runtime.Token;
 
 import java.util.Locale;
 
 public class ParsingUtils {
+
+    public static String parseLitString(Token token) {
+        // LIT_STRING_1: '\'' ~[']* '\'';
+        // LIT_STRING_2: '"' ~["]* '"';
+        String text = token.getText();
+        return text.substring(1, text.length() - 1);
+    }
 
     public static int parseLitHex1(Token token) {
         // LIT_HEXNUMBER_1: [\-]? '0' X [0-9a-fA-F]+;

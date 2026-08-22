@@ -9,7 +9,7 @@ import net.emustudio.plugins.compiler.as8080.ast.pseudo.*;
 import java.util.*;
 
 import static net.emustudio.plugins.compiler.as8080.CompileError.*;
-import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
+import static net.emustudio.plugins.compiler.shared.ParsingUtils.normalizeId;
 
 /**
  * Checks if all declarations are valid:

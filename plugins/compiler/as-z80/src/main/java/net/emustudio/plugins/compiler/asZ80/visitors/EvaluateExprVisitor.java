@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static net.emustudio.plugins.compiler.asZ80.CompileError.ambiguousExpression;
 import static net.emustudio.plugins.compiler.asZ80.CompileError.expressionIsBiggerThanExpected;
-import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.normalizeId;
+import static net.emustudio.plugins.compiler.shared.ParsingUtils.normalizeId;
 
 /**
  * The goal is to replace all Expr* with Evaluated
