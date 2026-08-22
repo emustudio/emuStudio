@@ -159,9 +159,9 @@ public class EmulatorPanel extends JPanel {
 
         this.memoryListener = new MemoryContext.MemoryListener() {
             @Override
-            public void memoryContentChanged(int fromLocatiom, int toLocation) {
+            public void memoryContentChanged(int fromLocation, int toLocation) {
                 runOnEdt(() -> {
-                    debugTableModel.memoryChanged(fromLocatiom, toLocation + 1);
+                    debugTableModel.memoryChanged(fromLocation, toLocation + 1);
                     refreshDebugTable();
                 });
             }
