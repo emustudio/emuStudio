@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ram;
 
-import net.emustudio.plugins.compiler.shared.CharArrayCharStream;
+import net.emustudio.emulib.plugins.compiler.antlr.CharArrayCharStream;
 import net.emustudio.emulib.plugins.compiler.LexicalAnalyzer;
 import net.emustudio.emulib.plugins.compiler.Token;
 import org.antlr.v4.runtime.*;

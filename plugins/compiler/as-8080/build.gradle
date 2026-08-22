@@ -19,7 +19,6 @@ dependencies {
   implementation libs.antlrRuntime
 
   implementation libs.emuLib
-  implementation project(":plugins:compiler:compiler-shared")
   implementation libs.slf4JApi
   implementation libs.jcipAnnotations
 

@@ -16,7 +16,6 @@ rootProject.name = 'emuStudio'
 
 include ':application'
 
-include ':plugins:compiler:compiler-shared'
 include ':plugins:compiler:as-8080'
 include ':plugins:compiler:as-ssem'
 include ':plugins:compiler:as-z80'

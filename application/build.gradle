@@ -23,8 +23,6 @@ dependencies {
 
   implementation libs.jcipAnnotations
   implementation libs.antlrRuntime
-  // shared plugin support code must land in dist lib/ (referenced by plugin jar manifests)
-  implementation project(":plugins:compiler:compiler-shared")
 
   extraLibs libs.editor
   extraLibs libs.editorDialogs
