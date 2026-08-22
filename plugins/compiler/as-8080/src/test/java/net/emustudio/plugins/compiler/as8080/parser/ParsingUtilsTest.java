@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.as8080.parser;
 
-import net.emustudio.plugins.compiler.as8080.ParsingUtils;
+import net.emustudio.plugins.compiler.shared.ParsingUtils;
 import net.emustudio.plugins.compiler.as8080.Utils;
 import org.antlr.v4.runtime.Token;
 import org.junit.Assert;

@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2006-2026 Peter Jakubčo
    SPDX-License-Identifier: GPL-3.0-or-later */
-package net.emustudio.plugins.compiler.as8080;
+package net.emustudio.plugins.compiler.shared;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.IntStream;
@@ -24,7 +24,7 @@ import org.antlr.v4.runtime.misc.Interval;
  * <b>Limitation:</b> Assumes all characters are in the BMP (U+0000–U+FFFF),
  * which is true for assembly language source code.
  */
-final class CharArrayCharStream implements CharStream {
+public final class CharArrayCharStream implements CharStream {
     private final char[] data;
     private final int start;
     private final int size;
@@ -37,7 +37,7 @@ final class CharArrayCharStream implements CharStream {
      * @param offset first character index in the array
      * @param length number of characters to expose
      */
-    CharArrayCharStream(char[] data, int offset, int length) {
+    public CharArrayCharStream(char[] data, int offset, int length) {
         this.data = data;
         this.start = offset;
         this.size = length;

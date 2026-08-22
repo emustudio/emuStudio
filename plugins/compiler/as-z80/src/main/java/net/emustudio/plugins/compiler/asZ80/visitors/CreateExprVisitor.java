@@ -5,7 +5,7 @@ package net.emustudio.plugins.compiler.asZ80.visitors;
 import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.asZ80.AsZ80Parser.*;
 import net.emustudio.plugins.compiler.asZ80.AsZ80ParserBaseVisitor;
-import net.emustudio.plugins.compiler.asZ80.ParsingUtils;
+import net.emustudio.plugins.compiler.shared.ParsingUtils;
 import net.emustudio.plugins.compiler.asZ80.ast.Node;
 import net.emustudio.plugins.compiler.asZ80.ast.expr.*;
 import org.antlr.v4.runtime.Token;

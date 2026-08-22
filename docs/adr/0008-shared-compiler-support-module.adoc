@@ -1,0 +1,15 @@
+# ADR-0008: Shared Compiler Support Module
+
+## Status
+Accepted
+
+## Context
+Six bundled compiler plugins each carried identical copies of ANTLR support code (`CharArrayCharStream`, `ParsingUtils`). Bug fixes had to be repeated per copy. The code depends on the ANTLR runtime, so it does not belong in emuLib (which must stay free of parser-framework dependencies).
+
+## Decision
+Introduce an internal Gradle module `:plugins:compiler:compiler-shared` (package `net.emustudio.plugins.compiler.shared`) holding compiler support code shared by bundled compiler plugins. Plugins depend on it via `implementation project(...)`; the application also depends on it so the jar lands in the distribution `lib/` directory, where plugin jar manifests resolve their `Class-Path` entries from.
+
+Plugin-specific code (exception types, error listeners tied to per-plugin grammars) stays in each plugin.
+
+## Consequences
+One source of truth for shared parsing code; ~700 lines of duplication removed. Bundled compiler plugins are no longer standalone-buildable without this repository, which is acceptable — they are bundled and versioned together. Third-party plugins are unaffected; the emuLib API is unchanged.

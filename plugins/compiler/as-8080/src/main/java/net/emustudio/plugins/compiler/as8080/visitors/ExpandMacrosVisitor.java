@@ -11,7 +11,7 @@ import java.util.*;
 
 import static net.emustudio.plugins.compiler.as8080.CompileError.infiniteLoopDetected;
 import static net.emustudio.plugins.compiler.as8080.CompileError.notDefined;
-import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
+import static net.emustudio.plugins.compiler.shared.ParsingUtils.normalizeId;
 
 /**
  * Expands macros. It means - find macro definitions, remove them from the parent node and put them as a child under

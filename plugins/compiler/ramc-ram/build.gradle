@@ -19,6 +19,7 @@ dependencies {
   implementation libs.antlrRuntime
 
   implementation libs.emuLib
+  implementation project(":plugins:compiler:compiler-shared")
   implementation project.rootProject.project(":plugins:memory:ram-mem")
   implementation libs.slf4JApi
 

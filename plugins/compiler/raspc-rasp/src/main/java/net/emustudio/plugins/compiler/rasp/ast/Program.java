@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.rasp.ast;
 
-import net.emustudio.plugins.compiler.rasp.ParsingUtils;
+import net.emustudio.plugins.compiler.shared.ParsingUtils;
 import net.emustudio.plugins.compiler.rasp.exceptions.CompileException;
 import net.emustudio.plugins.memory.rasp.api.RaspMemoryContext;
 
