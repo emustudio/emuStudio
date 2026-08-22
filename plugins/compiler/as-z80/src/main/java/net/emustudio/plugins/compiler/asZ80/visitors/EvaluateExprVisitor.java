@@ -41,7 +41,8 @@ public class EvaluateExprVisitor extends NodeVisitor {
     private int sizeBytes = 0;
     private boolean doNotEvaluateCurrentAddress = false;
     private Evaluated latestEval;
-    private Set<Node> needMorePassThings = new HashSet<>();
+    // tracks unresolved nodes by identity: equal-looking nodes at different places must stay distinct
+    private Set<Node> needMorePassThings = Collections.newSetFromMap(new IdentityHashMap<>());
     private String currentMacroId;
 
     @Override
@@ -56,7 +57,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
         Set<Node> oldNeedMorePass;
         while (!needMorePassThings.isEmpty()) {
             oldNeedMorePass = needMorePassThings;
-            needMorePassThings = new HashSet<>();
+            needMorePassThings = Collections.newSetFromMap(new IdentityHashMap<>());
 
             currentAddress = 0;
             doNotEvaluateCurrentAddress = false;
