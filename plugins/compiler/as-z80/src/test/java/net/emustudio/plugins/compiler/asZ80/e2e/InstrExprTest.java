@@ -6,6 +6,11 @@ import org.junit.Test;
 
 public class InstrExprTest extends AbstractCompilerTest {
 
+    @Test(expected = Exception.class)
+    public void testDivisionByZeroReportsError() {
+        compile("LD A, 1 / 0");
+    }
+
     @Test
     public void testJump() {
         compile(
