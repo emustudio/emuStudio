@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SchemaPreviewPanel extends JPanel {
     private final static Logger LOGGER = LoggerFactory.getLogger(SchemaPreviewPanel.class);
@@ -43,6 +44,7 @@ public class SchemaPreviewPanel extends JPanel {
     private int topFactor = 0;
 
     private boolean panelResized = false;
+    private final AtomicBoolean savingImage = new AtomicBoolean();
 
     public SchemaPreviewPanel(Schema schema, Dialogs dialogs) {
         this.dialogs = Objects.requireNonNull(dialogs);
@@ -103,28 +105,46 @@ public class SchemaPreviewPanel extends JPanel {
                     "Save schema image", "Save", currentDirectory, true,
                     new FileExtensionsFilter("PNG image", "png")
             ).ifPresent(path -> {
+                if (!savingImage.compareAndSet(false, true)) {
+                    return;
+                }
                 lastImageFile = path.toFile();
 
-                // Save the image
                 BufferedImage bi = new BufferedImage(schemaWidth, schemaHeight, BufferedImage.TYPE_INT_RGB);
 
                 Graphics2D graphics = bi.createGraphics();
-                graphics.setBackground(Color.WHITE);
-                graphics.fillRect(0, 0, schemaWidth, schemaHeight);
-                RenderingHints hints = new RenderingHints(Map.of(
-                        RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON,
-                        RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY,
-                        RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON
-                ));
-
-                graphics.setRenderingHints(hints);
-                paintComponent(graphics);
                 try {
-                    ImageIO.write(bi, "png", lastImageFile);
-                } catch (IOException e) {
-                    LOGGER.error("Could not save schema image.", e);
-                    dialogs.showError("Could not save schema image. Please see log file for details.", "Save schema image");
+                    graphics.setBackground(Color.WHITE);
+                    graphics.fillRect(0, 0, schemaWidth, schemaHeight);
+                    RenderingHints hints = new RenderingHints(Map.of(
+                            RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON,
+                            RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY,
+                            RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON
+                    ));
+                    graphics.setRenderingHints(hints);
+                    paintComponent(graphics);
+                } finally {
+                    graphics.dispose();
                 }
+
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() throws IOException {
+                        ImageIO.write(bi, "png", lastImageFile);
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        savingImage.set(false);
+                        try {
+                            get();
+                        } catch (Exception e) {
+                            LOGGER.error("Could not save schema image.", e);
+                            dialogs.showError("Could not save schema image. Please see log file for details.", "Save schema image");
+                        }
+                    }
+                }.execute();
             });
         } else {
             dialogs.showError("Could not save schema image: schema is not set.", "Save schema image");

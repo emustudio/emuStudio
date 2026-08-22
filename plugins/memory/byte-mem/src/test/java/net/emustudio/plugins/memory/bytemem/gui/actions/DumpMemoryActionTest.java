@@ -48,6 +48,7 @@ public class DumpMemoryActionTest {
         replay(dialogs);
         DumpMemoryAction action = new DumpMemoryAction(dialogs, context);
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "dump"));
+        waitForCompletion(action);
         String content = Files.readString(txtFile.toPath());
         assertTrue(content.contains("AA"));
         assertTrue(content.contains("BB"));
@@ -63,6 +64,7 @@ public class DumpMemoryActionTest {
         replay(dialogs);
         DumpMemoryAction action = new DumpMemoryAction(dialogs, context);
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "dump"));
+        waitForCompletion(action);
         byte[] bytes = Files.readAllBytes(binFile.toPath());
         assertEquals(4, bytes.length);
         assertEquals((byte) 0xAA, bytes[0]);
@@ -81,5 +83,15 @@ public class DumpMemoryActionTest {
         DumpMemoryAction action = new DumpMemoryAction(dialogs, context);
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "dump"));
         // No exception = pass
+    }
+
+    private void waitForCompletion(DumpMemoryAction action) throws InterruptedException {
+        for (int i = 0; i < 200; i++) {
+            if (action.isEnabled()) {
+                return;
+            }
+            Thread.sleep(10);
+        }
+        fail("Memory dump did not complete");
     }
 }

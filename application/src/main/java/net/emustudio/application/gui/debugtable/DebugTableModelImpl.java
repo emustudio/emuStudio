@@ -136,7 +136,7 @@ public class DebugTableModelImpl extends DebugTableModel {
         if (location == -1) return;
         
         DebuggerColumn<?> column = columns[columnIndex];
-        if (value.getClass() == column.getClassType()) {
+        if (column.getClassType().isInstance(value)) {
             try {
                 column.setValue(location, value);
             } catch (CannotSetDebuggerValueException ignored) {

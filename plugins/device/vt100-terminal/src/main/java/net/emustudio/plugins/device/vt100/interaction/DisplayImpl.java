@@ -25,8 +25,8 @@ import java.util.function.Consumer;
 public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
     private final static Logger LOGGER = LoggerFactory.getLogger(DisplayImpl.class);
 
-    public char[] videoMemory;
-    public int[] attributeMemory;
+    private char[] videoMemory;
+    private int[] attributeMemory;
 
     private final TerminalSettings settings;
     private final Cursor cursor;
@@ -100,13 +100,13 @@ public class DisplayImpl implements Display, Vt100StateMachine.Vt100Dispatcher {
     }
 
     @Override
-    public char[] getVideoMemory() {
-        return videoMemory;
+    public synchronized char[] getVideoMemory() {
+        return Arrays.copyOf(videoMemory, videoMemory.length);
     }
 
     @Override
-    public int[] getAttributeMemory() {
-        return attributeMemory;
+    public synchronized int[] getAttributeMemory() {
+        return Arrays.copyOf(attributeMemory, attributeMemory.length);
     }
 
     public void clearScreen() {

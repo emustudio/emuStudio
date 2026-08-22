@@ -1,0 +1,15 @@
+# ADR-0008: Shared Compiler Helpers Live in emuLib
+
+## Status
+Accepted
+
+## Context
+Six bundled compiler plugins each carried identical copies of ANTLR support code (`CharArrayCharStream`, `ParsingUtils`). Bug fixes had to be repeated per copy. emuLib owns reusable utilities shared across emuStudio repositories, so the helpers belong there rather than in an emuStudio-internal module.
+
+## Decision
+Move the helpers to emuLib package `net.emustudio.emulib.plugins.compiler.antlr` (a subpackage, because `plugins.compiler` already defines emuStudio's own `Token`). In emuLib, `antlr4-runtime` is a `compileOnly` dependency: only compiler plugins that use these helpers must provide the ANTLR runtime, which they already do.
+
+Plugin-specific code (exception types, error listeners tied to per-plugin grammars) stays in each plugin.
+
+## Consequences
+One source of truth for shared parsing code; ~700 lines of duplication removed from this repository. emuLib gains a compile-time-only ANTLR dependency; non-compiler consumers are unaffected. Bundled compiler plugins require emuLib >= 12.1.0.

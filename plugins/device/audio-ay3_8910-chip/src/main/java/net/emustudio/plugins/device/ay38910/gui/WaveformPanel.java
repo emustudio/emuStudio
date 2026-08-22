@@ -12,6 +12,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
 import java.util.concurrent.Executors;
@@ -26,6 +28,8 @@ final class WaveformPanel extends JPanel {
 
     private final Ay38910Chip chip;
     private volatile BufferedImage offscreenImage;
+    private volatile Dimension renderSize = new Dimension();
+    private volatile boolean displayable;
     private ScheduledExecutorService refreshExecutor;
 
     WaveformPanel(Ay38910Chip chip) {
@@ -33,6 +37,25 @@ final class WaveformPanel extends JPanel {
         setOpaque(true);
         setBackground(BACKGROUND);
         setPreferredSize(new Dimension(720, 320));
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent event) {
+                renderSize = event.getComponent().getSize();
+            }
+        });
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        displayable = true;
+        renderSize = getSize();
+    }
+
+    @Override
+    public void removeNotify() {
+        displayable = false;
+        super.removeNotify();
     }
 
     synchronized void startRefreshing(int refreshMs) {
@@ -103,12 +126,13 @@ final class WaveformPanel extends JPanel {
 
     private void refreshSamples() {
         short[] samples = chip.copyRecentWaveform();
-        if (!isDisplayable()) {
+        if (!displayable) {
             return;
         }
 
-        int width = getWidth();
-        int height = getHeight();
+        Dimension size = renderSize;
+        int width = size.width;
+        int height = size.height;
         if (width <= 0 || height <= 0) {
             return;
         }

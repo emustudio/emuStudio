@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
 
-import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.parseLabel;
+import static net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils.parseLabel;
 
 public class PseudoLabel extends Node {
     public final String label;

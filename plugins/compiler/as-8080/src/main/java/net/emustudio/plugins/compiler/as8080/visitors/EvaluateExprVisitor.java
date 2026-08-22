@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static net.emustudio.plugins.compiler.as8080.CompileError.ambiguousExpression;
 import static net.emustudio.plugins.compiler.as8080.CompileError.expressionIsBiggerThanExpected;
-import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
+import static net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils.normalizeId;
 
 /**
  * The goal is to replace all Expr* with Evaluated
@@ -41,7 +41,8 @@ public class EvaluateExprVisitor extends NodeVisitor {
     private int sizeBytes = 0;
     private boolean doNotEvaluateCurrentAddress = false;
     private Evaluated latestEval;
-    private Set<Node> needMorePassThings = new HashSet<>();
+    // tracks unresolved nodes by identity: equal-looking nodes at different places must stay distinct
+    private Set<Node> needMorePassThings = Collections.newSetFromMap(new IdentityHashMap<>());
     private String currentMacroId;
 
     @Override
@@ -56,7 +57,7 @@ public class EvaluateExprVisitor extends NodeVisitor {
         Set<Node> oldNeedMorePass;
         while (!needMorePassThings.isEmpty()) {
             oldNeedMorePass = needMorePassThings;
-            needMorePassThings = new HashSet<>();
+            needMorePassThings = Collections.newSetFromMap(new IdentityHashMap<>());
 
             currentAddress = 0;
             doNotEvaluateCurrentAddress = false;

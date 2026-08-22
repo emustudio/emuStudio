@@ -51,13 +51,27 @@ public class LoadImageAction extends AbstractAction {
                 false, new FileExtensionsFilter("Memory image", "brasp"));
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
-            try {
-                context.deserialize(path.toString(), setProgramLocation);
-                repaint.run();
-            } catch (Exception ex) {
-                dialogs.showError("Could not load selected image file: " + ex.getMessage(), "Load image file");
-                LOGGER.error("Could not load image file '{}'", path, ex);
-            }
+            setEnabled(false);
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    context.deserialize(path.toString(), setProgramLocation);
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    setEnabled(true);
+                    try {
+                        get();
+                        repaint.run();
+                    } catch (Exception ex) {
+                        Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                        dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
+                        LOGGER.error("Could not load image file '{}'", path, cause);
+                    }
+                }
+            }.execute();
         });
     }
 }

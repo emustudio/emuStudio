@@ -311,22 +311,23 @@ public class DisplayImplTest {
     public void testRollUp() {
         // Write characters on first two lines
         for (int i = 0; i < DEFAULT_COLUMNS; i++) {
-            display.getVideoMemory()[i] = 'A';
+            display.write((byte) 'A');
         }
-        for (int i = DEFAULT_COLUMNS; i < 2 * DEFAULT_COLUMNS; i++) {
-            display.getVideoMemory()[i] = 'B';
+        for (int i = 0; i < DEFAULT_COLUMNS; i++) {
+            display.write((byte) 'B');
         }
 
         display.rollUp();
 
+        char[] vm = display.getVideoMemory();
         // First line should now be 'B's
         for (int i = 0; i < DEFAULT_COLUMNS; i++) {
-            assertEquals('B', display.getVideoMemory()[i]);
+            assertEquals('B', vm[i]);
         }
         // Last line should be spaces
         int lastLineStart = DEFAULT_COLUMNS * (DEFAULT_ROWS - 1);
         for (int i = lastLineStart; i < lastLineStart + DEFAULT_COLUMNS; i++) {
-            assertEquals(' ', display.getVideoMemory()[i]);
+            assertEquals(' ', vm[i]);
         }
     }
 
@@ -334,18 +335,19 @@ public class DisplayImplTest {
     public void testRollDown() {
         // Write characters on first line
         for (int i = 0; i < DEFAULT_COLUMNS; i++) {
-            display.getVideoMemory()[i] = 'X';
+            display.write((byte) 'X');
         }
 
         display.rollDown();
 
+        char[] vm = display.getVideoMemory();
         // First line should be spaces
         for (int i = 0; i < DEFAULT_COLUMNS; i++) {
-            assertEquals(' ', display.getVideoMemory()[i]);
+            assertEquals(' ', vm[i]);
         }
         // Second line should now be 'X's
         for (int i = DEFAULT_COLUMNS; i < 2 * DEFAULT_COLUMNS; i++) {
-            assertEquals('X', display.getVideoMemory()[i]);
+            assertEquals('X', vm[i]);
         }
     }
 
@@ -890,6 +892,21 @@ public class DisplayImplTest {
         display.write((byte) 'r');
     }
 
+    /**
+     * Helper to put a char at column 0 of the given row.
+     */
+    private void putCharAtRow(char c, int row) {
+        cursor.move(0, row);
+        display.print(c);
+    }
+
+    /**
+     * Helper to read the char at column 0 of the given row.
+     */
+    private char charAtRow(int row) {
+        return display.getVideoMemory()[row * DEFAULT_COLUMNS];
+    }
+
     @Test
     public void testDecstbmMovesCursorHome() {
         // Move cursor somewhere first
@@ -917,19 +934,19 @@ public class DisplayImplTest {
         writeDecstbm(2, 4);
 
         // Directly fill column 0 of rows 0-4 with distinct chars
-        display.videoMemory[0] = 'A';                       // row 0
-        display.videoMemory[DEFAULT_COLUMNS] = 'B';         // row 1
-        display.videoMemory[2 * DEFAULT_COLUMNS] = 'C';     // row 2
-        display.videoMemory[3 * DEFAULT_COLUMNS] = 'D';     // row 3
-        display.videoMemory[4 * DEFAULT_COLUMNS] = 'E';     // row 4
+        putCharAtRow('A', 0);
+        putCharAtRow('B', 1);
+        putCharAtRow('C', 2);
+        putCharAtRow('D', 3);
+        putCharAtRow('E', 4);
 
         display.rollUp();
 
-        assertEquals('A', display.videoMemory[0]);
-        assertEquals('C', display.videoMemory[DEFAULT_COLUMNS]);
-        assertEquals('D', display.videoMemory[2 * DEFAULT_COLUMNS]);
-        assertEquals(' ', display.videoMemory[3 * DEFAULT_COLUMNS]);
-        assertEquals('E', display.videoMemory[4 * DEFAULT_COLUMNS]);
+        assertEquals('A', charAtRow(0));
+        assertEquals('C', charAtRow(1));
+        assertEquals('D', charAtRow(2));
+        assertEquals(' ', charAtRow(3));
+        assertEquals('E', charAtRow(4));
     }
 
     @Test
@@ -938,11 +955,11 @@ public class DisplayImplTest {
         writeDecstbm(2, 4);
 
         // Directly fill column 0 of rows 0-4 with distinct chars
-        display.videoMemory[0] = 'A';                       // row 0
-        display.videoMemory[DEFAULT_COLUMNS] = 'B';         // row 1
-        display.videoMemory[2 * DEFAULT_COLUMNS] = 'C';     // row 2
-        display.videoMemory[3 * DEFAULT_COLUMNS] = 'D';     // row 3
-        display.videoMemory[4 * DEFAULT_COLUMNS] = 'E';     // row 4
+        putCharAtRow('A', 0);
+        putCharAtRow('B', 1);
+        putCharAtRow('C', 2);
+        putCharAtRow('D', 3);
+        putCharAtRow('E', 4);
 
         // Move cursor to scrollBottom (row 3, 0-based)
         cursor.move(0, 3);
@@ -950,22 +967,22 @@ public class DisplayImplTest {
         // Line feed at bottom of scrolling region triggers rollUp within region
         display.write((byte) 0x0A); // LF
 
-        assertEquals('A', display.videoMemory[0]);
-        assertEquals('C', display.videoMemory[DEFAULT_COLUMNS]);
-        assertEquals('D', display.videoMemory[2 * DEFAULT_COLUMNS]);
-        assertEquals(' ', display.videoMemory[3 * DEFAULT_COLUMNS]);
-        assertEquals('E', display.videoMemory[4 * DEFAULT_COLUMNS]);
+        assertEquals('A', charAtRow(0));
+        assertEquals('C', charAtRow(1));
+        assertEquals('D', charAtRow(2));
+        assertEquals(' ', charAtRow(3));
+        assertEquals('E', charAtRow(4));
     }
 
 
     @Test
     public void testDecstbmScrollDownOnlyAffectsRegion() {
         // Directly fill column 0 of rows 0-4 with distinct chars
-        display.videoMemory[0] = 'A';                       // row 0
-        display.videoMemory[DEFAULT_COLUMNS] = 'B';         // row 1
-        display.videoMemory[2 * DEFAULT_COLUMNS] = 'C';     // row 2
-        display.videoMemory[3 * DEFAULT_COLUMNS] = 'D';     // row 3
-        display.videoMemory[4 * DEFAULT_COLUMNS] = 'E';     // row 4
+        putCharAtRow('A', 0);
+        putCharAtRow('B', 1);
+        putCharAtRow('C', 2);
+        putCharAtRow('D', 3);
+        putCharAtRow('E', 4);
 
         // Set scrolling region to rows 2-4 (1-based) = rows 1-3 (0-based)
         writeDecstbm(2, 4);
@@ -978,15 +995,15 @@ public class DisplayImplTest {
         display.write((byte) 0x4D);
 
         // Row 0 (outside region) should be unchanged: 'A'
-        assertEquals('A', display.videoMemory[0]);
+        assertEquals('A', charAtRow(0));
         // Row 1 (scrollTop) should be cleared to space (new blank line scrolled in)
-        assertEquals(' ', display.videoMemory[DEFAULT_COLUMNS]);
+        assertEquals(' ', charAtRow(1));
         // Row 2 should now contain what was in row 1 (old scrollTop): 'B'
-        assertEquals('B', display.videoMemory[2 * DEFAULT_COLUMNS]);
+        assertEquals('B', charAtRow(2));
         // Row 3 should now contain what was in row 2: 'C'
-        assertEquals('C', display.videoMemory[3 * DEFAULT_COLUMNS]);
+        assertEquals('C', charAtRow(3));
         // Row 4 (outside region) should be unchanged: 'E'
-        assertEquals('E', display.videoMemory[4 * DEFAULT_COLUMNS]);
+        assertEquals('E', charAtRow(4));
     }
 
     @Test
@@ -999,7 +1016,7 @@ public class DisplayImplTest {
         // Put a char at last row to verify full-screen scrolling region is intact
         cursor.move(0, DEFAULT_ROWS - 1);
         display.write((byte) 'Z');
-        assertEquals('Z', display.videoMemory[(DEFAULT_ROWS - 1) * DEFAULT_COLUMNS]);
+        assertEquals('Z', charAtRow(DEFAULT_ROWS - 1));
     }
 
     // ========== DECSC/DECRC saves/restores attribute ==========

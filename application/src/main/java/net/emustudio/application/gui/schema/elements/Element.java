@@ -66,11 +66,6 @@ public abstract class Element {
         this.pluginName = Objects.requireNonNull(pluginName);
         this.pluginFileName = Objects.requireNonNull(pluginFileName);
         this.pluginSettings = Objects.requireNonNull(pluginSettings);
-
-        int x = schemaPoint.ix();
-        int y = schemaPoint.iy();
-
-        this.gradient = new GradientPaint(x, y, Color.WHITE, x, y + height, this.backColor, false);
     }
 
     public void draw(Graphics2D g) {

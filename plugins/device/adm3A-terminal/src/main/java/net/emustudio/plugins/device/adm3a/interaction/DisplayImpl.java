@@ -84,7 +84,9 @@ public class DisplayImpl implements Display, Cursor.LineRoller {
 
     @Override
     public char[] getVideoMemory() {
-        return videoMemory; // I should be punished for this
+        synchronized (videoMemory) {
+            return Arrays.copyOf(videoMemory, videoMemory.length);
+        }
     }
 
     public void clearScreen() {
