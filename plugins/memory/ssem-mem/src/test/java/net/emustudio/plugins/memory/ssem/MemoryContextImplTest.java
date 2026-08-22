@@ -166,7 +166,7 @@ public class MemoryContextImplTest {
         MemoryContextImpl context = new MemoryContextImpl(new Annotations());
 
         MemoryContext.MemoryListener listener = createMock(MemoryContext.MemoryListener.class);
-        listener.memoryContentChanged(eq(4), eq(8));
+        listener.memoryContentChanged(eq(4), eq(7));
         expectLastCall().once();
         replay(listener);
 

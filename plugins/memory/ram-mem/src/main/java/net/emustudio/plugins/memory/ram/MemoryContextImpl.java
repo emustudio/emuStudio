@@ -80,7 +80,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
         AtomicBoolean sizeChanged = new AtomicBoolean();
         rwl.lockWrite(() -> {
             for (int i = 0; i < count; i++) {
-                sizeChanged.set(sizeChanged.get() || !memory.containsKey(address));
+                sizeChanged.set(sizeChanged.get() || !memory.containsKey(address + i));
                 memory.put(address + i, values[i]);
             }
         });
@@ -104,7 +104,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<RamInstruction> imp
 
     @Override
     public Optional<RamLabel> getLabel(int address) {
-        return Optional.ofNullable(labels.get(address));
+        return rwl.lockRead(() -> Optional.ofNullable(labels.get(address)));
     }
 
     @Override
