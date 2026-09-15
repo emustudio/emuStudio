@@ -13,6 +13,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 public class Schema {
     public final static int MIN_LEFT_MARGIN = 5;
@@ -64,32 +65,19 @@ public class Schema {
     }
 
     public void setCompilerElement(Point clickPoint, String pluginFile) {
-        CompilerElement element = createCompilerElement(clickPoint, pluginFile);
-        if (this.compilerElement != null) {
-            updateIncidentLines(this.compilerElement, element);
-        }
-        compilerElement = element;
+        compilerElement = replaceElement(clickPoint, pluginFile, CompilerElement::new, compilerElement);
     }
 
     public void setCpuElement(Point clickPoint, String pluginFile) {
-        CpuElement element = createCpuElement(clickPoint, pluginFile);
-        if (this.cpuElement != null) {
-            updateIncidentLines(this.cpuElement, element);
-        }
-        this.cpuElement = element;
+        cpuElement = replaceElement(clickPoint, pluginFile, CpuElement::new, cpuElement);
     }
 
     public void setMemoryElement(Point clickPoint, String pluginFile) {
-        MemoryElement element = createMemoryElement(clickPoint, pluginFile);
-        if (this.memoryElement != null) {
-            updateIncidentLines(this.memoryElement, element);
-        }
-        this.memoryElement = element;
+        memoryElement = replaceElement(clickPoint, pluginFile, MemoryElement::new, memoryElement);
     }
 
     public void addDeviceElement(Point clickPoint, String pluginFile) {
-        DeviceElement element = createDeviceElement(clickPoint, pluginFile);
-        deviceElements.add(element);
+        deviceElements.add(createElement(clickPoint, pluginFile, DeviceElement::new));
     }
 
     public void removeElement(Element element) {
@@ -375,15 +363,9 @@ public class Schema {
 
         config.setConnections(connections);
 
-        Optional.ofNullable(compilerElement).ifPresentOrElse(
-                c -> config.setCompiler(c.save()), () -> config.setCompiler(null)
-        );
-        Optional.ofNullable(cpuElement).ifPresentOrElse(
-                c -> config.setCPU(c.save()), () -> config.setCPU(null)
-        );
-        Optional.ofNullable(memoryElement).ifPresentOrElse(
-                c -> config.setMemory(c.save()), () -> config.setMemory(null)
-        );
+        saveElement(compilerElement, config::setCompiler);
+        saveElement(cpuElement, config::setCPU);
+        saveElement(memoryElement, config::setMemory);
 
         List<PluginConfig> devices = deviceElements.stream().map(Element::save).collect(Collectors.toList());
         config.setDevices(devices);
@@ -485,23 +467,25 @@ public class Schema {
         return P.of(dX * gridGap, dY * gridGap);
     }
 
-    private CompilerElement createCompilerElement(Point clickPoint, String pluginFile) {
+    private <T extends Element> T createElement(Point clickPoint, String pluginFile, ElementFactory<T> factory) {
         String pluginName = pluginFile.substring(0, pluginFile.length() - ".jar".length());
-        return new CompilerElement(searchGridPoint(P.of(clickPoint)), pluginName, pluginFile);
+        return factory.create(searchGridPoint(P.of(clickPoint)), pluginName, pluginFile);
     }
 
-    private CpuElement createCpuElement(Point clickPoint, String pluginFile) {
-        String pluginName = pluginFile.substring(0, pluginFile.length() - ".jar".length());
-        return new CpuElement(searchGridPoint(P.of(clickPoint)), pluginName, pluginFile);
+    private <T extends Element> T replaceElement(Point clickPoint, String pluginFile, ElementFactory<T> factory, T current) {
+        T element = createElement(clickPoint, pluginFile, factory);
+        if (current != null) {
+            updateIncidentLines(current, element);
+        }
+        return element;
     }
 
-    private MemoryElement createMemoryElement(Point clickPoint, String pluginFile) {
-        String pluginName = pluginFile.substring(0, pluginFile.length() - ".jar".length());
-        return new MemoryElement(searchGridPoint(P.of(clickPoint)), pluginName, pluginFile);
+    private static void saveElement(Element element, Consumer<PluginConfig> setter) {
+        setter.accept(element == null ? null : element.save());
     }
 
-    private DeviceElement createDeviceElement(Point clickPoint, String pluginFile) {
-        String pluginName = pluginFile.substring(0, pluginFile.length() - ".jar".length());
-        return new DeviceElement(searchGridPoint(P.of(clickPoint)), pluginName, pluginFile);
+    @FunctionalInterface
+    private interface ElementFactory<T extends Element> {
+        T create(P schemaPoint, String pluginName, String pluginFileName);
     }
 }
