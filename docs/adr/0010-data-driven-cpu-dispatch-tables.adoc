@@ -1,0 +1,24 @@
+# ADR-0010: Data-Driven CPU Dispatch Tables
+
+## Status
+Accepted
+
+## Context
+The z80 and 8080 CPU plugins built their opcode dispatch tables in large hand-written static blocks: one `DISPATCH_TABLE*[0xNN] = lookup.findVirtual(EmulatorEngine.class, "I_...", type)` line per entry. z80 was a 1652-line file with 1614 near-identical assignments across seven tables; 8080 was a 269-line file with one sparse table. The opcode-to-method mapping is pure data, and the method names are already resolved as runtime strings via `findVirtual` - the giant blocks added no compile-time safety, only boilerplate that was tedious to read and diff.
+
+## Decision
+Store each plugin's opcode-to-method mapping in a compact `dispatch-tables.txt` classpath resource next to `DispatchTables`. Each table is a section:
+
+```text
+[DISPATCH_TABLE] retVoid
+00 I_NOP
+01 I_LD_BC_NN
+...
+```
+
+`DispatchTables` reads the resource in its static initializer, maps each section name to the matching public `MethodHandle[]` field, derives the `MethodType` from the section's return token (`retVoid`, `retVoidByte` for z80; `retInt` for 8080), and binds every entry with `MethodHandles.lookup().findVirtual(EmulatorEngine.class, method, type)`. Lines starting with `#` and blank lines are ignored.
+
+The public `MethodHandle[]` fields and their contents are unchanged; `EmulatorEngine` consumers are untouched. We did not introduce a build-time code generator or Gradle tooling (rejected as unnecessary framework weight); the mapping is loaded at class initialization, exactly where `findVirtual` already resolved the names.
+
+## Consequences
+The z80 table source drops from 1652 to ~100 lines and the 8080 from 269 to ~83, with the mapping now living in a diff-friendly data file. Adding or changing an opcode binding is a one-line resource edit. The `MethodHandles` binding still fails loudly (logged) at class load if a method name is wrong, as before. A malformed or missing resource is reported the same way. Behavior is protected by the existing z80/8080 CPU test suites, which continue to pass unchanged.
