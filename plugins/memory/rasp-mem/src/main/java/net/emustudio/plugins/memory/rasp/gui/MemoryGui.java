@@ -3,11 +3,11 @@
 package net.emustudio.plugins.memory.rasp.gui;
 
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ui.EraseMemoryAction;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import net.emustudio.plugins.memory.rasp.gui.actions.DumpMemoryAction;
-import net.emustudio.plugins.memory.rasp.gui.actions.EraseMemoryAction;
 import net.emustudio.plugins.memory.rasp.gui.actions.LoadImageAction;
 
 import javax.swing.*;
@@ -15,6 +15,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static net.emustudio.emulib.runtime.ui.Constants.FONT_MONOSPACED;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
     private final GUI gui;
@@ -38,7 +39,8 @@ public class MemoryGui extends DialogBase {
             table.repaint();
         }, api::setProgramLocation);
         this.dumpMemoryAction = new DumpMemoryAction(api.getDialogs(), context, api::getProgramLocation);
-        this.eraseMemoryAction = new EraseMemoryAction(tableModel, context);
+        this.eraseMemoryAction = new EraseMemoryAction(
+                tableModel, context, loadIcon("/net/emustudio/plugins/memory/rasp/gui/clear.png"));
 
         buildContent();
     }

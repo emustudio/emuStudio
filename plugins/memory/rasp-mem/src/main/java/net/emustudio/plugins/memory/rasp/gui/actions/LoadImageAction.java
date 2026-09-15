@@ -3,6 +3,7 @@
 package net.emustudio.plugins.memory.rasp.gui.actions;
 
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import net.emustudio.plugins.memory.rasp.MemoryContextImpl;
 import org.slf4j.Logger;
@@ -51,27 +52,14 @@ public class LoadImageAction extends AbstractAction {
                 false, new FileExtensionsFilter("Memory image", "brasp"));
         imagePath.ifPresent(path -> {
             recentOpenPath = path;
-            setEnabled(false);
-            new SwingWorker<Void, Void>() {
-                @Override
-                protected Void doInBackground() throws Exception {
-                    context.deserialize(path.toString(), setProgramLocation);
-                    return null;
-                }
-
-                @Override
-                protected void done() {
-                    setEnabled(true);
-                    try {
-                        get();
-                        repaint.run();
-                    } catch (Exception ex) {
-                        Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+            GUI.runInBackground(
+                    this,
+                    () -> context.deserialize(path.toString(), setProgramLocation),
+                    repaint,
+                    cause -> {
                         dialogs.showError("Could not load selected image file: " + cause.getMessage(), "Load image file");
                         LOGGER.error("Could not load image file '{}'", path, cause);
-                    }
-                }
-            }.execute();
+                    });
         });
     }
 }

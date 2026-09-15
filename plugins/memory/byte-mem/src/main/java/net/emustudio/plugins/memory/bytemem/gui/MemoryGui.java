@@ -4,6 +4,7 @@ package net.emustudio.plugins.memory.bytemem.gui;
 
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.EraseMemoryAction;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.bytemem.MemoryContextImpl;
@@ -18,6 +19,7 @@ import java.util.Objects;
 
 import static javax.swing.Action.SHORT_DESCRIPTION;
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatBinaryString;
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
     private final GUI gui;
@@ -72,7 +74,8 @@ public class MemoryGui extends DialogBase {
         btnAsciiMode.setToolTipText(String.valueOf(asciiModeAction.getValue(SHORT_DESCRIPTION)));
         btnAsciiMode.setFocusable(false);
 
-        this.eraseMemoryAction = new EraseMemoryAction(tableModel, context);
+        this.eraseMemoryAction = new EraseMemoryAction(
+                tableModel, context, loadIcon("/net/emustudio/plugins/memory/bytemem/gui/edit-clear.png"));
         this.settingsAction = new SettingsAction(dialogs, this, memory, context, table, settings, gui);
 
         tableModel.addTableModelListener(e -> spnPage.getModel().setValue(tableModel.getPage()));
