@@ -5,6 +5,7 @@ package net.emustudio.plugins.memory.ssem.gui.actions;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ui.Dialogs;
+import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.FileExtensionsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,29 +49,14 @@ public class DumpMemoryAction extends AbstractAction {
                 new FileExtensionsFilter("Human-readable dump", "txt"),
                 new FileExtensionsFilter("Binary dump", "bssem"));
 
-        dumpPath.ifPresent(path -> {
-            setEnabled(false);
-            new SwingWorker<Void, Void>() {
-                @Override
-                protected Void doInBackground() throws IOException {
-                    dump(path);
-                    return null;
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        get();
-                    } catch (Exception ex) {
-                        Throwable cause = ex.getCause() == null ? ex : ex.getCause();
-                        LOGGER.error("Memory dump could not be created", cause);
-                        dialogs.showError("Memory dump could not be created: " + cause.getMessage() + ". Please see log file for more details.");
-                    } finally {
-                        setEnabled(true);
-                    }
-                }
-            }.execute();
-        });
+        dumpPath.ifPresent(path -> GUI.runInBackground(
+                this,
+                () -> dump(path),
+                () -> {},
+                cause -> {
+                    LOGGER.error("Memory dump could not be created", cause);
+                    dialogs.showError("Memory dump could not be created: " + cause.getMessage() + ". Please see log file for more details.");
+                }));
     }
 
     private void dump(Path path) throws IOException {

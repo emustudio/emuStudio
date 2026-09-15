@@ -4,16 +4,18 @@ package net.emustudio.plugins.memory.ssem.gui;
 
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ApplicationApi;
+import net.emustudio.emulib.runtime.ui.EraseMemoryAction;
 import net.emustudio.emulib.runtime.ui.GUI;
 import net.emustudio.emulib.runtime.ui.components.DialogBase;
 import net.emustudio.plugins.memory.ssem.gui.actions.DumpMemoryAction;
-import net.emustudio.plugins.memory.ssem.gui.actions.EraseMemoryAction;
 import net.emustudio.plugins.memory.ssem.gui.actions.LoadImageAction;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTable;
 import net.emustudio.plugins.memory.ssem.gui.table.MemoryTableModel;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
 
 public class MemoryGui extends DialogBase {
     private final GUI gui;
@@ -36,7 +38,8 @@ public class MemoryGui extends DialogBase {
             table.repaint();
         });
         this.dumpMemoryAction = new DumpMemoryAction(api, memory);
-        this.eraseMemoryAction = new EraseMemoryAction(tableModel, memory);
+        this.eraseMemoryAction = new EraseMemoryAction(
+                tableModel, memory, loadIcon("/net/emustudio/plugins/memory/ssem/gui/clear.png"));
 
         scrollPane.setViewportView(table);
         scrollPane.setPreferredSize(new Dimension(965, 455));
