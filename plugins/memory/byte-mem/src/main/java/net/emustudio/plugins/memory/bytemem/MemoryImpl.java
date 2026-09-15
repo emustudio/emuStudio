@@ -23,9 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.MEMORY,
@@ -54,16 +52,6 @@ public class MemoryImpl extends AbstractMemory {
                     "Could not register memory. Please see log file for more details", getTitle()
             );
         }
-    }
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -207,14 +195,6 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public boolean isShowSettingsSupported() {
         return !guiNotSupported;
-    }
-
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.memory.bytemem.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
     }
 
     @Override

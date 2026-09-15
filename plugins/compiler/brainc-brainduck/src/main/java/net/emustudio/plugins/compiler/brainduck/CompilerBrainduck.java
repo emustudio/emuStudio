@@ -60,16 +60,6 @@ public class CompilerBrainduck extends AbstractCompiler {
     }
 
     @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
-    }
-
-    @Override
     public String getDescription() {
         return "Compiler for esoteric architecture based on brainfuck.";
     }
@@ -150,11 +140,4 @@ public class CompilerBrainduck extends AbstractCompiler {
         return parser;
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.brainduck.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }

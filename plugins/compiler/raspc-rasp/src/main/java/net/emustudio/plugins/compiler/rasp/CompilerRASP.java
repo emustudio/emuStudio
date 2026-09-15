@@ -111,26 +111,8 @@ public class CompilerRASP extends AbstractCompiler {
     }
 
     @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
-    }
-
-    @Override
     public String getDescription() {
         return "RASP machine assembler";
-    }
-
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.rasp.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
     }
 
     private RASPLexer createLexer(CharStream input) {

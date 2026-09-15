@@ -16,9 +16,6 @@ import net.emustudio.plugins.device.audiotape_player.gui.TapePlayerGui;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "Audio Tape Player")
 public class DeviceImpl extends AbstractDevice {
@@ -124,17 +121,6 @@ public class DeviceImpl extends AbstractDevice {
         return guiSupported;
     }
 
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
-    }
-
     @Override
     public String getDescription() {
         return "Audio Tape Player";
@@ -145,11 +131,4 @@ public class DeviceImpl extends AbstractDevice {
         return true;
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.audiotape_player.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }

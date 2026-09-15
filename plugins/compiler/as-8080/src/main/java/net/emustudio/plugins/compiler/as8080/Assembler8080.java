@@ -30,9 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
@@ -68,16 +66,6 @@ public class Assembler8080 extends AbstractCompiler {
                 LOGGER.warn("Memory is not available", e);
             }
         });
-    }
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -159,14 +147,6 @@ public class Assembler8080 extends AbstractCompiler {
     @Override
     public List<FileExtension> getSourceFileExtensions() {
         return SOURCE_FILE_EXTENSIONS;
-    }
-
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.as8080.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
     }
 
     private As8080Lexer createLexer(CharStream input) {

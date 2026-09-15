@@ -1,0 +1,17 @@
+# ADR-0011: Plugin Version/Copyright Metadata in emuLib Base Classes
+
+## Status
+Accepted
+
+## Context
+Every bundled plugin implemented `getVersion()` and `getCopyright()` identically, each backed by a private `getResourceBundle()` that loaded a `version` resource bundle whose base name was the plugin's own package. 27 plugin main classes carried the same ~15-line trio, differing only by the bundle name (derived from the package) - about 530 lines of copy-paste. The `Plugin` interface already declares `getVersion()`/`getCopyright()`, and the `AbstractCompiler/AbstractCPU/AbstractMemory/AbstractDevice` base classes already derive `getTitle()` from the concrete plugin class via `getClass()`.
+
+## Decision
+Add a small emuLib helper `net.emustudio.emulib.plugins.PluginMeta` with `version(Class<?>)` and `copyright(Class<?>)`. It loads the `<pluginClass package>.version` bundle using the plugin class's own classloader and returns the requested key, or `"(unknown)"` when the bundle or key is missing.
+
+Implement default `getVersion()`/`getCopyright()` in the four plugin base classes, delegating to `PluginMeta.version(getClass())` / `PluginMeta.copyright(getClass())`, mirroring how `getTitle()` already works. Remove the per-plugin `getVersion`/`getCopyright`/`getResourceBundle` overrides from all 27 plugins.
+
+Loading with the plugin class's classloader (rather than the caller's, as the old inline `ResourceBundle.getBundle(name)` did) is required so the bundle resolves under emuStudio's isolated plugin classloaders (see ADR-0006). Plugins remain free to override the methods.
+
+## Consequences
+One source of truth for plugin version/copyright; ~530 lines of duplication removed and future plugins get the behavior for free by extending a base class. The bundled plugins require emuLib >= 12.1.0. `mits88dcdd`'s `Resources` utility is retained because its command-line `Runner` reads the version independently; only its `DeviceImpl` overrides were removed. Behavior is unchanged, including the `"(unknown)"` fallback, and is covered by a new `PluginMetaTest` in emuLib plus the existing plugin and application test suites.
