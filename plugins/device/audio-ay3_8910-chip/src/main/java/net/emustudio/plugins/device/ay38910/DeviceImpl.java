@@ -16,9 +16,6 @@ import net.emustudio.plugins.device.ay38910.gui.Ay38910Gui;
 
 import javax.sound.sampled.LineUnavailableException;
 import javax.swing.JFrame;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 import static net.emustudio.plugins.device.ay38910.Ay38910Chip.DEFAULT_SAMPLE_RATE;
 
@@ -102,16 +99,6 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public String getVersion() {
-        return getResourceBundle().map(bundle -> bundle.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(bundle -> bundle.getString("copyright")).orElse("(unknown)");
-    }
-
-    @Override
     public String getDescription() {
         return "AY-3-8910 programmable sound generator for ZX Spectrum style bus wiring.";
     }
@@ -121,11 +108,4 @@ public class DeviceImpl extends AbstractDevice {
         return true;
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.ay38910.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }

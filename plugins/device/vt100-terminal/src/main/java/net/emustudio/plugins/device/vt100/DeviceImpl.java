@@ -26,9 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "VT100 Terminal")
 @SuppressWarnings("unused")
@@ -65,16 +62,6 @@ public class DeviceImpl extends AbstractDevice {
             LOGGER.error("Could not register VT100-terminal context", e);
             applicationApi.getDialogs().showError("Could not register VT100-terminal. Please see log file for more details.", getTitle());
         }
-    }
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -152,11 +139,4 @@ public class DeviceImpl extends AbstractDevice {
         return terminalSettings.isGuiSupported();
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.vt100.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }

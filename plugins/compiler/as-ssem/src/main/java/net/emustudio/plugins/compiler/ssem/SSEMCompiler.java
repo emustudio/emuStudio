@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.plugins.compiler.ssem;
 
-
 import net.emustudio.emulib.plugins.annotations.PLUGIN_TYPE;
 import net.emustudio.emulib.plugins.annotations.PluginRoot;
 import net.emustudio.emulib.plugins.compiler.AbstractCompiler;
@@ -29,9 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.COMPILER,
@@ -121,16 +118,6 @@ public class SSEMCompiler extends AbstractCompiler {
     }
 
     @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
-    }
-
-    @Override
     public String getDescription() {
         return "Assembler of SSEM computer language";
     }
@@ -145,14 +132,6 @@ public class SSEMCompiler extends AbstractCompiler {
         SSEMParser parser = new SSEMParser(tokenStream);
         parser.removeErrorListeners();
         return parser;
-    }
-
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.compiler.ssem.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
     }
 
     private void writeToFile(ByteBuffer code, Path outputPath) throws IOException {

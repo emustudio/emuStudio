@@ -15,9 +15,6 @@ import net.emustudio.plugins.memory.ram.api.RamMemoryContext;
 import net.emustudio.plugins.memory.ram.gui.MemoryGui;
 
 import javax.swing.*;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(type = PLUGIN_TYPE.MEMORY, title = "RAM Program Tape")
 @SuppressWarnings("unused")
@@ -38,16 +35,6 @@ public class MemoryImpl extends AbstractMemory {
         } catch (InvalidContextException | ContextAlreadyRegisteredException e) {
             applicationApi.getDialogs().showError("Could not register Program tape context", super.getTitle());
         }
-    }
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
     }
 
     @Override
@@ -77,14 +64,6 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public boolean isShowSettingsSupported() {
         return true;
-    }
-
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.memory.ram.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
     }
 
     @Override

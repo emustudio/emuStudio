@@ -11,9 +11,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 
 import javax.swing.*;
-import java.util.MissingResourceException;
 import java.util.Optional;
-import java.util.ResourceBundle;
 
 @PluginRoot(
         type = PLUGIN_TYPE.DEVICE,
@@ -79,16 +77,6 @@ public class DeviceImpl extends AbstractDevice {
     }
 
     @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
-    }
-
-    @Override
     public String getDescription() {
         return "CRT display for SSEM computer";
     }
@@ -98,11 +86,4 @@ public class DeviceImpl extends AbstractDevice {
         return true;
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.ssem.display.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }

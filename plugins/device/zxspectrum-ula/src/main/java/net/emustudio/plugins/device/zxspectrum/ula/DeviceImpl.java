@@ -16,9 +16,6 @@ import net.emustudio.plugins.device.zxspectrum.ula.gui.DisplayWindow;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 @SuppressWarnings("unused")
 @PluginRoot(type = PLUGIN_TYPE.DEVICE, title = "ZX Spectrum ULA")
@@ -107,17 +104,6 @@ public class DeviceImpl extends AbstractDevice {
         return guiSupported;
     }
 
-
-    @Override
-    public String getVersion() {
-        return getResourceBundle().map(b -> b.getString("version")).orElse("(unknown)");
-    }
-
-    @Override
-    public String getCopyright() {
-        return getResourceBundle().map(b -> b.getString("copyright")).orElse("(unknown)");
-    }
-
     @Override
     public String getDescription() {
         return "ULA (Uncommitted Logic Array) handles ZX Spectrum keyboard, video, and beeper I/O.";
@@ -128,11 +114,4 @@ public class DeviceImpl extends AbstractDevice {
         return true;
     }
 
-    private Optional<ResourceBundle> getResourceBundle() {
-        try {
-            return Optional.of(ResourceBundle.getBundle("net.emustudio.plugins.device.zxspectrum.ula.version"));
-        } catch (MissingResourceException e) {
-            return Optional.empty();
-        }
-    }
 }
