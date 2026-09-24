@@ -204,6 +204,7 @@ public class DebugTableModelImplTest {
 
         assertFalse(model.isCellEditable(0, 0));
         assertFalse(model.isRowAtCurrentInstruction(0));
+        assertEquals(-1, model.getLocationAt(0));
         assertEquals(0, model.guessPreviousInstructionLocation());
 
         PaginatingDisassembler ida = mock(PaginatingDisassembler.class);
@@ -220,6 +221,7 @@ public class DebugTableModelImplTest {
         assertFalse(model.isCellEditable(2, 1));
         assertTrue(model.isCellEditable(2, 0));
         assertTrue(model.isRowAtCurrentInstruction(2));
+        assertEquals(100, model.getLocationAt(2));
         assertEquals(19, model.guessPreviousInstructionLocation());
 
         when(ida.rowToLocation(20, 3)).thenReturn(18);

@@ -16,6 +16,7 @@ import net.emustudio.application.gui.editor.REditor;
 import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
@@ -23,6 +24,7 @@ import org.fife.ui.rtextarea.RTextArea;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
@@ -35,6 +37,7 @@ public class StudioFrame extends JFrame {
     private final static String SOURCE_CODE_EDITOR = "Source code editor";
 
     private final GUI gui;
+    private final Dialogs dialogs;
     private final Editor editor;
 
     private final EditorPanel editorPanel;
@@ -56,6 +59,7 @@ public class StudioFrame extends JFrame {
                        DebugTableModel debugTableModel, MemoryContext<?> memoryContext, Path fileName, EmuStudioGui gui) {
         Objects.requireNonNull(computer);
         this.gui = Objects.requireNonNull(gui);
+        this.dialogs = Objects.requireNonNull(dialogs);
 
         this.editor = computer.getCompiler()
                 .map(compiler -> new REditor(dialogs, compiler))
@@ -66,7 +70,8 @@ public class StudioFrame extends JFrame {
         )).orElse(null);
 
         this.emulatorPanel = new EmulatorPanel(
-                this, computer, debugTableModel, dialogs, emulationController, memoryContext, gui
+                this, computer, debugTableModel, dialogs, emulationController, memoryContext,
+                this::navigateToSource, gui
         );
         this.editorPanel = new EditorPanel(
                 this, dialogs, editor, computer, this::updateTitleOfSourceCodePanel, emulatorPanel::getRunState,
@@ -194,5 +199,25 @@ public class StudioFrame extends JFrame {
                 file -> tabbedPane.setTitleAt(0, file.getName()),
                 () -> tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR)
         );
+    }
+
+    private void navigateToSource(SourceCodePosition position) {
+        try {
+            Path sourceFile = Path.of(position.fileName).toAbsolutePath().normalize();
+            boolean currentFile = editor.getCurrentFile()
+                    .map(file -> file.toPath().toAbsolutePath().normalize())
+                    .filter(sourceFile::equals)
+                    .isPresent();
+            if (!currentFile && (!editorPanel.confirmSave() || !editor.openFile(sourceFile))) {
+                return;
+            }
+
+            updateTitleOfSourceCodePanel();
+            tabbedPane.setSelectedIndex(0);
+            editor.setPosition(position);
+            editor.grabFocus();
+        } catch (InvalidPathException e) {
+            dialogs.showError("Could not open source file: " + position.fileName);
+        }
     }
 }

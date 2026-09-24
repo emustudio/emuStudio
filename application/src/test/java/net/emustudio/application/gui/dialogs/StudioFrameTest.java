@@ -8,13 +8,19 @@ import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.settings.AppSettings;
 import net.emustudio.application.settings.ComputerConfig;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
+import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
+import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
+import org.fife.ui.rsyntaxtextarea.TextEditorPane;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import javax.swing.*;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,6 +63,47 @@ public class StudioFrameTest extends AbstractSwingTest {
 
         JTabbedPane tabs = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
         assertEquals("program.asm", onEdt(() -> tabs.getTitleAt(0)));
+    }
+
+    @Test
+    public void doubleClickingDebugRowOpensAnnotatedSourcePosition() throws Exception {
+        Path sourceFile = temporaryFolder.newFile("linked.asm").toPath();
+        Files.writeString(sourceFile, "NOP\nHLT\n");
+        VirtualComputer computer = mock(VirtualComputer.class);
+        ComputerConfig computerConfig = mock(ComputerConfig.class);
+        MemoryContext<?> memoryContext = mock(MemoryContext.class);
+        DebugTableModel model = createDebugTableModel();
+        Annotations annotations = new Annotations();
+        annotations.add(12, new SourceCodeAnnotation(4, SourceCodePosition.of(2, 0, sourceFile.toString())));
+
+        when(computerConfig.getName()).thenReturn("Demo computer");
+        when(computer.getComputerConfig()).thenReturn(computerConfig);
+        when(computer.getCompiler()).thenReturn(Optional.empty());
+        when(computer.getCPU()).thenReturn(Optional.empty());
+        when(computer.getMemory()).thenReturn(Optional.empty());
+        when(computer.getDevices()).thenReturn(List.of());
+        when(memoryContext.annotations()).thenReturn(annotations);
+        when(model.getLocationAt(0)).thenReturn(12);
+
+        StudioFrame frame = onEdt(() -> new StudioFrame(
+                computer, mock(AppSettings.class), mock(Dialogs.class), model, memoryContext, null, new EmuStudioGui()
+        ));
+        showFrame(frame);
+        JTabbedPane tabs = findComponent(frame.getContentPane(), JTabbedPane.class, pane -> true);
+        JTable debugTable = findComponent(frame.getContentPane(), JTable.class, table -> true);
+        TextEditorPane textEditor = findComponent(frame.getContentPane(), TextEditorPane.class, editor -> true);
+
+        runOnEdt(() -> {
+            tabs.setSelectedIndex(1);
+            debugTable.dispatchEvent(new MouseEvent(
+                    debugTable, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0,
+                    5, 5, 2, false, MouseEvent.BUTTON1
+            ));
+        });
+
+        assertEquals(0, onEdt(tabs::getSelectedIndex).intValue());
+        assertEquals("linked.asm", onEdt(() -> tabs.getTitleAt(0)));
+        assertEquals(onEdt(() -> textEditor.getLineStartOffset(1)), onEdt(textEditor::getCaretPosition));
     }
 
     private StudioFrame createFrame(Path fileName) {

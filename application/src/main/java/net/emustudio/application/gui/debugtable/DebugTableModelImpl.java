@@ -158,6 +158,11 @@ public class DebugTableModelImpl extends DebugTableModel {
     }
 
     @Override
+    public int getLocationAt(int rowIndex) {
+        return ida == null ? -1 : ida.rowToLocation(cpu.getInstructionLocation(), rowIndex);
+    }
+
+    @Override
     public void memoryChanged(int from, int to) {
         if (ida != null) {
             ida.flushCache(from, to + 1);

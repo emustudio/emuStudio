@@ -8,9 +8,12 @@ import net.emustudio.application.gui.framework.EmuStudioGui;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
 import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.Annotations;
+import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.debugger.DebuggerColumn;
 import org.junit.Test;
@@ -20,6 +23,7 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -55,6 +59,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 dialogs,
                 mock(EmulationController.class),
                 memoryContext,
+                position -> {},
                 new EmuStudioGui()
         ));
 
@@ -105,6 +110,7 @@ public class EmulatorPanelTest extends AbstractSwingTest {
                 dialogs,
                 emulationController,
                 memoryContext,
+                position -> {},
                 new EmuStudioGui()
         ));
 
@@ -145,6 +151,37 @@ public class EmulatorPanelTest extends AbstractSwingTest {
         assertTrue(onEdt(stepButton::isEnabled));
         assertTrue(onEdt(debugTable::isEnabled));
         assertTrue(onEdt(debugTable::isVisible));
+    }
+
+    @Test
+    public void doubleClickingAnnotatedInstructionNavigatesToSource() {
+        VirtualComputer computer = mock(VirtualComputer.class);
+        MemoryContext<?> memoryContext = mock(MemoryContext.class);
+        DebugTableModel model = createDebugTableModel();
+        SourceCodePosition position = SourceCodePosition.of(7, 3, "program.asm");
+        Annotations annotations = new Annotations();
+        annotations.add(42, new SourceCodeAnnotation(5, position));
+        AtomicReference<SourceCodePosition> navigated = new AtomicReference<>();
+
+        when(computer.getCPU()).thenReturn(Optional.empty());
+        when(computer.getMemory()).thenReturn(Optional.empty());
+        when(computer.getDevices()).thenReturn(List.of());
+        when(memoryContext.annotations()).thenReturn(annotations);
+        when(model.getLocationAt(0)).thenReturn(42);
+
+        EmulatorPanel panel = onEdt(() -> new EmulatorPanel(
+                new JFrame(), computer, model, mock(Dialogs.class), null, memoryContext,
+                navigated::set, new EmuStudioGui()
+        ));
+        showInFrame(panel);
+        JTable debugTable = findComponent(panel, JTable.class, table -> true);
+
+        runOnEdt(() -> debugTable.dispatchEvent(new MouseEvent(
+                debugTable, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0,
+                5, 5, 2, false, MouseEvent.BUTTON1
+        )));
+
+        assertEquals(position, navigated.get());
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
