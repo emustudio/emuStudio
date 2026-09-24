@@ -66,6 +66,15 @@ public class ComputerConfig implements Closeable {
         config.set("name", Objects.requireNonNull(name));
     }
 
+    public List<Path> getOpenSourceFiles() {
+        return config.<List<String>>getOptional("openSourceFiles")
+                .orElse(Collections.emptyList()).stream().map(Path::of).collect(toList());
+    }
+
+    public void setOpenSourceFiles(List<Path> files) {
+        config.set("openSourceFiles", files.stream().map(Path::toString).collect(toList()));
+    }
+
     public Optional<PluginConfig> getCompiler() {
         Optional<Config> pluginConfigOpt = config.getOptional(PLUGIN_TYPE.COMPILER.name());
         return pluginConfigOpt.map(PluginConfig::new);

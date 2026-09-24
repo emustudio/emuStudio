@@ -20,15 +20,15 @@ public class NewFileAction extends AbstractAction {
     private final Runnable updateTitle;
 
     public NewFileAction(Supplier<Boolean> confirmSave, Editor editor, JTextArea compilerOutput, Runnable updateTitle) {
-        super("New", loadIcon(ICON_NEW_FILE));
+        super("New tab", loadIcon(ICON_NEW_FILE));
 
         this.confirmSave = Objects.requireNonNull(confirmSave);
         this.editor = Objects.requireNonNull(editor);
         this.compilerOutput = Objects.requireNonNull(compilerOutput);
         this.updateTitle = Objects.requireNonNull(updateTitle);
 
-        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.CTRL_DOWN_MASK));
-        putValue(SHORT_DESCRIPTION, "New file");
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.CTRL_DOWN_MASK));
+        putValue(SHORT_DESCRIPTION, "New editor tab");
         putValue(MNEMONIC_KEY, KeyEvent.VK_N);
     }
 

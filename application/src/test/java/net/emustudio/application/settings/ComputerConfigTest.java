@@ -14,6 +14,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -46,6 +47,14 @@ public class ComputerConfigTest {
         assertTrue(config.getCompiler().isEmpty());
         assertTrue(config.getCPU().isEmpty());
         assertTrue(config.getConnections().isEmpty());
+        assertTrue(config.getOpenSourceFiles().isEmpty());
+    }
+
+    @Test
+    public void storesOpenSourceFiles() {
+        List<Path> files = List.of(Path.of("main.asm"), Path.of("lib.asm"));
+        config.setOpenSourceFiles(files);
+        assertEquals(files, config.getOpenSourceFiles());
     }
 
 
