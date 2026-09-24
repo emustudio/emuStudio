@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static net.emustudio.plugins.compiler.as8080.CompileError.macroArgumentsDoNotMatch;
-import static net.emustudio.plugins.compiler.as8080.ParsingUtils.normalizeId;
+import static net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils.normalizeId;
 
 /**
  * Connects macro parameters with arguments.

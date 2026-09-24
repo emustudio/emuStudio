@@ -4,23 +4,28 @@ package net.emustudio.plugins.device.vt100.gui;
 
 import net.emustudio.plugins.device.vt100.VideoAttribute;
 import net.emustudio.plugins.device.vt100.api.Display;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferStrategy;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.RenderingHints.*;
 
 public class DisplayCanvas extends Canvas implements AutoCloseable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DisplayCanvas.class);
     private static final Color FOREGROUND = new Color(255, 255, 255);
     private static final Color BACKGROUND = Color.BLACK;
     private final Timer repaintTimer;
     private final Display display; // not owning this
     private final AtomicBoolean painting = new AtomicBoolean(false);
     private volatile Dimension size = new Dimension(0, 0);
+    private volatile Dimension minimumSize = new Dimension(0, 0);
 
     public DisplayCanvas(Display display) {
         this.display = Objects.requireNonNull(display);
@@ -50,19 +55,27 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     @Override
     public Dimension getMinimumSize() {
-        return this.size;
+        return new Dimension(minimumSize);
     }
 
     @Override
     public void setBounds(int x, int y, int width, int height) {
         super.setBounds(x, y, width, height);
-        this.size = getSize();
+        updateSize();
     }
 
     @Override
     public void setBounds(Rectangle r) {
         super.setBounds(r);
-        this.size = getSize();
+        updateSize();
+    }
+
+    private void updateSize() {
+        Dimension newSize = getSize();
+        if (minimumSize.width == 0 && minimumSize.height == 0) {
+            minimumSize = new Dimension(newSize);
+        }
+        size = newSize;
     }
 
     @Override
@@ -73,23 +86,70 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     public class PaintCycle implements Runnable {
         private BufferStrategy strategy;
+        private char[] videoMemory = new char[0];
+        private int[] attributeMemory = new int[0];
+        private Point cursorPoint = new Point();
+        private Dimension dimension = new Dimension();
+        private int columns;
+        private int rows;
+        private Font normalFont;
+        private Font boldFont;
+        private Font italicFont;
+        private Font boldItalicFont;
 
         @Override
         public void run() {
             strategy = getBufferStrategy();
-            if (painting.get()) {
+            if (painting.get() && strategy != null && refreshFrame()) {
                 paint();
             }
         }
 
+        private boolean refreshFrame() {
+            char[] newVideoMemory = display.getVideoMemory();
+            int[] newAttributeMemory = display.getAttributeMemory();
+            Point newCursorPoint = Objects.requireNonNullElse(display.getCursorPoint(), new Point());
+            Dimension newDimension = size;
+            int newColumns = display.getColumns();
+            int newRows = display.getRows();
+            Font newNormalFont = getFont();
+
+            if (Arrays.equals(videoMemory, newVideoMemory)
+                    && Arrays.equals(attributeMemory, newAttributeMemory)
+                    && cursorPoint.equals(newCursorPoint)
+                    && dimension.equals(newDimension)
+                    && columns == newColumns
+                    && rows == newRows
+                    && Objects.equals(normalFont, newNormalFont)) {
+                return false;
+            }
+
+            // getVideoMemory/getAttributeMemory already return defensive copies
+            videoMemory = newVideoMemory == null ? new char[0] : newVideoMemory;
+            attributeMemory = newAttributeMemory;
+            cursorPoint = new Point(newCursorPoint);
+            dimension = new Dimension(newDimension);
+            columns = newColumns;
+            rows = newRows;
+            if (!Objects.equals(normalFont, newNormalFont)) {
+                normalFont = newNormalFont;
+                boldFont = normalFont.deriveFont(Font.BOLD);
+                italicFont = normalFont.deriveFont(Font.ITALIC);
+                boldItalicFont = normalFont.deriveFont(Font.BOLD | Font.ITALIC);
+            }
+            return true;
+        }
+
         protected void paint() {
-            Dimension dimension = size;
+            Dimension dimension = this.dimension;
+            Graphics2D graphics = null;
             try {
                 do {
                     do {
-                        Graphics2D graphics = (Graphics2D) strategy.getDrawGraphics();
+                        graphics = (Graphics2D) strategy.getDrawGraphics();
                         graphics.setColor(BACKGROUND);
                         graphics.fillRect(0, 0, dimension.width, dimension.height);
+                        graphics.setFont(normalFont);
 
                         int lineHeight = graphics.getFontMetrics().getHeight();
                         graphics.setRenderingHint(KEY_RENDERING, VALUE_RENDER_QUALITY);
@@ -100,20 +160,20 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                         graphics.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
                         graphics.setRenderingHint(KEY_STROKE_CONTROL, VALUE_STROKE_NORMALIZE);
 
-                        char[] videoMem = display.getVideoMemory();
-                        int[] attrMem = display.getAttributeMemory();
-                        int columns = display.getColumns();
-                        int rows = display.getRows();
+                        char[] videoMem = videoMemory;
+                        int[] attrMem = attributeMemory;
+                        int columns = this.columns;
+                        int rows = this.rows;
 
                         Rectangle2D fontRect = getFont().getStringBounds("M", graphics.getFontMetrics().getFontRenderContext());
                         double charWidth = fontRect.getWidth();
                         int fontAscent = graphics.getFontMetrics().getAscent();
 
                         boolean hasAttributes = attrMem != null && attrMem.length == videoMem.length;
-                        Font normalFont = graphics.getFont();
-                        Font boldFont = normalFont.deriveFont(Font.BOLD);
-                        Font italicFont = normalFont.deriveFont(Font.ITALIC);
-                        Font boldItalicFont = normalFont.deriveFont(Font.BOLD | Font.ITALIC);
+                        Font normalFont = this.normalFont;
+                        Font boldFont = this.boldFont;
+                        Font italicFont = this.italicFont;
+                        Font boldItalicFont = this.boldItalicFont;
 
                         for (int y = 0; y < rows; y++) {
                             for (int x = 0; x < columns; x++) {
@@ -174,18 +234,26 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
                         // Restore default font for cursor painting
                         graphics.setFont(normalFont);
-                        paintCursor(graphics, lineHeight, charWidth);
+                        paintCursor(graphics, lineHeight, charWidth, cursorPoint);
                         graphics.dispose();
+                        graphics = null;
                     } while (strategy.contentsRestored());
                     strategy.show();
                 } while (strategy.contentsLost());
-            } catch (Exception ignored) {
+            } catch (IllegalStateException e) {
+                if (painting.get()) {
+                    LOGGER.warn("Could not paint VT100 display", e);
+                }
+            } catch (RuntimeException e) {
+                LOGGER.warn("Could not paint VT100 display", e);
+            } finally {
+                if (graphics != null) {
+                    graphics.dispose();
+                }
             }
         }
 
-        private void paintCursor(Graphics graphics, int lineHeight, double charWidth) {
-            Point cursorPoint = display.getCursorPoint();
-
+        private void paintCursor(Graphics graphics, int lineHeight, double charWidth, Point cursorPoint) {
             graphics.setXORMode(BACKGROUND);
             graphics.setColor(FOREGROUND);
 

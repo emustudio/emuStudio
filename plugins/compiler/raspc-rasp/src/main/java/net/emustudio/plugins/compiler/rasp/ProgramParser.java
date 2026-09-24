@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static net.emustudio.plugins.compiler.rasp.ParsingUtils.*;
+import static net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils.*;
 import static net.emustudio.plugins.compiler.rasp.RASPParser.*;
 import static net.emustudio.plugins.memory.rasp.gui.Disassembler.HALT;
 

@@ -75,7 +75,7 @@ public class EmulatorEngine implements CpuEngine {
     private boolean interruptSkip; // when EI enabled, skip next instruction interrupt
 
     private int lastOpcode;
-    private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
+    private volatile RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
 
     private volatile DispatchListener dispatchListener;
 

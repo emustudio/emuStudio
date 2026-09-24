@@ -65,6 +65,7 @@ public class TapePlaybackController implements AutoCloseable {
                 playPool.shutdownNow();
             }
         } catch (InterruptedException e) {
+            playPool.shutdownNow();
             Thread.currentThread().interrupt();
         }
     }

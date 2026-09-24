@@ -14,6 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.nio.file.Files;
@@ -88,6 +89,7 @@ public class DumpMemoryActionTest {
 
         DumpMemoryAction action = new DumpMemoryAction(dialogs, context, () -> 0);
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "dump"));
+        waitForCompletion(action);
 
         // Verify the file content (hex format: "%X:\t%02X\n")
         String content = Files.readString(dumpFile.toPath());
@@ -111,6 +113,7 @@ public class DumpMemoryActionTest {
 
         DumpMemoryAction action = new DumpMemoryAction(dialogs, context, () -> 5);
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "dump"));
+        waitForCompletion(action);
 
         // Verify by deserializing
         MemoryContextImpl context2 = MemoryContextImplFactory.create();
@@ -143,6 +146,7 @@ public class DumpMemoryActionTest {
 
         DumpMemoryAction action = new DumpMemoryAction(dialogs, context, () -> 0);
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "dump"));
+        waitForCompletion(action);
 
         // Should still write text format for .TXT
         String content = Files.readString(dumpFile.toPath());
@@ -160,6 +164,7 @@ public class DumpMemoryActionTest {
 
         DumpMemoryAction action = new DumpMemoryAction(dialogs, context, () -> 0);
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "dump"));
+        waitForCompletion(action);
 
         String content = Files.readString(dumpFile.toPath());
         assertEquals("", content);
@@ -179,8 +184,19 @@ public class DumpMemoryActionTest {
 
         DumpMemoryAction action = new DumpMemoryAction(dialogs, context, () -> 0);
         action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "dump"));
+        waitForCompletion(action);
 
         verify(dialogs);
+    }
+
+    private void waitForCompletion(Action action) throws InterruptedException {
+        for (int i = 0; i < 200; i++) {
+            if (action.isEnabled()) {
+                return;
+            }
+            Thread.sleep(10);
+        }
+        fail("Memory action did not complete");
     }
 
     private RaspLabel createLabel(int address, String label) {
@@ -197,4 +213,3 @@ public class DumpMemoryActionTest {
         };
     }
 }
-

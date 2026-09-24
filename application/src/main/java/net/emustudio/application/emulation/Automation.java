@@ -163,7 +163,7 @@ public class Automation implements Runnable {
         }
 
         resultState = CPU.RunState.STATE_RUNNING;
-        cpu.addCPUListener(new CPU.CPUListener() {
+        CPU.CPUListener stateListener = new CPU.CPUListener() {
             @Override
             public void runStateChanged(CPU.RunState state) {
                 if (state != CPU.RunState.STATE_RUNNING) {
@@ -177,7 +177,8 @@ public class Automation implements Runnable {
             @Override
             public void internalStateChanged() {
             }
-        });
+        };
+        cpu.addCPUListener(stateListener);
         cpu.execute();
 
         synchronized (resultStateLock) {
@@ -199,6 +200,7 @@ public class Automation implements Runnable {
                 Thread.currentThread().interrupt();
             }
         }
+        cpu.removeCPUListener(stateListener);
 
         switch (resultState) {
             case STATE_STOPPED_ADDR_FALLOUT:

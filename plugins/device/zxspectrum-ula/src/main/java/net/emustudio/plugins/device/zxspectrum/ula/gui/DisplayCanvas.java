@@ -23,31 +23,25 @@ import static net.emustudio.plugins.device.zxspectrum.ula.gui.KeyboardCanvas.KEY
 public class DisplayCanvas extends Canvas implements AutoCloseable {
     public static final float ZOOM = 2f;
 
-    private static final Color[] COLOR_MAP = new Color[]{
-            new Color(0, 0, 0),  // black
-            new Color(0, 0, 0xD8), // blue
-            new Color(0xD8, 0, 0), // red
-            new Color(0xD8, 0, 0xD8), // magenta
-            new Color(0, 0xD8, 0), // green
-            new Color(0, 0xD8, 0xD8), // cyan
-            new Color(0xD8, 0xD8, 0), // yellow
-            new Color(0xD8, 0xD8, 0xD8) // white
-    };
+    // ZX Spectrum palette, bit 0 = blue, bit 1 = red, bit 2 = green
+    private static final Color[] COLOR_MAP = palette(0xD8);
+    private static final Color[] BRIGHT_COLOR_MAP = palette(0xFF);
 
-    private static final Color[] BRIGHT_COLOR_MAP = new Color[]{
-            new Color(0, 0, 0),  // black
-            new Color(0, 0, 0xFF), // blue
-            new Color(0xFF, 0, 0), // red
-            new Color(0xFF, 0, 0xFF), // magenta
-            new Color(0, 0xFF, 0), // green
-            new Color(0, 0xFF, 0xFF), // cyan
-            new Color(0xFF, 0xFF, 0), // yellow
-            new Color(0xFF, 0xFF, 0xFF) // white
-    };
+    private static Color[] palette(int intensity) {
+        Color[] colors = new Color[8];
+        for (int i = 0; i < 8; i++) {
+            colors[i] = new Color(
+                    (i & 2) == 0 ? 0 : intensity,
+                    (i & 4) == 0 ? 0 : intensity,
+                    (i & 1) == 0 ? 0 : intensity);
+        }
+        return colors;
+    }
 
     private static final Color KEYBOARD_OVERLAY_COLOR = new Color(0, 0, 0, 127);
 
     private volatile Dimension size;
+    private final Dimension minimumSize;
 
     private final ULA ula;
     private final TimingProfile timing;
@@ -76,6 +70,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
                 (int) (ZOOM * screenImageWidth + 2 * MARGIN),
                 (int) (ZOOM * screenImageHeight + 2 * MARGIN)
         );
+        this.minimumSize = new Dimension(size);
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -224,7 +219,7 @@ public class DisplayCanvas extends Canvas implements AutoCloseable {
 
     @Override
     public Dimension getMinimumSize() {
-        return this.size;
+        return new Dimension(minimumSize);
     }
 
     @Override

@@ -11,7 +11,6 @@ import net.emustudio.plugins.cpu.intel8080.InstructionPrinter;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 
 import static net.emustudio.emulib.runtime.helpers.RadixUtils.formatByteHexString;
@@ -22,7 +21,7 @@ public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
     private final EmulatorEngine engine;
     private final Context8080 context;
-    private final AbstractTableModel flagModel;
+    private final FlagsModel flagModel;
 
     private final JLabel lblFrequency = new JLabel("0,0 kHz");
     private final JLabel lblRun = new JLabel("Stopped");
@@ -85,23 +84,34 @@ public class StatusPanel extends JPanel {
     }
 
     public void updateGUI() {
+        final int regA = engine.regs[EmulatorEngine.REG_A];
+        final int regB = engine.regs[EmulatorEngine.REG_B];
+        final int regC = engine.regs[EmulatorEngine.REG_C];
+        final int regD = engine.regs[EmulatorEngine.REG_D];
+        final int regE = engine.regs[EmulatorEngine.REG_E];
+        final int regH = engine.regs[EmulatorEngine.REG_H];
+        final int regL = engine.regs[EmulatorEngine.REG_L];
+        final int sp = engine.SP;
+        final int pc = engine.PC;
+        final int flags = engine.flags;
+        final RunState state = runState;
         SwingUtilities.invokeLater(() -> {
-            txtRegA.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_A]));
-            txtRegB.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_B]));
-            txtRegC.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_C]));
-            txtRegBC.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_B], (short) engine.regs[EmulatorEngine.REG_C]));
-            txtRegD.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_D]));
-            txtRegE.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_E]));
-            txtRegDE.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_D], (short) engine.regs[EmulatorEngine.REG_E]));
-            txtRegH.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_H]));
-            txtRegL.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_L]));
-            txtRegHL.setText(formatWordHexString((short) engine.regs[EmulatorEngine.REG_H], (short) engine.regs[EmulatorEngine.REG_L]));
-            txtRegSP.setText(formatWordHexString(engine.SP));
-            txtRegPC.setText(formatWordHexString(engine.PC));
-            txtFlags.setText(formatByteHexString(engine.flags));
-            flagModel.fireTableDataChanged();
-            lblRun.setText(runState.toString());
-            spnFrequency.setEnabled(runState != RunState.STATE_RUNNING);
+            txtRegA.setText(formatByteHexString(regA));
+            txtRegB.setText(formatByteHexString(regB));
+            txtRegC.setText(formatByteHexString(regC));
+            txtRegBC.setText(formatWordHexString((short) regB, (short) regC));
+            txtRegD.setText(formatByteHexString(regD));
+            txtRegE.setText(formatByteHexString(regE));
+            txtRegDE.setText(formatWordHexString((short) regD, (short) regE));
+            txtRegH.setText(formatByteHexString(regH));
+            txtRegL.setText(formatByteHexString(regL));
+            txtRegHL.setText(formatWordHexString((short) regH, (short) regL));
+            txtRegSP.setText(formatWordHexString(sp));
+            txtRegPC.setText(formatWordHexString(pc));
+            txtFlags.setText(formatByteHexString(flags));
+            flagModel.update(flags);
+            lblRun.setText(state.toString());
+            spnFrequency.setEnabled(state != RunState.STATE_RUNNING);
         });
     }
 

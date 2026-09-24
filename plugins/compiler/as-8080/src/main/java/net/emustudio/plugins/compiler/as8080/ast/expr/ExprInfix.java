@@ -6,6 +6,7 @@ import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.plugins.compiler.as8080.ast.Evaluated;
 import net.emustudio.plugins.compiler.as8080.ast.NameSpace;
 import net.emustudio.plugins.compiler.as8080.ast.Node;
+import net.emustudio.plugins.compiler.as8080.exceptions.CompileException;
 import net.emustudio.plugins.compiler.as8080.visitors.NodeVisitor;
 import org.antlr.v4.runtime.Token;
 
@@ -22,7 +23,7 @@ public class ExprInfix extends Node {
     static {
         infixOps.put(OP_ADD, Integer::sum);
         infixOps.put(OP_SUBTRACT, (x, y) -> x - y);
-        infixOps.put(OP_DIVIDE, (x, y) -> x / y);  // can throw!
+        infixOps.put(OP_DIVIDE, (x, y) -> x / y);
         infixOps.put(OP_MULTIPLY, (x, y) -> x * y);
         infixOps.put(OP_MOD, (x, y) -> x % y);
         infixOps.put(OP_MOD_2, (x, y) -> x % y);
@@ -73,7 +74,11 @@ public class ExprInfix extends Node {
         if (left != null && right != null) {
             int l = left.value;
             int r = right.value;
-            return new Evaluated(position, operation.apply(l, r));
+            try {
+                return new Evaluated(position, operation.apply(l, r));
+            } catch (ArithmeticException e) {
+                throw new CompileException(position, "Arithmetic error: " + e.getMessage());
+            }
         }
 
         return null;

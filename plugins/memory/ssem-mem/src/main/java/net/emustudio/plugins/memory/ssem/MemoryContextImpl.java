@@ -46,7 +46,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
     @Override
     public void write(int to, Byte[] values, int count) {
         System.arraycopy(values, 0, memory, to, count);
-        notifyMemoryContentChanged(to, to + values.length);
+        notifyMemoryContentChanged(to, to + count - 1);
     }
 
     @Override

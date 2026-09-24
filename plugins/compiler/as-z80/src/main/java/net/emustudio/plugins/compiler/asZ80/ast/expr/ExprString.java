@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.Objects;
 
-import static net.emustudio.plugins.compiler.asZ80.ParsingUtils.parseLitString;
+import static net.emustudio.emulib.plugins.compiler.antlr.ParsingUtils.parseLitString;
 
 public class ExprString extends Node {
     public final String string;
