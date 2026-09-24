@@ -11,7 +11,7 @@ import java.awt.event.KeyEvent;
 import java.util.Objects;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_FIND;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class FindAction extends AbstractAction {
     private final FindDialog findDialog;

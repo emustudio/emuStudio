@@ -21,7 +21,7 @@ import java.util.Optional;
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_ADD;
 import static net.emustudio.application.settings.ConfigFiles.createConfiguration;
 import static net.emustudio.application.settings.ConfigFiles.loadConfiguration;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class AddNewComputerAction extends AbstractAction {
     private final static Logger LOGGER = LoggerFactory.getLogger(AddNewComputerAction.class);

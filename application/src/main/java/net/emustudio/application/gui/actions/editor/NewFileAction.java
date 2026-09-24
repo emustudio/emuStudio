@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import static net.emustudio.application.gui.framework.EmuStudioGui.ICON_NEW_FILE;
-import static net.emustudio.emulib.runtime.ui.GUI.loadIcon;
+import static net.emustudio.application.gui.framework.Icons.loadIcon;
 
 public class NewFileAction extends AbstractAction {
     private final Supplier<Boolean> confirmSave;
