@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.simh.commands;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
+import net.emustudio.plugins.device.mits88tap.api.PaperTapeContext;
 
 public interface Command {
 
@@ -58,6 +59,8 @@ public interface Command {
         ByteMemoryContext getMemory();
 
         Context8080 getCpu();
+
+        PaperTapeContext getPaperTape();
     }
 
 

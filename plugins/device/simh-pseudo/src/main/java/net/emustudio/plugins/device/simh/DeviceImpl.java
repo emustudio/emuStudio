@@ -10,6 +10,7 @@ import net.emustudio.emulib.runtime.ApplicationApi;
 import net.emustudio.emulib.runtime.ContextPool;
 import net.emustudio.emulib.runtime.settings.PluginSettings;
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
+import net.emustudio.plugins.device.mits88tap.api.PaperTapeContext;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
 
 import javax.swing.*;
@@ -27,6 +28,7 @@ import java.util.ResourceBundle;
 @SuppressWarnings("unused")
 public class DeviceImpl extends AbstractDevice {
     private final PseudoContext context = new PseudoContext();
+    private Context8080 cpu;
 
     public DeviceImpl(long pluginID, ApplicationApi applicationApi, PluginSettings settings) {
         super(pluginID, applicationApi, settings);
@@ -36,11 +38,13 @@ public class DeviceImpl extends AbstractDevice {
     public void initialize() throws PluginInitializationException {
         ContextPool contextPool = applicationApi.getContextPool();
 
-        Context8080 cpu = contextPool.getCPUContext(pluginID, Context8080.class);
+        cpu = contextPool.getCPUContext(pluginID, Context8080.class);
         ByteMemoryContext mem = contextPool.getMemoryContext(pluginID, ByteMemoryContext.class);
+        PaperTapeContext paperTape = contextPool.getContext(pluginID, PaperTapeContext.class, 0);
 
         context.setMemory(mem);
         context.setCpu(cpu);
+        context.setPaperTape(paperTape);
 
         // attach IO port
         if (!cpu.attachDevice(0xFE, context)) {
@@ -53,7 +57,10 @@ public class DeviceImpl extends AbstractDevice {
 
     @Override
     public void destroy() {
-
+        if (cpu != null) {
+            cpu.detachDevice(0xFE);
+            cpu = null;
+        }
     }
 
     @Override

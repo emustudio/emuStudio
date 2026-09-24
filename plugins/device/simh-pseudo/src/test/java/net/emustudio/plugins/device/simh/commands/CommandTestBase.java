@@ -4,6 +4,7 @@ package net.emustudio.plugins.device.simh.commands;
 
 import net.emustudio.plugins.cpu.intel8080.api.Context8080;
 import net.emustudio.plugins.memory.bytemem.api.ByteMemoryContext;
+import net.emustudio.plugins.device.mits88tap.api.PaperTapeContext;
 import org.junit.Before;
 
 import static org.easymock.EasyMock.*;
@@ -15,6 +16,7 @@ public abstract class CommandTestBase {
     protected Command.Control control;
     protected Context8080 cpu;
     protected ByteMemoryContext memory;
+    protected PaperTapeContext paperTape;
 
     private boolean commandCleared;
     private boolean readCommandCleared;
@@ -24,6 +26,7 @@ public abstract class CommandTestBase {
     public void setUpBase() {
         cpu = createNiceMock(Context8080.class);
         memory = createNiceMock(ByteMemoryContext.class);
+        paperTape = createNiceMock(PaperTapeContext.class);
 
         commandCleared = false;
         readCommandCleared = false;
@@ -54,7 +57,19 @@ public abstract class CommandTestBase {
             public Context8080 getCpu() {
                 return cpu;
             }
+
+            @Override
+            public PaperTapeContext getPaperTape() {
+                return paperTape;
+            }
         };
+    }
+
+    protected void expectCommandLine(String commandLine) {
+        expect(memory.read(0x80)).andReturn((byte) (commandLine.length() + 1));
+        for (int i = 0; i < commandLine.length(); i++) {
+            expect(memory.read(0x82 + i)).andReturn((byte) commandLine.charAt(i));
+        }
     }
 
     protected boolean isCommandCleared() {
@@ -75,4 +90,3 @@ public abstract class CommandTestBase {
         writeCommandCleared = false;
     }
 }
-
