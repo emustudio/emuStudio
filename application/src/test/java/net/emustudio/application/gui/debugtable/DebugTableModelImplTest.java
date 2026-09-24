@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -34,7 +35,7 @@ public class DebugTableModelImplTest {
     @Test
     public void defaultColumnsReflectBreakpointSupport() {
         DebugTableModelImpl model = new DebugTableModelImpl();
-        model.setCPU(createCpu(true, 0), () -> 32);
+        model.setCPU(createCpu(true, 0));
 
         assertEquals(4, model.getColumnCount());
         assertTrue(model.getColumnAt(0) instanceof BreakpointColumn);
@@ -42,7 +43,7 @@ public class DebugTableModelImplTest {
         assertEquals("address", model.getColumnName(1));
 
         DebugTableModelImpl noBreakpoints = new DebugTableModelImpl();
-        noBreakpoints.setCPU(createCpu(false, 0), () -> 32);
+        noBreakpoints.setCPU(createCpu(false, 0));
 
         assertEquals(3, noBreakpoints.getColumnCount());
         assertTrue(noBreakpoints.getColumnAt(0) instanceof AddressColumn);
@@ -98,7 +99,6 @@ public class DebugTableModelImplTest {
         model.lastPage();
         model.currentPage();
         model.memoryChanged(4, 9);
-        model.memorySizeChanged(64);
 
         verify(ida).setInstructionsPerPage(7);
         verify(ida, times(3)).pagePrevious();
@@ -107,7 +107,7 @@ public class DebugTableModelImplTest {
         verify(ida).pageLast();
         verify(ida).pageCurrent();
         verify(ida).flushCache(4, 10);
-        assertTrue(eventCount.get() >= 10);
+        assertTrue(eventCount.get() >= 9);
     }
 
     @Test
@@ -180,10 +180,19 @@ public class DebugTableModelImplTest {
     public void breakpointColumnIsNotEditableForRowsWithoutInstructionLocation() {
         DebugTableModelImpl model = new DebugTableModelImpl();
         CPU cpu = createCpu(true, 0);
-        model.setCPU(cpu, () -> 32);
+        model.setCPU(cpu);
 
         assertFalse(model.isCellEditable(0, 0));
         assertTrue(model.isCellEditable(PaginatingDisassembler.INSTR_PER_PAGE / 2, 0));
+    }
+
+    @Test
+    public void debuggerHonorsCpuAddressSpaceBound() {
+        DebugTableModelImpl model = new DebugTableModelImpl();
+        model.setCPU(createCpu(false, 255));
+
+        assertNotNull(model.getValueAt(PaginatingDisassembler.INSTR_PER_PAGE / 2, 0));
+        assertNull(model.getValueAt(PaginatingDisassembler.INSTR_PER_PAGE / 2 + 1, 0));
     }
 
     @Test
@@ -222,6 +231,7 @@ public class DebugTableModelImplTest {
         CPU cpu = mock(CPU.class);
         when(cpu.getDisassembler()).thenReturn(disassembler);
         when(cpu.getInstructionLocation()).thenReturn(instructionLocation);
+        when(cpu.getAddressSpaceSize()).thenReturn(256);
         when(cpu.isBreakpointSupported()).thenReturn(breakpointSupported);
         when(cpu.isBreakpointSet(anyInt())).thenReturn(false);
         return cpu;

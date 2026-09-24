@@ -168,9 +168,7 @@ public class EmulatorPanel extends JPanel {
 
             @Override
             public void memorySizeChanged() {
-                runOnEdt(() ->
-                        debugTableModel.memorySizeChanged(memoryContext == null ? 0 : memoryContext.getSize())
-                );
+                runOnEdt(EmulatorPanel.this::refreshDebugTable);
             }
         };
 

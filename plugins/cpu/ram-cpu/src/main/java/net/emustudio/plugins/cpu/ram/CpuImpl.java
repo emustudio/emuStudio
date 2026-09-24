@@ -97,6 +97,11 @@ public class CpuImpl extends AbstractCPU {
         return engine.IP.get();
     }
 
+    @Override
+    public int getAddressSpaceSize() {
+        return memory.getSize();
+    }
+
     public TapeSymbol getR0() {
         AbstractTapeContext storage = context.getStorageTape();
         if (storage == null) {

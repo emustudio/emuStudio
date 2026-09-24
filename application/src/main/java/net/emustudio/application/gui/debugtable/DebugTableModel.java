@@ -29,8 +29,6 @@ public abstract class DebugTableModel extends AbstractTableModel implements Debu
 
     public abstract void memoryChanged(int from, int to);
 
-    public abstract void memorySizeChanged(int memorySize);
-
     public abstract void setDefaultColumns();
 
     public abstract int guessPreviousInstructionLocation();
