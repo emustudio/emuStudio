@@ -8,18 +8,22 @@ import net.emustudio.application.gui.debugtable.DebugTableImpl;
 import net.emustudio.application.gui.debugtable.DebugTableModel;
 import net.emustudio.application.gui.debugtable.PagesPanel;
 import net.emustudio.application.virtualcomputer.VirtualComputer;
+import net.emustudio.emulib.plugins.compiler.SourceCodePosition;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.plugins.device.Device;
 import net.emustudio.emulib.plugins.memory.Memory;
 import net.emustudio.emulib.plugins.memory.MemoryContext;
+import net.emustudio.emulib.plugins.memory.annotations.SourceCodeAnnotation;
 import net.emustudio.emulib.runtime.ui.Dialogs;
 import net.emustudio.emulib.runtime.ui.GUI;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class EmulatorPanel extends JPanel {
     private final static int MIN_PERIPHERAL_PANEL_HEIGHT = 100;
@@ -56,8 +60,10 @@ public class EmulatorPanel extends JPanel {
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
 
     public EmulatorPanel(JFrame parent, VirtualComputer computer, DebugTableModel debugTableModel, Dialogs dialogs,
-                         EmulationController emulationController, MemoryContext<?> memoryContext, GUI gui) {
+                         EmulationController emulationController, MemoryContext<?> memoryContext,
+                         Consumer<SourceCodePosition> sourceNavigator, GUI gui) {
         this.gui = Objects.requireNonNull(gui);
+        Objects.requireNonNull(sourceNavigator);
         this.memoryContext = memoryContext;
         this.debugTableModel = Objects.requireNonNull(debugTableModel);
         this.statusWindow = gui.section("Status", "insets 0, fill", "[grow]", "[grow]");
@@ -69,6 +75,29 @@ public class EmulatorPanel extends JPanel {
         debugTable.setFillsViewportHeight(true);
 
         gui.styleTable(debugTable);
+
+        debugTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() != 2 || !SwingUtilities.isLeftMouseButton(event) || memoryContext == null) {
+                    return;
+                }
+                int viewRow = debugTable.rowAtPoint(event.getPoint());
+                if (viewRow < 0) {
+                    return;
+                }
+                int address = debugTableModel.getLocationAt(debugTable.convertRowIndexToModel(viewRow));
+                if (address < 0) {
+                    return;
+                }
+                Optional.ofNullable(memoryContext.annotations())
+                        .map(annotations -> annotations.get(address, SourceCodeAnnotation.class))
+                        .flatMap(annotations -> annotations.stream()
+                                .min(Comparator.comparingLong(SourceCodeAnnotation::getPluginId)))
+                        .map(SourceCodeAnnotation::getPosition)
+                        .ifPresent(sourceNavigator);
+            }
+        });
 
         paneDebug.addComponentListener(new ComponentAdapter() {
             @Override

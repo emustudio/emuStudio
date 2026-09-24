@@ -27,6 +27,8 @@ public abstract class DebugTableModel extends AbstractTableModel implements Debu
 
     public abstract boolean isRowAtCurrentInstruction(int rowIndex);
 
+    public abstract int getLocationAt(int rowIndex);
+
     public abstract void memoryChanged(int from, int to);
 
     public abstract void setDefaultColumns();
